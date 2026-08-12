@@ -21,16 +21,27 @@ async function superadminRequest(path, options = {}) {
         : {})
     : authHeaders
 
-  const response = await fetch(buildUrl(path), {
-    credentials: 'include',
-    ...options,
-    headers: {
-      ...baseHeaders,
-      ...options.headers,
-    },
-  })
+  const headers = {
+    ...baseHeaders,
+    ...options.headers,
+  }
 
-  const body = await response.json().catch(() => ({}))
+  const doFetch = (cacheMode) =>
+    fetch(buildUrl(path), {
+      credentials: 'include',
+      ...options,
+      cache: cacheMode,
+      headers,
+    })
+
+  let response = await doFetch(options.cache ?? 'default')
+  let body = await response.json().catch(() => ({}))
+
+  // Express ETag 304s can arrive with an empty body in fetch; retry once uncached.
+  if (!body.success && (response.status === 304 || (response.ok && body.success === undefined))) {
+    response = await doFetch('no-store')
+    body = await response.json().catch(() => ({}))
+  }
 
   if (!body.success) {
     throw new SuperadminApiError(

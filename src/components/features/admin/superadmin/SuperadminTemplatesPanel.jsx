@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Search, Plus, X, LayoutTemplate, CheckCircle2, XCircle, Eye } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { Search, Plus, X, LayoutTemplate, CheckCircle2, XCircle, Eye, GripVertical, Trash2 } from 'lucide-react'
 import superadminService, { SuperadminApiError } from '../../../../services/superadminService'
 import { formatDate } from './superadminUtils'
 import LayoutPolishedPreview, { getGridDims } from '../../../ppt/LayoutPolishedPreview'
@@ -123,22 +124,230 @@ const THEME_OPTIONS = [
   { id: 'mint_clinic',    label: 'Mint Clinic' },
 ]
 
-// All 39 seeded layout ids — used as autocomplete hints in DECK_PACK slide list
-const SEEDED_LAYOUT_IDS = [
-  'title_centered_v1', 'title_left_accent_v2', 'title_hero_image_v3',
-  'agenda_numbered_v1', 'agenda_two_column_v2', 'agenda_side_image_v3',
-  'bullet_list_classic_v1', 'bullet_list_dense_v2', 'bullet_list_cards_v3',
-  'numbered_four_up_v1', 'policy_numbered_split_v1', 'achievement_three_up_v1',
-  'comparison_side_by_side_v1', 'comparison_pros_cons_v2', 'comparison_table_v3',
-  'stat_big_number_v1', 'stat_three_up_v2', 'stat_with_context_v3',
-  'quote_centered_v1', 'quote_portrait_v2', 'quote_banner_v3',
-  'image_text_split_v1', 'image_text_split_v2', 'image_text_overlay_v3',
-  'timeline_horizontal_v1', 'timeline_vertical_v2', 'timeline_alternating_v3',
-  'team_grid_four_v1', 'team_featured_lead_v2', 'team_row_v3',
-  'chart_full_width_v1', 'chart_with_callouts_v2', 'chart_compact_v3',
-  'closing_centered_cta_v1', 'closing_contact_v2', 'closing_thank_you_image_v3',
-  'section_divider_centered_v1', 'section_divider_numbered_v2', 'section_divider_band_v3',
+const CONTENT_TYPE_PREFIXES = [
+  ['title', 'title'],
+  ['agenda', 'agenda'],
+  ['bullet', 'bullet_list'],
+  ['numbered', 'bullet_list'],
+  ['policy', 'bullet_list'],
+  ['achievement', 'stat'],
+  ['comparison', 'comparison'],
+  ['stat', 'stat'],
+  ['quote', 'quote'],
+  ['image', 'image+text'],
+  ['timeline', 'timeline'],
+  ['team', 'team'],
+  ['chart', 'chart'],
+  ['closing', 'closing'],
+  ['section', 'section_divider'],
+  ['grid', 'grid'],
 ]
+
+function guessContentTypeFromLayoutId(layoutId = '') {
+  const id = String(layoutId).toLowerCase()
+  for (const [prefix, type] of CONTENT_TYPE_PREFIXES) {
+    if (id.startsWith(prefix)) return type
+  }
+  return 'bullet_list'
+}
+
+function resolveLayoutContentType(layoutSchema, layoutId) {
+  return layoutSchema?.content_type
+    || layoutSchema?.contentType
+    || guessContentTypeFromLayoutId(layoutId)
+}
+
+function defaultPlaceholderForContentType(contentType) {
+  switch (contentType) {
+    case 'title':
+      return { title: 'Presentation Title', subtitle: 'Tagline or company name' }
+    case 'agenda':
+      return { title: 'Agenda', bullets: ['Topic one', 'Topic two', 'Topic three'] }
+    case 'section_divider':
+      return { title: 'Section', subtitle: 'Chapter intro' }
+    case 'stat':
+      return {
+        title: 'Key metrics',
+        stats: [
+          { value: '00%', label: 'Metric one' },
+          { value: '00', label: 'Metric two' },
+          { value: '0x', label: 'Metric three' },
+        ],
+      }
+    case 'quote':
+      return { title: '“A memorable quote goes here.”', subtitle: '— Speaker name' }
+    case 'comparison':
+      return {
+        title: 'Comparison',
+        left: { title: 'Option A', bullets: ['Pro one', 'Pro two'] },
+        right: { title: 'Option B', bullets: ['Pro one', 'Pro two'] },
+      }
+    case 'timeline':
+      return { title: 'Timeline', bullets: ['Phase 1', 'Phase 2', 'Phase 3'] }
+    case 'team':
+      return { title: 'Our team', bullets: ['Role one', 'Role two', 'Role three'] }
+    case 'chart':
+      return { title: 'Performance', subtitle: 'Chart caption' }
+    case 'grid':
+      return { title: 'Overview', bullets: ['Insight one', 'Insight two', 'Insight three'] }
+    case 'image+text':
+      return {
+        title: 'Topic',
+        bullets: ['Point one', 'Point two', 'Point three'],
+        imagePrompt: 'Professional photo that supports the slide topic',
+      }
+    case 'closing':
+      return { title: 'Thank You', subtitle: 'contact@company.com' }
+    case 'bullet_list':
+    default:
+      return { title: 'Key Points', bullets: ['Point one', 'Point two', 'Point three'] }
+  }
+}
+
+function defaultIntentForContentType(contentType) {
+  const map = {
+    title: 'Hook the audience with a strong opening statement',
+    agenda: 'Signal structure with a crisp agenda',
+    bullet_list: 'List the top 3–4 key points concisely',
+    section_divider: 'Mark a clear chapter break',
+    'image+text': 'Explain the idea with supporting visuals',
+    comparison: 'Contrast two options side by side',
+    grid: 'Show several related insights at a glance',
+    chart: 'Make the trend or data easy to grasp',
+    stat: 'Lead with credible traction metrics',
+    timeline: 'Show progress or plan over time',
+    team: 'Introduce the people behind the story',
+    quote: 'Land a memorable line from a credible voice',
+    closing: 'End with a clear call-to-action',
+  }
+  return map[contentType] || 'Advance the narrative clearly on this slide'
+}
+
+function defaultDesignTokensForContentType(contentType) {
+  if (contentType === 'title' || contentType === 'closing' || contentType === 'section_divider') {
+    return { backgroundStyle: 'gradient', accentPosition: 'bottom-bar', textContrast: 'high' }
+  }
+  if (contentType === 'image+text') {
+    return { backgroundStyle: 'solid', accentPosition: 'none', imagePosition: 'left-half', textContrast: 'normal' }
+  }
+  return { backgroundStyle: 'solid', accentPosition: 'left-bar', textContrast: 'normal' }
+}
+
+function defaultGenerationHintsForContentType(contentType) {
+  switch (contentType) {
+    case 'title':
+      return { maxTitleWords: 8, maxBodyWords: 20 }
+    case 'agenda':
+    case 'bullet_list':
+      return { maxTitleWords: 6, maxBodyWords: 60, itemCountMin: 3, itemCountMax: 5 }
+    case 'stat':
+      return { maxTitleWords: 8, statFormat: 'percentage, dollar, or multiplier' }
+    case 'image+text':
+      return { maxTitleWords: 8, maxBodyWords: 40, imagePromptStyle: 'photo' }
+    case 'closing':
+      return { maxTitleWords: 6, maxBodyWords: 30 }
+    default:
+      return { maxTitleWords: 8, maxBodyWords: 50 }
+  }
+}
+
+function buildPackSlideFromLayout({ layoutId, order, layoutSchema, existingSlide = null }) {
+  if (existingSlide && existingSlide.layout_id === layoutId) {
+    return {
+      ...existingSlide,
+      order,
+      layout_id: layoutId,
+      contentType: existingSlide.contentType || resolveLayoutContentType(layoutSchema, layoutId),
+    }
+  }
+  const contentType = resolveLayoutContentType(layoutSchema, layoutId)
+  const slide = {
+    order,
+    layout_id: layoutId,
+    contentType,
+    intent: defaultIntentForContentType(contentType),
+    designTokens: defaultDesignTokensForContentType(contentType),
+    generationHints: defaultGenerationHintsForContentType(contentType),
+    placeholder: defaultPlaceholderForContentType(contentType),
+  }
+  if (contentType === 'image+text' && !slide.placeholder.imagePrompt) {
+    slide.placeholder.imagePrompt = 'Professional photo that supports the slide topic'
+  }
+  return slide
+}
+
+function readLayoutIdsFromPackSchema(schemaStr) {
+  const { ok, value } = parseJsonSafe(schemaStr)
+  if (!ok || !Array.isArray(value?.slides)) return []
+  return value.slides.map((s) => s?.layout_id).filter(Boolean).map(String)
+}
+
+function applyLayoutsToPackSchema(schemaStr, selectedLayoutIds, layoutSchemaMap = {}) {
+  const parsed = parseJsonSafe(schemaStr)
+  if (!parsed.ok) return { ok: false, error: parsed.error, schemaStr }
+  const schema = { ...parsed.value }
+  const existing = Array.isArray(schema.slides) ? schema.slides : []
+  const usedIndexes = new Set()
+
+  const slides = selectedLayoutIds.map((layoutId, index) => {
+    const existingIdx = existing.findIndex(
+      (s, j) => !usedIndexes.has(j) && String(s?.layout_id || '') === String(layoutId)
+    )
+    const existingSlide = existingIdx >= 0 ? existing[existingIdx] : null
+    if (existingIdx >= 0) usedIndexes.add(existingIdx)
+    return buildPackSlideFromLayout({
+      layoutId,
+      order: index + 1,
+      layoutSchema: layoutSchemaMap[layoutId] || null,
+      existingSlide,
+    })
+  })
+
+  schema.slides = slides
+  const whitelist = [...new Set(selectedLayoutIds)]
+  schema.generationDefaults = {
+    density: 'balanced',
+    imageType: 'ai',
+    imageStyle: 'photo',
+    preferVisuals: true,
+    slideOrder: 'fixed',
+    contentDistribution: {
+      maxConsecutiveBulletSlides: 2,
+      requireStatSlide: false,
+      requireImageSlide: true,
+    },
+    ...(schema.generationDefaults || {}),
+    layoutWhitelist: whitelist,
+  }
+  if (schema.preview && typeof schema.preview === 'object') {
+    schema.preview = { ...schema.preview, slideCount: slides.length }
+  }
+  return { ok: true, schemaStr: JSON.stringify(schema, null, 2) }
+}
+
+function buildLayoutCatalog(templates = []) {
+  return (templates || [])
+    .filter((t) => t?.schema?.layout_id || t?.schema?.layoutId)
+    .map((t) => {
+      const layoutId = String(t.schema.layout_id || t.schema.layoutId)
+      return {
+        id: t.id,
+        layoutId,
+        name: t.name || layoutId,
+        contentType: t.contentType || t.schema.content_type || guessContentTypeFromLayoutId(layoutId),
+        isActive: t.isActive !== false,
+        schema: t.schema,
+      }
+    })
+    .sort((a, b) => a.name.localeCompare(b.name))
+}
+
+function unwrapTemplateRows(data) {
+  if (Array.isArray(data)) return data
+  if (Array.isArray(data?.templates)) return data.templates
+  if (Array.isArray(data?.data)) return data.data
+  return []
+}
 
 const DECK_LAYOUT_PLACEHOLDER = JSON.stringify({
   layout_id: 'grid_insights_chart_v1',
@@ -437,6 +646,520 @@ function DeckPackQuickSelects({ schemaStr, setSchemaStr, onError, themeLabel = '
   )
 }
 
+/** Compact summary in create/edit — opens a separate roomy picker modal. */
+function DeckPackLayoutPicker({
+  schemaStr,
+  setSchemaStr,
+  layoutCatalog = [],
+  layoutSchemaMap = {},
+  onError,
+  disabled = false,
+}) {
+  const [open, setOpen] = useState(false)
+  const selectedIds = readLayoutIdsFromPackSchema(schemaStr)
+
+  const catalogById = useMemo(() => {
+    const map = {}
+    for (const item of layoutCatalog) map[item.layoutId] = item
+    return map
+  }, [layoutCatalog])
+
+  return (
+    <div style={{ marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-color)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
+        <div style={{ minWidth: 0 }}>
+          <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            Slide layouts
+          </p>
+          <p style={{ margin: '3px 0 0', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+            {selectedIds.length
+              ? `${selectedIds.length} slide${selectedIds.length === 1 ? '' : 's'} in schema`
+              : 'No slides yet — open the picker to compose the pack'}
+          </p>
+        </div>
+        <button
+          type="button"
+          className="sa-btn sa-btn--primary sa-btn--sm"
+          disabled={disabled}
+          onClick={() => setOpen(true)}
+          style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: 6 }}
+        >
+          <LayoutTemplate size={13} />
+          {selectedIds.length ? 'Manage slides' : 'Choose layouts'}
+        </button>
+      </div>
+
+      {selectedIds.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, maxHeight: 72, overflow: 'hidden' }}>
+          {selectedIds.slice(0, 8).map((layoutId, index) => {
+            const meta = catalogById[layoutId]
+            return (
+              <span
+                key={`${layoutId}-${index}`}
+                title={layoutId}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  maxWidth: 180, padding: '4px 8px', borderRadius: 999,
+                  border: '1px solid var(--border-color)',
+                  background: 'color-mix(in srgb, var(--primary) 8%, var(--bg-card))',
+                  fontSize: '0.7rem', color: 'var(--text-main)',
+                }}
+              >
+                <span style={{
+                  width: 16, height: 16, borderRadius: 999, flexShrink: 0,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '0.6rem', fontWeight: 700,
+                  background: 'color-mix(in srgb, var(--primary) 20%, transparent)',
+                  color: 'var(--primary)',
+                }}>
+                  {index + 1}
+                </span>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                  {meta?.name || layoutId}
+                </span>
+              </span>
+            )
+          })}
+          {selectedIds.length > 8 && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', padding: '4px 8px', borderRadius: 999,
+              fontSize: '0.7rem', color: 'var(--text-muted)', border: '1px dashed var(--border-color)',
+            }}>
+              +{selectedIds.length - 8} more
+            </span>
+          )}
+        </div>
+      )}
+
+      {open && (
+        <DeckPackLayoutPickerModal
+          schemaStr={schemaStr}
+          setSchemaStr={setSchemaStr}
+          layoutCatalog={layoutCatalog}
+          layoutSchemaMap={layoutSchemaMap}
+          onError={onError}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </div>
+  )
+}
+
+/** Full-screen-ish two-column picker — keeps the create modal short. */
+function DeckPackLayoutPickerModal({
+  schemaStr,
+  setSchemaStr,
+  layoutCatalog = [],
+  layoutSchemaMap = {},
+  onError,
+  onClose,
+}) {
+  const [draftIds, setDraftIds] = useState(() => readLayoutIdsFromPackSchema(schemaStr))
+  const [query, setQuery] = useState('')
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [localCatalog, setLocalCatalog] = useState(layoutCatalog)
+  const [catalogLoading, setCatalogLoading] = useState(layoutCatalog.length === 0)
+  const [catalogError, setCatalogError] = useState('')
+  const [applyError, setApplyError] = useState('')
+  const [dragIndex, setDragIndex] = useState(null)
+  const [overIndex, setOverIndex] = useState(null)
+  const [showPackPreview, setShowPackPreview] = useState(false)
+
+  useEffect(() => {
+    if (layoutCatalog.length) {
+      setLocalCatalog(layoutCatalog)
+      setCatalogLoading(false)
+      setCatalogError('')
+    }
+  }, [layoutCatalog])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      setCatalogLoading(true)
+      setCatalogError('')
+      try {
+        const data = await superadminService.listTemplates({ type: 'DECK_LAYOUT' })
+        if (cancelled) return
+        const next = buildLayoutCatalog(unwrapTemplateRows(data))
+        setLocalCatalog(next)
+        if (!next.length) setCatalogError('No deck layouts returned from the API.')
+      } catch (err) {
+        if (!cancelled) {
+          setCatalogError(err instanceof SuperadminApiError ? err.message : 'Failed to load layouts')
+          if (!layoutCatalog.length) setLocalCatalog([])
+        }
+      } finally {
+        if (!cancelled) setCatalogLoading(false)
+      }
+    })()
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return
+      // Full-pack preview handles its own Escape; don't close compose under it.
+      if (showPackPreview) return
+      onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose, showPackPreview])
+
+  const mergedSchemaMap = useMemo(() => {
+    const map = { ...layoutSchemaMap }
+    for (const item of localCatalog) {
+      if (item.layoutId && item.schema) map[item.layoutId] = item.schema
+    }
+    return map
+  }, [layoutSchemaMap, localCatalog])
+
+  const previewPackSchema = useMemo(() => {
+    if (!draftIds.length) return null
+    const result = applyLayoutsToPackSchema(schemaStr, draftIds, mergedSchemaMap)
+    if (!result.ok) return null
+    const parsed = parseJsonSafe(result.schemaStr)
+    return parsed.ok ? parsed.value : null
+  }, [schemaStr, draftIds, mergedSchemaMap])
+
+  const catalogById = useMemo(() => {
+    const map = {}
+    for (const item of localCatalog) map[item.layoutId] = item
+    return map
+  }, [localCatalog])
+
+  const activeLayouts = useMemo(
+    () => localCatalog.filter((l) => l.isActive !== false),
+    [localCatalog]
+  )
+
+  const filteredLayouts = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return activeLayouts.filter((l) => {
+      if (typeFilter !== 'all' && l.contentType !== typeFilter) return false
+      if (!q) return true
+      return (
+        l.name.toLowerCase().includes(q)
+        || l.layoutId.toLowerCase().includes(q)
+        || contentTypeLabel(l.contentType).toLowerCase().includes(q)
+      )
+    })
+  }, [activeLayouts, query, typeFilter])
+
+  function reorderDraft(fromIndex, toIndex) {
+    if (fromIndex == null || toIndex == null || fromIndex === toIndex) return
+    if (fromIndex < 0 || toIndex < 0 || fromIndex >= draftIds.length || toIndex >= draftIds.length) return
+    setDraftIds((prev) => {
+      const copy = [...prev]
+      const [item] = copy.splice(fromIndex, 1)
+      copy.splice(toIndex, 0, item)
+      return copy
+    })
+  }
+
+  function handleApply() {
+    const result = applyLayoutsToPackSchema(schemaStr, draftIds, mergedSchemaMap)
+    if (!result.ok) {
+      setApplyError(`Cannot update slides — schema JSON is invalid: ${result.error}`)
+      onError?.(`Cannot update slides — schema JSON is invalid: ${result.error}`)
+      return
+    }
+    setSchemaStr(result.schemaStr)
+    onError?.('')
+    onClose()
+  }
+
+  function handlePreviewPack() {
+    if (!draftIds.length) {
+      setApplyError('Add at least one layout to preview the full pack.')
+      return
+    }
+    if (!previewPackSchema?.slides?.length) {
+      setApplyError('Cannot build pack preview — fix schema JSON first.')
+      return
+    }
+    setApplyError('')
+    setShowPackPreview(true)
+  }
+
+  const packName = previewPackSchema?.meta?.name
+    || previewPackSchema?.pack_id
+    || readSchemaRootField(schemaStr, 'pack_id')
+    || 'Pack preview'
+
+  return createPortal(
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 1400,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(0,0,0,0.62)', backdropFilter: 'blur(4px)', padding: 16,
+      }}
+      onClick={(e) => { if (e.target === e.currentTarget && !showPackPreview) onClose() }}
+    >
+      <div style={{
+        width: 'min(980px, 96vw)', height: 'min(720px, 90vh)',
+        background: 'var(--bg-card)', borderRadius: 14,
+        border: '1px solid var(--border-color)',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.55)',
+        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+      }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+          padding: '14px 18px', borderBottom: '1px solid var(--border-color)', flexShrink: 0,
+        }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700 }}>Compose pack slides</h3>
+            <p style={{ margin: '3px 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+              Add layouts in order, then apply — updates <code style={{ fontSize: '0.72rem' }}>slides[]</code> and whitelist
+            </p>
+          </div>
+          <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 4 }}>
+            <X size={18} />
+          </button>
+        </div>
+
+        <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.05fr)', gap: 0 }}>
+          {/* Catalog */}
+          <div style={{
+            minHeight: 0, display: 'flex', flexDirection: 'column',
+            borderRight: '1px solid var(--border-color)', padding: 14,
+          }}>
+            <p style={{ margin: '0 0 8px', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Layout catalog
+            </p>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', flex: '1 1 140px' }}>
+                <Search size={13} style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  className="sa-input"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search layouts…"
+                  style={{ width: '100%', boxSizing: 'border-box', paddingLeft: 28, fontSize: '0.78rem', height: 34 }}
+                />
+              </div>
+              <select
+                className="sa-select"
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                style={{ flex: '0 1 150px', fontSize: '0.78rem', height: 34 }}
+              >
+                <option value="all">All types</option>
+                {CONTENT_TYPES.map((ct) => (
+                  <option key={ct} value={ct}>{contentTypeLabel(ct)}</option>
+                ))}
+              </select>
+            </div>
+            <div className="sa-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {catalogLoading ? (
+                <span style={{ padding: 10, fontSize: '0.75rem', color: 'var(--text-muted)' }}>Loading layouts…</span>
+              ) : catalogError && activeLayouts.length === 0 ? (
+                <span style={{ padding: 10, fontSize: '0.75rem', color: '#f87171' }}>{catalogError}</span>
+              ) : activeLayouts.length === 0 ? (
+                <span style={{ padding: 10, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                  No active deck layouts found. Create layouts first.
+                </span>
+              ) : filteredLayouts.length === 0 ? (
+                <span style={{ padding: 10, fontSize: '0.75rem', color: 'var(--text-muted)' }}>No layouts match this filter.</span>
+              ) : filteredLayouts.map((layout) => (
+                <button
+                  key={layout.id || layout.layoutId}
+                  type="button"
+                  onClick={() => setDraftIds((prev) => [...prev, layout.layoutId])}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left',
+                    padding: '8px 10px', borderRadius: 8, cursor: 'pointer',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-card)', color: 'var(--text-main)',
+                  }}
+                >
+                  <Plus size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{layout.name}</div>
+                    <div style={{ fontSize: '0.64rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                      {layout.layoutId} · {contentTypeLabel(layout.contentType)}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Selected order */}
+          <div style={{ minHeight: 0, display: 'flex', flexDirection: 'column', padding: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <div>
+                <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Pack order ({draftIds.length})
+                </p>
+                {draftIds.length > 1 && (
+                  <p style={{ margin: '2px 0 0', fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                    Drag the handle to rearrange
+                  </p>
+                )}
+              </div>
+              {draftIds.length > 0 && (
+                <button type="button" className="sa-btn sa-btn--ghost sa-btn--sm" onClick={() => setDraftIds([])}>
+                  Clear all
+                </button>
+              )}
+            </div>
+            <div className="sa-scroll" style={{
+              flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6,
+              padding: 8, borderRadius: 8,
+              border: '1px dashed color-mix(in srgb, var(--border-color) 80%, transparent)',
+              background: 'color-mix(in srgb, var(--bg-card) 50%, transparent)',
+            }}>
+              {draftIds.length === 0 ? (
+                <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', padding: 8 }}>
+                  Click layouts on the left to build the slide sequence.
+                </span>
+              ) : draftIds.map((layoutId, index) => {
+                const meta = catalogById[layoutId]
+                const isDragging = dragIndex === index
+                const isOver = overIndex === index && dragIndex !== null && dragIndex !== index
+                return (
+                  <div
+                    key={`${layoutId}-${index}`}
+                    draggable
+                    onDragStart={(e) => {
+                      setDragIndex(index)
+                      setOverIndex(index)
+                      e.dataTransfer.effectAllowed = 'move'
+                      e.dataTransfer.setData('text/plain', String(index))
+                      try { e.dataTransfer.setData('application/x-pack-slide-index', String(index)) } catch { /* ignore */ }
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault()
+                      e.dataTransfer.dropEffect = 'move'
+                      if (overIndex !== index) setOverIndex(index)
+                    }}
+                    onDragEnter={(e) => {
+                      e.preventDefault()
+                      setOverIndex(index)
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      const raw = e.dataTransfer.getData('application/x-pack-slide-index')
+                        || e.dataTransfer.getData('text/plain')
+                      const from = Number.parseInt(raw, 10)
+                      const fromIndex = Number.isFinite(from) ? from : dragIndex
+                      reorderDraft(fromIndex, index)
+                      setDragIndex(null)
+                      setOverIndex(null)
+                    }}
+                    onDragEnd={() => {
+                      setDragIndex(null)
+                      setOverIndex(null)
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '7px 9px', borderRadius: 8,
+                      border: `1px solid ${isOver ? 'var(--primary)' : 'var(--border-color)'}`,
+                      background: isDragging
+                        ? 'color-mix(in srgb, var(--primary) 12%, var(--bg-card))'
+                        : isOver
+                          ? 'color-mix(in srgb, var(--primary) 8%, var(--bg-card))'
+                          : 'var(--bg-card)',
+                      opacity: isDragging ? 0.72 : 1,
+                      boxShadow: isOver ? 'inset 0 0 0 1px color-mix(in srgb, var(--primary) 45%, transparent)' : 'none',
+                      cursor: 'grab',
+                      userSelect: 'none',
+                    }}
+                  >
+                    <span
+                      title="Drag to reorder"
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        color: 'var(--text-muted)', flexShrink: 0, cursor: 'grab', padding: '2px 0',
+                      }}
+                    >
+                      <GripVertical size={15} />
+                    </span>
+                    <span style={{
+                      width: 22, height: 22, borderRadius: 999, flexShrink: 0,
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '0.68rem', fontWeight: 700,
+                      background: 'color-mix(in srgb, var(--primary) 18%, transparent)',
+                      color: 'var(--primary)',
+                    }}>
+                      {index + 1}
+                    </span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {meta?.name || layoutId}
+                      </div>
+                      <div style={{ fontSize: '0.64rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                        {layoutId}
+                        {meta?.contentType ? ` · ${contentTypeLabel(meta.contentType)}` : ''}
+                        {!meta ? ' · not in catalog' : ''}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="sa-btn sa-btn--ghost sa-btn--sm"
+                      onClick={() => setDraftIds((prev) => prev.filter((_, i) => i !== index))}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      title="Remove"
+                      style={{ padding: 4, color: '#f87171', flexShrink: 0, cursor: 'pointer' }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+          padding: '12px 18px', borderTop: '1px solid var(--border-color)', flexShrink: 0,
+        }}>
+          <div style={{ fontSize: '0.75rem', color: applyError ? '#f87171' : 'var(--text-muted)' }}>
+            {applyError || 'Changes apply to the schema JSON when you confirm.'}
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button type="button" className="sa-btn" onClick={onClose}>Cancel</button>
+            <button
+              type="button"
+              className="sa-btn"
+              onClick={handlePreviewPack}
+              disabled={!draftIds.length}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
+              title={draftIds.length ? 'Preview the full pack slide sequence' : 'Add layouts first'}
+            >
+              <Eye size={14} /> Preview pack
+            </button>
+            <button type="button" className="sa-btn sa-btn--primary" onClick={handleApply}>
+              Apply {draftIds.length} slide{draftIds.length === 1 ? '' : 's'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {showPackPreview && previewPackSchema?.slides?.length > 0 && (
+        <DeckPackSlideModal
+          slides={previewPackSchema.slides}
+          theme={resolveDeckPackTheme(previewPackSchema.themeId)}
+          themeId={previewPackSchema.themeId}
+          aspectRatio={previewPackSchema.aspectRatio ?? '16:9'}
+          packName={packName}
+          previewImageUrl={null}
+          media={[]}
+          layoutSchemaMap={mergedSchemaMap}
+          initialSlide={0}
+          zIndex={1500}
+          onClose={() => setShowPackPreview(false)}
+        />
+      )}
+    </div>,
+    document.body
+  )
+}
+
 function ActiveBadge({ active }) {
   return (
     <span style={{
@@ -521,7 +1244,7 @@ function JsonEditor({ value, onChange, placeholder, disabled, label }) {
 
 // ─── Create modal ─────────────────────────────────────────────────────────────
 
-function CreateModal({ onClose, onCreated, defaultType, prefill, layoutSchemaMap = {} }) {
+function CreateModal({ onClose, onCreated, defaultType, prefill, layoutSchemaMap = {}, layoutCatalog = [] }) {
   const resolvedType = prefill?.type || defaultType || 'DECK_LAYOUT'
   const [type, setType]             = useState(resolvedType)
   const [name, setName]             = useState(prefill ? `${prefill.name} (copy)` : '')
@@ -725,14 +1448,14 @@ function CreateModal({ onClose, onCreated, defaultType, prefill, layoutSchemaMap
               {type === 'DECK_PACK' && (
                 <>
                   <DeckPackQuickSelects schemaStr={schemaStr} setSchemaStr={setSchemaStr} onError={setError} />
-                  <details>
-                    <summary style={{ fontSize: '0.7rem', color: 'var(--text-muted)', cursor: 'pointer', userSelect: 'none' }}>39 seeded layout_ids reference</summary>
-                    <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: '3px 6px' }}>
-                      {SEEDED_LAYOUT_IDS.map(id => (
-                        <span key={id} style={{ fontSize: '0.63rem', fontFamily: 'monospace', color: 'var(--text-muted)', background: 'color-mix(in srgb, var(--border-color) 40%, transparent)', padding: '1px 5px', borderRadius: 4 }}>{id}</span>
-                      ))}
-                    </div>
-                  </details>
+                  <DeckPackLayoutPicker
+                    schemaStr={schemaStr}
+                    setSchemaStr={setSchemaStr}
+                    layoutCatalog={layoutCatalog}
+                    layoutSchemaMap={layoutSchemaMap}
+                    onError={setError}
+                    disabled={loading}
+                  />
                 </>
               )}
               {type === 'VIDEO_PACK' && (
@@ -1441,7 +2164,7 @@ function SlideCard({ theme, slide, index, ph, icon, imageUrl, large, aspectRatio
 
 // ─── Full-screen deck pack modal — PPT style ──────────────────────────────────
 
-function DeckPackSlideModal({ slides, theme, themeId, aspectRatio = '16:9', packName, previewImageUrl, media, layoutSchemaMap = {}, initialSlide, onClose }) {
+function DeckPackSlideModal({ slides, theme, themeId, aspectRatio = '16:9', packName, previewImageUrl, media, layoutSchemaMap = {}, initialSlide, zIndex = 1200, onClose }) {
   const [current, setCurrent] = useState(initialSlide ?? 0)
   const mainRef   = useRef(null)
   const stripRefs = useRef([])
@@ -1485,7 +2208,7 @@ function DeckPackSlideModal({ slides, theme, themeId, aspectRatio = '16:9', pack
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 1200,
+      position: 'fixed', inset: 0, zIndex,
       background: '#111', display: 'flex', flexDirection: 'column',
     }}>
       {/* ── top bar ── */}
@@ -2166,7 +2889,7 @@ function TemplateMediaTab({ templateId }) {
 
 // ─── Detail / edit panel ──────────────────────────────────────────────────────
 
-function TemplateDetail({ template, onUpdated, onClose, onDuplicate, layoutSchemaMap = {} }) {
+function TemplateDetail({ template, onUpdated, onClose, onDuplicate, layoutSchemaMap = {}, layoutCatalog = [] }) {
   const [name, setName]             = useState(template.name || '')
   const [contentType, setContentType] = useState(template.contentType || '')
   const [variant, setVariant]       = useState(template.variant || '')
@@ -2323,14 +3046,14 @@ function TemplateDetail({ template, onUpdated, onClose, onDuplicate, layoutSchem
                       themeLabel="Inject themeId"
                       ratioLabel="Inject aspectRatio"
                     />
-                    <details>
-                      <summary style={{ fontSize: '0.68rem', color: 'var(--text-muted)', cursor: 'pointer', userSelect: 'none' }}>39 seeded layout_ids</summary>
-                      <div style={{ marginTop: 5, display: 'flex', flexWrap: 'wrap', gap: '2px 5px' }}>
-                        {SEEDED_LAYOUT_IDS.map(id => (
-                          <span key={id} style={{ fontSize: '0.6rem', fontFamily: 'monospace', color: 'var(--text-muted)', background: 'color-mix(in srgb, var(--border-color) 40%, transparent)', padding: '1px 4px', borderRadius: 3 }}>{id}</span>
-                        ))}
-                      </div>
-                    </details>
+                    <DeckPackLayoutPicker
+                      schemaStr={schemaStr}
+                      setSchemaStr={setSchemaStr}
+                      layoutCatalog={layoutCatalog}
+                      layoutSchemaMap={layoutSchemaMap}
+                      onError={(msg) => { if (msg) setSaveErr(msg); else setSaveErr('') }}
+                      disabled={saving}
+                    />
                   </>
                 )}
                 {template.type === 'VIDEO_PACK' && (
@@ -2544,6 +3267,7 @@ export default function SuperadminTemplatesPanel() {
   const [showCreate, setShowCreate]     = useState(false)
   const [duplicatePrefill, setDuplicatePrefill] = useState(null)
   const [layoutSchemaMap, setLayoutSchemaMap] = useState({})
+  const [layoutCatalog, setLayoutCatalog] = useState([])
 
   const fetchList = useCallback(async (type, activeFilter) => {
     setLoading(true); setListError('')
@@ -2552,7 +3276,7 @@ export default function SuperadminTemplatesPanel() {
       if (activeFilter === 'active')   params.isActive = true
       if (activeFilter === 'inactive') params.isActive = false
       const data = await superadminService.listTemplates(params)
-      const rows = data.templates ?? data.data ?? (Array.isArray(data) ? data : [])
+      const rows = unwrapTemplateRows(data)
       setTemplates(rows)
     } catch (err) {
       setListError(err instanceof SuperadminApiError ? err.message : 'Failed to load templates')
@@ -2564,17 +3288,30 @@ export default function SuperadminTemplatesPanel() {
 
   useEffect(() => {
     let cancelled = false
-    superadminService.listTemplates({ type: 'DECK_LAYOUT' })
-      .then((data) => {
+    ;(async () => {
+      try {
+        const data = await superadminService.listTemplates({ type: 'DECK_LAYOUT' })
         if (cancelled) return
-        const rows = data.templates ?? data.data ?? (Array.isArray(data) ? data : [])
+        const rows = unwrapTemplateRows(data)
         setLayoutSchemaMap(buildLayoutSchemaMap(rows))
-      })
-      .catch(() => {
-        if (!cancelled) setLayoutSchemaMap({})
-      })
+        setLayoutCatalog(buildLayoutCatalog(rows))
+      } catch {
+        if (!cancelled) {
+          // Keep any catalog already populated; picker also self-loads.
+        }
+      }
+    })()
     return () => { cancelled = true }
   }, [])
+
+  // When browsing Deck Layouts, keep pack-picker catalog in sync with the visible list.
+  useEffect(() => {
+    if (activeType !== 'DECK_LAYOUT' || !templates.length) return
+    const rows = templates.filter((t) => t.type === 'DECK_LAYOUT' || t.schema?.layout_id)
+    if (!rows.length) return
+    setLayoutSchemaMap((prev) => ({ ...prev, ...buildLayoutSchemaMap(rows) }))
+    setLayoutCatalog(buildLayoutCatalog(rows))
+  }, [activeType, templates])
 
   function handleSearchInput(e) {
     const v = e.target.value; setSearchInput(v)
@@ -2601,25 +3338,29 @@ export default function SuperadminTemplatesPanel() {
     } catch { /* silent */ }
   }
 
+  function upsertLayoutCatalogEntry(template) {
+    if (template?.type !== 'DECK_LAYOUT' || !template.schema?.layout_id) return
+    const entry = buildLayoutCatalog([template])[0]
+    if (!entry) return
+    setLayoutSchemaMap((prev) => ({
+      ...prev,
+      [entry.layoutId]: template.schema,
+    }))
+    setLayoutCatalog((prev) => {
+      const rest = prev.filter((l) => l.layoutId !== entry.layoutId && l.id !== entry.id)
+      return [...rest, entry].sort((a, b) => a.name.localeCompare(b.name))
+    })
+  }
+
   function handleCreated(created) {
     setShowCreate(false); setDuplicatePrefill(null)
     const template = created.template ?? created
     if (template.type === activeType) { setTemplates(prev => [template, ...prev]); setSelected(template) }
-    if (template.type === 'DECK_LAYOUT' && template.schema?.layout_id) {
-      setLayoutSchemaMap((prev) => ({
-        ...prev,
-        [String(template.schema.layout_id)]: template.schema,
-      }))
-    }
+    upsertLayoutCatalogEntry(template)
   }
   function handleUpdated(updated) {
     setTemplates(prev => prev.map(t => t.id === updated.id ? updated : t)); setSelected(updated)
-    if (updated.type === 'DECK_LAYOUT' && updated.schema?.layout_id) {
-      setLayoutSchemaMap((prev) => ({
-        ...prev,
-        [String(updated.schema.layout_id)]: updated.schema,
-      }))
-    }
+    upsertLayoutCatalogEntry(updated)
   }
 
   return (
@@ -2883,6 +3624,7 @@ export default function SuperadminTemplatesPanel() {
               key={selected.id}
               template={selected}
               layoutSchemaMap={layoutSchemaMap}
+              layoutCatalog={layoutCatalog}
               onUpdated={handleUpdated}
               onClose={() => setSelected(null)}
               onDuplicate={t => { setDuplicatePrefill(t); setShowCreate(true) }}
@@ -2896,6 +3638,7 @@ export default function SuperadminTemplatesPanel() {
           defaultType={activeType}
           prefill={duplicatePrefill}
           layoutSchemaMap={layoutSchemaMap}
+          layoutCatalog={layoutCatalog}
           onClose={() => { setShowCreate(false); setDuplicatePrefill(null) }}
           onCreated={handleCreated}
         />
