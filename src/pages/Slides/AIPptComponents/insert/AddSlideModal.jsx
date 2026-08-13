@@ -26,16 +26,19 @@ import './AddSlideModal.css'
 const PREVIEW_BASE_W = 520
 const PREVIEW_BASE_H = 293
 
+/** Matches backend layoutCategories.js category ids. */
 const LAYOUT_CATEGORIES = [
   { id: 'all', label: 'All' },
-  { id: 'simple', label: 'Simple slides' },
-  { id: 'grids', label: 'Grids' },
-  { id: 'charts', label: 'Charts and data' },
-  { id: 'timelines', label: 'Timelines and project plans' },
+  { id: 'simple_slides', label: 'Simple slides' },
+  { id: 'grid', label: 'Grid' },
+  { id: 'charts_and_data', label: 'Charts and data' },
+  { id: 'timeline_and_plans', label: 'Timeline and project plans' },
   { id: 'pricing', label: 'Pricing' },
-  { id: 'people', label: 'People and teams' },
-  { id: 'quotes', label: 'Quotes' },
-  { id: 'media', label: 'Image & text' },
+  { id: 'agenda', label: 'Agenda' },
+  { id: 'people_and_team', label: 'People and team' },
+  { id: 'quotes_and_testimonials', label: 'Quotes and testimonial' },
+  { id: 'device_frames', label: 'Device frames' },
+  { id: 'closing', label: 'Closing' },
 ]
 
 function unwrapTemplateList(payload) {
@@ -64,19 +67,27 @@ function resolveLayoutTemplateId(layoutId, layoutTemplates = []) {
 }
 
 function layoutCategoryId(layout) {
-  const ct = String(layout?.schema?.content_type || layout?.rawContentType || '').toLowerCase()
+  const ct = String(
+    layout?.schema?.content_type || layout?.contentType || layout?.rawContentType || ''
+  ).toLowerCase()
   const layoutId = String(layout?.schema?.layout_id || '').toLowerCase()
+  const fromApi = Array.isArray(layout?.categories) ? layout.categories.find((c) => c !== 'all') : null
+  if (fromApi) return fromApi
 
-  if (ct === 'grid') return 'grids'
-  if (ct === 'chart' || ct === 'stat') return 'charts'
-  if (ct === 'timeline') return 'timelines'
-  if (ct === 'team') return 'people'
-  if (ct === 'quote') return 'quotes'
-  if (ct === 'image+text' || ct === 'image_text') return 'media'
-  if (layoutId.includes('pricing') || (ct === 'comparison' && layoutId.includes('plan'))) return 'pricing'
-  if (ct === 'comparison' || ct === 'pros_cons') return 'charts'
-  if (['title', 'bullet_list', 'section_divider', 'closing', 'agenda'].includes(ct)) return 'simple'
-  return 'simple'
+  if (ct === 'grid') return 'grid'
+  if (ct === 'chart' || ct === 'stat') return 'charts_and_data'
+  if (ct === 'timeline') return 'timeline_and_plans'
+  if (ct === 'pricing' || layoutId.includes('pricing')) return 'pricing'
+  if (ct === 'agenda') return 'agenda'
+  if (ct === 'team') return 'people_and_team'
+  if (ct === 'quote') return 'quotes_and_testimonials'
+  if (ct === 'device_frames' || layoutId.startsWith('device_')) return 'device_frames'
+  if (ct === 'closing') return 'closing'
+  if (ct === 'comparison' || ct === 'pros_cons') return 'simple_slides'
+  if (['title', 'bullet_list', 'section_divider', 'image+text', 'image_text'].includes(ct)) {
+    return 'simple_slides'
+  }
+  return 'simple_slides'
 }
 
 function slideLabel(slide, slideIndex) {

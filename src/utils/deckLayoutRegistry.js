@@ -298,7 +298,8 @@ const REGISTRY = {
 
   pricing_three_plans_v1: {
     layout_id: 'pricing_three_plans_v1',
-    content_type: 'comparison',
+    content_type: 'pricing',
+    grid: '12-col',
     preview: {
       mode: 'pricing_plans',
       slots: {
@@ -320,7 +321,7 @@ const REGISTRY = {
 
   pricing_three_plans_highlight_v1: {
     layout_id: 'pricing_three_plans_highlight_v1',
-    content_type: 'comparison',
+    content_type: 'pricing',
     grid: '12-col',
     highlightedPlanIndex: 1,
     preview: {
@@ -561,6 +562,458 @@ const REGISTRY = {
       { id: 'MEMBER_4_ROLE', region: 'cols 9-11, rows 7-8', role: 'caption', placeholder_text: 'CFO' },
     ],
   },
+
+  // --- Agenda variants ---
+  agenda_numbered_v1: {
+    layout_id: 'agenda_numbered_v1',
+    content_type: 'agenda',
+    grid: '12-col',
+    preview: {
+      slots: {
+        HEADING: { text: "Today's agenda", variant: 'title', bold: true, uppercase: false },
+        NUM_1: { text: '01', variant: 'stat', bold: true, uppercase: false },
+        ITEM_1: { text: 'Context & goals', variant: 'body', bold: true, uppercase: false },
+        NUM_2: { text: '02', variant: 'stat', bold: true, uppercase: false },
+        ITEM_2: { text: 'Product walkthrough', variant: 'body', bold: true, uppercase: false },
+        NUM_3: { text: '03', variant: 'stat', bold: true, uppercase: false },
+        ITEM_3: { text: 'Proof & results', variant: 'body', bold: true, uppercase: false },
+        NUM_4: { text: '04', variant: 'stat', bold: true, uppercase: false },
+        ITEM_4: { text: 'Discussion & next steps', variant: 'body', bold: true, uppercase: false },
+      },
+    },
+    slots: [
+      { id: 'HEADING', region: 'cols 2-11, rows 2-3', role: 'heading', placeholder_text: "Today's agenda" },
+      { id: 'NUM_1', region: 'cols 2-3, rows 4-5', role: 'stat', placeholder_text: '01' },
+      { id: 'ITEM_1', region: 'cols 4-11, rows 4-5', role: 'body', placeholder_text: 'Context & goals' },
+      { id: 'NUM_2', region: 'cols 2-3, rows 5-6', role: 'stat', placeholder_text: '02' },
+      { id: 'ITEM_2', region: 'cols 4-11, rows 5-6', role: 'body', placeholder_text: 'Product walkthrough' },
+      { id: 'NUM_3', region: 'cols 2-3, rows 6-7', role: 'stat', placeholder_text: '03' },
+      { id: 'ITEM_3', region: 'cols 4-11, rows 6-7', role: 'body', placeholder_text: 'Proof & results' },
+      { id: 'NUM_4', region: 'cols 2-3, rows 7-8', role: 'stat', placeholder_text: '04' },
+      { id: 'ITEM_4', region: 'cols 4-11, rows 7-8', role: 'body', placeholder_text: 'Discussion & next steps' },
+    ],
+  },
+
+  agenda_two_column_v2: {
+    layout_id: 'agenda_two_column_v2',
+    content_type: 'agenda',
+    grid: '12-col',
+    preview: {
+      slots: {
+        HEADING: { text: 'Agenda', variant: 'title', bold: true, uppercase: false },
+        COL_1_ITEM_1: { text: '01 · Welcome', variant: 'body', bold: true, uppercase: false },
+        COL_1_ITEM_2: { text: '02 · Market snapshot', variant: 'body', bold: true, uppercase: false },
+        COL_1_ITEM_3: { text: '03 · Solution', variant: 'body', bold: true, uppercase: false },
+        COL_2_ITEM_1: { text: '04 · Traction', variant: 'body', bold: true, uppercase: false },
+        COL_2_ITEM_2: { text: '05 · Roadmap', variant: 'body', bold: true, uppercase: false },
+        COL_2_ITEM_3: { text: '06 · Ask', variant: 'body', bold: true, uppercase: false },
+      },
+    },
+    slots: [
+      { id: 'HEADING', region: 'cols 2-11, rows 2-3', role: 'heading', placeholder_text: 'Agenda' },
+      { id: 'COL_1_ITEM_1', region: 'cols 2-6, rows 4-5', role: 'body', placeholder_text: '01 · Welcome' },
+      { id: 'COL_1_ITEM_2', region: 'cols 2-6, rows 5-6', role: 'body', placeholder_text: '02 · Market snapshot' },
+      { id: 'COL_1_ITEM_3', region: 'cols 2-6, rows 6-7', role: 'body', placeholder_text: '03 · Solution' },
+      { id: 'COL_2_ITEM_1', region: 'cols 7-11, rows 4-5', role: 'body', placeholder_text: '04 · Traction' },
+      { id: 'COL_2_ITEM_2', region: 'cols 7-11, rows 5-6', role: 'body', placeholder_text: '05 · Roadmap' },
+      { id: 'COL_2_ITEM_3', region: 'cols 7-11, rows 6-7', role: 'body', placeholder_text: '06 · Ask' },
+    ],
+  },
+
+  agenda_side_image_v3: {
+    layout_id: 'agenda_side_image_v3',
+    content_type: 'agenda',
+    grid: '12-col',
+    preview: {
+      slots: {
+        HEADING: { text: "What we'll cover", variant: 'title', bold: true, uppercase: false },
+        ITEM_1: { text: '01 · The opportunity', variant: 'body', bold: true, uppercase: false },
+        ITEM_2: { text: '02 · How it works', variant: 'body', bold: true, uppercase: false },
+        ITEM_3: { text: '03 · Customer proof', variant: 'body', bold: true, uppercase: false },
+        ITEM_4: { text: '04 · Next steps', variant: 'body', bold: true, uppercase: false },
+        SIDE_IMAGE: { variant: 'image' },
+      },
+    },
+    slots: [
+      { id: 'HEADING', region: 'cols 1-7, rows 2-3', role: 'heading', placeholder_text: "What we'll cover" },
+      { id: 'ITEM_1', region: 'cols 1-7, rows 4-5', role: 'body', placeholder_text: '01 · The opportunity' },
+      { id: 'ITEM_2', region: 'cols 1-7, rows 5-6', role: 'body', placeholder_text: '02 · How it works' },
+      { id: 'ITEM_3', region: 'cols 1-7, rows 6-7', role: 'body', placeholder_text: '03 · Customer proof' },
+      { id: 'ITEM_4', region: 'cols 1-7, rows 7-8', role: 'body', placeholder_text: '04 · Next steps' },
+      { id: 'SIDE_IMAGE', region: 'cols 8-12, rows 1-10', role: 'image' },
+    ],
+  },
+
+  // --- Quote variants ---
+  quote_centered_v1: {
+    layout_id: 'quote_centered_v1',
+    content_type: 'quote',
+    grid: '12-col',
+    preview: {
+      mode: 'quote_attribution',
+      quoteText: 'This product changed how our team ships work every week.',
+      authorName: 'Alex Chen',
+      authorTitle: 'Head of Product, Northwind',
+    },
+    slots: [
+      { id: 'QUOTE', region: 'cols 2-11, rows 3-7', role: 'quote', placeholder_text: 'A short quote that makes your point.' },
+      { id: 'AUTHOR_NAME', region: 'cols 3-10, rows 8-9', role: 'attribution', placeholder_text: 'Author name' },
+      { id: 'AUTHOR_TITLE', region: 'cols 3-10, rows 9-10', role: 'caption', placeholder_text: 'Author title · Company' },
+    ],
+  },
+
+  quote_portrait_v2: {
+    layout_id: 'quote_portrait_v2',
+    content_type: 'quote',
+    grid: '12-col',
+    preview: {
+      mode: 'quote_attribution',
+      quoteText: 'We finally have a presentation workflow that matches how we sell.',
+      authorName: 'Morgan Blake',
+      authorTitle: 'VP Sales, Contoso',
+    },
+    slots: [
+      { id: 'AUTHOR_PORTRAIT', region: 'cols 2-5, rows 2-9', role: 'image' },
+      { id: 'QUOTE', region: 'cols 6-11, rows 3-7', role: 'quote', placeholder_text: 'Customer quote goes here.' },
+      { id: 'AUTHOR_NAME', region: 'cols 6-11, rows 7-8', role: 'heading', placeholder_text: 'Author name' },
+      { id: 'AUTHOR_TITLE', region: 'cols 6-11, rows 8-9', role: 'caption', placeholder_text: 'Title · Company' },
+    ],
+  },
+
+  quote_banner_v3: {
+    layout_id: 'quote_banner_v3',
+    content_type: 'quote',
+    grid: '12-col',
+    preview: {
+      mode: 'quote_attribution',
+      quoteText: 'Outstanding results — clear, fast, and on-brand every time.',
+      authorName: 'Riley Quinn',
+      authorTitle: 'Creative Director',
+    },
+    slots: [
+      { id: 'BANNER_BG', region: 'cols 1-12, rows 3-8', role: 'background' },
+      { id: 'QUOTE', region: 'cols 2-11, rows 3-6', role: 'quote', placeholder_text: 'Banner quote goes here.' },
+      { id: 'AUTHOR_NAME', region: 'cols 2-8, rows 6-7', role: 'attribution', placeholder_text: 'Author name' },
+      { id: 'AUTHOR_TITLE', region: 'cols 2-8, rows 7-8', role: 'caption', placeholder_text: 'Title · Company' },
+      { id: 'LOGO', region: 'cols 9-11, rows 6-8', role: 'decoration', placeholder_text: 'logo' },
+    ],
+  },
+
+  // --- Device frames ---
+  device_iphone_screenshot_v1: {
+    layout_id: 'device_iphone_screenshot_v1',
+    content_type: 'device_frames',
+    grid: '12-col',
+    preview: {
+      slots: {
+        HEADING: { text: 'Built for mobile-first teams', variant: 'title', bold: true, uppercase: false },
+        BODY: { text: 'Show your product UI inside a phone frame.', variant: 'body', bold: false, uppercase: false },
+        DEVICE_SCREEN: { variant: 'image' },
+        CAPTION: { text: 'iPhone · Product screenshot', variant: 'caption', bold: false, uppercase: false },
+      },
+    },
+    slots: [
+      { id: 'HEADING', region: 'cols 1-6, rows 2-4', role: 'heading', placeholder_text: 'Built for mobile-first teams' },
+      { id: 'BODY', region: 'cols 1-6, rows 4-7', role: 'body', placeholder_text: 'Show your product UI inside a phone frame.' },
+      { id: 'DEVICE_FRAME', region: 'cols 7-11, rows 1-10', role: 'decoration' },
+      { id: 'DEVICE_SCREEN', region: 'cols 7-11, rows 2-9', role: 'image' },
+      { id: 'CAPTION', region: 'cols 7-11, rows 9-10', role: 'caption', placeholder_text: 'iPhone · Product screenshot' },
+    ],
+  },
+
+  device_laptop_browser_v1: {
+    layout_id: 'device_laptop_browser_v1',
+    content_type: 'device_frames',
+    grid: '12-col',
+    preview: {
+      slots: {
+        HEADING: { text: 'Your product, full screen', variant: 'title', bold: true, uppercase: false },
+        SUBTITLE: { text: 'Browser / laptop mockup for desktop UI', variant: 'subheading', bold: false, uppercase: false },
+        DEVICE_SCREEN: { variant: 'image' },
+      },
+    },
+    slots: [
+      { id: 'HEADING', region: 'cols 2-11, rows 1-2', role: 'heading', placeholder_text: 'Your product, full screen' },
+      { id: 'SUBTITLE', region: 'cols 2-11, rows 2-3', role: 'subheading', placeholder_text: 'Browser / laptop mockup for desktop UI' },
+      { id: 'DEVICE_FRAME', region: 'cols 2-11, rows 3-9', role: 'decoration' },
+      { id: 'DEVICE_SCREEN', region: 'cols 2-11, rows 4-8', role: 'image' },
+      { id: 'CAPTION', region: 'cols 2-11, rows 9-10', role: 'caption', placeholder_text: 'Desktop app screenshot' },
+    ],
+  },
+
+  device_multi_hero_v1: {
+    layout_id: 'device_multi_hero_v1',
+    content_type: 'device_frames',
+    grid: '12-col',
+    preview: {
+      slots: {
+        HEADING: { text: 'One experience, every screen', variant: 'title', bold: true, uppercase: false },
+        PHONE_SCREEN: { variant: 'image' },
+        LAPTOP_SCREEN: { variant: 'image' },
+        CAPTION: { text: 'Phone + laptop product hero', variant: 'caption', bold: false, uppercase: false },
+      },
+    },
+    slots: [
+      { id: 'HEADING', region: 'cols 2-11, rows 1-2', role: 'heading', placeholder_text: 'One experience, every screen' },
+      { id: 'PHONE_FRAME', region: 'cols 2-5, rows 3-9', role: 'decoration' },
+      { id: 'PHONE_SCREEN', region: 'cols 2-5, rows 3-9', role: 'image' },
+      { id: 'LAPTOP_FRAME', region: 'cols 6-11, rows 3-9', role: 'decoration' },
+      { id: 'LAPTOP_SCREEN', region: 'cols 6-11, rows 4-8', role: 'image' },
+      { id: 'CAPTION', region: 'cols 2-11, rows 9-10', role: 'caption', placeholder_text: 'Phone + laptop product hero' },
+    ],
+  },
+
+  // --- Timeline variants ---
+  timeline_horizontal_v1: {
+    layout_id: 'timeline_horizontal_v1',
+    content_type: 'timeline',
+    grid: '12-col',
+    preview: {
+      mode: 'process_flow',
+      steps: [
+        { title: 'Discover', body: 'Research & validate' },
+        { title: 'Build', body: 'Ship the MVP' },
+        { title: 'Grow', body: 'Scale adoption' },
+      ],
+    },
+    slots: [
+      { id: 'HEADING', region: 'cols 2-11, rows 2-3', role: 'heading', placeholder_text: 'Project timeline' },
+      { id: 'STEP_1_CIRCLE', region: 'cols 2-4, rows 4-5', role: 'decoration' },
+      { id: 'STEP_1_TITLE', region: 'cols 2-4, rows 5-6', role: 'heading', placeholder_text: 'Discover' },
+      { id: 'STEP_1_BODY', region: 'cols 2-4, rows 6-8', role: 'body', placeholder_text: 'Research & validate' },
+      { id: 'STEP_2_CIRCLE', region: 'cols 5-8, rows 4-5', role: 'decoration' },
+      { id: 'STEP_2_TITLE', region: 'cols 5-8, rows 5-6', role: 'heading', placeholder_text: 'Build' },
+      { id: 'STEP_2_BODY', region: 'cols 5-8, rows 6-8', role: 'body', placeholder_text: 'Ship the MVP' },
+      { id: 'STEP_3_CIRCLE', region: 'cols 9-11, rows 4-5', role: 'decoration' },
+      { id: 'STEP_3_TITLE', region: 'cols 9-11, rows 5-6', role: 'heading', placeholder_text: 'Grow' },
+      { id: 'STEP_3_BODY', region: 'cols 9-11, rows 6-8', role: 'body', placeholder_text: 'Scale adoption' },
+    ],
+  },
+
+  timeline_vertical_v2: {
+    layout_id: 'timeline_vertical_v2',
+    content_type: 'timeline',
+    grid: '12-col',
+    preview: {
+      slots: {
+        HEADING: { text: 'Milestones', variant: 'title', bold: true, uppercase: false },
+        STEP_1_LABEL: { text: 'Week 1–2', variant: 'caption', bold: true, uppercase: false },
+        STEP_1_TITLE: { text: 'Kickoff & research', variant: 'body', bold: true, uppercase: false },
+        STEP_2_LABEL: { text: 'Week 3–5', variant: 'caption', bold: true, uppercase: false },
+        STEP_2_TITLE: { text: 'Prototype & test', variant: 'body', bold: true, uppercase: false },
+        STEP_3_LABEL: { text: 'Week 6–8', variant: 'caption', bold: true, uppercase: false },
+        STEP_3_TITLE: { text: 'Launch & learn', variant: 'body', bold: true, uppercase: false },
+        STEP_4_LABEL: { text: 'Week 9+', variant: 'caption', bold: true, uppercase: false },
+        STEP_4_TITLE: { text: 'Iterate & scale', variant: 'body', bold: true, uppercase: false },
+      },
+    },
+    slots: [
+      { id: 'HEADING', region: 'cols 2-11, rows 1-2', role: 'heading', placeholder_text: 'Milestones' },
+      { id: 'STEP_1_LABEL', region: 'cols 2-4, rows 3-4', role: 'caption', placeholder_text: 'Week 1–2' },
+      { id: 'STEP_1_TITLE', region: 'cols 5-11, rows 3-4', role: 'body', placeholder_text: 'Kickoff & research' },
+      { id: 'STEP_2_LABEL', region: 'cols 2-4, rows 5-6', role: 'caption', placeholder_text: 'Week 3–5' },
+      { id: 'STEP_2_TITLE', region: 'cols 5-11, rows 5-6', role: 'body', placeholder_text: 'Prototype & test' },
+      { id: 'STEP_3_LABEL', region: 'cols 2-4, rows 7-8', role: 'caption', placeholder_text: 'Week 6–8' },
+      { id: 'STEP_3_TITLE', region: 'cols 5-11, rows 7-8', role: 'body', placeholder_text: 'Launch & learn' },
+      { id: 'STEP_4_LABEL', region: 'cols 2-4, rows 9-10', role: 'caption', placeholder_text: 'Week 9+' },
+      { id: 'STEP_4_TITLE', region: 'cols 5-11, rows 9-10', role: 'body', placeholder_text: 'Iterate & scale' },
+    ],
+  },
+
+  timeline_alternating_v3: {
+    layout_id: 'timeline_alternating_v3',
+    content_type: 'timeline',
+    grid: '12-col',
+    preview: {
+      slots: {
+        HEADING: { text: 'Our journey', variant: 'title', bold: true, uppercase: false },
+        STEP_1_TITLE: { text: 'Founded', variant: 'body', bold: true, uppercase: false },
+        STEP_1_BODY: { text: 'Started with a simple idea', variant: 'caption', bold: false, uppercase: false },
+        STEP_2_TITLE: { text: 'First customers', variant: 'body', bold: true, uppercase: false },
+        STEP_2_BODY: { text: 'Validated product-market fit', variant: 'caption', bold: false, uppercase: false },
+        STEP_3_TITLE: { text: 'Series A', variant: 'body', bold: true, uppercase: false },
+        STEP_3_BODY: { text: 'Scaled the team and roadmap', variant: 'caption', bold: false, uppercase: false },
+      },
+    },
+    slots: [
+      { id: 'HEADING', region: 'cols 2-11, rows 1-2', role: 'heading', placeholder_text: 'Our journey' },
+      { id: 'STEP_1_TITLE', region: 'cols 2-5, rows 3-4', role: 'heading', placeholder_text: 'Founded' },
+      { id: 'STEP_1_BODY', region: 'cols 2-5, rows 4-5', role: 'body', placeholder_text: 'Started with a simple idea' },
+      { id: 'STEP_2_TITLE', region: 'cols 8-11, rows 5-6', role: 'heading', placeholder_text: 'First customers' },
+      { id: 'STEP_2_BODY', region: 'cols 8-11, rows 6-7', role: 'body', placeholder_text: 'Validated product-market fit' },
+      { id: 'STEP_3_TITLE', region: 'cols 2-5, rows 7-8', role: 'heading', placeholder_text: 'Series A' },
+      { id: 'STEP_3_BODY', region: 'cols 2-5, rows 8-9', role: 'body', placeholder_text: 'Scaled the team and roadmap' },
+      { id: 'TIMELINE_LINE', region: 'cols 6-7, rows 3-9', role: 'divider' },
+    ],
+  },
+
+  // --- Chart / data schemas (preview modes already exist) ---
+  chart_full_width_v1: {
+    layout_id: 'chart_full_width_v1',
+    content_type: 'chart',
+    grid: '12-col',
+    preview: {
+      mode: 'chart_full_width',
+      slots: {
+        HEADING: { text: 'Growth that compounds', variant: 'title', bold: true, uppercase: false },
+      },
+      chartValues: [40, 55, 70, 95],
+      chartLabels: ['Q1', 'Q2', 'Q3', 'Q4'],
+      chartCaption: 'Revenue by quarter',
+    },
+    slots: [
+      { id: 'HEADING', region: 'cols 2-11, rows 1-2', role: 'heading', placeholder_text: 'Growth that compounds' },
+      { id: 'CHART_PANEL_BG', region: 'cols 2-11, rows 3-9', role: 'background' },
+      { id: 'MAIN_CHART', region: 'cols 2-11, rows 3-8', role: 'chart' },
+      { id: 'CHART_CAPTION', region: 'cols 2-11, rows 8-9', role: 'caption', placeholder_text: 'Revenue by quarter' },
+    ],
+  },
+
+  chart_image_split_v1: {
+    layout_id: 'chart_image_split_v1',
+    content_type: 'chart',
+    grid: '12-col',
+    preview: {
+      mode: 'chart_image_split',
+      slots: {
+        HEADING: { text: 'Data with context', variant: 'title', bold: true, uppercase: false },
+      },
+      bodyText: 'Pair a chart with a supporting visual so the story is clear at a glance.',
+      chartValues: [20, 35, 50, 80],
+      chartLabels: ['Jan', 'Feb', 'Mar', 'Apr'],
+    },
+    slots: [
+      { id: 'HEADING', region: 'cols 1-6, rows 2-3', role: 'heading', placeholder_text: 'Data with context' },
+      { id: 'BODY', region: 'cols 1-6, rows 3-5', role: 'body', placeholder_text: 'Explain what the chart shows.' },
+      { id: 'CHART', region: 'cols 1-6, rows 5-9', role: 'chart' },
+      { id: 'HERO_IMAGE', region: 'cols 7-12, rows 1-10', role: 'image' },
+    ],
+  },
+
+  process_flow_three_v1: {
+    layout_id: 'process_flow_three_v1',
+    content_type: 'timeline',
+    grid: '12-col',
+    preview: {
+      mode: 'process_flow',
+      steps: [
+        { title: 'Discover', body: 'Understand the problem' },
+        { title: 'Build', body: 'Ship a focused solution' },
+        { title: 'Launch', body: 'Measure and iterate' },
+      ],
+    },
+    slots: [
+      { id: 'HEADING', region: 'cols 2-11, rows 2-3', role: 'heading', placeholder_text: 'How it works' },
+      { id: 'STEP_1_CIRCLE', region: 'cols 2-4, rows 4-5', role: 'decoration' },
+      { id: 'STEP_1_TITLE', region: 'cols 2-4, rows 5-6', role: 'heading', placeholder_text: 'Discover' },
+      { id: 'STEP_1_BODY', region: 'cols 2-4, rows 6-8', role: 'body', placeholder_text: 'Understand the problem' },
+      { id: 'STEP_2_CIRCLE', region: 'cols 5-8, rows 4-5', role: 'decoration' },
+      { id: 'STEP_2_TITLE', region: 'cols 5-8, rows 5-6', role: 'heading', placeholder_text: 'Build' },
+      { id: 'STEP_2_BODY', region: 'cols 5-8, rows 6-8', role: 'body', placeholder_text: 'Ship a focused solution' },
+      { id: 'STEP_3_CIRCLE', region: 'cols 9-11, rows 4-5', role: 'decoration' },
+      { id: 'STEP_3_TITLE', region: 'cols 9-11, rows 5-6', role: 'heading', placeholder_text: 'Launch' },
+      { id: 'STEP_3_BODY', region: 'cols 9-11, rows 6-8', role: 'body', placeholder_text: 'Measure and iterate' },
+    ],
+  },
+
+  stat_cards_image_v1: {
+    layout_id: 'stat_cards_image_v1',
+    content_type: 'stat',
+    grid: '12-col',
+    preview: {
+      mode: 'stat_cards_image',
+      stats: [
+        { value: '2.4x', label: 'Faster delivery' },
+        { value: '60%', label: 'Less rework' },
+        { value: '120+', label: 'Teams onboarded' },
+      ],
+    },
+    slots: [
+      { id: 'HEADING', region: 'cols 1-6, rows 2-3', role: 'heading', placeholder_text: 'Results that matter' },
+      { id: 'STAT_1_CARD', region: 'cols 1-6, rows 4-5', role: 'background' },
+      { id: 'STAT_1_VALUE', region: 'cols 1-3, rows 4-5', role: 'stat', placeholder_text: '2.4x' },
+      { id: 'STAT_1_LABEL', region: 'cols 3-6, rows 4-5', role: 'stat_label', placeholder_text: 'Faster delivery' },
+      { id: 'STAT_2_CARD', region: 'cols 1-6, rows 6-7', role: 'background' },
+      { id: 'STAT_2_VALUE', region: 'cols 1-3, rows 6-7', role: 'stat', placeholder_text: '60%' },
+      { id: 'STAT_2_LABEL', region: 'cols 3-6, rows 6-7', role: 'stat_label', placeholder_text: 'Less rework' },
+      { id: 'STAT_3_CARD', region: 'cols 1-6, rows 8-9', role: 'background' },
+      { id: 'STAT_3_VALUE', region: 'cols 1-3, rows 8-9', role: 'stat', placeholder_text: '120+' },
+      { id: 'STAT_3_LABEL', region: 'cols 3-6, rows 8-9', role: 'stat_label', placeholder_text: 'Teams onboarded' },
+      { id: 'HERO_IMAGE', region: 'cols 7-12, rows 1-10', role: 'image' },
+    ],
+  },
+
+  eight_short_texts_split_v1: {
+    layout_id: 'eight_short_texts_split_v1',
+    content_type: 'grid',
+    grid: '12-col',
+    preview: {
+      mode: 'eight_short_texts',
+    },
+    slots: [
+      { id: 'HEADING', region: 'cols 2-11, rows 1-2', role: 'heading', placeholder_text: 'Eight key points' },
+      { id: 'POINT_1_LABEL', region: 'cols 1-3, rows 3-4', role: 'heading', placeholder_text: 'First point' },
+      { id: 'POINT_1_DESC', region: 'cols 1-3, rows 4-5', role: 'caption', placeholder_text: 'A short description' },
+      { id: 'POINT_2_LABEL', region: 'cols 4-6, rows 3-4', role: 'heading', placeholder_text: 'Second point' },
+      { id: 'POINT_2_DESC', region: 'cols 4-6, rows 4-5', role: 'caption', placeholder_text: 'A short description' },
+      { id: 'POINT_3_LABEL', region: 'cols 7-9, rows 3-4', role: 'heading', placeholder_text: 'Third point' },
+      { id: 'POINT_3_DESC', region: 'cols 7-9, rows 4-5', role: 'caption', placeholder_text: 'A short description' },
+      { id: 'POINT_4_LABEL', region: 'cols 10-12, rows 3-4', role: 'heading', placeholder_text: 'Fourth point' },
+      { id: 'POINT_4_DESC', region: 'cols 10-12, rows 4-5', role: 'caption', placeholder_text: 'A short description' },
+      { id: 'POINT_5_LABEL', region: 'cols 1-3, rows 6-7', role: 'heading', placeholder_text: 'Fifth point' },
+      { id: 'POINT_5_DESC', region: 'cols 1-3, rows 7-8', role: 'caption', placeholder_text: 'A short description' },
+      { id: 'POINT_6_LABEL', region: 'cols 4-6, rows 6-7', role: 'heading', placeholder_text: 'Sixth point' },
+      { id: 'POINT_6_DESC', region: 'cols 4-6, rows 7-8', role: 'caption', placeholder_text: 'A short description' },
+      { id: 'POINT_7_LABEL', region: 'cols 7-9, rows 6-7', role: 'heading', placeholder_text: 'Seventh point' },
+      { id: 'POINT_7_DESC', region: 'cols 7-9, rows 7-8', role: 'caption', placeholder_text: 'A short description' },
+      { id: 'POINT_8_LABEL', region: 'cols 10-12, rows 6-7', role: 'heading', placeholder_text: 'Last point' },
+      { id: 'POINT_8_DESC', region: 'cols 10-12, rows 7-8', role: 'caption', placeholder_text: 'A short description' },
+    ],
+  },
+
+  grid_insights_chart_v1: {
+    layout_id: 'grid_insights_chart_v1',
+    content_type: 'grid',
+    grid: '12-col',
+    preview: { mode: 'grid_insights_chart' },
+    slots: [
+      { id: 'INSIGHT_CARD_1_BG', region: 'cols 1-3, rows 1-2', role: 'background' },
+      { id: 'INSIGHT_ICON_1', region: 'cols 1-3, rows 1-2', role: 'decoration' },
+      { id: 'INSIGHT_LABEL_1', region: 'cols 1-3, rows 3-4', role: 'caption', placeholder_text: 'Insight one' },
+      { id: 'INSIGHT_CARD_2_BG', region: 'cols 4-6, rows 1-2', role: 'background' },
+      { id: 'INSIGHT_ICON_2', region: 'cols 4-6, rows 1-2', role: 'decoration' },
+      { id: 'INSIGHT_LABEL_2', region: 'cols 4-6, rows 3-4', role: 'caption', placeholder_text: 'Insight two' },
+      { id: 'INSIGHT_CARD_3_BG', region: 'cols 7-9, rows 1-2', role: 'background' },
+      { id: 'INSIGHT_ICON_3', region: 'cols 7-9, rows 1-2', role: 'decoration' },
+      { id: 'INSIGHT_LABEL_3', region: 'cols 7-9, rows 3-4', role: 'caption', placeholder_text: 'Insight three' },
+      { id: 'CHART_CARD_BG', region: 'cols 1-9, rows 5-10', role: 'background' },
+      { id: 'CHART_HEADING', region: 'cols 1-9, rows 5-6', role: 'heading', placeholder_text: 'Revenue growth' },
+      { id: 'BAR_CHART', region: 'cols 1-9, rows 7-10', role: 'chart' },
+      { id: 'CHART_CAPTION', region: 'cols 1-9, rows 10-11', role: 'caption', placeholder_text: 'Monthly performance' },
+      { id: 'POINT_CARD_BG', region: 'cols 10-12, rows 1-10', role: 'background' },
+      { id: 'POINT_HEADING', region: 'cols 10-12, rows 1-2', role: 'heading', placeholder_text: 'Key takeaway' },
+      { id: 'POINT_BODY', region: 'cols 10-12, rows 3-5', role: 'body', placeholder_text: 'Summarize what the chart means.' },
+      { id: 'POINT_IMAGE', region: 'cols 10-12, rows 6-10', role: 'image' },
+    ],
+  },
+
+  image_three_gallery_v1: {
+    layout_id: 'image_three_gallery_v1',
+    content_type: 'image+text',
+    grid: '12-col',
+    preview: { mode: 'image_gallery_three' },
+    slots: [
+      { id: 'HEADING', region: 'cols 2-11, rows 2-3', role: 'heading', placeholder_text: 'Product highlights' },
+      { id: 'SUBTITLE', region: 'cols 2-11, rows 3-4', role: 'subheading', placeholder_text: 'Show three visuals with short labels.' },
+      { id: 'IMAGE_1', region: 'cols 2-4, rows 5-8', role: 'image' },
+      { id: 'IMAGE_1_LABEL', region: 'cols 2-4, rows 8-9', role: 'caption', placeholder_text: 'Feature A' },
+      { id: 'IMAGE_2', region: 'cols 5-8, rows 5-8', role: 'image' },
+      { id: 'IMAGE_2_LABEL', region: 'cols 5-8, rows 8-9', role: 'caption', placeholder_text: 'Feature B' },
+      { id: 'IMAGE_3', region: 'cols 9-11, rows 5-8', role: 'image' },
+      { id: 'IMAGE_3_LABEL', region: 'cols 9-11, rows 8-9', role: 'caption', placeholder_text: 'Feature C' },
+      { id: 'DOT_ACCENT', region: 'cols 2-11, rows 9-10', role: 'decoration' },
+    ],
+  },
 }
 
 const PLACEHOLDER_SLOT_MAP = {
@@ -662,8 +1115,12 @@ const LAYOUT_PREVIEW_MODES = {
   chart_image_split_v1: 'chart_image_split',
   image_three_gallery_v1: 'image_gallery_three',
   process_flow_three_v1: 'process_flow',
+  timeline_horizontal_v1: 'process_flow',
   stat_cards_image_v1: 'stat_cards_image',
   eight_short_texts_split_v1: 'eight_short_texts',
+  quote_centered_v1: 'quote_attribution',
+  quote_portrait_v2: 'quote_attribution',
+  quote_banner_v3: 'quote_attribution',
 }
 
 export function resolvePreviewMode(schema) {
@@ -694,8 +1151,10 @@ export function inferPreviewMode(schema) {
   if (roles.has('chart') && ids.includes('HERO_IMAGE') && roles.has('body')) return 'chart_image_split'
   if (roles.has('chart') && (ids.includes('MAIN_CHART') || ids.includes('CHART_PANEL_BG'))) return 'chart_full_width'
 
-  if (schema?.highlightedPlanIndex != null || ids.some((id) => id.includes('PLAN_'))) {
-    return ids.some((id) => id.includes('PRICE')) || ct === 'comparison' ? 'pricing_plans' : 'comparison_columns'
+  if (schema?.highlightedPlanIndex != null || ids.some((id) => id.includes('PLAN_')) || ct === 'pricing') {
+    return ids.some((id) => id.includes('PRICE')) || ct === 'pricing' || ct === 'comparison'
+      ? 'pricing_plans'
+      : 'comparison_columns'
   }
   if (ct === 'stat' || (roles.has('stat') && roles.has('stat_label'))) return 'stat_row'
   if (ct === 'chart' || roles.has('chart')) return 'chart_split'

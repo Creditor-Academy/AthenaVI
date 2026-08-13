@@ -26,42 +26,23 @@ const TEMPLATE_TYPES = [
   { id: 'VIDEO_PACK',  label: 'Video Packs',   description: 'Multi-scene video packs (snapshot-only, no AI)' },
 ]
 
+/** Matches backend layoutCategories.js (Pitch-style gallery tabs). */
 const LAYOUT_CATEGORIES = [
-  {
-    id: 'all',
-    label: 'All',
-    contentTypes: [],
-  },
+  { id: 'all', label: 'All', contentTypes: [] },
   {
     id: 'simple_slides',
     label: 'Simple slides',
     contentTypes: ['title', 'bullet_list', 'section_divider', 'image+text', 'comparison'],
   },
-  {
-    id: 'grid',
-    label: 'Grid',
-    contentTypes: ['grid'],
-  },
-  {
-    id: 'charts_and_data',
-    label: 'Charts and data',
-    contentTypes: ['chart', 'stat'],
-  },
-  {
-    id: 'timeline_and_plans',
-    label: 'Timeline and plans',
-    contentTypes: ['timeline', 'agenda'],
-  },
-  {
-    id: 'people_and_quotes',
-    label: 'People and quotes',
-    contentTypes: ['team', 'quote'],
-  },
-  {
-    id: 'closing',
-    label: 'Closing',
-    contentTypes: ['closing'],
-  },
+  { id: 'grid', label: 'Grid', contentTypes: ['grid'] },
+  { id: 'charts_and_data', label: 'Charts and data', contentTypes: ['chart', 'stat'] },
+  { id: 'timeline_and_plans', label: 'Timeline and project plans', contentTypes: ['timeline'] },
+  { id: 'pricing', label: 'Pricing', contentTypes: ['pricing'] },
+  { id: 'agenda', label: 'Agenda', contentTypes: ['agenda'] },
+  { id: 'people_and_team', label: 'People and team', contentTypes: ['team'] },
+  { id: 'quotes_and_testimonials', label: 'Quotes and testimonial', contentTypes: ['quote'] },
+  { id: 'device_frames', label: 'Device frames', contentTypes: ['device_frames'] },
+  { id: 'closing', label: 'Closing', contentTypes: ['closing'] },
 ]
 
 const CONTENT_TYPE_LABELS = {
@@ -74,9 +55,11 @@ const CONTENT_TYPE_LABELS = {
   chart: 'Chart',
   stat: 'Stat',
   timeline: 'Timeline',
+  pricing: 'Pricing',
   agenda: 'Agenda',
   team: 'Team',
   quote: 'Quote',
+  device_frames: 'Device frames',
   closing: 'Closing',
 }
 

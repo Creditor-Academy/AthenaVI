@@ -209,6 +209,77 @@ export const DECK_LAYOUT_STARTERS = {
       ],
     },
   },
+  agenda_numbered: {
+    label: 'Agenda — numbered',
+    suggestedName: 'Agenda Numbered',
+    contentType: 'agenda',
+    schema: {
+      layout_id: 'agenda_numbered_v1',
+      content_type: 'agenda',
+      grid: '12-col',
+      slots: [
+        slot('HEADING', 'cols 2-11, rows 2-3', 'heading', "Today's agenda"),
+        slot('NUM_1', 'cols 2-3, rows 4-5', 'stat', '01'),
+        slot('ITEM_1', 'cols 4-11, rows 4-5', 'body', 'Context & goals'),
+        slot('NUM_2', 'cols 2-3, rows 5-6', 'stat', '02'),
+        slot('ITEM_2', 'cols 4-11, rows 5-6', 'body', 'Product walkthrough'),
+        slot('NUM_3', 'cols 2-3, rows 6-7', 'stat', '03'),
+        slot('ITEM_3', 'cols 4-11, rows 6-7', 'body', 'Proof & results'),
+        slot('NUM_4', 'cols 2-3, rows 7-8', 'stat', '04'),
+        slot('ITEM_4', 'cols 4-11, rows 7-8', 'body', 'Discussion & next steps'),
+      ],
+    },
+  },
+  quote_centered: {
+    label: 'Quote — centered',
+    suggestedName: 'Quote Centered',
+    contentType: 'quote',
+    schema: {
+      layout_id: 'quote_centered_v1',
+      content_type: 'quote',
+      grid: '12-col',
+      preview: { mode: 'quote_attribution' },
+      slots: [
+        slot('QUOTE', 'cols 2-11, rows 3-7', 'quote', 'A short quote that makes your point.'),
+        slot('AUTHOR_NAME', 'cols 3-10, rows 8-9', 'attribution', 'Author name'),
+        slot('AUTHOR_TITLE', 'cols 3-10, rows 9-10', 'caption', 'Author title · Company'),
+      ],
+    },
+  },
+  device_iphone: {
+    label: 'Device — iPhone screenshot',
+    suggestedName: 'Device iPhone Screenshot',
+    contentType: 'device_frames',
+    schema: {
+      layout_id: 'device_iphone_screenshot_v1',
+      content_type: 'device_frames',
+      grid: '12-col',
+      slots: [
+        slot('HEADING', 'cols 1-6, rows 2-4', 'heading', 'Built for mobile-first teams'),
+        slot('BODY', 'cols 1-6, rows 4-7', 'body', 'Show your product UI inside a phone frame.'),
+        slot('DEVICE_FRAME', 'cols 7-11, rows 1-10', 'decoration'),
+        slot('DEVICE_SCREEN', 'cols 7-11, rows 2-9', 'image'),
+        slot('CAPTION', 'cols 7-11, rows 9-10', 'caption', 'iPhone · Product screenshot'),
+      ],
+    },
+  },
+  device_laptop: {
+    label: 'Device — laptop / browser',
+    suggestedName: 'Device Laptop Browser',
+    contentType: 'device_frames',
+    schema: {
+      layout_id: 'device_laptop_browser_v1',
+      content_type: 'device_frames',
+      grid: '12-col',
+      slots: [
+        slot('HEADING', 'cols 2-11, rows 1-2', 'heading', 'Your product, full screen'),
+        slot('SUBTITLE', 'cols 2-11, rows 2-3', 'subheading', 'Browser / laptop mockup for desktop UI'),
+        slot('DEVICE_FRAME', 'cols 2-11, rows 3-9', 'decoration'),
+        slot('DEVICE_SCREEN', 'cols 2-11, rows 4-8', 'image'),
+        slot('CAPTION', 'cols 2-11, rows 9-10', 'caption', 'Desktop app screenshot'),
+      ],
+    },
+  },
 }
 
 export function getDeckLayoutStarter(id) {
