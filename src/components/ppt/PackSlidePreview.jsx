@@ -3,6 +3,7 @@ import LayoutPolishedPreview from './LayoutPolishedPreview'
 import {
   buildPackSlidePreviewSchema,
   resolveLayoutSchemaById,
+  resolveSlideMediaFromPack,
 } from '../../utils/deckLayoutRegistry'
 import { aspectRatioToCss, deckPackThemeToCssVars, resolveDeckPackTheme } from '../../utils/deckPackTheme'
 import { slideHasCanvasElements } from '../../utils/videoTemplateToCanvasElements'
@@ -26,6 +27,8 @@ export default function PackSlidePreview({
   className,
   style,
   imageUrl = '',
+  imageUrls = null,
+  media = null,
 }) {
   const packTheme = theme || resolveDeckPackTheme(themeId)
   const accent = badgeColor || packTheme.accent
@@ -33,6 +36,11 @@ export default function PackSlidePreview({
   const frameStyle = fill
     ? { width: '100%', height: '100%', aspectRatio: 'unset', minHeight: 0 }
     : { width: '100%', aspectRatio: cssAspect }
+
+  const slideOrder = slide?.order ?? index + 1
+  const resolvedMedia = media?.length
+    ? resolveSlideMediaFromPack(media, slideOrder)
+    : { imageUrl, imageUrls: imageUrls || {} }
 
   const badge = showBadge ? (
     <div
@@ -81,7 +89,7 @@ export default function PackSlidePreview({
     resolveLayoutSchemaById(slide?.layout_id, layoutSchemaMap)
   if (!base) return null
 
-  const schema = buildPackSlidePreviewSchema(base, slide, { imageUrl })
+  const schema = buildPackSlidePreviewSchema(base, slide, resolvedMedia)
   if (!schema) return null
 
   return (

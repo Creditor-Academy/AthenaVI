@@ -5,7 +5,7 @@ import superadminService, { SuperadminApiError } from '../../../../services/supe
 import { formatDate } from './superadminUtils'
 import LayoutPolishedPreview, { getGridDims } from '../../../ppt/LayoutPolishedPreview'
 import PackSlidePreview from '../../../ppt/PackSlidePreview'
-import { buildLayoutSchemaMap, canPreviewDeckLayout, enrichLayoutSchemaForPreview } from '../../../../utils/deckLayoutRegistry'
+import { buildLayoutSchemaMap, canPreviewDeckLayout, enrichLayoutSchemaForPreview, resolveSlideMediaFromPack } from '../../../../utils/deckLayoutRegistry'
 import {
   DECK_LAYOUT_SLOT_ROLES,
   fixDeckLayoutSchemaRoles,
@@ -72,6 +72,101 @@ function contentTypeLabel(id) {
   return CONTENT_TYPE_LABELS[id] || String(id).replace(/_/g, ' ')
 }
 
+/** Map a layout/template row to a gallery category id (matches AddSlideModal + backend layoutCategories). */
+function resolveLayoutCategoryId(entry = {}) {
+  const ct = String(
+    entry?.schema?.content_type
+    || entry?.contentType
+    || entry?.rawContentType
+    || ''
+  ).toLowerCase()
+  const layoutId = String(
+    entry?.schema?.layout_id
+    || entry?.layoutId
+    || entry?.variant
+    || ''
+  ).toLowerCase()
+
+  if (ct === 'grid') return 'grid'
+  if (ct === 'chart' || ct === 'stat') return 'charts_and_data'
+  if (ct === 'timeline') return 'timeline_and_plans'
+  if (ct === 'pricing' || layoutId.includes('pricing')) return 'pricing'
+  if (ct === 'agenda') return 'agenda'
+  if (ct === 'team') return 'people_and_team'
+  if (ct === 'quote') return 'quotes_and_testimonials'
+  if (ct === 'device_frames' || layoutId.startsWith('device_')) return 'device_frames'
+  if (ct === 'closing') return 'closing'
+  if (ct === 'comparison') return 'simple_slides'
+  if (['title', 'bullet_list', 'section_divider', 'image+text', 'image_text'].includes(ct)) {
+    return 'simple_slides'
+  }
+  return 'simple_slides'
+}
+
+function LayoutCategoryTabs({ value, onChange, items, counts = {} }) {
+  return (
+    <div
+      role="tablist"
+      aria-label="Layout categories"
+      style={{
+        display: 'flex',
+        gap: 6,
+        padding: '0 24px 12px',
+        overflowX: 'auto',
+        flexShrink: 0,
+        scrollbarWidth: 'thin',
+      }}
+    >
+      {items.map((category) => {
+        const active = value === category.id
+        const count = counts[category.id]
+        return (
+          <button
+            key={category.id}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(category.id)}
+            style={{
+              appearance: 'none',
+              border: 'none',
+              background: active ? 'color-mix(in srgb, var(--primary) 12%, var(--bg-card))' : 'transparent',
+              color: active ? 'var(--primary)' : 'var(--text-muted)',
+              fontFamily: 'inherit',
+              fontSize: '0.78rem',
+              fontWeight: active ? 700 : 500,
+              padding: '6px 12px',
+              borderRadius: 999,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              transition: 'background 0.15s ease, color 0.15s ease',
+            }}
+          >
+            {category.label}
+            {typeof count === 'number' && count > 0 && (
+              <span style={{
+                marginLeft: 6,
+                fontSize: '0.65rem',
+                fontWeight: 700,
+                padding: '1px 6px',
+                borderRadius: 99,
+                background: active
+                  ? 'color-mix(in srgb, var(--primary) 18%, transparent)'
+                  : 'color-mix(in srgb, var(--border-color) 80%, transparent)',
+                color: active ? 'var(--primary)' : 'var(--text-muted)',
+              }}
+              >
+                {count}
+              </span>
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 function ContentTypeSelect({ value, onChange, disabled, emptyLabel = '— select —' }) {
   return (
     <select
@@ -124,6 +219,8 @@ const CONTENT_TYPE_PREFIXES = [
   ['closing', 'closing'],
   ['section', 'section_divider'],
   ['grid', 'grid'],
+  ['device', 'device_frames'],
+  ['pricing', 'pricing'],
 ]
 
 function guessContentTypeFromLayoutId(layoutId = '') {
@@ -333,28 +430,16 @@ function unwrapTemplateRows(data) {
 }
 
 const DECK_LAYOUT_PLACEHOLDER = JSON.stringify({
-  layout_id: 'grid_insights_chart_v1',
+  layout_id: 'grid_bento_three_v1',
   content_type: 'grid',
+  schemaVersion: 2,
   grid: '12-col',
-  preview: { mode: 'grid_insights_chart' },
+  shapePolicy: 'ai_decides',
+  preview: { mode: 'grid_bento_three' },
   slots: [
-    { id: 'INSIGHT_CARD_1_BG', region: 'cols 1-3, rows 1-2', role: 'background' },
-    { id: 'INSIGHT_ICON_1',    region: 'cols 1-3, rows 1-2', role: 'decoration' },
-    { id: 'INSIGHT_LABEL_1',   region: 'cols 1-3, rows 3-4', max_lines: 2, role: 'caption', placeholder_text: 'Insight one' },
-    { id: 'INSIGHT_CARD_2_BG', region: 'cols 4-6, rows 1-2', role: 'background' },
-    { id: 'INSIGHT_ICON_2',    region: 'cols 4-6, rows 1-2', role: 'decoration' },
-    { id: 'INSIGHT_LABEL_2',   region: 'cols 4-6, rows 3-4', max_lines: 2, role: 'caption', placeholder_text: 'Insight two' },
-    { id: 'INSIGHT_CARD_3_BG', region: 'cols 7-9, rows 1-2', role: 'background' },
-    { id: 'INSIGHT_ICON_3',    region: 'cols 7-9, rows 1-2', role: 'decoration' },
-    { id: 'INSIGHT_LABEL_3',   region: 'cols 7-9, rows 3-4', max_lines: 2, role: 'caption', placeholder_text: 'Insight three' },
-    { id: 'CHART_CARD_BG',     region: 'cols 1-9, rows 5-10', role: 'background' },
-    { id: 'CHART_HEADING',     region: 'cols 1-9, rows 5-6', max_lines: 1, role: 'heading', placeholder_text: 'Revenue growth' },
-    { id: 'BAR_CHART',         region: 'cols 1-9, rows 7-10', role: 'chart' },
-    { id: 'CHART_CAPTION',     region: 'cols 1-9, rows 10-11', role: 'caption', placeholder_text: 'Monthly performance' },
-    { id: 'POINT_CARD_BG',     region: 'cols 10-12, rows 1-10', role: 'background' },
-    { id: 'POINT_HEADING',     region: 'cols 10-12, rows 1-2', max_lines: 1, role: 'heading', placeholder_text: 'Key takeaway' },
-    { id: 'POINT_BODY',        region: 'cols 10-12, rows 3-5', max_lines: 3, role: 'body', placeholder_text: 'Summarize what the chart means.' },
-    { id: 'POINT_IMAGE',       region: 'cols 10-12, rows 6-10', role: 'image' },
+    { id: 'IMAGE_1', region: 'cols 1-6, rows 1-5', role: 'image', layer: 2, fit: 'cover' },
+    { id: 'IMAGE_2', region: 'cols 1-6, rows 6-10', role: 'image', layer: 2, fit: 'cover' },
+    { id: 'IMAGE_3', region: 'cols 7-12, rows 1-10', role: 'image', layer: 2, fit: 'cover' },
   ],
 }, null, 2)
 
@@ -752,7 +837,7 @@ function DeckPackLayoutPickerModal({
 }) {
   const [draftIds, setDraftIds] = useState(() => readLayoutIdsFromPackSchema(schemaStr))
   const [query, setQuery] = useState('')
-  const [typeFilter, setTypeFilter] = useState('all')
+  const [layoutCategory, setLayoutCategory] = useState('all')
   const [localCatalog, setLocalCatalog] = useState(layoutCatalog)
   const [catalogLoading, setCatalogLoading] = useState(layoutCatalog.length === 0)
   const [catalogError, setCatalogError] = useState('')
@@ -832,10 +917,19 @@ function DeckPackLayoutPickerModal({
     [localCatalog]
   )
 
+  const layoutCategoryCounts = useMemo(() => {
+    const out = { all: activeLayouts.length }
+    for (const layout of activeLayouts) {
+      const cat = resolveLayoutCategoryId(layout)
+      out[cat] = (out[cat] || 0) + 1
+    }
+    return out
+  }, [activeLayouts])
+
   const filteredLayouts = useMemo(() => {
     const q = query.trim().toLowerCase()
     return activeLayouts.filter((l) => {
-      if (typeFilter !== 'all' && l.contentType !== typeFilter) return false
+      if (layoutCategory !== 'all' && resolveLayoutCategoryId(l) !== layoutCategory) return false
       if (!q) return true
       return (
         l.name.toLowerCase().includes(q)
@@ -843,7 +937,7 @@ function DeckPackLayoutPickerModal({
         || contentTypeLabel(l.contentType).toLowerCase().includes(q)
       )
     })
-  }, [activeLayouts, query, typeFilter])
+  }, [activeLayouts, query, layoutCategory])
 
   function reorderDraft(fromIndex, toIndex) {
     if (fromIndex == null || toIndex == null || fromIndex === toIndex) return
@@ -936,18 +1030,13 @@ function DeckPackLayoutPickerModal({
                   style={{ width: '100%', boxSizing: 'border-box', paddingLeft: 28, fontSize: '0.78rem', height: 34 }}
                 />
               </div>
-              <select
-                className="sa-select"
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                style={{ flex: '0 1 150px', fontSize: '0.78rem', height: 34 }}
-              >
-                <option value="all">All types</option>
-                {CONTENT_TYPES.map((ct) => (
-                  <option key={ct} value={ct}>{contentTypeLabel(ct)}</option>
-                ))}
-              </select>
             </div>
+            <LayoutCategoryTabs
+              value={layoutCategory}
+              onChange={setLayoutCategory}
+              items={LAYOUT_CATEGORIES}
+              counts={layoutCategoryCounts}
+            />
             <div className="sa-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
               {catalogLoading ? (
                 <span style={{ padding: 10, fontSize: '0.75rem', color: 'var(--text-muted)' }}>Loading layouts…</span>
@@ -1996,8 +2085,10 @@ function DeckLayoutPreview({ schema, layoutName }) {
 
 // ─── Slide card renderer (used in both thumbnail strip and modal) ─────────────
 
-function SlideCard({ theme, slide, index, ph, icon, imageUrl, large, aspectRatio = '16:9', layoutSchemaMap = {} }) {
+function SlideCard({ theme, slide, index, ph, icon, imageUrl, media, large, aspectRatio = '16:9', layoutSchemaMap = {} }) {
   if (slide?.layout_id && canPreviewDeckLayout({ layoutId: slide.layout_id, layoutSchemaMap })) {
+    const slideOrder = slide?.order ?? index + 1
+    const resolved = media?.length ? resolveSlideMediaFromPack(media, slideOrder) : { imageUrl: imageUrl || '' }
     return (
       <PackSlidePreview
         slide={slide}
@@ -2007,7 +2098,9 @@ function SlideCard({ theme, slide, index, ph, icon, imageUrl, large, aspectRatio
         aspectRatio={aspectRatio}
         layoutSchemaMap={layoutSchemaMap}
         badgeColor={theme.accent}
-        imageUrl={imageUrl || ''}
+        imageUrl={resolved.imageUrl || ''}
+        imageUrls={resolved.imageUrls}
+        media={media}
       />
     )
   }
@@ -2448,7 +2541,7 @@ function DeckPackSlideModal({ slides, theme, themeId, aspectRatio = '16:9', pack
                   outline: 'none', transition: 'border-color 0.15s',
                   boxShadow: isActive ? `0 0 0 1px ${theme.accent}44` : 'none',
                 }}>
-                  <SlideCard theme={theme} slide={s} index={i} ph={sph} icon={sicon} imageUrl={imageUrl} large={false} aspectRatio={aspectRatio} layoutSchemaMap={layoutSchemaMap} />
+                  <SlideCard theme={theme} slide={s} index={i} ph={sph} icon={sicon} imageUrl={imageUrl} media={media} large={false} aspectRatio={aspectRatio} layoutSchemaMap={layoutSchemaMap} />
                 </button>
                 <div style={{
                   marginTop: 4, fontSize: '0.6rem', fontWeight: 600, textAlign: 'center',
@@ -2496,7 +2589,7 @@ function DeckPackSlideModal({ slides, theme, themeId, aspectRatio = '16:9', pack
                   boxShadow: `0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px ${i === current ? theme.accent + '55' : 'rgba(255,255,255,0.06)'}`,
                   transition: 'box-shadow 0.2s',
                 }}>
-                  <SlideCard theme={theme} slide={s} index={i} ph={sph} icon={sicon} imageUrl={imageUrl} large={true} aspectRatio={aspectRatio} layoutSchemaMap={layoutSchemaMap} />
+                  <SlideCard theme={theme} slide={s} index={i} ph={sph} icon={sicon} imageUrl={imageUrl} media={media} large={true} aspectRatio={aspectRatio} layoutSchemaMap={layoutSchemaMap} />
                 </div>
               </div>
             )
@@ -2607,7 +2700,7 @@ function DeckPackPreview({ schema, packName, previewImageUrl, media, layoutSchem
                   style={{ flexShrink: 0, width: 140, cursor: 'pointer', border: `2px solid ${theme.accent}55`, borderRadius: 10, overflow: 'hidden', background: 'none', padding: 0, boxShadow: '0 4px 16px rgba(0,0,0,0.35)', transition: 'transform 0.15s, box-shadow 0.15s' }}
                   onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 8px 24px rgba(0,0,0,0.5), 0 0 0 2px ${theme.accent}` }}
                   onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.35)' }}>
-                  <SlideCard theme={theme} slide={slide} index={i} ph={ph} icon={icon} imageUrl={slideImageUrl} large={false} aspectRatio={aspectRatio} layoutSchemaMap={layoutSchemaMap} />
+                  <SlideCard theme={theme} slide={slide} index={i} ph={ph} icon={icon} imageUrl={slideImageUrl} media={media} large={false} aspectRatio={aspectRatio} layoutSchemaMap={layoutSchemaMap} />
                 </button>
               )
             })}
@@ -3325,6 +3418,7 @@ function TemplateMediaTab({
               ph={extractPlaceholderTitle(activeSlide.placeholder)}
               icon={CONTENT_TYPE_ICONS[activeSlide.contentType] ?? '▣'}
               imageUrl={activeImageUrl}
+              media={media}
               large
               aspectRatio={aspectRatio}
               layoutSchemaMap={layoutSchemaMap}
@@ -3390,6 +3484,7 @@ function TemplateMediaTab({
                     ph={extractPlaceholderTitle(s.placeholder)}
                     icon={CONTENT_TYPE_ICONS[sct] ?? '▣'}
                     imageUrl={imgUrl}
+                    media={media}
                     large={false}
                     aspectRatio={aspectRatio}
                     layoutSchemaMap={layoutSchemaMap}
@@ -3740,7 +3835,7 @@ function InlinePackSlideViewer({ template, layoutSchemaMap = {} }) {
                 outline: 'none', transition: 'border-color 0.15s',
                 boxShadow: isActive ? `0 0 0 1px ${theme.accent}44` : 'none',
               }}>
-                <SlideCard theme={theme} slide={s} index={i} ph={sph} icon={sicon} imageUrl={imgUrl} large={false} aspectRatio={aspectRatio} layoutSchemaMap={layoutSchemaMap} />
+                <SlideCard theme={theme} slide={s} index={i} ph={sph} icon={sicon} imageUrl={imgUrl} media={media} large={false} aspectRatio={aspectRatio} layoutSchemaMap={layoutSchemaMap} />
               </button>
               <div style={{ marginTop: 4, fontSize: '0.58rem', fontWeight: 600, textAlign: 'center', color: isActive ? theme.accent : 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', transition: 'color 0.15s' }}>
                 {i + 1} · {sct}
@@ -3781,7 +3876,7 @@ function InlinePackSlideViewer({ template, layoutSchemaMap = {} }) {
                 boxShadow: `0 4px 20px rgba(0,0,0,0.12), 0 0 0 1px ${i === current ? theme.accent + '55' : 'var(--border-color)'}`,
                 transition: 'box-shadow 0.2s',
               }}>
-                <SlideCard theme={theme} slide={s} index={i} ph={sph} icon={sicon} imageUrl={imgUrl} large={true} aspectRatio={aspectRatio} layoutSchemaMap={layoutSchemaMap} />
+                <SlideCard theme={theme} slide={s} index={i} ph={sph} icon={sicon} imageUrl={imgUrl} media={media} large={true} aspectRatio={aspectRatio} layoutSchemaMap={layoutSchemaMap} />
               </div>
             </div>
           )
@@ -3802,6 +3897,7 @@ export default function SuperadminTemplatesPanel() {
   const [search, setSearch]             = useState('')
   const [searchInput, setSearchInput]   = useState('')
   const [filterActive, setFilterActive] = useState('all')
+  const [layoutCategory, setLayoutCategory] = useState('all')
   const searchTimer = useRef(null)
   const [selected, setSelected]         = useState(null)
   const [previewTemplate, setPreviewTemplate] = useState(null)
@@ -3839,6 +3935,10 @@ export default function SuperadminTemplatesPanel() {
   useEffect(() => { setSelected(null); fetchList(activeType, filterActive) }, [activeType, filterActive, fetchList])
 
   useEffect(() => {
+    if (activeType !== 'DECK_LAYOUT') setLayoutCategory('all')
+  }, [activeType])
+
+  useEffect(() => {
     let cancelled = false
     ;(async () => {
       try {
@@ -3871,14 +3971,35 @@ export default function SuperadminTemplatesPanel() {
     searchTimer.current = setTimeout(() => setSearch(v), 280)
   }
 
-  const filtered = search.trim()
-    ? templates.filter(t =>
-        t.name?.toLowerCase().includes(search.toLowerCase()) ||
-        t.contentType?.toLowerCase().includes(search.toLowerCase()) ||
-        t.variant?.toLowerCase().includes(search.toLowerCase()) ||
-        t.schema?.layout_id?.toLowerCase().includes(search.toLowerCase()) ||
-        t.schema?.pack_id?.toLowerCase().includes(search.toLowerCase()))
-    : templates
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return templates.filter((t) => {
+      if (q) {
+        const matchesSearch =
+          t.name?.toLowerCase().includes(q)
+          || t.contentType?.toLowerCase().includes(q)
+          || t.variant?.toLowerCase().includes(q)
+          || t.schema?.layout_id?.toLowerCase().includes(q)
+          || t.schema?.pack_id?.toLowerCase().includes(q)
+        if (!matchesSearch) return false
+      }
+      if (activeType === 'DECK_LAYOUT' && layoutCategory !== 'all') {
+        return resolveLayoutCategoryId(t) === layoutCategory
+      }
+      return true
+    })
+  }, [templates, search, activeType, layoutCategory])
+
+  const layoutCategoryCounts = useMemo(() => {
+    if (activeType !== 'DECK_LAYOUT') return {}
+    const deckLayouts = templates.filter((t) => t.type === 'DECK_LAYOUT' || t.schema?.layout_id)
+    const out = { all: deckLayouts.length }
+    for (const template of deckLayouts) {
+      const cat = resolveLayoutCategoryId(template)
+      out[cat] = (out[cat] || 0) + 1
+    }
+    return out
+  }, [templates, activeType])
 
   async function handleQuickToggle(e, t) {
     e.stopPropagation()
@@ -3982,6 +4103,15 @@ export default function SuperadminTemplatesPanel() {
         </div>
       </div>
 
+      {activeType === 'DECK_LAYOUT' && (
+        <LayoutCategoryTabs
+          value={layoutCategory}
+          onChange={setLayoutCategory}
+          items={LAYOUT_CATEGORIES}
+          counts={layoutCategoryCounts}
+        />
+      )}
+
       {/* ── card grid ── */}
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px 24px 24px' }}>
         {listError && <div className="sa-alert sa-alert--error" style={{ marginBottom: 16 }}>{listError}</div>}
@@ -4001,7 +4131,13 @@ export default function SuperadminTemplatesPanel() {
         ) : filtered.length === 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
             <LayoutTemplate size={40} style={{ margin: '0 auto 12px', display: 'block', opacity: 0.2 }} />
-            <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>{search ? `No results for "${search}"` : 'No templates yet'}</p>
+            <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>
+              {search
+                ? `No results for "${search}"`
+                : activeType === 'DECK_LAYOUT' && layoutCategory !== 'all'
+                  ? `No layouts in "${LAYOUT_CATEGORIES.find((c) => c.id === layoutCategory)?.label || layoutCategory}"`
+                  : 'No templates yet'}
+            </p>
             <p style={{ margin: '6px 0 16px', fontSize: '0.8rem', opacity: 0.7 }}>{TEMPLATE_TYPES.find(t => t.id === activeType)?.description}</p>
             {!search && (
               <button className="sa-btn sa-btn--primary" onClick={() => setShowCreate(true)}>

@@ -1,21 +1,24 @@
 /** Map video template scene layoutType → presentation layout_id + contentType hints. */
 
 export const LAYOUT_TYPE_MAP = {
-  Cover: { layoutId: 'title_with_image_v1', contentType: 'image+text' },
-  TwoColumn: { layoutId: 'section_with_image_v1', contentType: 'image+text' },
-  ContactSplit: { layoutId: 'section_with_image_v1', contentType: 'image+text' },
-  StatsHighlight: { layoutId: 'stat_three_up_v2', contentType: 'stat' },
-  ServiceGrid: { layoutId: 'agenda_four_items_v1', contentType: 'agenda' },
-  Syllabus: { layoutId: 'agenda_four_items_v1', contentType: 'agenda' },
-  Pillars: { layoutId: 'agenda_four_items_v1', contentType: 'agenda' },
-  ListRight: { layoutId: 'bullet_list_classic_v1', contentType: 'bullet_list' },
-  Outcomes: { layoutId: 'bullet_list_classic_v1', contentType: 'bullet_list' },
-  Tracker: { layoutId: 'bullet_list_classic_v1', contentType: 'bullet_list' },
-  Timeline: { layoutId: 'timeline_four_steps_v1', contentType: 'timeline' },
+  ServiceGrid: { layoutId: 'grid_bento_three_v1', contentType: 'grid' },
+  Syllabus: { layoutId: 'intro_four_para_v1', contentType: 'bullet_list' },
+  Pillars: { layoutId: 'grid_images_text_cards_v1', contentType: 'grid' },
+  ListRight: { layoutId: 'four_para_image_v1', contentType: 'bullet_list' },
+  Outcomes: { layoutId: 'four_para_image_v1', contentType: 'bullet_list' },
+  Tracker: { layoutId: 'metric_three_v1', contentType: 'stat' },
+  Timeline: { layoutId: 'process_linear_v1', contentType: 'chart' },
   Nutrition: { layoutId: 'section_with_image_v1', contentType: 'image+text' },
-  Promo: { layoutId: 'closing_centered_cta_v1', contentType: 'closing' },
-  CTA: { layoutId: 'closing_centered_cta_v1', contentType: 'closing' },
+  Promo: { layoutId: 'centered_text_cta_v1', contentType: 'closing' },
+  CTA: { layoutId: 'centered_text_cta_v1', contentType: 'closing' },
   Bio: { layoutId: 'section_left_image_v1', contentType: 'image+text' },
+  StatsHighlight: { layoutId: 'metric_single_v1', contentType: 'stat' },
+  Cover: { layoutId: 'title_image_logo_v1', contentType: 'title' },
+  TwoColumn: { layoutId: 'section_with_image_v1', contentType: 'image+text' },
+  ContactSplit: { layoutId: 'contact_left_image_v1', contentType: 'team' },
+  PricingPlans: { layoutId: 'pricing_three_plans_v1', contentType: 'pricing' },
+  TeamGrid: { layoutId: 'team_four_v1', contentType: 'team' },
+  DeviceFrames: { layoutId: 'device_phone_vertical_split_v1', contentType: 'device_frames' },
 }
 
 export const DEFAULT_LAYOUT = {

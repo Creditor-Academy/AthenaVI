@@ -4,6 +4,7 @@ import {
   hasOverlappingTextPlacements,
   isTextLayoutRole,
 } from './compileDeckLayoutToElements'
+import { buildContentBySlotIdFromSlideContent, mergeContentBySlotId } from './contentSlotMapping'
 import {
   buildLayoutSchemaMap,
   getDeckLayoutSchema,
@@ -177,10 +178,12 @@ export function extractContentBySlotFromElements(elements = [], schema) {
 }
 
 export function needsLayoutCanvasRepair(slide, elements = [], schema = null, opts = {}) {
-  if (opts?.deckPackId) return false
   if (slide?.manuallyEdited) return false
 
   const list = Array.isArray(elements) ? elements : []
+  if (opts?.deckPackId) {
+    return hasOverlappingTextPlacements(list)
+  }
   const slots = Array.isArray(schema?.slots) ? schema.slots : []
 
   if (slots.length && !list.length) return true
@@ -263,6 +266,7 @@ export async function applyCompiledLayoutToSlide({
   aspectRatio = '16:9',
   palette = null,
   slideTitle = '',
+  slideContent = null,
   mergeFromElements = [],
   skipSave = false,
 }) {
@@ -298,11 +302,16 @@ export async function applyCompiledLayoutToSlide({
   if (!resolvedSchema?.slots?.length) return null
 
   const canvas = resolveCanvasSize(null, aspectRatio)
-  const contentBySlotId = extractContentBySlotFromElements(mergeFromElements, resolvedSchema)
+  const extracted = extractContentBySlotFromElements(mergeFromElements, resolvedSchema)
+  const contentBySlotId = mergeContentBySlotId(
+    buildContentBySlotIdFromSlideContent(slideContent, resolvedSchema),
+    extracted
+  )
   const elements = compileDeckLayoutToElements(resolvedSchema, {
     canvas,
     palette,
     contentBySlotId,
+    content: slideContent,
   })
 
   const canvasDoc = buildCanvasDoc(null, { aspectRatio, elements })
@@ -326,8 +335,6 @@ export async function repairPresentationLayoutSlides({
   palette = null,
   deckPackId = null,
 }) {
-  if (deckPackId) return false
-
   const repairs = []
 
   for (const slide of slides) {
@@ -354,6 +361,7 @@ export async function repairPresentationLayoutSlides({
         aspectRatio,
         palette,
         slideTitle: slide.title,
+        slideContent: slide.content || slide.placeholder || null,
         mergeFromElements: elements,
       })
     )

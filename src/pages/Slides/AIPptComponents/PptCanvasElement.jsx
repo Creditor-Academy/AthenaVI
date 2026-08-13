@@ -220,14 +220,15 @@ export default function PptCanvasElement({
     const c = el.content || {}
     const url = c.url || c.src || c.thumbnailUrl || c.previewUrl
     if (!url) {
-      const radius = c.borderRadius != null ? c.borderRadius : 8
+      const radius = c.borderRadius != null ? c.borderRadius : 14
       return (
         <div
           style={{
             ...fillStyle,
-            background: c.placeholderFill || 'linear-gradient(145deg, #eef2f7 0%, #e2e8f0 100%)',
+            background: c.placeholderFill || 'linear-gradient(145deg, color-mix(in srgb, #6366f1 8%, #eef2f7) 0%, #e2e8f0 100%)',
             borderRadius: radius,
-            border: '1px solid color-mix(in srgb, #94a3b8 22%, transparent)',
+            border: '1px solid color-mix(in srgb, #6366f1 16%, #94a3b8)',
+            boxShadow: c.boxShadow || c.shadow || '0 8px 24px rgba(15, 23, 42, 0.08)',
           }}
         >
           <div className="aig-canvas-image-fallback ppt-image-placeholder">

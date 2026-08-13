@@ -1,20 +1,13 @@
-# Seed presentation templates (deck packs pilot)
+# Seed presentation layouts (Simple slides catalog)
 
-Convert bundles in `public/templates/` into backend **`DECK_LAYOUT`** + **`DECK_PACK`** records via the Superadmin API.
-
-## Pilot scope
-
-Women's Wellness — Harmony & Health (`womens_wellness_template`):
-
-- 6 `DECK_LAYOUT` rows (only layouts used by this pack)
-- 1 `DECK_PACK` with 6 slides + `slidePreviews`
+Seeds all **DECK_LAYOUT** templates from `src/utils/deckLayoutRegistry.js` via the Superadmin API.
 
 ## Prerequisites
 
-1. Backend running and reachable (`VITE_API_BASE_URL` in `.env`, default `http://localhost:9000`)
+1. Backend running (`VITE_API_BASE_URL` in `.env`, default `http://localhost:9000`)
 2. Platform superadmin access token
 
-### Auth options
+### Auth
 
 Add to `.env.local` (gitignored):
 
@@ -23,9 +16,9 @@ VITE_API_BASE_URL=http://localhost:9000
 SUPERADMIN_TOKEN=your_access_token_here
 ```
 
-Or paste the same value as `ACCESS_TOKEN` (from browser DevTools → Application → localStorage while logged in as superadmin).
+Or use `ACCESS_TOKEN` from browser DevTools while logged in as superadmin.
 
-Optional login instead of a raw token:
+Optional login:
 
 ```env
 SEED_LOGIN_EMAIL=you@example.com
@@ -34,58 +27,43 @@ SEED_LOGIN_PASSWORD=your_password
 
 ## Commands
 
-Dry run (no token required):
+Dry run (lists layouts that would be created):
 
 ```bash
-node scripts/seed-presentation-templates.mjs --dry-run --only womens_wellness_template
+npm run seed:layouts:dry-run
 ```
 
-Export converted schema JSON (no API):
+Seed all Simple slides layouts:
 
 ```bash
-node scripts/seed-presentation-templates.mjs --export-only --only womens_wellness_template
+npm run seed:layouts
 ```
 
-Seed layouts, then pack:
+Update existing layouts (after catalog/preview changes):
 
 ```bash
-node scripts/seed-presentation-templates.mjs --only womens_wellness_template
+npm run seed:layouts:update
 ```
 
-Layouts only / packs only:
+Seed specific layouts:
 
 ```bash
-node scripts/seed-presentation-templates.mjs --layouts-only --only womens_wellness_template
-node scripts/seed-presentation-templates.mjs --packs-only --only womens_wellness_template
-```
-
-Upload Pexels preview images to template media (optional):
-
-```bash
-node scripts/seed-presentation-templates.mjs --only womens_wellness_template --upload-media
-```
-
-Verify local conversion (+ API if token set):
-
-```bash
-node scripts/verify-deck-pack-pilot.mjs
+node scripts/seed-presentation-templates.mjs --only title_centered_v1,statement_left_v1
 ```
 
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `scripts/deck-pack-seed-manifest.json` | Pack registry (pilot: Women's Wellness only) |
-| `scripts/lib/layoutTypeMap.mjs` | Video `layoutType` → `layout_id` |
-| `scripts/lib/publicTemplateToPresentation.mjs` | Converts `*_template.json` → `DECK_PACK` schema |
+| `src/utils/simpleSlidesCatalog.js` | 33 Simple slides v2 layout definitions |
+| `src/utils/deckLayoutV2Helpers.js` | Shared slot/typography/shape builders |
+| `src/utils/deckLayoutRegistry.js` | Registry re-export for previews + seed CLI |
 | `scripts/seed-presentation-templates.mjs` | Idempotent Superadmin seed CLI |
-
-## After pilot
-
-Extend `deck-pack-seed-manifest.json` with the remaining 12 packs from `src/constants/templateRegistry.js`, then run `--packs-only` for each batch.
+| `scripts/export-seed-layouts.mjs` | Regenerate backend `seed-layouts.json` from catalog |
+| `scripts/README-simple-slides-ai-mapping.md` | AI slide-number → layout conventions |
 
 ## UI verification
 
-1. Superadmin → Templates: 6 `DECK_LAYOUT` + 1 `DECK_PACK` (`womens_wellness`)
-2. PPT Builder → Deck Packs: Women's Wellness card + 6-slide detail carousel
-3. Create deck with `createMode: "pack"` using the pack row **cuid** (not `pack_id` slug)
+1. Superadmin → Templates → Deck Layouts: 33 active rows
+2. PPT Builder → Add slide → Layouts → Simple slides gallery tab
+3. Apply layout on a slide and confirm shapes + typography compile correctly

@@ -840,7 +840,7 @@ export function buildCanvasShapeStyle(content = {}, palette = {}) {
       background: background === 'transparent' ? 'transparent' : background,
       borderRadius: borderRadius ?? 0,
       border,
-      boxShadow: content.shadow || undefined,
+      boxShadow: content.shadow || content.boxShadow || undefined,
       boxSizing: 'border-box',
     },
   }

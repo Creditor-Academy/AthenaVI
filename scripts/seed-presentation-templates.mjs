@@ -1,48 +1,25 @@
 #!/usr/bin/env node
 /**
- * Seed DECK_LAYOUT + DECK_PACK templates via Superadmin API.
+ * Seed DECK_LAYOUT templates from deckLayoutRegistry.js via Superadmin API.
  *
  * Env:
  *   API_BASE_URL or VITE_API_BASE_URL — backend origin (no trailing slash)
  *   SUPERADMIN_TOKEN — Bearer token for superadmin routes
  */
 
-import { readFileSync, writeFileSync, mkdirSync } from 'fs'
+import { readFileSync } from 'fs'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 import REGISTRY from '../src/utils/deckLayoutRegistry.js'
-import {
-  buildDeckLayoutsFromPack,
-  convertPublicTemplateToDeckPack,
-  filterManifestPacks,
-  loadManifest,
-} from './lib/publicTemplateToPresentation.mjs'
-import { collectRequiredLayoutIds } from './lib/layoutTypeMap.mjs'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const MANIFEST_PATH = join(__dirname, 'deck-pack-seed-manifest.json')
 
 function parseArgs(argv) {
-  const args = {
-    dryRun: false,
-    layoutsOnly: false,
-    packsOnly: false,
-    uploadMedia: false,
-    only: [],
-    writeSchema: null,
-    exportOnly: false,
-  }
+  const args = { dryRun: false, update: false, only: [] }
   for (let i = 2; i < argv.length; i += 1) {
     const arg = argv[i]
     if (arg === '--dry-run') args.dryRun = true
-    else if (arg === '--export-only') {
-      args.exportOnly = true
-      args.writeSchema = args.writeSchema || 'scripts/output/womens_wellness_deck_pack.json'
-    }
-    else if (arg === '--layouts-only') args.layoutsOnly = true
-    else if (arg === '--packs-only') args.packsOnly = true
-    else if (arg === '--upload-media') args.uploadMedia = true
-    else if (arg === '--write-schema') args.writeSchema = argv[++i] || null
+    else if (arg === '--update') args.update = true
     else if (arg === '--only') {
       args.only = argv[++i]?.split(',').map((s) => s.trim()).filter(Boolean) || []
     }
@@ -81,11 +58,7 @@ function loadDotEnvFiles() {
 loadDotEnvFiles()
 
 function resolveAccessToken() {
-  return (
-    process.env.SUPERADMIN_TOKEN?.trim()
-    || process.env.ACCESS_TOKEN?.trim()
-    || ''
-  )
+  return process.env.SUPERADMIN_TOKEN?.trim() || process.env.ACCESS_TOKEN?.trim() || ''
 }
 
 function getApiBaseUrl() {
@@ -93,16 +66,16 @@ function getApiBaseUrl() {
   return base.replace(/\/$/, '')
 }
 
-function getAuthHeaders(json = true, { required = true } = {}) {
+function getAuthHeaders(json = true) {
   const token = resolveAccessToken()
-  if (!token && required) {
+  if (!token) {
     throw new Error(
       'SUPERADMIN_TOKEN (or ACCESS_TOKEN) is required. Add it to .env.local or your shell environment.'
     )
   }
   return {
     ...(json ? { 'Content-Type': 'application/json' } : {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    Authorization: `Bearer ${token}`,
   }
 }
 
@@ -134,13 +107,9 @@ async function ensureAccessToken() {
 
 async function apiRequest(path, options = {}) {
   const url = `${getApiBaseUrl()}${path}`
-  const isMultipart = options.body instanceof FormData
   const response = await fetch(url, {
     ...options,
-    headers: {
-      ...getAuthHeaders(!isMultipart),
-      ...options.headers,
-    },
+    headers: { ...getAuthHeaders(), ...options.headers },
   })
   const body = await response.json().catch(() => ({}))
   if (!response.ok || body.success === false) {
@@ -159,10 +128,6 @@ function templateRowId(row) {
   return row.id || row.templateId || row.template?.id || null
 }
 
-function packIdFromTemplateRow(row) {
-  return row?.schema?.pack_id || row?.variant || null
-}
-
 function humanLayoutName(layoutId) {
   return String(layoutId)
     .replace(/_v\d+$/, '')
@@ -179,12 +144,20 @@ async function listTemplates(type, { offline = false } = {}) {
   return []
 }
 
-async function seedLayouts(requiredLayoutIds, { dryRun }) {
+async function seedLayouts(layoutIds, { dryRun, update }) {
   const existing = await listTemplates('DECK_LAYOUT', { offline: dryRun && !resolveAccessToken() })
-  const existingIds = new Set(existing.map(layoutIdFromTemplateRow).filter(Boolean))
-  const toCreate = requiredLayoutIds.filter((id) => !existingIds.has(id))
+  const existingByLayoutId = new Map()
+  for (const row of existing) {
+    const lid = layoutIdFromTemplateRow(row)
+    if (lid) existingByLayoutId.set(lid, row)
+  }
+  const existingIds = new Set(existingByLayoutId.keys())
+  const toCreate = layoutIds.filter((id) => !existingIds.has(id))
+  const toUpdate = update ? layoutIds.filter((id) => existingIds.has(id)) : []
 
-  console.log(`\n[layouts] required=${requiredLayoutIds.length} existing=${existingIds.size} toCreate=${toCreate.length}`)
+  console.log(
+    `\n[layouts] total=${layoutIds.length} existing=${existingIds.size} toCreate=${toCreate.length} toUpdate=${toUpdate.length}`
+  )
 
   const created = []
   for (const layoutId of toCreate) {
@@ -214,11 +187,37 @@ async function seedLayouts(requiredLayoutIds, { dryRun }) {
       body: JSON.stringify(payload),
     })
     console.log(`  created DECK_LAYOUT ${layoutId} → id=${templateRowId(row) || '?'}`)
-    created.push({ layoutId, id: row?.id || row?.templateId })
+    created.push({ layoutId, id: templateRowId(row) })
   }
 
-  for (const layoutId of requiredLayoutIds) {
-    if (existingIds.has(layoutId)) {
+  for (const layoutId of toUpdate) {
+    const schema = REGISTRY[layoutId]
+    const row = existingByLayoutId.get(layoutId)
+    const templateId = templateRowId(row)
+    if (!schema || !templateId) continue
+    const payload = {
+      name: humanLayoutName(layoutId),
+      contentType: schema.content_type || 'layout',
+      variant: layoutId,
+      isActive: true,
+      schema: {
+        ...JSON.parse(JSON.stringify(schema)),
+        grid: schema.grid || '12-col',
+      },
+    }
+    if (dryRun) {
+      console.log(`  [dry-run] PATCH DECK_LAYOUT ${layoutId}`)
+      continue
+    }
+    await apiRequest(`/api/superadmin/templates/${templateId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    })
+    console.log(`  updated DECK_LAYOUT ${layoutId} → id=${templateId}`)
+  }
+
+  for (const layoutId of layoutIds) {
+    if (existingIds.has(layoutId) && !update) {
       console.log(`  exists DECK_LAYOUT ${layoutId}`)
     }
   }
@@ -226,216 +225,27 @@ async function seedLayouts(requiredLayoutIds, { dryRun }) {
   return created
 }
 
-async function upsertDerivedLayout(layoutRow, existingRows, { dryRun }) {
-  const match = existingRows.find((row) => layoutIdFromTemplateRow(row) === layoutRow.layoutId)
-  const elementCount =
-    layoutRow.schema?.preview?.canvasElements?.elements?.length
-    || layoutRow.schema?.elements?.elements?.length
-    || 0
-  const payload = {
-    type: 'DECK_LAYOUT',
-    name: layoutRow.name,
-    contentType: layoutRow.contentType || 'layout',
-    variant: layoutRow.layoutId,
-    isActive: true,
-    schema: layoutRow.schema,
-  }
-
-  if (dryRun) {
-    console.log(`  [dry-run] ${match ? 'PATCH' : 'POST'} DECK_LAYOUT ${layoutRow.layoutId} (${elementCount} elements, neutral)`)
-    return { layoutId: layoutRow.layoutId, dryRun: true }
-  }
-
-  if (match) {
-    const templateId = templateRowId(match)
-    await apiRequest(`/api/superadmin/templates/${templateId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        name: payload.name,
-        contentType: payload.contentType,
-        variant: payload.variant,
-        isActive: true,
-        schema: payload.schema,
-      }),
-    })
-    console.log(`  updated DECK_LAYOUT ${layoutRow.layoutId} (${elementCount} elements) → id=${templateId}`)
-    return { layoutId: layoutRow.layoutId, id: templateId, updated: true }
-  }
-
-  const row = await apiRequest('/api/superadmin/templates', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  })
-  console.log(`  created DECK_LAYOUT ${layoutRow.layoutId} (${elementCount} elements) → id=${templateRowId(row) || '?'}`)
-  return { layoutId: layoutRow.layoutId, id: templateRowId(row) }
-}
-
-/** Seed DECK_LAYOUT rows with neutral canvas structure (shapes/text, no brand colors/images). */
-async function seedDerivedLayouts(packs, { dryRun }) {
-  const existing = await listTemplates('DECK_LAYOUT', { offline: dryRun && !resolveAccessToken() })
-  const layoutRows = packs.flatMap((entry) => buildDeckLayoutsFromPack(entry))
-  console.log(`\n[layouts-derived] packs=${packs.length} layouts=${layoutRows.length}`)
-
-  const results = []
-  for (const layoutRow of layoutRows) {
-    results.push(await upsertDerivedLayout(layoutRow, existing, { dryRun }))
-  }
-  return results
-}
-
-async function fetchImageBlob(url) {
-  const response = await fetch(url)
-  if (!response.ok) throw new Error(`Failed to fetch ${url}: ${response.status}`)
-  const buffer = Buffer.from(await response.arrayBuffer())
-  const contentType = response.headers.get('content-type') || 'image/jpeg'
-  const ext = contentType.includes('png') ? 'png' : 'jpg'
-  return { buffer, contentType, filename: `preview.${ext}` }
-}
-
-async function uploadTemplateMedia(templateId, { buffer, contentType, filename, kind, slotHint, name }) {
-  const form = new FormData()
-  form.append('file', new Blob([buffer], { type: contentType }), filename)
-  form.append('kind', kind)
-  if (slotHint) form.append('slotHint', slotHint)
-  if (name) form.append('name', name)
-  return apiRequest(`/api/superadmin/templates/${templateId}/media`, {
-    method: 'POST',
-    body: form,
-  })
-}
-
-async function seedPack(manifestEntry, { dryRun, uploadMedia }) {
-  const converted = convertPublicTemplateToDeckPack(manifestEntry)
-  const existing = await listTemplates('DECK_PACK', { offline: dryRun && !resolveAccessToken() })
-  const match = existing.find((row) => packIdFromTemplateRow(row) === manifestEntry.packId)
-
-  const payload = {
-    type: 'DECK_PACK',
-    name: converted.name,
-    contentType: 'pack',
-    variant: manifestEntry.packId,
-    isActive: true,
-    schema: converted.schema,
-  }
-
-  if (dryRun) {
-    console.log(`\n[pack] [dry-run] ${match ? 'PATCH' : 'POST'} DECK_PACK ${manifestEntry.packId}`)
-    console.log(`  slides=${converted.schema.slides.length} layouts=${converted.requiredLayoutIds.join(', ')}`)
-    return { packId: manifestEntry.packId, dryRun: true, converted }
-  }
-
-  let row
-  if (match) {
-    const templateId = match.id || match.templateId
-    row = await apiRequest(`/api/superadmin/templates/${templateId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({
-        name: payload.name,
-        contentType: payload.contentType,
-        variant: payload.variant,
-        isActive: true,
-        schema: payload.schema,
-      }),
-    })
-    console.log(`\n[pack] updated DECK_PACK ${manifestEntry.packId} → id=${templateId}`)
-    row = { ...(match || {}), ...(row || {}), id: templateId }
-  } else {
-    const row = await apiRequest('/api/superadmin/templates', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    })
-    const createdId = templateRowId(row)
-    console.log(`\n[pack] created DECK_PACK ${manifestEntry.packId} → id=${createdId || '?'}`)
-    row = { ...(row || {}), id: createdId || row?.id }
-  }
-
-  const templateId = templateRowId(row) || templateRowId(match)
-  if (uploadMedia && templateId) {
-    const uploads = []
-    if (converted.previewUrl) {
-      uploads.push({ kind: 'preview', slotHint: 'preview', url: converted.previewUrl, name: 'Pack preview' })
-    }
-    for (const hint of converted.mediaHints || []) {
-      uploads.push({
-        kind: 'photo',
-        slotHint: hint.slotHint,
-        url: hint.url,
-        name: `Slide ${hint.slotHint.replace('slide:', '')}`,
-      })
-    }
-    for (const item of uploads) {
-      try {
-        const blob = await fetchImageBlob(item.url)
-        await uploadTemplateMedia(templateId, { ...blob, kind: item.kind, slotHint: item.slotHint, name: item.name })
-        console.log(`  uploaded media ${item.slotHint} (${item.kind})`)
-      } catch (err) {
-        console.warn(`  media upload failed for ${item.slotHint}: ${err.message}`)
-      }
-    }
-  }
-
-  return { packId: manifestEntry.packId, id: templateId, converted }
-}
-
-function collectLayoutIdsFromPacks(packs) {
-  const ids = new Set()
-  for (const entry of packs) {
-    const converted = convertPublicTemplateToDeckPack(entry)
-    for (const layoutId of converted.requiredLayoutIds) ids.add(layoutId)
-    const templateJson = JSON.parse(
-      readFileSync(join(__dirname, '../public/templates', entry.templateFile), 'utf8')
-    )
-    for (const layoutId of collectRequiredLayoutIds(templateJson.scenes, entry.layoutOverrides)) {
-      ids.add(layoutId)
-    }
-  }
-  return [...ids]
-}
-
 async function main() {
   const args = parseArgs(process.argv)
-  const manifest = loadManifest(MANIFEST_PATH)
-  const packs = filterManifestPacks(manifest, args.only)
+  let layoutIds = Object.keys(REGISTRY)
+  if (args.only.length) {
+    layoutIds = layoutIds.filter((id) => args.only.includes(id))
+  }
 
-  if (!packs.length) {
-    console.error('No packs matched --only filter. Available keys:')
-    for (const p of manifest.packs || []) console.error(`  - ${p.key}`)
+  if (!layoutIds.length) {
+    console.error('No layouts matched --only filter.')
     process.exit(1)
   }
 
-  if (args.writeSchema) {
-    const converted = convertPublicTemplateToDeckPack(packs[0])
-    const outPath = args.writeSchema.startsWith('/') || /^[A-Za-z]:/.test(args.writeSchema)
-      ? args.writeSchema
-      : join(process.cwd(), args.writeSchema)
-    mkdirSync(dirname(outPath), { recursive: true })
-    writeFileSync(outPath, JSON.stringify(converted.schema, null, 2), 'utf8')
-    console.log(`Wrote schema → ${outPath}`)
-  }
-
-  if (args.exportOnly) {
-    console.log('Export complete.')
-    return
-  }
-
   console.log(`API: ${getApiBaseUrl()}`)
-  console.log(`Mode: ${args.dryRun ? 'DRY RUN' : 'LIVE'}${args.layoutsOnly ? ' (layouts only)' : ''}${args.packsOnly ? ' (packs only)' : ''}`)
-  console.log(`Packs: ${packs.map((p) => p.key).join(', ')}`)
+  console.log(`Mode: ${args.dryRun ? 'DRY RUN' : 'LIVE'}${args.update ? ' (update existing)' : ''}`)
+  console.log(`Layouts: ${layoutIds.length}`)
 
   if (!args.dryRun) {
     await ensureAccessToken()
   }
 
-  if (!args.packsOnly) {
-    await seedDerivedLayouts(packs, { dryRun: args.dryRun })
-  }
-
-  if (!args.layoutsOnly) {
-    for (const entry of packs) {
-      await seedPack(entry, { dryRun: args.dryRun, uploadMedia: args.uploadMedia })
-    }
-  }
-
+  await seedLayouts(layoutIds, { dryRun: args.dryRun, update: args.update })
   console.log('\nDone.')
 }
 

@@ -59,9 +59,47 @@ export function slotKind(id = '', role = '') {
   if (role === 'label') return 'label'
   if (/bar_chart|main_chart|^chart$/.test(s) || (/_chart$/.test(s) && !/heading|caption|card|panel/.test(s)) || role === 'chart') return 'chart'
   if (/image|media|photo|picture/.test(s) || role === 'image') return 'image'
+  if (role === 'table' || /^table_\d+$/.test(s) || s === 'table') return 'table'
   if (role === 'decoration' || /circle|arrow|accent|badge|dot|shape/.test(s)) return 'decoration'
   if (role === 'background') return 'bg'
   return 'generic'
+}
+
+/** Slots used only for AI shape hints — hidden from layout catalog previews. */
+export function isAiOnlyPreviewSlot(slot) {
+  if (!slot) return false
+  if (slot.aiOnly === true) return true
+  const id = String(slot.id || '')
+  const role = String(slot.role || '').toLowerCase()
+  if (/_BG$|CARD_BG|OVERLAY_SCRIM|CTA_BG|TEXT_HALF_BG/i.test(id)) return true
+  if (role === 'divider') return true
+  if (role === 'decoration' && slot.shape && !/logo/i.test(id)) return true
+  if (role === 'background' && id !== 'BACKGROUND_IMAGE' && slot.shape) return true
+  if (/^ICON_\d+$/.test(id)) return true
+  return false
+}
+
+export function filterPreviewSlots(slots = []) {
+  return (slots || []).filter((s) => !isAiOnlyPreviewSlot(s))
+}
+
+export function isFullBleedRegion(region, gridRows = 10, gridCols = 12) {
+  const reg = parseRegion(region)
+  if (!reg) return false
+  const touchesLeft = reg.c1 <= 1
+  const touchesRight = reg.c2 >= gridCols
+  const touchesTop = reg.r1 <= 1
+  const touchesBottom = reg.r2 >= gridRows
+  const fullHeight = touchesTop && touchesBottom
+  const fullWidth = touchesLeft && touchesRight
+  if (fullWidth && fullHeight) return true
+  if (fullHeight && (touchesLeft || touchesRight)) return true
+  if (fullWidth && (touchesTop || touchesBottom)) return true
+  return false
+}
+
+export function slotTextAlign(slot) {
+  return slot?.typography?.align || null
 }
 
 function slotFamily(id = '') {
@@ -122,7 +160,7 @@ export const SLOT_COLORS = [
 
 export function buildPolishedGroups(slots) {
   const map = new Map()
-  slots.forEach((slot, i) => {
+  filterPreviewSlots(slots).forEach((slot, i) => {
     const reg = parseRegion(slot.region)
     if (!reg) return
     const kind = slotKind(slot.id, slot.role)
@@ -166,6 +204,7 @@ export function resolveSlotPreview(slot, previewHints = {}) {
     else if (role === 'heading') variant = 'title'
     else if (role === 'subheading') variant = 'subheading'
     else if (role === 'caption' || role === 'eyebrow') variant = 'caption'
+    else if (role === 'stat') variant = 'stat'
     else if (role === 'quote') variant = 'title'
     else if (role === 'body') variant = 'body'
     else if (role === 'image') variant = 'image'
