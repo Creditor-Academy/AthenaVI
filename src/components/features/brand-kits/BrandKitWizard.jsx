@@ -8,16 +8,62 @@ import {
   MdClose,
   MdAdd,
   MdInfoOutline,
+  MdEdit,
 } from 'react-icons/md'
 import { ChevronRight } from 'lucide-react'
 import {
-  formatFontRoleGuideline,
+  formatFontWeightLabel,
   getFontRole,
-  resolveRoleHex,
   hexToHsl,
-  hslToHex,
   hexToRgb,
+  ensureGoogleFontLoaded,
 } from './utils/brandKitUtils'
+import { FONT_WEIGHT_OPTIONS, POPULAR_GOOGLE_FONTS } from './utils/brandKitConstants'
+
+function contrastInk(hex) {
+  const raw = String(hex || '#000000').replace('#', '')
+  const full =
+    raw.length === 3
+      ? raw
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : raw
+  const num = Number.parseInt(full, 16)
+  if (!Number.isFinite(num)) return '#0f172a'
+  const r = (num >> 16) & 255
+  const g = (num >> 8) & 255
+  const b = num & 255
+  const luma = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luma > 0.62 ? '#0f172a' : '#ffffff'
+}
+
+function patchFontRole(setKitData, role, patch) {
+  setKitData((prev) => {
+    const nextPatch = { ...patch }
+    if (nextPatch.size != null && nextPatch.sizePx == null) {
+      const n = Number.parseFloat(String(nextPatch.size).replace(/px$/i, ''))
+      if (Number.isFinite(n)) nextPatch.sizePx = n
+    }
+    if (nextPatch.sizePx != null && nextPatch.size == null) {
+      nextPatch.size = `${nextPatch.sizePx}px`
+    }
+    if (nextPatch.weight != null) {
+      const w = Number(nextPatch.weight)
+      if (Number.isFinite(w)) nextPatch.weight = w
+    }
+    if (nextPatch.lineHeight != null) {
+      const lh = Number.parseFloat(String(nextPatch.lineHeight))
+      if (Number.isFinite(lh)) nextPatch.lineHeight = lh
+    }
+    const nextRole = { ...prev.fonts?.[role], ...nextPatch }
+    const fonts = { ...prev.fonts, [role]: nextRole }
+    if (role === 'subheading') {
+      fonts.tertiary = { ...prev.fonts?.tertiary, ...nextPatch }
+    }
+    return { ...prev, fonts }
+  })
+}
 
 export default function BrandKitWizard(props) {
   const {
@@ -45,7 +91,8 @@ export default function BrandKitWizard(props) {
     addColor,
     removeColor,
     triggerAutoGenerateTypography,
-    logoFile,
+    triggerSuggestVoice,
+    triggerSuggestImageStyle,
     handleSave,
     saving,
   } = props
@@ -165,18 +212,33 @@ export default function BrandKitWizard(props) {
 
                   <div className="bk-field">
                     <label>Tone of Voice</label>
-                    <input
-                      type="text"
-                      value={kitData.voice?.tone || ''}
-                      onChange={(e) =>
-                        setKitData((prev) => ({
-                          ...prev,
-                          voice: { ...prev.voice, tone: e.target.value },
-                        }))
-                      }
-                      placeholder="e.g. Professional, Confident, Visionary"
-                      className="bk-wizard-input"
-                    />
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        value={kitData.voice?.tone || ''}
+                        onChange={(e) =>
+                          setKitData((prev) => ({
+                            ...prev,
+                            voice: { ...prev.voice, tone: e.target.value },
+                          }))
+                        }
+                        placeholder="e.g. Professional, Confident, Visionary"
+                        className="bk-wizard-input"
+                        style={{ flex: 1 }}
+                      />
+                      {canWrite && (
+                        <button
+                          type="button"
+                          className={`bk-extract-btn ${generating ? 'generating' : ''}`}
+                          onClick={triggerSuggestVoice}
+                          disabled={generating || !kitName.trim()}
+                          title={!kitName.trim() ? 'Enter a brand name first' : 'Suggest voice from brand name'}
+                        >
+                          <MdAutoAwesome size={16} />
+                          Suggest
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -212,7 +274,7 @@ export default function BrandKitWizard(props) {
               </div>
 
               <div className="bk-wizard-actions">
-                <button type="button" className="ghost-btn" onClick={() => setShowEditor(false)}>
+                <button type="button" className="ghost-btn" onClick={closeEditor}>
                   Cancel
                 </button>
                 <button
@@ -256,14 +318,21 @@ export default function BrandKitWizard(props) {
                   return (
                     <div className="bk-color-card" key={color.id || index}>
                       <div className="bk-card-swatch-block" style={{ background: hex }}>
-                        <button
-                          type="button"
-                          className="bk-copy-hex-btn"
-                          onClick={() => handleCopyHex(hex)}
-                        >
-                          <MdContentCopy size={14} />
-                          {copiedHex === hex ? 'Copied!' : 'Copy HEX'}
-                        </button>
+                        {canWrite && (
+                          <button
+                            type="button"
+                            className="bk-edit-color-btn"
+                            onClick={(e) => {
+                              e.currentTarget
+                                .closest('.bk-color-card')
+                                ?.querySelector('input[type="color"]')
+                                ?.click()
+                            }}
+                          >
+                            <MdEdit size={14} />
+                            Edit
+                          </button>
+                        )}
                         {canWrite && (kitData.colors || []).length > 2 && (
                           <button
                             type="button"
@@ -289,20 +358,37 @@ export default function BrandKitWizard(props) {
                             <span className="bk-card-role-tag">{index < 2 ? 'LIGHT MODE' : 'DARK MODE'}</span>
                           </div>
                           <div className="bk-card-hex-box">
-                            <input
-                              type="color"
-                              value={/^#[0-9A-Fa-f]{6}$/.test(hex) ? hex : '#0F172A'}
-                              disabled={!canWrite}
-                              onChange={(e) => updateColor(index, { hex: e.target.value.toUpperCase() })}
-                              className="bk-picker-inline"
-                            />
+                            <label
+                              className={`bk-hex-swatch-circle${!canWrite ? ' is-disabled' : ''}`}
+                              style={{ background: hex }}
+                              title={canWrite ? 'Edit color' : undefined}
+                            >
+                              <input
+                                type="color"
+                                value={/^#[0-9A-Fa-f]{6}$/.test(hex) ? hex : '#0F172A'}
+                                disabled={!canWrite}
+                                onChange={(e) => updateColor(index, { hex: e.target.value.toUpperCase() })}
+                                className="bk-picker-inline"
+                                aria-label={`Edit ${color.name || 'color'}`}
+                              />
+                            </label>
                             <input
                               type="text"
                               value={color.hex}
                               disabled={!canWrite}
                               onChange={(e) => updateColor(index, { hex: e.target.value })}
                               className="bk-card-hex-val"
+                              aria-label={`${color.name || 'Color'} hex`}
                             />
+                            <button
+                              type="button"
+                              className={`bk-hex-copy-btn${copiedHex === hex ? ' is-copied' : ''}`}
+                              onClick={() => handleCopyHex(hex)}
+                              title={copiedHex === hex ? 'Copied' : 'Copy HEX'}
+                              aria-label={copiedHex === hex ? 'Copied' : 'Copy HEX'}
+                            >
+                              {copiedHex === hex ? <MdCheck size={14} /> : <MdContentCopy size={14} />}
+                            </button>
                           </div>
                         </div>
 
@@ -339,242 +425,148 @@ export default function BrandKitWizard(props) {
             </div>
           )}
 
-          {/* STEP 3: TYPOGRAPHY & AUTO-GENERATE */}
-          {/* STEP 3: TYPOGRAPHY SYSTEM (MATCHING STITCH PROTOTYPE 4f899a683a294d32b7726bc1aeabc0ae) */}
+          {/* STEP 3: TYPOGRAPHY — full controls, no preview panel */}
           {wizardStep === 3 && (
             <div className="bk-wizard-body">
-              <div className="bk-type-header-row">
-                <div className="bk-type-header-left">
-                  <h2 className="bk-wizard-title">Typography System</h2>
+              <div className="bk-wiz-type-header">
+                <div>
+                  <h2 className="bk-wizard-title">Typography</h2>
                   <p className="bk-wizard-desc">
-                    Define heading, sub heading, and body font families or auto-generate harmonic font pairings.
+                    Set family, weight, size, and line height for heading, subheading, and body.
                   </p>
                 </div>
                 <button
                   type="button"
                   className="bk-extract-btn"
                   onClick={triggerAutoGenerateTypography}
+                  disabled={generating}
                 >
                   <MdAutoAwesome size={16} />
-                  Auto-Generate Font Pairing
+                  {generating ? 'Suggesting…' : 'Suggest Pairing'}
                 </button>
               </div>
 
-              {/* 12-Column Layout Grid */}
-              <div className="bk-type-grid" style={{ marginBottom: 24 }}>
-                {/* Left Column (Span 8) — 3 Typographic Specimen Cards */}
-                <div className="bk-type-col-main">
-                  {/* 1. HEADING SPECIMEN CARD */}
-                  <div className="bk-type-specimen-box">
-                    <div className="bk-type-box-head">
-                      <span className="bk-type-box-tag">HEADING</span>
-                      <div className="bk-type-box-input-wrap">
-                        <label className="bk-type-input-lbl">FONT FAMILY</label>
-                        <input
-                          type="text"
-                          className="bk-type-inline-input"
-                          value={kitData.fonts?.heading?.family || ''}
-                          onChange={(e) =>
-                            setKitData((prev) => ({
-                              ...prev,
-                              fonts: {
-                                ...prev.fonts,
-                                heading: { ...prev.fonts?.heading, family: e.target.value },
-                              },
-                            }))
-                          }
-                          placeholder="e.g. Playfair Display, Outfit"
-                        />
-                      </div>
-                    </div>
+              <div className="bk-wiz-type-list bk-wiz-type-list--full">
+                {[
+                  {
+                    role: 'heading',
+                    label: 'Heading',
+                    hint: 'Titles & slide headlines',
+                    sample: 'The quick brown fox',
+                  },
+                  {
+                    role: 'subheading',
+                    label: 'Subheading',
+                    hint: 'Section titles & captions',
+                    sample: 'Clean hierarchy for clarity',
+                  },
+                  {
+                    role: 'body',
+                    label: 'Body',
+                    hint: 'Paragraphs & UI copy',
+                    sample: 'Readable text for decks and product surfaces.',
+                  },
+                ].map(({ role, label, hint, sample }) => {
+                  const font = getFontRole(kitData.fonts, role)
+                  const familyOptions = POPULAR_GOOGLE_FONTS.includes(font.family)
+                    ? POPULAR_GOOGLE_FONTS
+                    : [font.family, ...POPULAR_GOOGLE_FONTS].filter(Boolean)
+                  const weightValue = String(font.weight || '400')
 
-                    <div className="bk-type-box-preview">
-                      <h2
-                        className="bk-type-preview-heading"
-                        style={{ fontFamily: kitData.fonts?.heading?.family || 'Playfair Display, serif' }}
-                      >
-                        The quick brown fox jumps over the lazy dog
-                      </h2>
-                    </div>
+                  return (
+                    <div className="bk-wiz-type-row bk-wiz-type-row--editable" key={role}>
+                      <div className="bk-wiz-type-meta">
+                        <span className="bk-wiz-type-label">{label}</span>
+                        <span className="bk-wiz-type-hint">{hint}</span>
+                      </div>
 
-                    <div className="bk-type-box-badges">
-                      <div className="bk-type-badge">
-                        <span className="bk-tb-lbl">FAMILY</span>
-                        <span className="bk-tb-val">{kitData.fonts?.heading?.family || 'Playfair Display'}</span>
-                      </div>
-                      <div className="bk-type-badge">
-                        <span className="bk-tb-lbl">WEIGHT</span>
-                        <span className="bk-tb-val">700 (Bold)</span>
-                      </div>
-                      <div className="bk-type-badge">
-                        <span className="bk-tb-lbl">SIZE</span>
-                        <span className="bk-tb-val">48px</span>
-                      </div>
-                      <div className="bk-type-badge">
-                        <span className="bk-tb-lbl">LINE HEIGHT</span>
-                        <span className="bk-tb-val">1.2</span>
-                      </div>
-                    </div>
-                  </div>
+                      <div className="bk-wiz-type-controls bk-wiz-type-controls--grid">
+                        <label className="bk-wiz-type-field">
+                          <span>Font family</span>
+                          <select
+                            value={font.family || ''}
+                            disabled={!canWrite}
+                            onChange={(e) => {
+                              const family = e.target.value
+                              ensureGoogleFontLoaded(family)
+                              patchFontRole(setKitData, role, { family })
+                            }}
+                          >
+                            {familyOptions.map((name) => (
+                              <option key={name} value={name}>
+                                {name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
 
-                  {/* 2. SUBHEADING SPECIMEN CARD */}
-                  <div className="bk-type-specimen-box">
-                    <div className="bk-type-box-head">
-                      <span className="bk-type-box-tag">SUBHEADING</span>
-                      <div className="bk-type-box-input-wrap">
-                        <label className="bk-type-input-lbl">FONT FAMILY</label>
-                        <input
-                          type="text"
-                          className="bk-type-inline-input"
-                          value={kitData.fonts?.subheading?.family || kitData.fonts?.tertiary?.family || ''}
-                          onChange={(e) =>
-                            setKitData((prev) => ({
-                              ...prev,
-                              fonts: {
-                                ...prev.fonts,
-                                subheading: { ...prev.fonts?.subheading, family: e.target.value },
-                                tertiary: { ...prev.fonts?.tertiary, family: e.target.value },
-                              },
-                            }))
-                          }
-                          placeholder="e.g. Plus Jakarta Sans, Poppins"
-                        />
-                      </div>
-                    </div>
+                        <label className="bk-wiz-type-field">
+                          <span>Weight</span>
+                          <select
+                            value={
+                              FONT_WEIGHT_OPTIONS.some((o) => o.value === weightValue)
+                                ? weightValue
+                                : weightValue
+                            }
+                            disabled={!canWrite}
+                            onChange={(e) =>
+                              patchFontRole(setKitData, role, { weight: e.target.value })
+                            }
+                          >
+                            {!FONT_WEIGHT_OPTIONS.some((o) => o.value === weightValue) && (
+                              <option value={weightValue}>
+                                {formatFontWeightLabel(weightValue) || weightValue}
+                              </option>
+                            )}
+                            {FONT_WEIGHT_OPTIONS.map((opt) => (
+                              <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
 
-                    <div className="bk-type-box-preview">
-                      <h3
-                        className="bk-type-preview-subheading"
-                        style={{
-                          fontFamily:
-                            kitData.fonts?.subheading?.family ||
-                            kitData.fonts?.tertiary?.family ||
-                            'Plus Jakarta Sans, sans-serif',
-                        }}
-                      >
-                        A clean, modern sans-serif perfectly paired for clarity and contrast.
-                      </h3>
-                    </div>
+                        <label className="bk-wiz-type-field bk-wiz-type-field--sm">
+                          <span>Size</span>
+                          <input
+                            type="text"
+                            value={font.size || ''}
+                            disabled={!canWrite}
+                            placeholder="40px"
+                            onChange={(e) =>
+                              patchFontRole(setKitData, role, { size: e.target.value })
+                            }
+                          />
+                        </label>
 
-                    <div className="bk-type-box-badges">
-                      <div className="bk-type-badge">
-                        <span className="bk-tb-lbl">FAMILY</span>
-                        <span className="bk-tb-val">
-                          {kitData.fonts?.subheading?.family || kitData.fonts?.tertiary?.family || 'Plus Jakarta Sans'}
-                        </span>
+                        <label className="bk-wiz-type-field bk-wiz-type-field--sm">
+                          <span>Line height</span>
+                          <input
+                            type="text"
+                            value={font.lineHeight ?? ''}
+                            disabled={!canWrite}
+                            placeholder="1.2"
+                            onChange={(e) =>
+                              patchFontRole(setKitData, role, { lineHeight: e.target.value })
+                            }
+                          />
+                        </label>
                       </div>
-                      <div className="bk-type-badge">
-                        <span className="bk-tb-lbl">WEIGHT</span>
-                        <span className="bk-tb-val">600 (Semi-bold)</span>
-                      </div>
-                      <div className="bk-type-badge">
-                        <span className="bk-tb-lbl">SIZE</span>
-                        <span className="bk-tb-val">20px</span>
-                      </div>
-                      <div className="bk-type-badge">
-                        <span className="bk-tb-lbl">LINE HEIGHT</span>
-                        <span className="bk-tb-val">28px</span>
-                      </div>
-                    </div>
-                  </div>
 
-                  {/* 3. BODY SPECIMEN CARD */}
-                  <div className="bk-type-specimen-box">
-                    <div className="bk-type-box-head">
-                      <span className="bk-type-box-tag">BODY</span>
-                      <div className="bk-type-box-input-wrap">
-                        <label className="bk-type-input-lbl">FONT FAMILY</label>
-                        <input
-                          type="text"
-                          className="bk-type-inline-input"
-                          value={kitData.fonts?.body?.family || ''}
-                          onChange={(e) =>
-                            setKitData((prev) => ({
-                              ...prev,
-                              fonts: {
-                                ...prev.fonts,
-                                body: { ...prev.fonts?.body, family: e.target.value },
-                              },
-                            }))
-                          }
-                          placeholder="e.g. Inter, Roboto"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="bk-type-box-preview">
-                      <p
-                        className="bk-type-preview-body"
-                        style={{ fontFamily: kitData.fonts?.body?.family || 'Inter, sans-serif' }}
-                      >
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                      </p>
-                    </div>
-
-                    <div className="bk-type-box-badges">
-                      <div className="bk-type-badge">
-                        <span className="bk-tb-lbl">FAMILY</span>
-                        <span className="bk-tb-val">{kitData.fonts?.body?.family || 'Inter'}</span>
-                      </div>
-                      <div className="bk-type-badge">
-                        <span className="bk-tb-lbl">WEIGHT</span>
-                        <span className="bk-tb-val">400 (Regular)</span>
-                      </div>
-                      <div className="bk-type-badge">
-                        <span className="bk-tb-lbl">SIZE</span>
-                        <span className="bk-tb-val">16px</span>
-                      </div>
-                      <div className="bk-type-badge">
-                        <span className="bk-tb-lbl">LINE HEIGHT</span>
-                        <span className="bk-tb-val">24px</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Column (Span 4) — "Typography in Action" Preview */}
-                <div className="bk-type-col-side">
-                  <div className="bk-type-action-card">
-                    <div className="bk-action-card-head">
-                      <span>TYPOGRAPHY IN ACTION</span>
-                    </div>
-                    <div className="bk-action-card-body">
                       <div
-                        className="bk-action-cover-img"
+                        className={`bk-wiz-type-sample bk-wiz-type-sample--${role}`}
                         style={{
-                          backgroundImage:
-                            "url('https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80')",
+                          fontFamily: font.family,
+                          fontWeight: font.weight,
+                          fontSize: font.size,
+                          lineHeight: font.lineHeight,
                         }}
-                      />
-                      <div className="bk-action-content">
-                        <span className="bk-action-eyebrow">CASE STUDY</span>
-                        <h4
-                          className="bk-action-heading"
-                          style={{ fontFamily: kitData.fonts?.heading?.family || 'Playfair Display, serif' }}
-                        >
-                          Designing for the Future of Work
-                        </h4>
-                        <p
-                          className="bk-action-subheading"
-                          style={{
-                            fontFamily:
-                              kitData.fonts?.subheading?.family ||
-                              kitData.fonts?.tertiary?.family ||
-                              'Plus Jakarta Sans, sans-serif',
-                          }}
-                        >
-                          How minimal interfaces improve deep focus and productivity in modern enterprise software.
-                        </p>
-                        <p
-                          className="bk-action-paragraph"
-                          style={{ fontFamily: kitData.fonts?.body?.family || 'Inter, sans-serif' }}
-                        >
-                          The transition to asynchronous work has necessitated tools that don&apos;t just connect us, but help us manage our attention.
-                        </p>
+                      >
+                        {sample}
                       </div>
                     </div>
-                  </div>
-                </div>
+                  )
+                })}
               </div>
 
               <div className="bk-wizard-actions">
@@ -588,45 +580,165 @@ export default function BrandKitWizard(props) {
             </div>
           )}
 
-          {/* STEP 4: REVIEW & CREATE */}
+          {/* STEP 4: REVIEW — colorful typography + colors overview */}
           {wizardStep === 4 && (
             <div className="bk-wizard-body">
-              <h2 className="bk-wizard-title">Review & Finish Brand Kit</h2>
-              <p className="bk-wizard-desc">Your brand kit specification is ready. Click finish to initialize the Studio.</p>
-
-              <div className="bk-guideline-card" style={{ marginBottom: 24 }}>
-                <div className="bk-guideline-header">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    {logoPreviewUrl && (
-                      <img src={logoPreviewUrl} alt="Brand Logo" style={{ height: 32, objectFit: 'contain' }} />
-                    )}
-                    <h3>{kitName || 'New Brand Kit'} Specification</h3>
-                  </div>
-                  <span className="bk-overview-chip">Ready to Create</span>
+              <div className="bk-wiz-review-header">
+                <div>
+                  <h2 className="bk-wizard-title">Review Guidelines</h2>
+                  <p className="bk-wizard-desc">
+                    A quick brand overview before you create the kit.
+                  </p>
                 </div>
-                <div className="bk-guideline-grid">
-                  <div className="bk-guideline-block">
-                    <h5>Basics</h5>
-                    <p>Name: <strong>{kitName}</strong><br />Tagline: <em>{slogan || 'N/A'}</em></p>
-                  </div>
-                  <div className="bk-guideline-block">
-                    <h5>Color Cards ({kitData.colors?.length || 0})</h5>
-                    <p>Base: <code>{resolveRoleHex(kitData, 'primary', '#2563EB')}</code></p>
-                  </div>
-                  <div className="bk-guideline-block">
-                    <h5>Typography</h5>
-                    <p>
-                      Heading: <strong>{formatFontRoleGuideline(getFontRole(kitData.fonts, 'heading'))}</strong><br />
-                      Sub Heading: <strong>{formatFontRoleGuideline(getFontRole(kitData.fonts, 'subheading'))}</strong><br />
-                      Body: <strong>{formatFontRoleGuideline(getFontRole(kitData.fonts, 'body'))}</strong>
-                    </p>
-                  </div>
-                  <div className="bk-guideline-block">
-                    <h5>Voice & Tone</h5>
-                    <p>Tone: <em>{kitData.voice?.tone || 'Professional'}</em></p>
-                  </div>
+                <div className="bk-wiz-review-header-actions">
+                  {canWrite && (
+                    <>
+                      <button
+                        type="button"
+                        className={`bk-extract-btn ${generating ? 'generating' : ''}`}
+                        onClick={triggerSuggestVoice}
+                        disabled={generating || !kitName.trim()}
+                      >
+                        <MdAutoAwesome size={16} />
+                        Suggest Voice
+                      </button>
+                      <button
+                        type="button"
+                        className={`bk-extract-btn ${generating ? 'generating' : ''}`}
+                        onClick={triggerSuggestImageStyle}
+                        disabled={generating}
+                      >
+                        <MdAutoAwesome size={16} />
+                        Suggest Image Style
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
+
+              {(() => {
+                const heading = getFontRole(kitData.fonts, 'heading')
+                const subheading = getFontRole(kitData.fonts, 'subheading')
+                const body = getFontRole(kitData.fonts, 'body')
+                const primaryFamily = heading.family || 'Outfit'
+                const colors = kitData.colors || []
+                const primaryHex = colors[0]?.hex || '#3B82F6'
+
+                return (
+                  <div className="bk-wiz-review-board">
+                    <section className="bk-wiz-review-type">
+                      <div className="bk-wiz-review-type-top">
+                        <div className="bk-wiz-review-brand">
+                          {logoPreviewUrl ? (
+                            <img src={logoPreviewUrl} alt="" className="bk-wiz-review-logo" />
+                          ) : null}
+                          <div>
+                            <p className="bk-wiz-review-kicker">Typography &amp; Colors</p>
+                            <h3 className="bk-wiz-review-name">{kitName.trim() || 'Brand Kit'}</h3>
+                            {slogan ? <p className="bk-wiz-review-tagline">{slogan}</p> : null}
+                          </div>
+                        </div>
+
+                        <div
+                          className="bk-wiz-review-hero-type"
+                          style={{ fontFamily: primaryFamily, color: primaryHex }}
+                        >
+                          <span className="bk-wiz-review-family">{primaryFamily}</span>
+                          <span className="bk-wiz-review-aa" aria-hidden>
+                            Aa
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="bk-wiz-review-scale">
+                        <div className="bk-wiz-review-scale-item">
+                          <span className="bk-wiz-review-scale-meta">
+                            H1 · {heading.size} · {formatFontWeightLabel(heading.weight)}
+                          </span>
+                          <p
+                            style={{
+                              fontFamily: heading.family,
+                              fontWeight: heading.weight,
+                              fontSize: Math.min(Number(heading.sizePx) || 40, 46),
+                              lineHeight: heading.lineHeight,
+                            }}
+                          >
+                            {kitName.trim() || 'Brand title'}
+                          </p>
+                        </div>
+                        <div className="bk-wiz-review-scale-item">
+                          <span className="bk-wiz-review-scale-meta">
+                            H2 · {subheading.size} · {formatFontWeightLabel(subheading.weight)}
+                          </span>
+                          <p
+                            style={{
+                              fontFamily: subheading.family,
+                              fontWeight: subheading.weight,
+                              fontSize: Math.min(Number(subheading.sizePx) || 20, 22),
+                              lineHeight: subheading.lineHeight,
+                            }}
+                          >
+                            {slogan.trim() || 'Supporting headline'}
+                          </p>
+                        </div>
+                        <div className="bk-wiz-review-scale-item">
+                          <span className="bk-wiz-review-scale-meta">
+                            Body · {body.size} · {formatFontWeightLabel(body.weight)}
+                          </span>
+                          <p
+                            style={{
+                              fontFamily: body.family,
+                              fontWeight: body.weight,
+                              fontSize: Math.min(Number(body.sizePx) || 14, 16),
+                              lineHeight: body.lineHeight,
+                            }}
+                          >
+                            {kitData.voice?.tone
+                              ? `Voice: ${kitData.voice.tone}`
+                              : 'Body copy stays clear across decks and product UI.'}
+                          </p>
+                        </div>
+                      </div>
+                    </section>
+
+                    <aside className="bk-wiz-review-colors">
+                      {colors.map((color, index) => {
+                        const hex = color.hex || '#94A3B8'
+                        const ink = contrastInk(hex)
+                        const sizes = ['lg', 'md', 'md', 'sm', 'sm', 'sm']
+                        const sizeClass = sizes[Math.min(index, sizes.length - 1)]
+                        const isLight = ink === '#0f172a'
+                        return (
+                          <div
+                            key={color.id || `${hex}-${index}`}
+                            className={`bk-wiz-review-swatch bk-wiz-review-swatch--${sizeClass}${isLight ? ' is-light' : ''}`}
+                            style={{ background: hex, color: ink }}
+                          >
+                            <span className="bk-wiz-review-swatch-name">
+                              {color.name || `Color ${index + 1}`}
+                            </span>
+                            <span className="bk-wiz-review-swatch-hex">{hex}</span>
+                          </div>
+                        )
+                      })}
+                    </aside>
+
+                    <div className="bk-wiz-review-extras">
+                      <div className="bk-wiz-review-extra-card">
+                        <span className="bk-wiz-review-extra-label">Voice</span>
+                        <p>{kitData.voice?.tone || 'Not set'}</p>
+                        <p className="bk-wiz-review-extra-muted">
+                          {kitData.voice?.audience || 'Audience not set'}
+                        </p>
+                      </div>
+                      <div className="bk-wiz-review-extra-card bk-wiz-review-extra-card--wide">
+                        <span className="bk-wiz-review-extra-label">Image style</span>
+                        <p>{kitData.imageStyle || 'Not set yet — suggest one above'}</p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
 
               <div className="bk-wizard-actions">
                 <button type="button" className="ghost-btn" onClick={() => setWizardStep(3)}>

@@ -1,5 +1,6 @@
 import ElementToolbar from './ElementToolbar'
 import ElementPropertiesPanel from '../ElementPropertiesPanel'
+import SlideTransitionPicker from './SlideTransitionPicker'
 import './insertPanels.css'
 import '../pptEditorExtras.css'
 import '../pptPanelUi.css'
@@ -21,8 +22,12 @@ function SlideDesignSection({
   onBackgroundGradientChange,
   onAddBackgroundImage,
   onSlideStylesChange,
+  onChangeTransition,
   disabled,
 }) {
+  const currentTransition =
+    slide?.transition || slide?.elements?.transition || 'none'
+
   const bgColor =
     slide?.backgroundColor ||
     (slide?.backgroundGradientStart ? null : DEFAULT_SLIDE_BG)
@@ -134,6 +139,16 @@ function SlideDesignSection({
         ) : (
           <div className="ppt-slide-layer-empty">No layout templates in workspace</div>
         )}
+      </div>
+
+      <div className="ppt-slide-panel-section">
+        <div className="ppt-slide-panel-label">Slide transition</div>
+        <SlideTransitionPicker
+          value={currentTransition}
+          onChange={onChangeTransition}
+          disabled={disabled}
+          compact
+        />
       </div>
 
       <div className="ppt-slide-panel-section">
@@ -363,19 +378,24 @@ function ChartDesignSection({ element, palette, onChangeContent, disabled }) {
 
 function ImageDesignSection({
   element,
+  slide,
   onChangeContent,
   onChangePlacement,
   onToggleLock,
   onReplaceImage,
   onCropImage,
+  onToggleUseAsBackground,
   disabled,
 }) {
   const c = element?.content || {}
   const p = element?.placement || {}
   const opacity = p.opacity != null ? Math.round(p.opacity * 100) : 100
+  const isBackground =
+    Boolean(c.useAsBackground) || slide?.backgroundImageElementId === element?.id
+  const canUseAsBackground = Boolean(c.url || c.src || c.thumbnailUrl)
 
   return (
-    <div className="ppt-element-props-grid">
+    <div className="ppt-element-props-grid ppt-image-design-panel">
       {c.url || c.src ? (
         <div className="ppt-design-image-preview">
           <img src={c.url || c.src} alt="" />
@@ -397,6 +417,18 @@ function ImageDesignSection({
       >
         Crop & fit
       </button>
+      <div className="ppt-element-props-row ppt-element-props-row--switch">
+        <span>Use as background</span>
+        <button
+          type="button"
+          className={`ppt-toggle-switch ${isBackground ? 'is-on' : ''}`}
+          role="switch"
+          aria-checked={isBackground}
+          aria-label="Use as background"
+          disabled={disabled || (!canUseAsBackground && !isBackground)}
+          onClick={() => onToggleUseAsBackground?.(!isBackground)}
+        />
+      </div>
       <div className="ppt-element-props-row">
         <span>Fit</span>
         <select
@@ -468,6 +500,8 @@ export default function DesignContextPanel({
   onToggleElementLock,
   onReplaceImage,
   onCropImage,
+  onToggleImageAsBackground,
+  onChangeTransition,
   disabled,
 }) {
   return (
@@ -486,6 +520,7 @@ export default function DesignContextPanel({
           onBackgroundGradientChange={onBackgroundGradientChange}
           onAddBackgroundImage={onAddBackgroundImage}
           onSlideStylesChange={onSlideStylesChange}
+          onChangeTransition={onChangeTransition}
           disabled={disabled}
         />
       )}
@@ -515,11 +550,15 @@ export default function DesignContextPanel({
       {(focus === 'image' || focus === 'icon') && element && (
         <ImageDesignSection
           element={element}
+          slide={slide}
           onChangeContent={onChangeElementContent}
           onChangePlacement={onChangeElementPlacement}
           onToggleLock={onToggleElementLock}
           onReplaceImage={onReplaceImage}
           onCropImage={onCropImage}
+          onToggleUseAsBackground={(enabled) =>
+            onToggleImageAsBackground?.(element.id, enabled)
+          }
           disabled={disabled}
         />
       )}

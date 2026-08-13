@@ -1,14 +1,23 @@
 import {
   buildPolishedGroups,
+  filterPreviewSlots,
   getGridDims,
   groupPrimaryText,
   groupSlotPreview,
+  isFullBleedRegion,
   isShapePreviewGroup,
   isTextPreviewGroup,
   previewVerticalAlign,
   regionToBox,
+  slotTextAlign,
 } from '../../utils/layoutPreviewUtils'
 import { aspectRatioToCss } from '../../utils/deckPackTheme'
+import { previewImageFrameStyle, PreviewImageIcon } from './layoutPreviewImageShared.jsx'
+import { layoutSchemaHasCanvasElements, resolveLayoutCanvasElementsDoc } from '../../utils/videoTemplateToCanvasElements'
+import CanvasElementsPreview from './CanvasElementsPreview'
+import { EXTENDED_PREVIEW_MODES } from './layoutPolishedPreviewsExtended.jsx'
+import { PEOPLE_PRICING_PREVIEW_MODES } from './layoutPolishedPreviewsPeoplePricing.jsx'
+import { DEVICE_FRAMES_PREVIEW_MODES } from './layoutPolishedPreviewsDeviceFrames.jsx'
 
 const LAYOUT_POLISHED_THEME = {
   bg: 'var(--preview-bg, var(--bg-card, #ffffff))',
@@ -43,18 +52,14 @@ function PolishedIconCircle({ size }) {
   )
 }
 
-function PolishedImagePlaceholder({ large, fullBleed = false, src = '' }) {
+function PolishedImagePlaceholder({ large, fullBleed = false, src = '', hero = false }) {
   const iconSize = large ? 36 : 20
   if (src) {
     return (
       <div
         style={{
-          width: '100%',
-          height: '100%',
-          boxSizing: 'border-box',
-          background: LAYOUT_POLISHED_THEME.imageBg,
-          borderRadius: fullBleed ? 0 : large ? 12 : 6,
-          overflow: 'hidden',
+          ...previewImageFrameStyle({ large, hero: hero && !fullBleed }),
+          borderRadius: fullBleed ? 0 : previewImageFrameStyle({ large, hero }).borderRadius,
         }}
       >
         <img
@@ -67,18 +72,7 @@ function PolishedImagePlaceholder({ large, fullBleed = false, src = '' }) {
     )
   }
   return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        boxSizing: 'border-box',
-        background: LAYOUT_POLISHED_THEME.imageBg,
-        borderRadius: fullBleed ? 0 : large ? 12 : 6,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
+    <div style={previewImageFrameStyle({ large, hero: hero && !fullBleed, circle: false })}>
       <svg
         width={iconSize}
         height={iconSize}
@@ -200,7 +194,7 @@ function PolishedStatRowPreview({ previewHints, large, className, style, fill, a
     { bold: headingMeta.bold ?? true, uppercase: headingMeta.uppercase ?? false }
   )
   const stats = Array.isArray(previewHints.stats) && previewHints.stats.length
-    ? previewHints.stats.slice(0, 3)
+    ? previewHints.stats
     : [
         { value: '98%', label: 'Customer satisfaction' },
         { value: '3.2x', label: 'Average ROI' },
@@ -454,7 +448,7 @@ function PolishedPricingPlansPreview({ previewHints, large, className, style, fi
     uppercase: eyebrowMeta.uppercase ?? true,
   })
   const columns = Array.isArray(previewHints.columns)?.length
-    ? previewHints.columns.slice(0, 3)
+    ? previewHints.columns
     : [
         { label: 'Basic', price: '$99', items: ['The first point', 'The second point', 'The third point'] },
         { label: 'Standard', price: '$299', items: ['The first point', 'The second point', 'The third point', 'The fourth point'] },
@@ -1177,7 +1171,65 @@ function renderSlotPreviewContent(group, large, previewHints) {
   }
 
   if (meta.variant === 'image' || (group.kinds.has('image') && group.kinds.size === 1)) {
-    return <PolishedImagePlaceholder large={large} src={meta.imageUrl || previewHints?.imageUrl || ''} />
+    const primarySlot = group.slots[0]?.slot
+    const fullBleed = isFullBleedRegion(primarySlot?.region)
+    const isHero = /HERO_IMAGE|BACKGROUND_IMAGE/i.test(String(primarySlot?.id || ''))
+    const captionText = group.kinds.has('caption')
+      ? groupPrimaryText(group, ['caption'], '')
+      : ''
+    const imageEl = (
+      <PolishedImagePlaceholder
+        large={large}
+        fullBleed={fullBleed}
+        hero={isHero}
+        src={meta.imageUrl || previewHints?.imageUrl || ''}
+      />
+    )
+    if (!captionText) return imageEl
+    return (
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          boxSizing: 'border-box',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+        }}
+      >
+        <div style={{ flex: 1, minHeight: 0 }}>{imageEl}</div>
+        <div
+          style={{
+            flexShrink: 0,
+            padding: large ? '4% 6%' : '3% 5%',
+            fontSize: large ? PREVIEW_CAPTION_FS.large : PREVIEW_CAPTION_FS.small,
+            color: LAYOUT_POLISHED_THEME.muted,
+            lineHeight: 1.3,
+            textAlign: 'center',
+          }}
+        >
+          {captionText}
+        </div>
+      </div>
+    )
+  }
+
+  const primarySlot = group.slots[0]?.slot
+  const textAlign = slotTextAlign(primarySlot) || (meta.variant === 'title' && /centered|divider/i.test(String(primarySlot?.id || '')) ? 'center' : 'left')
+  const justifyContent = textAlign === 'center' ? 'center' : 'flex-start'
+
+  if (meta.variant === 'stat' || group.kinds.has('stat')) {
+    const { display, fontWeight } = formatPreviewText(
+      meta.text || groupPrimaryText(group, ['stat'], '01'),
+      { bold: true, uppercase: false }
+    )
+    return (
+      <div style={{ width: '100%', height: '100%', boxSizing: 'border-box', padding: pad, display: 'flex', alignItems: vAlign, justifyContent }}>
+        <div style={{ fontSize: large ? '2.4rem' : '0.62rem', fontWeight: 800, color: t.accent, lineHeight: 1, width: '100%', textAlign }}>
+          {display}
+        </div>
+      </div>
+    )
   }
 
   if (meta.variant === 'title' || group.kinds.has('heading') || group.kinds.has('quote')) {
@@ -1194,7 +1246,7 @@ function renderSlotPreviewContent(group, large, previewHints) {
           padding: pad,
           display: 'flex',
           alignItems: vAlign,
-          justifyContent: 'flex-start',
+          justifyContent,
         }}
       >
         <div
@@ -1204,6 +1256,7 @@ function renderSlotPreviewContent(group, large, previewHints) {
             color: t.text,
             lineHeight: 1.12,
             textTransform: meta.uppercase ? 'uppercase' : 'none',
+            textAlign,
             display: '-webkit-box',
             WebkitLineClamp: large ? 4 : 3,
             WebkitBoxOrient: 'vertical',
@@ -1255,6 +1308,8 @@ function renderSlotPreviewContent(group, large, previewHints) {
   }
 
   if (meta.variant === 'body' || group.kinds.has('body')) {
+    const primarySlot = group.slots[0]?.slot
+    const lineClamp = primarySlot?.max_lines || (large ? 4 : 3)
     const { display, fontWeight } = formatPreviewText(
       meta.text || groupPrimaryText(group, ['body'], 'Explain what this section is about'),
       { bold: meta.bold ?? false, uppercase: meta.uppercase ?? false }
@@ -1278,7 +1333,7 @@ function renderSlotPreviewContent(group, large, previewHints) {
             color: t.muted,
             lineHeight: 1.35,
             display: '-webkit-box',
-            WebkitLineClamp: large ? 4 : 3,
+            WebkitLineClamp: lineClamp,
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
             width: '100%',
@@ -1347,7 +1402,9 @@ function renderPolishedGroupContent(group, large, previewHints = {}) {
     !group.kinds.has('chart')
 
   if (isImageOnly) {
-    return <PolishedImagePlaceholder large={large} src={resolvePreviewImageSrc(previewHints)} />
+    const slotId = group.slots?.[0]?.slot?.id || ''
+    const isHero = /HERO_IMAGE|BACKGROUND_IMAGE/i.test(String(slotId))
+    return <PolishedImagePlaceholder large={large} hero={isHero} src={resolvePreviewImageSrc(previewHints, slotId)} />
   }
 
   if (group.isInsight) {
@@ -1584,7 +1641,7 @@ export default function LayoutPolishedPreview({
   style,
   aspectRatio = '16:9',
 }) {
-  const resolvedSlots = slots.length ? slots : schema?.slots ?? []
+  const resolvedSlots = filterPreviewSlots(slots.length ? slots : schema?.slots ?? [])
   const hasSlots = resolvedSlots.length > 0
   const previewHints = schema?.preview ?? {}
   const previewMode = previewHints.mode
@@ -1593,6 +1650,22 @@ export default function LayoutPolishedPreview({
   const frameStyle = fill
     ? { width: '100%', height: '100%', aspectRatio: 'unset', minHeight: 0 }
     : { width: '100%', aspectRatio: cssAspect }
+
+  if (previewMode === 'canvas_elements' || layoutSchemaHasCanvasElements(schema)) {
+    const elementsDoc = resolveLayoutCanvasElementsDoc(schema) || {}
+    return (
+      <CanvasElementsPreview
+        slide={{
+          elements: elementsDoc,
+          backgroundColor: schema?.preview?.backgroundColor || elementsDoc.backgroundColor,
+        }}
+        aspectRatio={aspectRatio}
+        fill={fill}
+        className={className}
+        style={{ ...frameStyle, ...style }}
+      />
+    )
+  }
 
   if (previewMode === 'stat_row') {
     return (
@@ -1660,6 +1733,22 @@ export default function LayoutPolishedPreview({
     return <PolishedClosingCtaPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
   }
 
+  const ExtendedPreview = EXTENDED_PREVIEW_MODES[previewMode]
+    || PEOPLE_PRICING_PREVIEW_MODES[previewMode]
+    || DEVICE_FRAMES_PREVIEW_MODES[previewMode]
+  if (ExtendedPreview) {
+    return (
+      <ExtendedPreview
+        previewHints={previewHints}
+        large={large}
+        fill={fill}
+        className={className}
+        style={style}
+        aspectRatio={aspectRatio}
+      />
+    )
+  }
+
   const { COLS, ROWS } = getGridDims(resolvedSlots)
   const groups = hasSlots ? buildPolishedGroups(resolvedSlots) : []
   const inset = large ? 0.9 : 0.7
@@ -1703,15 +1792,18 @@ export default function LayoutPolishedPreview({
       {[...groups]
         .sort((a, b) => (a.kinds.has('bg') ? 0 : 1) - (b.kinds.has('bg') ? 0 : 1))
         .map((group) => {
+        if (isShapePreviewGroup(group)) return null
+        const primarySlot = group.slots[0]?.slot
         const isBg = group.kinds.has('bg')
-        const box = regionToBox(group.bounds, COLS, ROWS, isBg && group.kinds.size === 1 ? 0 : inset)
         const meta = groupSlotPreview(group, previewHints)
         const isImageOnly =
           meta.variant === 'image' || (group.kinds.has('image') && group.kinds.size === 1)
+        const fullBleed = isFullBleedRegion(primarySlot?.region, ROWS, COLS)
+        const box = regionToBox(group.bounds, COLS, ROWS, fullBleed || (isBg && group.kinds.size === 1) ? 0 : inset)
         const bgHasImage = isBg && group.kinds.size === 1 && Boolean(meta.imageUrl || previewHints?.imageUrl)
-        const isShape = isShapePreviewGroup(group)
-        const showPanel = ((isBg && group.kinds.size === 1) && !bgHasImage) || isShape
-        const transparentBg = !showPanel && (isImageOnly || bgHasImage || isTextPreviewGroup(group) || meta.variant === 'logo')
+        const isShape = false
+        const showPanel = false
+        const transparentBg = isImageOnly || bgHasImage || isTextPreviewGroup(group) || meta.variant === 'logo' || isBg
         const isText = isTextPreviewGroup(group)
         return (
           <div
@@ -1722,8 +1814,8 @@ export default function LayoutPolishedPreview({
               top: `${box.y}%`,
               width: `${box.w}%`,
               height: `${box.h}%`,
-              background: showPanel ? LAYOUT_POLISHED_THEME.card : transparentBg ? 'transparent' : LAYOUT_POLISHED_THEME.card,
-              borderRadius: isBg && group.kinds.size === 1 ? (large ? 8 : 4) : large ? 18 : 8,
+              background: transparentBg ? 'transparent' : showPanel ? LAYOUT_POLISHED_THEME.card : 'transparent',
+              borderRadius: fullBleed || isBg ? 0 : isImageOnly ? (large ? 10 : 5) : 0,
               overflow: 'hidden',
               zIndex: isBg ? 0 : isText ? 2 : isShape ? 1 : 1,
             }}
@@ -1731,7 +1823,7 @@ export default function LayoutPolishedPreview({
             {renderPolishedGroupContent(group, large, previewHints)}
           </div>
         )
-      })}
+      }).filter(Boolean)}
     </div>
   )
 }

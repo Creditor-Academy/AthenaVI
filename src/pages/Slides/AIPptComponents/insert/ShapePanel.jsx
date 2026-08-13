@@ -5,7 +5,7 @@ import {
   getPptShapesForCategory,
   PPT_SHAPE_PANEL_CATEGORIES,
 } from '../../../../constants/pptInsertCatalog'
-import { normalizeApiShape } from '../../../../utils/presentationHelpers'
+import { SHAPE_LIBRARY } from '../../../../constants/shapeLibrary'
 
 const ESSENTIAL_SHAPES = [
   {
@@ -158,14 +158,18 @@ export default function ShapePanel({ onInsert, disabled }) {
 
   const insertShape = (shapeId, variant, baseContent, presetId) => {
     const outlined = variant === 'outlined'
-    const shape = normalizeApiShape(baseContent?.shape || shapeId)
+    const shapeKey = String(baseContent?.shape || shapeId)
+    const libEntry = SHAPE_LIBRARY.find((s) => s.id === shapeKey)
+    const libStyle = libEntry?.style || {}
     onInsert({
       type: 'shape',
       ...(presetId ? { presetId } : {}),
       content: {
-        ...(baseContent || { shape, fill: '#475569' }),
-        shape,
+        ...(baseContent || { shape: shapeKey, fill: '#475569' }),
+        shape: shapeKey,
         fill: outlined ? 'transparent' : baseContent?.fill || '#475569',
+        ...(libStyle.clipPath ? { clipPath: libStyle.clipPath } : {}),
+        ...(libStyle.borderRadius != null ? { borderRadius: libStyle.borderRadius } : {}),
         ...(outlined
           ? { stroke: '#475569', strokeWidth: 3, variant: 'outlined' }
           : { variant: 'filled' }),

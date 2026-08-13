@@ -38,7 +38,7 @@ export const FONT_WEIGHT_OPTIONS = [
 ]
 
 export const FONT_ROLE_DEFAULTS = {
-  heading: { family: 'Playfair Display', weight: '700', size: '48px', lineHeight: '1.2' },
-  subheading: { family: 'Plus Jakarta Sans', weight: '600', size: '20px', lineHeight: '28px' },
-  body: { family: 'Inter', weight: '400', size: '16px', lineHeight: '24px' },
+  heading: { family: 'Outfit', weight: 700, sizePx: 40, size: '40px', lineHeight: 1.2 },
+  subheading: { family: 'Space Grotesk', weight: 600, sizePx: 20, size: '20px', lineHeight: 1.4 },
+  body: { family: 'Inter', weight: 400, sizePx: 14, size: '14px', lineHeight: 1.6 },
 }

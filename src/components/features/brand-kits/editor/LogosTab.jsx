@@ -4,34 +4,12 @@ import { LOGO_ROLES } from '../../../../utils/brandKitHelpers'
 export default function LogosTab(props) {
   const {
     canWrite,
-    kitData,
-    setKitData,
-    setEditorTab,
-    copiedHex,
-    handleCopyHex,
-    updateColor,
-    addColor,
-    removeColor,
-    primaryColors,
-    secondaryColors,
-    colorsList,
     triggerUpload,
     handleDeleteMedia,
     mediaByKind,
-    uploading,
     generatingRole,
     generating,
     generateLogoVariants,
-    triggerAutoGenerateTypography,
-    updateFontRole,
-    downloadBrandGuidelinePdf,
-    generatingGuideline,
-    activeSlideIndex,
-    setActiveSlideIndex,
-    slideViewMode,
-    setSlideViewMode,
-    kitName,
-    kitMedia,
     logoPreviewUrl,
   } = props
 
@@ -56,10 +34,16 @@ export default function LogosTab(props) {
                     className={`bk-extract-btn ${generating ? 'generating' : ''}`}
                     onClick={generateLogoVariants}
                     disabled={generating}
-                    title="Auto-generates Light Mode, Dark Mode, Black, and White variants from your Primary Logo using canvas pixel processing"
+                    title="Preview then apply logo variants via Brand Kit API (credits may apply on apply)"
                   >
                     <MdAutoAwesome size={16} />
-                    {generating ? `Generating ${generatingRole || ''}…` : 'Generate Variants from Primary'}
+                    {generating
+                      ? generatingRole === 'preview'
+                        ? 'Previewing…'
+                        : generatingRole === 'apply'
+                          ? 'Applying variants…'
+                          : 'Generating…'
+                      : 'Generate Variants from Primary'}
                   </button>
                 )}
               </div>

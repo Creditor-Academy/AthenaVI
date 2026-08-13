@@ -144,24 +144,10 @@ export const PPT_MEDIA_INTEGRATIONS = [
     stockType: 'photo',
   },
   {
-    id: 'giphy',
-    section: 'Integrations',
-    label: 'Giphy',
-    kind: 'stock',
-    provider: 'giphy',
-    stockType: 'gif',
-  },
-  {
     id: 'icons',
     section: 'Integrations',
     label: 'Icon sets',
     kind: 'icons',
-  },
-  {
-    id: 'stickers',
-    section: 'Integrations',
-    label: 'Stickers',
-    kind: 'stickers',
   },
   {
     id: 'brand-photos',
@@ -210,6 +196,23 @@ export const PPT_STOCK_TOPICS = [
       'https://images.unsplash.com/photo-1634017839464-5c339bbe3c8b?auto=format&fit=crop&w=320&h=180&q=80',
   },
 ]
+
+/** Rotating queries for the default stock browse (before a topic chip is picked). */
+export const PPT_STOCK_BROWSE_QUERIES = [
+  'nature landscape',
+  'architecture interior',
+  'workspace minimal',
+  'ocean sunset',
+  'city skyline',
+  'mountain adventure',
+  'coffee shop aesthetic',
+  'abstract texture',
+]
+
+export function pickRandomStockBrowseQuery() {
+  const list = PPT_STOCK_BROWSE_QUERIES
+  return list[Math.floor(Math.random() * list.length)] || 'nature landscape'
+}
 
 /** Curated sticker packs — static Icons8 doodle / accent assets. */
 export const PPT_STICKER_PACKS = [

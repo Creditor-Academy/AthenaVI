@@ -44,7 +44,7 @@ export default function PptBuilder({
           title: `${template.name || 'Pack'} Deck`,
           folderId: ctx.folderId,
           locale: 'en',
-          aspectRatio: '16:9',
+          aspectRatio: template.aspectRatio || '16:9',
           createMode: 'pack',
           packId: template.packId || template.id,
           ...(brandKitId ? { brandKitId } : {}),

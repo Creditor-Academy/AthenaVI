@@ -32,6 +32,7 @@ export default function BrandKitEditor(props) {
     canWrite,
     closeEditor,
     downloadBrandGuideline,
+    generatingGuideline,
     handleSave,
     saving,
     kitName,
@@ -78,10 +79,11 @@ export default function BrandKitEditor(props) {
               type="button"
               className="btn-secondary videos-create-btn"
               onClick={downloadBrandGuideline}
-              title="Download Brand Guideline specification"
+              title="Download Brand Guideline PDF"
+              disabled={generatingGuideline}
             >
               <MdDownload size={18} />
-              Download Guideline
+              {generatingGuideline ? 'Preparing PDF…' : 'Download Guideline'}
             </button>
             {canWrite && (
               <button

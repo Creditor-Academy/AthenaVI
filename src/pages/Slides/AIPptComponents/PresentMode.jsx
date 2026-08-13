@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useState } from 'react'
 import { FiChevronLeft, FiChevronRight, FiMaximize2, FiX } from 'react-icons/fi'
 import PptChartRenderer, { getEmbedIframeUrl } from './PptChartRenderer'
+import ExternalLinkHoverLayer from './ExternalLinkHoverLayer'
 import {
   getSlideImage,
-  normalizeApiShape,
+  isSlideBackgroundElement,
+  buildCanvasShapeStyle,
+  buildNativeShapeBoxStyle,
+  shapeElementUsesNativeStyle,
   resolveCanvasSize,
-  resolveFillCss,
+  resolveSlideStageBackground,
   resolveThemeColor,
 } from '../../../utils/presentationHelpers'
 import { PPT_SLIDE_TRANSITIONS } from './insert/EditorRightRail'
@@ -61,7 +65,12 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
       <img
         src={url}
         alt={c.alt || ''}
-        style={{ ...style, objectFit: c.fit || 'cover' }}
+        style={{
+          ...style,
+          objectFit: c.fit || 'cover',
+          borderRadius: c.borderRadius != null ? c.borderRadius : undefined,
+          boxShadow: c.boxShadow || c.shadow || undefined,
+        }}
       />
     )
   }
@@ -79,36 +88,56 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
     const iframeUrl = getEmbedIframeUrl(c)
     if (iframeUrl) {
       return (
-        <iframe
-          src={iframeUrl}
-          title={c.title || 'Embed'}
-          style={{ ...style, border: 'none', borderRadius: c.borderRadius ?? 8 }}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
+        <ExternalLinkHoverLayer content={c} style={style}>
+          <iframe
+            src={iframeUrl}
+            title={c.title || 'Embed'}
+            style={{ width: '100%', height: '100%', border: 'none', borderRadius: c.borderRadius ?? 8 }}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </ExternalLinkHoverLayer>
       )
     }
     return (
-      <div style={{ ...style, display: 'grid', placeItems: 'center', background: '#F1F5F9', borderRadius: 8 }}>
-        <a href={c.url} target="_blank" rel="noreferrer">{c.title || c.url}</a>
-      </div>
+      <ExternalLinkHoverLayer content={c} style={style}>
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            display: 'grid',
+            placeItems: 'center',
+            background: '#F1F5F9',
+            borderRadius: 8,
+          }}
+        >
+          <span style={{ color: '#475569', fontSize: 14 }}>{c.title || c.url}</span>
+        </div>
+      </ExternalLinkHoverLayer>
     )
   }
 
   if (el.type === 'shape') {
     const c = el.content || {}
-    const shape = normalizeApiShape(c.shape || 'rect')
-    const fill = resolveFillCss(c.fill, palette, 'rgba(148,163,184,0.35)')
-    return (
-      <div
-        style={{
-          ...style,
-          background: fill,
-          borderRadius: shape === 'ellipse' || shape === 'circle' ? '50%' : c.borderRadius ?? 0,
-          border: c.stroke ? `${c.strokeWidth || 2}px solid ${c.stroke}` : undefined,
-        }}
-      />
-    )
+    if (shapeElementUsesNativeStyle(el)) {
+      return <div style={{ ...style, ...buildNativeShapeBoxStyle(el.nativeStyle) }} />
+    }
+    const rendered = buildCanvasShapeStyle(c, palette)
+    if (rendered.kind === 'line') {
+      return (
+        <div
+          style={{
+            ...style,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <div style={{ ...rendered.style, width: '100%' }} />
+        </div>
+      )
+    }
+    return <div style={{ ...style, ...rendered.style }} />
   }
 
   if (el.type === 'table') {
@@ -147,12 +176,15 @@ export default function PresentMode({
 
   const slide = slides[index]
   const canvas = resolveCanvasSize(slide, aspectRatio)
-  const elements = slide?.elements?.elements || []
+  const elements = (slide?.elements?.elements || []).filter(
+    (el) => !isSlideBackgroundElement(el, slide)
+  )
   const transition =
     slide?.transition || slide?.elements?.transition || 'none'
   const palette = themeVisual?.palette || null
   const hasElements = elements.length > 0
   const fallbackImage = hasElements ? null : getSlideImage(slide).url
+  const slideBgStyle = resolveSlideStageBackground(slide, themeVisual?.inner || '#fff')
 
   const go = useCallback(
     (delta) => {
@@ -214,7 +246,7 @@ export default function PresentMode({
         <div
           className="ppt-present-slide"
           style={{
-            background: themeVisual?.inner || '#fff',
+            ...slideBgStyle,
             aspectRatio: `${canvas.width} / ${canvas.height}`,
           }}
         >

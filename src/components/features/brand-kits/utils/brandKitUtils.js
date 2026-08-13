@@ -192,20 +192,24 @@ export function extract4ColorsFromImage(imageSrc, callback, workspaceId, brandKi
 export function getFontRole(fonts, role) {
   const defaults = FONT_ROLE_DEFAULTS[role] || FONT_ROLE_DEFAULTS.body
   const raw = fonts?.[role] || {}
-  const tertiary = fonts?.tertiary || {}
-  if (role === 'subheading') {
-    return {
-      family: raw.family || tertiary.family || defaults.family,
-      weight: raw.weight || tertiary.weight || defaults.weight,
-      size: raw.size || tertiary.size || defaults.size,
-      lineHeight: raw.lineHeight || tertiary.lineHeight || defaults.lineHeight,
-    }
-  }
+  const tertiary = role === 'subheading' ? fonts?.tertiary || {} : {}
+  const family = raw.family || tertiary.family || defaults.family
+  const weight = raw.weight ?? tertiary.weight ?? defaults.weight
+  const sizePxRaw = raw.sizePx ?? tertiary.sizePx ?? defaults.sizePx
+  const size =
+    raw.size ||
+    tertiary.size ||
+    (sizePxRaw != null ? `${sizePxRaw}px` : defaults.size)
+  const lineHeight = raw.lineHeight ?? tertiary.lineHeight ?? defaults.lineHeight
   return {
-    family: raw.family || defaults.family,
-    weight: raw.weight || defaults.weight,
-    size: raw.size || defaults.size,
-    lineHeight: raw.lineHeight || defaults.lineHeight,
+    family,
+    weight,
+    size,
+    sizePx:
+      sizePxRaw != null
+        ? sizePxRaw
+        : Number.parseFloat(String(size).replace(/px$/i, '')) || defaults.sizePx,
+    lineHeight,
   }
 }
 

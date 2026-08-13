@@ -12,43 +12,36 @@ export default function ImageryTab(props) {
     canWrite,
     kitData,
     setKitData,
-    setEditorTab,
-    copiedHex,
-    handleCopyHex,
-    updateColor,
-    addColor,
-    removeColor,
-    primaryColors,
-    secondaryColors,
-    colorsList,
     triggerUpload,
     handleDeleteMedia,
     mediaByKind,
     uploading,
-    generatingRole,
     generating,
-    generateLogoVariants,
-    triggerAutoGenerateTypography,
-    updateFontRole,
-    downloadBrandGuidelinePdf,
-    generatingGuideline,
-    activeSlideIndex,
-    setActiveSlideIndex,
-    slideViewMode,
-    setSlideViewMode,
-    kitName,
-    kitMedia,
+    triggerSuggestImageStyle,
   } = props
 
   return (
             <div className="editor-tab-content">
               <div className="bk-colors-main-col" style={{ width: '100%' }}>
                 <section className="customize-card">
-                  <SectionHead
-                    icon={MdPhotoLibrary}
-                    title="AI Visual Brief & Charts"
-                    hint="Chart colors pick from your palette. Image style briefs AI visual generators."
-                  />
+                  <div className="bk-type-header-row" style={{ marginBottom: 16 }}>
+                    <SectionHead
+                      icon={MdPhotoLibrary}
+                      title="AI Visual Brief & Charts"
+                      hint="Chart colors pick from your palette. Image style briefs AI visual generators."
+                    />
+                    {canWrite && (
+                      <button
+                        type="button"
+                        className={`bk-extract-btn ${generating ? 'generating' : ''}`}
+                        onClick={triggerSuggestImageStyle}
+                        disabled={generating || uploading}
+                      >
+                        <MdAutoAwesome size={16} />
+                        {generating ? 'Suggesting…' : 'Suggest Image Style'}
+                      </button>
+                    )}
+                  </div>
                   <div className="bk-field">
                     <label>Chart colors</label>
                     <div className="chip-row">

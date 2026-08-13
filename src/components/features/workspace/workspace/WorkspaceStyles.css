@@ -1,12 +1,13 @@
 /* Workspace UI Styles */
 
 .team-workspace-container {
-  min-height: 100vh;
+  height: 100%;
+  min-height: 0;
   background: var(--bg-main);
-  padding: 32px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  overflow: hidden;
 }
 
 /* Header & Top Bar */
@@ -14,8 +15,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: 0;
+  margin: 0 0 20px 0;
   padding: 0;
+  flex-shrink: 0;
 }
 
 .workspace-header-title {
@@ -423,8 +425,31 @@
 }
 
 .workspace-root-tabs-wrapper {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.workspace-content-area {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 32px;
+  -webkit-overflow-scrolling: touch;
+  will-change: scroll-position;
+  overscroll-behavior-y: contain;
+}
+
+.workspace-content-area::-webkit-scrollbar {
+  display: none;
+}
+
+.workspace-sticky-nav {
+  flex-shrink: 0;
+  margin-bottom: 20px;
 }
 
 .workspace-root-tabs {
@@ -649,6 +674,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
+  contain: layout style;
 }
 
 /* Slides-style media tiles: transparent shell, 16:9 media, meta below */
@@ -868,8 +894,17 @@
     transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
     box-shadow 0.3s ease,
     border-color 0.3s ease;
-  /* overflow:visible so the context-menu dropdown is NOT clipped by the card boundary */
+  overflow: hidden;
+  isolation: isolate;
+  contain: content;
+  content-visibility: auto;
+  contain-intrinsic-size: 280px 300px;
+}
+
+.wsc-card:has(.is-open),
+.wsc-card.has-menu-open {
   overflow: visible;
+  z-index: 25;
 }
 
 .wsc-card:hover,
@@ -3120,6 +3155,14 @@ button.workspace-flow-card__tool--credits:hover {
 /* ── Workspace library (Videos / Presentations / Images) ─────────────── */
 .workspace-library {
   margin-top: 8px;
+}
+
+.workspace-library > .workspace-root-tabs-wrapper {
+  /* Library's inner tab bar is NOT a sticky page-level header — reset to normal flow */
+  position: static;
+  top: unset;
+  z-index: auto;
+  margin-bottom: 24px;
 }
 
 .workspace-library-mode-chips {

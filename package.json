@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build && node scripts/render-postbuild.mjs",
     "build:render": "node scripts/render-build.mjs && vite build && node scripts/render-postbuild.mjs",
-    "lint": "eslint .",
+    "seed:layouts": "node scripts/seed-presentation-templates.mjs",
+    "seed:layouts:update": "node scripts/seed-presentation-templates.mjs --update",
+    "seed:layouts:dry-run": "node scripts/seed-presentation-templates.mjs --dry-run",
     "preview": "vite preview"
   },
   "dependencies": {

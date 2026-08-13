@@ -11,9 +11,48 @@ import {
   ICON_CATEGORIES,
   PPT_MEDIA_INTEGRATIONS,
   PPT_MEDIA_LIBRARY_ITEMS,
-  PPT_STICKER_PACKS,
   PPT_STOCK_TOPICS,
+  pickRandomStockBrowseQuery,
 } from '../../../../constants/pptInsertCatalog'
+
+function stockImageUrl(item) {
+  return (
+    assetUrl(item) ||
+    item?.thumbnailUrl ||
+    item?.previewUrl ||
+    item?.urls?.small ||
+    item?.urls?.regular ||
+    item?.urls?.thumb ||
+    ''
+  )
+}
+
+function stockPhotographerName(item) {
+  if (!item) return ''
+  if (item.photographer) return String(item.photographer).trim()
+  if (item.author) return String(item.author).trim()
+  if (item.creator) return String(item.creator).trim()
+  if (item.user?.name) return String(item.user.name).trim()
+  if (typeof item.user === 'string') return item.user.trim()
+  if (item.attribution) {
+    return String(item.attribution)
+      .replace(/^photo\s+by\s+/i, '')
+      .replace(/^by\s+/i, '')
+      .trim()
+  }
+  return ''
+}
+
+function stockPhotographerLink(item) {
+  return (
+    item?.photographerUrl ||
+    item?.authorUrl ||
+    item?.user?.links?.html ||
+    item?.user?.portfolio_url ||
+    item?.links?.html ||
+    ''
+  )
+}
 
 function assetUrl(asset) {
   return (
@@ -49,12 +88,12 @@ export default function MediaPanel({
 }) {
   const canUseSlideMedia = Boolean(workspaceId && presentationId && slideId)
   const [activeId, setActiveId] = useState('unsplash')
-  const [query, setQuery] = useState(PPT_STOCK_TOPICS[0]?.query || 'business')
+  const [query, setQuery] = useState('')
+  const [selectedTopicId, setSelectedTopicId] = useState(null)
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [iconCategory, setIconCategory] = useState('all')
-  const [expandedPack, setExpandedPack] = useState(null)
   const fileRef = useRef(null)
 
   const active = useMemo(
@@ -114,8 +153,9 @@ export default function MediaPanel({
       setLoading(true)
       setError('')
       try {
+        const q = String(searchQuery || query || pickRandomStockBrowseQuery()).trim()
         const result = await stockService.search({
-          q: searchQuery || query || 'business',
+          q,
           type: active.stockType || 'photo',
           provider: active.provider || 'unsplash',
           page: 1,
@@ -179,7 +219,9 @@ export default function MediaPanel({
     if (active.kind === 'library-images' || active.kind === 'library-videos') {
       loadLibrary()
     } else if (active.kind === 'stock') {
-      loadStock(PPT_STOCK_TOPICS[0]?.query || 'business')
+      setSelectedTopicId(null)
+      setQuery('')
+      loadStock(pickRandomStockBrowseQuery())
     } else if (active.kind === 'brand-photos') {
       loadBrandPhotos()
     } else {
@@ -426,12 +468,7 @@ export default function MediaPanel({
       ? DOODLE_ICON_LIBRARY
       : DOODLE_ICON_LIBRARY.filter((i) => i.category === iconCategory)
 
-  const stickerPacks = expandedPack
-    ? PPT_STICKER_PACKS.filter((p) => p.id === expandedPack)
-    : PPT_STICKER_PACKS
-
-  const showSearch =
-    active.kind === 'stock' || active.kind === 'icons' || active.kind === 'stickers'
+  const showSearch = active.kind === 'stock' || active.kind === 'icons'
 
   return (
     <InsertPanelShell
@@ -449,16 +486,15 @@ export default function MediaPanel({
             className="ppt-insert-search ppt-insert-search--pill"
             type="search"
             placeholder={
-              active.kind === 'icons'
-                ? 'Search icons…'
-                : active.kind === 'stickers'
-                  ? 'Search stickers…'
-                  : `Search ${active.label}`
+              active.kind === 'icons' ? 'Search icons…' : `Search ${active.label}`
             }
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && active.kind === 'stock') loadStock(query)
+              if (e.key === 'Enter' && active.kind === 'stock') {
+                setSelectedTopicId(null)
+                loadStock(query)
+              }
             }}
           />
           {active.kind === 'stock' && (
@@ -466,7 +502,10 @@ export default function MediaPanel({
               type="button"
               className="ppt-insert-search-go"
               disabled={loading}
-              onClick={() => loadStock(query)}
+              onClick={() => {
+                setSelectedTopicId(null)
+                loadStock(query)
+              }}
             >
               Search
             </button>
@@ -480,9 +519,10 @@ export default function MediaPanel({
             <button
               key={t.id}
               type="button"
-              className={`ppt-topic-chip ${query === t.query ? 'is-active' : ''}`}
+              className={`ppt-topic-chip ${selectedTopicId === t.id ? 'is-active' : ''}`}
               style={t.image ? { backgroundImage: `url(${t.image})` } : undefined}
               onClick={() => {
+                setSelectedTopicId(t.id)
                 setQuery(t.query)
                 loadStock(t.query)
               }}
@@ -543,59 +583,6 @@ export default function MediaPanel({
         </>
       )}
 
-      {active.kind === 'stickers' && (
-        <div className="ppt-sticker-packs">
-          {expandedPack && (
-            <button type="button" className="ppt-insert-link" onClick={() => setExpandedPack(null)}>
-              ← All packs
-            </button>
-          )}
-          {stickerPacks.map((pack) => (
-            <div key={pack.id} className="ppt-insert-section">
-              <div className="ppt-insert-section-head">
-                <span>{pack.label}</span>
-                {!expandedPack && (
-                  <button type="button" className="ppt-insert-link" onClick={() => setExpandedPack(pack.id)}>
-                    More ›
-                  </button>
-                )}
-              </div>
-              <div className="ppt-media-grid">
-                {(expandedPack ? pack.items : pack.items.slice(0, 6))
-                  .filter((s) =>
-                    !query.trim()
-                      ? true
-                      : s.label.toLowerCase().includes(query.trim().toLowerCase()) ||
-                        pack.label.toLowerCase().includes(query.trim().toLowerCase())
-                  )
-                  .map((sticker) => (
-                    <button
-                      key={sticker.id}
-                      type="button"
-                      className="ppt-media-tile"
-                      disabled={disabled}
-                      title={sticker.label}
-                      onClick={() =>
-                        onInsert({
-                          type: 'icon',
-                          content: {
-                            url: sticker.src,
-                            src: sticker.src,
-                            alt: sticker.label,
-                            fit: 'contain',
-                          },
-                        })
-                      }
-                    >
-                      <img src={sticker.src} alt={sticker.label} />
-                    </button>
-                  ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
       {(active.kind === 'stock' ||
         active.kind === 'library-images' ||
         active.kind === 'library-videos' ||
@@ -603,61 +590,73 @@ export default function MediaPanel({
         !loading && (
           <div className="ppt-media-grid ppt-media-grid--masonry">
             {items.map((item, idx) => {
-              const url =
-                assetUrl(item) ||
-                item.thumbnailUrl ||
-                item.previewUrl ||
-                item.urls?.small ||
-                item.urls?.regular ||
-                item.urls?.thumb ||
-                ''
+              const url = stockImageUrl(item)
               const key = item.id || item._id || item.externalId || url || idx
               const aspect =
                 item.width && item.height
                   ? `${item.width} / ${item.height}`
                   : item.aspectRatio || undefined
+              const photographer = active.kind === 'stock' ? stockPhotographerName(item) : ''
+              const photographerLink = stockPhotographerLink(item)
               return (
-                <button
-                  key={key}
-                  type="button"
-                  className="ppt-media-tile ppt-media-tile--masonry"
-                  disabled={disabled || !url}
-                  style={aspect ? { aspectRatio: aspect } : undefined}
-                  onClick={() => {
-                    if (active.kind === 'stock') insertStock(item)
-                    else if (
-                      active.kind === 'library-images' ||
-                      active.kind === 'library-videos'
-                    ) {
-                      attachLibraryAsset(item)
-                    } else {
-                      onInsert({
-                        type: 'image',
-                        content: {
-                          url,
-                          src: url,
-                          alt: item.name || item.alt || '',
-                          fit: 'cover',
-                          assetId: item.id || item._id,
-                        },
-                      })
-                    }
-                  }}
-                >
-                  {url ? (
-                    <img
-                      src={url}
-                      alt=""
-                      loading="lazy"
-                      onLoad={(e) => {
-                        // Let natural image size drive masonry height
-                        e.currentTarget.parentElement?.classList.add('is-loaded')
-                      }}
-                    />
-                  ) : (
-                    <FiCamera size={22} />
-                  )}
-                </button>
+                <div key={key} className="ppt-media-card ppt-media-card--masonry">
+                  <button
+                    type="button"
+                    className="ppt-media-tile ppt-media-tile--masonry"
+                    disabled={disabled || !url}
+                    style={aspect ? { aspectRatio: aspect } : undefined}
+                    onClick={() => {
+                      if (active.kind === 'stock') insertStock(item)
+                      else if (
+                        active.kind === 'library-images' ||
+                        active.kind === 'library-videos'
+                      ) {
+                        attachLibraryAsset(item)
+                      } else {
+                        onInsert({
+                          type: 'image',
+                          content: {
+                            url,
+                            src: url,
+                            alt: item.name || item.alt || '',
+                            fit: 'cover',
+                            assetId: item.id || item._id,
+                          },
+                        })
+                      }
+                    }}
+                  >
+                    {url ? (
+                      <img
+                        src={url}
+                        alt=""
+                        loading="lazy"
+                        onLoad={(e) => {
+                          e.currentTarget.parentElement?.classList.add('is-loaded')
+                        }}
+                      />
+                    ) : (
+                      <FiCamera size={22} />
+                    )}
+                  </button>
+                  {photographer ? (
+                    <p className="ppt-media-attribution">
+                      by{' '}
+                      {photographerLink ? (
+                        <a
+                          href={photographerLink}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {photographer}
+                        </a>
+                      ) : (
+                        <span>{photographer}</span>
+                      )}
+                    </p>
+                  ) : null}
+                </div>
               )
             })}
             {!items.length && !error && (

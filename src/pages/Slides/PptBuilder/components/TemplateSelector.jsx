@@ -1,13 +1,20 @@
-import React, { useState, useEffect } from 'react'
-import { ArrowLeft } from 'lucide-react'
+import React, { useState, useEffect, useCallback } from 'react'
+import { ArrowLeft, ChevronLeft } from 'lucide-react'
 import LayoutPolishedPreview from '../../../../components/ppt/LayoutPolishedPreview'
+import PackSlidePreview from '../../../../components/ppt/PackSlidePreview'
 import '../PptBuilder.css'
 import '../../AIPptGenerator.css'
 import presentationService from '../../../../services/presentationService'
 import brandKitService from '../../../../services/brandKitService'
 import { resolvePresentationWorkspaceContext } from '../../../../utils/presentationContext'
-import { normalizeDeckPacks } from '../../../../utils/presentationHelpers'
+import {
+  normalizeDeckPacks,
+  normalizeDeckPackDetail,
+  resolvePackThumbnailUrl,
+  resolvePackColorFallback,
+} from '../../../../utils/presentationHelpers'
 import { getLayoutPreviewSlots } from '../../../../utils/layoutPreviewSchemas'
+import { slideHasCanvasElements } from '../../../../utils/videoTemplateToCanvasElements'
 
 import temp1 from '../../../../assets/Template_Image/theme_petrol.png'
 import temp2 from '../../../../assets/Template_Image/theme_stardust.png'
@@ -74,6 +81,99 @@ const FALLBACK_TEMPLATES = [
   },
 ]
 
+function PackCardThumbnail({ pack }) {
+  const thumb = pack.thumbnailUrl || resolvePackThumbnailUrl(pack)
+  const { color, accentColor } = resolvePackColorFallback(pack)
+
+  if (thumb) {
+    return <img src={thumb} alt="" className="aig-theme-card-image" />
+  }
+
+  return (
+    <div
+      className="aig-theme-card-image"
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'stretch',
+        justifyContent: 'center',
+        gap: 8,
+        padding: 16,
+        boxSizing: 'border-box',
+        background: color,
+      }}
+    >
+      <div style={{ height: 6, borderRadius: 999, background: accentColor, width: '42%' }} />
+      <div style={{ height: 4, borderRadius: 999, background: accentColor, opacity: 0.55, width: '68%' }} />
+      <div style={{ height: 4, borderRadius: 999, background: accentColor, opacity: 0.35, width: '52%' }} />
+    </div>
+  )
+}
+
+function resolveSchemaSlideForPreview(pack, slidePreview) {
+  const order = slidePreview?.order ?? 1
+  const slides = pack?.schema?.slides || []
+  return slides.find((s) => (s.order ?? slides.indexOf(s) + 1) === order) || null
+}
+
+function SlidePreviewThumbnail({ slidePreview, schemaSlide, pack, aspectRatio = '16:9', themeId }) {
+  const slide = schemaSlide || resolveSchemaSlideForPreview(pack, slidePreview) || slidePreview
+  const title = slidePreview?.title || slide?.placeholder?.title || `Slide ${slidePreview?.order ?? ''}`
+  const ratio = aspectRatio === '4:3' ? '4 / 3' : '16 / 9'
+
+  if (slideHasCanvasElements(slide) || slide?.layout_id) {
+    return (
+      <PackSlidePreview
+        slide={slide}
+        themeId={themeId || pack?.themeId}
+        aspectRatio={aspectRatio}
+        fill
+        showBadge={false}
+        style={{ width: '100%', height: '100%' }}
+      />
+    )
+  }
+
+  const thumb = slidePreview?.thumbnailUrl
+  if (thumb) {
+    return <img src={thumb} alt="" className="aig-theme-card-image" />
+  }
+
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        padding: 12,
+        boxSizing: 'border-box',
+        background: '#f8fafc',
+        aspectRatio: ratio,
+      }}
+    >
+      <span style={{ fontSize: 12, fontWeight: 700, color: '#334155', textAlign: 'center' }}>{title}</span>
+      {slidePreview?.contentType ? (
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 600,
+            color: '#64748b',
+            textTransform: 'capitalize',
+          }}
+        >
+          {slidePreview.contentType.replace(/_/g, ' ')}
+        </span>
+      ) : null}
+    </div>
+  )
+}
+
 export default function TemplateSelector({
   onSelect,
   onBack,
@@ -88,6 +188,12 @@ export default function TemplateSelector({
   const [brandKits, setBrandKits] = useState([])
   const [selectedBrandKitId, setSelectedBrandKitId] = useState('')
   const [loadError, setLoadError] = useState('')
+  const [workspaceId, setWorkspaceId] = useState(null)
+
+  const [selectedPack, setSelectedPack] = useState(null)
+  const [packDetail, setPackDetail] = useState(null)
+  const [packDetailLoading, setPackDetailLoading] = useState(false)
+  const [packDetailError, setPackDetailError] = useState('')
 
   useEffect(() => {
     const timer = setTimeout(() => setStepReady(true), 100)
@@ -102,6 +208,8 @@ export default function TemplateSelector({
           preferredWorkspaceId: initialWorkspaceId,
           preferredFolderId: initialFolderId,
         })
+
+        if (!cancelled) setWorkspaceId(ctx.workspaceId)
 
         const [templatesPayload, packsPayload, kits] = await Promise.all([
           presentationService.listTemplates(ctx.workspaceId).catch(() => null),
@@ -158,7 +266,58 @@ export default function TemplateSelector({
     })
   }
 
+  const openPackDetail = useCallback(
+    async (pack) => {
+      setSelectedPack(pack)
+      setPackDetail(null)
+      setPackDetailError('')
+      if (!workspaceId || !pack?.id) return
+
+      setPackDetailLoading(true)
+      try {
+        const payload = await presentationService.getDeckPack(workspaceId, pack.id)
+        const detail = normalizeDeckPackDetail(payload)
+        if (!detail) throw new Error('Pack detail unavailable')
+        setPackDetail(detail)
+      } catch (err) {
+        if (err.status === 404) {
+          setPackDetailError('Presentation deck pack not found')
+        } else if (err.status === 401) {
+          setPackDetailError('Session expired — refresh and try again')
+        } else {
+          setPackDetailError(err.message || 'Failed to load pack')
+        }
+      } finally {
+        setPackDetailLoading(false)
+      }
+    },
+    [workspaceId]
+  )
+
+  const closePackDetail = () => {
+    setSelectedPack(null)
+    setPackDetail(null)
+    setPackDetailError('')
+  }
+
+  const confirmPackCreate = () => {
+    const pack = packDetail || selectedPack
+    if (!pack?.id) return
+    handleSelect({
+      id: pack.id,
+      name: pack.name,
+      type: 'Pack',
+      img: pack.thumbnailUrl || resolvePackThumbnailUrl(pack),
+      createMode: 'pack',
+      packId: pack.id,
+      themeId: pack.themeId,
+      aspectRatio: pack.aspectRatio || '16:9',
+    })
+  }
+
   const items = tab === 'packs' ? packs : templates
+  const activePack = packDetail || selectedPack
+  const slidePreviews = activePack?.slidePreviews || []
 
   return (
     <main className="aig-main-fullscreen">
@@ -170,152 +329,229 @@ export default function TemplateSelector({
 
       <div className={`aig-step aig-step--2 ${stepReady ? 'aig-step-revealed' : 'aig-step-intro'}`}>
         <div className={`aig-step-header ${stepReady ? 'aig-header-settled' : 'aig-header-centered'}`}>
-          <h2 className="aig-step-title">Select a Template</h2>
+          <h2 className="aig-step-title">
+            {tab === 'packs' && selectedPack ? activePack?.name || 'Deck Pack' : 'Select a Template'}
+          </h2>
           <p className="aig-step-subtitle">
-            Start blank, from a single layout, or from a multi-slide deck pack.
+            {tab === 'packs' && selectedPack
+              ? 'Review slides, then create your deck from this pack.'
+              : 'Start blank, from a single layout, or from a multi-slide deck pack.'}
           </p>
-          {loadError && <p className="aig-credit-estimate-hint">{loadError}</p>}
+          {(loadError || packDetailError) && (
+            <p className="aig-credit-estimate-hint">{packDetailError || loadError}</p>
+          )}
         </div>
 
         <div className={`aig-step-body ${stepReady ? 'aig-body-visible' : 'aig-body-hidden'}`}>
           <div className="aig-selection-section">
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 12,
-                alignItems: 'center',
-                marginBottom: 20,
-              }}
-            >
-              <div className="aig-pill-grid" style={{ margin: 0 }}>
-                <button
-                  type="button"
-                  className={`aig-pill-small ${tab === 'layouts' ? 'active' : ''}`}
-                  onClick={() => setTab('layouts')}
-                >
-                  Layouts
-                </button>
-                <button
-                  type="button"
-                  className={`aig-pill-small ${tab === 'packs' ? 'active' : ''}`}
-                  onClick={() => setTab('packs')}
-                >
-                  Deck Packs
-                </button>
-              </div>
-
-              <label
+            {!(tab === 'packs' && selectedPack) && (
+              <div
                 style={{
                   display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 12,
                   alignItems: 'center',
-                  gap: 8,
-                  fontSize: 13,
-                  fontWeight: 600,
-                  color: '#475569',
-                  marginLeft: 'auto',
+                  marginBottom: 20,
                 }}
               >
-                Brand Kit
-                <select
-                  value={selectedBrandKitId}
-                  onChange={(e) => setSelectedBrandKitId(e.target.value)}
-                  disabled={disabled}
+                <div className="aig-pill-grid" style={{ margin: 0 }}>
+                  <button
+                    type="button"
+                    className={`aig-pill-small ${tab === 'layouts' ? 'active' : ''}`}
+                    onClick={() => {
+                      setTab('layouts')
+                      closePackDetail()
+                    }}
+                  >
+                    Layouts
+                  </button>
+                  <button
+                    type="button"
+                    className={`aig-pill-small ${tab === 'packs' ? 'active' : ''}`}
+                    onClick={() => {
+                      setTab('packs')
+                      closePackDetail()
+                    }}
+                  >
+                    Deck Packs
+                  </button>
+                </div>
+
+                <label
                   style={{
-                    padding: '8px 12px',
-                    borderRadius: 8,
-                    border: '1px solid #e2e8f0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
                     fontSize: 13,
-                    minWidth: 180,
+                    fontWeight: 600,
+                    color: '#475569',
+                    marginLeft: 'auto',
                   }}
                 >
-                  <option value="">None</option>
-                  {brandKits.map((kit) => (
-                    <option key={kit.id} value={kit.id}>
-                      {kit.name}
-                      {kit.isDefault ? ' (Default)' : ''}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            {tab === 'packs' && !packs.length && (
-              <p className="aig-credit-estimate-hint">No deck packs available yet.</p>
+                  Brand Kit
+                  <select
+                    value={selectedBrandKitId}
+                    onChange={(e) => setSelectedBrandKitId(e.target.value)}
+                    disabled={disabled}
+                    style={{
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: '1px solid #e2e8f0',
+                      fontSize: 13,
+                      minWidth: 180,
+                    }}
+                  >
+                    <option value="">None</option>
+                    {brandKits.map((kit) => (
+                      <option key={kit.id} value={kit.id}>
+                        {kit.name}
+                        {kit.isDefault ? ' (Default)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
             )}
 
-            <div className="aig-new-theme-grid-5">
-              {items.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  className="aig-new-theme-card-premium"
-                  disabled={disabled}
-                  onClick={() =>
-                    handleSelect(
-                      tab === 'packs'
-                        ? {
-                            id: t.id,
-                            name: t.name,
-                            type: 'Pack',
-                            img: t.preview?.thumbnailUrl || t.preview?.imageUrl || null,
-                            createMode: 'pack',
-                            packId: t.id,
-                            themeId: t.themeId,
-                          }
-                        : t
-                    )
-                  }
-                >
-                  <div className="aig-theme-card-header">
-                    <span className="aig-theme-card-title">{t.name}</span>
+            {tab === 'packs' && selectedPack ? (
+              <div className="aig-pack-detail">
+                <div className="aig-pack-detail-head">
+                  <button
+                    type="button"
+                    className="aig-btn-secondary"
+                    onClick={closePackDetail}
+                    disabled={disabled}
+                  >
+                    <ChevronLeft size={16} /> All packs
+                  </button>
+                  <div className="aig-pack-detail-meta">
+                    {activePack?.slideCount ? (
+                      <span className="aig-pack-badge">{activePack.slideCount} slides</span>
+                    ) : null}
+                    {activePack?.aspectRatio ? (
+                      <span className="aig-pack-badge">{activePack.aspectRatio}</span>
+                    ) : null}
                   </div>
+                  <button
+                    type="button"
+                    className="aig-btn-primary"
+                    disabled={disabled || packDetailLoading || !activePack?.id}
+                    onClick={confirmPackCreate}
+                  >
+                    Create deck
+                  </button>
+                </div>
 
-                  {tab === 'packs' && t.slideCount && (
-                    <div className="aig-theme-card-palette">
-                      <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>
-                        {t.slideCount} slides
-                        {t.themeId ? ` · ${t.themeId}` : ''}
-                      </span>
-                    </div>
-                  )}
+                {packDetailLoading && (
+                  <p className="aig-credit-estimate-hint">Loading pack slides…</p>
+                )}
 
-                  {tab !== 'packs' && t.id !== 'blank' && (t.hex1 || t.hex2 || t.hex3) && (
-                    <div className="aig-theme-card-palette">
-                      {t.hex1 && <div className="palette-color" style={{ background: t.hex1 }}></div>}
-                      {t.hex2 && <div className="palette-color" style={{ background: t.hex2 }}></div>}
-                      {t.hex3 && <div className="palette-color" style={{ background: t.hex3 }}></div>}
-                    </div>
-                  )}
+                {!packDetailLoading && !slidePreviews.length && !packDetailError && (
+                  <p className="aig-credit-estimate-hint">
+                    No slide previews yet — you can still create from this pack.
+                  </p>
+                )}
 
-                  <div className="aig-theme-card-image-wrapper">
-                    {t.img ? (
-                      <img src={t.img} alt={t.name} className="aig-theme-card-image" />
-                    ) : tab !== 'packs' && getLayoutPreviewSlots({ schema: t.schema }).length > 0 ? (
-                      <LayoutPolishedPreview schema={t.schema} fill style={{ borderRadius: 8 }} />
-                    ) : (
-                      <div
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          background: '#f8fafc',
-                          color: '#94a3b8',
-                          fontSize: tab === 'packs' ? 14 : 24,
-                          fontWeight: 600,
-                          padding: 12,
-                          textAlign: 'center',
-                        }}
-                      >
-                        {tab === 'packs' ? 'Deck Pack' : '+'}
+                <div className="aig-new-theme-grid-5">
+                  {slidePreviews.map((slidePreview) => (
+                    <div key={`${activePack.id}-${slidePreview.order}`} className="aig-new-theme-card-premium aig-pack-slide-card">
+                      <div className="aig-theme-card-header">
+                        <span className="aig-theme-card-title">
+                          {slidePreview.title || `Slide ${slidePreview.order}`}
+                        </span>
+                        {slidePreview.contentType ? (
+                          <span className="aig-pack-slide-type">{slidePreview.contentType}</span>
+                        ) : null}
                       </div>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
+                      <div className="aig-theme-card-image-wrapper">
+                        <SlidePreviewThumbnail
+                          slidePreview={slidePreview}
+                          schemaSlide={resolveSchemaSlideForPreview(activePack, slidePreview)}
+                          pack={activePack}
+                          aspectRatio={activePack.aspectRatio || '16:9'}
+                          themeId={activePack.themeId}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <>
+                {tab === 'packs' && !packs.length && (
+                  <p className="aig-credit-estimate-hint">No deck packs available yet.</p>
+                )}
+
+                <div className="aig-new-theme-grid-5">
+                  {items.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      className="aig-new-theme-card-premium"
+                      disabled={disabled}
+                      onClick={() =>
+                        tab === 'packs'
+                          ? openPackDetail(t)
+                          : handleSelect(t)
+                      }
+                    >
+                      <div className="aig-theme-card-header">
+                        <span className="aig-theme-card-title">{t.name}</span>
+                      </div>
+
+                      {tab === 'packs' && (
+                        <div className="aig-theme-card-palette">
+                          <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>
+                            {t.slideCount ? `${t.slideCount} slides` : 'Deck pack'}
+                            {t.aspectRatio ? ` · ${t.aspectRatio}` : ''}
+                          </span>
+                        </div>
+                      )}
+
+                      {tab === 'packs' && t.meta?.description ? (
+                        <p className="aig-pack-card-sub">{t.meta.description}</p>
+                      ) : null}
+
+                      {tab !== 'packs' && t.id !== 'blank' && (t.hex1 || t.hex2 || t.hex3) && (
+                        <div className="aig-theme-card-palette">
+                          {t.hex1 && <div className="palette-color" style={{ background: t.hex1 }}></div>}
+                          {t.hex2 && <div className="palette-color" style={{ background: t.hex2 }}></div>}
+                          {t.hex3 && <div className="palette-color" style={{ background: t.hex3 }}></div>}
+                        </div>
+                      )}
+
+                      <div className="aig-theme-card-image-wrapper">
+                        {tab === 'packs' ? (
+                          <PackCardThumbnail pack={t} />
+                        ) : t.img ? (
+                          <img src={t.img} alt={t.name} className="aig-theme-card-image" />
+                        ) : tab !== 'packs' && getLayoutPreviewSlots({ schema: t.schema }).length > 0 ? (
+                          <LayoutPolishedPreview schema={t.schema} fill style={{ borderRadius: 8 }} />
+                        ) : (
+                          <div
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              background: '#f8fafc',
+                              color: '#94a3b8',
+                              fontSize: 24,
+                              fontWeight: 600,
+                              padding: 12,
+                              textAlign: 'center',
+                            }}
+                          >
+                            +
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

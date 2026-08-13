@@ -4,8 +4,12 @@
   width: 100%;
   height: 100vh;
   background-color: #f1f5f9;
-  font-family: inherit;
+  font-family: var(--font-family);
   overflow: hidden;
+}
+
+.builder-shell :where(h1, h2, h3, h4, h5, h6, p, button, input, select, textarea, label, a, span, li) {
+  font-family: var(--font-family);
 }
 
 .builder-topbar {
@@ -274,5 +278,53 @@
 
 .template-type {
   font-size: 13px;
+  color: #64748b;
+}
+
+.aig-pack-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.aig-pack-detail-meta {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.aig-pack-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.aig-pack-card-sub {
+  margin: 0 0 8px;
+  padding: 0 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #64748b;
+  text-align: left;
+}
+
+.aig-pack-slide-card {
+  cursor: default;
+  pointer-events: none;
+}
+
+.aig-pack-slide-type {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   color: #64748b;
 }

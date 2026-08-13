@@ -136,10 +136,30 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}`,
       SET_DEFAULT: (workspaceId, brandKitId) =>
         `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/set-default`,
+      HEALTH: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/health`,
       MEDIA: (workspaceId, brandKitId) =>
         `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/media`,
       MEDIA_ONE: (workspaceId, brandKitId, mediaId) =>
         `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/media/${mediaId}`,
+      MEDIA_STREAM: (workspaceId, brandKitId, mediaId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/media/${mediaId}/stream`,
+      SUGGEST_COLORS: (workspaceId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/suggest/colors`,
+      SUGGEST_FONTS: (workspaceId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/suggest/fonts`,
+      SUGGEST_VOICE: (workspaceId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/suggest/voice`,
+      SUGGEST_IMAGE_STYLE: (workspaceId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/suggest/image-style`,
+      SUGGEST_LOGO_VARIANTS: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/suggest/logo-variants`,
+      GUIDELINES: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/guidelines`,
+      GUIDELINES_PDF: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/guidelines/pdf`,
+      GUIDELINES_GENERATE: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/guidelines/generate`,
     },
 
     // Image Gen (AI image studio)
@@ -170,6 +190,10 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/presentations/${presentationId}`,
       TEMPLATES: (workspaceId) => `/api/workspaces/${workspaceId}/presentation-templates`,
       DECK_PACKS: (workspaceId) => `/api/workspaces/${workspaceId}/presentation-deck-packs`,
+      DECK_PACK: (workspaceId, packId) =>
+        `/api/workspaces/${workspaceId}/presentation-deck-packs/${packId}`,
+      TEMPLATE: (workspaceId, templateId) =>
+        `/api/workspaces/${workspaceId}/presentation-templates/${templateId}`,
       THEMES: (workspaceId) => `/api/workspaces/${workspaceId}/presentation-themes`,
       ELEMENT_PRESETS: (workspaceId) => `/api/workspaces/${workspaceId}/presentation-elements`,
       STATUS: (workspaceId, presentationId) =>

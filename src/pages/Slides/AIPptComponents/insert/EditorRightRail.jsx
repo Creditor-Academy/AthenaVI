@@ -24,9 +24,12 @@ import presentationService from '../../../../services/presentationService'
 import PptCommentsPanel from '../PptCommentsPanel'
 import PptVariablesPanel from '../PptVariablesPanel'
 import SpeakerNotesPanel from '../SpeakerNotesPanel'
+import SlideTransitionPicker, { PPT_SLIDE_TRANSITIONS } from './SlideTransitionPicker'
 import './insertPanels.css'
 import '../pptEditorExtras.css'
 import '../pptPanelUi.css'
+
+export { PPT_SLIDE_TRANSITIONS }
 
 const DESIGN_PANEL_TITLES = {
   slide: 'Slide design',
@@ -46,15 +49,6 @@ const RAIL_TOOLS = [
   { id: 'status', label: 'Status', Icon: HiOutlineClipboard },
   { id: 'notes', label: 'Speaker notes', Icon: FiFileText },
   { id: 'variables', label: 'Variables', Icon: FiLayers },
-]
-
-export const PPT_SLIDE_TRANSITIONS = [
-  { id: 'none', label: 'None' },
-  { id: 'continuity', label: 'Continuity' },
-  { id: 'fade', label: 'Fade' },
-  { id: 'slide-left', label: 'Slide left' },
-  { id: 'slide-right', label: 'Slide right' },
-  { id: 'slide-up', label: 'Slide up' },
 ]
 
 export const PPT_SLIDE_STATUSES = [
@@ -88,68 +82,6 @@ function StatusDot({ id }) {
   return <span className={`ppt-status-dot ppt-status-dot--${id}`} aria-hidden />
 }
 
-function TransitionThumb({ id }) {
-  if (id === 'none') {
-    return (
-      <svg viewBox="0 0 64 44" className="ppt-transition-thumb-svg" aria-hidden>
-        <line x1="18" y1="36" x2="46" y2="8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-      </svg>
-    )
-  }
-  if (id === 'continuity') {
-    return (
-      <svg viewBox="0 0 64 44" className="ppt-transition-thumb-svg" aria-hidden>
-        <rect x="8" y="10" width="28" height="22" rx="5" fill="none" stroke="currentColor" strokeWidth="2" />
-        <rect x="28" y="14" width="28" height="22" rx="5" fill="#F1F5F9" stroke="currentColor" strokeWidth="2" />
-        <path d="M18 21 l2 2 4-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-        <path d="M38 25 l2 2 4-5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    )
-  }
-  if (id === 'fade') {
-    return (
-      <svg viewBox="0 0 64 44" className="ppt-transition-thumb-svg" aria-hidden>
-        <defs>
-          <linearGradient id="pptFadeGrad" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#fff" />
-            <stop offset="100%" stopColor="#CBD5E1" />
-          </linearGradient>
-        </defs>
-        <rect x="10" y="8" width="44" height="28" rx="6" fill="url(#pptFadeGrad)" stroke="currentColor" strokeWidth="2" />
-      </svg>
-    )
-  }
-  if (id === 'slide-left') {
-    return (
-      <svg viewBox="0 0 64 44" className="ppt-transition-thumb-svg" aria-hidden>
-        <rect x="8" y="8" width="48" height="28" rx="6" fill="none" stroke="currentColor" strokeWidth="2" />
-        <rect x="18" y="16" width="12" height="12" rx="2" fill="#94A3B8" />
-        <circle cx="40" cy="22" r="6" fill="#CBD5E1" />
-        <path d="M14 22 h6 M16 19 l-3 3 3 3" fill="none" stroke="#64748B" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    )
-  }
-  if (id === 'slide-right') {
-    return (
-      <svg viewBox="0 0 64 44" className="ppt-transition-thumb-svg" aria-hidden>
-        <rect x="8" y="8" width="48" height="28" rx="6" fill="none" stroke="currentColor" strokeWidth="2" />
-        <rect x="18" y="16" width="12" height="12" rx="2" fill="#94A3B8" />
-        <circle cx="40" cy="22" r="6" fill="#CBD5E1" />
-        <path d="M50 22 h-6 M48 19 l3 3 -3 3" fill="none" stroke="#64748B" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    )
-  }
-  // slide-up
-  return (
-    <svg viewBox="0 0 64 44" className="ppt-transition-thumb-svg" aria-hidden>
-      <rect x="8" y="8" width="48" height="28" rx="6" fill="none" stroke="currentColor" strokeWidth="2" />
-      <rect x="18" y="14" width="12" height="12" rx="2" fill="#94A3B8" />
-      <circle cx="40" cy="20" r="6" fill="#CBD5E1" />
-      <path d="M32 34 v-5 M29 31 l3 -3 3 3" fill="none" stroke="#64748B" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  )
-}
-
 /**
  * Right floating rail: Design / Transition / Comments / Status + zoom + AI.
  */
@@ -177,6 +109,7 @@ export default function EditorRightRail({
   onToggleElementLock,
   onReplaceImage,
   onCropImage,
+  onToggleImageAsBackground,
   onSpeakerNotesChange,
   deckVariables = [],
   onVariablesChange,
@@ -317,6 +250,8 @@ export default function EditorRightRail({
                 onToggleElementLock={() => selectedElementId && onToggleElementLock?.(selectedElementId)}
                 onReplaceImage={onReplaceImage}
                 onCropImage={onCropImage}
+                onToggleImageAsBackground={onToggleImageAsBackground}
+                onChangeTransition={onChangeTransition}
                 disabled={disabled}
               />
 
@@ -367,25 +302,11 @@ export default function EditorRightRail({
 
           {active === 'transition' && (
             <div className="ppt-slide-panel ppt-transition-panel" role="region" aria-label="Slide transition">
-              <div className="ppt-transition-grid">
-                {PPT_SLIDE_TRANSITIONS.map((opt) => {
-                  const selected = currentTransition === opt.id
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      className={`ppt-transition-card ${selected ? 'is-active' : ''}`}
-                      disabled={disabled}
-                      onClick={() => onChangeTransition?.(opt.id)}
-                    >
-                      <span className="ppt-transition-thumb">
-                        <TransitionThumb id={opt.id} />
-                      </span>
-                      <span className="ppt-transition-label">{opt.label}</span>
-                    </button>
-                  )
-                })}
-              </div>
+              <SlideTransitionPicker
+                value={currentTransition}
+                onChange={onChangeTransition}
+                disabled={disabled}
+              />
             </div>
           )}
 

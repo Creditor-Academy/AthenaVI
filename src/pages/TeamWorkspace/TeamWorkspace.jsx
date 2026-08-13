@@ -717,16 +717,6 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
       />
     ));
 
-    if (viewMode === 'tile') {
-      return [
-        <CreateVideoCard
-          key="create-recent-video-tile"
-          onClick={() => openCreateVideoModal()}
-        />,
-        ...itemElements
-      ];
-    }
-
     return itemElements;
   };
 
@@ -735,27 +725,6 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
   // ------------------------------------------------------------------
   const renderRoot = () => (
     <div>
-      <div className="workspace-root-tabs-wrapper">
-        <div className="workspace-root-tabs">
-          <button
-            className={`workspace-root-tab ${activeRootTab === 'recents' ? 'active' : ''}`}
-            onClick={() => setActiveRootTab('recents')}
-          >
-            <MdHistory size={18} /> Recents
-            <span className="tab-count-badge">{recentVideoEntries.length}</span>
-          </button>
-          <button
-            className={`workspace-root-tab ${activeRootTab === 'workspace' ? 'active' : ''}`}
-            onClick={() => setActiveRootTab('workspace')}
-          >
-            <MdWorkspaces size={18} /> Workspace
-            <span className="tab-count-badge">
-              {(personalWorkspace ? 1 : 0) + myWorkspaces.length + sharedWithMe.length}
-            </span>
-          </button>
-        </div>
-      </div>
-
       {activeRootTab === 'recents' && (
         <WorkspaceSection
           title="Recents"
@@ -764,9 +733,9 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
           listClassName="project-list-view"
           emptyMessage="No recent videos yet."
           emptyIcon={MdHistory}
-          showHeader={false}
+          showHeader={true}
         >
-          {viewMode === 'list' && (
+          {viewMode === 'list' && recentVideoEntries.length > 0 && (
             <div className="list-header project-list-header">
               <div className="col" />
               <div className="col">Name</div>
@@ -854,17 +823,6 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
 
     return (
       <div>
-        <div className="workspace-breadcrumbs workspace-breadcrumbs--with-storage">
-          <div className="workspace-breadcrumbs__trail">
-            <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>
-              Workspaces
-            </span>
-            <ChevronRight size={14} className="breadcrumb-separator" />
-            <span>{workspace.name}</span>
-          </div>
-          <WorkspaceStorageBreadcrumb workspaceId={workspace.id} />
-        </div>
-
         {!canEdit && (
           <div className="workspace-permission-note" style={{ marginBottom: 16 }}>
             <MdInfo size={18} />
@@ -939,24 +897,6 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
 
     return (
       <div>
-        <div className="workspace-breadcrumbs workspace-breadcrumbs--with-storage">
-          <div className="workspace-breadcrumbs__trail">
-            <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>
-              Workspaces
-            </span>
-            <ChevronRight size={14} className="breadcrumb-separator" />
-            <span
-              className="breadcrumb-link"
-              onClick={() => setCurrentLevel({ type: 'workspace', id: workspace.id, ws: workspace })}
-            >
-              {workspace.name}
-            </span>
-            <ChevronRight size={14} className="breadcrumb-separator" />
-            <span>{folder.name}</span>
-          </div>
-          <WorkspaceStorageBreadcrumb workspaceId={workspace.id} />
-        </div>
-
         {!canEdit && (
           <div className="workspace-permission-note" style={{ marginBottom: 16 }}>
             <MdInfo size={18} />
@@ -993,7 +933,67 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
         }
       />
 
-      <div className="workspace-content-area" style={{ flex: 1 }}>
+      {currentLevel.type === 'root' && !(loading && workspaces.length === 0) && (
+        <div className="workspace-root-tabs-wrapper">
+          <div className="workspace-root-tabs">
+            <button
+              type="button"
+              className={`workspace-root-tab ${activeRootTab === 'recents' ? 'active' : ''}`}
+              onClick={() => setActiveRootTab('recents')}
+            >
+              <MdHistory size={18} /> Recents
+              <span className="tab-count-badge">{recentVideoEntries.length}</span>
+            </button>
+            <button
+              type="button"
+              className={`workspace-root-tab ${activeRootTab === 'workspace' ? 'active' : ''}`}
+              onClick={() => setActiveRootTab('workspace')}
+            >
+              <MdWorkspaces size={18} /> Workspace
+              <span className="tab-count-badge">
+                {(personalWorkspace ? 1 : 0) + myWorkspaces.length + sharedWithMe.length}
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {currentLevel.type === 'workspace' && activeWorkspace && (
+        <div className="workspace-breadcrumbs workspace-breadcrumbs--with-storage workspace-sticky-nav">
+          <div className="workspace-breadcrumbs__trail">
+            <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>
+              Workspaces
+            </span>
+            <ChevronRight size={14} className="breadcrumb-separator" />
+            <span>{activeWorkspace.name}</span>
+          </div>
+          <WorkspaceStorageBreadcrumb workspaceId={activeWorkspace.id} />
+        </div>
+      )}
+
+      {currentLevel.type === 'folder' && activeWorkspace && activeFolder && (
+        <div className="workspace-breadcrumbs workspace-breadcrumbs--with-storage workspace-sticky-nav">
+          <div className="workspace-breadcrumbs__trail">
+            <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>
+              Workspaces
+            </span>
+            <ChevronRight size={14} className="breadcrumb-separator" />
+            <span
+              className="breadcrumb-link"
+              onClick={() =>
+                setCurrentLevel({ type: 'workspace', id: activeWorkspace.id, ws: activeWorkspace })
+              }
+            >
+              {activeWorkspace.name}
+            </span>
+            <ChevronRight size={14} className="breadcrumb-separator" />
+            <span>{activeFolder.name}</span>
+          </div>
+          <WorkspaceStorageBreadcrumb workspaceId={activeWorkspace.id} />
+        </div>
+      )}
+
+      <div className="workspace-content-area">
         {loading && workspaces.length === 0 ? (
           <TeamWorkspaceSkeleton viewMode={viewMode} activeRootTab={activeRootTab} />
         ) : (
