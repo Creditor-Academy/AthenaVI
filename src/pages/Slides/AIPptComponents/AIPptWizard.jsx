@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Sparkles, ArrowUp, ArrowRight, Paperclip, FileText, BookOpen, TrendingUp, AlignLeft, Check, Globe, Image as ImageIcon, Box, Ban, ChevronDown, Star } from 'lucide-react'
+import { Sparkles, ArrowUp, ArrowRight, Paperclip, FileText, BookOpen, TrendingUp, AlignLeft, Check, Globe, Image as ImageIcon, Box, Ban, ChevronDown, Star, Users, Target, Mic, ListPlus } from 'lucide-react'
 import presentationService from '../../../services/presentationService'
 import brandKitService from '../../../services/brandKitService'
 import { isInsufficientCreditsError } from '../../../services/creditsService'
@@ -164,6 +164,8 @@ export default function AIPptWizard({
   const [tone, setTone] = useState('Professional')
   const [audience, setAudience] = useState('Internal Team')
   const [purpose, setPurpose] = useState('Inform')
+  const [promptCommitted, setPromptCommitted] = useState(false)
+  const [outlineOpen, setOutlineOpen] = useState(false)
   
   // Theme Filters (legacy config fields)
   const [selectedStyle, setSelectedStyle] = useState('')
@@ -194,6 +196,8 @@ export default function AIPptWizard({
   const [workspaceHint, setWorkspaceHint] = useState(null)
   
   const outlineRef = useRef(null)
+  const optionsPanelRef = useRef(null)
+  const heroSectionRef = useRef(null)
 
   // Resolve workspace + load theme / pack / brand kit pickers once
   useEffect(() => {
@@ -282,8 +286,9 @@ export default function AIPptWizard({
       const packId = selectedPackId || null
       const brandKitId = selectedBrandKitId || null
 
+      // Mutually exclusive with brand kit / pack — only send theme when those are unset
       const candidateThemeId = toApiThemeId(theme)
-      const useCatalogTheme = !brandKitId || !packId
+      const useCatalogTheme = !brandKitId && !packId
       const themeId =
         useCatalogTheme && catalogThemeIds.includes(candidateThemeId)
           ? candidateThemeId
@@ -431,11 +436,26 @@ export default function AIPptWizard({
   }
 
   const handlePromptSubmit = () => {
-    if (prompt.trim()) setStep(2)
+    if (!prompt.trim()) return
+    setPromptCommitted(true)
+    if (outline.trim()) setOutlineOpen(true)
+    // Scroll options into view after they mount
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        optionsPanelRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        })
+      }, 80)
+    })
+  }
+
+  const handleContinueFromOptions = () => {
+    if (!prompt.trim()) return
+    setStep(2)
   }
 
   const themePickerThemes = THEMES
-  const isColorThemeOnly = !selectedBrandKitId && !selectedPackId
 
   return (
     <>
@@ -450,7 +470,10 @@ export default function AIPptWizard({
       <main className="aig-main-fullscreen">
         
         {step === 1 && (
-          <div className="aig-new-hero-section fade-in">
+          <div
+            ref={heroSectionRef}
+            className={`aig-new-hero-section fade-in ${promptCommitted ? 'aig-new-hero-section--committed' : ''}`}
+          >
             {/* Floating Background Images */}
             <div className="aig-floating-bg">
               <img src={customFloat1} className="aig-float-img img-1" alt="" aria-hidden="true" />
@@ -473,10 +496,14 @@ export default function AIPptWizard({
             <div className="aig-new-header">
               <span className="aig-new-greeting">Hi Creator</span>
               <h1 className="aig-new-title">Create your presentation</h1>
-              <p className="aig-new-subtitle">Type your PPT prompt below, or choose a suggestion to get started</p>
+              <p className="aig-new-subtitle">
+                {promptCommitted
+                  ? 'Tune the voice of your deck, then continue.'
+                  : 'Type your PPT prompt below, or choose a suggestion to get started'}
+              </p>
             </div>
             
-            {!prompt.trim() && (
+            {!promptCommitted && !prompt.trim() && (
               <div className="aig-new-suggestions-grid">
                 <div className="aig-new-suggestion-card" onClick={() => setPrompt('Turn meeting notes into a presentation')}>
                   <FileText className="aig-suggestion-icon" size={24} />
@@ -493,88 +520,172 @@ export default function AIPptWizard({
               </div>
             )}
 
-            <div className={`aig-new-prompt-container ${prompt.trim() ? 'expanded' : ''}`}>
-              {prompt.trim() && (
-                <div className="aig-new-prompt-expanded fade-in">
-                  <textarea 
-                    ref={outlineRef}
-                    className="aig-new-outline-input"
-                    placeholder="Add an outline or notes to guide the AI (optional)..."
-                    value={outline}
-                    onChange={(e) => setOutline(e.target.value)}
-                    rows={3}
-                  />
-                  <div className="aig-new-tone-selector">
-                    <span>Voice & Tone:</span>
-                    <div className="aig-pill-grid">
-                      {WIZARD_TONES.map(t => (
-                        <button 
-                          key={t}
-                          className={`aig-pill-small ${tone === t ? 'active' : ''}`}
-                          onClick={() => setTone(t)}
-                        >
-                          {t}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  <div className="aig-new-tone-selector" style={{ marginTop: '16px' }}>
-                    <span>Audience:</span>
-                    <div className="aig-pill-grid">
-                      {WIZARD_AUDIENCES.map(a => (
-                        <button 
-                          key={a}
-                          className={`aig-pill-small ${audience === a ? 'active' : ''}`}
-                          onClick={() => setAudience(a)}
-                        >
-                          {a}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="aig-new-tone-selector" style={{ marginTop: '16px' }}>
-                    <span>Purpose:</span>
-                    <div className="aig-pill-grid">
-                      {WIZARD_PURPOSES.map(p => (
-                        <button 
-                          key={p}
-                          className={`aig-pill-small ${purpose === p ? 'active' : ''}`}
-                          onClick={() => setPurpose(p)}
-                        >
-                          {p}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
+            <div className="aig-new-prompt-container">
               <div className="aig-new-input-row">
-                <button className="aig-attach-btn"><Paperclip size={20} /></button>
+                <button type="button" className="aig-attach-btn" aria-label="Attach file">
+                  <Paperclip size={20} />
+                </button>
                 <input 
                   className="aig-new-main-input"
                   placeholder="Type your PPT prompt..."
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handlePromptSubmit()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handlePromptSubmit()
+                    }
+                  }}
                   autoFocus
                 />
                 <button 
+                  type="button"
                   className={`aig-new-submit-btn ${prompt.trim() ? 'active' : ''}`}
                   onClick={handlePromptSubmit}
                   disabled={!prompt.trim()}
+                  aria-label={promptCommitted ? 'Update prompt options' : 'Continue with prompt'}
                 >
                   <ArrowRight size={18} />
                 </button>
               </div>
             </div>
+
+            {promptCommitted && (
+              <section
+                ref={optionsPanelRef}
+                className="aig-prompt-options fade-in"
+                aria-label="Presentation guidance"
+              >
+                <div className="aig-prompt-options-head">
+                  <h2 className="aig-prompt-options-title">Shape your presentation</h2>
+                  <p className="aig-prompt-options-sub">
+                    Choose how the AI should write, who it’s for, and why — then continue.
+                  </p>
+                </div>
+
+                <div className="aig-prompt-option-card">
+                  <div className="aig-prompt-option-card-head">
+                    <span className="aig-prompt-option-icon" aria-hidden>
+                      <Mic size={18} />
+                    </span>
+                    <div>
+                      <h3>Voice & Tone</h3>
+                      <p>How should the deck sound?</p>
+                    </div>
+                  </div>
+                  <div className="aig-pill-grid aig-pill-grid--wrap">
+                    {WIZARD_TONES.map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        className={`aig-pill-choice ${tone === t ? 'active' : ''}`}
+                        onClick={() => setTone(t)}
+                      >
+                        {tone === t && <Check size={14} strokeWidth={3} />}
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="aig-prompt-option-card">
+                  <div className="aig-prompt-option-card-head">
+                    <span className="aig-prompt-option-icon" aria-hidden>
+                      <Users size={18} />
+                    </span>
+                    <div>
+                      <h3>Audience</h3>
+                      <p>Who will see this presentation?</p>
+                    </div>
+                  </div>
+                  <div className="aig-pill-grid aig-pill-grid--wrap">
+                    {WIZARD_AUDIENCES.map((a) => (
+                      <button
+                        key={a}
+                        type="button"
+                        className={`aig-pill-choice ${audience === a ? 'active' : ''}`}
+                        onClick={() => setAudience(a)}
+                      >
+                        {audience === a && <Check size={14} strokeWidth={3} />}
+                        {a}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="aig-prompt-option-card">
+                  <div className="aig-prompt-option-card-head">
+                    <span className="aig-prompt-option-icon" aria-hidden>
+                      <Target size={18} />
+                    </span>
+                    <div>
+                      <h3>Purpose</h3>
+                      <p>What should this presentation achieve?</p>
+                    </div>
+                  </div>
+                  <div className="aig-pill-grid aig-pill-grid--wrap">
+                    {WIZARD_PURPOSES.map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        className={`aig-pill-choice ${purpose === p ? 'active' : ''}`}
+                        onClick={() => setPurpose(p)}
+                      >
+                        {purpose === p && <Check size={14} strokeWidth={3} />}
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="aig-prompt-option-card aig-prompt-option-card--outline">
+                  <button
+                    type="button"
+                    className="aig-prompt-outline-toggle"
+                    onClick={() => setOutlineOpen((open) => !open)}
+                    aria-expanded={outlineOpen}
+                  >
+                    <span className="aig-prompt-option-icon" aria-hidden>
+                      <ListPlus size={18} />
+                    </span>
+                    <div className="aig-prompt-outline-toggle-copy">
+                      <h3>Optional outline</h3>
+                      <p>Add slide structure or notes to guide the AI</p>
+                    </div>
+                    <ChevronDown
+                      size={18}
+                      className={`aig-prompt-outline-chevron ${outlineOpen ? 'open' : ''}`}
+                    />
+                  </button>
+                  {outlineOpen && (
+                    <textarea
+                      ref={outlineRef}
+                      className="aig-new-outline-input aig-prompt-outline-textarea"
+                      placeholder={'Slide 1 — Introduction\nSlide 2 — Problem\nSlide 3 — Solution'}
+                      value={outline}
+                      onChange={(e) => setOutline(e.target.value)}
+                      rows={5}
+                    />
+                  )}
+                </div>
+
+                <div className="aig-prompt-options-actions">
+                  <button
+                    type="button"
+                    className="aig-btn-primary aig-prompt-continue-btn"
+                    onClick={handleContinueFromOptions}
+                  >
+                    Continue
+                    <ArrowRight size={18} />
+                  </button>
+                </div>
+              </section>
+            )}
           </div>
         )}
 
         {step === 2 && (
-          <AIPptVibeStep
+            <AIPptVibeStep
             workspaceId={workspaceHint?.workspaceId}
             brandKits={brandKits}
             selectedBrandKitId={selectedBrandKitId}
@@ -586,7 +697,6 @@ export default function AIPptWizard({
             theme={theme}
             onSelectTheme={setTheme}
             onOpenThemeModal={() => setIsThemeModalOpen(true)}
-            screenSizes={SCREEN_SIZES}
             screenSize={screenSize}
             onScreenSizeChange={setScreenSize}
             stepReady={stepReady}
@@ -598,9 +708,7 @@ export default function AIPptWizard({
             <div className={`aig-step-header ${stepReady ? 'aig-header-settled' : 'aig-header-centered'}`}>
               <h2 className="aig-step-title">The Details</h2>
               <p className="aig-step-subtitle">
-                {isColorThemeOnly
-                  ? 'Choose how many slides you want.'
-                  : 'Fine-tune the content and media.'}
+                Fine-tune the content and media.
               </p>
             </div>
             
@@ -620,8 +728,6 @@ export default function AIPptWizard({
               </div>
             </div>
 
-            {!isColorThemeOnly && (
-            <>
             <div className="aig-selection-section">
               <div className="aig-section-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#0f172a' }}>
           
@@ -746,8 +852,6 @@ export default function AIPptWizard({
                 </button>
               </div>
             </div>
-            </>
-            )}
             </div>
           </div>
         )}

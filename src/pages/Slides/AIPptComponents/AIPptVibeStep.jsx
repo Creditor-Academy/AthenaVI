@@ -1,14 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Check, Palette, ChevronLeft, LayoutTemplate } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import {
+  Check,
+  LayoutTemplate,
+  Palette,
+  Sparkles,
+  X,
+  Search,
+} from 'lucide-react'
 import presentationService from '../../../services/presentationService'
 import brandKitService from '../../../services/brandKitService'
-import PackSlidePreview from '../../../components/ppt/PackSlidePreview'
 import {
   normalizeDeckPackDetail,
   resolvePackThumbnailUrl,
   resolvePackColorFallback,
 } from '../../../utils/presentationHelpers'
-import { slideHasCanvasElements } from '../../../utils/videoTemplateToCanvasElements'
+
+const FIXED_ASPECT = '16:9'
 
 function PackCardThumbnail({ pack }) {
   const thumb = pack.thumbnailUrl || resolvePackThumbnailUrl(pack)
@@ -41,98 +49,106 @@ function PackCardThumbnail({ pack }) {
   )
 }
 
-function resolveSchemaSlideForPreview(pack, slidePreview) {
-  const order = slidePreview?.order ?? 1
-  const slides = pack?.schema?.slides || []
-  return slides.find((s) => (s.order ?? slides.indexOf(s) + 1) === order) || null
-}
-
-function SlidePreviewThumbnail({ slidePreview, schemaSlide, pack, aspectRatio = '16:9', themeId }) {
-  const slide = schemaSlide || resolveSchemaSlideForPreview(pack, slidePreview) || slidePreview
-
-  if (slideHasCanvasElements(slide) || slide?.layout_id) {
-    return (
-      <PackSlidePreview
-        slide={slide}
-        themeId={themeId || pack?.themeId}
-        aspectRatio={aspectRatio}
-        fill
-        showBadge={false}
-        style={{ width: '100%', height: '100%' }}
-      />
-    )
+function ColorStripeCard({
+  title,
+  subtitle,
+  colors = [],
+  selected,
+  onSelect,
+  badge,
+}) {
+  const cleaned = colors.filter(Boolean)
+  // Match brand-kit tiles: 4 vertical bands (last slightly wider)
+  const fallback = ['#64748b', '#e2e8f0', '#94a3b8', '#0f172a']
+  const source = cleaned.length ? cleaned : fallback
+  const palette = source.slice(0, 4)
+  while (palette.length < 4) {
+    palette.push(fallback[palette.length] || '#e2e8f0')
   }
-
-  const thumb = slidePreview?.thumbnailUrl
-  if (thumb) {
-    return <img src={thumb} alt="" className="aig-theme-card-image" />
-  }
-
-  return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#f1f5f9',
-        color: '#64748b',
-        fontSize: 13,
-        fontWeight: 600,
-      }}
-    >
-      Slide {slidePreview?.order ?? ''}
-    </div>
-  )
-}
-
-function BrandKitCard({ kit, detail, selected, onSelect }) {
-  const colors = detail?.data?.colors || []
-  const logo = (detail?.media || []).find((m) => m.kind === 'logo' && m.url)
 
   return (
     <button
       type="button"
-      className={`aig-vibe-card aig-brandkit-card ${selected ? 'active' : ''}`}
-      onClick={() => onSelect(kit.id)}
+      className={`aig-color-stripe-card ${selected ? 'selected' : ''}`}
+      onClick={onSelect}
     >
-      <div className="aig-vibe-card-top">
-        <span className="aig-vibe-card-title">{kit.name}</span>
+      {badge ? <span className="aig-color-stripe-badge">{badge}</span> : null}
+      <div className="aig-color-stripe-preview" aria-hidden>
+        {palette.map((hex, index) => (
+          <div
+            key={`${hex}-${index}`}
+            className={`aig-color-stripe-band ${index === palette.length - 1 ? 'is-wide' : ''}`}
+            style={{ backgroundColor: hex }}
+          />
+        ))}
         {selected && (
-          <span className="aig-vibe-card-check">
-            <Check size={14} strokeWidth={3} />
+          <span className="aig-template-drawer-badge">
+            <Check size={12} strokeWidth={3} /> Selected
           </span>
         )}
       </div>
-      <div className="aig-brandkit-card-body">
-        {logo ? (
-          <img src={logo.url} alt="" className="aig-brandkit-card-logo" />
-        ) : (
-          <div className="aig-brandkit-card-logo-placeholder">Logo</div>
-        )}
-        <div className="aig-brandkit-card-swatches">
-          {colors.slice(0, 5).map((c) => (
-            <span
-              key={c.id || c.hex}
-              className="aig-brandkit-swatch"
-              style={{ background: c.hex }}
-              title={c.name || c.hex}
-            />
-          ))}
-        </div>
+      <div className="aig-color-stripe-body">
+        <strong className="aig-color-stripe-name">{title || 'Untitled'}</strong>
+        <span className="aig-color-stripe-sub">{subtitle}</span>
       </div>
-      {kit.isDefault && <span className="aig-vibe-card-badge">Default</span>}
     </button>
   )
 }
 
-function selectionModeLabel({ brandKitId, packId }) {
-  if (brandKitId && packId) return 'Brand Kit + Template'
-  if (brandKitId) return 'Brand Kit + Color Theme'
-  return 'Color Theme'
+function brandKitColors(detail) {
+  const colors = detail?.data?.colors || []
+  const hexes = colors.map((c) => c.hex).filter(Boolean)
+  // Prefer first 4 palette entries — same strip count as theme cards
+  return hexes.slice(0, 4)
 }
 
+function themeColors(theme) {
+  // Same strip roles as brand kits: primary, light/bg, mid, dark/text
+  return [
+    theme.primary,
+    theme.background || theme.background_secondary || '#FFFFFF',
+    theme.secondary || theme.accent,
+    theme.text_primary || theme.title || '#0F172A',
+  ].filter(Boolean)
+}
+
+function GlassChoiceTile({ selected, configured, onClick, icon: Icon, title, subtitle, meta }) {
+  return (
+    <button
+      type="button"
+      className={`aig-glass-tile ${selected ? 'selected' : ''} ${configured ? 'configured' : ''}`}
+      onClick={onClick}
+    >
+      <span className="aig-glass-tile-check" aria-hidden>
+        <Check size={12} strokeWidth={3} />
+      </span>
+      <span className="aig-glass-tile-icon" aria-hidden>
+        <Icon size={22} />
+      </span>
+      <strong>{title}</strong>
+      <span>{subtitle}</span>
+      {meta ? <em className="aig-glass-tile-meta">{meta}</em> : null}
+    </button>
+  )
+}
+
+function packMatchesAspect(pack, aspectRatio = FIXED_ASPECT) {
+  const packRatio = String(pack.aspectRatio || '').trim()
+  if (!packRatio) return true
+  return packRatio === aspectRatio
+}
+
+function selectionSummary(activeChoice) {
+  if (activeChoice === 'brand') return 'Brand Kit'
+  if (activeChoice === 'palette') return 'Palette'
+  if (activeChoice === 'template') return 'Template'
+  return 'Choose one option'
+}
+
+/**
+ * drawer: null | 'brand' | 'palette' | 'template'
+ * User can configure any one or combination via the three tiles.
+ */
 export default function AIPptVibeStep({
   workspaceId,
   brandKits = [],
@@ -144,28 +160,28 @@ export default function AIPptVibeStep({
   themes = [],
   theme,
   onSelectTheme,
-  onOpenThemeModal,
-  screenSizes = [],
+  onOpenThemeModal: _onOpenThemeModal,
   screenSize,
   onScreenSizeChange,
   stepReady,
 }) {
+  const [drawer, setDrawer] = useState(null) // 'brand' | 'palette' | 'template'
+  // Only one of Brand Kit / Palette / Template can be active
+  const [activeChoice, setActiveChoice] = useState(() => {
+    if (selectedPackId) return 'template'
+    if (selectedBrandKitId) return 'brand'
+    return 'palette'
+  })
+  const [searchQuery, setSearchQuery] = useState('')
   const [brandKitDetails, setBrandKitDetails] = useState({})
   const [packDetail, setPackDetail] = useState(null)
-  const [packDetailLoading, setPackDetailLoading] = useState(false)
-  const [packDetailError, setPackDetailError] = useState('')
-  const [previewPackId, setPreviewPackId] = useState(null)
 
-  const showColorThemes = !(selectedBrandKitId && selectedPackId)
-
-  const modeLabel = useMemo(
-    () =>
-      selectionModeLabel({
-        brandKitId: selectedBrandKitId,
-        packId: selectedPackId,
-      }),
-    [selectedBrandKitId, selectedPackId]
-  )
+  // AI PPT generation is always 16:9
+  useEffect(() => {
+    if (screenSize !== FIXED_ASPECT) {
+      onScreenSizeChange?.(FIXED_ASPECT)
+    }
+  }, [screenSize, onScreenSizeChange])
 
   useEffect(() => {
     let cancelled = false
@@ -184,9 +200,7 @@ export default function AIPptVibeStep({
           }
         })
       )
-      if (!cancelled) {
-        setBrandKitDetails(Object.fromEntries(entries))
-      }
+      if (!cancelled) setBrandKitDetails(Object.fromEntries(entries))
     })()
     return () => {
       cancelled = true
@@ -199,273 +213,338 @@ export default function AIPptVibeStep({
         setPackDetail(null)
         return
       }
-      setPackDetailLoading(true)
-      setPackDetailError('')
       try {
         const payload = await presentationService.getDeckPack(workspaceId, packId)
-        const detail = normalizeDeckPackDetail(payload)
-        if (!detail) throw new Error('Pack detail unavailable')
-        setPackDetail(detail)
-      } catch (err) {
-        setPackDetailError(err.message || 'Failed to load pack preview')
+        setPackDetail(normalizeDeckPackDetail(payload))
+      } catch {
         setPackDetail(null)
-      } finally {
-        setPackDetailLoading(false)
       }
     },
     [workspaceId]
   )
 
   useEffect(() => {
-    if (!selectedPackId) {
-      setPreviewPackId(null)
-      setPackDetail(null)
-      return
-    }
-    setPreviewPackId(String(selectedPackId))
-    loadPackDetail(selectedPackId)
+    if (selectedPackId) loadPackDetail(selectedPackId)
+    else setPackDetail(null)
   }, [selectedPackId, loadPackDetail])
 
-  const handleSelectPack = (packId) => {
-    const next = packId ? String(packId) : ''
-    onSelectPack(next)
-    if (next) {
-      setPreviewPackId(next)
-      loadPackDetail(next)
-    } else {
-      setPreviewPackId(null)
-      setPackDetail(null)
+  useEffect(() => {
+    if (!drawer) return undefined
+    const onKey = (e) => {
+      if (e.key === 'Escape') setDrawer(null)
     }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [drawer])
+
+  const openDrawer = (type) => {
+    setSearchQuery('')
+    setDrawer(type)
   }
 
-  const activePack =
+  const closeDrawer = useCallback((event) => {
+    event?.preventDefault?.()
+    event?.stopPropagation?.()
+    setDrawer(null)
+  }, [])
+
+  const selectBrandKit = (id) => {
+    onSelectBrandKit(String(id))
+    onSelectPack('')
+    setActiveChoice('brand')
+    setDrawer(null)
+  }
+
+  const selectPalette = (id) => {
+    onSelectTheme(id)
+    onSelectBrandKit('')
+    onSelectPack('')
+    setActiveChoice('palette')
+    setDrawer(null)
+  }
+
+  const selectTemplate = (id) => {
+    onSelectPack(String(id))
+    onSelectBrandKit('')
+    setActiveChoice('template')
+    setDrawer(null)
+  }
+
+  const filteredBrandKits = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return brandKits
+    return brandKits.filter((kit) => (kit.name || '').toLowerCase().includes(q))
+  }, [brandKits, searchQuery])
+
+  const filteredThemes = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return themes
+    return themes.filter((t) =>
+      `${t.name} ${t.vibe || ''}`.toLowerCase().includes(q)
+    )
+  }, [themes, searchQuery])
+
+  const filteredPacks = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    return (deckPacks || []).filter((pack) => {
+      if (!packMatchesAspect(pack, FIXED_ASPECT)) return false
+      if (!q) return true
+      return (
+        (pack.name || '').toLowerCase().includes(q) ||
+        (pack.category || '').toLowerCase().includes(q)
+      )
+    })
+  }, [deckPacks, searchQuery])
+
+  const selectedBrandKit = brandKits.find(
+    (k) => String(k.id) === String(selectedBrandKitId)
+  )
+  const selectedTheme = themes.find((t) => t.id === theme)
+  const selectedPack =
     packDetail ||
-    deckPacks.find((p) => String(p.id) === String(previewPackId || selectedPackId)) ||
+    deckPacks.find((p) => String(p.id) === String(selectedPackId)) ||
     null
-  const slidePreviews = activePack?.slidePreviews || []
+
+  const brandConfigured = activeChoice === 'brand' && Boolean(selectedBrandKitId)
+  const paletteConfigured = activeChoice === 'palette' && Boolean(theme)
+  const templateConfigured = activeChoice === 'template' && Boolean(selectedPackId)
+
+  const modeLabel = selectionSummary(activeChoice)
+
+  const drawerTitle =
+    drawer === 'brand'
+      ? 'Brand kits'
+      : drawer === 'palette'
+        ? 'Theme palette'
+        : drawer === 'template'
+          ? 'Templates'
+          : ''
+
+  const drawerSubtitle =
+    drawer === 'brand'
+      ? 'Tap a kit to apply it'
+      : drawer === 'palette'
+        ? 'Tap a palette to apply it'
+        : drawer === 'template'
+          ? `Tap a ${FIXED_ASPECT} template to apply it`
+          : ''
 
   return (
     <div className={`aig-step aig-step--2 ${stepReady ? 'aig-step-revealed' : 'aig-step-intro'}`}>
       <div className={`aig-step-header ${stepReady ? 'aig-header-settled' : 'aig-header-centered'}`}>
         <h2 className="aig-step-title">The Vibe</h2>
         <p className="aig-step-subtitle">
-          Choose a brand kit, template, and colors — mix Brand Kit + Template, Brand Kit + Theme, or Theme only.
+          Choose only one — Brand Kit, Palette, or Template.
         </p>
         <div className="aig-vibe-mode-pill">{modeLabel}</div>
       </div>
 
       <div className={`aig-step-body ${stepReady ? 'aig-body-visible' : 'aig-body-hidden'}`}>
-        <div className="aig-selection-section">
-          <h3 className="aig-selection-label">Brand Kit</h3>
-          <p className="aig-vibe-section-hint">Optional — applies your logo and colors to the deck.</p>
-          <div className="aig-vibe-card-grid">
-            <button
-              type="button"
-              className={`aig-vibe-card aig-vibe-card-none ${!selectedBrandKitId ? 'active' : ''}`}
-              onClick={() => onSelectBrandKit('')}
-            >
-              <span className="aig-vibe-card-title">None</span>
-              <span className="aig-vibe-card-sub">Use color theme only</span>
-            </button>
-            {brandKits.map((kit) => (
-              <BrandKitCard
-                key={kit.id}
-                kit={kit}
-                detail={brandKitDetails[String(kit.id)]}
-                selected={String(selectedBrandKitId) === String(kit.id)}
-                onSelect={(id) => onSelectBrandKit(String(id))}
-              />
-            ))}
+        <section className="aig-vibe-block">
+          <div className="aig-vibe-block-head">
+            <h3>Theme</h3>
+            <p>Select one option. Choosing another will replace your current selection.</p>
           </div>
-          {!brandKits.length && (
-            <p className="aig-credit-estimate-hint">No brand kits in this workspace yet.</p>
-          )}
-        </div>
 
-        <div className="aig-selection-section">
-          <h3 className="aig-selection-label">
-            <LayoutTemplate size={18} style={{ verticalAlign: 'middle', marginRight: 6 }} />
-            Templates
-          </h3>
-          <p className="aig-vibe-section-hint">Deck packs define slide layout and order. Preview slides before selecting.</p>
-          <div className="aig-vibe-card-grid aig-vibe-template-grid">
-            <button
-              type="button"
-              className={`aig-vibe-card aig-vibe-card-none aig-template-card ${!selectedPackId ? 'active' : ''}`}
-              onClick={() => handleSelectPack('')}
-            >
-              <div className="aig-template-none-icon">+</div>
-              <span className="aig-vibe-card-title">No template</span>
-              <span className="aig-vibe-card-sub">AI picks layouts from your prompt</span>
-            </button>
-            {deckPacks.map((pack) => (
-              <button
-                key={pack.id}
-                type="button"
-                className={`aig-new-theme-card-premium aig-template-pack-card ${String(selectedPackId) === String(pack.id) ? 'active' : ''}`}
-                onClick={() => handleSelectPack(pack.id)}
-              >
-                <div className="aig-theme-card-header">
-                  <span className="aig-theme-card-title">{pack.name}</span>
-                  {String(selectedPackId) === String(pack.id) && (
-                    <div className="aig-theme-card-check">
-                      <Check size={14} strokeWidth={3} color="#2563eb" />
-                    </div>
-                  )}
-                </div>
-                <div className="aig-theme-card-palette">
-                  <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>
-                    {pack.slideCount ? `${pack.slideCount} slides` : 'Deck pack'}
-                    {pack.aspectRatio ? ` · ${pack.aspectRatio}` : ''}
-                  </span>
-                </div>
-                <div className="aig-theme-card-image-wrapper">
-                  <PackCardThumbnail pack={pack} />
-                </div>
-              </button>
-            ))}
+          <div className="aig-glass-tile-grid aig-glass-tile-grid--3">
+            <GlassChoiceTile
+              selected={drawer === 'brand' || brandConfigured}
+              configured={brandConfigured}
+              onClick={() => openDrawer('brand')}
+              icon={Sparkles}
+              title="Use Brand Kit"
+              subtitle="Logo and brand colors"
+              meta={brandConfigured ? selectedBrandKit?.name : null}
+            />
+            <GlassChoiceTile
+              selected={drawer === 'palette' || paletteConfigured}
+              configured={paletteConfigured}
+              onClick={() => openDrawer('palette')}
+              icon={Palette}
+              title="Palette"
+              subtitle="Discover color themes"
+              meta={paletteConfigured ? selectedTheme?.name : null}
+            />
+            <GlassChoiceTile
+              selected={drawer === 'template' || templateConfigured}
+              configured={templateConfigured}
+              onClick={() => openDrawer('template')}
+              icon={LayoutTemplate}
+              title="Template"
+              subtitle="Start from a deck pack"
+              meta={templateConfigured ? selectedPack?.name : null}
+            />
           </div>
-          {!deckPacks.length && (
-            <p className="aig-credit-estimate-hint">No deck packs available yet.</p>
-          )}
 
-          {previewPackId && (
-            <div className="aig-pack-detail aig-vibe-pack-preview">
-              <div className="aig-pack-detail-head">
+          {(brandConfigured || paletteConfigured || templateConfigured) && (
+            <div className="aig-vibe-summary-row fade-in">
+              {brandConfigured && (
                 <button
                   type="button"
-                  className="aig-btn-secondary"
-                  onClick={() => handleSelectPack('')}
+                  className="aig-vibe-summary-chip"
+                  onClick={() => openDrawer('brand')}
                 >
-                  <ChevronLeft size={16} /> Clear template
+                  Brand: {selectedBrandKit?.name || 'Selected'}
                 </button>
-                <div className="aig-pack-detail-meta">
-                  <strong>{activePack?.name || 'Template preview'}</strong>
-                  {activePack?.slideCount ? (
-                    <span className="aig-pack-badge">{activePack.slideCount} slides</span>
-                  ) : null}
-                  {activePack?.aspectRatio ? (
-                    <span className="aig-pack-badge">{activePack.aspectRatio}</span>
-                  ) : null}
-                </div>
-              </div>
-              {packDetailLoading && (
-                <p className="aig-credit-estimate-hint">Loading slide previews…</p>
               )}
-              {packDetailError && <p className="aig-credit-estimate-hint">{packDetailError}</p>}
-              {!packDetailLoading && !slidePreviews.length && !packDetailError && (
-                <p className="aig-credit-estimate-hint">Slide previews will appear after pack loads.</p>
+              {paletteConfigured && (
+                <button
+                  type="button"
+                  className="aig-vibe-summary-chip"
+                  onClick={() => openDrawer('palette')}
+                >
+                  Palette: {selectedTheme?.name || theme}
+                </button>
               )}
-              <div className="aig-new-theme-grid-5">
-                {slidePreviews.map((slidePreview) => (
-                  <div
-                    key={`${activePack?.id}-${slidePreview.order}`}
-                    className="aig-new-theme-card-premium aig-pack-slide-card"
-                  >
-                    <div className="aig-theme-card-header">
-                      <span className="aig-theme-card-title">
-                        {slidePreview.title || `Slide ${slidePreview.order}`}
-                      </span>
-                      {slidePreview.contentType ? (
-                        <span className="aig-pack-slide-type">{slidePreview.contentType}</span>
-                      ) : null}
-                    </div>
-                    <div className="aig-theme-card-image-wrapper">
-                      <SlidePreviewThumbnail
-                        slidePreview={slidePreview}
-                        schemaSlide={resolveSchemaSlideForPreview(activePack, slidePreview)}
-                        pack={activePack}
-                        aspectRatio={activePack?.aspectRatio || '16:9'}
-                        themeId={activePack?.themeId}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              {templateConfigured && (
+                <button
+                  type="button"
+                  className="aig-vibe-summary-chip"
+                  onClick={() => openDrawer('template')}
+                >
+                  Template: {selectedPack?.name || 'Selected'}
+                </button>
+              )}
             </div>
           )}
-        </div>
+        </section>
+      </div>
 
-        {showColorThemes ? (
-          <div className="aig-selection-section">
-            <div className="aig-section-header-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <div>
-                <h3 className="aig-selection-label" style={{ margin: 0, fontSize: '18px', fontWeight: '700' }}>
-                  Color Themes
-                </h3>
-                <p className="aig-vibe-section-hint" style={{ marginTop: 4, marginBottom: 0 }}>
-                  {selectedBrandKitId
-                    ? 'Combine with your brand kit or pick a catalog theme for accents.'
-                    : 'Pick a color theme for your presentation.'}
-                </p>
-              </div>
-              <button type="button" className="aig-view-more-btn" onClick={onOpenThemeModal}>
-                <Palette size={14} /> View more
-              </button>
-            </div>
-            <div className="aig-new-theme-grid-5">
-              {themes.slice(0, 5).map((t) => (
+      {drawer &&
+        createPortal(
+          <>
+            <div
+              className="aig-template-drawer-backdrop"
+              onClick={closeDrawer}
+              aria-hidden
+            />
+            <aside
+              className="aig-template-drawer"
+              role="dialog"
+              aria-modal="true"
+              aria-label={drawerTitle}
+            >
+              <div className="aig-template-drawer-header">
+                <div>
+                  <h2>{drawerTitle}</h2>
+                  <p>{drawerSubtitle}</p>
+                </div>
                 <button
-                  key={t.id}
                   type="button"
-                  className={`aig-new-theme-card-premium ${theme === t.id ? 'active' : ''}`}
-                  onClick={() => onSelectTheme(t.id)}
+                  className="aig-template-drawer-close"
+                  onClick={closeDrawer}
+                  aria-label="Close sidebar"
                 >
-                  <div className="aig-theme-card-header">
-                    <span className="aig-theme-card-title">{t.name}</span>
-                    {theme === t.id && (
-                      <div className="aig-theme-card-check">
-                        <Check size={14} strokeWidth={3} color="#2563eb" />
+                  <X size={18} aria-hidden />
+                </button>
+              </div>
+
+              <div className="aig-template-drawer-tools">
+                <label className="aig-template-drawer-search">
+                  <Search size={16} />
+                  <input
+                    type="search"
+                    placeholder={
+                      drawer === 'brand'
+                        ? 'Search brand kits...'
+                        : drawer === 'palette'
+                          ? 'Search themes...'
+                          : 'Search templates...'
+                    }
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </label>
+              </div>
+
+              <div className="aig-template-drawer-body">
+                {drawer === 'brand' && (
+                  <>
+                    {!filteredBrandKits.length && (
+                      <div className="aig-template-drawer-empty">
+                        No brand kits in this workspace yet.
                       </div>
                     )}
-                  </div>
-                  <div className="aig-theme-card-palette">
-                    <div className="palette-color" style={{ background: t.primary }} />
-                    <div className="palette-color" style={{ background: t.secondary }} />
-                    <div className="palette-color" style={{ background: t.accent }} />
-                    <div className="palette-color" style={{ background: t.background }} />
-                  </div>
-                  <div
-                    className="aig-theme-card-image-wrapper aig-theme-card-mock"
-                    style={{ background: t.background, borderColor: t.border }}
-                  >
-                    <div className="aig-theme-mock-bar" style={{ background: t.primary }} />
-                    <div className="aig-theme-mock-title" style={{ background: t.text_primary }} />
-                    <div className="aig-theme-mock-line" style={{ background: t.text_secondary }} />
-                    <div className="aig-theme-mock-line short" style={{ background: t.text_secondary }} />
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div className="aig-vibe-theme-hidden-note">
-            Color themes are hidden because you selected <strong>Brand Kit + Template</strong>. Colors and logo come from your brand kit.
-          </div>
-        )}
+                    {filteredBrandKits.map((kit) => (
+                      <ColorStripeCard
+                        key={kit.id}
+                        title={kit.name}
+                        subtitle={kit.isDefault ? 'Default brand kit' : 'Brand kit'}
+                        colors={brandKitColors(brandKitDetails[String(kit.id)])}
+                        selected={
+                          activeChoice === 'brand' &&
+                          String(selectedBrandKitId) === String(kit.id)
+                        }
+                        onSelect={() => selectBrandKit(kit.id)}
+                        badge={kit.isDefault ? 'Default' : null}
+                      />
+                    ))}
+                  </>
+                )}
 
-        <div className="aig-selection-section">
-          <h3 className="aig-selection-label">Screen Size</h3>
-          <div className="aig-selection-grid">
-            {screenSizes.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                className={`aig-aspect-card ${screenSize === s.id ? 'active' : ''}`}
-                onClick={() => onScreenSizeChange(s.id)}
-              >
-                <div className="aig-aspect-preview">
-                  <div className="aig-aspect-box" style={{ aspectRatio: s.ratio }} />
-                </div>
-                <div className="aig-aspect-info">
-                  <strong>{s.name}</strong>
-                  <span>{s.id}</span>
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+                {drawer === 'palette' && (
+                  <>
+                    {!filteredThemes.length && (
+                      <div className="aig-template-drawer-empty">No themes match your search.</div>
+                    )}
+                    {filteredThemes.map((t) => (
+                      <ColorStripeCard
+                        key={t.id}
+                        title={t.name}
+                        subtitle="Theme palette"
+                        colors={themeColors(t)}
+                        selected={activeChoice === 'palette' && theme === t.id}
+                        onSelect={() => selectPalette(t.id)}
+                      />
+                    ))}
+                  </>
+                )}
+
+                {drawer === 'template' && (
+                  <>
+                    {!filteredPacks.length && (
+                      <div className="aig-template-drawer-empty">
+                        No templates available for 16:9 yet.
+                      </div>
+                    )}
+                    {filteredPacks.map((pack) => {
+                      const isSelected =
+                        activeChoice === 'template' &&
+                        String(selectedPackId) === String(pack.id)
+                      return (
+                        <button
+                          key={pack.id}
+                          type="button"
+                          className={`aig-template-drawer-card ${isSelected ? 'selected' : ''}`}
+                          onClick={() => selectTemplate(pack.id)}
+                        >
+                          <div className="aig-template-drawer-card-preview">
+                            <PackCardThumbnail pack={pack} />
+                            {isSelected && (
+                              <span className="aig-template-drawer-badge">Selected</span>
+                            )}
+                          </div>
+                          <div className="aig-template-drawer-card-body">
+                            <strong>{pack.name}</strong>
+                            <span>
+                              {[
+                                pack.slideCount ? `${pack.slideCount} slides` : 'Deck pack',
+                                FIXED_ASPECT,
+                              ]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </span>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </>
+                )}
+              </div>
+            </aside>
+          </>,
+          document.body
+        )}
     </div>
   )
 }
