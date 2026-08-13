@@ -26,6 +26,9 @@ import imageGenService, {
 import creditsService, { isInsufficientCreditsError } from '../../../services/creditsService.js'
 import { resolvePresentationWorkspaceContext } from '../../../utils/presentationContext.js'
 import { isTeamWorkspaceType } from '../../../utils/creditTransactions.js'
+import ImageGenContextAttach, {
+  contextPreviewBadge,
+} from '../../../components/features/image-generation/ImageGenContextAttach.jsx'
 import './AIImageStudio.css'
 
 const STEPS = [
@@ -402,6 +405,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
   const [busyAction, setBusyAction] = useState('')
   const [fullscreenSrc, setFullscreenSrc] = useState(null)
   const [promptModalText, setPromptModalText] = useState(null)
+  const [activeContext, setActiveContext] = useState(null)
 
   const textRef = useRef(null)
   const genAbortRef = useRef(null)
@@ -604,7 +608,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
     })
   }
 
-  const buildGenerateBody = () => {
+  const buildGenerateBody = ({ includeContext = true } = {}) => {
     const body = {
       mode,
       modelId,
@@ -627,6 +631,9 @@ export default function AIImageStudio({ onBack, createContext = null }) {
         })),
       }
     }
+    if (includeContext && activeContext?.id) {
+      body.contextId = activeContext.id
+    }
     return body
   }
 
@@ -642,9 +649,22 @@ export default function AIImageStudio({ onBack, createContext = null }) {
       setThread((prev) =>
         prev.map((t) =>
           t.id === turnId
-            ? { ...t, status: 'done', generation: gen, error: null }
+            ? {
+                ...t,
+                status: 'done',
+                generation: gen,
+                error: null,
+                contextBadge: contextPreviewBadge(gen) || t.contextBadge || null,
+              }
             : t
         )
+      )
+    }
+    if (gen.contextId || data?.generation?.contextId) {
+      setActiveContext((prev) =>
+        prev?.id && (prev.id === gen.contextId || prev.id === data?.generation?.contextId)
+          ? { ...prev, pinnedAt: prev.pinnedAt || new Date().toISOString() }
+          : prev
       )
     }
     refreshCredits(workspaceId)
@@ -678,6 +698,17 @@ export default function AIImageStudio({ onBack, createContext = null }) {
         status: 'pending',
         generation: null,
         error: null,
+        contextBadge: activeContext?.id
+          ? contextPreviewBadge({
+              contextId: activeContext.id,
+              contextPreview: {
+                documentCount: activeContext.previews?.documents?.length || 0,
+                imageCount:
+                  (activeContext.previews?.images?.length || 0) +
+                  (activeContext.previews?.assetRefs?.length || 0),
+              },
+            })
+          : null,
       },
     ])
     try {
@@ -685,8 +716,21 @@ export default function AIImageStudio({ onBack, createContext = null }) {
       applyResult(data, turnId)
     } catch (err) {
       const msg = friendlyError(err)
-      setActionError(msg)
-      failTurn(turnId, msg)
+      const expired =
+        err?.status === 400 &&
+        /context has expired|context unavailable|expired/i.test(String(err?.message || ''))
+      const missing =
+        err?.status === 404 && /context/i.test(String(err?.message || 'context'))
+      setActionError(
+        expired || missing
+          ? 'Context unavailable — please re-attach your brief, then generate again.'
+          : msg
+      )
+      failTurn(turnId, expired || missing ? 'Context unavailable — please re-attach.' : msg)
+      if (expired || missing) {
+        setActiveContext(null)
+        setStep('prompt')
+      }
     } finally {
       setIsGenerating(false)
     }
@@ -708,13 +752,15 @@ export default function AIImageStudio({ onBack, createContext = null }) {
         status: 'pending',
         generation: null,
         error: null,
+        contextBadge: contextPreviewBadge(fromGeneration),
       },
     ])
     try {
+      // Omit contextId so the backend inherits the parent brief/snapshot
       const data = await imageGenService.regenerate(
         workspaceId,
         fromGeneration.id,
-        buildGenerateBody()
+        buildGenerateBody({ includeContext: false })
       )
       applyResult(data, turnId)
     } catch (err) {
@@ -779,6 +825,64 @@ export default function AIImageStudio({ onBack, createContext = null }) {
     } finally {
       setBusyAction('')
     }
+  }
+
+  const retryFailedTurn = async (turn) => {
+    if (!turn || isGenerating) return
+    if (turn.kind === 'regenerate') {
+      const parent =
+        activeGeneration ||
+        [...thread].reverse().find((t) => t.id !== turn.id && t.generation?.id)?.generation
+      if (parent?.id) {
+        await runRegenerate(parent)
+        return
+      }
+    }
+    if (turn.kind === 'tweak') {
+      const parent =
+        activeGeneration ||
+        [...thread].reverse().find((t) => t.id !== turn.id && t.generation?.id)?.generation
+      const instruction = String(turn.text || '').trim()
+      if (parent?.id && instruction) {
+        setActiveGeneration(parent)
+        setChatInput(instruction)
+        // submit after state flush via direct call path
+        if (!workspaceId || isGenerating) return
+        if (selectedModel?.supportsEdit === false) {
+          setActionError('This model does not support image tweaks. Try regenerating instead.')
+          return
+        }
+        const turnId = `turn_${Date.now()}`
+        setChatInput('')
+        setActionError('')
+        setBusyAction('tweak')
+        setIsGenerating(true)
+        setThread((prev) => [
+          ...prev,
+          {
+            id: turnId,
+            kind: 'tweak',
+            text: instruction,
+            status: 'pending',
+            generation: null,
+            error: null,
+          },
+        ])
+        try {
+          const data = await imageGenService.tweak(workspaceId, parent.id, instruction)
+          applyResult(data, turnId)
+        } catch (err) {
+          const msg = friendlyError(err)
+          setActionError(msg)
+          failTurn(turnId, msg)
+        } finally {
+          setIsGenerating(false)
+          setBusyAction('')
+        }
+        return
+      }
+    }
+    await runGenerate()
   }
 
   const navBack = () => {
@@ -861,6 +965,17 @@ export default function AIImageStudio({ onBack, createContext = null }) {
           {/* ── PROMPT ── */}
           {step === 'prompt' && (
             <motion.section key="prompt" className="aig-page aig-page--prompt" {...stepMotion}>
+              <div className="aig-prompt-atmosphere" aria-hidden>
+                <span className="aig-prompt-atmosphere-base" />
+                <span className="aig-prompt-atmosphere-wash" />
+                <span className="aig-prompt-atmosphere-orb aig-prompt-atmosphere-orb--a" />
+                <span className="aig-prompt-atmosphere-orb aig-prompt-atmosphere-orb--b" />
+                <span className="aig-prompt-atmosphere-orb aig-prompt-atmosphere-orb--c" />
+                <span className="aig-prompt-atmosphere-beam" />
+                <span className="aig-prompt-atmosphere-dots" />
+                <span className="aig-prompt-atmosphere-grain" />
+                <span className="aig-prompt-atmosphere-vignette" />
+              </div>
               <div className="aig-prompt-stage">
                 <div className="aig-prompt-hero">
                   <motion.span
@@ -894,40 +1009,57 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ delay: 0.2, duration: 0.42 }}
                 >
-                  <textarea
-                    ref={textRef}
-                    className="aig-textarea"
-                    placeholder="A quiet coastal lighthouse at golden hour, deep blue sea, soft editorial light…"
-                    value={prompt}
-                    rows={3}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && prompt.trim()) {
-                        setStep('canvas')
-                      }
-                    }}
-                    autoFocus
-                  />
-                  <div className="aig-prompt-toolbar">
-                    <button
-                      type="button"
-                      className="aig-inspire"
-                      onClick={handleInspire}
-                      disabled={inspiring}
-                    >
-                      <Wand2 size={14} />
-                      {inspiring ? 'Writing…' : 'Inspire me'}
-                    </button>
-                    <button
-                      type="button"
-                      className="aig-btn aig-btn--primary aig-btn--lg"
-                      disabled={!prompt.trim()}
-                      onClick={() => setStep('canvas')}
-                    >
-                      Continue
-                      <ArrowRight size={16} />
-                    </button>
-                  </div>
+                  <ImageGenContextAttach
+                    workspaceId={workspaceId}
+                    context={activeContext}
+                    onContextChange={setActiveContext}
+                    disabled={isGenerating}
+                  >
+                    {({ thumbs, trigger }) => (
+                      <>
+                        {thumbs}
+                        <textarea
+                          ref={textRef}
+                          className="aig-textarea"
+                          placeholder="A quiet coastal lighthouse at golden hour, deep blue sea, soft editorial light…"
+                          value={prompt}
+                          rows={3}
+                          onChange={(e) => setPrompt(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && prompt.trim()) {
+                              setStep('canvas')
+                            }
+                          }}
+                          autoFocus
+                        />
+                        <div className="aig-prompt-toolbar aig-prompt-toolbar--composer">
+                          <div className="aig-prompt-composer-row">
+                            {trigger}
+                            <div className="aig-prompt-toolbar-end">
+                              <button
+                                type="button"
+                                className="aig-inspire"
+                                onClick={handleInspire}
+                                disabled={inspiring}
+                              >
+                                <Wand2 size={14} />
+                                {inspiring ? 'Writing…' : 'Inspire me'}
+                              </button>
+                              <button
+                                type="button"
+                                className="aig-btn aig-btn--primary aig-btn--lg"
+                                disabled={!prompt.trim()}
+                                onClick={() => setStep('canvas')}
+                              >
+                                Continue
+                                <ArrowRight size={16} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </ImageGenContextAttach>
                 </motion.div>
 
                 <div className="aig-pills">
@@ -1259,6 +1391,43 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                     )}
                   </div>
 
+                  <div className="aig-review-context">
+                    <div className="aig-review-prompt-top">
+                      <span className="aig-review-label">Reference brief</span>
+                      <button
+                        type="button"
+                        className="aig-review-edit"
+                        onClick={() => setStep('prompt')}
+                      >
+                        <Pencil size={13} />
+                        {activeContext?.id ? 'Edit' : 'Add'}
+                      </button>
+                    </div>
+                    {activeContext?.id ? (
+                      <div className="aig-review-context-ready">
+                        <span className="aig-context-badge">
+                          {contextPreviewBadge({
+                            contextId: activeContext.id,
+                            contextPreview: {
+                              documentCount: activeContext.previews?.documents?.length || 0,
+                              imageCount:
+                                (activeContext.previews?.images?.length || 0) +
+                                (activeContext.previews?.assetRefs?.length || 0),
+                            },
+                          })}
+                        </span>
+                        <p>
+                          Brief ready — the model will use your attached docs and style references.
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="aig-review-context-empty">
+                        Optional. Attach a PDF brief or moodboard on the prompt step for closer
+                        matches. Context is free.
+                      </p>
+                    )}
+                  </div>
+
                   <div className="aig-review-tiles">
                     <p className="aig-review-tiles-label">Settings</p>
                     <div className="aig-review-tile-grid">
@@ -1426,6 +1595,9 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                       {selectedModel && <span className="aig-mini-chip">{selectedModel.name}</span>}
                       {selectedFormat && <span className="aig-mini-chip">{selectedFormat.name}</span>}
                       {selectedStyle && <span className="aig-mini-chip">{selectedStyle.name}</span>}
+                      {activeContext?.id && (
+                        <span className="aig-mini-chip aig-mini-chip--accent">Brief attached</span>
+                      )}
                     </div>
                   </div>
 
@@ -1521,6 +1693,12 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                               </>
                             )
                           })()}
+                          {(turn.contextBadge ||
+                            contextPreviewBadge(turn.generation)) && (
+                            <span className="aig-context-badge aig-context-badge--chat">
+                              {turn.contextBadge || contextPreviewBadge(turn.generation)}
+                            </span>
+                          )}
                           {turn.status === 'pending' && (
                             <div className="aig-chat-status">
                               <Loader2 size={12} className="aig-spin" />
@@ -1614,6 +1792,15 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                             <div className="aig-chat-media-fail">
                               <AlertCircle size={20} />
                               <span>Couldn’t generate</span>
+                              <button
+                                type="button"
+                                className="aig-retry-btn"
+                                disabled={isGenerating}
+                                onClick={() => retryFailedTurn(turn)}
+                              >
+                                <RotateCcw size={13} />
+                                Try again
+                              </button>
                             </div>
                           )}
                         </div>
@@ -1626,6 +1813,9 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                     {actionError && !isGenerating && (
                       <div className="aig-error-banner aig-error-banner--dock">{actionError}</div>
                     )}
+                    <p className="aig-tweak-note">
+                      Tweak adjusts this image only; it doesn’t re-read your brief.
+                    </p>
                     <div className="aig-chat-bar">
                       <textarea
                         ref={chatInputRef}

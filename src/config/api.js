@@ -148,6 +148,9 @@ const API_CONFIG = {
       FORMATS: '/api/image-gen/formats',
       STYLES: '/api/image-gen/styles',
       ESTIMATE: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/estimate`,
+      CONTEXT: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/context`,
+      CONTEXT_ONE: (workspaceId, contextId) =>
+        `/api/image-gen/workspaces/${workspaceId}/context/${contextId}`,
       GENERATE: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/generate`,
       GENERATIONS: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/generations`,
       GENERATION: (workspaceId, generationId) =>

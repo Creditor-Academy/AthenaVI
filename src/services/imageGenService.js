@@ -21,7 +21,18 @@ export class ImageGenProviderError extends Error {
   }
 }
 
-const GENERATE_TIMEOUT_MS = 90_000
+export class ImageGenContextPinnedError extends Error {
+  constructor(message, data = {}) {
+    super(message || 'This brief was used for a generation and can’t be deleted.')
+    this.name = 'ImageGenContextPinnedError'
+    this.code = 'IMAGE_GEN_CONTEXT_PINNED'
+    this.status = 409
+    this.data = data
+  }
+}
+
+const GENERATE_TIMEOUT_MS = 120_000
+const CONTEXT_TIMEOUT_MS = 90_000
 
 class ImageGenService {
   unwrap(json) {
@@ -43,10 +54,17 @@ class ImageGenService {
     return query ? `?${query}` : ''
   }
 
+  authOnlyHeaders() {
+    const token = localStorage.getItem('accessToken')
+    return token ? { Authorization: `Bearer ${token}` } : {}
+  }
+
   async request(endpoint, options = {}) {
-    const { timeoutMs, signal, headers: extraHeaders, ...fetchOptions } = options
+    const { timeoutMs, signal, headers: extraHeaders, skipJsonContentType, ...fetchOptions } =
+      options
+    const baseHeaders = skipJsonContentType ? this.authOnlyHeaders() : getAuthHeaders()
     const headers = {
-      ...getAuthHeaders(),
+      ...baseHeaders,
       ...(extraHeaders || {}),
     }
 
@@ -130,6 +148,55 @@ class ImageGenService {
   async estimate(workspaceId, { modelId, mode = 'image', tweak = false } = {}) {
     const query = this.buildQuery({ modelId, mode, tweak: tweak ? 'true' : 'false' })
     return this.request(`${API_CONFIG.ENDPOINTS.IMAGE_GEN.ESTIMATE(workspaceId)}${query}`)
+  }
+
+  /**
+   * Create a reusable context bundle (free, rate-limited).
+   * @param {string} workspaceId
+   * @param {{ files?: File[], inlineText?: string, assetIds?: string[] }} input
+   */
+  async createContext(workspaceId, { files = [], inlineText = '', assetIds = [] } = {}) {
+    const form = new FormData()
+    const payload = {}
+    const trimmed = String(inlineText || '').trim()
+    if (trimmed) payload.inlineText = trimmed
+    if (Array.isArray(assetIds) && assetIds.length) payload.assetIds = assetIds
+    form.append('payload', JSON.stringify(payload))
+    for (const file of files || []) {
+      form.append('files', file)
+    }
+
+    const data = await this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.CONTEXT(workspaceId), {
+      method: 'POST',
+      body: form,
+      skipJsonContentType: true,
+      timeoutMs: CONTEXT_TIMEOUT_MS,
+    })
+    return data?.context || data
+  }
+
+  async getContext(workspaceId, contextId) {
+    const data = await this.request(
+      API_CONFIG.ENDPOINTS.IMAGE_GEN.CONTEXT_ONE(workspaceId, contextId)
+    )
+    return data?.context || data
+  }
+
+  async deleteContext(workspaceId, contextId) {
+    try {
+      return await this.request(
+        API_CONFIG.ENDPOINTS.IMAGE_GEN.CONTEXT_ONE(workspaceId, contextId),
+        { method: 'DELETE' }
+      )
+    } catch (error) {
+      if (error?.status === 409) {
+        throw new ImageGenContextPinnedError(
+          error.message || 'Image generation context is in use and cannot be deleted',
+          error.data
+        )
+      }
+      throw error
+    }
   }
 
   async generate(workspaceId, body) {
