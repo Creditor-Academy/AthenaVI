@@ -51,6 +51,22 @@ function isImageFile(file) {
   return /^image\//.test(file.type) || /\.(png|jpe?g|webp)$/i.test(file.name || '')
 }
 
+function isDocFile(file) {
+  if (!file) return false
+  const mime = String(file.type || '').toLowerCase()
+  const name = String(file.name || '')
+  if (
+    mime === 'application/pdf' ||
+    mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    mime === 'text/markdown' ||
+    mime === 'text/plain' ||
+    mime === 'text/x-markdown'
+  ) {
+    return true
+  }
+  return /\.(pdf|docx|md|txt)$/i.test(name)
+}
+
 function formatContextBadge(preview) {
   if (!preview) return null
   const docs = Number(preview.documentCount) || 0
@@ -92,9 +108,11 @@ export default function ImageGenContextAttach({
   context,
   onContextChange,
   disabled = false,
+  compact = false,
   children,
 }) {
-  const fileRef = useRef(null)
+  const imageFileRef = useRef(null)
+  const docFileRef = useRef(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [tab, setTab] = useState('add') // add | brief | library
   const [pendingFiles, setPendingFiles] = useState([])
@@ -105,7 +123,7 @@ export default function ImageGenContextAttach({
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [dirtyAfterAttach, setDirtyAfterAttach] = useState(false)
-  const [dragOver, setDragOver] = useState(false)
+  const [dragOver, setDragOver] = useState(null)
   const [libraryLoading, setLibraryLoading] = useState(false)
   const [libraryItems, setLibraryItems] = useState([])
   const [libraryError, setLibraryError] = useState('')
@@ -192,21 +210,31 @@ export default function ImageGenContextAttach({
   const closeModal = () => {
     setModalOpen(false)
     setTab('add')
-    setDragOver(false)
+    setDragOver(null)
   }
 
   const markDirty = () => {
     if (context?.id) setDirtyAfterAttach(true)
   }
 
-  const addFiles = (fileList) => {
+  const addFiles = (fileList, kind = 'any') => {
     const incoming = Array.from(fileList || [])
     if (!incoming.length) return
     setError('')
     const next = []
     for (const file of incoming) {
+      const image = isImageFile(file)
+      const doc = isDocFile(file)
+      if (kind === 'image' && !image) {
+        setError('That folder is for images only — PNG, JPG, or WebP.')
+        continue
+      }
+      if (kind === 'doc' && !doc) {
+        setError('That folder is for briefs — PDF, Word, Markdown, or TXT.')
+        continue
+      }
       if (!isAllowedFile(file)) {
-        setError('Unsupported type. Use PDF, DOCX, MD, TXT, PNG, JPG, or WebP.')
+        setError('Unsupported file. Images: PNG, JPG, WebP. Briefs: PDF, Word, MD, TXT.')
         continue
       }
       if (file.size > MAX_FILE_BYTES) {
@@ -308,9 +336,7 @@ export default function ImageGenContextAttach({
       setDirtyAfterAttach(false)
       setTab('brief')
       setNotice(
-        Array.isArray(created?.warnings) && created.warnings.length
-          ? created.warnings[0]
-          : 'Brief ready — review what the AI understood.'
+        Array.isArray(created?.warnings) && created.warnings.length ? created.warnings[0] : ''
       )
     } catch (err) {
       setError(friendlyContextError(err))
@@ -394,19 +420,25 @@ export default function ImageGenContextAttach({
       </div>
     ) : null
 
-  const triggerNode = (
+  const plusButton = (
+    <button
+      type="button"
+      className={`igc-plus ${compact ? 'igc-plus--compact' : ''} ${modalOpen ? 'is-on' : ''} ${isReady ? 'is-ready' : ''}`}
+      disabled={disabled}
+      aria-label="Attach brief or references"
+      title="Attach brief & images"
+      onClick={() => openModal(isReady ? 'brief' : 'add')}
+    >
+      <Plus size={18} strokeWidth={2.25} />
+    </button>
+  )
+
+  const triggerNode = compact ? (
+    plusButton
+  ) : (
     <div className={`igc-bar ${isReady ? 'igc-bar--ready' : ''}`}>
       <div className="igc-bar-row">
-        <button
-          type="button"
-          className={`igc-plus ${modalOpen ? 'is-on' : ''}`}
-          disabled={disabled}
-          aria-label="Attach brief or references"
-          title="Attach brief & images"
-          onClick={() => openModal(isReady ? 'brief' : 'add')}
-        >
-          <Plus size={18} strokeWidth={2.25} />
-        </button>
+        {plusButton}
 
         <div className="igc-chip-scroll">
           {isReady && readyLabel ? (
@@ -511,7 +543,7 @@ export default function ImageGenContextAttach({
           className="igc-modal"
           role="dialog"
           aria-modal="true"
-          aria-label="Reference brief and images"
+          aria-label="Add references"
           onClick={(e) => e.stopPropagation()}
           initial={{ opacity: 0, y: 18, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -519,8 +551,8 @@ export default function ImageGenContextAttach({
         >
           <header className="igc-modal-head">
             <div>
-              <h3>Reference brief & images</h3>
-              <p>Free to attach · generation still uses credits</p>
+              <h3>Add references</h3>
+              <p>Images set the look. A brief is optional — it sets the story.</p>
             </div>
             <button type="button" onClick={closeModal} aria-label="Close">
               <X size={16} />
@@ -544,7 +576,7 @@ export default function ImageGenContextAttach({
               className={tab === 'brief' ? 'is-on' : ''}
               onClick={() => setTab('brief')}
             >
-              Brief
+              Review
               {isReady && <span className="igc-tab-dot" />}
             </button>
           </div>
@@ -554,7 +586,7 @@ export default function ImageGenContextAttach({
               {(tab === 'add' || tab === 'library') && (
                 <motion.div
                   key={tab === 'library' ? 'library' : 'add'}
-                  className="igc-modal-pane"
+                  className={`igc-modal-pane ${attaching && tab !== 'library' ? 'is-busy' : ''}`}
                   initial={{ opacity: 0, x: 8 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -8 }}
@@ -627,149 +659,216 @@ export default function ImageGenContextAttach({
                     </>
                   ) : (
                     <>
-                      <div
-                        className={`igc-dropzone ${dragOver ? 'is-over' : ''}`}
-                        onDragOver={(e) => {
-                          e.preventDefault()
-                          setDragOver(true)
-                        }}
-                        onDragLeave={() => setDragOver(false)}
-                        onDrop={(e) => {
-                          e.preventDefault()
-                          setDragOver(false)
-                          addFiles(e.dataTransfer.files)
-                        }}
-                      >
-                        <button
-                          type="button"
-                          className="igc-dropzone-main"
-                          disabled={disabled || slotsLeft <= 0}
-                          onClick={() => fileRef.current?.click()}
+                      <section className="igc-section">
+                        <div className="igc-section-head">
+                          <ImageIcon size={15} />
+                          <div>
+                            <strong>Style images</strong>
+                            <span>Photos or art the model should match</span>
+                          </div>
+                        </div>
+                        <div
+                          className={`igc-dropzone ${dragOver === 'image' ? 'is-over' : ''}`}
+                          onDragOver={(e) => {
+                            e.preventDefault()
+                            setDragOver('image')
+                          }}
+                          onDragLeave={() => setDragOver(null)}
+                          onDrop={(e) => {
+                            e.preventDefault()
+                            setDragOver(null)
+                            addFiles(e.dataTransfer.files, 'image')
+                          }}
                         >
-                          <Upload size={22} strokeWidth={1.75} />
-                          <strong>Drop files or browse</strong>
-                          <span>PDF, DOCX, MD, TXT, PNG, JPG, WebP · max 20 MB</span>
-                        </button>
-                        <button
-                          type="button"
-                          className="igc-library-link"
-                          disabled={disabled || slotsLeft <= 0}
-                          onClick={openLibrary}
-                        >
-                          <FolderOpen size={14} />
-                          Or pick from workspace library
-                        </button>
-                      </div>
-                      <input
-                        ref={fileRef}
-                        type="file"
-                        multiple
-                        accept=".pdf,.docx,.md,.txt,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp,text/plain,text/markdown"
-                        hidden
-                        onChange={(e) => {
-                          addFiles(e.target.files)
-                          e.target.value = ''
-                        }}
-                      />
-
-                      {(pendingFiles.length > 0 || pendingAssets.length > 0) && (
-                        <div className="igc-chips">
-                          {pendingFiles.map((file, idx) => {
-                            const image = isImageFile(file)
-                            const preview = filePreviewUrls[idx]
-                            return (
-                              <span
-                                key={`f-${file.name}-${idx}`}
-                                className={`igc-mini-chip ${image ? 'igc-mini-chip--image' : ''}`}
-                              >
-                                {image && preview ? (
+                          <button
+                            type="button"
+                            className="igc-dropzone-main igc-dropzone-main--sm"
+                            disabled={disabled || slotsLeft <= 0 || attaching}
+                            onClick={() => imageFileRef.current?.click()}
+                          >
+                            <Upload size={18} strokeWidth={1.75} />
+                            <strong>Drop images or browse</strong>
+                            <span>PNG, JPG, WebP · up to 20 MB</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="igc-lib-btn"
+                            disabled={disabled || slotsLeft <= 0 || attaching}
+                            onClick={openLibrary}
+                          >
+                            <FolderOpen size={15} />
+                            Choose from library
+                          </button>
+                        </div>
+                        <input
+                          ref={imageFileRef}
+                          type="file"
+                          multiple
+                          accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+                          hidden
+                          onChange={(e) => {
+                            addFiles(e.target.files, 'image')
+                            e.target.value = ''
+                          }}
+                        />
+                        {(pendingFiles.some(isImageFile) || pendingAssets.length > 0) && (
+                          <div className="igc-pick-grid">
+                            {pendingFiles.map((file, idx) => {
+                              if (!isImageFile(file)) return null
+                              const preview = filePreviewUrls[idx]
+                              return (
+                                <div key={`f-${file.name}-${idx}`} className="igc-pick">
                                   <button
                                     type="button"
-                                    className="igc-mini-thumb"
+                                    className="igc-pick-open"
                                     onClick={() =>
+                                      preview &&
                                       setExpandedThumb({
                                         id: `file-${file.name}-${idx}`,
                                         src: preview,
                                         name: file.name || 'Image',
                                       })
                                     }
-                                    aria-label={`Expand ${file.name}`}
                                   >
-                                    <img src={preview} alt="" />
+                                    {preview ? (
+                                      <img src={preview} alt="" />
+                                    ) : (
+                                      <ImageIcon size={18} />
+                                    )}
                                   </button>
-                                ) : image ? (
-                                  <ImageIcon size={11} />
-                                ) : (
-                                  <FileText size={11} />
-                                )}
-                                <em>{file.name}</em>
+                                  <button
+                                    type="button"
+                                    className="igc-pick-remove"
+                                    aria-label={`Remove ${file.name}`}
+                                    disabled={disabled || attaching}
+                                    onClick={() => removePendingFile(idx)}
+                                  >
+                                    <X size={11} />
+                                  </button>
+                                </div>
+                              )
+                            })}
+                            {pendingAssets.map((asset) => (
+                              <div key={`a-${asset.id}`} className="igc-pick">
                                 <button
                                   type="button"
-                                  aria-label={`Remove ${file.name}`}
-                                  disabled={disabled}
-                                  onClick={() => removePendingFile(idx)}
-                                >
-                                  <X size={10} />
-                                </button>
-                              </span>
-                            )
-                          })}
-                          {pendingAssets.map((asset) => (
-                            <span
-                              key={`a-${asset.id}`}
-                              className="igc-mini-chip igc-mini-chip--image"
-                            >
-                              {asset.url ? (
-                                <button
-                                  type="button"
-                                  className="igc-mini-thumb"
+                                  className="igc-pick-open"
                                   onClick={() =>
+                                    asset.url &&
                                     setExpandedThumb({
                                       id: `asset-${asset.id}`,
                                       src: asset.url,
                                       name: asset.name || 'Library image',
                                     })
                                   }
-                                  aria-label={`Expand ${asset.name || 'image'}`}
                                 >
-                                  <img src={asset.url} alt="" />
+                                  {asset.url ? (
+                                    <img src={asset.url} alt="" />
+                                  ) : (
+                                    <ImageIcon size={18} />
+                                  )}
                                 </button>
-                              ) : (
-                                <ImageIcon size={11} />
-                              )}
-                              <em>{asset.name || 'Library'}</em>
-                              <button
-                                type="button"
-                                aria-label={`Remove ${asset.name}`}
-                                disabled={disabled}
-                                onClick={() => removePendingAsset(asset.id)}
-                              >
-                                <X size={10} />
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                                  <button
+                                    type="button"
+                                    className="igc-pick-remove"
+                                    aria-label={`Remove ${asset.name}`}
+                                    disabled={disabled || attaching}
+                                    onClick={() => removePendingAsset(asset.id)}
+                                  >
+                                    <X size={11} />
+                                  </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </section>
 
-                      <label className="igc-notes-label">
-                        Pasted notes
-                        <textarea
-                          className="igc-tray-notes"
-                          rows={3}
-                          placeholder="Premium minimal SaaS look, blue + teal…"
-                          value={inlineText}
-                          disabled={disabled || attaching}
-                          maxLength={8000}
+                      <section className="igc-section">
+                        <div className="igc-section-head">
+                          <FileText size={15} />
+                          <div>
+                            <strong>Brief</strong>
+                            <span>Optional — PDF, Word, Markdown, or a short note</span>
+                          </div>
+                        </div>
+                        <div
+                          className={`igc-dropzone ${dragOver === 'doc' ? 'is-over' : ''}`}
+                          onDragOver={(e) => {
+                            e.preventDefault()
+                            setDragOver('doc')
+                          }}
+                          onDragLeave={() => setDragOver(null)}
+                          onDrop={(e) => {
+                            e.preventDefault()
+                            setDragOver(null)
+                            addFiles(e.dataTransfer.files, 'doc')
+                          }}
+                        >
+                          <button
+                            type="button"
+                            className="igc-dropzone-main igc-dropzone-main--sm"
+                            disabled={disabled || slotsLeft <= 0 || attaching}
+                            onClick={() => docFileRef.current?.click()}
+                          >
+                            <Upload size={18} strokeWidth={1.75} />
+                            <strong>Drop a document or browse</strong>
+                            <span>PDF, DOCX, MD, TXT · up to 20 MB</span>
+                          </button>
+                        </div>
+                        <input
+                          ref={docFileRef}
+                          type="file"
+                          multiple
+                          accept=".pdf,.docx,.md,.txt,application/pdf,text/plain,text/markdown"
+                          hidden
                           onChange={(e) => {
-                            setInlineText(e.target.value)
-                            markDirty()
-                            setError('')
+                            addFiles(e.target.files, 'doc')
+                            e.target.value = ''
                           }}
                         />
-                      </label>
+                        {pendingFiles.some(isDocFile) && (
+                          <ul className="igc-doc-list">
+                            {pendingFiles.map((file, idx) => {
+                              if (!isDocFile(file)) return null
+                              return (
+                                <li key={`d-${file.name}-${idx}`} className="igc-doc-row">
+                                  <FileText size={14} />
+                                  <em>{file.name}</em>
+                                  <button
+                                    type="button"
+                                    aria-label={`Remove ${file.name}`}
+                                    disabled={disabled || attaching}
+                                    onClick={() => removePendingFile(idx)}
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                </li>
+                              )
+                            })}
+                          </ul>
+                        )}
+                        <label className="igc-notes-label">
+                          Or type a note
+                          <textarea
+                            className="igc-tray-notes"
+                            rows={3}
+                            placeholder="e.g. Premium SaaS look, blue and teal, lots of space…"
+                            value={inlineText}
+                            disabled={disabled || attaching}
+                            maxLength={8000}
+                            onChange={(e) => {
+                              setInlineText(e.target.value)
+                              markDirty()
+                              setError('')
+                            }}
+                          />
+                        </label>
+                      </section>
 
                       <div className="igc-modal-pane-foot">
-                        <span className="igc-tray-slots">{slotsLeft} slots left · Free</span>
+                        <span className="igc-tray-slots">
+                          {slotsLeft} of {MAX_CONTEXT_ITEMS} left · attaching is free
+                        </span>
                         <button
                           type="button"
                           className="igc-attach-btn"
@@ -784,12 +883,12 @@ export default function ImageGenContextAttach({
                           ) : dirtyAfterAttach ? (
                             <>
                               <Paperclip size={14} />
-                              Re-attach
+                              Update
                             </>
                           ) : (
                             <>
                               <Check size={14} />
-                              Attach
+                              Use these
                             </>
                           )}
                         </button>
@@ -813,8 +912,8 @@ export default function ImageGenContextAttach({
                       <Paperclip size={22} strokeWidth={1.6} />
                       <strong>Nothing attached yet</strong>
                       <p>
-                        Add a PDF/MD brief or style references on the Add tab, then Attach to see
-                        what the AI understood.
+                        Add style images and an optional brief, then tap Use these to see what the
+                        AI understood.
                       </p>
                       <button
                         type="button"
@@ -845,11 +944,11 @@ export default function ImageGenContextAttach({
                         </button>
                       </div>
 
-                      {composerThumbs.length > 0 && (
+                      {composerThumbs.length > 0 && !(context.previews?.images || []).length && (
                         <div className="igc-preview-block">
                           <strong>
                             <ImageIcon size={12} />
-                            References
+                            Look
                           </strong>
                           <div className="igc-thumbs igc-thumbs--modal">
                             {composerThumbs.map((thumb) => (
@@ -890,15 +989,34 @@ export default function ImageGenContextAttach({
                         <div className="igc-preview-block">
                           <strong>
                             <ImageIcon size={12} />
-                            Style notes from your references
+                            Brief
                           </strong>
-                          <ul className="igc-image-summaries">
-                            {context.previews.images.map((img, i) => (
-                              <li key={`img-${img.name}-${i}`}>
-                                <span>{img.name}</span>
-                                <p>{img.summary}</p>
-                              </li>
-                            ))}
+                          <p className="igc-preview-lede">What we read from your images</p>
+                          <ul className="igc-brief-list">
+                            {(context.previews.images || []).map((img, i) => {
+                              const thumb =
+                                composerThumbs.find((t) => t.name === img.name) ||
+                                composerThumbs[i]
+                              return (
+                                <li key={`img-${img.name}-${i}`} className="igc-brief-row">
+                                  {thumb?.src ? (
+                                    <button
+                                      type="button"
+                                      className="igc-brief-thumb"
+                                      onClick={() => setExpandedThumb(thumb)}
+                                      aria-label={`Expand ${img.name || 'image'}`}
+                                    >
+                                      <img src={thumb.src} alt="" />
+                                    </button>
+                                  ) : (
+                                    <span className="igc-brief-thumb igc-brief-thumb--empty">
+                                      <ImageIcon size={16} />
+                                    </span>
+                                  )}
+                                  <p>{img.summary || 'No style notes for this image.'}</p>
+                                </li>
+                              )
+                            })}
                           </ul>
                         </div>
                       )}
@@ -936,7 +1054,6 @@ export default function ImageGenContextAttach({
             </AnimatePresence>
 
             {error && <p className="igc-error">{error}</p>}
-            {notice && tab === 'brief' && !error && <p className="igc-notice">{notice}</p>}
           </div>
         </motion.div>
       </div>,
