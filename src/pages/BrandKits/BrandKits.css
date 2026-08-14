@@ -5536,6 +5536,11 @@
   display: flex;
 }
 
+.bk-ov-logo-grid--primary-only .bk-ov-logo-tile {
+  max-width: 240px;
+  flex: 0 1 240px;
+}
+
 .bk-ov-logo-tile {
   position: relative;
   flex: 0 0 auto;
@@ -6129,4 +6134,104 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   BUTTON STYLES (Brand Colors tab + Overview)
+   ═══════════════════════════════════════════════════════════ */
+
+.bk-button-styles-section {
+  margin-top: 28px;
+}
+
+.bk-button-styles-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.bk-button-style-card {
+  border: 1px solid var(--bk-border);
+  border-radius: 16px;
+  background: var(--bk-surface);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.bk-button-style-preview-pane {
+  padding: 20px 18px 16px;
+  background: var(--bk-page);
+  border-bottom: 1px solid var(--bk-border);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 140px;
+}
+
+.bk-button-style-kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bk-muted);
+}
+
+.bk-button-style-preview {
+  border: none;
+  outline: none;
+  font-family: inherit;
+}
+
+.bk-button-style-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--bk-muted);
+  line-height: 1.4;
+}
+
+.bk-button-style-fields {
+  padding: 16px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bk-button-style-fields select,
+.bk-button-style-fields input[type='text'],
+.bk-button-style-fields input[type='number'] {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--bk-border);
+  border-radius: 10px;
+  padding: 9px 11px;
+  font-size: 13px;
+  background: var(--bk-surface);
+  color: var(--bk-text);
+}
+
+.bk-button-style-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.bk-ov-buttons-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  min-height: 72px;
+}
+
+.bk-ov-buttons-card .bk-ov-buttons-row {
+  padding-top: 4px;
+}
+
+@media (max-width: 900px) {
+  .bk-button-styles-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 

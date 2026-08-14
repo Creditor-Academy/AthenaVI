@@ -1,5 +1,6 @@
-import { MdArrowForward, MdAdd, MdCheck, MdContentCopy, MdAutoAwesome } from 'react-icons/md'
+import { MdArrowForward, MdCheck, MdContentCopy, MdAutoAwesome } from 'react-icons/md'
 import { formatFontWeightLabel, getFontRole } from '../utils/brandKitUtils'
+import { findLogoMedia, resolveButtonStyle } from '../../../../utils/brandKitHelpers'
 
 function contrastInk(hex) {
   const raw = String(hex || '#000000').replace('#', '')
@@ -65,8 +66,12 @@ export default function OverviewTab(props) {
   const primaryFamily = heading.family || 'Outfit'
   const primaryHex = colors[0]?.hex || '#3B82F6'
   const logos = mediaByKind('logo')
-  const primaryLogo = logos[0]
-  const logoSrc = primaryLogo?.url || primaryLogo?.src || primaryLogo?.presignedUrl || logoPreviewUrl
+  const primaryLogo = findLogoMedia(logos, 'primary')
+  const logoSrc =
+    primaryLogo?.url ||
+    primaryLogo?.src ||
+    primaryLogo?.presignedUrl ||
+    logoPreviewUrl
   const healthScore = Math.max(0, Math.min(100, Number(kitHealth?.score) || 0))
   const displayName = kitName?.trim() || 'Brand Kit'
   const displayTagline = slogan?.trim() || kitData.meta?.tagline || ''
@@ -296,97 +301,32 @@ export default function OverviewTab(props) {
           </div>
         </aside>
 
-        <section className="bk-ov-logo-card">
+        <section className="bk-ov-logo-card bk-ov-buttons-card">
           <div className="bk-ov-panel-head">
             <div>
-              <h4>Logo Marks</h4>
-              <p>Variants for decks, light, and dark surfaces</p>
+              <h4>Buttons</h4>
+              <p>Primary and secondary CTA styles</p>
             </div>
-            <button type="button" className="bk-ov-link-btn" onClick={() => setEditorTab('logos')}>
-              Logos <MdArrowForward size={14} />
+            <button type="button" className="bk-ov-link-btn" onClick={() => setEditorTab('identity')}>
+              Edit <MdArrowForward size={14} />
             </button>
           </div>
-
-          {(() => {
-            const logoItems = (logos || [])
-              .map((item, index) => ({
-                id: item.id || item._id || `logo-${index}`,
-                src: item.url || item.src || item.presignedUrl || '',
-                role: item.role || item.name || 'Logo',
-                dark:
-                  ['dark', 'dark-mode', 'white', 'black'].includes(
-                    String(item.role || '').toLowerCase()
-                  ),
-              }))
-              .filter((item) => item.src)
-
-            if (!logoItems.length && logoPreviewUrl) {
-              logoItems.push({
-                id: 'preview-primary',
-                src: logoPreviewUrl,
-                role: 'primary',
-                dark: false,
-              })
-            }
-
-            const maxVisible = 4
-            const showMore = logoItems.length > maxVisible
-            const visible = showMore ? logoItems.slice(0, maxVisible - 1) : logoItems.slice(0, maxVisible)
-            const moreCount = showMore ? logoItems.length - visible.length : 0
-
-            if (!logoItems.length) {
+          <div className="bk-ov-buttons-row">
+            {['primary', 'secondary'].map((kind) => {
+              const resolved = resolveButtonStyle(kitData, kind)
               return (
-                <div className="bk-ov-logo-grid bk-ov-logo-grid--empty">
-                  <button
-                    type="button"
-                    className="bk-ov-logo-tile bk-ov-logo-tile--add"
-                    disabled={!canWrite}
-                    onClick={() => triggerUpload('logo', 'primary')}
-                  >
-                    <MdAdd size={24} />
-                    <span>Upload logo</span>
-                  </button>
-                </div>
+                <button
+                  key={kind}
+                  type="button"
+                  className="bk-button-style-preview"
+                  style={resolved.css}
+                  onClick={() => setEditorTab('identity')}
+                >
+                  {resolved.label}
+                </button>
               )
-            }
-
-            return (
-              <div className="bk-ov-logo-grid">
-                {visible.map((item) => (
-                  <button
-                    type="button"
-                    key={item.id}
-                    className={`bk-ov-logo-tile${item.dark ? ' is-dark' : ''}`}
-                    onClick={() => setEditorTab('logos')}
-                    title={item.role}
-                  >
-                    <img src={item.src} alt={item.role} />
-                    <span className="bk-ov-logo-tile-role">{item.role}</span>
-                  </button>
-                ))}
-                {showMore ? (
-                  <button
-                    type="button"
-                    className="bk-ov-logo-tile bk-ov-logo-tile--more"
-                    onClick={() => setEditorTab('logos')}
-                    title={`View ${moreCount} more logos`}
-                  >
-                    <strong>+{moreCount}</strong>
-                    <span>more</span>
-                  </button>
-                ) : canWrite && logoItems.length < maxVisible ? (
-                  <button
-                    type="button"
-                    className="bk-ov-logo-tile bk-ov-logo-tile--add"
-                    onClick={() => triggerUpload('logo', 'primary')}
-                  >
-                    <MdAdd size={22} />
-                    <span>Add</span>
-                  </button>
-                ) : null}
-              </div>
-            )
-          })()}
+            })}
+          </div>
         </section>
 
         <section className="bk-ov-voice-card">

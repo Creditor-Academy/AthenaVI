@@ -969,7 +969,7 @@ function BrandKits() {
   }, [workspaceId, editingKitId, handleApiError])
 
   const generateMockup = useCallback(
-    async (templateId, save = false) => {
+    async (templateId, save = true) => {
       if (!canWrite || !workspaceId || !editingKitId || !templateId) return
       if (mockupGeneratingId) return
       if (!hasLogoOnKit()) {
@@ -982,7 +982,7 @@ function BrandKits() {
       try {
         const result = await brandKitService.generateMockup(workspaceId, editingKitId, {
           templateId,
-          save: Boolean(save),
+          save: save !== false,
         })
         const mockup = result.mockup || {}
         if (result.billing) setMockupBilling(result.billing)
@@ -1010,11 +1010,17 @@ function BrandKits() {
             )
           }
           await refreshHealth(workspaceId, editingKitId)
-          setMockupPreviews((prev) => {
-            const next = { ...prev }
-            delete next[templateId]
-            return next
-          })
+          // Keep showing the fresh result; treat as saved
+          setMockupPreviews((prev) => ({
+            ...prev,
+            [templateId]: {
+              url: mockup.url,
+              saved: true,
+              mediaId: mockup.mediaId,
+              templateId: mockup.templateId || templateId,
+              logoRoleUsed: mockup.logoRoleUsed,
+            },
+          }))
         }
       } catch (err) {
         handleApiError(err, 'Mockup generation failed')

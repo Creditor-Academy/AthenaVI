@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   MdAutoAwesome,
   MdInfoOutline,
-  MdSave,
   MdRefresh,
   MdCheck,
 } from 'react-icons/md'
@@ -146,13 +145,13 @@ export default function LogoMockupsSection({
                         <span>Generating… this can take up to 90s</span>
                       </div>
                     )}
-                    {preview?.saved === false && displayUrl && (
-                      <span className="bk-mockup-preview-chip">Preview</span>
-                    )}
-                    {saved && !preview && (
+                    {displayUrl && (preview?.saved || saved) && (
                       <span className="bk-mockup-preview-chip bk-mockup-preview-chip--saved">
                         <MdCheck size={12} /> Saved
                       </span>
+                    )}
+                    {preview?.saved === false && displayUrl && !saved && (
+                      <span className="bk-mockup-preview-chip">Preview</span>
                     )}
                   </div>
 
@@ -175,10 +174,10 @@ export default function LogoMockupsSection({
                             : !canWrite
                               ? 'Only owners and admins can generate'
                               : costLabel
-                                ? `Generate (${costLabel})`
-                                : 'Generate mockup'
+                                ? `Generate & save (${costLabel})`
+                                : 'Generate and save mockup'
                         }
-                        onClick={() => onGenerate?.(id, false)}
+                        onClick={() => onGenerate?.(id, true)}
                       >
                         <MdAutoAwesome size={14} />
                         {isBusy
@@ -188,26 +187,13 @@ export default function LogoMockupsSection({
                             : 'Generate'}
                       </button>
 
-                      {preview?.url && !preview?.saved && canWrite && (
-                        <button
-                          type="button"
-                          className="bk-mockup-secondary-btn"
-                          disabled={Boolean(generatingTemplateId)}
-                          onClick={() => onSave?.(id)}
-                          title="Save this mockup to the brand kit"
-                        >
-                          <MdSave size={14} />
-                          Save to kit
-                        </button>
-                      )}
-
                       {(preview?.url || saved) && canWrite && (
                         <button
                           type="button"
                           className="bk-mockup-secondary-btn"
                           disabled={!canGenerate}
-                          onClick={() => onGenerate?.(id, false)}
-                          title="Regenerate (uses free slot or credits)"
+                          onClick={() => onGenerate?.(id, true)}
+                          title="Regenerate and save to kit (uses free slot or credits)"
                         >
                           <MdRefresh size={14} />
                           Regenerate

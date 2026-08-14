@@ -61,6 +61,32 @@ export function emptyBrandKitData() {
     },
     chartStyles: { colorIds: ['c1', 'c5'] },
     imageStyle: '',
+    buttons: {
+      primary: {
+        label: 'Primary',
+        backgroundColorId: 'c1',
+        textColorId: null,
+        borderColorId: null,
+        borderWidthPx: 0,
+        borderRadiusPx: 10,
+        paddingXPx: 20,
+        paddingYPx: 10,
+        fontWeight: 600,
+        fontSizePx: 14,
+      },
+      secondary: {
+        label: 'Secondary',
+        backgroundColorId: 'c2',
+        textColorId: 'c1',
+        borderColorId: 'c1',
+        borderWidthPx: 1,
+        borderRadiusPx: 10,
+        paddingXPx: 20,
+        paddingYPx: 10,
+        fontWeight: 600,
+        fontSizePx: 14,
+      },
+    },
   }
 }
 
@@ -118,6 +144,109 @@ export function normalizeFontRole(role = {}, defaults = {}) {
   }
 }
 
+/** Normalize one button style; keep color ids that still exist in the palette. */
+export function normalizeButtonStyle(style = {}, defaults = {}, colorIds = []) {
+  const has = (id) => id && colorIds.includes(id)
+  const pickId = (id, fallback) => (has(id) ? id : has(fallback) ? fallback : colorIds[0] || null)
+  return {
+    label: style.label ?? defaults.label ?? 'Button',
+    backgroundColorId: pickId(style.backgroundColorId, defaults.backgroundColorId),
+    textColorId:
+      style.textColorId === null || style.textColorId === ''
+        ? null
+        : pickId(style.textColorId, defaults.textColorId),
+    borderColorId:
+      style.borderColorId === null || style.borderColorId === ''
+        ? null
+        : pickId(style.borderColorId, defaults.borderColorId),
+    borderWidthPx: Number.isFinite(Number(style.borderWidthPx))
+      ? Math.max(0, Math.min(12, Number(style.borderWidthPx)))
+      : defaults.borderWidthPx ?? 0,
+    borderRadiusPx: Number.isFinite(Number(style.borderRadiusPx))
+      ? Math.max(0, Math.min(64, Number(style.borderRadiusPx)))
+      : defaults.borderRadiusPx ?? 10,
+    paddingXPx: Number.isFinite(Number(style.paddingXPx))
+      ? Math.max(0, Math.min(80, Number(style.paddingXPx)))
+      : defaults.paddingXPx ?? 20,
+    paddingYPx: Number.isFinite(Number(style.paddingYPx))
+      ? Math.max(0, Math.min(48, Number(style.paddingYPx)))
+      : defaults.paddingYPx ?? 10,
+    fontWeight: parseWeight(style.fontWeight, defaults.fontWeight ?? 600),
+    fontSizePx: Number.isFinite(Number(style.fontSizePx))
+      ? Math.max(10, Math.min(32, Number(style.fontSizePx)))
+      : defaults.fontSizePx ?? 14,
+  }
+}
+
+function contrastInkHex(hex) {
+  const raw = String(hex || '#000000').replace('#', '')
+  const full =
+    raw.length === 3
+      ? raw
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : raw
+  const num = Number.parseInt(full, 16)
+  if (!Number.isFinite(num)) return '#0f172a'
+  const r = (num >> 16) & 255
+  const g = (num >> 8) & 255
+  const b = num & 255
+  const luma = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return luma > 0.62 ? '#0f172a' : '#ffffff'
+}
+
+/** Resolve button style to concrete CSS-ready values for previews / export. */
+export function resolveButtonStyle(kitData, kind = 'primary') {
+  const empty = emptyBrandKitData()
+  const colors = kitData?.colors || empty.colors
+  const roles = kitData?.colorRoles || empty.colorRoles
+  const colorIds = colors.map((c) => c.id)
+  const defaults = empty.buttons[kind] || empty.buttons.primary
+  const style = normalizeButtonStyle(kitData?.buttons?.[kind] || {}, defaults, colorIds)
+  const hexFor = (id, fallback) => {
+    const match = colors.find((c) => c.id === id)
+    return match?.hex || fallback
+  }
+  const background = hexFor(
+    style.backgroundColorId,
+    kind === 'secondary' ? hexFor(roles.bg, '#F8FAFC') : hexFor(roles.primary, '#2563EB')
+  )
+  const text = style.textColorId
+    ? hexFor(style.textColorId, contrastInkHex(background))
+    : kind === 'secondary'
+      ? hexFor(roles.primary, '#2563EB')
+      : contrastInkHex(background)
+  const border = style.borderColorId
+    ? hexFor(style.borderColorId, background)
+    : kind === 'secondary'
+      ? hexFor(roles.primary, '#2563EB')
+      : background
+
+  return {
+    ...style,
+    background,
+    text,
+    border,
+    css: {
+      background,
+      color: text,
+      border: `${style.borderWidthPx}px solid ${border}`,
+      borderRadius: `${style.borderRadiusPx}px`,
+      padding: `${style.paddingYPx}px ${style.paddingXPx}px`,
+      fontWeight: style.fontWeight,
+      fontSize: `${style.fontSizePx}px`,
+      fontFamily: kitData?.fonts?.body?.family || 'Inter, system-ui, sans-serif',
+      lineHeight: 1.2,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      cursor: 'default',
+      boxShadow: 'none',
+    },
+  }
+}
+
 export function normalizeBrandKitData(data = {}) {
   const empty = emptyBrandKitData()
   const fontsIn = data.fonts || {}
@@ -162,6 +291,18 @@ export function normalizeBrandKitData(data = {}) {
         : empty.chartStyles.colorIds.filter((id) => colors.some((c) => c.id === id)),
     },
     imageStyle: data.imageStyle || '',
+    buttons: {
+      primary: normalizeButtonStyle(
+        data.buttons?.primary || {},
+        empty.buttons.primary,
+        colors.map((c) => c.id)
+      ),
+      secondary: normalizeButtonStyle(
+        data.buttons?.secondary || {},
+        empty.buttons.secondary,
+        colors.map((c) => c.id)
+      ),
+    },
   }
 }
 
@@ -249,6 +390,10 @@ export function toBrandKitApiData(data) {
       colorIds: normalized.chartStyles?.colorIds || [],
     },
     imageStyle: normalized.imageStyle || '',
+    buttons: {
+      primary: { ...normalized.buttons.primary },
+      secondary: { ...normalized.buttons.secondary },
+    },
   }
 }
 
