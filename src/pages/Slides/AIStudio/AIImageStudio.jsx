@@ -13,8 +13,8 @@ import {
   AlertCircle,
   ArrowUp,
   Maximize2,
+  Plus,
   X,
-  Home,
 } from 'lucide-react'
 import imageGenService, {
   ImageGenRateLimitError,
@@ -62,14 +62,279 @@ const INFOGRAPHIC_LAYOUTS = [
 
 const emptySection = () => ({ title: '', bullets: '' })
 
-const EXAMPLE_PROMPTS = [
-  'A lone astronaut on a vast red Martian desert at golden hour, cinematic wide shot, volumetric dust, photorealistic',
-  'Dense neon-lit Tokyo alley at 2am in heavy rain, cobblestones reflecting neon signs, 35mm film grain',
-  'Hyper-realistic portrait of an elderly Icelandic fisherman, weathered wrinkles, pale blue eyes, overcast coastal light',
-  'Abstract macro of deep navy and molten gold liquid swirls frozen mid-motion, luxury texture',
-  'Futuristic matte black electric hypercar on a salt flat at dusk, ultra-low angle, dramatic storm clouds',
-  'Hidden waterfall deep inside a lush ancient jungle, sunlight through giant ferns, long exposure silk water',
+const IMAGE_INSPIRE = [
+  {
+    kind: 'image',
+    styleId: 'cinematic',
+    formatId: 'landscape',
+    prompt:
+      'A tiny paper boat drifting down a rain-swollen city gutter at night, neon pharmacy signs trembling in the water, shot from street level',
+  },
+  {
+    kind: 'image',
+    styleId: 'photoreal',
+    formatId: 'portrait',
+    prompt:
+      'An elderly beekeeper in morning fog, veil dotted with dew, golden hives receding into a lavender field, quiet overcast light',
+  },
+  {
+    kind: 'image',
+    styleId: 'flat_illustration',
+    formatId: 'square',
+    prompt:
+      'A cutaway of a cozy subway car at 7am: commuters as simple shapes, steam from coffee cups, one empty seat glowing like a secret',
+  },
+  {
+    kind: 'image',
+    styleId: '3d_render',
+    formatId: 'square',
+    prompt:
+      'A polished 3D still life: a cracked porcelain moon used as a soup bowl, chopsticks resting on the rim, soft studio lighting',
+  },
+  {
+    kind: 'image',
+    styleId: 'watercolor',
+    formatId: 'landscape',
+    prompt:
+      'A hidden waterfall inside a greenhouse, ferns bleeding into pigment, sunlight as pale gold washes on wet paper',
+  },
+  {
+    kind: 'image',
+    styleId: 'corporate',
+    formatId: 'landscape',
+    prompt:
+      'A sunlit workshop table: sketches, a laptop, a clay prototype, one plant, calm navy and oak — a brand-safe hero for a product studio',
+  },
+  {
+    kind: 'image',
+    styleId: 'playful',
+    formatId: 'square',
+    prompt:
+      'A city bus that is secretly a giant loaf of bread, passengers peeking from sesame-seed windows, cheerful morning light',
+  },
+  {
+    kind: 'image',
+    styleId: 'dark_moody',
+    formatId: 'portrait',
+    prompt:
+      'A violin maker’s hands in a pool of lamplight, maple dust hanging in the dark, the rest of the workshop swallowed in shadow',
+  },
+  {
+    kind: 'image',
+    styleId: 'minimal',
+    formatId: 'square',
+    prompt:
+      'A single red telephone booth stuffed with wildflowers on an empty gray street, huge negative space, two-color restraint',
+  },
+  {
+    kind: 'image',
+    styleId: 'neon',
+    formatId: 'portrait',
+    prompt:
+      'A deserted laundromat at 2am, washers pulsing cyan and magenta, one dryer door ajar like a portal, rain on the glass',
+  },
 ]
+
+const INFOGRAPHIC_INSPIRE = [
+  {
+    kind: 'infographic',
+    layout: 'process',
+    styleId: 'corporate',
+    formatId: 'portrait',
+    prompt:
+      'A witty how-it-works diagram: how a thunderstorm is born. Light artboard, navy accents, every step fully on canvas, no clipping.',
+    title: 'How a thunderstorm is born',
+    sections: [
+      { title: 'Warm air rises', bullets: 'Sun heats the ground\nMoist air lifts' },
+      { title: 'Clouds stack', bullets: 'Vapor cools into droplets\nThe tower grows taller' },
+      { title: 'Charge builds', bullets: 'Ice and droplets collide\nThe cloud becomes a battery' },
+      { title: 'The sky answers', bullets: 'Lightning equalizes the charge\nRain and thunder follow' },
+    ],
+  },
+  {
+    kind: 'infographic',
+    layout: 'comparison',
+    styleId: 'minimal',
+    formatId: 'landscape',
+    prompt:
+      'A clean side-by-side comparison: handwritten letter vs a text message. Restrained palette, matching labels, nothing cut off.',
+    title: 'Letter vs text',
+    sections: [
+      { title: 'Handwritten letter', bullets: 'Slow on purpose\nKeeps the folds and the wait\nYou reread the handwriting' },
+      { title: 'Text message', bullets: 'Instant and disposable\nRead in a lock-screen glance\nEasy to send, easy to forget' },
+    ],
+  },
+  {
+    kind: 'infographic',
+    layout: 'timeline',
+    styleId: 'flat_illustration',
+    formatId: 'landscape',
+    prompt:
+      'A playful timeline of a banana’s life, from green bunch to the last brown spot. All dates visible, light background.',
+    title: 'The secret life of a banana',
+    sections: [
+      { title: 'Day 0', bullets: 'Green, stubborn, not ready' },
+      { title: 'Day 3', bullets: 'Yellow, peak lunchbox fame' },
+      { title: 'Day 6', bullets: 'Spots appear — banana-bread rumors start' },
+      { title: 'Day 9', bullets: 'Fully committed to bread' },
+    ],
+  },
+  {
+    kind: 'infographic',
+    layout: 'stats',
+    styleId: 'corporate',
+    formatId: 'square',
+    prompt:
+      'A KPI board for “60 seconds on a busy train platform.” Big readable numbers, muted navy and gray, no neon.',
+    title: '60 seconds on the platform',
+    sections: [
+      { title: '12', bullets: 'Trains announced' },
+      { title: '84', bullets: 'Coffee lids pressed shut' },
+      { title: '3', bullets: 'People who almost miss it' },
+      { title: '1', bullets: 'Stranger who holds the door' },
+    ],
+  },
+  {
+    kind: 'infographic',
+    layout: 'hierarchy',
+    styleId: 'playful',
+    formatId: 'portrait',
+    prompt:
+      'An org chart for the government of a houseplant. Cute but readable. Every role on canvas with padding.',
+    title: 'Government of a houseplant',
+    sections: [
+      { title: 'The plant', bullets: 'Supreme leader\nRequires water and compliments' },
+      { title: 'Sunbeam', bullets: 'Minister of energy' },
+      { title: 'Watering can', bullets: 'Treasury of hydration' },
+      { title: 'The cat', bullets: 'Chaos department\nUnpaid intern' },
+    ],
+  },
+  {
+    kind: 'infographic',
+    layout: 'funnel',
+    styleId: 'corporate',
+    formatId: 'portrait',
+    prompt:
+      'A conversion funnel: how a joke becomes a catchphrase. Wide to narrow, last stage fully visible, calm colors.',
+    title: 'How a joke becomes a catchphrase',
+    sections: [
+      { title: 'The mutter', bullets: 'Said once, almost to yourself' },
+      { title: 'The table laugh', bullets: 'Friends repeat it that night' },
+      { title: 'The group chat', bullets: 'It grows a life of its own' },
+      { title: 'The catchphrase', bullets: 'Now it shows up in unrelated meetings' },
+    ],
+  },
+  {
+    kind: 'infographic',
+    layout: 'custom',
+    styleId: 'minimal',
+    formatId: 'square',
+    prompt:
+      'Anatomy of a perfect grilled cheese: labeled parts, generous margins, two-color palette, nothing overlapping the edge.',
+    title: 'Anatomy of a grilled cheese',
+    sections: [
+      { title: 'The bread', bullets: 'Crisp edges, soft middle' },
+      { title: 'The butter', bullets: 'Gold, not grease' },
+      { title: 'The cheese', bullets: 'Stretches, never floods' },
+      { title: 'The wait', bullets: 'Thirty seconds of patience' },
+    ],
+  },
+]
+
+const SOCIAL_INSPIRE = [
+  {
+    kind: 'social',
+    formatId: 'linkedin_banner',
+    styleId: 'corporate',
+    prompt:
+      'Ultra-wide LinkedIn banner for a quiet design studio. Full-bleed oak and navy. Leave the left side calm for a profile photo. Headline on the right.',
+    headline: 'Make work feel like craft',
+    subheadline: 'Less noise. Better making.',
+  },
+  {
+    kind: 'social',
+    formatId: 'linkedin_post',
+    styleId: 'corporate',
+    prompt:
+      'A LinkedIn feed graphic: sunlit desk, one open notebook, no clutter. Large centered type, professional, full-bleed.',
+    headline: 'The 4-hour onboarding',
+    subheadline: 'that used to take 4 weeks',
+  },
+  {
+    kind: 'social',
+    formatId: 'instagram_post',
+    styleId: 'cinematic',
+    prompt:
+      'A square Instagram still: espresso and a film camera on a marble ledge at golden hour. Bold type inside the margins.',
+    headline: 'Monday, but make it slow',
+    subheadline: 'Stay for the light',
+  },
+  {
+    kind: 'social',
+    formatId: 'instagram_story',
+    styleId: 'neon',
+    prompt:
+      'A 9:16 night-market story. Keep the headline in the middle third, away from the top and bottom UI. Full-bleed, no empty bars.',
+    headline: 'Tonight’s special just dropped',
+    subheadline: 'Last tray at 11',
+  },
+  {
+    kind: 'social',
+    formatId: 'instagram_landscape',
+    styleId: 'cinematic',
+    prompt:
+      'Wide Instagram landscape of a coastline road at dusk, headlights like a thread of gold. Centered type, full-bleed.',
+    headline: 'Golden hour is a strategy',
+    subheadline: 'Go where the light is',
+  },
+  {
+    kind: 'social',
+    formatId: 'facebook_post',
+    styleId: 'photoreal',
+    prompt:
+      'A Facebook post image of a neighborhood bakery window at opening time. Big high-contrast headline that still reads small.',
+    headline: 'Open before the city is',
+    subheadline: 'Bread, butter, and a quiet table',
+  },
+  {
+    kind: 'social',
+    formatId: 'facebook_cover',
+    styleId: 'minimal',
+    prompt:
+      'A panoramic Facebook cover: linen, ceramic, and morning window light across the full width. Keep lower-left quieter. Center-band type.',
+    headline: 'A calmer kind of busy',
+    subheadline: 'Studio notes, weekly',
+  },
+  {
+    kind: 'social',
+    formatId: 'x_post',
+    styleId: 'dark_moody',
+    prompt:
+      'A 16:9 X post: rain on a taxi window, city bokeh, strong center focus. Headline fully on canvas.',
+    headline: 'Stop waiting on the weather',
+    subheadline: 'Make the scene anyway',
+  },
+  {
+    kind: 'social',
+    formatId: 'x_header',
+    styleId: 'cinematic',
+    prompt:
+      'A 3:1 X header of fog over a harbor. Full width, no empty sides. Leave the lower center clear for an avatar.',
+    headline: 'Built for the long take',
+    subheadline: 'Stories, frames, and quiet ambition',
+  },
+  {
+    kind: 'social',
+    formatId: 'youtube_thumbnail',
+    styleId: 'playful',
+    prompt:
+      'A YouTube thumbnail with huge readable type, high contrast, one surprising object (a toaster wearing headphones). No tiny details.',
+    headline: 'I TESTED 100 TOASTERS',
+    subheadline: 'So you don’t have to',
+  },
+]
+
+const ALL_INSPIRE = [...IMAGE_INSPIRE, ...INFOGRAPHIC_INSPIRE, ...SOCIAL_INSPIRE]
 
 const PROMPT_ARTWORK = [
   {
@@ -184,6 +449,124 @@ function getFriendlyModelName(model) {
   return nameMap[model.id] || model.name
 }
 
+function LayoutSchematic({ layoutId, size = 'thumb' }) {
+  const id = layoutId || 'process'
+  return (
+    <div className={`aig-sch aig-sch--${id} aig-sch--${size}`} aria-hidden>
+      {id === 'process' && (
+        <>
+          <span className="aig-sch-spine" />
+          {['1', '2', '3', '4'].map((n) => (
+            <span key={n} className="aig-sch-row">
+              <em>{n}</em>
+              <i />
+            </span>
+          ))}
+        </>
+      )}
+      {id === 'comparison' && (
+        <>
+          <span className="aig-sch-col">
+            <b />
+            <i />
+            <i />
+          </span>
+          <span className="aig-sch-vs">vs</span>
+          <span className="aig-sch-col">
+            <b />
+            <i />
+            <i />
+          </span>
+        </>
+      )}
+      {id === 'timeline' && (
+        <>
+          <span className="aig-sch-line" />
+          {['', '', '', ''].map((_, i) => (
+            <span key={i} className="aig-sch-tick">
+              <em />
+              <i />
+            </span>
+          ))}
+        </>
+      )}
+      {id === 'stats' && (
+        <>
+          <span className="aig-sch-kpi">
+            <b />
+            <i />
+          </span>
+          <span className="aig-sch-kpi">
+            <b />
+            <i />
+          </span>
+          <span className="aig-sch-kpi">
+            <b />
+            <i />
+          </span>
+          <span className="aig-sch-kpi">
+            <b />
+            <i />
+          </span>
+        </>
+      )}
+      {id === 'hierarchy' && (
+        <>
+          <span className="aig-sch-root" />
+          <span className="aig-sch-fork" />
+          <span className="aig-sch-kids">
+            <i />
+            <i />
+            <i />
+          </span>
+        </>
+      )}
+      {id === 'funnel' && (
+        <>
+          <span className="aig-sch-band" />
+          <span className="aig-sch-band" />
+          <span className="aig-sch-band" />
+          <span className="aig-sch-band" />
+        </>
+      )}
+      {id === 'custom' && (
+        <>
+          <span className="aig-sch-hero" />
+          <span className="aig-sch-mosaic">
+            <i />
+            <i />
+            <i />
+          </span>
+        </>
+      )}
+    </div>
+  )
+}
+
+function LayoutCard({ layout, selected, onSelect }) {
+  return (
+    <button
+      type="button"
+      className={`aig-layout-card ${selected ? 'is-selected' : ''}`}
+      onClick={() => onSelect(layout.id)}
+      aria-pressed={selected}
+    >
+      <div className="aig-layout-thumb">
+        <LayoutSchematic layoutId={layout.id} size="thumb" />
+        {selected && (
+          <span className="aig-layout-check">
+            <Check size={11} strokeWidth={2.6} />
+          </span>
+        )}
+      </div>
+      <div className="aig-layout-copy">
+        <strong>{layout.name}</strong>
+        <span>{layout.desc}</span>
+      </div>
+    </button>
+  )
+}
+
 function FormatCard({ format, selected, onSelect }) {
   const ratio = format.width / Math.max(format.height, 1)
   const stage = 72
@@ -232,10 +615,11 @@ function FormatCard({ format, selected, onSelect }) {
   )
 }
 
-function GeneratingFrame({ format, label = 'Creating…' }) {
+function GeneratingFrame({ format, label = 'Creating…', size = 'default' }) {
   const ratio = format?.width && format?.height ? format.width / format.height : 1
-  const maxW = 420
-  const maxH = 420
+  const isHero = size === 'hero'
+  const maxW = isHero ? 720 : 420
+  const maxH = isHero ? 560 : 420
   let w = maxW
   let h = w / ratio
   if (h > maxH) {
@@ -244,23 +628,28 @@ function GeneratingFrame({ format, label = 'Creating…' }) {
   }
 
   return (
-    <div className="aig-gen-frame" style={{ width: w, height: h, maxWidth: '100%' }}>
-      <div className="aig-gen-frame-blobs" aria-hidden>
-        <span className="aig-blob aig-blob--a" />
-        <span className="aig-blob aig-blob--b" />
-        <span className="aig-blob aig-blob--c" />
-        <span className="aig-blob aig-blob--d" />
-      </div>
-      <div className="aig-gen-frame-shimmer" aria-hidden />
-      <div className="aig-gen-frame-label">
-        <Sparkles size={16} />
+    <div
+      className={`aig-gen-frame ${isHero ? 'aig-gen-frame--hero' : ''}`}
+      style={
+        isHero
+          ? { '--aig-ratio': String(ratio) }
+          : { width: w, height: h, maxWidth: '100%' }
+      }
+    >
+      <div className="aig-gen-frame-wash" aria-hidden />
+      <div className="aig-gen-frame-grid" aria-hidden />
+      <div className="aig-gen-frame-center">
+        <span className="aig-gen-frame-mark" aria-hidden>
+          <span className="aig-gen-frame-ring" />
+          <Sparkles size={isHero ? 22 : 16} strokeWidth={2} />
+        </span>
         <span>{label}</span>
       </div>
     </div>
   )
 }
 
-function CanvasPreview({ format, mode, infoLayoutName }) {
+function CanvasPreview({ format, mode, infoLayoutId, infoLayoutName }) {
   if (!format) {
     return (
       <div className="aig-canvas-preview aig-canvas-preview--empty">
@@ -285,6 +674,7 @@ function CanvasPreview({ format, mode, infoLayoutName }) {
 
   const modeLabel = MODE_TABS.find((t) => t.id === mode)?.label || mode
   const aspectLabel = formatAspect(format.width, format.height) || format.name
+  const showLayoutVision = mode === 'infographic' && infoLayoutId
 
   return (
     <div className="aig-canvas-preview">
@@ -297,7 +687,7 @@ function CanvasPreview({ format, mode, infoLayoutName }) {
             <span>{format.height}px</span>
           </div>
           <motion.div
-            className={`aig-canvas-preview-frame aig-canvas-preview-frame--${mode}`}
+            className={`aig-canvas-preview-frame aig-canvas-preview-frame--${mode}${showLayoutVision ? ' has-vision' : ''}`}
             initial={false}
             animate={{ width: w, height: h }}
             transition={{
@@ -307,34 +697,58 @@ function CanvasPreview({ format, mode, infoLayoutName }) {
               mass: 0.9,
             }}
           >
-            <span className="aig-canvas-preview-grid" aria-hidden />
-            <span className="aig-canvas-preview-orb aig-canvas-preview-orb--a" aria-hidden />
-            <span className="aig-canvas-preview-orb aig-canvas-preview-orb--b" aria-hidden />
-            <span className="aig-canvas-preview-orb aig-canvas-preview-orb--c" aria-hidden />
+            {!showLayoutVision && (
+              <>
+                <span className="aig-canvas-preview-grid" aria-hidden />
+                <span className="aig-canvas-preview-orb aig-canvas-preview-orb--a" aria-hidden />
+                <span className="aig-canvas-preview-orb aig-canvas-preview-orb--b" aria-hidden />
+                <span className="aig-canvas-preview-orb aig-canvas-preview-orb--c" aria-hidden />
+              </>
+            )}
             <span className="aig-canvas-corner aig-canvas-corner--tl" aria-hidden />
             <span className="aig-canvas-corner aig-canvas-corner--tr" aria-hidden />
             <span className="aig-canvas-corner aig-canvas-corner--bl" aria-hidden />
             <span className="aig-canvas-corner aig-canvas-corner--br" aria-hidden />
 
-            <span className="aig-canvas-preview-badge">
-              {modeLabel}
-              <em>{aspectLabel}</em>
-            </span>
+            {showLayoutVision ? (
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={infoLayoutId}
+                  className="aig-canvas-preview-vision"
+                  initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                  transition={{ duration: 0.22 }}
+                >
+                  <LayoutSchematic layoutId={infoLayoutId} size="stage" />
+                  <p>{infoLayoutName} layout</p>
+                </motion.div>
+              </AnimatePresence>
+            ) : (
+              <span className="aig-canvas-preview-badge">
+                {modeLabel}
+                <em>{aspectLabel}</em>
+              </span>
+            )}
           </motion.div>
         </div>
       </div>
 
       <motion.div
         className="aig-canvas-preview-meta"
-        key={`meta-${format.id}`}
+        key={`meta-${format.id}-${infoLayoutId || mode}`}
         initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
       >
-        <strong>{format.name}</strong>
+        <strong>
+          {showLayoutVision ? `${infoLayoutName} on ${format.name}` : format.name}
+        </strong>
         <span>
           {format.width} × {format.height} px
-          {mode === 'infographic' && infoLayoutName ? ` · ${infoLayoutName}` : ''}
+          {showLayoutVision
+            ? ' · structure preview — not the final graphic'
+            : ''}
         </span>
       </motion.div>
     </div>
@@ -382,14 +796,15 @@ export default function AIImageStudio({ onBack, createContext = null }) {
   const genAbortRef = useRef(null)
   const chatEndRef = useRef(null)
   const chatInputRef = useRef(null)
+  const inspireTimerRef = useRef(null)
 
   const resizePromptField = useCallback(() => {
     const el = textRef.current
     if (!el) return
     el.style.height = '0px'
-    const next = Math.min(el.scrollHeight, 132)
-    el.style.height = `${Math.max(next, 24)}px`
-    el.classList.toggle('is-tall', next > 40)
+    const next = Math.min(el.scrollHeight, 148)
+    el.style.height = `${Math.max(next, 28)}px`
+    el.classList.toggle('is-tall', next > 44)
   }, [])
 
   useEffect(() => {
@@ -570,20 +985,72 @@ export default function AIImageStudio({ onBack, createContext = null }) {
   }, [thread, isGenerating, step])
 
   const handleInspire = () => {
-    const pool = EXAMPLE_PROMPTS.filter((p) => p !== prompt)
-    const next = pool[Math.floor(Math.random() * pool.length)] || EXAMPLE_PROMPTS[0]
+    const bank =
+      step === 'options' || step === 'canvas'
+        ? mode === 'infographic'
+          ? INFOGRAPHIC_INSPIRE
+          : mode === 'social'
+            ? SOCIAL_INSPIRE
+            : IMAGE_INSPIRE
+        : ALL_INSPIRE
+
+    const pool = bank.filter((item) => item.prompt !== prompt)
+    const next = pool[Math.floor(Math.random() * pool.length)] || bank[0]
+    if (!next) return
+
+    if (next.kind === 'infographic') {
+      switchMode('infographic')
+      if (next.layout) setInfoLayout(next.layout)
+      if (next.title) setInfoTitle(next.title)
+      if (next.sections?.length) {
+        setInfoSections(
+          next.sections.map((s) => ({
+            title: s.title || '',
+            bullets: s.bullets || '',
+          }))
+        )
+      }
+      setFormatId(next.formatId || 'portrait')
+      if (next.styleId) setStyleId(next.styleId)
+    } else if (next.kind === 'social') {
+      switchMode('social')
+      setHeadline(next.headline || '')
+      setSubheadline(next.subheadline || '')
+      setFormatId(next.formatId || 'instagram_post')
+      if (next.styleId) setStyleId(next.styleId)
+    } else {
+      switchMode('image')
+      setFormatId(next.formatId || 'square')
+      if (next.styleId) setStyleId(next.styleId)
+    }
+
+    if (inspireTimerRef.current) clearInterval(inspireTimerRef.current)
     setInspiring(true)
     setPrompt('')
     let i = 0
-    const iv = setInterval(() => {
+    inspireTimerRef.current = setInterval(() => {
       i += 1
-      setPrompt(next.slice(0, i))
-      if (i >= next.length) {
-        clearInterval(iv)
+      const typed = next.prompt.slice(0, i)
+      setPrompt(typed)
+      const el = textRef.current
+      if (el) {
+        el.focus()
+        el.setSelectionRange(typed.length, typed.length)
+      }
+      if (i >= next.prompt.length) {
+        clearInterval(inspireTimerRef.current)
+        inspireTimerRef.current = null
         setInspiring(false)
       }
-    }, 10)
+    }, 8)
   }
+
+  useEffect(
+    () => () => {
+      if (inspireTimerRef.current) clearInterval(inspireTimerRef.current)
+    },
+    []
+  )
 
   const buildGenerateBody = () => {
     const body = {
@@ -686,7 +1153,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
       {
         id: turnId,
         kind: 'regenerate',
-        text: 'Regenerate with same settings',
+        text: prompt.trim() || 'Same prompt, new take',
         status: 'pending',
         generation: null,
         error: null,
@@ -764,32 +1231,92 @@ export default function AIImageStudio({ onBack, createContext = null }) {
   }
 
   const navBack = () => {
-    if (step === 'prompt') onBack?.()
-    else if (step === 'canvas') setStep('prompt')
+    if (step === 'prompt') {
+      if (thread.length) setStep('workspace')
+      else onBack?.()
+    } else if (step === 'canvas') setStep('prompt')
     else if (step === 'options') setStep('canvas')
     else if (step === 'workspace') setStep('options')
   }
+
+  const startNewCreation = () => {
+    setStep('prompt')
+  }
+
+  const focusTweakInput = () => {
+    const el = chatInputRef.current
+    if (!el || isGenerating) return
+    el.focus()
+    el.scrollIntoView({ behavior: 'smooth', block: 'end' })
+  }
+
+  const pendingTurn = thread.find((t) => t.status === 'pending') || null
+  const selectedTurn =
+    thread.find((t) => t.generation?.id === activeGeneration?.id) || null
+  const heroTurn = pendingTurn || selectedTurn || thread[thread.length - 1] || null
+
+  const workspaceHeading = pendingTurn
+    ? pendingTurn.kind === 'tweak'
+      ? {
+          title: 'Applying your tweak',
+          sub: 'The next version will land here in a moment.',
+        }
+      : pendingTurn.kind === 'regenerate'
+        ? {
+            title: 'A fresh take is on the way',
+            sub: 'Same prompt and settings, new interpretation.',
+          }
+        : {
+            title: 'Creating your image',
+            sub: GEN_STATUS_LINES[genStatusIdx],
+          }
+    : heroTurn?.status === 'error'
+      ? {
+          title: 'That one didn’t land',
+          sub: 'Try a tweak, or generate a new version.',
+        }
+      : {
+          title: 'Your image is ready',
+          sub: '',
+        }
+
+  const sourcePrompt =
+    thread.find((t) => t.kind !== 'tweak' && t.kind !== 'regenerate')?.text || prompt
+
+  const heroPromptText =
+    heroTurn?.kind === 'tweak' ? heroTurn.text : sourcePrompt || heroTurn?.text || ''
+
+  const selectTurn = (turn) => {
+    if (turn?.generation) setActiveGeneration(turn.generation)
+    document
+      .getElementById(`aig-turn-${turn.id}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }
+
+  const versionTitle = (turn, index) => {
+    const n = `v${index + 1}`
+    if (turn.kind === 'tweak') return `${n} Tweak`
+    if (turn.kind === 'regenerate') return `${n} Regen`
+    return `${n} Original`
+  }
+
+  const heroMetaBits = [
+    selectedStyle?.name,
+    selectedFormat?.name,
+    selectedModel ? getFriendlyModelName(selectedModel) : null,
+    estimateAc != null ? `${estimateAc} AC` : null,
+  ].filter(Boolean)
 
   const shellClass = `aig-shell aig-shell--${step}`
 
   if (catalogLoading) {
     return (
       <div className="aig-shell aig-shell--loading">
-        <div className="aig-loading-backdrop" aria-hidden>
-          <span className="aig-loading-glow aig-loading-glow--a" />
-          <span className="aig-loading-glow aig-loading-glow--b" />
-        </div>
-        <div className="aig-loading-card">
-          <div className="aig-loading-mark" aria-hidden>
-            <span className="aig-loading-ring" />
-            <Sparkles size={22} strokeWidth={2.1} />
-          </div>
+        <div className="aig-loading">
+          <Loader2 className="aig-loading-spin" size={22} strokeWidth={2} aria-hidden />
           <div className="aig-loading-copy">
             <h2>Image Studio</h2>
-            <p>Preparing models, formats, and styles…</p>
-          </div>
-          <div className="aig-loading-bar" aria-hidden>
-            <span />
+            <p>Loading catalog…</p>
           </div>
         </div>
       </div>
@@ -799,13 +1326,8 @@ export default function AIImageStudio({ onBack, createContext = null }) {
   if (catalogError && !formats.length) {
     return (
       <div className="aig-shell aig-shell--loading">
-        <div className="aig-loading-backdrop" aria-hidden>
-          <span className="aig-loading-glow aig-loading-glow--a" />
-        </div>
-        <div className="aig-loading-card aig-loading-card--error">
-          <div className="aig-loading-mark aig-loading-mark--error" aria-hidden>
-            <AlertCircle size={22} strokeWidth={2.1} />
-          </div>
+        <div className="aig-loading aig-loading--error">
+          <AlertCircle size={22} strokeWidth={2} aria-hidden />
           <div className="aig-loading-copy">
             <h2>Couldn’t open Image Studio</h2>
             <p>{catalogError}</p>
@@ -822,7 +1344,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
     <div className={shellClass}>
       <button type="button" className="aig-float-back" onClick={navBack} aria-label="Back">
         <ChevronLeft size={18} strokeWidth={2.25} />
-        <span>{step === 'prompt' ? 'Home' : 'Back'}</span>
+        <span>{step === 'prompt' ? (thread.length ? 'Session' : 'Home') : 'Back'}</span>
       </button>
 
       <div className="aig-float-credits" aria-label="Credits balance">
@@ -873,50 +1395,65 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                         if (prompt.trim()) setStep('canvas')
                       }}
                     >
-                      <div className="aig-prompt-card aig-glow-ring">
+                      <div
+                        className={`aig-prompt-card aig-glow-ring ${inspiring ? 'is-inspiring' : ''}`}
+                      >
                         {thumbs}
-                        <div className="aig-prompt-row">
-                          {trigger}
-                          <textarea
-                            ref={textRef}
-                            className="aig-prompt-input"
-                            rows={1}
-                            placeholder="Describe the image you want to create…"
-                            value={prompt}
-                            onChange={(e) => setPrompt(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault()
-                                if (prompt.trim()) setStep('canvas')
-                              }
-                            }}
-                            aria-label="Describe the image you want to create"
-                            autoFocus
-                          />
-                          <button
-                            type="button"
-                            className="aig-inspire"
-                            onClick={handleInspire}
-                            disabled={inspiring}
-                          >
-                            <Wand2 size={14} />
-                            <span>{inspiring ? 'Writing…' : 'Inspire'}</span>
-                          </button>
-                          <button
-                            type="submit"
-                            className="aig-prompt-go"
-                            disabled={!prompt.trim()}
-                            aria-label="Continue"
-                          >
-                            <Sparkles size={18} />
-                          </button>
+                        <div className="aig-prompt-composer">
+                          <div className="aig-prompt-field">
+                            {trigger}
+                            <textarea
+                              ref={textRef}
+                              className="aig-prompt-input"
+                              rows={1}
+                              placeholder="A rainy laundromat, a how-storms-work diagram, a YouTube thumbnail…"
+                              value={prompt}
+                              onChange={(e) => setPrompt(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault()
+                                  if (prompt.trim()) setStep('canvas')
+                                }
+                              }}
+                              aria-label="Describe the image you want to create"
+                              autoFocus
+                            />
+                          </div>
+                          <div className="aig-prompt-actions">
+                            <button
+                              type="button"
+                              className="aig-inspire"
+                              onClick={handleInspire}
+                              disabled={inspiring}
+                              aria-label="Inspire me with a prompt"
+                            >
+                              <Wand2 size={14} strokeWidth={2.1} />
+                              <span>{inspiring ? 'Writing…' : 'Inspire'}</span>
+                            </button>
+                            <button
+                              type="submit"
+                              className="aig-prompt-go"
+                              disabled={!prompt.trim()}
+                              aria-label="Continue"
+                            >
+                              <Sparkles size={17} strokeWidth={2.1} />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </form>
                   )}
                 </ImageGenContextAttach>
 
-                <p className="aig-prompt-hint">Press enter to generate</p>
+                <p className="aig-prompt-hint">
+                  Press <kbd>Enter</kbd> to continue
+                  <span className="aig-prompt-hint-extra">
+                    <span className="aig-prompt-hint-sep" aria-hidden="true">
+                      ·
+                    </span>
+                    Inspire cycles images, infographics, and social ideas
+                  </span>
+                </p>
               </div>
             </motion.section>
           )}
@@ -962,15 +1499,12 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                       <h3>Layout</h3>
                       <div className="aig-layout-grid">
                         {INFOGRAPHIC_LAYOUTS.map((layout) => (
-                          <button
+                          <LayoutCard
                             key={layout.id}
-                            type="button"
-                            className={`aig-layout-card ${infoLayout === layout.id ? 'is-selected' : ''}`}
-                            onClick={() => setInfoLayout(layout.id)}
-                          >
-                            <strong>{layout.name}</strong>
-                            <span>{layout.desc}</span>
-                          </button>
+                            layout={layout}
+                            selected={infoLayout === layout.id}
+                            onSelect={setInfoLayout}
+                          />
                         ))}
                       </div>
                     </div>
@@ -993,6 +1527,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                   <CanvasPreview
                     format={selectedFormat}
                     mode={mode}
+                    infoLayoutId={mode === 'infographic' ? infoLayout : null}
                     infoLayoutName={selectedInfoLayout?.name}
                   />
                 </aside>
@@ -1087,7 +1622,18 @@ export default function AIImageStudio({ onBack, createContext = null }) {
 
               {mode === 'infographic' && (
                 <div className="aig-opt-block aig-opt-block--info">
-                  <h3>Infographic content</h3>
+                  <div className="aig-opt-block-head">
+                    <h3>Infographic content</h3>
+                    <button
+                      type="button"
+                      className="aig-inspire"
+                      onClick={handleInspire}
+                      disabled={inspiring}
+                    >
+                      <Wand2 size={14} strokeWidth={2.1} />
+                      <span>{inspiring ? 'Writing…' : 'Inspire'}</span>
+                    </button>
+                  </div>
                   <label className="aig-field-full">
                     Title
                     <input
@@ -1155,7 +1701,18 @@ export default function AIImageStudio({ onBack, createContext = null }) {
 
               {mode === 'social' && (
                 <div className="aig-opt-block aig-opt-block--social">
-                  <h3>Optional text overlay</h3>
+                  <div className="aig-opt-block-head">
+                    <h3>Optional text overlay</h3>
+                    <button
+                      type="button"
+                      className="aig-inspire"
+                      onClick={handleInspire}
+                      disabled={inspiring}
+                    >
+                      <Wand2 size={14} strokeWidth={2.1} />
+                      <span>{inspiring ? 'Writing…' : 'Inspire'}</span>
+                    </button>
+                  </div>
                   <p className="aig-opt-hint">
                     Add headline and subheadline for better on-canvas text. Keep copy short for readability.
                   </p>
@@ -1221,262 +1778,261 @@ export default function AIImageStudio({ onBack, createContext = null }) {
           {step === 'workspace' && (
             <motion.section key="workspace" className="aig-page aig-page--workspace" {...stepMotion}>
               <div className="aig-work">
-                <aside className="aig-work-sidebar">
-                  <div className="aig-work-sidebar-brand">
-                    <Sparkles size={16} />
-                    <div>
-                      <strong>Image Studio</strong>
-                      <span>Session</span>
-                    </div>
+                <header className="aig-work-top">
+                  <button
+                    type="button"
+                    className="aig-work-new"
+                    onClick={startNewCreation}
+                  >
+                    <Plus size={15} strokeWidth={2.4} />
+                    <span>New creation</span>
+                  </button>
+                  <div className="aig-work-heading">
+                    <h1>{workspaceHeading.title}</h1>
+                    {workspaceHeading.sub ? <p>{workspaceHeading.sub}</p> : null}
                   </div>
-
-                  <div className="aig-work-sidebar-block">
-                    <h4>Settings</h4>
-                    <div className="aig-chip-row">
-                      <span className="aig-mini-chip aig-mini-chip--accent">
-                        {MODE_TABS.find((t) => t.id === mode)?.label || 'Image'}
-                      </span>
-                      {selectedModel && <span className="aig-mini-chip">{selectedModel.name}</span>}
-                      {selectedFormat && <span className="aig-mini-chip">{selectedFormat.name}</span>}
-                      {selectedStyle && <span className="aig-mini-chip">{selectedStyle.name}</span>}
-                    </div>
+                  <div className="aig-work-credits" aria-label="Credits balance">
+                    <Sparkles size={13} strokeWidth={2.25} />
+                    <span>
+                      {creditBalance == null
+                        ? '—'
+                        : Math.round(creditBalance).toLocaleString()}{' '}
+                      AC
+                    </span>
                   </div>
+                </header>
 
-                  <div className="aig-work-sidebar-block aig-work-sidebar-versions">
-                    <h4>Versions</h4>
-                    <div className="aig-version-list">
-                      {thread.length === 0 && (
-                        <p className="aig-version-empty">No generations yet</p>
-                      )}
-                      {[...thread].reverse().map((turn, idx) => (
-                        <button
-                          key={turn.id}
-                          type="button"
-                          className={`aig-version-item ${
-                            turn.generation?.id === activeGeneration?.id ? 'is-active' : ''
-                          }`}
-                          onClick={() => {
-                            if (turn.generation) setActiveGeneration(turn.generation)
-                            document
-                              .getElementById(`aig-turn-${turn.id}`)
-                              ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                          }}
-                        >
-                          <div className="aig-version-thumb">
-                            {turn.generation?.url ? (
-                              <img src={turn.generation.url} alt="" />
-                            ) : turn.status === 'pending' ? (
-                              <Loader2 size={14} className="aig-spin" />
-                            ) : (
-                              <AlertCircle size={14} />
+                    <div className="aig-work-board">
+                      <section className="aig-work-info" aria-label="Prompt details">
+                        {heroTurn && (
+                          <div className="aig-work-meta">
+                            <div className="aig-work-meta-top">
+                              <span className="aig-work-meta-kicker">
+                                {versionTitle(
+                                  heroTurn,
+                                  Math.max(0, thread.findIndex((t) => t.id === heroTurn.id))
+                                )}
+                              </span>
+                              {heroMetaBits.map((bit) => (
+                                <span key={bit} className="aig-work-chip">
+                                  {bit}
+                                </span>
+                              ))}
+                            </div>
+                            <h2 className="aig-work-info-title">Prompt</h2>
+                            <p className="aig-work-meta-prompt">{heroPromptText}</p>
+                            {heroTurn.status === 'error' && heroTurn.error && (
+                              <p className="aig-chat-error">{heroTurn.error}</p>
                             )}
                           </div>
-                          <div className="aig-version-meta">
-                            <strong>
-                              {turn.kind === 'tweak'
-                                ? 'Tweak'
-                                : turn.kind === 'regenerate'
-                                  ? 'Regen'
-                                  : `V${thread.length - idx}`}
-                            </strong>
-                            <span>{turn.text.slice(0, 42)}{turn.text.length > 42 ? '…' : ''}</span>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                        )}
 
-                  <div className="aig-work-sidebar-actions">
-                    <button
-                      type="button"
-                      className="aig-btn aig-btn--primary aig-btn--block"
-                      onClick={() => onBack?.()}
-                    >
-                      <Home size={15} strokeWidth={2.25} />
-                      Home
-                    </button>
-                  </div>
-                </aside>
-
-                <div className="aig-work-main">
-                  <div className="aig-chat-scroll">
-                    {thread.map((turn) => (
-                      <motion.article
-                        key={turn.id}
-                        id={`aig-turn-${turn.id}`}
-                        className="aig-chat-turn"
-                        initial={{ opacity: 0, y: 18 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-                      >
-                        <div className="aig-chat-prompt">
-                          <span className="aig-chat-prompt-label">
-                            {turn.kind === 'tweak'
-                              ? 'Tweak'
-                              : turn.kind === 'regenerate'
-                                ? 'Regenerate'
-                                : 'Prompt'}
-                          </span>
-                          {(() => {
-                            const { preview, truncated } = previewPrompt(turn.text)
-                            return (
-                              <>
-                                <p className="aig-chat-prompt-text">{preview}</p>
-                                {truncated && (
+                        <div className="aig-work-cta">
+                          <button
+                            type="button"
+                            className="aig-cta-btn"
+                            disabled={isGenerating || !heroTurn?.generation}
+                            onClick={() => runRegenerate(heroTurn?.generation)}
+                          >
+                            <RotateCcw size={15} />
+                            Regenerate
+                          </button>
+                          <button
+                            type="button"
+                            className="aig-cta-btn"
+                            disabled={isGenerating || !activeGeneration}
+                            onClick={focusTweakInput}
+                          >
+                            <Wand2 size={15} />
+                            Tweak
+                          </button>
+                          <div className="aig-download-wrap aig-cta-download">
+                            <button
+                              type="button"
+                              className="aig-cta-btn aig-cta-btn--primary"
+                              disabled={!heroTurn?.generation}
+                              onClick={() =>
+                                setDownloadMenuFor((id) =>
+                                  id === heroTurn?.generation?.id ? null : heroTurn.generation.id
+                                )
+                              }
+                            >
+                              <Download size={15} />
+                              Download
+                            </button>
+                            {heroTurn?.generation && downloadMenuFor === heroTurn.generation.id && (
+                              <div className="aig-download-menu aig-download-menu--cta">
+                                {['png', 'jpg', 'pdf'].map((fmt) => (
                                   <button
+                                    key={fmt}
                                     type="button"
-                                    className="aig-show-more"
-                                    onClick={() => setPromptModalText(turn.text)}
+                                    onClick={() => runDownload(fmt, heroTurn.generation.id)}
+                                    disabled={busyAction.startsWith(
+                                      `dl-${heroTurn.generation.id}-`
+                                    )}
                                   >
-                                    Show more
+                                    {busyAction === `dl-${heroTurn.generation.id}-${fmt}`
+                                      ? 'Saving…'
+                                      : fmt.toUpperCase()}
                                   </button>
-                                )}
-                              </>
-                            )
-                          })()}
-                          {turn.status === 'pending' && (
-                            <div className="aig-chat-status">
-                              <Loader2 size={12} className="aig-spin" />
-                              {GEN_STATUS_LINES[genStatusIdx]}
-                            </div>
-                          )}
-                          {turn.status === 'error' && turn.error && (
-                            <p className="aig-chat-error">{turn.error}</p>
-                          )}
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
 
-                        <div className="aig-chat-media">
-                          {turn.status === 'pending' && (
-                            <GeneratingFrame
-                              format={selectedFormat}
-                              label={
-                                turn.kind === 'tweak'
-                                  ? 'Applying tweak…'
-                                  : 'Creating your image…'
-                              }
-                            />
+                        <div className="aig-chat-dock">
+                          {actionError && !isGenerating && (
+                            <div className="aig-error-banner aig-error-banner--dock">
+                              {actionError}
+                            </div>
                           )}
-                          {turn.status === 'done' && turn.generation?.url && (
-                            <div className="aig-img-wrap">
+                          <div className="aig-chat-bar">
+                            <textarea
+                              ref={chatInputRef}
+                              className="aig-chat-input"
+                              rows={2}
+                              placeholder={
+                                isGenerating
+                                  ? 'Hang tight — your image is generating…'
+                                  : activeGeneration
+                                    ? 'Describe a change and press Enter…'
+                                    : 'Generate an image first, then tweak here…'
+                              }
+                              value={chatInput}
+                              disabled={isGenerating || !activeGeneration}
+                              onChange={(e) => setChatInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault()
+                                  submitChat()
+                                }
+                              }}
+                              maxLength={2000}
+                            />
+                            <div className="aig-chat-counter">
+                              <span
+                                className={chatInput.length > 1900 ? 'aig-chat-counter--warn' : ''}
+                              >
+                                {chatInput.length}/2000
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              className="aig-chat-send"
+                              disabled={isGenerating || !activeGeneration || !chatInput.trim()}
+                              onClick={submitChat}
+                              aria-label="Send tweak"
+                            >
+                              <ArrowUp size={18} strokeWidth={2.5} />
+                            </button>
+                          </div>
+                        </div>
+                      </section>
+
+                      <div className="aig-work-stage">
+                        <div className="aig-work-hero">
+                        {!heroTurn && (
+                          <div className="aig-chat-media-fail">
+                            <Sparkles size={20} />
+                            <span>Your image will appear here</span>
+                          </div>
+                        )}
+
+                        {heroTurn?.status === 'pending' && (
+                          <GeneratingFrame
+                            format={selectedFormat}
+                            size="hero"
+                            label={
+                              heroTurn.kind === 'tweak'
+                                ? 'Applying tweak…'
+                                : heroTurn.kind === 'regenerate'
+                                  ? 'Regenerating…'
+                                  : 'Creating your image…'
+                            }
+                          />
+                        )}
+
+                        {heroTurn?.status === 'done' && heroTurn.generation?.url && (
+                          <button
+                            type="button"
+                            className="aig-hero-open"
+                            onClick={() => setFullscreenSrc(heroTurn.generation.url)}
+                            aria-label="View fullscreen"
+                          >
+                            <span className="aig-hero-frame">
                               <motion.img
-                                src={turn.generation.url}
-                                alt={turn.text}
-                                className="aig-chat-img"
-                                initial={{ opacity: 0, scale: 0.98 }}
+                                key={heroTurn.generation.id}
+                                src={heroTurn.generation.url}
+                                alt={heroPromptText || heroTurn.text}
+                                className="aig-hero-img"
+                                initial={{ opacity: 0, scale: 0.985 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ duration: 0.4 }}
-                                onClick={() => setFullscreenSrc(turn.generation.url)}
                               />
-                              <div className="aig-img-actions">
-                                <button
-                                  type="button"
-                                  className="aig-img-action"
-                                  title="Regenerate"
-                                  disabled={isGenerating}
-                                  onClick={() => runRegenerate(turn.generation)}
-                                >
-                                  <RotateCcw size={14} />
-                                  <span>Regenerate</span>
-                                </button>
-                                <div className="aig-download-wrap">
-                                  <button
-                                    type="button"
-                                    className="aig-img-action"
-                                    title="Download"
-                                    onClick={() =>
-                                      setDownloadMenuFor((id) =>
-                                        id === turn.generation.id ? null : turn.generation.id
-                                      )
-                                    }
-                                  >
-                                    <Download size={14} />
-                                    <span>Download</span>
-                                  </button>
-                                  {downloadMenuFor === turn.generation.id && (
-                                    <div className="aig-download-menu aig-download-menu--img">
-                                      {['png', 'jpg', 'pdf'].map((fmt) => (
-                                        <button
-                                          key={fmt}
-                                          type="button"
-                                          onClick={() => runDownload(fmt, turn.generation.id)}
-                                          disabled={busyAction.startsWith(
-                                            `dl-${turn.generation.id}-`
-                                          )}
-                                        >
-                                          {busyAction === `dl-${turn.generation.id}-${fmt}`
-                                            ? 'Saving…'
-                                            : fmt.toUpperCase()}
-                                        </button>
-                                      ))}
-                                    </div>
+                              <span className="aig-hero-zoom" aria-hidden="true">
+                                <Maximize2 size={14} strokeWidth={2.2} />
+                              </span>
+                            </span>
+                          </button>
+                        )}
+
+                        {heroTurn?.status === 'error' && (
+                          <div className="aig-chat-media-fail">
+                            <AlertCircle size={22} />
+                            <span>Couldn’t generate</span>
+                            {heroTurn.error && <em>{heroTurn.error}</em>}
+                          </div>
+                        )}
+                        </div>
+
+                        <aside className="aig-work-versions" aria-label="Version history">
+                          <div className="aig-work-versions-head">
+                            <h2>Versions</h2>
+                            <span>{thread.length}</span>
+                          </div>
+                          <div className="aig-version-list">
+                            {thread.length === 0 && (
+                              <p className="aig-version-empty">No versions yet</p>
+                            )}
+                            {thread.map((turn, idx) => (
+                              <button
+                                key={turn.id}
+                                id={`aig-turn-${turn.id}`}
+                                type="button"
+                                className={`aig-version-item ${heroTurn?.id === turn.id ? 'is-active' : ''}`}
+                                onClick={() => selectTurn(turn)}
+                              >
+                                <div className="aig-version-thumb">
+                                  {turn.generation?.url ? (
+                                    <img src={turn.generation.url} alt="" />
+                                  ) : turn.status === 'pending' ? (
+                                    <Loader2 size={14} className="aig-spin" />
+                                  ) : (
+                                    <AlertCircle size={14} />
                                   )}
                                 </div>
-                                <button
-                                  type="button"
-                                  className="aig-img-action"
-                                  title="Fullscreen"
-                                  onClick={() => setFullscreenSrc(turn.generation.url)}
-                                >
-                                  <Maximize2 size={14} />
-                                  <span>View</span>
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                          {turn.status === 'error' && (
-                            <div className="aig-chat-media-fail">
-                              <AlertCircle size={20} />
-                              <span>Couldn’t generate</span>
-                            </div>
-                          )}
-                        </div>
-                      </motion.article>
-                    ))}
-                    <div ref={chatEndRef} />
-                  </div>
-
-                  <div className="aig-chat-dock">
-                    {actionError && !isGenerating && (
-                      <div className="aig-error-banner aig-error-banner--dock">{actionError}</div>
-                    )}
-                    <div className="aig-chat-bar">
-                      <textarea
-                        ref={chatInputRef}
-                        className="aig-chat-input"
-                        rows={1}
-                        placeholder={
-                          activeGeneration
-                            ? 'Describe a change and press Enter…'
-                            : 'Generate an image first, then tweak here…'
-                        }
-                        value={chatInput}
-                        disabled={isGenerating || !activeGeneration}
-                        onChange={(e) => setChatInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault()
-                            submitChat()
-                          }
-                        }}
-                        maxLength={2000}
-                      />
-                      <div className="aig-chat-counter">
-                        <span className={chatInput.length > 1900 ? 'aig-chat-counter--warn' : ''}>
-                          {chatInput.length}/2000
-                        </span>
+                                <div className="aig-version-meta">
+                                  <strong>{`v${idx + 1}`}</strong>
+                                  <span>
+                                    {turn.status === 'pending'
+                                      ? '…'
+                                      : turn.status === 'error'
+                                        ? 'Fail'
+                                        : turn.kind === 'tweak'
+                                          ? 'Tweak'
+                                          : turn.kind === 'regenerate'
+                                            ? 'Regen'
+                                            : 'Original'}
+                                  </span>
+                                </div>
+                              </button>
+                            ))}
+                            <div ref={chatEndRef} />
+                          </div>
+                        </aside>
                       </div>
-                      <button
-                        type="button"
-                        className="aig-chat-send"
-                        disabled={isGenerating || !activeGeneration || !chatInput.trim()}
-                        onClick={submitChat}
-                        aria-label="Send tweak"
-                      >
-                        <ArrowUp size={18} strokeWidth={2.5} />
-                      </button>
                     </div>
-                  </div>
-                </div>
               </div>
 
               {fullscreenSrc &&
