@@ -42,6 +42,7 @@ const LAYOUT_CATEGORIES = [
   { id: 'people_and_team', label: 'People and team', contentTypes: ['team'] },
   { id: 'quotes_and_testimonials', label: 'Quotes and testimonial', contentTypes: ['quote'] },
   { id: 'device_frames', label: 'Device frames', contentTypes: ['device_frames'] },
+  { id: 'diagrams', label: 'Diagrams', contentTypes: ['diagram'] },
   { id: 'closing', label: 'Closing', contentTypes: ['closing'] },
 ]
 
@@ -60,6 +61,7 @@ const CONTENT_TYPE_LABELS = {
   team: 'Team',
   quote: 'Quote',
   device_frames: 'Device frames',
+  diagram: 'Diagram',
   closing: 'Closing',
 }
 
@@ -95,6 +97,7 @@ function resolveLayoutCategoryId(entry = {}) {
   if (ct === 'team') return 'people_and_team'
   if (ct === 'quote') return 'quotes_and_testimonials'
   if (ct === 'device_frames' || layoutId.startsWith('device_')) return 'device_frames'
+  if (ct === 'diagram' || layoutId.startsWith('diagram_')) return 'diagrams'
   if (ct === 'closing') return 'closing'
   if (ct === 'comparison') return 'simple_slides'
   if (['title', 'bullet_list', 'section_divider', 'image+text', 'image_text'].includes(ct)) {

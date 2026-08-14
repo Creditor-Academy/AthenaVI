@@ -18,6 +18,7 @@ import CanvasElementsPreview from './CanvasElementsPreview'
 import { EXTENDED_PREVIEW_MODES } from './layoutPolishedPreviewsExtended.jsx'
 import { PEOPLE_PRICING_PREVIEW_MODES } from './layoutPolishedPreviewsPeoplePricing.jsx'
 import { DEVICE_FRAMES_PREVIEW_MODES } from './layoutPolishedPreviewsDeviceFrames.jsx'
+import { DIAGRAM_PREVIEW_MODES } from './layoutPolishedPreviewsDiagrams.jsx'
 
 const LAYOUT_POLISHED_THEME = {
   bg: 'var(--preview-bg, var(--bg-card, #ffffff))',
@@ -1719,6 +1720,19 @@ export default function LayoutPolishedPreview({
   }
   if (previewMode === 'process_flow') {
     return <PolishedProcessFlowPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
+  }
+  const DiagramPreview = DIAGRAM_PREVIEW_MODES[previewMode]
+  if (DiagramPreview) {
+    return (
+      <DiagramPreview
+        previewHints={previewHints}
+        large={large}
+        fill={fill}
+        className={className}
+        style={style}
+        aspectRatio={aspectRatio}
+      />
+    )
   }
   if (previewMode === 'stat_cards_image') {
     return <PolishedStatCardsImagePreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />

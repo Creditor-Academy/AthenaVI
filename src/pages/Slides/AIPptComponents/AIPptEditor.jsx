@@ -52,7 +52,7 @@ import {
   resolveThemeColor,
   toApiThemeId,
 } from '../../../utils/presentationHelpers'
-import { compileDeckLayoutToElements } from '../../../utils/compileDeckLayoutToElements'
+import { compileDeckLayoutToElements, buildThemeCompileOptions } from '../../../utils/compileDeckLayoutToElements'
 import { resolveLayoutSchemaById } from '../../../utils/deckLayoutRegistry'
 import {
   layoutSchemaHasCanvasElements,
@@ -64,6 +64,7 @@ import {
   repairPresentationLayoutSlides,
 } from '../../../utils/layoutCanvasService'
 import { PPT_DEFAULT_PLACEMENTS } from '../../../constants/pptInsertCatalog'
+import { ensureThemeFontsLoaded, themeFontFamilies } from '../../../utils/googleFonts'
 import './pptEditorExtras.css'
 
 const CANVAS_SAVE_DEBOUNCE_MS = 600
@@ -315,7 +316,7 @@ function SlideStage({
   const hasElements = elements.length > 0
   const fallbackImage = hasElements ? null : getSlideImage(slide).url
   const palette = themeVisual?.palette || null
-  const slideBgStyle = resolveSlideStageBackground(slide, DEFAULT_SLIDE_BG)
+  const slideBgStyle = resolveSlideStageBackground(slide, themeVisual?.palette?.bg || DEFAULT_SLIDE_BG)
 
   return (
     <div
@@ -487,6 +488,25 @@ export default function AIPptEditor({
     [config.theme, themeTokens]
   )
 
+  const themeCompileOptions = useMemo(
+    () => buildThemeCompileOptions(themeTokens, { palette: themeVisual?.palette }),
+    [themeTokens, themeVisual?.palette]
+  )
+
+  useEffect(() => {
+    ensureThemeFontsLoaded(themeTokens)
+  }, [themeTokens])
+
+  useEffect(() => {
+    if (!themeTokens?.fonts) return
+    const { headerFont, bodyFont } = themeFontFamilies(themeTokens)
+    setSlideStyles((prev) => ({
+      ...prev,
+      headerFont,
+      bodyFont,
+    }))
+  }, [themeTokens])
+
   const isGenerating = String(deckStatus).toUpperCase() === 'GENERATING'
   const atDeckCap = localSlides.length >= PPT_CAPS.DECK_MAX_SLIDES
   const selectedSlide =
@@ -577,6 +597,7 @@ export default function AIPptEditor({
         layoutSchemaMap,
         aspectRatio: resolvedAspect,
         palette: tokens?.palette || null,
+        themeTokens: tokens,
         deckPackId: packId,
       })
       if (didRepair) {
@@ -613,6 +634,7 @@ export default function AIPptEditor({
         layoutSchemaMap,
         aspectRatio,
         palette: themeTokens?.palette || themeVisual?.palette || null,
+        themeTokens,
         deckPackId,
       })
       if (cancelled) return
@@ -1175,7 +1197,7 @@ export default function AIPptEditor({
       } else if (!seedElements.length && schema?.slots?.length) {
         seedElements = compileDeckLayoutToElements(schema, {
           canvas,
-          palette: themeVisual?.palette,
+          ...themeCompileOptions,
           slideTitle: title,
         })
       }
@@ -1259,7 +1281,7 @@ export default function AIPptEditor({
             schema: layoutSchema,
             layoutSchemaMap,
             aspectRatio,
-            palette: themeVisual?.palette,
+            ...themeCompileOptions,
             slideTitle: title,
             mergeFromElements,
           })
@@ -1715,7 +1737,7 @@ export default function AIPptEditor({
           layoutId,
           layoutSchemaMap,
           aspectRatio,
-          palette: themeVisual?.palette,
+          ...themeCompileOptions,
           slideTitle: slide?.title || '',
           mergeFromElements,
         })
@@ -2292,7 +2314,7 @@ export default function AIPptEditor({
                     }
                     aria-hidden
                   />
-                  <div className="aig-minimap-thumb" style={resolveSlideStageBackground(slide, DEFAULT_SLIDE_BG)}>
+                  <div className="aig-minimap-thumb" style={resolveSlideStageBackground(slide, themeVisual?.palette?.bg || DEFAULT_SLIDE_BG)}>
                     <MinimapSlidePreview
                       slide={slide}
                       themeVisual={themeVisual}

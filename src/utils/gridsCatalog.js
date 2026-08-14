@@ -174,6 +174,28 @@ const CATALOG = {
     deviceFrameHint('cols 7-12, rows 1-10', 'phone', 'PHONE_FRAME', 'DEVICE_R'),
     slot('DEVICE_R', 'cols 7-12, rows 2-9', 'image', null, { layer: 2, fit: 'cover' }),
   ], { mode: 'grid_device_mockups' }),
+
+  logo_wall_v1: layoutBase('logo_wall_v1', 'grid', [
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Trusted by leading teams', {
+      typography: typo('heading', { fontSize: 28, align: 'center' }),
+    }),
+    slot('IMAGE_1', 'cols 1-3, rows 3-5', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_2', 'cols 4-6, rows 3-5', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_3', 'cols 7-9, rows 3-5', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_4', 'cols 10-12, rows 3-5', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_5', 'cols 2-4, rows 5-7', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_6', 'cols 5-7, rows 5-7', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_7', 'cols 8-10, rows 5-7', 'image', null, { layer: 2, fit: 'contain' }),
+  ], { mode: 'grid_six_images' }),
+
+  logo_partner_strip_v1: layoutBase('logo_partner_strip_v1', 'grid', [
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Partners', {
+      typography: typo('heading', { fontSize: 24, align: 'center' }),
+    }),
+    slot('IMAGE_1', 'cols 2-4, rows 4-6', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_2', 'cols 5-7, rows 4-6', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_3', 'cols 8-10, rows 4-6', 'image', null, { layer: 2, fit: 'contain' }),
+  ], { mode: 'grid_three_images' }),
 }
 
 export default CATALOG

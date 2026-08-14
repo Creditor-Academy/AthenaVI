@@ -3,9 +3,12 @@
  */
 
 import {
+  slot,
   typo,
+  centeredTypo,
   layoutBase,
   heading,
+  body,
   agendaColumn,
   heroImage,
 } from './deckLayoutV2Helpers.js'
@@ -29,6 +32,51 @@ const CATALOG = {
     ...agendaColumn(2, 5, 8, 7),
     ...agendaColumn(3, 9, 12, 7),
   ], { mode: 'agenda_three_columns_hero' }),
+
+  agenda_numbered_v1: layoutBase('agenda_numbered_v1', 'agenda', [
+    heading('HEADING', 'cols 2-11, rows 1-2', "Today's agenda", {
+      typography: typo('heading', { fontSize: 34, align: 'center' }),
+    }),
+    body('ITEM_1', 'cols 3-10, rows 3-4', '01 · Opening and goals', 1, { typography: typo('body', { fontWeight: 600 }) }),
+    body('ITEM_2', 'cols 3-10, rows 4-5', '02 · Market context', 1, { typography: typo('body', { fontWeight: 600 }) }),
+    body('ITEM_3', 'cols 3-10, rows 5-6', '03 · Product demo', 1, { typography: typo('body', { fontWeight: 600 }) }),
+    body('ITEM_4', 'cols 3-10, rows 6-7', '04 · Q&A', 1, { typography: typo('body', { fontWeight: 600 }) }),
+  ], { mode: 'agenda_numbered' }),
+
+  agenda_minimal_v1: layoutBase('agenda_minimal_v1', 'agenda', [
+    heading('HEADING', 'cols 2-11, rows 2-4', 'Agenda', {
+      typography: typo('heading', { fontSize: 40, align: 'center' }),
+    }),
+    body('BODY', 'cols 3-10, rows 4-8', 'Topic one\nTopic two\nTopic three\nTopic four', 6, {
+      typography: centeredTypo('body', { fontSize: 20 }),
+    }),
+  ], { mode: 'agenda_minimal' }),
+
+  agenda_two_column_v1: layoutBase('agenda_two_column_v1', 'agenda', [
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Session overview', { max_lines: 2 }),
+    ...agendaColumn(1, 1, 6, 3),
+    ...agendaColumn(2, 7, 12, 3),
+  ], { mode: 'agenda_two_columns' }),
+
+  agenda_timeline_preview_v1: layoutBase('agenda_timeline_preview_v1', 'agenda', [
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Roadmap preview', { max_lines: 2 }),
+    slot('milestone_1_label', 'cols 1-3, rows 4-5', 'subheading', 'Phase 1', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 13, align: 'center', fontWeight: 700 }),
+    }),
+    slot('milestone_2_label', 'cols 4-6, rows 4-5', 'subheading', 'Phase 2', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 13, align: 'center', fontWeight: 700 }),
+    }),
+    slot('milestone_3_label', 'cols 7-9, rows 4-5', 'subheading', 'Phase 3', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 13, align: 'center', fontWeight: 700 }),
+    }),
+    slot('milestone_4_label', 'cols 10-12, rows 4-5', 'subheading', 'Phase 4', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 13, align: 'center', fontWeight: 700 }),
+    }),
+  ], { mode: 'process_flow' }),
 }
 
 export default CATALOG

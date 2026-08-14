@@ -1,6 +1,7 @@
 import presentationService from '../services/presentationService'
 import {
   compileDeckLayoutToElements,
+  buildThemeCompileOptions,
   hasOverlappingTextPlacements,
   isTextLayoutRole,
 } from './compileDeckLayoutToElements'
@@ -265,6 +266,9 @@ export async function applyCompiledLayoutToSlide({
   layoutSchemaMap = {},
   aspectRatio = '16:9',
   palette = null,
+  themeTokens = null,
+  fonts = null,
+  typeScale = null,
   slideTitle = '',
   slideContent = null,
   mergeFromElements = [],
@@ -307,9 +311,14 @@ export async function applyCompiledLayoutToSlide({
     buildContentBySlotIdFromSlideContent(slideContent, resolvedSchema),
     extracted
   )
+  const compileOptions = buildThemeCompileOptions(themeTokens, {
+    palette,
+    fonts,
+    typeScale,
+  })
   const elements = compileDeckLayoutToElements(resolvedSchema, {
     canvas,
-    palette,
+    ...compileOptions,
     contentBySlotId,
     content: slideContent,
   })
@@ -333,6 +342,7 @@ export async function repairPresentationLayoutSlides({
   layoutSchemaMap = {},
   aspectRatio = '16:9',
   palette = null,
+  themeTokens = null,
   deckPackId = null,
 }) {
   const repairs = []
@@ -360,6 +370,7 @@ export async function repairPresentationLayoutSlides({
         layoutSchemaMap,
         aspectRatio,
         palette,
+        themeTokens,
         slideTitle: slide.title,
         slideContent: slide.content || slide.placeholder || null,
         mergeFromElements: elements,

@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react'
-import { FiCode, FiImage } from 'react-icons/fi'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { FiCode } from 'react-icons/fi'
 import PptChartRenderer, { getEmbedIframeUrl } from './PptChartRenderer'
 import ExternalLinkHoverLayer from './ExternalLinkHoverLayer'
 import {
@@ -31,6 +31,31 @@ function TextListDisplay({ text, listType }) {
   )
 }
 
+function RichTextDisplay({ runs, palette, baseStyle = {} }) {
+  if (!Array.isArray(runs) || !runs.length) return null
+  return (
+    <>
+      {runs.map((run, i) => {
+        const color = resolveThemeColor(run.color || run.colorRole, palette, baseStyle.color || '#0F172A')
+        const weight = run.fontWeight ?? (run.bold ? 700 : baseStyle.fontWeight || 400)
+        return (
+          <span
+            key={i}
+            style={{
+              color,
+              fontWeight: weight,
+              fontStyle: run.italic ? 'italic' : baseStyle.fontStyle || 'normal',
+              fontFamily: run.fontFamily || baseStyle.fontFamily,
+            }}
+          >
+            {run.text}
+          </span>
+        )
+      })}
+    </>
+  )
+}
+
 function EditableText({
   content,
   palette,
@@ -40,8 +65,28 @@ function EditableText({
   onEndEdit,
   onChange,
   style,
+  autoFit = true,
 }) {
   const ref = useRef(null)
+  const c = content || {}
+  const baseFontSize = c.fontSize ? Math.max(12, Math.min(Number(c.fontSize), 120)) : 22
+  const [fitFontSize, setFitFontSize] = useState(baseFontSize)
+
+  useLayoutEffect(() => {
+    if (editing || !autoFit || !ref.current) {
+      setFitFontSize(baseFontSize)
+      return
+    }
+    const node = ref.current
+    let size = baseFontSize
+    node.style.fontSize = `${size}px`
+    const minSize = 12
+    while (size > minSize && node.scrollHeight > node.clientHeight + 2) {
+      size -= 1
+      node.style.fontSize = `${size}px`
+    }
+    setFitFontSize(size)
+  }, [c.text, baseFontSize, editing, autoFit, style?.height, style?.width])
 
   useEffect(() => {
     if (editing && ref.current) {
@@ -55,7 +100,6 @@ function EditableText({
     }
   }, [editing])
 
-  const c = content || {}
   const color = resolveThemeColor(c.color || c.colorRole, palette, '#0F172A')
   const weight = c.fontWeight || (c.bold ? 700 : 400)
   const decoration = [c.underline && 'underline', c.strikethrough && 'line-through']
@@ -65,7 +109,7 @@ function EditableText({
   const textStyle = {
     ...style,
     color,
-    fontSize: c.fontSize ? `${Math.max(12, Math.min(c.fontSize, 120))}px` : '22px',
+    fontSize: `${fitFontSize}px`,
     fontWeight: weight,
     fontStyle: c.italic ? 'italic' : 'normal',
     textDecoration: decoration || undefined,
@@ -134,6 +178,8 @@ function EditableText({
     >
       {c.listType && c.text ? (
         <TextListDisplay text={c.text} listType={c.listType} />
+      ) : Array.isArray(c.runs) && c.runs.length ? (
+        <RichTextDisplay runs={c.runs} palette={palette} baseStyle={textStyle} />
       ) : (
         displayText
       )}
@@ -221,20 +267,24 @@ export default function PptCanvasElement({
     const url = c.url || c.src || c.thumbnailUrl || c.previewUrl
     if (!url) {
       const radius = c.borderRadius != null ? c.borderRadius : 14
+      const skeletonBg =
+        c.placeholderFill ||
+        (palette
+          ? `linear-gradient(145deg, color-mix(in srgb, ${palette.primary || palette.accent || '#6366f1'} 8%, ${palette.surface || palette.bg || '#f8fafc'}) 0%, color-mix(in srgb, ${palette.muted || '#94a3b8'} 12%, #e2e8f0) 100%)`
+          : 'linear-gradient(145deg, color-mix(in srgb, #6366f1 6%, #f1f5f9) 0%, #e2e8f0 100%)')
+      const borderColor = palette
+        ? `color-mix(in srgb, ${palette.divider || palette.muted || '#94a3b8'} 28%, transparent)`
+        : 'color-mix(in srgb, #94a3b8 22%, transparent)'
       return (
         <div
+          className="ppt-image-skeleton"
           style={{
             ...fillStyle,
-            background: c.placeholderFill || 'linear-gradient(145deg, color-mix(in srgb, #6366f1 8%, #eef2f7) 0%, #e2e8f0 100%)',
+            background: skeletonBg,
             borderRadius: radius,
-            border: '1px solid color-mix(in srgb, #6366f1 16%, #94a3b8)',
-            boxShadow: c.boxShadow || c.shadow || '0 8px 24px rgba(15, 23, 42, 0.08)',
+            border: `1px solid ${borderColor}`,
           }}
-        >
-          <div className="aig-canvas-image-fallback ppt-image-placeholder">
-            <FiImage size={22} strokeWidth={1.5} />
-          </div>
-        </div>
+        />
       )
     }
     return (

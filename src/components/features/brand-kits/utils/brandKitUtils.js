@@ -228,6 +228,7 @@ export function parseCssSize(value, fallback) {
 }
 
 export function ensureGoogleFontLoaded(fontFamily) {
+  if (typeof document === 'undefined') return
   if (!fontFamily) return
   const cleanName = String(fontFamily).trim().replace(/['"]/g, '')
   if (!cleanName || ['sans-serif', 'serif', 'monospace', 'system-ui'].includes(cleanName.toLowerCase())) return

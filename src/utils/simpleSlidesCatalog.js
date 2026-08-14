@@ -393,6 +393,111 @@ const CATALOG = {
       typography: { ...typo('body'), colorRole: 'textOnImageMuted' },
     }),
   ]),
+
+  title_minimal_v1: layoutBase('title_minimal_v1', 'title', [
+    slot('MAIN_TITLE', 'cols 2-11, rows 4-6', 'heading', 'Minimal title slide', {
+      layer: 10,
+      typography: centeredTypo('heading', { fontSize: 52 }),
+      max_lines: 2,
+    }),
+    slot('SUBTITLE', 'cols 3-10, rows 6-7', 'subheading', 'Optional tagline', {
+      layer: 10,
+      typography: centeredTypo('subheading'),
+    }),
+  ]),
+
+  title_statement_v1: layoutBase('title_statement_v1', 'title', [
+    slot('HEADLINE', 'cols 2-10, rows 3-6', 'heading', 'Bold opening statement', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 48 }),
+      max_lines: 3,
+    }),
+    body('BODY', 'cols 2-8, rows 6-8', P.short, 3),
+  ]),
+
+  section_divider_band_v1: layoutBase('section_divider_band_v1', 'section_divider', [
+    slot('BAND', 'cols 1-12, rows 4-6', 'decoration', null, {
+      layer: 1,
+      shape: { fillColorRole: 'primary' },
+    }),
+    heading('HEADING', 'cols 2-11, rows 4-6', 'Section break', {
+      typography: centeredTypo('heading', { colorRole: 'textOnImage' }),
+    }),
+  ]),
+
+  section_divider_split_v1: layoutBase('section_divider_split_v1', 'section_divider', [
+    heading('HEADING', 'cols 1-6, rows 3-6', 'Next section', {
+      typography: typo('heading', { fontSize: 36 }),
+    }),
+    body('BODY', 'cols 7-11, rows 3-7', P.short, 4),
+  ]),
+
+  bullet_list_dense_v1: layoutBase('bullet_list_dense_v1', 'bullet_list', [
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Key takeaways', { max_lines: 2 }),
+    body('BULLETS', 'cols 2-10, rows 2-9', '• Point one\n• Point two\n• Point three\n• Point four\n• Point five\n• Point six', 8),
+  ]),
+
+  bullet_list_numbered_v1: layoutBase('bullet_list_numbered_v1', 'bullet_list', [
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Numbered list', { max_lines: 2 }),
+    body('ITEM_1', 'cols 2-10, rows 2-3', '1. First priority', 1),
+    body('ITEM_2', 'cols 2-10, rows 3-4', '2. Second priority', 1),
+    body('ITEM_3', 'cols 2-10, rows 4-5', '3. Third priority', 1),
+    body('ITEM_4', 'cols 2-10, rows 5-6', '4. Fourth priority', 1),
+    body('ITEM_5', 'cols 2-10, rows 6-7', '5. Fifth priority', 1),
+  ]),
+
+  bullet_list_two_column_v1: layoutBase('bullet_list_two_column_v1', 'bullet_list', [
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Two-column points', { max_lines: 2 }),
+    body('LEFT_BODY', 'cols 1-6, rows 2-9', '• Left column point\n• Another left point\n• Third left point', 6),
+    body('RIGHT_BODY', 'cols 7-12, rows 2-9', '• Right column point\n• Another right point\n• Third right point', 6),
+  ]),
+
+  text_only_centered_v1: layoutBase('text_only_centered_v1', 'bullet_list', [
+    heading('HEADING', 'cols 2-11, rows 2-4', 'Centered message', {
+      typography: centeredTypo('heading'),
+    }),
+    body('BODY', 'cols 3-10, rows 4-7', P.short, 4, {
+      typography: centeredTypo('body'),
+    }),
+  ]),
+
+  text_two_column_v1: layoutBase('text_two_column_v1', 'bullet_list', [
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Two perspectives', { max_lines: 2 }),
+    slot('LEFT_TITLE', 'cols 1-6, rows 2-3', 'heading', 'Column A', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 22 }),
+    }),
+    body('LEFT_BODY', 'cols 1-6, rows 3-9', P.short, 5),
+    slot('RIGHT_TITLE', 'cols 7-12, rows 2-3', 'heading', 'Column B', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 22 }),
+    }),
+    body('RIGHT_BODY', 'cols 7-12, rows 3-9', P.short, 5),
+  ]),
+
+  closing_thank_you_v1: layoutBase('closing_thank_you_v1', 'closing', [
+    slot('HEADING', 'cols 2-11, rows 4-6', 'heading', 'Thank you', {
+      layer: 10,
+      typography: centeredTypo('heading', { fontSize: 56 }),
+    }),
+    slot('SUBTITLE', 'cols 3-10, rows 6-7', 'subheading', 'Questions?', {
+      layer: 10,
+      typography: centeredTypo('subheading'),
+    }),
+  ], { mode: 'closing_cta' }),
+
+  closing_contact_cta_v1: layoutBase('closing_contact_cta_v1', 'closing', [
+    slot('HEADING', 'cols 2-11, rows 2-4', 'heading', "Let's connect", {
+      layer: 10,
+      typography: centeredTypo('heading'),
+    }),
+    slot('CONTACT', 'cols 3-10, rows 4-6', 'contact', 'hello@company.com', {
+      layer: 10,
+      typography: centeredTypo('body', { fontSize: 20 }),
+    }),
+    ctaPill('cols 4-9, rows 6-7'),
+    slot('CTA', 'cols 4-9, rows 6-7', 'cta', 'Get in touch', { layer: 10, typography: typo('cta') }),
+  ], { mode: 'closing_cta' }),
 }
 
 export default CATALOG

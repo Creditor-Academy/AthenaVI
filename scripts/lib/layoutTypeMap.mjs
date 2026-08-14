@@ -7,7 +7,7 @@ export const LAYOUT_TYPE_MAP = {
   ListRight: { layoutId: 'four_para_image_v1', contentType: 'bullet_list' },
   Outcomes: { layoutId: 'four_para_image_v1', contentType: 'bullet_list' },
   Tracker: { layoutId: 'metric_three_v1', contentType: 'stat' },
-  Timeline: { layoutId: 'process_linear_v1', contentType: 'chart' },
+  Timeline: { layoutId: 'timeline_horizontal_v1', contentType: 'timeline' },
   Nutrition: { layoutId: 'section_with_image_v1', contentType: 'image+text' },
   Promo: { layoutId: 'centered_text_cta_v1', contentType: 'closing' },
   CTA: { layoutId: 'centered_text_cta_v1', contentType: 'closing' },
