@@ -1313,11 +1313,15 @@ export default function AIImageStudio({ onBack, createContext = null }) {
     return (
       <div className="aig-shell aig-shell--loading">
         <div className="aig-loading">
-          <Loader2 className="aig-loading-spin" size={22} strokeWidth={2} aria-hidden />
+          <span className="aig-loading-orb" aria-hidden>
+            <span className="aig-loading-ring" />
+            <Sparkles size={15} strokeWidth={2} />
+          </span>
           <div className="aig-loading-copy">
             <h2>Image Studio</h2>
-            <p>Loading catalog…</p>
+            <p>Preparing your workspace</p>
           </div>
+          <span className="aig-loading-pulse" aria-hidden />
         </div>
       </div>
     )
@@ -1327,7 +1331,9 @@ export default function AIImageStudio({ onBack, createContext = null }) {
     return (
       <div className="aig-shell aig-shell--loading">
         <div className="aig-loading aig-loading--error">
-          <AlertCircle size={22} strokeWidth={2} aria-hidden />
+          <span className="aig-loading-orb" aria-hidden>
+            <AlertCircle size={16} strokeWidth={2} />
+          </span>
           <div className="aig-loading-copy">
             <h2>Couldn’t open Image Studio</h2>
             <p>{catalogError}</p>
