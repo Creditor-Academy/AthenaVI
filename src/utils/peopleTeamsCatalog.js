@@ -5,7 +5,10 @@
 import {
   slot,
   typo,
+  centeredTypo,
   layoutBase,
+  SAMPLE_PARA,
+  body,
   heading,
   memberFields,
   contactInfoFields,
@@ -264,6 +267,65 @@ const CATALOG = {
       email: 'cols 11-12, rows 8-9',
     }),
   ], { mode: 'team_by_department' }),
+
+  team_featured_lead_v1: layoutBase('team_featured_lead_v1', 'team', [
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Leadership', { max_lines: 2 }),
+    slot('MEMBER_1_IMAGE', 'cols 2-5, rows 2-8', 'image', null, { layer: 2, fit: 'cover' }),
+    slot('MEMBER_1_NAME', 'cols 6-11, rows 3-4', 'heading', 'Founder name', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 32 }),
+    }),
+    slot('MEMBER_1_ROLE', 'cols 6-11, rows 4-5', 'subheading', 'CEO & Co-founder', {
+      layer: 10,
+      typography: typo('subheading'),
+    }),
+    body('MEMBER_1_BIO', 'cols 6-11, rows 5-8', 'Short bio highlighting experience and vision.', 4),
+  ], { mode: 'team_featured_lead' }),
+
+  team_speaker_bio_v1: layoutBase('team_speaker_bio_v1', 'team', [
+    slot('MEMBER_1_IMAGE', 'cols 1-5, rows 2-9', 'image', null, { layer: 2, fit: 'cover' }),
+    slot('MEMBER_1_NAME', 'cols 6-11, rows 2-3', 'heading', 'Speaker name', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 28 }),
+    }),
+    slot('MEMBER_1_ROLE', 'cols 6-11, rows 3-4', 'subheading', 'Title · Organization', {
+      layer: 10,
+      typography: typo('subheading'),
+    }),
+    body('MEMBER_1_BIO', 'cols 6-11, rows 4-9', 'Speaker bio with credentials and talk focus.', 6),
+  ], { mode: 'team_speaker_bio' }),
+
+  team_org_simple_v1: layoutBase('team_org_simple_v1', 'team', [
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Organization', { max_lines: 2 }),
+    slot('MEMBER_1_NAME', 'cols 5-8, rows 2-3', 'heading', 'CEO', {
+      layer: 10,
+      typography: centeredTypo('heading', { fontSize: 22 }),
+    }),
+    slot('MEMBER_2_NAME', 'cols 2-4, rows 4-5', 'heading', 'Engineering', {
+      layer: 10,
+      typography: centeredTypo('heading', { fontSize: 18 }),
+    }),
+    slot('MEMBER_3_NAME', 'cols 5-7, rows 4-5', 'heading', 'Product', {
+      layer: 10,
+      typography: centeredTypo('heading', { fontSize: 18 }),
+    }),
+    slot('MEMBER_4_NAME', 'cols 8-10, rows 4-5', 'heading', 'Design', {
+      layer: 10,
+      typography: centeredTypo('heading', { fontSize: 18 }),
+    }),
+    slot('MEMBER_5_NAME', 'cols 2-4, rows 6-7', 'heading', 'Sales', {
+      layer: 10,
+      typography: centeredTypo('heading', { fontSize: 16 }),
+    }),
+    slot('MEMBER_6_NAME', 'cols 5-7, rows 6-7', 'heading', 'Marketing', {
+      layer: 10,
+      typography: centeredTypo('heading', { fontSize: 16 }),
+    }),
+    slot('MEMBER_7_NAME', 'cols 8-10, rows 6-7', 'heading', 'Ops', {
+      layer: 10,
+      typography: centeredTypo('heading', { fontSize: 16 }),
+    }),
+  ], { mode: 'team_org_simple' }),
 }
 
 export default CATALOG

@@ -38,6 +38,7 @@ const LAYOUT_CATEGORIES = [
   { id: 'people_and_team', label: 'People and team' },
   { id: 'quotes_and_testimonials', label: 'Quotes and testimonial' },
   { id: 'device_frames', label: 'Device frames' },
+  { id: 'diagrams', label: 'Diagrams' },
   { id: 'closing', label: 'Closing' },
 ]
 
@@ -82,6 +83,7 @@ function layoutCategoryId(layout) {
   if (ct === 'team') return 'people_and_team'
   if (ct === 'quote') return 'quotes_and_testimonials'
   if (ct === 'device_frames' || layoutId.startsWith('device_')) return 'device_frames'
+  if (ct === 'diagram' || layoutId.startsWith('diagram_')) return 'diagrams'
   if (ct === 'closing') return 'closing'
   if (ct === 'comparison' || ct === 'pros_cons') return 'simple_slides'
   if (['title', 'bullet_list', 'section_divider', 'image+text', 'image_text'].includes(ct)) {

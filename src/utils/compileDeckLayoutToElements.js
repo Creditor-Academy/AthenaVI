@@ -6,6 +6,37 @@ import {
   findDeviceFrameSlot,
 } from './deviceFrameCanvas'
 import { buildContentBySlotIdFromSlideContent, mergeContentBySlotId } from './contentSlotMapping'
+import { fontSizeForTextSlot, resolveTypeScaleFontSize } from './canvasTypography'
+
+/**
+ * Merge theme tokens into compile options so editor preview matches AI output.
+ */
+export function buildThemeCompileOptions(themeTokens = null, overrides = {}) {
+  const palette =
+    overrides.palette ||
+    themeTokens?.palette ||
+    null
+  const fonts = overrides.fonts || themeTokens?.fonts || null
+  const typeScale = overrides.typeScale || themeTokens?.typeScale || null
+  return {
+    ...overrides,
+    palette,
+    fonts,
+    typeScale,
+    fontFamily:
+      overrides.fontFamily ||
+      fonts?.body ||
+      fonts?.heading ||
+      null,
+  }
+}
+
+function themedImagePlaceholder(palette) {
+  if (!palette || typeof palette !== 'object') return LAYOUT_SURFACE.image
+  const primary = palette.primary || palette.accent || '#6366f1'
+  const surface = palette.surface || palette.bg || '#f8fafc'
+  return `linear-gradient(145deg, color-mix(in srgb, ${primary} 10%, ${surface}) 0%, color-mix(in srgb, ${primary} 4%, #e2e8f0) 100%)`
+}
 
 /** Neutral layout surfaces — structure only, matches LayoutPolishedPreview (not brand theme). */
 const LAYOUT_SURFACE = {
@@ -39,6 +70,31 @@ const COLOR_ROLE_MAP = {
   textOnImage: LAYOUT_SURFACE.textOnImage,
   textOnImageMuted: LAYOUT_SURFACE.textOnImageMuted,
   overlayScrim: LAYOUT_SURFACE.overlayScrim,
+}
+
+function colorRoleMapFromPalette(palette = {}) {
+  if (!palette || typeof palette !== 'object' || Object.keys(palette).length === 0) {
+    return COLOR_ROLE_MAP
+  }
+  return {
+    text: palette.text || COLOR_ROLE_MAP.text,
+    muted: palette.muted || palette.textMuted || COLOR_ROLE_MAP.muted,
+    primary: palette.primary || COLOR_ROLE_MAP.primary,
+    accent: palette.accent || COLOR_ROLE_MAP.accent,
+    surface: palette.surface || palette.bg || COLOR_ROLE_MAP.surface,
+    cardBg: palette.cardBg || palette.surface || COLOR_ROLE_MAP.cardBg,
+    textOnImage: palette.textOnImage || COLOR_ROLE_MAP.textOnImage,
+    textOnImageMuted: palette.textOnImageMuted || COLOR_ROLE_MAP.textOnImageMuted,
+    overlayScrim: palette.overlayScrim || COLOR_ROLE_MAP.overlayScrim,
+  }
+}
+
+function resolveFontFamily(options = {}, role = 'body') {
+  const fonts = options.fonts || {}
+  if (role === 'heading' || role === 'title' || role === 'stat') {
+    return fonts.heading || fonts.display || options.fontFamily || null
+  }
+  return fonts.body || options.fontFamily || null
 }
 
 function resolveShapeFill(shapeSpec) {
@@ -164,32 +220,14 @@ function layerForSlot(slot) {
   return 24 + (reg?.r1 || 0)
 }
 
-function fontSizeForTextSlot(slot, placement) {
+function fontSizeForTextSlotFromOptions(slot, placement, options = {}) {
   const role = slot?.role || 'body'
-  const maxLines =
-    slot?.max_lines ||
-    (role === 'heading' || role === 'quote' ? 2 : role === 'caption' || role === 'stat_label' ? 2 : 4)
-  const lineHeight = role === 'stat' ? 1.1 : 1.32
-  const maxByHeight = placement.height / (maxLines * lineHeight) - 2
-  const roleCap = (() => {
-    const h = Math.max(placement.height, 24)
-    switch (role) {
-      case 'heading':
-      case 'quote':
-        return Math.min(44, Math.max(24, h * 0.34))
-      case 'subheading':
-        return Math.min(32, Math.max(18, h * 0.3))
-      case 'stat':
-        return Math.min(72, Math.max(24, h * 0.5))
-      case 'caption':
-      case 'stat_label':
-      case 'eyebrow':
-        return Math.min(20, Math.max(12, h * 0.28))
-      default:
-        return Math.min(24, Math.max(14, h * 0.32))
-    }
-  })()
-  return Math.max(12, Math.min(roleCap, maxByHeight))
+  const ty = slot?.typography || {}
+  if (ty.fontSize != null) return Number(ty.fontSize)
+  const fromScale = resolveTypeScaleFontSize(role, options.typeScale)
+  if (fromScale != null) return fromScale
+  const canvasW = options.canvas?.width || 1920
+  return fontSizeForTextSlot(slot, placement, canvasW)
 }
 
 function textAlignForRole(role) {
@@ -316,8 +354,9 @@ function buildTextElement(slot, placement, options) {
   const text = resolveSlotText(slot, contentBySlotId, schema)
   const ty = slot.typography || {}
   const overlay = isOverlayLayout(schema)
-  const fontSize = ty.fontSize || fontSizeForTextSlot(slot, placement)
+  const fontSize = fontSizeForTextSlotFromOptions(slot, placement, options)
   const verticalAlign = role === 'stat' || role === 'stat_label' ? 'center' : 'flex-start'
+  const colorMap = colorRoleMapFromPalette(options.palette)
   let colorRole = ty.colorRole || null
   if (!colorRole) {
     if (overlay && (role === 'caption' || role === 'eyebrow' || role === 'subheading' || role === 'body')) {
@@ -330,7 +369,11 @@ function buildTextElement(slot, placement, options) {
       colorRole = 'text'
     }
   }
-  const color = COLOR_ROLE_MAP[colorRole] || LAYOUT_SURFACE.text
+  if (overlay && (colorRole === 'text' || colorRole === 'muted')) {
+    colorRole =
+      role === 'body' || role === 'caption' || role === 'subheading' ? 'textOnImageMuted' : 'textOnImage'
+  }
+  const color = colorMap[colorRole] || colorMap.text
   const align = ty.align || textAlignForRole(role)
   const pad = textPaddingForRole(role)
 
@@ -351,7 +394,7 @@ function buildTextElement(slot, placement, options) {
       verticalAlign,
       color,
       colorRole,
-      fontFamily: 'Inter',
+      fontFamily: resolveFontFamily(options, role),
       lineHeight: ty.lineHeight || (role === 'stat' ? 1.08 : role === 'heading' ? 1.18 : 1.42),
       letterSpacing: ty.letterSpacing != null ? `${ty.letterSpacing}em` : role === 'heading' ? '-0.02em' : role === 'caption' ? '0.01em' : undefined,
       wrap: 'pre-wrap',
@@ -439,12 +482,13 @@ function buildDecorationElement(slot, placement) {
   }
 }
 
-function buildImageElement(slot, placement, contentBySlotId) {
+function buildImageElement(slot, placement, contentBySlotId, options = {}) {
   const slotId = slot.id
   const url = contentBySlotId?.[`${slotId}__url`] || contentBySlotId?.[`${slotId}_url`]
   const presentation = resolveImagePresentation(slot)
   const borderRadius = slot.borderRadius != null ? slot.borderRadius : presentation.borderRadius
   const shadow = slot.shadow ?? presentation.shadow
+  const colorMap = colorRoleMapFromPalette(options.palette)
   return {
     id: `slot-${slot.id}`,
     slotId: slot.id,
@@ -456,7 +500,8 @@ function buildImageElement(slot, placement, contentBySlotId) {
       ...(url ? { url, src: url } : {}),
       fit: slot.fit || 'cover',
       alt: '',
-      placeholderFill: LAYOUT_SURFACE.image,
+      placeholderFill: themedImagePlaceholder(options.palette),
+      skeletonColor: colorMap.surface || colorMap.cardBg,
       borderRadius,
       ...(shadow ? { boxShadow: shadow, shadow } : {}),
     },
@@ -599,7 +644,7 @@ export function compileDeckLayoutToElements(schema, options = {}) {
     if (role === 'image') {
       const frameSlot = findDeviceFrameSlot(slots, slot.id)
       if (frameSlot) {
-        const imageEl = buildImageElement(slot, placement, contentBySlotId)
+        const imageEl = buildImageElement(slot, placement, contentBySlotId, compileOptions)
         const frameReg = parseRegion(frameSlot.region)
         const framePlacement = boxToPlacement(
           regionToBox(frameReg, COLS, ROWS, 0.2),
@@ -614,7 +659,7 @@ export function compileDeckLayoutToElements(schema, options = {}) {
           layerBase: layerForSlot(frameSlot),
         })
       }
-      return [buildImageElement(slot, placement, contentBySlotId)]
+      return [buildImageElement(slot, placement, contentBySlotId, compileOptions)]
     }
     if (role === 'chart') {
       return [buildChartElement(slot, placement, compileOptions)]
@@ -629,10 +674,36 @@ export function compileDeckLayoutToElements(schema, options = {}) {
   })
 
   const palette = options.palette || LAYOUT_SURFACE
-  return applyTextOverImageContrast(
+  const colorMap = colorRoleMapFromPalette(options.palette)
+  const themedPalette = colorMap.textOnImage
+    ? { ...palette, ...colorMap }
+    : palette
+  let result = applyTextOverImageContrast(
     elements.sort((a, b) => (a.layer || 0) - (b.layer || 0)),
-    palette
+    themedPalette
   )
+  if (
+    isOverlayLayout(schema) &&
+    !result.some((e) => e.slotId === 'OVERLAY_SCRIM' || e.role === 'design_overlay')
+  ) {
+    result = [
+      {
+        id: `shp-overlay-${Math.random().toString(36).slice(2, 9)}`,
+        type: 'shape',
+        slotId: 'OVERLAY_SCRIM',
+        layer: 1,
+        placement: { x: 0, y: 0, width: canvasW, height: canvasH, rotation: 0, opacity: 1 },
+        content: {
+          shape: 'rect',
+          fill: themedPalette.overlayScrim || 'rgba(0,0,0,0.5)',
+          opacity: 0.5,
+        },
+        role: 'design_overlay',
+      },
+      ...result,
+    ]
+  }
+  return result
 }
 
 export function isTextLayoutRole(role) {

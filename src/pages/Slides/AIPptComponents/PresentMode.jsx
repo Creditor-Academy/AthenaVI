@@ -34,25 +34,42 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
   if (el.type === 'text') {
     const c = el.content || {}
     const color = resolveThemeColor(c.color || c.colorRole, palette, palette?.text || '#0F172A')
+    const baseStyle = {
+      fontSize: c.fontSize ? `${Math.max(10, c.fontSize * 0.55)}px` : '18px',
+      fontWeight: c.bold ? 700 : 400,
+      fontStyle: c.italic ? 'italic' : 'normal',
+      fontFamily: c.fontFamily || undefined,
+    }
     return (
       <div
         style={{
           ...style,
           color,
-          fontSize: c.fontSize ? `${Math.max(10, c.fontSize * 0.55)}px` : '18px',
-          fontWeight: c.bold ? 700 : 400,
-          fontStyle: c.italic ? 'italic' : 'normal',
+          ...baseStyle,
           textDecoration: [c.underline && 'underline', c.strikethrough && 'line-through']
             .filter(Boolean)
             .join(' ') || undefined,
-          fontFamily: c.fontFamily || undefined,
           textAlign: c.align || 'left',
           textTransform: c.textTransform || undefined,
           whiteSpace: 'pre-wrap',
           lineHeight: c.lineHeight ?? 1.25,
         }}
       >
-        {c.text || ''}
+        {Array.isArray(c.runs) && c.runs.length
+          ? c.runs.map((run, i) => (
+              <span
+                key={i}
+                style={{
+                  color: resolveThemeColor(run.color || run.colorRole, palette, color),
+                  fontWeight: run.fontWeight ?? (run.bold ? 700 : baseStyle.fontWeight),
+                  fontStyle: run.italic ? 'italic' : baseStyle.fontStyle,
+                  fontFamily: run.fontFamily || baseStyle.fontFamily,
+                }}
+              >
+                {run.text}
+              </span>
+            ))
+          : c.text || ''}
       </div>
     )
   }

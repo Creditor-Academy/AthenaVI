@@ -234,7 +234,19 @@ export default function AIPptVibeStep({
       if (e.key === 'Escape') setDrawer(null)
     }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+
+    // Prevent the wizard page behind the drawer from stealing wheel scroll
+    const container = document.querySelector('.aig-container')
+    const prevContainerOverflow = container?.style.overflow
+    const prevBodyOverflow = document.body.style.overflow
+    if (container) container.style.overflow = 'hidden'
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      if (container) container.style.overflow = prevContainerOverflow || ''
+      document.body.style.overflow = prevBodyOverflow
+    }
   }, [drawer])
 
   const openDrawer = (type) => {
@@ -457,7 +469,13 @@ export default function AIPptVibeStep({
                 </label>
               </div>
 
-              <div className="aig-template-drawer-body">
+              <div
+                className={`aig-template-drawer-body${
+                  drawer === 'brand' || drawer === 'palette'
+                    ? ' aig-template-drawer-body--kits'
+                    : ''
+                }`}
+              >
                 {drawer === 'brand' && (
                   <>
                     {!filteredBrandKits.length && (

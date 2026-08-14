@@ -1,15 +1,9 @@
 /**
  * Registry of deck layout schemas for pack slide previews.
- * Merged: Simple slides (33) + Grids (10) + Charts & data (21) + Pricing (5) + Agenda (1) + People & team (9) + Device frames (8) = 87 layouts.
+ * Merged via deckLayoutCatalogs.js (129 layouts) — keep in sync with export-seed-layouts.mjs.
  */
 
-import SIMPLE_CATALOG from './simpleSlidesCatalog.js'
-import GRIDS_CATALOG from './gridsCatalog.js'
-import CHARTS_DATA_CATALOG from './chartsDataCatalog.js'
-import PRICING_CATALOG from './pricingCatalog.js'
-import AGENDA_CATALOG from './agendaCatalog.js'
-import PEOPLE_TEAMS_CATALOG from './peopleTeamsCatalog.js'
-import DEVICE_FRAMES_CATALOG from './deviceFramesCatalog.js'
+import ALL_LAYOUT_CATALOGS from './deckLayoutCatalogs.js'
 
 function layoutSchemaHasPreviewCanvas(schema) {
   const doc = schema?.preview?.canvasElements || schema?.elements
@@ -18,13 +12,7 @@ function layoutSchemaHasPreviewCanvas(schema) {
 
 /** Full DECK_LAYOUT v2 catalog */
 const REGISTRY = {
-  ...SIMPLE_CATALOG,
-  ...GRIDS_CATALOG,
-  ...CHARTS_DATA_CATALOG,
-  ...PRICING_CATALOG,
-  ...AGENDA_CATALOG,
-  ...PEOPLE_TEAMS_CATALOG,
-  ...DEVICE_FRAMES_CATALOG,
+  ...ALL_LAYOUT_CATALOGS,
 }
 
 const PLACEHOLDER_SLOT_MAP = {
@@ -209,6 +197,47 @@ const LAYOUT_PREVIEW_MODES = {
   table_two_desc_v1: 'table_dual',
   table_two_same_header_v1: 'table_dual_shared_header',
   process_linear_v1: 'process_flow',
+  timeline_horizontal_v1: 'process_flow',
+  timeline_milestones_v1: 'process_flow',
+  timeline_vertical_v1: 'process_flow',
+  timeline_roadmap_v1: 'process_flow',
+  timeline_process_steps_v1: 'process_flow',
+  comparison_side_by_side_v1: 'comparison_columns',
+  comparison_pros_cons_v1: 'comparison_columns',
+  comparison_table_v1: 'comparison_columns',
+  comparison_before_after_v1: 'comparison_columns',
+  bullet_list_cards_v1: 'two_image_columns',
+  section_divider_numbered_v1: 'section_divider',
+  section_divider_band_v1: 'section_divider',
+  section_divider_split_v1: 'section_divider',
+  bullet_list_dense_v1: 'bullet_list',
+  bullet_list_numbered_v1: 'bullet_list',
+  bullet_list_two_column_v1: 'comparison_columns',
+  text_only_centered_v1: 'bullet_list',
+  text_two_column_v1: 'comparison_columns',
+  title_minimal_v1: 'title_centered',
+  title_statement_v1: 'title_centered',
+  closing_thank_you_v1: 'closing_cta',
+  closing_contact_cta_v1: 'closing_cta',
+  agenda_numbered_v1: 'agenda_numbered',
+  agenda_minimal_v1: 'agenda_minimal',
+  agenda_two_column_v1: 'agenda_two_columns',
+  agenda_timeline_preview_v1: 'process_flow',
+  quote_portrait_v1: 'quote_attribution',
+  quote_testimonial_card_v1: 'quote_attribution',
+  quote_grid_v1: 'quote_attribution',
+  team_featured_lead_v1: 'team_featured_lead',
+  team_speaker_bio_v1: 'team_speaker_bio',
+  team_org_simple_v1: 'team_org_simple',
+  logo_wall_v1: 'grid_six_images',
+  logo_partner_strip_v1: 'grid_three_images',
+  diagram_swot_v1: 'diagram_quadrants',
+  diagram_funnel_v1: 'diagram_funnel',
+  diagram_matrix_v1: 'diagram_quadrants',
+  diagram_process_steps_v1: 'diagram_process_steps',
+  diagram_cycle_v1: 'diagram_quadrants',
+  diagram_venn_v1: 'diagram_venn',
+  diagram_pyramid_v1: 'diagram_funnel',
   metric_single_v1: 'stat_hero',
   metric_two_v1: 'stat_row',
   metric_three_v1: 'stat_row',
@@ -458,6 +487,65 @@ function fillPreviewDataFromSlots(schema) {
         slotPlaceholderText(slots, `STEP_${n}_BODY`) ||
         'Short step description',
     }))
+  }
+  if (mode === 'diagram_process_steps' && !Array.isArray(preview.steps)) {
+    preview.steps = [1, 2, 3, 4].map((n) => ({
+      title:
+        preview.slots?.[`step_${n}_title`]?.text ||
+        slotPlaceholderText(slots, `step_${n}_title`) ||
+        `${n}. Step`,
+      body:
+        preview.slots?.[`step_${n}_body`]?.text ||
+        slotPlaceholderText(slots, `step_${n}_body`) ||
+        'Brief description',
+    }))
+  }
+  if (mode === 'diagram_quadrants' && !Array.isArray(preview.quadrants)) {
+    preview.quadrants = [1, 2, 3, 4].map((n) => ({
+      title:
+        preview.slots?.[`Q${n}_TITLE`]?.text ||
+        slotPlaceholderText(slots, `Q${n}_TITLE`) ||
+        `Quadrant ${n}`,
+      body:
+        preview.slots?.[`Q${n}_BODY`]?.text ||
+        slotPlaceholderText(slots, `Q${n}_BODY`) ||
+        '',
+    }))
+    if (schema.layout_id === 'diagram_cycle_v1' || schema.preview?.diagramVariant === 'cycle') {
+      preview.diagramVariant = 'cycle'
+    }
+  }
+  if (mode === 'diagram_funnel' && !Array.isArray(preview.funnelTiers)) {
+    preview.funnelTiers = [1, 2, 3, 4].map((n) => ({
+      title:
+        preview.slots?.[`funnel_${n}_title`]?.text ||
+        slotPlaceholderText(slots, `funnel_${n}_title`) ||
+        `Stage ${n}`,
+      body:
+        preview.slots?.[`funnel_${n}_body`]?.text ||
+        slotPlaceholderText(slots, `funnel_${n}_body`) ||
+        '',
+    }))
+    if (schema.layout_id === 'diagram_pyramid_v1' || schema.preview?.diagramVariant === 'pyramid') {
+      preview.diagramVariant = 'pyramid'
+    }
+  }
+  if (mode === 'diagram_venn' && !Array.isArray(preview.vennSets)) {
+    preview.vennSets = [1, 2, 3].map((n) => ({
+      title:
+        preview.slots?.[`Q${n}_TITLE`]?.text ||
+        slotPlaceholderText(slots, `Q${n}_TITLE`) ||
+        `Set ${String.fromCharCode(64 + n)}`,
+      body:
+        preview.slots?.[`Q${n}_BODY`]?.text ||
+        slotPlaceholderText(slots, `Q${n}_BODY`) ||
+        '',
+    }))
+    preview.vennCenter =
+      preview.vennCenter ||
+      preview.slots?.CENTER_BODY?.text ||
+      slotPlaceholderText(slots, 'CENTER_BODY') ||
+      'Shared overlap'
   }
   if (mode === 'stat_cards_image') {
     if (!Array.isArray(preview.stats)) preview.stats = buildStatsFromLayoutSlots(slots)

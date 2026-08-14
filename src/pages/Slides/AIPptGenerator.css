@@ -4257,10 +4257,6 @@ body {
   background: rgba(37, 99, 235, 0.14);
 }
 
-.aig-template-drawer-body--kits {
-  grid-template-columns: 1fr;
-}
-
 .aig-color-stripe-card {
   position: relative;
   display: flex;
@@ -4596,8 +4592,13 @@ body {
   bottom: 0;
   z-index: 10050;
   width: min(480px, 100vw);
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background: #ffffff;
   border-left: 1px solid rgba(226, 232, 240, 0.9);
   box-shadow: -16px 0 48px rgba(15, 23, 42, 0.12);
@@ -4676,6 +4677,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex-shrink: 0;
 }
 
 .aig-template-drawer-search {
@@ -4733,14 +4735,22 @@ body {
 }
 
 .aig-template-drawer-body {
-  flex: 1;
+  flex: 1 1 auto;
+  height: 0; /* force flex child to shrink so overflow-y can scroll */
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 4px 20px 24px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   align-content: start;
+}
+
+.aig-template-drawer-body--kits {
+  grid-template-columns: 1fr;
 }
 
 .aig-template-drawer-empty {
