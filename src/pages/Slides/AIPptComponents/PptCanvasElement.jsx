@@ -6,6 +6,7 @@ import {
   resolveThemeColor,
   buildCanvasShapeStyle,
   buildNativeShapeBoxStyle,
+  buildImageEdgeFadeMask,
   shapeElementUsesNativeStyle,
 } from '../../../utils/presentationHelpers'
 import { getListMarker, splitTextLines, stripLeadingListMarkers } from '../../../utils/textListUtils'
@@ -287,6 +288,7 @@ export default function PptCanvasElement({
         />
       )
     }
+    const edgeFadeMask = buildImageEdgeFadeMask(c.edgeFade)
     return (
       <img
         src={url}
@@ -297,6 +299,14 @@ export default function PptCanvasElement({
           opacity: c.opacity != null ? c.opacity : 1,
           borderRadius: c.borderRadius != null ? c.borderRadius : undefined,
           boxShadow: c.boxShadow || c.shadow || undefined,
+          ...(edgeFadeMask
+            ? {
+                WebkitMaskImage: edgeFadeMask,
+                maskImage: edgeFadeMask,
+                WebkitMaskSize: '100% 100%',
+                maskSize: '100% 100%',
+              }
+            : {}),
         }}
         onError={() => onImageAuthError?.(el.id)}
       />

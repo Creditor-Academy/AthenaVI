@@ -9,6 +9,7 @@ import presentationService from '../../services/presentationService'
 import { isInsufficientCreditsError } from '../../services/creditsService'
 import {
   buildPresentationGenerationPayload,
+  buildWizardThemeTokens,
   outlineCardsToApiPayload,
   toApiThemeId,
 } from '../../utils/presentationHelpers'
@@ -56,10 +57,18 @@ export default function AIPptGenerator({
         })
       )
 
-      const themeId = toApiThemeId(config.backendThemeId)
-      if (themeId) {
+      const wizardThemeTokens = buildWizardThemeTokens(
+        config.theme,
+        config.availableOptions?.colorThemes
+      )
+      if (!config.brandKitId && !config.packId && wizardThemeTokens) {
         await presentationService.setTheme(session.workspaceId, session.presentationId, {
-          themeId,
+          themeId: config.theme || undefined,
+          themeTokens: wizardThemeTokens,
+        })
+      } else if (toApiThemeId(config.backendThemeId)) {
+        await presentationService.setTheme(session.workspaceId, session.presentationId, {
+          themeId: toApiThemeId(config.backendThemeId),
         })
       }
 
