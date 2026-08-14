@@ -154,6 +154,12 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/brand-kits/suggest/image-style`,
       SUGGEST_LOGO_VARIANTS: (workspaceId, brandKitId) =>
         `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/suggest/logo-variants`,
+      MOCKUPS_CATALOG: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/mockups/catalog`,
+      MOCKUPS: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/mockups`,
+      MOCKUPS_GENERATE: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/mockups/generate`,
       GUIDELINES: (workspaceId, brandKitId) =>
         `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/guidelines`,
       GUIDELINES_PDF: (workspaceId, brandKitId) =>

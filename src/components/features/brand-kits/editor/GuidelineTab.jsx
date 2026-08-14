@@ -1,5 +1,6 @@
 import { MdAutoAwesome, MdDownload, MdGridView, MdViewList, MdArrowBack, MdArrowForward, MdImage, MdPalette } from 'react-icons/md'
 import { formatFontWeightLabel, getFontRole } from '../utils/brandKitUtils'
+import { findLogoMedia } from '../../../../utils/brandKitHelpers'
 
 export default function GuidelineTab(props) {
   const {
@@ -149,16 +150,18 @@ export default function GuidelineTab(props) {
                               <div className="bk-slide-logo-grid">
                                 {[
                                   { role: 'primary', label: 'Primary Mark' },
-                                  { role: 'light-mode', label: 'Light Mode' },
-                                  { role: 'dark-mode', label: 'Dark Mode' },
+                                  { role: 'light', label: 'Light Mode' },
+                                  { role: 'dark', label: 'Dark Mode' },
                                   { role: 'black', label: 'Black / Mono' },
                                   { role: 'white', label: 'White Reversed' },
                                   { role: 'with-name-adjacent', label: 'Horizontal Lockup' },
                                 ].map(({ role, label }) => {
-                                  const item = mediaByKind('logo').find(
-                                    (m) => (m.role || '') === role || (role === 'primary' && (m.role || '') === 'main')
-                                  )
-                                  const url = item?.url || item?.src || item?.presignedUrl || (role === 'primary' ? logoPreviewUrl : null)
+                                  const item = findLogoMedia(mediaByKind('logo'), role)
+                                  const url =
+                                    item?.url ||
+                                    item?.src ||
+                                    item?.presignedUrl ||
+                                    (role === 'primary' ? logoPreviewUrl : null)
                                   return (
                                     <div key={role} className="bk-slide-logo-card">
                                       <span className="bk-slide-logo-title">{label}</span>

@@ -10,7 +10,22 @@ import {
   normalizeBrandKitData,
   reconcileColorRoles,
   validateBrandKitData,
+  LOGO_VARIANT_APPLY_ROLES,
+  LOGO_WORDMARK_ROLES,
+  logoRolesMatch,
+  findLogoMedia,
+  refreshEditorCredits,
 } from '../../utils/brandKitHelpers'
+import {
+  finishTransparentMark,
+  recolorOpaquePixels,
+  loadLogoCanvasFromBlob,
+  loadLogoCanvasFromUrl,
+  canvasToPngFile,
+  composeWordmarkBelow,
+  composeWordmarkAdjacent,
+  resolveWordmarkTypeSpec,
+} from '../../components/features/brand-kits/utils/composeLogoVariants'
 import {
   ensureGoogleFontLoaded,
   resolveRoleHex,
@@ -62,6 +77,12 @@ function BrandKits() {
   const [kitHealth, setKitHealth] = useState(null)
   const [guidelineLink, setGuidelineLink] = useState(null)
   const [folderId, setFolderId] = useState(null)
+  const [mockupTemplates, setMockupTemplates] = useState([])
+  const [mockupBilling, setMockupBilling] = useState(null)
+  const [mockupSaved, setMockupSaved] = useState([])
+  const [mockupLoading, setMockupLoading] = useState(false)
+  const [mockupGeneratingId, setMockupGeneratingId] = useState(null)
+  const [mockupPreviews, setMockupPreviews] = useState({})
   const menuRefs = useRef({})
   const fileInputRef = useRef(null)
   const wizardLogoInputRef = useRef(null)
@@ -77,6 +98,10 @@ function BrandKits() {
     }
     if (err instanceof InsufficientCreditsError) {
       setError(err.message || 'Insufficient credits for this brand kit action')
+      return
+    }
+    if (err?.status === 429) {
+      setError(err.message || 'Rate limit reached. Try again later.')
       return
     }
     setError(err?.message || fallback || 'Brand kit request failed')
@@ -241,6 +266,11 @@ function BrandKits() {
     setEditorTab('overview')
     setLogoFile(null)
     setLogoPreviewUrl(null)
+    setMockupTemplates([])
+    setMockupBilling(null)
+    setMockupSaved([])
+    setMockupPreviews({})
+    setMockupGeneratingId(null)
     setShowEditor(true)
     setEditingKitId(kit.id)
     setKitName(kit.name)
@@ -648,6 +678,98 @@ function BrandKits() {
     }
   }
 
+  const loadMediaCanvas = useCallback(
+    async (mediaItem, fallbackUrl) => {
+      const mediaId = mediaItem?.id || mediaItem?._id
+      if (mediaId && workspaceId && editingKitId) {
+        try {
+          const blob = await brandKitService.fetchMediaBlob(workspaceId, editingKitId, mediaId)
+          return loadLogoCanvasFromBlob(blob)
+        } catch {
+          // fall through to URL
+        }
+      }
+      const url = mediaItem?.url || mediaItem?.presignedUrl || mediaItem?.src || fallbackUrl
+      if (!url) throw new Error('No logo source available')
+      try {
+        const res = await fetch(url)
+        if (res.ok) {
+          const blob = await res.blob()
+          return loadLogoCanvasFromBlob(blob)
+        }
+      } catch {
+        // last resort: direct image load (may fail CORS for canvas ops)
+      }
+      return loadLogoCanvasFromUrl(url)
+    },
+    [workspaceId, editingKitId]
+  )
+
+  const uploadFinishedLogo = useCallback(
+    async (canvas, role) => {
+      const file = await canvasToPngFile(canvas, `${role}.png`)
+      await brandKitService.uploadMedia(workspaceId, editingKitId, {
+        file,
+        kind: 'logo',
+        role,
+        name: `${role}.png`,
+      })
+    },
+    [workspaceId, editingKitId]
+  )
+
+  const finishAiLogoRoles = useCallback(
+    async (mediaList) => {
+      for (const role of LOGO_VARIANT_APPLY_ROLES) {
+        const item = findLogoMedia(mediaList, role)
+        if (!item) continue
+        setGeneratingRole(role)
+        let canvas = await loadMediaCanvas(item)
+        canvas = finishTransparentMark(canvas)
+        if (role === 'black') canvas = recolorOpaquePixels(canvas, '#000000')
+        if (role === 'white') canvas = recolorOpaquePixels(canvas, '#FFFFFF')
+        await uploadFinishedLogo(canvas, role)
+      }
+    },
+    [loadMediaCanvas, uploadFinishedLogo]
+  )
+
+  const composeAndUploadWordmarks = useCallback(
+    async (mediaList) => {
+      const primary =
+        findLogoMedia(mediaList, 'primary') || findLogoMedia(mediaList, 'light')
+      if (!primary && !logoPreviewUrl) {
+        throw new Error('Primary logo required to build wordmark lockups')
+      }
+      const { fontFamily, fontWeight } = resolveWordmarkTypeSpec(kitData)
+      const textColor = '#0F172A'
+      let markCanvas = await loadMediaCanvas(primary, logoPreviewUrl)
+      markCanvas = finishTransparentMark(markCanvas)
+
+      for (const role of LOGO_WORDMARK_ROLES) {
+        setGeneratingRole(role)
+        const composed =
+          role === 'with-name-adjacent'
+            ? await composeWordmarkAdjacent({
+                markCanvas,
+                name: kitName,
+                fontFamily,
+                fontWeight,
+                textColor,
+              })
+            : await composeWordmarkBelow({
+                markCanvas,
+                name: kitName,
+                fontFamily,
+                fontWeight,
+                textColor,
+              })
+        await uploadFinishedLogo(composed, role)
+      }
+    },
+    [kitData, kitName, loadMediaCanvas, logoPreviewUrl, uploadFinishedLogo]
+  )
+
   const generateLogoVariants = async () => {
     if (!canWrite || !editingKitId) {
       setError('Save the brand kit first before generating variants.')
@@ -655,8 +777,7 @@ function BrandKits() {
     }
     const hasPrimary = (kitMedia || []).some(
       (m) =>
-        String(m.kind || '').toLowerCase() === 'logo' &&
-        ['primary', 'main'].includes(String(m.role || ''))
+        String(m.kind || '').toLowerCase() === 'logo' && logoRolesMatch(m.role, 'primary')
     )
     if (!hasPrimary && !logoPreviewUrl) {
       setError('Upload a Primary Logo first to generate variants.')
@@ -666,18 +787,31 @@ function BrandKits() {
     setGenerating(true)
     setError('')
     try {
-      // Free preview pass (optional UX feedback)
       setGeneratingRole('preview')
       await brandKitService.suggestLogoVariants(workspaceId, editingKitId, {})
 
-      // Paid apply for core roles from handoff
       setGeneratingRole('apply')
-      const applyRoles = ['light', 'dark', 'black', 'white', 'light-mode', 'dark-mode']
-      await brandKitService.suggestLogoVariants(workspaceId, editingKitId, { applyRoles })
+      await brandKitService.suggestLogoVariants(workspaceId, editingKitId, {
+        applyRoles: LOGO_VARIANT_APPLY_ROLES,
+      })
 
-      const detail = await brandKitService.get(workspaceId, editingKitId)
+      let detail = await brandKitService.get(workspaceId, editingKitId)
+      let media = detail.media || []
+
+      // Strip AI plate backgrounds + normalize mono variants
+      setGeneratingRole('finish')
+      await finishAiLogoRoles(media)
+      detail = await brandKitService.get(workspaceId, editingKitId)
+      media = detail.media || []
+
+      // Compose balanced wordmarks from the primary mark + kit typography
+      setGeneratingRole('wordmarks')
+      await composeAndUploadWordmarks(media)
+
+      detail = await brandKitService.get(workspaceId, editingKitId)
       setKitMedia(detail.media || [])
       await refreshHealth(workspaceId, editingKitId)
+      refreshEditorCredits()
     } catch (err) {
       handleApiError(err, 'Logo variant generation failed')
     } finally {
@@ -685,6 +819,227 @@ function BrandKits() {
       setGeneratingRole(null)
     }
   }
+
+  const regenerateLogoRole = async (role) => {
+    if (!canWrite || !editingKitId || !role) return
+    const hasPrimary = (kitMedia || []).some(
+      (m) =>
+        String(m.kind || '').toLowerCase() === 'logo' && logoRolesMatch(m.role, 'primary')
+    )
+    if (!hasPrimary && !logoPreviewUrl) {
+      setError('Upload a Primary Logo first to regenerate variants.')
+      return
+    }
+
+    setGenerating(true)
+    setGeneratingRole(role)
+    setError('')
+    try {
+      if (LOGO_WORDMARK_ROLES.includes(role)) {
+        const primary =
+          findLogoMedia(kitMedia, 'primary') || findLogoMedia(kitMedia, 'light')
+        if (!primary && !logoPreviewUrl) {
+          throw new Error('Primary logo required to build wordmark lockups')
+        }
+        const { fontFamily, fontWeight } = resolveWordmarkTypeSpec(kitData)
+        let markCanvas = await loadMediaCanvas(primary, logoPreviewUrl)
+        markCanvas = finishTransparentMark(markCanvas)
+        const composed =
+          role === 'with-name-adjacent'
+            ? await composeWordmarkAdjacent({
+                markCanvas,
+                name: kitName,
+                fontFamily,
+                fontWeight,
+                textColor: '#0F172A',
+              })
+            : await composeWordmarkBelow({
+                markCanvas,
+                name: kitName,
+                fontFamily,
+                fontWeight,
+                textColor: '#0F172A',
+              })
+        await uploadFinishedLogo(composed, role)
+      } else if (LOGO_VARIANT_APPLY_ROLES.includes(role)) {
+        await brandKitService.suggestLogoVariants(workspaceId, editingKitId, {
+          applyRoles: [role],
+        })
+        const detail = await brandKitService.get(workspaceId, editingKitId)
+        const item = findLogoMedia(detail.media || [], role)
+        if (item) {
+          let canvas = await loadMediaCanvas(item)
+          canvas = finishTransparentMark(canvas)
+          if (role === 'black') canvas = recolorOpaquePixels(canvas, '#000000')
+          if (role === 'white') canvas = recolorOpaquePixels(canvas, '#FFFFFF')
+          await uploadFinishedLogo(canvas, role)
+        }
+      } else {
+        // primary / unknown — re-upload finished primary if possible
+        const item = findLogoMedia(kitMedia, role)
+        if (item || logoPreviewUrl) {
+          let canvas = await loadMediaCanvas(item, logoPreviewUrl)
+          canvas = finishTransparentMark(canvas)
+          await uploadFinishedLogo(canvas, role === 'primary' ? 'primary' : role)
+        }
+      }
+
+      const detail = await brandKitService.get(workspaceId, editingKitId)
+      setKitMedia(detail.media || [])
+      await refreshHealth(workspaceId, editingKitId)
+      refreshEditorCredits()
+    } catch (err) {
+      handleApiError(err, `Failed to regenerate ${role} logo`)
+    } finally {
+      setGenerating(false)
+      setGeneratingRole(null)
+    }
+  }
+
+  const downloadLogoPng = async (mediaItem, roleLabel) => {
+    if (!workspaceId || !editingKitId || !mediaItem) return
+    const mediaId = mediaItem.id || mediaItem._id
+    const safeName = String(kitName || 'brand-kit')
+      .replace(/[^\w-]+/g, '-')
+      .replace(/-+/g, '-')
+      .toLowerCase()
+    const rolePart = String(roleLabel || mediaItem.role || 'logo')
+      .replace(/[^\w-]+/g, '-')
+      .toLowerCase()
+    const filename = `${safeName}-${rolePart}.png`
+
+    try {
+      let blob = null
+      if (mediaId) {
+        try {
+          blob = await brandKitService.fetchMediaBlob(workspaceId, editingKitId, mediaId)
+        } catch {
+          blob = null
+        }
+      }
+      if (!blob) {
+        const url = mediaItem.url || mediaItem.presignedUrl || mediaItem.src
+        if (!url) throw new Error('No logo URL available')
+        const res = await fetch(url)
+        if (!res.ok) throw new Error('Failed to download logo')
+        blob = await res.blob()
+      }
+      const objectUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = objectUrl
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(objectUrl)
+    } catch (err) {
+      handleApiError(err, 'Failed to download logo PNG')
+    }
+  }
+
+  const hasLogoOnKit = useCallback(() => {
+    return (kitMedia || []).some((m) => String(m.kind || m.type || '').toLowerCase() === 'logo')
+  }, [kitMedia])
+
+  const loadMockups = useCallback(async () => {
+    if (!workspaceId || !editingKitId) return
+    setMockupLoading(true)
+    try {
+      const [catalog, listed] = await Promise.all([
+        brandKitService.listMockupCatalog(workspaceId, editingKitId),
+        brandKitService.listMockups(workspaceId, editingKitId).catch(() => null),
+      ])
+      setMockupTemplates(catalog.templates || [])
+      if (catalog.billing) setMockupBilling(catalog.billing)
+      if (listed) {
+        setMockupSaved(listed.mockups || [])
+        if (listed.billing) setMockupBilling(listed.billing)
+      } else {
+        const detail = await brandKitService.get(workspaceId, editingKitId).catch(() => null)
+        const media = detail?.media || []
+        setMockupSaved(
+          media.filter((m) => String(m.kind || m.type || '').toLowerCase() === 'mockup')
+        )
+      }
+    } catch (err) {
+      handleApiError(err, 'Failed to load logo mockups')
+    } finally {
+      setMockupLoading(false)
+    }
+  }, [workspaceId, editingKitId, handleApiError])
+
+  const generateMockup = useCallback(
+    async (templateId, save = false) => {
+      if (!canWrite || !workspaceId || !editingKitId || !templateId) return
+      if (mockupGeneratingId) return
+      if (!hasLogoOnKit()) {
+        setError('Upload a logo to this brand kit before generating mockups.')
+        return
+      }
+
+      setMockupGeneratingId(templateId)
+      setError('')
+      try {
+        const result = await brandKitService.generateMockup(workspaceId, editingKitId, {
+          templateId,
+          save: Boolean(save),
+        })
+        const mockup = result.mockup || {}
+        if (result.billing) setMockupBilling(result.billing)
+        setMockupPreviews((prev) => ({
+          ...prev,
+          [templateId]: {
+            url: mockup.url,
+            saved: Boolean(mockup.saved),
+            mediaId: mockup.mediaId,
+            templateId: mockup.templateId || templateId,
+            logoRoleUsed: mockup.logoRoleUsed,
+          },
+        }))
+        if (result.billing?.charged) refreshEditorCredits()
+        if (mockup.saved) {
+          const detail = await brandKitService.get(workspaceId, editingKitId)
+          setKitMedia(detail.media || [])
+          const listed = await brandKitService.listMockups(workspaceId, editingKitId).catch(() => null)
+          if (listed?.mockups) setMockupSaved(listed.mockups)
+          else {
+            setMockupSaved(
+              (detail.media || []).filter(
+                (m) => String(m.kind || m.type || '').toLowerCase() === 'mockup'
+              )
+            )
+          }
+          await refreshHealth(workspaceId, editingKitId)
+          setMockupPreviews((prev) => {
+            const next = { ...prev }
+            delete next[templateId]
+            return next
+          })
+        }
+      } catch (err) {
+        handleApiError(err, 'Mockup generation failed')
+      } finally {
+        setMockupGeneratingId(null)
+      }
+    },
+    [
+      canWrite,
+      workspaceId,
+      editingKitId,
+      mockupGeneratingId,
+      hasLogoOnKit,
+      handleApiError,
+      refreshHealth,
+    ]
+  )
+
+  const saveMockup = useCallback(
+    async (templateId) => {
+      // Re-generate with save:true (backend replace-on-save per template)
+      await generateMockup(templateId, true)
+    },
+    [generateMockup]
+  )
 
   const generateBrandGuidelines = async () => {
     if (!canWrite || !editingKitId) {
@@ -716,6 +1071,7 @@ function BrandKits() {
       if (detail?.data) setKitData(detail.data)
       await refreshHealth(workspaceId, editingKitId)
       await refreshGuidelines(workspaceId, editingKitId)
+      refreshEditorCredits()
     } catch (err) {
       handleApiError(err, 'Failed to generate brand guidelines')
     } finally {
@@ -760,7 +1116,14 @@ function BrandKits() {
   const mediaByKind = (kind) =>
     (kitMedia || []).filter((m) => String(m.kind || m.type || '').toLowerCase() === kind)
 
-  const closeEditor = () => setShowEditor(false)
+  const closeEditor = () => {
+    setShowEditor(false)
+    setMockupTemplates([])
+    setMockupBilling(null)
+    setMockupSaved([])
+    setMockupPreviews({})
+    setMockupGeneratingId(null)
+  }
 
   const handleViewModeChange = useCallback((mode) => {
     setViewMode(mode)
@@ -857,6 +1220,18 @@ function BrandKits() {
         slideViewMode={slideViewMode}
         setSlideViewMode={setSlideViewMode}
         generateLogoVariants={generateLogoVariants}
+        regenerateLogoRole={regenerateLogoRole}
+        downloadLogoPng={downloadLogoPng}
+        hasLogoOnKit={hasLogoOnKit()}
+        mockupTemplates={mockupTemplates}
+        mockupBilling={mockupBilling}
+        mockupSaved={mockupSaved}
+        mockupLoading={mockupLoading}
+        mockupGeneratingId={mockupGeneratingId}
+        mockupPreviews={mockupPreviews}
+        loadMockups={loadMockups}
+        generateMockup={generateMockup}
+        saveMockup={saveMockup}
       />
     )
   }

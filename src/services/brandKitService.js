@@ -254,7 +254,7 @@ class BrandKitService {
   /**
    * Logo variants:
    * - preview (free): body `{}`
-   * - apply (paid): `{ applyRoles: ['light','dark','black','white'] }`
+   * - apply (paid): `{ applyRoles: ['light','dark','black','white', ...] }`
    */
   async suggestLogoVariants(workspaceId, brandKitId, body = {}) {
     const data = await this.request(
@@ -265,6 +265,58 @@ class BrandKitService {
       }
     )
     return data?.suggestion || data?.variants || data
+  }
+
+  /**
+   * Logo product mockups catalog + free quota billing.
+   * GET .../mockups/catalog → { templates, billing }
+   */
+  async listMockupCatalog(workspaceId, brandKitId) {
+    const data = await this.request(
+      API_CONFIG.ENDPOINTS.BRAND_KITS.MOCKUPS_CATALOG(workspaceId, brandKitId)
+    )
+    return {
+      templates: data?.templates || [],
+      billing: data?.billing || null,
+    }
+  }
+
+  /**
+   * Saved mockups for a kit (kind: mockup media) + billing.
+   * GET .../mockups → { mockups, billing }
+   */
+  async listMockups(workspaceId, brandKitId) {
+    const data = await this.request(
+      API_CONFIG.ENDPOINTS.BRAND_KITS.MOCKUPS(workspaceId, brandKitId)
+    )
+    return {
+      mockups: data?.mockups || data?.items || (Array.isArray(data) ? data : []),
+      billing: data?.billing || null,
+    }
+  }
+
+  /**
+   * Generate a logo-on-product mockup.
+   * POST .../mockups/generate { templateId, logoRole?, save? }
+   * → { mockup, billing }
+   */
+  async generateMockup(workspaceId, brandKitId, { templateId, logoRole, save = false } = {}) {
+    if (!templateId) throw new Error('templateId is required')
+    const data = await this.request(
+      API_CONFIG.ENDPOINTS.BRAND_KITS.MOCKUPS_GENERATE(workspaceId, brandKitId),
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          templateId,
+          ...(logoRole ? { logoRole } : {}),
+          save: Boolean(save),
+        }),
+      }
+    )
+    return {
+      mockup: data?.mockup || data,
+      billing: data?.billing || null,
+    }
   }
 
   async getGuidelines(workspaceId, brandKitId) {
@@ -299,7 +351,7 @@ class BrandKitService {
 
     const blob = await response.blob()
     const disposition = response.headers.get('Content-Disposition') || ''
-    const match = disposition.match(/filename\*?=(?:UTF-8''|")?([^\";]+)/i)
+    const match = disposition.match(/filename\*?=(?:UTF-8''|")?([^";]+)/i)
     const filename = match
       ? decodeURIComponent(match[1].replace(/"/g, ''))
       : 'Brand_Guidelines.pdf'

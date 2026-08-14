@@ -159,6 +159,7 @@ export default function BrandKitWizard(props) {
           }}
         />
 
+        <div className="bk-wizard-scroll">
         <div className="bk-wizard-container">
           {/* Stepper Indicator */}
           <div className="bk-wizard-stepper">
@@ -758,6 +759,7 @@ export default function BrandKitWizard(props) {
               </div>
             </div>
           )}
+        </div>
         </div>
       </div>
       </div>

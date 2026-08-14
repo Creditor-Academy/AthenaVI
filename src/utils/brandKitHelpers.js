@@ -380,4 +380,99 @@ export const LOGO_ROLES = [
   'white',
 ]
 
-export const MEDIA_KINDS = ['logo', 'photo', 'graphic']
+/** Canonical UI cards for the Logos studio tab (API may use aliases). */
+export const LOGO_VARIANT_CARDS = [
+  {
+    role: 'primary',
+    label: 'Primary Logo',
+    desc: 'Primary brand mark for general use on neutral backgrounds.',
+    darkCanvas: false,
+  },
+  {
+    role: 'light',
+    label: 'Light Mode',
+    desc: 'Optimised for use on light / white backgrounds.',
+    darkCanvas: false,
+  },
+  {
+    role: 'dark',
+    label: 'Dark Mode',
+    desc: 'Optimised for use on dark / black backgrounds.',
+    darkCanvas: true,
+  },
+  {
+    role: 'with-name-below',
+    label: 'With Name Below',
+    desc: 'Mark stacked above the brand wordmark.',
+    darkCanvas: false,
+  },
+  {
+    role: 'with-name-adjacent',
+    label: 'With Name Adjacent',
+    desc: 'Mark and wordmark side-by-side (horizontal lockup).',
+    darkCanvas: false,
+  },
+  {
+    role: 'black',
+    label: 'Black / Monochrome',
+    desc: 'Single-colour black version for light backgrounds and print.',
+    darkCanvas: false,
+  },
+  {
+    role: 'white',
+    label: 'White / Reversed',
+    desc: 'Single-colour white version for dark backgrounds and overlays.',
+    darkCanvas: true,
+  },
+]
+
+/** Roles requested from AI logo-variants apply (wordmarks are composed client-side). */
+export const LOGO_VARIANT_APPLY_ROLES = ['light', 'dark', 'black', 'white']
+
+/** Roles composed on the client from the primary mark + kit typography. */
+export const LOGO_WORDMARK_ROLES = ['with-name-below', 'with-name-adjacent']
+
+/**
+ * Normalize logo role aliases so UI cards match API media.
+ * primary ↔ main, light ↔ light-mode, dark ↔ dark-mode
+ */
+export function normalizeLogoRole(role) {
+  const r = String(role || '')
+    .trim()
+    .toLowerCase()
+  if (r === 'main') return 'primary'
+  if (r === 'light-mode') return 'light'
+  if (r === 'dark-mode') return 'dark'
+  return r
+}
+
+export function logoRolesMatch(a, b) {
+  return normalizeLogoRole(a) === normalizeLogoRole(b)
+}
+
+export function findLogoMedia(mediaList, role) {
+  const list = Array.isArray(mediaList) ? mediaList : []
+  return list.find((m) => {
+    const kind = String(m.kind || m.type || '').toLowerCase()
+    if (kind && kind !== 'logo') return false
+    return logoRolesMatch(m.role || m.name, role)
+  })
+}
+
+export const MEDIA_KINDS = ['logo', 'photo', 'graphic', 'mockup']
+
+export const MOCKUP_CATEGORY_ORDER = ['desk', 'apparel', 'digital', 'packaging', 'signage']
+
+export const MOCKUP_CATEGORY_LABELS = {
+  desk: 'Desk',
+  apparel: 'Apparel',
+  digital: 'Digital',
+  packaging: 'Packaging',
+  signage: 'Signage',
+}
+
+/** Dispatch so header / billing widgets refresh Athena Credits. */
+export function refreshEditorCredits() {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent('editor-credits-refresh'))
+}
