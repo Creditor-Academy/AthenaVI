@@ -12,28 +12,11 @@ import {
 } from 'react-icons/md'
 import { FontMetricSelect } from '../TypeSpecEditors'
 import { MOCKUP_CATEGORY_LABELS } from '../../../../utils/brandKitHelpers'
+import { BrandKitGeneratingFrame } from './BrandKitMorphModal'
 
 function mockupLabel(templates, templateId, fallback) {
   const tpl = (templates || []).find((t) => t.id === templateId)
   return tpl?.label || fallback || templateId || 'Mockup'
-}
-
-function MockupGeneratingFrame({ label = 'Creating your mockup…' }) {
-  return (
-    <div className="bk-mockup-gen-frame" aria-live="polite">
-      <div className="bk-mockup-gen-blobs" aria-hidden>
-        <span className="bk-mockup-blob bk-mockup-blob--a" />
-        <span className="bk-mockup-blob bk-mockup-blob--b" />
-        <span className="bk-mockup-blob bk-mockup-blob--c" />
-        <span className="bk-mockup-blob bk-mockup-blob--d" />
-      </div>
-      <div className="bk-mockup-gen-shimmer" aria-hidden />
-      <div className="bk-mockup-gen-label">
-        <MdAutoAwesome size={16} />
-        <span>{label}</span>
-      </div>
-    </div>
-  )
 }
 
 function MockupCardMenu({ open, canWrite, onPreview, onRegenerate, onDownload, onDelete }) {
@@ -348,7 +331,7 @@ export default function LogoMockupsSection({
               onClick={(e) => e.stopPropagation()}
             >
               {modal.phase === 'loading' || (!modal.url && generatingTemplateId === modal.templateId) ? (
-                <MockupGeneratingFrame
+                <BrandKitGeneratingFrame
                   label={
                     generatingTemplateId === modal.templateId
                       ? 'Creating your mockup…'
@@ -369,7 +352,12 @@ export default function LogoMockupsSection({
                   </button>
                 </div>
               )}
-              <p className="bk-mockup-morph-caption">{modal.label}</p>
+              {!(
+                modal.phase === 'loading' ||
+                (!modal.url && generatingTemplateId === modal.templateId)
+              ) ? (
+                <p className="bk-mockup-morph-caption">{modal.label}</p>
+              ) : null}
             </div>
           </div>,
           document.body

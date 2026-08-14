@@ -1,20 +1,31 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { MdAutoAwesome, MdClose, MdRefresh } from 'react-icons/md'
+import { MdClose, MdRefresh } from 'react-icons/md'
 
-export function BrandKitGeneratingFrame({ label = 'Creating…' }) {
+/** Brand-kit native loader — not the AI Image Studio generation frame. */
+export function BrandKitGeneratingFrame({ label = 'Working on your brand kit…' }) {
   return (
-    <div className="bk-mockup-gen-frame" aria-live="polite">
-      <div className="bk-mockup-gen-blobs" aria-hidden>
-        <span className="bk-mockup-blob bk-mockup-blob--a" />
-        <span className="bk-mockup-blob bk-mockup-blob--b" />
-        <span className="bk-mockup-blob bk-mockup-blob--c" />
-        <span className="bk-mockup-blob bk-mockup-blob--d" />
+    <div className="bk-kit-loader" aria-live="polite" aria-busy="true">
+      <div className="bk-kit-loader-stage" aria-hidden>
+        <div className="bk-kit-loader-orbit">
+          <span className="bk-kit-loader-dot bk-kit-loader-dot--1" />
+          <span className="bk-kit-loader-dot bk-kit-loader-dot--2" />
+          <span className="bk-kit-loader-dot bk-kit-loader-dot--3" />
+          <span className="bk-kit-loader-dot bk-kit-loader-dot--4" />
+          <span className="bk-kit-loader-dot bk-kit-loader-dot--5" />
+        </div>
+        <div className="bk-kit-loader-mark">
+          <span className="bk-kit-loader-mark-frame" />
+          <span className="bk-kit-loader-mark-aa">Aa</span>
+        </div>
       </div>
-      <div className="bk-mockup-gen-shimmer" aria-hidden />
-      <div className="bk-mockup-gen-label">
-        <MdAutoAwesome size={16} />
-        <span>{label}</span>
+
+      <div className="bk-kit-loader-copy">
+        <p className="bk-kit-loader-title">{label}</p>
+        <p className="bk-kit-loader-sub">This usually takes a moment. Keep this window open.</p>
+        <div className="bk-kit-loader-track" aria-hidden>
+          <span className="bk-kit-loader-bar" />
+        </div>
       </div>
     </div>
   )
@@ -145,7 +156,7 @@ export default function BrandKitMorphModal({
             ) : null}
           </div>
         )}
-        <p className="bk-mockup-morph-caption">{modal.label}</p>
+        {!showLoading ? <p className="bk-mockup-morph-caption">{modal.label}</p> : null}
       </div>
     </div>,
     document.body
