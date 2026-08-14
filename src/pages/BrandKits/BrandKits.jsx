@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { MdWarning } from 'react-icons/md'
 import brandKitService, { BrandKitPermissionError } from '../../services/brandKitService'
 import { InsufficientCreditsError } from '../../services/creditsService'
 import presentationService from '../../services/presentationService'
@@ -35,9 +36,28 @@ import { downloadBrandGuidelinePdf as generateGuidelinePdf } from '../../compone
 import BrandKitsListView from '../../components/features/brand-kits/BrandKitsListView'
 import BrandKitWizard from '../../components/features/brand-kits/BrandKitWizard'
 import BrandKitEditor from '../../components/features/brand-kits/BrandKitEditor'
+import Toast from '../../components/ui/Toast/Toast'
+import { sanitizeUserFacingMessage } from '../../utils/userFacingMessage'
+import '../../components/ui/ConfirmDialog/ConfirmDialog.css'
 import '../../components/features/workspace/workspace/WorkspaceStyles.css'
 import '../Videos/Videos.css'
 import './BrandKits.css'
+
+function serializeBrandKitDraft({ kitName, slogan, isDefault, logoFile, kitData }) {
+  return JSON.stringify({
+    kitName: String(kitName || '').trim(),
+    slogan: String(slogan || ''),
+    isDefault: Boolean(isDefault),
+    hasPendingLogo: Boolean(logoFile),
+    data: normalizeBrandKitData({
+      ...(kitData || emptyBrandKitData()),
+      meta: {
+        ...((kitData && kitData.meta) || {}),
+        tagline: slogan || kitData?.meta?.tagline || '',
+      },
+    }),
+  })
+}
 
 function BrandKits() {
   const [workspaceId, setWorkspaceId] = useState(null)
@@ -83,13 +103,29 @@ function BrandKits() {
   const [mockupLoading, setMockupLoading] = useState(false)
   const [mockupGeneratingId, setMockupGeneratingId] = useState(null)
   const [mockupPreviews, setMockupPreviews] = useState({})
+  const [toast, setToast] = useState(null)
+  const [leaveModalOpen, setLeaveModalOpen] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
   const menuRefs = useRef({})
   const fileInputRef = useRef(null)
   const wizardLogoInputRef = useRef(null)
   const pendingUploadKind = useRef('logo')
   const pendingUploadRole = useRef('primary')
+  const savedSnapshotRef = useRef(null)
+  const toastTimeoutRef = useRef(null)
 
   const canWrite = canWriteBrandKits(workspaceRole)
+
+  const showToast = useCallback((message, type = 'success') => {
+    setToast({ message: sanitizeUserFacingMessage(message), type })
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    toastTimeoutRef.current = setTimeout(() => setToast(null), 2800)
+  }, [])
+
+  const captureCleanSnapshot = useCallback((draft) => {
+    savedSnapshotRef.current = serializeBrandKitDraft(draft)
+    setIsDirty(false)
+  }, [])
 
   const handleApiError = useCallback((err, fallback) => {
     if (err instanceof BrandKitPermissionError) {
@@ -241,6 +277,37 @@ function BrandKits() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!showEditor || !savedSnapshotRef.current) {
+      setIsDirty(false)
+      return
+    }
+    const current = serializeBrandKitDraft({
+      kitName,
+      slogan,
+      isDefault,
+      logoFile,
+      kitData,
+    })
+    setIsDirty(current !== savedSnapshotRef.current)
+  }, [showEditor, kitName, slogan, isDefault, logoFile, kitData])
+
+  useEffect(() => {
+    if (!showEditor || !isDirty) return undefined
+    const onBeforeUnload = (event) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    return () => window.removeEventListener('beforeunload', onBeforeUnload)
+  }, [showEditor, isDirty])
+
   const openCreate = () => {
     if (!canWrite) return
     setEditingKitId(null)
@@ -248,15 +315,25 @@ function BrandKits() {
     setSlogan('')
     setLogoFile(null)
     setLogoPreviewUrl(null)
-    setKitData(emptyBrandKitData())
+    const empty = emptyBrandKitData()
+    setKitData(empty)
     setKitMedia([])
     setKitHealth(null)
     setGuidelineLink(null)
-    setIsDefault(brandKits.length === 0)
+    const defaultFlag = brandKits.length === 0
+    setIsDefault(defaultFlag)
     setError('')
     setIsWizardMode(true)
     setWizardStep(1)
+    setLeaveModalOpen(false)
     setShowEditor(true)
+    captureCleanSnapshot({
+      kitName: '',
+      slogan: '',
+      isDefault: defaultFlag,
+      logoFile: null,
+      kitData: empty,
+    })
   }
 
   const openEdit = async (kit) => {
@@ -271,17 +348,28 @@ function BrandKits() {
     setMockupSaved([])
     setMockupPreviews({})
     setMockupGeneratingId(null)
+    setLeaveModalOpen(false)
     setShowEditor(true)
     setEditingKitId(kit.id)
     setKitName(kit.name)
     try {
       const detail = await brandKitService.get(workspaceId, kit.id)
       const data = detail.data || emptyBrandKitData()
-      setKitName(detail.name)
+      const name = detail.name || kit.name || ''
+      const tagline = data.meta?.tagline || ''
+      const defaultFlag = Boolean(detail.isDefault)
+      setKitName(name)
       setKitData(data)
-      setSlogan(data.meta?.tagline || '')
+      setSlogan(tagline)
       setKitMedia(detail.media || [])
-      setIsDefault(Boolean(detail.isDefault))
+      setIsDefault(defaultFlag)
+      captureCleanSnapshot({
+        kitName: name,
+        slogan: tagline,
+        isDefault: defaultFlag,
+        logoFile: null,
+        kitData: data,
+      })
       await Promise.all([
         refreshHealth(workspaceId, kit.id),
         refreshGuidelines(workspaceId, kit.id),
@@ -306,6 +394,7 @@ function BrandKits() {
       setError(validationError)
       return null
     }
+    const creating = !editingKitId
     setSaving(true)
     setError('')
     try {
@@ -340,6 +429,8 @@ function BrandKits() {
         }
       }
 
+      let nextData = dataWithMeta
+      let nextLogoFile = logoFile
       if (logoFile && targetKitId) {
         try {
           await brandKitService.uploadMedia(workspaceId, targetKitId, {
@@ -350,7 +441,10 @@ function BrandKits() {
           })
           const detail = await brandKitService.get(workspaceId, targetKitId)
           setKitMedia(detail.media || [])
-          setKitData(detail.data || dataWithMeta)
+          nextData = detail.data || dataWithMeta
+          setKitData(nextData)
+          setLogoFile(null)
+          nextLogoFile = null
         } catch (uploadErr) {
           handleApiError(uploadErr, 'Logo upload failed after save')
         }
@@ -362,6 +456,17 @@ function BrandKits() {
       if (targetKitId) {
         await refreshHealth(workspaceId, targetKitId)
       }
+      captureCleanSnapshot({
+        kitName: finalName,
+        slogan: slogan || dataWithMeta.meta?.tagline || '',
+        isDefault,
+        logoFile: nextLogoFile,
+        kitData: nextData,
+      })
+      showToast(
+        creating ? 'Brand kit created successfully' : 'Brand kit saved successfully',
+        'success'
+      )
       if (redirect) {
         setIsWizardMode(false)
         setEditorTab('overview')
@@ -1047,6 +1152,57 @@ function BrandKits() {
     [generateMockup]
   )
 
+  const deleteMockup = useCallback(
+    async (item) => {
+      if (!canWrite || !item) return
+      const mediaId = item.mediaId || item.id || item._id
+      const templateId = String(item.templateId || item.role || '')
+      try {
+        if (mediaId) {
+          await brandKitService.deleteMedia(workspaceId, editingKitId, mediaId)
+          setKitMedia((prev) =>
+            prev.filter((m) => String(m.id || m._id) !== String(mediaId))
+          )
+        }
+        if (templateId) {
+          setMockupPreviews((prev) => {
+            const next = { ...prev }
+            delete next[templateId]
+            return next
+          })
+        }
+        setMockupSaved((prev) =>
+          (prev || []).filter((m) => {
+            const id = m.id || m._id || m.mediaId
+            const role = String(m.role || m.templateId || '')
+            if (mediaId && String(id) === String(mediaId)) return false
+            if (templateId && role === templateId) return false
+            return true
+          })
+        )
+        await loadMockups()
+        if (editingKitId) await refreshHealth(workspaceId, editingKitId)
+      } catch (err) {
+        handleApiError(err, 'Failed to delete mockup')
+      }
+    },
+    [
+      canWrite,
+      workspaceId,
+      editingKitId,
+      loadMockups,
+      refreshHealth,
+      handleApiError,
+    ]
+  )
+
+  const downloadMockupPng = useCallback(
+    async (item, label) => {
+      await downloadLogoPng(item, label || item?.templateId || 'mockup')
+    },
+    [downloadLogoPng]
+  )
+
   const generateBrandGuidelines = async () => {
     if (!canWrite || !editingKitId) {
       setError('Save the brand kit first before generating guidelines.')
@@ -1122,14 +1278,38 @@ function BrandKits() {
   const mediaByKind = (kind) =>
     (kitMedia || []).filter((m) => String(m.kind || m.type || '').toLowerCase() === kind)
 
-  const closeEditor = () => {
+  const closeEditor = useCallback(() => {
+    setLeaveModalOpen(false)
     setShowEditor(false)
+    setIsDirty(false)
+    savedSnapshotRef.current = null
     setMockupTemplates([])
     setMockupBilling(null)
     setMockupSaved([])
     setMockupPreviews({})
     setMockupGeneratingId(null)
-  }
+  }, [])
+
+  const requestCloseEditor = useCallback(() => {
+    if (isDirty && canWrite) {
+      setLeaveModalOpen(true)
+      return
+    }
+    closeEditor()
+  }, [isDirty, canWrite, closeEditor])
+
+  const handleDiscardChanges = useCallback(() => {
+    setLeaveModalOpen(false)
+    closeEditor()
+  }, [closeEditor])
+
+  const handleSaveAndLeave = useCallback(async () => {
+    const id = await handleSave(false)
+    if (id) {
+      setLeaveModalOpen(false)
+      closeEditor()
+    }
+  }, [handleSave, closeEditor])
 
   const handleViewModeChange = useCallback((mode) => {
     setViewMode(mode)
@@ -1140,12 +1320,59 @@ function BrandKits() {
     }
   }, [])
 
+  const brandKitOverlays = (
+    <>
+      <Toast toast={toast} />
+      {leaveModalOpen ? (
+        <div
+          className="confirm-dialog-overlay"
+          onClick={() => setLeaveModalOpen(false)}
+          role="presentation"
+        >
+          <div
+            className="confirm-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="bk-unsaved-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="confirm-dialog-icon-wrap">
+              <MdWarning className="confirm-dialog-icon" aria-hidden="true" />
+            </div>
+            <h3 id="bk-unsaved-title" className="confirm-dialog-title">
+              Unsaved changes
+            </h3>
+            <p className="confirm-dialog-message">
+              You have unsaved changes to this brand kit. Save them before leaving, or discard
+              them.
+            </p>
+            <div className="confirm-dialog-actions">
+              <button type="button" className="btn-secondary" onClick={handleDiscardChanges}>
+                Discard
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={handleSaveAndLeave}
+                disabled={saving}
+              >
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
+  )
+
   if (!loading && showEditor && isWizardMode) {
     return (
-      <BrandKitWizard
+      <>
+        {brandKitOverlays}
+        <BrandKitWizard
         wizardStep={wizardStep}
         setWizardStep={setWizardStep}
-        closeEditor={closeEditor}
+        closeEditor={requestCloseEditor}
         error={error}
         wizardLogoInputRef={wizardLogoInputRef}
         handleWizardLogoSelected={handleWizardLogoSelected}
@@ -1172,14 +1399,17 @@ function BrandKits() {
         handleSave={handleSave}
         saving={saving}
       />
+      </>
     )
   }
 
   if (!loading && showEditor && !isWizardMode) {
     return (
-      <BrandKitEditor
+      <>
+        {brandKitOverlays}
+        <BrandKitEditor
         canWrite={canWrite}
-        closeEditor={closeEditor}
+        closeEditor={requestCloseEditor}
         downloadBrandGuideline={downloadBrandGuideline}
         generatingGuideline={generatingGuideline}
         handleSave={handleSave}
@@ -1238,12 +1468,17 @@ function BrandKits() {
         loadMockups={loadMockups}
         generateMockup={generateMockup}
         saveMockup={saveMockup}
+        deleteMockup={deleteMockup}
+        downloadMockupPng={downloadMockupPng}
       />
+      </>
     )
   }
 
   return (
-    <BrandKitsListView
+    <>
+      {brandKitOverlays}
+      <BrandKitsListView
       viewMode={viewMode}
       setViewMode={handleViewModeChange}
       canWrite={canWrite}
@@ -1259,6 +1494,7 @@ function BrandKits() {
       handleCopyId={handleCopyId}
       handleDelete={handleDelete}
     />
+    </>
   )
 }
 

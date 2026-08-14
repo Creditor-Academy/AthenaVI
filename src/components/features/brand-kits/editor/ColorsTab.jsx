@@ -1,6 +1,5 @@
 import { MdAutoAwesome, MdAdd, MdContentCopy, MdClose, MdCheck, MdEdit } from 'react-icons/md'
 import { hexToHsl, hexToRgb } from '../utils/brandKitUtils'
-import ButtonStylesSection from './ButtonStylesSection'
 
 export default function ColorsTab(props) {
   const {
@@ -15,8 +14,6 @@ export default function ColorsTab(props) {
     colorsList,
     generating,
     triggerGenerateFromLogo,
-    kitData,
-    setKitData,
   } = props
 
   return (
@@ -308,12 +305,6 @@ export default function ColorsTab(props) {
                     </div>
                   )}
                 </section>
-
-                <ButtonStylesSection
-                  canWrite={canWrite}
-                  kitData={kitData}
-                  setKitData={setKitData}
-                />
               </div>
             </div>
   )

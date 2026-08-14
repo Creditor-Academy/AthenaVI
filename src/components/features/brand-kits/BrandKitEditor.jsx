@@ -9,10 +9,12 @@ import {
   MdPhotoLibrary,
   MdMenuBook,
   MdInfoOutline,
+  MdSmartButton,
 } from 'react-icons/md'
 import { ChevronRight } from 'lucide-react'
 import OverviewTab from './editor/OverviewTab'
 import ColorsTab from './editor/ColorsTab'
+import ButtonsTab from './editor/ButtonsTab'
 import LogosTab from './editor/LogosTab'
 import TypographyTab from './editor/TypographyTab'
 import ImageryTab from './editor/ImageryTab'
@@ -21,6 +23,7 @@ import GuidelineTab from './editor/GuidelineTab'
 const EDITOR_NAV_ITEMS = [
   { id: 'overview', label: 'Overview', icon: MdDashboard },
   { id: 'identity', label: 'Brand Colors', icon: MdPalette },
+  { id: 'buttons', label: 'Buttons', icon: MdSmartButton },
   { id: 'logos', label: 'Logos', icon: MdCategory },
   { id: 'typography', label: 'Typography', icon: MdTextFields },
   { id: 'imagery', label: 'Imagery', icon: MdPhotoLibrary },
@@ -177,6 +180,7 @@ export default function BrandKitEditor(props) {
         <div className="editor-studio-panel">
           {editorTab === 'overview' && <OverviewTab {...tabProps} />}
           {editorTab === 'identity' && <ColorsTab {...tabProps} />}
+          {editorTab === 'buttons' && <ButtonsTab {...tabProps} />}
           {editorTab === 'logos' && <LogosTab {...tabProps} />}
           {editorTab === 'typography' && <TypographyTab {...tabProps} />}
           {editorTab === 'imagery' && <ImageryTab {...tabProps} />}
