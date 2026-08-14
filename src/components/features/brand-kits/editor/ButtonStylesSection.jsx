@@ -1,7 +1,47 @@
-import { resolveButtonStyle } from '../../../../utils/brandKitHelpers'
+import { FontMetricField, FontMetricSelect } from '../TypeSpecEditors'
 import { FONT_WEIGHT_OPTIONS } from '../utils/brandKitConstants'
+import { resolveButtonStyle } from '../../../../utils/brandKitHelpers'
 
-function ButtonStyleCard({
+function ColorSwatchPicker({ label, value, colors, allowEmpty, emptyLabel, disabled, onChange }) {
+  return (
+    <div className={`bk-btn-swatch-picker ${disabled ? 'is-disabled' : ''}`}>
+      <span className="bk-tb-lbl">{label}</span>
+      <div className="bk-btn-swatches" role="listbox" aria-label={label}>
+        {allowEmpty ? (
+          <button
+            type="button"
+            role="option"
+            aria-selected={!value}
+            className={`bk-btn-swatch bk-btn-swatch--empty${!value ? ' is-active' : ''}`}
+            disabled={disabled}
+            title={emptyLabel}
+            onClick={() => onChange(null)}
+          >
+            Auto
+          </button>
+        ) : null}
+        {(colors || []).map((color) => {
+          const active = value === color.id
+          return (
+            <button
+              key={color.id}
+              type="button"
+              role="option"
+              aria-selected={active}
+              className={`bk-btn-swatch${active ? ' is-active' : ''}`}
+              style={{ background: color.hex || '#94A3B8' }}
+              disabled={disabled}
+              title={`${color.name || 'Color'} (${color.hex || ''})`}
+              onClick={() => onChange(color.id)}
+            />
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function ButtonStyleSpecimen({
   kind,
   title,
   hint,
@@ -27,149 +67,113 @@ function ButtonStyleCard({
   }
 
   return (
-    <div className="bk-button-style-card">
-      <div className="bk-button-style-preview-pane">
-        <span className="bk-button-style-kicker">{title}</span>
-        <button type="button" className="bk-button-style-preview" style={resolved.css}>
-          {style.label || resolved.label || title}
-        </button>
-        <p className="bk-button-style-hint">{hint}</p>
+    <div className="bk-type-specimen-box bk-btn-specimen">
+      <div className="bk-type-box-head">
+        <span className="bk-type-box-tag">{title}</span>
+        <span className="bk-btn-specimen-hint">{hint}</span>
       </div>
 
-      <div className="bk-button-style-fields">
-        <label className="bk-ov-field">
-          <span>Label</span>
-          <input
-            type="text"
-            value={style.label || ''}
-            disabled={!canWrite}
-            onChange={(e) => patch({ label: e.target.value })}
-            placeholder={title}
-          />
-        </label>
-
-        <label className="bk-ov-field">
-          <span>Background</span>
-          <select
-            value={style.backgroundColorId || ''}
-            disabled={!canWrite}
-            onChange={(e) => patch({ backgroundColorId: e.target.value || null })}
-          >
-            {colors.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} ({c.hex})
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="bk-ov-field">
-          <span>Text color</span>
-          <select
-            value={style.textColorId ?? ''}
-            disabled={!canWrite}
-            onChange={(e) =>
-              patch({ textColorId: e.target.value === '' ? null : e.target.value })
-            }
-          >
-            <option value="">Auto contrast</option>
-            {colors.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} ({c.hex})
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="bk-ov-field">
-          <span>Border color</span>
-          <select
-            value={style.borderColorId ?? ''}
-            disabled={!canWrite}
-            onChange={(e) =>
-              patch({ borderColorId: e.target.value === '' ? null : e.target.value })
-            }
-          >
-            <option value="">Match background</option>
-            {colors.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} ({c.hex})
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <div className="bk-button-style-grid">
-          <label className="bk-ov-field">
-            <span>Border width</span>
-            <input
-              type="number"
-              min={0}
-              max={12}
-              value={style.borderWidthPx ?? 0}
-              disabled={!canWrite}
-              onChange={(e) => patch({ borderWidthPx: Number(e.target.value) })}
-            />
-          </label>
-          <label className="bk-ov-field">
-            <span>Radius</span>
-            <input
-              type="number"
-              min={0}
-              max={64}
-              value={style.borderRadiusPx ?? 10}
-              disabled={!canWrite}
-              onChange={(e) => patch({ borderRadiusPx: Number(e.target.value) })}
-            />
-          </label>
-          <label className="bk-ov-field">
-            <span>Pad X</span>
-            <input
-              type="number"
-              min={0}
-              max={80}
-              value={style.paddingXPx ?? 20}
-              disabled={!canWrite}
-              onChange={(e) => patch({ paddingXPx: Number(e.target.value) })}
-            />
-          </label>
-          <label className="bk-ov-field">
-            <span>Pad Y</span>
-            <input
-              type="number"
-              min={0}
-              max={48}
-              value={style.paddingYPx ?? 10}
-              disabled={!canWrite}
-              onChange={(e) => patch({ paddingYPx: Number(e.target.value) })}
-            />
-          </label>
-          <label className="bk-ov-field">
-            <span>Weight</span>
-            <select
-              value={String(style.fontWeight ?? 600)}
-              disabled={!canWrite}
-              onChange={(e) => patch({ fontWeight: Number(e.target.value) })}
-            >
-              {FONT_WEIGHT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="bk-ov-field">
-            <span>Font size</span>
-            <input
-              type="number"
-              min={10}
-              max={32}
-              value={style.fontSizePx ?? 14}
-              disabled={!canWrite}
-              onChange={(e) => patch({ fontSizePx: Number(e.target.value) })}
-            />
-          </label>
+      <div className="bk-btn-preview-stage" aria-label={`${title} preview`}>
+        <div className="bk-btn-preview-surface bk-btn-preview-surface--light">
+          <button type="button" className="bk-button-style-preview" style={resolved.css}>
+            {style.label || resolved.label || title}
+          </button>
         </div>
+        <div className="bk-btn-preview-surface bk-btn-preview-surface--dark">
+          <button type="button" className="bk-button-style-preview" style={resolved.css}>
+            {style.label || resolved.label || title}
+          </button>
+        </div>
+      </div>
+
+      <div className="bk-type-box-badges bk-type-box-badges--editable">
+        <FontMetricField
+          label="Label"
+          value={style.label || ''}
+          disabled={!canWrite}
+          placeholder={title}
+          ariaLabel={`${kind} label`}
+          onChange={(label) => patch({ label })}
+        />
+        <FontMetricSelect
+          label="Weight"
+          value={String(style.fontWeight ?? 600)}
+          options={FONT_WEIGHT_OPTIONS}
+          disabled={!canWrite}
+          menuLabel={`${kind} font weight`}
+          onChange={(fontWeight) => patch({ fontWeight: Number(fontWeight) })}
+        />
+        <FontMetricField
+          label="Size"
+          value={String(style.fontSizePx ?? 14)}
+          disabled={!canWrite}
+          placeholder="14"
+          ariaLabel={`${kind} font size`}
+          onChange={(v) => patch({ fontSizePx: Number(v) || 14 })}
+        />
+        <FontMetricField
+          label="Radius"
+          value={String(style.borderRadiusPx ?? 10)}
+          disabled={!canWrite}
+          placeholder="10"
+          ariaLabel={`${kind} radius`}
+          onChange={(v) => patch({ borderRadiusPx: Number(v) || 0 })}
+        />
+      </div>
+
+      <div className="bk-type-box-badges bk-type-box-badges--editable bk-btn-metrics-row">
+        <FontMetricField
+          label="Pad X"
+          value={String(style.paddingXPx ?? 20)}
+          disabled={!canWrite}
+          placeholder="20"
+          ariaLabel={`${kind} padding x`}
+          onChange={(v) => patch({ paddingXPx: Number(v) || 0 })}
+        />
+        <FontMetricField
+          label="Pad Y"
+          value={String(style.paddingYPx ?? 10)}
+          disabled={!canWrite}
+          placeholder="10"
+          ariaLabel={`${kind} padding y`}
+          onChange={(v) => patch({ paddingYPx: Number(v) || 0 })}
+        />
+        <FontMetricField
+          label="Border"
+          value={String(style.borderWidthPx ?? 0)}
+          disabled={!canWrite}
+          placeholder="0"
+          ariaLabel={`${kind} border width`}
+          onChange={(v) => patch({ borderWidthPx: Number(v) || 0 })}
+        />
+      </div>
+
+      <div className="bk-btn-color-panel">
+        <ColorSwatchPicker
+          label="Background"
+          value={style.backgroundColorId || null}
+          colors={colors}
+          disabled={!canWrite}
+          onChange={(backgroundColorId) => patch({ backgroundColorId })}
+        />
+        <ColorSwatchPicker
+          label="Text"
+          value={style.textColorId ?? null}
+          colors={colors}
+          allowEmpty
+          emptyLabel="Auto contrast"
+          disabled={!canWrite}
+          onChange={(textColorId) => patch({ textColorId })}
+        />
+        <ColorSwatchPicker
+          label="Border"
+          value={style.borderColorId ?? null}
+          colors={colors}
+          allowEmpty
+          emptyLabel="Match background"
+          disabled={!canWrite}
+          onChange={(borderColorId) => patch({ borderColorId })}
+        />
       </div>
     </div>
   )
@@ -177,33 +181,23 @@ function ButtonStyleCard({
 
 export default function ButtonStylesSection({ canWrite, kitData, setKitData }) {
   return (
-    <section className="bk-color-section bk-button-styles-section">
-      <div className="bk-section-head-line">
-        <span className="bk-sec-num">[03]</span>
-        <h3 className="bk-sec-title">Button Styles</h3>
-      </div>
-      <p className="bk-type-page-desc" style={{ marginBottom: 16 }}>
-        Primary and secondary buttons for decks, CTAs, and product UI. Colors pick from your
-        palette and save with the brand kit.
-      </p>
-      <div className="bk-button-styles-grid">
-        <ButtonStyleCard
-          kind="primary"
-          title="Primary button"
-          hint="Filled CTA — uses brand primary by default"
-          canWrite={canWrite}
-          kitData={kitData}
-          setKitData={setKitData}
-        />
-        <ButtonStyleCard
-          kind="secondary"
-          title="Secondary button"
-          hint="Outlined / soft action — pairs with primary"
-          canWrite={canWrite}
-          kitData={kitData}
-          setKitData={setKitData}
-        />
-      </div>
-    </section>
+    <div className="bk-btn-specimen-stack">
+      <ButtonStyleSpecimen
+        kind="primary"
+        title="Primary"
+        hint="Filled CTA for main actions"
+        canWrite={canWrite}
+        kitData={kitData}
+        setKitData={setKitData}
+      />
+      <ButtonStyleSpecimen
+        kind="secondary"
+        title="Secondary"
+        hint="Soft / outlined companion action"
+        canWrite={canWrite}
+        kitData={kitData}
+        setKitData={setKitData}
+      />
+    </div>
   )
 }

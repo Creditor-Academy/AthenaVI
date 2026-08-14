@@ -441,6 +441,62 @@ export function toApiThemeId(themeId) {
   return String(themeId).trim().replace(/-/g, '_')
 }
 
+/**
+ * Build wizard themeTokens for API setTheme/create when id is not in backend catalog.
+ * @param {string} colorThemeId - e.g. earthy-sage
+ * @param {Array<object>} [colorThemes] - from wizard availableOptions.colorThemes
+ */
+export function buildWizardThemeTokens(colorThemeId, colorThemes = []) {
+  const raw = String(colorThemeId || '').trim()
+  if (!raw) return null
+
+  const normalized = raw.replace(/_/g, '-')
+  const theme = (Array.isArray(colorThemes) ? colorThemes : []).find(
+    (t) =>
+      String(t.id || '').trim() === raw ||
+      String(t.id || '').trim() === normalized ||
+      String(t.id || '').trim().replace(/_/g, '-') === normalized
+  )
+  if (!theme) return null
+
+  const bg = theme.background
+  const surface = theme.backgroundSecondary || theme.background_secondary || bg
+  const text = theme.textPrimary || theme.text_primary
+  const muted = theme.textSecondary || theme.text_secondary
+
+  return {
+    palette: {
+      bg,
+      surface,
+      cardBg: surface,
+      primary: theme.primary,
+      secondary: theme.secondary,
+      text,
+      muted,
+      accent: theme.accent,
+      border: theme.border,
+      overlayScrim: 'rgba(0,0,0,0.5)',
+      textOnImage: '#FFFFFF',
+      textOnImageMuted: 'rgba(255,255,255,0.85)',
+    },
+    wizardColorThemeId: theme.id,
+    colorTreatment: `${theme.vibe || 'professional'}; primary ${theme.primary}, accent ${theme.accent}`,
+    fontSource: 'wizard',
+  }
+}
+
+/** CSS mask for split-layout hero images — background bleeds into photo edge. */
+export function buildImageEdgeFadeMask(edgeFade) {
+  if (!edgeFade || typeof edgeFade !== 'object') return null
+  const width = Math.min(0.45, Math.max(0.12, Number(edgeFade.width) || 0.28))
+  const pct = Math.round(width * 100)
+  const side = String(edgeFade.side || 'left').toLowerCase()
+  if (side === 'right') {
+    return `linear-gradient(to left, transparent 0%, black ${pct}%, black 100%)`
+  }
+  return `linear-gradient(to right, transparent 0%, black ${pct}%, black 100%)`
+}
+
 export function clampAiSlideCount(count) {
   const n = Number(count) || PPT_CAPS.AI_SLIDE_MIN
   return Math.min(PPT_CAPS.AI_SLIDE_MAX, Math.max(PPT_CAPS.AI_SLIDE_MIN, n))

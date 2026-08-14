@@ -6,6 +6,7 @@ import { isInsufficientCreditsError } from '../../../services/creditsService'
 import { resolvePresentationWorkspaceContext } from '../../../utils/presentationContext'
 import {
   PPT_AI_SLIDE_COUNTS,
+  buildWizardThemeTokens,
   clampAiSlideCount,
   flattenPresentationPrompt,
   mapDensity,
@@ -278,26 +279,20 @@ export default function AIPptWizard({
         }))
       setWorkspaceHint(ctx)
 
-      // Only send themeId when it exists in the backend catalog — unknown ids are rejected (400).
-      const catalogThemeIds = apiThemes
-        .map((t) => String(t.id || t.themeId || ''))
-        .filter(Boolean)
       const userPrompt = prompt.trim()
       const packId = selectedPackId || null
       const brandKitId = selectedBrandKitId || null
 
       // Mutually exclusive with brand kit / pack — only send theme when those are unset
-      const candidateThemeId = toApiThemeId(theme)
       const useCatalogTheme = !brandKitId && !packId
-      const themeId =
-        useCatalogTheme && catalogThemeIds.includes(candidateThemeId)
-          ? candidateThemeId
-          : undefined
+      const wizardThemeTokens = useCatalogTheme ? buildWizardThemeTokens(theme, THEMES) : null
 
       const created = await presentationService.createPresentation(ctx.workspaceId, {
         title: 'Untitled Presentation',
         folderId: ctx.folderId,
-        ...(themeId ? { themeId } : {}),
+        ...(useCatalogTheme && wizardThemeTokens
+          ? { themeId: theme, themeTokens: wizardThemeTokens }
+          : {}),
         locale: 'en',
         aspectRatio: screenSize,
         createMode: packId ? 'pack' : 'blank',
@@ -371,7 +366,7 @@ export default function AIPptWizard({
         industries: selectedIndustries,
         baseTemplate,
         theme,
-        backendThemeId: themeId || null,
+        backendThemeId: useCatalogTheme ? toApiThemeId(theme) : null,
         screenSize,
         slides: slideCount,
         textAmount,

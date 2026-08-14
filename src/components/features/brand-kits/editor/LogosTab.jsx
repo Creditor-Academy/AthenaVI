@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   MdAutoAwesome,
   MdAdd,
@@ -6,16 +6,44 @@ import {
   MdUpload,
   MdRefresh,
   MdDownload,
+  MdVisibility,
 } from 'react-icons/md'
 import {
   LOGO_VARIANT_CARDS,
   findLogoMedia,
 } from '../../../../utils/brandKitHelpers'
+import BrandKitMorphModal, {
+  getElementRect,
+  runMorphClose,
+} from './BrandKitMorphModal'
 
-function LogoCardMenu({ open, onUpload, onRegenerate, onDownload, canWrite, hasMedia }) {
+function batchLoadingLabel(generatingRole) {
+  if (generatingRole === 'preview') return 'Previewing logo variants…'
+  if (generatingRole === 'apply') return 'Applying logo variants…'
+  if (generatingRole === 'finish') return 'Cleaning backgrounds…'
+  if (generatingRole === 'wordmarks') return 'Building wordmarks…'
+  if (generatingRole) return `Generating ${generatingRole}…`
+  return 'Generating logo variants…'
+}
+
+function LogoCardMenu({
+  open,
+  onPreview,
+  onUpload,
+  onRegenerate,
+  onDownload,
+  canWrite,
+  hasMedia,
+  canPreview,
+}) {
   if (!open) return null
   return (
     <div className="bk-logo-card-menu" role="menu">
+      {canPreview && (
+        <button type="button" role="menuitem" onClick={onPreview} disabled={!hasMedia}>
+          <MdVisibility size={15} /> Preview
+        </button>
+      )}
       {canWrite && (
         <button type="button" role="menuitem" onClick={onUpload}>
           <MdUpload size={15} /> Upload
@@ -47,7 +75,12 @@ export default function LogosTab(props) {
   } = props
 
   const [menuRole, setMenuRole] = useState(null)
+  const [modal, setModal] = useState(null)
   const menuAnchorRef = useRef(null)
+  const cardRefs = useRef({})
+  const modalPanelRef = useRef(null)
+  const pendingBatchRef = useRef(false)
+  const pendingRoleRef = useRef(null)
 
   useEffect(() => {
     if (!menuRole) return undefined
@@ -61,6 +94,162 @@ export default function LogosTab(props) {
   }, [menuRole])
 
   const logos = mediaByKind('logo')
+
+  const resolveSrc = useCallback(
+    (role) => {
+      const item = findLogoMedia(logos, role)
+      if (item) return item.url || item.src || item.presignedUrl || null
+      if (role === 'primary') return logoPreviewUrl || null
+      return null
+    },
+    [logos, logoPreviewUrl]
+  )
+
+  // When generation finishes, show the resulting logo in the open modal
+  useEffect(() => {
+    if (!modal || modal.phase !== 'loading') return
+    if (generating) return
+
+    if (pendingBatchRef.current && modal.id === 'batch') {
+      pendingBatchRef.current = false
+      const prefer = ['primary', 'light', 'dark', 'with-name-below']
+      let url = null
+      let targetId = 'primary'
+      for (const role of prefer) {
+        const src = resolveSrc(role)
+        if (src) {
+          url = src
+          targetId = role
+          break
+        }
+      }
+      setModal((prev) =>
+        prev
+          ? {
+              ...prev,
+              id: targetId,
+              label: LOGO_VARIANT_CARDS.find((c) => c.role === targetId)?.label || 'Logo variants',
+              url,
+              phase: 'ready',
+              anim: 'idle',
+              dark: LOGO_VARIANT_CARDS.find((c) => c.role === targetId)?.darkCanvas || false,
+            }
+          : prev
+      )
+      return
+    }
+
+    if (pendingRoleRef.current && modal.id === pendingRoleRef.current) {
+      const role = pendingRoleRef.current
+      pendingRoleRef.current = null
+      const url = resolveSrc(role)
+      setModal((prev) =>
+        prev
+          ? {
+              ...prev,
+              url,
+              phase: 'ready',
+              anim: 'idle',
+            }
+          : prev
+      )
+    }
+  }, [generating, modal, resolveSrc, logos, logoPreviewUrl])
+
+  // Keep loading label in sync during batch
+  useEffect(() => {
+    if (!modal || modal.id !== 'batch' || modal.phase !== 'loading') return
+    setModal((prev) =>
+      prev
+        ? { ...prev, loadingLabel: batchLoadingLabel(generatingRole) }
+        : prev
+    )
+  }, [generatingRole, modal?.id, modal?.phase])
+
+  const openPreview = useCallback((role, label, url, dark) => {
+    if (!url) return
+    const origin = getElementRect(cardRefs.current[role])
+    setMenuRole(null)
+    setModal({
+      id: role,
+      label,
+      url,
+      phase: 'ready',
+      anim: 'open',
+      origin,
+      dark: Boolean(dark),
+    })
+  }, [])
+
+  const startBatchGenerate = useCallback(async () => {
+    if (!canWrite || generating) return
+    pendingBatchRef.current = true
+    pendingRoleRef.current = null
+    const origin = getElementRect(cardRefs.current.primary)
+    setModal({
+      id: 'batch',
+      label: 'Logo variants',
+      url: null,
+      phase: 'loading',
+      anim: origin ? 'open' : 'idle',
+      origin,
+      dark: false,
+      loadingLabel: batchLoadingLabel('preview'),
+    })
+    try {
+      await generateLogoVariants?.()
+    } catch {
+      pendingBatchRef.current = false
+      setModal(null)
+    }
+  }, [canWrite, generating, generateLogoVariants])
+
+  const startRegenerate = useCallback(
+    async (role, label, dark) => {
+      if (!canWrite || generating || !role) return
+      pendingRoleRef.current = role
+      pendingBatchRef.current = false
+      const origin = getElementRect(cardRefs.current[role])
+      setMenuRole(null)
+      setModal({
+        id: role,
+        label,
+        url: null,
+        phase: 'loading',
+        anim: origin ? 'open' : 'idle',
+        origin,
+        dark: Boolean(dark),
+        loadingLabel: `Generating ${label}…`,
+      })
+      try {
+        await regenerateLogoRole?.(role)
+      } catch {
+        pendingRoleRef.current = null
+        setModal(null)
+      }
+    },
+    [canWrite, generating, regenerateLogoRole]
+  )
+
+  const closeModal = useCallback(() => {
+    setModal((current) => {
+      if (!current || current.anim === 'closing') return current
+      const panel = modalPanelRef.current
+      const targetId = current.id === 'batch' ? 'primary' : current.id
+      const target = getElementRect(cardRefs.current[targetId])
+      runMorphClose(panel, target, () => setModal(null))
+      return { ...current, anim: 'closing' }
+    })
+  }, [])
+
+  // Mark open animation finished
+  useEffect(() => {
+    if (!modal || modal.anim !== 'open') return undefined
+    const t = window.setTimeout(() => {
+      setModal((prev) => (prev && prev.anim === 'open' ? { ...prev, anim: 'idle' } : prev))
+    }, 420)
+    return () => window.clearTimeout(t)
+  }, [modal?.id, modal?.anim])
 
   return (
     <div className="editor-tab-content">
@@ -82,7 +271,7 @@ export default function LogosTab(props) {
           <button
             type="button"
             className={`bk-extract-btn ${generating ? 'generating' : ''}`}
-            onClick={generateLogoVariants}
+            onClick={startBatchGenerate}
             disabled={generating}
             title="Preview then apply logo variants (credits may apply on apply)"
           >
@@ -111,7 +300,14 @@ export default function LogosTab(props) {
           const src = hasUpload
             ? item.url || item.src || item.presignedUrl
             : fallbackSrc
-          const isBusy = generating && (generatingRole === role || generatingRole === 'apply')
+          const isBusy =
+            generating &&
+            (generatingRole === role ||
+              generatingRole === 'apply' ||
+              generatingRole === 'finish' ||
+              generatingRole === 'wordmarks' ||
+              generatingRole === 'preview')
+          const showCardBusy = isBusy && modal?.id !== role && modal?.id !== 'batch'
 
           return (
             <div key={role} className={`bk-logo-variant-card ${isBusy ? 'is-busy' : ''}`}>
@@ -119,6 +315,9 @@ export default function LogosTab(props) {
                 className={`bk-logo-variant-canvas bk-logo-checkerboard ${
                   darkCanvas ? 'dark-canvas' : ''
                 }`}
+                ref={(el) => {
+                  cardRefs.current[role] = el
+                }}
               >
                 <div
                   className="bk-logo-card-menu-wrap"
@@ -141,14 +340,13 @@ export default function LogosTab(props) {
                     open={menuRole === role}
                     canWrite={canWrite}
                     hasMedia={Boolean(src)}
+                    canPreview={Boolean(src)}
+                    onPreview={() => openPreview(role, label, src, darkCanvas)}
                     onUpload={() => {
                       setMenuRole(null)
                       triggerUpload('logo', role)
                     }}
-                    onRegenerate={() => {
-                      setMenuRole(null)
-                      regenerateLogoRole?.(role)
-                    }}
+                    onRegenerate={() => startRegenerate(role, label, darkCanvas)}
                     onDownload={() => {
                       setMenuRole(null)
                       if (item) downloadLogoPng?.(item, role)
@@ -160,7 +358,14 @@ export default function LogosTab(props) {
                 </div>
 
                 {src ? (
-                  <img src={src} alt={label} className="bk-logo-variant-img" />
+                  <button
+                    type="button"
+                    className="bk-logo-variant-hit"
+                    onClick={() => openPreview(role, label, src, darkCanvas)}
+                    aria-label={`Preview ${label}`}
+                  >
+                    <img src={src} alt={label} className="bk-logo-variant-img" />
+                  </button>
                 ) : (
                   <button
                     type="button"
@@ -173,7 +378,7 @@ export default function LogosTab(props) {
                   </button>
                 )}
 
-                {isBusy && (
+                {showCardBusy && (
                   <div className="bk-logo-variant-busy">
                     <div className="bk-mockup-spinner" />
                   </div>
@@ -187,13 +392,32 @@ export default function LogosTab(props) {
                 </div>
               </div>
 
-              <div className={`bk-logo-variant-status ${hasUpload || hasFallback ? 'uploaded' : 'empty'}`}>
+              <div
+                className={`bk-logo-variant-status ${hasUpload || hasFallback ? 'uploaded' : 'empty'}`}
+              >
                 {hasUpload ? '✓ Ready' : hasFallback ? 'Preview' : 'Missing'}
               </div>
             </div>
           )
         })}
       </div>
+
+      <BrandKitMorphModal
+        modal={modal}
+        panelRef={modalPanelRef}
+        onClose={closeModal}
+        onRetry={
+          modal?.id && modal.id !== 'batch'
+            ? () => {
+                const card = LOGO_VARIANT_CARDS.find((c) => c.role === modal.id)
+                startRegenerate(modal.id, card?.label || modal.label, card?.darkCanvas)
+              }
+            : () => startBatchGenerate()
+        }
+        loadingLabel={modal?.loadingLabel}
+        imageClassName="bk-morph-logo-img"
+        panelClassName="bk-morph-logo-panel"
+      />
     </div>
   )
 }

@@ -284,33 +284,35 @@ function isLikelyBadMergedText(text, slot, schema) {
   return false
 }
 
-function resolveChartContent(slot, schema, palette, contentBySlotId) {
+function resolveChartContent(slot, schema, palette, contentBySlotId, slideContent = null) {
   const preview = schema?.preview || {}
   const layoutId = String(schema?.layout_id || '').toLowerCase()
   const slotId = String(slot?.id || '').toUpperCase()
   const mode = resolvePreviewMode(schema)
   const saved = contentBySlotId?.[`${slot.id}__chart`]
+  const chart = slideContent?.chart && typeof slideContent.chart === 'object' ? slideContent.chart : null
 
   let chartType =
     saved?.chartType ||
+    chart?.type ||
+    chart?.chartType ||
     slot?.chart_type ||
     slot?.chartType ||
     preview?.chartType ||
     preview?.chart_type
 
   if (!chartType) {
-    if (
-      mode === 'chart_split' ||
+    if (/^DONUT/.test(slotId) || /pie|donut/.test(layoutId)) {
+      chartType = 'donut'
+    } else if (/area/.test(layoutId)) {
+      chartType = 'area'
+    } else if (
       /exponential|line_chart|line-chart/.test(layoutId) ||
       /^LINE_/.test(slotId)
     ) {
       chartType = 'line-points'
     } else if (/BAR_CHART|bar_chart|^BAR_/.test(slotId) || mode === 'grid_insights_chart') {
       chartType = 'column-grouped'
-    } else if (/^DONUT/.test(slotId) || /pie|donut/.test(layoutId)) {
-      chartType = 'donut'
-    } else if (/area/.test(layoutId)) {
-      chartType = 'area'
     } else if (/kpi|stat/.test(layoutId) && slotId.includes('KPI')) {
       chartType = 'kpi'
     } else {
@@ -321,27 +323,33 @@ function resolveChartContent(slot, schema, palette, contentBySlotId) {
   const labels =
     saved?.data?.labels ||
     saved?.labels ||
+    (Array.isArray(chart?.labels) ? chart.labels : null) ||
     preview?.chartLabels ||
-    ['Q1', 'Q2', 'Q3', 'Q4']
+    []
   const values =
     saved?.data?.series?.[0]?.values ||
     saved?.data?.values ||
     saved?.values ||
+    chart?.series?.[0]?.values ||
+    chart?.data ||
+    chart?.values ||
     preview?.chartValues ||
-    [12, 19, 14, 22]
+    []
+
+  const barColor = palette?.primary || palette?.accent || LAYOUT_SURFACE.bar
 
   return {
     chartType,
-    colors: [LAYOUT_SURFACE.bar],
+    colors: [barColor],
     showGrid: true,
     showLabels: true,
     premium: true,
     data: {
-      labels: Array.isArray(labels) ? labels : ['Q1', 'Q2', 'Q3', 'Q4'],
+      labels: Array.isArray(labels) && labels.length ? labels : [],
       series: [
         {
-          name: saved?.data?.series?.[0]?.name || 'Series',
-          values: (Array.isArray(values) ? values : [12, 19, 14, 22]).map(Number),
+          name: saved?.data?.series?.[0]?.name || chart?.series?.[0]?.name || 'Series',
+          values: (Array.isArray(values) ? values : []).map(Number).filter((v) => !Number.isNaN(v)),
         },
       ],
     },
@@ -482,12 +490,37 @@ function buildDecorationElement(slot, placement) {
   }
 }
 
+function resolveSplitImageEdgeFade(schema, slot, allSlots) {
+  if (!slot?.region || !Array.isArray(allSlots)) return null
+  const imgReg = parseRegion(slot.region)
+  if (!imgReg) return null
+  const textRoles = new Set(['heading', 'subheading', 'body', 'caption', 'stat', 'stat_label', 'quote', 'eyebrow'])
+  const textSlots = allSlots.filter((s) => s.id !== slot.id && textRoles.has(String(s.role || '').toLowerCase()))
+  if (!textSlots.length) return null
+  let textColSum = 0
+  let textCount = 0
+  for (const ts of textSlots) {
+    const tr = parseRegion(ts.region)
+    if (!tr) continue
+    textColSum += (tr.c1 + tr.c2) / 2
+    textCount += 1
+  }
+  if (!textCount) return null
+  const textCenter = textColSum / textCount
+  const imgCenter = (imgReg.c1 + imgReg.c2) / 2
+  if (imgCenter > textCenter && imgReg.c1 >= 6) return { side: 'left', width: 0.3 }
+  if (imgCenter < textCenter && imgReg.c2 <= 7) return { side: 'right', width: 0.3 }
+  return null
+}
+
 function buildImageElement(slot, placement, contentBySlotId, options = {}) {
   const slotId = slot.id
   const url = contentBySlotId?.[`${slotId}__url`] || contentBySlotId?.[`${slotId}_url`]
   const presentation = resolveImagePresentation(slot)
-  const borderRadius = slot.borderRadius != null ? slot.borderRadius : presentation.borderRadius
-  const shadow = slot.shadow ?? presentation.shadow
+  const edgeFade = resolveSplitImageEdgeFade(options.schema, slot, options.schema?.slots)
+  const borderRadius =
+    edgeFade != null ? 0 : slot.borderRadius != null ? slot.borderRadius : presentation.borderRadius
+  const shadow = edgeFade != null ? undefined : slot.shadow ?? presentation.shadow
   const colorMap = colorRoleMapFromPalette(options.palette)
   return {
     id: `slot-${slot.id}`,
@@ -504,6 +537,7 @@ function buildImageElement(slot, placement, contentBySlotId, options = {}) {
       skeletonColor: colorMap.surface || colorMap.cardBg,
       borderRadius,
       ...(shadow ? { boxShadow: shadow, shadow } : {}),
+      ...(edgeFade ? { edgeFade } : {}),
     },
   }
 }
@@ -517,7 +551,7 @@ function buildChartElement(slot, placement, options) {
     role: 'chart',
     layer: layerForSlot(slot),
     placement,
-    content: resolveChartContent(slot, schema, palette, contentBySlotId),
+    content: resolveChartContent(slot, schema, palette, contentBySlotId, options.content),
   }
 }
 

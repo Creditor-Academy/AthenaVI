@@ -1,6 +1,12 @@
-import { MdArrowForward, MdCheck, MdContentCopy, MdAutoAwesome } from 'react-icons/md'
+import { useEffect, useRef, useState } from 'react'
+import { MdArrowForward, MdAdd, MdCheck, MdContentCopy, MdAutoAwesome } from 'react-icons/md'
 import { formatFontWeightLabel, getFontRole } from '../utils/brandKitUtils'
-import { findLogoMedia, resolveButtonStyle } from '../../../../utils/brandKitHelpers'
+import {
+  findLogoMedia,
+  normalizeLogoRole,
+  resolveButtonStyle,
+  LOGO_ROLES,
+} from '../../../../utils/brandKitHelpers'
 
 function contrastInk(hex) {
   const raw = String(hex || '#000000').replace('#', '')
@@ -32,6 +38,7 @@ function missingTab(id) {
   if (id === 'fonts' || id === 'typography') return 'typography'
   if (id === 'guidelines' || id === 'guideline') return 'guideline'
   if (id === 'colors' || id === 'palette') return 'identity'
+  if (id === 'buttons' || id === 'button') return 'buttons'
   if (id === 'voice') return 'overview'
   return null
 }
@@ -72,6 +79,65 @@ export default function OverviewTab(props) {
     primaryLogo?.src ||
     primaryLogo?.presignedUrl ||
     logoPreviewUrl
+
+  const orderedLogos = (() => {
+    const list = Array.isArray(logos) ? [...logos] : []
+    const rank = (role) => {
+      const n = normalizeLogoRole(role)
+      const i = LOGO_ROLES.indexOf(n)
+      return i === -1 ? 99 : i
+    }
+    list.sort((a, b) => {
+      const ra = rank(a.role || a.name)
+      const rb = rank(b.role || b.name)
+      if (ra !== rb) return ra - rb
+      return String(a.role || '').localeCompare(String(b.role || ''))
+    })
+    // Prefer one tile per normalized role (first wins after sort)
+    const seen = new Set()
+    return list.filter((m) => {
+      const key = normalizeLogoRole(m.role || m.name) || String(m.id || '')
+      if (!key || seen.has(key)) return false
+      seen.add(key)
+      return Boolean(m.url || m.src || m.presignedUrl)
+    })
+  })()
+
+  const logoGridRef = useRef(null)
+  const [logoSlots, setLogoSlots] = useState(4)
+  useEffect(() => {
+    const el = logoGridRef.current
+    if (!el) return undefined
+    const MIN_TILE = 68
+    const GAP = 10
+    const measure = () => {
+      const w = el.clientWidth || 0
+      const n = Math.max(1, Math.floor((w + GAP) / (MIN_TILE + GAP)))
+      setLogoSlots(n)
+    }
+    measure()
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null
+    ro?.observe(el)
+    return () => ro?.disconnect()
+  }, [orderedLogos.length])
+
+  const needsMoreTile = orderedLogos.length > logoSlots
+  const visibleLogoCount = needsMoreTile ? Math.max(0, logoSlots - 1) : orderedLogos.length
+  const visibleLogos = orderedLogos.slice(0, visibleLogoCount)
+  const hiddenLogoCount = Math.max(0, orderedLogos.length - visibleLogoCount)
+
+  const logoNeedsDarkCanvas = (role) => {
+    const r = normalizeLogoRole(role)
+    return r === 'light' || r === 'white'
+  }
+
+  const formatOverviewLogoRole = (role) => {
+    const r = normalizeLogoRole(role)
+    if (r === 'with-name-below') return 'Name below'
+    if (r === 'with-name-adjacent') return 'Name adjacent'
+    return r || 'logo'
+  }
+
   const healthScore = Math.max(0, Math.min(100, Number(kitHealth?.score) || 0))
   const displayName = kitName?.trim() || 'Brand Kit'
   const displayTagline = slogan?.trim() || kitData.meta?.tagline || ''
@@ -207,6 +273,35 @@ export default function OverviewTab(props) {
             </div>
           </div>
 
+          <div className="bk-ov-hero-buttons" aria-label="Button styles">
+            <div className="bk-ov-hero-buttons-head">
+              <span className="bk-ov-hero-buttons-label">Buttons</span>
+              <button
+                type="button"
+                className="bk-ov-link-btn"
+                onClick={() => setEditorTab('buttons')}
+              >
+                Edit <MdArrowForward size={14} />
+              </button>
+            </div>
+            <div className="bk-ov-buttons-row">
+              {['primary', 'secondary'].map((kind) => {
+                const resolved = resolveButtonStyle(kitData, kind)
+                return (
+                  <button
+                    key={kind}
+                    type="button"
+                    className="bk-button-style-preview"
+                    style={resolved.css}
+                    onClick={() => setEditorTab('buttons')}
+                  >
+                    {resolved.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           {missing.length > 0 && (() => {
             const MAX_CHIPS_VISIBLE = 4
             const validMissing = missing.filter((id) => missingTab(id) !== null)
@@ -301,32 +396,65 @@ export default function OverviewTab(props) {
           </div>
         </aside>
 
-        <section className="bk-ov-logo-card bk-ov-buttons-card">
+        <section className="bk-ov-logo-card">
           <div className="bk-ov-panel-head">
             <div>
-              <h4>Buttons</h4>
-              <p>Primary and secondary CTA styles</p>
+              <h4>Logos</h4>
+              <p>
+                {orderedLogos.length
+                  ? `${orderedLogos.length} mark${orderedLogos.length === 1 ? '' : 's'}`
+                  : 'Upload brand marks'}
+              </p>
             </div>
-            <button type="button" className="bk-ov-link-btn" onClick={() => setEditorTab('identity')}>
-              Edit <MdArrowForward size={14} />
+            <button type="button" className="bk-ov-link-btn" onClick={() => setEditorTab('logos')}>
+              Logos <MdArrowForward size={14} />
             </button>
           </div>
-          <div className="bk-ov-buttons-row">
-            {['primary', 'secondary'].map((kind) => {
-              const resolved = resolveButtonStyle(kitData, kind)
-              return (
+
+          {orderedLogos.length ? (
+            <div className="bk-ov-logo-grid" ref={logoGridRef}>
+              {visibleLogos.map((logo) => {
+                const role = normalizeLogoRole(logo.role || logo.name)
+                const src = logo.url || logo.src || logo.presignedUrl
+                const dark = logoNeedsDarkCanvas(role)
+                return (
+                  <button
+                    key={logo.id || role}
+                    type="button"
+                    className={`bk-ov-logo-tile${dark ? ' is-dark' : ''}`}
+                    onClick={() => setEditorTab('logos')}
+                    title={formatOverviewLogoRole(role)}
+                  >
+                    <img src={src} alt={`${formatOverviewLogoRole(role)} logo`} />
+                    <span className="bk-ov-logo-tile-role">{formatOverviewLogoRole(role)}</span>
+                  </button>
+                )
+              })}
+              {needsMoreTile && hiddenLogoCount > 0 && (
                 <button
-                  key={kind}
                   type="button"
-                  className="bk-button-style-preview"
-                  style={resolved.css}
-                  onClick={() => setEditorTab('identity')}
+                  className="bk-ov-logo-tile bk-ov-logo-tile--more"
+                  onClick={() => setEditorTab('logos')}
+                  title={`View ${hiddenLogoCount} more logos`}
                 >
-                  {resolved.label}
+                  <strong>+{hiddenLogoCount}</strong>
+                  <span>more</span>
                 </button>
-              )
-            })}
-          </div>
+              )}
+            </div>
+          ) : (
+            <div className="bk-ov-logo-grid bk-ov-logo-grid--empty" ref={logoGridRef}>
+              <button
+                type="button"
+                className="bk-ov-logo-tile bk-ov-logo-tile--add"
+                disabled={!canWrite}
+                onClick={() => triggerUpload('logo', 'primary')}
+              >
+                <MdAdd size={24} />
+                <span>Upload logo</span>
+              </button>
+            </div>
+          )}
         </section>
 
         <section className="bk-ov-voice-card">
