@@ -61,7 +61,10 @@ export default function AIPptGenerator({
         config.theme,
         config.availableOptions?.colorThemes
       )
-      if (!config.brandKitId && !config.packId && wizardThemeTokens) {
+      const paletteMode =
+        config.themeMode === 'palette' ||
+        (!config.themeMode && !config.brandKitId && !config.packId)
+      if (paletteMode && wizardThemeTokens) {
         await presentationService.setTheme(session.workspaceId, session.presentationId, {
           themeId: config.theme || undefined,
           themeTokens: wizardThemeTokens,

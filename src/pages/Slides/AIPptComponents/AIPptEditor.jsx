@@ -93,7 +93,7 @@ function resolveThemeVisual(themeId, themeTokens) {
       palette,
     }
   }
-  const id = String(themeId || '')
+  const id = String(themeTokens?.wizardColorThemeId || themeId || '')
   const fallback = THEMES.find((t) => t.id === id || toApiThemeId(t.id) === id) || THEMES[0]
   return {
     ...fallback,
@@ -484,7 +484,7 @@ export default function AIPptEditor({
   }, [presentationId, layoutSchemaMap])
 
   const themeVisual = useMemo(
-    () => resolveThemeVisual(config.theme, themeTokens),
+    () => resolveThemeVisual(themeTokens?.wizardColorThemeId || config.theme, themeTokens),
     [config.theme, themeTokens]
   )
 

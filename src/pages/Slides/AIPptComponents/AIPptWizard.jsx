@@ -194,6 +194,7 @@ export default function AIPptWizard({
   const [brandKits, setBrandKits] = useState([])
   const [selectedPackId, setSelectedPackId] = useState('')
   const [selectedBrandKitId, setSelectedBrandKitId] = useState('')
+  const [themeMode, setThemeMode] = useState('palette')
   const [workspaceHint, setWorkspaceHint] = useState(null)
   
   const outlineRef = useRef(null)
@@ -366,6 +367,7 @@ export default function AIPptWizard({
         industries: selectedIndustries,
         baseTemplate,
         theme,
+        themeMode,
         backendThemeId: useCatalogTheme ? toApiThemeId(theme) : null,
         screenSize,
         slides: slideCount,
@@ -691,6 +693,7 @@ export default function AIPptWizard({
             themes={THEMES}
             theme={theme}
             onSelectTheme={setTheme}
+            onThemeModeChange={setThemeMode}
             onOpenThemeModal={() => setIsThemeModalOpen(true)}
             screenSize={screenSize}
             onScreenSizeChange={setScreenSize}

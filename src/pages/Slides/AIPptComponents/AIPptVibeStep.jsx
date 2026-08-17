@@ -160,6 +160,7 @@ export default function AIPptVibeStep({
   themes = [],
   theme,
   onSelectTheme,
+  onThemeModeChange,
   onOpenThemeModal: _onOpenThemeModal,
   screenSize,
   onScreenSizeChange,
@@ -172,6 +173,10 @@ export default function AIPptVibeStep({
     if (selectedBrandKitId) return 'brand'
     return 'palette'
   })
+
+  useEffect(() => {
+    onThemeModeChange?.(activeChoice)
+  }, [activeChoice, onThemeModeChange])
   const [searchQuery, setSearchQuery] = useState('')
   const [brandKitDetails, setBrandKitDetails] = useState({})
   const [packDetail, setPackDetail] = useState(null)

@@ -187,7 +187,12 @@ export function buildPresentationGenerationPayload(
         color: config.color || '',
         industries: Array.isArray(config.industries) ? config.industries : [],
         baseTemplate: config.baseTemplate || '',
-        colorTheme: config.theme || '',
+        themeMode:
+          config.themeMode ||
+          (config.packId ? 'template' : config.brandKitId ? 'brand' : 'palette'),
+        colorTheme: config.themeMode === 'palette' || (!config.themeMode && !config.packId && !config.brandKitId)
+          ? (config.theme || '')
+          : '',
         canvasSize: config.screenSize || '16:9',
         imageType: config.imageSource || '',
         imageStyle: config.mediaStyle || '',
