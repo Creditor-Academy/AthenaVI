@@ -322,7 +322,23 @@ class BrandKitService {
 
     if (logoRole) body.logoRole = logoRole
 
-    if (logoPosition) body.logoPosition = logoPosition
+    if (logoPosition) {
+      const raw = String(logoPosition)
+        .trim()
+        .toLowerCase()
+        .replace(/[-\s]+/g, '_')
+      const aliases = {
+        back_center: 'center_back',
+        back: 'center_back',
+        rear: 'center_back',
+        rear_center: 'center_back',
+        upper_back: 'center_back',
+        back_full: 'full_back',
+        full_rear: 'full_back',
+        rear_full: 'full_back',
+      }
+      body.logoPosition = aliases[raw] || raw
+    }
 
     const data = await this.request(
       API_CONFIG.ENDPOINTS.BRAND_KITS.MOCKUPS_GENERATE(workspaceId, brandKitId),

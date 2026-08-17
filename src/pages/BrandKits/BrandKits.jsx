@@ -16,6 +16,7 @@ import {
   logoRolesMatch,
   findLogoMedia,
   refreshEditorCredits,
+  isDarkWordmarkRole,
 } from '../../utils/brandKitHelpers'
 import {
   finishTransparentMark,
@@ -23,9 +24,9 @@ import {
   loadLogoCanvasFromBlob,
   loadLogoCanvasFromUrl,
   canvasToPngFile,
-  composeWordmarkBelow,
-  composeWordmarkAdjacent,
   resolveWordmarkTypeSpec,
+  resolveWordmarkTextColorsFromKit,
+  composeWordmarkForRole,
 } from '../../components/features/brand-kits/utils/composeLogoVariants'
 import {
   ensureGoogleFontLoaded,
@@ -847,28 +848,31 @@ function BrandKits() {
         throw new Error('Primary logo required to build wordmark lockups')
       }
       const { fontFamily, fontWeight } = resolveWordmarkTypeSpec(kitData)
-      const textColor = '#0F172A'
-      let markCanvas = await loadMediaCanvas(primary, logoPreviewUrl)
-      markCanvas = finishTransparentMark(markCanvas)
+      const textColors = resolveWordmarkTextColorsFromKit(kitData)
+      let lightMarkCanvas = await loadMediaCanvas(primary, logoPreviewUrl)
+      lightMarkCanvas = finishTransparentMark(lightMarkCanvas)
+
+      const darkMarkSource =
+        findLogoMedia(mediaList, 'white') ||
+        findLogoMedia(mediaList, 'dark') ||
+        primary
+      let darkMarkCanvas = await loadMediaCanvas(darkMarkSource, logoPreviewUrl)
+      darkMarkCanvas = finishTransparentMark(darkMarkCanvas)
+      if (!findLogoMedia(mediaList, 'white') && !findLogoMedia(mediaList, 'dark')) {
+        darkMarkCanvas = recolorOpaquePixels(darkMarkCanvas, '#FFFFFF')
+      }
 
       for (const role of LOGO_WORDMARK_ROLES) {
         setGeneratingRole(role)
-        const composed =
-          role === 'with-name-adjacent'
-            ? await composeWordmarkAdjacent({
-                markCanvas,
-                name: kitName,
-                fontFamily,
-                fontWeight,
-                textColor,
-              })
-            : await composeWordmarkBelow({
-                markCanvas,
-                name: kitName,
-                fontFamily,
-                fontWeight,
-                textColor,
-              })
+        const markCanvas = isDarkWordmarkRole(role) ? darkMarkCanvas : lightMarkCanvas
+        const composed = await composeWordmarkForRole({
+          role,
+          markCanvas,
+          name: kitName,
+          fontFamily,
+          fontWeight,
+          textColors,
+        })
         await uploadFinishedLogo(composed, role)
       }
     },
@@ -947,24 +951,28 @@ function BrandKits() {
           throw new Error('Primary logo required to build wordmark lockups')
         }
         const { fontFamily, fontWeight } = resolveWordmarkTypeSpec(kitData)
+        const textColors = resolveWordmarkTextColorsFromKit(kitData)
         let markCanvas = await loadMediaCanvas(primary, logoPreviewUrl)
         markCanvas = finishTransparentMark(markCanvas)
-        const composed =
-          role === 'with-name-adjacent'
-            ? await composeWordmarkAdjacent({
-                markCanvas,
-                name: kitName,
-                fontFamily,
-                fontWeight,
-                textColor: '#0F172A',
-              })
-            : await composeWordmarkBelow({
-                markCanvas,
-                name: kitName,
-                fontFamily,
-                fontWeight,
-                textColor: '#0F172A',
-              })
+        if (isDarkWordmarkRole(role)) {
+          const darkMarkSource =
+            findLogoMedia(kitMedia, 'white') ||
+            findLogoMedia(kitMedia, 'dark') ||
+            primary
+          markCanvas = await loadMediaCanvas(darkMarkSource, logoPreviewUrl)
+          markCanvas = finishTransparentMark(markCanvas)
+          if (!findLogoMedia(kitMedia, 'white') && !findLogoMedia(kitMedia, 'dark')) {
+            markCanvas = recolorOpaquePixels(markCanvas, '#FFFFFF')
+          }
+        }
+        const composed = await composeWordmarkForRole({
+          role,
+          markCanvas,
+          name: kitName,
+          fontFamily,
+          fontWeight,
+          textColors,
+        })
         await uploadFinishedLogo(composed, role)
       } else if (LOGO_VARIANT_APPLY_ROLES.includes(role)) {
         await brandKitService.suggestLogoVariants(workspaceId, editingKitId, {

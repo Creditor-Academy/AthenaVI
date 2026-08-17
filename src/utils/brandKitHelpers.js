@@ -31,6 +31,8 @@ export function emptyBrandKitData() {
         weight: 700,
         sizePx: 40,
         lineHeight: 1.2,
+        lightTextColorId: 'c3',
+        darkTextColorId: 'c6',
       },
       subheading: {
         fontPairingId: null,
@@ -38,6 +40,8 @@ export function emptyBrandKitData() {
         weight: 600,
         sizePx: 20,
         lineHeight: 1.4,
+        lightTextColorId: 'c3',
+        darkTextColorId: 'c6',
       },
       body: {
         fontPairingId: null,
@@ -45,6 +49,8 @@ export function emptyBrandKitData() {
         weight: 400,
         sizePx: 14,
         lineHeight: 1.6,
+        lightTextColorId: 'c3',
+        darkTextColorId: 'c6',
       },
     },
     voice: {
@@ -86,6 +92,10 @@ export function emptyBrandKitData() {
         fontWeight: 600,
         fontSizePx: 14,
       },
+    },
+    wordmarks: {
+      lightTextColorId: 'c3',
+      darkTextColorId: 'c6',
     },
   }
 }
@@ -129,16 +139,20 @@ function parseLineHeight(value, fallback = 1.4) {
 }
 
 /** Normalize one font role to backend-compatible fields (keeps UI-friendly aliases). */
-export function normalizeFontRole(role = {}, defaults = {}) {
+export function normalizeFontRole(role = {}, defaults = {}, colorIds = []) {
   const sizePx = parseSizePx(role.sizePx ?? role.size, defaults.sizePx ?? 16)
   const weight = parseWeight(role.weight, defaults.weight ?? 400)
   const lineHeight = parseLineHeight(role.lineHeight, defaults.lineHeight ?? 1.4)
+  const has = (id) => id && colorIds.includes(id)
+  const pickId = (id, fallback) => (has(id) ? id : has(fallback) ? fallback : colorIds[0] || null)
   return {
     fontPairingId: role.fontPairingId ?? defaults.fontPairingId ?? null,
     family: role.family || defaults.family || null,
     weight,
     sizePx,
     lineHeight,
+    lightTextColorId: pickId(role.lightTextColorId, defaults.lightTextColorId),
+    darkTextColorId: pickId(role.darkTextColorId, defaults.darkTextColorId),
     // UI aliases used by existing tabs
     size: `${sizePx}px`,
   }
@@ -255,6 +269,7 @@ export function normalizeBrandKitData(data = {}) {
     ...empty.colorRoles,
     ...(data.colorRoles || {}),
   })
+  const colorIds = colors.map((c) => c.id)
   return {
     ...empty,
     ...data,
@@ -266,12 +281,13 @@ export function normalizeBrandKitData(data = {}) {
     colors,
     colorRoles,
     fonts: {
-      heading: normalizeFontRole(fontsIn.heading, empty.fonts.heading),
+      heading: normalizeFontRole(fontsIn.heading, empty.fonts.heading, colorIds),
       subheading: normalizeFontRole(
         fontsIn.subheading || fontsIn.tertiary,
-        empty.fonts.subheading
+        empty.fonts.subheading,
+        colorIds
       ),
-      body: normalizeFontRole(fontsIn.body, empty.fonts.body),
+      body: normalizeFontRole(fontsIn.body, empty.fonts.body, colorIds),
     },
     voice: {
       ...empty.voice,
@@ -302,6 +318,18 @@ export function normalizeBrandKitData(data = {}) {
         empty.buttons.secondary,
         colors.map((c) => c.id)
       ),
+    },
+    wordmarks: {
+      ...empty.wordmarks,
+      ...(data.wordmarks || {}),
+      lightTextColorId:
+        data.wordmarks?.lightTextColorId && colors.some((c) => c.id === data.wordmarks.lightTextColorId)
+          ? data.wordmarks.lightTextColorId
+          : empty.wordmarks.lightTextColorId,
+      darkTextColorId:
+        data.wordmarks?.darkTextColorId && colors.some((c) => c.id === data.wordmarks.darkTextColorId)
+          ? data.wordmarks.darkTextColorId
+          : empty.wordmarks.darkTextColorId,
     },
   }
 }
@@ -521,6 +549,8 @@ export const LOGO_ROLES = [
   'dark-mode',
   'with-name-below',
   'with-name-adjacent',
+  'with-name-below-dark',
+  'with-name-adjacent-dark',
   'black',
   'white',
 ]
@@ -558,6 +588,18 @@ export const LOGO_VARIANT_CARDS = [
     darkCanvas: false,
   },
   {
+    role: 'with-name-below-dark',
+    label: 'With Name Below (Dark)',
+    desc: 'Stacked lockup with dark-mode wordmark text colour.',
+    darkCanvas: true,
+  },
+  {
+    role: 'with-name-adjacent-dark',
+    label: 'With Name Adjacent (Dark)',
+    desc: 'Horizontal lockup with dark-mode wordmark text colour.',
+    darkCanvas: true,
+  },
+  {
     role: 'black',
     label: 'Black / Monochrome',
     desc: 'Single-colour black version for light backgrounds and print.',
@@ -575,7 +617,47 @@ export const LOGO_VARIANT_CARDS = [
 export const LOGO_VARIANT_APPLY_ROLES = ['light', 'dark', 'black', 'white']
 
 /** Roles composed on the client from the primary mark + kit typography. */
-export const LOGO_WORDMARK_ROLES = ['with-name-below', 'with-name-adjacent']
+export const LOGO_WORDMARK_ROLES = [
+  'with-name-below',
+  'with-name-adjacent',
+  'with-name-below-dark',
+  'with-name-adjacent-dark',
+]
+
+export function resolveWordmarkTextColorIds(kitData) {
+  return resolveFontRoleTextColorIds(kitData, 'heading')
+}
+
+export function resolveFontRoleTextColorIds(kitData, roleKey) {
+  const roles = kitData?.colorRoles || {}
+  const face = kitData?.fonts?.[roleKey] || {}
+  return {
+    lightTextColorId: face.lightTextColorId || roles.text || null,
+    darkTextColorId: face.darkTextColorId || roles.textDark || roles.text || null,
+  }
+}
+
+export function resolveFontRoleTextColors(kitData, roleKey) {
+  const colors = kitData?.colors || []
+  const { lightTextColorId, darkTextColorId } = resolveFontRoleTextColorIds(kitData, roleKey)
+  const hexForId = (id, fallback) => {
+    const match = colors.find((c) => c.id === id)
+    return match?.hex || fallback
+  }
+  return {
+    light: hexForId(lightTextColorId, '#0F172A'),
+    dark: hexForId(darkTextColorId, '#F8FAFC'),
+  }
+}
+
+export function resolveWordmarkTextColors(kitData) {
+  return resolveFontRoleTextColors(kitData, 'heading')
+}
+
+export function isDarkWordmarkRole(role) {
+  const r = normalizeLogoRole(role)
+  return r === 'with-name-below-dark' || r === 'with-name-adjacent-dark'
+}
 
 /**
  * Normalize logo role aliases so UI cards match API media.

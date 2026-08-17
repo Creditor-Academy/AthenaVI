@@ -81,11 +81,47 @@ function getProductImage(templateId, iconType) {
   return MOCKUP_PRODUCT_IMAGES[id] || MOCKUP_PRODUCT_IMAGES[icon] || null
 }
 
+const CANONICAL_LOGO_POSITIONS = ['center_chest', 'left_chest', 'full_front', 'center_back', 'full_back']
+const LOGO_POSITION_ALIASES = {
+  back_center: 'center_back',
+  back: 'center_back',
+  rear: 'center_back',
+  rear_center: 'center_back',
+  upper_back: 'center_back',
+  back_full: 'full_back',
+  full_rear: 'full_back',
+  rear_full: 'full_back',
+}
+
+function canonicalizeLogoPosition(pos, fallback = 'center_chest') {
+  const raw = String(pos || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[-\s]+/g, '_')
+  if (!raw) return fallback
+  const canonical = LOGO_POSITION_ALIASES[raw] || raw
+  return CANONICAL_LOGO_POSITIONS.includes(canonical) ? canonical : fallback
+}
+
+function positionsMatch(a, b) {
+  return canonicalizeLogoPosition(a) === canonicalizeLogoPosition(b)
+}
+
+function catalogAllowsPosition(positions, pos) {
+  const canonical = canonicalizeLogoPosition(pos)
+  if (!Array.isArray(positions) || positions.length === 0) {
+    return CANONICAL_LOGO_POSITIONS.includes(canonical)
+  }
+  return positions.some((p) => canonicalizeLogoPosition(p) === canonical)
+}
+
 const LOGO_POSITION_LABELS = {
   center_chest: 'Center chest',
   left_chest: 'Left chest',
   full_front: 'Full front',
-  back_center: 'Back chest',
+  center_back: 'Back',
+  full_back: 'Full back',
+  back_center: 'Back',
 }
 
 const PRESET_PRODUCT_COLORS = [
@@ -109,7 +145,7 @@ const DEFAULT_MOCKUP_CATALOG = [
     description: 'Cotton crewneck t-shirt with customizable chest position and product color.',
     supportsItemColor: true,
     supportsLogoPosition: true,
-    logoPositions: ['center_chest', 'left_chest', 'full_front', 'back_center'],
+    logoPositions: ['center_chest', 'left_chest', 'full_front', 'center_back', 'full_back'],
     defaultLogoPosition: 'center_chest',
     iconType: 'tshirt',
   },
@@ -120,7 +156,7 @@ const DEFAULT_MOCKUP_CATALOG = [
     description: 'Fleece pullover hoodie with kangaroo pocket and front logo placement.',
     supportsItemColor: true,
     supportsLogoPosition: true,
-    logoPositions: ['center_chest', 'left_chest', 'full_front', 'back_center'],
+    logoPositions: ['center_chest', 'left_chest', 'full_front', 'center_back', 'full_back'],
     defaultLogoPosition: 'center_chest',
     iconType: 'hoodie',
   },
@@ -389,6 +425,8 @@ const POSITION_OPTION_LABELS = {
   center_chest: 'Center chest',
   left_chest: 'Left chest',
   full_front: 'Full front',
+  center_back: 'Back',
+  full_back: 'Full back',
   back_center: 'Back',
 }
 
@@ -396,11 +434,11 @@ const REAL_POSITION_MOCKUP_IMAGES = [
   { itemType: 'tshirt', position: 'center_chest', label: 'Center chest', url: '/mockups/tshirt_center_chest.jpg' },
   { itemType: 'tshirt', position: 'left_chest', label: 'Left chest', url: '/mockups/tshirt_left_chest.jpg' },
   { itemType: 'tshirt', position: 'full_front', label: 'Full front', url: '/mockups/tshirt_full_front.jpg' },
-  { itemType: 'tshirt', position: 'back_center', label: 'Back', url: '/mockups/tshirt_back_center.jpg' },
+  { itemType: 'tshirt', position: 'center_back', label: 'Back', url: '/mockups/tshirt_back_center.jpg' },
   { itemType: 'hoodie', position: 'center_chest', label: 'Center chest', url: '/mockups/hoodie_center_chest.jpg' },
   { itemType: 'hoodie', position: 'left_chest', label: 'Left chest', url: '/mockups/hoodie_left_chest.jpg' },
   { itemType: 'hoodie', position: 'full_front', label: 'Full front', url: '/mockups/hoodie_full_front.jpg' },
-  { itemType: 'hoodie', position: 'back_center', label: 'Back', url: '/mockups/hoodie_back_center.jpg' },
+  { itemType: 'hoodie', position: 'center_back', label: 'Back', url: '/mockups/hoodie_back_center.jpg' },
 ]
 
 /** Logo position picker — left hero preview + right 2×2 options for the selected surface. */
@@ -417,9 +455,10 @@ function InteractiveGarmentPresentation({
     () => REAL_POSITION_MOCKUP_IMAGES.filter((m) => m.itemType === garmentKey),
     [garmentKey]
   )
+  const selectedCanonical = canonicalizeLogoPosition(selectedPosition)
 
   const activePhoto =
-    options.find((m) => m.position === selectedPosition) || options[0] || null
+    options.find((m) => positionsMatch(m.position, selectedCanonical)) || options[0] || null
 
   return (
     <div className="bk-pos-layout">
@@ -434,14 +473,14 @@ function InteractiveGarmentPresentation({
         <div className="bk-pos-hero-meta">
           <span className="bk-pos-hero-eyebrow">{garmentLabel}</span>
           <strong className="bk-pos-hero-title">
-            {POSITION_OPTION_LABELS[selectedPosition] || activePhoto?.label || 'Logo position'}
+            {POSITION_OPTION_LABELS[selectedCanonical] || activePhoto?.label || 'Logo position'}
           </strong>
         </div>
       </div>
 
       <div className="bk-pos-options" role="listbox" aria-label={`${garmentLabel} logo positions`}>
         {options.map((mockup) => {
-          const active = selectedPosition === mockup.position
+          const active = positionsMatch(selectedCanonical, mockup.position)
           return (
             <button
               key={mockup.position}
@@ -450,7 +489,7 @@ function InteractiveGarmentPresentation({
               aria-selected={active}
               className={`bk-pos-option${active ? ' is-active' : ''}`}
               disabled={!canWrite}
-              onClick={() => onSelectPosition?.(mockup.position)}
+              onClick={() => onSelectPosition?.(canonicalizeLogoPosition(mockup.position))}
             >
               <span className="bk-pos-option-media">
                 <img src={mockup.url} alt="" />
@@ -589,9 +628,13 @@ export default function LogoMockupsSection({
       return
     }
     if (selectedTemplate.supportsLogoPosition) {
-      const positions = selectedTemplate.logoPositions || ['center_chest', 'left_chest', 'full_front', 'back_center']
-      const fallback = selectedTemplate.defaultLogoPosition || positions[0] || 'center_chest'
-      setLogoPosition((prev) => (prev && positions.includes(prev) ? prev : fallback))
+      const positions = selectedTemplate.logoPositions || CANONICAL_LOGO_POSITIONS
+      const fallback = canonicalizeLogoPosition(
+        selectedTemplate.defaultLogoPosition || positions[0] || 'center_chest'
+      )
+      setLogoPosition((prev) =>
+        prev && catalogAllowsPosition(positions, prev) ? canonicalizeLogoPosition(prev) : fallback
+      )
     } else {
       setLogoPosition(null)
     }
@@ -640,12 +683,11 @@ export default function LogoMockupsSection({
       }
       if (itemColor) options.itemColor = itemColor
       if (tpl?.supportsLogoPosition) {
-        const positions = tpl.logoPositions || ['center_chest', 'left_chest', 'full_front', 'back_center']
-        const pos =
-          (logoPosition && positions.includes(logoPosition) && logoPosition) ||
-          tpl.defaultLogoPosition ||
-          positions[0] ||
-          'center_chest'
+        const positions = tpl.logoPositions || CANONICAL_LOGO_POSITIONS
+        const selected = canonicalizeLogoPosition(logoPosition)
+        const pos = catalogAllowsPosition(positions, selected)
+          ? selected
+          : canonicalizeLogoPosition(tpl.defaultLogoPosition || positions[0] || 'center_chest')
         options.logoPosition = pos
       }
       return options
@@ -1071,7 +1113,7 @@ export default function LogoMockupsSection({
             <InteractiveGarmentPresentation
               templateId={selectedTemplate?.id || selectedTemplateId || 'tshirt'}
               selectedPosition={logoPosition || 'center_chest'}
-              onSelectPosition={(pos) => setLogoPosition(pos)}
+              onSelectPosition={(pos) => setLogoPosition(canonicalizeLogoPosition(pos))}
               canWrite={canWrite}
             />
           </div>
@@ -1133,7 +1175,18 @@ export default function LogoMockupsSection({
           </button>
           {selectedTemplate && (
             <p className="bk-mockup-selected-hint">
-              Generating <strong>{selectedTemplate.label}</strong> with <strong>{logoRoleLabel(logoRole)}</strong> mark.
+              Generating <strong>{selectedTemplate.label}</strong>
+              {' · '}
+              <strong>{logoRoleLabel(logoRole)}</strong>
+              {showPosition ? (
+                <>
+                  {' · '}
+                  <strong>
+                    {POSITION_OPTION_LABELS[canonicalizeLogoPosition(logoPosition)] ||
+                      canonicalizeLogoPosition(logoPosition)}
+                  </strong>
+                </>
+              ) : null}
             </p>
           )}
         </div>

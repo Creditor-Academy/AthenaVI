@@ -5,6 +5,7 @@
  */
 
 import { ensureGoogleFontLoaded, getFontRole } from './brandKitUtils'
+import { resolveFontRoleTextColors } from '../../../../utils/brandKitHelpers'
 
 function loadHtmlImage(src) {
   return new Promise((resolve, reject) => {
@@ -343,4 +344,30 @@ export function resolveWordmarkTypeSpec(kitData) {
     fontFamily: heading.family || 'Outfit',
     fontWeight: Number(heading.weight) || 700,
   }
+}
+
+export function resolveWordmarkTextColorsFromKit(kitData) {
+  return resolveFontRoleTextColors(kitData, 'heading')
+}
+
+export function isDarkWordmarkRole(role) {
+  const r = String(role || '').trim().toLowerCase()
+  return r === 'with-name-below-dark' || r === 'with-name-adjacent-dark'
+}
+
+export async function composeWordmarkForRole({
+  role,
+  markCanvas,
+  name,
+  fontFamily,
+  fontWeight,
+  textColors,
+}) {
+  const dark = isDarkWordmarkRole(role)
+  const adjacent = String(role).includes('adjacent')
+  const textColor = dark ? textColors.dark : textColors.light
+  if (adjacent) {
+    return composeWordmarkAdjacent({ markCanvas, name, fontFamily, fontWeight, textColor })
+  }
+  return composeWordmarkBelow({ markCanvas, name, fontFamily, fontWeight, textColor })
 }

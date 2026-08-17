@@ -210,6 +210,8 @@ export function getFontRole(fonts, role) {
         ? sizePxRaw
         : Number.parseFloat(String(size).replace(/px$/i, '')) || defaults.sizePx,
     lineHeight,
+    lightTextColorId: raw.lightTextColorId ?? tertiary.lightTextColorId ?? defaults.lightTextColorId,
+    darkTextColorId: raw.darkTextColorId ?? tertiary.darkTextColorId ?? defaults.darkTextColorId,
   }
 }
 

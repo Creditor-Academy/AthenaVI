@@ -38,7 +38,31 @@ export const FONT_WEIGHT_OPTIONS = [
 ]
 
 export const FONT_ROLE_DEFAULTS = {
-  heading: { family: 'Outfit', weight: 700, sizePx: 40, size: '40px', lineHeight: 1.2 },
-  subheading: { family: 'Space Grotesk', weight: 600, sizePx: 20, size: '20px', lineHeight: 1.4 },
-  body: { family: 'Inter', weight: 400, sizePx: 14, size: '14px', lineHeight: 1.6 },
+  heading: {
+    family: 'Outfit',
+    weight: 700,
+    sizePx: 40,
+    size: '40px',
+    lineHeight: 1.2,
+    lightTextColorId: 'c3',
+    darkTextColorId: 'c6',
+  },
+  subheading: {
+    family: 'Space Grotesk',
+    weight: 600,
+    sizePx: 20,
+    size: '20px',
+    lineHeight: 1.4,
+    lightTextColorId: 'c3',
+    darkTextColorId: 'c6',
+  },
+  body: {
+    family: 'Inter',
+    weight: 400,
+    sizePx: 14,
+    size: '14px',
+    lineHeight: 1.6,
+    lightTextColorId: 'c3',
+    darkTextColorId: 'c6',
+  },
 }

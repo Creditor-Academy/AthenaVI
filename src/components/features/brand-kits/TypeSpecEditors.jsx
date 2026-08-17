@@ -99,7 +99,64 @@ export function FontMetricField({ label, value, onChange, disabled = false, plac
   )
 }
 
-export function TypeSpecEditors({ role, font, canWrite, onPatch }) {
+export function TypographyColorPickers({
+  lightLabel = 'Light mode text',
+  darkLabel = 'Dark mode text',
+  lightTextColorId,
+  darkTextColorId,
+  colors = [],
+  disabled = false,
+  onChange,
+}) {
+  return (
+    <div className="bk-type-color-pickers">
+      <div className={`bk-btn-swatch-picker ${disabled ? 'is-disabled' : ''}`}>
+        <span className="bk-tb-lbl">{lightLabel}</span>
+        <div className="bk-btn-swatches" role="listbox" aria-label={lightLabel}>
+          {(colors || []).map((color) => {
+            const active = lightTextColorId === color.id
+            return (
+              <button
+                key={`light-${color.id}`}
+                type="button"
+                role="option"
+                aria-selected={active}
+                className={`bk-btn-swatch${active ? ' is-active' : ''}`}
+                style={{ background: color.hex || '#94A3B8' }}
+                disabled={disabled}
+                title={`${color.name || 'Color'} (${color.hex || ''})`}
+                onClick={() => onChange({ lightTextColorId: color.id })}
+              />
+            )
+          })}
+        </div>
+      </div>
+      <div className={`bk-btn-swatch-picker ${disabled ? 'is-disabled' : ''}`}>
+        <span className="bk-tb-lbl">{darkLabel}</span>
+        <div className="bk-btn-swatches" role="listbox" aria-label={darkLabel}>
+          {(colors || []).map((color) => {
+            const active = darkTextColorId === color.id
+            return (
+              <button
+                key={`dark-${color.id}`}
+                type="button"
+                role="option"
+                aria-selected={active}
+                className={`bk-btn-swatch${active ? ' is-active' : ''}`}
+                style={{ background: color.hex || '#94A3B8' }}
+                disabled={disabled}
+                title={`${color.name || 'Color'} (${color.hex || ''})`}
+                onClick={() => onChange({ darkTextColorId: color.id })}
+              />
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function TypeSpecEditors({ role, font, colors = [], canWrite, onPatch }) {
   const familyOptions = POPULAR_GOOGLE_FONTS.map((fontName) => ({ value: fontName, label: fontName }))
   const familyInList = familyOptions.some((option) => option.value === font.family)
   const familySelectOptions = familyInList
@@ -107,6 +164,7 @@ export function TypeSpecEditors({ role, font, canWrite, onPatch }) {
     : [{ value: font.family, label: font.family }, ...familyOptions]
 
   return (
+    <>
     <div className="bk-type-box-badges bk-type-box-badges--editable">
       <FontMetricSelect
         label="Font Family"
@@ -145,5 +203,15 @@ export function TypeSpecEditors({ role, font, canWrite, onPatch }) {
         onChange={(lineHeight) => onPatch({ lineHeight })}
       />
     </div>
+    {colors.length > 0 ? (
+      <TypographyColorPickers
+        lightTextColorId={font.lightTextColorId}
+        darkTextColorId={font.darkTextColorId}
+        colors={colors}
+        disabled={!canWrite}
+        onChange={onPatch}
+      />
+    ) : null}
+  </>
   )
 }

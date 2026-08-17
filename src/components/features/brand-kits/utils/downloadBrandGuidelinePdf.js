@@ -71,6 +71,8 @@ function formatLogoRole(role) {
     white: 'White',
     'with-name-adjacent': 'With name (adjacent)',
     'with-name-below': 'With name (below)',
+    'with-name-adjacent-dark': 'With name (adjacent, dark)',
+    'with-name-below-dark': 'With name (below, dark)',
   }
   return map[role] || String(role || 'Logo').replace(/-/g, ' ')
 }
@@ -79,6 +81,8 @@ const LOGO_ROLE_ALIASES = {
   primary: ['primary', 'main'],
   'with-name-below': ['with-name-below'],
   'with-name-adjacent': ['with-name-adjacent'],
+  'with-name-below-dark': ['with-name-below-dark'],
+  'with-name-adjacent-dark': ['with-name-adjacent-dark'],
   dark: ['dark', 'dark-mode'],
   light: ['light', 'light-mode'],
   white: ['white'],

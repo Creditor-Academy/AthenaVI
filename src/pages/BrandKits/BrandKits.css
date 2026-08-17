@@ -7962,4 +7962,93 @@
   }
 }
 
+.bk-logo-typography-link {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 8px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--primary, #2563eb);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
 
+.bk-logo-typography-link:hover {
+  text-decoration: underline;
+}
+
+.bk-wordmark-color-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 16px;
+}
+
+.bk-wordmark-color-preview-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.bk-wordmark-color-preview {
+  border-radius: 12px;
+  padding: 16px 18px;
+  min-height: 72px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--bk-border);
+}
+
+.bk-wordmark-color-preview--light {
+  background: #f8fafc;
+}
+
+.bk-wordmark-color-preview--dark {
+  background: #0f172a;
+}
+
+.bk-wordmark-preview-label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+
+.bk-wordmark-color-preview--light .bk-wordmark-preview-label {
+  color: #64748b;
+}
+
+.bk-wordmark-color-preview--dark .bk-wordmark-preview-label {
+  color: #94a3b8;
+}
+
+.bk-type-color-pickers {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--bk-border);
+}
+
+.bk-type-role-preview-row {
+  margin-top: 16px;
+}
+
+.bk-type-role-preview-copy {
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  .bk-wordmark-color-grid,
+  .bk-wordmark-color-preview-row,
+  .bk-type-color-pickers {
+    grid-template-columns: 1fr;
+  }
+}

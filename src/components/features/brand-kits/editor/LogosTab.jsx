@@ -72,6 +72,7 @@ export default function LogosTab(props) {
     regenerateLogoRole,
     downloadLogoPng,
     logoPreviewUrl,
+    setEditorTab,
   } = props
 
   const [menuRole, setMenuRole] = useState(null)
@@ -257,8 +258,16 @@ export default function LogosTab(props) {
         <div>
           <p className="bk-logo-variants-desc">
             Generate or upload each logo variant. Light, dark, monochrome, and wordmark lockups
-            use your brand typography and name. Previews use a transparent checkerboard.
+            (below / adjacent, including dark-mode versions) use your brand name and{' '}
+            <strong>Heading</strong> typography from the Typography tab.
           </p>
+          <button
+            type="button"
+            className="bk-logo-typography-link"
+            onClick={() => setEditorTab?.('typography')}
+          >
+            Edit heading font &amp; wordmark text colours in Typography →
+          </button>
           <div className="bk-dl-formats-row" style={{ marginTop: 8 }}>
             <span className="bk-dl-label">ACCEPTED FORMATS</span>
             <span className="bk-dl-badge">SVG</span>

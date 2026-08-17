@@ -103,26 +103,11 @@ export default function OverviewTab(props) {
     })
   })()
 
-  const logoGridRef = useRef(null)
-  const [logoSlots, setLogoSlots] = useState(4)
-  useEffect(() => {
-    const el = logoGridRef.current
-    if (!el) return undefined
-    const MIN_TILE = 68
-    const GAP = 10
-    const measure = () => {
-      const w = el.clientWidth || 0
-      const n = Math.max(1, Math.floor((w + GAP) / (MIN_TILE + GAP)))
-      setLogoSlots(n)
-    }
-    measure()
-    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null
-    ro?.observe(el)
-    return () => ro?.disconnect()
-  }, [orderedLogos.length])
-
-  const needsMoreTile = orderedLogos.length > logoSlots
-  const visibleLogoCount = needsMoreTile ? Math.max(0, logoSlots - 1) : orderedLogos.length
+  // Fit as much as possible cleanly on Overview without crowding: show at most 3 logo tiles,
+  // and if there are more logos, place a "+N more logos" card in the last slot that redirects to Logos tab.
+  const MAX_OVERVIEW_LOGOS = 3
+  const needsMoreTile = orderedLogos.length > MAX_OVERVIEW_LOGOS
+  const visibleLogoCount = needsMoreTile ? MAX_OVERVIEW_LOGOS : orderedLogos.length
   const visibleLogos = orderedLogos.slice(0, visibleLogoCount)
   const hiddenLogoCount = Math.max(0, orderedLogos.length - visibleLogoCount)
 
@@ -135,6 +120,8 @@ export default function OverviewTab(props) {
     const r = normalizeLogoRole(role)
     if (r === 'with-name-below') return 'Name below'
     if (r === 'with-name-adjacent') return 'Name adjacent'
+    if (r === 'with-name-below-dark') return 'Name below (dark)'
+    if (r === 'with-name-adjacent-dark') return 'Name adjacent (dark)'
     return r || 'logo'
   }
 
@@ -412,7 +399,7 @@ export default function OverviewTab(props) {
           </div>
 
           {orderedLogos.length ? (
-            <div className="bk-ov-logo-grid" ref={logoGridRef}>
+            <div className="bk-ov-logo-grid">
               {visibleLogos.map((logo) => {
                 const role = normalizeLogoRole(logo.role || logo.name)
                 const src = logo.url || logo.src || logo.presignedUrl
@@ -435,15 +422,15 @@ export default function OverviewTab(props) {
                   type="button"
                   className="bk-ov-logo-tile bk-ov-logo-tile--more"
                   onClick={() => setEditorTab('logos')}
-                  title={`View ${hiddenLogoCount} more logos`}
+                  title={`View ${hiddenLogoCount} more logos in Logos Studio`}
                 >
                   <strong>+{hiddenLogoCount}</strong>
-                  <span>more</span>
+                  <span>more logos</span>
                 </button>
               )}
             </div>
           ) : (
-            <div className="bk-ov-logo-grid bk-ov-logo-grid--empty" ref={logoGridRef}>
+            <div className="bk-ov-logo-grid bk-ov-logo-grid--empty">
               <button
                 type="button"
                 className="bk-ov-logo-tile bk-ov-logo-tile--add"
