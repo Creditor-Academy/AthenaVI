@@ -102,7 +102,15 @@ function findLogoMedia(media = [], roles = []) {
 
 function logoNeedsDarkBg(role) {
   const r = String(role || '').toLowerCase()
-  return r === 'light' || r === 'light-mode' || r === 'white'
+  return (
+    r === 'light' ||
+    r === 'light-mode' ||
+    r === 'white' ||
+    r === 'dark' ||
+    r === 'dark-mode' ||
+    r === 'with-name-below-dark' ||
+    r === 'with-name-adjacent-dark'
+  )
 }
 
 const FONT_ROLE_ORDER = ['heading', 'subheading', 'body', 'tertiary']
@@ -119,9 +127,20 @@ const FONT_ROLE_SAMPLES = {
   tertiary: 'Supporting labels, captions, and compact UI text',
 }
 
-function collectFontRoles(fonts = {}) {
+function collectFontRoles(fonts = {}, data = {}) {
   const roles = []
   const seen = new Set()
+  const map = new Map((data?.colors || []).map((c) => [c.id, c.hex]))
+
+  const hexFor = (face, mode) => {
+    const colorRoles = data?.colorRoles || {}
+    const id =
+      mode === 'dark'
+        ? face?.darkTextColorId || colorRoles.textDark || colorRoles.text
+        : face?.lightTextColorId || colorRoles.text
+    return normalizeHex(map.get(id) || (mode === 'dark' ? '#F8FAFC' : '#0F172A'))
+  }
+
   for (const key of FONT_ROLE_ORDER) {
     const face = fonts[key]
     if (!face || typeof face !== 'object') continue
@@ -136,6 +155,8 @@ function collectFontRoles(fonts = {}) {
       sizePx: Number(face.sizePx) || (key === 'heading' ? 40 : key === 'subheading' ? 20 : 14),
       lineHeight: Number(face.lineHeight) || (key === 'heading' ? 1.2 : key === 'subheading' ? 1.4 : 1.6),
       sample: FONT_ROLE_SAMPLES[key] || FONT_ROLE_SAMPLES.body,
+      lightTextColor: hexFor(face, 'light'),
+      darkTextColor: hexFor(face, 'dark'),
     })
   }
   for (const [key, face] of Object.entries(fonts)) {
@@ -152,6 +173,8 @@ function collectFontRoles(fonts = {}) {
       sizePx: Number(face.sizePx) || 14,
       lineHeight: Number(face.lineHeight) || 1.4,
       sample: FONT_ROLE_SAMPLES.body,
+      lightTextColor: hexFor(face, 'light'),
+      darkTextColor: hexFor(face, 'dark'),
     })
   }
   return roles
@@ -175,7 +198,7 @@ export async function downloadBrandGuidelinePdf({
     const pageBg = '#FFFFFF'
     const text = resolveRoleHex(data, 'text', '#0F172A')
     const muted = resolveRoleHex(data, 'muted', '#64748B')
-    const fontRoles = collectFontRoles(data.fonts || {})
+    const fontRoles = collectFontRoles(data.fonts || {}, data)
     const headingFamily = fontRoles.find((r) => r.key === 'heading')?.family || fontRoles[0]?.family || 'Inter'
     const tagline = data.meta?.tagline || ''
 
@@ -347,7 +370,7 @@ export async function downloadBrandGuidelinePdf({
     })
     y += sw + 44
 
-    // Typography — heading (tall) | two equal stacked roles
+    // Typography — stacked cards with light/dark previews
     drawSectionLabel('TYPOGRAPHY')
     if (!fontRoles.length) {
       ensureSpace(20)
@@ -357,79 +380,64 @@ export async function downloadBrandGuidelinePdf({
       doc.text('No typography roles defined.', MARGIN_X, y + 12)
       y += 28
     } else {
-      const headingRole = fontRoles.find((r) => r.key === 'heading') || fontRoles[0]
-      const restRoles = fontRoles.filter((r) => r !== headingRole)
-      const rightRoles = restRoles.slice(0, 2)
-      const extraRoles = restRoles.slice(2)
+      const lightBg = resolveRoleHex(data, 'bg', '#FFFFFF')
+      const darkBg = resolveRoleHex(data, 'bgDark', '#0F172A')
 
-      const leftW = contentW * 0.58
-      const rightW = contentW - leftW - GAP
-      const leftH = 200
-      const rowH = (leftH - GAP) / 2
-      ensureSpace(leftH + 12)
-
-      const drawTypeCard = (x, cardY, w, h, role, { watermark = false } = {}) => {
+      for (const role of fontRoles) {
+        const cardH = 118
+        ensureSpace(cardH + 10)
         doc.setFillColor(250, 250, 250)
         doc.setDrawColor(226, 232, 240)
-        doc.roundedRect(x, cardY, w, h, 10, 10, 'FD')
-
-        if (watermark) {
-          // Large faint "Aa" flush to bottom-right corner
-          doc.setTextColor(200, 210, 220)
-          doc.setFont('helvetica', Number(role.weight) >= 600 ? 'bold' : 'normal')
-          doc.setFontSize(110)
-          // Baseline at bottom edge; right-aligned to right edge (no inset)
-          doc.text('Aa', x + w + 2, cardY + h + 6, { align: 'right' })
-          ink(text)
-        }
+        doc.roundedRect(MARGIN_X, y, contentW, cardH, 10, 10, 'FD')
 
         ink(primary)
         doc.setFont('helvetica', 'bold')
         doc.setFontSize(9)
-        doc.text(String(role.label).toUpperCase(), x + 12, cardY + 18)
+        doc.text(String(role.label).toUpperCase(), MARGIN_X + 12, y + 18)
 
         ink(muted)
         doc.setFont('helvetica', 'normal')
         doc.setFontSize(8)
         doc.text(
           `${role.family} · ${role.weight} · ${role.sizePx}px · LH ${role.lineHeight}`,
-          x + 12,
-          cardY + 32,
-          { maxWidth: w - 24 }
+          MARGIN_X + 12,
+          y + 32,
+          { maxWidth: contentW - 24 }
         )
 
         ink(text)
         doc.setFont('helvetica', Number(role.weight) >= 600 ? 'bold' : 'normal')
-        doc.setFontSize(watermark ? 36 : 24)
-        doc.text('Aa', x + 12, cardY + (watermark ? 72 : 58))
+        doc.setFontSize(28)
+        doc.text('Aa', MARGIN_X + 12, y + 58)
 
+        const stripW = (contentW - 24 - GAP) / 2
+        const stripY = y + 66
+        const stripH = 40
+        const sampleSize = Math.min(11, Math.max(9, role.sizePx * 0.35))
+
+        fill(lightBg)
+        doc.setDrawColor(226, 232, 240)
+        doc.roundedRect(MARGIN_X + 12, stripY, stripW, stripH, 6, 6, 'FD')
+        ink(role.lightTextColor)
         doc.setFont('helvetica', Number(role.weight) >= 600 ? 'bold' : 'normal')
-        doc.setFontSize(Math.min(14, Math.max(9, role.sizePx * 0.4)))
-        doc.text(role.sample, x + 12, cardY + (watermark ? 96 : 78), {
-          maxWidth: w - 24,
-        })
-
+        doc.setFontSize(sampleSize)
+        doc.text(role.sample, MARGIN_X + 18, stripY + 16, { maxWidth: stripW - 12 })
         ink(muted)
-        doc.setFontSize(9)
-        doc.text('AaBbCcDdEeFf · 0123456789', x + 12, cardY + h - 14, {
-          maxWidth: w - 24,
+        doc.setFontSize(7)
+        doc.text(`Light ${role.lightTextColor}`, MARGIN_X + 18, stripY + stripH - 6)
+
+        fill(darkBg)
+        doc.roundedRect(MARGIN_X + 12 + stripW + GAP, stripY, stripW, stripH, 6, 6, 'FD')
+        ink(role.darkTextColor)
+        doc.setFont('helvetica', Number(role.weight) >= 600 ? 'bold' : 'normal')
+        doc.setFontSize(sampleSize)
+        doc.text(role.sample, MARGIN_X + 18 + stripW + GAP, stripY + 16, {
+          maxWidth: stripW - 12,
         })
-      }
+        ink(muted)
+        doc.setFontSize(7)
+        doc.text(`Dark ${role.darkTextColor}`, MARGIN_X + 18 + stripW + GAP, stripY + stripH - 6)
 
-      const baseY = y
-      drawTypeCard(MARGIN_X, baseY, leftW, leftH, headingRole, { watermark: true })
-
-      rightRoles.forEach((role, idx) => {
-        const ry = baseY + idx * (rowH + GAP)
-        drawTypeCard(MARGIN_X + leftW + GAP, ry, rightW, rowH, role)
-      })
-
-      y = baseY + leftH + 14
-
-      for (const role of extraRoles) {
-        const cardH = 88
-        ensureSpace(cardH + 10)
-        drawTypeCard(MARGIN_X, y, contentW, cardH, role)
         y += cardH + 10
       }
     }
@@ -507,51 +515,53 @@ export async function downloadBrandGuidelinePdf({
     })
     y = rowY + 44
 
-    // Logos — bento: large primary + stacked named, then 4 variants in a row
+    // Logos — primary + 2×2 wordmarks, then color variants row
     drawSectionLabel('LOGO VARIANTS')
     {
       const LABEL_H = 18
-      const namedW = (contentW - GAP) * (1 / 2.6)
-      const primaryW = contentW - GAP - namedW
-      const namedFrame = namedW
-      const primaryFrameH = namedFrame * 2 + GAP + LABEL_H
-      const topH = primaryFrameH + LABEL_H
+      const wordmarkW = (contentW - GAP) * (1 / 2.35)
+      const primaryW = contentW - GAP - wordmarkW
+      const wordmarkFrame = (wordmarkW - GAP) / 2
+      const wordmarkGridH = wordmarkFrame * 2 + GAP + LABEL_H * 2
+      const primaryFrameH = wordmarkGridH - LABEL_H
+      const topH = wordmarkGridH
       const bottomFrame = (contentW - GAP * 3) / 4
       const bottomH = bottomFrame + LABEL_H
       const blockH = topH + GAP + bottomH
       ensureSpace(blockH + 8)
 
       const primaryL = findLogoMedia(kitMedia, LOGO_ROLE_ALIASES.primary)
-      const nameBelow = findLogoMedia(kitMedia, LOGO_ROLE_ALIASES['with-name-below'])
-      const nameAdjacent = findLogoMedia(kitMedia, LOGO_ROLE_ALIASES['with-name-adjacent'])
+      const wordmarks = [
+        ['with-name-below', findLogoMedia(kitMedia, LOGO_ROLE_ALIASES['with-name-below'])],
+        ['with-name-adjacent', findLogoMedia(kitMedia, LOGO_ROLE_ALIASES['with-name-adjacent'])],
+        [
+          'with-name-below-dark',
+          findLogoMedia(kitMedia, LOGO_ROLE_ALIASES['with-name-below-dark']),
+        ],
+        [
+          'with-name-adjacent-dark',
+          findLogoMedia(kitMedia, LOGO_ROLE_ALIASES['with-name-adjacent-dark']),
+        ],
+      ]
       const dark = findLogoMedia(kitMedia, LOGO_ROLE_ALIASES.dark)
       const light = findLogoMedia(kitMedia, LOGO_ROLE_ALIASES.light)
       const white = findLogoMedia(kitMedia, LOGO_ROLE_ALIASES.white)
       const black = findLogoMedia(kitMedia, LOGO_ROLE_ALIASES.black)
 
       const baseY = y
-      const xNamed = MARGIN_X + primaryW + GAP
+      const xWord = MARGIN_X + primaryW + GAP
 
       await drawLogoCell(MARGIN_X, baseY, primaryW, primaryFrameH, primaryL, 'primary')
 
-      let yNamed = baseY
-      const hBelow = await drawLogoCell(
-        xNamed,
-        yNamed,
-        namedW,
-        namedFrame,
-        nameBelow,
-        'with-name-below'
-      )
-      yNamed += hBelow + GAP
-      await drawLogoCell(
-        xNamed,
-        yNamed,
-        namedW,
-        namedFrame,
-        nameAdjacent,
-        'with-name-adjacent'
-      )
+      for (let i = 0; i < wordmarks.length; i += 1) {
+        const [role, logo] = wordmarks[i]
+        if (!logo) continue
+        const col = i % 2
+        const row = Math.floor(i / 2)
+        const wx = xWord + col * (wordmarkFrame + GAP)
+        const wy = baseY + row * (wordmarkFrame + LABEL_H + GAP)
+        await drawLogoCell(wx, wy, wordmarkFrame, wordmarkFrame, logo, role)
+      }
 
       const bottomY = baseY + topH + GAP
       const variants = [
