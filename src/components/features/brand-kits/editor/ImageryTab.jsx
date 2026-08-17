@@ -68,6 +68,8 @@ export default function ImageryTab(props) {
             loading={mockupLoading}
             generatingTemplateId={mockupGeneratingId}
             previews={mockupPreviews}
+            colors={colors}
+            logos={mediaByKind('logo')}
             onGenerate={generateMockup}
             onSave={saveMockup}
             onLoad={loadMockups}

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import {
   MdArrowBack,
   MdCheck,
@@ -97,6 +98,14 @@ export default function BrandKitWizard(props) {
     saving,
   } = props
 
+  const wizardScrollRef = useRef(null)
+
+  useEffect(() => {
+    const panel = wizardScrollRef.current
+    if (!panel) return
+    panel.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [wizardStep])
+
   return (
       <div className="videos-page brandkits-page brandkit-editor">
         <div className="videos-shell">
@@ -159,7 +168,7 @@ export default function BrandKitWizard(props) {
           }}
         />
 
-        <div className="bk-wizard-scroll">
+        <div className="bk-wizard-scroll" ref={wizardScrollRef}>
         <div className="bk-wizard-container">
           {/* Stepper Indicator */}
           <div className="bk-wizard-stepper">

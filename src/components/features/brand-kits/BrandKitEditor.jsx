@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import {
   MdArrowBack,
   MdSave,
@@ -48,6 +49,7 @@ export default function BrandKitEditor(props) {
     kitData,
   } = props
 
+  const studioPanelRef = useRef(null)
   const colorsList = kitData.colors || []
   const primaryColors = colorsList.slice(0, 2)
   const secondaryColors = colorsList.slice(2)
@@ -58,6 +60,12 @@ export default function BrandKitEditor(props) {
     primaryColors,
     secondaryColors,
   }
+
+  useEffect(() => {
+    const panel = studioPanelRef.current
+    if (!panel) return
+    panel.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [editorTab])
 
   return (
     <div className="videos-page brandkits-page brandkit-editor">
@@ -177,7 +185,7 @@ export default function BrandKitEditor(props) {
           onChange={handleFileSelected}
         />
 
-        <div className="editor-studio-panel">
+        <div className="editor-studio-panel" ref={studioPanelRef}>
           {editorTab === 'overview' && <OverviewTab {...tabProps} />}
           {editorTab === 'identity' && <ColorsTab {...tabProps} />}
           {editorTab === 'buttons' && <ButtonsTab {...tabProps} />}

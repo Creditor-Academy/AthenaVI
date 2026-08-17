@@ -297,20 +297,38 @@ class BrandKitService {
 
   /**
    * Generate a logo-on-product mockup.
-   * POST .../mockups/generate { templateId, logoRole?, save? }
+   * POST .../mockups/generate
+   * { templateId, itemColor?, logoRole?, logoPosition?, save? }
    * → { mockup, billing }
+   *
+   * - itemColor: omit when unset (keeps catalog default look)
+   * - logoRole: defaults to primary on the server; send explicitly when chosen
+   * - logoPosition: only for apparel templates that support it (tshirt / hoodie)
    */
-  async generateMockup(workspaceId, brandKitId, { templateId, logoRole, save = false } = {}) {
+  async generateMockup(
+    workspaceId,
+    brandKitId,
+    { templateId, itemColor, logoRole, logoPosition, save = false } = {}
+  ) {
     if (!templateId) throw new Error('templateId is required')
+
+    const body = {
+      templateId,
+      save: Boolean(save),
+    }
+
+    const hex = typeof itemColor === 'string' ? itemColor.trim() : ''
+    if (hex) body.itemColor = hex
+
+    if (logoRole) body.logoRole = logoRole
+
+    if (logoPosition) body.logoPosition = logoPosition
+
     const data = await this.request(
       API_CONFIG.ENDPOINTS.BRAND_KITS.MOCKUPS_GENERATE(workspaceId, brandKitId),
       {
         method: 'POST',
-        body: JSON.stringify({
-          templateId,
-          ...(logoRole ? { logoRole } : {}),
-          save: Boolean(save),
-        }),
+        body: JSON.stringify(body),
       }
     )
     return {

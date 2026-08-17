@@ -1074,7 +1074,16 @@ function BrandKits() {
   }, [workspaceId, editingKitId, handleApiError])
 
   const generateMockup = useCallback(
-    async (templateId, save = true) => {
+    async (templateId, options = {}) => {
+      const opts =
+        typeof options === 'boolean' ? { save: options } : options || {}
+      const {
+        save = true,
+        itemColor,
+        logoRole = 'primary',
+        logoPosition,
+      } = opts
+
       if (!canWrite || !workspaceId || !editingKitId || !templateId) return
       if (mockupGeneratingId) return
       if (!hasLogoOnKit()) {
@@ -1088,18 +1097,24 @@ function BrandKits() {
         const result = await brandKitService.generateMockup(workspaceId, editingKitId, {
           templateId,
           save: save !== false,
+          itemColor: itemColor || undefined,
+          logoRole: logoRole || 'primary',
+          logoPosition: logoPosition || undefined,
         })
         const mockup = result.mockup || {}
         if (result.billing) setMockupBilling(result.billing)
+        const previewPayload = {
+          url: mockup.url,
+          saved: Boolean(mockup.saved),
+          mediaId: mockup.mediaId,
+          templateId: mockup.templateId || templateId,
+          logoRoleUsed: mockup.logoRoleUsed,
+          itemColorUsed: mockup.itemColorUsed ?? null,
+          logoPositionUsed: mockup.logoPositionUsed ?? null,
+        }
         setMockupPreviews((prev) => ({
           ...prev,
-          [templateId]: {
-            url: mockup.url,
-            saved: Boolean(mockup.saved),
-            mediaId: mockup.mediaId,
-            templateId: mockup.templateId || templateId,
-            logoRoleUsed: mockup.logoRoleUsed,
-          },
+          [templateId]: previewPayload,
         }))
         if (result.billing?.charged) refreshEditorCredits()
         if (mockup.saved) {
@@ -1115,20 +1130,18 @@ function BrandKits() {
             )
           }
           await refreshHealth(workspaceId, editingKitId)
-          // Keep showing the fresh result; treat as saved
           setMockupPreviews((prev) => ({
             ...prev,
             [templateId]: {
-              url: mockup.url,
+              ...previewPayload,
               saved: true,
               mediaId: mockup.mediaId,
-              templateId: mockup.templateId || templateId,
-              logoRoleUsed: mockup.logoRoleUsed,
             },
           }))
         }
       } catch (err) {
         handleApiError(err, 'Mockup generation failed')
+        throw err
       } finally {
         setMockupGeneratingId(null)
       }
@@ -1145,9 +1158,8 @@ function BrandKits() {
   )
 
   const saveMockup = useCallback(
-    async (templateId) => {
-      // Re-generate with save:true (backend replace-on-save per template)
-      await generateMockup(templateId, true)
+    async (templateId, options = {}) => {
+      await generateMockup(templateId, { ...options, save: true })
     },
     [generateMockup]
   )
