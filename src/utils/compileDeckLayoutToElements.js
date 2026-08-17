@@ -7,6 +7,9 @@ import {
 } from './deviceFrameCanvas'
 import { buildContentBySlotIdFromSlideContent, mergeContentBySlotId } from './contentSlotMapping'
 import { fontSizeForTextSlot, resolveTypeScaleFontSize } from './canvasTypography'
+import { finalizeTimelineShapes } from './timelineShapeFinalize'
+import { isCatalogPlaceholderText } from './catalogPlaceholder'
+import { normalizeChartContent } from './chartContentNormalize'
 
 /**
  * Merge theme tokens into compile options so editor preview matches AI output.
@@ -77,6 +80,7 @@ function colorRoleMapFromPalette(palette = {}) {
     return COLOR_ROLE_MAP
   }
   return {
+    bg: palette.bg || palette.surface || COLOR_ROLE_MAP.surface,
     text: palette.text || COLOR_ROLE_MAP.text,
     muted: palette.muted || palette.textMuted || COLOR_ROLE_MAP.muted,
     primary: palette.primary || COLOR_ROLE_MAP.primary,
@@ -97,9 +101,10 @@ function resolveFontFamily(options = {}, role = 'body') {
   return fonts.body || options.fontFamily || null
 }
 
-function resolveShapeFill(shapeSpec) {
+function resolveShapeFill(shapeSpec, palette = null) {
+  const colorMap = palette ? colorRoleMapFromPalette(palette) : COLOR_ROLE_MAP
   if (!shapeSpec) {
-    return { shape: 'rounded-rect', fill: LAYOUT_SURFACE.card, borderRadius: LAYOUT_SURFACE.radiusSm }
+    return { shape: 'rounded-rect', fill: colorMap.cardBg || LAYOUT_SURFACE.card, borderRadius: LAYOUT_SURFACE.radiusSm }
   }
   const type = shapeSpec.type === 'ellipse' ? 'circle' : shapeSpec.type === 'line' ? 'rect' : 'rounded-rect'
   const borderRadius = shapeSpec.borderRadius ?? (type === 'circle' ? undefined : LAYOUT_SURFACE.radiusSm)
@@ -107,7 +112,7 @@ function resolveShapeFill(shapeSpec) {
     return { shape: type, fill: shapeSpec.fill.color, borderRadius }
   }
   const role = shapeSpec.fillColorRole || shapeSpec.fill?.colorRole || 'cardBg'
-  const fill = COLOR_ROLE_MAP[role] || LAYOUT_SURFACE.card
+  const fill = colorMap[role] || palette?.[role] || LAYOUT_SURFACE.card
   return {
     shape: type,
     fill,
@@ -241,18 +246,34 @@ function fontWeightForRole(role) {
   return 400
 }
 
-function resolveSlotText(slot, contentBySlotId, schema) {
+function lookupSlotValue(contentBySlotId, slotId) {
+  if (!contentBySlotId || slotId == null) return undefined
+  if (contentBySlotId[slotId] != null) return contentBySlotId[slotId]
+  const key = String(slotId)
+  if (contentBySlotId[key] != null) return contentBySlotId[key]
+  const upper = key.toUpperCase()
+  const lower = key.toLowerCase()
+  if (contentBySlotId[upper] != null) return contentBySlotId[upper]
+  if (contentBySlotId[lower] != null) return contentBySlotId[lower]
+  const found = Object.keys(contentBySlotId).find((k) => k.toLowerCase() === lower)
+  return found ? contentBySlotId[found] : undefined
+}
+
+function resolveSlotText(slot, contentBySlotId, schema, options = {}) {
   const slotId = slot?.id
   const placeholder = slot?.placeholder_text != null ? String(slot.placeholder_text).trim() : ''
+  const content = options.content && typeof options.content === 'object' ? options.content : null
+  const hasSlideContent = Boolean(content && (content.title || content.body || content.summary || content.bullets))
 
-  if (slotId && contentBySlotId?.[slotId] != null) {
-    const merged = String(contentBySlotId[slotId]).trim()
-    if (merged && !isLikelyBadMergedText(merged, slot, schema)) {
+  const mapped = lookupSlotValue(contentBySlotId, slotId)
+  if (mapped != null) {
+    const merged = String(mapped).trim()
+    if (merged && !isCatalogPlaceholderText(merged) && !isLikelyBadMergedText(merged, slot, schema)) {
       return merged
     }
   }
 
-  if (placeholder) return placeholder
+  if (placeholder && !hasSlideContent) return placeholder
   return ''
 }
 
@@ -273,10 +294,11 @@ function isLikelyBadMergedText(text, slot, schema) {
 
   if ((slot?.role === 'caption' || slot?.role === 'body' || slot?.role === 'stat_label') && layoutId) {
     if (value.includes('insights chart') || value.includes('grid insights')) return true
-    if (layoutId.split(/\s+/).every((word) => word.length > 2 && value.includes(word))) return true
+    if (value.length < 80 && layoutId.split(/\s+/).every((word) => word.length > 2 && value.includes(word))) return true
   }
 
-  if (placeholder && value === placeholder) return false
+  if (placeholder && value === placeholder) return true
+  if (isCatalogPlaceholderText(text)) return true
   if (placeholder && (slot?.role === 'caption' || slot?.role === 'stat_label') && value.length > placeholder.length + 12) {
     return true
   }
@@ -289,11 +311,44 @@ function resolveChartContent(slot, schema, palette, contentBySlotId, slideConten
   const layoutId = String(schema?.layout_id || '').toLowerCase()
   const slotId = String(slot?.id || '').toUpperCase()
   const mode = resolvePreviewMode(schema)
+  const barColor = palette?.primary || palette?.accent || LAYOUT_SURFACE.bar
   const saved = contentBySlotId?.[`${slot.id}__chart`]
-  const chart = slideContent?.chart && typeof slideContent.chart === 'object' ? slideContent.chart : null
+  if (saved) {
+    return normalizeChartContent(
+      {
+        chartType: saved.chartType || saved.data?.chartType || 'column-grouped',
+        labels: saved.labels || saved.data?.labels || [],
+        series: saved.data?.series || saved.series || [{ name: 'Series', values: saved.values || [] }],
+        values: saved.values,
+        colors: [barColor],
+        premium: true,
+        showGrid: true,
+        showLabels: true,
+      },
+      palette
+    )
+  }
+
+  const chartMatch = slotId.match(/^CHART_(\d+)$/)
+  let chart = null
+  if (chartMatch) {
+    const idx = Number(chartMatch[1]) - 1
+    if (Array.isArray(slideContent?.charts) && slideContent.charts[idx]) {
+      chart = slideContent.charts[idx]
+    } else if (idx === 0 && slideContent?.chart) {
+      chart = slideContent.chart
+    } else if (idx === 1 && slideContent?.chart2) {
+      chart = slideContent.chart2
+    }
+  } else {
+    chart = slideContent?.chart && typeof slideContent.chart === 'object' ? slideContent.chart : null
+  }
+
+  if (chartMatch && !chart) {
+    return null
+  }
 
   let chartType =
-    saved?.chartType ||
     chart?.type ||
     chart?.chartType ||
     slot?.chart_type ||
@@ -321,45 +376,35 @@ function resolveChartContent(slot, schema, palette, contentBySlotId, slideConten
   }
 
   const labels =
-    saved?.data?.labels ||
-    saved?.labels ||
     (Array.isArray(chart?.labels) ? chart.labels : null) ||
     preview?.chartLabels ||
     []
   const values =
-    saved?.data?.series?.[0]?.values ||
-    saved?.data?.values ||
-    saved?.values ||
     chart?.series?.[0]?.values ||
     chart?.data ||
     chart?.values ||
     preview?.chartValues ||
     []
 
-  const barColor = palette?.primary || palette?.accent || LAYOUT_SURFACE.bar
-
-  return {
-    chartType,
-    colors: [barColor],
-    showGrid: true,
-    showLabels: true,
-    premium: true,
-    data: {
+  return normalizeChartContent(
+    {
+      chartType,
       labels: Array.isArray(labels) && labels.length ? labels : [],
-      series: [
-        {
-          name: saved?.data?.series?.[0]?.name || chart?.series?.[0]?.name || 'Series',
-          values: (Array.isArray(values) ? values : []).map(Number).filter((v) => !Number.isNaN(v)),
-        },
-      ],
+      series: [{ name: saved?.data?.series?.[0]?.name || chart?.series?.[0]?.name || 'Series', values: (Array.isArray(values) ? values : []).map(Number).filter((v) => !Number.isNaN(v)) }],
+      values,
+      colors: [barColor],
+      premium: true,
+      showGrid: true,
+      showLabels: true,
     },
-  }
+    palette
+  )
 }
 
 function buildTextElement(slot, placement, options) {
   const { contentBySlotId, schema } = options
   const role = slot.role || 'body'
-  const text = resolveSlotText(slot, contentBySlotId, schema)
+  const text = resolveSlotText(slot, contentBySlotId, schema, options)
   const ty = slot.typography || {}
   const overlay = isOverlayLayout(schema)
   const fontSize = fontSizeForTextSlotFromOptions(slot, placement, options)
@@ -412,8 +457,45 @@ function buildTextElement(slot, placement, options) {
   }
 }
 
-function buildBackgroundElement(slot, placement) {
-  const resolved = resolveShapeFill(slot.shape)
+function isFullCanvasPlacement(placement, canvasW, canvasH) {
+  const p = placement || {}
+  return (
+    (p.x ?? 0) <= 2 &&
+    (p.y ?? 0) <= 2 &&
+    (p.width ?? 0) >= canvasW * 0.95 &&
+    (p.height ?? 0) >= canvasH * 0.95
+  )
+}
+
+function applyThemeSlideBackground(elements, palette, canvasW, canvasH) {
+  if (!palette?.bg) return elements
+  const hasFullBg = elements.some((el) => {
+    if (el.type !== 'shape') return false
+    const role = String(el.role || '').toLowerCase()
+    return (
+      (role === 'design_bg' || role === 'background') &&
+      isFullCanvasPlacement(el.placement, canvasW, canvasH)
+    )
+  })
+  if (hasFullBg) return elements
+  return [
+    {
+      id: `shp-theme-bg-${Math.random().toString(36).slice(2, 9)}`,
+      type: 'shape',
+      layer: 0,
+      placement: { x: 0, y: 0, width: canvasW, height: canvasH, rotation: 0, opacity: 1 },
+      content: {
+        shape: 'rect',
+        fill: { type: 'solid', color: palette.bg, colorRole: 'bg' },
+      },
+      role: 'design_bg',
+    },
+    ...elements,
+  ]
+}
+
+function buildBackgroundElement(slot, placement, options = {}) {
+  const resolved = resolveShapeFill(slot.shape, options.palette)
   return {
     id: `slot-${slot.id}`,
     slotId: slot.id,
@@ -433,10 +515,10 @@ function buildBackgroundElement(slot, placement) {
   }
 }
 
-function buildDecorationElement(slot, placement) {
+function buildDecorationElement(slot, placement, options = {}) {
   const id = String(slot.id || '').toLowerCase()
   if (slot.shape) {
-    const resolved = resolveShapeFill(slot.shape)
+    const resolved = resolveShapeFill(slot.shape, options.palette)
     return {
       id: `slot-${slot.id}`,
       slotId: slot.id,
@@ -492,6 +574,10 @@ function buildDecorationElement(slot, placement) {
 
 function resolveSplitImageEdgeFade(schema, slot, allSlots) {
   if (!slot?.region || !Array.isArray(allSlots)) return null
+  const contentType = String(schema?.content_type || '').toLowerCase()
+  const layoutId = String(schema?.layout_id || '').toLowerCase()
+  if (contentType !== 'title' && !/^title_/.test(layoutId)) return null
+
   const imgReg = parseRegion(slot.region)
   if (!imgReg) return null
   const textRoles = new Set(['heading', 'subheading', 'body', 'caption', 'stat', 'stat_label', 'quote', 'eyebrow'])
@@ -513,14 +599,42 @@ function resolveSplitImageEdgeFade(schema, slot, allSlots) {
   return null
 }
 
+function resolveImageUrl(slot, contentBySlotId, options = {}) {
+  const slotId = slot?.id
+  const mapped =
+    lookupSlotValue(contentBySlotId, `${slotId}__url`) ||
+    lookupSlotValue(contentBySlotId, `${slotId}_url`)
+  if (mapped) return String(mapped)
+  const content = options.content || {}
+  const map = content.slotImageUrls
+  if (map && typeof map === 'object') {
+    if (map[slotId]) return map[slotId]
+    if (map[String(slotId).toUpperCase()]) return map[String(slotId).toUpperCase()]
+    if (map[String(slotId).toLowerCase()]) return map[String(slotId).toLowerCase()]
+  }
+  const imageSlots = (options.schema?.slots || []).filter(
+    (s) => String(s.role || '').toLowerCase() === 'image'
+  )
+  const hero =
+    content.imageRef?.url ||
+    content.imageRef?.src ||
+    content.imageUrl ||
+    (Array.isArray(content.imageUrls) ? content.imageUrls[0] : null)
+  if (hero && (imageSlots.length <= 1 || /^(HERO_IMAGE|BACKGROUND_IMAGE)$/i.test(String(slotId)))) {
+    return hero
+  }
+  return null
+}
+
 function buildImageElement(slot, placement, contentBySlotId, options = {}) {
-  const slotId = slot.id
-  const url = contentBySlotId?.[`${slotId}__url`] || contentBySlotId?.[`${slotId}_url`]
+  const url = resolveImageUrl(slot, contentBySlotId, options)
   const presentation = resolveImagePresentation(slot)
   const edgeFade = resolveSplitImageEdgeFade(options.schema, slot, options.schema?.slots)
+  const imageMask = slot.imageMask && typeof slot.imageMask === 'object' ? slot.imageMask : null
+  const shaped = Boolean(imageMask && imageMask.type && imageMask.type !== 'edgeFade')
   const borderRadius =
-    edgeFade != null ? 0 : slot.borderRadius != null ? slot.borderRadius : presentation.borderRadius
-  const shadow = edgeFade != null ? undefined : slot.shadow ?? presentation.shadow
+    edgeFade != null || shaped ? 0 : slot.borderRadius != null ? slot.borderRadius : presentation.borderRadius
+  const shadow = edgeFade != null || shaped ? undefined : slot.shadow ?? presentation.shadow
   const colorMap = colorRoleMapFromPalette(options.palette)
   return {
     id: `slot-${slot.id}`,
@@ -538,12 +652,15 @@ function buildImageElement(slot, placement, contentBySlotId, options = {}) {
       borderRadius,
       ...(shadow ? { boxShadow: shadow, shadow } : {}),
       ...(edgeFade ? { edgeFade } : {}),
+      ...(imageMask && !edgeFade ? { imageMask } : {}),
     },
   }
 }
 
 function buildChartElement(slot, placement, options) {
   const { palette, contentBySlotId, schema } = options
+  const content = resolveChartContent(slot, schema, palette, contentBySlotId, options.content)
+  if (!content) return null
   return {
     id: `slot-${slot.id}`,
     slotId: slot.id,
@@ -551,7 +668,7 @@ function buildChartElement(slot, placement, options) {
     role: 'chart',
     layer: layerForSlot(slot),
     placement,
-    content: resolveChartContent(slot, schema, palette, contentBySlotId, options.content),
+    content,
   }
 }
 
@@ -670,10 +787,10 @@ export function compileDeckLayoutToElements(schema, options = {}) {
     const compileOptions = { ...options, schema, contentBySlotId }
 
     if (role === 'background' || /^METRIC_CARD_\d+_BG$|^TEXT_HALF_BG$|^SURFACE_|_bg$|_card_bg|_panel_bg/i.test(String(slot.id || ''))) {
-      return [buildBackgroundElement(slot, placement)]
+      return [buildBackgroundElement(slot, placement, compileOptions)]
     }
     if (role === 'decoration' && slot.shape) {
-      return [buildBackgroundElement(slot, placement)]
+      return [buildBackgroundElement(slot, placement, compileOptions)]
     }
     if (role === 'image') {
       const frameSlot = findDeviceFrameSlot(slots, slot.id)
@@ -696,7 +813,8 @@ export function compileDeckLayoutToElements(schema, options = {}) {
       return [buildImageElement(slot, placement, contentBySlotId, compileOptions)]
     }
     if (role === 'chart') {
-      return [buildChartElement(slot, placement, compileOptions)]
+      const chartEl = buildChartElement(slot, placement, compileOptions)
+      return chartEl ? [chartEl] : []
     }
     if (role === 'table') {
       return [buildTableElement(slot, placement, contentBySlotId, options.content)]
@@ -716,6 +834,8 @@ export function compileDeckLayoutToElements(schema, options = {}) {
     elements.sort((a, b) => (a.layer || 0) - (b.layer || 0)),
     themedPalette
   )
+  result = finalizeTimelineShapes(result, schema, colorMap)
+  result = applyThemeSlideBackground(result, themedPalette, canvasW, canvasH)
   if (
     isOverlayLayout(schema) &&
     !result.some((e) => e.slotId === 'OVERLAY_SCRIM' || e.role === 'design_overlay')

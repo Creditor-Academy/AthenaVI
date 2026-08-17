@@ -1,4 +1,5 @@
 /** Map slide content objects to per-slot text for canvas compile. */
+import { normalizeChartContent } from './chartContentNormalize'
 
 function columnAt(content, index) {
   const cols = content?.columns
@@ -12,28 +13,55 @@ function statAt(content, index) {
   return stats[index] || null
 }
 
+function chartDatasetAt(content, index) {
+  if (!content || typeof content !== 'object') return null
+  if (Array.isArray(content.charts) && content.charts[index]) return content.charts[index]
+  if (index === 0 && content.chart) return content.chart
+  if (index === 1 && content.chart2) return content.chart2
+  return null
+}
+
+function buildChartPayload(chart, slot, schema) {
+  const layoutId = String(schema?.layout_id || '').toLowerCase()
+  const slotId = String(slot?.id || '').toUpperCase()
+  let chartType = chart.type || chart.chartType || slot?.chartType || slot?.chart_type
+  if (!chartType) {
+    if (/^DONUT/.test(slotId) || /donut|pie/.test(layoutId)) chartType = 'donut'
+    else if (/line|exponential|area/.test(layoutId) || /^LINE_/.test(slotId)) chartType = 'line'
+    else chartType = 'column-grouped'
+  }
+  return normalizeChartContent(
+    {
+      chartType,
+      labels: chart.labels || [],
+      series: Array.isArray(chart.series)
+        ? chart.series
+        : [{ name: 'Series', values: chart.series?.[0]?.values || chart.data || chart.values || [] }],
+      values: chart.series?.[0]?.values || chart.data || chart.values || [],
+    },
+    {}
+  )
+}
+
 function mapChartToSlots(content, schema, out) {
   const chart = content?.chart
   if (!chart || typeof chart !== 'object') return
   const chartSlots = (schema?.slots || []).filter((s) => String(s.role || '').toLowerCase() === 'chart')
-  const payload = {
-    chartType: chart.type || chart.chartType || 'column-grouped',
-    labels: chart.labels || [],
-    values: chart.series?.[0]?.values || chart.data || chart.values || [],
-    data: {
-      labels: chart.labels || [],
-      series: Array.isArray(chart.series)
-        ? chart.series
-        : [{ name: chart.series?.[0]?.name || 'Series', values: chart.series?.[0]?.values || chart.data || [] }],
-    },
+  if (!chartSlots.length) {
+    out.MAIN_CHART__chart = buildChartPayload(chart, null, schema)
+    return
   }
-  if (chartSlots.length) {
-    chartSlots.forEach((slot) => {
-      out[`${slot.id}__chart`] = payload
-    })
-  } else {
-    out.MAIN_CHART__chart = payload
-  }
+
+  chartSlots.forEach((slot) => {
+    const slotId = String(slot.id || '').toUpperCase()
+    const chartMatch = slotId.match(/^CHART_(\d+)$/)
+    let chartObj = chart
+    if (chartMatch) {
+      chartObj = chartDatasetAt(content, Number(chartMatch[1]) - 1)
+    }
+    if (!chartObj) return
+    out[`${slot.id}__chart`] = buildChartPayload(chartObj, slot, schema)
+  })
 }
 
 export function buildContentBySlotIdFromSlideContent(content = {}, schema = null) {
@@ -44,6 +72,8 @@ export function buildContentBySlotIdFromSlideContent(content = {}, schema = null
   const subtitle = content.subtitle != null ? String(content.subtitle).trim() : ''
   const body = content.body != null ? String(content.body).trim() : ''
   const quote = content.quote != null ? String(content.quote).trim() : ''
+  const summary = content.summary != null ? String(content.summary).trim() : ''
+  const ctaText = content.cta || content.callToAction
 
   if (title) {
     out.HEADING = title
@@ -51,8 +81,20 @@ export function buildContentBySlotIdFromSlideContent(content = {}, schema = null
     out.MAIN_TITLE = title
   }
   if (subtitle) out.SUBTITLE = subtitle
+  else if (summary) out.SUBTITLE = summary.split(/[.!?]/)[0]?.trim() || summary
   if (body) out.BODY = body
   if (quote) out.QUOTE = quote
+  if (ctaText) out.CTA = String(ctaText).trim()
+  if (!out.BODY && summary) out.BODY = summary
+  if (content.contact) {
+    if (typeof content.contact === 'string') out.CONTACT = content.contact
+    else {
+      const parts = [content.contact.email, content.contact.phone, content.contact.address]
+        .map((part) => (part != null ? String(part).trim() : ''))
+        .filter(Boolean)
+      if (parts.length) out.CONTACT = parts.join(' · ')
+    }
+  }
 
   const bullets = Array.isArray(content.bullets) ? content.bullets : []
   if (bullets.length) {
@@ -66,12 +108,14 @@ export function buildContentBySlotIdFromSlideContent(content = {}, schema = null
     const text = typeof item === 'string' ? item : String(item?.text ?? item?.label ?? '')
     out[`BULLET_${i + 1}`] = text
   })
+  if (!out.BODY && bullets.length) out.BODY = out.BULLETS
 
   const columns = Array.isArray(content.columns) ? content.columns : []
   columns.slice(0, 6).forEach((col, i) => {
     const n = i + 1
     const colTitle = String(col?.title ?? col?.heading ?? col?.label ?? '').trim()
     const colBody = String(col?.body ?? col?.text ?? '').trim()
+    const bulletText = colTitle && colBody ? `${colTitle}\n${colBody}` : colBody || colTitle
     out[`CARD_${n}_TITLE`] = colTitle
     out[`CARD_${n}_BODY`] = colBody
     out[`COL_${n}_TITLE`] = colTitle
@@ -79,6 +123,8 @@ export function buildContentBySlotIdFromSlideContent(content = {}, schema = null
     out[`BODY_${n}`] = colBody || colTitle
     out[`METRIC_TITLE_${n}`] = colTitle
     out[`METRIC_BODY_${n}`] = colBody
+    if (colTitle) out[`IMAGE_${n}_LABEL`] = colTitle
+    if (bulletText) out[`BULLET_${n}`] = bulletText
   })
 
   if (statAt(content, 0)) {
@@ -139,20 +185,98 @@ export function buildContentBySlotIdFromSlideContent(content = {}, schema = null
     out[`milestone_${n}`] = label && detail ? `${label}\n${detail}` : label || detail
   })
 
+  const diagramCells =
+    content.diagram?.cells ||
+    content.cells ||
+    content.quadrants ||
+    content.steps ||
+    content.funnel ||
+    []
+  if (Array.isArray(diagramCells)) {
+    diagramCells.slice(0, 6).forEach((cell, i) => {
+      const n = i + 1
+      const cellTitle = String(cell?.title ?? cell?.label ?? cell?.heading ?? '').trim()
+      const cellBody = String(cell?.body ?? cell?.text ?? cell?.detail ?? '').trim()
+      out[`Q${n}_TITLE`] = cellTitle
+      out[`Q${n}_BODY`] = cellBody
+      out[`funnel_${n}_title`] = cellTitle
+      out[`funnel_${n}_body`] = cellBody
+      out[`step_${n}_title`] = cellTitle
+      out[`step_${n}_body`] = cellBody
+    })
+  }
+
+  const items = Array.isArray(content.items) ? content.items : []
+  items.slice(0, 8).forEach((item, i) => {
+    const n = i + 1
+    const text =
+      typeof item === 'string'
+        ? item.trim()
+        : String(item?.title ?? item?.heading ?? item?.label ?? item?.body ?? item?.text ?? '').trim()
+    if (text) out[`ITEM_${n}`] = text
+  })
+
+  const left = content.left && typeof content.left === 'object' ? content.left : null
+  const right = content.right && typeof content.right === 'object' ? content.right : null
+  if (left) {
+    out.LEFT_TITLE = String(left.title ?? left.heading ?? '').trim()
+    out.LEFT_BODY = String(left.body ?? left.text ?? '').trim()
+  }
+  if (right) {
+    out.RIGHT_TITLE = String(right.title ?? right.heading ?? '').trim()
+    out.RIGHT_BODY = String(right.body ?? right.text ?? '').trim()
+  }
+
   const slotImageUrls = content.slotImageUrls || {}
   for (const [slotId, url] of Object.entries(slotImageUrls)) {
     if (url) out[`${slotId}__url`] = url
   }
+  const imageSlots = (schema?.slots || []).filter((s) => String(s.role || '').toLowerCase() === 'image')
+  const galleryImageSlots = imageSlots.filter((s) => /^IMAGE_\d+$/i.test(String(s.id || '')))
   if (Array.isArray(content.imageUrls)) {
-    const imageSlots = (schema?.slots || []).filter((s) => s.role === 'image' || String(s.id || '').includes('IMAGE'))
-    imageSlots.forEach((slot, i) => {
-      if (content.imageUrls[i]) out[`${slot.id}__url`] = content.imageUrls[i]
+    const targets = galleryImageSlots.length ? galleryImageSlots : imageSlots
+    targets.forEach((slot, i) => {
+      if (content.imageUrls[i] && !out[`${slot.id}__url`]) out[`${slot.id}__url`] = content.imageUrls[i]
     })
+  }
+  const heroUrl =
+    content.imageRef?.url ||
+    content.imageRef?.src ||
+    content.imageUrl ||
+    (Array.isArray(content.imageUrls) ? content.imageUrls[0] : null)
+  if (heroUrl && imageSlots.length === 1 && !out[`${imageSlots[0].id}__url`]) {
+    out[`${imageSlots[0].id}__url`] = heroUrl
+  } else if (heroUrl) {
+    for (const slot of imageSlots) {
+      const id = String(slot.id || '').toUpperCase()
+      if ((id === 'HERO_IMAGE' || id === 'BACKGROUND_IMAGE') && !out[`${slot.id}__url`]) {
+        out[`${slot.id}__url`] = heroUrl
+      }
+    }
   }
 
   return out
 }
 
+function isUsableMappedValue(value) {
+  if (value == null || value === '') return false
+  if (typeof value === 'string') {
+    const t = value.trim()
+    if (!t) return false
+    if (/^double-?click to edit$/i.test(t)) return false
+  }
+  return true
+}
+
 export function mergeContentBySlotId(...maps) {
-  return Object.assign({}, ...maps.filter(Boolean))
+  const out = {}
+  for (const map of maps) {
+    if (!map || typeof map !== 'object') continue
+    for (const [key, value] of Object.entries(map)) {
+      if (!isUsableMappedValue(value)) continue
+      if (isUsableMappedValue(out[key])) continue
+      out[key] = value
+    }
+  }
+  return out
 }

@@ -68,6 +68,36 @@ function milestoneDetailSlots(count = 4) {
   return slots
 }
 
+function milestoneImageDetailSlots(count = 4) {
+  const cols = [
+    [2, 3],
+    [4, 5],
+    [6, 7],
+    [8, 9],
+    [10, 11],
+  ]
+  const slots = []
+  for (let i = 0; i < count; i += 1) {
+    const [c1, c2] = cols[i] || [2 + i * 2, 3 + i * 2]
+    const n = i + 1
+    slots.push(
+      slot(`IMAGE_${n}`, `cols ${c1}-${c2}, rows 3-5`, 'image', null, { layer: 2, fit: 'cover' }),
+      cardShapeHint(`cols ${c1}-${c2}, rows 5-8`, `MILESTONE_${n}_CARD_BG`, 10, `milestone_${n}_label`),
+      slot(`milestone_${n}_label`, `cols ${c1}-${c2}, rows 5-6`, 'subheading', '2020', {
+        layer: 10,
+        typography: { ...typo('caption', { fontSize: 13, align: 'center', fontWeight: 700 }) },
+        max_lines: 1,
+      }),
+      slot(`milestone_${n}_detail`, `cols ${c1}-${c2}, rows 6-8`, 'body', 'Key event summary', {
+        layer: 10,
+        typography: typo('body', { fontSize: 14, align: 'center' }),
+        max_lines: 3,
+      })
+    )
+  }
+  return slots
+}
+
 const CATALOG = {
   comparison_side_by_side_v1: layoutBase('comparison_side_by_side_v1', 'comparison', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Compare options', { max_lines: 2 }),
@@ -115,6 +145,11 @@ const CATALOG = {
   timeline_milestones_v1: layoutBase('timeline_milestones_v1', 'timeline', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Key milestones', { max_lines: 2 }),
     ...milestoneDetailSlots(4),
+  ], { mode: 'process_flow' }),
+
+  timeline_milestones_image_v1: layoutBase('timeline_milestones_image_v1', 'timeline', [
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Key milestones', { max_lines: 2 }),
+    ...milestoneImageDetailSlots(4),
   ], { mode: 'process_flow' }),
 
   timeline_vertical_v1: layoutBase('timeline_vertical_v1', 'timeline', [

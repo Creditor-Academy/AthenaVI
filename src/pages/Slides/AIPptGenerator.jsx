@@ -5,7 +5,7 @@ import './AIPptGenerator.css'
 import AIPptWizard from './AIPptComponents/AIPptWizard'
 import AIPptOutline from './AIPptComponents/AIPptOutline'
 import AIPptGenerating from './AIPptComponents/AIPptGenerating'
-import presentationService from '../../services/presentationService'
+import presentationService, { PresentationConflictError } from '../../services/presentationService'
 import { isInsufficientCreditsError } from '../../services/creditsService'
 import {
   buildPresentationGenerationPayload,
@@ -88,6 +88,11 @@ export default function AIPptGenerator({
     } catch (error) {
       if (isInsufficientCreditsError(error)) {
         setFlowError(error.message || 'Insufficient credits to generate this presentation.')
+      } else if (error instanceof PresentationConflictError) {
+        setFlowError(
+          error.message ||
+            'This deck is still generating. Wait for it to finish, or start a new presentation from the wizard.'
+        )
       } else {
         setFlowError(error.message || 'Failed to start generation.')
       }

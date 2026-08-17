@@ -23,11 +23,39 @@ export const DEFAULT_SLIDE_BG = '#FFFFFF'
 export function isSlideBackgroundElement(el, slide) {
   if (!el) return false
   if (el.content?.useAsBackground) return true
-  return Boolean(slide?.backgroundImageElementId && el.id === slide.backgroundImageElementId)
+  if (slide?.backgroundImageElementId && el.id === slide.backgroundImageElementId) return true
+
+  const role = String(el?.role || '').toLowerCase()
+  if (role === 'design_bg') return true
+
+  if (role === 'background') {
+    const canvas = slide?.elements?.canvas || {}
+    const cw = canvas.width || 1920
+    const ch = canvas.height || 1080
+    const p = el.placement || {}
+    if ((p.width ?? 0) >= cw * 0.9 && (p.height ?? 0) >= ch * 0.9) return true
+  }
+
+  if (el.type === 'shape' && el.content?.layoutSurface) {
+    const canvas = slide?.elements?.canvas || {}
+    const cw = canvas.width || 1920
+    const ch = canvas.height || 1080
+    const p = el.placement || {}
+    if ((p.width ?? 0) >= cw * 0.9 && (p.height ?? 0) >= ch * 0.9) return true
+  }
+
+  return false
+}
+
+function isDefaultSlideBackgroundColor(color) {
+  if (!color) return true
+  const normalized = String(color).trim().toLowerCase()
+  return normalized === DEFAULT_SLIDE_BG.toLowerCase() || normalized === '#fff' || normalized === 'white'
 }
 
 export function resolveSlideStageBackground(slide, fallback = DEFAULT_SLIDE_BG) {
-  const color = slide?.backgroundColor || fallback
+  const stored = slide?.backgroundColor || slide?.elements?.backgroundColor || null
+  const color = isDefaultSlideBackgroundColor(stored) ? fallback : stored
   if (slide?.backgroundImage) {
     const fit = slide.backgroundImageFit || 'cover'
     return {
@@ -502,6 +530,32 @@ export function buildImageEdgeFadeMask(edgeFade) {
   return `linear-gradient(to right, transparent 0%, black ${pct}%, black 100%)`
 }
 
+/** Clip-path masks for shaped hero images on title slides. */
+export function buildImageClipPath(imageMask) {
+  if (!imageMask || typeof imageMask !== 'object') return null
+  const type = String(imageMask.type || '').toLowerCase()
+  const side = String(imageMask.side || 'right').toLowerCase()
+
+  if (type === 'oval') {
+    if (side === 'left') return 'ellipse(88% 96% at 0% 50%)'
+    return 'ellipse(88% 96% at 100% 50%)'
+  }
+
+  if (type === 'blob') {
+    if (side === 'left') {
+      return 'polygon(0% 0%, 70% 0%, 86% 14%, 94% 50%, 86% 86%, 70% 100%, 0% 100%)'
+    }
+    return 'polygon(30% 0%, 100% 0%, 100% 100%, 30% 100%, 14% 86%, 6% 50%, 14% 14%)'
+  }
+
+  if (type === 'arch') {
+    if (side === 'left') return 'ellipse(92% 100% at 0% 100%)'
+    return 'ellipse(92% 100% at 100% 100%)'
+  }
+
+  return null
+}
+
 export function clampAiSlideCount(count) {
   const n = Number(count) || PPT_CAPS.AI_SLIDE_MIN
   return Math.min(PPT_CAPS.AI_SLIDE_MAX, Math.max(PPT_CAPS.AI_SLIDE_MIN, n))
@@ -772,17 +826,23 @@ export function emptyCanvasDoc(aspectRatio = '16:9') {
   }
 }
 
-export function buildCanvasDoc(slide, { aspectRatio = '16:9', elements } = {}) {
+export function buildCanvasDoc(slide, { aspectRatio = '16:9', elements, backgroundColor } = {}) {
   const canvas = resolveCanvasSize(slide, aspectRatio)
   const list = Array.isArray(elements)
     ? elements
     : Array.isArray(slide?.elements?.elements)
       ? slide.elements.elements
       : []
+  const bg =
+    backgroundColor ||
+    slide?.backgroundColor ||
+    slide?.elements?.backgroundColor ||
+    undefined
   return {
     version: slide?.elements?.version || 1,
     canvas,
     elements: list,
+    ...(bg ? { backgroundColor: bg } : {}),
     ...(slide?.elements?.transition ? { transition: slide.elements.transition } : {}),
     ...(slide?.elements?.contributorStatus
       ? { contributorStatus: slide.elements.contributorStatus }

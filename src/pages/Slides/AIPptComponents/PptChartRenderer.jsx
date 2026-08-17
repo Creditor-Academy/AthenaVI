@@ -1,5 +1,7 @@
 /** SVG chart renderer for PPT canvas elements. */
 
+import { normalizeChartContent } from '../../../utils/chartContentNormalize'
+
 function normalizeChartType(chartType) {
   const type = String(chartType || 'column').toLowerCase()
   if (type === 'doughnut') return 'donut'
@@ -196,10 +198,11 @@ function KpiChart({ values, content, palette }) {
 }
 
 export default function PptChartRenderer({ content, palette, style }) {
-  const chartType = normalizeChartType(content?.chartType)
-  const { labels, values } = getSeriesData(content)
-  const colors = (content?.colors || ['#475569']).map((c) => resolveColor(c, palette, c))
-  const premium = content?.premium !== false
+  const normalized = normalizeChartContent(content || {}, palette || {})
+  const chartType = normalizeChartType(normalized.chartType)
+  const { labels, values } = getSeriesData(normalized)
+  const colors = (normalized.colors || ['#475569']).map((c) => resolveColor(c, palette, c))
+  const premium = normalized.premium !== false
 
   const isLine = chartType.includes('line') || chartType.includes('area')
   const isPie = chartType === 'pie'

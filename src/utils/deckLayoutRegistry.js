@@ -199,6 +199,7 @@ const LAYOUT_PREVIEW_MODES = {
   process_linear_v1: 'process_flow',
   timeline_horizontal_v1: 'process_flow',
   timeline_milestones_v1: 'process_flow',
+  timeline_milestones_image_v1: 'process_flow',
   timeline_vertical_v1: 'process_flow',
   timeline_roadmap_v1: 'process_flow',
   timeline_process_steps_v1: 'process_flow',
@@ -972,6 +973,11 @@ export function buildPackSlidePreviewSchema(layoutSchema, slide, { imageUrl, ima
     || (typeof pl.image === 'string' && pl.image.trim())
     || ''
 
+  const galleryImageSlots = (schema.slots || []).filter(
+    (s) => String(s.role || '').toLowerCase() === 'image' && /^IMAGE_\d+$/i.test(String(s.id || ''))
+  )
+  const multiImageGallery = galleryImageSlots.length > 1
+
   if (resolvedImage) {
     schema.preview.imageUrl = resolvedImage
   }
@@ -984,7 +990,7 @@ export function buildPackSlidePreviewSchema(layoutSchema, slide, { imageUrl, ima
       (slotId && slotUrlMap[slotId])
       || (slotId && slotUrlMap[String(slotId).toUpperCase()])
       || null
-    const urlForSlot = perSlotUrl || resolvedImage
+    const urlForSlot = perSlotUrl || (multiImageGallery ? null : resolvedImage)
     if (
       urlForSlot
       && (

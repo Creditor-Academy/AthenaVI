@@ -7,6 +7,7 @@ import {
   buildCanvasShapeStyle,
   buildNativeShapeBoxStyle,
   buildImageEdgeFadeMask,
+  buildImageClipPath,
   shapeElementUsesNativeStyle,
 } from '../../../utils/presentationHelpers'
 import { getListMarker, splitTextLines, stripLeadingListMarkers } from '../../../utils/textListUtils'
@@ -289,6 +290,7 @@ export default function PptCanvasElement({
       )
     }
     const edgeFadeMask = buildImageEdgeFadeMask(c.edgeFade)
+    const clipPath = c.clipPath || buildImageClipPath(c.imageMask)
     return (
       <img
         src={url}
@@ -297,8 +299,9 @@ export default function PptCanvasElement({
           ...fillStyle,
           objectFit: c.fit || (el.type === 'icon' ? 'contain' : 'cover'),
           opacity: c.opacity != null ? c.opacity : 1,
-          borderRadius: c.borderRadius != null ? c.borderRadius : undefined,
+          borderRadius: clipPath || edgeFadeMask ? 0 : c.borderRadius != null ? c.borderRadius : undefined,
           boxShadow: c.boxShadow || c.shadow || undefined,
+          ...(clipPath ? { clipPath, WebkitClipPath: clipPath } : {}),
           ...(edgeFadeMask
             ? {
                 WebkitMaskImage: edgeFadeMask,

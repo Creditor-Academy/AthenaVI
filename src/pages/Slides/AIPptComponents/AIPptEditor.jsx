@@ -51,6 +51,7 @@ import {
   resolveSlideStageBackground,
   resolveThemeColor,
   toApiThemeId,
+  buildWizardThemeTokens,
 } from '../../../utils/presentationHelpers'
 import { compileDeckLayoutToElements, buildThemeCompileOptions } from '../../../utils/compileDeckLayoutToElements'
 import { resolveLayoutSchemaById } from '../../../utils/deckLayoutRegistry'
@@ -82,8 +83,8 @@ function resolveThemeVisual(themeId, themeTokens) {
     return {
       id: 'themeTokens',
       name: themeTokens?.brand?.name || 'Brand Kit',
-      outer: DEFAULT_SLIDE_BG,
-      inner: DEFAULT_SLIDE_BG,
+      outer: bg,
+      inner: bg,
       title: text,
       body: muted,
       primary,
@@ -95,11 +96,15 @@ function resolveThemeVisual(themeId, themeTokens) {
   }
   const id = String(themeTokens?.wizardColorThemeId || themeId || '')
   const fallback = THEMES.find((t) => t.id === id || toApiThemeId(t.id) === id) || THEMES[0]
+  const builtTokens = buildWizardThemeTokens(fallback.id, THEMES)
+  const fallbackPalette = builtTokens?.palette || null
+  const bg = fallback.background || fallbackPalette?.bg || DEFAULT_SLIDE_BG
   return {
     ...fallback,
-    outer: DEFAULT_SLIDE_BG,
-    inner: DEFAULT_SLIDE_BG,
-    palette: null,
+    outer: bg,
+    inner: bg,
+    background: bg,
+    palette: fallbackPalette,
   }
 }
 
@@ -316,7 +321,10 @@ function SlideStage({
   const hasElements = elements.length > 0
   const fallbackImage = hasElements ? null : getSlideImage(slide).url
   const palette = themeVisual?.palette || null
-  const slideBgStyle = resolveSlideStageBackground(slide, themeVisual?.palette?.bg || DEFAULT_SLIDE_BG)
+  const slideBgStyle = resolveSlideStageBackground(
+    slide,
+    themeVisual?.palette?.bg || themeVisual?.background || DEFAULT_SLIDE_BG
+  )
 
   return (
     <div
@@ -458,6 +466,8 @@ export default function AIPptEditor({
   const elementPatchTimers = useRef({})
   const imageRefreshInFlight = useRef(new Set())
   const layoutRepairPassRef = useRef('')
+  const mainScrollRef = useRef(null)
+  const slideContainerRefs = useRef({})
 
   const history = usePptEditorHistory()
 
@@ -513,6 +523,13 @@ export default function AIPptEditor({
     localSlides.find((s) => s.id === selectedSlideId) || localSlides[0] || null
   const selectedElement =
     selectedSlide?.elements?.elements?.find((el) => el.id === selectedElementId) || null
+
+  useEffect(() => {
+    if (!selectedSlideId) return
+    const node = slideContainerRefs.current[selectedSlideId]
+    if (!node) return
+    node.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }, [selectedSlideId])
   const designFocus = (() => {
     const type = String(selectedElement?.type || '').toLowerCase()
     if (type) return type
@@ -2098,6 +2115,7 @@ export default function AIPptEditor({
 
       <div className="aig-editor-workspace gamma-layout">
         <main
+          ref={mainScrollRef}
           className={`aig-editor-main-scroll ${sidebarOpen ? 'is-sidebar-open' : ''}`}
           style={{
             marginLeft: showMinimap ? '260px' : '0',
@@ -2108,6 +2126,10 @@ export default function AIPptEditor({
             {localSlides.map((slide, idx) => (
               <div
                 key={slide.id}
+                ref={(node) => {
+                  if (node) slideContainerRefs.current[slide.id] = node
+                  else delete slideContainerRefs.current[slide.id]
+                }}
                 className={`aig-scroll-slide-container ${selectedSlideId === slide.id ? 'is-selected' : ''}`}
                 onClick={() => {
                   setSelectedSlideId(slide.id)
@@ -2314,13 +2336,13 @@ export default function AIPptEditor({
                     }
                     aria-hidden
                   />
-                  <div className="aig-minimap-thumb" style={resolveSlideStageBackground(slide, themeVisual?.palette?.bg || DEFAULT_SLIDE_BG)}>
+                  <div className="aig-minimap-thumb" style={resolveSlideStageBackground(slide, themeVisual?.palette?.bg || themeVisual?.background || DEFAULT_SLIDE_BG)}>
                     <MinimapSlidePreview
                       slide={slide}
                       themeVisual={themeVisual}
                       themeId={config.theme}
                       aspectRatio={aspectRatio}
-                      fallbackBg={DEFAULT_SLIDE_BG}
+                      fallbackBg={themeVisual?.palette?.bg || themeVisual?.background || DEFAULT_SLIDE_BG}
                       layoutSchemaMap={layoutSchemaMap}
                     />
                   </div>

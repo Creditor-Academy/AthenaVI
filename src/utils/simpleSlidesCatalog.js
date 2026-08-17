@@ -50,6 +50,87 @@ const CATALOG = {
     imageRight('cols 7-12, rows 1-10', 'HERO_IMAGE', 'hero'),
   ]),
 
+  title_hero_left_blob_v1: layoutBase('title_hero_left_blob_v1', 'title', [
+    slot('HERO_IMAGE', 'cols 1-7, rows 1-10', 'image', null, {
+      layer: 2,
+      fit: 'cover',
+      imageStyle: 'hero',
+      imageMask: { type: 'blob', side: 'left' },
+    }),
+    slot('MAIN_TITLE', 'cols 7-11, rows 3-5', 'heading', 'Presentation title', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 48 }),
+      max_lines: 2,
+    }),
+    slot('SUBTITLE', 'cols 7-11, rows 5-7', 'subheading', 'Tagline or company name', {
+      layer: 10,
+      typography: typo('subheading', { fontSize: 22 }),
+      max_lines: 2,
+    }),
+  ]),
+
+  title_hero_right_oval_v1: layoutBase('title_hero_right_oval_v1', 'title', [
+    slot('MAIN_TITLE', 'cols 2-6, rows 3-5', 'heading', 'Presentation title', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 48 }),
+      max_lines: 2,
+    }),
+    slot('SUBTITLE', 'cols 2-6, rows 5-7', 'subheading', 'Tagline or company name', {
+      layer: 10,
+      typography: typo('subheading', { fontSize: 22 }),
+      max_lines: 2,
+    }),
+    slot('HERO_IMAGE', 'cols 6-12, rows 1-10', 'image', null, {
+      layer: 2,
+      fit: 'cover',
+      imageStyle: 'hero',
+      imageMask: { type: 'oval', side: 'right' },
+    }),
+  ]),
+
+  title_hero_left_fade_v1: layoutBase('title_hero_left_fade_v1', 'title', [
+    imageLeft('cols 1-7, rows 1-10', 'HERO_IMAGE', 'hero'),
+    slot('MAIN_TITLE', 'cols 7-11, rows 3-5', 'heading', 'Presentation title', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 48 }),
+      max_lines: 2,
+    }),
+    slot('SUBTITLE', 'cols 7-11, rows 5-7', 'subheading', 'Tagline or company name', {
+      layer: 10,
+      typography: typo('subheading', { fontSize: 22 }),
+      max_lines: 2,
+    }),
+  ]),
+
+  title_hero_right_fade_v1: layoutBase('title_hero_right_fade_v1', 'title', [
+    slot('MAIN_TITLE', 'cols 2-6, rows 3-5', 'heading', 'Presentation title', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 48 }),
+      max_lines: 2,
+    }),
+    slot('SUBTITLE', 'cols 2-6, rows 5-7', 'subheading', 'Tagline or company name', {
+      layer: 10,
+      typography: typo('subheading', { fontSize: 22 }),
+      max_lines: 2,
+    }),
+    imageRight('cols 6-12, rows 1-10', 'HERO_IMAGE', 'hero'),
+  ]),
+
+  title_fullbleed_v1: layoutBase('title_fullbleed_v1', 'title', [
+    slot('BACKGROUND_IMAGE', 'cols 1-12, rows 1-10', 'background', null, { layer: 0, fit: 'cover' }),
+    overlayScrim(),
+    slot('MAIN_TITLE', 'cols 2-10, rows 3-5', 'heading', 'Presentation title', {
+      layer: 10,
+      typography: { ...typo('heading', { fontSize: 52 }), colorRole: 'textOnImage' },
+      max_lines: 2,
+    }),
+    slot('SUBTITLE', 'cols 2-10, rows 5-7', 'subheading', 'Tagline or company name', {
+      layer: 10,
+      typography: { ...typo('subheading', { fontSize: 24 }), colorRole: 'textOnImageMuted' },
+      max_lines: 2,
+    }),
+  ]),
+
   title_with_logo_v1: layoutBase('title_with_logo_v1', 'title', [
     slot('LOGO', 'cols 2-4, rows 2-3', 'decoration', 'logo', {
       layer: 2,

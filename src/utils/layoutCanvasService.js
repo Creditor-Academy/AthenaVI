@@ -6,11 +6,11 @@ import {
   isTextLayoutRole,
 } from './compileDeckLayoutToElements'
 import { buildContentBySlotIdFromSlideContent, mergeContentBySlotId } from './contentSlotMapping'
+import { isCatalogPlaceholderText } from './catalogPlaceholder'
 import {
   buildLayoutSchemaMap,
   getDeckLayoutSchema,
   resolveLayoutSchemaById,
-  resolvePreviewMode,
 } from './deckLayoutRegistry'
 import { parseRegion } from './layoutPreviewUtils'
 import { buildCanvasDoc, resolveCanvasSize } from './presentationHelpers'
@@ -123,7 +123,10 @@ export function extractContentBySlotFromElements(elements = [], schema) {
     const slotId = el?.slotId || el?.meta?.slotId || el?.content?.slotId
     if (!slotId) continue
     if (el.type === 'text' && el.content?.text != null) {
-      bySlotId[slotId] = String(el.content.text)
+      const text = String(el.content.text).trim()
+      if (text && !isCatalogPlaceholderText(text)) {
+        bySlotId[slotId] = text
+      }
     }
     if (el.type === 'image' && (el.content?.url || el.content?.src)) {
       bySlotId[`${slotId}__url`] = el.content.url || el.content.src
@@ -192,36 +195,58 @@ export function needsLayoutCanvasRepair(slide, elements = [], schema = null, opt
 
   if (hasOverlappingTextPlacements(list)) return true
   if (needsLegacyBrokenLayout(list, slide?.title)) return true
+  if (needsContentHydration(slide, list)) return true
 
-  if (slots.length) {
-    const mode = resolvePreviewMode(schema)
-    if (mode === 'chart_split') {
-      const chartEl = list.find((el) => el.type === 'chart')
-      const chartType = String(chartEl?.content?.chartType || '').toLowerCase()
-      if (chartEl && !chartType.includes('line') && !chartType.includes('area')) return true
-    }
+  return false
+}
 
-    const themedCard = list.find(
+function isEmptyCanvasText(text) {
+  const t = String(text || '').trim()
+  if (!t) return true
+  return isCatalogPlaceholderText(t) || /^double-?click to edit$/i.test(t)
+}
+
+function needsContentHydration(slide, elements = []) {
+  const content = slide?.content && typeof slide.content === 'object' ? slide.content : {}
+  const hasCopy = Boolean(
+    String(content.body || content.summary || content.cta || content.subtitle || '').trim() ||
+      (Array.isArray(content.bullets) && content.bullets.length) ||
+      (Array.isArray(content.columns) && content.columns.length) ||
+      content.chart
+  )
+  if (hasCopy) {
+    const emptyText = elements.some(
       (el) =>
-        el.type === 'shape' &&
-        /_bg$|card_bg|panel_bg|background/i.test(String(el.slotId || el.role || '')) &&
-        String(el.content?.fill || '').includes('22')
+        (el.type === 'text' || el.type === 'textbox') &&
+        isEmptyCanvasText(el.content?.text) &&
+        !/heading|title/i.test(String(el.role || el.slotId || ''))
     )
-    if (themedCard) return true
+    if (emptyText) return true
+  }
 
-    const rainbowChart = list.find(
-      (el) => el.type === 'chart' && Array.isArray(el.content?.colors) && el.content.colors.length > 1
+  const hasImageSource = Boolean(
+    slide?.imageRef?.url ||
+      content.imageRef?.url ||
+      content.imageUrl ||
+      (content.slotImageUrls && Object.values(content.slotImageUrls).some(Boolean)) ||
+      (Array.isArray(content.imageUrls) && content.imageUrls.some(Boolean))
+  )
+  if (hasImageSource) {
+    const missingImage = elements.some(
+      (el) => el.type === 'image' && !el.content?.url && !el.content?.src
     )
-    if (rainbowChart) return true
+    if (missingImage) return true
+  }
 
-    const staleLayoutCompile = list.some(
-      (el) =>
-        (el.type === 'shape' &&
-          /_bg$|card_bg|panel_bg|background/i.test(String(el.slotId || el.role || '')) &&
-          !el.content?.layoutSurface) ||
-        (el.type === 'chart' && el.content?.premium !== true)
-    )
-    if (staleLayoutCompile) return true
+  if (content.chart && typeof content.chart === 'object') {
+    const chartEl = elements.find((el) => el.type === 'chart')
+    const values =
+      chartEl?.content?.data?.series?.[0]?.values ||
+      chartEl?.content?.series?.[0]?.values ||
+      chartEl?.content?.values ||
+      []
+    if (chartEl && (!Array.isArray(values) || !values.length)) return true
+    if (!chartEl) return true
   }
 
   return false
@@ -283,7 +308,7 @@ export async function applyCompiledLayoutToSlide({
     schema,
     layoutSchemaMap,
   })
-  if (layoutSchemaHasCanvasElements(resolvedSchema)) {
+  if (layoutSchemaHasCanvasElements(resolvedSchema) && !resolvedSchema?.slots?.length) {
     const elementsDoc = resolveLayoutCanvasElementsDoc(resolvedSchema)
     const canvasDoc = buildCanvasDoc(
       { elements: elementsDoc },
@@ -306,9 +331,13 @@ export async function applyCompiledLayoutToSlide({
   if (!resolvedSchema?.slots?.length) return null
 
   const canvas = resolveCanvasSize(null, aspectRatio)
+  const content = {
+    ...(slideContent && typeof slideContent === 'object' ? slideContent : {}),
+    ...(slideTitle && !(slideContent && slideContent.title) ? { title: slideTitle } : {}),
+  }
   const extracted = extractContentBySlotFromElements(mergeFromElements, resolvedSchema)
   const contentBySlotId = mergeContentBySlotId(
-    buildContentBySlotIdFromSlideContent(slideContent, resolvedSchema),
+    buildContentBySlotIdFromSlideContent(content, resolvedSchema),
     extracted
   )
   const compileOptions = buildThemeCompileOptions(themeTokens, {
@@ -320,10 +349,14 @@ export async function applyCompiledLayoutToSlide({
     canvas,
     ...compileOptions,
     contentBySlotId,
-    content: slideContent,
+    content,
   })
 
-  const canvasDoc = buildCanvasDoc(null, { aspectRatio, elements })
+  const canvasDoc = buildCanvasDoc(null, {
+    aspectRatio,
+    elements,
+    backgroundColor: compileOptions.palette?.bg || palette?.bg || null,
+  })
   if (skipSave) return canvasDoc
 
   const result = await presentationService.saveCanvas(
@@ -372,7 +405,10 @@ export async function repairPresentationLayoutSlides({
         palette,
         themeTokens,
         slideTitle: slide.title,
-        slideContent: slide.content || slide.placeholder || null,
+        slideContent: {
+          ...(slide.content || slide.placeholder || {}),
+          imageRef: slide.imageRef || slide.content?.imageRef || null,
+        },
         mergeFromElements: elements,
       })
     )
