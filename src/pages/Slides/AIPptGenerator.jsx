@@ -1,10 +1,16 @@
 import { useState } from 'react'
-import { ChevronLeft } from 'lucide-react'
 import './AIPptGenerator.css'
 
 import AIPptWizard from './AIPptComponents/AIPptWizard'
 import AIPptOutline from './AIPptComponents/AIPptOutline'
 import AIPptGenerating from './AIPptComponents/AIPptGenerating'
+import PptHistorySidebar from './AIPptComponents/PptHistorySidebar'
+import PptHistoryPreview from './AIPptComponents/PptHistoryPreview'
+import customFloat1 from '../../assets/Template_Image/custom_float_1.png'
+import customFloat2 from '../../assets/Template_Image/custom_float_2.png'
+import customFloat3 from '../../assets/Template_Image/custom_float_3.png'
+import customFloat4 from '../../assets/Template_Image/custom_float_4.png'
+import aiMascot from '../../assets/slides_icons/ai_mascot.png'
 import presentationService, { PresentationConflictError } from '../../services/presentationService'
 import { isInsufficientCreditsError } from '../../services/creditsService'
 import {
@@ -16,7 +22,9 @@ import {
 
 export default function AIPptGenerator({
   onBack,
-  onComplete, createContext: _createContext = null,
+  onComplete: _onComplete,
+  onOpenPresentation,
+  createContext: _createContext = null,
   initialWorkspaceId,
   initialFolderId,
 }) {
@@ -27,6 +35,8 @@ export default function AIPptGenerator({
   const [creditEstimate, setCreditEstimate] = useState(null)
   const [flowError, setFlowError] = useState('')
   const [isBusy, setIsBusy] = useState(false)
+  const [flowNonce, setFlowNonce] = useState(0)
+  const [wizardStep, setWizardStep] = useState(1)
   // _createContext ({ optionId, workspaceId, folderId }) reserved for a future name/save step.
 
   const handleWizardComplete = (generatedOutline, generatorConfig, apiSession) => {
@@ -101,35 +111,81 @@ export default function AIPptGenerator({
     }
   }
 
-  const handleGenerationComplete = (statusPayload) => {
-    if (onComplete) {
-      onComplete({
-        outline: outlineData,
-        config,
-        workspaceId: session?.workspaceId,
-        presentationId: session?.presentationId,
-        folderId: session?.folderId,
-        status: statusPayload,
-      })
-    }
+  const handleGenerationComplete = () => {
+    setStage('preview')
   }
 
+  const handleNewPresentation = () => {
+    setStage('wizard')
+    setOutlineData([])
+    setConfig({})
+    setSession(null)
+    setCreditEstimate(null)
+    setFlowError('')
+    setIsBusy(false)
+    setFlowNonce((value) => value + 1)
+  }
+
+  const handleOpenHistoryItem = (item) => {
+    if (!item?.id || !item?.workspaceId) return
+    setSession({
+      workspaceId: item.workspaceId,
+      presentationId: item.id,
+      folderId: item.folderId || null,
+      title: item.title || 'Untitled Presentation',
+      themeId: item.themeId || null,
+    })
+    setConfig({
+      title: item.title || 'Untitled Presentation',
+      theme: item.themeId || 'petrol',
+      workspaceId: item.workspaceId,
+      presentationId: item.id,
+    })
+    setFlowError('')
+    setStage('preview')
+  }
+
+  const handleEditPreview = (data) => {
+    onOpenPresentation?.(data)
+  }
+
+  const showHistorySidebar = stage === 'preview' || (stage === 'wizard' && wizardStep === 1)
+
   return (
-    <div className="aig-container">
+    <div className={`aig-container ${showHistorySidebar ? 'aig-container--with-history' : ''}`}>
       {stage !== 'editor' && (
-        <div className="aig-bg-sky">
-          <div className="aig-bg-wave aig-bg-wave-1"></div>
-          <div className="aig-bg-wave aig-bg-wave-2"></div>
-          <div className="aig-bg-wave aig-bg-wave-3"></div>
-        </div>
+        <>
+          <div className="aig-bg-sky">
+            <div className="aig-bg-wave aig-bg-wave-1"></div>
+            <div className="aig-bg-wave aig-bg-wave-2"></div>
+            <div className="aig-bg-wave aig-bg-wave-3"></div>
+          </div>
+          <div className="aig-floating-bg">
+            <img src={customFloat1} className="aig-float-img img-1" alt="" aria-hidden="true" />
+            <img src={customFloat2} className="aig-float-img img-2" alt="" aria-hidden="true" />
+            <img src={customFloat4} className="aig-float-img img-3" alt="" aria-hidden="true" />
+            <img src={customFloat3} className="aig-float-img img-4" alt="" aria-hidden="true" />
+            <img src={customFloat2} className="aig-float-img img-5" alt="" aria-hidden="true" />
+            <img src={customFloat1} className="aig-float-img img-6" alt="" aria-hidden="true" />
+            <img src={customFloat3} className="aig-float-img img-7" alt="" aria-hidden="true" />
+            <img src={customFloat4} className="aig-float-img img-8" alt="" aria-hidden="true" />
+          </div>
+          <img
+            src={aiMascot}
+            alt=""
+            className="aig-mascot-slide"
+            aria-hidden="true"
+          />
+        </>
       )}
 
-      {(stage === 'wizard' || stage === 'outline') && (
-        <header className="aig-header-floating fade-in">
-          <button className="aig-home-btn" onClick={onBack}>
-            <ChevronLeft size={18} /> Home
-          </button>
-        </header>
+      {showHistorySidebar && (
+        <PptHistorySidebar
+          activePresentationId={session?.presentationId}
+          onOpenPresentation={handleOpenHistoryItem}
+          onNewPresentation={handleNewPresentation}
+          onHome={onBack}
+        />
       )}
 
       {flowError && (
@@ -143,9 +199,11 @@ export default function AIPptGenerator({
 
       {stage === 'wizard' && (
         <AIPptWizard
+          key={flowNonce}
           initialWorkspaceId={initialWorkspaceId}
           initialFolderId={initialFolderId}
           onComplete={handleWizardComplete}
+          onStepChange={setWizardStep}
         />
       )}
 
@@ -169,6 +227,18 @@ export default function AIPptGenerator({
             setFlowError(message)
             setStage('outline')
           }}
+        />
+      )}
+
+      {stage === 'preview' && session?.workspaceId && session?.presentationId && (
+        <PptHistoryPreview
+          key={session.presentationId}
+          workspaceId={session.workspaceId}
+          presentationId={session.presentationId}
+          folderId={session.folderId || null}
+          title={session.title || config.title}
+          themeId={session.themeId || config.theme}
+          onEdit={handleEditPreview}
         />
       )}
     </div>

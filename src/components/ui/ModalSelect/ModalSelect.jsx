@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { Check, ChevronDown, Loader2 } from 'lucide-react'
+import { Check, ChevronDown, Loader2, Plus } from 'lucide-react'
 import './ModalSelect.css'
 
 function ModalSelect({
@@ -16,11 +16,17 @@ function ModalSelect({
   open = false,
   onOpenChange,
   onChange,
+  createActionLabel = '',
+  onCreateAction,
 }) {
   const listId = useId()
   const rootRef = useRef(null)
   const [highlightIndex, setHighlightIndex] = useState(-1)
   const selected = options.find((item) => String(item.id) === String(value)) || null
+  const hasCreate = Boolean(createActionLabel && onCreateAction)
+  const createIndex = 0
+  const optionOffset = hasCreate ? 1 : 0
+  const maxIndex = hasCreate ? options.length : options.length - 1
 
   useEffect(() => {
     if (!open) {
@@ -29,7 +35,15 @@ function ModalSelect({
     }
 
     const selectedIndex = options.findIndex((item) => String(item.id) === String(value))
-    setHighlightIndex(selectedIndex >= 0 ? selectedIndex : 0)
+    if (selectedIndex >= 0) {
+      setHighlightIndex(selectedIndex + optionOffset)
+    } else if (hasCreate) {
+      setHighlightIndex(createIndex)
+    } else if (options.length) {
+      setHighlightIndex(0)
+    } else {
+      setHighlightIndex(-1)
+    }
 
     const handlePointer = (event) => {
       if (!rootRef.current?.contains(event.target)) {
@@ -50,14 +64,20 @@ function ModalSelect({
       document.removeEventListener('mousedown', handlePointer)
       document.removeEventListener('keydown', handleEscape, true)
     }
-  }, [open, options, value, onOpenChange])
+  }, [open, options, value, onOpenChange, hasCreate, createIndex, optionOffset])
 
   useEffect(() => {
     if (disabled || loading) onOpenChange?.(false)
   }, [disabled, loading, onOpenChange])
 
   const selectAt = (index) => {
-    const item = options[index]
+    if (hasCreate && index === createIndex) {
+      onCreateAction?.()
+      onOpenChange?.(false)
+      return
+    }
+
+    const item = options[index - optionOffset]
     if (!item) return
     onChange?.(item.id)
     onOpenChange?.(false)
@@ -86,8 +106,8 @@ function ModalSelect({
     if (event.key === 'ArrowDown') {
       event.preventDefault()
       setHighlightIndex((prev) => {
-        if (!options.length) return -1
-        return prev < options.length - 1 ? prev + 1 : 0
+        if (maxIndex < 0) return -1
+        return prev < maxIndex ? prev + 1 : 0
       })
       return
     }
@@ -95,8 +115,8 @@ function ModalSelect({
     if (event.key === 'ArrowUp') {
       event.preventDefault()
       setHighlightIndex((prev) => {
-        if (!options.length) return -1
-        return prev > 0 ? prev - 1 : options.length - 1
+        if (maxIndex < 0) return -1
+        return prev > 0 ? prev - 1 : maxIndex
       })
       return
     }
@@ -156,37 +176,59 @@ function ModalSelect({
 
       {open && (
         <div className="modal-select-menu" role="listbox" id={listId} aria-label={label || 'Options'}>
-          {!options.length ? (
-            <div className="modal-select-empty">{emptyLabel}</div>
-          ) : (
-            options.map((item, index) => {
-              const isActive = String(item.id) === String(value)
-              const isHighlighted = index === highlightIndex
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  role="option"
-                  aria-selected={isActive}
-                  className={[
-                    'modal-select-option',
-                    isActive ? 'is-active' : '',
-                    isHighlighted ? 'is-highlighted' : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                  onMouseEnter={() => setHighlightIndex(index)}
-                  onClick={() => selectAt(index)}
-                >
-                  <span className="modal-select-option-icon" aria-hidden="true">
-                    {Icon ? <Icon size={15} /> : null}
-                  </span>
-                  <span className="modal-select-option-text">{item.name}</span>
-                  {isActive && <Check size={15} className="modal-select-check" aria-hidden="true" />}
-                </button>
-              )
-            })
+          {hasCreate && (
+            <>
+              <button
+                type="button"
+                role="option"
+                aria-selected={false}
+                className={[
+                  'modal-select-option',
+                  'modal-select-option-create',
+                  highlightIndex === createIndex ? 'is-highlighted' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                onMouseEnter={() => setHighlightIndex(createIndex)}
+                onClick={() => selectAt(createIndex)}
+              >
+                <span className="modal-select-option-icon" aria-hidden="true">
+                  <Plus size={15} />
+                </span>
+                <span className="modal-select-option-text">{createActionLabel}</span>
+              </button>
+              {options.length > 0 && <div className="modal-select-divider" role="separator" />}
+            </>
           )}
+          {!options.length && <div className="modal-select-empty">{emptyLabel}</div>}
+          {options.map((item, index) => {
+            const optionIndex = index + optionOffset
+            const isActive = String(item.id) === String(value)
+            const isHighlighted = optionIndex === highlightIndex
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="option"
+                aria-selected={isActive}
+                className={[
+                  'modal-select-option',
+                  isActive ? 'is-active' : '',
+                  isHighlighted ? 'is-highlighted' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                onMouseEnter={() => setHighlightIndex(optionIndex)}
+                onClick={() => selectAt(optionIndex)}
+              >
+                <span className="modal-select-option-icon" aria-hidden="true">
+                  {Icon ? <Icon size={15} /> : null}
+                </span>
+                <span className="modal-select-option-text">{item.name}</span>
+                {isActive && <Check size={15} className="modal-select-check" aria-hidden="true" />}
+              </button>
+            )
+          })}
         </div>
       )}
     </div>

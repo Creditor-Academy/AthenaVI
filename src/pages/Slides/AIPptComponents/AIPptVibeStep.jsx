@@ -477,7 +477,7 @@ export default function AIPptVibeStep({
               <div
                 className={`aig-template-drawer-body${
                   drawer === 'brand' || drawer === 'palette'
-                    ? ' aig-template-drawer-body--kits'
+                    ? ' aig-template-drawer-body--palettes'
                     : ''
                 }`}
               >

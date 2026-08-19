@@ -29,15 +29,9 @@ import temp2 from '../../../assets/Template_Image/gen_temp2.png'
 import temp3 from '../../../assets/Template_Image/gen_temp3.png'
 import temp4 from '../../../assets/Template_Image/gen_temp4.png'
 
-import customFloat1 from '../../../assets/Template_Image/custom_float_1.png'
-import customFloat2 from '../../../assets/Template_Image/custom_float_2.png'
-import customFloat3 from '../../../assets/Template_Image/custom_float_3.png'
-import customFloat4 from '../../../assets/Template_Image/custom_float_4.png'
-
 import AIPptVibeStep from './AIPptVibeStep'
 import AIPptThemeModal from './AIPptThemeModal'
 import AIPptImageModal from './AIPptImageModal'
-import aiMascot from '../../../assets/slides_icons/ai_mascot.png'
 
 const SUGGESTED_PROMPTS = [
   "Turn meeting notes into a presentation",
@@ -154,10 +148,15 @@ const INDUSTRY_OPTIONS = ['Technology', 'Healthcare', 'Education', 'Finance', 'R
 
 export default function AIPptWizard({
   onComplete,
+  onStepChange,
   initialWorkspaceId,
   initialFolderId,
 }) {
   const [step, setStep] = useState(1)
+
+  useEffect(() => {
+    onStepChange?.(step)
+  }, [step, onStepChange])
   
   // Form Data
   const [prompt, setPrompt] = useState('')
@@ -464,32 +463,13 @@ export default function AIPptWizard({
           </button>
         </div>
       )}
-      <main className="aig-main-fullscreen">
+      <main className={`aig-main-fullscreen ${step === 1 && !promptCommitted ? 'aig-main-center' : ''}`}>
         
         {step === 1 && (
           <div
             ref={heroSectionRef}
             className={`aig-new-hero-section fade-in ${promptCommitted ? 'aig-new-hero-section--committed' : ''}`}
           >
-            {/* Floating Background Images */}
-            <div className="aig-floating-bg">
-              <img src={customFloat1} className="aig-float-img img-1" alt="" aria-hidden="true" />
-              <img src={customFloat2} className="aig-float-img img-2" alt="" aria-hidden="true" />
-              <img src={customFloat4} className="aig-float-img img-3" alt="" aria-hidden="true" />
-              <img src={customFloat3} className="aig-float-img img-4" alt="" aria-hidden="true" />
-              <img src={customFloat2} className="aig-float-img img-5" alt="" aria-hidden="true" />
-              <img src={customFloat1} className="aig-float-img img-6" alt="" aria-hidden="true" />
-              <img src={customFloat3} className="aig-float-img img-7" alt="" aria-hidden="true" />
-              <img src={customFloat4} className="aig-float-img img-8" alt="" aria-hidden="true" />
-            </div>
-            
-            {/* AI Mascot — slides in from top-right on page open */}
-            <img
-              src={aiMascot}
-              alt="AI Mascot"
-              className="aig-mascot-slide"
-              aria-hidden="true"
-            />
             <div className="aig-new-header">
               <span className="aig-new-greeting">Hi Creator</span>
               <h1 className="aig-new-title">Create your presentation</h1>
@@ -727,7 +707,7 @@ export default function AIPptWizard({
             </div>
 
             <div className="aig-selection-section">
-              <div className="aig-section-header" style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#0f172a' }}>
+              <div className="aig-section-header" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           
                 <h3 className="aig-selection-label" style={{ margin: 0 }}>Text content</h3>
               </div>
@@ -767,7 +747,7 @@ export default function AIPptWizard({
                     const Icon = activeSrc.icon
                     return (
                       <>
-                        <Icon size={18} style={{ color: '#0f172a' }} /> {activeSrc.title}
+                        <Icon size={18} /> {activeSrc.title}
                         {activeSrc.extra && <span className="aig-image-source-extra">{activeSrc.extra}</span>}
                         <span className="aig-image-source-chevron"><ChevronDown size={16} /></span>
                       </>

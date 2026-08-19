@@ -458,6 +458,7 @@ function Dashboard({ onCreate, initialSection }) {
         onComplete={(data) => {
           openPresentationEditor(data)
         }}
+        onOpenPresentation={openPresentationEditor}
         createContext={
           createLocationContext?.optionId === 'ppt-ai' ? createLocationContext : null
         }

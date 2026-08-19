@@ -341,7 +341,7 @@ export default function AIPptGenerating({
       {phase === 'slides' && (
         <div className="aig-realtime-gen-container fade-in">
           <div className="aig-realtime-header fade-in">
-            <Sparkles size={24} className="aig-pulse-icon" color="#3b82f6" />
+            <Sparkles size={24} className="aig-pulse-icon" />
             <h3>
               {revealFinished
                 ? 'Presentation Complete!'

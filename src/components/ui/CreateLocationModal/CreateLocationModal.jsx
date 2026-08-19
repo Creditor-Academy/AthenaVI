@@ -91,9 +91,23 @@ function CreateLocationModal({
   const [error, setError] = useState('')
   const [openSelect, setOpenSelect] = useState(null)
 
+  const [showInlineWorkspaceCreate, setShowInlineWorkspaceCreate] = useState(false)
+  const [newWorkspaceName, setNewWorkspaceName] = useState('')
+  const [creatingWorkspace, setCreatingWorkspace] = useState(false)
+
+  const [showInlineFolderCreate, setShowInlineFolderCreate] = useState(false)
+  const [newFolderName, setNewFolderName] = useState('')
+  const [creatingFolder, setCreatingFolder] = useState(false)
+
   const selectedWorkspace = workspaceOptions.find((ws) => String(ws.id) === String(workspaceId))
   const selectedFolder = folderOptions.find((folder) => String(folder.id) === String(folderId))
-  const canConfirm = Boolean(workspaceId) && Boolean(folderId) && !workspaceLoading && !folderLoading
+  const canConfirm =
+    Boolean(workspaceId) &&
+    Boolean(folderId) &&
+    !workspaceLoading &&
+    !folderLoading &&
+    !creatingWorkspace &&
+    !creatingFolder
 
   const loadWorkspaces = useCallback(async () => {
     setWorkspaceLoading(true)
@@ -157,6 +171,12 @@ function CreateLocationModal({
 
     setError('')
     setOpenSelect(null)
+    setShowInlineWorkspaceCreate(false)
+    setShowInlineFolderCreate(false)
+    setNewWorkspaceName('')
+    setNewFolderName('')
+    setCreatingWorkspace(false)
+    setCreatingFolder(false)
     loadWorkspaces()
 
     const previousOverflow = document.body.style.overflow
@@ -179,6 +199,67 @@ function CreateLocationModal({
   }, [isOpen, workspaceId, loadFolders])
 
   if (!isOpen) return null
+
+  const handleCreateWorkspaceInline = async () => {
+    const trimmedName = newWorkspaceName.trim()
+    if (!trimmedName || creatingWorkspace) return
+
+    setCreatingWorkspace(true)
+    setError('')
+    try {
+      const created = await workspaceService.createWorkspace(trimmedName)
+      const normalized = normalizeWorkspace({ ...created, userRole: 'OWNER' })
+
+      setWorkspaceOptions((prev) => {
+        if (prev.some((workspace) => String(workspace.id) === String(normalized.id))) return prev
+        return [...prev, normalized]
+      })
+      setWorkspaceId(normalized.id)
+      setFolderOptions([])
+      setFolderId('')
+      setShowInlineWorkspaceCreate(false)
+      setShowInlineFolderCreate(true)
+      setNewWorkspaceName('')
+
+      window.dispatchEvent(new CustomEvent('workspace:created', { detail: { workspace: normalized } }))
+    } catch (err) {
+      console.error('[CreateLocationModal] Failed to create workspace:', err)
+      setError(err?.message || 'Failed to create workspace. Please try again.')
+    } finally {
+      setCreatingWorkspace(false)
+    }
+  }
+
+  const handleCreateFolderInline = async () => {
+    const trimmedName = newFolderName.trim()
+    if (!trimmedName || !workspaceId || creatingFolder) return
+
+    setCreatingFolder(true)
+    setError('')
+    try {
+      const created = await workspaceService.createFolder(workspaceId, trimmedName)
+      const normalizedFolder = normalizeFolder({ ...created, name: created.name || trimmedName })
+
+      setFolderOptions((prev) => {
+        if (prev.some((folder) => String(folder.id) === String(normalizedFolder.id))) return prev
+        return [...prev, normalizedFolder]
+      })
+      setFolderId(normalizedFolder.id)
+      setShowInlineFolderCreate(false)
+      setNewFolderName('')
+
+      window.dispatchEvent(
+        new CustomEvent('workspace:folder-created', {
+          detail: { workspaceId, folder: normalizedFolder },
+        })
+      )
+    } catch (err) {
+      console.error('[CreateLocationModal] Failed to create folder:', err)
+      setError(err?.message || 'Failed to create folder. Please try again.')
+    } finally {
+      setCreatingFolder(false)
+    }
+  }
 
   const handleConfirm = () => {
     if (!canConfirm || !optionId) return
@@ -235,15 +316,51 @@ function CreateLocationModal({
                 placeholder="Select a workspace"
                 emptyLabel="No workspaces available"
                 loading={workspaceLoading}
-                disabled={workspaceLoading || !workspaceOptions.length}
+                disabled={workspaceLoading}
                 open={openSelect === 'workspace'}
                 onOpenChange={(next) => setOpenSelect(next ? 'workspace' : null)}
                 onChange={(id) => {
                   setWorkspaceId(id)
                   setFolderId('')
+                  setShowInlineWorkspaceCreate(false)
+                  setShowInlineFolderCreate(false)
                   setOpenSelect('folder')
                 }}
+                createActionLabel="+ Create New Workspace"
+                onCreateAction={() => {
+                  setShowInlineWorkspaceCreate(true)
+                  setShowInlineFolderCreate(false)
+                  setOpenSelect(null)
+                }}
               />
+
+              {showInlineWorkspaceCreate && (
+                <div className="create-location-inline-row">
+                  <input
+                    className="create-location-inline-input"
+                    type="text"
+                    placeholder="New workspace name"
+                    value={newWorkspaceName}
+                    onChange={(event) => setNewWorkspaceName(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault()
+                        handleCreateWorkspaceInline()
+                      }
+                    }}
+                    autoFocus
+                    disabled={creatingWorkspace}
+                  />
+                  <button
+                    type="button"
+                    className="create-location-btn create-location-btn-primary"
+                    onClick={handleCreateWorkspaceInline}
+                    disabled={creatingWorkspace || !newWorkspaceName.trim()}
+                  >
+                    {creatingWorkspace ? 'Creating…' : 'Create'}
+                  </button>
+                </div>
+              )}
 
               <ModalSelect
                 id="create-location-folder"
@@ -255,14 +372,48 @@ function CreateLocationModal({
                 placeholder={workspaceId ? 'Select a folder' : 'Select a workspace first'}
                 emptyLabel="No folders in this workspace"
                 loading={folderLoading}
-                disabled={!workspaceId || folderLoading || !folderOptions.length}
+                disabled={!workspaceId || folderLoading}
                 open={openSelect === 'folder'}
                 onOpenChange={(next) => setOpenSelect(next ? 'folder' : null)}
                 onChange={(id) => {
                   setFolderId(id)
+                  setShowInlineFolderCreate(false)
+                  setOpenSelect(null)
+                }}
+                createActionLabel={workspaceId ? '+ Create New Folder' : ''}
+                onCreateAction={() => {
+                  setShowInlineFolderCreate(true)
                   setOpenSelect(null)
                 }}
               />
+
+              {showInlineFolderCreate && (
+                <div className="create-location-inline-row">
+                  <input
+                    className="create-location-inline-input"
+                    type="text"
+                    placeholder="New folder name"
+                    value={newFolderName}
+                    onChange={(event) => setNewFolderName(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault()
+                        handleCreateFolderInline()
+                      }
+                    }}
+                    autoFocus
+                    disabled={creatingFolder || !workspaceId}
+                  />
+                  <button
+                    type="button"
+                    className="create-location-btn create-location-btn-primary"
+                    onClick={handleCreateFolderInline}
+                    disabled={creatingFolder || !workspaceId || !newFolderName.trim()}
+                  >
+                    {creatingFolder ? 'Creating…' : 'Create'}
+                  </button>
+                </div>
+              )}
             </div>
 
             <div

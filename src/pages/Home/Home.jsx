@@ -321,7 +321,7 @@ function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigat
                                         <span className="home-quickcreate-cta-icon" aria-hidden="true">
                                             <MdNorthEast size={14} />
                                         </span>
-                                        Learn more
+                                        Create Now
                                     </span>
                                 </div>
                                 <div className="home-quickcreate-visual" aria-hidden="true">
