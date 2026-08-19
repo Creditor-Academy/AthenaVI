@@ -31,8 +31,14 @@ export class ImageGenContextPinnedError extends Error {
   }
 }
 
-const GENERATE_TIMEOUT_MS = 120_000
+const IMAGE_GENERATE_TIMEOUT_MS = 90_000
+const INFOGRAPHIC_GENERATE_TIMEOUT_MS = 180_000
+const TWEAK_TIMEOUT_MS = 90_000
 const CONTEXT_TIMEOUT_MS = 90_000
+
+function generateTimeoutMs(mode) {
+  return mode === 'infographic' ? INFOGRAPHIC_GENERATE_TIMEOUT_MS : IMAGE_GENERATE_TIMEOUT_MS
+}
 
 class ImageGenService {
   unwrap(json) {
@@ -203,7 +209,7 @@ class ImageGenService {
     return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.GENERATE(workspaceId), {
       method: 'POST',
       body: JSON.stringify(body),
-      timeoutMs: GENERATE_TIMEOUT_MS,
+      timeoutMs: generateTimeoutMs(body?.mode),
     })
   }
 
@@ -226,7 +232,7 @@ class ImageGenService {
     return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.REGENERATE(workspaceId, generationId), {
       method: 'POST',
       body: JSON.stringify(body),
-      timeoutMs: GENERATE_TIMEOUT_MS,
+      timeoutMs: generateTimeoutMs(body?.mode),
     })
   }
 
@@ -234,7 +240,7 @@ class ImageGenService {
     return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.TWEAK(workspaceId, generationId), {
       method: 'POST',
       body: JSON.stringify({ instruction }),
-      timeoutMs: GENERATE_TIMEOUT_MS,
+      timeoutMs: TWEAK_TIMEOUT_MS,
     })
   }
 

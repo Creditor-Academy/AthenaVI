@@ -30,6 +30,16 @@ import art3 from '../../../assets/ai-img-gen/art-3.jpg'
 import art4 from '../../../assets/ai-img-gen/art-4.jpg'
 import art5 from '../../../assets/ai-img-gen/art-5.jpg'
 import art6 from '../../../assets/ai-img-gen/art-6.jpg'
+import linkedinBannerPreview from '../../../assets/ai-img-gen/Linkedin_Banner.png'
+import linkedinPostPreview from '../../../assets/ai-img-gen/Linkedin_post.png'
+import instagramPostPreview from '../../../assets/ai-img-gen/Instagram_post.png'
+import facebookCoverPreview from '../../../assets/ai-img-gen/Facebook_banner.png'
+import xPostPreview from '../../../assets/ai-img-gen/X_Twitter_Post.png'
+import xHeaderPreview from '../../../assets/ai-img-gen/X_Twitter_Header.png'
+import youtubeThumbnailPreview from '../../../assets/ai-img-gen/Youtube_thumbnail.png'
+import instagramStoryPreview from '../../../assets/ai-img-gen/Instagram_Story.png'
+import instagramLandscapePreview from '../../../assets/ai-img-gen/Insta_landscape.png'
+import facebookPostPreview from '../../../assets/ai-img-gen/facebook_post.png'
 import './AIImageStudio.css'
 
 const MODE_TABS = [
@@ -61,6 +71,51 @@ const INFOGRAPHIC_LAYOUTS = [
 ]
 
 const emptySection = () => ({ title: '', bullets: '' })
+
+const INFOGRAPHIC_MAX_SECTIONS = 24
+const INFOGRAPHIC_MAX_BULLETS = 20
+const INFOGRAPHIC_BULLET_MAX = 1000
+const TWEAK_INSTRUCTION_MAX = 4000
+const INFOGRAPHIC_PREFERRED_STYLES = ['flat_illustration', 'corporate', 'minimal']
+const INFOGRAPHIC_IGNORED_STYLES = new Set([
+  'cinematic',
+  'photoreal',
+  'watercolor',
+  '3d_render',
+  'neon',
+])
+
+function pickModelForMode(models = [], mode) {
+  const available = models.filter((m) => !m.modes?.length || m.modes.includes(mode))
+  const recommended = available.find((m) =>
+    Array.isArray(m.recommendedForModes) ? m.recommendedForModes.includes(mode) : false
+  )
+  if (recommended) return recommended
+  if (mode !== 'infographic') {
+    return available.find((m) => m.recommended) || available[0] || models[0] || null
+  }
+  return available[0] || models[0] || null
+}
+
+function stylesForMode(styles = [], mode) {
+  if (mode !== 'infographic') return styles
+  const usable = styles.filter((s) => !INFOGRAPHIC_IGNORED_STYLES.has(s.id))
+  const preferred = INFOGRAPHIC_PREFERRED_STYLES.map((id) =>
+    usable.find((s) => s.id === id)
+  ).filter(Boolean)
+  const rest = usable.filter((s) => !INFOGRAPHIC_PREFERRED_STYLES.includes(s.id))
+  return [...preferred, ...rest]
+}
+
+function pickInfographicStyleId(styles = [], currentId) {
+  const offered = stylesForMode(styles, 'infographic')
+  if (offered.some((s) => s.id === currentId)) return currentId
+  return offered[0]?.id || currentId
+}
+
+function infographicQualityOf(generation) {
+  return generation?.infographicQuality || generation?.request?.infographicQuality || null
+}
 
 const IMAGE_INSPIRE = [
   {
@@ -400,6 +455,13 @@ const GEN_STATUS_LINES = [
   'Polishing the final image…',
 ]
 
+const INFOGRAPHIC_STATUS_LINES = [
+  'Planning layout and labels…',
+  'Drawing the infographic…',
+  'Checking on-canvas text…',
+  'Polishing numbering and headings…',
+]
+
 const PROMPT_PREVIEW_CHARS = 140
 
 function previewPrompt(text = '') {
@@ -567,7 +629,48 @@ function LayoutCard({ layout, selected, onSelect }) {
   )
 }
 
-function FormatCard({ format, selected, onSelect }) {
+const CANVAS_MOCK_IMAGES = [art1, art2, art3, art4, art5, art6]
+
+const SOCIAL_FORMAT_PREVIEWS = {
+  linkedin_banner: linkedinBannerPreview,
+  linkedin_post: linkedinPostPreview,
+  instagram_post: instagramPostPreview,
+  instagram_story: instagramStoryPreview,
+  instagram_landscape: instagramLandscapePreview,
+  facebook_post: facebookPostPreview,
+  facebook_cover: facebookCoverPreview,
+  x_post: xPostPreview,
+  x_header: xHeaderPreview,
+  youtube_thumbnail: youtubeThumbnailPreview,
+}
+
+function formatPreviewSrc(formatId) {
+  const s = String(formatId || 'canvas')
+  if (SOCIAL_FORMAT_PREVIEWS[s]) return SOCIAL_FORMAT_PREVIEWS[s]
+  let h = 0
+  for (let i = 0; i < s.length; i += 1) h += s.charCodeAt(i) * (i + 3)
+  return CANVAS_MOCK_IMAGES[h % CANVAS_MOCK_IMAGES.length]
+}
+
+function formatMockupKind(format) {
+  const id = String(format?.id || '')
+  const ratio = (format?.width || 1) / Math.max(format?.height || 1, 1)
+  if (id.includes('story') || ratio < 0.7) return 'phone'
+  if (ratio >= 2.2) return 'banner'
+  if (ratio >= 1.2) return 'landscape'
+  return 'square'
+}
+
+function CanvasMockup({ format, src, size = 'card' }) {
+  const kind = formatMockupKind(format)
+  return (
+    <div className={`aig-mockup aig-mockup--${kind} aig-mockup--${size}`} aria-hidden>
+      <img src={src} alt="" />
+    </div>
+  )
+}
+
+function FormatCard({ format, selected, onSelect, variant = 'image', layoutId }) {
   const ratio = format.width / Math.max(format.height, 1)
   const stage = 72
   let previewW = stage
@@ -579,8 +682,6 @@ function FormatCard({ format, selected, onSelect }) {
   previewW = Math.max(22, Math.round(previewW))
   previewH = Math.max(22, Math.round(previewH))
 
-  const aspect = formatAspect(format.width, format.height)
-
   return (
     <button
       type="button"
@@ -588,14 +689,18 @@ function FormatCard({ format, selected, onSelect }) {
       onClick={() => onSelect(format)}
       aria-pressed={selected}
     >
-      <div className="aig-format-stage" aria-hidden>
-        <div
-          className="aig-format-preview"
-          style={{ width: previewW, height: previewH }}
-        >
-          <span className="aig-format-preview-grid" />
-          <span className="aig-format-preview-shine" />
-        </div>
+      <div className="aig-format-well">
+        {variant === 'infographic' ? (
+          <div
+            className="aig-format-artboard"
+            style={{ width: previewW, height: previewH }}
+            aria-hidden
+          >
+            <LayoutSchematic layoutId={layoutId} size="thumb" />
+          </div>
+        ) : (
+          <CanvasMockup format={format} src={formatPreviewSrc(format.id)} size="card" />
+        )}
         {selected && (
           <span className="aig-format-check">
             <Check size={12} strokeWidth={2.5} />
@@ -604,12 +709,9 @@ function FormatCard({ format, selected, onSelect }) {
       </div>
       <div className="aig-format-meta">
         <strong>{format.name}</strong>
-        <div className="aig-format-meta-row">
-          {aspect ? <span className="aig-format-aspect">{aspect}</span> : null}
-          <span className="aig-format-size">
-            {format.width}×{format.height}
-          </span>
-        </div>
+        <span className="aig-format-size">
+          {format.width} × {format.height} px
+        </span>
       </div>
     </button>
   )
@@ -649,6 +751,19 @@ function GeneratingFrame({ format, label = 'Creating…', size = 'default' }) {
   )
 }
 
+function canvasStageSize(format) {
+  const ratio = (format?.width || 1) / Math.max(format?.height || 1, 1)
+  const maxW = 340
+  const maxH = 380
+  let w = maxW
+  let h = w / ratio
+  if (h > maxH) {
+    h = maxH
+    w = h * ratio
+  }
+  return { w: Math.round(w), h: Math.round(h) }
+}
+
 function CanvasPreview({ format, mode, infoLayoutId, infoLayoutName }) {
   if (!format) {
     return (
@@ -662,78 +777,44 @@ function CanvasPreview({ format, mode, infoLayoutId, infoLayoutName }) {
     )
   }
 
-  const ratio = format.width / Math.max(format.height, 1)
-  const maxW = 340
-  const maxH = 380
-  let w = maxW
-  let h = w / ratio
-  if (h > maxH) {
-    h = maxH
-    w = h * ratio
-  }
-
-  const modeLabel = MODE_TABS.find((t) => t.id === mode)?.label || mode
-  const aspectLabel = formatAspect(format.width, format.height) || format.name
-  const showLayoutVision = mode === 'infographic' && infoLayoutId
+  const isInfographic = mode === 'infographic'
+  const previewSrc = formatPreviewSrc(format.id)
+  const kind = isInfographic ? 'board' : formatMockupKind(format)
+  const { w, h } = canvasStageSize(format)
+  const radius = kind === 'phone' ? 28 : kind === 'banner' ? 12 : 18
 
   return (
     <div className="aig-canvas-preview">
-      <div className="aig-canvas-preview-shell">
-        <div className="aig-canvas-preview-ruler aig-canvas-preview-ruler--top" aria-hidden>
-          <span>{format.width}px</span>
-        </div>
-        <div className="aig-canvas-preview-body">
-          <div className="aig-canvas-preview-ruler aig-canvas-preview-ruler--side" aria-hidden>
-            <span>{format.height}px</span>
-          </div>
-          <motion.div
-            className={`aig-canvas-preview-frame aig-canvas-preview-frame--${mode}${showLayoutVision ? ' has-vision' : ''}`}
-            initial={false}
-            animate={{ width: w, height: h }}
-            transition={{
-              type: 'spring',
-              stiffness: 260,
-              damping: 28,
-              mass: 0.9,
-            }}
-          >
-            {!showLayoutVision && (
-              <>
-                <span className="aig-canvas-preview-grid" aria-hidden />
-                <span className="aig-canvas-preview-orb aig-canvas-preview-orb--a" aria-hidden />
-                <span className="aig-canvas-preview-orb aig-canvas-preview-orb--b" aria-hidden />
-                <span className="aig-canvas-preview-orb aig-canvas-preview-orb--c" aria-hidden />
-              </>
-            )}
-            <span className="aig-canvas-corner aig-canvas-corner--tl" aria-hidden />
-            <span className="aig-canvas-corner aig-canvas-corner--tr" aria-hidden />
-            <span className="aig-canvas-corner aig-canvas-corner--bl" aria-hidden />
-            <span className="aig-canvas-corner aig-canvas-corner--br" aria-hidden />
-
-            {showLayoutVision ? (
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={infoLayoutId}
-                  className="aig-canvas-preview-vision"
-                  initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -6, scale: 0.98 }}
-                  transition={{ duration: 0.22 }}
-                >
-                  <LayoutSchematic layoutId={infoLayoutId} size="stage" />
-                  <p>{infoLayoutName} layout</p>
-                </motion.div>
-              </AnimatePresence>
-            ) : (
-              <span className="aig-canvas-preview-badge">
-                {modeLabel}
-                <em>{aspectLabel}</em>
-              </span>
-            )}
-          </motion.div>
-        </div>
+      <div className="aig-canvas-preview-well">
+        <motion.div
+          className={`aig-mockup aig-mockup--${kind} aig-mockup--stage`}
+          initial={false}
+          animate={{ width: w, height: h, borderRadius: radius }}
+          transition={{
+            type: 'spring',
+            stiffness: 260,
+            damping: 28,
+            mass: 0.9,
+          }}
+        >
+          {isInfographic ? (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={infoLayoutId || 'layout'}
+                className="aig-canvas-preview-board"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.18 }}
+              >
+                <LayoutSchematic layoutId={infoLayoutId} size="stage" />
+              </motion.div>
+            </AnimatePresence>
+          ) : (
+            <img src={previewSrc} alt="" />
+          )}
+        </motion.div>
       </div>
-
       <motion.div
         className="aig-canvas-preview-meta"
         key={`meta-${format.id}-${infoLayoutId || mode}`}
@@ -742,13 +823,12 @@ function CanvasPreview({ format, mode, infoLayoutId, infoLayoutName }) {
         transition={{ duration: 0.2 }}
       >
         <strong>
-          {showLayoutVision ? `${infoLayoutName} on ${format.name}` : format.name}
+          {isInfographic && infoLayoutName
+            ? `${infoLayoutName} · ${format.name}`
+            : format.name}
         </strong>
         <span>
           {format.width} × {format.height} px
-          {showLayoutVision
-            ? ' · structure preview — not the final graphic'
-            : ''}
         </span>
       </motion.div>
     </div>
@@ -837,6 +917,10 @@ export default function AIImageStudio({ onBack, createContext = null }) {
     [formats]
   )
   const formatsForMode = mode === 'social' ? socialFormats : genericFormats
+  const stylesForCurrentMode = useMemo(
+    () => stylesForMode(styles, mode),
+    [styles, mode]
+  )
   const selectedInfoLayout = useMemo(
     () => INFOGRAPHIC_LAYOUTS.find((l) => l.id === infoLayout) || INFOGRAPHIC_LAYOUTS[0],
     [infoLayout]
@@ -851,7 +935,12 @@ export default function AIImageStudio({ onBack, createContext = null }) {
             .map((b) => b.trim())
             .filter(Boolean),
         }))
-        .filter((s) => s.title || s.bullets.length),
+        .map((s) => ({
+          ...s,
+          bullets: s.bullets.slice(0, INFOGRAPHIC_MAX_BULLETS).map((b) => b.slice(0, INFOGRAPHIC_BULLET_MAX)),
+        }))
+        .filter((s) => s.title || s.bullets.length)
+        .slice(0, INFOGRAPHIC_MAX_SECTIONS),
     [infoSections]
   )
 
@@ -862,6 +951,17 @@ export default function AIImageStudio({ onBack, createContext = null }) {
       if (!current || current.category !== 'social') {
         setFormatId(socialFormats[0]?.id || 'instagram_post')
       }
+    } else if (nextMode === 'infographic') {
+      if (genericFormats.some((f) => f.id === 'landscape')) setFormatId('landscape')
+      else {
+        const current = formats.find((f) => f.id === formatId)
+        if (!current || current.category !== 'generic') {
+          setFormatId(genericFormats[0]?.id || 'square')
+        }
+      }
+      const rec = pickModelForMode(models, 'infographic')
+      if (rec) setModelId(rec.id)
+      setStyleId((prev) => pickInfographicStyleId(styles, prev))
     } else {
       const current = formats.find((f) => f.id === formatId)
       if (!current || current.category !== 'generic') {
@@ -917,8 +1017,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
         setFormats(catalogs.formats)
         setStyles(catalogs.styles)
 
-        const defaultModel =
-          catalogs.models.find((m) => m.recommended) || catalogs.models[0]
+        const defaultModel = pickModelForMode(catalogs.models, 'image')
         if (defaultModel) setModelId(defaultModel.id)
         if (catalogs.formats.some((f) => f.id === 'square')) setFormatId('square')
         else if (catalogs.formats[0]) setFormatId(catalogs.formats[0].id)
@@ -964,20 +1063,22 @@ export default function AIImageStudio({ onBack, createContext = null }) {
   useEffect(() => {
     if (!modelsForMode.length) return
     if (!modelsForMode.some((m) => m.id === modelId)) {
-      setModelId(modelsForMode[0].id)
+      const rec = pickModelForMode(models, mode)
+      setModelId(rec?.id || modelsForMode[0].id)
     }
-  }, [modelsForMode, modelId])
+  }, [modelsForMode, modelId, models, mode])
 
   useEffect(() => {
     if (!isGenerating) {
       setGenStatusIdx(0)
       return undefined
     }
+    const lines = mode === 'infographic' ? INFOGRAPHIC_STATUS_LINES : GEN_STATUS_LINES
     const id = setInterval(() => {
-      setGenStatusIdx((i) => (i + 1) % GEN_STATUS_LINES.length)
+      setGenStatusIdx((i) => (i + 1) % lines.length)
     }, 2200)
     return () => clearInterval(id)
-  }, [isGenerating])
+  }, [isGenerating, mode])
 
   useEffect(() => {
     if (step !== 'workspace') return
@@ -1096,6 +1197,10 @@ export default function AIImageStudio({ onBack, createContext = null }) {
         )
       )
     }
+    const quality = infographicQualityOf(gen)
+    if (quality && quality.passed === false && quality.suggestedTweak) {
+      setChatInput(quality.suggestedTweak)
+    }
     refreshCredits(workspaceId)
   }
 
@@ -1183,8 +1288,8 @@ export default function AIImageStudio({ onBack, createContext = null }) {
       setActionError('This model does not support image tweaks. Try regenerating instead.')
       return
     }
-    if (instruction.length > 2000) {
-      setActionError('Tweak instruction is too long. Maximum 2000 characters allowed.')
+    if (instruction.length > TWEAK_INSTRUCTION_MAX) {
+      setActionError(`Tweak instruction is too long. Maximum ${TWEAK_INSTRUCTION_MAX} characters allowed.`)
       return
     }
     const turnId = `turn_${Date.now()}`
@@ -1254,6 +1359,8 @@ export default function AIImageStudio({ onBack, createContext = null }) {
   const selectedTurn =
     thread.find((t) => t.generation?.id === activeGeneration?.id) || null
   const heroTurn = pendingTurn || selectedTurn || thread[thread.length - 1] || null
+  const heroQuality = infographicQualityOf(heroTurn?.generation || activeGeneration)
+  const statusLines = mode === 'infographic' ? INFOGRAPHIC_STATUS_LINES : GEN_STATUS_LINES
 
   const workspaceHeading = pendingTurn
     ? pendingTurn.kind === 'tweak'
@@ -1264,11 +1371,14 @@ export default function AIImageStudio({ onBack, createContext = null }) {
       : pendingTurn.kind === 'regenerate'
         ? {
             title: 'A fresh take is on the way',
-            sub: 'Same prompt and settings, new interpretation.',
+            sub:
+              mode === 'infographic'
+                ? 'This can take a couple of minutes — layout, drawing, then a text check.'
+                : 'Same prompt and settings, new interpretation.',
           }
         : {
-            title: 'Creating your image',
-            sub: GEN_STATUS_LINES[genStatusIdx],
+            title: mode === 'infographic' ? 'Creating your infographic' : 'Creating your image',
+            sub: statusLines[genStatusIdx % statusLines.length],
           }
     : heroTurn?.status === 'error'
       ? {
@@ -1470,8 +1580,12 @@ export default function AIImageStudio({ onBack, createContext = null }) {
               <div className="aig-canvas-split">
                 <div className="aig-canvas-picker">
                   <header className="aig-canvas-picker-head">
-                    <h2>Choose canvas</h2>
-                    <p>Pick a mode, then a size. Preview updates on the right.</p>
+                    <div className="aig-canvas-step">
+                      <span>1</span>
+                      Choose Canvas
+                    </div>
+                    <h2>Choose your canvas</h2>
+                    <p>Pick a format that fits your creative vision</p>
                   </header>
 
                   <div className="aig-tabs aig-tabs--modes" role="tablist" aria-label="Generation mode">
@@ -1489,16 +1603,29 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                     ))}
                   </div>
 
-                  <div className="aig-format-grid">
-                    {formatsForMode.map((f) => (
-                      <FormatCard
-                        key={f.id}
-                        format={f}
-                        selected={formatId === f.id}
-                        onSelect={(fmt) => setFormatId(fmt.id)}
-                      />
-                    ))}
+                  <div className="aig-canvas-size-block">
+                    <h3>Select size</h3>
+                    <div
+                      className={`aig-format-grid${mode === 'social' ? ' aig-format-grid--social' : ''}`}
+                    >
+                      {formatsForMode.map((f) => (
+                        <FormatCard
+                          key={f.id}
+                          format={f}
+                          selected={formatId === f.id}
+                          onSelect={(fmt) => setFormatId(fmt.id)}
+                          variant={mode === 'infographic' ? 'infographic' : 'image'}
+                          layoutId={mode === 'infographic' ? infoLayout : undefined}
+                        />
+                      ))}
+                    </div>
                   </div>
+
+                  {mode === 'infographic' && (
+                    <p className="aig-opt-hint aig-opt-hint--info">
+                      On-canvas text is auto-checked. If labels or numbering still look off, you can Tweak — the silent fix is already included in this generate.
+                    </p>
+                  )}
 
                   {mode === 'infographic' && (
                     <div className="aig-layout-block">
@@ -1519,12 +1646,11 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                   <div className="aig-canvas-actions">
                     <button
                       type="button"
-                      className="aig-btn aig-btn--primary aig-btn--lg"
+                      className="aig-btn aig-btn--primary aig-btn--lg aig-btn--canvas-continue"
                       disabled={!selectedFormat}
                       onClick={() => setStep('options')}
                     >
-                      Continue
-                      <ChevronRight size={16} />
+                      Continue to Editor
                     </button>
                   </div>
                 </div>
@@ -1563,21 +1689,27 @@ export default function AIImageStudio({ onBack, createContext = null }) {
               <div className="aig-opt-block">
                 <h3>Model</h3>
                 <div className="aig-model-grid">
-                  {modelsForMode.map((m) => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      className={`aig-model-card ${modelId === m.id ? 'is-selected' : ''}`}
-                      onClick={() => setModelId(m.id)}
-                    >
-                      <div className="aig-model-top">
-                        <strong>{getFriendlyModelName(m)}</strong>
-                        {m.recommended && <span className="aig-badge">Recommended</span>}
-                      </div>
-                      <p>{m.description}</p>
-                      <span className="aig-model-cost">~{m.creditEstimate ?? '—'} AC</span>
-                    </button>
-                  ))}
+                  {modelsForMode.map((m) => {
+                    const recommended =
+                      Array.isArray(m.recommendedForModes) && m.recommendedForModes.includes(mode)
+                        ? true
+                        : Boolean(m.recommended) && mode !== 'infographic'
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        className={`aig-model-card ${modelId === m.id ? 'is-selected' : ''}`}
+                        onClick={() => setModelId(m.id)}
+                      >
+                        <div className="aig-model-top">
+                          <strong>{getFriendlyModelName(m)}</strong>
+                          {recommended && <span className="aig-badge">Recommended</span>}
+                        </div>
+                        <p>{m.description}</p>
+                        <span className="aig-model-cost">~{m.creditEstimate ?? '—'} AC</span>
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
 
@@ -1596,7 +1728,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                     </div>
                   </div>
                   <div className="aig-style-grid">
-                    {styles.map((s) => {
+                    {stylesForCurrentMode.map((s) => {
                       const selected = styleId === s.id
                       const preview = STYLE_PREVIEW_BY_ID[s.id]
                       return (
@@ -1628,6 +1760,9 @@ export default function AIImageStudio({ onBack, createContext = null }) {
 
               {mode === 'infographic' && (
                 <div className="aig-opt-block aig-opt-block--info">
+                  <p className="aig-opt-hint aig-opt-hint--info">
+                    Dense on-canvas text is auto-checked after generate. Remaining issues can be Tweaked (billed separately).
+                  </p>
                   <div className="aig-opt-block-head">
                     <h3>Infographic content</h3>
                     <button
@@ -1693,13 +1828,13 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                       </div>
                     ))}
                   </div>
-                  {infoSections.length < 12 && (
+                  {infoSections.length < INFOGRAPHIC_MAX_SECTIONS && (
                     <button
                       type="button"
                       className="aig-btn aig-btn--ghost"
                       onClick={() => setInfoSections((prev) => [...prev, emptySection()])}
                     >
-                      Add section
+                      Add section ({infoSections.length}/{INFOGRAPHIC_MAX_SECTIONS})
                     </button>
                   )}
                 </div>
@@ -1900,7 +2035,9 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                               rows={2}
                               placeholder={
                                 isGenerating
-                                  ? 'Hang tight — your image is generating…'
+                                  ? mode === 'infographic'
+                                    ? 'Hang tight — infographics can take a couple of minutes…'
+                                    : 'Hang tight — your image is generating…'
                                   : activeGeneration
                                     ? 'Describe a change and press Enter…'
                                     : 'Generate an image first, then tweak here…'
@@ -1914,13 +2051,17 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                                   submitChat()
                                 }
                               }}
-                              maxLength={2000}
+                              maxLength={TWEAK_INSTRUCTION_MAX}
                             />
                             <div className="aig-chat-counter">
                               <span
-                                className={chatInput.length > 1900 ? 'aig-chat-counter--warn' : ''}
+                                className={
+                                  chatInput.length > TWEAK_INSTRUCTION_MAX - 200
+                                    ? 'aig-chat-counter--warn'
+                                    : ''
+                                }
                               >
-                                {chatInput.length}/2000
+                                {chatInput.length}/{TWEAK_INSTRUCTION_MAX}
                               </span>
                             </div>
                             <button
@@ -1954,10 +2095,30 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                                 ? 'Applying tweak…'
                                 : heroTurn.kind === 'regenerate'
                                   ? 'Regenerating…'
-                                  : 'Creating your image…'
+                                  : mode === 'infographic'
+                                    ? 'Creating your infographic…'
+                                    : 'Creating your image…'
                             }
                           />
                         )}
+
+                        {heroTurn?.status === 'done' &&
+                          heroQuality &&
+                          heroQuality.passed === false && (
+                            <div className="aig-quality-banner" role="status">
+                              <AlertCircle size={16} strokeWidth={2.1} />
+                              <div>
+                                <strong>Review on-canvas text</strong>
+                                <p>
+                                  {(heroQuality.issues || []).filter(Boolean).join(' · ') ||
+                                    'Some labels or numbering may still be off.'}
+                                  {heroQuality.retried
+                                    ? ' A free text fix already ran with this generate — Tweak is optional and billed.'
+                                    : ' Tweak is optional and billed.'}
+                                </p>
+                              </div>
+                            </div>
+                          )}
 
                         {heroTurn?.status === 'done' && heroTurn.generation?.url && (
                           <button
