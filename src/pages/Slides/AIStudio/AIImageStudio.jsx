@@ -15,6 +15,9 @@ import {
   Maximize2,
   Plus,
   X,
+  FileImage,
+  FileText,
+  Archive,
 } from 'lucide-react'
 import imageGenService, {
   ImageGenRateLimitError,
@@ -42,22 +45,24 @@ import instagramLandscapePreview from '../../../assets/ai-img-gen/Insta_landscap
 import facebookPostPreview from '../../../assets/ai-img-gen/facebook_post.png'
 import './AIImageStudio.css'
 
+// Image Gen backend is Mode 1 (image) only. Infographic/social UI is parked below, not deleted.
 const MODE_TABS = [
   {
     id: 'image',
     label: 'Image',
     blurb: 'General visuals — pick a square, landscape, or portrait canvas.',
   },
-  {
-    id: 'infographic',
-    label: 'Infographic',
-    blurb: 'Structured diagrams — choose a layout, then fill sections on the next step.',
-  },
-  {
-    id: 'social',
-    label: 'Social',
-    blurb: 'Platform creatives — exact pixel sizes for LinkedIn, Instagram, and more.',
-  },
+  // PARKED — restore when backend Mode 2/3 returns:
+  // {
+  //   id: 'infographic',
+  //   label: 'Infographic',
+  //   blurb: 'Structured diagrams — choose a layout, then fill sections on the next step.',
+  // },
+  // {
+  //   id: 'social',
+  //   label: 'Social',
+  //   blurb: 'Platform creatives — exact pixel sizes for LinkedIn, Instagram, and more.',
+  // },
 ]
 
 const INFOGRAPHIC_LAYOUTS = [
@@ -389,7 +394,10 @@ const SOCIAL_INSPIRE = [
   },
 ]
 
-const ALL_INSPIRE = [...IMAGE_INSPIRE, ...INFOGRAPHIC_INSPIRE, ...SOCIAL_INSPIRE]
+const ALL_INSPIRE = IMAGE_INSPIRE
+// PARKED: [...IMAGE_INSPIRE, ...INFOGRAPHIC_INSPIRE, ...SOCIAL_INSPIRE]
+void INFOGRAPHIC_INSPIRE
+void SOCIAL_INSPIRE
 
 const PROMPT_ARTWORK = [
   {
@@ -453,6 +461,12 @@ const GEN_STATUS_LINES = [
   'Composing the frame…',
   'Rendering details…',
   'Polishing the final image…',
+]
+
+const DOWNLOAD_FORMATS = [
+  { id: 'png', label: 'PNG', hint: 'Best quality', Icon: FileImage },
+  { id: 'jpg', label: 'JPG', hint: 'Smaller file', Icon: FileImage },
+  { id: 'pdf', label: 'PDF', hint: 'One page', Icon: FileText },
 ]
 
 const INFOGRAPHIC_STATUS_LINES = [
@@ -867,6 +881,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
   const [actionError, setActionError] = useState('')
   const [chatInput, setChatInput] = useState('')
   const [downloadMenuFor, setDownloadMenuFor] = useState(null)
+  const [downloadTargetId, setDownloadTargetId] = useState(null)
   const [busyAction, setBusyAction] = useState('')
   const [fullscreenSrc, setFullscreenSrc] = useState(null)
   const [promptModalText, setPromptModalText] = useState(null)
@@ -909,14 +924,15 @@ export default function AIImageStudio({ onBack, createContext = null }) {
     [models, mode]
   )
   const genericFormats = useMemo(
-    () => formats.filter((f) => f.category === 'generic'),
+    () => formats.filter((f) => f.category === 'generic' || ['square', 'landscape', 'portrait'].includes(f.id)),
     [formats]
   )
-  const socialFormats = useMemo(
-    () => formats.filter((f) => f.category === 'social'),
-    [formats]
-  )
-  const formatsForMode = mode === 'social' ? socialFormats : genericFormats
+  // PARKED social formats:
+  // const socialFormats = useMemo(
+  //   () => formats.filter((f) => f.category === 'social'),
+  //   [formats]
+  // )
+  const formatsForMode = genericFormats
   const stylesForCurrentMode = useMemo(
     () => stylesForMode(styles, mode),
     [styles, mode]
@@ -945,29 +961,15 @@ export default function AIImageStudio({ onBack, createContext = null }) {
   )
 
   const switchMode = (nextMode) => {
-    setMode(nextMode)
-    if (nextMode === 'social') {
-      const current = formats.find((f) => f.id === formatId)
-      if (!current || current.category !== 'social') {
-        setFormatId(socialFormats[0]?.id || 'instagram_post')
-      }
-    } else if (nextMode === 'infographic') {
-      if (genericFormats.some((f) => f.id === 'landscape')) setFormatId('landscape')
-      else {
-        const current = formats.find((f) => f.id === formatId)
-        if (!current || current.category !== 'generic') {
-          setFormatId(genericFormats[0]?.id || 'square')
-        }
-      }
-      const rec = pickModelForMode(models, 'infographic')
-      if (rec) setModelId(rec.id)
-      setStyleId((prev) => pickInfographicStyleId(styles, prev))
-    } else {
-      const current = formats.find((f) => f.id === formatId)
-      if (!current || current.category !== 'generic') {
-        setFormatId(genericFormats[0]?.id || 'square')
-      }
+    // Backend is image-only. Parked infographic/social branches:
+    // if (nextMode === 'social') { setFormatId(socialFormats[0]?.id || 'instagram_post') }
+    // if (nextMode === 'infographic') { setFormatId('landscape'); pick HD model + infographic styles }
+    setMode('image')
+    const current = formats.find((f) => f.id === formatId)
+    if (!current || !['square', 'landscape', 'portrait'].includes(current.id)) {
+      setFormatId(genericFormats[0]?.id || 'square')
     }
+    void nextMode
   }
 
   const refreshCredits = useCallback(async (wsId) => {
@@ -1047,7 +1049,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
       try {
         const est = await imageGenService.estimate(workspaceId, {
           modelId,
-          mode,
+          mode: 'image',
           tweak: false,
         })
         if (!cancelled) setEstimateAc(est?.athenaCredits ?? null)
@@ -1073,7 +1075,8 @@ export default function AIImageStudio({ onBack, createContext = null }) {
       setGenStatusIdx(0)
       return undefined
     }
-    const lines = mode === 'infographic' ? INFOGRAPHIC_STATUS_LINES : GEN_STATUS_LINES
+    const lines = GEN_STATUS_LINES
+    // PARKED: mode === 'infographic' ? INFOGRAPHIC_STATUS_LINES : GEN_STATUS_LINES
     const id = setInterval(() => {
       setGenStatusIdx((i) => (i + 1) % lines.length)
     }, 2200)
@@ -1086,44 +1089,16 @@ export default function AIImageStudio({ onBack, createContext = null }) {
   }, [thread, isGenerating, step])
 
   const handleInspire = () => {
-    const bank =
-      step === 'options' || step === 'canvas'
-        ? mode === 'infographic'
-          ? INFOGRAPHIC_INSPIRE
-          : mode === 'social'
-            ? SOCIAL_INSPIRE
-            : IMAGE_INSPIRE
-        : ALL_INSPIRE
-
+    const bank = IMAGE_INSPIRE
+    // PARKED: infographic/social inspire banks + ALL_INSPIRE mix
     const pool = bank.filter((item) => item.prompt !== prompt)
     const next = pool[Math.floor(Math.random() * pool.length)] || bank[0]
     if (!next) return
 
-    if (next.kind === 'infographic') {
-      switchMode('infographic')
-      if (next.layout) setInfoLayout(next.layout)
-      if (next.title) setInfoTitle(next.title)
-      if (next.sections?.length) {
-        setInfoSections(
-          next.sections.map((s) => ({
-            title: s.title || '',
-            bullets: s.bullets || '',
-          }))
-        )
-      }
-      setFormatId(next.formatId || 'portrait')
-      if (next.styleId) setStyleId(next.styleId)
-    } else if (next.kind === 'social') {
-      switchMode('social')
-      setHeadline(next.headline || '')
-      setSubheadline(next.subheadline || '')
-      setFormatId(next.formatId || 'instagram_post')
-      if (next.styleId) setStyleId(next.styleId)
-    } else {
-      switchMode('image')
-      setFormatId(next.formatId || 'square')
-      if (next.styleId) setStyleId(next.styleId)
-    }
+    switchMode('image')
+    setFormatId(['square', 'landscape', 'portrait'].includes(next.formatId) ? next.formatId : 'square')
+    if (next.styleId) setStyleId(next.styleId)
+    void ALL_INSPIRE
 
     if (inspireTimerRef.current) clearInterval(inspireTimerRef.current)
     setInspiring(true)
@@ -1155,28 +1130,16 @@ export default function AIImageStudio({ onBack, createContext = null }) {
 
   const buildGenerateBody = () => {
     const body = {
-      mode,
+      mode: 'image',
       modelId,
-      formatId: selectedFormat?.id,
+      formatId: selectedFormat?.id || 'square',
+      style: styleId,
       styleId,
-      prompt: prompt.trim() || undefined,
-      name: `athena-${Date.now()}.png`,
+      prompt: prompt.trim(),
     }
     if (imageContext?.id) body.contextId = imageContext.id
-    if (mode === 'social') {
-      if (headline.trim()) body.headline = headline.trim()
-      if (subheadline.trim()) body.subheadline = subheadline.trim()
-    }
-    if (mode === 'infographic') {
-      body.infographic = {
-        layout: infoLayout,
-        title: infoTitle.trim() || undefined,
-        sections: filledInfoSections.map((s) => ({
-          title: s.title || undefined,
-          bullets: s.bullets.length ? s.bullets : undefined,
-        })),
-      }
-    }
+    // PARKED social: headline, subheadline, textMode
+    // PARKED infographic: body.infographic = { layout, title, sections }
     return body
   }
 
@@ -1197,10 +1160,8 @@ export default function AIImageStudio({ onBack, createContext = null }) {
         )
       )
     }
-    const quality = infographicQualityOf(gen)
-    if (quality && quality.passed === false && quality.suggestedTweak) {
-      setChatInput(quality.suggestedTweak)
-    }
+    // PARKED infographicQuality / socialQuality / socialOverlay banners
+    // const quality = infographicQualityOf(gen)
     refreshCredits(workspaceId)
   }
 
@@ -1213,10 +1174,9 @@ export default function AIImageStudio({ onBack, createContext = null }) {
 
   const runGenerate = async () => {
     const hasPrompt = Boolean(prompt.trim())
-    const hasSections = mode === 'infographic' && filledInfoSections.length > 0
     if (!workspaceId || isGenerating) return
-    if (!hasPrompt && !hasSections) {
-      setActionError('Add a prompt or at least one infographic section.')
+    if (!hasPrompt) {
+      setActionError('Add a prompt to generate an image.')
       return
     }
     const turnId = `turn_${Date.now()}`
@@ -1228,7 +1188,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
       {
         id: turnId,
         kind: 'generate',
-        text: prompt.trim() || infoTitle.trim() || 'Generate image',
+        text: prompt.trim() || 'Generate image',
         status: 'pending',
         generation: null,
         error: null,
@@ -1294,6 +1254,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
     }
     const turnId = `turn_${Date.now()}`
     setChatInput('')
+    if (chatInputRef.current) chatInputRef.current.style.height = ''
     setActionError('')
     setBusyAction('tweak')
     setIsGenerating(true)
@@ -1321,12 +1282,41 @@ export default function AIImageStudio({ onBack, createContext = null }) {
     }
   }
 
-  const runDownload = async (format, generationId = activeGeneration?.id) => {
+  const runDownload = async (format, generationId = downloadTargetId || activeGeneration?.id) => {
     if (!workspaceId || !generationId) return
     setBusyAction(`dl-${generationId}-${format}`)
     setActionError('')
     try {
       await imageGenService.downloadAndSave(workspaceId, generationId, format)
+      setDownloadMenuFor(null)
+    } catch (err) {
+      setActionError(friendlyError(err))
+    } finally {
+      setBusyAction('')
+    }
+  }
+
+  const openDownloadModal = (generationId) => {
+    if (!generationId) return
+    setDownloadTargetId(generationId)
+    setDownloadMenuFor(generationId)
+  }
+
+  const runDownloadZip = async () => {
+    if (!workspaceId || readyTurns.length < 2) return
+    setBusyAction('dl-zip')
+    setActionError('')
+    try {
+      await imageGenService.downloadAllAsZip(
+        workspaceId,
+        readyTurns.map((turn, idx) => ({
+          generationId: turn.generation.id,
+          name: `${String(idx + 1).padStart(2, '0')}-${versionTitle(turn, idx)
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')}.png`,
+        })),
+        'png'
+      )
       setDownloadMenuFor(null)
     } catch (err) {
       setActionError(friendlyError(err))
@@ -1348,19 +1338,17 @@ export default function AIImageStudio({ onBack, createContext = null }) {
     setStep('prompt')
   }
 
-  const focusTweakInput = () => {
-    const el = chatInputRef.current
-    if (!el || isGenerating) return
-    el.focus()
-    el.scrollIntoView({ behavior: 'smooth', block: 'end' })
-  }
-
   const pendingTurn = thread.find((t) => t.status === 'pending') || null
   const selectedTurn =
     thread.find((t) => t.generation?.id === activeGeneration?.id) || null
   const heroTurn = pendingTurn || selectedTurn || thread[thread.length - 1] || null
-  const heroQuality = infographicQualityOf(heroTurn?.generation || activeGeneration)
-  const statusLines = mode === 'infographic' ? INFOGRAPHIC_STATUS_LINES : GEN_STATUS_LINES
+  const statusLines = GEN_STATUS_LINES
+  const readyTurns = thread.filter((t) => t.status === 'done' && t.generation?.url)
+  const downloadTargetTurn =
+    readyTurns.find((t) => t.generation?.id === downloadTargetId) ||
+    readyTurns.find((t) => t.generation?.id === heroTurn?.generation?.id) ||
+    readyTurns[readyTurns.length - 1] ||
+    null
 
   const workspaceHeading = pendingTurn
     ? pendingTurn.kind === 'tweak'
@@ -1371,13 +1359,10 @@ export default function AIImageStudio({ onBack, createContext = null }) {
       : pendingTurn.kind === 'regenerate'
         ? {
             title: 'A fresh take is on the way',
-            sub:
-              mode === 'infographic'
-                ? 'This can take a couple of minutes — layout, drawing, then a text check.'
-                : 'Same prompt and settings, new interpretation.',
+            sub: 'Same prompt and settings, new interpretation.',
           }
         : {
-            title: mode === 'infographic' ? 'Creating your infographic' : 'Creating your image',
+            title: 'Creating your image',
             sub: statusLines[genStatusIdx % statusLines.length],
           }
     : heroTurn?.status === 'error'
@@ -1522,7 +1507,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                               ref={textRef}
                               className="aig-prompt-input"
                               rows={1}
-                              placeholder="A rainy laundromat, a how-storms-work diagram, a YouTube thumbnail…"
+                              placeholder="A rainy laundromat at 2am, cyan washers, one dryer ajar…"
                               value={prompt}
                               onChange={(e) => setPrompt(e.target.value)}
                               onKeyDown={(e) => {
@@ -1567,7 +1552,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                     <span className="aig-prompt-hint-sep" aria-hidden="true">
                       ·
                     </span>
-                    Inspire cycles images, infographics, and social ideas
+                    Inspire suggests a scene for this canvas
                   </span>
                 </p>
               </div>
@@ -1588,60 +1573,24 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                     <p>Pick a format that fits your creative vision</p>
                   </header>
 
-                  <div className="aig-tabs aig-tabs--modes" role="tablist" aria-label="Generation mode">
-                    {MODE_TABS.map((tab) => (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        role="tab"
-                        aria-selected={mode === tab.id}
-                        className={mode === tab.id ? 'is-on' : ''}
-                        onClick={() => switchMode(tab.id)}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
+                  {/* PARKED Image / Infographic / Social mode tabs — backend is image-only */}
 
                   <div className="aig-canvas-size-block">
                     <h3>Select size</h3>
-                    <div
-                      className={`aig-format-grid${mode === 'social' ? ' aig-format-grid--social' : ''}`}
-                    >
+                    <div className="aig-format-grid">
                       {formatsForMode.map((f) => (
                         <FormatCard
                           key={f.id}
                           format={f}
                           selected={formatId === f.id}
                           onSelect={(fmt) => setFormatId(fmt.id)}
-                          variant={mode === 'infographic' ? 'infographic' : 'image'}
-                          layoutId={mode === 'infographic' ? infoLayout : undefined}
+                          variant="image"
                         />
                       ))}
                     </div>
                   </div>
 
-                  {mode === 'infographic' && (
-                    <p className="aig-opt-hint aig-opt-hint--info">
-                      On-canvas text is auto-checked. If labels or numbering still look off, you can Tweak — the silent fix is already included in this generate.
-                    </p>
-                  )}
-
-                  {mode === 'infographic' && (
-                    <div className="aig-layout-block">
-                      <h3>Layout</h3>
-                      <div className="aig-layout-grid">
-                        {INFOGRAPHIC_LAYOUTS.map((layout) => (
-                          <LayoutCard
-                            key={layout.id}
-                            layout={layout}
-                            selected={infoLayout === layout.id}
-                            onSelect={setInfoLayout}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {/* PARKED infographic hints + layout picker */}
 
                   <div className="aig-canvas-actions">
                     <button
@@ -1656,12 +1605,12 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                 </div>
 
                 <aside className="aig-canvas-stage">
-                  <CanvasPreview
-                    format={selectedFormat}
-                    mode={mode}
-                    infoLayoutId={mode === 'infographic' ? infoLayout : null}
-                    infoLayoutName={selectedInfoLayout?.name}
-                  />
+                    <CanvasPreview
+                      format={selectedFormat}
+                      mode="image"
+                      infoLayoutId={null}
+                      infoLayoutName={null}
+                    />
                 </aside>
               </div>
             </motion.section>
@@ -1675,7 +1624,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                   <div>
                     <h2>Model & style</h2>
                     <p>
-                      {MODE_TABS.find((t) => t.id === mode)?.label || mode} canvas
+                      {MODE_TABS[0]?.label || 'Image'} canvas
                     </p>
                   </div>
                   {estimateAc != null && (
@@ -1690,10 +1639,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                 <h3>Model</h3>
                 <div className="aig-model-grid">
                   {modelsForMode.map((m) => {
-                    const recommended =
-                      Array.isArray(m.recommendedForModes) && m.recommendedForModes.includes(mode)
-                        ? true
-                        : Boolean(m.recommended) && mode !== 'infographic'
+                    const recommended = Boolean(m.recommended)
                     return (
                       <button
                         key={m.id}
@@ -1758,135 +1704,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                 </div>
               </div>
 
-              {mode === 'infographic' && (
-                <div className="aig-opt-block aig-opt-block--info">
-                  <p className="aig-opt-hint aig-opt-hint--info">
-                    Dense on-canvas text is auto-checked after generate. Remaining issues can be Tweaked (billed separately).
-                  </p>
-                  <div className="aig-opt-block-head">
-                    <h3>Infographic content</h3>
-                    <button
-                      type="button"
-                      className="aig-inspire"
-                      onClick={handleInspire}
-                      disabled={inspiring}
-                    >
-                      <Wand2 size={14} strokeWidth={2.1} />
-                      <span>{inspiring ? 'Writing…' : 'Inspire'}</span>
-                    </button>
-                  </div>
-                  <label className="aig-field-full">
-                    Title
-                    <input
-                      type="text"
-                      value={infoTitle}
-                      onChange={(e) => setInfoTitle(e.target.value)}
-                      placeholder="Onboarding"
-                      maxLength={200}
-                    />
-                  </label>
-                  <div className="aig-sections">
-                    {infoSections.map((section, idx) => (
-                      <div key={idx} className="aig-section-card">
-                        <div className="aig-section-head">
-                          <strong>Section {idx + 1}</strong>
-                          {infoSections.length > 1 && (
-                            <button
-                              type="button"
-                              className="aig-link"
-                              onClick={() =>
-                                setInfoSections((prev) => prev.filter((_, i) => i !== idx))
-                              }
-                            >
-                              Remove
-                            </button>
-                          )}
-                        </div>
-                        <input
-                          type="text"
-                          value={section.title}
-                          onChange={(e) =>
-                            setInfoSections((prev) =>
-                              prev.map((s, i) => (i === idx ? { ...s, title: e.target.value } : s))
-                            )
-                          }
-                          placeholder="Section title"
-                          maxLength={200}
-                        />
-                        <textarea
-                          value={section.bullets}
-                          onChange={(e) =>
-                            setInfoSections((prev) =>
-                              prev.map((s, i) =>
-                                i === idx ? { ...s, bullets: e.target.value } : s
-                              )
-                            )
-                          }
-                          placeholder="One bullet per line"
-                          rows={3}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  {infoSections.length < INFOGRAPHIC_MAX_SECTIONS && (
-                    <button
-                      type="button"
-                      className="aig-btn aig-btn--ghost"
-                      onClick={() => setInfoSections((prev) => [...prev, emptySection()])}
-                    >
-                      Add section ({infoSections.length}/{INFOGRAPHIC_MAX_SECTIONS})
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {mode === 'social' && (
-                <div className="aig-opt-block aig-opt-block--social">
-                  <div className="aig-opt-block-head">
-                    <h3>Optional text overlay</h3>
-                    <button
-                      type="button"
-                      className="aig-inspire"
-                      onClick={handleInspire}
-                      disabled={inspiring}
-                    >
-                      <Wand2 size={14} strokeWidth={2.1} />
-                      <span>{inspiring ? 'Writing…' : 'Inspire'}</span>
-                    </button>
-                  </div>
-                  <p className="aig-opt-hint">
-                    Add headline and subheadline for better on-canvas text. Keep copy short for readability.
-                  </p>
-                  <div className="aig-field-row">
-                    <label>
-                      Headline
-                      <input
-                        type="text"
-                        value={headline}
-                        onChange={(e) => setHeadline(e.target.value)}
-                        placeholder="Create faster"
-                        maxLength={80}
-                      />
-                    </label>
-                    <label>
-                      Subheadline
-                      <input
-                        type="text"
-                        value={subheadline}
-                        onChange={(e) => setSubheadline(e.target.value)}
-                        placeholder="AI instructor studio"
-                        maxLength={120}
-                      />
-                    </label>
-                  </div>
-                  {selectedFormat?.safeZone && (
-                    <div className="aig-safe-zone-tip">
-                      <span className="aig-safe-zone-label">Safe zone:</span>
-                      <span className="aig-safe-zone-text">{selectedFormat.safeZone}</span>
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* PARKED: infographic sections form + social headline/subheadline overlay (restore when Mode 2/3 returns) */}
 
               {actionError && step === 'options' && (
                 <p className="aig-error-banner">{actionError}</p>
@@ -1899,15 +1717,11 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                 <button
                   type="button"
                   className="aig-btn aig-btn--generate"
-                  disabled={
-                    isGenerating ||
-                    (!prompt.trim() &&
-                      !(mode === 'infographic' && filledInfoSections.length > 0))
-                  }
+                  disabled={isGenerating || !prompt.trim()}
                   onClick={runGenerate}
                 >
                   <Sparkles size={16} />
-                  Generate {mode === 'infographic' ? 'infographic' : 'image'}
+                  Generate image
                   {estimateAc != null && <em>{estimateAc} AC</em>}
                 </button>
               </div>
@@ -1980,71 +1794,45 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                           </button>
                           <button
                             type="button"
-                            className="aig-cta-btn"
-                            disabled={isGenerating || !activeGeneration}
-                            onClick={focusTweakInput}
+                            className="aig-cta-btn aig-cta-btn--primary"
+                            disabled={!heroTurn?.generation}
+                            onClick={() => openDownloadModal(heroTurn.generation.id)}
                           >
-                            <Wand2 size={15} />
-                            Tweak
+                            <Download size={15} />
+                            Download
                           </button>
-                          <div className="aig-download-wrap aig-cta-download">
-                            <button
-                              type="button"
-                              className="aig-cta-btn aig-cta-btn--primary"
-                              disabled={!heroTurn?.generation}
-                              onClick={() =>
-                                setDownloadMenuFor((id) =>
-                                  id === heroTurn?.generation?.id ? null : heroTurn.generation.id
-                                )
-                              }
-                            >
-                              <Download size={15} />
-                              Download
-                            </button>
-                            {heroTurn?.generation && downloadMenuFor === heroTurn.generation.id && (
-                              <div className="aig-download-menu aig-download-menu--cta">
-                                {['png', 'jpg', 'pdf'].map((fmt) => (
-                                  <button
-                                    key={fmt}
-                                    type="button"
-                                    onClick={() => runDownload(fmt, heroTurn.generation.id)}
-                                    disabled={busyAction.startsWith(
-                                      `dl-${heroTurn.generation.id}-`
-                                    )}
-                                  >
-                                    {busyAction === `dl-${heroTurn.generation.id}-${fmt}`
-                                      ? 'Saving…'
-                                      : fmt.toUpperCase()}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
                         </div>
 
-                        <div className="aig-chat-dock">
+                          <div className="aig-chat-dock">
                           {actionError && !isGenerating && (
                             <div className="aig-error-banner aig-error-banner--dock">
                               {actionError}
                             </div>
                           )}
+                          <label className="aig-chat-label" htmlFor="aig-tweak-input">
+                            Tweak
+                          </label>
                           <div className="aig-chat-bar">
                             <textarea
+                              id="aig-tweak-input"
                               ref={chatInputRef}
                               className="aig-chat-input"
-                              rows={2}
+                              rows={1}
                               placeholder={
                                 isGenerating
-                                  ? mode === 'infographic'
-                                    ? 'Hang tight — infographics can take a couple of minutes…'
-                                    : 'Hang tight — your image is generating…'
+                                  ? 'Generating…'
                                   : activeGeneration
-                                    ? 'Describe a change and press Enter…'
-                                    : 'Generate an image first, then tweak here…'
+                                    ? 'Describe a change…'
+                                    : 'Generate first, then tweak'
                               }
                               value={chatInput}
                               disabled={isGenerating || !activeGeneration}
                               onChange={(e) => setChatInput(e.target.value)}
+                              onInput={(e) => {
+                                const el = e.currentTarget
+                                el.style.height = '0px'
+                                el.style.height = `${Math.min(el.scrollHeight, 72)}px`
+                              }}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                   e.preventDefault()
@@ -2053,26 +1841,28 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                               }}
                               maxLength={TWEAK_INSTRUCTION_MAX}
                             />
-                            <div className="aig-chat-counter">
-                              <span
-                                className={
-                                  chatInput.length > TWEAK_INSTRUCTION_MAX - 200
-                                    ? 'aig-chat-counter--warn'
-                                    : ''
-                                }
+                            <div className="aig-chat-tools">
+                              {chatInput.length > 0 && (
+                                <span
+                                  className={`aig-chat-counter${
+                                    chatInput.length > TWEAK_INSTRUCTION_MAX - 200
+                                      ? ' aig-chat-counter--warn'
+                                      : ''
+                                  }`}
+                                >
+                                  {chatInput.length}
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                className="aig-chat-send"
+                                disabled={isGenerating || !activeGeneration || !chatInput.trim()}
+                                onClick={submitChat}
+                                aria-label="Send tweak"
                               >
-                                {chatInput.length}/{TWEAK_INSTRUCTION_MAX}
-                              </span>
+                                <ArrowUp size={16} strokeWidth={2.5} />
+                              </button>
                             </div>
-                            <button
-                              type="button"
-                              className="aig-chat-send"
-                              disabled={isGenerating || !activeGeneration || !chatInput.trim()}
-                              onClick={submitChat}
-                              aria-label="Send tweak"
-                            >
-                              <ArrowUp size={18} strokeWidth={2.5} />
-                            </button>
                           </div>
                         </div>
                       </section>
@@ -2095,30 +1885,12 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                                 ? 'Applying tweak…'
                                 : heroTurn.kind === 'regenerate'
                                   ? 'Regenerating…'
-                                  : mode === 'infographic'
-                                    ? 'Creating your infographic…'
-                                    : 'Creating your image…'
+                                  : 'Creating your image…'
                             }
                           />
                         )}
 
-                        {heroTurn?.status === 'done' &&
-                          heroQuality &&
-                          heroQuality.passed === false && (
-                            <div className="aig-quality-banner" role="status">
-                              <AlertCircle size={16} strokeWidth={2.1} />
-                              <div>
-                                <strong>Review on-canvas text</strong>
-                                <p>
-                                  {(heroQuality.issues || []).filter(Boolean).join(' · ') ||
-                                    'Some labels or numbering may still be off.'}
-                                  {heroQuality.retried
-                                    ? ' A free text fix already ran with this generate — Tweak is optional and billed.'
-                                    : ' Tweak is optional and billed.'}
-                                </p>
-                              </div>
-                            </div>
-                          )}
+                        {/* PARKED infographicQuality / socialQuality banners until Mode 2/3 returns */}
 
                         {heroTurn?.status === 'done' && heroTurn.generation?.url && (
                           <button
@@ -2201,6 +1973,123 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                       </div>
                     </div>
               </div>
+
+              {downloadMenuFor &&
+                downloadTargetTurn?.generation &&
+                createPortal(
+                  <div
+                    className="aig-modal-backdrop"
+                    onClick={() => !busyAction.startsWith('dl-') && setDownloadMenuFor(null)}
+                  >
+                    <motion.div
+                      className="aig-modal aig-modal--download"
+                      onClick={(e) => e.stopPropagation()}
+                      initial={{ opacity: 0, y: 14, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      role="dialog"
+                      aria-modal="true"
+                      aria-labelledby="aig-download-title"
+                    >
+                      <div className="aig-modal-head">
+                        <h3 id="aig-download-title">Download</h3>
+                        <button
+                          type="button"
+                          onClick={() => setDownloadMenuFor(null)}
+                          aria-label="Close"
+                          disabled={busyAction.startsWith('dl-')}
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                      <p className="aig-modal-lede">
+                        {readyTurns.length > 1
+                          ? 'Pick a version, then how you want to save it.'
+                          : 'Choose a file type for this image.'}
+                      </p>
+
+                      {readyTurns.length > 1 && (
+                        <div className="aig-dl-versions" role="listbox" aria-label="Version to download">
+                          {readyTurns.map((turn, idx) => {
+                            const gen = turn.generation
+                            const selected = gen.id === downloadTargetTurn.generation.id
+                            return (
+                              <button
+                                key={gen.id}
+                                type="button"
+                                role="option"
+                                aria-selected={selected}
+                                className={`aig-dl-version ${selected ? 'is-on' : ''}`}
+                                onClick={() => setDownloadTargetId(gen.id)}
+                              >
+                                <img src={gen.url} alt="" />
+                                <span>
+                                  {versionTitle(turn, idx)}
+                                </span>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+
+                      <div className="aig-dl-preview">
+                        <img
+                          src={downloadTargetTurn.generation.url}
+                          alt=""
+                        />
+                      </div>
+
+                      <p className="aig-dl-section-label">Save this version as</p>
+                      <div className="aig-dl-formats">
+                        {DOWNLOAD_FORMATS.map(({ id: fmt, label, hint, Icon }) => (
+                          <button
+                            key={fmt}
+                            type="button"
+                            className="aig-dl-format"
+                            onClick={() =>
+                              runDownload(fmt, downloadTargetTurn.generation.id)
+                            }
+                            disabled={busyAction.startsWith('dl-')}
+                          >
+                            <span className="aig-download-fmt-icon" aria-hidden>
+                              <Icon size={18} strokeWidth={2} />
+                            </span>
+                            <span className="aig-download-fmt-copy">
+                              <strong>{label}</strong>
+                              <span>{hint}</span>
+                            </span>
+                            {busyAction ===
+                            `dl-${downloadTargetTurn.generation.id}-${fmt}` ? (
+                              <Loader2 size={16} className="aig-spin" />
+                            ) : (
+                              <Download size={16} strokeWidth={2.2} />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+
+                      {readyTurns.length > 1 && (
+                        <button
+                          type="button"
+                          className="aig-dl-zip"
+                          onClick={runDownloadZip}
+                          disabled={busyAction.startsWith('dl-')}
+                        >
+                          {busyAction === 'dl-zip' ? (
+                            <Loader2 size={16} className="aig-spin" />
+                          ) : (
+                            <Archive size={16} strokeWidth={2.1} />
+                          )}
+                          <span>
+                            {busyAction === 'dl-zip'
+                              ? 'Zipping images…'
+                              : `Download all ${readyTurns.length} as ZIP`}
+                          </span>
+                        </button>
+                      )}
+                    </motion.div>
+                  </div>,
+                  document.body
+                )}
 
               {fullscreenSrc &&
                 createPortal(

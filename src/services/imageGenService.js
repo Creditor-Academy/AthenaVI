@@ -32,12 +32,123 @@ export class ImageGenContextPinnedError extends Error {
 }
 
 const IMAGE_GENERATE_TIMEOUT_MS = 90_000
-const INFOGRAPHIC_GENERATE_TIMEOUT_MS = 180_000
+// PARKED: infographic generate used 90–180s. Restore when Mode 2 returns.
+// const INFOGRAPHIC_GENERATE_TIMEOUT_MS = 180_000
 const TWEAK_TIMEOUT_MS = 90_000
 const CONTEXT_TIMEOUT_MS = 90_000
 
-function generateTimeoutMs(mode) {
-  return mode === 'infographic' ? INFOGRAPHIC_GENERATE_TIMEOUT_MS : IMAGE_GENERATE_TIMEOUT_MS
+function generateTimeoutMs() {
+  return IMAGE_GENERATE_TIMEOUT_MS
+}
+
+function saveBlob(blob, filename) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}
+
+function crc32(bytes) {
+  let crc = 0xffffffff
+  for (let i = 0; i < bytes.length; i += 1) {
+    crc ^= bytes[i]
+    for (let j = 0; j < 8; j += 1) {
+      crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0)
+    }
+  }
+  return (crc ^ 0xffffffff) >>> 0
+}
+
+function u16(n) {
+  const b = new Uint8Array(2)
+  new DataView(b.buffer).setUint16(0, n, true)
+  return b
+}
+
+function u32(n) {
+  const b = new Uint8Array(4)
+  new DataView(b.buffer).setUint32(0, n, true)
+  return b
+}
+
+function concatBytes(parts) {
+  const total = parts.reduce((sum, part) => sum + part.length, 0)
+  const out = new Uint8Array(total)
+  let offset = 0
+  for (const part of parts) {
+    out.set(part, offset)
+    offset += part.length
+  }
+  return out
+}
+
+function buildZip(entries) {
+  const encoder = new TextEncoder()
+  const locals = []
+  const centrals = []
+  let offset = 0
+
+  for (const entry of entries) {
+    const nameBytes = encoder.encode(entry.name)
+    const data = entry.data
+    const crc = crc32(data)
+    const local = concatBytes([
+      u32(0x04034b50),
+      u16(20),
+      u16(0),
+      u16(0),
+      u16(0),
+      u16(0),
+      u32(crc),
+      u32(data.length),
+      u32(data.length),
+      u16(nameBytes.length),
+      u16(0),
+      nameBytes,
+      data,
+    ])
+    const central = concatBytes([
+      u32(0x02014b50),
+      u16(20),
+      u16(20),
+      u16(0),
+      u16(0),
+      u16(0),
+      u16(0),
+      u32(crc),
+      u32(data.length),
+      u32(data.length),
+      u16(nameBytes.length),
+      u16(0),
+      u16(0),
+      u16(0),
+      u16(0),
+      u32(0),
+      u32(offset),
+      nameBytes,
+    ])
+    locals.push(local)
+    centrals.push(central)
+    offset += local.length
+  }
+
+  const localBlob = concatBytes(locals)
+  const centralBlob = concatBytes(centrals)
+  const eocd = concatBytes([
+    u32(0x06054b50),
+    u16(0),
+    u16(0),
+    u16(entries.length),
+    u16(entries.length),
+    u32(centralBlob.length),
+    u32(localBlob.length),
+    u16(0),
+  ])
+  return new Blob([concatBytes([localBlob, centralBlob, eocd])], { type: 'application/zip' })
 }
 
 class ImageGenService {
@@ -209,12 +320,12 @@ class ImageGenService {
     return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.GENERATE(workspaceId), {
       method: 'POST',
       body: JSON.stringify(body),
-      timeoutMs: generateTimeoutMs(body?.mode),
+      timeoutMs: generateTimeoutMs(),
     })
   }
 
   async listGenerations(workspaceId, { take = 40, skip = 0 } = {}) {
-    const query = this.buildQuery({ take, skip })
+    const query = this.buildQuery({ take, skip, mode: 'image' })
     const data = await this.request(
       `${API_CONFIG.ENDPOINTS.IMAGE_GEN.GENERATIONS(workspaceId)}${query}`
     )
@@ -232,7 +343,7 @@ class ImageGenService {
     return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.REGENERATE(workspaceId, generationId), {
       method: 'POST',
       body: JSON.stringify(body),
-      timeoutMs: generateTimeoutMs(body?.mode),
+      timeoutMs: generateTimeoutMs(),
     })
   }
 
@@ -272,14 +383,33 @@ class ImageGenService {
 
   async downloadAndSave(workspaceId, generationId, format = 'png') {
     const { blob, filename } = await this.download(workspaceId, generationId, format)
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
+    saveBlob(blob, filename)
+  }
+
+  /**
+   * Client-side zip of several generations (API is per-file only).
+   * @param {{ generationId: string, name: string }[]} items
+   */
+  async downloadAllAsZip(workspaceId, items = [], format = 'png') {
+    const used = new Set()
+    const entries = []
+    for (const item of items) {
+      const { blob, filename } = await this.download(workspaceId, item.generationId, format)
+      let name = String(item.name || filename || `image.${format}`).replace(/[\\/]/g, '-')
+      if (used.has(name)) {
+        const stem = name.replace(/(\.[^.]+)$/, '')
+        const ext = name.slice(stem.length)
+        let n = 2
+        while (used.has(`${stem}-${n}${ext}`)) n += 1
+        name = `${stem}-${n}${ext}`
+      }
+      used.add(name)
+      entries.push({ name, data: new Uint8Array(await blob.arrayBuffer()) })
+    }
+    if (!entries.length) {
+      throw new Error('Nothing to zip')
+    }
+    saveBlob(buildZip(entries), 'athena-images.zip')
   }
 }
 

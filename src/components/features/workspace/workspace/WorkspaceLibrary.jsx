@@ -8,7 +8,7 @@ import {
 } from 'react-icons/md'
 import workspaceService from '../../../../services/workspaceService.js'
 import {
-  IMAGE_MODE_FILTERS,
+  // IMAGE_MODE_FILTERS, // PARKED infographic/social chips
   normalizeLibraryCategories,
   normalizeLibraryItem,
   normalizeLibraryCategoryId,
@@ -119,7 +119,8 @@ export default function WorkspaceLibrary({
       if (activeCategory === 'image') {
         params.take = 40
         params.skip = 0
-        if (imageMode && imageMode !== 'all') params.mode = imageMode
+        // PARKED: infographic/social library filter — API is image-only
+        // if (imageMode && imageMode !== 'all') params.mode = imageMode
       }
 
       const data = await workspaceService.getLibrary(workspaceId, params)
@@ -260,20 +261,11 @@ export default function WorkspaceLibrary({
         </div>
       </div>
 
+      {/* PARKED Image / Infographic / Social library chips — list is mode=image only
       {activeCategory === 'image' && (
-        <div className="workspace-library-mode-chips" role="group" aria-label="Image modes">
-          {IMAGE_MODE_FILTERS.map((mode) => (
-            <button
-              key={mode.id}
-              type="button"
-              className={`workspace-library-mode-chip ${imageMode === mode.id ? 'active' : ''}`}
-              onClick={() => setImageMode(mode.id)}
-            >
-              {mode.label}
-            </button>
-          ))}
-        </div>
+        <div className="workspace-library-mode-chips" ... />
       )}
+      */}
 
       {error && (
         <div className="workspace-permission-note" style={{ marginBottom: 12 }}>

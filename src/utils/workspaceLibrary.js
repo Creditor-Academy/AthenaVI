@@ -205,8 +205,9 @@ function truncatePrompt(text, max = 48) {
 export const IMAGE_MODE_FILTERS = [
   { id: 'all', label: 'All' },
   { id: 'image', label: 'Image' },
-  { id: 'infographic', label: 'Infographic' },
-  { id: 'social', label: 'Social' },
+  // PARKED until Image Gen Mode 2/3 returns:
+  // { id: 'infographic', label: 'Infographic' },
+  // { id: 'social', label: 'Social' },
 ]
 
 export const LIBRARY_CATEGORY_ICONS = {
