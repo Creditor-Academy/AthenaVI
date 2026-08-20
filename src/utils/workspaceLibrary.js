@@ -176,16 +176,29 @@ export function normalizeLibraryItem(item, { workspaceId } = {}) {
   }
 
   if (kind === 'image') {
+    const head = item.head && typeof item.head === 'object' ? item.head : null
+    const headUrl = head?.url || head?.asset?.url || item.url || item.thumbnail || item.thumbnailUrl || null
+    const headGenerationId = head?.generationId || item.generationId || item.headGenerationId || null
     return {
       ...base,
-      url: item.url || item.thumbnail || item.thumbnailUrl || null,
-      prompt: item.prompt || '',
+      name: String(item.title || item.name || name || 'Untitled chat'),
+      title: String(item.title || item.name || name || 'Untitled chat'),
+      url: headUrl,
+      thumbnail: headUrl,
+      thumbnailUrl: headUrl,
+      prompt: item.prompt || item.title || '',
       revisedPrompt: item.revisedPrompt || null,
       mode: item.mode || 'image',
       status: item.status || 'SUCCEEDED',
       downloadFormats: item.downloadFormats || null,
-      assetId: item.assetId || item.asset?.id || null,
-      asset: item.asset || null,
+      assetId: item.assetId || item.asset?.id || head?.asset?.id || null,
+      asset: item.asset || head?.asset || null,
+      head,
+      headGenerationId,
+      generationId: headGenerationId,
+      threadId: item.threadId || item.id,
+      messageCount: item.messageCount ?? null,
+      versionCount: item.versionCount ?? null,
     }
   }
 

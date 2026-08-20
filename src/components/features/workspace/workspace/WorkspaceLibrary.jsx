@@ -68,6 +68,7 @@ export default function WorkspaceLibrary({
   onRename,
   onMove,
   onDelete,
+  refreshKey = 0,
   className = '',
 }) {
   const workspaceId = workspace?.id
@@ -87,7 +88,10 @@ export default function WorkspaceLibrary({
     setLoadingCategories(true)
     setError(null)
     try {
-      const data = await workspaceService.getLibrary(workspaceId)
+      const data = await workspaceService.getLibrary(
+        workspaceId,
+        folderId ? { folderId } : {}
+      )
       const next = normalizeLibraryCategories(data.categories)
       setCategories(next)
       setActiveCategory((prev) => {
@@ -101,7 +105,7 @@ export default function WorkspaceLibrary({
     } finally {
       setLoadingCategories(false)
     }
-  }, [workspaceId])
+  }, [workspaceId, folderId])
 
   const loadItems = useCallback(async () => {
     if (!workspaceId || !activeCategory) return
@@ -110,12 +114,7 @@ export default function WorkspaceLibrary({
     setItems([])
     try {
       const params = { category: activeCategory }
-      if (
-        folderId &&
-        (activeCategory === 'video' || activeCategory === 'presentation')
-      ) {
-        params.folderId = folderId
-      }
+      if (folderId) params.folderId = folderId
       if (activeCategory === 'image') {
         params.take = 40
         params.skip = 0
@@ -145,11 +144,11 @@ export default function WorkspaceLibrary({
     } finally {
       setLoadingItems(false)
     }
-  }, [workspaceId, activeCategory, folderId, imageMode])
+  }, [workspaceId, activeCategory, folderId, imageMode, refreshKey])
 
   useEffect(() => {
     loadCategories()
-  }, [loadCategories])
+  }, [loadCategories, refreshKey])
 
   useEffect(() => {
     loadItems()
@@ -179,7 +178,6 @@ export default function WorkspaceLibrary({
     const Component = viewMode === 'tile' ? VideoCard : VideoRow
     const itemElements = sortedItems.map((item) => {
       const kind = normalizeLibraryCategoryId(item.kind) || 'video'
-      const isImage = kind === 'image'
       return (
         <Component
           key={`${kind}-${item.id}`}
@@ -187,11 +185,9 @@ export default function WorkspaceLibrary({
           onClick={() => onOpenItem?.(item)}
           contextProps={{
             onDetails: onDetails ? () => onDetails(item) : null,
-            onRename:
-              canEdit && !isImage && onRename ? () => onRename(item) : null,
-            onMove: canEdit && !isImage && onMove ? () => onMove(item) : null,
-            onDelete:
-              canEdit && !isImage && onDelete ? () => onDelete(item) : null,
+            onRename: canEdit && onRename ? () => onRename(item) : null,
+            onMove: canEdit && onMove ? () => onMove(item) : null,
+            onDelete: canEdit && onDelete ? () => onDelete(item) : null,
           }}
         />
       )

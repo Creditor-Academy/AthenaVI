@@ -18,12 +18,16 @@ import {
   FileImage,
   FileText,
   Archive,
+  MessageSquare,
+  CreditCard,
+  ArrowLeftRight,
 } from 'lucide-react'
 import imageGenService, {
   ImageGenRateLimitError,
   ImageGenProviderError,
 } from '../../../services/imageGenService.js'
 import creditsService, { isInsufficientCreditsError } from '../../../services/creditsService.js'
+import AllocateCreditsModal from '../../../components/features/workspace/workspace/AllocateCreditsModal.jsx'
 import { resolvePresentationWorkspaceContext } from '../../../utils/presentationContext.js'
 import { isTeamWorkspaceType } from '../../../utils/creditTransactions.js'
 import ImageGenContextAttach from '../../../components/features/image-generation/ImageGenContextAttach.jsx'
@@ -116,6 +120,58 @@ function pickInfographicStyleId(styles = [], currentId) {
   const offered = stylesForMode(styles, 'infographic')
   if (offered.some((s) => s.id === currentId)) return currentId
   return offered[0]?.id || currentId
+}
+
+function turnsFromSavedThread(saved) {
+  const messages = Array.isArray(saved?.messages) ? saved.messages : []
+  const turns = []
+  for (let i = 0; i < messages.length; i += 1) {
+    const msg = messages[i]
+    if (msg.role !== 'user') continue
+    const follow = messages[i + 1]
+    const generation = follow?.generationId
+      ? {
+          id: follow.generationId,
+          url: follow.url || follow.asset?.url || null,
+          asset: follow.asset || null,
+          threadId: saved.id,
+          prompt: msg.content,
+        }
+      : null
+    const kind =
+      msg.type === 'tweak' ? 'tweak' : msg.type === 'regenerate' ? 'regenerate' : 'generate'
+    turns.push({
+      id: msg.id,
+      kind,
+      text: msg.content || '',
+      status: generation?.url ? 'done' : follow?.generationId ? 'done' : 'error',
+      generation,
+      error: generation || follow?.generationId ? null : 'Image missing',
+    })
+  }
+  return turns
+}
+
+function upsertChatList(list, thread) {
+  if (!thread?.id) return list
+  const rest = (list || []).filter((item) => item.id !== thread.id)
+  return [thread, ...rest]
+}
+
+function chatTitle(item) {
+  return String(item?.title || item?.head?.asset?.name || 'Untitled chat')
+}
+
+function chatThumb(item) {
+  return item?.head?.url || item?.head?.asset?.url || ''
+}
+
+function chatWhen(item) {
+  const raw = item?.updatedAt || item?.createdAt
+  if (!raw) return ''
+  const date = new Date(raw)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
 function infographicQualityOf(generation) {
@@ -849,7 +905,7 @@ function CanvasPreview({ format, mode, infoLayoutId, infoLayoutName }) {
   )
 }
 
-export default function AIImageStudio({ onBack, createContext = null }) {
+export default function AIImageStudio({ onBack, createContext = null, onOpenBilling = null }) {
   const [step, setStep] = useState('prompt')
   const [prompt, setPrompt] = useState('')
   const [inspiring, setInspiring] = useState(false)
@@ -861,6 +917,15 @@ export default function AIImageStudio({ onBack, createContext = null }) {
   const [infoSections, setInfoSections] = useState([emptySection(), emptySection(), emptySection()])
 
   const [workspaceId, setWorkspaceId] = useState(createContext?.workspaceId || null)
+  const [folderId, setFolderId] = useState(createContext?.folderId || null)
+  const [workspaceMeta, setWorkspaceMeta] = useState(null)
+  const [personalCredits, setPersonalCredits] = useState(0)
+  const [isTeamPool, setIsTeamPool] = useState(false)
+  const [creditsGate, setCreditsGate] = useState(null)
+  const [allocateOpen, setAllocateOpen] = useState(false)
+  const [savedChats, setSavedChats] = useState([])
+  const [activeThreadId, setActiveThreadId] = useState(null)
+  const [chatsOpen, setChatsOpen] = useState(false)
   const [catalogLoading, setCatalogLoading] = useState(true)
   const [catalogError, setCatalogError] = useState('')
   const [models, setModels] = useState([])
@@ -892,6 +957,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
   const chatEndRef = useRef(null)
   const chatInputRef = useRef(null)
   const inspireTimerRef = useRef(null)
+  const lastGoodGenRef = useRef(null)
 
   const resizePromptField = useCallback(() => {
     const el = textRef.current
@@ -973,28 +1039,43 @@ export default function AIImageStudio({ onBack, createContext = null }) {
   }
 
   const refreshCredits = useCallback(async (wsId) => {
-    if (!wsId) return
+    if (!wsId) return null
     try {
       const bal = await creditsService.getWorkspaceBalance(wsId)
-      const value = isTeamWorkspaceType(bal.workspaceType)
-        ? bal.workspaceCredits
-        : bal.personalCredits
-      setCreditBalance(Number.isFinite(value) ? value : bal.personalCredits)
+      const isTeam = isTeamWorkspaceType(bal.workspaceType)
+      const pool = isTeam ? bal.workspaceCredits : bal.personalCredits
+      const personal = Number(bal.personalCredits) || 0
+      setIsTeamPool(isTeam)
+      setPersonalCredits(personal)
+      setCreditBalance(Number.isFinite(pool) ? pool : personal)
+      return {
+        isTeam,
+        pool: Number.isFinite(pool) ? Number(pool) : personal,
+        personal,
+      }
     } catch {
       try {
-        const personal = await creditsService.getPersonalBalance()
-        setCreditBalance(personal.personalCredits)
+        const personalBal = await creditsService.getPersonalBalance()
+        const personal = Number(personalBal.personalCredits) || 0
+        setPersonalCredits(personal)
+        setCreditBalance(personal)
+        return { isTeam: false, pool: personal, personal }
       } catch {
-        /* ignore */
+        return null
       }
     }
   }, [])
 
-  const loadHistory = useCallback(async (wsId) => {
+  const openedThreadRef = useRef(null)
+
+  const loadHistory = useCallback(async (wsId, nextFolderId) => {
     if (!wsId) return
     try {
-      const list = await imageGenService.listGenerations(wsId, { take: 50 })
-      setGenerations(list)
+      const list = await imageGenService.listThreads(wsId, {
+        folderId: nextFolderId,
+        take: 50,
+      })
+      setSavedChats(list)
     } catch {
       /* history optional on first load */
     }
@@ -1012,6 +1093,8 @@ export default function AIImageStudio({ onBack, createContext = null }) {
         })
         if (cancelled) return
         setWorkspaceId(ctx.workspaceId)
+        setFolderId(ctx.folderId)
+        setWorkspaceMeta(ctx.workspace || { id: ctx.workspaceId, name: 'Workspace' })
 
         const catalogs = await imageGenService.getCatalogs()
         if (cancelled) return
@@ -1028,7 +1111,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
 
         await Promise.all([
           refreshCredits(ctx.workspaceId),
-          loadHistory(ctx.workspaceId),
+          loadHistory(ctx.workspaceId, ctx.folderId),
         ])
       } catch (err) {
         if (!cancelled) setCatalogError(friendlyError(err))
@@ -1131,6 +1214,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
   const buildGenerateBody = () => {
     const body = {
       mode: 'image',
+      folderId,
       modelId,
       formatId: selectedFormat?.id || 'square',
       style: styleId,
@@ -1138,15 +1222,17 @@ export default function AIImageStudio({ onBack, createContext = null }) {
       prompt: prompt.trim(),
     }
     if (imageContext?.id) body.contextId = imageContext.id
-    // PARKED social: headline, subheadline, textMode
-    // PARKED infographic: body.infographic = { layout, title, sections }
     return body
   }
 
   const applyResult = (data, turnId) => {
     const gen = data?.generation
     if (!gen) return
+    const nextThreadId = data?.thread?.id || data?.actions?.threadId || gen.threadId || activeThreadId
+    if (nextThreadId) setActiveThreadId(nextThreadId)
+    if (data?.thread) setSavedChats((prev) => upsertChatList(prev, data.thread))
     setActiveGeneration(gen)
+    lastGoodGenRef.current = gen
     setGenerations((prev) => {
       const rest = prev.filter((g) => g.id !== gen.id)
       return [gen, ...rest]
@@ -1160,30 +1246,131 @@ export default function AIImageStudio({ onBack, createContext = null }) {
         )
       )
     }
-    // PARKED infographicQuality / socialQuality / socialOverlay banners
-    // const quality = infographicQualityOf(gen)
     refreshCredits(workspaceId)
   }
 
-  const failTurn = (turnId, message) => {
+  const openCreditsGate = (snapshot, needed) => {
+    setCreditsGate({
+      needed: Number(needed) || 6,
+      pool: Number(snapshot?.pool) || 0,
+      personal: Number(snapshot?.personal) || 0,
+      isTeam: Boolean(snapshot?.isTeam),
+    })
+  }
+
+  const assertCreditsForGenerate = async () => {
+    const needed = Number(estimateAc) > 0 ? Number(estimateAc) : 6
+    const snapshot = await refreshCredits(workspaceId)
+    if (!snapshot) return true
+    if (snapshot.pool >= needed) return true
+    openCreditsGate(snapshot, needed)
+    return false
+  }
+
+  const failTurn = (turnId, message, extra = {}) => {
     if (!turnId) return
     setThread((prev) =>
-      prev.map((t) => (t.id === turnId ? { ...t, status: 'error', error: message } : t))
+      prev.map((t) =>
+        t.id === turnId
+          ? { ...t, status: 'error', error: message, errorKind: extra.errorKind || t.errorKind || null }
+          : t
+      )
     )
   }
+
+  const lastSuccessfulGeneration = () =>
+    lastGoodGenRef.current ||
+    [...thread].reverse().find((t) => t.status === 'done' && t.generation?.id)?.generation ||
+    activeGeneration ||
+    null
+
+  const retryFailedTurn = async (turn) => {
+    if (!workspaceId || !turn?.id || isGenerating) return
+    const parent = lastSuccessfulGeneration()
+    if (!parent?.id) return
+    const canCharge = await assertCreditsForGenerate()
+    if (!canCharge) return
+
+    setActionError('')
+    setBusyAction(turn.kind === 'tweak' ? 'tweak' : 'regenerate')
+    setIsGenerating(true)
+    setThread((prev) =>
+      prev.map((t) =>
+        t.id === turn.id ? { ...t, status: 'pending', error: null, errorKind: null } : t
+      )
+    )
+    try {
+      let data
+      if (turn.kind === 'tweak') {
+        const instruction = String(turn.text || '').trim()
+        if (!instruction) throw new Error('Nothing to retry.')
+        data = activeThreadId
+          ? await imageGenService.sendThreadMessage(workspaceId, activeThreadId, instruction)
+          : await imageGenService.tweak(workspaceId, parent.id, instruction)
+      } else {
+        data = await imageGenService.regenerate(workspaceId, parent.id, buildGenerateBody())
+      }
+      applyResult(data, turn.id)
+    } catch (err) {
+      if (isInsufficientCreditsError(err)) {
+        const snapshot = await refreshCredits(workspaceId)
+        openCreditsGate(snapshot, estimateAc)
+        failTurn(turn.id, 'Not enough credits.', { errorKind: 'credits' })
+        return
+      }
+      failTurn(turn.id, friendlyError(err))
+    } finally {
+      setIsGenerating(false)
+      setBusyAction('')
+    }
+  }
+
+  const openSavedThread = useCallback(
+    async (threadId) => {
+      if (!workspaceId || !threadId || isGenerating) return
+      setActionError('')
+      try {
+        const saved = await imageGenService.getThread(workspaceId, threadId)
+        const turns = turnsFromSavedThread(saved)
+        setActiveThreadId(saved.id)
+        setSavedChats((prev) => upsertChatList(prev, saved))
+        setThread(turns)
+        const last = [...turns].reverse().find((t) => t.generation?.url) || turns[turns.length - 1]
+        setActiveGeneration(last?.generation || null)
+        if (saved.modelId) setModelId(saved.modelId)
+        if (saved.formatId) setFormatId(saved.formatId)
+        if (saved.styleId) setStyleId(saved.styleId)
+        const firstPrompt = turns.find((t) => t.kind === 'generate')?.text
+        if (firstPrompt) setPrompt(firstPrompt)
+        setStep('workspace')
+        setChatsOpen(false)
+      } catch (err) {
+        setActionError(friendlyError(err))
+      }
+    },
+    [workspaceId, isGenerating]
+  )
 
   const runGenerate = async () => {
     const hasPrompt = Boolean(prompt.trim())
     if (!workspaceId || isGenerating) return
+    if (!folderId) {
+      setActionError('Pick a folder first. Image chats are saved in a workspace folder.')
+      return
+    }
     if (!hasPrompt) {
       setActionError('Add a prompt to generate an image.')
       return
     }
+    const canCharge = await assertCreditsForGenerate()
+    if (!canCharge) return
     const turnId = `turn_${Date.now()}`
     setActionError('')
     setIsGenerating(true)
+    setChatsOpen(false)
     setStep('workspace')
     setActiveGeneration(null)
+    setActiveThreadId(null)
     setThread([
       {
         id: turnId,
@@ -1198,6 +1385,14 @@ export default function AIImageStudio({ onBack, createContext = null }) {
       const data = await imageGenService.generate(workspaceId, buildGenerateBody())
       applyResult(data, turnId)
     } catch (err) {
+      if (isInsufficientCreditsError(err)) {
+        setStep('options')
+        setThread([])
+        setActiveGeneration(null)
+        const snapshot = await refreshCredits(workspaceId)
+        openCreditsGate(snapshot, estimateAc)
+        return
+      }
       const msg = friendlyError(err)
       setActionError(msg)
       failTurn(turnId, msg)
@@ -1232,6 +1427,12 @@ export default function AIImageStudio({ onBack, createContext = null }) {
       )
       applyResult(data, turnId)
     } catch (err) {
+      if (isInsufficientCreditsError(err)) {
+        const snapshot = await refreshCredits(workspaceId)
+        openCreditsGate(snapshot, estimateAc)
+        failTurn(turnId, 'Not enough credits for this generation.', { errorKind: 'credits' })
+        return
+      }
       const msg = friendlyError(err)
       setActionError(msg)
       failTurn(turnId, msg)
@@ -1270,9 +1471,17 @@ export default function AIImageStudio({ onBack, createContext = null }) {
       },
     ])
     try {
-      const data = await imageGenService.tweak(workspaceId, activeGeneration.id, instruction)
+      const data = activeThreadId
+        ? await imageGenService.sendThreadMessage(workspaceId, activeThreadId, instruction)
+        : await imageGenService.tweak(workspaceId, activeGeneration.id, instruction)
       applyResult(data, turnId)
     } catch (err) {
+      if (isInsufficientCreditsError(err)) {
+        const snapshot = await refreshCredits(workspaceId)
+        openCreditsGate(snapshot, estimateAc)
+        failTurn(turnId, 'Not enough credits for this tweak.', { errorKind: 'credits' })
+        return
+      }
       const msg = friendlyError(err)
       setActionError(msg)
       failTurn(turnId, msg)
@@ -1335,6 +1544,14 @@ export default function AIImageStudio({ onBack, createContext = null }) {
   }
 
   const startNewCreation = () => {
+    setActiveThreadId(null)
+    setThread([])
+    setActiveGeneration(null)
+    setChatInput('')
+    setActionError('')
+    setPrompt('')
+    setImageContext(null)
+    setChatsOpen(false)
     setStep('prompt')
   }
 
@@ -1368,7 +1585,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
     : heroTurn?.status === 'error'
       ? {
           title: 'That one didn’t land',
-          sub: 'Try a tweak, or generate a new version.',
+          sub: 'Retry this version after you add credits.',
         }
       : {
           title: 'Your image is ready',
@@ -1403,6 +1620,14 @@ export default function AIImageStudio({ onBack, createContext = null }) {
   ].filter(Boolean)
 
   const shellClass = `aig-shell aig-shell--${step}`
+
+  useEffect(() => {
+    const openId = createContext?.threadId
+    if (catalogLoading || !workspaceId || !openId) return
+    if (openedThreadRef.current === openId) return
+    openedThreadRef.current = openId
+    openSavedThread(openId)
+  }, [catalogLoading, workspaceId, createContext?.threadId, openSavedThread])
 
   if (catalogLoading) {
     return (
@@ -1443,14 +1668,30 @@ export default function AIImageStudio({ onBack, createContext = null }) {
 
   return (
     <div className={shellClass}>
-      <button type="button" className="aig-float-back" onClick={navBack} aria-label="Back">
-        <ChevronLeft size={18} strokeWidth={2.25} />
-        <span>{step === 'prompt' ? (thread.length ? 'Session' : 'Home') : 'Back'}</span>
-      </button>
+      <div className="aig-main">
+      <div className="aig-float-nav">
+        <button type="button" className="aig-float-back" onClick={navBack} aria-label="Back">
+          <ChevronLeft size={18} strokeWidth={2.25} />
+          <span>{step === 'prompt' ? (thread.length ? 'Session' : 'Home') : 'Back'}</span>
+        </button>
+      </div>
 
-      <div className="aig-float-credits" aria-label="Credits balance">
-        <Sparkles size={13} strokeWidth={2.25} />
-        <span>{creditBalance == null ? '—' : Math.round(creditBalance).toLocaleString()} AC</span>
+      <div className="aig-float-end">
+        <button
+          type="button"
+          className={`aig-float-chats${chatsOpen ? ' is-open' : ''}`}
+          onClick={() => setChatsOpen((v) => !v)}
+          aria-expanded={chatsOpen}
+          aria-controls="aig-chats-drawer"
+        >
+          <MessageSquare size={15} strokeWidth={2.2} />
+          <span>Chats</span>
+          {savedChats.length > 0 && <em>{savedChats.length}</em>}
+        </button>
+        <div className="aig-float-credits" aria-label="Credits balance">
+          <Sparkles size={13} strokeWidth={2.25} />
+          <span>{creditBalance == null ? '—' : Math.round(creditBalance).toLocaleString()} AC</span>
+        </div>
       </div>
 
       <div className="aig-body">
@@ -1734,26 +1975,40 @@ export default function AIImageStudio({ onBack, createContext = null }) {
             <motion.section key="workspace" className="aig-page aig-page--workspace" {...stepMotion}>
               <div className="aig-work">
                 <header className="aig-work-top">
-                  <button
-                    type="button"
-                    className="aig-work-new"
-                    onClick={startNewCreation}
-                  >
-                    <Plus size={15} strokeWidth={2.4} />
-                    <span>New creation</span>
-                  </button>
+                  <div className="aig-work-top-actions">
+                    <button
+                      type="button"
+                      className="aig-work-new"
+                      onClick={startNewCreation}
+                    >
+                      <Plus size={15} strokeWidth={2.4} />
+                      <span>New creation</span>
+                    </button>
+                  </div>
                   <div className="aig-work-heading">
                     <h1>{workspaceHeading.title}</h1>
                     {workspaceHeading.sub ? <p>{workspaceHeading.sub}</p> : null}
                   </div>
-                  <div className="aig-work-credits" aria-label="Credits balance">
-                    <Sparkles size={13} strokeWidth={2.25} />
-                    <span>
-                      {creditBalance == null
-                        ? '—'
-                        : Math.round(creditBalance).toLocaleString()}{' '}
-                      AC
-                    </span>
+                  <div className="aig-work-end">
+                    <button
+                      type="button"
+                      className={`aig-work-chats${chatsOpen ? ' is-open' : ''}`}
+                      onClick={() => setChatsOpen((v) => !v)}
+                      aria-expanded={chatsOpen}
+                    >
+                      <MessageSquare size={15} strokeWidth={2.2} />
+                      <span>Chats</span>
+                      {savedChats.length > 0 && <em>{savedChats.length}</em>}
+                    </button>
+                    <div className="aig-work-credits" aria-label="Credits balance">
+                      <Sparkles size={13} strokeWidth={2.25} />
+                      <span>
+                        {creditBalance == null
+                          ? '—'
+                          : Math.round(creditBalance).toLocaleString()}{' '}
+                        AC
+                      </span>
+                    </div>
                   </div>
                 </header>
 
@@ -1919,8 +2174,21 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                         {heroTurn?.status === 'error' && (
                           <div className="aig-chat-media-fail">
                             <AlertCircle size={22} />
-                            <span>Couldn’t generate</span>
+                            <span>
+                              {heroTurn.errorKind === 'credits'
+                                ? 'Out of workspace credits'
+                                : 'Couldn’t generate'}
+                            </span>
                             {heroTurn.error && <em>{heroTurn.error}</em>}
+                            <button
+                              type="button"
+                              className="aig-retry-btn"
+                              disabled={isGenerating}
+                              onClick={() => retryFailedTurn(heroTurn)}
+                            >
+                              <RotateCcw size={14} />
+                              Retry
+                            </button>
                           </div>
                         )}
                         </div>
@@ -1935,18 +2203,37 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                               <p className="aig-version-empty">No versions yet</p>
                             )}
                             {thread.map((turn, idx) => (
-                              <button
+                              <div
                                 key={turn.id}
                                 id={`aig-turn-${turn.id}`}
-                                type="button"
-                                className={`aig-version-item ${heroTurn?.id === turn.id ? 'is-active' : ''}`}
-                                onClick={() => selectTurn(turn)}
+                                className={`aig-version-item ${heroTurn?.id === turn.id ? 'is-active' : ''} ${turn.status === 'error' ? 'is-fail' : ''}`}
                               >
-                                <div className="aig-version-thumb">
+                                <div
+                                  className="aig-version-thumb"
+                                  onClick={() => selectTurn(turn)}
+                                  role="button"
+                                  tabIndex={0}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') selectTurn(turn)
+                                  }}
+                                >
                                   {turn.generation?.url ? (
                                     <img src={turn.generation.url} alt="" />
                                   ) : turn.status === 'pending' ? (
                                     <Loader2 size={14} className="aig-spin" />
+                                  ) : turn.status === 'error' ? (
+                                    <button
+                                      type="button"
+                                      className="aig-version-retry"
+                                      disabled={isGenerating}
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        retryFailedTurn(turn)
+                                      }}
+                                    >
+                                      <RotateCcw size={13} />
+                                      Retry
+                                    </button>
                                   ) : (
                                     <AlertCircle size={14} />
                                   )}
@@ -1957,7 +2244,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                                     {turn.status === 'pending'
                                       ? '…'
                                       : turn.status === 'error'
-                                        ? 'Fail'
+                                        ? 'Retry'
                                         : turn.kind === 'tweak'
                                           ? 'Tweak'
                                           : turn.kind === 'regenerate'
@@ -1965,7 +2252,7 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                                             : 'Original'}
                                   </span>
                                 </div>
-                              </button>
+                              </div>
                             ))}
                             <div ref={chatEndRef} />
                           </div>
@@ -1984,16 +2271,20 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                     <motion.div
                       className="aig-modal aig-modal--download"
                       onClick={(e) => e.stopPropagation()}
-                      initial={{ opacity: 0, y: 14, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
                       role="dialog"
                       aria-modal="true"
                       aria-labelledby="aig-download-title"
                     >
-                      <div className="aig-modal-head">
-                        <h3 id="aig-download-title">Download</h3>
+                      <div className="aig-dl-top">
+                        <div>
+                          <p className="aig-dl-kicker">Export</p>
+                          <h3 id="aig-download-title">Save image</h3>
+                        </div>
                         <button
                           type="button"
+                          className="aig-dl-close"
                           onClick={() => setDownloadMenuFor(null)}
                           aria-label="Close"
                           disabled={busyAction.startsWith('dl-')}
@@ -2001,11 +2292,13 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                           <X size={16} />
                         </button>
                       </div>
-                      <p className="aig-modal-lede">
-                        {readyTurns.length > 1
-                          ? 'Pick a version, then how you want to save it.'
-                          : 'Choose a file type for this image.'}
-                      </p>
+
+                      <div className="aig-dl-preview">
+                        <img
+                          src={downloadTargetTurn.generation.url}
+                          alt=""
+                        />
+                      </div>
 
                       {readyTurns.length > 1 && (
                         <div className="aig-dl-versions" role="listbox" aria-label="Version to download">
@@ -2022,24 +2315,14 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                                 onClick={() => setDownloadTargetId(gen.id)}
                               >
                                 <img src={gen.url} alt="" />
-                                <span>
-                                  {versionTitle(turn, idx)}
-                                </span>
+                                <span>{versionTitle(turn, idx)}</span>
                               </button>
                             )
                           })}
                         </div>
                       )}
 
-                      <div className="aig-dl-preview">
-                        <img
-                          src={downloadTargetTurn.generation.url}
-                          alt=""
-                        />
-                      </div>
-
-                      <p className="aig-dl-section-label">Save this version as</p>
-                      <div className="aig-dl-formats">
+                      <div className="aig-dl-formats" role="group" aria-label="File format">
                         {DOWNLOAD_FORMATS.map(({ id: fmt, label, hint, Icon }) => (
                           <button
                             key={fmt}
@@ -2050,19 +2333,15 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                             }
                             disabled={busyAction.startsWith('dl-')}
                           >
-                            <span className="aig-download-fmt-icon" aria-hidden>
-                              <Icon size={18} strokeWidth={2} />
-                            </span>
-                            <span className="aig-download-fmt-copy">
+                            <Icon size={16} strokeWidth={2} />
+                            <span>
                               <strong>{label}</strong>
-                              <span>{hint}</span>
+                              <em>{hint}</em>
                             </span>
                             {busyAction ===
                             `dl-${downloadTargetTurn.generation.id}-${fmt}` ? (
-                              <Loader2 size={16} className="aig-spin" />
-                            ) : (
-                              <Download size={16} strokeWidth={2.2} />
-                            )}
+                              <Loader2 size={14} className="aig-spin" />
+                            ) : null}
                           </button>
                         ))}
                       </div>
@@ -2075,13 +2354,13 @@ export default function AIImageStudio({ onBack, createContext = null }) {
                           disabled={busyAction.startsWith('dl-')}
                         >
                           {busyAction === 'dl-zip' ? (
-                            <Loader2 size={16} className="aig-spin" />
+                            <Loader2 size={14} className="aig-spin" />
                           ) : (
-                            <Archive size={16} strokeWidth={2.1} />
+                            <Archive size={14} strokeWidth={2.1} />
                           )}
                           <span>
                             {busyAction === 'dl-zip'
-                              ? 'Zipping images…'
+                              ? 'Zipping…'
                               : `Download all ${readyTurns.length} as ZIP`}
                           </span>
                         </button>
@@ -2157,6 +2436,162 @@ export default function AIImageStudio({ onBack, createContext = null }) {
           )}
         </AnimatePresence>
       </div>
+
+      {chatsOpen && (
+        <div className="aig-chats-backdrop" onClick={() => setChatsOpen(false)} />
+      )}
+      <aside
+        id="aig-chats-drawer"
+        className={`aig-chats${chatsOpen ? ' is-open' : ''}`}
+        aria-label="Image chats"
+        aria-hidden={!chatsOpen}
+      >
+        <div className="aig-chats-hero">
+          <div className="aig-chats-hero-copy">
+            <span className="aig-chats-kicker">Image studio</span>
+            <strong className="aig-chats-brand">Your chats</strong>
+            <p>
+              {savedChats.length
+                ? `${savedChats.length} conversation${savedChats.length === 1 ? '' : 's'} in this folder`
+                : 'Start a conversation and it will live here'}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="aig-chats-icon-btn"
+            onClick={() => setChatsOpen(false)}
+            aria-label="Close chats"
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <button type="button" className="aig-chats-new" onClick={startNewCreation}>
+          <Plus size={15} strokeWidth={2.4} />
+          <span>New chat</span>
+        </button>
+        <div className="aig-chats-list">
+          {savedChats.length === 0 && (
+            <div className="aig-chats-empty">
+              <span className="aig-chats-empty-orb" aria-hidden>
+                <Sparkles size={18} />
+              </span>
+              <strong>Nothing here yet</strong>
+              <p>Generate an image and this becomes your history.</p>
+            </div>
+          )}
+          {savedChats.map((chat) => {
+            const active = chat.id === activeThreadId
+            const thumb = chatThumb(chat)
+            return (
+              <button
+                key={chat.id}
+                type="button"
+                className={`aig-chats-item${active ? ' is-active' : ''}${thumb ? '' : ' is-blank'}`}
+                onClick={() => openSavedThread(chat.id)}
+                title={chatTitle(chat)}
+              >
+                <span className="aig-chats-thumb">
+                  {thumb ? <img src={thumb} alt="" /> : <Sparkles size={16} />}
+                </span>
+                <span className="aig-chats-copy">
+                  <strong>{chatTitle(chat)}</strong>
+                  <em>
+                    {[
+                      chatWhen(chat),
+                      chat.versionCount
+                        ? `${chat.versionCount} version${chat.versionCount === 1 ? '' : 's'}`
+                        : chat.messageCount
+                          ? `${chat.messageCount} messages`
+                          : null,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </em>
+                </span>
+              </button>
+            )
+          })}
+        </div>
+      </aside>
+      </div>
+
+      {creditsGate &&
+        !allocateOpen &&
+        createPortal(
+          <div className="aig-modal-backdrop" onClick={() => setCreditsGate(null)}>
+            <motion.div
+              className="aig-credits-sheet"
+              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0, y: 16, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="aig-credits-title"
+            >
+              <button
+                type="button"
+                className="aig-credits-sheet-close"
+                onClick={() => setCreditsGate(null)}
+                aria-label="Close"
+              >
+                <X size={16} />
+              </button>
+              <span className="aig-credits-sheet-kicker">Workspace pool</span>
+              <h3 id="aig-credits-title">This workspace is out of AC</h3>
+              <p>
+                Generation costs <strong>{creditsGate.needed} AC</strong>. Move some from your
+                personal balance, or buy more.
+              </p>
+              <div className="aig-credits-sheet-pills">
+                <span>
+                  Needs <strong>{creditsGate.needed}</strong>
+                </span>
+                <span>
+                  Workspace <strong>{Math.max(0, Math.round(creditsGate.pool)).toLocaleString()}</strong>
+                </span>
+                <span>
+                  Personal <strong>{Math.max(0, Math.round(creditsGate.personal)).toLocaleString()}</strong>
+                </span>
+              </div>
+              <div className="aig-credits-sheet-actions">
+                {creditsGate.isTeam && creditsGate.personal > 0 && (
+                  <button
+                    type="button"
+                    className="aig-credits-sheet-btn aig-credits-sheet-btn--ghost"
+                    onClick={() => setAllocateOpen(true)}
+                  >
+                    <ArrowLeftRight size={16} />
+                    Transfer into workspace
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="aig-credits-sheet-btn aig-credits-sheet-btn--fill"
+                  onClick={() => {
+                    setCreditsGate(null)
+                    if (onOpenBilling) onOpenBilling()
+                    else onBack?.()
+                  }}
+                >
+                  <CreditCard size={16} />
+                  Buy credits
+                </button>
+              </div>
+            </motion.div>
+          </div>,
+          document.body
+        )}
+
+      <AllocateCreditsModal
+        isOpen={allocateOpen}
+        workspace={workspaceMeta}
+        onClose={() => setAllocateOpen(false)}
+        onSuccess={async () => {
+          setAllocateOpen(false)
+          setCreditsGate(null)
+          await refreshCredits(workspaceId)
+        }}
+      />
     </div>
   )
 }

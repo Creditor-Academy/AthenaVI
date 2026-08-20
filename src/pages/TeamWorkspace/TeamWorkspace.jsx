@@ -82,6 +82,7 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
   const [selectedWorkspaceForFolder, setSelectedWorkspaceForFolder] = useState(null);
   const [isCreateWorkspaceOpen, setIsCreateWorkspaceOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [libraryEpoch, setLibraryEpoch] = useState(0);
   const [renameTarget, setRenameTarget] = useState(null);
   const [detailsTarget, setDetailsTarget] = useState(null);
   const [contributorsPanel, setContributorsPanel] = useState({ open: false, workspace: null });
@@ -273,7 +274,8 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
     showToast,
     openConfirmDialog,
     loadWorkspaces,
-    loadContributorsForWorkspace
+    loadContributorsForWorkspace,
+    onLibraryChange: () => setLibraryEpoch((n) => n + 1),
   });
 
   // Wrap handleCreateFolder to inject the currently selected workspace
@@ -533,12 +535,29 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
             item,
           })
         }
-        onRename={(item) => renameItem('video', item.id, workspace)}
+        onRename={(item) => {
+          if (resolveLibraryKind(item) === 'image') {
+            setRenameTarget({
+              type: 'image-thread',
+              id: item.id,
+              name: item.name || item.title || '',
+            });
+            return;
+          }
+          renameItem('video', item.id, workspace);
+        }}
         onMove={(item) => {
           setMoveTargetVideo(item);
           setMoveTargetWorkspace(workspace);
         }}
-        onDelete={(item) => deleteItem('video', item.id, workspace)}
+        onDelete={(item) => {
+          if (resolveLibraryKind(item) === 'image') {
+            deleteItem('image-thread', item.id, workspace);
+            return;
+          }
+          deleteItem('video', item.id, workspace);
+        }}
+        refreshKey={libraryEpoch}
       />
     );
   };

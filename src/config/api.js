@@ -187,6 +187,13 @@ const API_CONFIG = {
         `/api/image-gen/workspaces/${workspaceId}/generations/${generationId}/tweak`,
       DOWNLOAD: (workspaceId, generationId) =>
         `/api/image-gen/workspaces/${workspaceId}/generations/${generationId}/download`,
+      THREADS: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/threads`,
+      THREAD: (workspaceId, threadId) =>
+        `/api/image-gen/workspaces/${workspaceId}/threads/${threadId}`,
+      THREAD_MESSAGES: (workspaceId, threadId) =>
+        `/api/image-gen/workspaces/${workspaceId}/threads/${threadId}/messages`,
+      THREAD_MOVE: (workspaceId, threadId) =>
+        `/api/image-gen/workspaces/${workspaceId}/threads/${threadId}/move-folder`,
     },
 
     // Presentations (AI PPT / Canvas)

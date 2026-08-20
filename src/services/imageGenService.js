@@ -386,6 +386,51 @@ class ImageGenService {
     saveBlob(blob, filename)
   }
 
+  async listThreads(workspaceId, { folderId, take = 50, skip = 0 } = {}) {
+    const query = this.buildQuery({ folderId, take, skip })
+    const data = await this.request(
+      `${API_CONFIG.ENDPOINTS.IMAGE_GEN.THREADS(workspaceId)}${query}`
+    )
+    return data?.threads || []
+  }
+
+  async getThread(workspaceId, threadId) {
+    const data = await this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.THREAD(workspaceId, threadId))
+    return data?.thread || data
+  }
+
+  async sendThreadMessage(workspaceId, threadId, content, { fromGenerationId } = {}) {
+    const body = { content }
+    if (fromGenerationId) body.fromGenerationId = fromGenerationId
+    return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.THREAD_MESSAGES(workspaceId, threadId), {
+      method: 'POST',
+      body: JSON.stringify(body),
+      timeoutMs: TWEAK_TIMEOUT_MS,
+    })
+  }
+
+  async renameThread(workspaceId, threadId, title) {
+    const data = await this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.THREAD(workspaceId, threadId), {
+      method: 'PATCH',
+      body: JSON.stringify({ title }),
+    })
+    return data?.thread || data
+  }
+
+  async moveThread(workspaceId, threadId, folderId) {
+    const data = await this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.THREAD_MOVE(workspaceId, threadId), {
+      method: 'POST',
+      body: JSON.stringify({ folderId }),
+    })
+    return data?.thread || data
+  }
+
+  async deleteThread(workspaceId, threadId) {
+    return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.THREAD(workspaceId, threadId), {
+      method: 'DELETE',
+    })
+  }
+
   /**
    * Client-side zip of several generations (API is per-file only).
    * @param {{ generationId: string, name: string }[]} items

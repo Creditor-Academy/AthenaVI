@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import workspaceService from '../../services/workspaceService.js';
+import imageGenService from '../../services/imageGenService.js';
 import invitationFlowService from '../../services/invitationFlowService.js';
 import inboxService from '../../services/inboxService.js';
 import { savePendingInvitation } from '../../utils/inviteNavigation.js';
@@ -46,7 +47,8 @@ export function useWorkspaceActions({
   showToast,
   openConfirmDialog,
   loadWorkspaces,
-  loadContributorsForWorkspace
+  loadContributorsForWorkspace,
+  onLibraryChange,
 }) {
   const [inviteSending, setInviteSending] = useState(false);
 
@@ -200,7 +202,7 @@ export function useWorkspaceActions({
       currentName = workspaces
         .flatMap((workspace) => workspace.folders)
         .find((folder) => String(folder.id) === String(id))?.name || '';
-    } else if (type === 'video') {
+    } else if (type === 'video' || type === 'image-thread') {
       currentName = workspaces
         .flatMap((workspace) => workspace.folders)
         .flatMap((folder) => folder.videos || [])
@@ -270,6 +272,17 @@ export function useWorkspaceActions({
       showToast('Folder renamed successfully', 'success');
     }
 
+    if (type === 'image-thread') {
+      const parentWorkspace = activeWorkspace;
+      if (!workspaceCanEdit(parentWorkspace)) {
+        throw new Error('You do not have permission to rename this chat.');
+      }
+      await imageGenService.renameThread(parentWorkspace.id, id, newName);
+      showToast('Chat renamed', 'success');
+      onLibraryChange?.();
+      return;
+    }
+
     if (type === 'video') {
       const parentWorkspace = activeWorkspace;
       if (!workspaceCanEdit(parentWorkspace)) {
@@ -309,7 +322,7 @@ export function useWorkspaceActions({
       );
       showToast('Video renamed successfully', 'success');
     }
-  }, [workspaces, activeWorkspace, authUser, setWorkspaces, setLocalAdditions, setCurrentLevel, showToast]);
+  }, [workspaces, activeWorkspace, authUser, setWorkspaces, setLocalAdditions, setCurrentLevel, showToast, onLibraryChange]);
 
   // ------------------------------------------------------------------
   // Delete
@@ -409,6 +422,28 @@ export function useWorkspaceActions({
           showToast(error.message || 'Failed to delete folder', 'error');
         }
       });
+      return;
+    }
+
+    if (type === 'image-thread') {
+      const parentWorkspace = workspaceContext || activeWorkspace;
+      if (!workspaceCanEdit(parentWorkspace)) {
+        showToast('You do not have permission to delete this chat.', 'error');
+        return;
+      }
+      openConfirmDialog(
+        'Remove this image chat from the folder? Generated images stay in your assets.',
+        async () => {
+          try {
+            await imageGenService.deleteThread(parentWorkspace.id, id);
+            await refreshWorkspaceData();
+            onLibraryChange?.();
+            showToast('Chat removed', 'success');
+          } catch (error) {
+            showToast(error.message || 'Failed to delete chat', 'error');
+          }
+        }
+      );
       return;
     }
 
@@ -580,6 +615,18 @@ export function useWorkspaceActions({
   const handleMoveProject = useCallback(async (targetFolderId, moveTargetVideo, moveTargetWorkspace) => {
     if (!moveTargetVideo || !moveTargetWorkspace) return;
     try {
+      if (moveTargetVideo.kind === 'image' || moveTargetVideo.category === 'image') {
+        if (!targetFolderId) {
+          throw new Error('Image chats must live in a folder.');
+        }
+        await imageGenService.moveThread(moveTargetWorkspace.id, moveTargetVideo.id, targetFolderId);
+        showToast('Chat moved', 'success');
+        setMoveTargetVideo(null);
+        setMoveTargetWorkspace(null);
+        onLibraryChange?.();
+        return;
+      }
+
       const targetFolder = moveTargetWorkspace.folders?.find(
         (folder) => String(folder.id) === String(targetFolderId)
       );

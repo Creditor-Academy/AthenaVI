@@ -320,7 +320,7 @@ function KindBadge({ kind }) {
 function LibraryThumb({ item, kind }) {
     const title = item.name || item.title || '';
     if (kind === 'image') {
-        const src = item.url || item.thumbnail || item.thumbnailUrl;
+        const src = item.head?.url || item.url || item.thumbnail || item.thumbnailUrl;
         return src ? (
             <img src={src} alt={title} className="wsc-library-thumb-img" loading="lazy" decoding="async" />
         ) : (
@@ -359,7 +359,7 @@ export const VideoCard = ({ video, onClick, contextProps }) => {
         kind === 'presentation'
             ? 'Open Presentation'
             : kind === 'image'
-                ? 'Open Image'
+                ? 'Open chat'
                 : 'Open Project';
     const creatorName = (() => {
         const candidates = [

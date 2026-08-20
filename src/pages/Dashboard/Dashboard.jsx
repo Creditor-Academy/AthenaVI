@@ -601,7 +601,7 @@ function Dashboard({ onCreate, initialSection }) {
                   optionId: 'image-ai',
                   workspaceId,
                   folderId: item.folderId || null,
-                  generationId: item.id || null,
+                  threadId: item.threadId || item.id || null,
                 })
                 goToSection('image-ai')
               }}
@@ -734,7 +734,7 @@ function Dashboard({ onCreate, initialSection }) {
                   optionId: 'image-ai',
                   workspaceId,
                   folderId: item.folderId || null,
-                  generationId: item.id || null,
+                  threadId: item.threadId || item.id || null,
                 })
                 goToSection('image-ai')
               }}
@@ -776,6 +776,7 @@ function Dashboard({ onCreate, initialSection }) {
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, isolation: 'isolate' }}>
           <AIImageStudio
             onBack={() => goToSection('home')}
+            onOpenBilling={() => goToSection('credits')}
             createContext={
               createLocationContext?.optionId === 'image-ai' ? createLocationContext : null
             }
