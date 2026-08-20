@@ -178,6 +178,7 @@ export default function AIPptVibeStep({
     onThemeModeChange?.(activeChoice)
   }, [activeChoice, onThemeModeChange])
   const [searchQuery, setSearchQuery] = useState('')
+  const [appearanceFilter, setAppearanceFilter] = useState('all') // 'all' | 'light' | 'dark'
   const [brandKitDetails, setBrandKitDetails] = useState({})
   const [packDetail, setPackDetail] = useState(null)
 
@@ -295,11 +296,13 @@ export default function AIPptVibeStep({
 
   const filteredThemes = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
-    if (!q) return themes
-    return themes.filter((t) =>
-      `${t.name} ${t.vibe || ''}`.toLowerCase().includes(q)
-    )
-  }, [themes, searchQuery])
+    return themes.filter((t) => {
+      const appearance = t.appearance || (String(t.vibe || '').toLowerCase().includes('dark') ? 'dark' : 'light')
+      if (appearanceFilter !== 'all' && appearance !== appearanceFilter) return false
+      if (!q) return true
+      return `${t.name} ${t.vibe || ''}`.toLowerCase().includes(q)
+    })
+  }, [themes, searchQuery, appearanceFilter])
 
   const filteredPacks = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
@@ -472,6 +475,31 @@ export default function AIPptVibeStep({
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </label>
+                {drawer === 'palette' && (
+                  <div className="aig-theme-filters aig-theme-filters--drawer" role="group" aria-label="Theme appearance">
+                    <button
+                      type="button"
+                      className={`filter-pill ${appearanceFilter === 'all' ? 'active' : ''}`}
+                      onClick={() => setAppearanceFilter('all')}
+                    >
+                      All
+                    </button>
+                    <button
+                      type="button"
+                      className={`filter-pill ${appearanceFilter === 'light' ? 'active' : ''}`}
+                      onClick={() => setAppearanceFilter('light')}
+                    >
+                      Light
+                    </button>
+                    <button
+                      type="button"
+                      className={`filter-pill ${appearanceFilter === 'dark' ? 'active' : ''}`}
+                      onClick={() => setAppearanceFilter('dark')}
+                    >
+                      Dark
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div
@@ -508,13 +536,15 @@ export default function AIPptVibeStep({
                 {drawer === 'palette' && (
                   <>
                     {!filteredThemes.length && (
-                      <div className="aig-template-drawer-empty">No themes match your search.</div>
+                      <div className="aig-template-drawer-empty">
+                        No {appearanceFilter === 'all' ? '' : `${appearanceFilter} `}themes match your search.
+                      </div>
                     )}
                     {filteredThemes.map((t) => (
                       <ColorStripeCard
                         key={t.id}
                         title={t.name}
-                        subtitle="Theme palette"
+                        subtitle={t.appearance === 'dark' ? 'Dark palette' : 'Light palette'}
                         colors={themeColors(t)}
                         selected={activeChoice === 'palette' && theme === t.id}
                         onSelect={() => selectPalette(t.id)}

@@ -111,16 +111,37 @@ export function buildContentBySlotIdFromSlideContent(content = {}, schema = null
   if (!out.BODY && bullets.length) out.BODY = out.BULLETS
 
   const columns = Array.isArray(content.columns) ? content.columns : []
+  const slideTitleLower = String(content.title || '').trim().toLowerCase()
+  const seenColTitles = new Set()
+  const slots = Array.isArray(schema?.slots) ? schema.slots : []
+  const hasDedicatedTitles = slots.some((s) =>
+    /^(card|col|feature)_\d+_title$/i.test(String(s.id || ''))
+  )
   columns.slice(0, 6).forEach((col, i) => {
     const n = i + 1
-    const colTitle = String(col?.title ?? col?.heading ?? col?.label ?? '').trim()
+    let colTitle = String(col?.title ?? col?.heading ?? col?.label ?? '').trim()
     const colBody = String(col?.body ?? col?.text ?? '').trim()
-    const bulletText = colTitle && colBody ? `${colTitle}\n${colBody}` : colBody || colTitle
+    const titleLower = colTitle.toLowerCase()
+    if (!colTitle || titleLower === slideTitleLower || seenColTitles.has(titleLower)) {
+      const words = colBody.split(/\s+/).filter(Boolean).slice(0, 4).join(' ')
+      const wordsLower = words.toLowerCase()
+      colTitle =
+        words && wordsLower !== slideTitleLower && !seenColTitles.has(wordsLower)
+          ? words
+          : `Aspect ${n}`
+    }
+    seenColTitles.add(colTitle.toLowerCase())
+    const bulletText =
+      hasDedicatedTitles
+        ? colBody || colTitle
+        : colTitle && colBody
+          ? `${colTitle}\n${colBody}`
+          : colBody || colTitle
     out[`CARD_${n}_TITLE`] = colTitle
     out[`CARD_${n}_BODY`] = colBody
     out[`COL_${n}_TITLE`] = colTitle
     out[`COL_${n}_BODY`] = colBody
-    out[`BODY_${n}`] = colBody || colTitle
+    out[`BODY_${n}`] = colBody || (hasDedicatedTitles ? '' : colTitle)
     out[`METRIC_TITLE_${n}`] = colTitle
     out[`METRIC_BODY_${n}`] = colBody
     if (colTitle) out[`IMAGE_${n}_LABEL`] = colTitle

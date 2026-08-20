@@ -994,6 +994,100 @@
   box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.1);
 }
 
+.aig-outline-desc-input {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font: inherit;
+  resize: vertical;
+  background: var(--bg-elevated, var(--bg-card));
+  color: inherit;
+}
+
+.aig-outline-layout-row {
+  margin-top: 10px;
+}
+
+.aig-outline-intent-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-secondary, #64748b);
+  font-style: italic;
+}
+
+.aig-outline-layout-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #64748b);
+}
+
+.aig-outline-layout-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.aig-outline-layout-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.aig-outline-layout-badge--auto {
+  background: rgba(var(--primary-rgb), 0.1);
+  color: var(--primary);
+}
+
+.aig-outline-layout-badge--locked {
+  background: rgba(245, 158, 11, 0.14);
+  color: #b45309;
+}
+
+.aig-outline-layout-meta {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-secondary, #64748b);
+}
+
+.aig-outline-layout-help {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.aig-outline-layout-why {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text-secondary, #64748b);
+}
+
+.aig-outline-layout-select {
+  width: 100%;
+  max-width: 420px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  background: var(--bg-elevated, var(--bg-card));
+  color: inherit;
+}
+
 .aig-outline-edit-btn {
   width: 40px;
   height: 40px;
@@ -1165,7 +1259,7 @@
 
 .aig-realtime-carousel-wrapper {
   width: 100%;
-  height: 400px;
+  height: 440px;
   position: relative;
   display: flex;
   align-items: center;
@@ -1174,18 +1268,63 @@
 
 .aig-realtime-slide-card {
   width: 100%;
-  max-width: 680px;
+  max-width: 720px;
   aspect-ratio: 16/9;
   background: var(--bg-card);
   border-radius: 24px;
   box-shadow: 0 24px 48px rgba(0,0,0,0.15);
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   overflow: hidden;
   border: 1px solid var(--border-color);
   position: absolute;
   transition: transform 1s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 1s ease, filter 1s ease;
   will-change: transform, opacity, filter;
+}
+
+.aig-realtime-slide-card--layout {
+  aspect-ratio: auto;
+  height: 400px;
+  max-height: 400px;
+}
+
+.aig-realtime-layout-stage {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-surface, #f8fafc);
+}
+
+.aig-realtime-layout-preview {
+  width: 100%;
+  height: 100%;
+}
+
+.aig-realtime-media--fill {
+  width: 100%;
+  height: 100%;
+  border-left: none;
+}
+
+.aig-realtime-caption {
+  flex: 0 0 auto;
+  padding: 10px 16px 12px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-card);
+}
+
+.aig-realtime-title--caption {
+  font-size: 16px;
+  min-height: 0;
+  margin: 0;
+}
+
+.aig-realtime-layout-id {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--text-muted, #64748b);
+  text-transform: capitalize;
 }
 
 .pos-active {
@@ -4726,6 +4865,34 @@
   flex-direction: column;
   gap: 10px;
   flex-shrink: 0;
+}
+
+.aig-theme-filters--drawer {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.aig-theme-filters--drawer .filter-pill {
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-card, #ffffff);
+  color: var(--text-muted, #64748b);
+  cursor: pointer;
+}
+
+.aig-theme-filters--drawer .filter-pill:hover {
+  background: var(--bg-muted, #f1f5f9);
+  color: var(--text-main, #0f172a);
+}
+
+.aig-theme-filters--drawer .filter-pill.active {
+  background: var(--primary, #2563eb);
+  border-color: var(--primary, #2563eb);
+  color: #ffffff;
 }
 
 .aig-template-drawer-search {

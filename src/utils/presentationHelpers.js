@@ -589,24 +589,49 @@ export function normalizeOutlineSlides(payload) {
       (typeof slide.content === 'string' ? [slide.content] : []) ||
       []
 
+    const layoutLocked = Boolean(slide.layoutLocked ?? slide.layout_locked)
+    const rawLayoutId = slide.layoutId || slide.layout_id || null
+
     return {
       id: slide.id || slide.slideId || index + 1,
       title: slide.title || slide.topic || `Slide ${index + 1}`,
       description: bullets,
       summary:
         slide.summary ||
+        slide.contentIntent ||
         (Array.isArray(bullets) ? bullets.join(' ') : String(bullets || '')),
+      purpose: slide.purpose || slide.intent || null,
+      contentIntent: slide.contentIntent || slide.summary || null,
+      contentTypeHints: Array.isArray(slide.contentType)
+        ? slide.contentType
+        : Array.isArray(slide.contentTypes)
+          ? slide.contentTypes
+          : [],
+      visualIntent: Array.isArray(slide.visualIntent) ? slide.visualIntent : [],
       suggestedContentType:
         slide.suggestedContentType ||
-        slide.contentType ||
+        slide.content_type ||
         slide.layoutHint ||
         slide.layout ||
         '',
-      layoutId: slide.layoutId || slide.layout_id || null,
-      intent: slide.intent || null,
+      layoutId: layoutLocked ? rawLayoutId : null,
+      layoutLocked,
+      layoutWhy: slide.layoutWhy || slide.layout_why || '',
+      visual_need: slide.visual_need || slide.visualNeed || '',
+      subtitle: slide.subtitle || '',
+      beats: Array.isArray(slide.beats) ? slide.beats : [],
+      visual: slide.visual || '',
+      intent: slide.intent || slide.purpose || null,
       isEditing: false,
     }
   })
+}
+
+/** Human label for catalog content types in the Blueprint UI. */
+export function formatOutlineContentType(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  return raw.replace(/_/g, ' ').replace(/\+/g, ' + ')
 }
 
 /** Build PATCH/POST outline body from UI cards. */
@@ -619,21 +644,41 @@ export function outlineCardsToApiPayload(
     slideCount: (cards || []).length,
     density: mapDensity(density),
     locale,
-    slides: (cards || []).map((card, index) => ({
-      order: index + 1,
-      title: card.title,
-      summary:
+    slides: (cards || []).map((card, index) => {
+      const layoutLocked = Boolean(card.layoutLocked)
+      const lockedLayoutId = layoutLocked && card.layoutId ? card.layoutId : null
+      const summaryText =
         card.summary ||
         (Array.isArray(card.description)
           ? card.description.join(' ')
-          : String(card.description || '')),
-      suggestedContentType:
-        card.suggestedContentType ||
-        card.layoutHint ||
-        (index === 0 ? 'title' : 'bullet_list'),
-      ...(card.layoutId ? { layoutId: card.layoutId } : {}),
-      ...(card.intent ? { intent: card.intent } : {}),
-    })),
+          : String(card.description || ''))
+
+      return {
+        order: index + 1,
+        title: card.title,
+        summary: summaryText,
+        ...(card.purpose || card.intent ? { purpose: card.purpose || card.intent } : {}),
+        ...(card.contentIntent ? { contentIntent: card.contentIntent } : {}),
+        ...(Array.isArray(card.contentTypeHints) && card.contentTypeHints.length
+          ? { contentType: card.contentTypeHints }
+          : {}),
+        ...(Array.isArray(card.visualIntent) && card.visualIntent.length
+          ? { visualIntent: card.visualIntent }
+          : {}),
+        suggestedContentType:
+          card.suggestedContentType ||
+          card.layoutHint ||
+          (index === 0 ? 'title' : 'bullet_list'),
+        layoutLocked,
+        ...(lockedLayoutId ? { layoutId: lockedLayoutId } : {}),
+        ...(card.layoutWhy ? { layoutWhy: card.layoutWhy } : {}),
+        ...(card.visual_need ? { visual_need: card.visual_need } : {}),
+        ...(card.subtitle ? { subtitle: card.subtitle } : {}),
+        ...(Array.isArray(card.beats) && card.beats.length ? { beats: card.beats } : {}),
+        ...(card.visual ? { visual: card.visual } : {}),
+        ...(card.intent ? { intent: card.intent } : {}),
+      }
+    }),
   }
 }
 

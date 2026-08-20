@@ -1,71 +1,111 @@
-import { useState, useEffect } from 'react'
-import { X, Search, Check } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { X, Search, Check, Image as ImageIcon } from 'lucide-react'
+
+function themeAppearance(theme) {
+  if (theme?.appearance === 'dark' || theme?.appearance === 'light') return theme.appearance
+  const vibe = String(theme?.vibe || '').toLowerCase()
+  if (vibe.includes('dark')) return 'dark'
+  return 'light'
+}
 
 export default function AIPptThemeModal({ isOpen, onClose, themes, initialTheme, onSelectTheme }) {
   const [activeThemeId, setActiveThemeId] = useState(initialTheme)
   const [searchQuery, setSearchQuery] = useState('')
+  const [appearanceFilter, setAppearanceFilter] = useState('all') // 'all' | 'light' | 'dark'
 
-  // Sync active theme when opened
   useEffect(() => {
     if (isOpen) {
       setActiveThemeId(initialTheme)
       setSearchQuery('')
+      setAppearanceFilter('all')
     }
   }, [isOpen, initialTheme])
 
-  if (!isOpen) return null;
+  const filteredThemes = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim()
+    return (themes || []).filter((t) => {
+      const appearance = themeAppearance(t)
+      if (appearanceFilter !== 'all' && appearance !== appearanceFilter) return false
+      if (!query) return true
+      return `${t.name} ${t.vibe || ''}`.toLowerCase().includes(query)
+    })
+  }, [themes, searchQuery, appearanceFilter])
 
-  const activeTheme = themes.find(t => t.id === activeThemeId) || themes[0];
-  const query = searchQuery.toLowerCase().trim();
-  const filteredThemes = themes.filter(t =>
-    `${t.name} ${t.vibe || ''}`.toLowerCase().includes(query)
-  );
+  if (!isOpen) return null
+
+  const activeTheme = themes.find((t) => t.id === activeThemeId) || themes[0] || filteredThemes[0]
 
   const handleSelect = () => {
-    onSelectTheme(activeThemeId)
+    if (!activeTheme?.id) return
+    onSelectTheme(activeTheme.id)
     onClose()
   }
 
   return (
     <div className="aig-theme-modal-overlay fade-in">
       <div className="aig-theme-modal-container scale-in">
-        
         {/* LEFT SIDEBAR */}
         <div className="aig-theme-modal-sidebar">
           <div className="aig-theme-sidebar-header">
             <h2>All themes</h2>
             <p>View and select from all themes</p>
-            
+
             <div className="aig-theme-search-box">
               <Search size={16} className="search-icon" />
-              <input 
-                type="text" 
-                placeholder="Search for a theme" 
+              <input
+                type="text"
+                placeholder="Search for a theme"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            
-            <div className="aig-theme-filters">
-              <button className="filter-pill">Dark</button>
-              <button className="filter-pill">Light</button>
-              <button className="filter-pill">Professional</button>
-              <button className="filter-pill">Colorful</button>
+
+            <div className="aig-theme-filters" role="group" aria-label="Theme appearance">
+              <button
+                type="button"
+                className={`filter-pill ${appearanceFilter === 'all' ? 'active' : ''}`}
+                onClick={() => setAppearanceFilter('all')}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                className={`filter-pill ${appearanceFilter === 'light' ? 'active' : ''}`}
+                onClick={() => setAppearanceFilter('light')}
+              >
+                Light
+              </button>
+              <button
+                type="button"
+                className={`filter-pill ${appearanceFilter === 'dark' ? 'active' : ''}`}
+                onClick={() => setAppearanceFilter('dark')}
+              >
+                Dark
+              </button>
             </div>
           </div>
 
           <div className="aig-theme-sidebar-scroll">
             <div className="aig-theme-sidebar-grid">
-              {filteredThemes.map(t => {
-                const isActive = activeThemeId === t.id;
+              {!filteredThemes.length && (
+                <div className="aig-template-drawer-empty" style={{ gridColumn: '1 / -1' }}>
+                  No themes match this filter.
+                </div>
+              )}
+              {filteredThemes.map((t) => {
+                const isActive = activeThemeId === t.id
                 return (
                   <button
                     key={t.id}
+                    type="button"
                     className={`aig-sidebar-theme-card ${isActive ? 'active' : ''}`}
                     onClick={() => setActiveThemeId(t.id)}
                   >
                     <div className="aig-sidebar-preview" style={{ background: t.outer }}>
-                      <div className="aig-sidebar-inner" style={{ background: t.inner, borderColor: t.border || 'transparent' }}>
+                      <div
+                        className="aig-sidebar-inner"
+                        style={{ background: t.inner, borderColor: t.border || 'transparent' }}
+                      >
                         <h4 style={{ color: t.title }}>Title</h4>
                         <p style={{ color: t.body }}>Body & link</p>
                         <div className="aig-sidebar-swatches">
@@ -86,74 +126,100 @@ export default function AIPptThemeModal({ isOpen, onClose, themes, initialTheme,
           </div>
         </div>
 
-        {/* RIGHT PREVIEW AREA */}
-        <div className="aig-theme-modal-preview-area" style={{ background: activeTheme.outer }}>
-          
-          <button className="aig-modal-close-btn" onClick={onClose}>
+        {/* RIGHT PREVIEW */}
+        <div
+          className="aig-theme-modal-preview-area"
+          style={{ background: activeTheme?.background || activeTheme?.inner || '#f8fafc' }}
+        >
+          <button type="button" className="aig-modal-close-btn" onClick={onClose} aria-label="Close">
             <X size={20} />
           </button>
 
-          {/* CASCADING 3D SLIDES PREVIEW */}
-          <div className="aig-3d-slides-wrapper" key={activeTheme.id}>
-             
-             {/* Slide 3 (Back) */}
-             <div className="aig-3d-slide aig-3d-slide-3" style={{ background: activeTheme.inner }}>
-                <h3 style={{ color: activeTheme.title }}>This is a title</h3>
-                <h2 style={{ color: activeTheme.title }}>It's like a heading, but bigger</h2>
+          {activeTheme && (
+            <div className="aig-3d-slides-wrapper">
+              <div
+                className="aig-3d-slide aig-3d-slide-3"
+                style={{ background: activeTheme.inner, color: activeTheme.title }}
+              >
+                <h3 style={{ color: activeTheme.title }}>Welcome</h3>
                 <p style={{ color: activeTheme.body }}>
-                  This is body text. You can change your fonts, colors and images later in the theme editor.
-                  You can also create your own custom branded theme. What's more, you can create multiple themes and switch between them at any time.
+                  A preview of how body copy looks on this palette.
                 </p>
-             </div>
+                <div className="aig-slide-buttons-row">
+                  <button
+                    type="button"
+                    className="aig-mock-btn-primary"
+                    style={{ background: activeTheme.primary, color: '#fff' }}
+                  >
+                    Primary
+                  </button>
+                  <button
+                    type="button"
+                    className="aig-mock-btn-secondary"
+                    style={{ borderColor: activeTheme.secondary, color: activeTheme.secondary }}
+                  >
+                    Secondary
+                  </button>
+                </div>
+              </div>
 
-             {/* Slide 2 (Middle) */}
-             <div className="aig-3d-slide aig-3d-slide-2" style={{ background: activeTheme.inner }}>
-                <h3 style={{ color: activeTheme.title }}>This is a heading</h3>
+              <div
+                className="aig-3d-slide aig-3d-slide-2"
+                style={{ background: activeTheme.inner, color: activeTheme.title, position: 'relative' }}
+              >
+                <h2 style={{ color: activeTheme.title }}>Gallery</h2>
                 <div className="aig-3d-images-row">
-                  <div className="aig-mock-img" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1543722530-d2c3201371e7?w=300&q=80)', backgroundSize: 'cover' }}></div>
-                  <div className="aig-mock-img" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=300&q=80)', backgroundSize: 'cover' }}></div>
-                  <div className="aig-mock-img" style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1534447677768-be436bb09401?w=300&q=80)', backgroundSize: 'cover' }}></div>
+                  <div className="aig-mock-img" style={{ background: activeTheme.primary }} />
+                  <div className="aig-mock-img" style={{ background: activeTheme.secondary }} />
+                  <div className="aig-mock-img" style={{ background: activeTheme.accent }} />
                 </div>
                 <div className="aig-mock-captions">
-                  <span style={{ color: activeTheme.body }}>Image 1</span>
-                  <span style={{ color: activeTheme.body }}>Image 2</span>
-                  <span style={{ color: activeTheme.body }}>Image 3</span>
+                  <span style={{ color: activeTheme.body }}>Label one</span>
+                  <span style={{ color: activeTheme.body }}>Label two</span>
+                  <span style={{ color: activeTheme.body }}>Label three</span>
                 </div>
-             </div>
+                <div className="aig-3d-floating-image-block">
+                  <div className="aig-placeholder-img-icon">
+                    <ImageIcon />
+                  </div>
+                </div>
+              </div>
 
-             {/* Slide 1 (Front) */}
-             <div className="aig-3d-slide aig-3d-slide-1" style={{ background: activeTheme.inner }}>
-                <div className="aig-slide-hello">Hello 👋</div>
-                <h2 style={{ color: activeTheme.title }}>This is a theme preview</h2>
-                <p style={{ color: activeTheme.body }}>
-                  This is body text. You can change your fonts, colors and images later in the theme editor.
-                  You can also create your own custom branded theme.
-                </p>
-                <a href="#" style={{ color: activeTheme.accent || activeTheme.title, display: 'block', margin: '16px 0', textDecoration: 'underline' }}>This is a link.</a>
-                
+              <div
+                className="aig-3d-slide aig-3d-slide-1"
+                style={{ background: activeTheme.inner, color: activeTheme.title }}
+              >
+                <div className="aig-slide-hello" style={{ color: activeTheme.primary }}>
+                  HELLO
+                </div>
+                <h2 style={{ color: activeTheme.title }}>Key points</h2>
                 <div className="aig-slide-boxes-row">
-                  <div className="aig-mock-text-box" style={{ background: 'rgba(0,0,0,0.05)', color: activeTheme.body }}>
-                    This is a smart layout: it acts as a text box.
+                  <div
+                    className="aig-mock-text-box"
+                    style={{ background: activeTheme.background_secondary || activeTheme.secondary, color: activeTheme.title }}
+                  >
+                    First insight with primary accent.
                   </div>
-                  <div className="aig-mock-text-box" style={{ background: 'rgba(0,0,0,0.05)', color: activeTheme.body }}>
-                    You can get these by typing /smart
+                  <div
+                    className="aig-mock-text-box"
+                    style={{ background: activeTheme.background_secondary || activeTheme.accent, color: activeTheme.title }}
+                  >
+                    Second insight with secondary tone.
                   </div>
                 </div>
-
-                <div className="aig-slide-buttons-row">
-                  <button className="aig-mock-btn-primary" style={{ background: activeTheme.title, color: activeTheme.inner }}>Primary button</button>
-                  <button className="aig-mock-btn-secondary" style={{ borderColor: activeTheme.title, color: activeTheme.title }}>Secondary button</button>
-                </div>
-             </div>
-             
-          </div>
+              </div>
+            </div>
+          )}
 
           <div className="aig-theme-modal-footer">
-            <button className="aig-btn-secondary-white" onClick={onClose}>Cancel</button>
-            <button className="aig-btn-primary-blue" onClick={handleSelect}>Select theme</button>
+            <button type="button" className="aig-btn-secondary-white" onClick={onClose}>
+              Cancel
+            </button>
+            <button type="button" className="aig-btn-primary-blue" onClick={handleSelect}>
+              Apply theme
+            </button>
           </div>
         </div>
-
       </div>
     </div>
   )
