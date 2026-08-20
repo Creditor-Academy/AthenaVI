@@ -188,9 +188,15 @@ export function adjustSlotRegion(reg, slot, allSlots) {
 
 function insetForRole(role, slotId) {
   const id = String(slotId || '').toLowerCase()
+  // Full-bleed / hero media must fill the grid cell edge-to-edge.
+  if (/^background_image$|^hero_image$/i.test(String(slotId || ''))) return 0
   if (role === 'background' || /_bg$|card_bg|panel_bg/.test(id)) return 0.15
   if (role === 'chart') return 1.2
-  if (role === 'image') return 0.35
+  if (role === 'image') {
+    // Card / gallery image slots keep a small inset; hero already handled above.
+    if (/^image_\d+$|^col_\d+_image$/i.test(id)) return 0.2
+    return 0
+  }
   if (role === 'caption' || role === 'stat_label') return 0.85
   if (role === 'heading' || role === 'subheading') return 1
   return 1.1
@@ -404,7 +410,7 @@ function resolveChartContent(slot, schema, palette, contentBySlotId, slideConten
 function buildTextElement(slot, placement, options) {
   const { contentBySlotId, schema } = options
   const role = slot.role || 'body'
-  const text = resolveSlotText(slot, contentBySlotId, schema, options)
+  let text = resolveSlotText(slot, contentBySlotId, schema, options)
   const ty = slot.typography || {}
   const overlay = isOverlayLayout(schema)
   const fontSize = fontSizeForTextSlotFromOptions(slot, placement, options)
@@ -430,6 +436,25 @@ function buildTextElement(slot, placement, options) {
   const align = ty.align || textAlignForRole(role)
   const pad = textPaddingForRole(role)
 
+  // Strip raw markdown so editor preview matches backend rich-run rendering.
+  let runs = undefined
+  if (typeof text === 'string' && (text.includes('**') || text.includes('__'))) {
+    const textRole = overlay ? 'textOnImage' : 'text'
+    const mutedRole = overlay ? 'textOnImageMuted' : 'muted'
+    const lines = text.split('\n')
+    runs = []
+    lines.forEach((line, index) => {
+      if (index > 0) runs.push({ text: '\n', colorRole: mutedRole })
+      const parts = line.split(/(\*\*[^*]+\*\*)/g).filter((p) => p.length)
+      parts.forEach((part) => {
+        const bold = part.match(/^\*\*(.+)\*\*$/)
+        if (bold) runs.push({ text: bold[1], fontWeight: 700, colorRole: textRole })
+        else runs.push({ text: part.replace(/__(.+?)__/g, '$1'), colorRole: mutedRole })
+      })
+    })
+    text = text.replace(/\*\*(.+?)\*\*/g, '$1').replace(/__(.+?)__/g, '$1')
+  }
+
   return {
     id: `slot-${slot.id}`,
     slotId: slot.id,
@@ -453,6 +478,7 @@ function buildTextElement(slot, placement, options) {
       wrap: 'pre-wrap',
       padding: pad.y,
       paddingX: pad.x,
+      ...(runs ? { runs } : {}),
     },
   }
 }
@@ -612,9 +638,11 @@ function resolveImageUrl(slot, contentBySlotId, options = {}) {
     if (map[String(slotId).toUpperCase()]) return map[String(slotId).toUpperCase()]
     if (map[String(slotId).toLowerCase()]) return map[String(slotId).toLowerCase()]
   }
-  const imageSlots = (options.schema?.slots || []).filter(
-    (s) => String(s.role || '').toLowerCase() === 'image'
-  )
+  const imageSlots = (options.schema?.slots || []).filter((s) => {
+    const r = String(s.role || '').toLowerCase()
+    const sid = String(s.id || '').toUpperCase()
+    return r === 'image' || sid === 'BACKGROUND_IMAGE' || sid === 'HERO_IMAGE'
+  })
   const hero =
     content.imageRef?.url ||
     content.imageRef?.src ||
@@ -632,15 +660,23 @@ function buildImageElement(slot, placement, contentBySlotId, options = {}) {
   const edgeFade = resolveSplitImageEdgeFade(options.schema, slot, options.schema?.slots)
   const imageMask = slot.imageMask && typeof slot.imageMask === 'object' ? slot.imageMask : null
   const shaped = Boolean(imageMask && imageMask.type && imageMask.type !== 'edgeFade')
+  const isFullBleedBg = String(slot.id || '').toUpperCase() === 'BACKGROUND_IMAGE'
   const borderRadius =
-    edgeFade != null || shaped ? 0 : slot.borderRadius != null ? slot.borderRadius : presentation.borderRadius
-  const shadow = edgeFade != null || shaped ? undefined : slot.shadow ?? presentation.shadow
+    edgeFade != null || shaped || isFullBleedBg
+      ? 0
+      : slot.borderRadius != null
+        ? slot.borderRadius
+        : presentation.borderRadius
+  const shadow =
+    edgeFade != null || shaped || isFullBleedBg
+      ? undefined
+      : slot.shadow ?? presentation.shadow
   const colorMap = colorRoleMapFromPalette(options.palette)
   return {
     id: `slot-${slot.id}`,
     slotId: slot.id,
     type: 'image',
-    role: 'image',
+    role: isFullBleedBg ? 'background' : 'image',
     layer: layerForSlot(slot),
     placement,
     content: {
@@ -757,6 +793,130 @@ function applyTextOverImageContrast(elements, palette = LAYOUT_SURFACE) {
   })
 }
 
+function parseHexColor(hex) {
+  const raw = String(hex || '').trim().replace(/^#/, '')
+  if (!/^[0-9a-fA-F]{6}$/.test(raw)) return null
+  return {
+    r: parseInt(raw.slice(0, 2), 16),
+    g: parseInt(raw.slice(2, 4), 16),
+    b: parseInt(raw.slice(4, 6), 16),
+    a: 1,
+  }
+}
+
+function parseRgbaColor(color) {
+  const raw = String(color || '').trim()
+  const m = raw.match(/^rgba\s*\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*([01]?\.?\d+)\s*\)$/i)
+  if (!m) return null
+  return {
+    r: Math.max(0, Math.min(255, Number(m[1]))),
+    g: Math.max(0, Math.min(255, Number(m[2]))),
+    b: Math.max(0, Math.min(255, Number(m[3]))),
+    a: Math.max(0, Math.min(1, Number(m[4]))),
+  }
+}
+
+function relativeLuminance({ r, g, b }) {
+  const toLinear = (ch) => {
+    const c = ch / 255
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+  }
+  const rl = toLinear(r)
+  const gl = toLinear(g)
+  const bl = toLinear(b)
+  return 0.2126 * rl + 0.7152 * gl + 0.0722 * bl
+}
+
+function contrastRatioHex(hexA, hexB) {
+  const a = parseHexColor(hexA)
+  const b = parseHexColor(hexB)
+  if (!a || !b) return null
+  const la = relativeLuminance(a)
+  const lb = relativeLuminance(b)
+  const lighter = Math.max(la, lb)
+  const darker = Math.min(la, lb)
+  return (lighter + 0.05) / (darker + 0.05)
+}
+
+function compositeRgbaOnHex(fg, bgHex) {
+  const bg = parseHexColor(bgHex)
+  if (!bg) return null
+  const a = fg?.a == null ? 1 : fg.a
+  if (a >= 1) return `#${[fg.r, fg.g, fg.b]
+    .map((n) => Math.round(n).toString(16).padStart(2, '0'))
+    .join('')}`
+  const r = a * fg.r + (1 - a) * bg.r
+  const g = a * fg.g + (1 - a) * bg.g
+  const b = a * fg.b + (1 - a) * bg.b
+  return `#${[r, g, b]
+    .map((n) => Math.round(n).toString(16).padStart(2, '0'))
+    .join('')}`
+}
+
+function applyReadableTextContrastForPreview(elements, palette, schema) {
+  const bgHex = palette?.bg || palette?.surface || null
+  if (!bgHex) return elements
+
+  const overlay = isOverlayLayout(schema)
+
+  const bgLum = parseHexColor(bgHex)
+  if (!bgLum) return elements
+
+  return elements.map((el) => {
+    if (el.type !== 'text' && el.type !== 'textbox') return el
+    const colorRole = String(el.content?.colorRole || '').toLowerCase()
+    const rawColor = el.content?.color
+    if (!rawColor) return el
+
+    // If we are explicitly in an overlay layout and the renderer used text-on-image tokens,
+    // let the existing logic + overlay scrim handle readability.
+    if (
+      overlay &&
+      (colorRole === 'textonimage' || colorRole === 'textonimagemuted' || colorRole.includes('textonimage'))
+    ) {
+      return el
+    }
+
+    const hex = parseHexColor(rawColor)
+    const rgba = parseRgbaColor(rawColor)
+    let fgHex = hex ? rawColor : null
+    if (!fgHex && rgba) {
+      const composite = compositeRgbaOnHex(rgba, bgHex)
+      if (composite) fgHex = composite
+    }
+    if (!fgHex) return el
+
+    const ratio = contrastRatioHex(fgHex, bgHex)
+    if (ratio != null && ratio >= 4.5) return el
+
+    // Repair: choose between token "text" and "muted" based on contrast against background.
+    const candText = palette?.text || COLOR_ROLE_MAP.text
+    const candMuted = palette?.muted || COLOR_ROLE_MAP.textMuted
+    const candRoles = [
+      { role: 'text', hex: candText },
+      { role: 'muted', hex: candMuted },
+    ]
+    const scored = candRoles
+      .map((c) => ({ ...c, ratio: contrastRatioHex(c.hex, bgHex) }))
+      .filter((c) => c.ratio != null)
+      .sort((a, b) => b.ratio - a.ratio)
+
+    if (!scored.length) return el
+    const best = scored[0]
+    const bestRole = best.role
+    const bestColor = best.hex
+
+    return {
+      ...el,
+      content: {
+        ...(el.content || {}),
+        colorRole: bestRole,
+        color: bestColor,
+      },
+    }
+  })
+}
+
 /**
  * Compile DECK_LAYOUT schema slots into canvas elements (1920×1080 space).
  */
@@ -785,6 +945,12 @@ export function compileDeckLayoutToElements(schema, options = {}) {
     const placement = boxToPlacement(box, canvasW, canvasH)
     const role = slot.role || 'body'
     const compileOptions = { ...options, schema, contentBySlotId }
+    const slotIdUpper = String(slot.id || '').toUpperCase()
+
+    // BACKGROUND_IMAGE / HERO_IMAGE must compile as images (not shapes) so URLs bind.
+    if (slotIdUpper === 'BACKGROUND_IMAGE' || slotIdUpper === 'HERO_IMAGE') {
+      return [buildImageElement(slot, placement, contentBySlotId, compileOptions)]
+    }
 
     if (role === 'background' || /^METRIC_CARD_\d+_BG$|^TEXT_HALF_BG$|^SURFACE_|_bg$|_card_bg|_panel_bg/i.test(String(slot.id || ''))) {
       return [buildBackgroundElement(slot, placement, compileOptions)]
@@ -836,8 +1002,17 @@ export function compileDeckLayoutToElements(schema, options = {}) {
   )
   result = finalizeTimelineShapes(result, schema, colorMap)
   result = applyThemeSlideBackground(result, themedPalette, canvasW, canvasH)
+  result = applyReadableTextContrastForPreview(result, colorRoleMapFromPalette(options.palette), schema)
+  const hasLoadedOverlayImage = result.some(
+    (e) =>
+      e.type === 'image' &&
+      e.content?.url &&
+      (/^(BACKGROUND_IMAGE|HERO_IMAGE)$/i.test(String(e.slotId || '')) ||
+        String(e.role || '').toLowerCase() === 'background')
+  )
   if (
     isOverlayLayout(schema) &&
+    hasLoadedOverlayImage &&
     !result.some((e) => e.slotId === 'OVERLAY_SCRIM' || e.role === 'design_overlay')
   ) {
     result = [

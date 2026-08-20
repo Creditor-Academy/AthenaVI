@@ -15,6 +15,9 @@ import {
   extractSlidesFromPresentation,
   getSlideImage,
 } from '../../../utils/presentationHelpers'
+import { getDeckLayoutSchema } from '../../../utils/deckLayoutRegistry'
+import CanvasElementsPreview from '../../../components/ppt/CanvasElementsPreview'
+import LayoutPolishedPreview from '../../../components/ppt/LayoutPolishedPreview'
 
 const SETUP_STEPS = [
   { text: 'Drafting presentation layout…', icon: LayoutTemplate },
@@ -26,121 +29,101 @@ const SETUP_STEPS = [
 
 const SLIDE_DWELL_MS = 4500
 
-function mapPresentationSlides(presentationData) {
+function mapPresentationSlides(presentationData, outlineSlides = []) {
   const slides = extractSlidesFromPresentation(presentationData)
   return slides.map((slide, i) => {
     const image = getSlideImage(slide)
+    const outline = outlineSlides[i] || {}
+    const hasElements = Boolean(slide?.elements?.elements?.length)
     return {
       id: slide.id || i + 1,
-      title: slide.title || `Slide ${i + 1}`,
+      title: slide.title || outline.title || `Slide ${i + 1}`,
       description: Array.isArray(slide.description)
-        ? slide.description.filter(Boolean).join(' · ') || 'Slide ready'
-        : String(slide.description || 'Slide ready'),
+        ? slide.description.filter(Boolean).join(' · ') || outline.summary || 'Slide ready'
+        : String(slide.description || outline.summary || 'Slide ready'),
       img: image.url,
       imageNone: image.intentionallyNone,
       imageError: image.error,
       slideStatus: String(slide.status || 'READY').toUpperCase(),
+      layoutId: slide.layoutId || outline.layoutId || null,
+      elements: hasElements ? slide.elements : null,
+      backgroundColor: slide.backgroundColor,
+      slideDoc: hasElements ? slide : null,
     }
   })
 }
 
+function RealtimeLayoutStage({ slide, status }) {
+  const schema = slide?.layoutId ? getDeckLayoutSchema(slide.layoutId) : null
+  const hasCanvas = Boolean(slide?.slideDoc?.elements?.elements?.length)
+  const showImageFallback = !hasCanvas && !schema?.slots?.length
+
+  return (
+    <div className="aig-realtime-layout-stage">
+      {hasCanvas && (
+        <CanvasElementsPreview slide={slide.slideDoc} fill className="aig-realtime-layout-preview" />
+      )}
+      {!hasCanvas && schema?.slots?.length > 0 && (
+        <LayoutPolishedPreview schema={schema} slots={schema.slots} large fill className="aig-realtime-layout-preview" />
+      )}
+      {showImageFallback && (
+        <div className="aig-realtime-media aig-realtime-media--fill">
+          {status === 'active' && !slide?.img && (
+            <div className="aig-skeleton-loader">
+              <ImageIcon size={32} color="#94a3b8" className="aig-pulse-icon" />
+              <span>Generating visual…</span>
+            </div>
+          )}
+          {slide?.img && (
+            <img src={slide.img} alt="" className="aig-realtime-img fade-in" />
+          )}
+          {!slide?.img && status !== 'active' && (
+            <div className="aig-skeleton-loader">
+              <Check size={28} color="#22c55e" />
+              <span>{slide?.layoutId ? slide.layoutId.replace(/_/g, ' ') : 'Slide ready'}</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function RealtimeSlideCard({ slide, status }) {
   const [typedTitle, setTypedTitle] = useState('')
-  const [typedDesc, setTypedDesc] = useState('')
-  const [imageRevealed, setImageRevealed] = useState(false)
-  const [imageFailed, setImageFailed] = useState(false)
-
   const title = slide?.title || 'Slide'
-  const desc = slide?.description || ''
   const isActive = status === 'active'
   const isComplete = status === 'prev' || status === 'done'
-  const showFull = isComplete
-  const displayTitle = showFull ? title : typedTitle
-  const displayDesc = showFull ? desc : typedDesc
-  const showImage = isComplete || imageRevealed
+  const displayTitle = isComplete ? title : typedTitle
 
   useEffect(() => {
     if (!isActive) return undefined
-
     let i = 0
-    let j = 0
     let titleTimer
-    let descInterval
-    let descDelay
-    let imgTimer
-
     const start = window.setTimeout(() => {
       setTypedTitle('')
-      setTypedDesc('')
-      setImageRevealed(false)
-      setImageFailed(false)
-
       titleTimer = setInterval(() => {
         i += 1
         setTypedTitle(title.substring(0, i))
         if (i >= title.length) clearInterval(titleTimer)
       }, 36)
-
-      descDelay = setTimeout(() => {
-        descInterval = setInterval(() => {
-          j += 1
-          setTypedDesc(desc.substring(0, j))
-          if (j >= desc.length) clearInterval(descInterval)
-        }, 18)
-      }, 700)
-
-      imgTimer = setTimeout(() => setImageRevealed(true), 1600)
     }, 0)
-
     return () => {
       clearTimeout(start)
       clearInterval(titleTimer)
-      clearTimeout(descDelay)
-      clearInterval(descInterval)
-      clearTimeout(imgTimer)
     }
-  }, [isActive, title, desc, slide?.img])
+  }, [isActive, title])
 
   return (
-    <div className={`aig-realtime-slide-card pos-${status === 'done' ? 'prev' : status}`}>
-      <div className="aig-realtime-content">
-        <h1 className="aig-realtime-title">
+    <div className={`aig-realtime-slide-card aig-realtime-slide-card--layout pos-${status === 'done' ? 'prev' : status}`}>
+      <RealtimeLayoutStage slide={slide} status={status} />
+      <div className="aig-realtime-caption">
+        <h1 className="aig-realtime-title aig-realtime-title--caption">
           {displayTitle}
           {isActive && <span className="aig-type-cursor"></span>}
         </h1>
-        <p className="aig-realtime-desc">{displayDesc}</p>
-      </div>
-
-      <div className="aig-realtime-media">
-        {!showImage && (
-          <div className="aig-skeleton-loader">
-            <ImageIcon size={32} color="#94a3b8" className="aig-pulse-icon" />
-            <span>{status === 'next' ? 'Waiting…' : 'Generating visual…'}</span>
-          </div>
-        )}
-
-        {showImage && slide?.img && !imageFailed && (
-          <img
-            src={slide.img}
-            alt=""
-            className="aig-realtime-img fade-in"
-            onError={() => setImageFailed(true)}
-          />
-        )}
-
-        {showImage && (!slide?.img || imageFailed) && (
-          <div className="aig-skeleton-loader">
-            <Check size={28} color="#22c55e" />
-            <span>
-              {imageFailed
-                ? 'Image unavailable'
-                : slide?.imageError
-                  ? 'Visual failed'
-                  : slide?.imageNone
-                    ? 'No visual for this slide'
-                    : 'Slide ready'}
-            </span>
-          </div>
+        {slide?.layoutId && (
+          <p className="aig-realtime-layout-id">{String(slide.layoutId).replace(/_/g, ' ')}</p>
         )}
       </div>
     </div>
@@ -151,6 +134,7 @@ export default function AIPptGenerating({
   workspaceId,
   presentationId,
   expectedSlideCount,
+  outlineSlides = [],
   onComplete,
   onError,
 }) {
@@ -238,7 +222,7 @@ export default function AIPptGenerating({
             presentationId
           )
           if (cancelled) return
-          const mapped = mapPresentationSlides(presentation)
+          const mapped = mapPresentationSlides(presentation, outlineSlides)
           setRevealSlides(
             mapped.length
               ? mapped
@@ -257,7 +241,7 @@ export default function AIPptGenerating({
           setRevealSlides(
             raw.map((slide, i) => ({
               id: slide.id || i + 1,
-              title: slide.title || slide.topic || `Slide ${i + 1}`,
+              title: slide.title || slide.topic || outlineSlides[i]?.title || `Slide ${i + 1}`,
               description: slide.summary || slide.contentType || 'Slide ready',
               img:
                 slide.thumbnailUrl ||
@@ -265,6 +249,9 @@ export default function AIPptGenerating({
                 slide.imageRef?.url ||
                 null,
               slideStatus: String(slide.status || 'READY').toUpperCase(),
+              layoutId: slide.layoutId || outlineSlides[i]?.layoutId || null,
+              elements: null,
+              slideDoc: null,
             }))
           )
         }

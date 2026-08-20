@@ -210,6 +210,8 @@ export default function AIPptGenerator({
       {stage === 'outline' && (
         <AIPptOutline
           initialOutline={outlineData}
+          layoutChoices={config.layoutChoices || []}
+          fontPairing={config.fontPairing || null}
           creditEstimate={creditEstimate}
           isSubmitting={isBusy}
           onGenerate={handleOutlineComplete}
@@ -222,6 +224,7 @@ export default function AIPptGenerator({
           workspaceId={session?.workspaceId}
           presentationId={session?.presentationId}
           expectedSlideCount={outlineData?.length || config?.slides}
+          outlineSlides={outlineData || []}
           onComplete={handleGenerationComplete}
           onError={(message) => {
             setFlowError(message)

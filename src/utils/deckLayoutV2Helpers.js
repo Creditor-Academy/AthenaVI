@@ -214,7 +214,8 @@ export const IMAGE_PRESENTATION = {
 
 function inferImageStyle(slotId) {
   const id = String(slotId || '').toUpperCase()
-  if (id === 'HERO_IMAGE' || id === 'BACKGROUND_IMAGE') return 'hero'
+  if (id === 'BACKGROUND_IMAGE') return 'flat'
+  if (id === 'HERO_IMAGE') return 'hero'
   if (/^IMAGE_\d+$|^COL_\d+_IMAGE$|^METRIC_IMAGE/.test(id)) return 'card'
   if (/^DEVICE_|^PHONE_|^LAPTOP_|^TABLET_|^WATCH_/.test(id)) return 'inset'
   return 'featured'
