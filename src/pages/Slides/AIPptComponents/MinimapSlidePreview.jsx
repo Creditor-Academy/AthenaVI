@@ -8,6 +8,7 @@ import {
   resolveCanvasSize,
   resolveSlideStageBackground,
 } from '../../../utils/presentationHelpers'
+import { shouldPaintElement } from '../../../utils/canvasRenderDebug'
 
 function placementFrameStyle(p, canvasW, canvasH, { layer = 0, rotation = 0, opacity = 1 } = {}) {
   return {
@@ -34,9 +35,11 @@ function MinimapSlidePreview({
   const [transform, setTransform] = useState({ scale: 0.08, x: 0, y: 0 })
 
   const canvas = resolveCanvasSize(slide, aspectRatio)
-  const slideBgStyle = resolveSlideStageBackground(slide, fallbackBg)
+  const slideBgStyle = resolveSlideStageBackground(slide, fallbackBg, themeVisual?.palette)
   const elements = (slide?.elements?.elements || []).filter(
-    (el) => !isSlideBackgroundElement(el, slide)
+    (el) =>
+      !isSlideBackgroundElement(el, slide) &&
+      shouldPaintElement(el, slide, canvas.width, canvas.height)
   )
   const hasElements = elements.length > 0
   const layoutId = slide?.layoutId || slide?.layout_id || null

@@ -27,11 +27,14 @@ function getSeriesData(content) {
     content?.data?.series ||
     content?.series ||
     [{ name: 'Series', values: [12, 19, 14, 22] }]
-  const values = Array.isArray(series[0]?.values)
+  let values = Array.isArray(series[0]?.values)
     ? series[0].values
     : Array.isArray(series) && typeof series[0] === 'number'
       ? series
-      : [12, 19, 14, 22]
+      : null
+  if (!Array.isArray(values) || !values.length) {
+    values = [12, 19, 14, 22]
+  }
   return { labels, values, seriesName: series[0]?.name || 'Series' }
 }
 
@@ -137,7 +140,7 @@ function LineChart({ values, labels, colors, palette, premium }) {
   )
 }
 
-function PieChart({ values, colors, palette, donut = false }) {
+function PieChart({ values, colors, palette, labels = [], donut = false, showLegend = true }) {
   const total = values.reduce((s, v) => s + Number(v), 0) || 1
   let angle = -90
   const cx = 50
@@ -178,9 +181,24 @@ function PieChart({ values, colors, palette, donut = false }) {
     )
   })
   return (
-    <svg viewBox="0 0 100 100" className="ppt-chart-pie-svg">
-      {slices}
-    </svg>
+    <div className="ppt-chart-pie-wrap">
+      <svg viewBox="0 0 100 100" className="ppt-chart-pie-svg">
+        {slices}
+      </svg>
+      {showLegend && labels?.length > 0 ? (
+        <div className="ppt-chart-pie-legend">
+          {labels.slice(0, values.length).map((label, i) => (
+            <div key={`${label}-${i}`} className="ppt-chart-pie-legend-item">
+              <span
+                className="ppt-chart-pie-legend-swatch"
+                style={{ background: resolveColor(colors[i % colors.length], palette, '#64748b') }}
+              />
+              <span className="ppt-chart-pie-legend-label">{label}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -215,7 +233,14 @@ export default function PptChartRenderer({ content, palette, style }) {
       {isKpi ? (
         <KpiChart values={values} content={content} palette={palette} />
       ) : isPie || isDonut ? (
-        <PieChart values={values} colors={colors} palette={palette} donut={isDonut} />
+        <PieChart
+          values={values}
+          colors={colors}
+          palette={palette}
+          labels={labels}
+          donut={isDonut}
+          showLegend={normalized.showLabels !== false}
+        />
       ) : isLine ? (
         <LineChart values={values} labels={labels} colors={colors} palette={palette} premium={premium} />
       ) : (

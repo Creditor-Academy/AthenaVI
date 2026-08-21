@@ -66,6 +66,10 @@ import {
 } from '../../../utils/layoutCanvasService'
 import { PPT_DEFAULT_PLACEMENTS } from '../../../constants/pptInsertCatalog'
 import { ensureThemeFontsLoaded, themeFontFamilies } from '../../../utils/googleFonts'
+import {
+  logCanvasGreySuspects,
+  shouldPaintElement,
+} from '../../../utils/canvasRenderDebug'
 import './pptEditorExtras.css'
 
 const CANVAS_SAVE_DEBOUNCE_MS = 600
@@ -316,15 +320,26 @@ function SlideStage({
   const stageRef = useRef(null)
   const canvas = resolveCanvasSize(slide, aspectRatio)
   const elements = (slide?.elements?.elements || []).filter(
-    (el) => !isSlideBackgroundElement(el, slide)
+    (el) =>
+      !isSlideBackgroundElement(el, slide) &&
+      shouldPaintElement(el, slide, canvas.width, canvas.height)
   )
   const hasElements = elements.length > 0
   const fallbackImage = hasElements ? null : getSlideImage(slide).url
   const palette = themeVisual?.palette || null
   const slideBgStyle = resolveSlideStageBackground(
     slide,
-    themeVisual?.palette?.bg || themeVisual?.background || DEFAULT_SLIDE_BG
+    themeVisual?.palette?.bg || themeVisual?.background || DEFAULT_SLIDE_BG,
+    palette
   )
+
+  useEffect(() => {
+    logCanvasGreySuspects(slide, {
+      canvasW: canvas.width,
+      canvasH: canvas.height,
+      label: 'SlideStage',
+    })
+  }, [slide, canvas.width, canvas.height])
 
   return (
     <div

@@ -5,6 +5,7 @@ import {
   resolveCanvasSize,
   resolveSlideStageBackground,
 } from '../../utils/presentationHelpers'
+import { shouldPaintElement } from '../../utils/canvasRenderDebug'
 
 function placementFrameStyle(p, canvasW, canvasH, { layer = 0, rotation = 0, opacity = 1 } = {}) {
   return {
@@ -33,10 +34,13 @@ function CanvasElementsPreview({
   const [transform, setTransform] = useState({ scale: 1, x: 0, y: 0 })
 
   const canvas = resolveCanvasSize(slide, aspectRatio)
-  const slideBgStyle = resolveSlideStageBackground(slide, fallbackBg)
+  const resolvedPalette = palette || themeVisual?.palette || null
+  const slideBgStyle = resolveSlideStageBackground(slide, fallbackBg, resolvedPalette)
   const elementsDoc = slide?.elements || {}
   const elements = (elementsDoc.elements || []).filter(
-    (el) => !isSlideBackgroundElement(el, slide)
+    (el) =>
+      !isSlideBackgroundElement(el, slide) &&
+      shouldPaintElement(el, slide, canvas.width, canvas.height)
   )
 
   useEffect(() => {
@@ -102,7 +106,7 @@ function CanvasElementsPreview({
 
           return (
             <div key={el.id || `canvas-el-${i}`} style={frame}>
-              <PptCanvasElement el={el} palette={palette} editable={false} />
+              <PptCanvasElement el={el} palette={resolvedPalette} editable={false} />
             </div>
           )
         })}

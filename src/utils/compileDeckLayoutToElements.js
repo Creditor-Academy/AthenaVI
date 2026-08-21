@@ -186,15 +186,35 @@ export function adjustSlotRegion(reg, slot, allSlots) {
   return adjusted
 }
 
-function insetForRole(role, slotId) {
+function insetForRole(role, slotId, reg = null, COLS = 12, ROWS = 10) {
   const id = String(slotId || '').toLowerCase()
-  // Full-bleed / hero media must fill the grid cell edge-to-edge.
-  if (/^background_image$|^hero_image$/i.test(String(slotId || ''))) return 0
+  // Full-bleed / hero media: 0 on flush canvas edges; soft inset on open edges.
+  if (/^background_image$|^hero_image$/i.test(String(slotId || ''))) {
+    if (!reg) return 0
+    const soft = 0.6
+    return {
+      left: reg.c1 <= 1 ? 0 : soft,
+      right: reg.c2 >= COLS ? 0 : soft,
+      top: reg.r1 <= 1 ? 0 : soft,
+      bottom: reg.r2 >= ROWS ? 0 : soft,
+    }
+  }
   if (role === 'background' || /_bg$|card_bg|panel_bg/.test(id)) return 0.15
   if (role === 'chart') return 1.2
   if (role === 'image') {
-    // Card / gallery image slots keep a small inset; hero already handled above.
-    if (/^image_\d+$|^col_\d+_image$/i.test(id)) return 0.2
+    // Card / gallery image slots: pad all sides so photos don't touch card edges.
+    if (/^image_\d+$|^col_\d+_image$|^metric_image_\d+$|^point_image$/i.test(id)) {
+      return { left: 1.4, right: 1.4, top: 1.4, bottom: 1.4 }
+    }
+    if (reg) {
+      const soft = 0.5
+      return {
+        left: reg.c1 <= 1 ? 0 : soft,
+        right: reg.c2 >= COLS ? 0 : soft,
+        top: reg.r1 <= 1 ? 0 : soft,
+        bottom: reg.r2 >= ROWS ? 0 : soft,
+      }
+    }
     return 0
   }
   if (role === 'caption' || role === 'stat_label') return 0.85
@@ -940,7 +960,7 @@ export function compileDeckLayoutToElements(schema, options = {}) {
     if (!reg) return []
 
     const adjusted = adjustSlotRegion(reg, slot, slots)
-    const inset = insetForRole(slot.role, slot.id)
+    const inset = insetForRole(slot.role, slot.id, adjusted, COLS, ROWS)
     const box = regionToBox(adjusted, COLS, ROWS, inset)
     const placement = boxToPlacement(box, canvasW, canvasH)
     const role = slot.role || 'body'
@@ -1003,13 +1023,14 @@ export function compileDeckLayoutToElements(schema, options = {}) {
   result = finalizeTimelineShapes(result, schema, colorMap)
   result = applyThemeSlideBackground(result, themedPalette, canvasW, canvasH)
   result = applyReadableTextContrastForPreview(result, colorRoleMapFromPalette(options.palette), schema)
-  const hasLoadedOverlayImage = result.some(
-    (e) =>
-      e.type === 'image' &&
-      e.content?.url &&
-      (/^(BACKGROUND_IMAGE|HERO_IMAGE)$/i.test(String(e.slotId || '')) ||
-        String(e.role || '').toLowerCase() === 'background')
-  )
+  const hasLoadedOverlayImage = result.some((e) => {
+    if (e.type !== 'image' || !e.content?.url) return false
+    const slotId = String(e.slotId || '').toUpperCase()
+    const role = String(e.role || '').toLowerCase()
+    if (slotId === 'BACKGROUND_IMAGE' || role === 'background') return true
+    const p = e.placement || {}
+    return (p.width || 0) * (p.height || 0) >= canvasW * canvasH * 0.7
+  })
   if (
     isOverlayLayout(schema) &&
     hasLoadedOverlayImage &&

@@ -25,10 +25,24 @@ export function getGridDims(slots = []) {
 }
 
 export function regionToBox(reg, COLS, ROWS, insetPct = 0) {
-  const x = ((reg.c1 - 1) / COLS) * 100 + insetPct
-  const y = ((reg.r1 - 1) / ROWS) * 100 + insetPct
-  const w = ((reg.c2 - reg.c1 + 1) / COLS) * 100 - insetPct * 2
-  const h = ((reg.r2 - reg.r1 + 1) / ROWS) * 100 - insetPct * 2
+  const inset =
+    insetPct && typeof insetPct === 'object'
+      ? {
+          left: Number(insetPct.left) || 0,
+          right: Number(insetPct.right) || 0,
+          top: Number(insetPct.top) || 0,
+          bottom: Number(insetPct.bottom) || 0,
+        }
+      : {
+          left: Number(insetPct) || 0,
+          right: Number(insetPct) || 0,
+          top: Number(insetPct) || 0,
+          bottom: Number(insetPct) || 0,
+        }
+  const x = ((reg.c1 - 1) / COLS) * 100 + inset.left
+  const y = ((reg.r1 - 1) / ROWS) * 100 + inset.top
+  const w = ((reg.c2 - reg.c1 + 1) / COLS) * 100 - inset.left - inset.right
+  const h = ((reg.r2 - reg.r1 + 1) / ROWS) * 100 - inset.top - inset.bottom
   return { x, y, w: Math.max(w, 1), h: Math.max(h, 1) }
 }
 
