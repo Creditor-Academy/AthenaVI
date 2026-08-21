@@ -268,51 +268,60 @@ export default function PptCanvasElement({
     const c = el.content || {}
     const url = c.url || c.src || c.thumbnailUrl || c.previewUrl
     if (!url) {
-      const radius = c.borderRadius != null ? c.borderRadius : 14
-      const skeletonBg =
-        c.placeholderFill ||
-        (palette
-          ? `linear-gradient(145deg, color-mix(in srgb, ${palette.primary || palette.accent || '#6366f1'} 8%, ${palette.surface || palette.bg || '#f8fafc'}) 0%, color-mix(in srgb, ${palette.muted || '#94a3b8'} 12%, #e2e8f0) 100%)`
-          : 'linear-gradient(145deg, color-mix(in srgb, #6366f1 6%, #f1f5f9) 0%, #e2e8f0 100%)')
-      const borderColor = palette
-        ? `color-mix(in srgb, ${palette.divider || palette.muted || '#94a3b8'} 28%, transparent)`
-        : 'color-mix(in srgb, #94a3b8 22%, transparent)'
+      // Quiet empty slot — do not paint a massive grey skeleton that reads as a layout slab.
+      const radius = c.borderRadius != null ? c.borderRadius : 0
+      const emptyBg = palette?.surface || palette?.bg || 'transparent'
       return (
         <div
-          className="ppt-image-skeleton"
+          className="ppt-image-skeleton ppt-image-skeleton--empty"
           style={{
             ...fillStyle,
-            background: skeletonBg,
+            background: emptyBg,
             borderRadius: radius,
-            border: `1px solid ${borderColor}`,
           }}
+          aria-hidden
         />
       )
     }
     const edgeFadeMask = buildImageEdgeFadeMask(c.edgeFade)
     const clipPath = c.clipPath || buildImageClipPath(c.imageMask)
+    const isFullBleedMedia =
+      String(el.slotId || '').toUpperCase() === 'BACKGROUND_IMAGE' ||
+      String(el.role || '').toLowerCase() === 'background' ||
+      c.useAsBackground
     return (
-      <img
-        src={url}
-        alt={c.alt || c.icon || ''}
+      <div
         style={{
           ...fillStyle,
-          objectFit: c.fit || (el.type === 'icon' ? 'contain' : 'cover'),
-          opacity: c.opacity != null ? c.opacity : 1,
-          borderRadius: clipPath || edgeFadeMask ? 0 : c.borderRadius != null ? c.borderRadius : undefined,
-          boxShadow: c.boxShadow || c.shadow || undefined,
-          ...(clipPath ? { clipPath, WebkitClipPath: clipPath } : {}),
-          ...(edgeFadeMask
-            ? {
-                WebkitMaskImage: edgeFadeMask,
-                maskImage: edgeFadeMask,
-                WebkitMaskSize: '100% 100%',
-                maskSize: '100% 100%',
-              }
-            : {}),
+          overflow: 'hidden',
+          borderRadius: clipPath || edgeFadeMask || isFullBleedMedia ? 0 : c.borderRadius != null ? c.borderRadius : undefined,
         }}
-        onError={() => onImageAuthError?.(el.id)}
-      />
+      >
+        <img
+          src={url}
+          alt={c.alt || c.icon || ''}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: c.fit || (el.type === 'icon' ? 'contain' : 'cover'),
+            objectPosition: 'center',
+            opacity: c.opacity != null ? c.opacity : 1,
+            borderRadius: clipPath || edgeFadeMask || isFullBleedMedia ? 0 : c.borderRadius != null ? c.borderRadius : undefined,
+            boxShadow: c.boxShadow || c.shadow || undefined,
+            display: 'block',
+            ...(clipPath ? { clipPath, WebkitClipPath: clipPath } : {}),
+            ...(edgeFadeMask
+              ? {
+                  WebkitMaskImage: edgeFadeMask,
+                  maskImage: edgeFadeMask,
+                  WebkitMaskSize: '100% 100%',
+                  maskSize: '100% 100%',
+                }
+              : {}),
+          }}
+          onError={() => onImageAuthError?.(el.id)}
+        />
+      </div>
     )
   }
 

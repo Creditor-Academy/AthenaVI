@@ -22,13 +22,22 @@ export const DEFAULT_SLIDE_BG = '#FFFFFF'
 
 export function isSlideBackgroundElement(el, slide) {
   if (!el) return false
+  // Keep BACKGROUND_IMAGE / hero photos in the element list so they paint as images.
+  // Only CSS-owned stage fills (design_bg) and explicit useAsBackground hooks are filtered.
+  if (el.type === 'image' && !el.content?.useAsBackground) {
+    if (slide?.backgroundImageElementId && el.id === slide.backgroundImageElementId) {
+      return Boolean(slide?.backgroundImage)
+    }
+    return false
+  }
+
   if (el.content?.useAsBackground) return true
   if (slide?.backgroundImageElementId && el.id === slide.backgroundImageElementId) return true
 
   const role = String(el?.role || '').toLowerCase()
   if (role === 'design_bg') return true
 
-  if (role === 'background') {
+  if (role === 'background' && el.type === 'shape') {
     const canvas = slide?.elements?.canvas || {}
     const cw = canvas.width || 1920
     const ch = canvas.height || 1080
@@ -53,7 +62,21 @@ function isDefaultSlideBackgroundColor(color) {
   return normalized === DEFAULT_SLIDE_BG.toLowerCase() || normalized === '#fff' || normalized === 'white'
 }
 
-export function resolveSlideStageBackground(slide, fallback = DEFAULT_SLIDE_BG) {
+/** Prefer explicit design_bg fill when stage CSS replaces the filtered element. */
+function resolveDesignBgFillColor(slide, palette = {}) {
+  const elements = slide?.elements?.elements || []
+  const designBg = elements.find((el) => String(el?.role || '').toLowerCase() === 'design_bg')
+  if (!designBg) return null
+  const fill = designBg.content?.fill
+  if (fill == null) return null
+  const css = resolveFillCss(fill, palette, null)
+  if (!css || css === 'transparent') return null
+  // Gradients are applied via background shorthand separately.
+  if (String(css).includes('gradient')) return { background: css }
+  return { backgroundColor: css }
+}
+
+export function resolveSlideStageBackground(slide, fallback = DEFAULT_SLIDE_BG, palette = null) {
   const stored = slide?.backgroundColor || slide?.elements?.backgroundColor || null
   const color = isDefaultSlideBackgroundColor(stored) ? fallback : stored
   if (slide?.backgroundImage) {
@@ -71,6 +94,8 @@ export function resolveSlideStageBackground(slide, fallback = DEFAULT_SLIDE_BG) 
       background: `linear-gradient(135deg, ${slide.backgroundGradientStart}, ${slide.backgroundGradientEnd})`,
     }
   }
+  const fromDesignBg = resolveDesignBgFillColor(slide, palette || {})
+  if (fromDesignBg) return fromDesignBg
   return { background: color }
 }
 
@@ -704,12 +729,19 @@ export function extractPresentationId(payload) {
   )
 }
 
+function firstSlideList(node, depth = 0) {
+  if (!node || typeof node !== 'object' || depth > 5) return null
+  if (Array.isArray(node.slides)) return node.slides
+  if (Array.isArray(node.pages)) return node.pages
+  for (const key of ['deck', 'presentation', 'payload', 'data', 'result']) {
+    const found = firstSlideList(node[key], depth + 1)
+    if (found) return found
+  }
+  return null
+}
+
 export function extractSlidesFromPresentation(presentation) {
-  const slides =
-    presentation?.slides ||
-    presentation?.deck?.slides ||
-    presentation?.presentation?.slides ||
-    []
+  const slides = firstSlideList(presentation) || []
   const aspectRatio =
     presentation?.aspectRatio ||
     presentation?.deck?.aspectRatio ||
@@ -941,6 +973,10 @@ export function buildCanvasShapeStyle(content = {}, palette = {}) {
   const stroke = content.stroke ? resolveThemeColor(content.stroke, palette, content.stroke) : undefined
   const strokeWidth = content.strokeWidth != null ? content.strokeWidth : stroke ? 1 : 0
   const isOutlined = content.variant === 'outlined'
+  const shapeOpacity =
+    content.opacity != null && Number.isFinite(Number(content.opacity))
+      ? Number(content.opacity)
+      : undefined
 
   if (content.border && !content.clipPath) {
     return {
@@ -953,6 +989,7 @@ export function buildCanvasShapeStyle(content = {}, palette = {}) {
         borderRadius: content.borderRadius ?? 0,
         boxShadow: content.shadow || content.boxShadow || undefined,
         boxSizing: 'border-box',
+        ...(shapeOpacity != null ? { opacity: shapeOpacity } : {}),
       },
     }
   }
@@ -968,6 +1005,7 @@ export function buildCanvasShapeStyle(content = {}, palette = {}) {
         alignSelf: 'center',
         boxSizing: 'border-box',
         flexShrink: 0,
+        ...(shapeOpacity != null ? { opacity: shapeOpacity } : {}),
       },
     }
   }
@@ -994,6 +1032,7 @@ export function buildCanvasShapeStyle(content = {}, palette = {}) {
         background,
         clipPath,
         boxSizing: 'border-box',
+        ...(shapeOpacity != null ? { opacity: shapeOpacity } : {}),
       },
     }
   }
@@ -1008,6 +1047,7 @@ export function buildCanvasShapeStyle(content = {}, palette = {}) {
       border,
       boxShadow: content.shadow || content.boxShadow || undefined,
       boxSizing: 'border-box',
+      ...(shapeOpacity != null ? { opacity: shapeOpacity } : {}),
     },
   }
 }
@@ -1020,7 +1060,12 @@ export function resolveThemeColor(value, palette = {}, fallback = undefined) {
   if (value == null || value === '') return fallback
   if (typeof value === 'object') {
     if (value.type === 'gradient') return cssGradientFromFill(value, palette)
-    if (value.color) return resolveThemeColor(value.color, palette, fallback)
+    if (value.color != null && value.color !== '') {
+      return resolveThemeColor(value.color, palette, fallback)
+    }
+    if (value.colorRole) {
+      return resolveThemeColor(value.colorRole, palette, fallback)
+    }
     return fallback
   }
   const raw = String(value).trim()
@@ -1030,7 +1075,8 @@ export function resolveThemeColor(value, palette = {}, fallback = undefined) {
     raw.startsWith('hsl') ||
     raw.startsWith('url(') ||
     raw === 'transparent' ||
-    raw.startsWith('linear-gradient')
+    raw.startsWith('linear-gradient') ||
+    raw.startsWith('color-mix')
   ) {
     return raw
   }
@@ -1057,11 +1103,20 @@ export function cssGradientFromFill(fill, palette = {}) {
   return `linear-gradient(${angle}deg, ${start}, ${end})`
 }
 
-/** Resolve shape/text fill (string token, hex, or { type: 'gradient', … }). */
+/** Resolve shape/text fill (string token, hex, or { type: 'gradient'|'solid', … }). */
 export function resolveFillCss(fill, palette = {}, fallback = 'rgba(148,163,184,0.35)') {
   if (fill == null || fill === '') return fallback
-  if (typeof fill === 'object' && fill.type === 'gradient') {
-    return cssGradientFromFill(fill, palette) || fallback
+  if (typeof fill === 'object') {
+    if (fill.type === 'gradient') {
+      return cssGradientFromFill(fill, palette) || fallback
+    }
+    if (fill.color != null && fill.color !== '') {
+      return resolveThemeColor(fill.color, palette, fallback)
+    }
+    if (fill.colorRole) {
+      return resolveThemeColor(fill.colorRole, palette, fallback)
+    }
+    return fallback
   }
   return resolveThemeColor(fill, palette, fallback)
 }

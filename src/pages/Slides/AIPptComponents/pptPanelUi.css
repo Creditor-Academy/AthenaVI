@@ -505,6 +505,68 @@
   color: #94a3b8;
 }
 
+.ppt-share-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.ppt-share-toggle-row strong {
+  display: block;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.ppt-share-toggle-row p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.ppt-share-switch {
+  width: 44px;
+  height: 26px;
+  border: none;
+  border-radius: 999px;
+  background: #cbd5e1;
+  padding: 3px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.ppt-share-switch span {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.16s ease;
+}
+
+.ppt-share-switch.is-on {
+  background: var(--primary, #2563eb);
+}
+
+.ppt-share-switch.is-on span {
+  transform: translateX(18px);
+}
+
+.ppt-share-switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ppt-share-reset-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
 .ppt-export-format-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

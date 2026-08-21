@@ -120,6 +120,8 @@ export default function EditorRightRail({
   onBackgroundColorChange,
   designFocus = 'slide',
   disabled = false,
+  viewOnly = false,
+  onViewOnlyAttempt,
   onOpenChange,
 }) {
   const [active, setActive] = useState(null)
@@ -192,6 +194,10 @@ export default function EditorRightRail({
   }, [active, workspaceId])
 
   const toggle = (id) => {
+    if (viewOnly) {
+      onViewOnlyAttempt?.()
+      return
+    }
     if (disabled) return
     setAiOpen(false)
     setActive((prev) => (prev === id ? null : id))
@@ -397,8 +403,9 @@ export default function EditorRightRail({
                 key={tool.id}
                 type="button"
                 className={`ppt-editor-sidebar-btn ${active === tool.id ? 'is-active' : ''}`}
-                title={tool.label}
-                disabled={disabled}
+                title={viewOnly ? 'View only' : tool.label}
+                disabled={disabled && !viewOnly}
+                aria-disabled={disabled || viewOnly}
                 aria-label={tool.label}
                 aria-expanded={active === tool.id}
                 onClick={() => toggle(tool.id)}
@@ -421,6 +428,10 @@ export default function EditorRightRail({
             aria-label="AI prompt"
             aria-expanded={aiOpen}
             onClick={() => {
+              if (viewOnly) {
+                onViewOnlyAttempt?.()
+                return
+              }
               setActive(null)
               setAiOpen((v) => !v)
             }}

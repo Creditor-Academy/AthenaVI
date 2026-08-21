@@ -8,6 +8,7 @@ import {
   FiBellOff,
   FiFileText,
   FiUpload,
+  FiShare2,
   FiCornerUpLeft,
   FiCornerUpRight,
   FiSliders,
@@ -26,10 +27,12 @@ export default function EditorFileMenu({
   onRename,
   onDuplicate,
   onExport,
+  onSharePreview,
   onUndo,
   onRedo,
   onExit,
   onFindReplace,
+  viewOnly = false,
 }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -60,6 +63,7 @@ export default function EditorFileMenu({
     { id: 'rename', label: 'Rename presentation', Icon: FiEdit2, action: onRename },
     { id: 'move', label: 'Move to folder', Icon: FiFolder, action: null, disabled: true },
     { id: 'duplicate', label: 'Duplicate', Icon: FiCopy, action: onDuplicate },
+    { id: 'share-preview', label: 'Share preview', Icon: FiShare2, action: onSharePreview, hidden: viewOnly || !onSharePreview },
     { id: 'unsub', label: 'Unsubscribe', Icon: FiBellOff, action: null, disabled: true },
     { id: 'template', label: 'Convert to template', Icon: FiFileText, action: null, disabled: true },
     { id: 'export', label: 'Export presentation', Icon: FiUpload, action: onExport },
@@ -122,7 +126,7 @@ export default function EditorFileMenu({
           </div>
 
           <div className="ppt-file-menu-section">
-            {items.map((item) => {
+            {items.filter((item) => !item.hidden).map((item) => {
               const Icon = item.Icon
               return (
                 <button

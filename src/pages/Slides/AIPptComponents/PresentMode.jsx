@@ -12,6 +12,7 @@ import {
   resolveSlideStageBackground,
   resolveThemeColor,
 } from '../../../utils/presentationHelpers'
+import { shouldPaintElement } from '../../../utils/canvasRenderDebug'
 import { PPT_SLIDE_TRANSITIONS } from './insert/EditorRightRail'
 import './PresentMode.css'
 
@@ -194,14 +195,20 @@ export default function PresentMode({
   const slide = slides[index]
   const canvas = resolveCanvasSize(slide, aspectRatio)
   const elements = (slide?.elements?.elements || []).filter(
-    (el) => !isSlideBackgroundElement(el, slide)
+    (el) =>
+      !isSlideBackgroundElement(el, slide) &&
+      shouldPaintElement(el, slide, canvas.width, canvas.height)
   )
   const transition =
     slide?.transition || slide?.elements?.transition || 'none'
   const palette = themeVisual?.palette || null
   const hasElements = elements.length > 0
   const fallbackImage = hasElements ? null : getSlideImage(slide).url
-  const slideBgStyle = resolveSlideStageBackground(slide, themeVisual?.inner || '#fff')
+  const slideBgStyle = resolveSlideStageBackground(
+    slide,
+    themeVisual?.inner || '#fff',
+    palette
+  )
 
   const go = useCallback(
     (delta) => {

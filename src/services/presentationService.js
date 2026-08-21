@@ -53,6 +53,8 @@ export class PresentationRateLimitError extends Error {
   }
 }
 
+const sharePresenceRoute = new Map()
+
 class PresentationService {
   unwrap(json) {
     return json?.data ?? json
@@ -74,16 +76,17 @@ class PresentationService {
   }
 
   async request(endpoint, options = {}) {
+    const { quiet, headers: extraHeaders, ...fetchOptions } = options
     const headers = {
       ...getAuthHeaders(),
-      ...(options.headers || {}),
+      ...(extraHeaders || {}),
     }
-    if (options.body instanceof FormData) {
+    if (fetchOptions.body instanceof FormData) {
       delete headers['Content-Type']
     }
 
     const response = await fetch(buildUrl(endpoint), {
-      ...options,
+      ...fetchOptions,
       headers,
     })
 
@@ -107,7 +110,7 @@ class PresentationService {
 
     if (!response.ok) {
       const payload = await this.readPayload(response)
-      if (import.meta.env?.DEV) {
+      if (import.meta.env?.DEV && !quiet) {
         console.error('[presentationService] request failed', {
           endpoint,
           status: response.status,
@@ -468,11 +471,92 @@ class PresentationService {
     )
   }
 
-  createShareLink(workspaceId, presentationId, { access = 'view' } = {}) {
+  getShareLink(workspaceId, presentationId) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE(workspaceId, presentationId))
+  }
+
+  enableShareLink(workspaceId, presentationId) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE(workspaceId, presentationId), {
+      method: 'PUT',
+    })
+  }
+
+  updateShareLink(workspaceId, presentationId, payload = {}) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE(workspaceId, presentationId), {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    })
+  }
+
+  rotateShareLink(workspaceId, presentationId) {
     return this.request(
-      API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE(workspaceId, presentationId),
-      { method: 'POST', body: JSON.stringify({ access }) }
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE_ROTATE(workspaceId, presentationId),
+      { method: 'POST' }
     )
+  }
+
+  async pollSharePresence(workspaceId, presentationId, { viewerSessionId, slideIndex } = {}) {
+    const key = `${workspaceId}:${presentationId}`
+    const remembered = sharePresenceRoute.get(key)
+    const routes = [
+      remembered
+        ? {
+            method: remembered.method,
+            endpoint: remembered.endpoint,
+            body:
+              remembered.method === 'PUT'
+                ? JSON.stringify({ viewerSessionId, slideIndex })
+                : undefined,
+          }
+        : null,
+      {
+        method: 'GET',
+        endpoint: API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE_VIEWERS(workspaceId, presentationId),
+      },
+      {
+        method: 'GET',
+        endpoint: API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE_PRESENCE(workspaceId, presentationId),
+      },
+      {
+        method: 'PUT',
+        endpoint: API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE_PRESENCE(workspaceId, presentationId),
+        body: JSON.stringify({ viewerSessionId, slideIndex }),
+      },
+      {
+        method: 'PUT',
+        endpoint: API_CONFIG.ENDPOINTS.PRESENTATIONS.PRESENCE(workspaceId, presentationId),
+        body: JSON.stringify({ viewerSessionId, slideIndex }),
+      },
+      {
+        method: 'GET',
+        endpoint: API_CONFIG.ENDPOINTS.PRESENTATIONS.PRESENCE(workspaceId, presentationId),
+      },
+    ].filter(Boolean)
+
+    const tried = new Set()
+    for (const route of routes) {
+      const id = `${route.method}:${route.endpoint}`
+      if (tried.has(id)) continue
+      tried.add(id)
+      try {
+        const data = await this.request(route.endpoint, {
+          method: route.method,
+          body: route.body,
+          quiet: true,
+        })
+        sharePresenceRoute.set(key, { method: route.method, endpoint: route.endpoint })
+        return data
+      } catch (err) {
+        if (err?.status && ![404, 405, 403].includes(err.status)) throw err
+      }
+    }
+
+    const data = await this.getShareLink(workspaceId, presentationId)
+    sharePresenceRoute.set(key, {
+      method: 'GET',
+      endpoint: API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE(workspaceId, presentationId),
+    })
+    return data
   }
 }
 
