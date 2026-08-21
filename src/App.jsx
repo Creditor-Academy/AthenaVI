@@ -7,7 +7,7 @@ import Landing from './pages/Landing/Landing.jsx'
 import AuthPage from './pages/Auth/AuthPage.jsx'
 import ResetPassword from './components/features/auth/authentication/ResetPassword.jsx'
 import { persistWorkspaceFolderNavigation } from './utils/navigateToWorkspaceFolder.js'
-import { isOAuthCallbackPath, resolveViewFromLocation } from './utils/authRouting.js'
+import { isOAuthCallbackPath, isPublicPresentationPath, resolveViewFromLocation } from './utils/authRouting.js'
 import {
   dashboardPathForSection,
   isDashboardClientPath,
@@ -53,6 +53,7 @@ const NotFound = lazy(() => import('./pages/NotFound/NotFound.jsx'))
 const RenderDownload = lazy(() => import('./pages/Download/RenderDownload.jsx'))
 const EarlyAccessPage = lazy(() => import('./pages/EarlyAccess/EarlyAccessPage.jsx'))
 const GoogleCallback = lazy(() => import('./components/features/auth/GoogleCallback.jsx'))
+const PublicPresentation = lazy(() => import('./pages/Slides/PublicPresentation/PublicPresentation.jsx'))
 const PATH_TO_VIEW_MAP = {
   '/': 'landing',
   '/hub': 'dashboard',
@@ -282,7 +283,7 @@ function App() {
 
   // Save view to localStorage whenever it changes
   useEffect(() => {
-    if (view === 'not-found' || view === 'google-callback') return
+    if (view === 'not-found' || view === 'google-callback' || view === 'public-presentation') return
 
     window.localStorage.setItem('athenavi:view', view)
     
@@ -320,6 +321,7 @@ function App() {
     const onProtectedPath = currentPath.includes('/invitations/accept') ||
       currentPath.includes('/invite/accept') ||
       currentPath.includes('/reset-password') ||
+      currentPath.startsWith('/p/') ||
       isOAuthCallbackPath(currentPath)
     const isDashboardSubPath = isDashboardClientPath()
     const targetUrl =
@@ -380,6 +382,11 @@ function App() {
 
     const handleNavigation = (event) => {
       const path = event?.detail?.path || readClientPath()
+
+      if (isPublicPresentationPath(path)) {
+        setView('public-presentation')
+        return
+      }
 
       if (path.startsWith('/create')) {
         setView('create')
@@ -513,6 +520,8 @@ function App() {
 
       {/* Invite Acceptance Page - Standalone */}
       {isInviteAcceptancePath && <InviteAcceptance />}
+
+      {view === 'public-presentation' && <PublicPresentation />}
 
       {/* Protected Routes */}
       {view === 'create' && (
@@ -975,7 +984,7 @@ function App() {
         <NotFound setView={setView} />
       )}
 
-      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'login', 'early-access', 'google-callback', 'not-found'].includes(view) && (
+      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'login', 'early-access', 'google-callback', 'not-found', 'public-presentation'].includes(view) && (
         <>
           <Landing 
             onLoginClick={handleLoginClick}

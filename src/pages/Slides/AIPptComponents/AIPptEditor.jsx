@@ -29,9 +29,13 @@ import MinimapSlidePreview from './MinimapSlidePreview'
 import { usePptEditorHistory } from '../../../hooks/usePptEditorHistory'
 import { usePptElementMutations } from './usePptElementMutations'
 import { computePptSmartGuides } from '../../../utils/pptSmartGuides'
+import { useAuth } from '../../../contexts/AuthContext'
 import presentationService, {
   PresentationConflictError,
 } from '../../../services/presentationService'
+import { readShareToken, extractShareToken, stashShareToken } from '../../../utils/pptShareSession'
+import PptPresenceAvatars from './PptPresenceAvatars'
+import usePptPresence from './usePptPresence'
 import brandKitService from '../../../services/brandKitService'
 import { isInsufficientCreditsError } from '../../../services/creditsService'
 import {
@@ -71,6 +75,7 @@ import {
   shouldPaintElement,
 } from '../../../utils/canvasRenderDebug'
 import './pptEditorExtras.css'
+import '../AIPptGenerator.css'
 
 const CANVAS_SAVE_DEBOUNCE_MS = 600
 const DEFAULT_SLIDE_BG = '#FFFFFF'
@@ -435,15 +440,31 @@ export default function AIPptEditor({
   workspaceId: workspaceIdProp,
   presentationId: presentationIdProp,
   onBack,
+  viewOnly = false,
+  initialDeck = null,
+  canOpenInEditor = false,
+  onOpenInEditor,
+  generatingBanner = '',
+  presenceToken = '',
+  onContentUpdated,
 }) {
   const workspaceId = workspaceIdProp || config.workspaceId
   const presentationId = presentationIdProp || config.presentationId
+  const { user } = useAuth()
 
-  const [localSlides, setLocalSlides] = useState(outline || [])
+  const [localSlides, setLocalSlides] = useState(() => {
+    if (viewOnly && initialDeck) {
+      const fromDeck = extractSlidesFromPresentation(initialDeck)
+      if (fromDeck.length) return fromDeck
+    }
+    return outline || []
+  })
   const [showMinimap, setShowMinimap] = useState(true)
   const [deckStatus, setDeckStatus] = useState('READY')
   const [aspectRatio, setAspectRatio] = useState(config.screenSize || config.aspectRatio || '16:9')
-  const [loading, setLoading] = useState(Boolean(workspaceId && presentationId))
+  const [loading, setLoading] = useState(
+    viewOnly ? !initialDeck : Boolean(workspaceId && presentationId)
+  )
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [exportModalOpen, setExportModalOpen] = useState(false)
@@ -463,6 +484,10 @@ export default function AIPptEditor({
   const [editingTextId, setEditingTextId] = useState(null)
   const [presentOpen, setPresentOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
+  const [viewOnlyNotice, setViewOnlyNotice] = useState(false)
+  const [shareToken, setShareToken] = useState(
+    () => presenceToken || readShareToken(presentationIdProp || config.presentationId)
+  )
   const [quickMenuOpen, setQuickMenuOpen] = useState(false)
   const [slideAiEditId, setSlideAiEditId] = useState(null)
   const [cropModalOpen, setCropModalOpen] = useState(false)
@@ -491,7 +516,7 @@ export default function AIPptEditor({
   }, [config.title])
 
   useEffect(() => {
-    if (!workspaceId) {
+    if (viewOnly || !workspaceId) {
       setLayoutSchemaMap({})
       return
     }
@@ -502,7 +527,7 @@ export default function AIPptEditor({
     return () => {
       cancelled = true
     }
-  }, [workspaceId])
+  }, [viewOnly, workspaceId])
 
   useEffect(() => {
     layoutRepairPassRef.current = ''
@@ -552,6 +577,31 @@ export default function AIPptEditor({
   })()
   const selectedElementCount = selectedSlide?.elements?.elements?.length || 0
   const atElementCap = selectedElementCount >= PPT_CAPS.ELEMENTS_PER_SLIDE
+  const selectedSlideIndex = Math.max(
+    0,
+    localSlides.findIndex((s) => s.id === (selectedSlideId || selectedSlide?.id))
+  )
+  const askOwner = useCallback(() => {
+    if (viewOnly) setViewOnlyNotice(true)
+  }, [viewOnly])
+  const { viewers, viewerCount, contentUpdatedAt } = usePptPresence({
+    token: shareToken,
+    workspaceId: viewOnly ? undefined : workspaceId,
+    presentationId: viewOnly ? undefined : presentationId,
+    slideIndex: selectedSlideIndex,
+    enabled: viewOnly
+      ? Boolean(shareToken) && !loading
+      : Boolean(workspaceId && presentationId) && !loading,
+    onShareToken: setShareToken,
+  })
+  const selfViewer = !viewOnly && user
+    ? {
+        id: user.id || user._id || user.userId || 'owner',
+        displayName: user.name || user.displayName || user.fullName || user.email || 'You',
+        avatarUrl: user.profileImage || user.avatarUrl || user.avatar || user.photoUrl,
+        slideIndex: selectedSlideIndex,
+      }
+    : null
 
   const applySlideUpdate = useCallback((slidePayload, indexHint = 0) => {
     if (!slidePayload) return
@@ -594,6 +644,7 @@ export default function AIPptEditor({
   }, [aspectRatio])
 
   const reloadPresentation = useCallback(async () => {
+    if (viewOnly) return null
     if (!workspaceId || !presentationId) return
     const data = await presentationService.getPresentation(workspaceId, presentationId)
     let slides = extractSlidesFromPresentation(data)
@@ -647,9 +698,10 @@ export default function AIPptEditor({
     }
     if (slides[0]?.id) setSelectedSlideId((prev) => prev || slides[0].id)
     return data
-  }, [workspaceId, presentationId, config.screenSize, config.aspectRatio, layoutSchemaMap])
+  }, [workspaceId, presentationId, config.screenSize, config.aspectRatio, layoutSchemaMap, viewOnly])
 
   useEffect(() => {
+    if (viewOnly) return
     if (!workspaceId || !presentationId || !localSlides.length) return
     if (!Object.keys(layoutSchemaMap).length) return
     if (isGenerating) return
@@ -692,6 +744,7 @@ export default function AIPptEditor({
     aspectRatio,
     themeTokens,
     themeVisual?.palette,
+    viewOnly,
     deckPackId,
   ])
 
@@ -708,7 +761,7 @@ export default function AIPptEditor({
 
   const queueCanvasSave = useCallback(
     (slideId, canvasDoc) => {
-      if (!workspaceId || !presentationId || !slideId || isGenerating) return
+      if (!workspaceId || !presentationId || !slideId || isGenerating || viewOnly) return
       if (canvasSaveTimers.current[slideId]) {
         clearTimeout(canvasSaveTimers.current[slideId])
       }
@@ -731,7 +784,7 @@ export default function AIPptEditor({
         }
       }, CANVAS_SAVE_DEBOUNCE_MS)
     },
-    [workspaceId, presentationId, isGenerating, applySlideUpdate]
+    [workspaceId, presentationId, isGenerating, viewOnly, applySlideUpdate]
   )
 
   const pushHistorySnapshot = useCallback(() => {
@@ -827,36 +880,46 @@ export default function AIPptEditor({
       const ids = multiSelectIds.length ? multiSelectIds : [selectedElementId].filter(Boolean)
       switch (cmd) {
         case 'undo':
+          if (viewOnly) { askOwner(); break }
           handleUndo()
           break
         case 'redo':
+          if (viewOnly) { askOwner(); break }
           handleRedo()
           break
         case 'duplicate':
+          if (viewOnly) { askOwner(); break }
           elementMutations.duplicateElement()
           break
         case 'group':
+          if (viewOnly) { askOwner(); break }
           elementMutations.groupSelection(ids)
           break
         case 'ungroup':
+          if (viewOnly) { askOwner(); break }
           elementMutations.ungroupSelection()
           break
         case 'lock':
+          if (viewOnly) { askOwner(); break }
           elementMutations.toggleLock()
           break
         case 'present':
           setPresentOpen(true)
           break
         case 'share':
+          if (viewOnly) { askOwner(); break }
           setShareOpen(true)
           break
         case 'export':
+          if (viewOnly) { askOwner(); break }
           setExportModalOpen(true)
           break
         case 'smart-tidy':
+          if (viewOnly) { askOwner(); break }
           elementMutations.smartTidy(ids)
           break
         case 'smart-swap':
+          if (viewOnly) { askOwner(); break }
           elementMutations.smartSwap()
           break
         case 'zoom-in':
@@ -872,7 +935,7 @@ export default function AIPptEditor({
           break
       }
     },
-    [handleUndo, handleRedo, elementMutations, multiSelectIds, selectedElementId]
+    [handleUndo, handleRedo, elementMutations, multiSelectIds, selectedElementId, viewOnly, askOwner]
   )
 
   const handleCropApply = useCallback(
@@ -1142,6 +1205,7 @@ export default function AIPptEditor({
       setLoading(false)
       return undefined
     }
+    if (viewOnly) return undefined
 
     let cancelled = false
     setLoading(true)
@@ -1169,7 +1233,87 @@ export default function AIPptEditor({
       Object.values(canvasSaveTimers.current).forEach((t) => clearTimeout(t))
       Object.values(elementPatchTimers.current).forEach((t) => clearTimeout(t))
     }
-  }, [workspaceId, presentationId, outline, reloadPresentation])
+  }, [workspaceId, presentationId, outline, reloadPresentation, viewOnly])
+
+  useEffect(() => {
+    if (presenceToken) setShareToken(presenceToken)
+  }, [presenceToken])
+
+  useEffect(() => {
+    if (viewOnly || !workspaceId || !presentationId) return undefined
+    const applyToken = (value) => {
+      const token = extractShareToken(value)
+      if (!token) return
+      stashShareToken(presentationId, token)
+      setShareToken(token)
+    }
+    applyToken(readShareToken(presentationId))
+    let cancelled = false
+    presentationService
+      .getShareLink(workspaceId, presentationId)
+      .then((data) => {
+        if (cancelled) return
+        applyToken(
+          data?.token ||
+            data?.url ||
+            data?.share?.token ||
+            data?.share?.url ||
+            data?.share?.publicUrl ||
+            (String(data?.urlDisplay || data?.share?.urlDisplay || '').includes('…')
+              ? ''
+              : data?.urlDisplay || data?.share?.urlDisplay)
+        )
+      })
+      .catch(() => {})
+
+    const onStash = (event) => {
+      if (event?.detail?.presentationId && event.detail.presentationId !== presentationId) return
+      applyToken(event?.detail?.token || event?.detail?.url || readShareToken(presentationId))
+    }
+    window.addEventListener('athenavi:ppt-share-token', onStash)
+    window.addEventListener('storage', onStash)
+    return () => {
+      cancelled = true
+      window.removeEventListener('athenavi:ppt-share-token', onStash)
+      window.removeEventListener('storage', onStash)
+    }
+  }, [viewOnly, workspaceId, presentationId])
+
+  useEffect(() => {
+    if (!viewOnly || !initialDeck) return
+    const slides = extractSlidesFromPresentation(initialDeck)
+    const nextAspect =
+      initialDeck?.aspectRatio ||
+      initialDeck?.deck?.aspectRatio ||
+      initialDeck?.presentation?.aspectRatio ||
+      config.screenSize ||
+      config.aspectRatio ||
+      '16:9'
+    setAspectRatio(nextAspect === '9:16' ? '16:9' : nextAspect)
+    setLocalSlides(slides)
+    setThemeTokens(
+      initialDeck?.deck?.themeTokens ||
+        initialDeck?.themeTokens ||
+        initialDeck?.presentation?.deck?.themeTokens ||
+        null
+    )
+    setDeckStatus(
+      initialDeck?.deck?.status ||
+        initialDeck?.status ||
+        initialDeck?.presentation?.deck?.status ||
+        initialDeck?.presentation?.status ||
+        'READY'
+    )
+    if (initialDeck?.title || initialDeck?.presentation?.title) {
+      setDeckTitle(initialDeck?.title || initialDeck?.presentation?.title)
+    }
+    if (slides[0]?.id) setSelectedSlideId((prev) => prev || slides[0].id)
+    setLoading(false)
+  }, [viewOnly, initialDeck, config.screenSize, config.aspectRatio])
+
+  useEffect(() => {
+    if (contentUpdatedAt) onContentUpdated?.(contentUpdatedAt)
+  }, [contentUpdatedAt, onContentUpdated])
 
   useEffect(() => {
     const onDocClick = (e) => {
@@ -1182,6 +1326,10 @@ export default function AIPptEditor({
   }, [])
 
   const handleApplyBrandKit = async (brandKitId) => {
+    if (viewOnly) {
+      askOwner()
+      return
+    }
     if (!workspaceId || !presentationId || !brandKitId || isGenerating) return
     setApplyingBrandKit(true)
     setBrandKitOpen(false)
@@ -1806,6 +1954,29 @@ export default function AIPptEditor({
 
       const mod = e.ctrlKey || e.metaKey
 
+      if (viewOnly) {
+        const allowed =
+          (mod && (e.key === '=' || e.key === '+' || e.key === '-')) ||
+          (mod && e.key === 'Enter')
+        if (!allowed && (mod || e.key === 'Delete' || e.key === 'Backspace' || ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', '[', ']'].includes(e.key))) {
+          e.preventDefault()
+          askOwner()
+        }
+        if (mod && e.key === 'Enter') {
+          e.preventDefault()
+          setPresentOpen(true)
+        }
+        if (mod && (e.key === '=' || e.key === '+')) {
+          e.preventDefault()
+          setCanvasZoom((z) => Math.min(200, z + 10))
+        }
+        if (mod && e.key === '-') {
+          e.preventDefault()
+          setCanvasZoom((z) => Math.max(40, z - 10))
+        }
+        return
+      }
+
       if (mod && e.key === 'z' && !e.shiftKey) {
         e.preventDefault()
         handleUndo()
@@ -1899,6 +2070,8 @@ export default function AIPptEditor({
     handleRedo,
     handlePlacementCommit,
     elementMutations,
+    viewOnly,
+    askOwner,
   ])
 
   const handleChangeTransition = async (transitionId) => {
@@ -1972,6 +2145,10 @@ export default function AIPptEditor({
     [config.title, config.tone, config.audience].filter(Boolean).join(' · ')
 
   const handleRename = () => {
+    if (viewOnly) {
+      askOwner()
+      return
+    }
     const next = window.prompt('Rename presentation', deckTitle || 'Untitled Presentation')
     if (next == null) return
     const trimmed = next.trim().slice(0, 255)
@@ -1980,6 +2157,10 @@ export default function AIPptEditor({
   }
 
   const handleDuplicateDeck = async () => {
+    if (viewOnly) {
+      askOwner()
+      return
+    }
     if (!workspaceId || !presentationId || isGenerating) {
       setError('Duplicate deck requires a saved presentation')
       return
@@ -2015,7 +2196,9 @@ export default function AIPptEditor({
     <div className="aig-editor-container fade-in">
       {isGenerating && (
         <div className="aig-generating-lock" role="status">
-          Generating… structure and canvas edits are locked
+          {viewOnly
+            ? generatingBanner || 'Updating… newer slides will appear as they finish'
+            : 'Generating… structure and canvas edits are locked'}
         </div>
       )}
 
@@ -2032,14 +2215,16 @@ export default function AIPptEditor({
         <div className="aig-editor-nav-left">
           <EditorFileMenu
             title={deckTitle}
-            privacy="Private"
+            privacy={viewOnly ? 'View only' : 'Private'}
             canUndo={history.canUndo}
             canRedo={history.canRedo}
+            viewOnly={viewOnly}
             onRename={handleRename}
             onDuplicate={handleDuplicateDeck}
-            onExport={() => setExportOpen(true)}
-            onUndo={handleUndo}
-            onRedo={handleRedo}
+            onExport={() => (viewOnly ? askOwner() : setExportModalOpen(true))}
+            onSharePreview={() => setShareOpen(true)}
+            onUndo={viewOnly ? askOwner : handleUndo}
+            onRedo={viewOnly ? askOwner : handleRedo}
             onExit={onBack}
           />
           {presentationId && <span className="aig-editor-badge">Saved</span>}
@@ -2049,7 +2234,9 @@ export default function AIPptEditor({
           <InsertToolbar
             orientation="horizontal"
             disabled={isGenerating || busy || atElementCap}
-            workspaceId={workspaceId}
+            viewOnly={viewOnly}
+            onViewOnlyAttempt={askOwner}
+            workspaceId={viewOnly ? undefined : workspaceId}
             presentationId={presentationId}
             slideId={selectedSlide?.id}
             targetElementId={
@@ -2071,15 +2258,32 @@ export default function AIPptEditor({
         </div>
 
         <div className="aig-editor-nav-right">
+          {!viewOnly && (
+            <PptPresenceAvatars
+              viewers={viewers}
+              viewerCount={viewerCount}
+              selfViewer={selfViewer}
+            />
+          )}
+          {viewOnly && canOpenInEditor && (
+            <button className="aig-editor-btn-secondary" type="button" onClick={onOpenInEditor}>
+              Open in editor
+            </button>
+          )}
+          {!viewOnly && (
           <div className="aig-export-menu" ref={brandKitMenuRef}>
             <button
               className="aig-editor-btn-secondary"
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
+                if (viewOnly) {
+                  askOwner()
+                  return
+                }
                 setBrandKitOpen((v) => !v)
               }}
-              disabled={!presentationId || busy || isGenerating || applyingBrandKit}
+              disabled={!viewOnly && (!presentationId || busy || isGenerating || applyingBrandKit)}
               title="Apply Brand Kit"
             >
               <MdOutlineColorLens size={16} />
@@ -2105,14 +2309,17 @@ export default function AIPptEditor({
               </div>
             )}
           </div>
-          <button className="aig-editor-btn-secondary" type="button" onClick={() => setShareOpen(true)}>
-            <FiShare2 size={16} /> Share
-          </button>
+          )}
+          {!viewOnly && (
+            <button className="aig-editor-btn-secondary" type="button" onClick={() => setShareOpen(true)}>
+              <FiShare2 size={16} /> Share
+            </button>
+          )}
           <button
             className="aig-editor-btn-secondary"
             type="button"
-            onClick={() => setExportModalOpen(true)}
-            disabled={!presentationId || busy}
+            onClick={() => (viewOnly ? askOwner() : setExportModalOpen(true))}
+            disabled={!viewOnly && (!presentationId || busy)}
           >
             <FiDownload size={16} /> Export
           </button>
@@ -2153,6 +2360,7 @@ export default function AIPptEditor({
                 }}
               >
                 <div className="aig-scroll-slide-wrapper">
+                  {!viewOnly && (
                   <div className="aig-scroll-slide-hover-actions">
                     <button className="aig-slide-action-btn" title="Drag" type="button">
                       <MdDragIndicator size={16} />
@@ -2161,9 +2369,13 @@ export default function AIPptEditor({
                       className={`aig-slide-action-btn ${slideAiEditId === slide.id ? 'is-active' : ''}`}
                       title="Edit with AI"
                       type="button"
-                      disabled={busy || isGenerating}
+                      disabled={!viewOnly && (busy || isGenerating)}
                       onClick={(e) => {
                         e.stopPropagation()
+                        if (viewOnly) {
+                          askOwner()
+                          return
+                        }
                         setSelectedSlideId(slide.id)
                         setSelectedElementId(null)
                         setEditingTextId(null)
@@ -2176,27 +2388,33 @@ export default function AIPptEditor({
                       className="aig-slide-action-btn"
                       title="Duplicate"
                       type="button"
-                      disabled={busy || isGenerating || atDeckCap}
+                      disabled={!viewOnly && (busy || isGenerating || atDeckCap)}
                       onClick={(e) => {
                         e.stopPropagation()
+                        if (viewOnly) {
+                          askOwner()
+                          return
+                        }
                         handleDuplicateSlide(slide.id)
                       }}
                     >
                       <FiGrid size={16} />
                     </button>
                   </div>
+                  )}
 
                   <SlideStage
                     slide={slide}
                     themeVisual={themeVisual}
                     aspectRatio={aspectRatio}
-                    editable={!isGenerating && !busy && selectedSlideId === slide.id}
+                    editable={!viewOnly && !isGenerating && !busy && selectedSlideId === slide.id}
                     selectedElementId={
                       selectedSlideId === slide.id ? selectedElementId : null
                     }
                     editingTextId={selectedSlideId === slide.id ? editingTextId : null}
                     smartGuides={selectedSlideId === slide.id ? smartGuides : []}
                     onSelectElement={(id) => {
+                      if (viewOnly) return
                       setSelectedSlideId(slide.id)
                       setSelectedElementId(id)
                       setEditingTextId((prev) => (prev === id ? prev : null))
@@ -2217,13 +2435,14 @@ export default function AIPptEditor({
                   <SlideEditAiPanel
                     open={slideAiEditId === slide.id}
                     slideTitle={slide.title || slide.content?.title || `Slide ${idx + 1}`}
-                    disabled={isGenerating || busy}
+                    disabled={viewOnly || isGenerating || busy}
                     busy={busy && slideAiEditId === slide.id}
                     onClose={() => setSlideAiEditId(null)}
                     onSubmit={(payload) => handleSlideAiEdit(slide, payload)}
                   />
                 </div>
 
+                {!viewOnly && (
                 <div className="aig-scroll-add-slide-divider">
                   <button
                     className="aig-add-slide-btn"
@@ -2234,6 +2453,7 @@ export default function AIPptEditor({
                     <FiPlus size={14} /> {atDeckCap ? 'Max 40' : 'Add'}
                   </button>
                 </div>
+                )}
               </div>
             ))}
           </div>
@@ -2270,6 +2490,8 @@ export default function AIPptEditor({
           workspaceId={workspaceId}
           presentationId={presentationId}
           disabled={isGenerating || busy}
+          viewOnly={viewOnly}
+          onViewOnlyAttempt={askOwner}
           designFocus={designFocus}
           onOpenChange={setSidebarOpen}
           selectedElement={selectedElement}
@@ -2302,6 +2524,7 @@ export default function AIPptEditor({
         {showMinimap ? (
           <aside className="aig-editor-minimap">
             <div className="aig-minimap-header">
+              {!viewOnly && (
               <button
                 className="aig-minimap-add-btn"
                 type="button"
@@ -2311,6 +2534,7 @@ export default function AIPptEditor({
               >
                 <FiPlus size={16} /> {atDeckCap ? 'Deck full (40)' : 'Add slide'}
               </button>
+              )}
               <button
                 className="aig-minimap-outline-btn"
                 type="button"
@@ -2333,6 +2557,7 @@ export default function AIPptEditor({
                   }}
                   onContextMenu={(e) => {
                     e.preventDefault()
+                    if (viewOnly) return
                     handleDeleteSlide(slide.id)
                   }}
                 >
@@ -2407,8 +2632,42 @@ export default function AIPptEditor({
           workspaceId={workspaceId}
           presentationId={presentationId}
           title={deckTitle}
+          deckStatus={deckStatus}
           onClose={() => setShareOpen(false)}
+          onShareToken={(token) => setShareToken(token)}
         />
+      )}
+
+      {viewOnlyNotice && (
+        <div className="ppt-editor-modal-overlay" onClick={() => setViewOnlyNotice(false)}>
+          <div className="ppt-editor-modal" role="dialog" aria-label="View only">
+            <header className="ppt-editor-modal-head">
+              <div className="ppt-editor-modal-head-text">
+                <h3 className="ppt-editor-modal-title">This presentation is view-only</h3>
+              </div>
+              <button
+                type="button"
+                className="ppt-editor-modal-close"
+                onClick={() => setViewOnlyNotice(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </header>
+            <p className="ppt-editor-modal-lead">
+              Ask the owner to add you to their workspace.
+            </p>
+            <footer className="ppt-editor-modal-foot">
+              <button
+                type="button"
+                className="ppt-editor-modal-btn ppt-editor-modal-btn--primary"
+                onClick={() => setViewOnlyNotice(false)}
+              >
+                Got it
+              </button>
+            </footer>
+          </div>
+        </div>
       )}
 
       {exportModalOpen && (

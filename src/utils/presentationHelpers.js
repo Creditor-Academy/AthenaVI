@@ -729,12 +729,19 @@ export function extractPresentationId(payload) {
   )
 }
 
+function firstSlideList(node, depth = 0) {
+  if (!node || typeof node !== 'object' || depth > 5) return null
+  if (Array.isArray(node.slides)) return node.slides
+  if (Array.isArray(node.pages)) return node.pages
+  for (const key of ['deck', 'presentation', 'payload', 'data', 'result']) {
+    const found = firstSlideList(node[key], depth + 1)
+    if (found) return found
+  }
+  return null
+}
+
 export function extractSlidesFromPresentation(presentation) {
-  const slides =
-    presentation?.slides ||
-    presentation?.deck?.slides ||
-    presentation?.presentation?.slides ||
-    []
+  const slides = firstSlideList(presentation) || []
   const aspectRatio =
     presentation?.aspectRatio ||
     presentation?.deck?.aspectRatio ||

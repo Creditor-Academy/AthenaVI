@@ -256,6 +256,17 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/duplicate`,
       SHARE: (workspaceId, presentationId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/share`,
+      SHARE_ROTATE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/share/rotate`,
+      SHARE_VIEWERS: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/share/viewers`,
+      SHARE_PRESENCE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/share/presence`,
+      PRESENCE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/presence`,
+      PUBLIC_DECK: (token) => `/api/p/${encodeURIComponent(token)}`,
+      PUBLIC_SESSION: (token) => `/api/p/${encodeURIComponent(token)}/session`,
+      PUBLIC_PRESENCE: (token) => `/api/p/${encodeURIComponent(token)}/presence`,
     },
   },
   

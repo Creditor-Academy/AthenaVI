@@ -30,6 +30,8 @@ const TOOLS = [
  */
 export default function InsertToolbar({
   disabled = false,
+  viewOnly = false,
+  onViewOnlyAttempt,
   workspaceId,
   presentationId,
   slideId,
@@ -110,6 +112,10 @@ export default function InsertToolbar({
   }
 
   const toggle = (id) => {
+    if (viewOnly) {
+      onViewOnlyAttempt?.()
+      return
+    }
     if (disabled) return
     setOpenTool((prev) => (prev === id ? null : id))
   }
@@ -171,8 +177,9 @@ export default function InsertToolbar({
                 buttonRefs.current[tool.id] = el
               }}
               className={`ppt-insert-tool-btn ${orientation === 'horizontal' ? 'ppt-insert-tool-btn--labeled' : 'aig-float-btn'} ${openTool === tool.id ? 'is-active' : ''}`}
-              title={insertDisabledReason || tool.label}
-              disabled={disabled}
+              title={viewOnly ? 'View only' : insertDisabledReason || tool.label}
+              disabled={disabled && !viewOnly}
+              aria-disabled={disabled || viewOnly}
               aria-expanded={openTool === tool.id}
               aria-label={tool.label}
               onClick={() => toggle(tool.id)}
