@@ -4964,6 +4964,10 @@
   word-break: break-word;
 }
 
+.aig-modal-prompt-body.aig-md-preview {
+  font-family: inherit;
+}
+
 .aig-modal-actions {
   display: flex;
   justify-content: flex-end;

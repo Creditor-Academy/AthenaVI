@@ -31,6 +31,8 @@ import AllocateCreditsModal from '../../../components/features/workspace/workspa
 import { resolvePresentationWorkspaceContext } from '../../../utils/presentationContext.js'
 import { isTeamWorkspaceType } from '../../../utils/creditTransactions.js'
 import ImageGenContextAttach from '../../../components/features/image-generation/ImageGenContextAttach.jsx'
+import MarkdownPromptInput from '../../../components/features/image-generation/MarkdownPromptInput.jsx'
+import { highlightMarkdownSource } from '../../../utils/markdownPrompt.jsx'
 import art1 from '../../../assets/ai-img-gen/art-1.jpg'
 import art2 from '../../../assets/ai-img-gen/art-2.jpg'
 import art3 from '../../../assets/ai-img-gen/art-3.jpg'
@@ -1859,9 +1861,8 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                         <div className="aig-prompt-composer">
                           <div className="aig-prompt-field">
                             {trigger}
-                            <textarea
+                            <MarkdownPromptInput
                               ref={textRef}
-                              className="aig-prompt-input"
                               rows={1}
                               placeholder="A rainy laundromat at 2am, cyan washers, one dryer ajar…"
                               value={prompt}
@@ -2554,7 +2555,9 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                           <X size={16} />
                         </button>
                       </div>
-                      <div className="aig-modal-prompt-body">{promptModalText}</div>
+                      <div className="aig-modal-prompt-body aig-md-preview">
+                        {highlightMarkdownSource(promptModalText)}
+                      </div>
                       <div className="aig-modal-actions">
                         <button
                           type="button"
