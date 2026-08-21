@@ -175,10 +175,10 @@ export function adjustSlotRegion(reg, slot, allSlots) {
     const otherRole = other.role || 'body'
 
     if (oreg.r1 === adjusted.r2 && shouldSplitSharedRow(role, otherRole)) {
-      adjusted.r2 -= 0.42
+      adjusted.r2 -= 0.75
     }
     if (oreg.r2 === adjusted.r1 && shouldSplitSharedRow(otherRole, role)) {
-      adjusted.r1 += 0.42
+      adjusted.r1 += 0.75
     }
   }
 
@@ -237,6 +237,81 @@ function textPaddingForRole(role) {
   if (role === 'heading' || role === 'quote') return { x: 12, y: 8 }
   if (role === 'caption' || role === 'stat_label' || role === 'eyebrow') return { x: 8, y: 4 }
   return { x: 10, y: 6 }
+}
+
+const COLUMN_STACK_GAP_PX = 14
+const COLUMN_STACK_MIN_TITLE = 36
+const COLUMN_STACK_MIN_BODY = 48
+
+function columnStackKey(slotId) {
+  const m = String(slotId || '').match(
+    /^(CARD|COL|ROW|FEATURE)_(\d+)_(TITLE|SUBTITLE|BODY|TEXT)$/i
+  )
+  if (!m) return null
+  return `${m[1].toUpperCase()}_${m[2]}`
+}
+
+function columnStackPartWeight(part, text) {
+  const len = String(text || '').trim().length
+  const p = String(part || '').toUpperCase()
+  if (p === 'TITLE' || p === 'SUBTITLE') return Math.max(1, Math.min(4, Math.ceil(len / 18) || 1))
+  return Math.max(2, Math.min(10, Math.ceil(len / 40) || 2))
+}
+
+/** Re-pack CARD/COL/ROW title+body stacks within their original column band. */
+function packColumnTextStacks(elements) {
+  if (!Array.isArray(elements) || !elements.length) return elements
+  const groups = new Map()
+  for (const el of elements) {
+    if (!el || el.type !== 'text' || !el.placement) continue
+    const key = columnStackKey(el.slotId)
+    if (!key) continue
+    const part =
+      String(el.slotId)
+        .match(/_(TITLE|SUBTITLE|BODY|TEXT)$/i)?.[1]
+        ?.toUpperCase() || 'BODY'
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key).push({ el, part })
+  }
+
+  for (const items of groups.values()) {
+    if (items.length < 2) continue
+    items.sort((a, b) => (a.el.placement?.y || 0) - (b.el.placement?.y || 0))
+    const first = items[0].el.placement
+    const last = items[items.length - 1].el.placement
+    const bandTop = Number(first.y) || 0
+    const bandBottom = (Number(last.y) || 0) + (Number(last.height) || 0)
+    const bandH = Math.max(0, bandBottom - bandTop)
+    if (bandH < 40) continue
+
+    const gapsTotal = COLUMN_STACK_GAP_PX * (items.length - 1)
+    const usable = Math.max(0, bandH - gapsTotal)
+    const weights = items.map(({ el, part }) => columnStackPartWeight(part, el.content?.text))
+    const weightSum = weights.reduce((a, b) => a + b, 0) || items.length
+    let heights = items.map(({ part }, i) => {
+      const minH =
+        part === 'TITLE' || part === 'SUBTITLE' ? COLUMN_STACK_MIN_TITLE : COLUMN_STACK_MIN_BODY
+      return Math.max(minH, Math.round((weights[i] / weightSum) * usable))
+    })
+    let sumH = heights.reduce((a, b) => a + b, 0)
+    if (sumH > usable && sumH > 0) {
+      const scale = usable / sumH
+      heights = heights.map((h) => Math.max(28, Math.round(h * scale)))
+      sumH = heights.reduce((a, b) => a + b, 0)
+      heights[heights.length - 1] += Math.max(0, usable - sumH)
+    }
+
+    let y = bandTop
+    items.forEach(({ el }, i) => {
+      el.placement = {
+        ...el.placement,
+        y: Math.round(y),
+        height: Math.max(28, heights[i]),
+      }
+      y += heights[i] + COLUMN_STACK_GAP_PX
+    })
+  }
+  return elements
 }
 
 function layerForSlot(slot) {
@@ -1023,6 +1098,7 @@ export function compileDeckLayoutToElements(schema, options = {}) {
   result = finalizeTimelineShapes(result, schema, colorMap)
   result = applyThemeSlideBackground(result, themedPalette, canvasW, canvasH)
   result = applyReadableTextContrastForPreview(result, colorRoleMapFromPalette(options.palette), schema)
+  result = packColumnTextStacks(result)
   const hasLoadedOverlayImage = result.some((e) => {
     if (e.type !== 'image' || !e.content?.url) return false
     const slotId = String(e.slotId || '').toUpperCase()
