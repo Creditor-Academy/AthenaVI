@@ -1087,10 +1087,13 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
       setCatalogLoading(true)
       setCatalogError('')
       try {
-        const ctx = await resolvePresentationWorkspaceContext({
-          preferredWorkspaceId: createContext?.workspaceId || null,
-          preferredFolderId: createContext?.folderId || null,
-        })
+        const preferredWorkspaceId = createContext?.workspaceId || null
+        const preferredFolderId = createContext?.folderId || null
+        const ctx = await resolvePresentationWorkspaceContext(
+          preferredWorkspaceId
+            ? { preferredWorkspaceId, preferredFolderId }
+            : {}
+        )
         if (cancelled) return
         setWorkspaceId(ctx.workspaceId)
         setFolderId(ctx.folderId)

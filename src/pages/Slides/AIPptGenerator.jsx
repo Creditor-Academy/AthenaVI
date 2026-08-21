@@ -24,10 +24,21 @@ export default function AIPptGenerator({
   onBack,
   onComplete: _onComplete,
   onOpenPresentation,
-  createContext: _createContext = null,
+  createContext = null,
   initialWorkspaceId,
   initialFolderId,
 }) {
+  const preferredWorkspaceId =
+    initialWorkspaceId ||
+    createContext?.workspaceId ||
+    createContext?.initialWorkspaceId ||
+    null
+  const preferredFolderId =
+    initialFolderId ||
+    createContext?.folderId ||
+    createContext?.initialFolderId ||
+    null
+
   const [stage, setStage] = useState('wizard')
   const [outlineData, setOutlineData] = useState([])
   const [config, setConfig] = useState({})
@@ -37,7 +48,6 @@ export default function AIPptGenerator({
   const [isBusy, setIsBusy] = useState(false)
   const [flowNonce, setFlowNonce] = useState(0)
   const [wizardStep, setWizardStep] = useState(1)
-  // _createContext ({ optionId, workspaceId, folderId }) reserved for a future name/save step.
 
   const handleWizardComplete = (generatedOutline, generatorConfig, apiSession) => {
     setOutlineData(generatedOutline)
@@ -200,8 +210,8 @@ export default function AIPptGenerator({
       {stage === 'wizard' && (
         <AIPptWizard
           key={flowNonce}
-          initialWorkspaceId={initialWorkspaceId}
-          initialFolderId={initialFolderId}
+          initialWorkspaceId={preferredWorkspaceId}
+          initialFolderId={preferredFolderId}
           onComplete={handleWizardComplete}
           onStepChange={setWizardStep}
         />
