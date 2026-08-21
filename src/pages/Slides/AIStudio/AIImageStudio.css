@@ -831,6 +831,12 @@
   padding-top: 12px;
 }
 
+.aig-prompt-card.is-file-over {
+  outline: 2px dashed color-mix(in oklab, var(--aig-cobalt) 55%, white);
+  outline-offset: 3px;
+  background: color-mix(in oklab, var(--aig-cobalt) 10%, white);
+}
+
 .aig-prompt-form .igc-thumbs {
   justify-content: flex-start;
   padding: 0 4px 2px;
@@ -841,8 +847,10 @@
   height: 48px;
 }
 
-.aig-prompt-form .igc-thumb-open {
-  border-radius: 12px;
+.aig-prompt-drop-error {
+  margin: 8px 4px 0;
+  font-size: 0.82rem;
+  color: #b42318;
 }
 
 .aig-prompt-composer {
@@ -3298,6 +3306,30 @@
   color: var(--text-muted);
 }
 
+.aig-work-refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.aig-work-ref {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
+  border-radius: 12px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--bg-main) 70%, var(--bg-card));
+  cursor: zoom-in;
+}
+
+.aig-work-ref img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .aig-work-stage {
   position: relative;
   display: grid;
@@ -4412,6 +4444,11 @@
 
 [data-mode='dark'] .aig-prompt-card {
   background: color-mix(in oklab, var(--aig-canvas) 55%, white 12%);
+}
+
+[data-mode='dark'] .aig-prompt-card.is-file-over {
+  outline-color: color-mix(in oklab, var(--aig-cobalt) 70%, white);
+  background: color-mix(in oklab, var(--aig-cobalt) 22%, var(--aig-canvas));
 }
 
 [data-mode='dark'] .aig-prompt-actions {

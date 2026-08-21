@@ -905,6 +905,73 @@ function CanvasPreview({ format, mode, infoLayoutId, infoLayoutName }) {
   )
 }
 
+const THREAD_REFS_KEY = 'athena.vi.imageGen.threadRefs.v1'
+
+function threadRefsKey(workspaceId, threadId) {
+  return `${workspaceId || 'ws'}:${threadId || 'draft'}`
+}
+
+function loadThreadRefsStore() {
+  try {
+    const raw = sessionStorage.getItem(THREAD_REFS_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
+function saveThreadRefsStore(store) {
+  try {
+    sessionStorage.setItem(THREAD_REFS_KEY, JSON.stringify(store))
+  } catch {
+    /* quota — thumbs stay in memory for this session */
+  }
+}
+
+function readThreadRefs(workspaceId, threadId) {
+  const row = loadThreadRefsStore()[threadRefsKey(workspaceId, threadId)]
+  if (!row?.id && !row?.localImages?.length) return null
+  return {
+    id: row.id || null,
+    localImages: Array.isArray(row.localImages) ? row.localImages : [],
+    previews: row.previews || undefined,
+  }
+}
+
+function writeThreadRefs(workspaceId, threadId, ctx) {
+  const store = loadThreadRefsStore()
+  const key = threadRefsKey(workspaceId, threadId)
+  if (!ctx?.id && !ctx?.localImages?.length) {
+    delete store[key]
+  } else {
+    store[key] = {
+      id: ctx.id || null,
+      localImages: ctx.localImages || [],
+      previews: ctx.previews || null,
+    }
+  }
+  saveThreadRefsStore(store)
+}
+
+function localImagesFromContext(ctx) {
+  const fromApi = (ctx?.previews?.images || [])
+    .map((img) => ({
+      name: img?.name || 'Reference',
+      src: img?.url || img?.src || '',
+    }))
+    .filter((img) => img.src)
+  if (fromApi.length) return fromApi
+  return Array.isArray(ctx?.localImages) ? ctx.localImages.filter((img) => img?.src) : []
+}
+
+function revokeContextBlobs(ctx) {
+  for (const img of ctx?.localImages || []) {
+    if (typeof img?.src === 'string' && img.src.startsWith('blob:')) {
+      URL.revokeObjectURL(img.src)
+    }
+  }
+}
+
 export default function AIImageStudio({ onBack, createContext = null, onOpenBilling = null }) {
   const [step, setStep] = useState('prompt')
   const [prompt, setPrompt] = useState('')
@@ -950,7 +1017,29 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
   const [busyAction, setBusyAction] = useState('')
   const [fullscreenSrc, setFullscreenSrc] = useState(null)
   const [promptModalText, setPromptModalText] = useState(null)
-  const [imageContext, setImageContext] = useState(null)
+  const [imageContext, setImageContextState] = useState(null)
+  const setImageContext = useCallback((next) => {
+    setImageContextState((prev) => {
+      const resolved = typeof next === 'function' ? next(prev) : next
+      if (resolved !== prev) revokeContextBlobs(prev)
+      return resolved
+    })
+  }, [])
+  const handleContextChange = useCallback(
+    (ctx) => {
+      const next = ctx
+        ? { ...ctx, localImages: localImagesFromContext(ctx) }
+        : null
+      setImageContext(next)
+      writeThreadRefs(workspaceId, activeThreadId || 'draft', next)
+    },
+    [workspaceId, activeThreadId, setImageContext]
+  )
+
+  useEffect(() => {
+    return () => revokeContextBlobs(imageContext)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const textRef = useRef(null)
   const genAbortRef = useRef(null)
@@ -1229,7 +1318,14 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
     const gen = data?.generation
     if (!gen) return
     const nextThreadId = data?.thread?.id || data?.actions?.threadId || gen.threadId || activeThreadId
-    if (nextThreadId) setActiveThreadId(nextThreadId)
+    if (nextThreadId) {
+      const draft = readThreadRefs(workspaceId, 'draft')
+      if (draft?.id || draft?.localImages?.length) {
+        writeThreadRefs(workspaceId, nextThreadId, draft)
+        writeThreadRefs(workspaceId, 'draft', null)
+      }
+      setActiveThreadId(nextThreadId)
+    }
     if (data?.thread) setSavedChats((prev) => upsertChatList(prev, data.thread))
     setActiveGeneration(gen)
     lastGoodGenRef.current = gen
@@ -1337,6 +1433,22 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
         setThread(turns)
         const last = [...turns].reverse().find((t) => t.generation?.url) || turns[turns.length - 1]
         setActiveGeneration(last?.generation || null)
+        const stored = readThreadRefs(workspaceId, saved.id)
+        let nextContext = stored
+        const contextId = saved.contextId || stored?.id
+        if (contextId) {
+          try {
+            const live = await imageGenService.getContext(workspaceId, contextId)
+            const apiImages = localImagesFromContext(live)
+            nextContext = {
+              ...live,
+              localImages: apiImages.length ? apiImages : stored?.localImages || [],
+            }
+          } catch {
+            /* keep stored thumbs if GET fails or context expired */
+          }
+        }
+        setImageContext(nextContext)
         if (saved.modelId) setModelId(saved.modelId)
         if (saved.formatId) setFormatId(saved.formatId)
         if (saved.styleId) setStyleId(saved.styleId)
@@ -1348,7 +1460,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
         setActionError(friendlyError(err))
       }
     },
-    [workspaceId, isGenerating]
+    [workspaceId, isGenerating, setImageContext]
   )
 
   const runGenerate = async () => {
@@ -1726,10 +1838,10 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                 <ImageGenContextAttach
                   workspaceId={workspaceId}
                   context={imageContext}
-                  onContextChange={setImageContext}
+                  onContextChange={handleContextChange}
                   compact
                 >
-                  {({ thumbs, trigger }) => (
+                  {({ thumbs, trigger, composerBind, isDragOver, error: contextError }) => (
                     <form
                       className="aig-prompt-form"
                       onSubmit={(e) => {
@@ -1738,7 +1850,10 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                       }}
                     >
                       <div
-                        className={`aig-prompt-card aig-glow-ring ${inspiring ? 'is-inspiring' : ''}`}
+                        className={`aig-prompt-card aig-glow-ring ${inspiring ? 'is-inspiring' : ''}${
+                          isDragOver ? ' is-file-over' : ''
+                        }`}
+                        {...composerBind}
                       >
                         {thumbs}
                         <div className="aig-prompt-composer">
@@ -1751,6 +1866,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                               placeholder="A rainy laundromat at 2am, cyan washers, one dryer ajar…"
                               value={prompt}
                               onChange={(e) => setPrompt(e.target.value)}
+                              onPaste={composerBind.onPaste}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                   e.preventDefault()
@@ -1783,6 +1899,11 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                           </div>
                         </div>
                       </div>
+                      {contextError && (
+                        <p className="aig-prompt-drop-error" role="alert">
+                          {contextError}
+                        </p>
+                      )}
                     </form>
                   )}
                 </ImageGenContextAttach>
@@ -2030,6 +2151,21 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                               ))}
                             </div>
                             <h2 className="aig-work-info-title">Prompt</h2>
+                            {imageContext?.localImages?.length > 0 && (
+                              <div className="aig-work-refs" aria-label="Uploaded references">
+                                {imageContext.localImages.map((img, i) => (
+                                  <button
+                                    key={`${img.name || 'ref'}-${i}`}
+                                    type="button"
+                                    className="aig-work-ref"
+                                    onClick={() => img.src && setFullscreenSrc(img.src)}
+                                    title={img.name || 'Reference'}
+                                  >
+                                    <img src={img.src} alt={img.name || 'Reference'} />
+                                  </button>
+                                ))}
+                              </div>
+                            )}
                             <p className="aig-work-meta-prompt">{heroPromptText}</p>
                             {heroTurn.status === 'error' && heroTurn.error && (
                               <p className="aig-chat-error">{heroTurn.error}</p>

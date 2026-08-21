@@ -51,6 +51,15 @@ function isImageFile(file) {
   return /^image\//.test(file.type) || /\.(png|jpe?g|webp)$/i.test(file.name || '')
 }
 
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result)
+    reader.onerror = () => reject(reader.error || new Error('Couldn’t read image'))
+    reader.readAsDataURL(file)
+  })
+}
+
 function isDocFile(file) {
   if (!file) return false
   const mime = String(file.type || '').toLowerCase()
@@ -65,6 +74,72 @@ function isDocFile(file) {
     return true
   }
   return /\.(pdf|docx|md|txt)$/i.test(name)
+}
+
+function filenameFromUrl(url, mime = 'image/png') {
+  try {
+    const path = new URL(url).pathname
+    const base = decodeURIComponent(path.split('/').filter(Boolean).pop() || '')
+    if (/\.(png|jpe?g|webp)$/i.test(base)) return base
+  } catch {
+    /* ignore */
+  }
+  const ext = mime === 'image/jpeg' || mime === 'image/jpg' ? 'jpg' : mime === 'image/webp' ? 'webp' : 'png'
+  return `image.${ext}`
+}
+
+function urlsFromDataTransfer(dataTransfer) {
+  const urls = []
+  const uriList = String(dataTransfer?.getData('text/uri-list') || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith('#'))
+  urls.push(...uriList)
+
+  const html = String(dataTransfer?.getData('text/html') || '')
+  const imgSrc = html.match(/<img[^>]+src=["']([^"']+)["']/i)
+  if (imgSrc?.[1]) urls.push(imgSrc[1])
+
+  const plain = String(dataTransfer?.getData('text/plain') || '').trim()
+  if (/^https?:\/\//i.test(plain)) urls.push(plain)
+
+  return [...new Set(urls)].filter((u) => /^https?:\/\//i.test(u) || u.startsWith('data:image/'))
+}
+
+function isImageLikeDrag(dataTransfer) {
+  const types = Array.from(dataTransfer?.types || [])
+  if (types.includes('Files')) return true
+  if (types.includes('text/uri-list')) return true
+  if (types.includes('text/html')) return true
+  return false
+}
+
+async function fileFromImageUrl(url) {
+  if (url.startsWith('data:image/')) {
+    const res = await fetch(url)
+    const blob = await res.blob()
+    return new File([blob], filenameFromUrl('image', blob.type), { type: blob.type || 'image/png' })
+  }
+  const res = await fetch(url)
+  if (!res.ok) throw new Error('Couldn’t fetch that image.')
+  const blob = await res.blob()
+  const mime = String(blob.type || '').toLowerCase()
+  if (!mime.startsWith('image/')) throw new Error('That drop wasn’t an image file.')
+  if (!ACCEPTED_MIME.has(mime)) {
+    throw new Error('Use PNG, JPG, or WebP.')
+  }
+  return new File([blob], filenameFromUrl(url, mime), { type: mime })
+}
+
+function clipboardImageFiles(clipboardData) {
+  const files = []
+  const items = Array.from(clipboardData?.items || [])
+  for (const item of items) {
+    if (!String(item.type || '').startsWith('image/')) continue
+    const file = item.getAsFile()
+    if (file) files.push(file)
+  }
+  return files
 }
 
 function formatContextBadge(preview) {
@@ -124,6 +199,7 @@ export default function ImageGenContextAttach({
   const [notice, setNotice] = useState('')
   const [dirtyAfterAttach, setDirtyAfterAttach] = useState(false)
   const [dragOver, setDragOver] = useState(null)
+  const [composerDragOver, setComposerDragOver] = useState(false)
   const [libraryLoading, setLibraryLoading] = useState(false)
   const [libraryItems, setLibraryItems] = useState([])
   const [libraryError, setLibraryError] = useState('')
@@ -310,9 +386,12 @@ export default function ImageGenContextAttach({
     })
   }
 
-  const handleAttach = async () => {
+  const handleAttach = async (override = null) => {
+    const files = override?.files ?? pendingFiles
+    const assets = override?.assets ?? pendingAssets
+    const text = override?.text ?? inlineText
     if (!workspaceId || attaching || disabled) return
-    if (!hasPending) {
+    if (!files.length && !assets.length && !String(text || '').trim()) {
       setError('Add a file, library image, or pasted note first.')
       return
     }
@@ -328,11 +407,26 @@ export default function ImageGenContextAttach({
         }
       }
       const created = await imageGenService.createContext(workspaceId, {
-        files: pendingFiles,
-        inlineText,
-        assetIds: pendingAssets.map((a) => a.id),
+        files,
+        inlineText: text,
+        assetIds: assets.map((a) => a.id),
       })
-      onContextChange?.(created)
+      const localImages = []
+      for (const file of files) {
+        if (!isImageFile(file)) continue
+        localImages.push({
+          name: file.name || 'Image',
+          src: await fileToDataUrl(file),
+        })
+      }
+      for (const asset of assets) {
+        if (!asset?.url) continue
+        localImages.push({
+          name: asset.name || 'Library image',
+          src: asset.url,
+        })
+      }
+      onContextChange?.({ ...created, localImages })
       setDirtyAfterAttach(false)
       setTab('brief')
       setNotice(
@@ -343,6 +437,84 @@ export default function ImageGenContextAttach({
     } finally {
       setAttaching(false)
     }
+  }
+
+  const collectIncomingFiles = (incoming) => {
+    const accepted = []
+    for (const file of incoming || []) {
+      if (!isAllowedFile(file) && !isImageFile(file)) continue
+      if (file.size > MAX_FILE_BYTES) {
+        setError(`“${file.name}” is over 20 MB.`)
+        continue
+      }
+      accepted.push(file)
+    }
+    const room = Math.max(0, MAX_CONTEXT_ITEMS - (pendingFiles.length + pendingAssets.length))
+    if (!accepted.length) return []
+    if (room <= 0) {
+      setError('Too many context files or assets (max 5).')
+      return []
+    }
+    if (accepted.length > room) setError('Too many context files or assets (max 5).')
+    return accepted.slice(0, room)
+  }
+
+  const ingestComposerFiles = async (incoming) => {
+    const added = collectIncomingFiles(incoming)
+    if (!added.length) return false
+    const nextFiles = [...pendingFiles, ...added]
+    setPendingFiles(nextFiles)
+    markDirty()
+    setError('')
+    await handleAttach({ files: nextFiles, assets: pendingAssets, text: inlineText })
+    return true
+  }
+
+  const composerBind = {
+    onDragOver: (e) => {
+      if (disabled || !isImageLikeDrag(e.dataTransfer)) return
+      e.preventDefault()
+      e.stopPropagation()
+      e.dataTransfer.dropEffect = 'copy'
+      setComposerDragOver(true)
+    },
+    onDragLeave: (e) => {
+      if (e.currentTarget.contains(e.relatedTarget)) return
+      setComposerDragOver(false)
+    },
+    onDrop: async (e) => {
+      if (disabled) return
+      if (!isImageLikeDrag(e.dataTransfer)) return
+      e.preventDefault()
+      e.stopPropagation()
+      setComposerDragOver(false)
+      const fromFiles = Array.from(e.dataTransfer.files || []).filter(
+        (f) => isImageFile(f) || isAllowedFile(f)
+      )
+      if (fromFiles.length) {
+        await ingestComposerFiles(fromFiles)
+        return
+      }
+      const urls = urlsFromDataTransfer(e.dataTransfer)
+      if (!urls.length) return
+      try {
+        const fetched = []
+        for (const url of urls.slice(0, MAX_CONTEXT_ITEMS)) {
+          fetched.push(await fileFromImageUrl(url))
+        }
+        await ingestComposerFiles(fetched)
+      } catch (err) {
+        setError(err?.message || 'Couldn’t add that image. Save it and drop the file instead.')
+      }
+    },
+    onPaste: async (e) => {
+      if (disabled) return
+      const imageFiles = clipboardImageFiles(e.clipboardData)
+      if (!imageFiles.length) return
+      e.preventDefault()
+      e.stopPropagation()
+      await ingestComposerFiles(imageFiles)
+    },
   }
 
   const handleClear = async () => {
@@ -1070,7 +1242,13 @@ export default function ImageGenContextAttach({
   if (typeof children === 'function') {
     return (
       <>
-        {children({ thumbs: thumbsNode, trigger: triggerNode })}
+        {children({
+          thumbs: thumbsNode,
+          trigger: triggerNode,
+          composerBind,
+          isDragOver: composerDragOver,
+          error,
+        })}
         {portals}
       </>
     )
