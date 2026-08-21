@@ -1,45 +1,21 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { FiCopy, FiShare2, FiX, FiAlertCircle, FiRefreshCw } from 'react-icons/fi'
 import presentationService, { PresentationConflictError } from '../../../services/presentationService'
-import {
-  stashShareToken,
-  readShareUrl,
-  extractShareToken,
-  buildShareUrl,
-  isCompleteShareUrl,
-} from '../../../utils/pptShareSession'
+import { extractShareToken, buildShareUrl } from '../../../utils/pptShareSession'
 import './pptPanelUi.css'
 
 function unwrapShare(data) {
   const share = data?.share || data || {}
   const token = share.token || data?.token || ''
-  const rawUrl =
-    share.url ||
-    data?.url ||
-    share.publicUrl ||
-    share.shareUrl ||
-    share.link ||
-    ''
-  const url = isCompleteShareUrl(rawUrl)
-    ? rawUrl
-    : token
-      ? buildShareUrl(token)
-      : isCompleteShareUrl(share.urlDisplay)
-        ? share.urlDisplay
-        : ''
+  const url = share.url || data?.url || (token ? buildShareUrl(token) : '')
   return {
     enabled: Boolean(share.enabled ?? share.isEnabled),
     exists:
       share.exists !== false &&
-      (Boolean(share.enabled) ||
-        Boolean(share.urlDisplay) ||
-        Boolean(share.tokenPrefix) ||
-        Boolean(url) ||
-        Boolean(token)),
+      (Boolean(share.enabled) || Boolean(url) || Boolean(token) || Boolean(share.expired)),
+    expired: Boolean(share.expired),
     url,
     token,
-    urlDisplay: share.urlDisplay || '',
-    tokenPrefix: share.tokenPrefix || '',
     expiresAt: share.expiresAt || share.expires_at || '',
   }
 }
@@ -53,7 +29,6 @@ export default function SharePresentationModal({
   onShareToken,
 }) {
   const [share, setShare] = useState(null)
-  const [copyUrl, setCopyUrl] = useState(() => readShareUrl(presentationId))
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -61,6 +36,11 @@ export default function SharePresentationModal({
   const [confirmRotate, setConfirmRotate] = useState(false)
 
   const generating = String(deckStatus || '').toUpperCase() === 'GENERATING'
+  const copyUrl = share?.url || ''
+  const neverCreated = !loading && share && !share.exists && !share.enabled
+  const needsRotate = Boolean(share?.exists && !copyUrl)
+  const onShareTokenRef = useRef(onShareToken)
+  onShareTokenRef.current = onShareToken
 
   useEffect(() => {
     const onKey = (e) => {
@@ -69,6 +49,12 @@ export default function SharePresentationModal({
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
+
+  const applyShare = (next) => {
+    setShare(next)
+    const token = extractShareToken(next.token || next.url)
+    if (token) onShareTokenRef.current?.(token)
+  }
 
   useEffect(() => {
     if (!workspaceId || !presentationId) {
@@ -82,29 +68,7 @@ export default function SharePresentationModal({
       try {
         const data = await presentationService.getShareLink(workspaceId, presentationId)
         if (cancelled) return
-        const next = unwrapShare(data)
-        setShare(next)
-        let url =
-          next.url ||
-          readShareUrl(presentationId) ||
-          (next.token ? buildShareUrl(next.token) : '')
-        if (next.enabled && !url) {
-          try {
-            const created = unwrapShare(
-              await presentationService.enableShareLink(workspaceId, presentationId)
-            )
-            url = created.url || (created.token ? buildShareUrl(created.token) : '')
-            setShare({ ...next, ...created, enabled: true })
-            if (url) stashShareToken(presentationId, created.token || url)
-          } catch {
-            /* keep GET state if the link is already on */
-          }
-        }
-        if (url) {
-          setCopyUrl(url)
-          stashShareToken(presentationId, url)
-          onShareToken?.(extractShareToken(url))
-        }
+        applyShare(unwrapShare(data))
       } catch (err) {
         if (cancelled) return
         setError(err.message || 'Could not load share settings.')
@@ -118,23 +82,13 @@ export default function SharePresentationModal({
     }
   }, [workspaceId, presentationId])
 
-  const remember = (next) => {
-    const url = next.url || (next.token ? buildShareUrl(next.token) : '') || readShareUrl(presentationId)
-    if (url) {
-      setCopyUrl(url)
-      stashShareToken(presentationId, next.token || url)
-      onShareToken?.(extractShareToken(next.token || url))
-    }
-  }
-
   const run = async (fn) => {
     setBusy(true)
     setError('')
     try {
       const data = await fn()
       const next = unwrapShare(data)
-      setShare(next)
-      remember(next)
+      applyShare(next)
       return next
     } catch (err) {
       if (err instanceof PresentationConflictError) {
@@ -150,7 +104,7 @@ export default function SharePresentationModal({
 
   const handleToggle = async () => {
     if (generating || busy || loading) return
-    if (!share?.exists || (!share.enabled && !copyUrl && !share.urlDisplay)) {
+    if (!share?.exists) {
       await run(() => presentationService.enableShareLink(workspaceId, presentationId))
       return
     }
@@ -181,8 +135,6 @@ export default function SharePresentationModal({
     }
   }
 
-  const neverCreated = !loading && share && !share.exists && !share.enabled
-
   return (
     <div
       className="ppt-editor-modal-overlay"
@@ -202,8 +154,8 @@ export default function SharePresentationModal({
         <div className="ppt-editor-modal-callout">
           <FiShare2 size={16} />
           <p>
-            Anyone with this link can view the deck read-only. Share it with as many people as you like
-            until you reset or turn it off.
+            Anyone with this link can view the deck read-only. Copy it whenever you like and send it to
+            as many people as you want.
           </p>
         </div>
 
@@ -221,6 +173,12 @@ export default function SharePresentationModal({
           </div>
         )}
 
+        {needsRotate && (
+          <div className="ppt-editor-modal-alert ppt-editor-modal-alert--info" role="status">
+            This link was created before full URLs were stored. Reset it once to get a copyable URL.
+          </div>
+        )}
+
         <div className="ppt-share-toggle-row">
           <div>
             <strong>View-only link</strong>
@@ -228,8 +186,8 @@ export default function SharePresentationModal({
               {neverCreated
                 ? 'No link yet. Turn this on to create one.'
                 : share?.enabled
-                  ? 'Link is on. Copy it anytime and send it to multiple people.'
-                  : 'Link is paused. Re-enable to revive the same URL.'}
+                  ? 'Link is on. Copy it anytime — it stays the same until you reset it.'
+                  : 'Link is paused. Guests will see an unavailable page until you turn it back on.'}
             </p>
           </div>
           <button
@@ -244,7 +202,7 @@ export default function SharePresentationModal({
           </button>
         </div>
 
-        {(copyUrl || share?.urlDisplay) && (
+        {(copyUrl || share?.exists) && (
           <>
             <label className="ppt-editor-modal-field-label" htmlFor="ppt-share-url">
               Preview link
@@ -255,20 +213,20 @@ export default function SharePresentationModal({
                 type="text"
                 readOnly
                 className="ppt-editor-modal-link-input"
-                value={loading ? 'Loading…' : copyUrl || share?.urlDisplay || ''}
+                value={loading ? 'Loading…' : copyUrl || 'Reset the link to get a URL'}
               />
               <button
                 type="button"
                 className="ppt-editor-modal-btn ppt-editor-modal-btn--primary"
                 onClick={copyLink}
-                disabled={!copyUrl || !share?.enabled}
-                title={share?.enabled ? 'Copy link' : 'Turn the link on to copy it'}
+                disabled={!copyUrl}
+                title={copyUrl ? 'Copy link' : 'Reset the link to get a copyable URL'}
               >
                 <FiCopy size={15} /> {copied ? 'Copied' : 'Copy'}
               </button>
             </div>
             <p className="ppt-editor-modal-hint">
-              This same link works for every viewer until you reset it.
+              Disable pauses this URL. Reset issues a new one and the old copies stop working.
             </p>
           </>
         )}

@@ -33,7 +33,7 @@ import { useAuth } from '../../../contexts/AuthContext'
 import presentationService, {
   PresentationConflictError,
 } from '../../../services/presentationService'
-import { readShareToken, extractShareToken, stashShareToken } from '../../../utils/pptShareSession'
+import { extractShareToken, getOrCreateViewerSessionId } from '../../../utils/pptShareSession'
 import PptPresenceAvatars from './PptPresenceAvatars'
 import usePptPresence from './usePptPresence'
 import brandKitService from '../../../services/brandKitService'
@@ -485,9 +485,7 @@ export default function AIPptEditor({
   const [presentOpen, setPresentOpen] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [viewOnlyNotice, setViewOnlyNotice] = useState(false)
-  const [shareToken, setShareToken] = useState(
-    () => presenceToken || readShareToken(presentationIdProp || config.presentationId)
-  )
+  const [shareToken, setShareToken] = useState(() => presenceToken || '')
   const [quickMenuOpen, setQuickMenuOpen] = useState(false)
   const [slideAiEditId, setSlideAiEditId] = useState(null)
   const [cropModalOpen, setCropModalOpen] = useState(false)
@@ -597,6 +595,9 @@ export default function AIPptEditor({
   const selfViewer = !viewOnly && user
     ? {
         id: user.id || user._id || user.userId || 'owner',
+        userId: user.id || user._id || user.userId,
+        email: user.email,
+        viewerSessionId: getOrCreateViewerSessionId(),
         displayName: user.name || user.displayName || user.fullName || user.email || 'You',
         avatarUrl: user.profileImage || user.avatarUrl || user.avatar || user.photoUrl,
         slideIndex: selectedSlideIndex,
@@ -1241,41 +1242,18 @@ export default function AIPptEditor({
 
   useEffect(() => {
     if (viewOnly || !workspaceId || !presentationId) return undefined
-    const applyToken = (value) => {
-      const token = extractShareToken(value)
-      if (!token) return
-      stashShareToken(presentationId, token)
-      setShareToken(token)
-    }
-    applyToken(readShareToken(presentationId))
     let cancelled = false
     presentationService
       .getShareLink(workspaceId, presentationId)
       .then((data) => {
         if (cancelled) return
-        applyToken(
-          data?.token ||
-            data?.url ||
-            data?.share?.token ||
-            data?.share?.url ||
-            data?.share?.publicUrl ||
-            (String(data?.urlDisplay || data?.share?.urlDisplay || '').includes('…')
-              ? ''
-              : data?.urlDisplay || data?.share?.urlDisplay)
-        )
+        const share = data?.share || data || {}
+        const token = extractShareToken(share.token || data?.token || share.url || data?.url)
+        if (token) setShareToken(token)
       })
       .catch(() => {})
-
-    const onStash = (event) => {
-      if (event?.detail?.presentationId && event.detail.presentationId !== presentationId) return
-      applyToken(event?.detail?.token || event?.detail?.url || readShareToken(presentationId))
-    }
-    window.addEventListener('athenavi:ppt-share-token', onStash)
-    window.addEventListener('storage', onStash)
     return () => {
       cancelled = true
-      window.removeEventListener('athenavi:ppt-share-token', onStash)
-      window.removeEventListener('storage', onStash)
     }
   }, [viewOnly, workspaceId, presentationId])
 
@@ -2634,7 +2612,7 @@ export default function AIPptEditor({
           title={deckTitle}
           deckStatus={deckStatus}
           onClose={() => setShareOpen(false)}
-          onShareToken={(token) => setShareToken(token)}
+          onShareToken={setShareToken}
         />
       )}
 
