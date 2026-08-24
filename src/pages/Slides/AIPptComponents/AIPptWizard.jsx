@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
-import { Sparkles, ArrowUp, ArrowRight, Paperclip, FileText, BookOpen, TrendingUp, AlignLeft, Check, Globe, Image as ImageIcon, Box, Ban, ChevronDown, Star, Users, Target, Mic, ListPlus } from 'lucide-react'
+import { Sparkles, ArrowUp, ArrowRight, Paperclip, AlignLeft, Check, Globe, Image as ImageIcon, Box, Ban, ChevronDown, Star, Users, Target, Mic, ListPlus } from 'lucide-react'
+import { MdDescription, MdMenuBook, MdInsights } from 'react-icons/md'
+import { useAuth } from '../../../contexts/AuthContext'
 import presentationService from '../../../services/presentationService'
 import brandKitService from '../../../services/brandKitService'
 import { isInsufficientCreditsError } from '../../../services/creditsService'
@@ -32,13 +34,11 @@ import temp4 from '../../../assets/Template_Image/gen_temp4.png'
 import AIPptVibeStep from './AIPptVibeStep'
 import AIPptThemeModal from './AIPptThemeModal'
 import AIPptImageModal from './AIPptImageModal'
-
-const SUGGESTED_PROMPTS = [
-  "Turn meeting notes into a presentation",
-  "Summarize a research paper into key takeaways",
-  "Research industry trends",
-  "Create a strategy brief from planning notes"
-]
+import { usePptDaypart } from '../../../utils/pptDaypart'
+import pptBgMorning from '../../../assets/ppt-bg/morning.png'
+import pptBgAfternoon from '../../../assets/ppt-bg/afternoon.png'
+import pptBgEvening from '../../../assets/ppt-bg/evening.png'
+import pptBgNight from '../../../assets/ppt-bg/night.png'
 
 import {
   WIZARD_TONES,
@@ -427,6 +427,88 @@ const TEXT_AMOUNTS = [
 
 const SLIDE_COUNTS = PPT_AI_SLIDE_COUNTS
 
+const PPT_DAY_BACKGROUNDS = {
+  morning: pptBgMorning,
+  afternoon: pptBgAfternoon,
+  evening: pptBgEvening,
+  night: pptBgNight,
+}
+
+const STARTER_IDEAS = [
+  {
+    id: 'notes',
+    title: 'Turn meeting notes into a presentation',
+    description: 'Messy notes in. A sharp, ready-to-present deck out.',
+    prompt: 'Turn meeting notes into a presentation',
+    Icon: MdDescription,
+  },
+  {
+    id: 'research',
+    title: 'Summarize a research paper into key takeaways',
+    description: 'Keep the insight. Skip the 40 pages. Lead with the punch.',
+    prompt: 'Summarize a research paper into key takeaways',
+    Icon: MdMenuBook,
+  },
+  {
+    id: 'trends',
+    title: 'Research industry trends and market analysis',
+    description: 'A market snapshot they can follow in one sitting.',
+    prompt: 'Research industry trends and market analysis',
+    Icon: MdInsights,
+  },
+]
+
+const PPT_DAY_GREETINGS = {
+  morning: {
+    hello: 'The morning is yours',
+    titleLead: "Let's make",
+    titleAccent: "something they'll remember",
+    subtitle: 'Pour an idea into the bar below. We’ll turn it into a presentation that shines.',
+    placeholder: 'A pitch. A story. A spark — start typing…',
+    committedTitleLead: 'Beautiful. Now',
+    committedTitleAccent: 'give it a voice',
+    committedSubtitle: 'Tune how it should feel — then we’ll bring every slide to life.',
+  },
+  afternoon: {
+    hello: 'This hour belongs to you',
+    titleLead: 'Turn this spark into',
+    titleAccent: 'a standing ovation',
+    subtitle: 'Type a thought. We’ll craft slides that steal the room.',
+    placeholder: 'What’s the idea that deserves a beautiful deck?',
+    committedTitleLead: 'It’s already glowing.',
+    committedTitleAccent: 'Now shape the voice',
+    committedSubtitle: 'Choose the tone, the room, the reason — then we’ll make it unforgettable.',
+  },
+  evening: {
+    hello: 'The glow is with you',
+    titleLead: 'Tonight, your story',
+    titleAccent: 'takes the stage',
+    subtitle: 'Drop a line below. We’ll dress it in slides they can’t look away from.',
+    placeholder: 'Tell us the story you want them to feel…',
+    committedTitleLead: 'The story is in.',
+    committedTitleAccent: 'Now set the mood',
+    committedSubtitle: 'Pick how it should sound — then we’ll light up the slides.',
+  },
+  night: {
+    hello: 'The quiet is yours',
+    titleLead: 'Build the deck',
+    titleAccent: 'the morning will envy',
+    subtitle: 'One prompt. A presentation that feels like magic.',
+    placeholder: 'Whisper the idea. We’ll make it unforgettable…',
+    committedTitleLead: 'The spark is caught.',
+    committedTitleAccent: 'Now give it fire',
+    committedSubtitle: 'Choose the voice — then we’ll build the deck while the world sleeps.',
+  },
+}
+
+function firstNameFromProfile(user) {
+  const fromName = String(user?.name || user?.fullName || user?.firstName || '').trim()
+  let raw = fromName.split(/\s+/)[0]
+  if (!raw && user?.email) raw = String(user.email).split('@')[0].split(/[._-]/)[0]
+  if (!raw) return ''
+  return raw.charAt(0).toUpperCase() + raw.slice(1)
+}
+
 const STYLE_OPTIONS = ['Abstract', 'Aesthetic', 'Black & White', 'Colorful', 'Craft & Notebook', 'Creative', 'Cute', 'Dark', 'Deluxe', 'Doodle', 'Duotone', 'Floral & Plants', 'Illustration', 'Interactive & Animated', 'Minimalist', 'Modern', 'Pattern', 'Professional', 'Simple', 'Vintage', 'Watercolor']
 const COLOR_OPTIONS = ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange', 'Pink', 'Monochrome']
 const INDUSTRY_OPTIONS = ['Technology', 'Healthcare', 'Education', 'Finance', 'Real Estate', 'Marketing', 'E-commerce', 'Creative Agency']
@@ -437,7 +519,11 @@ export default function AIPptWizard({
   initialWorkspaceId,
   initialFolderId,
 }) {
+  const { user } = useAuth()
   const [step, setStep] = useState(1)
+  const promptDaypart = usePptDaypart()
+  const dayGreeting = PPT_DAY_GREETINGS[promptDaypart] || PPT_DAY_GREETINGS.afternoon
+  const firstName = firstNameFromProfile(user)
 
   useEffect(() => {
     onStepChange?.(step)
@@ -450,6 +536,9 @@ export default function AIPptWizard({
   const [audience, setAudience] = useState('Internal Team')
   const [purpose, setPurpose] = useState('Inform')
   const [promptCommitted, setPromptCommitted] = useState(false)
+  const heroTitleLead = promptCommitted ? dayGreeting.committedTitleLead : dayGreeting.titleLead
+  const heroTitleAccent = promptCommitted ? dayGreeting.committedTitleAccent : dayGreeting.titleAccent
+  const heroSubtitle = promptCommitted ? dayGreeting.committedSubtitle : dayGreeting.subtitle
   const [outlineOpen, setOutlineOpen] = useState(false)
   
   // Theme Filters (legacy config fields)
@@ -768,60 +857,75 @@ export default function AIPptWizard({
             ref={heroSectionRef}
             className={`aig-new-hero-section fade-in ${promptCommitted ? 'aig-new-hero-section--committed' : ''}`}
           >
-            <div className="aig-new-header">
-              <span className="aig-new-greeting">Hi Creator</span>
-              <h1 className="aig-new-title">Create your presentation</h1>
-              <p className="aig-new-subtitle">
-                {promptCommitted
-                  ? 'Tune the voice of your deck, then continue.'
-                  : 'Type your PPT prompt below, or choose a suggestion to get started'}
+            <div className={`aig-new-header aig-new-header--${promptDaypart}`}>
+              <p className="aig-new-greeting">
+                {dayGreeting.hello}
+                {firstName ? (
+                  <>
+                    {', '}
+                    <span className="aig-new-greeting-name">{firstName}</span>
+                  </>
+                ) : null}
               </p>
+              <h1 className="aig-new-title">
+                {heroTitleLead}{' '}
+                <em>{heroTitleAccent}</em>
+              </h1>
+              <p className="aig-new-subtitle">{heroSubtitle}</p>
             </div>
-            
-            {!promptCommitted && !prompt.trim() && (
-              <div className="aig-new-suggestions-grid">
-                <div className="aig-new-suggestion-card" onClick={() => setPrompt('Turn meeting notes into a presentation')}>
-                  <FileText className="aig-suggestion-icon" size={24} />
-                  <p>Turn meeting notes into a presentation</p>
-                </div>
-                <div className="aig-new-suggestion-card" onClick={() => setPrompt('Summarize a research paper into key takeaways')}>
-                  <BookOpen className="aig-suggestion-icon" size={24} />
-                  <p>Summarize a research paper into key takeaways</p>
-                </div>
-                <div className="aig-new-suggestion-card" onClick={() => setPrompt('Research industry trends')}>
-                  <TrendingUp className="aig-suggestion-icon" size={24} />
-                  <p>Research industry trends and market analysis</p>
-                </div>
-              </div>
-            )}
 
-            <div className="aig-new-prompt-container">
-              <div className="aig-new-input-row">
-                <button type="button" className="aig-attach-btn" aria-label="Attach file">
-                  <Paperclip size={20} />
-                </button>
-                <input 
-                  className="aig-new-main-input"
-                  placeholder="Type your PPT prompt..."
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      handlePromptSubmit()
-                    }
-                  }}
-                  autoFocus
-                />
-                <button 
-                  type="button"
-                  className={`aig-new-submit-btn ${prompt.trim() ? 'active' : ''}`}
-                  onClick={handlePromptSubmit}
-                  disabled={!prompt.trim()}
-                  aria-label={promptCommitted ? 'Update prompt options' : 'Continue with prompt'}
-                >
-                  <ArrowRight size={18} />
-                </button>
+            <div className="aig-create-stage aig-glass">
+              <div className="aig-new-suggestions-grid">
+                {STARTER_IDEAS.map(({ id, title, description, prompt: ideaPrompt, Icon }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    className="aig-new-suggestion-card"
+                    onClick={() => setPrompt(ideaPrompt)}
+                  >
+                    <div className="aig-suggestion-art">
+                      <span className="aig-suggestion-tabs" aria-hidden="true" />
+                      <div className={`aig-suggestion-scene aig-suggestion-scene--${id}`}>
+                        <Icon className="aig-suggestion-glyph" />
+                      </div>
+                    </div>
+                    <h3>{title}</h3>
+                    <p>{description}</p>
+                  </button>
+                ))}
+              </div>
+
+              <div
+                className={`aig-new-prompt-container aig-new-prompt-container--${promptDaypart}`}
+                style={{ backgroundImage: `url(${PPT_DAY_BACKGROUNDS[promptDaypart]})` }}
+              >
+                <div className="aig-new-input-row">
+                  <button type="button" className="aig-attach-btn" aria-label="Attach file">
+                    <Paperclip size={20} />
+                  </button>
+                  <input 
+                    className="aig-new-main-input"
+                    placeholder={dayGreeting.placeholder}
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handlePromptSubmit()
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <button 
+                    type="button"
+                    className={`aig-new-submit-btn ${prompt.trim() ? 'active' : ''}`}
+                    onClick={handlePromptSubmit}
+                    disabled={!prompt.trim()}
+                    aria-label={promptCommitted ? 'Update prompt options' : 'Continue with prompt'}
+                  >
+                    <ArrowRight size={18} />
+                  </button>
+                </div>
               </div>
             </div>
 

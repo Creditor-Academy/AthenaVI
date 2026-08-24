@@ -11,6 +11,11 @@ import customFloat2 from '../../assets/Template_Image/custom_float_2.png'
 import customFloat3 from '../../assets/Template_Image/custom_float_3.png'
 import customFloat4 from '../../assets/Template_Image/custom_float_4.png'
 import aiMascot from '../../assets/slides_icons/ai_mascot.png'
+import pptBgMorning from '../../assets/ppt-bg/morning.png'
+import pptBgAfternoon from '../../assets/ppt-bg/afternoon.png'
+import pptBgEvening from '../../assets/ppt-bg/evening.png'
+import pptBgNight from '../../assets/ppt-bg/night.png'
+import { usePptDaypart } from '../../utils/pptDaypart'
 import presentationService, { PresentationConflictError } from '../../services/presentationService'
 import { isInsufficientCreditsError } from '../../services/creditsService'
 import {
@@ -20,6 +25,13 @@ import {
   toApiThemeId,
 } from '../../utils/presentationHelpers'
 
+const PPT_DAY_BACKGROUNDS = {
+  morning: pptBgMorning,
+  afternoon: pptBgAfternoon,
+  evening: pptBgEvening,
+  night: pptBgNight,
+}
+
 export default function AIPptGenerator({
   onBack,
   onComplete: _onComplete,
@@ -28,6 +40,7 @@ export default function AIPptGenerator({
   initialWorkspaceId,
   initialFolderId,
 }) {
+  const promptDaypart = usePptDaypart()
   const preferredWorkspaceId =
     initialWorkspaceId ||
     createContext?.workspaceId ||
@@ -160,10 +173,15 @@ export default function AIPptGenerator({
   }
 
   const showHistorySidebar = stage === 'preview' || (stage === 'wizard' && wizardStep === 1)
+  const isDayPage = stage === 'wizard' && wizardStep === 1
+  const dayBackground = PPT_DAY_BACKGROUNDS[promptDaypart] || PPT_DAY_BACKGROUNDS.afternoon
 
   return (
-    <div className={`aig-container ${showHistorySidebar ? 'aig-container--with-history' : ''}`}>
-      {stage !== 'editor' && (
+    <div
+      className={`aig-container ${showHistorySidebar ? 'aig-container--with-history' : ''} ${isDayPage ? `aig-container--daypart aig-container--${promptDaypart}` : ''}`}
+      style={isDayPage ? { backgroundImage: `url(${dayBackground})` } : undefined}
+    >
+      {stage !== 'editor' && !isDayPage && (
         <>
           <div className="aig-bg-sky">
             <div className="aig-bg-wave aig-bg-wave-1"></div>
@@ -180,13 +198,15 @@ export default function AIPptGenerator({
             <img src={customFloat3} className="aig-float-img img-7" alt="" aria-hidden="true" />
             <img src={customFloat4} className="aig-float-img img-8" alt="" aria-hidden="true" />
           </div>
-          <img
-            src={aiMascot}
-            alt=""
-            className="aig-mascot-slide"
-            aria-hidden="true"
-          />
         </>
+      )}
+      {stage !== 'editor' && (
+        <img
+          src={aiMascot}
+          alt=""
+          className="aig-mascot-slide"
+          aria-hidden="true"
+        />
       )}
 
       {showHistorySidebar && (
