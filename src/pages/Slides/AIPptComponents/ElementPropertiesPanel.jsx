@@ -73,9 +73,10 @@ export default function ElementPropertiesPanel({
           <div className="ppt-element-props-color">
             <span className="ppt-element-props-field">Color</span>
             <ColorFillPicker
+              key={element.id}
               inline
               title="Text color"
-              value={contentFillValue(c, palette)}
+              value={contentFillValue(c, palette, element.id)}
               palette={palette}
               disabled={disabled}
               fallbackHex="#0F172A"

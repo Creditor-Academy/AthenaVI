@@ -48,7 +48,7 @@ export default function ElementToolbar({
   if (!element || (element.type !== 'text' && element.type !== 'textbox')) return null
 
   const c = element.content || {}
-  const fill = contentFillValue(c, palette)
+  const fill = contentFillValue(c, palette, element.id)
   const isPanel = variant === 'panel'
 
   const patch = (updates) => {
@@ -147,6 +147,7 @@ export default function ElementToolbar({
 
       <div className="ppt-element-toolbar-color" title="Text color">
         <ColorFillPicker
+          key={element.id}
           compact
           title="Text color"
           value={fill}

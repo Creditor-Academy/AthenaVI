@@ -505,8 +505,21 @@ export function resolveTextHex(content, palette, fallback = '#0F172A') {
   return cssColorToHex(resolved, fallback)
 }
 
-export function contentFillValue(content, palette) {
+export function contentFillValue(content, palette, elementId) {
   const c = content || {}
+  const range = elementId ? getPptTextSelection() : null
+  if (range && range.elementId === elementId && range.end > range.start) {
+    let cursor = 0
+    for (const run of expandRuns(c)) {
+      const next = cursor + (run.text || '').length
+      if (range.start < next && range.end > cursor) {
+        const fill = runFill(run, null)
+        if (fill) return fill
+        break
+      }
+      cursor = next
+    }
+  }
   if (isGradientFill(c.fill)) return c.fill
   const run = Array.isArray(c.runs) ? c.runs.find((item) => item?.fill || item?.color) : null
   if (isGradientFill(run?.fill)) return run.fill

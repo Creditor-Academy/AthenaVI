@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { FiMinus, FiPlus } from 'react-icons/fi'
 import { cssGradientFromFill, resolveFillCss } from '../../../../utils/presentationHelpers'
-import { cssColorToHex, normalizeFillValue } from '../../../../utils/pptTextContent'
+import { cssColorToHex, getPptTextSelection, normalizeFillValue } from '../../../../utils/pptTextContent'
 import './insertPanels.css'
 
 const GRADIENT_PRESETS = [
@@ -75,21 +75,40 @@ function SolidSwatch({ color, active, disabled, onPick }) {
   )
 }
 
+function ColorDot({ value, disabled, onChange, title }) {
+  return (
+    <label className="ppt-fill-picker-color-dot" title={title}>
+      <span className="ppt-fill-picker-color-dot-face" style={{ background: value }} />
+      <input
+        type="color"
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+      />
+    </label>
+  )
+}
+
 function FillPickerBody({
   fill,
   css,
   palette,
   disabled,
   fallbackHex,
+  tab,
+  onTab,
   emit,
   setSolid,
   setGradient,
   updateStop,
 }) {
-  const tab = fill.type === 'gradient' ? 'gradient' : 'solid'
   const themeColors = themeSolids(palette)
-  const solidHex = hexForInput(fill.color || fill.stops?.[0]?.color, fallbackHex)
-  const currentSolid = (fill.color || '').toLowerCase()
+  const gradient = toGradient(fill)
+  const solidHex = hexForInput(fill.color || gradient.stops?.[0]?.color, fallbackHex)
+  const currentSolid = (fill.type === 'solid' ? fill.color || '' : '').toLowerCase()
+  const stops = gradient.stops || []
+  const isRadial = (fill.type === 'gradient' ? fill.kind : gradient.kind) === 'radial'
+  const angle = fill.type === 'gradient' ? fill.angle : gradient.angle
 
   return (
     <>
@@ -97,14 +116,14 @@ function FillPickerBody({
         <button
           type="button"
           className={tab === 'solid' ? 'is-active' : ''}
-          onClick={() => setSolid(solidHex)}
+          onClick={() => onTab('solid')}
         >
           Solid
         </button>
         <button
           type="button"
           className={tab === 'gradient' ? 'is-active' : ''}
-          onClick={() => setGradient(toGradient(fill))}
+          onClick={() => onTab('gradient')}
         >
           Gradient
         </button>
@@ -141,16 +160,16 @@ function FillPickerBody({
             ))}
           </div>
           <div className="ppt-fill-picker-solid">
-            <input
-              type="color"
+            <ColorDot
               value={solidHex}
               disabled={disabled}
-              onChange={(e) => setSolid(e.target.value)}
+              title="Custom color"
+              onChange={setSolid}
             />
             <input
               type="text"
               className="ppt-fill-picker-hex"
-              value={fill.color || solidHex}
+              value={fill.type === 'solid' ? fill.color || solidHex : solidHex}
               disabled={disabled}
               onChange={(e) => {
                 const next = e.target.value.trim()
@@ -161,54 +180,54 @@ function FillPickerBody({
         </div>
       ) : (
         <>
-          <div className="ppt-fill-picker-preview" style={{ background: css }} />
+          <div className="ppt-fill-picker-preview" style={{ background: cssGradientFromFill(gradient, palette) }} />
           <div className="ppt-fill-picker-tabs ppt-fill-picker-tabs--sub">
             <button
               type="button"
-              className={fill.kind !== 'radial' ? 'is-active' : ''}
+              className={!isRadial ? 'is-active' : ''}
               onClick={() => setGradient({ kind: 'linear' })}
             >
               Linear
             </button>
             <button
               type="button"
-              className={fill.kind === 'radial' ? 'is-active' : ''}
+              className={isRadial ? 'is-active' : ''}
               onClick={() => setGradient({ kind: 'radial' })}
             >
               Radial
             </button>
           </div>
-          {fill.kind !== 'radial' && (
+          {!isRadial && (
             <label className="ppt-fill-picker-angle">
               Angle
               <input
                 type="range"
                 min={0}
                 max={360}
-                value={fill.angle ?? 90}
+                value={angle ?? 90}
                 disabled={disabled}
                 onChange={(e) => setGradient({ angle: Number(e.target.value) })}
               />
-              <span>{Math.round(fill.angle ?? 90)}°</span>
+              <span>{Math.round(angle ?? 90)}°</span>
             </label>
           )}
           <div className="ppt-fill-picker-stops">
-            {(fill.stops || []).map((stop, i) => (
+            {stops.map((stop, i) => (
               <div key={i} className="ppt-fill-picker-stop">
-                <input
-                  type="color"
+                <ColorDot
                   value={hexForInput(stop.color, fallbackHex)}
                   disabled={disabled}
-                  onChange={(e) => updateStop(i, { color: e.target.value })}
+                  title={`Stop ${i + 1}`}
+                  onChange={(color) => updateStop(i, { color })}
                 />
-                {fill.stops.length > 2 && (
+                {stops.length > 2 && (
                   <button
                     type="button"
                     className="ppt-fill-picker-icon-btn"
                     title="Remove stop"
                     disabled={disabled}
                     onClick={() =>
-                      setGradient({ stops: fill.stops.filter((_, idx) => idx !== i) })
+                      setGradient({ stops: stops.filter((_, idx) => idx !== i) })
                     }
                   >
                     <FiMinus size={12} />
@@ -216,7 +235,7 @@ function FillPickerBody({
                 )}
               </div>
             ))}
-            {fill.stops.length < 4 && (
+            {stops.length < 4 && (
               <button
                 type="button"
                 className="ppt-fill-picker-icon-btn"
@@ -225,9 +244,9 @@ function FillPickerBody({
                 onClick={() =>
                   setGradient({
                     stops: [
-                      ...fill.stops,
+                      ...stops,
                       {
-                        color: fill.stops[fill.stops.length - 1]?.color || '#EC4899',
+                        color: stops[stops.length - 1]?.color || '#EC4899',
                         at: 1,
                       },
                     ].map((stop, i, all) => ({
@@ -253,7 +272,10 @@ function FillPickerBody({
                   title="Gradient preset"
                   disabled={disabled}
                   style={{ background: cssGradientFromFill(next, palette) }}
-                  onClick={() => emit(next)}
+                  onClick={() => {
+                    onTab('gradient')
+                    emit(next)
+                  }}
                 />
               )
             })}
@@ -278,6 +300,9 @@ export default function ColorFillPicker({
   const popRef = useRef(null)
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState({ top: 8, left: 8 })
+  const [tab, setTab] = useState(() =>
+    value && typeof value === 'object' && value.type === 'gradient' ? 'gradient' : 'solid'
+  )
   const fill = useMemo(() => normalizeFillValue(value, fallbackHex), [value, fallbackHex])
   const css = resolveFillCss(fill, palette, fallbackHex)
 
@@ -322,10 +347,14 @@ export default function ColorFillPicker({
 
   const emit = (next) => onChange?.(next)
 
-  const setSolid = (color) => emit({ type: 'solid', color })
+  const setSolid = (color) => {
+    setTab('solid')
+    emit({ type: 'solid', color })
+  }
 
   const setGradient = (patch) => {
     const base = toGradient(fill)
+    setTab('gradient')
     emit({ ...base, ...patch, type: 'gradient' })
   }
 
@@ -342,6 +371,8 @@ export default function ColorFillPicker({
       palette={palette}
       disabled={disabled}
       fallbackHex={fallbackHex}
+      tab={tab}
+      onTab={setTab}
       emit={emit}
       setSolid={setSolid}
       setGradient={setGradient}
@@ -383,6 +414,8 @@ export default function ColorFillPicker({
             return
           }
           placePopover(e.currentTarget)
+          const range = getPptTextSelection()
+          if (range && range.end > range.start) setTab('solid')
           setOpen(true)
         }}
       />
