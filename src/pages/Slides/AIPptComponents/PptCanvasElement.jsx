@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { FiCode } from 'react-icons/fi'
 import PptChartRenderer, { getEmbedIframeUrl } from './PptChartRenderer'
 import ExternalLinkHoverLayer from './ExternalLinkHoverLayer'
@@ -13,6 +13,7 @@ import {
 import { getListMarker, splitTextLines, stripLeadingListMarkers } from '../../../utils/textListUtils'
 import { measureTextContentSize } from '../../../utils/canvasTransformUtils'
 import {
+  collapseDuplicatedRuns,
   contentPlainText,
   contentUsesFullRuns,
   getPptTextSelection,
@@ -63,13 +64,13 @@ function RichTextDisplay({ runs, palette, baseStyle = {} }) {
   if (!Array.isArray(runs) || !runs.length) return null
   const fallback = baseStyle.color || '#0F172A'
   return (
-    <>
+    <span className="ppt-rich-text">
       {runs.map((run, i) => (
         <span key={i} style={runPaintStyle(run, palette, fallback)}>
           {run.text}
         </span>
       ))}
-    </>
+    </span>
   )
 }
 
@@ -123,6 +124,7 @@ function EditableText({
   useEffect(() => {
     if (!editing || !ref.current) {
       wasEditingRef.current = false
+      liveRunsRef.current = null
       return
     }
     const node = ref.current
@@ -133,10 +135,16 @@ function EditableText({
       typedRef.current = false
       startTextRef.current = plainText
       liveTextRef.current = plainText
+      liveRunsRef.current = null
+      selRef.current = null
     }
     seedEditableNode(
       node,
-      { ...c, text: liveTextRef.current || plainText, runs: c.runs },
+      {
+        ...c,
+        text: liveTextRef.current || plainText,
+        runs: justStarted ? collapseDuplicatedRuns(c) : c.runs,
+      },
       palette
     )
     liveRunsRef.current = serializeEditableRuns(node)
@@ -159,17 +167,6 @@ function EditableText({
       }
     }
   }, [editing, runsSig])
-
-  useLayoutEffect(() => {
-    if (!editing || !ref.current) return
-    const node = ref.current
-    const live = liveTextRef.current
-    if (!live) return
-    const shown = node.innerText || ''
-    if (!shown || shown.length < live.length) {
-      seedEditableNode(node, { ...c, text: live, runs: liveRunsRef.current }, palette)
-    }
-  })
 
   useEffect(() => {
     if (!editing) return undefined
@@ -199,7 +196,8 @@ function EditableText({
     .filter(Boolean)
     .join(' ')
   const cursor = editing ? 'text' : selected && editable ? 'default' : editable ? 'pointer' : undefined
-  const usesRuns = contentUsesFullRuns(c)
+  const paintRuns = collapseDuplicatedRuns(c)
+  const usesRuns = contentUsesFullRuns({ ...c, runs: paintRuns })
   const boxPaint =
     !usesRuns && isGradientFill(c.fill) ? textPaintStyle(c.fill, palette, color) : { color }
 
@@ -222,6 +220,7 @@ function EditableText({
     maxWidth: '100%',
     minHeight: '1em',
     cursor,
+    display: 'block',
     padding:
       c.padding != null
         ? `${c.padding}px ${c.paddingX != null ? c.paddingX : c.padding}px`
@@ -230,22 +229,26 @@ function EditableText({
       ? {
           height: 'auto',
           overflow: 'visible',
-          display: 'block',
           caretColor: color,
           WebkitTextFillColor: unsetIfRuns(usesRuns, boxPaint),
         }
       : {
-          height: '100%',
+          height: 'auto',
           overflow: 'visible',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent:
-            c.verticalAlign === 'center'
-              ? 'center'
-              : c.verticalAlign === 'flex-end'
-                ? 'flex-end'
-                : 'flex-start',
         }),
+  }
+
+  const wrapStyle = {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent:
+      c.verticalAlign === 'center'
+        ? 'center'
+        : c.verticalAlign === 'flex-end'
+          ? 'flex-end'
+          : 'flex-start',
   }
 
   const finishEdit = (node) => {
@@ -253,11 +256,12 @@ function EditableText({
     endedRef.current = true
     selRef.current = null
     setPptTextSelection(null)
-    const runs = serializeEditableRuns(node)
+    const serialized = serializeEditableRuns(node)
     let text = readEditableText(node, c.listType, liveTextRef.current || plainText)
     if (!String(text).trim() && String(startTextRef.current).trim() && !typedRef.current) {
       text = startTextRef.current
     }
+    const runs = collapseDuplicatedRuns({ text, runs: serialized })
     const changed = text !== startTextRef.current
     if (changed) syncHeight({ commit: true, allowShrink: true })
     onEndEdit?.(text, runs)
@@ -282,30 +286,33 @@ function EditableText({
 
   if (editing) {
     return (
-      <div
-        ref={ref}
-        className="ppt-text-editable"
-        contentEditable
-        suppressContentEditableWarning
-        style={textStyle}
-        onPointerDown={(e) => editable && e.stopPropagation()}
-        onInput={(e) => {
-          typedRef.current = true
-          liveTextRef.current = e.currentTarget.innerText ?? ''
-          liveRunsRef.current = serializeEditableRuns(e.currentTarget)
-          cancelAnimationFrame(measureRaf.current)
-          measureRaf.current = requestAnimationFrame(() => {
-            syncHeight({ commit: false, allowShrink: true })
-          })
-        }}
-        onKeyDown={(e) => {
-          e.stopPropagation()
-          if (e.key === 'Escape') {
-            e.preventDefault()
-            finishEdit(ref.current)
-          }
-        }}
-      />
+      <div style={wrapStyle}>
+        <div
+          key="ppt-text-edit"
+          ref={ref}
+          className="ppt-text-editable"
+          contentEditable
+          suppressContentEditableWarning
+          style={textStyle}
+          onPointerDown={(e) => editable && e.stopPropagation()}
+          onInput={(e) => {
+            typedRef.current = true
+            liveTextRef.current = e.currentTarget.innerText ?? ''
+            liveRunsRef.current = serializeEditableRuns(e.currentTarget)
+            cancelAnimationFrame(measureRaf.current)
+            measureRaf.current = requestAnimationFrame(() => {
+              syncHeight({ commit: false, allowShrink: true })
+            })
+          }}
+          onKeyDown={(e) => {
+            e.stopPropagation()
+            if (e.key === 'Escape') {
+              e.preventDefault()
+              finishEdit(ref.current)
+            }
+          }}
+        />
+      </div>
     )
   }
 
@@ -319,25 +326,28 @@ function EditableText({
     .join(' ')
 
   return (
-    <div
-      ref={ref}
-      className={className}
-      style={textStyle}
-      onPointerDown={(e) => editable && e.stopPropagation()}
-      onDoubleClick={(e) => {
-        if (editable) {
-          e.stopPropagation()
-          onStartEdit?.()
-        }
-      }}
-    >
-      {c.listType && (c.text || plainText) ? (
-        <TextListDisplay text={plainText || c.text} listType={c.listType} />
-      ) : usesRuns ? (
-        <RichTextDisplay runs={c.runs} palette={palette} baseStyle={textStyle} />
-      ) : (
-        displayText
-      )}
+    <div style={wrapStyle}>
+      <div
+        key="ppt-text-view"
+        ref={ref}
+        className={className}
+        style={textStyle}
+        onPointerDown={(e) => editable && e.stopPropagation()}
+        onDoubleClick={(e) => {
+          if (editable) {
+            e.stopPropagation()
+            onStartEdit?.()
+          }
+        }}
+      >
+        {c.listType && (c.text || plainText) ? (
+          <TextListDisplay text={plainText || c.text} listType={c.listType} />
+        ) : usesRuns ? (
+          <RichTextDisplay runs={paintRuns} palette={palette} baseStyle={textStyle} />
+        ) : (
+          displayText
+        )}
+      </div>
     </div>
   )
 }

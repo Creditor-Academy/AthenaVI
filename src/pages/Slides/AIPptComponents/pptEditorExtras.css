@@ -115,6 +115,16 @@
   background-repeat: no-repeat;
 }
 
+.ppt-rich-text {
+  display: block;
+  width: 100%;
+}
+
+.ppt-rich-text > span {
+  display: inline;
+  white-space: inherit;
+}
+
 .ppt-text-display ::selection,
 .ppt-text-editable ::selection {
   background: rgba(59, 130, 246, 0.28);

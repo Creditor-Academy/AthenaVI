@@ -161,11 +161,45 @@ export function mergeAdjacentRuns(runs) {
   return out
 }
 
+export function sliceRunsToLength(runs, length) {
+  const out = []
+  let cursor = 0
+  const max = Math.max(0, Number(length) || 0)
+  for (const run of runs || []) {
+    if (cursor >= max) break
+    const text = run?.text || ''
+    const take = Math.min(text.length, max - cursor)
+    if (take > 0) out.push({ ...run, text: text.slice(0, take) })
+    cursor += text.length
+  }
+  return mergeAdjacentRuns(out)
+}
+
+/** Drop a second pasted copy of the same heading (DOM leftover / double-seed). */
+export function collapseDuplicatedRuns(content) {
+  const c = content || {}
+  const runs = Array.isArray(c.runs) ? c.runs : []
+  if (!runs.length) return runs
+  const joined = joinedRunText(c)
+  const text = String(c.text || '')
+  if (text && joined.length > text.length && joined.startsWith(text)) {
+    return sliceRunsToLength(runs, text.length)
+  }
+  if (joined.length >= 4 && joined.length % 2 === 0) {
+    const half = joined.length / 2
+    if (joined.slice(0, half) === joined.slice(half)) {
+      return sliceRunsToLength(runs, half)
+    }
+  }
+  return runs
+}
+
 export function expandRuns(content) {
   const c = content || {}
   const text = contentPlainText(c)
-  if (contentUsesFullRuns(c)) {
-    return c.runs.map((run) => ({ ...run, text: run?.text || '' }))
+  const runs = collapseDuplicatedRuns(c)
+  if (contentUsesFullRuns({ ...c, runs }) && runs.length) {
+    return runs.map((run) => ({ ...run, text: run?.text || '' }))
   }
   const fill = c.fill || (c.color ? { type: 'solid', color: c.color } : null)
   return [
@@ -370,6 +404,7 @@ export function serializeEditableRuns(node) {
 
 export function seedEditableNode(node, content, palette) {
   if (!node) return
+  node.innerHTML = ''
   node.replaceChildren()
   const runs = expandRuns(content)
   const fallback = normalizeFillValue(content?.fill || content?.color || '#0F172A')
