@@ -13,6 +13,8 @@ import {
 } from 'react-icons/fi'
 import { MdFormatListBulleted, MdFormatListNumbered, MdStrikethroughS } from 'react-icons/md'
 import { stripLeadingListMarkers } from '../../../../utils/textListUtils'
+import { applyElementTextFill, contentFillValue, contentPlainText, contentWithSyncedText } from '../../../../utils/pptTextContent'
+import ColorFillPicker from './ColorFillPicker'
 import './insertPanels.css'
 
 const LIST_STYLE_OPTIONS = [
@@ -43,10 +45,10 @@ export default function ElementToolbar({
   disabled = false,
   variant = 'floating',
 }) {
-  if (!element || element.type !== 'text') return null
+  if (!element || (element.type !== 'text' && element.type !== 'textbox')) return null
 
   const c = element.content || {}
-  const color = c.color || palette?.text || '#0F172A'
+  const fill = contentFillValue(c, palette)
   const isPanel = variant === 'panel'
 
   const patch = (updates) => {
@@ -60,8 +62,8 @@ export default function ElementToolbar({
 
   const toggleList = (listType) => {
     const next = c.listType === listType ? null : listType
-    const text = next ? stripLeadingListMarkers(c.text) : c.text
-    patch({ listType: next, text })
+    const text = next ? stripLeadingListMarkers(contentPlainText(c)) : contentPlainText(c)
+    onChange?.({ ...contentWithSyncedText(c, text), listType: next })
   }
 
   return (
@@ -143,14 +145,16 @@ export default function ElementToolbar({
 
       <span className="ppt-element-toolbar-divider" />
 
-      <label className="ppt-element-toolbar-color" title="Text color">
-        <input
-          type="color"
-          value={String(color).startsWith('#') ? color : '#0F172A'}
+      <div className="ppt-element-toolbar-color" title="Text color">
+        <ColorFillPicker
+          compact
+          title="Text color"
+          value={fill}
+          palette={palette}
           disabled={disabled}
-          onChange={(e) => patch({ color: e.target.value })}
+          onChange={(nextFill) => onChange?.(applyElementTextFill(element, nextFill))}
         />
-      </label>
+      </div>
 
       <span className="ppt-element-toolbar-divider" />
 

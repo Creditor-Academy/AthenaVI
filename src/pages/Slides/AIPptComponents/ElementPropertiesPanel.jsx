@@ -1,5 +1,28 @@
 import { FiLock, FiUnlock } from 'react-icons/fi'
+import { measureTextContentSize } from '../../../utils/canvasTransformUtils'
+import {
+  applyElementTextFill,
+  contentFillValue,
+  contentPlainText,
+  contentWithSyncedText,
+  normalizeFillValue,
+} from '../../../utils/pptTextContent'
+import ColorFillPicker from './insert/ColorFillPicker'
 import './pptEditorExtras.css'
+
+const TEXT_TYPES = new Set(['text', 'textbox'])
+
+function fitPlacementHeightToDom(element) {
+  const frame = document.querySelector(`[data-element-id="${element.id}"]`)
+  if (!frame) return null
+  const textEl =
+    frame.querySelector('.ppt-text-display, .ppt-text-editable') || frame
+  const measured = measureTextContentSize(textEl, { paddingX: 0, paddingY: 4 })
+  if (!measured) return null
+  const framePx = frame.getBoundingClientRect().height || 1
+  const current = Number(element.placement?.height) || 40
+  return Math.max(24, Math.round((measured.height / framePx) * current))
+}
 
 /**
  * Selected-element property controls (opacity, borders, corners, colors).
@@ -21,6 +44,7 @@ export default function ElementPropertiesPanel({
   const p = element.placement || {}
   const c = element.content || {}
   const opacity = p.opacity != null ? Math.round(p.opacity * 100) : 100
+  const isText = TEXT_TYPES.has(element.type)
 
   const patchContent = (updates) => onChangeContent?.({ ...c, ...updates })
   const patchPlacement = (updates) =>
@@ -32,6 +56,48 @@ export default function ElementPropertiesPanel({
         <span>Type</span>
         <strong>{element.type}</strong>
       </div>
+
+      {isText && (
+        <>
+          <label className="ppt-element-props-field" htmlFor={`ppt-el-text-${element.id}`}>
+            Text
+          </label>
+          <textarea
+            id={`ppt-el-text-${element.id}`}
+            className="ppt-element-props-textarea"
+            rows={5}
+            value={contentPlainText(c)}
+            disabled={disabled}
+            onChange={(e) => onChangeContent?.(contentWithSyncedText(c, e.target.value))}
+          />
+          <div className="ppt-element-props-color">
+            <span className="ppt-element-props-field">Color</span>
+            <ColorFillPicker
+              inline
+              title="Text color"
+              value={contentFillValue(c, palette)}
+              palette={palette}
+              disabled={disabled}
+              fallbackHex="#0F172A"
+              onChange={(fill) => onChangeContent?.(applyElementTextFill(element, fill))}
+            />
+            <p className="ppt-fill-hint">
+              Highlight words on the slide to recolor only those words. With no selection, the whole text box changes.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="ppt-slide-panel-btn ppt-slide-panel-btn--block"
+            disabled={disabled}
+            onClick={() => {
+              const nextH = fitPlacementHeightToDom(element)
+              if (nextH) patchPlacement({ height: nextH })
+            }}
+          >
+            Fit box to text
+          </button>
+        </>
+      )}
 
       <div className="ppt-element-props-row">
         <span>Opacity</span>
@@ -58,11 +124,16 @@ export default function ElementPropertiesPanel({
         <>
           <div className="ppt-element-props-row">
             <span>Fill / border</span>
-            <input
-              type="color"
-              value={String(c.fill || c.stroke || '#94a3b8').startsWith('#') ? c.fill || c.stroke : '#94a3b8'}
+            <ColorFillPicker
+              title="Fill color"
+              value={normalizeFillValue(c.fill || c.stroke, '#94a3b8')}
+              palette={palette}
               disabled={disabled}
-              onChange={(e) => patchContent({ fill: e.target.value, stroke: e.target.value })}
+              fallbackHex="#94a3b8"
+              onChange={(fill) => {
+                const stroke = fill?.type === 'gradient' ? fill.stops?.[0]?.color : fill?.color
+                patchContent({ fill, stroke })
+              }}
             />
           </div>
           <div className="ppt-element-props-row">
@@ -90,7 +161,7 @@ export default function ElementPropertiesPanel({
         </>
       )}
 
-      {element.type === 'text' && (
+      {isText && (
         <div className="ppt-element-props-row">
           <span>Wrap text</span>
           <select

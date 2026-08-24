@@ -1,5 +1,6 @@
 /** SVG chart renderer for PPT canvas elements. */
 
+import { resolveFillCss } from '../../../utils/presentationHelpers'
 import { normalizeChartContent } from '../../../utils/chartContentNormalize'
 
 function normalizeChartType(chartType) {
@@ -9,13 +10,31 @@ function normalizeChartType(chartType) {
 }
 
 function resolveColor(col, palette, fallback) {
-  if (!col) return fallback
-  if (String(col).startsWith('#') || String(col).startsWith('rgb') || String(col).startsWith('color-mix')) {
-    return col
+  if (col && typeof col === 'object') {
+    return resolveFillCss(col, palette, fallback)
   }
-  const role = String(col).toLowerCase()
+  if (!col) return fallback
+  const raw = String(col)
+  if (
+    raw.startsWith('#') ||
+    raw.startsWith('rgb') ||
+    raw.startsWith('hsl') ||
+    raw.startsWith('color-mix') ||
+    raw.includes('gradient')
+  ) {
+    return raw
+  }
+  const role = raw.toLowerCase()
   if (palette?.[role]) return palette[role]
   return fallback
+}
+
+function svgSafeFill(css, fallback) {
+  if (!css || /gradient/i.test(String(css))) {
+    const match = String(css || '').match(/#[0-9a-fA-F]{3,8}/)
+    return match ? match[0] : fallback
+  }
+  return css
 }
 
 function getSeriesData(content) {
@@ -117,7 +136,7 @@ function LineChart({ values, labels, colors, palette, premium }) {
           ))}
         <polyline
           fill="none"
-          stroke={color}
+          stroke={svgSafeFill(color, '#475569')}
           strokeWidth={premium ? 2.2 : 2.5}
           points={pts}
           vectorEffect="non-scaling-stroke"
@@ -126,7 +145,7 @@ function LineChart({ values, labels, colors, palette, premium }) {
           values.map((v, i) => {
             const x = 4 + (i / Math.max(values.length - 1, 1)) * 92
             const y = 94 - ((Number(v) - min) / range) * 82
-            return <circle key={i} cx={x} cy={y} r={1.8} fill={color} />
+            return <circle key={i} cx={x} cy={y} r={1.8} fill={svgSafeFill(color, '#475569')} />
           })}
       </svg>
       {premium && labels?.length > 0 && (
@@ -168,7 +187,7 @@ function PieChart({ values, colors, palette, labels = [], donut = false, showLeg
         <path
           key={i}
           d={`M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} L ${ix2} ${iy2} A ${ir} ${ir} 0 ${large} 0 ${ix1} ${iy1} Z`}
-          fill={fill}
+          fill={svgSafeFill(fill, '#64748b')}
         />
       )
     }
@@ -176,7 +195,7 @@ function PieChart({ values, colors, palette, labels = [], donut = false, showLeg
       <path
         key={i}
         d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`}
-        fill={fill}
+        fill={svgSafeFill(fill, '#64748b')}
       />
     )
   })

@@ -34,6 +34,7 @@ export { PPT_SLIDE_TRANSITIONS }
 const DESIGN_PANEL_TITLES = {
   slide: 'Slide design',
   text: 'Text',
+  textbox: 'Text',
   image: 'Image',
   icon: 'Image',
   chart: 'Chart',

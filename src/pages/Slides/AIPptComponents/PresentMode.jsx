@@ -10,10 +10,15 @@ import {
   shapeElementUsesNativeStyle,
   resolveCanvasSize,
   resolveSlideStageBackground,
-  resolveThemeColor,
 } from '../../../utils/presentationHelpers'
 import { shouldPaintElement } from '../../../utils/canvasRenderDebug'
-import { PPT_SLIDE_TRANSITIONS } from './insert/EditorRightRail'
+import {
+  contentUsesFullRuns,
+  isGradientFill,
+  resolveTextHex,
+  runFill,
+  textPaintStyle,
+} from '../../../utils/pptTextContent'
 import './PresentMode.css'
 
 function PresentElement({ el, palette, canvasW, canvasH, focused }) {
@@ -32,9 +37,12 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
     outlineOffset: focused ? 4 : undefined,
   }
 
-  if (el.type === 'text') {
+  if (el.type === 'text' || el.type === 'textbox') {
     const c = el.content || {}
-    const color = resolveThemeColor(c.color || c.colorRole, palette, palette?.text || '#0F172A')
+    const color = resolveTextHex(c, palette, palette?.text || '#0F172A')
+    const usesRuns = contentUsesFullRuns(c)
+    const boxPaint =
+      !usesRuns && isGradientFill(c.fill) ? textPaintStyle(c.fill, palette, color) : { color }
     const baseStyle = {
       fontSize: c.fontSize ? `${Math.max(10, c.fontSize * 0.55)}px` : '18px',
       fontWeight: c.bold ? 700 : 400,
@@ -45,7 +53,7 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
       <div
         style={{
           ...style,
-          color,
+          ...boxPaint,
           ...baseStyle,
           textDecoration: [c.underline && 'underline', c.strikethrough && 'line-through']
             .filter(Boolean)
@@ -56,20 +64,23 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
           lineHeight: c.lineHeight ?? 1.25,
         }}
       >
-        {Array.isArray(c.runs) && c.runs.length
-          ? c.runs.map((run, i) => (
-              <span
-                key={i}
-                style={{
-                  color: resolveThemeColor(run.color || run.colorRole, palette, color),
-                  fontWeight: run.fontWeight ?? (run.bold ? 700 : baseStyle.fontWeight),
-                  fontStyle: run.italic ? 'italic' : baseStyle.fontStyle,
-                  fontFamily: run.fontFamily || baseStyle.fontFamily,
-                }}
-              >
-                {run.text}
-              </span>
-            ))
+        {usesRuns
+          ? c.runs.map((run, i) => {
+              const fill = runFill(run, { type: 'solid', color })
+              return (
+                <span
+                  key={i}
+                  style={{
+                    ...textPaintStyle(fill, palette, color),
+                    fontWeight: run.fontWeight ?? (run.bold ? 700 : baseStyle.fontWeight),
+                    fontStyle: run.italic ? 'italic' : baseStyle.fontStyle,
+                    fontFamily: run.fontFamily || baseStyle.fontFamily,
+                  }}
+                >
+                  {run.text}
+                </span>
+              )
+            })
           : c.text || ''}
       </div>
     )

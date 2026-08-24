@@ -116,7 +116,12 @@ function MinimapSlidePreview({
                   opacity: p.opacity,
                 })}
               >
-                <PptCanvasElement el={el} palette={palette} editable={false} />
+                <PptCanvasElement
+                  el={el}
+                  palette={palette}
+                  editable={false}
+                  canvasW={canvas.width}
+                />
               </div>
             )
           })

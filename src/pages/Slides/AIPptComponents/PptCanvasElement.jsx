@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { FiCode } from 'react-icons/fi'
 import PptChartRenderer, { getEmbedIframeUrl } from './PptChartRenderer'
 import ExternalLinkHoverLayer from './ExternalLinkHoverLayer'
@@ -11,6 +11,21 @@ import {
   shapeElementUsesNativeStyle,
 } from '../../../utils/presentationHelpers'
 import { getListMarker, splitTextLines, stripLeadingListMarkers } from '../../../utils/textListUtils'
+import { measureTextContentSize } from '../../../utils/canvasTransformUtils'
+import {
+  contentPlainText,
+  contentUsesFullRuns,
+  getPptTextSelection,
+  getTextOffsetsInNode,
+  isGradientFill,
+  resolveTextHex,
+  runFill,
+  seedEditableNode,
+  serializeEditableRuns,
+  setPptTextSelection,
+  setTextOffsetsInNode,
+  textPaintStyle,
+} from '../../../utils/pptTextContent'
 
 function TextListDisplay({ text, listType }) {
   const lines = splitTextLines(text)
@@ -33,29 +48,35 @@ function TextListDisplay({ text, listType }) {
   )
 }
 
+function runPaintStyle(run, palette, fallbackColor) {
+  const fill = runFill(run, { type: 'solid', color: fallbackColor })
+  const paint = textPaintStyle(fill, palette, fallbackColor)
+  return {
+    ...paint,
+    fontWeight: run.fontWeight ?? (run.bold ? 700 : undefined),
+    fontStyle: run.italic ? 'italic' : undefined,
+    fontFamily: run.fontFamily,
+  }
+}
+
 function RichTextDisplay({ runs, palette, baseStyle = {} }) {
   if (!Array.isArray(runs) || !runs.length) return null
+  const fallback = baseStyle.color || '#0F172A'
   return (
     <>
-      {runs.map((run, i) => {
-        const color = resolveThemeColor(run.color || run.colorRole, palette, baseStyle.color || '#0F172A')
-        const weight = run.fontWeight ?? (run.bold ? 700 : baseStyle.fontWeight || 400)
-        return (
-          <span
-            key={i}
-            style={{
-              color,
-              fontWeight: weight,
-              fontStyle: run.italic ? 'italic' : baseStyle.fontStyle || 'normal',
-              fontFamily: run.fontFamily || baseStyle.fontFamily,
-            }}
-          >
-            {run.text}
-          </span>
-        )
-      })}
+      {runs.map((run, i) => (
+        <span key={i} style={runPaintStyle(run, palette, fallback)}>
+          {run.text}
+        </span>
+      ))}
     </>
   )
+}
+
+function readEditableText(node, listType, fallback = '') {
+  let text = node?.innerText ?? fallback
+  if (listType) text = stripLeadingListMarkers(text)
+  return text
 }
 
 function EditableText({
@@ -63,55 +84,129 @@ function EditableText({
   palette,
   editable,
   editing,
+  selected,
+  elementId,
   onStartEdit,
   onEndEdit,
-  onChange,
+  onHeightChange,
   style,
-  autoFit = true,
 }) {
   const ref = useRef(null)
+  const measureRaf = useRef(null)
+  const endedRef = useRef(false)
+  const startTextRef = useRef('')
+  const liveTextRef = useRef('')
+  const liveRunsRef = useRef(null)
+  const typedRef = useRef(false)
+  const wasEditingRef = useRef(false)
+  const selRef = useRef(null)
+  const restoringSelRef = useRef(false)
   const c = content || {}
-  const baseFontSize = c.fontSize ? Math.max(12, Math.min(Number(c.fontSize), 120)) : 22
-  const [fitFontSize, setFitFontSize] = useState(baseFontSize)
+  const fontSize = Number(c.fontSize) > 0 ? Number(c.fontSize) : 22
+  const plainText = contentPlainText(c)
+  const runsSig = JSON.stringify({
+    runs: c.runs || null,
+    fill: c.fill || null,
+    color: c.color || null,
+  })
 
-  useLayoutEffect(() => {
-    if (editing || !autoFit || !ref.current) {
-      setFitFontSize(baseFontSize)
+  const syncHeight = useCallback(
+    ({ commit = false, allowShrink = false } = {}) => {
+      if (!ref.current || !onHeightChange) return
+      const measured = measureTextContentSize(ref.current, { paddingX: 0, paddingY: 4 })
+      if (!measured) return
+      onHeightChange(measured.height, { commit, allowShrink })
+    },
+    [onHeightChange]
+  )
+
+  useEffect(() => {
+    if (!editing || !ref.current) {
+      wasEditingRef.current = false
       return
     }
     const node = ref.current
-    let size = baseFontSize
-    node.style.fontSize = `${size}px`
-    const minSize = 12
-    while (size > minSize && node.scrollHeight > node.clientHeight + 2) {
-      size -= 1
-      node.style.fontSize = `${size}px`
+    const justStarted = !wasEditingRef.current
+    wasEditingRef.current = true
+    if (justStarted) {
+      endedRef.current = false
+      typedRef.current = false
+      startTextRef.current = plainText
+      liveTextRef.current = plainText
     }
-    setFitFontSize(size)
-  }, [c.text, baseFontSize, editing, autoFit, style?.height, style?.width])
-
-  useEffect(() => {
-    if (editing && ref.current) {
-      ref.current.focus()
+    seedEditableNode(
+      node,
+      { ...c, text: liveTextRef.current || plainText, runs: c.runs },
+      palette
+    )
+    liveRunsRef.current = serializeEditableRuns(node)
+    if (justStarted) {
+      node.focus()
       const range = document.createRange()
-      range.selectNodeContents(ref.current)
+      range.selectNodeContents(node)
       range.collapse(false)
       const sel = window.getSelection()
       sel?.removeAllRanges()
       sel?.addRange(range)
+    } else {
+      const keep = selRef.current || getPptTextSelection()
+      if (keep && keep.end > keep.start && (!keep.elementId || keep.elementId === elementId)) {
+        restoringSelRef.current = true
+        setTextOffsetsInNode(node, keep.start, keep.end)
+        requestAnimationFrame(() => {
+          restoringSelRef.current = false
+        })
+      }
     }
-  }, [editing])
+  }, [editing, runsSig])
 
-  const color = resolveThemeColor(c.color || c.colorRole, palette, '#0F172A')
+  useLayoutEffect(() => {
+    if (!editing || !ref.current) return
+    const node = ref.current
+    const live = liveTextRef.current
+    if (!live) return
+    const shown = node.innerText || ''
+    if (!shown || shown.length < live.length) {
+      seedEditableNode(node, { ...c, text: live, runs: liveRunsRef.current }, palette)
+    }
+  })
+
+  useEffect(() => {
+    if (!editing) return undefined
+    const onSel = () => {
+      if (restoringSelRef.current) return
+      const offsets = getTextOffsetsInNode(ref.current)
+      if (!offsets) return
+      if (offsets.end > offsets.start) {
+        selRef.current = offsets
+        setPptTextSelection({ elementId, ...offsets })
+      } else {
+        selRef.current = null
+        setPptTextSelection(null)
+      }
+    }
+    document.addEventListener('selectionchange', onSel)
+    return () => document.removeEventListener('selectionchange', onSel)
+  }, [editing, elementId])
+
+  useEffect(() => {
+    return () => cancelAnimationFrame(measureRaf.current)
+  }, [])
+
+  const color = resolveTextHex(c, palette)
   const weight = c.fontWeight || (c.bold ? 700 : 400)
   const decoration = [c.underline && 'underline', c.strikethrough && 'line-through']
     .filter(Boolean)
     .join(' ')
+  const cursor = editing ? 'text' : selected && editable ? 'default' : editable ? 'pointer' : undefined
+  const usesRuns = contentUsesFullRuns(c)
+  const boxPaint =
+    !usesRuns && isGradientFill(c.fill) ? textPaintStyle(c.fill, palette, color) : { color }
 
   const textStyle = {
     ...style,
-    color,
-    fontSize: `${fitFontSize}px`,
+    ...boxPaint,
+    fontSize: `${fontSize}px`,
     fontWeight: weight,
     fontStyle: c.italic ? 'italic' : 'normal',
     textDecoration: decoration || undefined,
@@ -120,20 +215,70 @@ function EditableText({
     textTransform: c.textTransform || undefined,
     letterSpacing: c.letterSpacing != null ? c.letterSpacing : undefined,
     whiteSpace: c.wrap === 'nowrap' ? 'nowrap' : 'pre-wrap',
+    wordBreak: c.wrap === 'nowrap' ? 'normal' : 'break-word',
     lineHeight: c.lineHeight != null ? c.lineHeight : 1.25,
-    overflow: 'hidden',
     boxSizing: 'border-box',
     width: '100%',
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent:
-      c.verticalAlign === 'center' ? 'center' : c.verticalAlign === 'flex-end' ? 'flex-end' : 'flex-start',
+    maxWidth: '100%',
+    minHeight: '1em',
+    cursor,
     padding:
       c.padding != null
         ? `${c.padding}px ${c.paddingX != null ? c.paddingX : c.padding}px`
         : undefined,
+    ...(editing
+      ? {
+          height: 'auto',
+          overflow: 'visible',
+          display: 'block',
+          caretColor: color,
+          WebkitTextFillColor: unsetIfRuns(usesRuns, boxPaint),
+        }
+      : {
+          height: '100%',
+          overflow: 'visible',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent:
+            c.verticalAlign === 'center'
+              ? 'center'
+              : c.verticalAlign === 'flex-end'
+                ? 'flex-end'
+                : 'flex-start',
+        }),
   }
+
+  const finishEdit = (node) => {
+    if (endedRef.current) return
+    endedRef.current = true
+    selRef.current = null
+    setPptTextSelection(null)
+    const runs = serializeEditableRuns(node)
+    let text = readEditableText(node, c.listType, liveTextRef.current || plainText)
+    if (!String(text).trim() && String(startTextRef.current).trim() && !typedRef.current) {
+      text = startTextRef.current
+    }
+    const changed = text !== startTextRef.current
+    if (changed) syncHeight({ commit: true, allowShrink: true })
+    onEndEdit?.(text, runs)
+  }
+
+  useEffect(() => {
+    if (!editing) return undefined
+    const onDown = (e) => {
+      if (ref.current?.contains(e.target)) return
+      if (
+        e.target.closest?.(
+          '.ppt-fill-picker, .ppt-fill-picker-pop, .ppt-element-toolbar, .ppt-design-toolbar-panel, .ppt-element-props-grid, .ppt-element-props-color'
+        )
+      ) {
+        return
+      }
+      finishEdit(ref.current)
+    }
+    document.addEventListener('pointerdown', onDown, true)
+    return () => document.removeEventListener('pointerdown', onDown, true)
+  }, [editing])
 
   if (editing) {
     return (
@@ -144,31 +289,39 @@ function EditableText({
         suppressContentEditableWarning
         style={textStyle}
         onPointerDown={(e) => editable && e.stopPropagation()}
-        onBlur={(e) => {
-          let text = e.currentTarget.innerText
-          if (c.listType) text = stripLeadingListMarkers(text)
-          onEndEdit?.(text)
+        onInput={(e) => {
+          typedRef.current = true
+          liveTextRef.current = e.currentTarget.innerText ?? ''
+          liveRunsRef.current = serializeEditableRuns(e.currentTarget)
+          cancelAnimationFrame(measureRaf.current)
+          measureRaf.current = requestAnimationFrame(() => {
+            syncHeight({ commit: false, allowShrink: true })
+          })
         }}
         onKeyDown={(e) => {
           e.stopPropagation()
           if (e.key === 'Escape') {
             e.preventDefault()
-            let text = ref.current?.innerText || c.text
-            if (c.listType) text = stripLeadingListMarkers(text)
-            onEndEdit?.(text)
+            finishEdit(ref.current)
           }
         }}
-      >
-        {c.text || ''}
-      </div>
+      />
     )
   }
 
-  const displayText = c.text || (editable ? 'Double-click to edit' : '')
+  const displayText = plainText || (editable ? 'Double-click to edit' : '')
+  const className = [
+    'ppt-text-display',
+    editable ? 'ppt-text-display--editable' : '',
+    selected && editable ? 'is-selected' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
 
   return (
     <div
-      className={editable ? 'ppt-text-display ppt-text-display--editable' : 'ppt-text-display'}
+      ref={ref}
+      className={className}
       style={textStyle}
       onPointerDown={(e) => editable && e.stopPropagation()}
       onDoubleClick={(e) => {
@@ -178,15 +331,20 @@ function EditableText({
         }
       }}
     >
-      {c.listType && c.text ? (
-        <TextListDisplay text={c.text} listType={c.listType} />
-      ) : Array.isArray(c.runs) && c.runs.length ? (
+      {c.listType && (c.text || plainText) ? (
+        <TextListDisplay text={plainText || c.text} listType={c.listType} />
+      ) : usesRuns ? (
         <RichTextDisplay runs={c.runs} palette={palette} baseStyle={textStyle} />
       ) : (
         displayText
       )}
     </div>
   )
+}
+
+function unsetIfRuns(usesRuns, boxPaint) {
+  if (usesRuns) return 'unset'
+  return boxPaint.WebkitTextFillColor
 }
 
 function EditableTable({ content, editable, onCellChange, onActivate, style }) {
@@ -237,9 +395,11 @@ export default function PptCanvasElement({
   el,
   palette,
   editable = false,
+  selected = false,
   editingText = false,
   onStartTextEdit,
   onEndTextEdit,
+  onHeightChange,
   onTableCellChange,
   onTableActivate,
   onImageAuthError,
@@ -256,10 +416,13 @@ export default function PptCanvasElement({
         content={el.content}
         palette={palette}
         editable={editable}
+        selected={selected}
         editing={editingText}
         onStartEdit={onStartTextEdit}
         onEndEdit={onEndTextEdit}
-        style={fillStyle}
+        elementId={el.id}
+        onHeightChange={onHeightChange}
+        style={{ width: '100%', maxWidth: '100%', minHeight: '1em', height: '100%' }}
       />
     )
   }

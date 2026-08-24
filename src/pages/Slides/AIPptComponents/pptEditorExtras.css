@@ -103,7 +103,23 @@
 }
 
 .ppt-text-display--editable {
-  cursor: text;
+  cursor: pointer;
+}
+
+.ppt-text-display--editable.is-selected {
+  cursor: default;
+}
+
+.ppt-text-display span,
+.ppt-text-editable span {
+  background-repeat: no-repeat;
+}
+
+.ppt-text-display ::selection,
+.ppt-text-editable ::selection {
+  background: rgba(59, 130, 246, 0.28);
+  color: inherit;
+  -webkit-text-fill-color: inherit;
 }
 
 .ppt-text-list {
@@ -140,15 +156,47 @@
 
 .ppt-text-editable {
   width: 100%;
-  height: 100%;
+  height: auto;
   outline: none;
   cursor: text;
   min-height: 1em;
+  user-select: text;
 }
 
 .ppt-text-editable:focus {
-  outline: 2px dashed rgba(59, 130, 246, 0.5);
-  outline-offset: 2px;
+  outline: none;
+}
+
+.ppt-text-drag {
+  position: absolute;
+  cursor: move;
+  touch-action: none;
+  z-index: 3;
+  pointer-events: auto;
+}
+
+.ppt-text-drag--top {
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+.ppt-text-drag--bottom {
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.ppt-text-drag--left {
+  top: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.ppt-text-drag--right {
+  top: 0;
+  bottom: 0;
+  right: 0;
 }
 
 .ppt-table-cell-input {
@@ -249,12 +297,17 @@
   pointer-events: none;
 }
 
+.is-editing-text,
+.is-editing-text .ppt-canvas-el-body {
+  overflow: visible;
+}
+
 .ppt-canvas-el-body .ppt-text-display,
 .ppt-canvas-el-body .ppt-text-display--editable,
 .ppt-canvas-el-body .ppt-text-editable,
 .ppt-canvas-el-body .ppt-table-cell-input {
   pointer-events: auto;
-  overflow: hidden;
+  overflow: visible;
   word-break: break-word;
 }
 
@@ -483,8 +536,35 @@
   font-size: 13px;
 }
 
-.ppt-element-props-row input[type='range'] {
-  flex: 1;
+.ppt-element-props-field {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.ppt-element-props-color {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ppt-element-props-textarea {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.4;
+  font-family: inherit;
+  color: #0f172a;
+  box-sizing: border-box;
+}
+
+.ppt-element-props-textarea:focus {
+  outline: none;
+  border-color: #c4b5fd;
 }
 
 .ppt-variables-list {

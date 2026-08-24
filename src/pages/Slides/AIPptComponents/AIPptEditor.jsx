@@ -29,6 +29,7 @@ import MinimapSlidePreview from './MinimapSlidePreview'
 import { usePptEditorHistory } from '../../../hooks/usePptEditorHistory'
 import { usePptElementMutations } from './usePptElementMutations'
 import { computePptSmartGuides } from '../../../utils/pptSmartGuides'
+import { exceedsDragThreshold } from '../../../utils/pointerDrag'
 import { useAuth } from '../../../contexts/AuthContext'
 import presentationService, {
   PresentationConflictError,
@@ -54,6 +55,7 @@ import {
   resolveCanvasSize,
   resolveSlideStageBackground,
   resolveThemeColor,
+  patchFromBackgroundFill,
   toApiThemeId,
   buildWizardThemeTokens,
 } from '../../../utils/presentationHelpers'
@@ -68,6 +70,7 @@ import {
   fetchLayoutSchemaMap,
   repairPresentationLayoutSlides,
 } from '../../../utils/layoutCanvasService'
+import { contentWithSyncedText, setPptTextSelection } from '../../../utils/pptTextContent'
 import { PPT_DEFAULT_PLACEMENTS } from '../../../constants/pptInsertCatalog'
 import { ensureThemeFontsLoaded, themeFontFamilies } from '../../../utils/googleFonts'
 import {
@@ -78,6 +81,19 @@ import './pptEditorExtras.css'
 import '../AIPptGenerator.css'
 
 const CANVAS_SAVE_DEBOUNCE_MS = 600
+const TEXT_BORDER_DRAG_PX = 8
+const TEXT_MIN_HEIGHT = 24
+
+function isTextElement(el) {
+  return el?.type === 'text' || el?.type === 'textbox'
+}
+
+function cssPxToCanvas(cssPx, stageEl, canvasSize) {
+  const rect = stageEl?.getBoundingClientRect()
+  if (!rect?.height) return cssPx
+  return (cssPx / rect.height) * canvasSize
+}
+
 const DEFAULT_SLIDE_BG = '#FFFFFF'
 const DEFAULT_TEXT_COLOR = '#0F172A'
 
@@ -150,6 +166,7 @@ function InteractiveElementShell({
   selected,
   editable,
   locked,
+  editing,
   stageRef,
   allElements,
   onSelect,
@@ -162,11 +179,16 @@ function InteractiveElementShell({
   const p = el.placement || {}
   const dragRef = useRef(null)
   const lastPlacementRef = useRef(null)
+  const isText = isTextElement(el)
 
   useEffect(() => {
     const onMove = (e) => {
       const drag = dragRef.current
       if (!drag || !stageRef?.current || locked) return
+      if (drag.mode === 'move' && !drag.moved) {
+        if (!exceedsDragThreshold(drag.startClientX, drag.startClientY, e.clientX, e.clientY)) return
+        drag.moved = true
+      }
       const pt = pointerToCanvas(e.clientX, e.clientY, stageRef.current, canvasW, canvasH)
       const dx = pt.x - drag.originX
       const dy = pt.y - drag.originY
@@ -192,7 +214,7 @@ function InteractiveElementShell({
         onGuidesChange?.(guides)
       } else if (drag.mode === 'resize') {
         next.width = clamp(start.width + dx, 40, canvasW - start.x)
-        next.height = clamp(start.height + dy, 24, canvasH - start.y)
+        next.height = clamp(start.height + dy, TEXT_MIN_HEIGHT, canvasH - start.y)
       }
 
       lastPlacementRef.current = next
@@ -204,6 +226,7 @@ function InteractiveElementShell({
       if (!drag) return
       dragRef.current = null
       onGuidesChange?.([])
+      if (!drag.moved) return
       onPlacementCommit?.(el.id, lastPlacementRef.current || drag.startPlacement)
     }
 
@@ -218,7 +241,7 @@ function InteractiveElementShell({
   }, [canvasW, canvasH, el.id, allElements, locked, onGuidesChange, onPlacementCommit, onPlacementLive, stageRef])
 
   const beginDrag = (e, mode) => {
-    if (!editable || !selected || !stageRef?.current || locked) return
+    if (!editable || !selected || !stageRef?.current || locked || editing) return
     e.preventDefault()
     e.stopPropagation()
     const origin = pointerToCanvas(
@@ -241,7 +264,10 @@ function InteractiveElementShell({
       mode,
       originX: origin.x,
       originY: origin.y,
+      startClientX: e.clientX,
+      startClientY: e.clientY,
       startPlacement,
+      moved: mode === 'resize',
     }
   }
 
@@ -251,10 +277,11 @@ function InteractiveElementShell({
       rotation: p.rotation,
       opacity: p.opacity,
     }),
-    outline: selected ? '2px solid #3B82F6' : undefined,
-    outlineOffset: selected ? 2 : undefined,
-    cursor: editable && selected && !locked ? 'move' : 'pointer',
+    outline: selected && !editing ? '2px solid #3B82F6' : undefined,
+    outlineOffset: selected && !editing ? 2 : undefined,
+    cursor: isText || !editable || locked ? 'pointer' : selected ? 'move' : 'pointer',
     touchAction: 'none',
+    overflow: isText ? 'visible' : undefined,
   }
 
   return (
@@ -262,22 +289,28 @@ function InteractiveElementShell({
       role="button"
       tabIndex={0}
       data-element-id={el.id}
-      className={locked ? 'ppt-canvas-el-locked' : undefined}
+      className={[
+        locked ? 'ppt-canvas-el-locked' : '',
+        isText && editing ? 'is-editing-text' : '',
+      ]
+        .filter(Boolean)
+        .join(' ') || undefined}
       style={frameStyle}
       onClick={(e) => {
         e.stopPropagation()
         onSelect?.(el.id)
       }}
       onDoubleClick={(e) => {
-        if (!editable || locked || el.type !== 'text') return
+        if (!editable || locked || !isText) return
         e.stopPropagation()
         onSelect?.(el.id)
         onStartTextEdit?.(el.id)
       }}
       onPointerDown={(e) => {
-        if (!editable || !selected) return
-        if (e.target.closest?.('.ppt-canvas-el-resize')) return
-        if (e.target.closest?.('.ppt-text-display, .ppt-text-editable, .ppt-table-cell-input')) return
+        if (!editable || !selected || editing) return
+        if (e.target.closest?.('.ppt-canvas-el-resize, .ppt-text-drag')) return
+        if (isText) return
+        if (e.target.closest?.('.ppt-table-cell-input')) return
         beginDrag(e, 'move')
       }}
       onKeyDown={(e) => {
@@ -294,7 +327,35 @@ function InteractiveElementShell({
       }}
     >
       <div className="ppt-canvas-el-body">{children}</div>
-      {selected && editable && (
+      {isText && selected && editable && !locked && !editing && (
+        <>
+          <span
+            className="ppt-text-drag ppt-text-drag--top"
+            style={{ height: TEXT_BORDER_DRAG_PX }}
+            onPointerDown={(e) => beginDrag(e, 'move')}
+            aria-hidden
+          />
+          <span
+            className="ppt-text-drag ppt-text-drag--bottom"
+            style={{ height: TEXT_BORDER_DRAG_PX }}
+            onPointerDown={(e) => beginDrag(e, 'move')}
+            aria-hidden
+          />
+          <span
+            className="ppt-text-drag ppt-text-drag--left"
+            style={{ width: TEXT_BORDER_DRAG_PX }}
+            onPointerDown={(e) => beginDrag(e, 'move')}
+            aria-hidden
+          />
+          <span
+            className="ppt-text-drag ppt-text-drag--right"
+            style={{ width: TEXT_BORDER_DRAG_PX }}
+            onPointerDown={(e) => beginDrag(e, 'move')}
+            aria-hidden
+          />
+        </>
+      )}
+      {selected && editable && !editing && (
         <span
           className="ppt-canvas-el-resize"
           onPointerDown={(e) => beginDrag(e, 'resize')}
@@ -376,6 +437,7 @@ function SlideStage({
               selected={selectedElementId === el.id}
               editable={editable}
               locked={!!el.locked}
+              editing={editingTextId === el.id}
               stageRef={stageRef}
               allElements={elements}
               onSelect={onSelectElement}
@@ -387,16 +449,41 @@ function SlideStage({
               <PptCanvasElement
                 el={el}
                 palette={palette}
+                selected={selectedElementId === el.id}
+                canvasW={canvas.width}
                 editable={
                   editable &&
-                  (el.type === 'text' || el.type === 'table' || selectedElementId === el.id)
+                  (el.type === 'text' ||
+                    el.type === 'textbox' ||
+                    el.type === 'table' ||
+                    selectedElementId === el.id)
                 }
                 editingText={editingTextId === el.id}
                 onStartTextEdit={() => {
                   onSelectElement?.(el.id)
                   onStartTextEdit?.(el.id)
                 }}
-                onEndTextEdit={(text) => onEndTextEdit?.(el.id, text)}
+                onEndTextEdit={(text, runs) => onEndTextEdit?.(el.id, text, runs)}
+                onHeightChange={(cssHeight, { commit = false, allowShrink = false } = {}) => {
+                  if (!editable) return
+                  const y = el.placement?.y || 0
+                  const curH = el.placement?.height || 40
+                  const nextH = Math.max(
+                    TEXT_MIN_HEIGHT,
+                    Math.min(
+                      canvas.height - y,
+                      Math.round(cssPxToCanvas(cssHeight, stageRef.current, canvas.height))
+                    )
+                  )
+                  if (allowShrink) {
+                    if (Math.abs(nextH - curH) <= 2) return
+                  } else if (nextH <= curH + 2) {
+                    return
+                  }
+                  const next = { ...(el.placement || {}), height: nextH }
+                  onPlacementLive?.(el.id, next)
+                  if (commit) onPlacementCommit?.(el.id, next)
+                }}
                 onTableCellChange={(ri, ci, val) => onTableCellChange?.(el.id, ri, ci, val)}
                 onTableActivate={() => onSelectElement?.(el.id)}
                 onImageAuthError={onImageAuthError}
@@ -630,6 +717,13 @@ export default function AIPptEditor({
           normalized.backgroundGradientStart ?? current.backgroundGradientStart,
         backgroundGradientEnd:
           normalized.backgroundGradientEnd ?? current.backgroundGradientEnd,
+        backgroundGradientAngle:
+          normalized.backgroundGradientAngle ?? current.backgroundGradientAngle,
+        backgroundGradientKind:
+          normalized.backgroundGradientKind ?? current.backgroundGradientKind,
+        backgroundGradientStops:
+          normalized.backgroundGradientStops ?? current.backgroundGradientStops,
+        backgroundFill: normalized.backgroundFill ?? current.backgroundFill,
         backgroundImage: normalized.backgroundImage ?? current.backgroundImage,
         backgroundImageFit: normalized.backgroundImageFit ?? current.backgroundImageFit,
         backgroundImageElementId:
@@ -842,11 +936,12 @@ export default function AIPptEditor({
   )
 
   const handleEndTextEdit = useCallback(
-    (elementId, text) => {
+    (elementId, text, runs) => {
       setEditingTextId(null)
+      setPptTextSelection(null)
       const el = selectedSlide?.elements?.elements?.find((e) => e.id === elementId)
       elementMutations.patchElement(elementId, {
-        content: { ...(el?.content || {}), text },
+        content: contentWithSyncedText(el?.content, text, runs),
       })
     },
     [elementMutations, selectedSlide]
@@ -954,25 +1049,55 @@ export default function AIPptEditor({
   )
 
   const handleBackgroundGradientChange = useCallback(
-    ({ start, end }) => {
+    (payload) => {
       const slideId = selectedSlideId || localSlides[0]?.id
       if (!slideId) return
-      setLocalSlides((prev) =>
-        prev.map((s) =>
-          s.id === slideId
-            ? {
-                ...s,
-                backgroundGradientStart: start ?? undefined,
-                backgroundGradientEnd: end ?? undefined,
-                ...(start == null && end == null
-                  ? { backgroundGradientStart: undefined, backgroundGradientEnd: undefined }
-                  : {}),
+      const fill =
+        payload?.type === 'solid' || payload?.type === 'gradient'
+          ? payload
+          : payload?.start == null && payload?.end == null
+            ? { type: 'solid', color: DEFAULT_SLIDE_BG }
+            : {
+                type: 'gradient',
+                kind: 'linear',
+                angle: 135,
+                stops: [
+                  { color: payload.start || '#E0F2FE', at: 0 },
+                  { color: payload.end || '#FFFFFF', at: 1 },
+                ],
               }
-            : s
-        )
+      const patch = patchFromBackgroundFill(fill, DEFAULT_SLIDE_BG)
+      setLocalSlides((prev) =>
+        prev.map((s) => {
+          if (s.id !== slideId) return s
+          const next = { ...s, ...patch }
+          next.elements = buildCanvasDoc(next, {
+            aspectRatio,
+            elements: s.elements?.elements,
+          })
+          return next
+        })
       )
+      if (workspaceId && presentationId) {
+        const slide = localSlides.find((s) => s.id === slideId)
+        const nextDoc = buildCanvasDoc(
+          { ...slide, ...patch },
+          { aspectRatio, elements: slide?.elements?.elements }
+        )
+        presentationService
+          .patchSlide(workspaceId, presentationId, slideId, {
+            ...Object.fromEntries(
+              Object.entries(patch).map(([key, value]) => [key, value === undefined ? null : value])
+            ),
+            backgroundImage: null,
+            backgroundImageFit: null,
+            backgroundImageElementId: null,
+          })
+          .catch(() => {})
+        queueCanvasSave(slideId, nextDoc)
+      }
     },
-    [selectedSlideId, localSlides]
+    [selectedSlideId, localSlides, workspaceId, presentationId, aspectRatio, queueCanvasSave]
   )
 
   const handleBackgroundColorChange = useCallback(
@@ -987,31 +1112,43 @@ export default function AIPptEditor({
                 backgroundColor: color,
                 backgroundGradientStart: undefined,
                 backgroundGradientEnd: undefined,
+                backgroundGradientAngle: undefined,
+                backgroundGradientKind: undefined,
+                backgroundGradientStops: undefined,
+                backgroundFill: undefined,
                 backgroundImage: undefined,
                 backgroundImageFit: undefined,
                 backgroundImageElementId: undefined,
-                elements: buildCanvasDoc(s, {
-                  aspectRatio,
-                  elements: (s.elements?.elements || []).map((el) =>
-                    el.content?.useAsBackground
-                      ? { ...el, content: { ...el.content, useAsBackground: false } }
-                      : el
-                  ),
-                }),
+                elements: buildCanvasDoc(
+                  { ...s, backgroundColor: color },
+                  {
+                    aspectRatio,
+                    backgroundColor: color,
+                    elements: (s.elements?.elements || []).map((el) =>
+                      el.content?.useAsBackground
+                        ? { ...el, content: { ...el.content, useAsBackground: false } }
+                        : el
+                    ),
+                  }
+                ),
               }
             : s
         )
       )
       if (workspaceId && presentationId) {
         const slide = localSlides.find((s) => s.id === slideId)
-        const nextDoc = buildCanvasDoc(slide, {
-          aspectRatio,
-          elements: (slide?.elements?.elements || []).map((el) =>
-            el.content?.useAsBackground
-              ? { ...el, content: { ...el.content, useAsBackground: false } }
-              : el
-          ),
-        })
+        const nextDoc = buildCanvasDoc(
+          { ...slide, backgroundColor: color },
+          {
+            aspectRatio,
+            backgroundColor: color,
+            elements: (slide?.elements?.elements || []).map((el) =>
+              el.content?.useAsBackground
+                ? { ...el, content: { ...el.content, useAsBackground: false } }
+                : el
+            ),
+          }
+        )
         presentationService
           .patchSlide(workspaceId, presentationId, slideId, {
             backgroundColor: color,
@@ -1020,6 +1157,10 @@ export default function AIPptEditor({
             backgroundImageElementId: null,
             backgroundGradientStart: null,
             backgroundGradientEnd: null,
+            backgroundGradientAngle: null,
+            backgroundGradientKind: null,
+            backgroundGradientStops: null,
+            backgroundFill: null,
           })
           .catch(() => {})
         queueCanvasSave(slideId, nextDoc)
