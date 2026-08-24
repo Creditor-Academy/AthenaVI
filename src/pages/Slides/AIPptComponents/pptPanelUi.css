@@ -17,6 +17,17 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.ppt-editor-sidebar-panel-body .ppt-element-toolbar select,
+.ppt-editor-sidebar-panel-body .ppt-element-toolbar input[type='number'],
+.ppt-editor-sidebar-panel-body .ppt-size-stepper-input,
+.ppt-editor-sidebar-panel-body .ppt-element-props-select {
+  width: auto;
+}
+
+.ppt-editor-sidebar-panel-body .ppt-ui-select {
+  padding: 8px 32px 8px 12px;
+}
+
 .ppt-editor-sidebar-panel-body .ppt-panel-input:focus,
 .ppt-editor-sidebar-panel-body .ppt-panel-select:focus,
 .ppt-editor-sidebar-panel-body input:focus,

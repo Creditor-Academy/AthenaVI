@@ -73,7 +73,7 @@ export default function ElementToolbar({
       aria-label="Text formatting"
     >
       <select
-        className="ppt-element-toolbar-select"
+        className="ppt-ui-select ppt-element-toolbar-select"
         value={c.fontFamily || 'Inter'}
         disabled={disabled}
         onChange={(e) => patch({ fontFamily: e.target.value })}
@@ -86,13 +86,13 @@ export default function ElementToolbar({
         ))}
       </select>
 
-      <div className="ppt-element-toolbar-size">
+      <div className="ppt-size-stepper" title="Font size">
         <button type="button" disabled={disabled} onClick={() => adjustSize(-1)} title="Decrease size">
           <FiMinus size={14} />
         </button>
         <input
           type="number"
-          className="ppt-element-toolbar-size-input"
+          className="ppt-size-stepper-input"
           value={c.fontSize ?? 22}
           min={8}
           max={200}
@@ -209,15 +209,18 @@ export default function ElementToolbar({
         title="Line spacing"
       />
 
-      <button
-        type="button"
-        className="ppt-element-toolbar-btn"
+      <select
+        className="ppt-ui-select ppt-element-toolbar-select ppt-element-toolbar-select--case"
+        value={c.textTransform || 'none'}
         disabled={disabled}
-        onClick={() => patch({ textTransform: c.textTransform === 'uppercase' ? null : 'uppercase' })}
-        title="Uppercase"
+        onChange={(e) => patch({ textTransform: e.target.value === 'none' ? null : e.target.value })}
+        title="Letter case"
       >
-        AA
-      </button>
+        <option value="none">As typed</option>
+        <option value="uppercase">UPPERCASE</option>
+        <option value="lowercase">lowercase</option>
+        <option value="capitalize">Title Case</option>
+      </select>
     </div>
   )
 }

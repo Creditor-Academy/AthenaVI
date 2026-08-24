@@ -1,12 +1,6 @@
 import { FiLock, FiUnlock } from 'react-icons/fi'
 import { measureTextContentSize } from '../../../utils/canvasTransformUtils'
-import {
-  applyElementTextFill,
-  contentFillValue,
-  contentPlainText,
-  contentWithSyncedText,
-  normalizeFillValue,
-} from '../../../utils/pptTextContent'
+import { contentPlainText, contentWithSyncedText, normalizeFillValue } from '../../../utils/pptTextContent'
 import ColorFillPicker from './insert/ColorFillPicker'
 import './pptEditorExtras.css'
 
@@ -35,6 +29,7 @@ export default function ElementPropertiesPanel({
   onToggleLock,
   onReplaceImage,
   onCropImage,
+  toolbar = null,
   disabled = false,
 }) {
   if (!element) {
@@ -52,52 +47,39 @@ export default function ElementPropertiesPanel({
 
   return (
     <div className="ppt-element-props-grid">
-      <div className="ppt-element-props-row">
-        <span>Type</span>
-        <strong>{element.type}</strong>
-      </div>
+      {isText && (
+        <textarea
+          id={`ppt-el-text-${element.id}`}
+          className="ppt-element-props-textarea"
+          rows={5}
+          value={contentPlainText(c)}
+          disabled={disabled}
+          placeholder="Write or edit text"
+          onChange={(e) => onChangeContent?.(contentWithSyncedText(c, e.target.value))}
+        />
+      )}
+
+      {toolbar}
+
+      {!isText && (
+        <div className="ppt-element-props-row">
+          <span>Type</span>
+          <strong>{element.type}</strong>
+        </div>
+      )}
 
       {isText && (
-        <>
-          <label className="ppt-element-props-field" htmlFor={`ppt-el-text-${element.id}`}>
-            Text
-          </label>
-          <textarea
-            id={`ppt-el-text-${element.id}`}
-            className="ppt-element-props-textarea"
-            rows={5}
-            value={contentPlainText(c)}
-            disabled={disabled}
-            onChange={(e) => onChangeContent?.(contentWithSyncedText(c, e.target.value))}
-          />
-          <div className="ppt-element-props-color">
-            <span className="ppt-element-props-field">Color</span>
-            <ColorFillPicker
-              key={element.id}
-              inline
-              title="Text color"
-              value={contentFillValue(c, palette, element.id)}
-              palette={palette}
-              disabled={disabled}
-              fallbackHex="#0F172A"
-              onChange={(fill) => onChangeContent?.(applyElementTextFill(element, fill))}
-            />
-            <p className="ppt-fill-hint">
-              Highlight words on the slide to recolor only those words. With no selection, the whole text box changes.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="ppt-slide-panel-btn ppt-slide-panel-btn--block"
-            disabled={disabled}
-            onClick={() => {
-              const nextH = fitPlacementHeightToDom(element)
-              if (nextH) patchPlacement({ height: nextH })
-            }}
-          >
-            Fit box to text
-          </button>
-        </>
+        <button
+          type="button"
+          className="ppt-slide-panel-btn ppt-slide-panel-btn--block"
+          disabled={disabled}
+          onClick={() => {
+            const nextH = fitPlacementHeightToDom(element)
+            if (nextH) patchPlacement({ height: nextH })
+          }}
+        >
+          Fit box to text
+        </button>
       )}
 
       <div className="ppt-element-props-row">
@@ -115,9 +97,15 @@ export default function ElementPropertiesPanel({
 
       <div className="ppt-element-props-row">
         <span>Lock position</span>
-        <button type="button" disabled={disabled} onClick={onToggleLock} title="Lock/unlock">
+        <button
+          type="button"
+          className={`ppt-lock-btn ${element.locked ? 'is-locked' : ''}`}
+          disabled={disabled}
+          onClick={onToggleLock}
+          title="Lock/unlock"
+        >
           {element.locked ? <FiLock size={14} /> : <FiUnlock size={14} />}
-          {element.locked ? ' Locked' : ' Unlocked'}
+          {element.locked ? 'Locked' : 'Unlocked'}
         </button>
       </div>
 
@@ -166,6 +154,7 @@ export default function ElementPropertiesPanel({
         <div className="ppt-element-props-row">
           <span>Wrap text</span>
           <select
+            className="ppt-ui-select ppt-element-props-select"
             value={c.wrap || 'pre-wrap'}
             disabled={disabled}
             onChange={(e) => patchContent({ wrap: e.target.value })}

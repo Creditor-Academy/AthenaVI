@@ -486,8 +486,14 @@ export default function DesignContextPanel({
       )}
 
       {(focus === 'text' || focus === 'textbox') && element && (
-        <>
-          <div className="ppt-design-toolbar-panel">
+        <ElementPropertiesPanel
+          element={element}
+          palette={palette}
+          disabled={disabled}
+          onChangeContent={onChangeElementContent}
+          onChangePlacement={onChangeElementPlacement}
+          onToggleLock={onToggleElementLock}
+          toolbar={
             <ElementToolbar
               element={element}
               palette={palette}
@@ -495,16 +501,8 @@ export default function DesignContextPanel({
               variant="panel"
               onChange={(content) => onChangeElementContent?.(content)}
             />
-          </div>
-          <ElementPropertiesPanel
-            element={element}
-            palette={palette}
-            disabled={disabled}
-            onChangeContent={onChangeElementContent}
-            onChangePlacement={onChangeElementPlacement}
-            onToggleLock={onToggleElementLock}
-          />
-        </>
+          }
+        />
       )}
 
       {(focus === 'image' || focus === 'icon') && element && (
