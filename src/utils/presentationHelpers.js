@@ -1122,13 +1122,20 @@ export function buildCanvasShapeStyle(content = {}, palette = {}) {
       : undefined
 
   if (clipPath) {
+    const outlineStroke = stroke || (isOutlined ? fill : undefined)
+    const outlineWidth = strokeWidth || (isOutlined ? 3 : 0)
     return {
       kind: 'clip',
+      clipPath,
+      outlined: isOutlined,
+      fill: background,
+      stroke: outlineStroke,
+      strokeWidth: outlineWidth,
       style: {
         width: '100%',
         height: '100%',
-        background,
-        clipPath,
+        background: isOutlined ? 'transparent' : background,
+        clipPath: isOutlined ? undefined : clipPath,
         boxSizing: 'border-box',
         ...(shapeOpacity != null ? { opacity: shapeOpacity } : {}),
       },

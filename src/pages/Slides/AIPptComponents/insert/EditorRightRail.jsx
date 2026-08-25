@@ -109,6 +109,7 @@ export default function EditorRightRail({
   onChangeElementPlacement,
   onToggleElementLock,
   onReplaceImage,
+  onClearDeviceFrameScreen,
   onCropImage,
   onToggleImageAsBackground,
   onSpeakerNotesChange,
@@ -256,6 +257,7 @@ export default function EditorRightRail({
                 }
                 onToggleElementLock={() => selectedElementId && onToggleElementLock?.(selectedElementId)}
                 onReplaceImage={onReplaceImage}
+                onClearDeviceFrameScreen={onClearDeviceFrameScreen}
                 onCropImage={onCropImage}
                 onToggleImageAsBackground={onToggleImageAsBackground}
                 onChangeTransition={onChangeTransition}

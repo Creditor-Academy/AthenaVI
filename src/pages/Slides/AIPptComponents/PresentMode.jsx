@@ -11,6 +11,10 @@ import {
   resolveCanvasSize,
   resolveSlideStageBackground,
 } from '../../../utils/presentationHelpers'
+import DeviceFrameVisual, { resolveDeviceFrameColor } from '../../../components/ppt/DeviceFrameVisual'
+import ClipShapeSvg from '../../../components/ppt/ClipShapeSvg'
+import GraphicCanvasVisual from '../../../components/ppt/GraphicCanvasVisual'
+import { parsePolygonClipPath } from '../../../utils/shapeClipSvg'
 import { shouldPaintElement } from '../../../utils/canvasRenderDebug'
 import {
   contentUsesFullRuns,
@@ -86,6 +90,14 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
     )
   }
 
+  if (el.type === 'graphic') {
+    return (
+      <div style={style}>
+        <GraphicCanvasVisual content={el.content || {}} palette={palette} />
+      </div>
+    )
+  }
+
   if (el.type === 'image' || el.type === 'icon') {
     const c = el.content || {}
     const url = c.url || c.src
@@ -148,6 +160,16 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
 
   if (el.type === 'shape') {
     const c = el.content || {}
+    const deviceKind = c.deviceFrame || (c.shape === 'device-frame' ? 'phone' : null)
+    if (deviceKind) {
+      const screenSrc = c.screenUrl || c.url || c.src || c.thumbnailUrl || c.previewUrl
+      const frameColor = resolveDeviceFrameColor(c, palette)
+      return (
+        <div style={style}>
+          <DeviceFrameVisual kind={deviceKind} src={screenSrc} frameColor={frameColor} />
+        </div>
+      )
+    }
     if (shapeElementUsesNativeStyle(el)) {
       return <div style={{ ...style, ...buildNativeShapeBoxStyle(el.nativeStyle) }} />
     }
@@ -165,6 +187,24 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
           <div style={{ ...rendered.style, width: '100%' }} />
         </div>
       )
+    }
+    if (rendered.kind === 'clip' && rendered.clipPath) {
+      const svgFill = rendered.outlined
+        ? 'none'
+        : rendered.fill || rendered.style?.background || '#475569'
+      if (parsePolygonClipPath(rendered.clipPath)) {
+        return (
+          <div style={{ ...style, position: 'relative' }}>
+            <ClipShapeSvg
+              clipPath={rendered.clipPath}
+              fill={typeof svgFill === 'string' ? svgFill : '#475569'}
+              stroke={rendered.stroke || '#475569'}
+              strokeWidth={rendered.strokeWidth || 3}
+              outlined={Boolean(rendered.outlined)}
+            />
+          </div>
+        )
+      }
     }
     return <div style={{ ...style, ...rendered.style }} />
   }

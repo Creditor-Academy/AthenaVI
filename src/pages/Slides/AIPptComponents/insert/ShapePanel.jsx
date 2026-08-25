@@ -6,118 +6,9 @@ import {
   PPT_SHAPE_PANEL_CATEGORIES,
 } from '../../../../constants/pptInsertCatalog'
 import { SHAPE_LIBRARY } from '../../../../constants/shapeLibrary'
-
-const ESSENTIAL_SHAPES = [
-  {
-    id: 'rect',
-    name: 'Rectangle',
-    path: 'M8 8h24v24H8z',
-    content: { shape: 'rect', fill: '#475569' },
-    presetId: 'shape_rect',
-  },
-  {
-    id: 'rounded-rect',
-    name: 'Rounded square',
-    path: 'M12 8h16a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V12a4 4 0 0 1 4-4z',
-    content: { shape: 'rounded-rect', fill: '#475569' },
-    presetId: 'shape_rounded_rect',
-  },
-  {
-    id: 'circle',
-    name: 'Circle',
-    path: 'M20 8a12 12 0 1 1 0 24 12 12 0 0 1 0-24z',
-    circle: true,
-    content: { shape: 'circle', fill: '#475569' },
-    presetId: 'shape_circle',
-  },
-  {
-    id: 'triangle',
-    name: 'Triangle',
-    path: 'M20 8 L32 32 H8 Z',
-    content: { shape: 'triangle', fill: '#475569' },
-    presetId: 'shape_triangle',
-  },
-  {
-    id: 'diamond',
-    name: 'Diamond',
-    path: 'M20 8 L32 20 L20 32 L8 20 Z',
-    content: { shape: 'diamond', fill: '#475569' },
-    presetId: 'shape_diamond',
-  },
-  {
-    id: 'star',
-    name: 'Star',
-    path: 'M20 7l3.5 9.5H34l-8 5.8 3 9.7L20 26.2 11 32l3-9.7-8-5.8h10.5z',
-    content: { shape: 'star', fill: '#475569' },
-    presetId: 'shape_star',
-  },
-]
-
-function ShapeSvg({ shape, variant }) {
-  const filled = variant === 'filled'
-  if (shape.circle) {
-    return (
-      <svg viewBox="0 0 40 40" className="ppt-shape-svg" aria-hidden>
-        <circle
-          cx="20"
-          cy="20"
-          r="12"
-          fill={filled ? 'currentColor' : 'none'}
-          stroke="currentColor"
-          strokeWidth={filled ? 0 : 2}
-        />
-      </svg>
-    )
-  }
-  return (
-    <svg viewBox="0 0 40 40" className="ppt-shape-svg" aria-hidden>
-      <path
-        d={shape.path}
-        fill={filled ? 'currentColor' : 'none'}
-        stroke="currentColor"
-        strokeWidth={filled ? 0 : 2}
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
-}
-
-function shapePreviewStyle(shape, variant = 'filled') {
-  const s = { ...(shape.style || {}) }
-  if (s.width) s.width = '48px'
-  if (s.height === '0px') {
-    s.width = '48px'
-    s.height = '0px'
-  } else if (s.height) {
-    s.height = '48px'
-  }
-
-  if (variant === 'outlined') {
-    const radius = s.borderRadius
-    const isClip = Boolean(s.clipPath)
-    if (isClip) {
-      return {
-        ...s,
-        background: 'currentColor',
-        opacity: 0.95,
-        WebkitMaskImage: 'linear-gradient(#000 0 0), linear-gradient(#000 0 0)',
-        filter: 'drop-shadow(0 0 0.6px currentColor)',
-      }
-    }
-    return {
-      ...s,
-      background: 'transparent',
-      border: `2.5px solid currentColor`,
-      borderRadius: radius || s.borderRadius,
-      boxSizing: 'border-box',
-    }
-  }
-  return {
-    ...s,
-    background: s.background?.includes('transparent') ? s.background : 'currentColor',
-    borderColor: s.border ? 'currentColor' : undefined,
-  }
-}
+import DeviceFrameVisual from '../../../../components/ppt/DeviceFrameVisual'
+import ClipShapeSvg from '../../../../components/ppt/ClipShapeSvg'
+import { parsePolygonClipPath } from '../../../../utils/shapeClipSvg'
 
 function expandWithVariants(shapes) {
   const out = []
@@ -131,6 +22,73 @@ function expandWithVariants(shapes) {
     out.push({ ...shape, variant: 'outlined', key: `${shape.id}-outlined` })
   })
   return out
+}
+
+function ShapePreview({ shape, variant = 'filled' }) {
+  const s = shape.style || {}
+  const isLine = shape.category === 'lines' || String(shape.id).startsWith('line')
+  const outlined = variant === 'outlined'
+  const clipPath = s.clipPath
+  const hasPolygon = Boolean(clipPath && parsePolygonClipPath(clipPath))
+
+  if (hasPolygon) {
+    return (
+      <span className="ppt-shape-preview ppt-shape-preview--svg">
+        <ClipShapeSvg
+          clipPath={clipPath}
+          fill="#475569"
+          stroke="#475569"
+          strokeWidth={2.5}
+          outlined={outlined}
+        />
+      </span>
+    )
+  }
+
+  if (isLine) {
+    return (
+      <span
+        className="ppt-shape-preview"
+        style={{
+          width: '48px',
+          height: '0px',
+          borderTop: s.borderTop || '3px solid currentColor',
+          background: 'transparent',
+        }}
+      />
+    )
+  }
+
+  if (outlined) {
+    return (
+      <span
+        className="ppt-shape-preview"
+        style={{
+          width: '48px',
+          height: '48px',
+          background: 'transparent',
+          border: '2.5px solid currentColor',
+          borderRadius: s.borderRadius || 0,
+          boxSizing: 'border-box',
+          ...(s.border ? { border: s.border.replace(/var\(--primary\)|#\w+/g, 'currentColor') } : {}),
+        }}
+      />
+    )
+  }
+
+  return (
+    <span
+      className="ppt-shape-preview"
+      style={{
+        width: '48px',
+        height: '48px',
+        background: s.background?.includes('transparent') ? 'transparent' : 'currentColor',
+        borderRadius: s.borderRadius || 0,
+        border: s.border ? String(s.border).replace(/var\(--primary\)/g, 'currentColor') : undefined,
+        boxSizing: 'border-box',
+      }}
+    />
+  )
 }
 
 export default function ShapePanel({ onInsert, disabled }) {
@@ -153,6 +111,7 @@ export default function ShapePanel({ onInsert, disabled }) {
   const libraryShapes = getPptShapesForCategory(activeId)
   const activeLabel =
     PPT_SHAPE_PANEL_CATEGORIES.find((c) => c.id === activeId)?.label || 'Shapes'
+  const isDevices = activeId === 'devices'
   const isEssential = activeId === 'essential'
   const expanded = useMemo(() => expandWithVariants(libraryShapes), [libraryShapes])
 
@@ -161,19 +120,30 @@ export default function ShapePanel({ onInsert, disabled }) {
     const shapeKey = String(baseContent?.shape || shapeId)
     const libEntry = SHAPE_LIBRARY.find((s) => s.id === shapeKey)
     const libStyle = libEntry?.style || {}
+    const defaultFill = '#475569'
     onInsert({
       type: 'shape',
       ...(presetId ? { presetId } : {}),
       content: {
-        ...(baseContent || { shape: shapeKey, fill: '#475569' }),
         shape: shapeKey,
-        fill: outlined ? 'transparent' : baseContent?.fill || '#475569',
+        fill: outlined ? 'transparent' : baseContent?.fill || defaultFill,
         ...(libStyle.clipPath ? { clipPath: libStyle.clipPath } : {}),
         ...(libStyle.borderRadius != null ? { borderRadius: libStyle.borderRadius } : {}),
+        ...(libStyle.border && !outlined ? { border: libStyle.border } : {}),
         ...(outlined
-          ? { stroke: '#475569', strokeWidth: 3, variant: 'outlined' }
-          : { variant: 'filled' }),
+          ? { stroke: defaultFill, strokeWidth: 3, variant: 'outlined' }
+          : { stroke: undefined, variant: 'filled' }),
       },
+    })
+  }
+
+  const insertDeviceFrame = (device) => {
+    onInsert({
+      type: 'shape',
+      role: 'device_frame',
+      presetId: device.id,
+      placement: device.placement,
+      content: { ...(device.content || {}) },
     })
   }
 
@@ -188,36 +158,48 @@ export default function ShapePanel({ onInsert, disabled }) {
     >
       <div className="ppt-shape-panel-head">
         <h3 className="ppt-insert-main-title">{activeLabel}</h3>
+        {isEssential && (
+          <p className="ppt-slide-panel-hint" style={{ margin: '4px 0 0' }}>
+            Full cover and outline for each shape
+          </p>
+        )}
       </div>
 
-      {isEssential ? (
-        <div className="ppt-shape-icon-grid">
-          {(['filled', 'outlined']).map((variant) =>
-            ESSENTIAL_SHAPES.map((shape) => (
-              <button
-                key={`${shape.id}-${variant}`}
-                type="button"
-                className="ppt-shape-icon-btn"
-                disabled={disabled}
-                title={`${shape.name} (${variant})`}
-                onClick={() =>
-                  insertShape(shape.id, variant, shape.content, shape.presetId)
-                }
+      {isDevices ? (
+        <div className="ppt-shape-icon-grid ppt-shape-icon-grid--devices">
+          {libraryShapes.map((device) => (
+            <button
+              key={device.id}
+              type="button"
+              className="ppt-shape-icon-btn ppt-shape-icon-btn--device"
+              disabled={disabled}
+              title={device.name}
+              onClick={() => insertDeviceFrame(device)}
+            >
+              <span
+                className="ppt-device-frame-preview"
+                style={{ aspectRatio: device.previewAspect || '1' }}
               >
-                <ShapeSvg shape={shape} variant={variant} />
-              </button>
-            ))
-          )}
+                <DeviceFrameVisual kind={device.deviceFrame} compact />
+              </span>
+              <span className="ppt-device-frame-label">{device.name}</span>
+            </button>
+          ))}
+          {!libraryShapes.length && <div className="ppt-insert-empty">No devices available</div>}
         </div>
       ) : (
-        <div className="ppt-shape-icon-grid ppt-shape-icon-grid--library">
+        <div
+          className={`ppt-shape-icon-grid ppt-shape-icon-grid--library ${
+            isEssential ? 'ppt-shape-icon-grid--essential' : ''
+          }`}
+        >
           {expanded.map((shape) => (
             <button
               key={shape.key}
               type="button"
               className="ppt-shape-icon-btn"
               disabled={disabled}
-              title={`${shape.name}${shape.variant === 'outlined' ? ' (outline)' : ''}`}
+              title={`${shape.name}${shape.variant === 'outlined' ? ' (outline)' : ' (full cover)'}`}
               onClick={() =>
                 insertShape(
                   shape.id,
@@ -227,10 +209,7 @@ export default function ShapePanel({ onInsert, disabled }) {
                 )
               }
             >
-              <span
-                className="ppt-shape-preview"
-                style={shapePreviewStyle(shape, shape.variant)}
-              />
+              <ShapePreview shape={shape} variant={shape.variant} />
             </button>
           ))}
           {!expanded.length && <div className="ppt-insert-empty">No shapes in this category</div>}

@@ -1577,6 +1577,20 @@
   min-height: 0;
 }
 
+.content.content--graphics-library {
+  padding: 0 !important;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.content.content--graphics-library > .sg-portal {
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+}
+
 .content.content--workspace-consistent :is(
   .videos-page-title,
   .library-page-title,

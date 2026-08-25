@@ -38,6 +38,7 @@ import { extractShareToken, getOrCreateViewerSessionId } from '../../../utils/pp
 import PptPresenceAvatars from './PptPresenceAvatars'
 import usePptPresence from './usePptPresence'
 import brandKitService from '../../../services/brandKitService'
+import assetService from '../../../services/assetService'
 import { isInsufficientCreditsError } from '../../../services/creditsService'
 import {
   PPT_CAPS,
@@ -83,6 +84,17 @@ import {
   logCanvasGreySuspects,
   shouldPaintElement,
 } from '../../../utils/canvasRenderDebug'
+import { hydrateSlidesGraphicElements } from '../../../utils/hydrateGraphicElements'
+import {
+  parseCanvasDragData,
+  resolveDropImageSrc,
+  resolveDropAssetId,
+} from '../../../utils/editorDragDrop'
+import {
+  isPptDeviceFrameElement,
+  buildDeviceFrameScreenPatch,
+  clearDeviceFrameScreenPatch,
+} from '../../../components/ppt/DeviceFrameVisual'
 import './pptEditorExtras.css'
 import '../AIPptGenerator.css'
 
@@ -180,12 +192,16 @@ function InteractiveElementShell({
   onPlacementCommit,
   onGuidesChange,
   onStartTextEdit,
+  onFillDeviceFrame,
   children,
 }) {
   const p = el.placement || {}
   const dragRef = useRef(null)
   const lastPlacementRef = useRef(null)
   const isText = isTextElement(el)
+  const [isDropTarget, setIsDropTarget] = useState(false)
+  const acceptsImageFill =
+    editable && !locked && isPptDeviceFrameElement(el) && typeof onFillDeviceFrame === 'function'
 
   useEffect(() => {
     const onMove = (e) => {
@@ -277,6 +293,56 @@ function InteractiveElementShell({
     }
   }
 
+  const handleDragOver = (e) => {
+    if (!acceptsImageFill) return
+    const types = Array.from(e.dataTransfer?.types || [])
+    if (!types.includes('application/json') && !types.includes('Files')) return
+    e.preventDefault()
+    e.stopPropagation()
+    e.dataTransfer.dropEffect = 'copy'
+    setIsDropTarget(true)
+  }
+
+  const handleDragLeave = (e) => {
+    if (!acceptsImageFill) return
+    e.preventDefault()
+    setIsDropTarget(false)
+  }
+
+  const handleDrop = (e) => {
+    if (!acceptsImageFill) return
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDropTarget(false)
+
+    const data = parseCanvasDragData(e)
+    if (data?.type === 'image') {
+      const src = resolveDropImageSrc(data.content)
+      if (src) {
+        onFillDeviceFrame(el.id, {
+          url: src,
+          src,
+          assetId: resolveDropAssetId(data.content),
+          alt: data.content?.alt || data.content?.name || '',
+        })
+        onSelect?.(el.id)
+      }
+      return
+    }
+
+    const file = e.dataTransfer.files?.[0]
+    if (file?.type?.startsWith('image/')) {
+      const blobUrl = URL.createObjectURL(file)
+      onFillDeviceFrame(el.id, {
+        url: blobUrl,
+        src: blobUrl,
+        alt: file.name,
+        file,
+      })
+      onSelect?.(el.id)
+    }
+  }
+
   const frameStyle = {
     ...placementFrameStyle(p, canvasW, canvasH, {
       layer: el.layer,
@@ -298,6 +364,8 @@ function InteractiveElementShell({
       className={[
         locked ? 'ppt-canvas-el-locked' : '',
         isText && editing ? 'is-editing-text' : '',
+        isDropTarget ? 'ppt-canvas-el--drop-target' : '',
+        acceptsImageFill ? 'ppt-canvas-el--accepts-fill' : '',
       ]
         .filter(Boolean)
         .join(' ') || undefined}
@@ -312,6 +380,9 @@ function InteractiveElementShell({
         onSelect?.(el.id)
         onStartTextEdit?.(el.id)
       }}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
       onPointerDown={(e) => {
         if (!editable || !selected || editing) return
         if (e.target.closest?.('.ppt-canvas-el-resize, .ppt-text-drag')) return
@@ -388,6 +459,7 @@ function SlideStage({
   onEndTextEdit,
   onTableCellChange,
   onImageAuthError,
+  onFillDeviceFrame,
 }) {
   const stageRef = useRef(null)
   const canvas = resolveCanvasSize(slide, aspectRatio)
@@ -451,6 +523,7 @@ function SlideStage({
               onPlacementLive={onPlacementLive}
               onPlacementCommit={onPlacementCommit}
               onGuidesChange={onGuidesChange}
+              onFillDeviceFrame={onFillDeviceFrame}
             >
               <PptCanvasElement
                 el={el}
@@ -795,6 +868,8 @@ export default function AIPptEditor({
         slides = extractSlidesFromPresentation(refreshed)
       }
     }
+
+    slides = await hydrateSlidesGraphicElements(slides)
 
     setLocalSlides(slides)
     setThemeTokens(tokens)
@@ -1396,6 +1471,17 @@ export default function AIPptEditor({
   }, [workspaceId, presentationId, outline, reloadPresentation, viewOnly])
 
   useEffect(() => {
+    if (!viewOnly || !localSlides.length) return undefined
+    let cancelled = false
+    hydrateSlidesGraphicElements(localSlides).then((next) => {
+      if (!cancelled) setLocalSlides(next)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [viewOnly])
+
+  useEffect(() => {
     if (presenceToken) setShareToken(presenceToken)
   }, [presenceToken])
 
@@ -1762,10 +1848,10 @@ export default function AIPptEditor({
     if (type === 'text' && !content.color && !content.colorRole) {
       content.color = DEFAULT_TEXT_COLOR
     }
-    if ((type === 'image' || type === 'icon') && !content.url && content.src) {
+    if ((type === 'image' || type === 'icon' || type === 'graphic') && !content.url && content.src) {
       content.url = content.src
     }
-    if ((type === 'image' || type === 'icon') && content.url && !content.src) {
+    if ((type === 'image' || type === 'icon' || type === 'graphic') && content.url && !content.src) {
       content.src = content.url
     }
 
@@ -1776,7 +1862,7 @@ export default function AIPptEditor({
       placement,
       layer: existing.length + 1,
       ...(payload.presetId ? { presetId: payload.presetId } : {}),
-      ...(payload.role ? { role: payload.role } : {}),
+      ...(payload.role ? { role: payload.role } : type === 'graphic' ? { role: 'decoration' } : {}),
     }
     const optimisticDoc = buildCanvasDoc(slide, {
       aspectRatio,
@@ -2024,6 +2110,46 @@ export default function AIPptEditor({
     },
     [applySlideUpdate, refreshSlide, selectedSlideId, localSlides]
   )
+
+  const handleFillDeviceFrame = useCallback(
+    async (elementId, imagePayload = {}) => {
+      if (!elementId || viewOnly || isGenerating) return
+      let url = imagePayload.url || imagePayload.src || ''
+      let assetId = imagePayload.assetId || undefined
+
+      if (imagePayload.file && workspaceId) {
+        try {
+          const asset = await assetService.uploadAsset(workspaceId, imagePayload.file)
+          url =
+            asset?.url ||
+            asset?.cdnUrl ||
+            asset?.src ||
+            asset?.downloadUrl ||
+            url
+          assetId = asset?.id || asset?._id || assetId
+        } catch {
+          // Keep blob/preview URL if upload fails
+        }
+      }
+
+      const patch = buildDeviceFrameScreenPatch(url, {
+        assetId,
+        alt: imagePayload.alt,
+        provider: imagePayload.provider,
+      })
+      if (!patch) return
+      await elementMutations.patchElement(elementId, { content: patch })
+      setSelectedElementId(elementId)
+    },
+    [viewOnly, isGenerating, workspaceId, elementMutations]
+  )
+
+  const handleClearDeviceFrameScreen = useCallback(() => {
+    if (!selectedElementId || !isPptDeviceFrameElement(selectedElement)) return
+    elementMutations.patchElement(selectedElementId, {
+      content: clearDeviceFrameScreenPatch(),
+    })
+  }, [selectedElementId, selectedElement, elementMutations])
 
   const handleApplyLayout = useCallback(
     async (templateId) => {
@@ -2388,6 +2514,16 @@ export default function AIPptEditor({
                 ? selectedElementId
                 : null
             }
+            fillElementId={
+              isPptDeviceFrameElement(
+                selectedSlide?.elements?.elements?.find((el) => el.id === selectedElementId)
+              )
+                ? selectedElementId
+                : null
+            }
+            onFillElement={(content) => {
+              if (selectedElementId) handleFillDeviceFrame(selectedElementId, content)
+            }}
             brandKits={brandKits}
             elementPresets={elementPresets}
             onInsert={handleInsertElement}
@@ -2573,6 +2709,7 @@ export default function AIPptEditor({
                     onEndTextEdit={handleEndTextEdit}
                     onTableCellChange={handleTableCellChange}
                     onImageAuthError={handleImageAuthError}
+                    onFillDeviceFrame={handleFillDeviceFrame}
                   />
 
                   <SlideEditAiPanel
@@ -2651,7 +2788,14 @@ export default function AIPptEditor({
           onChangeElementContent={handleChangeElementContentWithBackground}
           onChangeElementPlacement={handleChangeElementPlacement}
           onToggleElementLock={() => elementMutations.toggleLock()}
-          onReplaceImage={() => setError('Use Media panel with a selected image to replace.')}
+          onReplaceImage={() =>
+            setError(
+              isPptDeviceFrameElement(selectedElement)
+                ? 'Open Media and click or drag an image onto the selected device frame.'
+                : 'Use Media panel with a selected image to replace.'
+            )
+          }
+          onClearDeviceFrameScreen={handleClearDeviceFrameScreen}
           onCropImage={() => setCropModalOpen(true)}
           onToggleImageAsBackground={handleToggleImageAsBackground}
           onSpeakerNotesChange={elementMutations.updateSpeakerNotes}

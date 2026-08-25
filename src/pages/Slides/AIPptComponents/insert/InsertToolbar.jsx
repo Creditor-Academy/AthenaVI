@@ -5,11 +5,13 @@ import {
   FiBarChart2,
   FiGrid,
   FiCode,
+  FiLayers,
 } from 'react-icons/fi'
 import { InsertMediaIcon, InsertShapeIcon } from './InsertToolIcons'
 import TextPanel from './TextPanel'
 import MediaPanel from './MediaPanel'
 import ShapePanel from './ShapePanel'
+import GraphicsPanel from './GraphicsPanel'
 import ChartPanel from './ChartPanel'
 import TablePopover from './TablePopover'
 import EmbedPanel from './EmbedPanel'
@@ -19,6 +21,7 @@ const TOOLS = [
   { id: 'text', label: 'Text', Icon: FiType },
   { id: 'media', label: 'Media', Icon: InsertMediaIcon },
   { id: 'shape', label: 'Shape', Icon: InsertShapeIcon },
+  { id: 'graphics', label: 'Graphics', Icon: FiLayers },
   { id: 'chart', label: 'Chart', Icon: FiBarChart2 },
   { id: 'table', label: 'Table', Icon: FiGrid },
   { id: 'embed', label: 'Embed', Icon: FiCode },
@@ -36,6 +39,8 @@ export default function InsertToolbar({
   presentationId,
   slideId,
   targetElementId = null,
+  fillElementId = null,
+  onFillElement,
   brandKits = [],
   elementPresets = [],
   onInsert,
@@ -142,6 +147,8 @@ export default function InsertToolbar({
             presentationId={presentationId}
             slideId={slideId}
             targetElementId={targetElementId}
+            fillElementId={fillElementId}
+            onFillElement={onFillElement}
             brandKits={brandKits}
             onInsert={handleInsert}
             onMediaAttached={onMediaAttached}
@@ -149,6 +156,7 @@ export default function InsertToolbar({
           />
         )}
         {openTool === 'shape' && <ShapePanel onInsert={handleInsert} disabled={disabled} />}
+        {openTool === 'graphics' && <GraphicsPanel onInsert={handleInsert} disabled={disabled} />}
         {openTool === 'chart' && (
           <ChartPanel
             onInsert={handleInsert}

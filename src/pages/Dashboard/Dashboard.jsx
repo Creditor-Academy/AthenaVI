@@ -110,7 +110,7 @@ function Dashboard({ onCreate, initialSection }) {
   const [avatarCreateTypeId, setAvatarCreateTypeId] = useState(null)
   const [adminTab, setAdminTab] = useState(() => {
     const saved = localStorage.getItem('adminPortalTab')
-    const valid = ['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'platform-actions', 'heygen', 'broadcast', 'early-access', 'templates', 'ai-template']
+    const valid = ['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'platform-actions', 'heygen', 'broadcast', 'early-access', 'templates', 'graphics', 'ai-template']
     return valid.includes(saved) ? saved : 'overview'
   })
   const [settingsInitialTab, setSettingsInitialTab] = useState(() => resolveSettingsTabFromSearch())
@@ -585,7 +585,7 @@ function Dashboard({ onCreate, initialSection }) {
 
         <div className="dashboard-page-card">
           <main
-            className={`dashboard-main-content content ${!noPaddingSections.includes(section) ? 'with-padding' : ''} ${section === 'home' ? 'content--home' : ''} ${workspaceConsistentSections.includes(section) ? 'content--workspace-consistent' : ''} ${isAdminPortal ? 'content--superadmin' : ''}`}
+            className={`dashboard-main-content content ${!noPaddingSections.includes(section) ? 'with-padding' : ''} ${section === 'home' ? 'content--home' : ''} ${workspaceConsistentSections.includes(section) ? 'content--workspace-consistent' : ''} ${isAdminPortal ? 'content--superadmin' : ''} ${isAdminPortal && adminTab === 'graphics' ? 'content--graphics-library' : ''}`}
           >
           {section === 'home' && (
             <Home

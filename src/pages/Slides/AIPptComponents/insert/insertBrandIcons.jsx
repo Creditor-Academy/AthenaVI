@@ -25,6 +25,7 @@ import {
   FiGitBranch,
   FiMessageCircle,
   FiTag,
+  FiSmartphone,
 } from 'react-icons/fi'
 import { MdStickyNote2 } from 'react-icons/md'
 
@@ -61,6 +62,7 @@ export const BRAND_ICON_META = {
   speech: { Icon: FiMessageCircle, color: '#D97706' },
   sticky: { Icon: MdStickyNote2, color: '#CA8A04' },
   buttons: { Icon: FiTag, color: '#DB2777' },
+  devices: { Icon: FiSmartphone, color: '#0F172A' },
   charts: { Icon: FiBarChart2, color: '#7C3AED' },
 }
 

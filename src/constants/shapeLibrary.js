@@ -26,6 +26,7 @@ export const SHAPE_CATEGORIES = [
   { id: 'flowchart', label: 'Flowchart' },
   { id: 'speech', label: 'Bubbles' },
   { id: 'clouds', label: 'Clouds' },
+  { id: 'decorative', label: 'Decorative' },
   { id: 'pitch', label: 'Pitch' },
   { id: 'product-launch', label: 'Launch' },
   { id: 'course-module', label: 'Course' },
@@ -33,13 +34,68 @@ export const SHAPE_CATEGORIES = [
   { id: 'social-short', label: 'Social' },
 ];
 
-const SHAPES_GROUP = new Set(['basic', 'polygons', 'stars', 'shapes']);
+const SHAPES_GROUP = new Set(['basic', 'polygons', 'stars', 'shapes', 'decorative', 'clouds', 'arrows', 'speech']);
 
 export function shapeMatchesCategory(shape, category) {
   if (category === 'all') return true;
   if (category === 'shapes') return SHAPES_GROUP.has(shape.category);
   return shape.category === category;
 }
+
+/** Curated Essential tab order for PPT Shape panel (filled + outline pairs). */
+export const PPT_ESSENTIAL_SHAPE_IDS = [
+  'rect',
+  'square',
+  'rounded-rect',
+  'round-corner-rect',
+  'cut-corner-rect',
+  'concave-rect',
+  'wavy-bottom-rect',
+  'pill',
+  'circle',
+  'ellipse',
+  'semicircle',
+  'quarter-circle',
+  'arch',
+  'triangle-up',
+  'triangle-down',
+  'triangle-left',
+  'triangle-right',
+  'diamond',
+  'pentagon',
+  'hexagon',
+  'heptagon',
+  'octagon',
+  'parallelogram',
+  'trapezoid',
+  'star-4',
+  'star',
+  'star-6',
+  'star-8',
+  'burst',
+  'burst-soft',
+  'sparkle',
+  'cross',
+  'leaf',
+  'clover',
+  'wave',
+  'arrow-right',
+  'arrow-left',
+  'arrow-up',
+  'arrow-down',
+  'arrow-double',
+  'chevron-right',
+  'arrow-fat-right',
+  'banner',
+  'banner-pointed',
+  'banner-wavy',
+  'shield',
+  'ticket',
+  'speech-rect',
+  'speech-rounded',
+  'speech-cloud',
+  'cloud-1',
+];
 
 export const SHAPE_LIBRARY = [
   // ── Lines ───────────────────────────────────────────────────────────────
@@ -189,7 +245,24 @@ export const SHAPE_LIBRARY = [
     category: 'stars',
     style: base(120, 120, {
       clipPath:
-        'polygon(50% 0%, 58% 26%, 85% 10%, 72% 36%, 100% 50%, 72% 64%, 85% 90%, 58% 74%, 50% 100%, 42% 74%, 15% 90%, 28% 64%, 0% 50%, 28% 36%, 15% 10%, 42% 26%)',
+        'polygon(50% 0%, 55% 18%, 72% 8%, 68% 28%, 90% 22%, 78% 40%, 100% 50%, 78% 60%, 90% 78%, 68% 72%, 72% 92%, 55% 82%, 50% 100%, 45% 82%, 28% 92%, 32% 72%, 10% 78%, 22% 60%, 0% 50%, 22% 40%, 10% 22%, 32% 28%, 28% 8%, 45% 18%)',
+    }),
+  },
+  {
+    id: 'burst-soft',
+    name: 'Scalloped burst',
+    category: 'stars',
+    style: base(120, 120, {
+      clipPath:
+        'polygon(50% 0%, 61% 8%, 75% 4%, 82% 18%, 96% 22%, 90% 36%, 100% 50%, 90% 64%, 96% 78%, 82% 82%, 75% 96%, 61% 92%, 50% 100%, 39% 92%, 25% 96%, 18% 82%, 4% 78%, 10% 64%, 0% 50%, 10% 36%, 4% 22%, 18% 18%, 25% 4%, 39% 8%)',
+    }),
+  },
+  {
+    id: 'sparkle',
+    name: 'Sparkle',
+    category: 'stars',
+    style: base(100, 100, {
+      clipPath: 'polygon(50% 0%, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0% 50%, 42% 42%)',
     }),
   },
 
@@ -229,6 +302,15 @@ export const SHAPE_LIBRARY = [
     name: 'Block arrow right',
     category: 'arrows',
     style: base(180, 100, { clipPath: 'polygon(0% 25%, 55% 25%, 55% 0%, 100% 50%, 55% 100%, 55% 75%, 0% 75%)' }),
+  },
+  {
+    id: 'arrow-double',
+    name: 'Double arrow',
+    category: 'arrows',
+    style: base(180, 80, {
+      clipPath:
+        'polygon(0% 50%, 22% 0%, 22% 28%, 78% 28%, 78% 0%, 100% 50%, 78% 100%, 78% 72%, 22% 72%, 22% 100%)',
+    }),
   },
 
   // ── Flowchart ───────────────────────────────────────────────────────────
@@ -378,7 +460,126 @@ export const SHAPE_LIBRARY = [
     category: 'shapes',
     style: base(8, 160, { borderRadius: '4px' }),
   },
+
+  // ── Decorative / reference-sheet extras ─────────────────────────────────
+  {
+    id: 'round-corner-rect',
+    name: 'Round corner',
+    category: 'decorative',
+    style: base(160, 120, { borderRadius: '0 28px 0 0' }),
+  },
+  {
+    id: 'cut-corner-rect',
+    name: 'Cut corner',
+    category: 'decorative',
+    style: base(160, 120, {
+      clipPath: 'polygon(0% 0%, 78% 0%, 100% 22%, 100% 100%, 0% 100%)',
+    }),
+  },
+  {
+    id: 'concave-rect',
+    name: 'Concave corners',
+    category: 'decorative',
+    style: base(160, 120, {
+      clipPath:
+        'polygon(8% 0%, 92% 0%, 100% 8%, 100% 92%, 92% 100%, 8% 100%, 0% 92%, 0% 8%)',
+    }),
+  },
+  {
+    id: 'wavy-bottom-rect',
+    name: 'Wavy bottom',
+    category: 'decorative',
+    style: base(180, 120, {
+      clipPath:
+        'polygon(0% 0%, 100% 0%, 100% 78%, 88% 88%, 75% 78%, 62% 90%, 50% 78%, 38% 90%, 25% 78%, 12% 88%, 0% 78%)',
+    }),
+  },
+  {
+    id: 'quarter-circle',
+    name: 'Quarter circle',
+    category: 'decorative',
+    style: base(120, 120, { borderRadius: '0 0 0 100%' }),
+  },
+  {
+    id: 'arch',
+    name: 'Arch',
+    category: 'decorative',
+    style: base(120, 150, { borderRadius: '999px 999px 0 0' }),
+  },
+  {
+    id: 'leaf',
+    name: 'Leaf',
+    category: 'decorative',
+    style: base(120, 160, {
+      clipPath: 'polygon(50% 0%, 92% 42%, 50% 100%, 8% 42%)',
+    }),
+  },
+  {
+    id: 'clover',
+    name: 'Clover',
+    category: 'decorative',
+    style: base(140, 140, {
+      clipPath:
+        'polygon(50% 18%, 62% 8%, 78% 12%, 88% 28%, 82% 42%, 92% 52%, 88% 68%, 72% 78%, 58% 72%, 50% 88%, 42% 72%, 28% 78%, 12% 68%, 8% 52%, 18% 42%, 12% 28%, 22% 12%, 38% 8%)',
+    }),
+  },
+  {
+    id: 'wave',
+    name: 'Wave',
+    category: 'decorative',
+    style: base(200, 70, {
+      clipPath:
+        'polygon(0% 40%, 12% 20%, 25% 40%, 38% 20%, 50% 40%, 62% 20%, 75% 40%, 88% 20%, 100% 40%, 100% 80%, 88% 60%, 75% 80%, 62% 60%, 50% 80%, 38% 60%, 25% 80%, 12% 60%, 0% 80%)',
+    }),
+  },
+  {
+    id: 'banner',
+    name: 'Banner',
+    category: 'decorative',
+    style: base(200, 80, {
+      clipPath: 'polygon(0% 0%, 100% 0%, 88% 50%, 100% 100%, 0% 100%, 12% 50%)',
+    }),
+  },
+  {
+    id: 'banner-pointed',
+    name: 'Banner pointed',
+    category: 'decorative',
+    style: base(200, 80, {
+      clipPath: 'polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%)',
+    }),
+  },
+  {
+    id: 'banner-wavy',
+    name: 'Banner wavy',
+    category: 'decorative',
+    style: base(200, 70, {
+      clipPath:
+        'polygon(0% 30%, 15% 10%, 30% 30%, 45% 10%, 60% 30%, 75% 10%, 90% 30%, 100% 15%, 100% 70%, 90% 90%, 75% 70%, 60% 90%, 45% 70%, 30% 90%, 15% 70%, 0% 90%)',
+    }),
+  },
+  {
+    id: 'shield',
+    name: 'Shield',
+    category: 'decorative',
+    style: base(110, 130, {
+      clipPath: 'polygon(50% 0%, 100% 18%, 100% 55%, 50% 100%, 0% 55%, 0% 18%)',
+    }),
+  },
+  {
+    id: 'ticket',
+    name: 'Ticket',
+    category: 'decorative',
+    style: base(180, 100, {
+      clipPath:
+        'polygon(0% 0%, 100% 0%, 100% 38%, 94% 50%, 100% 62%, 100% 100%, 0% 100%, 0% 62%, 6% 50%, 0% 38%)',
+    }),
+  },
 ];
+
+export function getEssentialShapes() {
+  const byId = new Map(SHAPE_LIBRARY.map((s) => [s.id, s]));
+  return PPT_ESSENTIAL_SHAPE_IDS.map((id) => byId.get(id)).filter(Boolean);
+}
 
 /** @deprecated use SHAPE_LIBRARY */
 export const predefinedShapes = SHAPE_LIBRARY;

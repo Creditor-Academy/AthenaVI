@@ -777,6 +777,60 @@
   grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
 }
 
+.ppt-shape-icon-grid--essential {
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: 8px 6px;
+}
+
+.ppt-shape-preview--svg {
+  width: 48px;
+  height: 48px;
+  display: block;
+  color: #475569;
+}
+
+.ppt-shape-preview--svg svg {
+  width: 100%;
+  height: 100%;
+}
+
+.ppt-shape-icon-grid--devices {
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+  gap: 12px 10px;
+}
+
+.ppt-shape-icon-btn--device {
+  min-height: auto;
+  padding: 10px 8px 12px;
+  gap: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.ppt-device-frame-preview {
+  display: block;
+  height: 88px;
+  width: auto;
+  max-width: 100%;
+}
+
+.ppt-device-frame-label {
+  font-size: 11px;
+  line-height: 1.2;
+  color: #64748b;
+  text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ppt-shape-icon-btn--device:hover:not(:disabled) .ppt-device-frame-label {
+  color: #0f172a;
+}
+
 .ppt-shape-icon-btn {
   appearance: none;
   border: none;
@@ -2404,6 +2458,68 @@
   font-size: 12px;
   line-height: 1.4;
   color: #64748b;
+}
+
+/* Graphics insert panel */
+.ppt-graphics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: 10px;
+  padding: 4px 2px 12px;
+}
+
+.ppt-graphic-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ppt-graphic-tile:hover:not(:disabled) {
+  border-color: #a5b4fc;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.12);
+}
+
+.ppt-graphic-tile-preview {
+  display: grid;
+  place-items: center;
+  height: 72px;
+  border-radius: 8px;
+  background: #f8fafc;
+  overflow: hidden;
+}
+
+.ppt-graphic-tile-preview--icon {
+  background: transparent;
+}
+
+.ppt-graphic-tile-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.ppt-graphic-tile-img--icon {
+  width: 40px;
+  height: 40px;
+  max-width: 40px;
+  max-height: 40px;
+}
+
+.ppt-graphic-tile-label {
+  font-size: 11px;
+  line-height: 1.3;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 

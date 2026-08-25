@@ -10,6 +10,12 @@ const API_CONFIG = {
       REQUEST: '/api/early-access/request',
     },
 
+    GRAPHICS: {
+      LIST: '/api/graphics',
+      SEARCH: '/api/graphics/search',
+      GET: (id) => `/api/graphics/${id}`,
+    },
+
     // Authentication
     AUTH: {
       // OTP

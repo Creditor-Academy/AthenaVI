@@ -28,6 +28,7 @@ export default function ElementPropertiesPanel({
   onChangePlacement,
   onToggleLock,
   onReplaceImage,
+  onClearDeviceFrameScreen,
   onCropImage,
   toolbar = null,
   disabled = false,
@@ -40,6 +41,7 @@ export default function ElementPropertiesPanel({
   const c = element.content || {}
   const opacity = p.opacity != null ? Math.round(p.opacity * 100) : 100
   const isText = TEXT_TYPES.has(element.type)
+  const isDeviceFrame = Boolean(c.deviceFrame || c.shape === 'device-frame')
 
   const patchContent = (updates) => onChangeContent?.({ ...c, ...updates })
   const patchPlacement = (updates) =>
@@ -112,41 +114,74 @@ export default function ElementPropertiesPanel({
       {(element.type === 'shape' || element.type === 'embed') && (
         <>
           <div className="ppt-element-props-row">
-            <span>Fill / border</span>
+            <span>{isDeviceFrame ? 'Frame color' : 'Fill / border'}</span>
             <ColorFillPicker
-              title="Fill color"
-              value={normalizeFillValue(c.fill || c.stroke, '#94a3b8')}
+              title={isDeviceFrame ? 'Frame color' : 'Fill color'}
+              value={normalizeFillValue(c.stroke || c.frameColor || c.fill, '#1e293b')}
               palette={palette}
               disabled={disabled}
-              fallbackHex="#94a3b8"
+              fallbackHex="#1e293b"
               onChange={(fill) => {
-                const stroke = fill?.type === 'gradient' ? fill.stops?.[0]?.color : fill?.color
-                patchContent({ fill, stroke })
+                const color = fill?.type === 'gradient' ? fill.stops?.[0]?.color : fill?.color
+                if (isDeviceFrame) {
+                  patchContent({ stroke: color, frameColor: color, fill: color })
+                  return
+                }
+                patchContent({ fill, stroke: color })
               }}
             />
           </div>
-          <div className="ppt-element-props-row">
-            <span>Border width</span>
-            <input
-              type="number"
-              min={0}
-              max={20}
-              value={c.strokeWidth ?? 2}
-              disabled={disabled}
-              onChange={(e) => patchContent({ strokeWidth: Number(e.target.value) })}
-            />
-          </div>
-          <div className="ppt-element-props-row">
-            <span>Rounded corners</span>
-            <input
-              type="number"
-              min={0}
-              max={64}
-              value={c.borderRadius ?? 0}
-              disabled={disabled}
-              onChange={(e) => patchContent({ borderRadius: Number(e.target.value) })}
-            />
-          </div>
+          {!isDeviceFrame && (
+            <>
+              <div className="ppt-element-props-row">
+                <span>Border width</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={20}
+                  value={c.strokeWidth ?? 2}
+                  disabled={disabled}
+                  onChange={(e) => patchContent({ strokeWidth: Number(e.target.value) })}
+                />
+              </div>
+              <div className="ppt-element-props-row">
+                <span>Rounded corners</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={64}
+                  value={c.borderRadius ?? 0}
+                  disabled={disabled}
+                  onChange={(e) => patchContent({ borderRadius: Number(e.target.value) })}
+                />
+              </div>
+            </>
+          )}
+          {isDeviceFrame && (
+            <>
+              <p className="ppt-slide-panel-hint" style={{ margin: 0 }}>
+                Drag an image from Media onto this frame, or click an image while it is selected.
+              </p>
+              <button
+                type="button"
+                className="ppt-slide-panel-btn ppt-slide-panel-btn--block"
+                disabled={disabled}
+                onClick={onReplaceImage}
+              >
+                Replace screen image
+              </button>
+              {(c.screenUrl || c.url || c.src) && (
+                <button
+                  type="button"
+                  className="ppt-slide-panel-btn ppt-slide-panel-btn--block"
+                  disabled={disabled}
+                  onClick={onClearDeviceFrameScreen}
+                >
+                  Clear screen image
+                </button>
+              )}
+            </>
+          )}
         </>
       )}
 

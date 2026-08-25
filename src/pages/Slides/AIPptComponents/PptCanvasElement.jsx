@@ -27,6 +27,10 @@ import {
   setTextOffsetsInNode,
   textPaintStyle,
 } from '../../../utils/pptTextContent'
+import DeviceFrameVisual, { resolveDeviceFrameColor } from '../../../components/ppt/DeviceFrameVisual'
+import ClipShapeSvg from '../../../components/ppt/ClipShapeSvg'
+import GraphicCanvasVisual from '../../../components/ppt/GraphicCanvasVisual'
+import { parsePolygonClipPath } from '../../../utils/shapeClipSvg'
 
 function TextListDisplay({ text, listType }) {
   const lines = splitTextLines(text)
@@ -437,6 +441,14 @@ export default function PptCanvasElement({
     )
   }
 
+  if (el.type === 'graphic') {
+    return (
+      <div style={fillStyle}>
+        <GraphicCanvasVisual content={el.content || {}} palette={palette} />
+      </div>
+    )
+  }
+
   if (el.type === 'image' || el.type === 'icon') {
     const c = el.content || {}
     const url = c.url || c.src || c.thumbnailUrl || c.previewUrl
@@ -500,6 +512,21 @@ export default function PptCanvasElement({
 
   if (el.type === 'shape') {
     const c = el.content || {}
+    const deviceKind = c.deviceFrame || (c.shape === 'device-frame' ? 'phone' : null)
+    if (deviceKind) {
+      const screenSrc = c.screenUrl || c.url || c.src || c.thumbnailUrl || c.previewUrl
+      const frameColor = resolveDeviceFrameColor(c, palette)
+      return (
+        <div style={{ ...fillStyle, position: 'relative' }}>
+          <DeviceFrameVisual kind={deviceKind} src={screenSrc} frameColor={frameColor} />
+          {selected && !screenSrc && (
+            <div className="ppt-device-frame-drop-hint" aria-hidden>
+              Drop image here
+            </div>
+          )}
+        </div>
+      )
+    }
     const shapeImageUrl = c.url || c.src || c.thumbnailUrl || c.previewUrl
     if (shapeImageUrl) {
       return (
@@ -576,6 +603,36 @@ export default function PptCanvasElement({
           }}
         >
           <div style={rendered.style} />
+        </div>
+      )
+    }
+
+    if (rendered.kind === 'clip' && rendered.clipPath) {
+      const svgFill = rendered.outlined
+        ? 'none'
+        : rendered.fill || rendered.style?.background || '#475569'
+      const svgStroke = rendered.outlined
+        ? rendered.stroke || '#475569'
+        : 'none'
+      const fillColor = typeof svgFill === 'string' ? svgFill : '#475569'
+      const canSvg = Boolean(parsePolygonClipPath(rendered.clipPath))
+      if (canSvg) {
+        return (
+          <div style={{ ...fillStyle, position: 'relative' }}>
+            <ClipShapeSvg
+              clipPath={rendered.clipPath}
+              fill={fillColor}
+              stroke={typeof svgStroke === 'string' ? svgStroke : '#475569'}
+              strokeWidth={rendered.strokeWidth || 3}
+              outlined={Boolean(rendered.outlined)}
+            />
+            {inner}
+          </div>
+        )
+      }
+      return (
+        <div style={{ ...fillStyle, ...rendered.style }}>
+          {inner}
         </div>
       )
     }

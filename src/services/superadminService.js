@@ -345,6 +345,53 @@ const superadminService = {
       method: 'DELETE',
     })
   },
+
+  listGraphics(params = {}) {
+    const qs = new URLSearchParams()
+    Object.entries(params).forEach(([k, v]) => {
+      if (v != null && v !== '') qs.set(k, String(v))
+    })
+    const suffix = qs.toString() ? `?${qs}` : ''
+    return superadminRequest(`/api/superadmin/graphics${suffix}`)
+  },
+
+  getGraphic(id) {
+    return superadminRequest(`/api/superadmin/graphics/${id}`)
+  },
+
+  uploadGraphic(fields) {
+    const form = new FormData()
+    Object.entries(fields || {}).forEach(([key, value]) => {
+      if (value == null || value === '') return
+      if (key === 'file') form.append('file', value)
+      else if (Array.isArray(value)) form.append(key, value.join(','))
+      else form.append(key, String(value))
+    })
+    return superadminRequest('/api/superadmin/graphics', { method: 'POST', body: form })
+  },
+
+  updateGraphic(id, body) {
+    return superadminRequest(`/api/superadmin/graphics/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    })
+  },
+
+  publishGraphic(id) {
+    return superadminRequest(`/api/superadmin/graphics/${id}/publish`, { method: 'POST' })
+  },
+
+  unpublishGraphic(id) {
+    return superadminRequest(`/api/superadmin/graphics/${id}/unpublish`, { method: 'POST' })
+  },
+
+  archiveGraphic(id) {
+    return superadminRequest(`/api/superadmin/graphics/${id}/archive`, { method: 'POST' })
+  },
+
+  deleteGraphic(id) {
+    return superadminRequest(`/api/superadmin/graphics/${id}`, { method: 'DELETE' })
+  },
 }
 
 export { SuperadminApiError }
