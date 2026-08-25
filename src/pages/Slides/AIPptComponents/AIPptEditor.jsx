@@ -72,7 +72,13 @@ import {
 } from '../../../utils/layoutCanvasService'
 import { contentWithSyncedText, setPptTextSelection } from '../../../utils/pptTextContent'
 import { PPT_DEFAULT_PLACEMENTS } from '../../../constants/pptInsertCatalog'
-import { ensureThemeFontsLoaded, themeFontFamilies } from '../../../utils/googleFonts'
+import {
+  collectSlideFontFamilies,
+  ensureElementFontsLoaded,
+  ensureFontCssUrl,
+  ensureThemeFontsLoaded,
+  themeFontFamilies,
+} from '../../../utils/googleFonts'
 import {
   logCanvasGreySuspects,
   shouldPaintElement,
@@ -558,6 +564,7 @@ export default function AIPptEditor({
   const [selectedSlideId, setSelectedSlideId] = useState(null)
   const [selectedElementId, setSelectedElementId] = useState(null)
   const [themeTokens, setThemeTokens] = useState(null)
+  const [fontCssUrl, setFontCssUrl] = useState(null)
   const [elementPresets, setElementPresets] = useState([])
   const [brandKits, setBrandKits] = useState([])
   const [brandKitOpen, setBrandKitOpen] = useState(false)
@@ -629,8 +636,13 @@ export default function AIPptEditor({
   )
 
   useEffect(() => {
-    ensureThemeFontsLoaded(themeTokens)
-  }, [themeTokens])
+    if (fontCssUrl) {
+      ensureFontCssUrl(fontCssUrl)
+    } else {
+      ensureThemeFontsLoaded(themeTokens)
+    }
+    ensureElementFontsLoaded(collectSlideFontFamilies(localSlides))
+  }, [fontCssUrl, themeTokens, localSlides])
 
   useEffect(() => {
     if (!themeTokens?.fonts) return
@@ -786,6 +798,12 @@ export default function AIPptEditor({
 
     setLocalSlides(slides)
     setThemeTokens(tokens)
+    setFontCssUrl(
+      data?.fontCssUrl ||
+        data?.deck?.fontCssUrl ||
+        data?.presentation?.fontCssUrl ||
+        null
+    )
     setDeckStatus(deckStatusRaw)
     setDeckPackId(extractDeckPackId(data) || deckPackId)
     if (data?.title || data?.presentation?.title) {
@@ -1414,6 +1432,12 @@ export default function AIPptEditor({
       initialDeck?.deck?.themeTokens ||
         initialDeck?.themeTokens ||
         initialDeck?.presentation?.deck?.themeTokens ||
+        null
+    )
+    setFontCssUrl(
+      initialDeck?.fontCssUrl ||
+        initialDeck?.deck?.fontCssUrl ||
+        initialDeck?.presentation?.fontCssUrl ||
         null
     )
     setDeckStatus(

@@ -14,6 +14,8 @@ import {
 import { MdFormatListBulleted, MdFormatListNumbered, MdStrikethroughS } from 'react-icons/md'
 import { stripLeadingListMarkers } from '../../../../utils/textListUtils'
 import { applyElementTextFill, contentFillValue, contentPlainText, contentWithSyncedText } from '../../../../utils/pptTextContent'
+import { ensureGoogleFontLoaded } from '../../../../utils/googleFonts'
+import FontPicker from '../../../../components/shared/fonts/FontPicker'
 import ColorFillPicker from './ColorFillPicker'
 import './insertPanels.css'
 
@@ -23,16 +25,6 @@ const LIST_STYLE_OPTIONS = [
   { id: 'star', title: 'Star list', label: '★', useIcon: FiStar },
   { id: 'check', title: 'Check list', label: '✓', useIcon: FiCheck },
   { id: 'dash', title: 'Dash list', label: '–', useIcon: FiMinus },
-]
-
-const FONT_FAMILIES = [
-  'Inter',
-  'Georgia',
-  'Times New Roman',
-  'Arial',
-  'Helvetica',
-  'Courier New',
-  'monospace',
 ]
 
 /**
@@ -72,19 +64,19 @@ export default function ElementToolbar({
       role="toolbar"
       aria-label="Text formatting"
     >
-      <select
-        className="ppt-ui-select ppt-element-toolbar-select"
-        value={c.fontFamily || 'Inter'}
-        disabled={disabled}
-        onChange={(e) => patch({ fontFamily: e.target.value })}
-        title="Font family"
-      >
-        {FONT_FAMILIES.map((f) => (
-          <option key={f} value={f}>
-            {f}
-          </option>
-        ))}
-      </select>
+      <div className="ppt-element-toolbar-font-picker">
+        <FontPicker
+          label={isPanel ? 'Font family' : ''}
+          value={c.fontFamily || 'Inter'}
+          disabled={disabled}
+          compact
+          menuLabel="Font family"
+          onChange={(family) => {
+            ensureGoogleFontLoaded(family)
+            patch({ fontFamily: family })
+          }}
+        />
+      </div>
 
       <div className="ppt-size-stepper" title="Font size">
         <button type="button" disabled={disabled} onClick={() => adjustSize(-1)} title="Decrease size">

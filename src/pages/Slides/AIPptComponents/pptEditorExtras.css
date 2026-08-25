@@ -781,6 +781,26 @@
   height: 36px;
 }
 
+.ppt-element-toolbar-font-picker {
+  flex: 1 1 160px;
+  min-width: 140px;
+  max-width: 100%;
+  position: relative;
+  z-index: 5;
+}
+
+.ppt-element-toolbar:not(.ppt-element-toolbar--panel) .ppt-element-toolbar-font-picker .font-picker__label {
+  display: none;
+}
+
+.ppt-element-toolbar-font-picker .font-picker__trigger {
+  min-height: 36px;
+}
+
+.ppt-element-toolbar-font-picker .font-picker__panel {
+  z-index: 60;
+}
+
 .ppt-element-toolbar--panel .ppt-element-toolbar-select--case {
   flex: 0 1 132px;
   min-width: 118px;

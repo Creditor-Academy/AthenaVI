@@ -129,6 +129,12 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/projects/${projectId}/comments/mentionable-users`,
     },
 
+    // Shared Google Fonts catalog (user-scoped)
+    FONTS: {
+      CATALOG: '/api/fonts/catalog',
+      CSS: '/api/fonts/css',
+    },
+
     // Brand Kits (workspace branding)
     BRAND_KITS: {
       LIST: (workspaceId) => `/api/workspaces/${workspaceId}/brand-kits`,

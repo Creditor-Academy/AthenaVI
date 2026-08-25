@@ -2,6 +2,8 @@ import ElementToolbar from './ElementToolbar'
 import ElementPropertiesPanel from '../ElementPropertiesPanel'
 import SlideTransitionPicker from './SlideTransitionPicker'
 import ColorFillPicker from './ColorFillPicker'
+import FontPicker from '../../../../components/shared/fonts/FontPicker'
+import { ensureGoogleFontLoaded } from '../../../../utils/googleFonts'
 import { slideBackgroundFill } from '../../../../utils/presentationHelpers'
 import './insertPanels.css'
 import '../pptEditorExtras.css'
@@ -118,25 +120,27 @@ function SlideDesignSection({
         <div className="ppt-slide-panel-label">Slide style defaults</div>
         <div className="ppt-slide-style-grid">
           <div className="ppt-slide-style-row">
-            <label>Header font</label>
-            <input
-              type="text"
+            <FontPicker
+              label="Header font"
               value={slideStyles?.headerFont || 'Inter'}
               disabled={disabled}
-              onChange={(e) =>
-                onSlideStylesChange?.({ ...slideStyles, headerFont: e.target.value })
-              }
+              compact
+              onChange={(family) => {
+                ensureGoogleFontLoaded(family)
+                onSlideStylesChange?.({ ...slideStyles, headerFont: family })
+              }}
             />
           </div>
           <div className="ppt-slide-style-row">
-            <label>Body font</label>
-            <input
-              type="text"
+            <FontPicker
+              label="Body font"
               value={slideStyles?.bodyFont || 'Inter'}
               disabled={disabled}
-              onChange={(e) =>
-                onSlideStylesChange?.({ ...slideStyles, bodyFont: e.target.value })
-              }
+              compact
+              onChange={(family) => {
+                ensureGoogleFontLoaded(family)
+                onSlideStylesChange?.({ ...slideStyles, bodyFont: family })
+              }}
             />
           </div>
         </div>

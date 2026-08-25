@@ -30,6 +30,7 @@ import {
 } from '../../components/features/brand-kits/utils/composeLogoVariants'
 import {
   ensureGoogleFontLoaded,
+  fontsFromPairing,
   resolveRoleHex,
 } from '../../components/features/brand-kits/utils/brandKitUtils'
 import { FONT_ROLE_DEFAULTS } from '../../components/features/brand-kits/utils/brandKitConstants'
@@ -561,6 +562,15 @@ function BrandKits() {
     })
   }
 
+  const applyFontPairing = (pairing) => {
+    if (!pairing) return
+    ;[pairing.heading, pairing.subheading, pairing.body].filter(Boolean).forEach(ensureGoogleFontLoaded)
+    setKitData((prev) => ({
+      ...prev,
+      fonts: fontsFromPairing(pairing, prev.fonts),
+    }))
+  }
+
   const addColor = () => {
     setKitData((prev) => {
       const colors = prev.colors || []
@@ -677,6 +687,9 @@ function BrandKits() {
           },
         })
       )
+      ;[fonts.heading?.family, fonts.subheading?.family, fonts.body?.family]
+        .filter(Boolean)
+        .forEach(ensureGoogleFontLoaded)
     } catch (err) {
       handleApiError(err, 'Failed to suggest fonts')
     } finally {
@@ -1462,6 +1475,7 @@ function BrandKits() {
         editingKitId={editingKitId}
         triggerAutoGenerateTypography={triggerAutoGenerateTypography}
         updateFontRole={updateFontRole}
+        applyFontPairing={applyFontPairing}
         downloadBrandGuidelinePdf={downloadBrandGuidelinePdf}
         generateBrandGuidelines={generateBrandGuidelines}
         guidelineLink={guidelineLink}

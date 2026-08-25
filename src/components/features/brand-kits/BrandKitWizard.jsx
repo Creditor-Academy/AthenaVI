@@ -18,8 +18,10 @@ import {
   hexToHsl,
   hexToRgb,
   ensureGoogleFontLoaded,
+  fontsFromPairing,
 } from './utils/brandKitUtils'
-import { FONT_WEIGHT_OPTIONS, POPULAR_GOOGLE_FONTS } from './utils/brandKitConstants'
+import { FONT_WEIGHT_OPTIONS } from './utils/brandKitConstants'
+import FontPicker from '../../shared/fonts/FontPicker'
 
 function contrastInk(hex) {
   const raw = String(hex || '#000000').replace('#', '')
@@ -478,9 +480,6 @@ export default function BrandKitWizard(props) {
                   },
                 ].map(({ role, label, hint, sample }) => {
                   const font = getFontRole(kitData.fonts, role)
-                  const familyOptions = POPULAR_GOOGLE_FONTS.includes(font.family)
-                    ? POPULAR_GOOGLE_FONTS
-                    : [font.family, ...POPULAR_GOOGLE_FONTS].filter(Boolean)
                   const weightValue = String(font.weight || '400')
 
                   return (
@@ -491,24 +490,28 @@ export default function BrandKitWizard(props) {
                       </div>
 
                       <div className="bk-wiz-type-controls bk-wiz-type-controls--grid">
-                        <label className="bk-wiz-type-field">
-                          <span>Font family</span>
-                          <select
+                        <div className="bk-wiz-type-field">
+                          <FontPicker
+                            label="Font family"
                             value={font.family || ''}
                             disabled={!canWrite}
-                            onChange={(e) => {
-                              const family = e.target.value
+                            menuLabel={`${label} font family`}
+                            showPairings={role === 'heading'}
+                            onApplyPairing={(pairing) => {
+                              ;[pairing.heading, pairing.subheading, pairing.body]
+                                .filter(Boolean)
+                                .forEach(ensureGoogleFontLoaded)
+                              setKitData((prev) => ({
+                                ...prev,
+                                fonts: fontsFromPairing(pairing, prev.fonts),
+                              }))
+                            }}
+                            onChange={(family) => {
                               ensureGoogleFontLoaded(family)
                               patchFontRole(setKitData, role, { family })
                             }}
-                          >
-                            {familyOptions.map((name) => (
-                              <option key={name} value={name}>
-                                {name}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
+                          />
+                        </div>
 
                         <label className="bk-wiz-type-field">
                           <span>Weight</span>
