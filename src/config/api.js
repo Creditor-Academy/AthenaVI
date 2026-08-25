@@ -42,7 +42,8 @@ const API_CONFIG = {
       // user settings endpoints are under /api/user/settings
       USER_SETTINGS: {
         APPEARANCE: '/api/user/settings/appearance',
-        NOTIFICATIONS: '/api/user/settings/notifications'
+        NOTIFICATIONS: '/api/user/settings/notifications',
+        PPT: '/api/user/settings/ppt',
       },
       INBOX: {
         LIST: '/api/user/inbox',

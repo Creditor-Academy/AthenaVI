@@ -173,7 +173,7 @@ export default function AIPptGenerator({
   }
 
   const showHistorySidebar = stage === 'preview' || (stage === 'wizard' && wizardStep === 1)
-  const isDayPage = stage === 'wizard' && wizardStep === 1
+  const isDayPage = stage === 'wizard'
   const dayBackground = PPT_DAY_BACKGROUNDS[promptDaypart] || PPT_DAY_BACKGROUNDS.afternoon
 
   return (
