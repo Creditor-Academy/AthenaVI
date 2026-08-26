@@ -1,4 +1,3 @@
-import { MdArrowForward } from 'react-icons/md'
 import ButtonStylesSection from './ButtonStylesSection'
 import { resolveButtonStyle } from '../../../../utils/brandKitHelpers'
 import { getFontRole } from '../utils/brandKitUtils'
@@ -82,9 +81,6 @@ export default function ButtonsTab({ canWrite, kitData, setKitData }) {
                 </div>
               </div>
 
-              <button type="button" className="bk-action-btn" disabled>
-                Synced with brand kit <MdArrowForward size={14} />
-              </button>
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { MdAutoAwesome, MdArrowForward } from 'react-icons/md'
+import { MdAutoAwesome } from 'react-icons/md'
 import { TypeSpecEditors } from '../TypeSpecEditors'
 import { getFontRole } from '../utils/brandKitUtils'
 import { resolveFontRoleTextColors } from '../../../../utils/brandKitHelpers'
@@ -198,9 +198,6 @@ export default function TypographyTab(props) {
                   dashboards and more like quiet studios.
                 </p>
               </div>
-              <button type="button" className="bk-action-btn">
-                Read Full Article <MdArrowForward size={14} />
-              </button>
             </div>
           </div>
         </div>

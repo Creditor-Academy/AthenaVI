@@ -21,9 +21,39 @@ function loadFontFace(fontOrFamily) {
   }
 }
 
+function normalizeFamily(family) {
+  return String(family || '').trim()
+}
+
+function familyKey(family) {
+  return normalizeFamily(family).toLowerCase()
+}
+
+function uniqueFamilyNames(families = []) {
+  const seen = new Set()
+  const out = []
+  for (const raw of families) {
+    const name = normalizeFamily(raw)
+    if (!name) continue
+    const key = familyKey(name)
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(name)
+  }
+  return out
+}
+
+function resolveFont(family, catalogByKey) {
+  const name = normalizeFamily(family)
+  if (!name) return null
+  return catalogByKey.get(familyKey(name)) || { family: name, featured: false, category: null }
+}
+
 /**
  * Shared Google Fonts catalog picker.
  * Stores family name only via onChange(family, fontMeta?).
+ *
+ * Canva-style panel: search → Recommended (used in doc / fallbacks) → Featured.
  */
 export default function FontPicker({
   value = '',
@@ -35,10 +65,10 @@ export default function FontPicker({
   onApplyPairing,
   className = '',
   compact = false,
-  defaultBrowse = 'recommended',
+  /** Fonts already used in the current presentation / document. */
+  usedFontFamilies = [],
 }) {
   const [open, setOpen] = useState(false)
-  const [browse, setBrowse] = useState(defaultBrowse)
   const rootRef = useRef(null)
   const searchRef = useRef(null)
   const { fonts, recommendedFonts, pairings, query, setQuery, loading, error } = useFontCatalog({
@@ -46,10 +76,36 @@ export default function FontPicker({
   })
 
   const isSearching = Boolean(String(query || '').trim())
-  const listFonts = useMemo(() => {
+
+  const catalogByKey = useMemo(() => {
+    const map = new Map()
+    for (const font of fonts) {
+      if (font?.family) map.set(familyKey(font.family), font)
+    }
+    for (const font of recommendedFonts) {
+      if (font?.family && !map.has(familyKey(font.family))) {
+        map.set(familyKey(font.family), font)
+      }
+    }
+    return map
+  }, [fonts, recommendedFonts])
+
+  const recommendedList = useMemo(() => {
+    const fromDoc = uniqueFamilyNames(usedFontFamilies)
+      .map((family) => resolveFont(family, catalogByKey))
+      .filter(Boolean)
+
+    if (fromDoc.length) return fromDoc
+
+    // Fallback when nothing is used yet (brand kits / empty decks): curated pairings.
+    return recommendedFonts
+  }, [usedFontFamilies, catalogByKey, recommendedFonts])
+
+  const featuredList = useMemo(() => {
     if (isSearching) return fonts
-    return browse === 'featured' ? fonts : recommendedFonts
-  }, [isSearching, browse, fonts, recommendedFonts])
+    const recommendedKeys = new Set(recommendedList.map((f) => familyKey(f.family)))
+    return fonts.filter((f) => f?.family && !recommendedKeys.has(familyKey(f.family)))
+  }, [isSearching, fonts, recommendedList])
 
   useEffect(() => {
     if (value) ensureGoogleFontLoaded(value)
@@ -79,8 +135,11 @@ export default function FontPicker({
 
   useEffect(() => {
     if (!open) return
-    listFonts.slice(0, 40).forEach(preloadFontPreview)
-  }, [open, listFonts])
+    const preview = isSearching
+      ? fonts.slice(0, 40)
+      : [...recommendedList.slice(0, 20), ...featuredList.slice(0, 40)]
+    preview.forEach(preloadFontPreview)
+  }, [open, isSearching, fonts, recommendedList, featuredList])
 
   const handleSelect = (font) => {
     loadFontFace(font)
@@ -97,12 +156,34 @@ export default function FontPicker({
   }
 
   const displayValue = value || 'Select font'
-  const hasCurrentInList = listFonts.some((f) => f.family === value)
-  const sectionTitle = isSearching
-    ? 'Search results'
-    : browse === 'featured'
-      ? 'Featured'
-      : 'Recommended'
+  const recommendedKeys = useMemo(
+    () => new Set(recommendedList.map((f) => familyKey(f.family))),
+    [recommendedList]
+  )
+  const showCurrentInFeatured =
+    Boolean(value) &&
+    !isSearching &&
+    !recommendedKeys.has(familyKey(value)) &&
+    !featuredList.some((f) => familyKey(f.family) === familyKey(value))
+
+  const renderFontButton = (font) => {
+    const isActive = familyKey(value) === familyKey(font.family)
+    return (
+      <button
+        key={font.family}
+        type="button"
+        role="option"
+        aria-selected={isActive}
+        className={`font-picker__item ${isActive ? 'is-active' : ''}`}
+        style={{ fontFamily: font.family }}
+        onMouseEnter={() => preloadFontPreview(font)}
+        onClick={() => handleSelect(font)}
+      >
+        {font.family}
+        {font.category ? <span className="font-picker__item-cat">{font.category}</span> : null}
+      </button>
+    )
+  }
 
   return (
     <div
@@ -133,111 +214,84 @@ export default function FontPicker({
           aria-label={menuLabel || label || 'Font family'}
         >
           <div className="font-picker__search">
-            <MdSearch size={16} aria-hidden />
-            <input
-              ref={searchRef}
-              type="search"
-              value={query}
-              placeholder="Search fonts…"
-              aria-label="Search fonts"
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.stopPropagation()}
-            />
+            <label className="font-picker__search-field">
+              <MdSearch size={18} aria-hidden className="font-picker__search-icon" />
+              <input
+                ref={searchRef}
+                type="search"
+                value={query}
+                placeholder="Search fonts"
+                aria-label="Search fonts"
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.stopPropagation()}
+              />
+            </label>
           </div>
 
-          {!isSearching ? (
-            <div className="font-picker__tabs" role="tablist" aria-label="Font lists">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={browse === 'recommended'}
-                className={`font-picker__tab ${browse === 'recommended' ? 'is-active' : ''}`}
-                onClick={() => setBrowse('recommended')}
-              >
-                Recommended
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={browse === 'featured'}
-                className={`font-picker__tab ${browse === 'featured' ? 'is-active' : ''}`}
-                onClick={() => setBrowse('featured')}
-              >
-                Featured
-              </button>
-            </div>
-          ) : null}
-
-          {showPairings && pairings.length > 0 && !isSearching && browse === 'recommended' ? (
-            <div className="font-picker__section">
-              <div className="font-picker__section-title">Pairings</div>
-              <div className="font-picker__pairings">
-                {pairings.slice(0, 12).map((pairing) => (
-                  <button
-                    key={pairing.id}
-                    type="button"
-                    className="font-picker__pairing"
-                    onClick={() => handlePairing(pairing)}
-                  >
-                    <span className="font-picker__pairing-heading" style={{ fontFamily: pairing.heading }}>
-                      {pairing.heading}
-                    </span>
-                    <span className="font-picker__pairing-meta">
-                      <span style={{ fontFamily: pairing.subheading }}>{pairing.subheading}</span>
-                      {' · '}
-                      <span style={{ fontFamily: pairing.body }}>{pairing.body}</span>
-                    </span>
-                  </button>
-                ))}
+          <div className="font-picker__body">
+            {showPairings && pairings.length > 0 && !isSearching ? (
+              <div className="font-picker__section">
+                <div className="font-picker__section-title">Pairings</div>
+                <div className="font-picker__pairings">
+                  {pairings.slice(0, 12).map((pairing) => (
+                    <button
+                      key={pairing.id}
+                      type="button"
+                      className="font-picker__pairing"
+                      onClick={() => handlePairing(pairing)}
+                    >
+                      <span className="font-picker__pairing-heading" style={{ fontFamily: pairing.heading }}>
+                        {pairing.heading}
+                      </span>
+                      <span className="font-picker__pairing-meta">
+                        <span style={{ fontFamily: pairing.subheading }}>{pairing.subheading}</span>
+                        {' · '}
+                        <span style={{ fontFamily: pairing.body }}>{pairing.body}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
-          ) : null}
-
-          <div className="font-picker__section">
-            <div className="font-picker__section-title">{sectionTitle}</div>
-            {loading ? <div className="font-picker__status">Loading…</div> : null}
-            {error ? <div className="font-picker__status font-picker__status--error">{error}</div> : null}
-            {!loading && !error && listFonts.length === 0 ? (
-              <div className="font-picker__status">No fonts found</div>
             ) : null}
-            <div className="font-picker__list">
-              {value && !hasCurrentInList ? (
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected
-                  className="font-picker__item is-active"
-                  style={{ fontFamily: value }}
-                  onClick={() => {
-                    ensureGoogleFontLoaded(value)
-                    onChange?.(value)
-                    setOpen(false)
-                    setQuery('')
-                  }}
-                >
-                  {value}
-                </button>
+
+            {!isSearching && recommendedList.length > 0 ? (
+              <div className="font-picker__section">
+                <div className="font-picker__section-title">Recommended</div>
+                <div className="font-picker__list font-picker__list--section">
+                  {recommendedList.map(renderFontButton)}
+                </div>
+              </div>
+            ) : null}
+
+            <div className="font-picker__section">
+              <div className="font-picker__section-title">
+                {isSearching ? 'Search results' : 'Featured'}
+              </div>
+              {loading ? <div className="font-picker__status">Loading…</div> : null}
+              {error ? <div className="font-picker__status font-picker__status--error">{error}</div> : null}
+              {!loading && !error && featuredList.length === 0 && !showCurrentInFeatured ? (
+                <div className="font-picker__status">No fonts found</div>
               ) : null}
-              {listFonts.map((font) => {
-                const isActive = value === font.family
-                return (
+              <div className="font-picker__list font-picker__list--section">
+                {showCurrentInFeatured ? (
                   <button
-                    key={font.family}
                     type="button"
                     role="option"
-                    aria-selected={isActive}
-                    className={`font-picker__item ${isActive ? 'is-active' : ''}`}
-                    style={{ fontFamily: font.family }}
-                    onMouseEnter={() => preloadFontPreview(font)}
-                    onClick={() => handleSelect(font)}
+                    aria-selected
+                    className="font-picker__item is-active"
+                    style={{ fontFamily: value }}
+                    onClick={() => {
+                      ensureGoogleFontLoaded(value)
+                      onChange?.(value)
+                      setOpen(false)
+                      setQuery('')
+                    }}
                   >
-                    {font.family}
-                    {font.category ? (
-                      <span className="font-picker__item-cat">{font.category}</span>
-                    ) : null}
+                    {value}
                   </button>
-                )
-              })}
+                ) : null}
+                {featuredList.map(renderFontButton)}
+              </div>
             </div>
           </div>
         </div>

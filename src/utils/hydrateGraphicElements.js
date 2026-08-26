@@ -6,7 +6,10 @@ function collectGraphicAssetIds(slides = []) {
     for (const el of slide?.elements?.elements || []) {
       if (el?.type !== 'graphic') continue
       const c = el.content || {}
-      if (c.assetId) ids.add(String(c.assetId))
+      const id = c.assetId != null ? String(c.assetId) : ''
+      // SVGL logos use remote URLs (svgl:*) — do not resolve via Graphics Library API
+      if (!id || id.startsWith('svgl:')) continue
+      ids.add(id)
     }
   }
   return [...ids]

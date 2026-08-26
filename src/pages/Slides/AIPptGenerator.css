@@ -3916,19 +3916,20 @@
   color: #64748b;
 }
 
-/* Zoom Controls */
+/* Zoom Controls — fixed to editor workspace, not the scrolling canvas */
 .aig-canvas-controls {
   position: absolute;
   bottom: 24px;
-  right: 24px;
-  background: rgba(255,255,255,0.9);
+  right: 88px;
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(8px);
   border-radius: 999px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   padding: 4px;
-  z-index: 10;
+  z-index: 40;
+  pointer-events: auto;
 }
 
 .aig-canvas-ctrl-btn {
@@ -4572,18 +4573,40 @@
   pointer-events: auto;
 }
 
+.ppt-canvas-el-handles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
 .ppt-canvas-el-resize {
   position: absolute;
-  right: -4px;
-  bottom: -4px;
   width: 10px;
   height: 10px;
-  background: var(--primary);
-  border: 2px solid #fff;
+  background: #ffffff;
+  border: 1.5px solid #3b82f6;
   border-radius: 2px;
-  cursor: nwse-resize;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
   pointer-events: auto;
-  z-index: 4;
+  z-index: 5;
+  box-sizing: border-box;
+}
+
+.ppt-canvas-el-resize--nw { top: -5px; left: -5px; cursor: nwse-resize; }
+.ppt-canvas-el-resize--n  { top: -5px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+.ppt-canvas-el-resize--ne { top: -5px; right: -5px; cursor: nesw-resize; }
+.ppt-canvas-el-resize--e  { top: 50%; right: -5px; transform: translateY(-50%); cursor: ew-resize; }
+.ppt-canvas-el-resize--se { right: -5px; bottom: -5px; cursor: nwse-resize; }
+.ppt-canvas-el-resize--s  { bottom: -5px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+.ppt-canvas-el-resize--sw { left: -5px; bottom: -5px; cursor: nesw-resize; }
+.ppt-canvas-el-resize--w  { top: 50%; left: -5px; transform: translateY(-50%); cursor: ew-resize; }
+
+/* Keep the active drag cursor stable while pointer moves over other elements */
+html.ppt-drag-cursor-lock,
+html.ppt-drag-cursor-lock * {
+  cursor: var(--ppt-drag-cursor, move) !important;
+  user-select: none !important;
 }
 
 .aig-export-menu {

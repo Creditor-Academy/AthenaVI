@@ -3,7 +3,7 @@ import { MdSlideshow, MdImage } from 'react-icons/md';
 import { Clapperboard } from 'lucide-react';
 import './DefaultProjectThumbnail.css';
 
-const DefaultProjectThumbnail = ({ title = '', category = 'video' }) => {
+const DefaultProjectThumbnail = ({ title = '', category = 'video', showLabel = true }) => {
   const getVariant = (str) => {
     let hash = 0;
     const cleanStr = String(str || 'Athena');
@@ -34,12 +34,14 @@ const DefaultProjectThumbnail = ({ title = '', category = 'video' }) => {
         </div>
       </div>
 
-      <div className="dpt-footer">
-        <span className="dpt-indicator-dot" />
-        <span className="dpt-footer-text">
-          {category === 'ppt' ? 'Presentation' : category === 'image' ? 'Image' : 'Virtual Studio Video'}
-        </span>
-      </div>
+      {showLabel ? (
+        <div className="dpt-footer">
+          <span className="dpt-indicator-dot" />
+          <span className="dpt-footer-text">
+            {category === 'ppt' ? 'Presentation' : category === 'image' ? 'Image' : 'Virtual Studio Video'}
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 };

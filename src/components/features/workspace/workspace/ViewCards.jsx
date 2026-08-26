@@ -19,7 +19,7 @@ import ContextMenu from './ContextMenu.jsx';
 import UserIdentity from './UserIdentity.jsx';
 import DefaultProjectThumbnail from './DefaultProjectThumbnail.jsx';
 import { formatWorkspaceCredits } from './WorkspaceCreditsBadge.jsx';
-import { resolveLibraryKind } from '../../../../utils/workspaceLibrary.js';
+import { resolveLibraryKind, resolvePresentationThumbnailUrl } from '../../../../utils/workspaceLibrary.js';
 
 function formatRelativeLabel(dateStr) {
     if (!dateStr) return 'Recently';
@@ -324,22 +324,22 @@ function LibraryThumb({ item, kind }) {
         return src ? (
             <img src={src} alt={title} className="wsc-library-thumb-img" loading="lazy" decoding="async" />
         ) : (
-            <DefaultProjectThumbnail title={title} category="image" />
+            <DefaultProjectThumbnail title={title} category="image" showLabel={false} />
         );
     }
     if (kind === 'presentation') {
-        const src = item.thumbnail || item.thumbnailUrl;
+        const src = resolvePresentationThumbnailUrl(item) || item.thumbnail || item.thumbnailUrl;
         return src ? (
             <img src={src} alt={title} className="wsc-library-thumb-img" loading="lazy" decoding="async" />
         ) : (
-            <DefaultProjectThumbnail title={title} category="ppt" />
+            <DefaultProjectThumbnail title={title} category="ppt" showLabel={false} />
         );
     }
     const src = item.thumbnail || item.thumbnailUrl;
     return src ? (
         <img src={src} alt={title} className="wsc-library-thumb-img" loading="lazy" decoding="async" />
     ) : (
-        <DefaultProjectThumbnail title={title} category="video" />
+        <DefaultProjectThumbnail title={title} category="video" showLabel={false} />
     );
 }
 

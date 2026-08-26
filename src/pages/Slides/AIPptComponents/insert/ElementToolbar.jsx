@@ -27,8 +27,21 @@ const LIST_STYLE_OPTIONS = [
   { id: 'dash', title: 'Dash list', label: '–', useIcon: FiMinus },
 ]
 
+const CASE_OPTIONS = [
+  { id: 'uppercase', title: 'Uppercase', label: 'AA' },
+  { id: 'lowercase', title: 'Lowercase', label: 'aa' },
+  { id: 'capitalize', title: 'Title case', label: 'Aa' },
+]
+
+const ALIGN_OPTIONS = [
+  { id: 'left', Icon: FiAlignLeft, title: 'Align left' },
+  { id: 'center', Icon: FiAlignCenter, title: 'Align center' },
+  { id: 'right', Icon: FiAlignRight, title: 'Align right' },
+  { id: 'justify', Icon: FiAlignJustify, title: 'Justify' },
+]
+
 /**
- * Floating toolbar for selected text elements (Pitch-style inline formatting).
+ * Text formatting controls — floating toolbar or Style panel.
  */
 export default function ElementToolbar({
   element,
@@ -36,6 +49,7 @@ export default function ElementToolbar({
   onChange,
   disabled = false,
   variant = 'floating',
+  usedFontFamilies = [],
 }) {
   if (!element || (element.type !== 'text' && element.type !== 'textbox')) return null
 
@@ -58,46 +72,50 @@ export default function ElementToolbar({
     onChange?.({ ...contentWithSyncedText(c, text), listType: next })
   }
 
-  return (
-    <div
-      className={`ppt-element-toolbar ${isPanel ? 'ppt-element-toolbar--panel' : ''}`}
-      role="toolbar"
-      aria-label="Text formatting"
-    >
-      <div className="ppt-element-toolbar-font-picker">
-        <FontPicker
-          label={isPanel ? 'Font family' : ''}
-          value={c.fontFamily || 'Inter'}
-          disabled={disabled}
-          compact
-          menuLabel="Font family"
-          onChange={(family) => {
-            ensureGoogleFontLoaded(family)
-            patch({ fontFamily: family })
-          }}
-        />
-      </div>
+  const setCase = (value) => {
+    const next = c.textTransform === value ? null : value
+    patch({ textTransform: next })
+  }
 
-      <div className="ppt-size-stepper" title="Font size">
-        <button type="button" disabled={disabled} onClick={() => adjustSize(-1)} title="Decrease size">
-          <FiMinus size={14} />
-        </button>
-        <input
-          type="number"
-          className="ppt-size-stepper-input"
-          value={c.fontSize ?? 22}
-          min={8}
-          max={200}
-          disabled={disabled}
-          onChange={(e) => patch({ fontSize: Number(e.target.value) || 22 })}
-        />
-        <button type="button" disabled={disabled} onClick={() => adjustSize(1)} title="Increase size">
-          <FiPlus size={14} />
-        </button>
-      </div>
+  const fontFamilyControl = (
+    <div className="ppt-element-toolbar-font-picker">
+      <FontPicker
+        label={isPanel ? '' : ''}
+        value={c.fontFamily || 'Inter'}
+        disabled={disabled}
+        compact
+        menuLabel="Font family"
+        usedFontFamilies={usedFontFamilies}
+        onChange={(family) => {
+          ensureGoogleFontLoaded(family)
+          patch({ fontFamily: family })
+        }}
+      />
+    </div>
+  )
 
-      <span className="ppt-element-toolbar-divider" />
+  const sizeControl = (
+    <div className="ppt-size-stepper" title="Font size">
+      <button type="button" disabled={disabled} onClick={() => adjustSize(-1)} title="Decrease size">
+        <FiMinus size={14} />
+      </button>
+      <input
+        type="number"
+        className="ppt-size-stepper-input"
+        value={c.fontSize ?? 22}
+        min={8}
+        max={200}
+        disabled={disabled}
+        onChange={(e) => patch({ fontSize: Number(e.target.value) || 22 })}
+      />
+      <button type="button" disabled={disabled} onClick={() => adjustSize(1)} title="Increase size">
+        <FiPlus size={14} />
+      </button>
+    </div>
+  )
 
+  const formatButtons = (
+    <>
       <button
         type="button"
         className={`ppt-element-toolbar-btn ${c.bold ? 'is-active' : ''}`}
@@ -134,61 +152,140 @@ export default function ElementToolbar({
       >
         <MdStrikethroughS size={16} />
       </button>
+    </>
+  )
 
-      <span className="ppt-element-toolbar-divider" />
+  const caseButtons = CASE_OPTIONS.map(({ id, title, label }) => (
+    <button
+      key={id}
+      type="button"
+      className={`ppt-element-toolbar-btn ppt-element-toolbar-btn--case ${c.textTransform === id ? 'is-active' : ''}`}
+      disabled={disabled}
+      onClick={() => setCase(id)}
+      title={title}
+      aria-pressed={c.textTransform === id}
+    >
+      <span className="ppt-case-glyph">{label}</span>
+    </button>
+  ))
 
-      <div className="ppt-element-toolbar-color" title="Text color">
-        <ColorFillPicker
-          key={element.id}
-          compact
-          title="Text color"
-          value={fill}
-          palette={palette}
-          disabled={disabled}
-          onChange={(nextFill) => onChange?.(applyElementTextFill(element, nextFill))}
-        />
+  const alignButtons = ALIGN_OPTIONS.map(({ id, Icon, title }) => (
+    <button
+      key={id}
+      type="button"
+      className={`ppt-element-toolbar-btn ${(c.align || 'left') === id ? 'is-active' : ''}`}
+      disabled={disabled}
+      onClick={() => patch({ align: id })}
+      title={title}
+    >
+      <Icon size={15} />
+    </button>
+  ))
+
+  const listButtons = LIST_STYLE_OPTIONS.map(({ id, title, label, useIcon: Icon }) => (
+    <button
+      key={id}
+      type="button"
+      className={`ppt-element-toolbar-btn ${c.listType === id ? 'is-active' : ''}`}
+      disabled={disabled}
+      onClick={() => toggleList(id)}
+      title={title}
+    >
+      {Icon ? <Icon size={id === 'dash' ? 14 : 16} /> : label}
+    </button>
+  ))
+
+  const colorControl = (
+    <div className="ppt-element-toolbar-color" title="Text color">
+      <ColorFillPicker
+        key={element.id}
+        compact={!isPanel}
+        title="Text color"
+        value={fill}
+        palette={palette}
+        disabled={disabled}
+        onChange={(nextFill) => onChange?.(applyElementTextFill(element, nextFill))}
+      />
+    </div>
+  )
+
+  const spacingControls = (
+    <>
+      <input
+        type="number"
+        className="ppt-element-toolbar-spacing"
+        title="Line spacing"
+        aria-label="Line spacing"
+        value={c.lineHeight ?? 1.25}
+        min={0.8}
+        max={3}
+        step={0.05}
+        disabled={disabled}
+        onChange={(e) => patch({ lineHeight: Number(e.target.value) || 1.25 })}
+      />
+      <input
+        type="number"
+        className="ppt-element-toolbar-spacing"
+        title="Letter spacing"
+        aria-label="Letter spacing"
+        value={c.letterSpacing ?? 0}
+        min={-5}
+        max={40}
+        step={0.5}
+        disabled={disabled}
+        onChange={(e) => {
+          const next = Number(e.target.value)
+          patch({ letterSpacing: Number.isFinite(next) ? next : 0 })
+        }}
+      />
+    </>
+  )
+
+  const styleDivider = <span className="ppt-element-toolbar-divider" aria-hidden="true">|</span>
+
+  if (isPanel) {
+    return (
+      <div
+        className="ppt-element-toolbar ppt-element-toolbar--panel ppt-text-style-panel"
+        role="toolbar"
+        aria-label="Text style"
+      >
+        <div className="ppt-text-style-heading">Style</div>
+        <div className="ppt-text-style-font">{fontFamilyControl}</div>
+        <div className="ppt-text-style-flow">
+          {sizeControl}
+          {formatButtons}
+          {styleDivider}
+          {caseButtons}
+          {styleDivider}
+          {alignButtons}
+          {styleDivider}
+          {listButtons}
+          {styleDivider}
+          {spacingControls}
+          {styleDivider}
+          {colorControl}
+        </div>
       </div>
+    )
+  }
 
+  return (
+    <div
+      className="ppt-element-toolbar"
+      role="toolbar"
+      aria-label="Text formatting"
+    >
+      {fontFamilyControl}
+      {sizeControl}
       <span className="ppt-element-toolbar-divider" />
-
-      {(['left', 'center', 'right', 'justify']).map((align) => {
-        const Icon =
-          align === 'left'
-            ? FiAlignLeft
-            : align === 'center'
-              ? FiAlignCenter
-              : align === 'right'
-                ? FiAlignRight
-                : FiAlignJustify
-        return (
-          <button
-            key={align}
-            type="button"
-            className={`ppt-element-toolbar-btn ${(c.align || 'left') === align ? 'is-active' : ''}`}
-            disabled={disabled}
-            onClick={() => patch({ align })}
-            title={`Align ${align}`}
-          >
-            <Icon size={15} />
-          </button>
-        )
-      })}
-
+      {formatButtons}
       <span className="ppt-element-toolbar-divider" />
-
-      {LIST_STYLE_OPTIONS.map(({ id, title, label, useIcon: Icon }) => (
-        <button
-          key={id}
-          type="button"
-          className={`ppt-element-toolbar-btn ${c.listType === id ? 'is-active' : ''}`}
-          disabled={disabled}
-          onClick={() => toggleList(id)}
-          title={title}
-        >
-          {Icon ? <Icon size={id === 'dash' ? 14 : 16} /> : label}
-        </button>
-      ))}
-
+      {colorControl}
+      <span className="ppt-element-toolbar-divider" />
+      {alignButtons}
+      <span className="ppt-element-toolbar-divider" />
+      {listButtons}
       <input
         type="number"
         className="ppt-element-toolbar-spacing"
@@ -200,7 +297,6 @@ export default function ElementToolbar({
         onChange={(e) => patch({ lineHeight: Number(e.target.value) || 1.25 })}
         title="Line spacing"
       />
-
       <select
         className="ppt-ui-select ppt-element-toolbar-select ppt-element-toolbar-select--case"
         value={c.textTransform || 'none'}

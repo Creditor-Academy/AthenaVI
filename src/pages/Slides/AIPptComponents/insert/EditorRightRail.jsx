@@ -125,6 +125,7 @@ export default function EditorRightRail({
   viewOnly = false,
   onViewOnlyAttempt,
   onOpenChange,
+  usedFontFamilies = [],
 }) {
   const [active, setActive] = useState(null)
   const [aiOpen, setAiOpen] = useState(false)
@@ -262,6 +263,7 @@ export default function EditorRightRail({
                 onToggleImageAsBackground={onToggleImageAsBackground}
                 onChangeTransition={onChangeTransition}
                 disabled={disabled}
+                usedFontFamilies={usedFontFamilies}
               />
 
               <div className="ppt-panel-section ppt-panel-section--layers">

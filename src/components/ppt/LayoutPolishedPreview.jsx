@@ -840,12 +840,16 @@ function PolishedProcessFlowPreview({ previewHints, large, className, style, fil
       fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box',
       padding: large ? '8% 7%' : '10% 6%', display: 'flex', flexDirection: 'column', gap: large ? 14 : 5, ...style,
     }}>
-      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 800, color: t.text }}>{heading}</div>
+      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 800, color: t.text, textAlign: 'left' }}>{heading}</div>
       <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr auto 1fr auto 1fr', gap: large ? 10 : 3, alignItems: 'start' }}>
         {steps.slice(0, 3).flatMap((step, i) => {
           const nodes = [
             <div key={step.title} style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3, alignItems: 'center', textAlign: 'center' }}>
-              <PolishedShapeRing large={large} />
+              <div style={{
+                width: large ? 36 : 14, height: large ? 36 : 14, borderRadius: '50%',
+                background: t.accent, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#fff', fontSize: large ? 14 : 7, fontWeight: 800,
+              }}>{i + 1}</div>
               <div style={{ fontSize: large ? '0.78rem' : '0.3rem', fontWeight: 700, color: t.text }}>{step.title}</div>
               <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: t.muted, lineHeight: 1.35 }}>{step.body}</div>
             </div>,
@@ -860,7 +864,157 @@ function PolishedProcessFlowPreview({ previewHints, large, className, style, fil
           return nodes
         })}
       </div>
-      <PolishedShapeAccentBar large={large} horizontal />
+    </div>
+  )
+}
+
+function PolishedTimelineHorizontalPreview(props) {
+  return <PolishedProcessFlowPreview {...props} />
+}
+
+function PolishedTimelineRoadmapPreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const heading = previewHints.slots?.HEADING?.text || 'Roadmap'
+  const steps = previewHints.steps || [
+    { title: 'Q1', body: 'Foundation' },
+    { title: 'Q2', body: 'Growth' },
+    { title: 'Q3', body: 'Scale' },
+    { title: 'Q4', body: 'Enterprise' },
+  ]
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+  return (
+    <div className={className} style={{
+      position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+      fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box',
+      padding: large ? '8% 6%' : '10% 5%', display: 'flex', flexDirection: 'column', gap: large ? 12 : 4, ...style,
+    }}>
+      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 800, color: t.text, textAlign: 'left' }}>{heading}</div>
+      <div style={{ position: 'relative', flex: 1, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: large ? 10 : 4, alignItems: 'stretch' }}>
+        <div style={{
+          position: 'absolute', left: '8%', right: '8%', top: large ? 18 : 8, height: 2, background: t.muted, opacity: 0.5,
+        }} />
+        {steps.slice(0, 4).map((step, i) => (
+          <div key={i} style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: large ? 6 : 2,
+            background: t.card, borderRadius: large ? 8 : 4, padding: large ? '28px 8px 10px' : '14px 3px 4px', textAlign: 'center',
+          }}>
+            <div style={{
+              width: large ? 28 : 11, height: large ? 28 : 11, borderRadius: '50%', background: t.accent,
+              marginTop: large ? -22 : -10, color: '#fff', fontSize: large ? 12 : 6, fontWeight: 800,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>{i + 1}</div>
+            <div style={{ fontSize: large ? '0.72rem' : '0.28rem', fontWeight: 700, color: t.text }}>{step.title}</div>
+            <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.2rem', color: t.muted }}>{step.body}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function PolishedTimelineVerticalPreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const heading = previewHints.slots?.HEADING?.text || 'Timeline'
+  const steps = previewHints.steps || [
+    { title: 'Phase 1', body: 'Kickoff' },
+    { title: 'Phase 2', body: 'Build' },
+    { title: 'Phase 3', body: 'Launch' },
+  ]
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+  return (
+    <div className={className} style={{
+      position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+      fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box',
+      padding: large ? '8% 8%' : '10% 6%', display: 'flex', flexDirection: 'column', gap: large ? 10 : 4, ...style,
+    }}>
+      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 800, color: t.text, textAlign: 'left' }}>{heading}</div>
+      <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', gap: large ? 10 : 4, paddingLeft: large ? 28 : 12 }}>
+        <div style={{ position: 'absolute', left: large ? 10 : 4, top: 4, bottom: 4, width: 2, background: t.muted, opacity: 0.45 }} />
+        {steps.slice(0, 3).map((step, i) => (
+          <div key={i} style={{ display: 'flex', gap: large ? 10 : 4, alignItems: 'flex-start' }}>
+            <div style={{
+              width: large ? 22 : 9, height: large ? 22 : 9, borderRadius: '50%', background: t.accent, flexShrink: 0,
+              marginLeft: large ? -18 : -8, color: '#fff', fontSize: large ? 10 : 5, fontWeight: 800,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>{i + 1}</div>
+            <div>
+              <div style={{ fontSize: large ? '0.75rem' : '0.28rem', fontWeight: 700, color: t.text }}>{step.title}</div>
+              <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.2rem', color: t.muted }}>{step.body}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function PolishedTimelineMilestonesImagePreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const heading = previewHints.slots?.HEADING?.text || 'Milestones'
+  const steps = previewHints.steps || [
+    { title: 'Start', body: 'Brief' },
+    { title: 'Build', body: 'Ship' },
+    { title: 'Grow', body: 'Scale' },
+  ]
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+  return (
+    <div className={className} style={{
+      position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+      fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box',
+      padding: large ? '7% 6%' : '9% 5%', display: 'flex', flexDirection: 'column', gap: large ? 10 : 4, ...style,
+    }}>
+      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 800, color: t.text, textAlign: 'left' }}>{heading}</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 8 : 3, flex: 1 }}>
+        {steps.slice(0, 3).map((step, i) => (
+          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: large ? 6 : 2 }}>
+            <div style={{ flex: 1, minHeight: large ? 48 : 18, borderRadius: large ? 8 : 3, overflow: 'hidden', background: t.card }}>
+              <PolishedImagePlaceholder large={large} src={resolvePreviewImageSrc(previewHints)} />
+            </div>
+            <div style={{
+              width: large ? 22 : 9, height: large ? 22 : 9, borderRadius: '50%', background: t.accent, alignSelf: 'center',
+              color: '#fff', fontSize: large ? 10 : 5, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>{i + 1}</div>
+            <div style={{ fontSize: large ? '0.7rem' : '0.26rem', fontWeight: 700, color: t.text, textAlign: 'center' }}>{step.title}</div>
+            <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.2rem', color: t.muted, textAlign: 'center' }}>{step.body}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function PolishedTimelineProcessStepsPreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const heading = previewHints.slots?.HEADING?.text || 'Process'
+  const steps = previewHints.steps || [
+    { title: '1. Discover', body: 'Research' },
+    { title: '2. Design', body: 'Prototype' },
+    { title: '3. Deliver', body: 'Ship' },
+    { title: '4. Iterate', body: 'Improve' },
+  ]
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+  return (
+    <div className={className} style={{
+      position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+      fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box',
+      padding: large ? '8% 6%' : '10% 5%', display: 'flex', flexDirection: 'column', gap: large ? 12 : 4, ...style,
+    }}>
+      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 800, color: t.text, textAlign: 'left' }}>{heading}</div>
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: large ? 8 : 3 }}>
+        {steps.slice(0, 4).map((step, i) => (
+          <div key={i} style={{
+            background: t.card, borderRadius: large ? 8 : 4, padding: large ? 10 : 4,
+            display: 'flex', flexDirection: 'column', gap: large ? 6 : 2, alignItems: 'center', textAlign: 'center',
+          }}>
+            <div style={{
+              width: large ? 28 : 11, height: large ? 28 : 11, borderRadius: '50%', background: t.accent,
+              color: '#fff', fontSize: large ? 12 : 6, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>{i + 1}</div>
+            <div style={{ fontSize: large ? '0.7rem' : '0.26rem', fontWeight: 700, color: t.text }}>{step.title}</div>
+            <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.2rem', color: t.muted }}>{step.body}</div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -1720,6 +1874,21 @@ export default function LayoutPolishedPreview({
   }
   if (previewMode === 'process_flow') {
     return <PolishedProcessFlowPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
+  }
+  if (previewMode === 'timeline_horizontal') {
+    return <PolishedTimelineHorizontalPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
+  }
+  if (previewMode === 'timeline_roadmap') {
+    return <PolishedTimelineRoadmapPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
+  }
+  if (previewMode === 'timeline_vertical') {
+    return <PolishedTimelineVerticalPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
+  }
+  if (previewMode === 'timeline_milestones_image') {
+    return <PolishedTimelineMilestonesImagePreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
+  }
+  if (previewMode === 'timeline_process_steps') {
+    return <PolishedTimelineProcessStepsPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
   }
   const DiagramPreview = DIAGRAM_PREVIEW_MODES[previewMode]
   if (DiagramPreview) {

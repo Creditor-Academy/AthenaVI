@@ -834,7 +834,9 @@ function isAiOnlyShapeSlot(slot) {
   const role = String(slot?.role || '').toLowerCase()
   // Card backgrounds and device frames are compiled explicitly
   if (/^METRIC_CARD_\d+_BG$/.test(id)) return false
+  if (/^CARD_\d+_BG$/i.test(id)) return false
   if (/^TEXT_HALF_BG$/i.test(id)) return false
+  if (/^STEP_\d+_CIRCLE$/i.test(id) || slot.shapeHint?.kind === 'stepCircle') return false
   if (/_(FRAME|_BG)$/i.test(id) && slot.shape) return false
   if (slot.aiOnly === true) return true
   if (/_BG$|CARD_BG|OVERLAY_SCRIM|CTA_BG/i.test(id)) return true
@@ -1027,6 +1029,9 @@ export function compileDeckLayoutToElements(schema, options = {}) {
     options.contentBySlotId || {}
   )
 
+  const palette = options.palette || LAYOUT_SURFACE
+  const colorMap = colorRoleMapFromPalette(options.palette)
+
   const elements = slots.flatMap((slot) => {
     if (isDeviceFrameSlot(slot)) return []
     if (isAiOnlyShapeSlot(slot)) return []
@@ -1045,6 +1050,58 @@ export function compileDeckLayoutToElements(schema, options = {}) {
     // BACKGROUND_IMAGE / HERO_IMAGE must compile as images (not shapes) so URLs bind.
     if (slotIdUpper === 'BACKGROUND_IMAGE' || slotIdUpper === 'HERO_IMAGE') {
       return [buildImageElement(slot, placement, contentBySlotId, compileOptions)]
+    }
+
+    if (/^STEP_\d+_CIRCLE$/i.test(String(slot.id || '')) || slot.shapeHint?.kind === 'stepCircle') {
+      const size = Math.min(placement.width || 64, placement.height || 64, 64)
+      const cx = (placement.x ?? 0) + (placement.width || size) / 2
+      const cy = (placement.y ?? 0) + (placement.height || size) / 2
+      const stepNum = String(slot.id).match(/(\d+)/)?.[1] || ''
+      const accent = colorMap.accent || colorMap.primary || '#6366F1'
+      const text = colorMap.text || '#0F172A'
+      const out = [
+        {
+          id: `shp-step-${Math.random().toString(36).slice(2, 9)}`,
+          type: 'shape',
+          slotId: slot.id,
+          layer: layerForSlot(slot),
+          placement: {
+            x: Math.round(cx - size / 2),
+            y: Math.round(cy - size / 2),
+            width: size,
+            height: size,
+            rotation: 0,
+            opacity: 1,
+          },
+          content: { shape: 'ellipse', fill: accent, layoutSurface: true },
+          role: 'decoration',
+        },
+      ]
+      if (stepNum) {
+        out.push({
+          id: `txt-step-num-${Math.random().toString(36).slice(2, 9)}`,
+          type: 'text',
+          slotId: `${slot.id}_NUM`,
+          layer: layerForSlot(slot) + 1,
+          placement: {
+            x: Math.round(cx - size / 2),
+            y: Math.round(cy + size / 2 + 4),
+            width: size,
+            height: 28,
+            rotation: 0,
+            opacity: 1,
+          },
+          content: {
+            text: String(stepNum),
+            align: 'center',
+            fontSize: 16,
+            fontWeight: 700,
+            color: text,
+          },
+          role: 'caption',
+        })
+      }
+      return out
     }
 
     if (role === 'background' || /^METRIC_CARD_\d+_BG$|^TEXT_HALF_BG$|^SURFACE_|_bg$|_card_bg|_panel_bg/i.test(String(slot.id || ''))) {
@@ -1086,8 +1143,6 @@ export function compileDeckLayoutToElements(schema, options = {}) {
     return [buildTextElement(slot, placement, compileOptions)]
   })
 
-  const palette = options.palette || LAYOUT_SURFACE
-  const colorMap = colorRoleMapFromPalette(options.palette)
   const themedPalette = colorMap.textOnImage
     ? { ...palette, ...colorMap }
     : palette
@@ -1095,7 +1150,7 @@ export function compileDeckLayoutToElements(schema, options = {}) {
     elements.sort((a, b) => (a.layer || 0) - (b.layer || 0)),
     themedPalette
   )
-  result = finalizeTimelineShapes(result, schema, colorMap)
+  result = finalizeTimelineShapes(result, schema, colorMap, { width: canvasW, height: canvasH })
   result = applyThemeSlideBackground(result, themedPalette, canvasW, canvasH)
   result = applyReadableTextContrastForPreview(result, colorRoleMapFromPalette(options.palette), schema)
   result = packColumnTextStacks(result)
