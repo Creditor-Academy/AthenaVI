@@ -98,10 +98,24 @@ export function ensureElementFontsLoaded(families = []) {
 }
 
 /**
- * Collect fontFamily strings from PPT slide elements (content / runs / style).
- * @param {Array} slides
+ * Unique primary font family names (order preserved).
+ * @param {string[]} families
  * @returns {string[]}
  */
+export function uniqueFontFamilies(families = []) {
+  const seen = new Set()
+  const out = []
+  for (const raw of families) {
+    const family = extractPrimaryFontFamily(raw) || String(raw || '').trim()
+    if (!family) continue
+    const key = family.toLowerCase()
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(family)
+  }
+  return out
+}
+
 export function collectSlideFontFamilies(slides = []) {
   const out = []
   for (const slide of slides) {
@@ -118,7 +132,7 @@ export function collectSlideFontFamilies(slides = []) {
       if (el?.style?.fontFamily) out.push(el.style.fontFamily)
     }
   }
-  return out
+  return uniqueFontFamilies(out)
 }
 
 export function themeFontFamilies(themeTokens) {
