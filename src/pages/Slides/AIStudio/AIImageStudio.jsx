@@ -21,6 +21,9 @@ import {
   MessageSquare,
   CreditCard,
   ArrowLeftRight,
+  Square,
+  RectangleHorizontal,
+  RectangleVertical,
 } from 'lucide-react'
 import imageGenService, {
   ImageGenRateLimitError,
@@ -738,6 +741,147 @@ function CanvasMockup({ format, src, size = 'card' }) {
   return (
     <div className={`aig-mockup aig-mockup--${kind} aig-mockup--${size}`} aria-hidden>
       <img src={src} alt="" />
+    </div>
+  )
+}
+
+const CANVAS_SHOWCASE = {
+  square: {
+    kicker: 'Square canvas',
+    headline: 'Balanced frames for posts, stills, and product shots.',
+  },
+  landscape: {
+    kicker: 'Landscape canvas',
+    headline: 'Wide scenes for headers, slides, and cinematic stills.',
+  },
+  portrait: {
+    kicker: 'Portrait canvas',
+    headline: 'Tall frames for stories, posters, and full-body shots.',
+  },
+}
+
+function formatPillIcon(format) {
+  const kind = formatMockupKind(format)
+  if (kind === 'phone') return RectangleVertical
+  if (kind === 'banner' || kind === 'landscape') return RectangleHorizontal
+  return Square
+}
+
+function formatShowcaseCopy(format) {
+  const id = String(format?.id || '')
+  return (
+    CANVAS_SHOWCASE[id] || {
+      kicker: format?.name || 'Canvas',
+      headline: `${format?.width} × ${format?.height} — pick this size for your generation.`,
+    }
+  )
+}
+
+function canvasCardSize(format, role) {
+  const ratio = (format?.width || 1) / Math.max(format?.height || 1, 1)
+  const isHero = role === 'hero'
+  const maxW = isHero ? 520 : 200
+  const maxH = isHero ? 390 : 250
+  let w = maxW
+  let h = w / ratio
+  if (h > maxH) {
+    h = maxH
+    w = h * ratio
+  }
+  const radius = ratio < 0.75 ? (isHero ? 36 : 22) : ratio > 1.35 ? (isHero ? 22 : 14) : isHero ? 28 : 18
+  return {
+    width: Math.round(w),
+    height: Math.round(h),
+    borderRadius: radius,
+  }
+}
+
+function CanvasPeek({ format, onSelect }) {
+  const size = canvasCardSize(format, 'peek')
+  return (
+    <button
+      type="button"
+      className="aig-canvas-peek"
+      style={size}
+      onClick={() => onSelect(format.id)}
+      aria-label={`Select ${format.name}`}
+    >
+      <img src={formatPreviewSrc(format.id)} alt="" draggable={false} />
+    </button>
+  )
+}
+
+function CanvasCarousel({ formats, selectedId, onSelect }) {
+  const list = formats?.length ? formats : []
+  const activeIndex = Math.max(
+    0,
+    list.findIndex((f) => f.id === selectedId)
+  )
+  const active = list[activeIndex]
+  const prev = list.length > 1 ? list[(activeIndex - 1 + list.length) % list.length] : null
+  const next = list.length > 1 ? list[(activeIndex + 1) % list.length] : null
+  const nextDistinct = next && next.id !== prev?.id ? next : null
+
+  if (!active) {
+    return (
+      <div className="aig-canvas-preview aig-canvas-preview--empty">
+        <div className="aig-canvas-empty-art">
+          <Maximize2 size={22} strokeWidth={1.75} />
+        </div>
+        <p>Select a canvas</p>
+        <span>Preview will appear here</span>
+      </div>
+    )
+  }
+
+  const hero = canvasCardSize(active, 'hero')
+  const copy = formatShowcaseCopy(active)
+  const kind = formatMockupKind(active)
+
+  return (
+    <div className="aig-canvas-showcase">
+      <div className="aig-canvas-showcase-row">
+        {prev ? <CanvasPeek format={prev} onSelect={onSelect} /> : <span />}
+        <motion.div
+          className={`aig-canvas-hero aig-canvas-hero--${kind}`}
+          initial={false}
+          animate={{
+            width: hero.width,
+            height: hero.height,
+            borderRadius: hero.borderRadius,
+          }}
+          transition={{ type: 'spring', stiffness: 280, damping: 30, mass: 0.9 }}
+        >
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={active.id}
+              src={formatPreviewSrc(active.id)}
+              alt=""
+              draggable={false}
+              initial={{ opacity: 0.35 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.22 }}
+            />
+          </AnimatePresence>
+          <div className="aig-canvas-slide-shade" aria-hidden />
+          <span className="aig-canvas-slide-live">
+            <i />
+            Preview
+          </span>
+          <span className="aig-canvas-slide-badge">
+            {activeIndex + 1} · {active.name}
+          </span>
+          <p className="aig-canvas-slide-headline">{copy.headline}</p>
+        </motion.div>
+        {nextDistinct ? <CanvasPeek format={nextDistinct} onSelect={onSelect} /> : <span />}
+      </div>
+      <p className="aig-canvas-hero-meta">
+        <strong>{active.name}</strong>
+        <span>
+          {active.width} × {active.height} px
+        </span>
+      </p>
     </div>
   )
 }
@@ -1939,18 +2083,24 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                   {/* PARKED Image / Infographic / Social mode tabs — backend is image-only */}
 
                   <div className="aig-canvas-size-block">
-                    <h3>Select size</h3>
-                    <div className="aig-format-grid">
-                      {formatsForMode.map((f) => (
-                        <FormatCard
-                          key={f.id}
-                          format={f}
-                          selected={formatId === f.id}
-                          onSelect={(fmt) => setFormatId(fmt.id)}
-                          variant="image"
-                        />
-                      ))}
-                    </div>
+                    <nav className="aig-canvas-pills" aria-label="Canvas sizes">
+                      {formatsForMode.map((f) => {
+                        const Icon = formatPillIcon(f)
+                        const on = formatId === f.id
+                        return (
+                          <button
+                            key={f.id}
+                            type="button"
+                            className={`aig-canvas-pill ${on ? 'is-on' : ''}`}
+                            onClick={() => setFormatId(f.id)}
+                            aria-pressed={on}
+                          >
+                            <Icon size={16} strokeWidth={2.1} />
+                            <span>{f.name}</span>
+                          </button>
+                        )
+                      })}
+                    </nav>
                   </div>
 
                   {/* PARKED infographic hints + layout picker */}
@@ -1968,12 +2118,11 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                 </div>
 
                 <aside className="aig-canvas-stage">
-                    <CanvasPreview
-                      format={selectedFormat}
-                      mode="image"
-                      infoLayoutId={null}
-                      infoLayoutName={null}
-                    />
+                  <CanvasCarousel
+                    formats={formatsForMode}
+                    selectedId={formatId}
+                    onSelect={setFormatId}
+                  />
                 </aside>
               </div>
             </motion.section>

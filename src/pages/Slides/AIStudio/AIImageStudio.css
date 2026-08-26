@@ -1292,7 +1292,7 @@
 
 .aig-canvas-split {
   display: grid;
-  grid-template-columns: minmax(300px, 1.08fr) minmax(280px, 0.92fr);
+  grid-template-columns: minmax(240px, 0.42fr) minmax(320px, 1.18fr);
   height: 100%;
   min-height: 0;
   border-radius: 24px;
@@ -1388,6 +1388,48 @@
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--text-main);
+}
+
+.aig-canvas-pills {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.aig-canvas-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 18px;
+  border-radius: 999px;
+  border: 1.5px solid color-mix(in srgb, var(--border-color) 80%, transparent);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border-color 0.18s, box-shadow 0.18s;
+}
+
+.aig-canvas-pill svg {
+  flex-shrink: 0;
+}
+
+.aig-canvas-pill:hover:not(.is-on) {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border-color));
+  color: var(--text-main);
+}
+
+.aig-canvas-pill.is-on {
+  background: var(--bg-surface);
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 22%, transparent);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
 }
 
 .aig-format-grid {
@@ -2062,23 +2104,191 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 28px clamp(18px, 2.5vw, 36px);
+  padding: 28px clamp(12px, 2vw, 28px);
   border-left: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
   background:
-    radial-gradient(ellipse 60% 50% at 50% 42%, rgba(var(--primary-rgb), 0.05), transparent 70%),
-    color-mix(in srgb, var(--bg-surface) 55%, var(--bg-card));
+    radial-gradient(ellipse 60% 50% at 50% 42%, rgba(var(--primary-rgb), 0.08), transparent 70%),
+    color-mix(in srgb, var(--bg-surface) 70%, var(--bg-card));
   min-height: 0;
   overflow: hidden;
   position: relative;
 }
 
 .aig-canvas-stage::before {
-  content: '';
-  position: absolute;
-  inset: 20px;
-  border-radius: 18px;
-  border: 1px dashed color-mix(in srgb, var(--border-color) 80%, transparent);
+  display: none;
+}
+
+.aig-canvas-showcase {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  padding: 8px 4px;
+}
+
+.aig-canvas-showcase-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  gap: 0;
+}
+
+.aig-canvas-peek {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
+  margin: 0 -36px;
+  padding: 0;
+  border: none;
+  overflow: hidden;
+  cursor: pointer;
+  background: #0f172a;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  opacity: 0.72;
+  transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.aig-canvas-peek:hover {
+  opacity: 0.92;
+  transform: scale(1.04);
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.18);
+}
+
+.aig-canvas-peek img,
+.aig-canvas-hero img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
   pointer-events: none;
+}
+
+.aig-canvas-hero {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  overflow: hidden;
+  width: 320px;
+  height: 320px;
+  max-width: 100%;
+  color: #fff;
+  background: #0f172a;
+  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.22);
+}
+
+.aig-canvas-hero img {
+  position: absolute;
+  inset: 0;
+}
+
+.aig-canvas-slide-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(8, 12, 22, 0.16) 0%,
+      rgba(8, 12, 22, 0.04) 42%,
+      rgba(8, 12, 22, 0.78) 100%
+    );
+  pointer-events: none;
+}
+
+.aig-canvas-hero--landscape .aig-canvas-slide-headline,
+.aig-canvas-hero--banner .aig-canvas-slide-headline {
+  font-size: clamp(15px, 1.6vw, 20px);
+  max-width: 70%;
+}
+
+.aig-canvas-slide-live {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+}
+
+.aig-canvas-slide-live i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.22);
+}
+
+.aig-canvas-slide-badge {
+  position: absolute;
+  left: 16px;
+  bottom: 72px;
+  z-index: 2;
+  display: inline-flex;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+  background: rgba(10, 14, 24, 0.68);
+}
+
+.aig-canvas-hero--landscape .aig-canvas-slide-badge,
+.aig-canvas-hero--banner .aig-canvas-slide-badge {
+  bottom: 58px;
+}
+
+.aig-canvas-slide-headline {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2;
+  margin: 0;
+  font-size: clamp(16px, 1.8vw, 22px);
+  font-weight: 700;
+  line-height: 1.22;
+  letter-spacing: -0.03em;
+  text-align: left;
+  color: #fff;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.55);
+}
+
+.aig-canvas-hero-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  text-align: center;
+}
+
+.aig-canvas-hero-meta strong {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+}
+
+.aig-canvas-hero-meta span {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .aig-canvas-preview {
@@ -2413,15 +2623,33 @@
   .aig-canvas-stage {
     border-left: none;
     border-top: none;
-    min-height: 280px;
+    min-height: 320px;
     order: -1;
     background:
-      radial-gradient(ellipse 60% 50% at 50% 30%, rgba(var(--primary-rgb), 0.05), transparent 70%),
-      color-mix(in srgb, var(--bg-surface) 55%, var(--bg-card));
+      radial-gradient(ellipse 60% 50% at 50% 30%, rgba(var(--primary-rgb), 0.08), transparent 70%),
+      color-mix(in srgb, var(--bg-surface) 70%, var(--bg-card));
   }
 
   .aig-canvas-stage::before {
     display: none;
+  }
+
+  .aig-canvas-showcase {
+    min-height: 300px;
+  }
+
+  .aig-canvas-peek {
+    margin: 0 -20px;
+  }
+
+  .aig-canvas-pills {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .aig-canvas-pill {
+    width: auto;
+    flex: 1 1 auto;
   }
 
   .aig-canvas-actions {
