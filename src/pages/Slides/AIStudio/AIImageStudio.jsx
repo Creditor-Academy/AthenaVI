@@ -1036,8 +1036,8 @@ function GeneratingFrame({ format, label = 'Creating…', size = 'default' }) {
 
 function canvasStageSize(format) {
   const ratio = (format?.width || 1) / Math.max(format?.height || 1, 1)
-  const maxW = 340
-  const maxH = 380
+  const maxW = 260
+  const maxH = 300
   let w = maxW
   let h = w / ratio
   if (h > maxH) {
@@ -2206,92 +2206,100 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
           {/* ── CANVAS ── */}
           {step === 'canvas' && (
             <motion.section key="canvas" className="aig-page aig-page--canvas" {...stepMotion}>
-              <div className="aig-canvas-split">
-                <div className="aig-canvas-picker">
-                  <header className="aig-canvas-picker-head">
-                    <div className="aig-canvas-step">
-                      <span>1</span>
-                      Choose Canvas
-                    </div>
-                    <h2>Choose your canvas</h2>
-                    <p>{MODE_TABS.find((t) => t.id === mode)?.blurb || 'Pick a format that fits your creative vision'}</p>
-                  </header>
-
-                  <nav className="aig-tabs" aria-label="Studio mode">
-                    {MODE_TABS.map((tab) => (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        className={mode === tab.id ? 'is-on' : ''}
-                        aria-pressed={mode === tab.id}
-                        disabled={threadModeLocked}
-                        onClick={() => switchMode(tab.id)}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </nav>
-
-                  <div className="aig-canvas-size-block">
-                    <nav className="aig-canvas-pills" aria-label="Canvas sizes">
-                      {formatsForMode.map((f) => {
-                        const Icon = formatPillIcon(f)
-                        const on = formatId === f.id
-                        return (
-                          <button
-                            key={f.id}
-                            type="button"
-                            className={`aig-canvas-pill ${on ? 'is-on' : ''}`}
-                            onClick={() => setFormatId(f.id)}
-                            aria-pressed={on}
-                          >
-                            <Icon size={16} strokeWidth={2.1} />
-                            <span>{f.name}</span>
-                          </button>
-                        )
-                      })}
-                    </nav>
+              <div className="aig-canvas-board">
+                <header className="aig-canvas-board-head">
+                  <div className="aig-canvas-board-copy">
+                    <p className="aig-canvas-kicker">Step 1 of 2</p>
+                    <h2>{mode === 'infographic' ? 'Canvas & layout' : 'Choose a canvas'}</h2>
+                    <p>
+                      {mode === 'infographic'
+                        ? 'Pick a size, then a structure. Auto is fine if you are not sure.'
+                        : 'Pick the frame first. Style and model come next.'}
+                    </p>
                   </div>
-
-                  {mode === 'infographic' && (
-                    <div className="aig-layout-block">
-                      <h3>Archetype</h3>
-                      <div className="aig-layout-grid">
-                        {archetypeOptions.map((layout) => (
-                          <LayoutCard
-                            key={layout.id}
-                            layout={layout}
-                            selected={infoLayout === layout.id}
-                            onSelect={setInfoLayout}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="aig-canvas-actions">
+                  <div className="aig-canvas-board-tools">
+                    <nav className="aig-tabs" aria-label="Studio mode">
+                      {MODE_TABS.map((tab) => (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          className={mode === tab.id ? 'is-on' : ''}
+                          aria-pressed={mode === tab.id}
+                          disabled={threadModeLocked}
+                          onClick={() => switchMode(tab.id)}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </nav>
                     <button
                       type="button"
-                      className="aig-btn aig-btn--primary aig-btn--lg aig-btn--canvas-continue"
+                      className="aig-btn aig-btn--primary aig-btn--lg"
                       disabled={!selectedFormat}
                       onClick={() => setStep('options')}
                     >
-                      Continue to Editor
+                      Continue
                     </button>
                   </div>
-                </div>
+                </header>
 
-                <aside className="aig-canvas-stage">
-                  <CanvasCarousel
-                    formats={formatsForMode}
-                    selectedId={formatId}
-                    onSelect={setFormatId}
-                    mode={mode}
-                    layoutId={infoLayout}
-                    layoutName={selectedInfoLayout?.label}
-                    layoutDescription={selectedInfoLayout?.description}
-                  />
-                </aside>
+                <div className={`aig-canvas-board-grid${mode === 'infographic' ? ' is-info' : ''}`}>
+                  <div className="aig-canvas-board-main">
+                    <section className="aig-canvas-section">
+                      <div className="aig-canvas-section-head">
+                        <h3>Format</h3>
+                        <span>
+                          {selectedFormat
+                            ? `${selectedFormat.width} × ${selectedFormat.height}`
+                            : 'Select a size'}
+                        </span>
+                      </div>
+                      <div className="aig-canvas-format-row">
+                        {formatsForMode.map((f) => (
+                          <FormatCard
+                            key={f.id}
+                            format={f}
+                            selected={formatId === f.id}
+                            onSelect={(fmt) => setFormatId(fmt.id)}
+                            variant={mode === 'infographic' ? 'infographic' : 'image'}
+                            layoutId={infoLayout}
+                          />
+                        ))}
+                      </div>
+                    </section>
+
+                    {mode === 'infographic' && (
+                      <section className="aig-canvas-section">
+                        <div className="aig-canvas-section-head">
+                          <h3>Structure</h3>
+                          <span>{selectedInfoLayout?.label || 'Auto'}</span>
+                        </div>
+                        <div className="aig-layout-grid aig-layout-grid--studio">
+                          {archetypeOptions.map((layout) => (
+                            <LayoutCard
+                              key={layout.id}
+                              layout={layout}
+                              selected={infoLayout === layout.id}
+                              onSelect={setInfoLayout}
+                            />
+                          ))}
+                        </div>
+                      </section>
+                    )}
+                  </div>
+
+                  <aside className="aig-canvas-preview-col" aria-label="Canvas preview">
+                    <div className="aig-canvas-preview-card">
+                      <p className="aig-canvas-preview-kicker">Live preview</p>
+                      <CanvasPreview
+                        format={selectedFormat}
+                        mode={mode}
+                        infoLayoutId={infoLayout}
+                        infoLayoutName={selectedInfoLayout?.label}
+                      />
+                    </div>
+                  </aside>
+                </div>
               </div>
             </motion.section>
           )}
