@@ -106,67 +106,33 @@ function resolveLayoutCategoryId(entry = {}) {
   return 'simple_slides'
 }
 
-function LayoutCategoryTabs({ value, onChange, items, counts = {} }) {
+function LayoutCategorySelect({ value, onChange, items, counts = {} }) {
   return (
-    <div
-      role="tablist"
-      aria-label="Layout categories"
+    <select
+      className="sa-select"
+      aria-label="Layout category"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
       style={{
-        display: 'flex',
-        gap: 6,
-        padding: '0 24px 12px',
-        overflowX: 'auto',
-        flexShrink: 0,
-        scrollbarWidth: 'thin',
+        height: 32,
+        fontSize: '0.8rem',
+        borderRadius: 8,
+        minWidth: 168,
+        maxWidth: 220,
+        padding: '0 28px 0 10px',
+        boxSizing: 'border-box',
       }}
     >
       {items.map((category) => {
-        const active = value === category.id
         const count = counts[category.id]
+        const suffix = typeof count === 'number' ? ` (${count})` : ''
         return (
-          <button
-            key={category.id}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            onClick={() => onChange(category.id)}
-            style={{
-              appearance: 'none',
-              border: 'none',
-              background: active ? 'color-mix(in srgb, var(--primary) 12%, var(--bg-card))' : 'transparent',
-              color: active ? 'var(--primary)' : 'var(--text-muted)',
-              fontFamily: 'inherit',
-              fontSize: '0.78rem',
-              fontWeight: active ? 700 : 500,
-              padding: '6px 12px',
-              borderRadius: 999,
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              flexShrink: 0,
-              transition: 'background 0.15s ease, color 0.15s ease',
-            }}
-          >
-            {category.label}
-            {typeof count === 'number' && count > 0 && (
-              <span style={{
-                marginLeft: 6,
-                fontSize: '0.65rem',
-                fontWeight: 700,
-                padding: '1px 6px',
-                borderRadius: 99,
-                background: active
-                  ? 'color-mix(in srgb, var(--primary) 18%, transparent)'
-                  : 'color-mix(in srgb, var(--border-color) 80%, transparent)',
-                color: active ? 'var(--primary)' : 'var(--text-muted)',
-              }}
-              >
-                {count}
-              </span>
-            )}
-          </button>
+          <option key={category.id} value={category.id}>
+            {category.label}{suffix}
+          </option>
         )
       })}
-    </div>
+    </select>
   )
 }
 
@@ -1034,12 +1000,14 @@ function DeckPackLayoutPickerModal({
                 />
               </div>
             </div>
-            <LayoutCategoryTabs
-              value={layoutCategory}
-              onChange={setLayoutCategory}
-              items={LAYOUT_CATEGORIES}
-              counts={layoutCategoryCounts}
-            />
+            <div style={{ marginBottom: 8 }}>
+              <LayoutCategorySelect
+                value={layoutCategory}
+                onChange={setLayoutCategory}
+                items={LAYOUT_CATEGORIES}
+                counts={layoutCategoryCounts}
+              />
+            </div>
             <div className="sa-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
               {catalogLoading ? (
                 <span style={{ padding: 10, fontSize: '0.75rem', color: 'var(--text-muted)' }}>Loading layouts…</span>
@@ -4083,37 +4051,34 @@ export default function SuperadminTemplatesPanel() {
           ))}
         </div>
 
-        {/* search + filter */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 10 }}>
+        {/* search + category + status */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <div style={{ position: 'relative' }}>
             <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
             <input className="sa-input" placeholder="Search templates…" value={searchInput} onChange={handleSearchInput}
-              style={{ width: 220, boxSizing: 'border-box', height: 32, paddingLeft: 30, fontSize: '0.8rem', borderRadius: 8 }} />
+              style={{ width: 200, boxSizing: 'border-box', height: 32, paddingLeft: 30, fontSize: '0.8rem', borderRadius: 8 }} />
           </div>
-          <div style={{ display: 'flex', gap: 3, background: 'var(--border-color)', borderRadius: 8, padding: 2 }}>
-            {[['all', 'All'], ['active', '● Active'], ['inactive', '○ Inactive']].map(([val, label]) => (
-              <button key={val} type="button" onClick={() => setFilterActive(val)} style={{
-                padding: '3px 10px', borderRadius: 6, fontSize: '0.72rem', fontWeight: 600, cursor: 'pointer', border: 'none',
-                background: filterActive === val ? 'var(--bg-card)' : 'transparent',
-                color: filterActive === val
-                  ? (val === 'active' ? '#4ade80' : val === 'inactive' ? 'var(--text-muted)' : 'var(--text-main)')
-                  : 'var(--text-muted)',
-                boxShadow: filterActive === val ? '0 1px 3px rgba(0,0,0,0.15)' : 'none',
-                transition: 'all 0.15s',
-              }}>{label}</button>
-            ))}
-          </div>
+          {activeType === 'DECK_LAYOUT' && (
+            <LayoutCategorySelect
+              value={layoutCategory}
+              onChange={setLayoutCategory}
+              items={LAYOUT_CATEGORIES}
+              counts={layoutCategoryCounts}
+            />
+          )}
+          <select
+            className="sa-select"
+            aria-label="Status"
+            value={filterActive}
+            onChange={(e) => setFilterActive(e.target.value)}
+            style={{ height: 32, fontSize: '0.8rem', borderRadius: 8, minWidth: 128, padding: '0 28px 0 10px', boxSizing: 'border-box' }}
+          >
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
         </div>
       </div>
-
-      {activeType === 'DECK_LAYOUT' && (
-        <LayoutCategoryTabs
-          value={layoutCategory}
-          onChange={setLayoutCategory}
-          items={LAYOUT_CATEGORIES}
-          counts={layoutCategoryCounts}
-        />
-      )}
 
       {/* ── card grid ── */}
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px 24px 24px' }}>

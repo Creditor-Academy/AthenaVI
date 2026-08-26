@@ -1159,9 +1159,9 @@
 .sa-heygen-balance-block {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  border-radius: 10px;
+  gap: 16px;
+  padding: 18px 18px;
+  border-radius: 12px;
   border: 1px solid var(--border-color);
 }
 
@@ -1169,11 +1169,50 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  background: color-mix(in srgb, currentColor 12%, transparent);
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: color-mix(in srgb, currentColor 14%, transparent);
   flex-shrink: 0;
+}
+
+.sa-heygen-tile {
+  padding: 14px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--bg-card) 95%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sa-heygen-tile-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.sa-heygen-tile-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  flex-shrink: 0;
+}
+
+.sa-heygen-tile-value {
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--text-main);
 }
 
 .sa-heygen-balance-label {
@@ -1199,30 +1238,6 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 10px;
-}
-
-.sa-heygen-tile {
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  background: color-mix(in srgb, var(--bg-card) 95%, transparent);
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.sa-heygen-tile-label {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-}
-
-.sa-heygen-tile-value {
-  font-size: 0.875rem;
-  font-weight: 650;
-  color: var(--text-main);
 }
 
 .sa-heygen-tile-note {

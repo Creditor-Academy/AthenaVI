@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { RefreshCw, AlertTriangle, CheckCircle, Wallet, CreditCard, Zap } from 'lucide-react'
+import { RefreshCw, AlertTriangle, CheckCircle, Wallet, CreditCard, Zap, Video, Mail, Clock, DollarSign, Coins, Ban, Sparkles } from 'lucide-react'
 import superadminService from '../../../../services/superadminService'
 import { formatDate } from './superadminUtils'
 import '../../../../pages/AdminPortal/SuperadminPortal.css'
@@ -38,19 +38,24 @@ function usdFormat(value) {
 
 function StatusBadge({ billingType }) {
   const map = {
-    wallet: { label: 'Prepaid wallet', color: '#22c55e' },
-    subscription: { label: 'Subscription', color: '#a78bfa' },
-    usage_based: { label: 'Usage-based', color: '#38bdf8' },
+    wallet: { label: 'Prepaid wallet', color: '#22c55e', Icon: Wallet },
+    subscription: { label: 'Subscription', color: '#a78bfa', Icon: CreditCard },
+    usage_based: { label: 'Usage-based', color: '#38bdf8', Icon: Zap },
   }
-  const info = map[billingType] || { label: billingType || 'Unknown', color: 'var(--text-muted)' }
+  const info = map[billingType] || { label: billingType || 'Unknown', color: 'var(--text-muted)', Icon: Sparkles }
+  const Icon = info.Icon
   return (
     <span
       className="sa-badge"
       style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 5,
         background: `color-mix(in srgb, ${info.color} 15%, transparent)`,
         color: info.color,
       }}
     >
+      <Icon size={11} />
       {info.label}
     </span>
   )
@@ -58,10 +63,17 @@ function StatusBadge({ billingType }) {
 
 /* ─── stat tile ───────────────────────────────────────────── */
 
-function StatTile({ label, value, valueStyle, note }) {
+function StatTile({ label, value, valueStyle, note, icon: Icon, accent }) {
   return (
     <div className="sa-heygen-tile">
-      <span className="sa-heygen-tile-label">{label}</span>
+      <span className="sa-heygen-tile-label">
+        {Icon && (
+          <span className="sa-heygen-tile-icon" style={accent ? { color: accent, background: `color-mix(in srgb, ${accent} 14%, transparent)` } : undefined}>
+            <Icon size={13} />
+          </span>
+        )}
+        {label}
+      </span>
       <strong className="sa-heygen-tile-value" style={valueStyle}>{value}</strong>
       {note && <span className="sa-heygen-tile-note">{note}</span>}
     </div>
@@ -101,22 +113,26 @@ function WalletSection({ wallet }) {
       <div className="sa-heygen-tiles">
         <StatTile
           label="Currency"
+          icon={DollarSign}
+          accent="#38bdf8"
           value={String(wallet.currency || 'USD').toUpperCase()}
         />
         <StatTile
           label="Auto-reload"
+          icon={autoReload?.enabled ? CheckCircle : Ban}
+          accent={autoReload?.enabled ? '#4ade80' : '#f87171'}
           value={
             autoReload?.enabled ? (
               <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#4ade80' }}>
-                <CheckCircle size={13} /> Enabled
+                Enabled
               </span>
             ) : (
               <span style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#f87171' }}>
-                <AlertTriangle size={13} /> Disabled
+                Disabled
               </span>
             )
           }
-          note={autoReload?.enabled ? `Reloads ${usdFormat(autoReload.amount)} below ${usdFormat(autoReload.threshold)}` : undefined}
+          note={autoReload?.enabled ? `Reloads ${usdFormat(autoReload.amount)} below ${usdFormat(autoReload.threshold)}` : 'Top up manually in HeyGen'}
         />
       </div>
     </div>
@@ -150,6 +166,8 @@ function SubscriptionSection({ subscription }) {
         {premiumCredits && (
           <StatTile
             label="Premium credits"
+            icon={Sparkles}
+            accent="#a78bfa"
             value={premiumCredits.remaining != null ? new Intl.NumberFormat().format(premiumCredits.remaining) : '—'}
             note={premiumCredits.resetsAt ? `Resets ${formatDate(premiumCredits.resetsAt)}` : undefined}
           />
@@ -157,6 +175,8 @@ function SubscriptionSection({ subscription }) {
         {addOnCredits && (
           <StatTile
             label="Add-on credits"
+            icon={Coins}
+            accent="#38bdf8"
             value={addOnCredits.remaining != null ? new Intl.NumberFormat().format(addOnCredits.remaining) : '—'}
             note={addOnCredits.resetsAt ? `Resets ${formatDate(addOnCredits.resetsAt)}` : undefined}
           />
@@ -184,10 +204,10 @@ function UsageBasedSection({ usageBased }) {
       {(usageBased?.currentSpendUsd != null || usageBased?.spendingCapUsd != null) && (
         <div className="sa-heygen-tiles">
           {usageBased.currentSpendUsd != null && (
-            <StatTile label="Current spend" value={usdFormat(usageBased.currentSpendUsd)} />
+            <StatTile label="Current spend" icon={DollarSign} accent="#38bdf8" value={usdFormat(usageBased.currentSpendUsd)} />
           )}
           {usageBased.spendingCapUsd != null && (
-            <StatTile label="Spending cap" value={usdFormat(usageBased.spendingCapUsd)} />
+            <StatTile label="Spending cap" icon={Wallet} accent="#a78bfa" value={usdFormat(usageBased.spendingCapUsd)} />
           )}
         </div>
       )}
@@ -235,9 +255,20 @@ function SuperadminHeygenPanel() {
   return (
     <div className="sa-panel">
       <div className="sa-panel-header">
-        <div>
-          <h2 className="sa-panel-title">HeyGen account</h2>
-          <p className="sa-panel-desc">Platform API billing — funds all avatar video generation.</p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{
+            width: 40, height: 40, borderRadius: 11, flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 22%, var(--bg-card)), color-mix(in srgb, var(--primary) 38%, var(--bg-card)))',
+            border: '1px solid color-mix(in srgb, var(--primary) 35%, var(--border-color))',
+            color: 'var(--primary)',
+          }}>
+            <Video size={18} />
+          </span>
+          <div>
+            <h2 className="sa-panel-title">HeyGen account</h2>
+            <p className="sa-panel-desc">Platform API billing — funds all avatar video generation.</p>
+          </div>
         </div>
         <button
           type="button"
@@ -263,20 +294,31 @@ function SuperadminHeygenPanel() {
       {account && (
         <div className="sa-card">
           <div className="sa-card-header">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-              <span style={{ fontWeight: 650, fontSize: '0.875rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {displayName || account.email || 'HeyGen account'}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+              <span style={{
+                width: 34, height: 34, borderRadius: 9, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'color-mix(in srgb, var(--primary) 14%, var(--bg-card))',
+                color: 'var(--primary)',
+              }}>
+                <Mail size={15} />
               </span>
-              {account.email && displayName && (
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                  {account.email}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+                <span style={{ fontWeight: 650, fontSize: '0.875rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {displayName || account.email || 'HeyGen account'}
                 </span>
-              )}
+                {account.email && displayName && (
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    {account.email}
+                  </span>
+                )}
+              </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
               {billingType && <StatusBadge billingType={billingType} />}
               {lastFetched && (
-                <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.6875rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                  <Clock size={11} />
                   {formatDate(account.fetchedAt || lastFetched)}
                 </span>
               )}

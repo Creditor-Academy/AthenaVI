@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Mail, Send, Clock, Users, Eye, X, ChevronRight, RefreshCw, AlertTriangle, CheckCircle2, LayoutTemplate } from 'lucide-react'
+import { Mail, Send, Users, Eye, X, ChevronRight, RefreshCw, AlertTriangle, CheckCircle2, LayoutTemplate, Type, Code2, FileText, Inbox, Hash } from 'lucide-react'
 import superadminService from '../../../../services/superadminService'
 import { formatDate } from './superadminUtils'
 import { EMAIL_TEMPLATES } from './broadcastTemplates'
@@ -40,11 +40,6 @@ function TemplatePickerModal({ onSelect, onClose }) {
   const [active, setActive] = useState(EMAIL_TEMPLATES[0].id)
   const activeTemplate = EMAIL_TEMPLATES.find((t) => t.id === active) || EMAIL_TEMPLATES[0]
   const previewHtml = activeTemplate.html
-  const dotColor = (t) => t.accentColor === 'var(--text-muted)' ? '#94a3b8' : t.accentColor
-
-  const switchTemplate = (id) => {
-    setActive(id)
-  }
 
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
@@ -52,206 +47,149 @@ function TemplatePickerModal({ onSelect, onClose }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  const EditorField = ({ label, children }) => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-      <label style={{ fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)' }}>{label}</label>
-      {children}
-    </div>
-  )
+  const insertTemplate = () => {
+    onSelect({ ...activeTemplate })
+    onClose()
+  }
 
   return createPortal(
     <div
       onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 9999,
-        background: 'rgba(0,0,0,0.8)',
-        backdropFilter: 'blur(8px)',
+        background: 'rgba(0,0,0,0.72)',
+        backdropFilter: 'blur(6px)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: 24,
       }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-labelledby="template-picker-title"
         style={{
-          width: '100%', maxWidth: 960,
-          height: '90vh',
-          display: 'grid',
-          gridTemplateRows: 'auto 1fr',
-          gridTemplateColumns: '260px 1fr',
+          width: '100%', maxWidth: 880,
+          height: 'min(82vh, 720px)',
+          display: 'flex',
+          flexDirection: 'column',
           background: 'var(--bg-card)',
           border: '1px solid var(--border-color)',
-          borderRadius: 20,
+          borderRadius: 16,
           overflow: 'hidden',
-          boxShadow: '0 48px 120px rgba(0,0,0,0.6)',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.45)',
         }}
       >
-        {/* ── Header spans full width ── */}
         <div style={{
-          gridColumn: '1 / -1',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '14px 20px',
-          borderBottom: '1px solid var(--border-color)',
-          background: 'color-mix(in srgb, var(--primary) 5%, var(--bg-card))',
-          flexShrink: 0,
+          padding: '16px 20px 12px', flexShrink: 0,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{
-              width: 30, height: 30, borderRadius: 8,
-              background: 'color-mix(in srgb, var(--primary) 16%, var(--bg-card))',
-              border: '1px solid color-mix(in srgb, var(--primary) 28%, var(--border-color))',
-              color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            }}>
-              <LayoutTemplate size={14} />
-            </span>
-            <div>
-              <p style={{ margin: 0, fontWeight: 800, fontSize: '0.9375rem', color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
-                Email templates
-              </p>
-              <p style={{ margin: 0, fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-                Select a template · preview it · use it
-              </p>
-            </div>
+          <div>
+            <h2 id="template-picker-title" style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, letterSpacing: '-0.02em' }}>
+              Choose a starting template
+            </h2>
+            <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              This fills the subject and body in the editor. It does not send the email.
+            </p>
           </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <button
-              type="button" onClick={onClose} aria-label="Close"
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
             style={{
-              width: 30, height: 30, borderRadius: 8, border: 'none', cursor: 'pointer',
+              width: 32, height: 32, borderRadius: 8, border: 'none', cursor: 'pointer',
               background: 'color-mix(in srgb, var(--text-muted) 10%, transparent)',
               color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              transition: 'background 0.15s, color 0.15s',
             }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'color-mix(in srgb, var(--text-muted) 22%, transparent)'; e.currentTarget.style.color = 'var(--text-main)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'color-mix(in srgb, var(--text-muted) 10%, transparent)'; e.currentTarget.style.color = 'var(--text-muted)' }}
           >
-            <X size={14} />
+            <X size={15} />
           </button>
-          </div>
         </div>
 
-        {/* ── Sidebar: template list ── */}
         <div style={{
-          borderRight: '1px solid var(--border-color)',
-          overflowY: 'auto',
-          background: 'color-mix(in srgb, var(--text-muted) 3%, var(--bg-card))',
-          display: 'flex', flexDirection: 'column',
+          display: 'flex', gap: 6, padding: '0 20px 14px', flexShrink: 0, flexWrap: 'wrap',
+          borderBottom: '1px solid var(--border-color)',
         }}>
-          <p style={{
-            margin: 0, padding: '12px 14px 8px',
-            fontSize: '0.625rem', fontWeight: 700, textTransform: 'uppercase',
-            letterSpacing: '0.07em', color: 'var(--text-muted)',
-          }}>
-            Templates
-          </p>
           {EMAIL_TEMPLATES.map((t) => {
             const isActive = active === t.id
-            const dc = dotColor(t)
             return (
               <button
                 key={t.id}
                 type="button"
-                onClick={() => switchTemplate(t.id)}
+                onClick={() => setActive(t.id)}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '10px 14px',
-                  border: 'none',
-                  borderLeft: isActive ? `3px solid ${dc}` : '3px solid transparent',
-                  borderBottom: '1px solid var(--border-color)',
-                  background: isActive
-                    ? `color-mix(in srgb, ${dc} 9%, var(--bg-card))`
-                    : 'transparent',
-                  cursor: 'pointer', textAlign: 'left', width: '100%',
-                  transition: 'background 0.12s',
+                  appearance: 'none',
+                  border: isActive ? '1px solid var(--primary)' : '1px solid var(--border-color)',
+                  background: isActive ? 'color-mix(in srgb, var(--primary) 12%, var(--bg-card))' : 'transparent',
+                  color: isActive ? 'var(--primary)' : 'var(--text-main)',
+                  fontFamily: 'inherit',
+                  fontSize: '0.8rem',
+                  fontWeight: isActive ? 700 : 500,
+                  padding: '7px 12px',
+                  borderRadius: 999,
+                  cursor: 'pointer',
                 }}
-                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'color-mix(in srgb, var(--text-muted) 5%, transparent)' }}
-                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
               >
-                <span style={{
-                  width: 9, height: 9, borderRadius: '50%', flexShrink: 0,
-                  background: dc,
-                  boxShadow: isActive ? `0 0 0 3px color-mix(in srgb, ${dc} 25%, transparent)` : 'none',
-                  transition: 'box-shadow 0.15s',
-                }} />
-                <div style={{ minWidth: 0 }}>
-                  <p style={{
-                    margin: 0, fontSize: '0.8125rem',
-                    fontWeight: isActive ? 700 : 500,
-                    color: 'var(--text-main)',
-                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                  }}>{t.label}</p>
-                  <p style={{
-                    margin: 0, fontSize: '0.6875rem', color: 'var(--text-muted)',
-                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.4,
-                  }}>{t.description}</p>
-                </div>
+                {t.label}
               </button>
             )
           })}
         </div>
 
-        {/* ── Preview pane ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
-          {/* Preview area */}
-          <div style={{ flex: 1, overflow: 'hidden', background: '#f9fafb', minHeight: 0 }}>
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: 'color-mix(in srgb, var(--text-muted) 5%, var(--bg-card))' }}>
+          <div style={{ padding: '10px 20px 0', flexShrink: 0 }}>
+            <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              {activeTemplate.description}
+            </p>
+            {activeTemplate.subject && (
+              <p style={{ margin: '6px 0 0', fontSize: '0.8rem', color: 'var(--text-main)' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Subject: </span>
+                {activeTemplate.subject}
+              </p>
+            )}
+          </div>
+          <div style={{ flex: 1, minHeight: 0, padding: 16, overflow: 'hidden' }}>
             {activeTemplate.id === 'custom' ? (
               <div style={{
                 height: '100%', display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center', gap: 14,
-                background: '#f9fafb',
+                alignItems: 'center', justifyContent: 'center', gap: 8,
+                border: '1px dashed var(--border-color)', borderRadius: 12, background: 'var(--bg-card)',
               }}>
-                <div style={{
-                  width: 60, height: 60, borderRadius: 16,
-                  background: 'color-mix(in srgb, var(--text-muted) 10%, transparent)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8',
-                }}>
-                  <LayoutTemplate size={28} strokeWidth={1.5} />
-                </div>
-                <p style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: '#374151' }}>Empty canvas</p>
-                <p style={{ margin: 0, fontSize: '0.875rem', color: '#9ca3af' }}>Write your email from scratch</p>
+                <p style={{ margin: 0, fontWeight: 700, fontSize: '0.95rem' }}>Start from scratch</p>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Inserts an empty subject and body.</p>
               </div>
             ) : (
-              <iframe
-                key={activeTemplate.id}
-                srcDoc={previewHtml}
-                title={`${activeTemplate.label} preview`}
-                style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
-                sandbox="allow-same-origin"
-              />
+              <div style={{
+                height: '100%', borderRadius: 12, overflow: 'hidden',
+                border: '1px solid var(--border-color)', background: '#fff',
+              }}>
+                <iframe
+                  key={activeTemplate.id}
+                  srcDoc={previewHtml}
+                  title={`${activeTemplate.label} preview`}
+                  style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
+                  sandbox="allow-same-origin"
+                />
+              </div>
             )}
           </div>
+        </div>
 
-          {/* CTA footer */}
-          <div style={{
-            flexShrink: 0, padding: '14px 20px',
-            borderTop: '1px solid var(--border-color)',
-            background: 'var(--bg-card)',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
-          }}>
-            <div style={{ minWidth: 0 }}>
-              <p style={{ margin: 0, fontWeight: 700, fontSize: '0.9375rem', color: 'var(--text-main)', letterSpacing: '-0.01em' }}>
-                {activeTemplate.label}
-              </p>
-              {activeTemplate.subject && (
-                <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  Subject: {activeTemplate.subject}
-                </p>
-              )}
-            </div>
-            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-              <button
-                type="button"
-                className="sa-btn sa-btn--primary"
-                onClick={() => {
-                  onSelect({ ...activeTemplate })
-                  onClose()
-                }}
-                style={{ gap: 7, height: 40, padding: '0 20px' }}
-              >
-                <Send size={14} />
-                Use template
-              </button>
-            </div>
-          </div>
+        <div style={{
+          flexShrink: 0, padding: '12px 20px 16px',
+          borderTop: '1px solid var(--border-color)',
+          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
+        }}>
+          <button type="button" className="sa-btn sa-btn--ghost" onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="sa-btn sa-btn--primary"
+            onClick={insertTemplate}
+            style={{ gap: 7, height: 38, padding: '0 16px' }}
+          >
+            Insert into editor
+          </button>
         </div>
       </div>
     </div>,
@@ -385,37 +323,36 @@ function BroadcastRow({ broadcast, isSelected, onClick }) {
       onClick={onClick}
       style={{
         width: '100%', textAlign: 'left', border: 'none',
-        padding: '12px 16px', cursor: 'pointer',
+        padding: '9px 12px 9px 14px', cursor: 'pointer',
         borderBottom: '1px solid var(--border-color)',
-        borderLeft: isSelected ? '3px solid var(--primary)' : '3px solid transparent',
+        borderLeft: isSelected ? '2px solid var(--primary)' : '2px solid transparent',
         background: isSelected
-          ? 'linear-gradient(90deg, color-mix(in srgb, var(--primary) 8%, transparent), transparent)'
+          ? 'color-mix(in srgb, var(--primary) 7%, transparent)'
           : 'transparent',
         transition: 'background 0.15s',
       }}
       onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = 'color-mix(in srgb, var(--text-muted) 4%, transparent)' }}
       onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent' }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 5 }}>
-        <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-main)', lineHeight: 1.3, flex: 1, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{
+          fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)',
+          lineHeight: 1.3, flex: 1, minWidth: 0,
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
           {broadcast.subject || '(no subject)'}
         </span>
-        <ChevronRight size={13} style={{ color: 'var(--text-muted)', flexShrink: 0, marginTop: 2 }} />
+        <ChevronRight size={12} style={{ color: 'var(--text-muted)', flexShrink: 0, opacity: 0.6 }} />
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3, minWidth: 0 }}>
         <span style={{
-          fontSize: '0.625rem', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
-          color, background: `color-mix(in srgb, ${color} 14%, transparent)`,
-          border: `1px solid color-mix(in srgb, ${color} 22%, transparent)`,
-          borderRadius: 4, padding: '2px 6px',
+          fontSize: '0.6rem', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
+          color, flexShrink: 0,
         }}>
           {broadcast.status || 'sent'}
         </span>
-        <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-          {recipientLabel(broadcast.recipientCount ?? broadcast.totalRecipients)}
-        </span>
-        <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>
-          {timeAgo(broadcast.sentAt || broadcast.createdAt)}
+        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {recipientLabel(broadcast.recipientCount ?? broadcast.totalRecipients)} · {timeAgo(broadcast.sentAt || broadcast.createdAt)}
         </span>
       </div>
     </button>
@@ -947,35 +884,50 @@ function ComposePane({ onSent }) {
         />
       )}
 
-      {/* Top bar */}
+      {/* Composer header + actions */}
       <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '14px 16px', borderBottom: '1px solid var(--border-color)', flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+        padding: '16px 18px 14px', flexShrink: 0,
+        background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 10%, var(--bg-card)) 0%, var(--bg-card) 70%)',
+        borderBottom: '1px solid color-mix(in srgb, var(--primary) 18%, var(--border-color))',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
           <span style={{
-            width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-            background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 18%, var(--bg-card)), color-mix(in srgb, var(--primary) 28%, var(--bg-card)))',
-            border: '1px solid color-mix(in srgb, var(--primary) 30%, var(--border-color))',
-            color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 40, height: 40, borderRadius: 11, flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 22%, var(--bg-card)), color-mix(in srgb, var(--primary) 38%, var(--bg-card)))',
+            border: '1px solid color-mix(in srgb, var(--primary) 35%, var(--border-color))',
+            color: 'var(--primary)',
           }}>
-            <Mail size={14} />
+            <Mail size={18} />
           </span>
-          <span style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--text-main)' }}>New broadcast</span>
+          <div style={{ minWidth: 0 }}>
+            <h2 className="sa-panel-title" style={{ fontSize: '1.05rem' }}>Email broadcast</h2>
+            <span style={{
+              marginTop: 5, display: 'inline-flex', alignItems: 'center', gap: 5,
+              fontSize: '0.7rem', fontWeight: 600, color: 'var(--primary)',
+              background: 'color-mix(in srgb, var(--primary) 12%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--primary) 22%, transparent)',
+              borderRadius: 999, padding: '2px 8px',
+            }}>
+              <Users size={11} />
+              All active users
+            </span>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
           <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost"
             onClick={() => setTemplateOpen(true)}
             style={{ gap: 5 }}
           >
-            <LayoutTemplate size={12} />
+            <LayoutTemplate size={13} />
             Templates
           </button>
           <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost"
             onClick={() => setPreviewOpen(true)}
             style={{ gap: 5 }}
           >
-            <Eye size={12} />
+            <Eye size={13} />
             Preview
           </button>
           <button
@@ -984,70 +936,107 @@ function ComposePane({ onSent }) {
             onClick={() => setShowConfirm(true)}
             style={{ gap: 5 }}
           >
-            <Send size={12} />
+            <Send size={13} />
             Send
           </button>
         </div>
       </div>
 
-      {/* Subject line */}
-      <div style={{
-        padding: '0 16px', borderBottom: '1px solid var(--border-color)', flexShrink: 0,
-      }}>
-        <input
-          type="text"
-          placeholder="Subject line…"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          maxLength={200}
-          style={{
-            width: '100%', border: 'none', outline: 'none', background: 'transparent',
-            color: 'var(--text-main)', font: 'inherit', fontSize: '1rem', fontWeight: 650,
-            padding: '14px 0', letterSpacing: '-0.01em',
-            caretColor: 'var(--primary)',
-          }}
-        />
+      <div style={{ padding: '12px 18px 0', flexShrink: 0 }}>
+        <label htmlFor="broadcast-subject" style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase',
+          color: 'var(--primary)', marginBottom: 8,
+        }}>
+          <Type size={12} />
+          Subject
+        </label>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          border: '1px solid color-mix(in srgb, var(--primary) 22%, var(--border-color))',
+          borderRadius: 10,
+          background: 'color-mix(in srgb, var(--primary) 5%, var(--bg-card))',
+          padding: '0 12px',
+        }}>
+          <Hash size={14} style={{ color: 'var(--primary)', flexShrink: 0, opacity: 0.85 }} />
+          <input
+            id="broadcast-subject"
+            type="text"
+            aria-label="Subject"
+            placeholder="What is this email about?"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            maxLength={200}
+            style={{
+              flex: 1, minWidth: 0, boxSizing: 'border-box',
+              border: 'none', outline: 'none',
+              background: 'transparent',
+              color: 'var(--text-main)', font: 'inherit', fontSize: '0.95rem', fontWeight: 600,
+              padding: '11px 0', letterSpacing: '-0.01em',
+              caretColor: 'var(--primary)',
+            }}
+          />
+        </div>
       </div>
 
       {err && (
-        <div className="sa-alert sa-alert--error" style={{ margin: '12px 16px 0', flexShrink: 0 }}>
+        <div className="sa-alert sa-alert--error" style={{ margin: '10px 18px 0', flexShrink: 0 }}>
           <AlertTriangle size={13} style={{ display: 'inline', marginRight: 6 }} />{err}
         </div>
       )}
 
-      {/* Body area — always the editor */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', padding: '12px 18px 0' }}>
+        <label htmlFor="broadcast-html" style={{
+          display: 'flex', alignItems: 'center', gap: 6,
+          fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase',
+          color: 'var(--primary)', marginBottom: 8, flexShrink: 0,
+        }}>
+          <Code2 size={12} />
+          HTML body
+        </label>
         <textarea
+          id="broadcast-html"
+          aria-label="HTML body"
           placeholder="Write your HTML email body here…"
           value={html}
           onChange={(e) => setHtml(e.target.value)}
           style={{
-            flex: 1, border: 'none', outline: 'none', resize: 'none',
-            background: 'transparent', color: 'var(--text-main)',
-            font: 'inherit', fontSize: '0.8125rem', lineHeight: 1.7,
-            padding: '16px', fontFamily: '"Fira Code", "Consolas", monospace',
+            flex: 1, width: '100%', boxSizing: 'border-box',
+            border: '1px solid color-mix(in srgb, var(--primary) 18%, var(--border-color))',
+            borderRadius: 10, outline: 'none', resize: 'none',
+            background: 'color-mix(in srgb, var(--primary) 4%, var(--bg-card))',
+            color: 'var(--text-main)',
+            fontSize: '0.8125rem', lineHeight: 1.7,
+            padding: '12px 14px', fontFamily: '"Fira Code", "Consolas", monospace',
             caretColor: 'var(--primary)', minHeight: 0,
           }}
         />
       </div>
 
-      {/* Footer: char count + plain text toggle */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '8px 16px', borderTop: '1px solid var(--border-color)', flexShrink: 0,
-        background: 'color-mix(in srgb, var(--bg-card) 80%, transparent)',
+        padding: '10px 18px 12px', flexShrink: 0,
       }}>
         <button
           type="button"
           onClick={() => setShowText(!showText)}
           style={{
-            background: 'none', border: 'none', cursor: 'pointer', font: 'inherit',
-            fontSize: '0.6875rem', color: 'var(--text-muted)', padding: 0,
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: 'color-mix(in srgb, var(--primary) 8%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--primary) 18%, var(--border-color))',
+            borderRadius: 8, cursor: 'pointer', font: 'inherit',
+            fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', padding: '5px 10px',
           }}
         >
-          {showText ? 'Hide plain text' : '+ Add plain-text fallback'}
+          <FileText size={13} />
+          {showText ? 'Hide plain text' : 'Add plain-text fallback'}
         </button>
-        <span style={{ fontSize: '0.6875rem', color: html.length > 10000 ? '#f87171' : 'var(--text-muted)' }}>
+        <span style={{
+          display: 'inline-flex', alignItems: 'center', gap: 5,
+          fontSize: '0.7rem', fontWeight: 600,
+          color: html.length > 10000 ? '#f87171' : 'var(--text-muted)',
+        }}>
+          <Code2 size={12} />
           {html.length.toLocaleString()} chars
         </span>
       </div>
@@ -1108,15 +1097,24 @@ function HistoryPane({ refreshKey }) {
         <BroadcastDetailModal broadcastId={selectedId} onClose={() => setSelectedId(null)} />
       )}
 
-      {/* Pane header */}
-      <div className="sa-card-header" style={{ flexShrink: 0 }}>
-        <h3 style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <Clock size={14} style={{ color: '#a78bfa' }} />
-          Sent broadcasts
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '14px 14px 10px', flexShrink: 0,
+      }}>
+        <h3 style={{ margin: 0, fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 7, color: 'var(--text-main)' }}>
+          <Inbox size={14} style={{ color: 'var(--primary)' }} />
+          Sent
         </h3>
-        <button type="button" className="sa-btn sa-btn--sm" onClick={() => load(1)} disabled={loading} style={{ gap: 5 }}>
-          <RefreshCw size={11} style={loading ? { animation: 'sa-spin 0.7s linear infinite' } : undefined} />
-          Refresh
+        <button
+          type="button"
+          className="sa-btn sa-btn--sm sa-btn--ghost"
+          onClick={() => load(1)}
+          disabled={loading}
+          aria-label="Refresh broadcasts"
+          title="Refresh"
+          style={{ gap: 0, padding: '4px 7px' }}
+        >
+          <RefreshCw size={12} style={loading ? { animation: 'sa-spin 0.7s linear infinite' } : undefined} />
         </button>
       </div>
 
@@ -1159,53 +1157,24 @@ function SuperadminBroadcastPanel() {
   const [historyKey, setHistoryKey] = useState(0)
 
   return (
-    <div className="sa-panel" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-
-      {/* Header */}
-      <div className="sa-panel-header" style={{ flexShrink: 0 }}>
-        <div>
-          <h2 className="sa-panel-title">Email broadcast</h2>
-          <p className="sa-panel-desc">Write and send a product email to all active users on the platform.</p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-          <span style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            fontSize: '0.75rem', color: 'var(--text-muted)',
-            background: 'color-mix(in srgb, var(--text-muted) 8%, transparent)',
-            border: '1px solid var(--border-color)',
-            borderRadius: 8, padding: '5px 10px',
-          }}>
-            <Users size={12} />
-            Sends to all users
-          </span>
-        </div>
-      </div>
-
-      {/* Two-column layout */}
-      <div style={{
-        flex: 1, minHeight: 0,
+    <div className="sa-panel" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, gap: 0 }}>
+      <div className="sa-card" style={{
+        flex: 1, minHeight: 0, overflow: 'hidden',
         display: 'grid',
-        gridTemplateColumns: '1fr 300px',
-        gap: 16,
-        overflow: 'hidden',
+        gridTemplateColumns: 'minmax(0, 1fr) 280px',
+        transition: 'none',
       }}>
-
-        {/* Left: compose */}
-        <div className="sa-card" style={{
-          minHeight: 0, overflow: 'hidden',
-          display: 'flex', flexDirection: 'column',
-        }}>
+        <div style={{ minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <ComposePane onSent={() => setHistoryKey((k) => k + 1)} />
         </div>
-
-        {/* Right: history */}
-        <div className="sa-card" style={{
+        <div style={{
           minHeight: 0, overflow: 'hidden',
           display: 'flex', flexDirection: 'column',
+          borderLeft: '1px solid var(--border-color)',
+          background: 'color-mix(in srgb, var(--text-muted) 3%, var(--bg-card))',
         }}>
           <HistoryPane refreshKey={historyKey} />
         </div>
-
       </div>
     </div>
   )
