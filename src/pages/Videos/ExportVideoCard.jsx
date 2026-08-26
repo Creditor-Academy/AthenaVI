@@ -7,7 +7,7 @@ import {
   looksLikeId,
   normalizeLibraryCategoryId,
 } from '../../utils/workspaceLibrary.js'
-import PresentationCardThumb from './PresentationCardThumb.jsx'
+import PresentationCardThumb from '../../components/ppt/PresentationCardThumb.jsx'
 
 function resolveOwnerLabel(video) {
   const candidates = [

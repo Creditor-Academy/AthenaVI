@@ -1563,6 +1563,45 @@ button.wsc-workspace-card__tool--credits:hover {
   transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+.wsc-ppt-thumb-host {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0f172a;
+}
+
+.wsc-ppt-thumb-host .wsc-library-thumb-img,
+.wsc-ppt-thumb-host .ppt-thumb-fade {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.wsc-ppt-thumb-host .ppt-thumb-fade,
+.wsc-ppt-thumb-host .ppt-thumb-slide-wrap {
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.wsc-ppt-thumb-host .ppt-thumb-fade.is-ready,
+.wsc-ppt-thumb-host .ppt-thumb-slide-wrap.is-ready {
+  opacity: 1;
+}
+
+.wsc-ppt-thumb-host .ppt-thumb-slide-wrap,
+.wsc-ppt-thumb-canvas,
+.wsc-ppt-thumb-host .default-project-thumbnail {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
 .wsc-video-card__thumb-inner .project-scene-thumb {
   position: absolute;
   inset: 0;
