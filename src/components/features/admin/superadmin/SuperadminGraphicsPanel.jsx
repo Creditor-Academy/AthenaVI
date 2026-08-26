@@ -10,6 +10,9 @@ import {
   ArrowUp,
   Sparkles,
   Plus,
+  ExternalLink,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import superadminService, { SuperadminApiError } from '../../../../services/superadminService'
 import '../../../../pages/AdminPortal/SuperadminGraphicsPortal.css'
@@ -52,6 +55,16 @@ const STATUS_PILLS = [
   { id: 'draft', label: 'Draft' },
   { id: 'published', label: 'Published' },
   { id: 'archived', label: 'Archived' },
+]
+
+const VIEW_MODES = [
+  { id: 'library', label: 'Library' },
+  { id: 'getillustrations', label: 'GetIllustrations Free' },
+]
+
+const GI_KINDS = [
+  { id: 'illustration', label: 'Illustrations' },
+  { id: 'icon', label: 'Icons' },
 ]
 
 const MAX_SVG_BYTES = 1.5 * 1024 * 1024
@@ -159,6 +172,7 @@ function TagInput({ tags, onChange }) {
 
 export default function SuperadminGraphicsPanel() {
   const modalFileRef = useRef(null)
+  const [viewMode, setViewMode] = useState('library')
   const [items, setItems] = useState([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
@@ -181,6 +195,21 @@ export default function SuperadminGraphicsPanel() {
   const [busyId, setBusyId] = useState('')
   const [saving, setSaving] = useState(false)
 
+  // GetIllustrations free catalog
+  const [giKind, setGiKind] = useState('illustration')
+  const [giCategoryId, setGiCategoryId] = useState('')
+  const [giPackId, setGiPackId] = useState('')
+  const [giQ, setGiQ] = useState('')
+  const [giPage, setGiPage] = useState(1)
+  const [giItems, setGiItems] = useState([])
+  const [giCategories, setGiCategories] = useState([])
+  const [giTotal, setGiTotal] = useState(0)
+  const [giTotalPages, setGiTotalPages] = useState(1)
+  const [giConfigured, setGiConfigured] = useState(true)
+  const [giRateLimit, setGiRateLimit] = useState(null)
+  const [giLoading, setGiLoading] = useState(false)
+  const [giError, setGiError] = useState('')
+
   const load = useCallback(async () => {
     setLoading(true)
     setError('')
@@ -195,9 +224,45 @@ export default function SuperadminGraphicsPanel() {
     }
   }, [q, filters])
 
+  const loadGi = useCallback(async () => {
+    setGiLoading(true)
+    setGiError('')
+    try {
+      const params = {
+        kind: giKind,
+        q: giQ,
+        page: giPage,
+        limit: 48,
+      }
+      if (giKind === 'illustration' && giCategoryId) params.categoryId = giCategoryId
+      if (giKind === 'icon' && giPackId) params.packId = giPackId
+
+      const data = await superadminService.listGetIllustrationsFree(params)
+      setGiConfigured(data.configured !== false)
+      setGiItems(data.items || [])
+      setGiCategories(data.categories || [])
+      setGiTotal(data.total || 0)
+      setGiTotalPages(data.totalPages || 1)
+      setGiRateLimit(data.rateLimit || null)
+      if (giKind === 'icon' && data.selectedPackId) {
+        setGiPackId((prev) => prev || data.selectedPackId)
+      }
+    } catch (err) {
+      setGiError(
+        err instanceof SuperadminApiError ? err.message : err.message || 'Failed to load GetIllustrations'
+      )
+    } finally {
+      setGiLoading(false)
+    }
+  }, [giKind, giCategoryId, giPackId, giQ, giPage])
+
   useEffect(() => {
-    load()
-  }, [load])
+    if (viewMode === 'library') load()
+  }, [viewMode, load])
+
+  useEffect(() => {
+    if (viewMode === 'getillustrations') loadGi()
+  }, [viewMode, loadGi])
 
   useEffect(() => {
     return () => {
@@ -353,6 +418,8 @@ export default function SuperadminGraphicsPanel() {
     ...(editingRow || {}),
   })
   const showEmpty = !loading && items.length === 0
+  const giActiveCategoryId = giKind === 'icon' ? giPackId : giCategoryId
+  const showGiEmpty = !giLoading && giItems.length === 0
 
   return (
     <div className="sg-portal">
@@ -364,89 +431,275 @@ export default function SuperadminGraphicsPanel() {
             </p>
             <h1 className="sg-title">Graphics Library</h1>
             <p className="sg-subtitle">
-              Upload and publish SVG decorations for the PPT editor and AI slides. Only published
-              graphics appear in Insert → Graphics.
+              {viewMode === 'library'
+                ? 'Upload and publish SVG decorations for the PPT editor and AI slides. Only published graphics appear in Insert → Graphics.'
+                : 'Browse free GetIllustrations assets by category (illustrations) or pack (icons). Free-tier clean assets only.'}
             </p>
           </div>
-          <button type="button" className="sg-primary-cta" onClick={openCreate}>
-            <Plus size={18} strokeWidth={2.5} /> Add Graphic
-          </button>
+          {viewMode === 'library' ? (
+            <button type="button" className="sg-primary-cta" onClick={openCreate}>
+              <Plus size={18} strokeWidth={2.5} /> Add Graphic
+            </button>
+          ) : null}
         </div>
 
-        <div className="sg-controls">
-          <label className="sg-search">
-            <Search size={16} aria-hidden />
-            <input
-              type="search"
-              placeholder="Search name, tags, description…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-          </label>
+        <div className="sg-mode-tabs" role="tablist" aria-label="Graphics source">
+          {VIEW_MODES.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              role="tab"
+              aria-selected={viewMode === m.id}
+              className={`sg-mode-tab ${viewMode === m.id ? 'is-active' : ''}`}
+              onClick={() => setViewMode(m.id)}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
 
-          <div className="sg-status-pills" role="tablist" aria-label="Status filter">
-            {STATUS_PILLS.map((s) => (
-              <button
-                key={s.id || 'all'}
-                type="button"
-                role="tab"
-                aria-selected={filters.status === s.id}
-                className={`sg-pill ${filters.status === s.id ? 'is-active' : ''}`}
-                onClick={() => setFilters((prev) => ({ ...prev, status: s.id }))}
-              >
-                {s.label}
-                {s.id && statusCounts[s.id] > 0 ? ` · ${statusCounts[s.id]}` : ''}
-              </button>
-            ))}
+        {viewMode === 'library' ? (
+          <div className="sg-controls">
+            <label className="sg-search">
+              <Search size={16} aria-hidden />
+              <input
+                type="search"
+                placeholder="Search name, tags, description…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+              />
+            </label>
+
+            <div className="sg-status-pills" role="tablist" aria-label="Status filter">
+              {STATUS_PILLS.map((s) => (
+                <button
+                  key={s.id || 'all'}
+                  type="button"
+                  role="tab"
+                  aria-selected={filters.status === s.id}
+                  className={`sg-pill ${filters.status === s.id ? 'is-active' : ''}`}
+                  onClick={() => setFilters((prev) => ({ ...prev, status: s.id }))}
+                >
+                  {s.label}
+                  {s.id && statusCounts[s.id] > 0 ? ` · ${statusCounts[s.id]}` : ''}
+                </button>
+              ))}
+            </div>
+
+            <select
+              className="sg-select"
+              value={filters.category}
+              onChange={(e) => setFilters((prev) => ({ ...prev, category: e.target.value }))}
+              aria-label="Category"
+            >
+              <option value="">All categories</option>
+              {CATEGORY_OPTIONS.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+
+            <select
+              className="sg-select"
+              value={filters.type}
+              onChange={(e) => setFilters((prev) => ({ ...prev, type: e.target.value }))}
+              aria-label="Type"
+            >
+              <option value="">All types</option>
+              {TYPES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+
+            <select
+              className="sg-select"
+              value={filters.colorMode}
+              onChange={(e) => setFilters((prev) => ({ ...prev, colorMode: e.target.value }))}
+              aria-label="Color mode"
+            >
+              <option value="">Any color</option>
+              <option value="recolorable">Recolorable</option>
+              <option value="fixed">Fixed colors</option>
+            </select>
+
+            <span className="sg-count">{total} graphic{total === 1 ? '' : 's'}</span>
           </div>
+        ) : (
+          <div className="sg-controls sg-controls--gi">
+            <div className="sg-status-pills" role="tablist" aria-label="Asset kind">
+              {GI_KINDS.map((k) => (
+                <button
+                  key={k.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={giKind === k.id}
+                  className={`sg-pill ${giKind === k.id ? 'is-active' : ''}`}
+                  onClick={() => {
+                    setGiKind(k.id)
+                    setGiPage(1)
+                    setGiCategoryId('')
+                    setGiPackId('')
+                  }}
+                >
+                  {k.label}
+                </button>
+              ))}
+            </div>
 
-          <select
-            className="sg-select"
-            value={filters.category}
-            onChange={(e) => setFilters((prev) => ({ ...prev, category: e.target.value }))}
-            aria-label="Category"
-          >
-            <option value="">All categories</option>
-            {CATEGORY_OPTIONS.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.label}
-              </option>
-            ))}
-          </select>
+            <label className="sg-search">
+              <Search size={16} aria-hidden />
+              <input
+                type="search"
+                placeholder={
+                  giKind === 'icon' ? 'Filter icons in pack…' : 'Search free illustrations…'
+                }
+                value={giQ}
+                onChange={(e) => {
+                  setGiQ(e.target.value)
+                  setGiPage(1)
+                }}
+              />
+            </label>
 
-          <select
-            className="sg-select"
-            value={filters.type}
-            onChange={(e) => setFilters((prev) => ({ ...prev, type: e.target.value }))}
-            aria-label="Type"
-          >
-            <option value="">All types</option>
-            {TYPES.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.label}
-              </option>
-            ))}
-          </select>
+            <span className="sg-count">
+              {giTotal} free {giKind === 'icon' ? 'icon' : 'illustration'}
+              {giTotal === 1 ? '' : 's'}
+            </span>
+            {giRateLimit?.remaining != null ? (
+              <span className="sg-count sg-count--muted" title="Monthly API remaining">
+                API {giRateLimit.remaining}/{giRateLimit.limit ?? '—'}
+              </span>
+            ) : null}
+          </div>
+        )}
 
-          <select
-            className="sg-select"
-            value={filters.colorMode}
-            onChange={(e) => setFilters((prev) => ({ ...prev, colorMode: e.target.value }))}
-            aria-label="Color mode"
-          >
-            <option value="">Any color</option>
-            <option value="recolorable">Recolorable</option>
-            <option value="fixed">Fixed colors</option>
-          </select>
-
-          <span className="sg-count">{total} graphic{total === 1 ? '' : 's'}</span>
-        </div>
-
-        {error && <p className="sg-alert">{error}</p>}
+        {viewMode === 'library' && error ? <p className="sg-alert">{error}</p> : null}
+        {viewMode === 'getillustrations' && giError ? <p className="sg-alert">{giError}</p> : null}
+        {viewMode === 'getillustrations' && !giConfigured ? (
+          <p className="sg-alert">
+            Set <code>GETILLUSTRATIONS_API_KEY</code> on the backend to browse free assets.
+          </p>
+        ) : null}
       </div>
 
       <div className="sg-body">
-        {loading ? (
+        {viewMode === 'getillustrations' ? (
+          <div className="sg-gi-layout">
+            <aside className="sg-gi-cats" aria-label="Categories">
+              <p className="sg-gi-cats-title">
+                {giKind === 'icon' ? 'Free icon packs' : 'Categories'}
+              </p>
+              {giKind === 'illustration' ? (
+                <button
+                  type="button"
+                  className={`sg-gi-cat ${!giCategoryId ? 'is-active' : ''}`}
+                  onClick={() => {
+                    setGiPage(1)
+                    setGiCategoryId('')
+                  }}
+                >
+                  All free
+                </button>
+              ) : null}
+              {giCategories.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  className={`sg-gi-cat ${giActiveCategoryId === c.id ? 'is-active' : ''}`}
+                  onClick={() => {
+                    setGiPage(1)
+                    if (giKind === 'illustration') setGiCategoryId(c.id)
+                    else setGiPackId(c.id)
+                  }}
+                >
+                  <span>{c.name}</span>
+                  {c.count != null ? <em>{c.count}</em> : null}
+                </button>
+              ))}
+            </aside>
+
+            <div className="sg-gi-main">
+              {giLoading ? (
+                <p className="sg-loading">Loading free GetIllustrations catalog…</p>
+              ) : showGiEmpty ? (
+                <div className="sg-hero-empty">
+                  <div className="sg-hero-art" aria-hidden>
+                    <ExternalLink size={34} strokeWidth={1.75} />
+                  </div>
+                  <h3>No free assets in this filter</h3>
+                  <p>Try another category or pack, or clear the search.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="sg-grid">
+                    {giItems.map((row) => {
+                      const iconish = row.kind === 'icon'
+                      return (
+                        <article
+                          key={`${row.kind}-${row.packId}-${row.id}`}
+                          className={`sg-card ${iconish ? 'sg-card--icon' : ''}`}
+                        >
+                          <div className={`sg-card-preview ${iconish ? 'sg-card-preview--icon' : ''}`}>
+                            <span className="sg-card-badge sg-card-badge--published">free</span>
+                            <GraphicPreview
+                              src={row.thumbnailUrl || row.imageUrl}
+                              variant={iconish ? 'icon' : 'default'}
+                            />
+                          </div>
+                          <div className="sg-card-body">
+                            <strong title={row.name}>{row.name}</strong>
+                            <span className="sg-card-meta">
+                              {row.categoryName || row.packName || row.kind}
+                              {row.svgAvailable ? ' · SVG' : ''}
+                            </span>
+                          </div>
+                          <div className="sg-card-actions">
+                            {row.imageUrl ? (
+                              <a
+                                className="sg-btn sg-btn--sm"
+                                href={row.imageUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                              >
+                                <ExternalLink size={13} /> Open
+                              </a>
+                            ) : null}
+                          </div>
+                        </article>
+                      )
+                    })}
+                  </div>
+                  {giTotalPages > 1 ? (
+                    <div className="sg-gi-pager">
+                      <button
+                        type="button"
+                        className="sg-btn sg-btn--sm"
+                        disabled={giPage <= 1 || giLoading}
+                        onClick={() => setGiPage((p) => Math.max(1, p - 1))}
+                      >
+                        <ChevronLeft size={14} /> Prev
+                      </button>
+                      <span>
+                        Page {giPage} / {giTotalPages}
+                      </span>
+                      <button
+                        type="button"
+                        className="sg-btn sg-btn--sm"
+                        disabled={giPage >= giTotalPages || giLoading}
+                        onClick={() => setGiPage((p) => p + 1)}
+                      >
+                        Next <ChevronRight size={14} />
+                      </button>
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </div>
+          </div>
+        ) : loading ? (
           <p className="sg-loading">Loading graphics…</p>
         ) : showEmpty ? (
           <div

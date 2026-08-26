@@ -115,9 +115,35 @@ function sortSlotsByPosition(slots) {
 }
 
 /** Pull slot text from existing canvas elements (e.g. after broken apply-layout or AI generate). */
+const SLOT_ROLE_ALIASES = {
+  heading: ['heading', 'title', 'headline'],
+  title: ['heading', 'title', 'headline'],
+  headline: ['heading', 'title', 'headline'],
+  subtitle: ['subtitle', 'subheading', 'tagline'],
+  subheading: ['subtitle', 'subheading', 'tagline'],
+  body: ['body', 'paragraph', 'text'],
+  caption: ['caption', 'label'],
+  image: ['image', 'background'],
+  background: ['image', 'background'],
+}
+
+function rolesCompatible(a, b) {
+  const left = String(a || '').toLowerCase()
+  const right = String(b || '').toLowerCase()
+  if (!left || !right) return false
+  if (left === right) return true
+  if ((SLOT_ROLE_ALIASES[left] || []).includes(right)) return true
+  if (/heading|title|headline/.test(left) && ['heading', 'title', 'headline'].includes(right)) return true
+  if (/subtitle|subheading|tagline/.test(left) && ['subtitle', 'subheading', 'tagline'].includes(right)) return true
+  if (/(^|_)(image|hero|background)/.test(left) && (right === 'image' || right === 'background')) return true
+  return false
+}
+
 export function extractContentBySlotFromElements(elements = [], schema) {
   const slots = Array.isArray(schema?.slots) ? schema.slots : []
   const bySlotId = {}
+  const used = new Set()
+  const newSlotIds = new Set(slots.map((s) => String(s.id || '')))
 
   for (const el of elements) {
     const slotId = el?.slotId || el?.meta?.slotId || el?.content?.slotId
@@ -126,15 +152,51 @@ export function extractContentBySlotFromElements(elements = [], schema) {
       const text = String(el.content.text).trim()
       if (text && !isCatalogPlaceholderText(text)) {
         bySlotId[slotId] = text
+        if (newSlotIds.has(String(slotId))) used.add(el)
       }
     }
     if (el.type === 'image' && (el.content?.url || el.content?.src)) {
       bySlotId[`${slotId}__url`] = el.content.url || el.content.src
+      if (newSlotIds.has(String(slotId))) used.add(el)
     }
     if (el.type === 'chart' && el.content) {
       bySlotId[`${slotId}__chart`] = el.content
+      if (newSlotIds.has(String(slotId))) used.add(el)
     }
   }
+
+  for (const slot of slots) {
+    const slotId = String(slot.id || '')
+    const role = String(slot.role || '').toLowerCase()
+    const wantsImage = role === 'image' || role === 'background'
+    if (wantsImage) {
+      if (bySlotId[`${slotId}__url`]) continue
+      const match = elements.find(
+        (el) =>
+          !used.has(el) &&
+          el.type === 'image' &&
+          (el.content?.url || el.content?.src) &&
+          rolesCompatible(el.role || el.slotId, role)
+      )
+      if (match) {
+        bySlotId[`${slotId}__url`] = match.content.url || match.content.src
+        used.add(match)
+      }
+      continue
+    }
+    if (bySlotId[slotId] || !isTextLayoutRole(role)) continue
+    const match = elements.find((el) => {
+      if (used.has(el) || el.type !== 'text') return false
+      const text = String(el.content?.text || '').trim()
+      if (!text || isCatalogPlaceholderText(text)) return false
+      return rolesCompatible(el.role, role) || rolesCompatible(el.slotId, role)
+    })
+    if (match) {
+      bySlotId[slotId] = String(match.content.text).trim()
+      used.add(match)
+    }
+  }
+
   if (Object.keys(bySlotId).length) return bySlotId
 
   const textSlots = sortSlotsByPosition(slots.filter((slot) => isTextLayoutRole(slot.role)))
@@ -335,6 +397,7 @@ export async function applyCompiledLayoutToSlide({
     ...(slideContent && typeof slideContent === 'object' ? slideContent : {}),
     ...(slideTitle && !(slideContent && slideContent.title) ? { title: slideTitle } : {}),
   }
+  if (!content.title && slideTitle) content.title = slideTitle
   const extracted = extractContentBySlotFromElements(mergeFromElements, resolvedSchema)
   const contentBySlotId = mergeContentBySlotId(
     buildContentBySlotIdFromSlideContent(content, resolvedSchema),

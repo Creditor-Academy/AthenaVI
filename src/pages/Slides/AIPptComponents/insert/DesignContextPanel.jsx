@@ -1,10 +1,18 @@
+import { useMemo } from 'react'
 import ElementToolbar from './ElementToolbar'
 import ElementPropertiesPanel from '../ElementPropertiesPanel'
 import SlideTransitionPicker from './SlideTransitionPicker'
 import ColorFillPicker from './ColorFillPicker'
 import FontPicker from '../../../../components/shared/fonts/FontPicker'
+import LayoutPolishedPreview from '../../../../components/ppt/LayoutPolishedPreview'
 import { ensureGoogleFontLoaded } from '../../../../utils/googleFonts'
 import { slideBackgroundFill } from '../../../../utils/presentationHelpers'
+import { resolveLayoutSchemaById } from '../../../../utils/deckLayoutRegistry'
+import {
+  pickSimilarLayouts,
+  templateLayoutId,
+  templateRecordId,
+} from '../../../../utils/similarLayouts'
 import './insertPanels.css'
 import '../pptEditorExtras.css'
 import '../pptPanelUi.css'
@@ -13,12 +21,27 @@ const DEFAULT_SLIDE_BG = '#FFFFFF'
 
 export { DEFAULT_SLIDE_BG }
 
+function SimilarLayoutThumb({ schema, aspectRatio }) {
+  if (!schema) {
+    return <div className="ppt-similar-layout-fallback">Layout</div>
+  }
+  return (
+    <div className="ppt-similar-layout-preview-scaler">
+      <div className="ppt-similar-layout-preview-inner">
+        <LayoutPolishedPreview schema={schema} fill aspectRatio={aspectRatio} />
+      </div>
+    </div>
+  )
+}
+
 function SlideDesignSection({
   slide,
   themeVisual,
   slideStyles,
   layoutTemplates,
   layoutLoading,
+  layoutSchemaMap = {},
+  aspectRatio = '16:9',
   selectedLayoutId,
   onSelectLayoutId,
   onApplyLayout,
@@ -32,6 +55,20 @@ function SlideDesignSection({
 }) {
   const currentTransition =
     slide?.transition || slide?.elements?.transition || 'none'
+
+  const similarLayouts = useMemo(
+    () => pickSimilarLayouts(slide, layoutTemplates, layoutSchemaMap, 3),
+    [slide, layoutTemplates, layoutSchemaMap]
+  )
+
+  const currentLayoutId = String(slide?.layoutId || slide?.layout_id || '').trim()
+
+  const handlePickSimilar = (tpl) => {
+    const id = templateRecordId(tpl)
+    if (!id || disabled) return
+    onSelectLayoutId?.(id)
+    onApplyLayout?.(id)
+  }
 
   return (
     <>
@@ -73,37 +110,43 @@ function SlideDesignSection({
       </div>
 
       <div className="ppt-slide-panel-section">
-        <div className="ppt-slide-panel-label">Apply layout</div>
+        <div className="ppt-slide-panel-label">Similar layouts</div>
         {layoutLoading ? (
           <div className="ppt-slide-layer-empty">Loading layouts…</div>
-        ) : layoutTemplates.length ? (
-          <>
-            <select
-              className="ppt-slide-panel-select ppt-slide-layout-select"
-              value={selectedLayoutId}
-              disabled={disabled}
-              onChange={(e) => onSelectLayoutId?.(e.target.value)}
-            >
-              {layoutTemplates.map((tpl) => {
-                const id = tpl.id || tpl.templateId || tpl._id
-                return (
-                  <option key={id} value={id}>
-                    {tpl.name || tpl.label || id}
-                  </option>
-                )
-              })}
-            </select>
-            <button
-              type="button"
-              className="ppt-slide-panel-btn ppt-slide-panel-btn--block"
-              disabled={disabled || !selectedLayoutId}
-              onClick={() => onApplyLayout?.(selectedLayoutId)}
-            >
-              Apply layout
-            </button>
-          </>
+        ) : similarLayouts.length ? (
+          <div className="ppt-similar-layouts" role="list">
+            {similarLayouts.map((tpl) => {
+              const id = templateRecordId(tpl)
+              const layoutId = templateLayoutId(tpl)
+              const schema =
+                tpl?.schema ||
+                resolveLayoutSchemaById(layoutId, layoutSchemaMap) ||
+                null
+              const isActive =
+                (selectedLayoutId && id === String(selectedLayoutId)) ||
+                (currentLayoutId && layoutId === currentLayoutId)
+              return (
+                <button
+                  key={id || layoutId}
+                  type="button"
+                  role="listitem"
+                  className={`ppt-similar-layout-card ${isActive ? 'is-selected' : ''}`}
+                  disabled={disabled || !id}
+                  title={tpl.name || tpl.label || layoutId || 'Apply layout'}
+                  onClick={() => handlePickSimilar(tpl)}
+                >
+                  <div className="ppt-similar-layout-thumb">
+                    <SimilarLayoutThumb schema={schema} aspectRatio={aspectRatio} />
+                  </div>
+                  <span className="ppt-similar-layout-name">
+                    {tpl.name || tpl.label || layoutId || 'Layout'}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
         ) : (
-          <div className="ppt-slide-layer-empty">No layout templates in workspace</div>
+          <div className="ppt-slide-layer-empty">No similar layouts yet</div>
         )}
       </div>
 
@@ -455,6 +498,8 @@ export default function DesignContextPanel({
   slideStyles,
   layoutTemplates,
   layoutLoading,
+  layoutSchemaMap = {},
+  aspectRatio = '16:9',
   selectedLayoutId,
   onSelectLayoutId,
   onApplyLayout,
@@ -481,6 +526,8 @@ export default function DesignContextPanel({
           slideStyles={slideStyles}
           layoutTemplates={layoutTemplates}
           layoutLoading={layoutLoading}
+          layoutSchemaMap={layoutSchemaMap}
+          aspectRatio={aspectRatio}
           selectedLayoutId={selectedLayoutId}
           onSelectLayoutId={onSelectLayoutId}
           onApplyLayout={onApplyLayout}

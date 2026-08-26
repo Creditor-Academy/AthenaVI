@@ -355,6 +355,19 @@ const superadminService = {
     return superadminRequest(`/api/superadmin/graphics${suffix}`)
   },
 
+  getGetIllustrationsMeta() {
+    return superadminRequest('/api/superadmin/graphics/getillustrations/meta')
+  },
+
+  listGetIllustrationsFree(params = {}) {
+    const qs = new URLSearchParams()
+    Object.entries(params).forEach(([k, v]) => {
+      if (v != null && v !== '') qs.set(k, String(v))
+    })
+    const suffix = qs.toString() ? `?${qs}` : ''
+    return superadminRequest(`/api/superadmin/graphics/getillustrations/free${suffix}`)
+  },
+
   getGraphic(id) {
     return superadminRequest(`/api/superadmin/graphics/${id}`)
   },

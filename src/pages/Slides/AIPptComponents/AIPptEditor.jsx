@@ -2384,7 +2384,13 @@ export default function AIPptEditor({
       setError('')
       try {
         const slide = localSlides.find((s) => s.id === slideId)
-        let mergeFromElements = slide?.elements?.elements || []
+        const originalElements = slide?.elements?.elements || []
+        const originalContent =
+          slide?.content && typeof slide.content === 'object' ? { ...slide.content } : {}
+        if (slide?.imageRef && !originalContent.imageRef) {
+          originalContent.imageRef = slide.imageRef
+        }
+        let appliedLayoutId = slide?.layoutId || slide?.layout_id || null
 
         try {
           const result = await presentationService.applyLayout(
@@ -2394,26 +2400,25 @@ export default function AIPptEditor({
             templateId
           )
           const updated = extractSlideFromMutation(result)
-          if (updated?.elements?.elements?.length) {
-            mergeFromElements = updated.elements.elements
+          if (updated?.layoutId || updated?.layout_id) {
+            appliedLayoutId = updated.layoutId || updated.layout_id
           }
         } catch {
           // Client compile below replaces broken backend layout structure.
         }
-
-        const layoutId = slide?.layoutId || null
 
         await applyCompiledLayoutToSlide({
           workspaceId,
           presentationId,
           slideId,
           templateId,
-          layoutId,
+          layoutId: appliedLayoutId,
           layoutSchemaMap,
           aspectRatio,
           ...themeCompileOptions,
-          slideTitle: slide?.title || '',
-          mergeFromElements,
+          slideTitle: slide?.title || originalContent.title || '',
+          slideContent: originalContent,
+          mergeFromElements: originalElements,
         })
 
         await refreshSlide(slideId)
@@ -3012,6 +3017,8 @@ export default function AIPptEditor({
           onChangeSlideStatus={handleChangeSlideStatus}
           onChangeElementContent={handleChangeElementContentWithBackground}
           onChangeElementPlacement={handleChangeElementPlacement}
+          layoutSchemaMap={layoutSchemaMap}
+          aspectRatio={aspectRatio || '16:9'}
           onToggleElementLock={() => elementMutations.toggleLock()}
           onReplaceImage={() =>
             setError(

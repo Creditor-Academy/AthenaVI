@@ -25,6 +25,7 @@ import PptCommentsPanel from '../PptCommentsPanel'
 import PptVariablesPanel from '../PptVariablesPanel'
 import SpeakerNotesPanel from '../SpeakerNotesPanel'
 import SlideTransitionPicker, { PPT_SLIDE_TRANSITIONS } from './SlideTransitionPicker'
+import { findTemplateForSlideLayout, templateRecordId } from '../../../../utils/similarLayouts'
 import './insertPanels.css'
 import '../pptEditorExtras.css'
 import '../pptPanelUi.css'
@@ -121,6 +122,8 @@ export default function EditorRightRail({
   onBackgroundGradientChange,
   onBackgroundColorChange,
   designFocus = 'slide',
+  layoutSchemaMap = {},
+  aspectRatio = '16:9',
   disabled = false,
   viewOnly = false,
   onViewOnlyAttempt,
@@ -174,14 +177,23 @@ export default function EditorRightRail({
     let cancelled = false
     setLayoutLoading(true)
     presentationService
-      .listTemplates(workspaceId, { contentType: 'Layout' })
+      .listTemplates(workspaceId)
       .then((data) => {
         if (cancelled) return
-        const list = Array.isArray(data)
+        const list = (Array.isArray(data)
           ? data
           : data?.templates || data?.items || data?.data || []
+        ).filter(
+          (tpl) =>
+            String(tpl?.type || '').toUpperCase() !== 'DECK_PACK' &&
+            (String(tpl?.type || '').toUpperCase() === 'DECK_LAYOUT' ||
+              Boolean(tpl?.schema?.layout_id))
+        )
         setLayoutTemplates(list)
-        if (list[0]?.id || list[0]?.templateId) {
+        const match = findTemplateForSlideLayout(slide, list)
+        if (match) {
+          setSelectedLayoutId(templateRecordId(match))
+        } else if (list[0]?.id || list[0]?.templateId) {
           setSelectedLayoutId(String(list[0].id || list[0].templateId))
         }
       })
@@ -195,6 +207,12 @@ export default function EditorRightRail({
       cancelled = true
     }
   }, [active, workspaceId])
+
+  useEffect(() => {
+    if (!layoutTemplates.length) return
+    const match = findTemplateForSlideLayout(slide, layoutTemplates)
+    if (match) setSelectedLayoutId(templateRecordId(match))
+  }, [slide?.id, slide?.layoutId, slide?.layout_id, layoutTemplates])
 
   const toggle = (id) => {
     if (viewOnly) {
@@ -243,6 +261,8 @@ export default function EditorRightRail({
                 slideStyles={slideStyles}
                 layoutTemplates={layoutTemplates}
                 layoutLoading={layoutLoading}
+                layoutSchemaMap={layoutSchemaMap}
+                aspectRatio={aspectRatio}
                 selectedLayoutId={selectedLayoutId}
                 onSelectLayoutId={setSelectedLayoutId}
                 onApplyLayout={onApplyLayout}
