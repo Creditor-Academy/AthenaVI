@@ -79,6 +79,7 @@ import {
   ensureFontCssUrl,
   ensureThemeFontsLoaded,
   themeFontFamilies,
+  uniqueFontFamilies,
 } from '../../../utils/googleFonts'
 import {
   logCanvasGreySuspects,
@@ -101,9 +102,167 @@ import '../AIPptGenerator.css'
 const CANVAS_SAVE_DEBOUNCE_MS = 600
 const TEXT_BORDER_DRAG_PX = 8
 const TEXT_MIN_HEIGHT = 24
+const RESIZE_MIN_WIDTH = 40
+const RESIZE_MIN_HEIGHT = 40
+
+const RESIZE_HANDLES = [
+  { id: 'nw', cursor: 'nwse-resize', corner: true },
+  { id: 'n', cursor: 'ns-resize', corner: false },
+  { id: 'ne', cursor: 'nesw-resize', corner: true },
+  { id: 'e', cursor: 'ew-resize', corner: false },
+  { id: 'se', cursor: 'nwse-resize', corner: true },
+  { id: 's', cursor: 'ns-resize', corner: false },
+  { id: 'sw', cursor: 'nesw-resize', corner: true },
+  { id: 'w', cursor: 'ew-resize', corner: false },
+]
+
+function resizeCursorForHandle(handle) {
+  return RESIZE_HANDLES.find((item) => item.id === handle)?.cursor || 'nwse-resize'
+}
+
+function lockDragCursor(cursor) {
+  const root = document.documentElement
+  root.classList.add('ppt-drag-cursor-lock')
+  root.style.setProperty('--ppt-drag-cursor', cursor)
+}
+
+function unlockDragCursor() {
+  const root = document.documentElement
+  root.classList.remove('ppt-drag-cursor-lock')
+  root.style.removeProperty('--ppt-drag-cursor')
+}
 
 function isTextElement(el) {
   return el?.type === 'text' || el?.type === 'textbox'
+}
+
+function applyResizeFromHandle(handle, start, dx, dy, canvasW, canvasH, minH) {
+  const minW = RESIZE_MIN_WIDTH
+  const minHeight = minH
+  let { x, y, width, height } = start
+  const right = start.x + start.width
+  const bottom = start.y + start.height
+  const aspect = start.width > 0 && start.height > 0 ? start.width / start.height : 1
+
+  if (handle === 'e') {
+    width = clamp(start.width + dx, minW, canvasW - start.x)
+  } else if (handle === 'w') {
+    const nextX = clamp(start.x + dx, 0, right - minW)
+    width = right - nextX
+    x = nextX
+  } else if (handle === 's') {
+    height = clamp(start.height + dy, minHeight, canvasH - start.y)
+  } else if (handle === 'n') {
+    const nextY = clamp(start.y + dy, 0, bottom - minHeight)
+    height = bottom - nextY
+    y = nextY
+  } else {
+    // Corner: keep aspect ratio; opposite corner stays fixed
+    let scaleX
+    let scaleY
+    if (handle === 'se') {
+      scaleX = (start.width + dx) / start.width
+      scaleY = (start.height + dy) / start.height
+    } else if (handle === 'sw') {
+      scaleX = (start.width - dx) / start.width
+      scaleY = (start.height + dy) / start.height
+    } else if (handle === 'ne') {
+      scaleX = (start.width + dx) / start.width
+      scaleY = (start.height - dy) / start.height
+    } else {
+      // nw
+      scaleX = (start.width - dx) / start.width
+      scaleY = (start.height - dy) / start.height
+    }
+
+    const scale =
+      Math.abs(dx) * (1 / Math.max(start.width, 1)) >= Math.abs(dy) * (1 / Math.max(start.height, 1))
+        ? scaleX
+        : scaleY
+
+    let nextW = Math.max(minW, start.width * scale)
+    let nextH = nextW / aspect
+    if (nextH < minHeight) {
+      nextH = minHeight
+      nextW = nextH * aspect
+    }
+
+    if (handle === 'se') {
+      nextW = Math.min(nextW, canvasW - start.x)
+      nextH = nextW / aspect
+      if (start.y + nextH > canvasH) {
+        nextH = canvasH - start.y
+        nextW = nextH * aspect
+      }
+      width = nextW
+      height = nextH
+      x = start.x
+      y = start.y
+    } else if (handle === 'sw') {
+      nextW = Math.min(nextW, right)
+      nextH = nextW / aspect
+      if (start.y + nextH > canvasH) {
+        nextH = canvasH - start.y
+        nextW = nextH * aspect
+      }
+      width = nextW
+      height = nextH
+      x = right - width
+      y = start.y
+      if (x < 0) {
+        x = 0
+        width = right
+        height = width / aspect
+      }
+    } else if (handle === 'ne') {
+      nextW = Math.min(nextW, canvasW - start.x)
+      nextH = nextW / aspect
+      if (nextH > bottom) {
+        nextH = bottom
+        nextW = nextH * aspect
+      }
+      width = nextW
+      height = nextH
+      x = start.x
+      y = bottom - height
+      if (y < 0) {
+        y = 0
+        height = bottom
+        width = height * aspect
+      }
+    } else {
+      // nw
+      nextW = Math.min(nextW, right)
+      nextH = nextW / aspect
+      if (nextH > bottom) {
+        nextH = bottom
+        nextW = nextH * aspect
+      }
+      width = nextW
+      height = nextH
+      x = right - width
+      y = bottom - height
+      if (x < 0) {
+        x = 0
+        width = right
+        height = width / aspect
+        y = bottom - height
+      }
+      if (y < 0) {
+        y = 0
+        height = bottom
+        width = height * aspect
+        x = right - width
+      }
+    }
+  }
+
+  width = clamp(width, minW, canvasW)
+  height = clamp(height, minHeight, canvasH)
+  x = clamp(x, 0, canvasW - width)
+  y = clamp(y, 0, canvasH - height)
+
+  return { ...start, x, y, width, height }
 }
 
 function cssPxToCanvas(cssPx, stageEl, canvasSize) {
@@ -235,18 +394,26 @@ function InteractiveElementShell({
         next.y += snapDy
         onGuidesChange?.(guides)
       } else if (drag.mode === 'resize') {
-        next.width = clamp(start.width + dx, 40, canvasW - start.x)
-        next.height = clamp(start.height + dy, TEXT_MIN_HEIGHT, canvasH - start.y)
+        const minH = isText ? TEXT_MIN_HEIGHT : RESIZE_MIN_HEIGHT
+        next = applyResizeFromHandle(drag.handle, start, dx, dy, canvasW, canvasH, minH)
       }
 
       lastPlacementRef.current = next
       onPlacementLive?.(el.id, next)
     }
 
-    const onUp = () => {
+    const onUp = (e) => {
       const drag = dragRef.current
       if (!drag) return
       dragRef.current = null
+      unlockDragCursor()
+      try {
+        if (e?.pointerId != null && drag.captureTarget?.hasPointerCapture?.(e.pointerId)) {
+          drag.captureTarget.releasePointerCapture(e.pointerId)
+        }
+      } catch {
+        // ignore release errors
+      }
       onGuidesChange?.([])
       if (!drag.moved) return
       onPlacementCommit?.(el.id, lastPlacementRef.current || drag.startPlacement)
@@ -259,10 +426,11 @@ function InteractiveElementShell({
       window.removeEventListener('pointermove', onMove)
       window.removeEventListener('pointerup', onUp)
       window.removeEventListener('pointercancel', onUp)
+      unlockDragCursor()
     }
-  }, [canvasW, canvasH, el.id, allElements, locked, onGuidesChange, onPlacementCommit, onPlacementLive, stageRef])
+  }, [canvasW, canvasH, el.id, allElements, locked, isText, onGuidesChange, onPlacementCommit, onPlacementLive, stageRef])
 
-  const beginDrag = (e, mode) => {
+  const beginDrag = (e, mode, handle = null) => {
     if (!editable || !selected || !stageRef?.current || locked || editing) return
     e.preventDefault()
     e.stopPropagation()
@@ -282,14 +450,24 @@ function InteractiveElementShell({
       opacity: p.opacity != null ? p.opacity : 1,
     }
     lastPlacementRef.current = startPlacement
+    const cursor =
+      mode === 'resize' ? resizeCursorForHandle(handle) : 'move'
+    lockDragCursor(cursor)
+    try {
+      e.currentTarget?.setPointerCapture?.(e.pointerId)
+    } catch {
+      // ignore capture errors
+    }
     dragRef.current = {
       mode,
+      handle,
       originX: origin.x,
       originY: origin.y,
       startClientX: e.clientX,
       startClientY: e.clientY,
       startPlacement,
       moved: mode === 'resize',
+      captureTarget: e.currentTarget,
     }
   }
 
@@ -432,12 +610,17 @@ function InteractiveElementShell({
           />
         </>
       )}
-      {selected && editable && !editing && (
-        <span
-          className="ppt-canvas-el-resize"
-          onPointerDown={(e) => beginDrag(e, 'resize')}
-          aria-hidden
-        />
+      {selected && editable && !locked && !editing && (
+        <div className="ppt-canvas-el-handles" aria-hidden>
+          {RESIZE_HANDLES.map((handle) => (
+            <span
+              key={handle.id}
+              className={`ppt-canvas-el-resize ppt-canvas-el-resize--${handle.id}`}
+              style={{ cursor: handle.cursor }}
+              onPointerDown={(e) => beginDrag(e, 'resize', handle.id)}
+            />
+          ))}
+        </div>
       )}
     </div>
   )
@@ -716,6 +899,14 @@ export default function AIPptEditor({
     }
     ensureElementFontsLoaded(collectSlideFontFamilies(localSlides))
   }, [fontCssUrl, themeTokens, localSlides])
+
+  const usedFontFamilies = useMemo(() => {
+    return uniqueFontFamilies([
+      ...collectSlideFontFamilies(localSlides),
+      slideStyles?.headerFont,
+      slideStyles?.bodyFont,
+    ])
+  }, [localSlides, slideStyles?.headerFont, slideStyles?.bodyFont])
 
   useEffect(() => {
     if (!themeTokens?.fonts) return
@@ -2737,29 +2928,29 @@ export default function AIPptEditor({
               </div>
             ))}
           </div>
-
-          <div className="aig-canvas-controls">
-            <button
-              className="aig-canvas-ctrl-btn"
-              type="button"
-              onClick={() => setCanvasZoom((z) => Math.max(40, z - 10))}
-            >
-              <FiZoomOut size={14} />
-            </button>
-            <span className="aig-canvas-zoom-level">{canvasZoom}%</span>
-            <button
-              className="aig-canvas-ctrl-btn"
-              type="button"
-              onClick={() => setCanvasZoom((z) => Math.min(200, z + 10))}
-            >
-              <FiZoomIn size={14} />
-            </button>
-            <div className="aig-canvas-ctrl-divider"></div>
-            <button className="aig-canvas-ctrl-btn" type="button" onClick={() => setCanvasZoom(100)}>
-              Fit
-            </button>
-          </div>
         </main>
+
+        <div className="aig-canvas-controls" aria-label="Canvas zoom">
+          <button
+            className="aig-canvas-ctrl-btn"
+            type="button"
+            onClick={() => setCanvasZoom((z) => Math.max(40, z - 10))}
+          >
+            <FiZoomOut size={14} />
+          </button>
+          <span className="aig-canvas-zoom-level">{canvasZoom}%</span>
+          <button
+            className="aig-canvas-ctrl-btn"
+            type="button"
+            onClick={() => setCanvasZoom((z) => Math.min(200, z + 10))}
+          >
+            <FiZoomIn size={14} />
+          </button>
+          <div className="aig-canvas-ctrl-divider"></div>
+          <button className="aig-canvas-ctrl-btn" type="button" onClick={() => setCanvasZoom(100)}>
+            Fit
+          </button>
+        </div>
 
         <EditorRightRail
           zoom={canvasZoom}
@@ -2806,6 +2997,7 @@ export default function AIPptEditor({
           onSlideStylesChange={setSlideStyles}
           onBackgroundGradientChange={handleBackgroundGradientChange}
           onBackgroundColorChange={handleBackgroundColorChange}
+          usedFontFamilies={usedFontFamilies}
         />
 
         {showMinimap ? (

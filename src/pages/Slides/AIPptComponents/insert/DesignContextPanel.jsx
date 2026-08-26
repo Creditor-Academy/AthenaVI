@@ -28,6 +28,7 @@ function SlideDesignSection({
   onSlideStylesChange,
   onChangeTransition,
   disabled,
+  usedFontFamilies = [],
 }) {
   const currentTransition =
     slide?.transition || slide?.elements?.transition || 'none'
@@ -125,6 +126,7 @@ function SlideDesignSection({
               value={slideStyles?.headerFont || 'Inter'}
               disabled={disabled}
               compact
+              usedFontFamilies={usedFontFamilies}
               onChange={(family) => {
                 ensureGoogleFontLoaded(family)
                 onSlideStylesChange?.({ ...slideStyles, headerFont: family })
@@ -137,6 +139,7 @@ function SlideDesignSection({
               value={slideStyles?.bodyFont || 'Inter'}
               disabled={disabled}
               compact
+              usedFontFamilies={usedFontFamilies}
               onChange={(family) => {
                 ensureGoogleFontLoaded(family)
                 onSlideStylesChange?.({ ...slideStyles, bodyFont: family })
@@ -467,6 +470,7 @@ export default function DesignContextPanel({
   onToggleImageAsBackground,
   onChangeTransition,
   disabled,
+  usedFontFamilies = [],
 }) {
   return (
     <div className="ppt-design-context-panel">
@@ -486,6 +490,7 @@ export default function DesignContextPanel({
           onSlideStylesChange={onSlideStylesChange}
           onChangeTransition={onChangeTransition}
           disabled={disabled}
+          usedFontFamilies={usedFontFamilies}
         />
       )}
 
@@ -503,6 +508,7 @@ export default function DesignContextPanel({
               palette={palette}
               disabled={disabled}
               variant="panel"
+              usedFontFamilies={usedFontFamilies}
               onChange={(content) => onChangeElementContent?.(content)}
             />
           }
