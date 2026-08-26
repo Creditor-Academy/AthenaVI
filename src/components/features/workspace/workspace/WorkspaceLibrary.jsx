@@ -8,7 +8,7 @@ import {
 } from 'react-icons/md'
 import workspaceService from '../../../../services/workspaceService.js'
 import {
-  // IMAGE_MODE_FILTERS, // PARKED infographic/social chips
+  IMAGE_MODE_FILTERS,
   normalizeLibraryCategories,
   normalizeLibraryItem,
   normalizeLibraryCategoryId,
@@ -118,8 +118,7 @@ export default function WorkspaceLibrary({
       if (activeCategory === 'image') {
         params.take = 40
         params.skip = 0
-        // PARKED: infographic/social library filter — API is image-only
-        // if (imageMode && imageMode !== 'all') params.mode = imageMode
+        if (imageMode && imageMode !== 'all') params.mode = imageMode
       }
 
       const data = await workspaceService.getLibrary(workspaceId, params)
@@ -257,11 +256,22 @@ export default function WorkspaceLibrary({
         </div>
       </div>
 
-      {/* PARKED Image / Infographic / Social library chips — list is mode=image only
       {activeCategory === 'image' && (
-        <div className="workspace-library-mode-chips" ... />
+        <div className="workspace-library-mode-chips" role="tablist" aria-label="Image type">
+          {IMAGE_MODE_FILTERS.map((chip) => (
+            <button
+              key={chip.id}
+              type="button"
+              role="tab"
+              aria-selected={imageMode === chip.id}
+              className={`workspace-library-mode-chip ${imageMode === chip.id ? 'active' : ''}`}
+              onClick={() => setImageMode(chip.id)}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
       )}
-      */}
 
       {error && (
         <div className="workspace-permission-note" style={{ marginBottom: 12 }}>

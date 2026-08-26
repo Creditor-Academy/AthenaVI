@@ -186,6 +186,7 @@ const API_CONFIG = {
       MODELS: '/api/image-gen/models',
       FORMATS: '/api/image-gen/formats',
       STYLES: '/api/image-gen/styles',
+      ARCHETYPES: '/api/image-gen/archetypes',
       ESTIMATE: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/estimate`,
       CONTEXT: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/context`,
       CONTEXT_ONE: (workspaceId, contextId) =>

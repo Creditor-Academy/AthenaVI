@@ -32,13 +32,15 @@ export class ImageGenContextPinnedError extends Error {
 }
 
 const IMAGE_GENERATE_TIMEOUT_MS = 90_000
-// PARKED: infographic generate used 90–180s. Restore when Mode 2 returns.
-// const INFOGRAPHIC_GENERATE_TIMEOUT_MS = 180_000
+const INFOGRAPHIC_GENERATE_TIMEOUT_MS = 120_000
 const TWEAK_TIMEOUT_MS = 90_000
+const INFOGRAPHIC_TWEAK_TIMEOUT_MS = 120_000
 const CONTEXT_TIMEOUT_MS = 90_000
 
-function generateTimeoutMs() {
-  return IMAGE_GENERATE_TIMEOUT_MS
+function timeoutForMode(mode, kind = 'generate') {
+  const infographic = mode === 'infographic'
+  if (kind === 'tweak') return infographic ? INFOGRAPHIC_TWEAK_TIMEOUT_MS : TWEAK_TIMEOUT_MS
+  return infographic ? INFOGRAPHIC_GENERATE_TIMEOUT_MS : IMAGE_GENERATE_TIMEOUT_MS
 }
 
 function saveBlob(blob, filename) {
@@ -228,7 +230,9 @@ class ImageGenService {
       return this.unwrap(json)
     } catch (error) {
       if (error?.name === 'AbortError') {
-        const err = new Error('Image generation timed out. Please try again.')
+        const err = new Error(
+          'Generation timed out. Infographics can take two minutes or more — try again.'
+        )
         err.status = 408
         throw err
       }
@@ -253,13 +257,19 @@ class ImageGenService {
     return data?.styles || []
   }
 
+  async getArchetypes() {
+    const data = await this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.ARCHETYPES)
+    return data?.archetypes || []
+  }
+
   async getCatalogs() {
-    const [models, formats, styles] = await Promise.all([
+    const [models, formats, styles, archetypes] = await Promise.all([
       this.getModels(),
       this.getFormats(),
       this.getStyles(),
+      this.getArchetypes().catch(() => []),
     ])
-    return { models, formats, styles }
+    return { models, formats, styles, archetypes }
   }
 
   async estimate(workspaceId, { modelId, mode = 'image', tweak = false } = {}) {
@@ -320,12 +330,12 @@ class ImageGenService {
     return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.GENERATE(workspaceId), {
       method: 'POST',
       body: JSON.stringify(body),
-      timeoutMs: generateTimeoutMs(),
+      timeoutMs: timeoutForMode(body?.mode),
     })
   }
 
-  async listGenerations(workspaceId, { take = 40, skip = 0 } = {}) {
-    const query = this.buildQuery({ take, skip, mode: 'image' })
+  async listGenerations(workspaceId, { take = 40, skip = 0, mode } = {}) {
+    const query = this.buildQuery({ take, skip, mode })
     const data = await this.request(
       `${API_CONFIG.ENDPOINTS.IMAGE_GEN.GENERATIONS(workspaceId)}${query}`
     )
@@ -343,15 +353,17 @@ class ImageGenService {
     return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.REGENERATE(workspaceId, generationId), {
       method: 'POST',
       body: JSON.stringify(body),
-      timeoutMs: generateTimeoutMs(),
+      timeoutMs: timeoutForMode(body?.mode),
     })
   }
 
-  async tweak(workspaceId, generationId, instruction) {
+  async tweak(workspaceId, generationId, instruction, { editMode, mode } = {}) {
+    const payload = { instruction }
+    if (editMode === 'spec' || editMode === 'pixel') payload.editMode = editMode
     return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.TWEAK(workspaceId, generationId), {
       method: 'POST',
-      body: JSON.stringify({ instruction }),
-      timeoutMs: TWEAK_TIMEOUT_MS,
+      body: JSON.stringify(payload),
+      timeoutMs: timeoutForMode(mode, 'tweak'),
     })
   }
 
@@ -399,13 +411,14 @@ class ImageGenService {
     return data?.thread || data
   }
 
-  async sendThreadMessage(workspaceId, threadId, content, { fromGenerationId } = {}) {
+  async sendThreadMessage(workspaceId, threadId, content, { fromGenerationId, editMode, mode } = {}) {
     const body = { content }
     if (fromGenerationId) body.fromGenerationId = fromGenerationId
+    if (editMode === 'spec' || editMode === 'pixel') body.editMode = editMode
     return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.THREAD_MESSAGES(workspaceId, threadId), {
       method: 'POST',
       body: JSON.stringify(body),
-      timeoutMs: TWEAK_TIMEOUT_MS,
+      timeoutMs: timeoutForMode(mode, 'tweak'),
     })
   }
 

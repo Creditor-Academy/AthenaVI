@@ -413,7 +413,10 @@ export const VideoCard = ({ video, onClick, contextProps }) => {
                         {kind === 'image' && video.mode && (
                             <>
                                 <span className="wsc-card__dot" aria-hidden="true">·</span>
-                                <span>{String(video.mode)}</span>
+                                <span>
+                                  {video.mode === 'infographic' ? 'Infographic' : 'Image'}
+                                  {video.archetype ? ` · ${video.archetype}` : ''}
+                                </span>
                             </>
                         )}
                         {creatorName ? (

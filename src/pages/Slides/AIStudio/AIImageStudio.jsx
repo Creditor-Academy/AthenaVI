@@ -61,34 +61,24 @@ const MODE_TABS = [
     label: 'Image',
     blurb: 'General visuals — pick a square, landscape, or portrait canvas.',
   },
-  // PARKED — restore when backend Mode 2/3 returns:
-  // {
-  //   id: 'infographic',
-  //   label: 'Infographic',
-  //   blurb: 'Structured diagrams — choose a layout, then fill sections on the next step.',
-  // },
-  // {
-  //   id: 'social',
-  //   label: 'Social',
-  //   blurb: 'Platform creatives — exact pixel sizes for LinkedIn, Instagram, and more.',
-  // },
+  {
+    id: 'infographic',
+    label: 'Infographic',
+    blurb: 'Readable structured visuals — process, comparison, stats, and more.',
+  },
 ]
 
-const INFOGRAPHIC_LAYOUTS = [
-  { id: 'process', name: 'Process', desc: 'Steps in a flow' },
-  { id: 'comparison', name: 'Comparison', desc: 'Side-by-side contrast' },
-  { id: 'timeline', name: 'Timeline', desc: 'Events over time' },
-  { id: 'stats', name: 'Stats', desc: 'Numbers & KPIs' },
-  { id: 'hierarchy', name: 'Hierarchy', desc: 'Tree / org chart' },
-  { id: 'funnel', name: 'Funnel', desc: 'Conversion stages' },
-  { id: 'custom', name: 'Custom', desc: 'Freeform structure' },
+const FALLBACK_ARCHETYPES = [
+  { id: 'process', label: 'Process', description: 'Steps in a flow' },
+  { id: 'timeline', label: 'Timeline', description: 'Events over time' },
+  { id: 'comparison', label: 'Comparison', description: 'Side-by-side contrast' },
+  { id: 'stats', label: 'Stats', description: 'Numbers and KPIs' },
+  { id: 'hierarchy', label: 'Hierarchy', description: 'Tree / org chart' },
+  { id: 'list', label: 'List', description: 'Ranked or grouped items' },
+  { id: 'cycle', label: 'Cycle', description: 'Repeating loop' },
 ]
 
-const emptySection = () => ({ title: '', bullets: '' })
-
-const INFOGRAPHIC_MAX_SECTIONS = 24
-const INFOGRAPHIC_MAX_BULLETS = 20
-const INFOGRAPHIC_BULLET_MAX = 1000
+const AUTO_ARCHETYPE = { id: 'auto', label: 'Auto', description: 'Let the model pick a layout' }
 const TWEAK_INSTRUCTION_MAX = 4000
 const INFOGRAPHIC_PREFERRED_STYLES = ['flat_illustration', 'corporate', 'minimal']
 const INFOGRAPHIC_IGNORED_STYLES = new Set([
@@ -105,10 +95,10 @@ function pickModelForMode(models = [], mode) {
     Array.isArray(m.recommendedForModes) ? m.recommendedForModes.includes(mode) : false
   )
   if (recommended) return recommended
-  if (mode !== 'infographic') {
-    return available.find((m) => m.recommended) || available[0] || models[0] || null
+  if (mode === 'infographic') {
+    return available.find((m) => m.id === 'gpt-image-1-hd') || available[0] || models[0] || null
   }
-  return available[0] || models[0] || null
+  return available.find((m) => m.recommended) || available[0] || models[0] || null
 }
 
 function stylesForMode(styles = [], mode) {
@@ -141,6 +131,9 @@ function turnsFromSavedThread(saved) {
           asset: follow.asset || null,
           threadId: saved.id,
           prompt: msg.content,
+          mode: follow.mode || saved.mode,
+          request: follow.request || null,
+          infographicSpec: follow.infographicSpec || follow.request?.infographicSpec || null,
         }
       : null
     const kind =
@@ -177,10 +170,6 @@ function chatWhen(item) {
   const date = new Date(raw)
   if (Number.isNaN(date.getTime())) return ''
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-}
-
-function infographicQualityOf(generation) {
-  return generation?.infographicQuality || generation?.request?.infographicQuality || null
 }
 
 const IMAGE_INSPIRE = [
@@ -455,9 +444,7 @@ const SOCIAL_INSPIRE = [
   },
 ]
 
-const ALL_INSPIRE = IMAGE_INSPIRE
-// PARKED: [...IMAGE_INSPIRE, ...INFOGRAPHIC_INSPIRE, ...SOCIAL_INSPIRE]
-void INFOGRAPHIC_INSPIRE
+const ALL_INSPIRE = [...IMAGE_INSPIRE, ...INFOGRAPHIC_INSPIRE]
 void SOCIAL_INSPIRE
 
 const PROMPT_ARTWORK = [
@@ -564,6 +551,19 @@ function formatAspect(w, h) {
   return `${w / d}:${h / d}`
 }
 
+function collectApiErrorDetails(err) {
+  const payload = err?.data && typeof err.data === 'object' ? err.data : {}
+  const raw = []
+    .concat(payload.errors, payload.data?.errors, err?.errors)
+    .filter((item) => item != null && item !== '')
+  const texts = raw.map((item) => {
+    if (typeof item === 'string') return item.trim()
+    if (typeof item?.message === 'string') return item.message.trim()
+    return ''
+  })
+  return texts.filter((text) => text && text !== 'Validation error')
+}
+
 function friendlyError(err) {
   if (isInsufficientCreditsError(err)) {
     return 'Not enough credits for this generation. Top up or pick a lighter model.'
@@ -574,7 +574,13 @@ function friendlyError(err) {
   if (err instanceof ImageGenProviderError) {
     return err.message || 'The image provider is unavailable right now.'
   }
-  return err?.message || 'Something went wrong. Please try again.'
+  const details = collectApiErrorDetails(err)
+  if (details.length) return details.join(' · ')
+  if (err?.message && err.message !== 'Validation error') return err.message
+  if (err?.status === 400) {
+    return 'Couldn’t structure this as an infographic. Try a clearer prompt with steps, a comparison, or stats, then generate again.'
+  }
+  return 'Something went wrong. Please try again.'
 }
 
 function getFriendlyModelName(model) {
@@ -658,15 +664,31 @@ function LayoutSchematic({ layoutId, size = 'thumb' }) {
           </span>
         </>
       )}
-      {id === 'funnel' && (
+      {id === 'list' && (
         <>
-          <span className="aig-sch-band" />
-          <span className="aig-sch-band" />
-          <span className="aig-sch-band" />
-          <span className="aig-sch-band" />
+          <span className="aig-sch-row">
+            <em>1</em>
+            <i />
+          </span>
+          <span className="aig-sch-row">
+            <em>2</em>
+            <i />
+          </span>
+          <span className="aig-sch-row">
+            <em>3</em>
+            <i />
+          </span>
         </>
       )}
-      {id === 'custom' && (
+      {id === 'cycle' && (
+        <>
+          <span className="aig-sch-cycle" />
+          <span className="aig-sch-cycle-dot" />
+          <span className="aig-sch-cycle-dot" />
+          <span className="aig-sch-cycle-dot" />
+        </>
+      )}
+      {(id === 'auto' || id === 'custom' || id === 'funnel') && (
         <>
           <span className="aig-sch-hero" />
           <span className="aig-sch-mosaic">
@@ -697,8 +719,8 @@ function LayoutCard({ layout, selected, onSelect }) {
         )}
       </div>
       <div className="aig-layout-copy">
-        <strong>{layout.name}</strong>
-        <span>{layout.desc}</span>
+        <strong>{layout.label || layout.name}</strong>
+        <span>{layout.description || layout.desc}</span>
       </div>
     </button>
   )
@@ -796,22 +818,36 @@ function canvasCardSize(format, role) {
   }
 }
 
-function CanvasPeek({ format, onSelect }) {
+function CanvasPeek({ format, onSelect, layoutId, infographic }) {
   const size = canvasCardSize(format, 'peek')
   return (
     <button
       type="button"
-      className="aig-canvas-peek"
+      className={`aig-canvas-peek${infographic ? ' aig-canvas-peek--board' : ''}`}
       style={size}
       onClick={() => onSelect(format.id)}
       aria-label={`Select ${format.name}`}
     >
-      <img src={formatPreviewSrc(format.id)} alt="" draggable={false} />
+      {infographic ? (
+        <span className="aig-canvas-peek-board">
+          <LayoutSchematic layoutId={layoutId} size="thumb" />
+        </span>
+      ) : (
+        <img src={formatPreviewSrc(format.id)} alt="" draggable={false} />
+      )}
     </button>
   )
 }
 
-function CanvasCarousel({ formats, selectedId, onSelect }) {
+function CanvasCarousel({
+  formats,
+  selectedId,
+  onSelect,
+  mode = 'image',
+  layoutId,
+  layoutName,
+  layoutDescription,
+}) {
   const list = formats?.length ? formats : []
   const activeIndex = Math.max(
     0,
@@ -821,6 +857,7 @@ function CanvasCarousel({ formats, selectedId, onSelect }) {
   const prev = list.length > 1 ? list[(activeIndex - 1 + list.length) % list.length] : null
   const next = list.length > 1 ? list[(activeIndex + 1) % list.length] : null
   const nextDistinct = next && next.id !== prev?.id ? next : null
+  const infographic = mode === 'infographic'
 
   if (!active) {
     return (
@@ -836,12 +873,22 @@ function CanvasCarousel({ formats, selectedId, onSelect }) {
 
   const hero = canvasCardSize(active, 'hero')
   const copy = formatShowcaseCopy(active)
-  const kind = formatMockupKind(active)
+  const kind = infographic ? 'board' : formatMockupKind(active)
+  const headline = infographic
+    ? layoutDescription || layoutName || 'Structured layout'
+    : copy.headline
+  const badge = infographic
+    ? `${layoutName || 'Infographic'} · ${active.name}`
+    : `${activeIndex + 1} · ${active.name}`
 
   return (
     <div className="aig-canvas-showcase">
       <div className="aig-canvas-showcase-row">
-        {prev ? <CanvasPeek format={prev} onSelect={onSelect} /> : <span />}
+        {prev ? (
+          <CanvasPeek format={prev} onSelect={onSelect} infographic={infographic} layoutId={layoutId} />
+        ) : (
+          <span />
+        )}
         <motion.div
           className={`aig-canvas-hero aig-canvas-hero--${kind}`}
           initial={false}
@@ -853,31 +900,51 @@ function CanvasCarousel({ formats, selectedId, onSelect }) {
           transition={{ type: 'spring', stiffness: 280, damping: 30, mass: 0.9 }}
         >
           <AnimatePresence mode="wait">
-            <motion.img
-              key={active.id}
-              src={formatPreviewSrc(active.id)}
-              alt=""
-              draggable={false}
-              initial={{ opacity: 0.35 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.22 }}
-            />
+            {infographic ? (
+              <motion.div
+                key={layoutId || 'auto'}
+                className="aig-canvas-hero-board"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.22 }}
+              >
+                <LayoutSchematic layoutId={layoutId || 'auto'} size="stage" />
+              </motion.div>
+            ) : (
+              <motion.img
+                key={active.id}
+                src={formatPreviewSrc(active.id)}
+                alt=""
+                draggable={false}
+                initial={{ opacity: 0.35 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.22 }}
+              />
+            )}
           </AnimatePresence>
           <div className="aig-canvas-slide-shade" aria-hidden />
           <span className="aig-canvas-slide-live">
             <i />
             Preview
           </span>
-          <span className="aig-canvas-slide-badge">
-            {activeIndex + 1} · {active.name}
-          </span>
-          <p className="aig-canvas-slide-headline">{copy.headline}</p>
+          <span className="aig-canvas-slide-badge">{badge}</span>
+          <p className="aig-canvas-slide-headline">{headline}</p>
         </motion.div>
-        {nextDistinct ? <CanvasPeek format={nextDistinct} onSelect={onSelect} /> : <span />}
+        {nextDistinct ? (
+          <CanvasPeek
+            format={nextDistinct}
+            onSelect={onSelect}
+            infographic={infographic}
+            layoutId={layoutId}
+          />
+        ) : (
+          <span />
+        )}
       </div>
       <p className="aig-canvas-hero-meta">
-        <strong>{active.name}</strong>
+        <strong>{infographic && layoutName ? `${layoutName} · ${active.name}` : active.name}</strong>
         <span>
           {active.width} × {active.height} px
         </span>
@@ -1122,12 +1189,11 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
   const [step, setStep] = useState('prompt')
   const [prompt, setPrompt] = useState('')
   const [inspiring, setInspiring] = useState(false)
-  const [headline, setHeadline] = useState('')
-  const [subheadline, setSubheadline] = useState('')
   const [mode, setMode] = useState('image')
-  const [infoLayout, setInfoLayout] = useState('process')
-  const [infoTitle, setInfoTitle] = useState('')
-  const [infoSections, setInfoSections] = useState([emptySection(), emptySection(), emptySection()])
+  const [infoLayout, setInfoLayout] = useState('auto')
+  const [styleHint, setStyleHint] = useState('')
+  const [editMode, setEditMode] = useState('auto')
+  const [specOpen, setSpecOpen] = useState(false)
 
   const [workspaceId, setWorkspaceId] = useState(createContext?.workspaceId || null)
   const [folderId, setFolderId] = useState(createContext?.folderId || null)
@@ -1144,6 +1210,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
   const [models, setModels] = useState([])
   const [formats, setFormats] = useState([])
   const [styles, setStyles] = useState([])
+  const [archetypes, setArchetypes] = useState(FALLBACK_ARCHETYPES)
 
   const [formatId, setFormatId] = useState('square')
   const [modelId, setModelId] = useState('gpt-image-1')
@@ -1238,39 +1305,39 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
     () => stylesForMode(styles, mode),
     [styles, mode]
   )
+  const archetypeOptions = useMemo(() => {
+    const fromApi = (archetypes || []).map((a) => ({
+      id: a.id,
+      label: a.label || a.name,
+      description: a.description || a.desc || '',
+    }))
+    const list = fromApi.length ? fromApi : FALLBACK_ARCHETYPES
+    return [AUTO_ARCHETYPE, ...list]
+  }, [archetypes])
   const selectedInfoLayout = useMemo(
-    () => INFOGRAPHIC_LAYOUTS.find((l) => l.id === infoLayout) || INFOGRAPHIC_LAYOUTS[0],
-    [infoLayout]
-  )
-  const filledInfoSections = useMemo(
-    () =>
-      infoSections
-        .map((s) => ({
-          title: s.title.trim(),
-          bullets: String(s.bullets || '')
-            .split('\n')
-            .map((b) => b.trim())
-            .filter(Boolean),
-        }))
-        .map((s) => ({
-          ...s,
-          bullets: s.bullets.slice(0, INFOGRAPHIC_MAX_BULLETS).map((b) => b.slice(0, INFOGRAPHIC_BULLET_MAX)),
-        }))
-        .filter((s) => s.title || s.bullets.length)
-        .slice(0, INFOGRAPHIC_MAX_SECTIONS),
-    [infoSections]
+    () => archetypeOptions.find((l) => l.id === infoLayout) || AUTO_ARCHETYPE,
+    [archetypeOptions, infoLayout]
   )
 
+  const threadModeLocked = Boolean(activeThreadId && thread.length)
+
   const switchMode = (nextMode) => {
-    // Backend is image-only. Parked infographic/social branches:
-    // if (nextMode === 'social') { setFormatId(socialFormats[0]?.id || 'instagram_post') }
-    // if (nextMode === 'infographic') { setFormatId('landscape'); pick HD model + infographic styles }
-    setMode('image')
-    const current = formats.find((f) => f.id === formatId)
-    if (!current || !['square', 'landscape', 'portrait'].includes(current.id)) {
-      setFormatId(genericFormats[0]?.id || 'square')
+    if (threadModeLocked) return
+    if (nextMode !== 'image' && nextMode !== 'infographic') return
+    setMode(nextMode)
+    if (nextMode === 'infographic') {
+      setFormatId('landscape')
+      const hd = pickModelForMode(models, 'infographic')
+      if (hd?.id) setModelId(hd.id)
+      setStyleId(pickInfographicStyleId(styles, styleId))
+    } else {
+      const current = formats.find((f) => f.id === formatId)
+      if (!current || !['square', 'landscape', 'portrait'].includes(current.id)) {
+        setFormatId(genericFormats[0]?.id || 'square')
+      }
+      const rec = pickModelForMode(models, 'image')
+      if (rec?.id) setModelId(rec.id)
     }
-    void nextMode
   }
 
   const refreshCredits = useCallback(async (wsId) => {
@@ -1339,6 +1406,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
         setModels(catalogs.models)
         setFormats(catalogs.formats)
         setStyles(catalogs.styles)
+        if (catalogs.archetypes?.length) setArchetypes(catalogs.archetypes)
 
         const defaultModel = pickModelForMode(catalogs.models, 'image')
         if (defaultModel) setModelId(defaultModel.id)
@@ -1370,7 +1438,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
       try {
         const est = await imageGenService.estimate(workspaceId, {
           modelId,
-          mode: 'image',
+          mode,
           tweak: false,
         })
         if (!cancelled) setEstimateAc(est?.athenaCredits ?? null)
@@ -1396,8 +1464,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
       setGenStatusIdx(0)
       return undefined
     }
-    const lines = GEN_STATUS_LINES
-    // PARKED: mode === 'infographic' ? INFOGRAPHIC_STATUS_LINES : GEN_STATUS_LINES
+    const lines = mode === 'infographic' ? INFOGRAPHIC_STATUS_LINES : GEN_STATUS_LINES
     const id = setInterval(() => {
       setGenStatusIdx((i) => (i + 1) % lines.length)
     }, 2200)
@@ -1410,14 +1477,24 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
   }, [thread, isGenerating, step])
 
   const handleInspire = () => {
-    const bank = IMAGE_INSPIRE
-    // PARKED: infographic/social inspire banks + ALL_INSPIRE mix
+    const bank = mode === 'infographic' ? INFOGRAPHIC_INSPIRE : IMAGE_INSPIRE
     const pool = bank.filter((item) => item.prompt !== prompt)
     const next = pool[Math.floor(Math.random() * pool.length)] || bank[0]
     if (!next) return
 
-    switchMode('image')
-    setFormatId(['square', 'landscape', 'portrait'].includes(next.formatId) ? next.formatId : 'square')
+    if (next.kind === 'infographic') {
+      switchMode('infographic')
+      if (next.layout) setInfoLayout(next.layout)
+    } else {
+      switchMode('image')
+    }
+    setFormatId(
+      ['square', 'landscape', 'portrait'].includes(next.formatId)
+        ? next.formatId
+        : mode === 'infographic'
+          ? 'landscape'
+          : 'square'
+    )
     if (next.styleId) setStyleId(next.styleId)
     void ALL_INSPIRE
 
@@ -1451,16 +1528,27 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
 
   const buildGenerateBody = () => {
     const body = {
-      mode: 'image',
+      mode,
       folderId,
       modelId,
-      formatId: selectedFormat?.id || 'square',
+      formatId: selectedFormat?.id || (mode === 'infographic' ? 'landscape' : 'square'),
       style: styleId,
       styleId,
       prompt: prompt.trim(),
     }
+    if (mode === 'infographic') {
+      if (infoLayout && infoLayout !== 'auto') body.archetypeHint = infoLayout
+      const hint = styleHint.trim()
+      if (hint) body.styleHint = hint
+    }
     if (imageContext?.id) body.contextId = imageContext.id
     return body
+  }
+
+  const buildRegenerateBody = () => {
+    const full = buildGenerateBody()
+    const { folderId: _folderId, ...rest } = full
+    return rest
   }
 
   const applyResult = (data, turnId) => {
@@ -1550,10 +1638,16 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
         const instruction = String(turn.text || '').trim()
         if (!instruction) throw new Error('Nothing to retry.')
         data = activeThreadId
-          ? await imageGenService.sendThreadMessage(workspaceId, activeThreadId, instruction)
-          : await imageGenService.tweak(workspaceId, parent.id, instruction)
+          ? await imageGenService.sendThreadMessage(workspaceId, activeThreadId, instruction, {
+              editMode: mode === 'infographic' && editMode !== 'auto' ? editMode : undefined,
+              mode,
+            })
+          : await imageGenService.tweak(workspaceId, parent.id, instruction, {
+              editMode: mode === 'infographic' && editMode !== 'auto' ? editMode : undefined,
+              mode,
+            })
       } else {
-        data = await imageGenService.regenerate(workspaceId, parent.id, buildGenerateBody())
+        data = await imageGenService.regenerate(workspaceId, parent.id, buildRegenerateBody())
       }
       applyResult(data, turn.id)
     } catch (err) {
@@ -1598,9 +1692,13 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
           }
         }
         setImageContext(nextContext)
+        const savedMode = saved.mode === 'infographic' ? 'infographic' : 'image'
+        setMode(savedMode)
+        if (saved.archetype) setInfoLayout(saved.archetype)
         if (saved.modelId) setModelId(saved.modelId)
         if (saved.formatId) setFormatId(saved.formatId)
         if (saved.styleId) setStyleId(saved.styleId)
+        setEditMode('auto')
         const firstPrompt = turns.find((t) => t.kind === 'generate')?.text
         if (firstPrompt) setPrompt(firstPrompt)
         setStep('workspace')
@@ -1620,7 +1718,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
       return
     }
     if (!hasPrompt) {
-      setActionError('Add a prompt to generate an image.')
+      setActionError('Add a prompt to generate.')
       return
     }
     const canCharge = await assertCreditsForGenerate()
@@ -1636,7 +1734,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
       {
         id: turnId,
         kind: 'generate',
-        text: prompt.trim() || 'Generate image',
+        text: prompt.trim() || (mode === 'infographic' ? 'Generate infographic' : 'Generate image'),
         status: 'pending',
         generation: null,
         error: null,
@@ -1684,7 +1782,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
       const data = await imageGenService.regenerate(
         workspaceId,
         fromGeneration.id,
-        buildGenerateBody()
+        buildRegenerateBody()
       )
       applyResult(data, turnId)
     } catch (err) {
@@ -1706,7 +1804,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
   const submitChat = async () => {
     const instruction = chatInput.trim()
     if (!workspaceId || !activeGeneration?.id || !instruction || isGenerating) return
-    if (selectedModel?.supportsEdit === false) {
+    if (mode !== 'infographic' && selectedModel?.supportsEdit === false) {
       setActionError('This model does not support image tweaks. Try regenerating instead.')
       return
     }
@@ -1733,8 +1831,15 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
     ])
     try {
       const data = activeThreadId
-        ? await imageGenService.sendThreadMessage(workspaceId, activeThreadId, instruction)
-        : await imageGenService.tweak(workspaceId, activeGeneration.id, instruction)
+        ? await imageGenService.sendThreadMessage(workspaceId, activeThreadId, instruction, {
+            fromGenerationId: activeGeneration.id,
+            editMode: mode === 'infographic' && editMode !== 'auto' ? editMode : undefined,
+            mode,
+          })
+        : await imageGenService.tweak(workspaceId, activeGeneration.id, instruction, {
+            editMode: mode === 'infographic' && editMode !== 'auto' ? editMode : undefined,
+            mode,
+          })
       applyResult(data, turnId)
     } catch (err) {
       if (isInsufficientCreditsError(err)) {
@@ -1820,7 +1925,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
   const selectedTurn =
     thread.find((t) => t.generation?.id === activeGeneration?.id) || null
   const heroTurn = pendingTurn || selectedTurn || thread[thread.length - 1] || null
-  const statusLines = GEN_STATUS_LINES
+  const statusLines = mode === 'infographic' ? INFOGRAPHIC_STATUS_LINES : GEN_STATUS_LINES
   const readyTurns = thread.filter((t) => t.status === 'done' && t.generation?.url)
   const downloadTargetTurn =
     readyTurns.find((t) => t.generation?.id === downloadTargetId) ||
@@ -1840,7 +1945,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
             sub: 'Same prompt and settings, new interpretation.',
           }
         : {
-            title: 'Creating your image',
+            title: mode === 'infographic' ? 'Creating your infographic' : 'Creating your image',
             sub: statusLines[genStatusIdx % statusLines.length],
           }
     : heroTurn?.status === 'error'
@@ -1849,7 +1954,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
           sub: 'Retry this version after you add credits.',
         }
       : {
-          title: 'Your image is ready',
+          title: mode === 'infographic' ? 'Your infographic is ready' : 'Your image is ready',
           sub: '',
         }
 
@@ -1874,11 +1979,20 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
   }
 
   const heroMetaBits = [
+    mode === 'infographic' ? 'Infographic' : 'Image',
+    mode === 'infographic' && selectedInfoLayout?.label ? selectedInfoLayout.label : null,
     selectedStyle?.name,
     selectedFormat?.name,
     selectedModel ? getFriendlyModelName(selectedModel) : null,
     estimateAc != null ? `${estimateAc} AC` : null,
   ].filter(Boolean)
+
+  const infographicSpec =
+    heroTurn?.generation?.infographicSpec ||
+    heroTurn?.generation?.request?.infographicSpec ||
+    null
+  const pixelEdited = Boolean(heroTurn?.generation?.request?.pixelEdited)
+  const genWarnings = [].concat(heroTurn?.generation?.request?.warnings || []).filter(Boolean)
 
   const shellClass = `aig-shell aig-shell--${step}`
 
@@ -1982,7 +2096,23 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
 
               <div className="aig-prompt-stage">
                 <div className="aig-prompt-spotlight" aria-hidden="true" />
-                <h1 className="aig-prompt-title">What do you want to create?</h1>
+                <nav className="aig-tabs aig-tabs--prompt" aria-label="Studio mode">
+                  {MODE_TABS.map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      className={mode === tab.id ? 'is-on' : ''}
+                      aria-pressed={mode === tab.id}
+                      disabled={threadModeLocked}
+                      onClick={() => switchMode(tab.id)}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </nav>
+                <h1 className="aig-prompt-title">
+                  {mode === 'infographic' ? 'What should this infographic explain?' : 'What do you want to create?'}
+                </h1>
 
                 <ImageGenContextAttach
                   workspaceId={workspaceId}
@@ -2011,7 +2141,11 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                             <MarkdownPromptInput
                               ref={textRef}
                               rows={1}
-                              placeholder="A rainy laundromat at 2am, cyan washers, one dryer ajar…"
+                              placeholder={
+                                mode === 'infographic'
+                                  ? 'Compare two plans, map a 5-step process, or show quarterly stats…'
+                                  : 'A rainy laundromat at 2am, cyan washers, one dryer ajar…'
+                              }
                               value={prompt}
                               onChange={(e) => setPrompt(e.target.value)}
                               onPaste={composerBind.onPaste}
@@ -2080,10 +2214,23 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                       Choose Canvas
                     </div>
                     <h2>Choose your canvas</h2>
-                    <p>Pick a format that fits your creative vision</p>
+                    <p>{MODE_TABS.find((t) => t.id === mode)?.blurb || 'Pick a format that fits your creative vision'}</p>
                   </header>
 
-                  {/* PARKED Image / Infographic / Social mode tabs — backend is image-only */}
+                  <nav className="aig-tabs" aria-label="Studio mode">
+                    {MODE_TABS.map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        className={mode === tab.id ? 'is-on' : ''}
+                        aria-pressed={mode === tab.id}
+                        disabled={threadModeLocked}
+                        onClick={() => switchMode(tab.id)}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </nav>
 
                   <div className="aig-canvas-size-block">
                     <nav className="aig-canvas-pills" aria-label="Canvas sizes">
@@ -2106,7 +2253,21 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                     </nav>
                   </div>
 
-                  {/* PARKED infographic hints + layout picker */}
+                  {mode === 'infographic' && (
+                    <div className="aig-layout-block">
+                      <h3>Archetype</h3>
+                      <div className="aig-layout-grid">
+                        {archetypeOptions.map((layout) => (
+                          <LayoutCard
+                            key={layout.id}
+                            layout={layout}
+                            selected={infoLayout === layout.id}
+                            onSelect={setInfoLayout}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="aig-canvas-actions">
                     <button
@@ -2125,6 +2286,10 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                     formats={formatsForMode}
                     selectedId={formatId}
                     onSelect={setFormatId}
+                    mode={mode}
+                    layoutId={infoLayout}
+                    layoutName={selectedInfoLayout?.label}
+                    layoutDescription={selectedInfoLayout?.description}
                   />
                 </aside>
               </div>
@@ -2139,7 +2304,8 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                   <div>
                     <h2>Model & style</h2>
                     <p>
-                      {MODE_TABS[0]?.label || 'Image'} canvas
+                      {MODE_TABS.find((t) => t.id === mode)?.label || 'Image'} canvas
+                      {mode === 'infographic' ? ' · HD default · ~2 min' : ''}
                     </p>
                   </div>
                   {estimateAc != null && (
@@ -2154,7 +2320,10 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                 <h3>Model</h3>
                 <div className="aig-model-grid">
                   {modelsForMode.map((m) => {
-                    const recommended = Boolean(m.recommended)
+                    const recommended =
+                      mode === 'infographic'
+                        ? m.id === 'gpt-image-1-hd' || Boolean(m.recommended)
+                        : Boolean(m.recommended)
                     return (
                       <button
                         key={m.id}
@@ -2219,7 +2388,20 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                 </div>
               </div>
 
-              {/* PARKED: infographic sections form + social headline/subheadline overlay (restore when Mode 2/3 returns) */}
+              {mode === 'infographic' && (
+                <div className="aig-opt-block">
+                  <h3>Style hint</h3>
+                  <p className="aig-opt-hint">Optional. Merged with the chip above — e.g. minimal, black and white.</p>
+                  <input
+                    className="aig-style-hint"
+                    type="text"
+                    value={styleHint}
+                    onChange={(e) => setStyleHint(e.target.value)}
+                    placeholder="minimal, navy accents, lots of whitespace"
+                    maxLength={300}
+                  />
+                </div>
+              )}
 
               {actionError && step === 'options' && (
                 <p className="aig-error-banner">{actionError}</p>
@@ -2236,7 +2418,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                   onClick={runGenerate}
                 >
                   <Sparkles size={16} />
-                  Generate image
+                  {mode === 'infographic' ? 'Generate infographic' : 'Generate image'}
                   {estimateAc != null && <em>{estimateAc} AC</em>}
                 </button>
               </div>
@@ -2320,6 +2502,26 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                               </div>
                             )}
                             <p className="aig-work-meta-prompt">{heroPromptText}</p>
+                            {genWarnings.length > 0 && (
+                              <p className="aig-chat-warn">
+                                Dense sections were simplified: {genWarnings.join(' · ')}
+                              </p>
+                            )}
+                            {pixelEdited && (
+                              <p className="aig-chat-warn">
+                                This hop was pixel-edited. For text or structure changes, prefer a spec edit or regenerate from spec.
+                              </p>
+                            )}
+                            {mode === 'infographic' && infographicSpec && (
+                              <details
+                                className="aig-spec-panel"
+                                open={specOpen}
+                                onToggle={(e) => setSpecOpen(e.currentTarget.open)}
+                              >
+                                <summary>Infographic spec</summary>
+                                <pre>{JSON.stringify(infographicSpec, null, 2)}</pre>
+                              </details>
+                            )}
                             {heroTurn.status === 'error' && heroTurn.error && (
                               <p className="aig-chat-error">{heroTurn.error}</p>
                             )}
@@ -2354,8 +2556,26 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                             </div>
                           )}
                           <label className="aig-chat-label" htmlFor="aig-tweak-input">
-                            Tweak
+                            {mode === 'infographic' ? 'Iterate' : 'Tweak'}
                           </label>
+                          {mode === 'infographic' && (
+                            <div className="aig-edit-mode" role="group" aria-label="Edit path">
+                              {[
+                                { id: 'auto', label: 'Auto' },
+                                { id: 'spec', label: 'Content' },
+                                { id: 'pixel', label: 'Look' },
+                              ].map((opt) => (
+                                <button
+                                  key={opt.id}
+                                  type="button"
+                                  className={editMode === opt.id ? 'is-on' : ''}
+                                  onClick={() => setEditMode(opt.id)}
+                                >
+                                  {opt.label}
+                                </button>
+                              ))}
+                            </div>
+                          )}
                           <div className="aig-chat-bar">
                             <textarea
                               id="aig-tweak-input"
@@ -2366,7 +2586,9 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                                 isGenerating
                                   ? 'Generating…'
                                   : activeGeneration
-                                    ? 'Describe a change…'
+                                    ? mode === 'infographic'
+                                      ? 'Swap steps, rewrite a label, or darken the background…'
+                                      : 'Describe a change…'
                                     : 'Generate first, then tweak'
                               }
                               value={chatInput}
@@ -2429,12 +2651,12 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                                 ? 'Applying tweak…'
                                 : heroTurn.kind === 'regenerate'
                                   ? 'Regenerating…'
-                                  : 'Creating your image…'
+                                  : mode === 'infographic'
+                                    ? 'Creating your infographic…'
+                                    : 'Creating your image…'
                             }
                           />
                         )}
-
-                        {/* PARKED infographicQuality / socialQuality banners until Mode 2/3 returns */}
 
                         {heroTurn?.status === 'done' && heroTurn.generation?.url && (
                           <button
@@ -2789,6 +3011,8 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                   <em>
                     {[
                       chatWhen(chat),
+                      chat.mode === 'infographic' ? 'Infographic' : null,
+                      chat.archetype || null,
                       chat.versionCount
                         ? `${chat.versionCount} version${chat.versionCount === 1 ? '' : 's'}`
                         : chat.messageCount

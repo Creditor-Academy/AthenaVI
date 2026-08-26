@@ -1363,6 +1363,19 @@
   margin: 0;
 }
 
+.aig-canvas-picker .aig-tabs {
+  margin: 8px 0 18px;
+}
+
+.aig-tabs--prompt {
+  margin: 0 auto 18px;
+}
+
+.aig-tabs button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .aig-tabs button {
   border: none;
   background: transparent;
@@ -2001,6 +2014,126 @@
 .aig-sch--funnel .aig-sch-band:nth-child(3) { width: 62%; opacity: 0.7; }
 .aig-sch--funnel .aig-sch-band:nth-child(4) { width: 42%; opacity: 0.55; }
 
+.aig-sch--list {
+  flex-direction: column;
+  justify-content: space-evenly;
+  padding: 6px 8px;
+}
+
+.aig-sch--auto {
+  flex-direction: column;
+  gap: 5px;
+  padding: 4px;
+}
+
+.aig-sch--cycle {
+  position: relative;
+  align-items: center;
+  justify-content: center;
+}
+
+.aig-sch-cycle {
+  width: 34px;
+  height: 34px;
+  border: 2px solid color-mix(in srgb, var(--primary) 70%, transparent);
+  border-radius: 50%;
+  border-top-color: transparent;
+}
+
+.aig-sch--stage.aig-sch--cycle .aig-sch-cycle {
+  width: 96px;
+  height: 96px;
+  border-width: 4px;
+}
+
+.aig-sch--stage.aig-sch--cycle .aig-sch-cycle-dot {
+  width: 12px;
+  height: 12px;
+}
+
+.aig-sch-cycle-dot {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.aig-sch-cycle-dot:nth-of-type(2) { top: 4px; left: 50%; transform: translateX(-50%); }
+.aig-sch-cycle-dot:nth-of-type(3) { right: 6px; bottom: 12px; }
+.aig-sch-cycle-dot:nth-of-type(4) { left: 6px; bottom: 12px; }
+
+.aig-opt-hint {
+  margin: -4px 0 8px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.aig-style-hint {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 13.5px;
+}
+
+.aig-spec-panel {
+  margin-top: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 8px 10px;
+  background: color-mix(in srgb, var(--bg-surface) 80%, transparent);
+}
+
+.aig-spec-panel summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 650;
+}
+
+.aig-spec-panel pre {
+  margin: 8px 0 0;
+  max-height: 220px;
+  overflow: auto;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.aig-chat-warn {
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  color: color-mix(in srgb, var(--text-muted) 40%, #b45309);
+  line-height: 1.4;
+}
+
+.aig-edit-mode {
+  display: flex;
+  gap: 4px;
+  margin: 0 0 8px;
+}
+
+.aig-edit-mode button {
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.aig-edit-mode button.is-on {
+  border-color: color-mix(in srgb, var(--primary) 50%, var(--border-color));
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, var(--bg-card));
+}
+
 .aig-sch--stage .aig-sch-band {
   height: 14px;
   border-radius: 5px;
@@ -2182,6 +2315,61 @@
   color: #fff;
   background: #0f172a;
   box-shadow: 0 24px 56px rgba(15, 23, 42, 0.22);
+}
+
+.aig-canvas-hero--board {
+  color: #0f172a;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(var(--primary-rgb), 0.14), transparent 42%),
+    linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+}
+
+.aig-canvas-hero-board {
+  position: absolute;
+  z-index: 1;
+  inset: 22px 22px 92px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 20px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.06);
+}
+
+.aig-canvas-hero-board .aig-sch--stage {
+  width: 100%;
+  height: 100%;
+  min-height: 140px;
+}
+
+.aig-canvas-hero--board .aig-canvas-slide-shade {
+  inset: auto 0 0 0;
+  height: 38%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(8, 12, 22, 0.72) 100%
+  );
+}
+
+.aig-canvas-hero--board .aig-canvas-slide-headline,
+.aig-canvas-hero--board .aig-canvas-slide-badge,
+.aig-canvas-hero--board .aig-canvas-slide-live {
+  color: #fff;
+}
+
+.aig-canvas-peek--board {
+  background: #eef2f7;
+}
+
+.aig-canvas-peek-board {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 16px;
 }
 
 .aig-canvas-hero img {

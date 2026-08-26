@@ -126,7 +126,15 @@ export const VideoRow = ({ video, onClick, contextProps }) => {
     const RowIcon =
         kind === 'presentation' ? MdSlideshow : kind === 'image' ? MdImage : MdVideoLibrary;
     const kindLabel =
-        kind === 'presentation' ? 'Presentation' : kind === 'image' ? 'Image' : 'Video';
+        kind === 'presentation'
+          ? 'Presentation'
+          : kind === 'image'
+            ? video.mode === 'infographic'
+              ? video.archetype
+                ? `Infographic · ${video.archetype}`
+                : 'Infographic'
+              : 'Image'
+            : 'Video';
 
     return (
         <div className={`workspace-item-row project-item-row project-item-row--${kind}`} onClick={onClick}>

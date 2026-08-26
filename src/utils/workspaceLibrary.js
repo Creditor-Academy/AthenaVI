@@ -243,7 +243,8 @@ export function normalizeLibraryItem(item, { workspaceId } = {}) {
       thumbnailUrl: headUrl,
       prompt: item.prompt || item.title || '',
       revisedPrompt: item.revisedPrompt || null,
-      mode: item.mode || 'image',
+      mode: item.mode || item.head?.mode || 'image',
+      archetype: item.archetype || item.head?.archetype || null,
       status: item.status || 'SUCCEEDED',
       downloadFormats: item.downloadFormats || null,
       assetId: item.assetId || item.asset?.id || head?.asset?.id || null,
@@ -273,9 +274,7 @@ function truncatePrompt(text, max = 48) {
 export const IMAGE_MODE_FILTERS = [
   { id: 'all', label: 'All' },
   { id: 'image', label: 'Image' },
-  // PARKED until Image Gen Mode 2/3 returns:
-  // { id: 'infographic', label: 'Infographic' },
-  // { id: 'social', label: 'Social' },
+  { id: 'infographic', label: 'Infographic' },
 ]
 
 export const LIBRARY_CATEGORY_ICONS = {
