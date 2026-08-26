@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { samePresencePerson } from '../../../utils/pptShareSession'
 import './PptPresenceAvatars.css'
 
 const RING_COLORS = ['#7c3aed', '#1e3a5f', '#0f766e', '#b45309', '#be123c', '#2563eb']
@@ -79,31 +80,28 @@ export default function PptPresenceAvatars({
   viewerCount,
   selfViewer = null,
 }) {
-  const merged = []
-  const seen = new Set()
-
-  const push = (viewer) => {
+  let dropped = 0
+  const uniqueOthers = []
+  viewers.forEach((viewer) => {
     if (!viewer) return
-    const key = String(
-      viewer.id ||
-        viewer.userId ||
-        viewer.viewerSessionId ||
-        viewer.sessionId ||
-        viewer.email ||
-        viewer.displayName ||
-        merged.length
-    )
-    if (seen.has(key)) return
-    seen.add(key)
-    merged.push(viewer)
-  }
+    if (
+      selfViewer &&
+      (viewer.isSelf ||
+        viewer.self ||
+        viewer.isMe ||
+        viewer.isCurrentUser ||
+        samePresencePerson(selfViewer, viewer))
+    ) {
+      dropped += 1
+      return
+    }
+    if (uniqueOthers.some((existing) => samePresencePerson(existing, viewer))) return
+    uniqueOthers.push(viewer)
+  })
 
-  push(selfViewer)
-  viewers.forEach(push)
-
-  const total = Number.isFinite(Number(viewerCount))
-    ? Math.max(Number(viewerCount), merged.length)
-    : merged.length
+  const merged = selfViewer ? [selfViewer, ...uniqueOthers] : uniqueOthers
+  const reported = Number.isFinite(Number(viewerCount)) ? Number(viewerCount) : 0
+  const total = Math.max(merged.length, reported - dropped)
   const overflow = Math.max(0, total - merged.length)
   if (!merged.length && overflow <= 0) return null
 

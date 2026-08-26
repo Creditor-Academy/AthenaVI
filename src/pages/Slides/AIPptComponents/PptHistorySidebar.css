@@ -10,17 +10,9 @@
   display: flex;
   overflow: hidden;
   border-radius: 22px;
-  border: 1px solid rgba(255, 255, 255, 0.62);
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.52) 0%,
-    rgba(255, 255, 255, 0.34) 100%
-  );
-  box-shadow:
-    0 18px 48px rgba(15, 23, 42, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(28px) saturate(1.45);
-  -webkit-backdrop-filter: blur(28px) saturate(1.45);
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-card, #ffffff);
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.12);
   color: var(--text-main, #0f172a);
 }
 
@@ -54,9 +46,9 @@
   width: 36px;
   height: 36px;
   flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.55);
+  background: var(--bg-surface, #f8fafc);
   color: var(--text-main, #0f172a);
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
@@ -64,7 +56,7 @@
 }
 
 .aig-history-back:hover {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--bg-elevated, #ffffff);
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
 }
@@ -119,8 +111,8 @@
   margin-bottom: 12px;
   padding: 0 10px;
   border-radius: 11px;
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  background: rgba(255, 255, 255, 0.42);
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-input, #ffffff);
   color: var(--text-muted, #64748b);
 }
 
@@ -179,7 +171,7 @@
 
 .aig-history-item:hover,
 .aig-history-item.is-active {
-  background: rgba(255, 255, 255, 0.55);
+  background: var(--bg-surface, #f8fafc);
 }
 
 .aig-history-item.is-active {
@@ -193,7 +185,7 @@
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.55);
+  background: var(--bg-surface, #f8fafc);
   color: var(--aig-hs-accent);
   flex-shrink: 0;
 }
@@ -292,15 +284,9 @@
 }
 
 [data-mode='dark'] .aig-history-sidebar {
-  border-color: rgba(255, 255, 255, 0.1);
-  background: linear-gradient(
-    180deg,
-    rgba(15, 23, 42, 0.62) 0%,
-    rgba(15, 23, 42, 0.42) 100%
-  );
-  box-shadow:
-    0 18px 48px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border-color: var(--border-color, #1e293b);
+  background: var(--bg-card, #1e293b);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.4);
 }
 
 [data-mode='dark'] .aig-history-back {

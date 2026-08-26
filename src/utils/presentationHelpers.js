@@ -76,6 +76,51 @@ function resolveDesignBgFillColor(slide, palette = {}) {
   return { backgroundColor: css }
 }
 
+export function slideBackgroundFill(slide, fallback = DEFAULT_SLIDE_BG) {
+  if (slide?.backgroundFill && typeof slide.backgroundFill === 'object') {
+    return slide.backgroundFill
+  }
+  const stops = Array.isArray(slide?.backgroundGradientStops) ? slide.backgroundGradientStops : null
+  if (stops?.length >= 2 || (slide?.backgroundGradientStart && slide?.backgroundGradientEnd)) {
+    return {
+      type: 'gradient',
+      kind: slide.backgroundGradientKind === 'radial' ? 'radial' : 'linear',
+      angle: slide.backgroundGradientAngle != null ? Number(slide.backgroundGradientAngle) : 135,
+      stops: stops?.length
+        ? stops
+        : [
+            { color: slide.backgroundGradientStart, at: 0 },
+            { color: slide.backgroundGradientEnd, at: 1 },
+          ],
+    }
+  }
+  return { type: 'solid', color: slide?.backgroundColor || fallback }
+}
+
+export function patchFromBackgroundFill(fill, fallback = DEFAULT_SLIDE_BG) {
+  if (!fill || fill.type === 'solid') {
+    return {
+      backgroundColor: fill?.color || fallback,
+      backgroundGradientStart: undefined,
+      backgroundGradientEnd: undefined,
+      backgroundGradientAngle: undefined,
+      backgroundGradientKind: undefined,
+      backgroundGradientStops: undefined,
+      backgroundFill: undefined,
+    }
+  }
+  const stops = Array.isArray(fill.stops) ? fill.stops : []
+  return {
+    backgroundColor: undefined,
+    backgroundGradientStart: stops[0]?.color || '#E0F2FE',
+    backgroundGradientEnd: stops[stops.length - 1]?.color || '#FFFFFF',
+    backgroundGradientAngle: fill.angle ?? 135,
+    backgroundGradientKind: fill.kind || 'linear',
+    backgroundGradientStops: stops,
+    backgroundFill: fill,
+  }
+}
+
 export function resolveSlideStageBackground(slide, fallback = DEFAULT_SLIDE_BG, palette = null) {
   const stored = slide?.backgroundColor || slide?.elements?.backgroundColor || null
   const color = isDefaultSlideBackgroundColor(stored) ? fallback : stored
@@ -89,10 +134,27 @@ export function resolveSlideStageBackground(slide, fallback = DEFAULT_SLIDE_BG, 
       backgroundRepeat: 'no-repeat',
     }
   }
+  const fill = slideBackgroundFill(slide, fallback)
+  if (fill?.type === 'gradient') {
+    const css = cssGradientFromFill(fill, palette || {})
+    if (css) return { background: css }
+  }
   if (slide?.backgroundGradientStart && slide?.backgroundGradientEnd) {
-    return {
-      background: `linear-gradient(135deg, ${slide.backgroundGradientStart}, ${slide.backgroundGradientEnd})`,
-    }
+    const angle = slide.backgroundGradientAngle != null ? Number(slide.backgroundGradientAngle) : 135
+    const kind = slide.backgroundGradientKind === 'radial' ? 'radial' : 'linear'
+    const css = cssGradientFromFill(
+      {
+        type: 'gradient',
+        kind,
+        angle,
+        stops: [
+          { color: slide.backgroundGradientStart, at: 0 },
+          { color: slide.backgroundGradientEnd, at: 1 },
+        ],
+      },
+      palette || {}
+    )
+    if (css) return { background: css }
   }
   const fromDesignBg = resolveDesignBgFillColor(slide, palette || {})
   if (fromDesignBg) return fromDesignBg
@@ -828,6 +890,13 @@ export function normalizeSlideForEditor(slide, index = 0, aspectRatio = '16:9') 
       slide?.backgroundGradientStart || elementsDoc?.backgroundGradientStart,
     backgroundGradientEnd:
       slide?.backgroundGradientEnd || elementsDoc?.backgroundGradientEnd,
+    backgroundGradientAngle:
+      slide?.backgroundGradientAngle ?? elementsDoc?.backgroundGradientAngle,
+    backgroundGradientKind:
+      slide?.backgroundGradientKind || elementsDoc?.backgroundGradientKind,
+    backgroundGradientStops:
+      slide?.backgroundGradientStops || elementsDoc?.backgroundGradientStops,
+    backgroundFill: slide?.backgroundFill || elementsDoc?.backgroundFill,
     backgroundImage: slide?.backgroundImage,
     backgroundImageFit: slide?.backgroundImageFit || 'cover',
     backgroundImageElementId: slide?.backgroundImageElementId,
@@ -910,16 +979,45 @@ export function buildCanvasDoc(slide, { aspectRatio = '16:9', elements, backgrou
     : Array.isArray(slide?.elements?.elements)
       ? slide.elements.elements
       : []
-  const bg =
+  const fromSlide = (key) =>
+    slide && Object.prototype.hasOwnProperty.call(slide, key) ? slide[key] : slide?.elements?.[key]
+  const bgColor =
     backgroundColor ||
+    fromSlide('backgroundColor') ||
     slide?.backgroundColor ||
     slide?.elements?.backgroundColor ||
     undefined
+  const bg = {
+    ...(bgColor ? { backgroundColor: bgColor } : {}),
+    ...(fromSlide('backgroundGradientStart')
+      ? { backgroundGradientStart: fromSlide('backgroundGradientStart') }
+      : {}),
+    ...(fromSlide('backgroundGradientEnd')
+      ? { backgroundGradientEnd: fromSlide('backgroundGradientEnd') }
+      : {}),
+    ...(fromSlide('backgroundGradientAngle') != null
+      ? { backgroundGradientAngle: fromSlide('backgroundGradientAngle') }
+      : {}),
+    ...(fromSlide('backgroundGradientKind')
+      ? { backgroundGradientKind: fromSlide('backgroundGradientKind') }
+      : {}),
+    ...(fromSlide('backgroundGradientStops')
+      ? { backgroundGradientStops: fromSlide('backgroundGradientStops') }
+      : {}),
+    ...(fromSlide('backgroundFill') ? { backgroundFill: fromSlide('backgroundFill') } : {}),
+    ...(fromSlide('backgroundImage') ? { backgroundImage: fromSlide('backgroundImage') } : {}),
+    ...(fromSlide('backgroundImageFit')
+      ? { backgroundImageFit: fromSlide('backgroundImageFit') }
+      : {}),
+    ...(fromSlide('backgroundImageElementId')
+      ? { backgroundImageElementId: fromSlide('backgroundImageElementId') }
+      : {}),
+  }
   return {
     version: slide?.elements?.version || 1,
     canvas,
     elements: list,
-    ...(bg ? { backgroundColor: bg } : {}),
+    ...bg,
     ...(slide?.elements?.transition ? { transition: slide.elements.transition } : {}),
     ...(slide?.elements?.contributorStatus
       ? { contributorStatus: slide.elements.contributorStatus }
@@ -1024,13 +1122,20 @@ export function buildCanvasShapeStyle(content = {}, palette = {}) {
       : undefined
 
   if (clipPath) {
+    const outlineStroke = stroke || (isOutlined ? fill : undefined)
+    const outlineWidth = strokeWidth || (isOutlined ? 3 : 0)
     return {
       kind: 'clip',
+      clipPath,
+      outlined: isOutlined,
+      fill: background,
+      stroke: outlineStroke,
+      strokeWidth: outlineWidth,
       style: {
         width: '100%',
         height: '100%',
-        background,
-        clipPath,
+        background: isOutlined ? 'transparent' : background,
+        clipPath: isOutlined ? undefined : clipPath,
         boxSizing: 'border-box',
         ...(shapeOpacity != null ? { opacity: shapeOpacity } : {}),
       },
@@ -1084,23 +1189,31 @@ export function resolveThemeColor(value, palette = {}, fallback = undefined) {
   return fallback !== undefined ? fallback : raw
 }
 
-export function cssGradientFromFill(fill, palette = {}) {
-  if (!fill || typeof fill !== 'object') return null
-  const angle = fill.angle != null ? Number(fill.angle) : 135
+function gradientStopParts(fill, palette = {}) {
   const stops = Array.isArray(fill.stops) ? fill.stops : []
   if (stops.length) {
-    const parts = stops.map((stop) => {
+    return stops.map((stop) => {
       const color = resolveThemeColor(stop.color || stop, palette, '#94A3B8')
       const at = stop.at != null ? ` ${Math.round(Number(stop.at) * (Number(stop.at) <= 1 ? 100 : 1))}%` : ''
       return `${color}${at}`
     })
-    return `linear-gradient(${angle}deg, ${parts.join(', ')})`
   }
   const start =
     resolveThemeColor(fill.from || fill.start || palette.gradientStart, palette, '#3B82F6')
   const end =
     resolveThemeColor(fill.to || fill.end || palette.gradientEnd, palette, '#8B5CF6')
-  return `linear-gradient(${angle}deg, ${start}, ${end})`
+  return [start, end]
+}
+
+export function cssGradientFromFill(fill, palette = {}) {
+  if (!fill || typeof fill !== 'object') return null
+  const angle = fill.angle != null ? Number(fill.angle) : 135
+  const parts = gradientStopParts(fill, palette)
+  if (!parts.length) return null
+  if (fill.kind === 'radial' || fill.gradientKind === 'radial') {
+    return `radial-gradient(circle at center, ${parts.join(', ')})`
+  }
+  return `linear-gradient(${angle}deg, ${parts.join(', ')})`
 }
 
 /** Resolve shape/text fill (string token, hex, or { type: 'gradient'|'solid', … }). */

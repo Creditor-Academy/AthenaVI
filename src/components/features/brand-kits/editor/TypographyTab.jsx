@@ -46,6 +46,7 @@ export default function TypographyTab(props) {
     kitData,
     triggerAutoGenerateTypography,
     updateFontRole,
+    applyFontPairing,
   } = props
 
   const colors = kitData?.colors || []
@@ -86,6 +87,8 @@ export default function TypographyTab(props) {
               font={headingFont}
               colors={colors}
               canWrite={canWrite}
+              showPairings
+              onApplyPairing={applyFontPairing}
               onPatch={(patch) => updateFontRole('heading', patch)}
             />
 

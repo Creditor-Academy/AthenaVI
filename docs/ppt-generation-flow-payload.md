@@ -241,6 +241,33 @@ Also on **create** (`POST .../presentations`): when a pack is selected the wizar
 
 ---
 
+## 4b. Recent art styles (user preferences)
+
+The Details step shows **4 art styles** from the user's recently used styles, not a fixed catalog slice.
+
+Persist recents on the user so they follow them across devices:
+
+```
+GET    /api/user/settings/ppt
+PATCH  /api/user/settings/ppt
+```
+
+```json
+{
+  "recentArtStyles": ["watercolor", "cinematic", "photo", "illustration"]
+}
+```
+
+Rules:
+
+- Array of `imageStyles[].id` values, most recent first, max 4, unique.
+- PATCH replaces the stored list (frontend sends the full updated array).
+- If this endpoint is missing, the client falls back to local storage and to `generationFlow.selections.imageStyle` on the user's recent presentations (`GET /api/workspaces/{workspaceId}/presentations`).
+
+`imageStyle` is already saved on outline + generate; keep storing it so recents can be rebuilt from history.
+
+---
+
 ## 5. Constraints (already enforced client-side)
 
 | Constraint | Value |

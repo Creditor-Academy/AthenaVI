@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Building2, BarChart3, Video, HardDrive, Shield, Mail, UserCheck, LayoutTemplate } from 'lucide-react'
+import { LayoutDashboard, Users, Building2, BarChart3, Video, HardDrive, Shield, Mail, UserCheck, LayoutTemplate, Shapes } from 'lucide-react'
 
 export const adminPortalSidebarGroups = [
   {
@@ -22,6 +22,12 @@ export const adminPortalSidebarGroups = [
       { id: 'reports', label: 'Usage Reports', Icon: BarChart3 },
       { id: 'platform-actions', label: 'Platform Actions', Icon: Shield },
       { id: 'heygen', label: 'HeyGen Account', Icon: Video },
+    ],
+  },
+  {
+    label: 'Graphics',
+    items: [
+      { id: 'graphics', label: 'Graphics Library', Icon: Shapes },
     ],
   },
   {

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import LinkUnavailable from '../../../components/ui/LinkUnavailable/LinkUnavailable'
 import AIPptEditor from '../AIPptComponents/AIPptEditor'
 import publicPresentationService, {
   PresentationShareUnavailableError,
@@ -105,26 +106,12 @@ export default function PublicPresentation() {
     )
   }
 
-  if (error && !deck) {
+  if (error || !deck) {
     return (
-      <div className="aig-editor-container fade-in" style={{ placeItems: 'center', display: 'grid', padding: 32 }}>
-        <h1 className="ppt-editor-modal-title" style={{ marginBottom: 8 }}>
-          This link isn’t available
-        </h1>
-        <p className="ppt-editor-modal-lead" style={{ textAlign: 'center', maxWidth: 420 }}>
-          It may have been turned off, reset, or expired. Ask the owner for a new link.
-        </p>
-      </div>
-    )
-  }
-
-  if (!deck) {
-    return (
-      <div className="aig-editor-container fade-in" style={{ placeItems: 'center', display: 'grid', padding: 32 }}>
-        <h1 className="ppt-editor-modal-title" style={{ marginBottom: 8 }}>
-          This link isn’t available
-        </h1>
-      </div>
+      <LinkUnavailable
+        title="This link isn’t available"
+        subtitle="It may have been turned off, reset, or expired. Ask the owner for a new link."
+      />
     )
   }
 

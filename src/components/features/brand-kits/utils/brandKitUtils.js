@@ -229,16 +229,26 @@ export function parseCssSize(value, fallback) {
   return Number.isFinite(parsed) ? parsed : fallback
 }
 
-export function ensureGoogleFontLoaded(fontFamily) {
-  if (typeof document === 'undefined') return
-  if (!fontFamily) return
-  const cleanName = String(fontFamily).trim().replace(/['"]/g, '')
-  if (!cleanName || ['sans-serif', 'serif', 'monospace', 'system-ui'].includes(cleanName.toLowerCase())) return
-  const id = `google-font-${cleanName.replace(/\s+/g, '-').toLowerCase()}`
-  if (document.getElementById(id)) return
-  const link = document.createElement('link')
-  link.id = id
-  link.rel = 'stylesheet'
-  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(cleanName)}:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap`
-  document.head.appendChild(link)
+/**
+ * Apply a catalog pairing to heading/subheading/body (family + fontPairingId only).
+ * @param {object} pairing — { id, heading, subheading, body }
+ * @param {object} fonts — current kit fonts
+ */
+export function fontsFromPairing(pairing, fonts = {}) {
+  if (!pairing) return fonts
+  const id = pairing.id || null
+  const patchRole = (role, family) => ({
+    ...(fonts?.[role] || {}),
+    family: family || fonts?.[role]?.family || null,
+    fontPairingId: id,
+  })
+  return {
+    ...fonts,
+    heading: patchRole('heading', pairing.heading),
+    subheading: patchRole('subheading', pairing.subheading),
+    body: patchRole('body', pairing.body),
+    tertiary: patchRole('tertiary', pairing.subheading),
+  }
 }
+
+export { ensureGoogleFontLoaded } from '../../../../utils/googleFonts'

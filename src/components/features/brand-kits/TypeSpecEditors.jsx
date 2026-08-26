@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { MdKeyboardArrowDown } from 'react-icons/md'
-import { FONT_WEIGHT_OPTIONS, POPULAR_GOOGLE_FONTS } from './utils/brandKitConstants'
+import { FONT_WEIGHT_OPTIONS } from './utils/brandKitConstants'
 import { ensureGoogleFontLoaded } from './utils/brandKitUtils'
+import FontPicker from '../../shared/fonts/FontPicker'
 
 export function FontMetricSelect({ label, value, options, onChange, disabled = false, menuLabel, previewAsFont = false }) {
   const [open, setOpen] = useState(false)
@@ -156,28 +157,32 @@ export function TypographyColorPickers({
   )
 }
 
-export function TypeSpecEditors({ role, font, colors = [], canWrite, onPatch }) {
-  const familyOptions = POPULAR_GOOGLE_FONTS.map((fontName) => ({ value: fontName, label: fontName }))
-  const familyInList = familyOptions.some((option) => option.value === font.family)
-  const familySelectOptions = familyInList
-    ? familyOptions
-    : [{ value: font.family, label: font.family }, ...familyOptions]
-
+export function TypeSpecEditors({
+  role,
+  font,
+  colors = [],
+  canWrite,
+  onPatch,
+  showPairings = false,
+  onApplyPairing,
+}) {
   return (
     <>
     <div className="bk-type-box-badges bk-type-box-badges--editable">
-      <FontMetricSelect
-        label="Font Family"
-        value={font.family}
-        options={familySelectOptions}
-        disabled={!canWrite}
-        menuLabel={`${role} font family`}
-        previewAsFont
-        onChange={(family) => {
-          ensureGoogleFontLoaded(family)
-          onPatch({ family })
-        }}
-      />
+      <div className="bk-type-metric bk-type-metric--font-picker">
+        <FontPicker
+          label="Font Family"
+          value={font.family || ''}
+          disabled={!canWrite}
+          menuLabel={`${role} font family`}
+          showPairings={showPairings}
+          onApplyPairing={onApplyPairing}
+          onChange={(family) => {
+            ensureGoogleFontLoaded(family)
+            onPatch({ family })
+          }}
+        />
+      </div>
       <FontMetricSelect
         label="Weight"
         value={String(font.weight)}

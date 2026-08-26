@@ -13,6 +13,10 @@ import {
 } from 'react-icons/fi'
 import { MdFormatListBulleted, MdFormatListNumbered, MdStrikethroughS } from 'react-icons/md'
 import { stripLeadingListMarkers } from '../../../../utils/textListUtils'
+import { applyElementTextFill, contentFillValue, contentPlainText, contentWithSyncedText } from '../../../../utils/pptTextContent'
+import { ensureGoogleFontLoaded } from '../../../../utils/googleFonts'
+import FontPicker from '../../../../components/shared/fonts/FontPicker'
+import ColorFillPicker from './ColorFillPicker'
 import './insertPanels.css'
 
 const LIST_STYLE_OPTIONS = [
@@ -21,16 +25,6 @@ const LIST_STYLE_OPTIONS = [
   { id: 'star', title: 'Star list', label: '★', useIcon: FiStar },
   { id: 'check', title: 'Check list', label: '✓', useIcon: FiCheck },
   { id: 'dash', title: 'Dash list', label: '–', useIcon: FiMinus },
-]
-
-const FONT_FAMILIES = [
-  'Inter',
-  'Georgia',
-  'Times New Roman',
-  'Arial',
-  'Helvetica',
-  'Courier New',
-  'monospace',
 ]
 
 /**
@@ -43,10 +37,10 @@ export default function ElementToolbar({
   disabled = false,
   variant = 'floating',
 }) {
-  if (!element || element.type !== 'text') return null
+  if (!element || (element.type !== 'text' && element.type !== 'textbox')) return null
 
   const c = element.content || {}
-  const color = c.color || palette?.text || '#0F172A'
+  const fill = contentFillValue(c, palette, element.id)
   const isPanel = variant === 'panel'
 
   const patch = (updates) => {
@@ -60,8 +54,8 @@ export default function ElementToolbar({
 
   const toggleList = (listType) => {
     const next = c.listType === listType ? null : listType
-    const text = next ? stripLeadingListMarkers(c.text) : c.text
-    patch({ listType: next, text })
+    const text = next ? stripLeadingListMarkers(contentPlainText(c)) : contentPlainText(c)
+    onChange?.({ ...contentWithSyncedText(c, text), listType: next })
   }
 
   return (
@@ -70,27 +64,27 @@ export default function ElementToolbar({
       role="toolbar"
       aria-label="Text formatting"
     >
-      <select
-        className="ppt-element-toolbar-select"
-        value={c.fontFamily || 'Inter'}
-        disabled={disabled}
-        onChange={(e) => patch({ fontFamily: e.target.value })}
-        title="Font family"
-      >
-        {FONT_FAMILIES.map((f) => (
-          <option key={f} value={f}>
-            {f}
-          </option>
-        ))}
-      </select>
+      <div className="ppt-element-toolbar-font-picker">
+        <FontPicker
+          label={isPanel ? 'Font family' : ''}
+          value={c.fontFamily || 'Inter'}
+          disabled={disabled}
+          compact
+          menuLabel="Font family"
+          onChange={(family) => {
+            ensureGoogleFontLoaded(family)
+            patch({ fontFamily: family })
+          }}
+        />
+      </div>
 
-      <div className="ppt-element-toolbar-size">
+      <div className="ppt-size-stepper" title="Font size">
         <button type="button" disabled={disabled} onClick={() => adjustSize(-1)} title="Decrease size">
           <FiMinus size={14} />
         </button>
         <input
           type="number"
-          className="ppt-element-toolbar-size-input"
+          className="ppt-size-stepper-input"
           value={c.fontSize ?? 22}
           min={8}
           max={200}
@@ -143,14 +137,17 @@ export default function ElementToolbar({
 
       <span className="ppt-element-toolbar-divider" />
 
-      <label className="ppt-element-toolbar-color" title="Text color">
-        <input
-          type="color"
-          value={String(color).startsWith('#') ? color : '#0F172A'}
+      <div className="ppt-element-toolbar-color" title="Text color">
+        <ColorFillPicker
+          key={element.id}
+          compact
+          title="Text color"
+          value={fill}
+          palette={palette}
           disabled={disabled}
-          onChange={(e) => patch({ color: e.target.value })}
+          onChange={(nextFill) => onChange?.(applyElementTextFill(element, nextFill))}
         />
-      </label>
+      </div>
 
       <span className="ppt-element-toolbar-divider" />
 
@@ -204,15 +201,18 @@ export default function ElementToolbar({
         title="Line spacing"
       />
 
-      <button
-        type="button"
-        className="ppt-element-toolbar-btn"
+      <select
+        className="ppt-ui-select ppt-element-toolbar-select ppt-element-toolbar-select--case"
+        value={c.textTransform || 'none'}
         disabled={disabled}
-        onClick={() => patch({ textTransform: c.textTransform === 'uppercase' ? null : 'uppercase' })}
-        title="Uppercase"
+        onChange={(e) => patch({ textTransform: e.target.value === 'none' ? null : e.target.value })}
+        title="Letter case"
       >
-        AA
-      </button>
+        <option value="none">As typed</option>
+        <option value="uppercase">UPPERCASE</option>
+        <option value="lowercase">lowercase</option>
+        <option value="capitalize">Title Case</option>
+      </select>
     </div>
   )
 }

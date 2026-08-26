@@ -8,9 +8,10 @@ import SuperadminHeygenPanel from '../../components/features/admin/superadmin/Su
 import SuperadminBroadcastPanel from '../../components/features/admin/superadmin/SuperadminBroadcastPanel'
 import SuperadminEarlyAccessPanel from '../../components/features/admin/superadmin/SuperadminEarlyAccessPanel'
 import SuperadminTemplatesPanel from '../../components/features/admin/superadmin/SuperadminTemplatesPanel'
+import SuperadminGraphicsPanel from '../../components/features/admin/superadmin/SuperadminGraphicsPanel'
 import './SuperadminPortal.css'
 
-const VALID_TABS = new Set(['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'platform-actions', 'heygen', 'broadcast', 'early-access', 'templates', 'ai-template'])
+const VALID_TABS = new Set(['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'platform-actions', 'heygen', 'broadcast', 'early-access', 'templates', 'graphics', 'ai-template'])
 
 function normalizeTab(tab) {
   return VALID_TABS.has(tab) ? tab : 'overview'
@@ -21,6 +22,10 @@ const AdminPortal = ({
   onTabChange,
 }) => {
   const activeTab = normalizeTab(controlledActiveTab)
+
+  if (activeTab === 'graphics') {
+    return <SuperadminGraphicsPanel />
+  }
 
   return (
     <div className="sa-portal">

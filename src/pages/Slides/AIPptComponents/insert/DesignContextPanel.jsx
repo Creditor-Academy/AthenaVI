@@ -1,6 +1,10 @@
 import ElementToolbar from './ElementToolbar'
 import ElementPropertiesPanel from '../ElementPropertiesPanel'
 import SlideTransitionPicker from './SlideTransitionPicker'
+import ColorFillPicker from './ColorFillPicker'
+import FontPicker from '../../../../components/shared/fonts/FontPicker'
+import { ensureGoogleFontLoaded } from '../../../../utils/googleFonts'
+import { slideBackgroundFill } from '../../../../utils/presentationHelpers'
 import './insertPanels.css'
 import '../pptEditorExtras.css'
 import '../pptPanelUi.css'
@@ -28,21 +32,21 @@ function SlideDesignSection({
   const currentTransition =
     slide?.transition || slide?.elements?.transition || 'none'
 
-  const bgColor =
-    slide?.backgroundColor ||
-    (slide?.backgroundGradientStart ? null : DEFAULT_SLIDE_BG)
-
   return (
     <>
       <div className="ppt-slide-panel-section">
-        <div className="ppt-slide-panel-label">Background color</div>
+        <div className="ppt-slide-panel-label">Background</div>
         <div className="ppt-slide-panel-row">
-          <input
-            type="color"
-            value={bgColor || DEFAULT_SLIDE_BG}
-            disabled={disabled}
-            onChange={(e) => onBackgroundColorChange?.(e.target.value)}
+          <ColorFillPicker
             title="Slide background"
+            value={slideBackgroundFill(slide, DEFAULT_SLIDE_BG)}
+            palette={themeVisual?.palette}
+            disabled={disabled}
+            fallbackHex={DEFAULT_SLIDE_BG}
+            onChange={(fill) => {
+              if (fill?.type === 'solid') onBackgroundColorChange?.(fill.color || DEFAULT_SLIDE_BG)
+              else onBackgroundGradientChange?.(fill)
+            }}
           />
           <button
             type="button"
@@ -53,45 +57,6 @@ function SlideDesignSection({
             Reset to white
           </button>
         </div>
-      </div>
-
-      <div className="ppt-slide-panel-section">
-        <div className="ppt-slide-panel-label">Background gradient</div>
-        <div className="ppt-bg-gradient-picker">
-          <input
-            type="color"
-            value={slide?.backgroundGradientStart || '#E0F2FE'}
-            disabled={disabled}
-            onChange={(e) =>
-              onBackgroundGradientChange?.({
-                start: e.target.value,
-                end: slide?.backgroundGradientEnd || '#FFFFFF',
-              })
-            }
-            title="Gradient start"
-          />
-          <input
-            type="color"
-            value={slide?.backgroundGradientEnd || '#FFFFFF'}
-            disabled={disabled}
-            onChange={(e) =>
-              onBackgroundGradientChange?.({
-                start: slide?.backgroundGradientStart || '#E0F2FE',
-                end: e.target.value,
-              })
-            }
-            title="Gradient end"
-          />
-        </div>
-        <button
-          type="button"
-          className="ppt-slide-panel-btn ppt-slide-panel-btn--block"
-          style={{ marginTop: 8 }}
-          disabled={disabled}
-          onClick={() => onBackgroundGradientChange?.({ start: null, end: null })}
-        >
-          Clear gradient
-        </button>
       </div>
 
       <div className="ppt-slide-panel-section">
@@ -155,25 +120,27 @@ function SlideDesignSection({
         <div className="ppt-slide-panel-label">Slide style defaults</div>
         <div className="ppt-slide-style-grid">
           <div className="ppt-slide-style-row">
-            <label>Header font</label>
-            <input
-              type="text"
+            <FontPicker
+              label="Header font"
               value={slideStyles?.headerFont || 'Inter'}
               disabled={disabled}
-              onChange={(e) =>
-                onSlideStylesChange?.({ ...slideStyles, headerFont: e.target.value })
-              }
+              compact
+              onChange={(family) => {
+                ensureGoogleFontLoaded(family)
+                onSlideStylesChange?.({ ...slideStyles, headerFont: family })
+              }}
             />
           </div>
           <div className="ppt-slide-style-row">
-            <label>Body font</label>
-            <input
-              type="text"
+            <FontPicker
+              label="Body font"
               value={slideStyles?.bodyFont || 'Inter'}
               disabled={disabled}
-              onChange={(e) =>
-                onSlideStylesChange?.({ ...slideStyles, bodyFont: e.target.value })
-              }
+              compact
+              onChange={(family) => {
+                ensureGoogleFontLoaded(family)
+                onSlideStylesChange?.({ ...slideStyles, bodyFont: family })
+              }}
             />
           </div>
         </div>
@@ -351,25 +318,22 @@ function ChartDesignSection({ element, palette, onChangeContent, disabled }) {
       <div className="ppt-panel-section">
         <div className="ppt-slide-panel-label">Chart colors</div>
         <div className="ppt-color-swatch-row">
-          {colors.slice(0, 4).map((col, i) => {
-            const hex = col.startsWith('#') ? col : '#7C3AED'
-            return (
-              <label key={i} className="ppt-color-swatch-btn" title={`Color ${i + 1}`}>
-                <span className="ppt-color-swatch-fill" style={{ background: hex }} />
-                <input
-                  type="color"
-                  className="ppt-color-swatch-input"
-                  value={hex}
-                  disabled={disabled}
-                  onChange={(e) => {
-                    const nc = [...colors]
-                    nc[i] = e.target.value
-                    onChangeContent?.({ ...c, colors: nc })
-                  }}
-                />
-              </label>
-            )
-          })}
+          {colors.slice(0, 4).map((col, i) => (
+            <ColorFillPicker
+              key={i}
+              compact
+              title={`Color ${i + 1}`}
+              value={col}
+              palette={palette}
+              disabled={disabled}
+              fallbackHex="#7C3AED"
+              onChange={(fill) => {
+                const nc = [...colors]
+                nc[i] = fill
+                onChangeContent?.({ ...c, colors: nc })
+              }}
+            />
+          ))}
         </div>
       </div>
     </div>
@@ -525,9 +489,15 @@ export default function DesignContextPanel({
         />
       )}
 
-      {focus === 'text' && element && (
-        <>
-          <div className="ppt-design-toolbar-panel">
+      {(focus === 'text' || focus === 'textbox') && element && (
+        <ElementPropertiesPanel
+          element={element}
+          palette={palette}
+          disabled={disabled}
+          onChangeContent={onChangeElementContent}
+          onChangePlacement={onChangeElementPlacement}
+          onToggleLock={onToggleElementLock}
+          toolbar={
             <ElementToolbar
               element={element}
               palette={palette}
@@ -535,16 +505,8 @@ export default function DesignContextPanel({
               variant="panel"
               onChange={(content) => onChangeElementContent?.(content)}
             />
-          </div>
-          <ElementPropertiesPanel
-            element={element}
-            palette={palette}
-            disabled={disabled}
-            onChangeContent={onChangeElementContent}
-            onChangePlacement={onChangeElementPlacement}
-            onToggleLock={onToggleElementLock}
-          />
-        </>
+          }
+        />
       )}
 
       {(focus === 'image' || focus === 'icon') && element && (
@@ -580,7 +542,7 @@ export default function DesignContextPanel({
         />
       )}
 
-      {!['slide', 'text', 'image', 'icon', 'chart', 'table'].includes(focus) && element && (
+      {!['slide', 'text', 'textbox', 'image', 'icon', 'chart', 'table'].includes(focus) && element && (
         <ElementPropertiesPanel
           element={element}
           palette={palette}

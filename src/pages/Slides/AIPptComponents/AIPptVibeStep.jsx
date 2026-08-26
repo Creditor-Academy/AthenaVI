@@ -2,12 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Check,
-  LayoutTemplate,
-  Palette,
-  Sparkles,
   X,
   Search,
 } from 'lucide-react'
+import { MdDashboard } from 'react-icons/md'
 import presentationService from '../../../services/presentationService'
 import brandKitService from '../../../services/brandKitService'
 import {
@@ -112,22 +110,40 @@ function themeColors(theme) {
   ].filter(Boolean)
 }
 
-function GlassChoiceTile({ selected, configured, onClick, icon: Icon, title, subtitle, meta }) {
+function VibeChoiceCard({ id, selected, onClick, Icon, title, description }) {
   return (
     <button
       type="button"
-      className={`aig-glass-tile ${selected ? 'selected' : ''} ${configured ? 'configured' : ''}`}
+      className={`aig-new-suggestion-card ${selected ? 'is-active' : ''}`}
       onClick={onClick}
     >
-      <span className="aig-glass-tile-check" aria-hidden>
-        <Check size={12} strokeWidth={3} />
-      </span>
-      <span className="aig-glass-tile-icon" aria-hidden>
-        <Icon size={22} />
-      </span>
-      <strong>{title}</strong>
-      <span>{subtitle}</span>
-      {meta ? <em className="aig-glass-tile-meta">{meta}</em> : null}
+      {selected ? (
+        <span className="aig-suggestion-check" aria-hidden="true">
+          <Check size={12} strokeWidth={3} />
+        </span>
+      ) : null}
+      <div className="aig-suggestion-art">
+        <span className="aig-suggestion-tabs" aria-hidden="true" />
+        <div className={`aig-suggestion-scene aig-suggestion-scene--${id}`}>
+          {id === 'brand' && (
+            <span className="aig-suggestion-aa" aria-hidden="true">
+              Aa
+            </span>
+          )}
+          {id === 'palette' && (
+            <div className="aig-palette-stripes" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+              <span />
+              <span />
+            </div>
+          )}
+          {id === 'template' && Icon ? <Icon className="aig-suggestion-glyph" /> : null}
+        </div>
+      </div>
+      <h3>{title}</h3>
+      <p>{description}</p>
     </button>
   )
 }
@@ -136,13 +152,6 @@ function packMatchesAspect(pack, aspectRatio = FIXED_ASPECT) {
   const packRatio = String(pack.aspectRatio || '').trim()
   if (!packRatio) return true
   return packRatio === aspectRatio
-}
-
-function selectionSummary(activeChoice) {
-  if (activeChoice === 'brand') return 'Brand Kit'
-  if (activeChoice === 'palette') return 'Palette'
-  if (activeChoice === 'template') return 'Template'
-  return 'Choose one option'
 }
 
 /**
@@ -160,6 +169,7 @@ export default function AIPptVibeStep({
   themes = [],
   theme,
   onSelectTheme,
+  themeMode = null,
   onThemeModeChange,
   onOpenThemeModal: _onOpenThemeModal,
   screenSize,
@@ -171,7 +181,8 @@ export default function AIPptVibeStep({
   const [activeChoice, setActiveChoice] = useState(() => {
     if (selectedPackId) return 'template'
     if (selectedBrandKitId) return 'brand'
-    return 'palette'
+    if (themeMode === 'palette') return 'palette'
+    return null
   })
 
   useEffect(() => {
@@ -329,8 +340,6 @@ export default function AIPptVibeStep({
   const paletteConfigured = activeChoice === 'palette' && Boolean(theme)
   const templateConfigured = activeChoice === 'template' && Boolean(selectedPackId)
 
-  const modeLabel = selectionSummary(activeChoice)
-
   const drawerTitle =
     drawer === 'brand'
       ? 'Brand kits'
@@ -356,43 +365,44 @@ export default function AIPptVibeStep({
         <p className="aig-step-subtitle">
           Choose only one — Brand Kit, Palette, or Template.
         </p>
-        <div className="aig-vibe-mode-pill">{modeLabel}</div>
       </div>
 
       <div className={`aig-step-body ${stepReady ? 'aig-body-visible' : 'aig-body-hidden'}`}>
         <section className="aig-vibe-block">
-          <div className="aig-vibe-block-head">
-            <h3>Theme</h3>
-            <p>Select one option. Choosing another will replace your current selection.</p>
-          </div>
-
-          <div className="aig-glass-tile-grid aig-glass-tile-grid--3">
-            <GlassChoiceTile
-              selected={drawer === 'brand' || brandConfigured}
-              configured={brandConfigured}
+          <div className="aig-new-suggestions-grid">
+            <VibeChoiceCard
+              id="brand"
+              selected={brandConfigured}
               onClick={() => openDrawer('brand')}
-              icon={Sparkles}
               title="Use Brand Kit"
-              subtitle="Logo and brand colors"
-              meta={brandConfigured ? selectedBrandKit?.name : null}
+              description={
+                brandConfigured
+                  ? selectedBrandKit?.name || 'Your brand is applied'
+                  : 'Apply your logo and brand colors to every slide.'
+              }
             />
-            <GlassChoiceTile
-              selected={drawer === 'palette' || paletteConfigured}
-              configured={paletteConfigured}
+            <VibeChoiceCard
+              id="palette"
+              selected={paletteConfigured}
               onClick={() => openDrawer('palette')}
-              icon={Palette}
-              title="Palette"
-              subtitle="Discover color themes"
-              meta={paletteConfigured ? selectedTheme?.name : null}
+              title="Color Palette"
+              description={
+                paletteConfigured
+                  ? selectedTheme?.name || 'Palette selected'
+                  : 'Pick a color story that sets the mood of the deck.'
+              }
             />
-            <GlassChoiceTile
-              selected={drawer === 'template' || templateConfigured}
-              configured={templateConfigured}
+            <VibeChoiceCard
+              id="template"
+              selected={templateConfigured}
               onClick={() => openDrawer('template')}
-              icon={LayoutTemplate}
+              Icon={MdDashboard}
               title="Template"
-              subtitle="Start from a deck pack"
-              meta={templateConfigured ? selectedPack?.name : null}
+              description={
+                templateConfigured
+                  ? selectedPack?.name || 'Template selected'
+                  : 'Start from a ready-made deck and make it yours.'
+              }
             />
           </div>
 

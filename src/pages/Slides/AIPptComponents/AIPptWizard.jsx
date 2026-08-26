@@ -1,7 +1,11 @@
-import { useState, useRef, useEffect } from 'react'
-import { Sparkles, ArrowUp, ArrowRight, Paperclip, FileText, BookOpen, TrendingUp, AlignLeft, Check, Globe, Image as ImageIcon, Box, Ban, ChevronDown, Star, Users, Target, Mic, ListPlus } from 'lucide-react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { createPortal } from 'react-dom'
+import { Sparkles, ArrowUp, ArrowRight, Paperclip, Check, Globe, Image as ImageIcon, Box, Ban, ChevronDown, Users, Target, Mic, ListPlus } from 'lucide-react'
+import { MdDescription, MdMenuBook, MdInsights } from 'react-icons/md'
+import { useAuth } from '../../../contexts/AuthContext'
 import presentationService from '../../../services/presentationService'
 import brandKitService from '../../../services/brandKitService'
+import userService from '../../../services/userService'
 import { isInsufficientCreditsError } from '../../../services/creditsService'
 import { resolvePresentationWorkspaceContext } from '../../../utils/presentationContext'
 import {
@@ -32,19 +36,24 @@ import temp4 from '../../../assets/Template_Image/gen_temp4.png'
 import AIPptVibeStep from './AIPptVibeStep'
 import AIPptThemeModal from './AIPptThemeModal'
 import AIPptImageModal from './AIPptImageModal'
-
-const SUGGESTED_PROMPTS = [
-  "Turn meeting notes into a presentation",
-  "Summarize a research paper into key takeaways",
-  "Research industry trends",
-  "Create a strategy brief from planning notes"
-]
+import { usePptDaypart } from '../../../utils/pptDaypart'
+import pptBgMorning from '../../../assets/ppt-bg/morning.png'
+import pptBgAfternoon from '../../../assets/ppt-bg/afternoon.png'
+import pptBgEvening from '../../../assets/ppt-bg/evening.png'
+import pptBgNight from '../../../assets/ppt-bg/night.png'
 
 import {
   WIZARD_TONES,
   WIZARD_AUDIENCES,
   WIZARD_PURPOSES,
 } from '../../../constants/pptWizardOptions'
+import {
+  mergeRecentArtStyles,
+  readRecentArtStyles,
+  rememberArtStyle,
+  writeRecentArtStyles,
+  recentIdsFromPresentations,
+} from '../../../utils/pptArtStyleRecents'
 
 function hexLuminance(hex) {
   const raw = String(hex || '').trim().replace(/^#/, '')
@@ -406,11 +415,11 @@ const IMAGE_STYLES = [
 ]
 
 const IMAGE_SOURCES = [
-  { id: 'ai', title: 'AI images', subtitle: '', icon: Sparkles, extra: '2 per image' },
-  { id: 'web', title: 'Web images', subtitle: 'Search the web for relevant images', icon: Globe },
-  { id: 'stock', title: 'Stock images', subtitle: 'High quality stock photography', icon: ImageIcon },
-  { id: 'placeholders', title: 'Image placeholders', subtitle: 'Generate empty placeholders for your own images', icon: Box },
-  { id: 'none', title: "Don't add images", subtitle: '', icon: Ban }
+  { id: 'ai', title: 'AI images', subtitle: 'Matched to each slide', icon: Sparkles, badge: '2 / image' },
+  { id: 'web', title: 'Web images', subtitle: 'Search the open web', icon: Globe },
+  { id: 'stock', title: 'Stock images', subtitle: 'Polished photography', icon: ImageIcon },
+  { id: 'placeholders', title: 'Placeholders', subtitle: 'Fill in your own later', icon: Box },
+  { id: 'none', title: 'No images', subtitle: 'Words and layout only', icon: Ban },
 ]
 
 const SCREEN_SIZES = [
@@ -419,13 +428,173 @@ const SCREEN_SIZES = [
 ]
 
 const TEXT_AMOUNTS = [
-  { id: 'Minimal', name: 'Minimal', columns: 1, lines: 3 },
-  { id: 'Concise', name: 'Concise', columns: 1, lines: 4 },
-  { id: 'Detailed', name: 'Detailed', columns: 2, lines: 3 },
-  { id: 'Extensive', name: 'Extensive', columns: 3, lines: 4 },
+  { id: 'Minimal', name: 'Minimal', columns: 1, lines: 3, description: 'Headlines only. Fast and punchy.' },
+  { id: 'Concise', name: 'Concise', columns: 1, lines: 4, description: 'Short copy that still tells the story.' },
+  { id: 'Detailed', name: 'Detailed', columns: 2, lines: 3, description: 'Room for context, quotes, and proof.' },
+  { id: 'Extensive', name: 'Extensive', columns: 3, lines: 4, description: 'A full narrative on every slide.' },
 ]
 
 const SLIDE_COUNTS = PPT_AI_SLIDE_COUNTS
+
+const ART_STYLE_FILTERS = ['Suggested', 'Photo', 'Illustration', 'Abstract']
+
+const ART_STYLE_FILTER_TAGS = {
+  Photo: ['Realistic', 'Scenic'],
+  Illustration: ['Playful', 'Bold'],
+  Abstract: ['Abstract', 'Minimal'],
+}
+
+function previewArtStyles(filter, recentIds = []) {
+  const recents = recentIds
+    .map((id) => IMAGE_STYLES.find((style) => style.id === id))
+    .filter(Boolean)
+  const tags = ART_STYLE_FILTER_TAGS[filter]
+  if (!tags) {
+    const rest = IMAGE_STYLES.filter((style) => !recents.some((item) => item.id === style.id))
+    return [...recents, ...rest].slice(0, 4)
+  }
+  const matchingRecents = recents.filter((style) => style.tags?.some((tag) => tags.includes(tag)))
+  const matchingRest = IMAGE_STYLES.filter(
+    (style) =>
+      style.tags?.some((tag) => tags.includes(tag)) &&
+      !matchingRecents.some((item) => item.id === style.id)
+  )
+  return [...matchingRecents, ...matchingRest].slice(0, 4)
+}
+
+const PPT_DAY_BACKGROUNDS = {
+  morning: pptBgMorning,
+  afternoon: pptBgAfternoon,
+  evening: pptBgEvening,
+  night: pptBgNight,
+}
+
+const STARTER_IDEAS = [
+  {
+    id: 'notes',
+    title: 'Turn meeting notes into a presentation',
+    description: 'Messy notes in. A sharp, ready-to-present deck out.',
+    prompt: 'Turn meeting notes into a presentation',
+    Icon: MdDescription,
+  },
+  {
+    id: 'research',
+    title: 'Summarize a research paper into key takeaways',
+    description: 'Keep the insight. Skip the 40 pages. Lead with the punch.',
+    prompt: 'Summarize a research paper into key takeaways',
+    Icon: MdMenuBook,
+  },
+  {
+    id: 'trends',
+    title: 'Research industry trends and market analysis',
+    description: 'A market snapshot they can follow in one sitting.',
+    prompt: 'Research industry trends and market analysis',
+    Icon: MdInsights,
+  },
+]
+
+const PPT_DAY_GREETINGS = {
+  morning: {
+    hello: 'The morning is yours',
+    titleLead: "Let's make",
+    titleAccent: "something they'll remember",
+    subtitle: 'Pour an idea into the bar below. We’ll turn it into a presentation that shines.',
+    placeholder: 'A pitch. A story. A spark — start typing…',
+    committedTitleLead: 'Beautiful. Now',
+    committedTitleAccent: 'give it a voice',
+    committedSubtitle: 'Tune how it should feel — then we’ll bring every slide to life.',
+  },
+  afternoon: {
+    hello: 'This hour belongs to you',
+    titleLead: 'Turn this spark into',
+    titleAccent: 'a standing ovation',
+    subtitle: 'Type a thought. We’ll craft slides that steal the room.',
+    placeholder: 'What’s the idea that deserves a beautiful deck?',
+    committedTitleLead: 'It’s already glowing.',
+    committedTitleAccent: 'Now shape the voice',
+    committedSubtitle: 'Choose the tone, the room, the reason — then we’ll make it unforgettable.',
+  },
+  evening: {
+    hello: 'The glow is with you',
+    titleLead: 'Tonight, your story',
+    titleAccent: 'takes the stage',
+    subtitle: 'Drop a line below. We’ll dress it in slides they can’t look away from.',
+    placeholder: 'Tell us the story you want them to feel…',
+    committedTitleLead: 'The story is in.',
+    committedTitleAccent: 'Now set the mood',
+    committedSubtitle: 'Pick how it should sound — then we’ll light up the slides.',
+  },
+  night: {
+    hello: 'The quiet is yours',
+    titleLead: 'Build the deck',
+    titleAccent: 'the morning will envy',
+    subtitle: 'One prompt. A presentation that feels like magic.',
+    placeholder: 'Whisper the idea. We’ll make it unforgettable…',
+    committedTitleLead: 'The spark is caught.',
+    committedTitleAccent: 'Now give it fire',
+    committedSubtitle: 'Choose the voice — then we’ll build the deck while the world sleeps.',
+  },
+}
+
+function firstNameFromProfile(user) {
+  const fromName = String(user?.name || user?.fullName || user?.firstName || '').trim()
+  let raw = fromName.split(/\s+/)[0]
+  if (!raw && user?.email) raw = String(user.email).split('@')[0].split(/[._-]/)[0]
+  if (!raw) return ''
+  return raw.charAt(0).toUpperCase() + raw.slice(1)
+}
+
+const PROMPT_PLACEHOLDERS = [
+  'A pitch. A story. A spark — start typing…',
+  'What’s the idea that deserves a beautiful deck?',
+  'Tell us the story you want them to feel…',
+]
+
+function useTypedPlaceholder(phrases, enabled = true) {
+  const [text, setText] = useState('')
+
+  useEffect(() => {
+    if (!enabled || !phrases?.length) {
+      setText('')
+      return undefined
+    }
+
+    let phraseIndex = 0
+    let charIndex = 0
+    let deleting = false
+    let timer = 0
+
+    const tick = () => {
+      const phrase = phrases[phraseIndex]
+      if (!deleting) {
+        charIndex += 1
+        setText(`${phrase.slice(0, charIndex)}|`)
+        if (charIndex >= phrase.length) {
+          deleting = true
+          timer = window.setTimeout(tick, 1800)
+          return
+        }
+        timer = window.setTimeout(tick, 38)
+        return
+      }
+
+      charIndex -= 1
+      setText(charIndex > 0 ? `${phrase.slice(0, charIndex)}|` : '|')
+      if (charIndex <= 0) {
+        deleting = false
+        phraseIndex = (phraseIndex + 1) % phrases.length
+        timer = window.setTimeout(tick, 320)
+        return
+      }
+      timer = window.setTimeout(tick, 24)
+    }
+
+    timer = window.setTimeout(tick, 280)
+    return () => window.clearTimeout(timer)
+  }, [enabled, phrases])
+
+  return text
+}
 
 const STYLE_OPTIONS = ['Abstract', 'Aesthetic', 'Black & White', 'Colorful', 'Craft & Notebook', 'Creative', 'Cute', 'Dark', 'Deluxe', 'Doodle', 'Duotone', 'Floral & Plants', 'Illustration', 'Interactive & Animated', 'Minimalist', 'Modern', 'Pattern', 'Professional', 'Simple', 'Vintage', 'Watercolor']
 const COLOR_OPTIONS = ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange', 'Pink', 'Monochrome']
@@ -437,7 +606,12 @@ export default function AIPptWizard({
   initialWorkspaceId,
   initialFolderId,
 }) {
+  const { user } = useAuth()
+  const recentsUserKey = user?.id || user?._id || user?.email || 'local'
   const [step, setStep] = useState(1)
+  const promptDaypart = usePptDaypart()
+  const dayGreeting = PPT_DAY_GREETINGS[promptDaypart] || PPT_DAY_GREETINGS.afternoon
+  const firstName = firstNameFromProfile(user)
 
   useEffect(() => {
     onStepChange?.(step)
@@ -445,11 +619,15 @@ export default function AIPptWizard({
   
   // Form Data
   const [prompt, setPrompt] = useState('')
+  const typedPlaceholder = useTypedPlaceholder(PROMPT_PLACEHOLDERS, step === 1 && !prompt.trim())
   const [outline, setOutline] = useState('')
   const [tone, setTone] = useState('Professional')
   const [audience, setAudience] = useState('Internal Team')
   const [purpose, setPurpose] = useState('Inform')
   const [promptCommitted, setPromptCommitted] = useState(false)
+  const heroTitleLead = promptCommitted ? dayGreeting.committedTitleLead : dayGreeting.titleLead
+  const heroTitleAccent = promptCommitted ? dayGreeting.committedTitleAccent : dayGreeting.titleAccent
+  const heroSubtitle = promptCommitted ? dayGreeting.committedSubtitle : dayGreeting.subtitle
   const [outlineOpen, setOutlineOpen] = useState(false)
   
   // Theme Filters (legacy config fields)
@@ -466,8 +644,8 @@ export default function AIPptWizard({
   const [textAmount, setTextAmount] = useState('Concise')
   
   const [imageSource, setImageSource] = useState('ai')
-  const [isImageSourceDropdownOpen, setIsImageSourceDropdownOpen] = useState(false)
   const [mediaStyle, setMediaStyle] = useState('photo')
+  const [recentArtStyleIds, setRecentArtStyleIds] = useState(() => readRecentArtStyles('local'))
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const [imageStyleFilter, setImageStyleFilter] = useState('Suggested')
   
@@ -478,7 +656,7 @@ export default function AIPptWizard({
   const [brandKits, setBrandKits] = useState([])
   const [selectedPackId, setSelectedPackId] = useState('')
   const [selectedBrandKitId, setSelectedBrandKitId] = useState('')
-  const [themeMode, setThemeMode] = useState('palette')
+  const [themeMode, setThemeMode] = useState(null)
   const [workspaceHint, setWorkspaceHint] = useState(null)
   
   const outlineRef = useRef(null)
@@ -523,6 +701,70 @@ export default function AIPptWizard({
       cancelled = true
     }
   }, [initialWorkspaceId, initialFolderId])
+
+  useEffect(() => {
+    const fromAnon = recentsUserKey !== 'local' ? readRecentArtStyles('local') : []
+    const local = mergeRecentArtStyles(readRecentArtStyles(recentsUserKey), fromAnon)
+    writeRecentArtStyles(recentsUserKey, local)
+    setRecentArtStyleIds(local)
+    if (local[0]) setMediaStyle(local[0])
+  }, [recentsUserKey])
+
+  useEffect(() => {
+    if (!workspaceHint?.workspaceId) return undefined
+    let cancelled = false
+    const knownIds = new Set(IMAGE_STYLES.map((style) => style.id))
+
+    ;(async () => {
+      const [remote, decks] = await Promise.all([
+        userService.getPptSettings().catch(() => null),
+        presentationService
+          .listPresentations(workspaceHint.workspaceId, { take: 30 })
+          .catch(() => null),
+      ])
+      if (cancelled) return
+
+      const remoteIds = Array.isArray(remote?.recentArtStyles) ? remote.recentArtStyles : []
+      const fromDecks = recentIdsFromPresentations(decks, knownIds)
+      const merged = mergeRecentArtStyles(
+        readRecentArtStyles(recentsUserKey),
+        remoteIds,
+        fromDecks
+      )
+      writeRecentArtStyles(recentsUserKey, merged)
+      setRecentArtStyleIds(merged)
+      setMediaStyle((current) =>
+        merged.includes(current) ? current : merged[0] || current
+      )
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [workspaceHint?.workspaceId, recentsUserKey])
+
+  const pickArtStyle = useCallback(
+    (id) => {
+      if (!id) return
+      setMediaStyle(id)
+      const next = rememberArtStyle(recentsUserKey, id)
+      setRecentArtStyleIds(next)
+      userService.updatePptSettings({ recentArtStyles: next }).catch(() => {})
+    },
+    [recentsUserKey]
+  )
+
+  const visibleArtStyles = useMemo(
+    () => previewArtStyles(imageStyleFilter, recentArtStyleIds),
+    [imageStyleFilter, recentArtStyleIds]
+  )
+
+  const vibeReady =
+    (themeMode === 'brand' && Boolean(selectedBrandKitId)) ||
+    (themeMode === 'palette' && Boolean(theme)) ||
+    (themeMode === 'template' && Boolean(selectedPackId))
+
+  const canGoNext = step !== 2 || vibeReady
 
   useEffect(() => {
     if (!selectedPackId) return
@@ -636,6 +878,10 @@ export default function AIPptWizard({
       if (!cards.length) {
         throw new Error('Outline API returned no slides')
       }
+
+      const persistedStyles = rememberArtStyle(recentsUserKey, mediaStyle)
+      setRecentArtStyleIds(persistedStyles)
+      userService.updatePptSettings({ recentArtStyles: persistedStyles }).catch(() => {})
 
       const aiDeckTitle =
         outlinePayload?.presentation?.title ||
@@ -768,60 +1014,75 @@ export default function AIPptWizard({
             ref={heroSectionRef}
             className={`aig-new-hero-section fade-in ${promptCommitted ? 'aig-new-hero-section--committed' : ''}`}
           >
-            <div className="aig-new-header">
-              <span className="aig-new-greeting">Hi Creator</span>
-              <h1 className="aig-new-title">Create your presentation</h1>
-              <p className="aig-new-subtitle">
-                {promptCommitted
-                  ? 'Tune the voice of your deck, then continue.'
-                  : 'Type your PPT prompt below, or choose a suggestion to get started'}
+            <div className={`aig-new-header aig-new-header--${promptDaypart}`}>
+              <p className="aig-new-greeting">
+                {dayGreeting.hello}
+                {firstName ? (
+                  <>
+                    {', '}
+                    <span className="aig-new-greeting-name">{firstName}</span>
+                  </>
+                ) : null}
               </p>
+              <h1 className="aig-new-title">
+                {heroTitleLead}{' '}
+                <em>{heroTitleAccent}</em>
+              </h1>
+              <p className="aig-new-subtitle">{heroSubtitle}</p>
             </div>
-            
-            {!promptCommitted && !prompt.trim() && (
-              <div className="aig-new-suggestions-grid">
-                <div className="aig-new-suggestion-card" onClick={() => setPrompt('Turn meeting notes into a presentation')}>
-                  <FileText className="aig-suggestion-icon" size={24} />
-                  <p>Turn meeting notes into a presentation</p>
-                </div>
-                <div className="aig-new-suggestion-card" onClick={() => setPrompt('Summarize a research paper into key takeaways')}>
-                  <BookOpen className="aig-suggestion-icon" size={24} />
-                  <p>Summarize a research paper into key takeaways</p>
-                </div>
-                <div className="aig-new-suggestion-card" onClick={() => setPrompt('Research industry trends')}>
-                  <TrendingUp className="aig-suggestion-icon" size={24} />
-                  <p>Research industry trends and market analysis</p>
-                </div>
-              </div>
-            )}
 
-            <div className="aig-new-prompt-container">
-              <div className="aig-new-input-row">
-                <button type="button" className="aig-attach-btn" aria-label="Attach file">
-                  <Paperclip size={20} />
-                </button>
-                <input 
-                  className="aig-new-main-input"
-                  placeholder="Type your PPT prompt..."
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      handlePromptSubmit()
-                    }
-                  }}
-                  autoFocus
-                />
-                <button 
-                  type="button"
-                  className={`aig-new-submit-btn ${prompt.trim() ? 'active' : ''}`}
-                  onClick={handlePromptSubmit}
-                  disabled={!prompt.trim()}
-                  aria-label={promptCommitted ? 'Update prompt options' : 'Continue with prompt'}
-                >
-                  <ArrowRight size={18} />
-                </button>
+            <div className="aig-create-stage aig-glass">
+              <div className="aig-new-suggestions-grid">
+                {STARTER_IDEAS.map(({ id, title, description, prompt: ideaPrompt, Icon }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    className="aig-new-suggestion-card"
+                    onClick={() => setPrompt(ideaPrompt)}
+                  >
+                    <div className="aig-suggestion-art">
+                      <span className="aig-suggestion-tabs" aria-hidden="true" />
+                      <div className={`aig-suggestion-scene aig-suggestion-scene--${id}`}>
+                        <Icon className="aig-suggestion-glyph" />
+                      </div>
+                    </div>
+                    <h3>{title}</h3>
+                    <p>{description}</p>
+                  </button>
+                ))}
+              </div>
+
+              <div
+                className={`aig-new-prompt-container aig-new-prompt-container--${promptDaypart}`}
+                style={{ backgroundImage: `url(${PPT_DAY_BACKGROUNDS[promptDaypart]})` }}
+              >
+                <div className="aig-new-input-row">
+                  <button type="button" className="aig-attach-btn" aria-label="Attach file">
+                    <Paperclip size={20} />
+                  </button>
+                  <input 
+                    className="aig-new-main-input"
+                    placeholder={typedPlaceholder || 'Start typing…'}
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handlePromptSubmit()
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <button 
+                    type="button"
+                    className={`aig-new-submit-btn ${prompt.trim() ? 'active' : ''}`}
+                    onClick={handlePromptSubmit}
+                    disabled={!prompt.trim()}
+                    aria-label={promptCommitted ? 'Update prompt options' : 'Continue with prompt'}
+                  >
+                    <ArrowRight size={18} />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -970,6 +1231,7 @@ export default function AIPptWizard({
             onSelectPack={setSelectedPackId}
             themes={THEMES}
             theme={theme}
+            themeMode={themeMode}
             onSelectTheme={setTheme}
             onThemeModeChange={setThemeMode}
             onOpenThemeModal={() => setIsThemeModalOpen(true)}
@@ -987,147 +1249,135 @@ export default function AIPptWizard({
                 Fine-tune the content and media.
               </p>
             </div>
-            
+
             <div className={`aig-step-body ${stepReady ? 'aig-body-visible' : 'aig-body-hidden'}`}>
-            <div className="aig-selection-section">
-              <h3 className="aig-selection-label">Slide Count</h3>
-              <div className="aig-pill-grid">
-                {SLIDE_COUNTS.map(count => (
-                  <button 
-                    key={count}
-                    className={`aig-pill ${slides === count ? 'active' : ''}`}
-                    onClick={() => setSlides(count)}
-                  >
-                    {count} Slides
-                  </button>
-                ))}
+              <div className="aig-selection-section">
+                <h3 className="aig-selection-label">Number of slides</h3>
+                <div className="aig-pill-grid">
+                  {SLIDE_COUNTS.map((count) => (
+                    <button
+                      key={count}
+                      type="button"
+                      className={`aig-pill ${slides === count ? 'active' : ''}`}
+                      onClick={() => setSlides(count)}
+                    >
+                      {count} Slides
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <div className="aig-selection-section">
-              <div className="aig-section-header" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          
-                <h3 className="aig-selection-label" style={{ margin: 0 }}>Text content</h3>
+              <div className="aig-selection-section">
+                <h3 className="aig-selection-label">Text content</h3>
+                <div className="aig-text-amount-grid">
+                  {TEXT_AMOUNTS.map((amount) => (
+                    <button
+                      key={amount.id}
+                      type="button"
+                      className={`aig-text-card ${textAmount === amount.id ? 'active' : ''}`}
+                      onClick={() => setTextAmount(amount.id)}
+                    >
+                      <div className="aig-text-preview">
+                        {Array.from({ length: amount.columns }).map((_, colIdx) => (
+                          <div key={colIdx} className="aig-text-column">
+                            {Array.from({ length: amount.lines }).map((_, lineIdx) => (
+                              <div
+                                key={lineIdx}
+                                className={`aig-text-line ${lineIdx === amount.lines - 1 ? 'short' : ''}`}
+                              />
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                      <span className="aig-text-card-label">{amount.name}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-              
-              
-              <div className="aig-text-amount-grid">
-                {TEXT_AMOUNTS.map(t => (
-                  <button 
-                    key={t.id}
-                    className={`aig-text-card ${textAmount === t.id ? 'active' : ''}`}
-                    onClick={() => setTextAmount(t.id)}
-                  >
-                    <div className="aig-text-preview">
-                      {Array.from({ length: t.columns }).map((_, colIdx) => (
-                        <div key={colIdx} className="aig-text-column">
-                          {Array.from({ length: t.lines }).map((_, lineIdx) => (
-                            <div key={lineIdx} className={`aig-text-line ${lineIdx === t.lines - 1 ? 'short' : ''}`}></div>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                    <span className="aig-text-card-label">{t.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
 
-            <div className="aig-selection-section">
-              <h3 className="aig-selection-label">Image source</h3>
-              <div className="aig-image-source-container">
-                <button 
-                  className={`aig-image-source-dropdown ${isImageSourceDropdownOpen ? 'open' : ''}`}
-                  onClick={() => setIsImageSourceDropdownOpen(!isImageSourceDropdownOpen)}
-                >
-                  {(() => {
-                    const activeSrc = IMAGE_SOURCES.find(s => s.id === imageSource) || IMAGE_SOURCES[0]
-                    const Icon = activeSrc.icon
+              <div className="aig-selection-section">
+                <h3 className="aig-selection-label">Image source</h3>
+                <div className="aig-details-source-grid" role="listbox" aria-label="Image source">
+                  {IMAGE_SOURCES.map((source) => {
+                    const Icon = source.icon
+                    const selected = imageSource === source.id
                     return (
-                      <>
-                        <Icon size={18} /> {activeSrc.title}
-                        {activeSrc.extra && <span className="aig-image-source-extra">{activeSrc.extra}</span>}
-                        <span className="aig-image-source-chevron"><ChevronDown size={16} /></span>
-                      </>
+                      <button
+                        key={source.id}
+                        type="button"
+                        role="option"
+                        aria-selected={selected}
+                        className={`aig-details-source-tile aig-details-source-tile--${source.id} ${selected ? 'active' : ''}`}
+                        onClick={() => setImageSource(source.id)}
+                      >
+                        {selected ? (
+                          <span className="aig-details-source-check" aria-hidden="true">
+                            <Check size={12} strokeWidth={3} />
+                          </span>
+                        ) : null}
+                        {source.badge ? (
+                          <span className="aig-details-source-badge">{source.badge}</span>
+                        ) : null}
+                        <span className="aig-details-source-glyph" aria-hidden="true">
+                          <Icon size={22} strokeWidth={2} />
+                        </span>
+                        <strong>{source.title}</strong>
+                        <span className="aig-details-source-sub">{source.subtitle}</span>
+                      </button>
                     )
-                  })()}
-                </button>
-                
-                {isImageSourceDropdownOpen && (
-                  <>
-                    <div className="aig-dropdown-overlay" onClick={() => setIsImageSourceDropdownOpen(false)}></div>
-                    <div className="aig-image-source-menu fade-in">
-                      {IMAGE_SOURCES.map(src => {
-                        const Icon = src.icon
-                        return (
-                          <button 
-                            key={src.id}
-                            className={`aig-iso-option ${imageSource === src.id ? 'active' : ''}`}
-                            onClick={() => {
-                              setImageSource(src.id)
-                              setIsImageSourceDropdownOpen(false)
-                            }}
-                          >
-                            <div className="aig-iso-icon"><Icon size={18} /></div>
-                            <div className="aig-iso-text">
-                              <span className="aig-iso-title">{src.title}</span>
-                              {src.subtitle && <span className="aig-iso-subtitle">{src.subtitle}</span>}
-                            </div>
-                            {imageSource === src.id && <Check size={16} className="aig-iso-check" />}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </>
-                )}
+                  })}
+                </div>
               </div>
 
-              <h3 className="aig-selection-label" style={{ marginTop: '24px' }}>Art style</h3>
-              
-              <div className="aig-theme-filters" style={{ marginBottom: '16px' }}>
-                {['Suggested', 'Photo', 'Illustration', 'Abstract'].map(f => (
-                  <button 
-                    key={f}
-                    className={`filter-pill ${imageStyleFilter === f ? 'active' : ''}`}
-                    onClick={() => setImageStyleFilter(f)}
-                  >
-                    {f}
-                  </button>
-                ))}
-              </div>
-
-              <div className="aig-art-style-inline-grid">
-                {IMAGE_STYLES.slice(0, 4).map(style => (
+              <div className="aig-selection-section">
+                <h3 className="aig-selection-label">Art style</h3>
+                <div className="aig-details-filters">
+                  {ART_STYLE_FILTERS.map((filter) => (
+                    <button
+                      key={filter}
+                      type="button"
+                      className={`filter-pill ${imageStyleFilter === filter ? 'active' : ''}`}
+                      onClick={() => setImageStyleFilter(filter)}
+                    >
+                      {filter}
+                    </button>
+                  ))}
+                </div>
+                <div className="aig-art-style-inline-grid">
+                  {visibleArtStyles.map((style) => (
+                    <button
+                      key={style.id}
+                      type="button"
+                      className={`aig-image-style-card ${mediaStyle === style.id ? 'active' : ''}`}
+                      onClick={() => pickArtStyle(style.id)}
+                    >
+                      <div className="aig-image-card-img-wrapper">
+                        <img src={style.img} alt="" />
+                        {mediaStyle === style.id && (
+                          <div className="aig-image-card-check-overlay">
+                            <Check size={16} color="#ffffff" strokeWidth={3} />
+                          </div>
+                        )}
+                      </div>
+                      <span className="aig-image-card-label">{style.name}</span>
+                    </button>
+                  ))}
                   <button
-                    key={style.id}
-                    className={`aig-image-style-card ${mediaStyle === style.id ? 'active' : ''}`}
-                    onClick={() => setMediaStyle(style.id)}
+                    type="button"
+                    className="aig-image-style-card"
+                    onClick={() => setIsImageModalOpen(true)}
                   >
-                    <div className="aig-image-card-img-wrapper">
-                      <img src={style.img} alt={style.name} />
-                      {mediaStyle === style.id && (
-                        <div className="aig-image-card-check-overlay">
-                          <Check size={16} color="#ffffff" strokeWidth={3} />
-                        </div>
-                      )}
+                    <div className="aig-image-card-img-wrapper view-more-wrapper">
+                      <div className="view-more-stack">
+                        <img src={IMAGE_STYLES[5].img} className="stack-img-back" alt="" />
+                        <img src={IMAGE_STYLES[6].img} className="stack-img-mid" alt="" />
+                        <img src={IMAGE_STYLES[7].img} className="stack-img-front" alt="" />
+                      </div>
                     </div>
-                    <span className="aig-image-card-label">{style.name}</span>
+                    <span className="aig-image-card-label">View more</span>
                   </button>
-                ))}
-                
-                {/* View More Card */}
-                <button className="aig-image-style-card" onClick={() => setIsImageModalOpen(true)}>
-                  <div className="aig-image-card-img-wrapper view-more-wrapper">
-                     <div className="view-more-stack">
-                        <img src={IMAGE_STYLES[5].img} className="stack-img-back" />
-                        <img src={IMAGE_STYLES[6].img} className="stack-img-mid" />
-                        <img src={IMAGE_STYLES[7].img} className="stack-img-front" />
-                     </div>
-                  </div>
-                  <span className="aig-image-card-label">View more</span>
-                </button>
+                </div>
               </div>
-            </div>
             </div>
           </div>
         )}
@@ -1143,32 +1393,44 @@ export default function AIPptWizard({
             {step < 3 ? (
               <button 
                 className="aig-btn-primary" 
-                onClick={() => setStep(step + 1)}
+                onClick={() => {
+                  if (!canGoNext) return
+                  setStep(step + 1)
+                }}
+                disabled={!canGoNext}
+                title={
+                  step === 2 && !vibeReady
+                    ? 'Choose a Brand Kit, Palette, or Template to continue'
+                    : undefined
+                }
               >
                 Next <ArrowRight size={18} />
               </button>
             ) : (
               <button 
-                className={`aig-btn-magic ${isGenerating ? 'loading' : ''}`}
+                className="aig-btn-magic"
                 onClick={handleGenerateOutline}
                 disabled={isGenerating}
               >
-                {isGenerating ? (
-                  <>
-                    <div className="aig-spinner"></div>
-                    Designing...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={18} />
-                    Generate Magic
-                  </>
-                )}
+                <Sparkles size={18} />
+                Generate Magic
               </button>
             )}
           </div>
         </footer>
       )}
+
+      {isGenerating &&
+        createPortal(
+          <div className="aig-designing-overlay" role="status" aria-live="polite" aria-busy="true">
+            <div className="aig-designing-card">
+              <div className="aig-spinner-large" aria-hidden="true" />
+              <h2 className="aig-designing-title">Designing</h2>
+              <p className="aig-designing-text">Crafting your outline and slide plan…</p>
+            </div>
+          </div>,
+          document.body
+        )}
 
       {/* THEME MODAL */}
       <AIPptThemeModal 
@@ -1185,7 +1447,7 @@ export default function AIPptWizard({
         onClose={() => setIsImageModalOpen(false)}
         imageStyles={IMAGE_STYLES}
         initialStyle={mediaStyle}
-        onSelectStyle={setMediaStyle}
+        onSelectStyle={pickArtStyle}
       />
     </>
   )

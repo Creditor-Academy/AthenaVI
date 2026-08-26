@@ -5,7 +5,7 @@
  */
 
 import { DOODLE_ICON_LIBRARY, ICON_CATEGORIES } from './iconLibrary'
-import { SHAPE_LIBRARY, shapeMatchesCategory } from './shapeLibrary'
+import { SHAPE_LIBRARY, shapeMatchesCategory, getEssentialShapes } from './shapeLibrary'
 
 // ── Text ───────────────────────────────────────────────────────────────
 
@@ -278,6 +278,74 @@ export const PPT_SHAPE_PANEL_CATEGORIES = [
   { id: 'speech', label: 'Speech / Bubbles', libraryCategory: 'speech' },
   { id: 'sticky', label: 'Sticky notes', libraryCategory: null },
   { id: 'buttons', label: 'Buttons and labels', libraryCategory: null },
+  { id: 'devices', label: 'Devices', libraryCategory: null },
+]
+
+/** Device mockup presets for the shapes panel (1920×1080 canvas placements). */
+export const PPT_DEVICE_FRAMES = [
+  {
+    id: 'device-phone',
+    name: 'Phone',
+    category: 'devices',
+    deviceFrame: 'phone',
+    previewAspect: '9 / 19',
+    placement: { x: 840, y: 240, width: 240, height: 520 },
+    content: { shape: 'device-frame', deviceFrame: 'phone', stroke: '#1e293b', fill: '#1e293b' },
+  },
+  {
+    id: 'device-phone-landscape',
+    name: 'Phone landscape',
+    category: 'devices',
+    deviceFrame: 'phone_landscape',
+    previewAspect: '19 / 9',
+    placement: { x: 620, y: 400, width: 680, height: 280 },
+    content: { shape: 'device-frame', deviceFrame: 'phone_landscape', stroke: '#1e293b', fill: '#1e293b' },
+  },
+  {
+    id: 'device-tablet',
+    name: 'Tablet',
+    category: 'devices',
+    deviceFrame: 'tablet',
+    previewAspect: '3 / 4',
+    placement: { x: 720, y: 220, width: 480, height: 640 },
+    content: { shape: 'device-frame', deviceFrame: 'tablet', stroke: '#1e293b', fill: '#1e293b' },
+  },
+  {
+    id: 'device-tablet-landscape',
+    name: 'Tablet landscape',
+    category: 'devices',
+    deviceFrame: 'tablet_landscape',
+    previewAspect: '4 / 3',
+    placement: { x: 480, y: 340, width: 960, height: 400 },
+    content: { shape: 'device-frame', deviceFrame: 'tablet_landscape', stroke: '#1e293b', fill: '#1e293b' },
+  },
+  {
+    id: 'device-laptop',
+    name: 'Laptop',
+    category: 'devices',
+    deviceFrame: 'laptop',
+    previewAspect: '16 / 10',
+    placement: { x: 640, y: 330, width: 640, height: 420 },
+    content: { shape: 'device-frame', deviceFrame: 'laptop', stroke: '#1e293b', fill: '#1e293b' },
+  },
+  {
+    id: 'device-monitor',
+    name: 'Monitor',
+    category: 'devices',
+    deviceFrame: 'monitor',
+    previewAspect: '4 / 3',
+    placement: { x: 620, y: 280, width: 680, height: 520 },
+    content: { shape: 'device-frame', deviceFrame: 'monitor', stroke: '#1e293b', fill: '#1e293b' },
+  },
+  {
+    id: 'device-watch',
+    name: 'Smartwatch',
+    category: 'devices',
+    deviceFrame: 'watch',
+    previewAspect: '4 / 5',
+    placement: { x: 870, y: 430, width: 180, height: 220 },
+    content: { shape: 'device-frame', deviceFrame: 'watch', stroke: '#1e293b', fill: '#1e293b' },
+  },
 ]
 
 /** Extra sticky / button presets not in SHAPE_LIBRARY. */
@@ -362,6 +430,12 @@ export const PPT_EXTRA_SHAPES = {
 }
 
 export function getPptShapesForCategory(categoryId) {
+  if (categoryId === 'essential') {
+    return getEssentialShapes()
+  }
+  if (categoryId === 'devices') {
+    return PPT_DEVICE_FRAMES
+  }
   if (categoryId === 'sticky' || categoryId === 'buttons') {
     return PPT_EXTRA_SHAPES[categoryId] || []
   }
@@ -539,6 +613,7 @@ export const PPT_DEFAULT_PLACEMENTS = {
   text: { x: 160, y: 200, width: 1000, height: 120 },
   image: { x: 560, y: 240, width: 800, height: 500 },
   icon: { x: 860, y: 400, width: 120, height: 120 },
+  graphic: { x: 1480, y: 40, width: 360, height: 280 },
   shape: { x: 760, y: 340, width: 400, height: 280 },
   chart: { x: 360, y: 200, width: 1200, height: 640 },
   table: { x: 280, y: 220, width: 1360, height: 520 },
@@ -549,6 +624,7 @@ export const PPT_INSERT_TOOLS = [
   { id: 'text', label: 'Text' },
   { id: 'media', label: 'Media' },
   { id: 'shape', label: 'Shape' },
+  { id: 'graphics', label: 'Graphics' },
   { id: 'chart', label: 'Chart' },
   { id: 'table', label: 'Table' },
   { id: 'embed', label: 'Embed' },

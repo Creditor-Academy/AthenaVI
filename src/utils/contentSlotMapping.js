@@ -115,7 +115,7 @@ export function buildContentBySlotIdFromSlideContent(content = {}, schema = null
   const seenColTitles = new Set()
   const slots = Array.isArray(schema?.slots) ? schema.slots : []
   const hasDedicatedTitles = slots.some((s) =>
-    /^(card|col|feature)_\d+_title$/i.test(String(s.id || ''))
+    /^(card|col|row|feature)_\d+_title$/i.test(String(s.id || ''))
   )
   columns.slice(0, 6).forEach((col, i) => {
     const n = i + 1
@@ -141,6 +141,8 @@ export function buildContentBySlotIdFromSlideContent(content = {}, schema = null
     out[`CARD_${n}_BODY`] = colBody
     out[`COL_${n}_TITLE`] = colTitle
     out[`COL_${n}_BODY`] = colBody
+    out[`ROW_${n}_TITLE`] = colTitle
+    out[`ROW_${n}_BODY`] = colBody
     out[`BODY_${n}`] = colBody || (hasDedicatedTitles ? '' : colTitle)
     out[`METRIC_TITLE_${n}`] = colTitle
     out[`METRIC_BODY_${n}`] = colBody

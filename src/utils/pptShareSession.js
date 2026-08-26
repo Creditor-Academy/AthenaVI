@@ -51,6 +51,83 @@ function readStorage(key) {
   }
 }
 
+function presenceDisplayName(viewer) {
+  return String(viewer?.displayName || viewer?.name || viewer?.user?.name || '').trim().toLowerCase()
+}
+
+export function presenceHasPhoto(viewer) {
+  return Boolean(
+    viewer?.avatarUrl ||
+      viewer?.avatar ||
+      viewer?.profileImage ||
+      viewer?.photoUrl ||
+      viewer?.image ||
+      viewer?.user?.profileImage ||
+      viewer?.user?.avatarUrl
+  )
+}
+
+export function presenceIdentityKeys(viewer) {
+  if (!viewer) return []
+  const keys = new Set()
+  const add = (value) => {
+    const text = String(value || '').trim().toLowerCase()
+    if (text && text !== 'owner') keys.add(text)
+  }
+  add(viewer.id)
+  add(viewer._id)
+  add(viewer.userId)
+  add(viewer.user?.id)
+  add(viewer.user?._id)
+  add(viewer.email)
+  add(viewer.user?.email)
+  add(viewer.viewerSessionId)
+  add(viewer.sessionId)
+  return Array.from(keys)
+}
+
+export function isAnonymousPresenceViewer(viewer) {
+  if (!viewer) return true
+  if (viewer.isAnonymous || viewer.anonymous || viewer.guest || viewer.isGuest) return true
+  if (viewer.kind === 'guest' || viewer.role === 'guest' || viewer.type === 'anonymous') return true
+  const userId = viewer.userId || viewer.user?.id || viewer.user?._id
+  const email = viewer.email || viewer.user?.email
+  const name = presenceDisplayName(viewer)
+  if (userId || email || presenceHasPhoto(viewer)) return false
+  return !name || /anonymous/i.test(name)
+}
+
+export function samePresencePerson(a, b) {
+  if (!a || !b) return false
+  const aKeys = new Set(presenceIdentityKeys(a))
+  if (presenceIdentityKeys(b).some((key) => aKeys.has(key))) return true
+  if (isAnonymousPresenceViewer(a) || isAnonymousPresenceViewer(b)) return false
+  const aName = presenceDisplayName(a)
+  const bName = presenceDisplayName(b)
+  return Boolean(aName && aName === bName && !/anonymous/i.test(aName))
+}
+
+export function pickRicherPresenceViewer(current, incoming) {
+  if (!current) return incoming
+  if (!incoming) return current
+  const incomingHasPhoto = presenceHasPhoto(incoming)
+  const currentHasPhoto = presenceHasPhoto(current)
+  if (incomingHasPhoto && !currentHasPhoto) return { ...current, ...incoming }
+  if (currentHasPhoto && !incomingHasPhoto) return { ...incoming, ...current }
+  return { ...current, ...incoming }
+}
+
+export function mergePresenceViewers(...lists) {
+  const merged = []
+  lists.flat().forEach((viewer) => {
+    if (!viewer) return
+    const index = merged.findIndex((existing) => samePresencePerson(existing, viewer))
+    if (index === -1) merged.push(viewer)
+    else merged[index] = pickRicherPresenceViewer(merged[index], viewer)
+  })
+  return merged
+}
+
 export function extractPresencePayload(payload) {
   if (!payload) {
     return { viewers: [], viewerCount: 0, contentUpdatedAt: null, token: '', url: '' }

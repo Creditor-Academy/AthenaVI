@@ -92,6 +92,7 @@ function CanvasElementsPreview({
           height: canvas.height,
           transform: `scale(${transform.scale})`,
           transformOrigin: 'top left',
+          containerType: 'inline-size',
           ...slideBgStyle,
           color: themeVisual?.body,
         }}
@@ -106,7 +107,12 @@ function CanvasElementsPreview({
 
           return (
             <div key={el.id || `canvas-el-${i}`} style={frame}>
-              <PptCanvasElement el={el} palette={resolvedPalette} editable={false} />
+              <PptCanvasElement
+                el={el}
+                palette={resolvedPalette}
+                editable={false}
+                canvasW={canvas.width}
+              />
             </div>
           )
         })}

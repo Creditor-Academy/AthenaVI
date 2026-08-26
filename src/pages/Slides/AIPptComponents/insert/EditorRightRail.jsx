@@ -34,6 +34,7 @@ export { PPT_SLIDE_TRANSITIONS }
 const DESIGN_PANEL_TITLES = {
   slide: 'Slide design',
   text: 'Text',
+  textbox: 'Text',
   image: 'Image',
   icon: 'Image',
   chart: 'Chart',
@@ -108,6 +109,7 @@ export default function EditorRightRail({
   onChangeElementPlacement,
   onToggleElementLock,
   onReplaceImage,
+  onClearDeviceFrameScreen,
   onCropImage,
   onToggleImageAsBackground,
   onSpeakerNotesChange,
@@ -255,6 +257,7 @@ export default function EditorRightRail({
                 }
                 onToggleElementLock={() => selectedElementId && onToggleElementLock?.(selectedElementId)}
                 onReplaceImage={onReplaceImage}
+                onClearDeviceFrameScreen={onClearDeviceFrameScreen}
                 onCropImage={onCropImage}
                 onToggleImageAsBackground={onToggleImageAsBackground}
                 onChangeTransition={onChangeTransition}

@@ -5,37 +5,24 @@ import {
   extractPresencePayload,
   extractShareToken,
   getOrCreateViewerSessionId,
-  stashShareToken,
+  mergePresenceViewers,
 } from '../../../utils/pptShareSession'
 
 const DEFAULT_INTERVAL_MS = 8000
 
 function mergePresence(current, incoming) {
   if (!incoming) return current
-  const byId = new Map()
-  const push = (viewer) => {
-    if (!viewer) return
-    const key = String(
-      viewer.id ||
-        viewer.userId ||
-        viewer.viewerSessionId ||
-        viewer.sessionId ||
-        viewer.email ||
-        viewer.displayName ||
-        `anon-${byId.size}`
-    )
-    if (!byId.has(key)) byId.set(key, viewer)
-  }
-  ;(current?.viewers || []).forEach(push)
-  ;(incoming.viewers || []).forEach(push)
-  const viewers = Array.from(byId.values())
+  const rawCount =
+    (current?.viewers || []).length + (incoming.viewers || []).length
+  const viewers = mergePresenceViewers(current?.viewers, incoming.viewers)
+  const collapsed = Math.max(0, rawCount - viewers.length)
+  const reported = Math.max(
+    Number(incoming.viewerCount) || 0,
+    Number(current?.viewerCount) || 0
+  )
   return {
     viewers,
-    viewerCount: Math.max(
-      Number(incoming.viewerCount) || 0,
-      Number(current?.viewerCount) || 0,
-      viewers.length
-    ),
+    viewerCount: Math.max(viewers.length, reported - collapsed),
     contentUpdatedAt: incoming.contentUpdatedAt || current?.contentUpdatedAt || null,
     token: incoming.token || current?.token || '',
     url: incoming.url || current?.url || '',
@@ -104,10 +91,7 @@ export default function usePptPresence({
           })
           next = mergePresence(next, extractPresencePayload(listed))
           const recovered = extractShareToken(next.token || next.url)
-          if (recovered) {
-            stashShareToken(presentationId, recovered)
-            onShareTokenRef.current?.(recovered)
-          }
+          if (recovered) onShareTokenRef.current?.(recovered)
         } catch (err) {
           if (err instanceof PresentationRateLimitError) {
             delay = err.retryAfterMs || 20000

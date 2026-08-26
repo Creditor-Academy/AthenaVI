@@ -110,7 +110,7 @@ function Dashboard({ onCreate, initialSection }) {
   const [avatarCreateTypeId, setAvatarCreateTypeId] = useState(null)
   const [adminTab, setAdminTab] = useState(() => {
     const saved = localStorage.getItem('adminPortalTab')
-    const valid = ['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'platform-actions', 'heygen', 'broadcast', 'early-access', 'templates', 'ai-template']
+    const valid = ['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'platform-actions', 'heygen', 'broadcast', 'early-access', 'templates', 'graphics', 'ai-template']
     return valid.includes(saved) ? saved : 'overview'
   })
   const [settingsInitialTab, setSettingsInitialTab] = useState(() => resolveSettingsTabFromSearch())
@@ -222,14 +222,22 @@ function Dashboard({ onCreate, initialSection }) {
     if (!optionId || optionId === 'avatar-video') return
     setPendingCreateOptionId(optionId)
     setCreateLocationInitial({
-      workspaceId: context?.initialWorkspaceId || '',
-      folderId: context?.initialFolderId || '',
+      workspaceId: context?.workspaceId || context?.initialWorkspaceId || '',
+      folderId: context?.folderId || context?.initialFolderId || '',
     })
     setShowCreateLocationModal(true)
   }, [])
 
   const handleConfirmCreateLocation = useCallback(({ optionId, workspaceId, folderId }) => {
-    setCreateLocationContext({ optionId, workspaceId, folderId })
+    const location = { optionId, workspaceId, folderId }
+    setCreateLocationContext(location)
+    if (optionId === 'ppt-ai' || optionId === 'ppt-builder') {
+      setPresentationCreateContext({
+        ...location,
+        initialWorkspaceId: workspaceId,
+        initialFolderId: folderId,
+      })
+    }
     setShowCreateLocationModal(false)
     setPendingCreateOptionId(null)
     goToSection(optionId)
@@ -471,6 +479,9 @@ function Dashboard({ onCreate, initialSection }) {
       <PptBuilder
         initialWorkspaceId={presentationCreateContext?.initialWorkspaceId}
         initialFolderId={presentationCreateContext?.initialFolderId}
+        createContext={
+          createLocationContext?.optionId === 'ppt-builder' ? createLocationContext : null
+        }
         onBack={() => {
           setPresentationCreateContext(null)
           goToSection(presentationCreateContext ? 'workspace' : 'home')
@@ -574,7 +585,7 @@ function Dashboard({ onCreate, initialSection }) {
 
         <div className="dashboard-page-card">
           <main
-            className={`dashboard-main-content content ${!noPaddingSections.includes(section) ? 'with-padding' : ''} ${section === 'home' ? 'content--home' : ''} ${workspaceConsistentSections.includes(section) ? 'content--workspace-consistent' : ''} ${isAdminPortal ? 'content--superadmin' : ''}`}
+            className={`dashboard-main-content content ${!noPaddingSections.includes(section) ? 'with-padding' : ''} ${section === 'home' ? 'content--home' : ''} ${workspaceConsistentSections.includes(section) ? 'content--workspace-consistent' : ''} ${isAdminPortal ? 'content--superadmin' : ''} ${isAdminPortal && adminTab === 'graphics' ? 'content--graphics-library' : ''}`}
           >
           {section === 'home' && (
             <Home
@@ -798,12 +809,13 @@ function Dashboard({ onCreate, initialSection }) {
           setCreateMenuContext(null)
         }}
         onNavigateSection={(id) => {
+          const ctx = createMenuContext
           setShowCreateMenu(false)
-          if (id === 'ppt-ai' || id === 'ppt-builder') {
-            setPresentationCreateContext(createMenuContext)
-          }
           setCreateMenuContext(null)
-          handleOpenCreateLocationModal(id)
+          if (id === 'ppt-ai' || id === 'ppt-builder') {
+            setPresentationCreateContext(ctx)
+          }
+          handleOpenCreateLocationModal(id, ctx)
         }}
       />
 

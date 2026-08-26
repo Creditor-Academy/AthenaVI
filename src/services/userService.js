@@ -248,6 +248,47 @@ class UserService {
     }
   }
 
+  /**
+   * PPT wizard preferences (recent art styles, etc.).
+   * Backend: GET/PATCH /api/user/settings/ppt
+   * Missing endpoint is non-fatal — caller should fall back to local storage.
+   */
+  async getPptSettings() {
+    try {
+      const response = await fetch(buildUrl('/api/user/settings/ppt'), {
+        method: 'GET',
+        headers: getAuthHeaders(),
+      })
+      if (response.status === 404 || response.status === 405) return null
+      if (!response.ok) {
+        if (response.status === 401) throw new Error('Authentication required')
+        return null
+      }
+      const data = await response.json()
+      return data.data?.ppt || data.data?.settings || data.ppt || data.data || data
+    } catch (error) {
+      if (error.message === 'Authentication required') throw error
+      return null
+    }
+  }
+
+  async updatePptSettings(patch) {
+    try {
+      if (!patch || Object.keys(patch).length === 0) return null
+      const response = await fetch(buildUrl('/api/user/settings/ppt'), {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(patch),
+      })
+      if (response.status === 404 || response.status === 405) return null
+      if (!response.ok) return null
+      const data = await response.json()
+      return data.data?.ppt || data.data?.settings || data.ppt || data.data || data
+    } catch {
+      return null
+    }
+  }
+
   // Get current user's appearance settings
   async getAppearanceSettings() {
     try {

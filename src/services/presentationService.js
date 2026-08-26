@@ -172,6 +172,13 @@ class PresentationService {
 
   // ── Presentation CRUD ──────────────────────────────────────────────
 
+  listPresentations(workspaceId, params = {}) {
+    const query = this.buildQuery(params)
+    return this.request(`${API_CONFIG.ENDPOINTS.PRESENTATIONS.LIST(workspaceId)}${query}`, {
+      quiet: true,
+    })
+  }
+
   createPresentation(workspaceId, body) {
     const title = String(body?.title || '').trim()
     return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.LIST(workspaceId), {

@@ -22,8 +22,9 @@ function normalizeWorkspace(ws) {
 }
 
 /**
- * Resolve a workspace + folder for presentation create flows.
- * Prefers personal workspace and first folder; creates "Presentations" folder if none.
+ * Resolve a workspace + folder for presentation / image create flows.
+ * Uses preferred IDs when provided (no silent personal fallback).
+ * With no preferred workspace, falls back to personal then first workspace.
  */
 export async function resolvePresentationWorkspaceContext({
   preferredWorkspaceId = null,
@@ -36,10 +37,18 @@ export async function resolvePresentationWorkspaceContext({
     throw new Error('No workspace found. Create a workspace before starting a presentation.')
   }
 
-  const workspace =
-    normalized.find((ws) => String(ws.id) === String(preferredWorkspaceId)) ||
-    normalized.find((ws) => ws.isPersonal) ||
-    normalized[0]
+  const preferredId = preferredWorkspaceId ? String(preferredWorkspaceId) : ''
+  let workspace = preferredId
+    ? normalized.find((ws) => String(ws.id) === preferredId)
+    : null
+
+  if (preferredId && !workspace) {
+    throw new Error('The selected workspace is no longer available. Pick another location and try again.')
+  }
+
+  if (!workspace) {
+    workspace = normalized.find((ws) => ws.isPersonal) || normalized[0]
+  }
 
   const workspaceId = workspace.id
   let folders = (await workspaceService.listFolders(workspaceId)) || []
@@ -50,8 +59,10 @@ export async function resolvePresentationWorkspaceContext({
     folders = [{ ...created, id: created.id || created._id }]
   }
 
-  const folder =
-    folders.find((f) => String(f.id) === String(preferredFolderId)) || folders[0]
+  const preferredFolder = preferredFolderId
+    ? folders.find((f) => String(f.id) === String(preferredFolderId))
+    : null
+  const folder = preferredFolder || folders[0]
 
   return {
     workspaceId,

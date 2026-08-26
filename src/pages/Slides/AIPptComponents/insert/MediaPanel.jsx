@@ -14,6 +14,7 @@ import {
   PPT_STOCK_TOPICS,
   pickRandomStockBrowseQuery,
 } from '../../../../constants/pptInsertCatalog'
+import { setCanvasDragData } from '../../../../utils/editorDragDrop'
 
 function stockImageUrl(item) {
   return (
@@ -81,12 +82,15 @@ export default function MediaPanel({
   presentationId,
   slideId,
   targetElementId = null,
+  fillElementId = null,
+  onFillElement,
   brandKits = [],
   onInsert,
   onMediaAttached,
   disabled,
 }) {
   const canUseSlideMedia = Boolean(workspaceId && presentationId && slideId)
+  const canFillElement = Boolean(fillElementId && onFillElement)
   const [activeId, setActiveId] = useState('unsplash')
   const [query, setQuery] = useState('')
   const [selectedTopicId, setSelectedTopicId] = useState(null)
@@ -233,6 +237,37 @@ export default function MediaPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId, active.kind])
 
+  const fillWithImage = (payload) => {
+    if (!canFillElement) return false
+    const url = payload?.url || payload?.src
+    if (!url) return false
+    onFillElement({
+      url,
+      src: url,
+      alt: payload.alt || '',
+      assetId: payload.assetId,
+      provider: payload.provider,
+      file: payload.file,
+    })
+    return true
+  }
+
+  const startImageDrag = (e, item) => {
+    const url = stockImageUrl(item) || assetUrl(item)
+    if (!url) return
+    e.dataTransfer.effectAllowed = 'copy'
+    setCanvasDragData(e, {
+      type: 'image',
+      content: {
+        url,
+        src: url,
+        alt: item?.alt || item?.name || item?.description || '',
+        assetId: item?.id || item?._id || item?.assetId,
+        name: item?.name || item?.description || '',
+      },
+    })
+  }
+
   const handleUpload = async (e) => {
     const file = e.target.files?.[0]
     e.target.value = ''
@@ -243,6 +278,11 @@ export default function MediaPanel({
     setLoading(true)
     setError('')
     try {
+      if (canFillElement && file.type?.startsWith('image/')) {
+        fillWithImage({ file, alt: file.name })
+        return
+      }
+
       if (canUseSlideMedia) {
         const result = await presentationService.uploadSlideMedia(
           workspaceId,
@@ -262,6 +302,9 @@ export default function MediaPanel({
       const asset = await assetService.uploadAsset(workspaceId, file)
       const url = assetUrl(asset)
       if (!url) throw new Error('Upload succeeded but no URL returned')
+      if (fillWithImage({ url, src: url, alt: asset.name || file.name, assetId: asset.id || asset._id })) {
+        return
+      }
       onInsert({
         type: 'image',
         content: {
@@ -282,6 +325,12 @@ export default function MediaPanel({
   const attachLibraryAsset = async (item) => {
     const assetId = item.id || item._id
     const url = assetUrl(item)
+
+    if (canFillElement && url && isImageAsset(item)) {
+      fillWithImage({ url, src: url, alt: item.name || item.alt || '', assetId })
+      return
+    }
+
     if (canUseSlideMedia && assetId) {
       setLoading(true)
       setError('')
@@ -331,7 +380,18 @@ export default function MediaPanel({
   const insertStock = async (item) => {
     const provider = item.provider || active.provider
     const externalId = item.externalId || item.id || item._id
-    const previewUrl = item.url || item.src || item.thumbnailUrl || item.previewUrl
+    const previewUrl = item.url || item.src || item.thumbnailUrl || item.previewUrl || stockImageUrl(item)
+
+    if (canFillElement && previewUrl) {
+      fillWithImage({
+        url: previewUrl,
+        src: previewUrl,
+        alt: item.alt || item.description || '',
+        provider,
+        assetId: item.id || item._id,
+      })
+      return
+    }
 
     if (canUseSlideMedia && (externalId || item.query)) {
       setLoading(true)
@@ -398,6 +458,16 @@ export default function MediaPanel({
         name: item.description || item.alt || undefined,
       })
       const url = assetUrl(asset) || previewUrl
+      if (canFillElement && url) {
+        fillWithImage({
+          url,
+          src: url,
+          alt: item.alt || item.description || '',
+          assetId: asset?.id || asset?._id,
+          provider,
+        })
+        return
+      }
       if (canUseSlideMedia && (asset?.id || asset?._id)) {
         const result = await presentationService.attachSlideAsset(
           workspaceId,
@@ -589,6 +659,11 @@ export default function MediaPanel({
         active.kind === 'brand-photos') &&
         !loading && (
           <div className="ppt-media-grid ppt-media-grid--masonry">
+            {canFillElement && (
+              <div className="ppt-insert-empty" style={{ gridColumn: '1 / -1', marginBottom: 4 }}>
+                Selected device frame — click or drag an image to fill the screen
+              </div>
+            )}
             {items.map((item, idx) => {
               const url = stockImageUrl(item)
               const key = item.id || item._id || item.externalId || url || idx
@@ -598,6 +673,11 @@ export default function MediaPanel({
                   : item.aspectRatio || undefined
               const photographer = active.kind === 'stock' ? stockPhotographerName(item) : ''
               const photographerLink = stockPhotographerLink(item)
+              const canDragImage =
+                Boolean(url) &&
+                (active.kind === 'stock' ||
+                  active.kind === 'brand-photos' ||
+                  (active.kind === 'library-images' && isImageAsset(item)))
               return (
                 <div key={key} className="ppt-media-card ppt-media-card--masonry">
                   <button
@@ -605,6 +685,11 @@ export default function MediaPanel({
                     className="ppt-media-tile ppt-media-tile--masonry"
                     disabled={disabled || !url}
                     style={aspect ? { aspectRatio: aspect } : undefined}
+                    draggable={canDragImage && !disabled}
+                    onDragStart={(e) => {
+                      if (!canDragImage) return
+                      startImageDrag(e, { ...item, url })
+                    }}
                     onClick={() => {
                       if (active.kind === 'stock') insertStock(item)
                       else if (
@@ -612,6 +697,13 @@ export default function MediaPanel({
                         active.kind === 'library-videos'
                       ) {
                         attachLibraryAsset(item)
+                      } else if (canFillElement && url) {
+                        fillWithImage({
+                          url,
+                          src: url,
+                          alt: item.name || item.alt || '',
+                          assetId: item.id || item._id,
+                        })
                       } else {
                         onInsert({
                           type: 'image',

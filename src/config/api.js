@@ -10,6 +10,12 @@ const API_CONFIG = {
       REQUEST: '/api/early-access/request',
     },
 
+    GRAPHICS: {
+      LIST: '/api/graphics',
+      SEARCH: '/api/graphics/search',
+      GET: (id) => `/api/graphics/${id}`,
+    },
+
     // Authentication
     AUTH: {
       // OTP
@@ -42,7 +48,8 @@ const API_CONFIG = {
       // user settings endpoints are under /api/user/settings
       USER_SETTINGS: {
         APPEARANCE: '/api/user/settings/appearance',
-        NOTIFICATIONS: '/api/user/settings/notifications'
+        NOTIFICATIONS: '/api/user/settings/notifications',
+        PPT: '/api/user/settings/ppt',
       },
       INBOX: {
         LIST: '/api/user/inbox',
@@ -127,6 +134,12 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/projects/${projectId}/comments/${commentId}`,
       MENTIONABLE_USERS: (workspaceId, projectId) =>
         `/api/workspaces/${workspaceId}/projects/${projectId}/comments/mentionable-users`,
+    },
+
+    // Shared Google Fonts catalog (user-scoped)
+    FONTS: {
+      CATALOG: '/api/fonts/catalog',
+      CSS: '/api/fonts/css',
     },
 
     // Brand Kits (workspace branding)
