@@ -194,6 +194,33 @@ class PresentationService {
     return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.ONE(workspaceId, presentationId))
   }
 
+  /**
+   * Persist deck cover thumbnail for library / My Work cards.
+   * Backend should store `thumbnailUrl` on the presentation and return it from library lists.
+   * Quiet by default — older backends may not implement this yet.
+   */
+  updateThumbnail(workspaceId, presentationId, { thumbnailUrl, slideId } = {}) {
+    if (!thumbnailUrl) return Promise.resolve(null)
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.THUMBNAIL(workspaceId, presentationId),
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          thumbnailUrl,
+          ...(slideId ? { slideId } : {}),
+        }),
+        quiet: true,
+      }
+    ).catch(() =>
+      // Fallback: patch presentation resource if dedicated route is missing
+      this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.ONE(workspaceId, presentationId), {
+        method: 'PATCH',
+        body: JSON.stringify({ thumbnailUrl }),
+        quiet: true,
+      }).catch(() => null)
+    )
+  }
+
   getCreditEstimate(workspaceId, presentationId, { slideCount } = {}) {
     const query = this.buildQuery({ slideCount })
     return this.request(

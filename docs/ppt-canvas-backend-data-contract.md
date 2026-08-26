@@ -27,6 +27,51 @@ While `status === GENERATING`, structure edits (add/delete/reorder slides, canva
 
 ---
 
+## 0b. Presentation thumbnails (My Work / library)
+
+Library and list endpoints should return a cover image so cards load instantly without fetching the full deck.
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| PUT | `/presentations/{id}/thumbnail` | Persist cover `{ thumbnailUrl, slideId? }` |
+| PATCH | `/presentations/{id}` | Fallback body `{ thumbnailUrl }` if dedicated route is absent |
+
+**Rules**
+
+- Prefer the **first slide** visual: either a rendered cover image URL or the primary image on slide 1.
+- Store `thumbnailUrl` on the presentation row.
+- Return `thumbnailUrl` (aliases `thumbnail`, `coverUrl`, `previewUrl` OK) from:
+  - `GET /presentations` list items
+  - `GET /api/workspaces/{workspaceId}/library?category=presentation` items
+- When generation completes (`status → READY`), backend should set `thumbnailUrl` from slide 1 if the client has not already uploaded one.
+- Invalidate / replace `thumbnailUrl` when slide 1 canvas changes materially (optional; client also caches by `updatedAt`).
+
+**PUT body**
+
+```json
+{
+  "thumbnailUrl": "https://…",
+  "slideId": "slide_…"
+}
+```
+
+**List / library item fields (presentation)**
+
+```json
+{
+  "id": "…",
+  "title": "…",
+  "thumbnailUrl": "https://…",
+  "slideCount": 10,
+  "updatedAt": "2026-08-26T00:00:00.000Z",
+  "deckStatus": "READY"
+}
+```
+
+Frontend also keeps an IndexedDB cache of resolved thumbs for revisits when the API has not yet stored one.
+
+---
+
 ## 1. API surface (all presentation endpoints)
 
 Base: `/api/workspaces/{workspaceId}/…`
@@ -40,6 +85,7 @@ Base: `/api/workspaces/{workspaceId}/…`
 | GET | `/presentations` | List decks in workspace |
 | POST | `/presentations` | Create deck |
 | GET | `/presentations/{id}` | **Full deck + slides + canvas** (editor load) |
+| PUT | `/presentations/{id}/thumbnail` | Persist cover `{ thumbnailUrl, slideId? }` for library cards |
 | GET | `/presentations/{id}/status` | Poll generation |
 | GET | `/presentations/{id}/credit-estimate?slideCount=N` | Credits |
 | POST | `/presentations/{id}/outline` | Create outline (prompt / document) |

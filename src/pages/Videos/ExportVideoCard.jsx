@@ -7,6 +7,7 @@ import {
   looksLikeId,
   normalizeLibraryCategoryId,
 } from '../../utils/workspaceLibrary.js'
+import PresentationCardThumb from './PresentationCardThumb.jsx'
 
 function resolveOwnerLabel(video) {
   const candidates = [
@@ -68,6 +69,26 @@ function ExportVideoCard({
           ? formatBytes(video.fileSizeBytes)
           : null
 
+  const thumbMedia =
+    category === 'presentation' ? (
+      <PresentationCardThumb item={video} title={title} />
+    ) : thumbSrc ? (
+      <img
+        src={thumbSrc}
+        alt=""
+        className="work-card-image-bg"
+        loading="lazy"
+        decoding="async"
+        draggable={false}
+      />
+    ) : (
+      <DefaultProjectThumbnail
+        title={title}
+        category={category === 'image' ? 'image' : 'video'}
+        showLabel={false}
+      />
+    )
+
   return (
     <article className={`workspace-item-card videos-export-card work-card-${category}`}>
       <button
@@ -77,21 +98,7 @@ function ExportVideoCard({
         aria-label={`Open ${title}`}
       >
         <div className={`card-thumb-container ${category}-thumb`}>
-          {thumbSrc ? (
-            <img
-              src={thumbSrc}
-              alt=""
-              className="work-card-image-bg"
-              loading="lazy"
-              decoding="async"
-              draggable={false}
-            />
-          ) : (
-            <DefaultProjectThumbnail
-              title={title}
-              category={category === 'presentation' ? 'ppt' : category}
-            />
-          )}
+          {thumbMedia}
           {badge}
           <div className="videos-export-overlay" aria-hidden>
             <span className="btn-edit-premium">{overlayLabel}</span>

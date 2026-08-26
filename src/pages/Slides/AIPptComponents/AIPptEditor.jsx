@@ -86,6 +86,7 @@ import {
   shouldPaintElement,
 } from '../../../utils/canvasRenderDebug'
 import { hydrateSlidesGraphicElements } from '../../../utils/hydrateGraphicElements'
+import { syncPresentationThumbnailFromSlides } from '../../../utils/presentationThumbSync'
 import {
   parseCanvasDragData,
   resolveDropImageSrc,
@@ -1076,8 +1077,41 @@ export default function AIPptEditor({
       setDeckTitle(data?.title || data?.presentation?.title)
     }
     if (slides[0]?.id) setSelectedSlideId((prev) => prev || slides[0].id)
+    if (!generating && !viewOnly && slides.length) {
+      syncPresentationThumbnailFromSlides({
+        workspaceId,
+        presentationId,
+        slides,
+        updatedAt: data?.updatedAt || data?.lastModifiedAt || null,
+        aspectRatio: resolvedAspect,
+      })
+    }
     return data
   }, [workspaceId, presentationId, config.screenSize, config.aspectRatio, layoutSchemaMap, viewOnly])
+
+  useEffect(() => {
+    if (viewOnly || isGenerating) return undefined
+    if (!workspaceId || !presentationId || !localSlides.length) return undefined
+    if (String(deckStatus || '').toUpperCase() === 'GENERATING') return undefined
+
+    const timer = setTimeout(() => {
+      syncPresentationThumbnailFromSlides({
+        workspaceId,
+        presentationId,
+        slides: localSlides,
+        aspectRatio,
+      })
+    }, 1200)
+    return () => clearTimeout(timer)
+  }, [
+    viewOnly,
+    isGenerating,
+    workspaceId,
+    presentationId,
+    localSlides,
+    aspectRatio,
+    deckStatus,
+  ])
 
   useEffect(() => {
     if (viewOnly) return

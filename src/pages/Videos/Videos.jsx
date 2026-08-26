@@ -23,6 +23,7 @@ import {
   normalizeLibraryItem,
   normalizeLibraryCategories,
   normalizeLibraryCategoryId,
+  resolvePresentationThumbnailUrl,
 } from '../../utils/workspaceLibrary.js'
 import '../../components/features/workspace/workspace/WorkspaceStyles.css'
 import VideosSkeleton from '../page-skeleton/VideosSkeleton'
@@ -63,7 +64,7 @@ function toWorkCardItem(item, workspace) {
     workspaceType: workspace?.type,
     completedAt: normalized.lastModifiedAt || normalized.createdAt,
     fileSizeBytes: normalized.storageBytes ?? normalized.sizeBytes ?? null,
-    thumbnailUrl: normalized.thumbnailUrl || normalized.thumbnail || normalized.url,
+    thumbnailUrl: normalized.thumbnailUrl || normalized.thumbnail || null,
     slideCount: normalized.slideCount,
     triggeredBy: item.owner || item.lastModifiedBy || item.triggeredBy || null,
   }
@@ -237,7 +238,13 @@ function Videos({ onEdit, onOpenImage }) {
   const openPreview = (item) => {
     setPreviewItem(item)
     const kind = normalizeWorkCategoryId(item.category || item.kind)
-    if (kind === 'image' || kind === 'presentation') {
+    if (kind === 'presentation') {
+      setPreviewUrl(
+        resolvePresentationThumbnailUrl(item) || item.thumbnailUrl || item.thumbnail || ''
+      )
+      return
+    }
+    if (kind === 'image') {
       setPreviewUrl(item.url || item.thumbnailUrl || item.thumbnail || '')
       return
     }

@@ -1,4 +1,4 @@
-import { MdAutoAwesome, MdAdd, MdClose, MdArrowForward, MdPhotoLibrary, MdImage } from 'react-icons/md'
+import { MdAutoAwesome, MdAdd, MdClose, MdImage } from 'react-icons/md'
 import LogoMockupsSection from './LogoMockupsSection'
 
 export default function ImageryTab(props) {
@@ -262,9 +262,6 @@ export default function ImageryTab(props) {
                 </div>
               </div>
 
-              <button type="button" className="bk-action-btn" disabled>
-                <MdPhotoLibrary size={14} /> Brand imagery kit <MdArrowForward size={14} />
-              </button>
             </div>
           </div>
         </div>

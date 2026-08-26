@@ -234,6 +234,8 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/apply-brand-kit`,
       GENERATE: (workspaceId, presentationId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/generate`,
+      THUMBNAIL: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/thumbnail`,
       SLIDES: (workspaceId, presentationId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides`,
       SLIDE: (workspaceId, presentationId, slideId) =>

@@ -602,13 +602,12 @@
   margin-top: 4px;
 }
 
-/* ── My Work tile cards: equal size, clipped media, smooth scroll ─── */
+/* ── My Work tile cards: equal size, clipped media ─── */
 .videos-page .videos-export-items.tile-view {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 20px;
   align-items: stretch;
-  contain: layout style;
 }
 
 .videos-page .workspace-item-card.videos-export-card {
@@ -623,9 +622,6 @@
   box-shadow: none;
   padding: 0;
   gap: 12px;
-  contain: content;
-  content-visibility: auto;
-  contain-intrinsic-size: 280px 292px;
   transform: none;
   transition: none;
 }
@@ -664,7 +660,6 @@
   min-height: 0;
   display: block;
   overflow: hidden;
-  isolation: isolate;
   border-radius: 12px;
   border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
   background: color-mix(in srgb, var(--bg-card) 88%, var(--bg-surface));
@@ -692,6 +687,42 @@
   object-fit: cover;
   display: block;
   pointer-events: none;
+}
+
+.videos-page .videos-export-card .work-card-ppt-thumb-host {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0f172a;
+}
+
+.videos-page .videos-export-card .work-card-ppt-thumb-canvas,
+.videos-page .videos-export-card .work-card-ppt-thumb-host .default-project-thumbnail {
+  width: 100%;
+  height: 100%;
+}
+
+.videos-page .videos-export-card .work-card-ppt-thumb-loading {
+  position: absolute;
+  inset: auto 10px 10px auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  animation: work-card-ppt-pulse 1s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes work-card-ppt-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .videos-page .videos-export-card .work-card-badge {

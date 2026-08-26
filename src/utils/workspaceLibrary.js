@@ -30,6 +30,58 @@ const DEFAULT_CATEGORIES = [
 
 export const ATHENA_AI_OWNER = 'Athena AI'
 
+function firstNonEmptyUrl(...candidates) {
+  for (const candidate of candidates) {
+    const value = String(candidate || '').trim()
+    if (!value) continue
+    if (
+      value.startsWith('http://') ||
+      value.startsWith('https://') ||
+      value.startsWith('data:') ||
+      value.startsWith('blob:') ||
+      value.startsWith('/')
+    ) {
+      return value
+    }
+  }
+  return null
+}
+
+/** Best-effort image URL for a presentation library/project card (prefer first slide). */
+export function resolvePresentationThumbnailUrl(item) {
+  if (!item || typeof item !== 'object') return null
+  const slide0 = Array.isArray(item.slides)
+    ? item.slides[0]
+    : item.firstSlide && typeof item.firstSlide === 'object'
+      ? item.firstSlide
+      : null
+  const imageRef = slide0?.imageRef
+  const imageRefUrl =
+    typeof imageRef === 'string'
+      ? imageRef
+      : imageRef?.url || imageRef?.presignedUrl || imageRef?.src || null
+
+  return firstNonEmptyUrl(
+    item.thumbnailUrl,
+    item.thumbnail,
+    item.coverUrl,
+    item.coverImageUrl,
+    item.previewUrl,
+    item.previewImageUrl,
+    item.firstSlideThumbnailUrl,
+    item.firstSlideThumbUrl,
+    item.firstSlideUrl,
+    slide0?.thumbnailUrl,
+    slide0?.previewUrl,
+    slide0?.previewImageUrl,
+    slide0?.imageUrl,
+    slide0?.thumbnail,
+    imageRefUrl,
+    slide0?.content?.imageUrl,
+    slide0?.backgroundImage
+  )
+}
+
 export function normalizeLibraryCategories(categories) {
   const byId = new Map()
   ;(Array.isArray(categories) ? categories : []).forEach((cat) => {
@@ -165,8 +217,11 @@ export function normalizeLibraryItem(item, { workspaceId } = {}) {
   }
 
   if (kind === 'presentation') {
+    const thumb = resolvePresentationThumbnailUrl(item)
     return {
       ...base,
+      thumbnail: thumb,
+      thumbnailUrl: thumb,
       deckStatus: item.deckStatus || null,
       slideCount: item.slideCount ?? item.slidesCount ?? null,
       aspectRatio: item.aspectRatio || null,
