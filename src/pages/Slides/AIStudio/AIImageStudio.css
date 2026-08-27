@@ -1287,7 +1287,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 56px clamp(16px, 2.4vw, 32px) 20px;
+  padding: 80px clamp(20px, 2.2vw, 28px) 20px;
   overflow: hidden;
   background:
     radial-gradient(ellipse 55% 45% at 8% 0%, rgba(var(--primary-rgb), 0.14), transparent 55%),
@@ -1379,7 +1379,7 @@
   gap: 18px;
   flex: 1;
   min-height: 0;
-  max-width: 1240px;
+  max-width: min(1680px, 100%);
   margin: 0 auto;
   width: 100%;
 }
@@ -1946,35 +1946,110 @@
   background: transparent;
 }
 
-.aig-canvas-wash {
+.aig-canvas-wash,
+.aig-canvas-smoke {
   position: absolute;
-  inset: -18%;
+  inset: 0;
+  overflow: hidden;
   pointer-events: none;
-  filter: blur(18px);
 }
 
-.aig-canvas-wash--deep {
-  background:
-    radial-gradient(ellipse 70% 55% at 18% 88%, #06122c 0%, transparent 58%),
-    radial-gradient(ellipse 55% 70% at 86% 12%, #2d5ea8 0%, transparent 50%),
-    radial-gradient(ellipse 38% 32% at 40% 40%, rgba(255, 255, 255, 0.22) 0%, transparent 68%),
-    radial-gradient(ellipse 90% 80% at 48% 58%, #163a78 0%, #071226 72%);
+.aig-canvas-smoke i {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(28px);
 }
 
-.aig-canvas-wash--ice {
+.aig-canvas-smoke--deep {
   background:
-    radial-gradient(ellipse 80% 60% at 20% 80%, #93c5fd 0%, transparent 55%),
-    radial-gradient(ellipse 50% 70% at 88% 18%, #dbeafe 0%, transparent 48%),
-    radial-gradient(ellipse 40% 36% at 42% 42%, rgba(255, 255, 255, 0.7) 0%, transparent 70%),
-    radial-gradient(ellipse 90% 80% at 50% 50%, #7aa8e8 0%, #cfe3ff 75%);
+    radial-gradient(120% 90% at 12% 110%, #04101f 0%, transparent 46%),
+    radial-gradient(80% 70% at 88% -10%, #3d6fb8 0%, transparent 48%),
+    linear-gradient(160deg, #0a1c38 0%, #163a72 42%, #071226 100%);
 }
 
-.aig-canvas-wash--mist {
+.aig-canvas-smoke--deep i:nth-child(1) {
+  width: 78%;
+  height: 90%;
+  left: -18%;
+  top: 18%;
+  background: rgba(186, 214, 255, 0.42);
+  transform: rotate(-18deg);
+}
+
+.aig-canvas-smoke--deep i:nth-child(2) {
+  width: 70%;
+  height: 80%;
+  right: -22%;
+  top: -20%;
+  background: rgba(96, 145, 220, 0.55);
+}
+
+.aig-canvas-smoke--deep i:nth-child(3) {
+  width: 55%;
+  height: 70%;
+  left: 28%;
+  bottom: -30%;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.aig-canvas-smoke--ice {
   background:
-    radial-gradient(ellipse 75% 55% at 12% 90%, #bfdbfe 0%, transparent 52%),
-    radial-gradient(ellipse 60% 75% at 90% 10%, #eff6ff 0%, transparent 50%),
-    radial-gradient(ellipse 35% 30% at 48% 38%, rgba(255, 255, 255, 0.85) 0%, transparent 65%),
-    radial-gradient(ellipse 90% 80% at 50% 55%, #9ec0ef 0%, #e8f1ff 78%);
+    radial-gradient(90% 80% at 10% 100%, #9ec4f5 0%, transparent 50%),
+    linear-gradient(155deg, #f7fbff 0%, #c5ddf8 46%, #8eb4e6 100%);
+}
+
+.aig-canvas-smoke--ice i:nth-child(1) {
+  width: 72%;
+  height: 88%;
+  left: -16%;
+  top: -12%;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.aig-canvas-smoke--ice i:nth-child(2) {
+  width: 64%;
+  height: 72%;
+  right: -18%;
+  bottom: -16%;
+  background: rgba(96, 149, 214, 0.45);
+}
+
+.aig-canvas-smoke--ice i:nth-child(3) {
+  width: 48%;
+  height: 56%;
+  left: 30%;
+  top: 22%;
+  background: rgba(59, 130, 246, 0.22);
+}
+
+.aig-canvas-smoke--mist {
+  background:
+    radial-gradient(80% 70% at 90% 0%, #e8f2ff 0%, transparent 52%),
+    linear-gradient(200deg, #d7e8fb 0%, #7ea6d8 55%, #4d78b5 100%);
+}
+
+.aig-canvas-smoke--mist i:nth-child(1) {
+  width: 80%;
+  height: 90%;
+  right: -24%;
+  top: -18%;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.aig-canvas-smoke--mist i:nth-child(2) {
+  width: 60%;
+  height: 75%;
+  left: -20%;
+  bottom: -22%;
+  background: rgba(37, 99, 175, 0.35);
+}
+
+.aig-canvas-smoke--mist i:nth-child(3) {
+  width: 50%;
+  height: 60%;
+  left: 36%;
+  top: 30%;
+  background: rgba(147, 197, 253, 0.5);
 }
 
 .aig-choose-hero-shade {
@@ -2771,12 +2846,17 @@
   height: 100%;
   min-height: 0;
   border-radius: 24px;
-  border: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
-  background: var(--bg-card);
+  border: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
+  background: color-mix(in srgb, var(--bg-card) 78%, transparent);
+  backdrop-filter: blur(16px);
   box-shadow:
     0 1px 2px rgba(15, 23, 42, 0.04),
     0 18px 50px rgba(15, 23, 42, 0.06);
   overflow: hidden;
+}
+
+.aig-canvas-split.is-info {
+  grid-template-columns: minmax(280px, 0.46fr) minmax(280px, 1.14fr);
 }
 
 .aig-canvas-picker {
@@ -2838,8 +2918,14 @@
   margin: 0;
 }
 
-.aig-canvas-picker .aig-tabs {
-  margin: 8px 0 18px;
+.aig-canvas-picker .aig-choose-mode {
+  width: 100%;
+  margin: 0;
+}
+
+.aig-canvas-picker .aig-choose-grid {
+  flex: 1;
+  min-height: 0;
 }
 
 .aig-tabs--prompt {
@@ -3737,10 +3823,8 @@
   align-items: center;
   justify-content: center;
   padding: 28px clamp(12px, 2vw, 28px);
-  border-left: 1px solid color-mix(in srgb, var(--border-color) 65%, transparent);
-  background:
-    radial-gradient(ellipse 60% 50% at 50% 42%, rgba(var(--primary-rgb), 0.08), transparent 70%),
-    color-mix(in srgb, var(--bg-surface) 70%, var(--bg-card));
+  border-left: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
+  background: transparent;
   min-height: 0;
   overflow: hidden;
   position: relative;
@@ -3871,7 +3955,7 @@
   padding: 16px;
 }
 
-.aig-canvas-hero img {
+.aig-canvas-hero-fill {
   position: absolute;
   inset: 0;
 }
@@ -3889,10 +3973,17 @@
   pointer-events: none;
 }
 
-.aig-canvas-hero--landscape .aig-canvas-slide-headline,
-.aig-canvas-hero--banner .aig-canvas-slide-headline {
-  font-size: clamp(15px, 1.6vw, 20px);
-  max-width: 70%;
+.aig-canvas-slide-copy {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: calc(100% - 32px);
 }
 
 .aig-canvas-slide-live {
@@ -3920,10 +4011,6 @@
 }
 
 .aig-canvas-slide-badge {
-  position: absolute;
-  left: 16px;
-  bottom: 72px;
-  z-index: 2;
   display: inline-flex;
   padding: 6px 12px;
   border-radius: 999px;
@@ -3935,21 +4022,16 @@
   background: rgba(10, 14, 24, 0.68);
 }
 
-.aig-canvas-hero--landscape .aig-canvas-slide-badge,
-.aig-canvas-hero--banner .aig-canvas-slide-badge {
-  bottom: 58px;
+.aig-canvas-hero--landscape .aig-canvas-slide-headline,
+.aig-canvas-hero--banner .aig-canvas-slide-headline {
+  font-size: clamp(15px, 1.6vw, 20px);
 }
 
 .aig-canvas-slide-headline {
-  position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 16px;
-  z-index: 2;
   margin: 0;
-  font-size: clamp(16px, 1.8vw, 22px);
+  font-size: clamp(15px, 1.7vw, 20px);
   font-weight: 700;
-  line-height: 1.22;
+  line-height: 1.25;
   letter-spacing: -0.03em;
   text-align: left;
   color: #fff;
@@ -4368,12 +4450,10 @@
 
   .aig-canvas-stage {
     border-left: none;
-    border-top: none;
+    border-top: 1px solid color-mix(in srgb, var(--border-color) 55%, transparent);
     min-height: 320px;
     order: -1;
-    background:
-      radial-gradient(ellipse 60% 50% at 50% 30%, rgba(var(--primary-rgb), 0.08), transparent 70%),
-      color-mix(in srgb, var(--bg-surface) 70%, var(--bg-card));
+    background: transparent;
   }
 
   .aig-canvas-stage::before {

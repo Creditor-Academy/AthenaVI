@@ -784,13 +784,19 @@ function formatPreviewSrc(formatId) {
 
 function canvasWashTone(id) {
   const s = String(id || '').toLowerCase()
-  if (s.includes('portrait') || s.includes('story') || s.includes('process') || s.includes('cycle')) {
-    return 'mist'
-  }
-  if (s.includes('square') || s.includes('post') || s.includes('stats') || s.includes('list')) {
-    return 'ice'
-  }
+  if (s.includes('portrait') || s.includes('story')) return 'mist'
+  if (s.includes('square') || s.includes('post')) return 'ice'
   return 'deep'
+}
+
+function CanvasSmoke({ tone = 'deep' }) {
+  return (
+    <span className={`aig-canvas-smoke aig-canvas-smoke--${tone}`} aria-hidden>
+      <i />
+      <i />
+      <i />
+    </span>
+  )
 }
 
 function formatMockupKind(format) {
@@ -874,48 +880,39 @@ function canvasCardSize(format, role) {
   }
 }
 
-function CanvasPeek({ format, onSelect, layoutId, infographic }) {
+function CanvasPeek({ item, format, onSelect, infographic }) {
   const size = canvasCardSize(format, 'peek')
+  const label = item.label || item.name
   return (
     <button
       type="button"
       className={`aig-canvas-peek${infographic ? ' aig-canvas-peek--board' : ''}`}
       style={size}
-      onClick={() => onSelect(format.id)}
-      aria-label={`Select ${format.name}`}
+      onClick={() => onSelect(item.id)}
+      aria-label={`Select ${label}`}
     >
       {infographic ? (
         <span className="aig-canvas-peek-board">
-          <LayoutSchematic layoutId={layoutId} size="thumb" />
+          <LayoutSchematic layoutId={item.id} size="thumb" />
         </span>
       ) : (
-        <img src={formatPreviewSrc(format.id)} alt="" draggable={false} />
+        <CanvasSmoke tone={canvasWashTone(item.id)} />
       )}
     </button>
   )
 }
 
-function CanvasCarousel({
-  formats,
-  selectedId,
-  onSelect,
-  mode = 'image',
-  layoutId,
-  layoutName,
-  layoutDescription,
-}) {
-  const list = formats?.length ? formats : []
-  const activeIndex = Math.max(
-    0,
-    list.findIndex((f) => f.id === selectedId)
-  )
+function CanvasCarousel({ items, selectedId, onSelect, mode = 'image', format }) {
+  const list = items?.length ? items : []
+  const activeIndex = Math.max(0, list.findIndex((item) => item.id === selectedId))
   const active = list[activeIndex]
   const prev = list.length > 1 ? list[(activeIndex - 1 + list.length) % list.length] : null
   const next = list.length > 1 ? list[(activeIndex + 1) % list.length] : null
   const nextDistinct = next && next.id !== prev?.id ? next : null
   const infographic = mode === 'infographic'
+  const cardFormat = infographic ? format : active || format
 
-  if (!active) {
+  if (!active || !cardFormat) {
     return (
       <div className="aig-canvas-preview aig-canvas-preview--empty">
         <div className="aig-canvas-empty-art">
@@ -927,21 +924,20 @@ function CanvasCarousel({
     )
   }
 
-  const hero = canvasCardSize(active, 'hero')
-  const copy = formatShowcaseCopy(active)
-  const kind = infographic ? 'board' : formatMockupKind(active)
-  const headline = infographic
-    ? layoutDescription || layoutName || 'Structured layout'
-    : copy.headline
+  const hero = canvasCardSize(cardFormat, 'hero')
+  const copy = formatShowcaseCopy(cardFormat)
+  const kind = infographic ? 'board' : formatMockupKind(cardFormat)
+  const label = active.label || active.name
+  const headline = infographic ? active.description || label : copy.headline
   const badge = infographic
-    ? `${layoutName || 'Infographic'} · ${active.name}`
-    : `${activeIndex + 1} · ${active.name}`
+    ? `${activeIndex + 1} · ${label}`
+    : `${activeIndex + 1} · ${label}`
 
   return (
     <div className="aig-canvas-showcase">
       <div className="aig-canvas-showcase-row">
         {prev ? (
-          <CanvasPeek format={prev} onSelect={onSelect} infographic={infographic} layoutId={layoutId} />
+          <CanvasPeek item={prev} format={cardFormat} onSelect={onSelect} infographic={infographic} />
         ) : (
           <span />
         )}
@@ -958,26 +954,26 @@ function CanvasCarousel({
           <AnimatePresence mode="wait">
             {infographic ? (
               <motion.div
-                key={layoutId || 'auto'}
+                key={active.id}
                 className="aig-canvas-hero-board"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.22 }}
               >
-                <LayoutSchematic layoutId={layoutId || 'auto'} size="stage" />
+                <LayoutSchematic layoutId={active.id} size="stage" />
               </motion.div>
             ) : (
-              <motion.img
+              <motion.div
                 key={active.id}
-                src={formatPreviewSrc(active.id)}
-                alt=""
-                draggable={false}
+                className="aig-canvas-hero-fill"
                 initial={{ opacity: 0.35 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.22 }}
-              />
+              >
+                <CanvasSmoke tone={canvasWashTone(active.id)} />
+              </motion.div>
             )}
           </AnimatePresence>
           <div className="aig-canvas-slide-shade" aria-hidden />
@@ -985,217 +981,30 @@ function CanvasCarousel({
             <i />
             Preview
           </span>
-          <span className="aig-canvas-slide-badge">{badge}</span>
-          <p className="aig-canvas-slide-headline">{headline}</p>
+          <div className="aig-canvas-slide-copy">
+            <span className="aig-canvas-slide-badge">{badge}</span>
+            <p className="aig-canvas-slide-headline">{headline}</p>
+          </div>
         </motion.div>
         {nextDistinct ? (
           <CanvasPeek
-            format={nextDistinct}
+            item={nextDistinct}
+            format={cardFormat}
             onSelect={onSelect}
             infographic={infographic}
-            layoutId={layoutId}
           />
         ) : (
           <span />
         )}
       </div>
       <p className="aig-canvas-hero-meta">
-        <strong>{infographic && layoutName ? `${layoutName} · ${active.name}` : active.name}</strong>
+        <strong>
+          {infographic ? `${label} · ${cardFormat.name}` : cardFormat.name}
+        </strong>
         <span>
-          {active.width} × {active.height} px
+          {cardFormat.width} × {cardFormat.height} px
         </span>
       </p>
-    </div>
-  )
-}
-
-function CanvasPicker({
-  items,
-  selectedId,
-  format,
-  variant = 'image',
-  formats = [],
-  formatId,
-  onSelect,
-  onFormat,
-  onContinue,
-  mode,
-  onMode,
-  modeLocked,
-}) {
-  const list = items?.length ? items : []
-  const currentIndex = Math.max(0, list.findIndex((item) => item.id === selectedId))
-  const activeItem = list[currentIndex] || list[0]
-  const activeFormat = format || formats[0]
-  const copy = formatShowcaseCopy(activeFormat)
-  const infographic = variant === 'infographic'
-  const headline = infographic
-    ? activeItem?.description || 'Let the model pick a layout'
-    : copy.headline
-
-  if (!activeFormat || !activeItem) return null
-
-  const prev = list.length > 1 ? list[(currentIndex - 1 + list.length) % list.length] : null
-  const next = list.length > 1 ? list[(currentIndex + 1) % list.length] : null
-  const nextDistinct = next && next.id !== prev?.id ? next : null
-  const Icon = infographic ? layoutPillIcon(activeItem.id) : formatPillIcon(activeFormat)
-
-  const renderPeek = (item) => {
-    if (!item) return <span />
-    const peekFormat = infographic ? activeFormat : item.format || item
-    const size = canvasCardSize(peekFormat, 'peek')
-    return (
-      <button
-        type="button"
-        className="aig-choose-peek"
-        style={size}
-        onClick={() => onSelect(item)}
-        aria-label={`Select ${item.label}`}
-      >
-        <span className={`aig-canvas-wash aig-canvas-wash--${canvasWashTone(item.id)}`} aria-hidden />
-        {infographic ? (
-          <span className="aig-choose-peek-board">
-            <LayoutSchematic layoutId={item.id} size="thumb" />
-          </span>
-        ) : null}
-      </button>
-    )
-  }
-
-  return (
-    <div className={`aig-choose${infographic ? ' is-info' : ''}`}>
-      <aside className="aig-choose-col">
-        <h2>{infographic ? 'Choose canvas & layout' : 'Choose your canvas'}</h2>
-        <p className="aig-choose-lead">
-          {infographic
-            ? 'Pick a size, then a structure. Auto is fine if you are not sure.'
-            : 'Pick a format that fits your creative vision.'}
-        </p>
-
-        <nav className="aig-choose-mode" aria-label="Studio mode">
-          {MODE_TABS.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              className={mode === tab.id ? 'is-on' : ''}
-              aria-pressed={mode === tab.id}
-              disabled={modeLocked}
-              onClick={() => onMode?.(tab.id)}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-
-        {infographic && formats.length ? (
-          <div className="aig-choose-sizes" role="listbox" aria-label="Canvas size">
-            {formats.map((fmt) => {
-              const SizeIcon = formatPillIcon(fmt)
-              return (
-                <button
-                  key={fmt.id}
-                  type="button"
-                  className={formatId === fmt.id ? 'is-on' : ''}
-                  aria-pressed={formatId === fmt.id}
-                  onClick={() => onFormat?.(fmt)}
-                >
-                  <SizeIcon size={13} strokeWidth={2.2} />
-                  {fmt.name}
-                </button>
-              )
-            })}
-          </div>
-        ) : null}
-
-        {infographic ? <p className="aig-choose-kicker">Structure</p> : null}
-        <div
-          className={infographic ? 'aig-choose-grid' : 'aig-choose-pills'}
-          role="listbox"
-          aria-label={infographic ? 'Structures' : 'Formats'}
-        >
-          {list.map((item) => {
-            const on = item.id === activeItem.id
-            const PillIcon = infographic
-              ? layoutPillIcon(item.id)
-              : formatPillIcon(item.format || item)
-            return (
-              <button
-                key={item.id}
-                type="button"
-                className={`aig-choose-opt${infographic ? ' aig-choose-sq' : ''}${on ? ' is-on' : ''}`}
-                aria-pressed={on}
-                onClick={() => onSelect(item)}
-              >
-                {infographic ? (
-                  <span className="aig-choose-sq-art" aria-hidden>
-                    <LayoutSchematic layoutId={item.id} size="thumb" />
-                  </span>
-                ) : (
-                  <PillIcon size={16} strokeWidth={2.1} />
-                )}
-                <strong>{item.label}</strong>
-              </button>
-            )
-          })}
-        </div>
-
-        <button type="button" className="aig-choose-go" onClick={onContinue}>
-          Continue
-          <ChevronRight size={16} strokeWidth={2.4} />
-        </button>
-      </aside>
-
-      <div className="aig-choose-preview">
-        <div className="aig-choose-track">
-          {renderPeek(prev)}
-          <div
-            className="aig-choose-hero"
-            style={{ aspectRatio: `${activeFormat.width} / ${activeFormat.height}` }}
-          >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeItem.id}
-                className="aig-choose-hero-fill"
-                initial={{ opacity: 0.4 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.22 }}
-              >
-                <span
-                  className={`aig-canvas-wash aig-canvas-wash--${canvasWashTone(activeItem.id)}`}
-                  aria-hidden
-                />
-                {infographic ? (
-                  <div className="aig-choose-hero-board">
-                    <LayoutSchematic layoutId={activeItem.id} size="stage" />
-                  </div>
-                ) : null}
-              </motion.div>
-            </AnimatePresence>
-            <div className="aig-choose-hero-shade" aria-hidden />
-            <span className="aig-choose-live">
-              <i />
-              Preview
-            </span>
-            <div className="aig-choose-hero-copy">
-              <span>
-                {currentIndex + 1} · {activeItem.label}
-              </span>
-              <p>{headline}</p>
-            </div>
-          </div>
-          {renderPeek(nextDistinct)}
-        </div>
-        <p className="aig-choose-meta">
-          <strong>
-            <Icon size={14} strokeWidth={2.2} />
-            {infographic ? `${activeItem.label} · ${activeFormat.name}` : activeFormat.name}
-          </strong>
-          <span>
-            {activeFormat.width} × {activeFormat.height} px
-          </span>
-        </p>
-      </div>
     </div>
   )
 }
@@ -2433,36 +2242,136 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                 <span className="aig-canvas-orb aig-canvas-orb--c" />
               </div>
               <div className="aig-canvas-board">
-                <div className={`aig-canvas-stage-wrap${mode === 'infographic' ? ' is-info' : ''}`}>
-                  <CanvasPicker
-                    items={
-                      mode === 'infographic'
-                        ? archetypeOptions.map((a) => ({
-                            id: a.id,
-                            label: a.label,
-                            description: a.description,
-                          }))
-                        : formatsForMode.map((f) => ({
-                            ...f,
-                            label: f.name,
-                            format: f,
-                          }))
-                    }
-                    selectedId={mode === 'infographic' ? infoLayout : formatId}
-                    format={selectedFormat}
-                    formats={formatsForMode}
-                    formatId={formatId}
-                    variant={mode === 'infographic' ? 'infographic' : 'image'}
-                    mode={mode}
-                    modeLocked={threadModeLocked}
-                    onMode={switchMode}
-                    onFormat={(fmt) => setFormatId(fmt.id)}
-                    onSelect={(item) => {
-                      if (mode === 'infographic') setInfoLayout(item.id)
-                      else setFormatId(item.id)
-                    }}
-                    onContinue={() => setStep('options')}
-                  />
+                <div className={`aig-canvas-split${mode === 'infographic' ? ' is-info' : ''}`}>
+                  <div className="aig-canvas-picker">
+                    <header className="aig-canvas-picker-head">
+                      <div className="aig-canvas-step">
+                        <span>1</span>
+                        {mode === 'infographic' ? 'Canvas & layout' : 'Choose Canvas'}
+                      </div>
+                      <h2>
+                        {mode === 'infographic' ? 'Choose canvas & layout' : 'Choose your canvas'}
+                      </h2>
+                      <p>
+                        {mode === 'infographic'
+                          ? 'Pick a size, then a structure. Auto is fine if you are not sure.'
+                          : 'Pick a format that fits your creative vision'}
+                      </p>
+                    </header>
+
+                    <nav className="aig-choose-mode" aria-label="Studio mode">
+                      {MODE_TABS.map((tab) => (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          className={mode === tab.id ? 'is-on' : ''}
+                          aria-pressed={mode === tab.id}
+                          disabled={threadModeLocked}
+                          onClick={() => switchMode(tab.id)}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </nav>
+
+                    {mode === 'infographic' ? (
+                      <div className="aig-choose-sizes" role="listbox" aria-label="Canvas size">
+                        {formatsForMode.map((fmt) => {
+                          const SizeIcon = formatPillIcon(fmt)
+                          return (
+                            <button
+                              key={fmt.id}
+                              type="button"
+                              className={formatId === fmt.id ? 'is-on' : ''}
+                              aria-pressed={formatId === fmt.id}
+                              onClick={() => setFormatId(fmt.id)}
+                            >
+                              <SizeIcon size={13} strokeWidth={2.2} />
+                              {fmt.name}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <div className="aig-canvas-size-block">
+                        <nav className="aig-canvas-pills" aria-label="Canvas sizes">
+                          {formatsForMode.map((f) => {
+                            const Icon = formatPillIcon(f)
+                            const on = formatId === f.id
+                            return (
+                              <button
+                                key={f.id}
+                                type="button"
+                                className={`aig-canvas-pill ${on ? 'is-on' : ''}`}
+                                onClick={() => setFormatId(f.id)}
+                                aria-pressed={on}
+                              >
+                                <Icon size={16} strokeWidth={2.1} />
+                                <span>{f.name}</span>
+                              </button>
+                            )
+                          })}
+                        </nav>
+                      </div>
+                    )}
+
+                    {mode === 'infographic' ? (
+                      <>
+                        <p className="aig-choose-kicker">Structure</p>
+                        <div className="aig-choose-grid" role="listbox" aria-label="Structures">
+                          {archetypeOptions.map((item) => {
+                            const on = item.id === infoLayout
+                            return (
+                              <button
+                                key={item.id}
+                                type="button"
+                                className={`aig-choose-opt aig-choose-sq${on ? ' is-on' : ''}`}
+                                aria-pressed={on}
+                                onClick={() => setInfoLayout(item.id)}
+                              >
+                                <span className="aig-choose-sq-art" aria-hidden>
+                                  <LayoutSchematic layoutId={item.id} size="thumb" />
+                                </span>
+                                <strong>{item.label}</strong>
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </>
+                    ) : null}
+
+                    <div className="aig-canvas-actions">
+                      <button
+                        type="button"
+                        className="aig-btn aig-btn--primary aig-btn--lg aig-btn--canvas-continue"
+                        disabled={!selectedFormat}
+                        onClick={() => setStep('options')}
+                      >
+                        Continue to Editor
+                      </button>
+                    </div>
+                  </div>
+
+                  <aside className="aig-canvas-stage">
+                    <CanvasCarousel
+                      items={
+                        mode === 'infographic'
+                          ? archetypeOptions.map((a) => ({
+                              id: a.id,
+                              label: a.label,
+                              description: a.description,
+                            }))
+                          : formatsForMode
+                      }
+                      selectedId={mode === 'infographic' ? infoLayout : formatId}
+                      onSelect={(id) => {
+                        if (mode === 'infographic') setInfoLayout(id)
+                        else setFormatId(id)
+                      }}
+                      mode={mode}
+                      format={selectedFormat}
+                    />
+                  </aside>
                 </div>
               </div>
             </motion.section>
