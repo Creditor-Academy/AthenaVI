@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import LinkUnavailable from '../../../components/ui/LinkUnavailable/LinkUnavailable'
 import AIPptEditor from '../AIPptComponents/AIPptEditor'
+import PptEditorBootScreen from '../AIPptComponents/PptEditorBootScreen'
 import publicPresentationService, {
   PresentationShareUnavailableError,
 } from '../../../services/publicPresentationService'
@@ -8,6 +9,7 @@ import { PresentationRateLimitError } from '../../../services/presentationServic
 import { extractShareToken } from '../../../utils/pptShareSession'
 import { getPublicPresentationToken } from '../../../utils/authRouting'
 import { extractSlidesFromPresentation } from '../../../utils/presentationHelpers'
+import '../AIPptGenerator.css'
 import '../AIPptComponents/pptPanelUi.css'
 
 function setNoReferrerMeta() {
@@ -99,10 +101,9 @@ export default function PublicPresentation() {
 
   if (loading) {
     return (
-      <div className="aig-editor-container fade-in" style={{ placeItems: 'center', display: 'grid' }}>
-        <div className="aig-spinner" />
-        <p>Loading presentation…</p>
-      </div>
+      <PptEditorBootScreen
+        title={deck?.title || deck?.presentation?.title || ''}
+      />
     )
   }
 

@@ -3531,6 +3531,148 @@
   color: #ffffff;
 }
 
+/* --- Editor boot: same shuffle language as AIPptGenerating slide reveal --- */
+.aig-editor-boot--shuffle {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  z-index: 10;
+  font-family: var(--font-family);
+  color: var(--slides-ink, #0f172a);
+}
+
+.aig-editor-boot--shuffle .aig-bg-sky,
+.aig-editor-boot--shuffle .aig-bg-wave {
+  z-index: 0;
+}
+
+.aig-editor-boot-main {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  flex: 1;
+}
+
+.aig-editor-boot-carousel {
+  height: 420px;
+}
+
+.aig-editor-boot-card {
+  max-width: 680px;
+}
+
+.aig-editor-boot-card-stage {
+  flex: 1;
+  min-height: 0;
+  padding: 7% 7% 5%;
+  display: flex;
+  flex-direction: column;
+  gap: 3.2%;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.98)),
+    var(--boot-accent, #0f172a);
+  overflow: hidden;
+}
+
+.aig-editor-boot-card-kicker,
+.aig-editor-boot-card-heading,
+.aig-editor-boot-card-lines span,
+.aig-editor-boot-card-tiles span {
+  display: block;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0.08) 0%,
+    rgba(15, 23, 42, 0.04) 45%,
+    rgba(15, 23, 42, 0.08) 90%
+  );
+  background-size: 200% 100%;
+  animation: aig-editor-boot-shimmer 1.4s ease-in-out infinite;
+}
+
+.aig-editor-boot-card-kicker {
+  width: 16%;
+  height: 8%;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--boot-accent, #0f172a) 28%, transparent);
+}
+
+.aig-editor-boot-card-heading {
+  width: 58%;
+  height: 16%;
+  margin-top: 1%;
+}
+
+.aig-editor-boot-card-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 2.4%;
+  margin-top: 2%;
+}
+
+.aig-editor-boot-card-lines span {
+  width: 74%;
+  height: 7px;
+  min-height: 7px;
+}
+
+.aig-editor-boot-card-lines span.is-short {
+  width: 46%;
+}
+
+.aig-editor-boot-card-tiles {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3%;
+  height: 30%;
+}
+
+.aig-editor-boot-card-tiles span {
+  height: 100%;
+  border-radius: 10px;
+}
+
+@keyframes aig-editor-boot-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+.aig-editor-boot-title {
+  margin: 8px 0 0;
+  text-align: center;
+  max-width: 28ch;
+  font-size: clamp(22px, 3.2vw, 32px);
+}
+
+.aig-editor-boot--shuffle .aig-generating-text {
+  margin-top: 0;
+}
+
+.aig-editor-boot--shuffle .aig-realtime-header h3,
+.aig-editor-boot--shuffle .aig-generating-title,
+.aig-editor-boot--shuffle .aig-generating-text,
+.aig-editor-boot--shuffle .aig-realtime-title {
+  font-family: var(--font-family);
+}
+
+@media (max-width: 720px) {
+  .aig-editor-boot-carousel {
+    height: 340px;
+  }
+
+  .aig-editor-boot-card.aig-realtime-slide-card--layout {
+    height: 300px;
+    max-height: 300px;
+  }
+}
+
 /* --- STEP 6: MOCK EDITOR SCREEN --- */
 .aig-editor-container {
   display: flex;

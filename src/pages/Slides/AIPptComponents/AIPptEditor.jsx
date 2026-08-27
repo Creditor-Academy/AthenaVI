@@ -27,6 +27,7 @@ import ImageCropModal from './ImageCropModal'
 import PptQuickMenu from './PptQuickMenu'
 import SlideEditAiPanel from './SlideEditAiPanel'
 import MinimapSlidePreview from './MinimapSlidePreview'
+import PptEditorBootScreen from './PptEditorBootScreen'
 import { usePptEditorHistory } from '../../../hooks/usePptEditorHistory'
 import { usePptElementMutations } from './usePptElementMutations'
 import { computePptSmartGuides } from '../../../utils/pptSmartGuides'
@@ -1019,6 +1020,18 @@ export default function AIPptEditor({
     }
   }, [viewOnly, workspaceId])
 
+  const layoutSchemaMapRef = useRef(layoutSchemaMap)
+  const deckPackIdRef = useRef(deckPackId)
+  const bootLoadKeyRef = useRef('')
+
+  useEffect(() => {
+    layoutSchemaMapRef.current = layoutSchemaMap
+  }, [layoutSchemaMap])
+
+  useEffect(() => {
+    deckPackIdRef.current = deckPackId
+  }, [deckPackId])
+
   useEffect(() => {
     layoutRepairPassRef.current = ''
   }, [presentationId, layoutSchemaMap])
@@ -1195,13 +1208,13 @@ export default function AIPptEditor({
       data?.presentation?.deck?.themeTokens ||
       null
 
-    if (!generating && Object.keys(layoutSchemaMap).length) {
-      const packId = extractDeckPackId(data) || deckPackId
+    if (!generating && Object.keys(layoutSchemaMapRef.current || {}).length) {
+      const packId = extractDeckPackId(data) || deckPackIdRef.current
       const didRepair = await repairPresentationLayoutSlides({
         workspaceId,
         presentationId,
         slides,
-        layoutSchemaMap,
+        layoutSchemaMap: layoutSchemaMapRef.current,
         aspectRatio: resolvedAspect,
         palette: tokens?.palette || null,
         themeTokens: tokens,
@@ -1216,6 +1229,7 @@ export default function AIPptEditor({
     slides = await hydrateSlidesGraphicElements(slides)
 
     setLocalSlides(slides)
+    localSlidesRef.current = slides
     setThemeTokens(tokens)
     setFontCssUrl(
       data?.fontCssUrl ||
@@ -1224,7 +1238,7 @@ export default function AIPptEditor({
         null
     )
     setDeckStatus(deckStatusRaw)
-    setDeckPackId(extractDeckPackId(data) || deckPackId)
+    setDeckPackId(extractDeckPackId(data) || deckPackIdRef.current)
     if (data?.title || data?.presentation?.title) {
       setDeckTitle(data?.title || data?.presentation?.title)
     }
@@ -1239,7 +1253,7 @@ export default function AIPptEditor({
       })
     }
     return data
-  }, [workspaceId, presentationId, config.screenSize, config.aspectRatio, layoutSchemaMap, viewOnly])
+  }, [workspaceId, presentationId, config.screenSize, config.aspectRatio, viewOnly])
 
   useEffect(() => {
     if (viewOnly || isGenerating) return undefined
@@ -1910,12 +1924,20 @@ export default function AIPptEditor({
     if (!workspaceId || !presentationId) {
       setLocalSlides(outline || [])
       setLoading(false)
+      bootLoadKeyRef.current = ''
       return undefined
     }
     if (viewOnly) return undefined
 
+    const loadKey = `${workspaceId}:${presentationId}`
+    const isNewDeck = bootLoadKeyRef.current !== loadKey
+    bootLoadKeyRef.current = loadKey
+
     let cancelled = false
-    setLoading(true)
+    // Only show the full-screen boot UI when opening a (new) presentation —
+    // never flash it again when layout schemas / callbacks settle.
+    if (isNewDeck) setLoading(true)
+
     ;(async () => {
       try {
         await reloadPresentation()
@@ -1942,7 +1964,9 @@ export default function AIPptEditor({
       if (nudgeBurstTimerRef.current) clearTimeout(nudgeBurstTimerRef.current)
       pendingPlacementRef.current = {}
     }
-  }, [workspaceId, presentationId, outline, reloadPresentation, viewOnly])
+    // Intentionally omit reloadPresentation / outline — those identities churn and
+    // were causing a second full-screen "Loading presentation…" flash.
+  }, [workspaceId, presentationId, viewOnly]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!viewOnly || !localSlides.length) return undefined
@@ -3125,12 +3149,7 @@ export default function AIPptEditor({
   }
 
   if (loading) {
-    return (
-      <div className="aig-editor-container fade-in" style={{ placeItems: 'center', display: 'grid' }}>
-        <div className="aig-spinner" />
-        <p>Loading presentation…</p>
-      </div>
-    )
+    return <PptEditorBootScreen title={deckTitle} />
   }
 
   return (
