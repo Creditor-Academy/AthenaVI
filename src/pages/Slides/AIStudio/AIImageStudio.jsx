@@ -42,6 +42,7 @@ import { isTeamWorkspaceType } from '../../../utils/creditTransactions.js'
 import ImageGenContextAttach from '../../../components/features/image-generation/ImageGenContextAttach.jsx'
 import MarkdownPromptInput from '../../../components/features/image-generation/MarkdownPromptInput.jsx'
 import { highlightMarkdownSource } from '../../../utils/markdownPrompt.jsx'
+import '../../../components/features/image-generation/MarkdownPromptInput.css'
 import art1 from '../../../assets/ai-img-gen/art-1.jpg'
 import art2 from '../../../assets/ai-img-gen/art-2.jpg'
 import art3 from '../../../assets/ai-img-gen/art-3.jpg'
@@ -49,9 +50,6 @@ import art4 from '../../../assets/ai-img-gen/art-4.jpg'
 import art5 from '../../../assets/ai-img-gen/art-5.jpg'
 import art6 from '../../../assets/ai-img-gen/art-6.jpg'
 import canvasAtmosphere from '../../../assets/ai-img-gen/canvas-atmosphere.png'
-import formatSquarePreview from '../../../assets/ai-img-gen/format-square.jpg'
-import formatLandscapePreview from '../../../assets/ai-img-gen/format-landscape.jpg'
-import formatPortraitPreview from '../../../assets/ai-img-gen/format-portrait.jpg'
 import infoBoardPreview from '../../../assets/ai-img-gen/info-board.jpg'
 import linkedinBannerPreview from '../../../assets/ai-img-gen/Linkedin_Banner.png'
 import linkedinPostPreview from '../../../assets/ai-img-gen/Linkedin_post.png'
@@ -607,108 +605,93 @@ function LayoutSchematic({ layoutId, size = 'thumb' }) {
   const id = layoutId || 'process'
   return (
     <div className={`aig-sch aig-sch--${id} aig-sch--${size}`} aria-hidden>
-      {id === 'process' && (
-        <>
-          <span className="aig-sch-spine" />
-          {['1', '2', '3', '4'].map((n) => (
-            <span key={n} className="aig-sch-row">
-              <em>{n}</em>
-              <i />
-            </span>
-          ))}
-        </>
-      )}
-      {id === 'comparison' && (
-        <>
-          <span className="aig-sch-col">
-            <b />
-            <i />
-            <i />
-          </span>
-          <span className="aig-sch-vs">vs</span>
-          <span className="aig-sch-col">
-            <b />
-            <i />
-            <i />
-          </span>
-        </>
-      )}
-      {id === 'timeline' && (
-        <>
-          <span className="aig-sch-line" />
-          {['', '', '', ''].map((_, i) => (
-            <span key={i} className="aig-sch-tick">
-              <em />
-              <i />
-            </span>
-          ))}
-        </>
-      )}
-      {id === 'stats' && (
-        <>
-          <span className="aig-sch-kpi">
-            <b />
-            <i />
-          </span>
-          <span className="aig-sch-kpi">
-            <b />
-            <i />
-          </span>
-          <span className="aig-sch-kpi">
-            <b />
-            <i />
-          </span>
-          <span className="aig-sch-kpi">
-            <b />
-            <i />
-          </span>
-        </>
-      )}
-      {id === 'hierarchy' && (
-        <>
-          <span className="aig-sch-root" />
-          <span className="aig-sch-fork" />
-          <span className="aig-sch-kids">
-            <i />
-            <i />
-            <i />
-          </span>
-        </>
-      )}
-      {id === 'list' && (
-        <>
-          <span className="aig-sch-row">
-            <em>1</em>
-            <i />
-          </span>
-          <span className="aig-sch-row">
-            <em>2</em>
-            <i />
-          </span>
-          <span className="aig-sch-row">
-            <em>3</em>
-            <i />
-          </span>
-        </>
-      )}
-      {id === 'cycle' && (
-        <>
-          <span className="aig-sch-cycle" />
-          <span className="aig-sch-cycle-dot" />
-          <span className="aig-sch-cycle-dot" />
-          <span className="aig-sch-cycle-dot" />
-        </>
-      )}
-      {(id === 'auto' || id === 'custom' || id === 'funnel') && (
-        <>
-          <span className="aig-sch-hero" />
-          <span className="aig-sch-mosaic">
-            <i />
-            <i />
-            <i />
-          </span>
-        </>
-      )}
+      <svg viewBox="0 0 72 48" fill="none">
+        {id === 'hierarchy' && (
+          <>
+            <rect x="26" y="3" width="20" height="11" rx="3" fill="#2563eb" />
+            <path
+              d="M36 14v7M14 21h44M14 21v6M36 21v6M58 21v6"
+              stroke="#93c5fd"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
+            <rect x="6" y="27" width="16" height="11" rx="3" fill="#bfdbfe" />
+            <rect x="28" y="27" width="16" height="11" rx="3" fill="#60a5fa" />
+            <rect x="50" y="27" width="16" height="11" rx="3" fill="#bfdbfe" />
+          </>
+        )}
+        {id === 'process' && (
+          <>
+            <path d="M13 12h46M13 24h46M13 36h46" stroke="#dbeafe" strokeWidth="1.6" />
+            {[12, 24, 36].map((y, i) => (
+              <g key={y}>
+                <circle cx="13" cy={y} r="6" fill={i === 0 ? '#2563eb' : '#93c5fd'} />
+                <rect x="22" y={y - 4} width={32 - i * 4} height="8" rx="2" fill={i === 0 ? '#3b82f6' : '#bfdbfe'} />
+              </g>
+            ))}
+          </>
+        )}
+        {id === 'timeline' && (
+          <>
+            <path d="M8 24h56" stroke="#93c5fd" strokeWidth="2" strokeLinecap="round" />
+            {[14, 30, 46, 62].map((x, i) => (
+              <g key={x}>
+                <circle cx={x} cy="24" r="4.5" fill={i === 1 ? '#2563eb' : '#60a5fa'} />
+                <rect x={x - 6} y={i % 2 ? 6 : 31} width="12" height="7" rx="2" fill="#dbeafe" />
+              </g>
+            ))}
+          </>
+        )}
+        {id === 'comparison' && (
+          <>
+            <rect x="6" y="6" width="26" height="36" rx="5" fill="#eff6ff" />
+            <rect x="40" y="6" width="26" height="36" rx="5" fill="#dbeafe" />
+            <rect x="11" y="11" width="16" height="6" rx="2" fill="#2563eb" />
+            <rect x="11" y="21" width="16" height="4" rx="1.5" fill="#93c5fd" />
+            <rect x="11" y="28" width="12" height="4" rx="1.5" fill="#bfdbfe" />
+            <rect x="45" y="11" width="16" height="6" rx="2" fill="#3b82f6" />
+            <rect x="45" y="21" width="16" height="4" rx="1.5" fill="#60a5fa" />
+            <rect x="45" y="28" width="12" height="4" rx="1.5" fill="#93c5fd" />
+          </>
+        )}
+        {id === 'stats' && (
+          <>
+            <rect x="6" y="6" width="28" height="16" rx="4" fill="#dbeafe" />
+            <rect x="38" y="6" width="28" height="16" rx="4" fill="#bfdbfe" />
+            <rect x="6" y="26" width="28" height="16" rx="4" fill="#93c5fd" />
+            <rect x="38" y="26" width="28" height="16" rx="4" fill="#2563eb" />
+            <rect x="11" y="11" width="10" height="6" rx="1.5" fill="#fff" />
+            <rect x="43" y="11" width="10" height="6" rx="1.5" fill="#fff" />
+            <rect x="11" y="31" width="10" height="6" rx="1.5" fill="#fff" />
+            <rect x="43" y="31" width="10" height="6" rx="1.5" fill="#fff" opacity="0.85" />
+          </>
+        )}
+        {id === 'list' && (
+          <>
+            {[8, 20, 32].map((y, i) => (
+              <g key={y}>
+                <rect x="8" y={y} width="10" height="10" rx="3" fill={i === 0 ? '#2563eb' : '#93c5fd'} />
+                <rect x="22" y={y + 2} width={38 - i * 6} height="6" rx="2" fill={i === 0 ? '#3b82f6' : '#dbeafe'} />
+              </g>
+            ))}
+          </>
+        )}
+        {id === 'cycle' && (
+          <>
+            <circle cx="36" cy="24" r="14" stroke="#93c5fd" strokeWidth="3" strokeDasharray="8 6" />
+            <circle cx="36" cy="10" r="4.5" fill="#2563eb" />
+            <circle cx="50" cy="31" r="4.5" fill="#60a5fa" />
+            <circle cx="22" cy="31" r="4.5" fill="#93c5fd" />
+          </>
+        )}
+        {(id === 'auto' || id === 'custom' || id === 'funnel') && (
+          <>
+            <rect x="10" y="8" width="52" height="8" rx="4" fill="#2563eb" />
+            <rect x="16" y="20" width="40" height="7" rx="3.5" fill="#60a5fa" />
+            <rect x="22" y="31" width="28" height="7" rx="3.5" fill="#93c5fd" />
+          </>
+        )}
+      </svg>
     </div>
   )
 }
@@ -768,9 +751,9 @@ const SOCIAL_FORMAT_PREVIEWS = {
 }
 
 const FORMAT_PREVIEWS = {
-  square: formatSquarePreview,
-  landscape: formatLandscapePreview,
-  portrait: formatPortraitPreview,
+  square: art1,
+  landscape: art6,
+  portrait: art2,
 }
 
 function formatPreviewSrc(formatId) {
@@ -780,23 +763,6 @@ function formatPreviewSrc(formatId) {
   let h = 0
   for (let i = 0; i < s.length; i += 1) h += s.charCodeAt(i) * (i + 3)
   return CANVAS_MOCK_IMAGES[h % CANVAS_MOCK_IMAGES.length]
-}
-
-function canvasWashTone(id) {
-  const s = String(id || '').toLowerCase()
-  if (s.includes('portrait') || s.includes('story')) return 'mist'
-  if (s.includes('square') || s.includes('post')) return 'ice'
-  return 'deep'
-}
-
-function CanvasSmoke({ tone = 'deep' }) {
-  return (
-    <span className={`aig-canvas-smoke aig-canvas-smoke--${tone}`} aria-hidden>
-      <i />
-      <i />
-      <i />
-    </span>
-  )
 }
 
 function formatMockupKind(format) {
@@ -896,7 +862,7 @@ function CanvasPeek({ item, format, onSelect, infographic }) {
           <LayoutSchematic layoutId={item.id} size="thumb" />
         </span>
       ) : (
-        <CanvasSmoke tone={canvasWashTone(item.id)} />
+        <img src={formatPreviewSrc(item.id)} alt="" draggable={false} />
       )}
     </button>
   )
@@ -937,7 +903,12 @@ function CanvasCarousel({ items, selectedId, onSelect, mode = 'image', format })
     <div className="aig-canvas-showcase">
       <div className="aig-canvas-showcase-row">
         {prev ? (
-          <CanvasPeek item={prev} format={cardFormat} onSelect={onSelect} infographic={infographic} />
+          <CanvasPeek
+            item={prev}
+            format={infographic ? cardFormat : prev}
+            onSelect={onSelect}
+            infographic={infographic}
+          />
         ) : (
           <span />
         )}
@@ -964,16 +935,16 @@ function CanvasCarousel({ items, selectedId, onSelect, mode = 'image', format })
                 <LayoutSchematic layoutId={active.id} size="stage" />
               </motion.div>
             ) : (
-              <motion.div
+              <motion.img
                 key={active.id}
-                className="aig-canvas-hero-fill"
+                src={formatPreviewSrc(active.id)}
+                alt=""
+                draggable={false}
                 initial={{ opacity: 0.35 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.22 }}
-              >
-                <CanvasSmoke tone={canvasWashTone(active.id)} />
-              </motion.div>
+              />
             )}
           </AnimatePresence>
           <div className="aig-canvas-slide-shade" aria-hidden />
@@ -989,7 +960,7 @@ function CanvasCarousel({ items, selectedId, onSelect, mode = 'image', format })
         {nextDistinct ? (
           <CanvasPeek
             item={nextDistinct}
-            format={cardFormat}
+            format={infographic ? cardFormat : nextDistinct}
             onSelect={onSelect}
             infographic={infographic}
           />
@@ -1610,13 +1581,25 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
     refreshCredits(workspaceId)
   }
 
-  const openCreditsGate = (snapshot, needed) => {
+  const openCreditsGate = (snapshot, needed, manage = false) => {
     setCreditsGate({
       needed: Number(needed) || 6,
       pool: Number(snapshot?.pool) || 0,
       personal: Number(snapshot?.personal) || 0,
       isTeam: Boolean(snapshot?.isTeam),
+      manage: Boolean(manage),
     })
+  }
+
+  const openCreditsPanel = async () => {
+    const needed = Number(estimateAc) > 0 ? Number(estimateAc) : 6
+    const snapshot =
+      (await refreshCredits(workspaceId)) || {
+        pool: creditBalance,
+        personal: personalCredits,
+        isTeam: isTeamPool,
+      }
+    openCreditsGate(snapshot, needed, true)
   }
 
   const assertCreditsForGenerate = async () => {
@@ -2091,10 +2074,15 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
           <span>Chats</span>
           {savedChats.length > 0 && <em>{savedChats.length}</em>}
         </button>
-        <div className="aig-float-credits" aria-label="Credits balance">
+        <button
+          type="button"
+          className="aig-float-credits"
+          aria-label="Credits balance"
+          onClick={openCreditsPanel}
+        >
           <Sparkles size={13} strokeWidth={2.25} />
           <span>{creditBalance == null ? '—' : Math.round(creditBalance).toLocaleString()} AC</span>
-        </div>
+        </button>
       </div>
 
       <div className="aig-body">
@@ -2244,6 +2232,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
               <div className="aig-canvas-board">
                 <div className={`aig-canvas-split${mode === 'infographic' ? ' is-info' : ''}`}>
                   <div className="aig-canvas-picker">
+                    <div className="aig-canvas-picker-scroll">
                     <header className="aig-canvas-picker-head">
                       <div className="aig-canvas-step">
                         <span>1</span>
@@ -2329,8 +2318,10 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                                 aria-pressed={on}
                                 onClick={() => setInfoLayout(item.id)}
                               >
-                                <span className="aig-choose-sq-art" aria-hidden>
-                                  <LayoutSchematic layoutId={item.id} size="thumb" />
+                                <span className="aig-choose-sq-face" aria-hidden>
+                                  <span className="aig-choose-sq-art">
+                                    <LayoutSchematic layoutId={item.id} size="thumb" />
+                                  </span>
                                 </span>
                                 <strong>{item.label}</strong>
                               </button>
@@ -2339,6 +2330,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                         </div>
                       </>
                     ) : null}
+                    </div>
 
                     <div className="aig-canvas-actions">
                       <button
@@ -2537,7 +2529,12 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                       <span>Chats</span>
                       {savedChats.length > 0 && <em>{savedChats.length}</em>}
                     </button>
-                    <div className="aig-work-credits" aria-label="Credits balance">
+                    <button
+                      type="button"
+                      className="aig-work-credits"
+                      aria-label="Credits balance"
+                      onClick={openCreditsPanel}
+                    >
                       <Sparkles size={13} strokeWidth={2.25} />
                       <span>
                         {creditBalance == null
@@ -2545,7 +2542,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                           : Math.round(creditBalance).toLocaleString()}{' '}
                         AC
                       </span>
-                    </div>
+                    </button>
                   </div>
                 </header>
 
@@ -2582,7 +2579,9 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                                 ))}
                               </div>
                             )}
-                            <p className="aig-work-meta-prompt">{heroPromptText}</p>
+                            <div className="aig-work-meta-prompt aig-md-preview">
+                              {highlightMarkdownSource(heroPromptText)}
+                            </div>
                             {genWarnings.length > 0 && (
                               <p className="aig-chat-warn">
                                 Dense sections were simplified: {genWarnings.join(' · ')}
@@ -3133,10 +3132,21 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                 <X size={16} />
               </button>
               <span className="aig-credits-sheet-kicker">Workspace pool</span>
-              <h3 id="aig-credits-title">This workspace is out of AC</h3>
+              <h3 id="aig-credits-title">
+                {creditsGate.manage ? 'Workspace AC' : 'This workspace is out of AC'}
+              </h3>
               <p>
-                Generation costs <strong>{creditsGate.needed} AC</strong>. Move some from your
-                personal balance, or buy more.
+                {creditsGate.manage ? (
+                  <>
+                    A generation costs about <strong>{creditsGate.needed} AC</strong>. Transfer
+                    from your personal balance, or buy more.
+                  </>
+                ) : (
+                  <>
+                    Generation costs <strong>{creditsGate.needed} AC</strong>. Move some from your
+                    personal balance, or buy more.
+                  </>
+                )}
               </p>
               <div className="aig-credits-sheet-pills">
                 <span>
@@ -3150,7 +3160,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                 </span>
               </div>
               <div className="aig-credits-sheet-actions">
-                {creditsGate.isTeam && creditsGate.personal > 0 && (
+                {creditsGate.isTeam && (creditsGate.manage || creditsGate.personal > 0) && (
                   <button
                     type="button"
                     className="aig-credits-sheet-btn aig-credits-sheet-btn--ghost"
