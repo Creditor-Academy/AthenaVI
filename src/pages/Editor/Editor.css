@@ -2064,6 +2064,23 @@ kbd.shortcut-key {
 
 .video-clip-overflow-paint {
     pointer-events: none;
+    /* Transform + overflow mask live here so rotation matches PPT behavior */
+}
+
+.video-clip-overflow-paint > * {
+    pointer-events: auto;
+}
+
+.video-clip-chrome-layer {
+    pointer-events: none;
+}
+
+.video-clip-chrome-layer .sel-handle,
+.video-clip-chrome-layer .sel-overlay__move,
+.video-clip-chrome-layer .sel-overlay__rotate-handle,
+.video-clip-chrome-layer .ppt-text-selection-overlay button,
+.video-clip-chrome-layer button {
+    pointer-events: auto;
 }
 
 .video-clip-overflow-paint > * {
