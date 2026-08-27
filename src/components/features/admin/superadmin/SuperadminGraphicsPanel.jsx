@@ -13,6 +13,7 @@ import {
   ExternalLink,
   ChevronLeft,
   ChevronRight,
+  Save,
 } from 'lucide-react'
 import superadminService, { SuperadminApiError } from '../../../../services/superadminService'
 import '../../../../pages/AdminPortal/SuperadminGraphicsPortal.css'
@@ -209,6 +210,8 @@ export default function SuperadminGraphicsPanel() {
   const [giRateLimit, setGiRateLimit] = useState(null)
   const [giLoading, setGiLoading] = useState(false)
   const [giError, setGiError] = useState('')
+  const [giSavingPackId, setGiSavingPackId] = useState('')
+  const [giSaveMessage, setGiSaveMessage] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -255,6 +258,37 @@ export default function SuperadminGraphicsPanel() {
       setGiLoading(false)
     }
   }, [giKind, giCategoryId, giPackId, giQ, giPage])
+
+  const saveGiIconPack = useCallback(
+    async (packId, packName) => {
+      if (!packId || giSavingPackId) return
+      setGiSavingPackId(packId)
+      setGiSaveMessage('')
+      setGiError('')
+      try {
+        const data = await superadminService.saveGetIllustrationsIconPack(packId, {
+          publishAssets: true,
+        })
+        const saved = data.saved ?? 0
+        const skipped = data.skipped ?? 0
+        const failed = data.failed ?? 0
+        const total = data.total ?? 0
+        setGiSaveMessage(
+          `Saved “${data.packName || packName || 'pack'}”: ${saved} new, ${skipped} already saved, ${failed} failed (${total} total).`
+        )
+        if (viewMode === 'library') load()
+      } catch (err) {
+        setGiError(
+          err instanceof SuperadminApiError
+            ? err.message
+            : err.message || 'Failed to save icon pack'
+        )
+      } finally {
+        setGiSavingPackId('')
+      }
+    },
+    [giSavingPackId, viewMode, load]
+  )
 
   useEffect(() => {
     if (viewMode === 'library') load()
@@ -578,6 +612,9 @@ export default function SuperadminGraphicsPanel() {
 
         {viewMode === 'library' && error ? <p className="sg-alert">{error}</p> : null}
         {viewMode === 'getillustrations' && giError ? <p className="sg-alert">{giError}</p> : null}
+        {viewMode === 'getillustrations' && giSaveMessage ? (
+          <p className="sg-alert sg-alert--ok">{giSaveMessage}</p>
+        ) : null}
         {viewMode === 'getillustrations' && !giConfigured ? (
           <p className="sg-alert">
             Set <code>GETILLUSTRATIONS_API_KEY</code> on the backend to browse free assets.
@@ -605,19 +642,35 @@ export default function SuperadminGraphicsPanel() {
                 </button>
               ) : null}
               {giCategories.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  className={`sg-gi-cat ${giActiveCategoryId === c.id ? 'is-active' : ''}`}
-                  onClick={() => {
-                    setGiPage(1)
-                    if (giKind === 'illustration') setGiCategoryId(c.id)
-                    else setGiPackId(c.id)
-                  }}
-                >
-                  <span>{c.name}</span>
-                  {c.count != null ? <em>{c.count}</em> : null}
-                </button>
+                <div key={c.id} className={`sg-gi-cat-row ${giActiveCategoryId === c.id ? 'is-active' : ''}`}>
+                  <button
+                    type="button"
+                    className={`sg-gi-cat ${giActiveCategoryId === c.id ? 'is-active' : ''}`}
+                    onClick={() => {
+                      setGiPage(1)
+                      if (giKind === 'illustration') setGiCategoryId(c.id)
+                      else setGiPackId(c.id)
+                    }}
+                  >
+                    <span>{c.name}</span>
+                    {c.count != null ? <em>{c.count}</em> : null}
+                  </button>
+                  {giKind === 'icon' ? (
+                    <button
+                      type="button"
+                      className="sg-btn sg-btn--sm sg-gi-cat-save"
+                      title={`Save all icons from ${c.name} into the graphics library`}
+                      disabled={Boolean(giSavingPackId) || !giConfigured}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        saveGiIconPack(c.id, c.name)
+                      }}
+                    >
+                      <Save size={13} />
+                      {giSavingPackId === c.id ? 'Saving…' : 'Save'}
+                    </button>
+                  ) : null}
+                </div>
               ))}
             </aside>
 

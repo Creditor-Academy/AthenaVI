@@ -939,6 +939,32 @@
   cursor: pointer;
 }
 
+.sg-gi-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sg-gi-cat-row .sg-gi-cat {
+  flex: 1;
+  min-width: 0;
+}
+
+.sg-gi-cat-save {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.sg-gi-cat-row.is-active .sg-gi-cat-save {
+  border-color: #c7d2fe;
+}
+
+.sg-alert--ok {
+  background: #ecfdf5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+
 .sg-gi-cat:hover {
   background: var(--sg-soft);
 }
