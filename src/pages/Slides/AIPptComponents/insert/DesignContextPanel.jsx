@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { FiCrop, FiImage, FiLock, FiUnlock, FiRefreshCw } from 'react-icons/fi'
 import ElementToolbar from './ElementToolbar'
 import ElementPropertiesPanel from '../ElementPropertiesPanel'
 import SlideTransitionPicker from './SlideTransitionPicker'
@@ -19,6 +20,11 @@ import '../pptEditorExtras.css'
 import '../pptPanelUi.css'
 
 const DEFAULT_SLIDE_BG = '#FFFFFF'
+const IMAGE_FIT_OPTIONS = [
+  { value: 'cover', label: 'Cover' },
+  { value: 'contain', label: 'Contain' },
+  { value: 'fill', label: 'Fill' },
+]
 
 export { DEFAULT_SLIDE_BG }
 
@@ -72,101 +78,118 @@ function SlideDesignSection({
   }
 
   return (
-    <>
-      <div className="ppt-slide-panel-section">
-        <div className="ppt-slide-panel-label">Background</div>
-        <div className="ppt-slide-panel-row">
-          <ColorFillPicker
-            title="Slide background"
-            value={slideBackgroundFill(slide, DEFAULT_SLIDE_BG)}
-            palette={themeVisual?.palette}
-            disabled={disabled}
-            fallbackHex={DEFAULT_SLIDE_BG}
-            onChange={(fill) => {
-              if (fill?.type === 'solid') onBackgroundColorChange?.(fill.color || DEFAULT_SLIDE_BG)
-              else onBackgroundGradientChange?.(fill)
-            }}
-          />
-          <button
-            type="button"
-            className="ppt-slide-panel-btn"
-            disabled={disabled}
-            onClick={() => onBackgroundColorChange?.(DEFAULT_SLIDE_BG)}
-          >
-            Reset to white
-          </button>
-        </div>
-      </div>
-
-      <div className="ppt-slide-panel-section">
-        <div className="ppt-slide-panel-label">Background image</div>
-        <button
-          type="button"
-          className="ppt-slide-panel-btn ppt-slide-panel-btn--block"
-          disabled={disabled}
-          onClick={() => onAddBackgroundImage?.()}
-        >
-          Add background image
-        </button>
-      </div>
-
-      <div className="ppt-slide-panel-section">
-        <div className="ppt-slide-panel-label">Similar layouts</div>
-        {layoutLoading ? (
-          <div className="ppt-slide-layer-empty">Loading layouts…</div>
-        ) : similarLayouts.length ? (
-          <div className="ppt-similar-layouts" role="list">
-            {similarLayouts.map((tpl) => {
-              const id = templateRecordId(tpl)
-              const layoutId = templateLayoutId(tpl)
-              const schema =
-                tpl?.schema ||
-                resolveLayoutSchemaById(layoutId, layoutSchemaMap) ||
-                null
-              const isActive =
-                (selectedLayoutId && id === String(selectedLayoutId)) ||
-                (currentLayoutId && layoutId === currentLayoutId)
-              return (
-                <button
-                  key={id || layoutId}
-                  type="button"
-                  role="listitem"
-                  className={`ppt-similar-layout-card ${isActive ? 'is-selected' : ''}`}
-                  disabled={disabled || !id}
-                  title={tpl.name || tpl.label || layoutId || 'Apply layout'}
-                  onClick={() => handlePickSimilar(tpl)}
-                >
-                  <div className="ppt-similar-layout-thumb">
-                    <SimilarLayoutThumb schema={schema} aspectRatio={aspectRatio} />
-                  </div>
-                  <span className="ppt-similar-layout-name">
-                    {tpl.name || tpl.label || layoutId || 'Layout'}
-                  </span>
-                </button>
-              )
-            })}
+    <div className="ppt-props-stack">
+      <section className="ppt-props-group">
+        <header className="ppt-props-group-head">
+          <h3 className="ppt-props-group-title">Background</h3>
+        </header>
+        <div className="ppt-props-group-body">
+          <div className="ppt-props-row ppt-props-row--fill">
+            <span className="ppt-props-row-label">Color</span>
+            <div className="ppt-props-row-control">
+              <ColorFillPicker
+                title="Slide background"
+                value={slideBackgroundFill(slide, DEFAULT_SLIDE_BG)}
+                palette={themeVisual?.palette}
+                disabled={disabled}
+                fallbackHex={DEFAULT_SLIDE_BG}
+                onChange={(fill) => {
+                  if (fill?.type === 'solid') onBackgroundColorChange?.(fill.color || DEFAULT_SLIDE_BG)
+                  else onBackgroundGradientChange?.(fill)
+                }}
+              />
+            </div>
           </div>
-        ) : (
-          <div className="ppt-slide-layer-empty">No similar layouts yet</div>
-        )}
-      </div>
+          <div className="ppt-props-actions">
+            <button
+              type="button"
+              className="ppt-props-action-btn"
+              disabled={disabled}
+              onClick={() => onAddBackgroundImage?.()}
+            >
+              <FiImage size={15} aria-hidden />
+              Add image
+            </button>
+            <button
+              type="button"
+              className="ppt-props-action-btn ppt-props-action-btn--ghost"
+              disabled={disabled}
+              onClick={() => onBackgroundColorChange?.(DEFAULT_SLIDE_BG)}
+            >
+              <FiRefreshCw size={14} aria-hidden />
+              Reset
+            </button>
+          </div>
+        </div>
+      </section>
 
-      <div className="ppt-slide-panel-section">
-        <div className="ppt-slide-panel-label">Slide transition</div>
-        <SlideTransitionPicker
-          value={currentTransition}
-          onChange={onChangeTransition}
-          disabled={disabled}
-          compact
-        />
-      </div>
+      <section className="ppt-props-group">
+        <header className="ppt-props-group-head">
+          <h3 className="ppt-props-group-title">Layouts</h3>
+        </header>
+        <div className="ppt-props-group-body">
+          {layoutLoading ? (
+            <div className="ppt-props-empty">Loading layouts…</div>
+          ) : similarLayouts.length ? (
+            <div className="ppt-similar-layouts" role="list">
+              {similarLayouts.map((tpl) => {
+                const id = templateRecordId(tpl)
+                const layoutId = templateLayoutId(tpl)
+                const schema =
+                  tpl?.schema ||
+                  resolveLayoutSchemaById(layoutId, layoutSchemaMap) ||
+                  null
+                const isActive =
+                  (selectedLayoutId && id === String(selectedLayoutId)) ||
+                  (currentLayoutId && layoutId === currentLayoutId)
+                return (
+                  <button
+                    key={id || layoutId}
+                    type="button"
+                    role="listitem"
+                    className={`ppt-similar-layout-card ${isActive ? 'is-selected' : ''}`}
+                    disabled={disabled || !id}
+                    title={tpl.name || tpl.label || layoutId || 'Apply layout'}
+                    onClick={() => handlePickSimilar(tpl)}
+                  >
+                    <div className="ppt-similar-layout-thumb">
+                      <SimilarLayoutThumb schema={schema} aspectRatio={aspectRatio} />
+                    </div>
+                    <span className="ppt-similar-layout-name">
+                      {tpl.name || tpl.label || layoutId || 'Layout'}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="ppt-props-empty">No similar layouts yet</div>
+          )}
+        </div>
+      </section>
 
-      <div className="ppt-slide-panel-section">
-        <div className="ppt-slide-panel-label">Slide style defaults</div>
-        <div className="ppt-slide-style-grid">
+      <section className="ppt-props-group">
+        <header className="ppt-props-group-head">
+          <h3 className="ppt-props-group-title">Transition</h3>
+        </header>
+        <div className="ppt-props-group-body">
+          <SlideTransitionPicker
+            value={currentTransition}
+            onChange={onChangeTransition}
+            disabled={disabled}
+            compact
+          />
+        </div>
+      </section>
+
+      <section className="ppt-props-group">
+        <header className="ppt-props-group-head">
+          <h3 className="ppt-props-group-title">Default fonts</h3>
+        </header>
+        <div className="ppt-props-group-body ppt-slide-style-grid">
           <div className="ppt-slide-style-row">
             <FontPicker
-              label="Header font"
+              label="Header"
               value={slideStyles?.headerFont || 'Inter'}
               disabled={disabled}
               compact
@@ -179,7 +202,7 @@ function SlideDesignSection({
           </div>
           <div className="ppt-slide-style-row">
             <FontPicker
-              label="Body font"
+              label="Body"
               value={slideStyles?.bodyFont || 'Inter'}
               disabled={disabled}
               compact
@@ -191,13 +214,17 @@ function SlideDesignSection({
             />
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="ppt-slide-panel-section">
-        <div className="ppt-slide-panel-label">Theme</div>
-        <div className="ppt-slide-panel-select">{themeVisual?.name || 'Default'}</div>
-      </div>
-    </>
+      <section className="ppt-props-group">
+        <header className="ppt-props-group-head">
+          <h3 className="ppt-props-group-title">Theme</h3>
+        </header>
+        <div className="ppt-props-group-body">
+          <div className="ppt-props-static-value">{themeVisual?.name || 'Default'}</div>
+        </div>
+      </section>
+    </div>
   )
 }
 
@@ -406,87 +433,143 @@ function ImageDesignSection({
   const canUseAsBackground = Boolean(c.url || c.src || c.thumbnailUrl)
 
   return (
-    <div className="ppt-element-props-grid ppt-image-design-panel">
-      {c.url || c.src ? (
-        <div className="ppt-design-image-preview">
+    <div className="ppt-props-stack ppt-image-design-panel">
+      {(c.url || c.src) && (
+        <section className="ppt-props-group ppt-props-group--preview">
+          <div className="ppt-design-image-preview">
           <img
             src={c.url || c.src}
             alt=""
+            className="ppt-media-flip"
             style={{
               transform: mediaFlipTransform(c),
               transformOrigin: 'center center',
             }}
           />
+          </div>
+        </section>
+      )}
+
+      <section className="ppt-props-group">
+        <header className="ppt-props-group-head">
+          <h3 className="ppt-props-group-title">Media</h3>
+        </header>
+        <div className="ppt-props-group-body">
+          <div className="ppt-props-actions ppt-props-actions--stack">
+            <button
+              type="button"
+              className="ppt-props-action-btn"
+              disabled={disabled}
+              onClick={onReplaceImage}
+            >
+              <FiImage size={15} aria-hidden />
+              Replace image
+            </button>
+            <button
+              type="button"
+              className="ppt-props-action-btn"
+              disabled={disabled}
+              onClick={onCropImage}
+            >
+              <FiCrop size={15} aria-hidden />
+              Crop &amp; fit
+            </button>
+          </div>
         </div>
-      ) : null}
-      <button
-        type="button"
-        className="ppt-slide-panel-btn ppt-slide-panel-btn--block"
-        disabled={disabled}
-        onClick={onReplaceImage}
-      >
-        Replace image
-      </button>
-      <button
-        type="button"
-        className="ppt-slide-panel-btn ppt-slide-panel-btn--block"
-        disabled={disabled}
-        onClick={onCropImage}
-      >
-        Crop & fit
-      </button>
-      <div className="ppt-element-props-row ppt-element-props-row--switch">
-        <span>Use as background</span>
-        <button
-          type="button"
-          className={`ppt-toggle-switch ${isBackground ? 'is-on' : ''}`}
-          role="switch"
-          aria-checked={isBackground}
-          aria-label="Use as background"
-          disabled={disabled || (!canUseAsBackground && !isBackground)}
-          onClick={() => onToggleUseAsBackground?.(!isBackground)}
-        />
-      </div>
-      <div className="ppt-element-props-row">
-        <span>Fit</span>
-        <select
-          value={c.fit || 'cover'}
-          disabled={disabled}
-          onChange={(e) => onChangeContent?.({ ...c, fit: e.target.value })}
-        >
-          <option value="cover">Cover</option>
-          <option value="contain">Contain</option>
-          <option value="fill">Fill</option>
-        </select>
-      </div>
-      <ElementTransformControls
-        placement={p}
-        content={c}
-        showFlip
-        disabled={disabled}
-        onChangePlacement={onChangePlacement}
-        onChangeContent={onChangeContent}
-      />
-      <div className="ppt-element-props-row">
-        <span>Opacity</span>
-        <input
-          type="range"
-          min={10}
-          max={100}
-          value={opacity}
-          disabled={disabled}
-          onChange={(e) =>
-            onChangePlacement?.({ ...p, opacity: Number(e.target.value) / 100 })
-          }
-        />
-        <span>{opacity}%</span>
-      </div>
-      <div className="ppt-element-props-row">
-        <span>Lock</span>
-        <button type="button" disabled={disabled} onClick={onToggleLock}>
-          {element?.locked ? 'Unlock' : 'Lock position'}
-        </button>
-      </div>
+      </section>
+
+      <section className="ppt-props-group">
+        <header className="ppt-props-group-head">
+          <h3 className="ppt-props-group-title">Position</h3>
+        </header>
+        <div className="ppt-props-group-body">
+          <div className="ppt-props-row ppt-props-row--stack">
+            <span className="ppt-props-row-label">Fit</span>
+            <div className="ppt-segmented" role="radiogroup" aria-label="Image fit">
+              {IMAGE_FIT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={(c.fit || 'cover') === opt.value}
+                  className={`ppt-segmented-btn ${(c.fit || 'cover') === opt.value ? 'is-active' : ''}`}
+                  disabled={disabled}
+                  onClick={() => onChangeContent?.({ fit: opt.value })}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="ppt-props-row ppt-props-row--switch">
+            <span className="ppt-props-row-label">Use as background</span>
+            <button
+              type="button"
+              className={`ppt-toggle-switch ${isBackground ? 'is-on' : ''}`}
+              role="switch"
+              aria-checked={isBackground}
+              aria-label="Use as background"
+              disabled={disabled || (!canUseAsBackground && !isBackground)}
+              onClick={() => onToggleUseAsBackground?.(!isBackground)}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="ppt-props-group">
+        <header className="ppt-props-group-head">
+          <h3 className="ppt-props-group-title">Transform</h3>
+        </header>
+        <div className="ppt-props-group-body">
+          <ElementTransformControls
+            key={element?.id || 'transform'}
+            placement={p}
+            content={c}
+            showFlip
+            disabled={disabled}
+            onChangePlacement={onChangePlacement}
+            onChangeContent={onChangeContent}
+          />
+        </div>
+      </section>
+
+      <section className="ppt-props-group">
+        <header className="ppt-props-group-head">
+          <h3 className="ppt-props-group-title">Appearance</h3>
+        </header>
+        <div className="ppt-props-group-body">
+          <div className="ppt-props-row ppt-props-row--slider">
+            <span className="ppt-props-row-label">Opacity</span>
+            <div className="ppt-props-slider">
+              <input
+                type="range"
+                min={10}
+                max={100}
+                value={opacity}
+                disabled={disabled}
+                aria-label="Opacity"
+                onChange={(e) =>
+                  onChangePlacement?.({ opacity: Number(e.target.value) / 100 })
+                }
+              />
+              <span className="ppt-props-slider-value">{opacity}%</span>
+            </div>
+          </div>
+          <div className="ppt-props-row ppt-props-row--switch">
+            <span className="ppt-props-row-label">Lock position</span>
+            <button
+              type="button"
+              className={`ppt-props-lock-btn ${element?.locked ? 'is-locked' : ''}`}
+              disabled={disabled}
+              onClick={onToggleLock}
+              aria-pressed={!!element?.locked}
+            >
+              {element?.locked ? <FiLock size={14} aria-hidden /> : <FiUnlock size={14} aria-hidden />}
+              {element?.locked ? 'Locked' : 'Unlocked'}
+            </button>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }

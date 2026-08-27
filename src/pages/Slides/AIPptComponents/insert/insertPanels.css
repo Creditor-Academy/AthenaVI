@@ -1857,6 +1857,13 @@
   color: #0f172a;
 }
 
+.ppt-design-context-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Legacy gray cards — keep for chart/table sections that still use them */
 .ppt-slide-panel-section,
 .ppt-panel-section {
   padding: 14px;
@@ -1866,10 +1873,14 @@
   border-radius: 12px;
 }
 
-.ppt-design-context-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+/* Slide/image props use divider groups instead of nested cards */
+.ppt-design-context-panel > .ppt-props-stack .ppt-props-group,
+.ppt-design-context-panel > .ppt-props-stack {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .ppt-slide-panel-label {
