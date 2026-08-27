@@ -44,9 +44,8 @@ export default function ElementPropertiesPanel({
   const isText = TEXT_TYPES.has(element.type)
   const isDeviceFrame = Boolean(c.deviceFrame || c.shape === 'device-frame')
 
-  const patchContent = (updates) => onChangeContent?.({ ...c, ...updates })
-  const patchPlacement = (updates) =>
-    onChangePlacement?.({ ...p, ...updates })
+  const patchContent = (updates) => onChangeContent?.(updates)
+  const patchPlacement = (updates) => onChangePlacement?.(updates)
 
   return (
     <div className="ppt-element-props-grid">
@@ -86,6 +85,7 @@ export default function ElementPropertiesPanel({
       )}
 
       <ElementTransformControls
+        key={element.id}
         placement={p}
         content={c}
         showFlip={element.type === 'image' || element.type === 'icon' || element.type === 'graphic'}
