@@ -1,3 +1,5 @@
+import { clampPlacementOverflow } from './canvasOverflowUtils';
+
 /** Safe zone on 1920×1080 — matches CanvasGuidesOverlay 5% inset. */
 export const COMPOSITION_W = 1920;
 export const COMPOSITION_H = 1080;
@@ -66,12 +68,19 @@ export function getDefaultClipPlacement(type, content, meta = {}) {
   }
 
   if (meta?.dropAt) {
-    return clampPlacement(
+    // Canva-style: allow drop near/over edges; keep min overlap on canvas
+    const placed = clampPlacementOverflow(
       meta.dropAt.x - width / 2,
       meta.dropAt.y - height / 2,
       width,
-      height
+      height,
+      COMPOSITION_W,
+      COMPOSITION_H
     );
+    return {
+      position: { x: Math.round(placed.x), y: Math.round(placed.y) },
+      size: { width: Math.round(placed.width), height: Math.round(placed.height) },
+    };
   }
 
   const x = SAFE_ZONE.x + Math.round((SAFE_ZONE.w - width) / 2);
@@ -113,8 +122,9 @@ export function clientToComposition(
   const rect = containerEl.getBoundingClientRect();
   const x = (clientX - rect.left - (displayOffset?.x ?? 0)) / displayScale;
   const y = (clientY - rect.top - (displayOffset?.y ?? 0)) / displayScale;
+  // Do not clamp to frame — overflow drag/drop needs off-canvas targets
   return {
-    x: Math.max(0, Math.min(compositionWidth, Math.round(x))),
-    y: Math.max(0, Math.min(compositionHeight, Math.round(y))),
+    x: Math.round(x),
+    y: Math.round(y),
   };
 }

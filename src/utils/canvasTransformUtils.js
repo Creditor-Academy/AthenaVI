@@ -40,6 +40,16 @@ export function snapAngle(degrees, snap = true) {
   return bestDist <= SNAP_ANGLE_THRESHOLD ? best : Math.round(normalized);
 }
 
+/** Magnetic snap onto `step` increments (PPT canvas uses 90° detents). */
+export function snapAngleStep(degrees, { step = 30, threshold = 9, enabled = true } = {}) {
+  const normalized = normalizeAngle(degrees);
+  if (!enabled) return Math.round(normalized);
+  const nearest = Math.round(normalized / step) * step;
+  const target = normalizeAngle(nearest);
+  const dist = Math.min(Math.abs(normalized - target), 360 - Math.abs(normalized - target));
+  return dist <= threshold ? target : Math.round(normalized);
+}
+
 /** Fixed anchor point (opposite edge/corner) while resizing from `handle`. */
 export function getResizeAnchorPoint(handle, x, y, width, height) {
   const right = x + width;

@@ -9,6 +9,7 @@ import {
   buildImageEdgeFadeMask,
   buildImageClipPath,
   shapeElementUsesNativeStyle,
+  mediaFlipTransform,
 } from '../../../utils/presentationHelpers'
 import { getListMarker, splitTextLines, stripLeadingListMarkers } from '../../../utils/textListUtils'
 import { measureTextContentSize } from '../../../utils/canvasTransformUtils'
@@ -443,7 +444,13 @@ export default function PptCanvasElement({
 
   if (el.type === 'graphic') {
     return (
-      <div style={fillStyle}>
+      <div
+        style={{
+          ...fillStyle,
+          transform: mediaFlipTransform(el.content),
+          transformOrigin: 'center center',
+        }}
+      >
         <GraphicCanvasVisual content={el.content || {}} palette={palette} />
       </div>
     )
@@ -494,6 +501,8 @@ export default function PptCanvasElement({
             borderRadius: clipPath || edgeFadeMask || isFullBleedMedia ? 0 : c.borderRadius != null ? c.borderRadius : undefined,
             boxShadow: c.boxShadow || c.shadow || undefined,
             display: 'block',
+            transform: mediaFlipTransform(c),
+            transformOrigin: 'center center',
             ...(clipPath ? { clipPath, WebkitClipPath: clipPath } : {}),
             ...(edgeFadeMask
               ? {
@@ -538,6 +547,8 @@ export default function PptCanvasElement({
             objectFit: c.fit || 'cover',
             opacity: c.opacity != null ? c.opacity : 1,
             borderRadius: c.borderRadius != null ? c.borderRadius : undefined,
+            transform: mediaFlipTransform(c),
+            transformOrigin: 'center center',
           }}
           onError={() => onImageAuthError?.(el.id)}
         />

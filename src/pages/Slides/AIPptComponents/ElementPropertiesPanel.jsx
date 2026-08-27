@@ -2,6 +2,7 @@ import { FiLock, FiUnlock } from 'react-icons/fi'
 import { measureTextContentSize } from '../../../utils/canvasTransformUtils'
 import { contentPlainText, contentWithSyncedText, normalizeFillValue } from '../../../utils/pptTextContent'
 import ColorFillPicker from './insert/ColorFillPicker'
+import ElementTransformControls from './ElementTransformControls'
 import './pptEditorExtras.css'
 
 const TEXT_TYPES = new Set(['text', 'textbox'])
@@ -83,6 +84,15 @@ export default function ElementPropertiesPanel({
           Fit box to text
         </button>
       )}
+
+      <ElementTransformControls
+        placement={p}
+        content={c}
+        showFlip={element.type === 'image' || element.type === 'icon' || element.type === 'graphic'}
+        disabled={disabled}
+        onChangePlacement={patchPlacement}
+        onChangeContent={patchContent}
+      />
 
       <div className="ppt-element-props-row">
         <span>Opacity</span>

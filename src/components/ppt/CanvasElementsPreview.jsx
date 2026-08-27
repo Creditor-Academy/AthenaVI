@@ -15,6 +15,7 @@ function placementFrameStyle(p, canvasW, canvasH, { layer = 0, rotation = 0, opa
     width: `${((p.width || 100) / canvasW) * 100}%`,
     height: `${((p.height || 40) / canvasH) * 100}%`,
     transform: rotation ? `rotate(${rotation}deg)` : undefined,
+    transformOrigin: 'center center',
     opacity: opacity != null ? opacity : 1,
     zIndex: layer || 0,
   }

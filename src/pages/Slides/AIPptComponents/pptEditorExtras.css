@@ -950,6 +950,90 @@
   margin-top: 8px;
 }
 
+.ppt-element-props-row--stack {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.ppt-transform-flip-row {
+  display: flex;
+  gap: 8px;
+}
+
+.ppt-transform-flip-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ppt-transform-flip-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ppt-transform-flip-btn.is-active {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.ppt-transform-flip-icon-v {
+  display: inline-flex;
+  transform: rotate(90deg);
+}
+
+.ppt-transform-rotate-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ppt-transform-rotate-icon {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  cursor: pointer;
+  padding: 0;
+}
+
+.ppt-transform-rotate-icon:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ppt-transform-rotate-input {
+  width: 56px;
+  height: 28px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 13px;
+  color: #0f172a;
+}
+
+.ppt-transform-rotate-unit {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .ppt-toggle-label {
   font-size: 14px;
   font-weight: 500;

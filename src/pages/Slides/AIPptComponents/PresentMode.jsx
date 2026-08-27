@@ -10,6 +10,7 @@ import {
   shapeElementUsesNativeStyle,
   resolveCanvasSize,
   resolveSlideStageBackground,
+  mediaFlipTransform,
 } from '../../../utils/presentationHelpers'
 import DeviceFrameVisual, { resolveDeviceFrameColor } from '../../../components/ppt/DeviceFrameVisual'
 import ClipShapeSvg from '../../../components/ppt/ClipShapeSvg'
@@ -27,6 +28,11 @@ import './PresentMode.css'
 
 function PresentElement({ el, palette, canvasW, canvasH, focused }) {
   const p = el.placement || {}
+  const rotation = Number(p.rotation) || 0
+  const transformParts = [
+    rotation ? `rotate(${rotation}deg)` : '',
+    focused ? 'scale(1.08)' : '',
+  ].filter(Boolean)
   const style = {
     position: 'absolute',
     left: `${((p.x || 0) / canvasW) * 100}%`,
@@ -35,7 +41,8 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
     height: `${((p.height || 40) / canvasH) * 100}%`,
     opacity: p.opacity != null ? p.opacity : 1,
     zIndex: el.layer || 0,
-    transform: focused ? 'scale(1.08)' : undefined,
+    transform: transformParts.length ? transformParts.join(' ') : undefined,
+    transformOrigin: 'center center',
     transition: 'transform 0.3s ease, opacity 0.3s ease',
     outline: focused ? '3px solid #3B82F6' : undefined,
     outlineOffset: focused ? 4 : undefined,
@@ -111,6 +118,8 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
           objectFit: c.fit || 'cover',
           borderRadius: c.borderRadius != null ? c.borderRadius : undefined,
           boxShadow: c.boxShadow || c.shadow || undefined,
+          transform: [style.transform, mediaFlipTransform(c)].filter(Boolean).join(' ') || undefined,
+          transformOrigin: 'center center',
         }}
       />
     )
