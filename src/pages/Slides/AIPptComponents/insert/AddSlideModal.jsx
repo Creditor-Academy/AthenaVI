@@ -15,6 +15,7 @@ import {
   buildLayoutSchemaMap,
   enrichLayoutSchemaForPreview,
   getDeckLayoutSchema,
+  listDeckLayoutIds,
 } from '../../../../utils/deckLayoutRegistry'
 import {
   layoutSchemaHasCanvasElements,
@@ -133,6 +134,12 @@ function buildLayoutSchemaMapWithFallbacks(layoutTemplates, templatePacks) {
       const registered = getDeckLayoutSchema(layoutId)
       if (registered) map[layoutId] = registered
     }
+  }
+
+  // Prefer code catalog over stale DB templates for known layouts.
+  for (const layoutId of listDeckLayoutIds()) {
+    const registered = getDeckLayoutSchema(layoutId)
+    if (registered?.slots?.length) map[layoutId] = registered
   }
 
   return map

@@ -29,6 +29,7 @@ import {
   textPaintStyle,
 } from '../../../utils/pptTextContent'
 import DeviceFrameVisual, { resolveDeviceFrameColor } from '../../../components/ppt/DeviceFrameVisual'
+import EmptyImagePlaceholder from '../../../components/ppt/EmptyImagePlaceholder'
 import ClipShapeSvg from '../../../components/ppt/ClipShapeSvg'
 import GraphicCanvasVisual from '../../../components/ppt/GraphicCanvasVisual'
 import { parsePolygonClipPath } from '../../../utils/shapeClipSvg'
@@ -95,6 +96,7 @@ function EditableText({
   onStartEdit,
   onEndEdit,
   onHeightChange,
+  showEmptyHint = false,
   style,
 }) {
   const ref = useRef(null)
@@ -321,10 +323,11 @@ function EditableText({
     )
   }
 
-  const displayText = plainText || (editable ? 'Double-click to edit' : '')
+  const displayText = plainText || (editable || showEmptyHint ? 'Double-click to edit' : '')
   const className = [
     'ppt-text-display',
     editable ? 'ppt-text-display--editable' : '',
+    !plainText && (editable || showEmptyHint) ? 'ppt-text-display--empty-hint' : '',
     selected && editable ? 'is-selected' : '',
   ]
     .filter(Boolean)
@@ -412,6 +415,7 @@ export default function PptCanvasElement({
   editable = false,
   selected = false,
   editingText = false,
+  showEmptyTextHint = false,
   onStartTextEdit,
   onEndTextEdit,
   onHeightChange,
@@ -433,6 +437,7 @@ export default function PptCanvasElement({
         editable={editable}
         selected={selected}
         editing={editingText}
+        showEmptyHint={showEmptyTextHint}
         onStartEdit={onStartTextEdit}
         onEndEdit={onEndTextEdit}
         elementId={el.id}
@@ -460,8 +465,16 @@ export default function PptCanvasElement({
     const c = el.content || {}
     const url = c.url || c.src || c.thumbnailUrl || c.previewUrl
     if (!url) {
-      // Quiet empty slot — do not paint a massive grey skeleton that reads as a layout slab.
       const radius = c.borderRadius != null ? c.borderRadius : 0
+      if (el.type === 'image') {
+        return (
+          <EmptyImagePlaceholder
+            className="ppt-image-skeleton ppt-image-skeleton--empty"
+            borderRadius={radius}
+            style={fillStyle}
+          />
+        )
+      }
       const emptyBg = palette?.surface || palette?.bg || 'transparent'
       return (
         <div

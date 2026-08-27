@@ -421,6 +421,32 @@
   outline-offset: 4px !important;
 }
 
+/* Hit-test the body so drag/drop and clicks land on image/device fill targets */
+.ppt-canvas-el--accepts-fill .ppt-canvas-el-body {
+  pointer-events: auto;
+}
+
+.ppt-canvas-el-body .ppt-image-skeleton,
+.ppt-canvas-el-body img,
+.ppt-canvas-el-body .ppt-empty-image-placeholder {
+  pointer-events: auto;
+}
+
+.ppt-empty-image-placeholder {
+  display: block;
+  background: #c5dceb;
+}
+
+.ppt-empty-image-placeholder svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ppt-text-display--empty-hint {
+  opacity: 0.45;
+}
+
 .ppt-device-frame-drop-hint {
   position: absolute;
   inset: 12%;

@@ -110,6 +110,10 @@ import {
   selectedOverflowMaskStyle,
   clampPlacementOverflow,
 } from '../../../utils/canvasOverflowUtils'
+import {
+  clearImageMediaPatch,
+  isLayoutBoundImageSlot,
+} from '../../../components/ppt/EmptyImagePlaceholder'
 import './pptEditorExtras.css'
 import '../AIPptGenerator.css'
 
@@ -331,6 +335,7 @@ function InteractiveElementShell({
   onGuidesChange,
   onStartTextEdit,
   onFillDeviceFrame,
+  onFillImage,
   children,
 }) {
   const p = el.placement || {}
@@ -338,10 +343,16 @@ function InteractiveElementShell({
   const shellRef = useRef(null)
   const lastPlacementRef = useRef(null)
   const isText = isTextElement(el)
+  const isImageSlot = el.type === 'image'
+  const isDeviceFrame = isPptDeviceFrameElement(el)
   const [isDropTarget, setIsDropTarget] = useState(false)
+  const fillHandler = isDeviceFrame
+    ? onFillDeviceFrame
+    : isImageSlot
+      ? onFillImage
+      : null
   const [rotateBadge, setRotateBadge] = useState(null)
-  const acceptsImageFill =
-    editable && !locked && isPptDeviceFrameElement(el) && typeof onFillDeviceFrame === 'function'
+  const acceptsImageFill = editable && !locked && typeof fillHandler === 'function' && (isDeviceFrame || isImageSlot)
 
   useEffect(() => {
     const onMove = (e) => {
@@ -507,6 +518,12 @@ function InteractiveElementShell({
     setIsDropTarget(false)
   }
 
+  const applyDroppedImage = (payload) => {
+    if (!fillHandler) return
+    fillHandler(el.id, payload)
+    onSelect?.(el.id)
+  }
+
   const handleDrop = (e) => {
     if (!acceptsImageFill) return
     e.preventDefault()
@@ -517,13 +534,12 @@ function InteractiveElementShell({
     if (data?.type === 'image') {
       const src = resolveDropImageSrc(data.content)
       if (src) {
-        onFillDeviceFrame(el.id, {
+        applyDroppedImage({
           url: src,
           src,
           assetId: resolveDropAssetId(data.content),
           alt: data.content?.alt || data.content?.name || '',
         })
-        onSelect?.(el.id)
       }
       return
     }
@@ -531,13 +547,12 @@ function InteractiveElementShell({
     const file = e.dataTransfer.files?.[0]
     if (file?.type?.startsWith('image/')) {
       const blobUrl = URL.createObjectURL(file)
-      onFillDeviceFrame(el.id, {
+      applyDroppedImage({
         url: blobUrl,
         src: blobUrl,
         alt: file.name,
         file,
       })
-      onSelect?.(el.id)
     }
   }
 
@@ -728,6 +743,8 @@ function SlideStage({
   onTableCellChange,
   onImageAuthError,
   onFillDeviceFrame,
+  onFillImage,
+  showEmptyTextHint = false,
 }) {
   const stageRef = useRef(null)
   const [chromeHost, setChromeHost] = useState(null)
@@ -834,12 +851,14 @@ function SlideStage({
                 onPlacementCommit={onPlacementCommit}
                 onGuidesChange={onGuidesChange}
                 onFillDeviceFrame={onFillDeviceFrame}
+                onFillImage={onFillImage}
               >
                 <PptCanvasElement
                   el={el}
                   palette={palette}
                   selected={selectedElementId === el.id}
                   canvasW={canvas.width}
+                  showEmptyTextHint={showEmptyTextHint}
                   editable={
                     editable &&
                     (el.type === 'text' ||
@@ -2312,7 +2331,81 @@ export default function AIPptEditor({
 
     const slide = localSlides.find((s) => s.id === slideId)
     const existing = slide?.elements?.elements || []
-    const nextElements = existing.filter((el) => el.id !== elementId)
+    const elements = Array.isArray(existing) ? existing : []
+    const target = elements.find((el) => el.id === elementId)
+
+    // Layout image slots: clear media so the empty placeholder stays in place.
+    if (isLayoutBoundImageSlot(target)) {
+      const hasMedia = Boolean(
+        target.content?.url ||
+          target.content?.src ||
+          target.content?.thumbnailUrl ||
+          target.content?.previewUrl
+      )
+      if (!hasMedia) return
+
+      const clearingBackground =
+        slide?.backgroundImageElementId === elementId || target.content?.useAsBackground
+
+      await elementMutations.patchElement(elementId, { content: clearImageMediaPatch() })
+
+      const slotId = target.slotId
+      const slotKey = String(slotId || '')
+      const prevContent = slide?.content && typeof slide.content === 'object' ? slide.content : {}
+      const prevUrls =
+        prevContent.slotImageUrls && typeof prevContent.slotImageUrls === 'object'
+          ? { ...prevContent.slotImageUrls }
+          : {}
+      let urlsChanged = false
+      for (const key of Object.keys(prevUrls)) {
+        if (String(key).toUpperCase() === slotKey.toUpperCase()) {
+          delete prevUrls[key]
+          urlsChanged = true
+        }
+      }
+      const sidUpper = slotKey.toUpperCase()
+      const clearHero =
+        sidUpper === 'HERO_IMAGE' ||
+        sidUpper === 'BACKGROUND_IMAGE' ||
+        target.role === 'background'
+
+      if (urlsChanged || clearHero || clearingBackground) {
+        const nextContent = { ...prevContent }
+        if (urlsChanged) nextContent.slotImageUrls = prevUrls
+        if (clearHero) {
+          nextContent.imageRef = null
+          nextContent.imageUrl = null
+        }
+        setLocalSlides((prev) =>
+          prev.map((s) => {
+            if (s.id !== slideId) return s
+            return {
+              ...s,
+              content: nextContent,
+              ...(clearingBackground
+                ? {
+                    backgroundImage: undefined,
+                    backgroundImageFit: undefined,
+                    backgroundImageElementId: undefined,
+                  }
+                : {}),
+            }
+          })
+        )
+        if (workspaceId && presentationId) {
+          const patch = { content: nextContent }
+          if (clearingBackground) {
+            patch.backgroundImage = null
+            patch.backgroundImageFit = null
+            patch.backgroundImageElementId = null
+          }
+          presentationService.patchSlide(workspaceId, presentationId, slideId, patch).catch(() => {})
+        }
+      }
+      return
+    }
+
+    const nextElements = elements.filter((el) => el.id !== elementId)
     const clearingBackground = slide?.backgroundImageElementId === elementId
     const nextDoc = buildCanvasDoc(slide, { aspectRatio, elements: nextElements })
     setLocalSlides((prev) =>
@@ -2369,6 +2462,7 @@ export default function AIPptEditor({
     presentationId,
     applySlideUpdate,
     refreshSlide,
+    elementMutations,
   ])
 
   const handleReorderSelected = useCallback(
@@ -2480,6 +2574,43 @@ export default function AIPptEditor({
       })
       if (!patch) return
       await elementMutations.patchElement(elementId, { content: patch })
+      setSelectedElementId(elementId)
+    },
+    [viewOnly, isGenerating, workspaceId, elementMutations]
+  )
+
+  const handleFillImage = useCallback(
+    async (elementId, imagePayload = {}) => {
+      if (!elementId || viewOnly || isGenerating) return
+      let url = imagePayload.url || imagePayload.src || ''
+      let assetId = imagePayload.assetId || undefined
+
+      if (imagePayload.file && workspaceId) {
+        try {
+          const asset = await assetService.uploadAsset(workspaceId, imagePayload.file)
+          url =
+            asset?.url ||
+            asset?.cdnUrl ||
+            asset?.src ||
+            asset?.downloadUrl ||
+            url
+          assetId = asset?.id || asset?._id || assetId
+        } catch {
+          // Keep blob/preview URL if upload fails
+        }
+      }
+
+      if (!url) return
+      await elementMutations.patchElement(elementId, {
+        content: {
+          url,
+          src: url,
+          fit: 'cover',
+          ...(assetId ? { assetId } : {}),
+          ...(imagePayload.alt != null ? { alt: imagePayload.alt } : {}),
+          ...(imagePayload.provider ? { provider: imagePayload.provider } : {}),
+        },
+      })
       setSelectedElementId(elementId)
     },
     [viewOnly, isGenerating, workspaceId, elementMutations]
@@ -2861,14 +2992,27 @@ export default function AIPptEditor({
                 : null
             }
             fillElementId={
-              isPptDeviceFrameElement(
-                selectedSlide?.elements?.elements?.find((el) => el.id === selectedElementId)
-              )
-                ? selectedElementId
-                : null
+              (() => {
+                const selected = selectedSlide?.elements?.elements?.find(
+                  (el) => el.id === selectedElementId
+                )
+                if (!selected) return null
+                if (isPptDeviceFrameElement(selected) || selected.type === 'image') {
+                  return selectedElementId
+                }
+                return null
+              })()
             }
             onFillElement={(content) => {
-              if (selectedElementId) handleFillDeviceFrame(selectedElementId, content)
+              if (!selectedElementId) return
+              const selected = selectedSlide?.elements?.elements?.find(
+                (el) => el.id === selectedElementId
+              )
+              if (isPptDeviceFrameElement(selected)) {
+                handleFillDeviceFrame(selectedElementId, content)
+              } else if (selected?.type === 'image') {
+                handleFillImage(selectedElementId, content)
+              }
             }}
             brandKits={brandKits}
             elementPresets={elementPresets}
@@ -3042,6 +3186,7 @@ export default function AIPptEditor({
                     themeVisual={themeVisual}
                     aspectRatio={aspectRatio}
                     editable={!viewOnly && !isGenerating && !busy && selectedSlideId === slide.id}
+                    showEmptyTextHint={!viewOnly && !isGenerating}
                     selectedElementId={
                       selectedSlideId === slide.id ? selectedElementId : null
                     }
@@ -3065,6 +3210,7 @@ export default function AIPptEditor({
                     onTableCellChange={handleTableCellChange}
                     onImageAuthError={handleImageAuthError}
                     onFillDeviceFrame={handleFillDeviceFrame}
+                    onFillImage={handleFillImage}
                   />
 
                   <SlideEditAiPanel

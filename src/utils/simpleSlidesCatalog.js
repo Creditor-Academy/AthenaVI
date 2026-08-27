@@ -299,24 +299,24 @@ const CATALOG = {
 
   three_cards_image_text_v1: layoutBase('three_cards_image_text_v1', 'image+text', [
     heading('HEADING', 'cols 2-11, rows 2-3', 'Product highlights', { typography: typo('heading', { fontSize: 32 }) }),
-    slot('IMAGE_1', 'cols 1-4, rows 3-6', 'image', null, { layer: 2, fit: 'cover' }),
-    slot('CARD_1_TITLE', 'cols 1-4, rows 6-7', 'heading', 'Feature A', {
+    slot('IMAGE_1', 'cols 1-4, rows 3-7', 'image', null, { layer: 2, fit: 'cover' }),
+    slot('CARD_1_TITLE', 'cols 1-4, rows 7-8', 'heading', 'Feature A', {
       layer: 10,
       typography: typo('heading', { fontSize: 18 }),
     }),
-    body('CARD_1_BODY', 'cols 1-4, rows 7-9', P.short, 3, { typography: typo('body', { fontSize: 14 }) }),
-    slot('IMAGE_2', 'cols 5-8, rows 3-6', 'image', null, { layer: 2, fit: 'cover' }),
-    slot('CARD_2_TITLE', 'cols 5-8, rows 6-7', 'heading', 'Feature B', {
+    body('CARD_1_BODY', 'cols 1-4, rows 8-10', P.short, 3, { typography: typo('body', { fontSize: 14 }) }),
+    slot('IMAGE_2', 'cols 5-8, rows 3-7', 'image', null, { layer: 2, fit: 'cover' }),
+    slot('CARD_2_TITLE', 'cols 5-8, rows 7-8', 'heading', 'Feature B', {
       layer: 10,
       typography: typo('heading', { fontSize: 18 }),
     }),
-    body('CARD_2_BODY', 'cols 5-8, rows 7-9', P.short, 3, { typography: typo('body', { fontSize: 14 }) }),
-    slot('IMAGE_3', 'cols 9-12, rows 3-6', 'image', null, { layer: 2, fit: 'cover' }),
-    slot('CARD_3_TITLE', 'cols 9-12, rows 6-7', 'heading', 'Feature C', {
+    body('CARD_2_BODY', 'cols 5-8, rows 8-10', P.short, 3, { typography: typo('body', { fontSize: 14 }) }),
+    slot('IMAGE_3', 'cols 9-12, rows 3-7', 'image', null, { layer: 2, fit: 'cover' }),
+    slot('CARD_3_TITLE', 'cols 9-12, rows 7-8', 'heading', 'Feature C', {
       layer: 10,
       typography: typo('heading', { fontSize: 18 }),
     }),
-    body('CARD_3_BODY', 'cols 9-12, rows 7-9', P.short, 3, { typography: typo('body', { fontSize: 14 }) }),
+    body('CARD_3_BODY', 'cols 9-12, rows 8-10', P.short, 3, { typography: typo('body', { fontSize: 14 }) }),
   ]),
 
   two_cards_image_text_v1: layoutBase('two_cards_image_text_v1', 'image+text', [
@@ -411,22 +411,25 @@ const CATALOG = {
       layer: 10,
       typography: typo('subheading', { fontWeight: 700 }),
     }),
-    slot('ROW_1_TITLE', 'cols 2-4, rows 3-4', 'heading', 'Pillar 1', {
+    slot('ROW_1_ICON', 'cols 2-4, rows 3-4', 'decoration', null, { layer: 8 }),
+    slot('ROW_1_TITLE', 'cols 2-4, rows 4-5', 'heading', 'Pillar 1', {
       layer: 10,
       typography: typo('heading', { fontSize: 20 }),
     }),
-    body('ROW_1_BODY', 'cols 2-4, rows 4-6', P.one, 3, { typography: typo('body', { fontSize: 15 }) }),
-    slot('ROW_2_TITLE', 'cols 5-7, rows 3-4', 'heading', 'Pillar 2', {
+    body('ROW_1_BODY', 'cols 2-4, rows 5-8', P.one, 3, { typography: typo('body', { fontSize: 15 }) }),
+    slot('ROW_2_ICON', 'cols 5-7, rows 3-4', 'decoration', null, { layer: 8 }),
+    slot('ROW_2_TITLE', 'cols 5-7, rows 4-5', 'heading', 'Pillar 2', {
       layer: 10,
       typography: typo('heading', { fontSize: 20 }),
     }),
-    body('ROW_2_BODY', 'cols 5-7, rows 4-6', P.two, 3, { typography: typo('body', { fontSize: 15 }) }),
-    slot('ROW_3_TITLE', 'cols 8-10, rows 3-4', 'heading', 'Pillar 3', {
+    body('ROW_2_BODY', 'cols 5-7, rows 5-8', P.two, 3, { typography: typo('body', { fontSize: 15 }) }),
+    slot('ROW_3_ICON', 'cols 8-10, rows 3-4', 'decoration', null, { layer: 8 }),
+    slot('ROW_3_TITLE', 'cols 8-10, rows 4-5', 'heading', 'Pillar 3', {
       layer: 10,
       typography: typo('heading', { fontSize: 20 }),
     }),
-    body('ROW_3_BODY', 'cols 8-10, rows 4-6', P.three, 3, { typography: typo('body', { fontSize: 15 }) }),
-  ]),
+    body('ROW_3_BODY', 'cols 8-10, rows 5-8', P.three, 3, { typography: typo('body', { fontSize: 15 }) }),
+  ], { mode: 'intro_three_para_icons' }),
 
   centered_text_cta_v1: layoutBase('centered_text_cta_v1', 'closing', [
     slot('HEADING', 'cols 3-10, rows 3-5', 'heading', 'Thank you', {

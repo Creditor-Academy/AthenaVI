@@ -17,10 +17,22 @@ export function deviceFrameKindFromSlot(slot = {}) {
 
 export function findDeviceFrameSlot(slots, imageSlotId) {
   const target = String(imageSlotId || '')
-  return (slots || []).find((slot) => {
-    const pairs = slot?.shapeHint?.pairsWithSlotId
-    return pairs && String(pairs) === target
-  }) || null
+  if (!target) return null
+  return (
+    (slots || []).find((slot) => {
+      const pairs = slot?.shapeHint?.pairsWithSlotId
+      if (!pairs || String(pairs) !== target) return false
+      const id = String(slot?.id || '')
+      const kind = String(slot?.shapeHint?.kind || '')
+      // Only real device frames — not cardBehind / surface hints that also use pairsWithSlotId
+      return (
+        /FRAME$/i.test(id) ||
+        /Frame$/i.test(kind) ||
+        kind === 'deviceFrame' ||
+        /^(phone|tablet|laptop|watch)/i.test(kind)
+      )
+    }) || null
+  )
 }
 
 function insetScreenRect(placement, kind) {

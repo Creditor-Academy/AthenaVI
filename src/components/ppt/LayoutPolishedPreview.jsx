@@ -1122,6 +1122,100 @@ function PolishedTwoImageColumnsPreview({ previewHints, large, className, style,
   )
 }
 
+function PolishedIntroThreeParaIconsPreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const introMeta = previewHints.slots?.INTRO || {}
+  const { display: introText } = formatPreviewText(introMeta.text || 'Three pillars', {
+    bold: introMeta.bold ?? true,
+    uppercase: introMeta.uppercase ?? false,
+  })
+  const columns =
+    Array.isArray(previewHints.columns) && previewHints.columns.length
+      ? previewHints.columns.slice(0, 3)
+      : [1, 2, 3].map((n) => ({
+          title: previewHints.slots?.[`ROW_${n}_TITLE`]?.text || `Pillar ${n}`,
+          body:
+            previewHints.slots?.[`ROW_${n}_BODY`]?.text ||
+            'Short supporting copy for this pillar.',
+        }))
+  const frameStyle = fill
+    ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+    : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+
+  return (
+    <div
+      className={className}
+      style={{
+        position: 'relative',
+        ...frameStyle,
+        background: t.bg,
+        overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif',
+        borderRadius: large ? 12 : 6,
+        boxSizing: 'border-box',
+        padding: large ? '8% 7%' : '10% 6%',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: large ? 18 : 6,
+        ...style,
+      }}
+    >
+      <div
+        style={{
+          fontSize: large ? PREVIEW_SUBTITLE_FS.large : PREVIEW_SUBTITLE_FS.small,
+          fontWeight: 700,
+          color: t.muted,
+        }}
+      >
+        {introText}
+      </div>
+      <div
+        style={{
+          flex: 1,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr 1fr',
+          gap: large ? 18 : 6,
+          minHeight: 0,
+          alignContent: 'start',
+        }}
+      >
+        {columns.map((col, i) => (
+          <div
+            key={i}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: large ? 8 : 3,
+              minWidth: 0,
+            }}
+          >
+            <PolishedIconCircle size={large ? 28 : 10} />
+            <div
+              style={{
+                fontSize: large ? '0.95rem' : '0.34rem',
+                fontWeight: 800,
+                color: t.text,
+                lineHeight: 1.2,
+              }}
+            >
+              {col.title}
+            </div>
+            <div
+              style={{
+                fontSize: large ? PREVIEW_BODY_FS.large : '0.28rem',
+                color: t.muted,
+                lineHeight: 1.4,
+              }}
+            >
+              {col.body}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function PolishedEightShortTextsPreview({ previewHints, large, className, style, fill, aspectRatio }) {
   const t = LAYOUT_POLISHED_THEME
   const headingMeta = previewHints.slots?.HEADING || {}
@@ -1908,6 +2002,9 @@ export default function LayoutPolishedPreview({
   }
   if (previewMode === 'two_image_columns') {
     return <PolishedTwoImageColumnsPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
+  }
+  if (previewMode === 'intro_three_para_icons') {
+    return <PolishedIntroThreeParaIconsPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
   }
   if (previewMode === 'eight_short_texts') {
     return <PolishedEightShortTextsPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />

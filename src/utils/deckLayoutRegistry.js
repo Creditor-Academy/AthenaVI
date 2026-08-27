@@ -170,7 +170,7 @@ const LAYOUT_PREVIEW_MODES = {
   two_cards_image_text_v1: 'two_image_columns',
   centered_text_cta_v1: 'closing_cta',
   para_image_cta_v1: 'closing_cta',
-  intro_three_para_icons_v1: 'two_image_columns',
+  intro_three_para_icons_v1: 'intro_three_para_icons',
   // Grids
   grid_bento_three_v1: 'grid_bento_three',
   grid_bento_four_v1: 'grid_bento_four',
@@ -293,6 +293,9 @@ export function inferPreviewMode(schema) {
 
   if (layoutId && LAYOUT_PREVIEW_MODES[layoutId]) return LAYOUT_PREVIEW_MODES[layoutId]
 
+  if (ids.includes('ROW_1_ICON') && ids.includes('ROW_2_ICON') && ids.includes('ROW_3_ICON')) {
+    return 'intro_three_para_icons'
+  }
   if (ids.includes('BAR_CHART') && ids.includes('INSIGHT_ICON_1') && ids.includes('POINT_IMAGE')) {
     return 'grid_insights_chart'
   }
@@ -635,6 +638,14 @@ function fillPreviewDataFromSlots(schema) {
       },
     ]
   }
+  if (mode === 'intro_three_para_icons' && !Array.isArray(preview.columns)) {
+    preview.columns = [1, 2, 3].map((n) => ({
+      title: slotPlaceholderText(slots, `ROW_${n}_TITLE`) || `Pillar ${n}`,
+      body:
+        slotPlaceholderText(slots, `ROW_${n}_BODY`) ||
+        'Short supporting copy for this pillar.',
+    }))
+  }
   if (mode === 'eight_short_texts' && !Array.isArray(preview.points)) {
     preview.points = Array.from({ length: 8 }, (_, index) => {
       const n = index + 1
@@ -744,15 +755,16 @@ export function buildLayoutSchemaMap(templates = []) {
   return map
 }
 
-/** Resolve a layout schema: saved map → legacy registry fallback. */
+/** Resolve a layout schema: code catalog → saved map fallback. */
 export function resolveLayoutSchemaById(layoutId, layoutSchemaMap = {}) {
   const key = String(layoutId || '').trim()
   if (!key) return null
+  const registered = getDeckLayoutSchema(key)
+  if (registered) return normalizeLayoutSchemaForPreview(registered)
   if (layoutSchemaMap[key]) {
     return normalizeLayoutSchemaForPreview(layoutSchemaMap[key])
   }
-  const registered = getDeckLayoutSchema(key)
-  return registered ? normalizeLayoutSchemaForPreview(registered) : null
+  return null
 }
 
 /** @returns {object|null} layout schema clone for preview */
@@ -760,6 +772,10 @@ export function getDeckLayoutSchema(layoutId) {
   const key = String(layoutId || '').trim()
   if (!key || !REGISTRY[key]) return null
   return JSON.parse(JSON.stringify(REGISTRY[key]))
+}
+
+export function listDeckLayoutIds() {
+  return Object.keys(REGISTRY)
 }
 
 /** Resolve slide-level and per-slot image URLs from pack TemplateMedia rows. */

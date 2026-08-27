@@ -199,12 +199,20 @@ function insetForRole(role, slotId, reg = null, COLS = 12, ROWS = 10) {
       bottom: reg.r2 >= ROWS ? 0 : soft,
     }
   }
+  if (/^metric_card_\d+_bg$/i.test(id)) return 0.55
+  // Text inside masonry/metric cards — generous pad so copy never hugs edges
+  if (/^metric_(title|body)_\d+$|^stat_\d+_(value|label)$/i.test(id)) {
+    return { left: 2.4, right: 2.4, top: 2.0, bottom: 2.0 }
+  }
   if (role === 'background' || /_bg$|card_bg|panel_bg/.test(id)) return 0.15
   if (role === 'chart') return 1.2
   if (role === 'image') {
-    // Card / gallery image slots: pad all sides so photos don't touch card edges.
-    if (/^image_\d+$|^col_\d+_image$|^metric_image_\d+$|^point_image$/i.test(id)) {
-      return { left: 1.4, right: 1.4, top: 1.4, bottom: 1.4 }
+    // Standalone metric image: slight inset from neighbors, no nested card needed
+    if (/^metric_image_\d+$/i.test(id)) {
+      return { left: 0.35, right: 0.35, top: 0.35, bottom: 0.35 }
+    }
+    if (/^image_\d+$|^col_\d+_image$|^point_image$/i.test(id)) {
+      return { left: 0.5, right: 0.5, top: 0.5, bottom: 0.5 }
     }
     if (reg) {
       const soft = 0.5
@@ -217,7 +225,8 @@ function insetForRole(role, slotId, reg = null, COLS = 12, ROWS = 10) {
     }
     return 0
   }
-  if (role === 'caption' || role === 'stat_label') return 0.85
+  if (role === 'stat') return { left: 1.6, right: 1.2, top: 1.2, bottom: 1.2 }
+  if (role === 'caption' || role === 'stat_label') return { left: 1.2, right: 1.4, top: 1.2, bottom: 1.2 }
   if (role === 'heading' || role === 'subheading') return 1
   return 1.1
 }
@@ -234,9 +243,12 @@ function centerIconPlacement(placement) {
 }
 
 function textPaddingForRole(role) {
-  if (role === 'heading' || role === 'quote') return { x: 12, y: 8 }
-  if (role === 'caption' || role === 'stat_label' || role === 'eyebrow') return { x: 8, y: 4 }
-  return { x: 10, y: 6 }
+  if (role === 'stat') return { x: 28, y: 20 }
+  if (role === 'stat_label') return { x: 20, y: 18 }
+  if (role === 'heading' || role === 'quote') return { x: 22, y: 16 }
+  if (role === 'caption' || role === 'eyebrow') return { x: 16, y: 12 }
+  if (role === 'body') return { x: 22, y: 16 }
+  return { x: 16, y: 12 }
 }
 
 const COLUMN_STACK_GAP_PX = 14
@@ -329,21 +341,34 @@ function layerForSlot(slot) {
 function fontSizeForTextSlotFromOptions(slot, placement, options = {}) {
   const role = slot?.role || 'body'
   const ty = slot?.typography || {}
-  if (ty.fontSize != null) return Number(ty.fontSize)
-  const fromScale = resolveTypeScaleFontSize(role, options.typeScale)
-  if (fromScale != null) return fromScale
-  const canvasW = options.canvas?.width || 1920
-  return fontSizeForTextSlot(slot, placement, canvasW)
+  let size = ty.fontSize != null ? Number(ty.fontSize) : null
+  if (size == null) {
+    const fromScale = resolveTypeScaleFontSize(role, options.typeScale)
+    if (fromScale != null) size = fromScale
+  }
+  if (size == null) {
+    const canvasW = options.canvas?.width || 1920
+    size = fontSizeForTextSlot(slot, placement, canvasW)
+  }
+  // Keep stats fully visible inside their card height
+  if (role === 'stat') {
+    const h = Number(placement?.height) || 0
+    if (h > 0) {
+      const maxByHeight = Math.max(22, Math.floor(h * 0.55))
+      size = Math.min(size, maxByHeight)
+    }
+  }
+  return size
 }
 
 function textAlignForRole(role) {
-  if (role === 'stat' || role === 'stat_label') return 'center'
   if (role === 'caption') return 'center'
   return 'left'
 }
 
 function fontWeightForRole(role) {
-  if (role === 'heading' || role === 'stat') return 500
+  if (role === 'stat') return 900
+  if (role === 'heading') return 800
   return 400
 }
 
@@ -362,6 +387,7 @@ function lookupSlotValue(contentBySlotId, slotId) {
 
 function resolveSlotText(slot, contentBySlotId, schema, options = {}) {
   const slotId = slot?.id
+  const role = String(slot?.role || '')
   const placeholder = slot?.placeholder_text != null ? String(slot.placeholder_text).trim() : ''
   const content = options.content && typeof options.content === 'object' ? options.content : null
   const hasSlideContent = Boolean(content && (content.title || content.body || content.summary || content.bullets))
@@ -374,7 +400,13 @@ function resolveSlotText(slot, contentBySlotId, schema, options = {}) {
     }
   }
 
-  if (placeholder && !hasSlideContent) return placeholder
+  // Keep metric/stat catalog samples so empty authoring still looks like stats, not generic edit hints
+  if (
+    placeholder &&
+    (!hasSlideContent || role === 'stat' || role === 'stat_label')
+  ) {
+    return placeholder
+  }
   return ''
 }
 
@@ -445,8 +477,10 @@ function resolveChartContent(slot, schema, palette, contentBySlotId, slideConten
     chart = slideContent?.chart && typeof slideContent.chart === 'object' ? slideContent.chart : null
   }
 
+  // Multi-chart layouts: never drop CHART_2/CHART_3 — use distinct sample data for empty slots
   if (chartMatch && !chart) {
-    return null
+    const idx = Number(chartMatch[1]) - 1
+    chart = sampleChartDataset(idx, layoutId)
   }
 
   let chartType =
@@ -502,6 +536,25 @@ function resolveChartContent(slot, schema, palette, contentBySlotId, slideConten
   )
 }
 
+/** Distinct demo datasets so empty CHART_1/2/3 slots all render in authoring. */
+function sampleChartDataset(index = 0, layoutId = '') {
+  const i = Math.max(0, Number(index) || 0)
+  if (/donut|pie/.test(String(layoutId || ''))) {
+    const sets = [
+      { labels: ['A', 'B', 'C', 'D'], values: [40, 25, 20, 15] },
+      { labels: ['A', 'B', 'C', 'D'], values: [30, 30, 25, 15] },
+      { labels: ['A', 'B', 'C', 'D'], values: [50, 20, 18, 12] },
+    ]
+    return sets[i % sets.length]
+  }
+  const sets = [
+    { labels: ['Q1', 'Q2', 'Q3', 'Q4'], values: [42, 58, 51, 67] },
+    { labels: ['Q1', 'Q2', 'Q3', 'Q4'], values: [28, 36, 44, 39] },
+    { labels: ['Q1', 'Q2', 'Q3', 'Q4'], values: [55, 48, 62, 71] },
+  ]
+  return sets[i % sets.length]
+}
+
 function buildTextElement(slot, placement, options) {
   const { contentBySlotId, schema } = options
   const role = slot.role || 'body'
@@ -513,7 +566,9 @@ function buildTextElement(slot, placement, options) {
   const colorMap = colorRoleMapFromPalette(options.palette)
   let colorRole = ty.colorRole || null
   if (!colorRole) {
-    if (overlay && (role === 'caption' || role === 'eyebrow' || role === 'subheading' || role === 'body')) {
+    if (role === 'stat') {
+      colorRole = 'accent'
+    } else if (overlay && (role === 'caption' || role === 'eyebrow' || role === 'subheading' || role === 'body')) {
       colorRole = 'textOnImageMuted'
     } else if (overlay) {
       colorRole = 'textOnImage'
@@ -522,6 +577,9 @@ function buildTextElement(slot, placement, options) {
     } else {
       colorRole = 'text'
     }
+  }
+  if (role === 'stat' && (!colorRole || colorRole === 'text' || colorRole === 'muted')) {
+    colorRole = 'accent'
   }
   if (overlay && (colorRole === 'text' || colorRole === 'muted')) {
     colorRole =
@@ -1128,7 +1186,18 @@ export function compileDeckLayoutToElements(schema, options = {}) {
           layerBase: layerForSlot(frameSlot),
         })
       }
-      return [buildImageElement(slot, placement, contentBySlotId, compileOptions)]
+      let imagePlacement = placement
+      if (/^METRIC_IMAGE_/i.test(String(slot.id || ''))) {
+        const size = Math.max(48, Math.round(Math.min(placement.width || 0, placement.height || 0)))
+        imagePlacement = {
+          ...placement,
+          x: Math.round((placement.x || 0) + ((placement.width || size) - size) / 2),
+          y: Math.round((placement.y || 0) + ((placement.height || size) - size) / 2),
+          width: size,
+          height: size,
+        }
+      }
+      return [buildImageElement(slot, imagePlacement, contentBySlotId, compileOptions)]
     }
     if (role === 'chart') {
       const chartEl = buildChartElement(slot, placement, compileOptions)

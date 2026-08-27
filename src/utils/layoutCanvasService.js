@@ -10,6 +10,7 @@ import { isCatalogPlaceholderText } from './catalogPlaceholder'
 import {
   buildLayoutSchemaMap,
   getDeckLayoutSchema,
+  listDeckLayoutIds,
   resolveLayoutSchemaById,
 } from './deckLayoutRegistry'
 import { parseRegion } from './layoutPreviewUtils'
@@ -38,6 +39,12 @@ export function buildLayoutSchemaMapFromTemplates(templates = []) {
     if (!layoutId || map[layoutId]) continue
     const registered = getDeckLayoutSchema(layoutId)
     if (registered) map[layoutId] = registered
+  }
+
+  // Code catalog is source of truth for shipped layouts — override stale DB schemas.
+  for (const layoutId of listDeckLayoutIds()) {
+    const registered = getDeckLayoutSchema(layoutId)
+    if (registered?.slots?.length) map[layoutId] = registered
   }
 
   return map
@@ -78,20 +85,29 @@ export async function resolveLayoutSchema({
   schema,
   layoutSchemaMap = {},
 }) {
+  // Prefer code catalog whenever layout_id is known — avoids stale DB templates.
+  const key = String(layoutId || schema?.layout_id || '').trim()
+  if (key) {
+    const registered = getDeckLayoutSchema(key)
+    if (registered?.slots?.length || layoutSchemaHasCanvasElements(registered)) return registered
+  }
+
   if (schema?.slots?.length || layoutSchemaHasCanvasElements(schema)) return schema
 
-  const key = String(layoutId || '').trim()
   if (key) {
     const fromMap = resolveLayoutSchemaById(key, layoutSchemaMap)
     if (fromMap?.slots?.length || layoutSchemaHasCanvasElements(fromMap)) return fromMap
-    const registered = getDeckLayoutSchema(key)
-    if (registered?.slots?.length || layoutSchemaHasCanvasElements(registered)) return registered
   }
 
   if (templateId && workspaceId) {
     try {
       const row = await presentationService.getTemplate(workspaceId, templateId)
       const resolved = row?.schema || row?.data?.schema || row?.template?.schema
+      const resolvedId = String(resolved?.layout_id || '').trim()
+      if (resolvedId) {
+        const registered = getDeckLayoutSchema(resolvedId)
+        if (registered?.slots?.length || layoutSchemaHasCanvasElements(registered)) return registered
+      }
       if (resolved?.slots?.length || layoutSchemaHasCanvasElements(resolved)) return resolved
     } catch {
       // fall through
@@ -258,6 +274,46 @@ export function needsLayoutCanvasRepair(slide, elements = [], schema = null, opt
   if (hasOverlappingTextPlacements(list)) return true
   if (needsLegacyBrokenLayout(list, slide?.title)) return true
   if (needsContentHydration(slide, list)) return true
+  if (schemaCanvasSlotMismatch(list, schema)) return true
+
+  return false
+}
+
+/** Detect stale canvas structure vs current layout schema (e.g. old masonry with 3 images). */
+function schemaCanvasSlotMismatch(elements = [], schema = null) {
+  const slots = Array.isArray(schema?.slots) ? schema.slots : []
+  if (!slots.length || !elements.length) return false
+
+  const expected = new Set(
+    slots
+      .filter((slot) => {
+        const id = String(slot?.id || '')
+        if (slot?.aiOnly && !/^METRIC_CARD_\d+_BG$/i.test(id)) return false
+        return Boolean(id)
+      })
+      .map((slot) => String(slot.id))
+  )
+  const onCanvas = new Set(
+    elements.map((el) => String(el.slotId || '')).filter(Boolean)
+  )
+
+  for (const id of onCanvas) {
+    if (
+      !expected.has(id) &&
+      /^(METRIC_IMAGE|STAT_|METRIC_TITLE|METRIC_BODY|METRIC_CARD)/i.test(id)
+    ) {
+      return true
+    }
+  }
+
+  for (const id of expected) {
+    if (
+      /^(METRIC_IMAGE|STAT_\d+_VALUE|METRIC_TITLE|HEADING)$/i.test(id) &&
+      !onCanvas.has(id)
+    ) {
+      return true
+    }
+  }
 
   return false
 }

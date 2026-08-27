@@ -200,10 +200,22 @@ export function PolishedGridImagesTextCardsPreview({ previewHints, ...props }) {
   const cols = previewHints.columns || [{ title: 'Feature A', body: 'Body' }, { title: 'Feature B', body: 'Body' }, { title: 'Feature C', body: 'Body' }]
   const fp = frameProps(props)
   return (
-    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 10 : 3 }}>
+    <div
+      {...fp}
+      style={{
+        ...fp.style,
+        padding: large ? '10% 5% 6%' : '12% 5% 7%',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: large ? 10 : 3,
+        alignContent: 'start',
+      }}
+    >
       {cols.slice(0, 3).map((col, i) => (
-        <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: large ? 6 : 2 }}>
-          <div style={{ flex: 1, minHeight: large ? 60 : 20 }}><ImagePh large={large} /></div>
+        <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: large ? 6 : 2, minHeight: 0 }}>
+          <div style={{ flex: '0 0 auto', height: large ? '48%' : '42%', minHeight: large ? 72 : 22, maxHeight: large ? 160 : 48 }}>
+            <ImagePh large={large} />
+          </div>
           <div style={{ fontSize: large ? '0.68rem' : '0.26rem', fontWeight: 700, color: theme.text }}>{col.title}</div>
           <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted }}>{col.body}</div>
         </div>
@@ -260,7 +272,7 @@ export function PolishedGridMetricsMasonryPreview({ previewHints, ...props }) {
   const cardStyle = {
     background: `linear-gradient(165deg, ${theme.accentSoft}, ${theme.card})`,
     borderRadius: large ? 12 : 4,
-    padding: large ? 10 : 3,
+    padding: large ? 14 : 5,
     display: 'flex',
     minHeight: 0,
     overflow: 'hidden',
@@ -272,6 +284,7 @@ export function PolishedGridMetricsMasonryPreview({ previewHints, ...props }) {
     flexDirection: 'row',
     alignItems: 'center',
     gap: large ? 12 : 4,
+    padding: large ? 14 : 5,
   }
   const featureCardStyle = {
     ...cardStyle,
@@ -281,7 +294,7 @@ export function PolishedGridMetricsMasonryPreview({ previewHints, ...props }) {
   return (
     <div {...fp} style={{
       ...fp.style,
-      padding: pad(large),
+      padding: large ? '7% 5% 6%' : '9% 5% 7%',
       display: 'grid',
       gridTemplateColumns: '1fr 1fr 1fr 1fr',
       gridTemplateRows: `auto repeat(4, minmax(0, 1fr))`,
@@ -300,14 +313,13 @@ export function PolishedGridMetricsMasonryPreview({ previewHints, ...props }) {
       </div>
       <div style={{ ...featureCardStyle, gridArea: 'featL' }}>
         <div style={{ fontSize: large ? '0.72rem' : '0.28rem', fontWeight: 700, color: theme.text }}>{featLeft.title}</div>
-        <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted, lineHeight: 1.35 }}>{featLeft.body}</div>
-        <div style={{ flex: 1, minHeight: 0, display: 'flex' }}><PreviewImage large={large} src={slotSrc('METRIC_IMAGE_1')} /></div>
+        <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted, lineHeight: 1.35, flex: 1 }}>{featLeft.body}</div>
       </div>
       <div style={{ ...statCardStyle, gridArea: 'statT' }}>
         <div style={{ fontSize: large ? '1.4rem' : '0.48rem', fontWeight: 800, color: theme.accent, lineHeight: 1, flexShrink: 0 }}>{statTop.value}</div>
         <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted, lineHeight: 1.35 }}>{statTop.label}</div>
       </div>
-      <div style={{ ...cardStyle, gridArea: 'sq', padding: large ? 6 : 2 }}>
+      <div style={{ gridArea: 'sq', borderRadius: large ? 12 : 4, overflow: 'hidden', minHeight: 0, aspectRatio: '1 / 1', width: '100%', justifySelf: 'stretch', alignSelf: 'center' }}>
         <PreviewImage large={large} src={slotSrc('METRIC_IMAGE_2')} />
       </div>
       <div style={{ ...statCardStyle, gridArea: 'statB' }}>
@@ -316,8 +328,7 @@ export function PolishedGridMetricsMasonryPreview({ previewHints, ...props }) {
       </div>
       <div style={{ ...featureCardStyle, gridArea: 'featR' }}>
         <div style={{ fontSize: large ? '0.72rem' : '0.28rem', fontWeight: 700, color: theme.text }}>{featRight.title}</div>
-        <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted, lineHeight: 1.35 }}>{featRight.body}</div>
-        <div style={{ flex: 1, minHeight: 0, display: 'flex' }}><PreviewImage large={large} src={slotSrc('METRIC_IMAGE_3')} /></div>
+        <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted, lineHeight: 1.35, flex: 1 }}>{featRight.body}</div>
       </div>
     </div>
   )
