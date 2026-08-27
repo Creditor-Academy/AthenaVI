@@ -8,6 +8,7 @@ import {
 import { MdDashboard } from 'react-icons/md'
 import presentationService from '../../../services/presentationService'
 import brandKitService from '../../../services/brandKitService'
+import { listBrandKitsUsableInWorkspace } from '../../../utils/brandKitWorkspace'
 import {
   normalizeDeckPackDetail,
   resolvePackThumbnailUrl,
@@ -93,8 +94,8 @@ function ColorStripeCard({
   )
 }
 
-function brandKitColors(detail) {
-  const colors = detail?.data?.colors || []
+function brandKitColors(detailOrKit) {
+  const colors = detailOrKit?.data?.colors || []
   const hexes = colors.map((c) => c.hex).filter(Boolean)
   // Prefer first 4 palette entries — same strip count as theme cards
   return hexes.slice(0, 4)
@@ -192,6 +193,39 @@ export default function AIPptVibeStep({
   const [appearanceFilter, setAppearanceFilter] = useState('all') // 'all' | 'light' | 'dark'
   const [brandKitDetails, setBrandKitDetails] = useState({})
   const [packDetail, setPackDetail] = useState(null)
+  const [loadedBrandKits, setLoadedBrandKits] = useState(null)
+  const [brandKitsLoading, setBrandKitsLoading] = useState(false)
+  const [brandKitsError, setBrandKitsError] = useState('')
+
+  const effectiveBrandKits = loadedBrandKits ?? brandKits
+
+  const loadBrandKits = useCallback(async () => {
+    if (!workspaceId) {
+      setLoadedBrandKits(null)
+      return
+    }
+    setBrandKitsLoading(true)
+    setBrandKitsError('')
+    try {
+      const kits = await listBrandKitsUsableInWorkspace(workspaceId)
+      setLoadedBrandKits(kits || [])
+    } catch (err) {
+      setLoadedBrandKits([])
+      setBrandKitsError(err.message || 'Could not load brand kits')
+    } finally {
+      setBrandKitsLoading(false)
+    }
+  }, [workspaceId])
+
+  useEffect(() => {
+    loadBrandKits()
+  }, [loadBrandKits])
+
+  useEffect(() => {
+    if (drawer === 'brand') {
+      loadBrandKits()
+    }
+  }, [drawer, loadBrandKits])
 
   // AI PPT generation is always 16:9
   useEffect(() => {
@@ -202,15 +236,19 @@ export default function AIPptVibeStep({
 
   useEffect(() => {
     let cancelled = false
-    if (!workspaceId || !brandKits.length) {
+    if (!effectiveBrandKits.length) {
       setBrandKitDetails({})
       return undefined
     }
     ;(async () => {
       const entries = await Promise.all(
-        brandKits.map(async (kit) => {
+        effectiveBrandKits.map(async (kit) => {
+          const kitWorkspaceId = kit.workspaceId || workspaceId
+          if (!kitWorkspaceId || !kit.id) {
+            return [String(kit.id), null]
+          }
           try {
-            const detail = await brandKitService.get(workspaceId, kit.id)
+            const detail = await brandKitService.get(kitWorkspaceId, kit.id)
             return [String(kit.id), detail]
           } catch {
             return [String(kit.id), null]
@@ -222,7 +260,7 @@ export default function AIPptVibeStep({
     return () => {
       cancelled = true
     }
-  }, [workspaceId, brandKits])
+  }, [workspaceId, effectiveBrandKits])
 
   const loadPackDetail = useCallback(
     async (packId) => {
@@ -277,8 +315,10 @@ export default function AIPptVibeStep({
     setDrawer(null)
   }, [])
 
-  const selectBrandKit = (id) => {
-    onSelectBrandKit(String(id))
+  const selectBrandKit = (kit) => {
+    const id = kit?.id ?? kit
+    const kitWorkspaceId = typeof kit === 'object' ? kit.workspaceId || null : null
+    onSelectBrandKit(String(id), kitWorkspaceId)
     onSelectPack('')
     setActiveChoice('brand')
     setDrawer(null)
@@ -286,7 +326,7 @@ export default function AIPptVibeStep({
 
   const selectPalette = (id) => {
     onSelectTheme(id)
-    onSelectBrandKit('')
+    onSelectBrandKit('', null)
     onSelectPack('')
     setActiveChoice('palette')
     setDrawer(null)
@@ -294,16 +334,23 @@ export default function AIPptVibeStep({
 
   const selectTemplate = (id) => {
     onSelectPack(String(id))
-    onSelectBrandKit('')
+    onSelectBrandKit('', null)
     setActiveChoice('template')
     setDrawer(null)
   }
 
   const filteredBrandKits = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
-    if (!q) return brandKits
-    return brandKits.filter((kit) => (kit.name || '').toLowerCase().includes(q))
-  }, [brandKits, searchQuery])
+    if (!q) return effectiveBrandKits
+    return effectiveBrandKits.filter((kit) => (kit.name || '').toLowerCase().includes(q))
+  }, [effectiveBrandKits, searchQuery])
+
+  const showBrandKitWorkspaceNames = useMemo(() => {
+    const workspaceIds = new Set(
+      effectiveBrandKits.map((kit) => kit.workspaceId).filter(Boolean)
+    )
+    return workspaceIds.size > 1
+  }, [effectiveBrandKits])
 
   const filteredThemes = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
@@ -327,7 +374,7 @@ export default function AIPptVibeStep({
     })
   }, [deckPacks, searchQuery])
 
-  const selectedBrandKit = brandKits.find(
+  const selectedBrandKit = effectiveBrandKits.find(
     (k) => String(k.id) === String(selectedBrandKitId)
   )
   const selectedTheme = themes.find((t) => t.id === theme)
@@ -405,38 +452,6 @@ export default function AIPptVibeStep({
               }
             />
           </div>
-
-          {(brandConfigured || paletteConfigured || templateConfigured) && (
-            <div className="aig-vibe-summary-row fade-in">
-              {brandConfigured && (
-                <button
-                  type="button"
-                  className="aig-vibe-summary-chip"
-                  onClick={() => openDrawer('brand')}
-                >
-                  Brand: {selectedBrandKit?.name || 'Selected'}
-                </button>
-              )}
-              {paletteConfigured && (
-                <button
-                  type="button"
-                  className="aig-vibe-summary-chip"
-                  onClick={() => openDrawer('palette')}
-                >
-                  Palette: {selectedTheme?.name || theme}
-                </button>
-              )}
-              {templateConfigured && (
-                <button
-                  type="button"
-                  className="aig-vibe-summary-chip"
-                  onClick={() => openDrawer('template')}
-                >
-                  Template: {selectedPack?.name || 'Selected'}
-                </button>
-              )}
-            </div>
-          )}
         </section>
       </div>
 
@@ -521,7 +536,13 @@ export default function AIPptVibeStep({
               >
                 {drawer === 'brand' && (
                   <>
-                    {!filteredBrandKits.length && (
+                    {brandKitsLoading && (
+                      <div className="aig-template-drawer-empty">Loading brand kits…</div>
+                    )}
+                    {!brandKitsLoading && brandKitsError && (
+                      <div className="aig-template-drawer-empty">{brandKitsError}</div>
+                    )}
+                    {!brandKitsLoading && !brandKitsError && !filteredBrandKits.length && (
                       <div className="aig-template-drawer-empty">
                         No brand kits in this workspace yet.
                       </div>
@@ -530,13 +551,21 @@ export default function AIPptVibeStep({
                       <ColorStripeCard
                         key={kit.id}
                         title={kit.name}
-                        subtitle={kit.isDefault ? 'Default brand kit' : 'Brand kit'}
-                        colors={brandKitColors(brandKitDetails[String(kit.id)])}
+                        subtitle={
+                          kit.isDefault
+                            ? showBrandKitWorkspaceNames && kit.workspaceName
+                              ? `Default · ${kit.workspaceName}`
+                              : 'Default brand kit'
+                            : showBrandKitWorkspaceNames && kit.workspaceName
+                              ? kit.workspaceName
+                              : 'Brand kit'
+                        }
+                        colors={brandKitColors(brandKitDetails[String(kit.id)] || kit)}
                         selected={
                           activeChoice === 'brand' &&
                           String(selectedBrandKitId) === String(kit.id)
                         }
-                        onSelect={() => selectBrandKit(kit.id)}
+                        onSelect={() => selectBrandKit(kit)}
                         badge={kit.isDefault ? 'Default' : null}
                       />
                     ))}

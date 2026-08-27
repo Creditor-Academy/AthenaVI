@@ -338,7 +338,9 @@ Preset ids frontend may send:
     "alt": "Office",
     "fit": "cover",
     "assetId": "asset_…",
-    "provider": "unsplash"
+    "provider": "unsplash",
+    "flipHorizontal": false,
+    "flipVertical": false
   }
 }
 ```
@@ -349,6 +351,10 @@ Preset ids frontend may send:
 | `fit` | no | `cover` \| `contain` \| `fill` |
 | `assetId` | no | Workspace asset after upload/import |
 | `provider` | no | `unsplash` \| `pexels` \| `pixabay` \| `upload` \| `brand` |
+| `flipHorizontal` | no | Mirror on X. UI may also set `scaleX: -1` |
+| `flipVertical` | no | Mirror on Y. UI may also set `scaleY: -1` |
+
+Rotation is **not** on content — use `placement.rotation` (degrees). Text uses the same field. Canvas mouse-rotate snaps every 90°.
 
 ### 6.3 `icon`
 

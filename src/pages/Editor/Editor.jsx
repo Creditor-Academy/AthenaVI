@@ -72,13 +72,14 @@ import { useEditorUx } from '../../hooks/useEditorUx'
 import useTextCanvasInteraction from '../../hooks/useTextCanvasInteraction'
 import { findSceneMusicClip, resolveAudioClipSrc } from '../../utils/audioClipUtils'
 import { probeAudioDuration } from '../../utils/audioDuration'
-import { normalizeClipStack, normalizeClipsToScene, getLayerNudgeStep } from '../../utils/editorLayerUtils'
+import { normalizeClipStack, normalizeClipsToScene, getLayerNudgeStep, isBackgroundClip } from '../../utils/editorLayerUtils'
+import { getDefaultClipPlacement, COMPOSITION_W, COMPOSITION_H } from '../../utils/editorPlacementUtils'
+import { clampPlacementOverflow } from '../../utils/canvasOverflowUtils'
 import {
   findTopFrameAtPoint,
   resolveDropAssetId,
   resolveDropImageSrc,
 } from '../../utils/editorDragDrop'
-import { getDefaultClipPlacement } from '../../utils/editorPlacementUtils'
 import { rehydrateSceneAssetUrls } from '../../utils/assetClipUtils'
 import { normalizeSceneClips } from '../../utils/clipLayout'
 import { prepareTemplateSceneForEditor } from '../../utils/templateSceneUtils'
@@ -998,17 +999,26 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
         if (s.id !== activeSceneId) return s
         return {
           ...s,
-          clips: s.clips.map(c =>
-            c.id === layerId
-              ? {
-                  ...c,
-                  position: { x: px, y: py },
-                  size: { width: w, height: h },
-                  _userPlaced: true,
-                  _coordsNormalized: true,
-                }
-              : c
-          )
+          clips: s.clips.map(c => {
+            if (c.id !== layerId) return c
+            if (isBackgroundClip(c)) {
+              return {
+                ...c,
+                position: { x: px, y: py },
+                size: { width: w, height: h },
+                _userPlaced: true,
+                _coordsNormalized: true,
+              }
+            }
+            const placed = clampPlacementOverflow(px, py, w, h, COMPOSITION_W, COMPOSITION_H)
+            return {
+              ...c,
+              position: { x: Math.round(placed.x), y: Math.round(placed.y) },
+              size: { width: Math.round(placed.width), height: Math.round(placed.height) },
+              _userPlaced: true,
+              _coordsNormalized: true,
+            }
+          })
         }
       })
     }))

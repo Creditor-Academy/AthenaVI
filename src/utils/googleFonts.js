@@ -2,6 +2,8 @@
  * Load Google Font stylesheets for canvas / editor / share rendering.
  */
 
+import { isSystemFontFamily } from './legacyFonts.js'
+
 const GENERIC_FAMILIES = new Set(['sans-serif', 'serif', 'monospace', 'system-ui', 'cursive', 'fantasy'])
 
 function stylesheetIdFromHref(href) {
@@ -70,6 +72,7 @@ export function ensureGoogleFontLoaded(fontFamily) {
   if (typeof document === 'undefined') return
   const cleanName = extractPrimaryFontFamily(fontFamily)
   if (!cleanName || GENERIC_FAMILIES.has(cleanName.toLowerCase())) return
+  if (isSystemFontFamily(cleanName)) return
   const id = familyLinkId(cleanName)
   if (document.getElementById(id)) return
   const href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(cleanName)}:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap`

@@ -2042,6 +2042,34 @@ kbd.shortcut-key {
     transform-origin: center center;
 }
 
+/* Canva-style video stage: clipped frame + unclipped elements/chrome */
+.video-live-canvas {
+    overflow: visible;
+}
+
+.video-live-composition {
+    overflow: visible;
+}
+
+.video-live-stage-clip {
+    overflow: hidden !important;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.video-live-stage-elements {
+    overflow: visible;
+    z-index: 1;
+}
+
+.video-clip-overflow-paint {
+    pointer-events: none;
+}
+
+.video-clip-overflow-paint > * {
+    pointer-events: auto;
+}
+
 
 .tool-panel-beside {
     width: 280px;

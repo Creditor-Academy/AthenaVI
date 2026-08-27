@@ -368,6 +368,16 @@ const superadminService = {
     return superadminRequest(`/api/superadmin/graphics/getillustrations/free${suffix}`)
   },
 
+  saveGetIllustrationsIconPack(packId, body = {}) {
+    return superadminRequest(
+      `/api/superadmin/graphics/getillustrations/icon-packs/${encodeURIComponent(packId)}/save`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }
+    )
+  },
+
   getGraphic(id) {
     return superadminRequest(`/api/superadmin/graphics/${id}`)
   },

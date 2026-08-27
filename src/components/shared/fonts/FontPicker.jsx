@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { MdKeyboardArrowDown, MdSearch } from 'react-icons/md'
 import { ensureGoogleFontLoaded, injectStylesheet } from '../../../utils/googleFonts'
+import { isSystemFontFamily } from '../../../utils/legacyFonts'
 import { preloadFontPreview, useFontCatalog } from './useFontCatalog'
 import './FontPicker.css'
 
@@ -11,9 +12,10 @@ function fontLinkId(family) {
 function loadFontFace(fontOrFamily) {
   if (!fontOrFamily) return
   if (typeof fontOrFamily === 'string') {
-    ensureGoogleFontLoaded(fontOrFamily)
+    if (!isSystemFontFamily(fontOrFamily)) ensureGoogleFontLoaded(fontOrFamily)
     return
   }
+  if (fontOrFamily.source === 'system' || isSystemFontFamily(fontOrFamily.family)) return
   if (fontOrFamily.cssUrl) {
     injectStylesheet(fontOrFamily.cssUrl, fontLinkId(fontOrFamily.family))
   } else {
@@ -108,7 +110,7 @@ export default function FontPicker({
   }, [isSearching, fonts, recommendedList])
 
   useEffect(() => {
-    if (value) ensureGoogleFontLoaded(value)
+    if (value && !isSystemFontFamily(value)) ensureGoogleFontLoaded(value)
   }, [value])
 
   useEffect(() => {

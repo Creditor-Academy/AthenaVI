@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   FiPlay,
   FiDownload,
@@ -10,7 +11,7 @@ import {
   FiZoomOut,
   FiSidebar,
 } from 'react-icons/fi'
-import { MdDragIndicator, MdOutlineColorLens } from 'react-icons/md'
+import { MdDragIndicator, MdOutlineColorLens, MdRotateRight } from 'react-icons/md'
 import { BsStars } from 'react-icons/bs'
 import { THEMES } from './AIPptWizard'
 import InsertToolbar from './insert/InsertToolbar'
@@ -30,6 +31,11 @@ import { usePptEditorHistory } from '../../../hooks/usePptEditorHistory'
 import { usePptElementMutations } from './usePptElementMutations'
 import { computePptSmartGuides } from '../../../utils/pptSmartGuides'
 import { exceedsDragThreshold } from '../../../utils/pointerDrag'
+import {
+  normalizeAngle,
+  pointerAngleFromCenter,
+  snapAngleStep,
+} from '../../../utils/canvasTransformUtils'
 import { useAuth } from '../../../contexts/AuthContext'
 import presentationService, {
   PresentationConflictError,
@@ -97,6 +103,13 @@ import {
   buildDeviceFrameScreenPatch,
   clearDeviceFrameScreenPatch,
 } from '../../../components/ppt/DeviceFrameVisual'
+import {
+  minOverlapPx,
+  elementOverflowsCanvas as elementOverflowsSlide,
+  onCanvasOnlyClipPath as onSlideOnlyClipPath,
+  selectedOverflowMaskStyle,
+  clampPlacementOverflow,
+} from '../../../utils/canvasOverflowUtils'
 import './pptEditorExtras.css'
 import '../AIPptGenerator.css'
 
@@ -144,19 +157,21 @@ function applyResizeFromHandle(handle, start, dx, dy, canvasW, canvasH, minH) {
   const right = start.x + start.width
   const bottom = start.y + start.height
   const aspect = start.width > 0 && start.height > 0 ? start.width / start.height : 1
+  // Generous max so users can grow past the slide; final overflow clamp keeps min overlap
+  const maxDim = Math.max(canvasW, canvasH) * 3
 
   if (handle === 'e') {
-    width = clamp(start.width + dx, minW, canvasW - start.x)
+    width = clamp(start.width + dx, minW, maxDim)
   } else if (handle === 'w') {
-    const nextX = clamp(start.x + dx, 0, right - minW)
-    width = right - nextX
-    x = nextX
+    const nextX = start.x + dx
+    width = clamp(right - nextX, minW, maxDim)
+    x = right - width
   } else if (handle === 's') {
-    height = clamp(start.height + dy, minHeight, canvasH - start.y)
+    height = clamp(start.height + dy, minHeight, maxDim)
   } else if (handle === 'n') {
-    const nextY = clamp(start.y + dy, 0, bottom - minHeight)
-    height = bottom - nextY
-    y = nextY
+    const nextY = start.y + dy
+    height = clamp(bottom - nextY, minHeight, maxDim)
+    y = bottom - height
   } else {
     // Corner: keep aspect ratio; opposite corner stays fixed
     let scaleX
@@ -187,83 +202,41 @@ function applyResizeFromHandle(handle, start, dx, dy, canvasW, canvasH, minH) {
       nextH = minHeight
       nextW = nextH * aspect
     }
+    nextW = Math.min(nextW, maxDim)
+    nextH = nextW / aspect
+    if (nextH > maxDim) {
+      nextH = maxDim
+      nextW = nextH * aspect
+    }
 
     if (handle === 'se') {
-      nextW = Math.min(nextW, canvasW - start.x)
-      nextH = nextW / aspect
-      if (start.y + nextH > canvasH) {
-        nextH = canvasH - start.y
-        nextW = nextH * aspect
-      }
       width = nextW
       height = nextH
       x = start.x
       y = start.y
     } else if (handle === 'sw') {
-      nextW = Math.min(nextW, right)
-      nextH = nextW / aspect
-      if (start.y + nextH > canvasH) {
-        nextH = canvasH - start.y
-        nextW = nextH * aspect
-      }
       width = nextW
       height = nextH
       x = right - width
       y = start.y
-      if (x < 0) {
-        x = 0
-        width = right
-        height = width / aspect
-      }
     } else if (handle === 'ne') {
-      nextW = Math.min(nextW, canvasW - start.x)
-      nextH = nextW / aspect
-      if (nextH > bottom) {
-        nextH = bottom
-        nextW = nextH * aspect
-      }
       width = nextW
       height = nextH
       x = start.x
       y = bottom - height
-      if (y < 0) {
-        y = 0
-        height = bottom
-        width = height * aspect
-      }
     } else {
       // nw
-      nextW = Math.min(nextW, right)
-      nextH = nextW / aspect
-      if (nextH > bottom) {
-        nextH = bottom
-        nextW = nextH * aspect
-      }
       width = nextW
       height = nextH
       x = right - width
       y = bottom - height
-      if (x < 0) {
-        x = 0
-        width = right
-        height = width / aspect
-        y = bottom - height
-      }
-      if (y < 0) {
-        y = 0
-        height = bottom
-        width = height * aspect
-        x = right - width
-      }
     }
   }
 
-  width = clamp(width, minW, canvasW)
-  height = clamp(height, minHeight, canvasH)
-  x = clamp(x, 0, canvasW - width)
-  y = clamp(y, 0, canvasH - height)
-
-  return { ...start, x, y, width, height }
+  width = clamp(width, minW, maxDim)
+  height = clamp(height, minHeight, maxDim)
+  const placed = clampPlacementOverflow(x, y, width, height, canvasW, canvasH)
+  return { ...start, ...placed }
 }
 
 function cssPxToCanvas(cssPx, stageEl, canvasSize) {
@@ -315,23 +288,27 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
 }
 
+/** Map pointer → canvas px. Do not clamp to slide so overflow drag/resize works. */
 function pointerToCanvas(clientX, clientY, stageEl, canvasW, canvasH) {
   if (!stageEl) return { x: 0, y: 0 }
   const rect = stageEl.getBoundingClientRect()
+  if (!rect.width || !rect.height) return { x: 0, y: 0 }
   return {
-    x: clamp(((clientX - rect.left) / rect.width) * canvasW, 0, canvasW),
-    y: clamp(((clientY - rect.top) / rect.height) * canvasH, 0, canvasH),
+    x: ((clientX - rect.left) / rect.width) * canvasW,
+    y: ((clientY - rect.top) / rect.height) * canvasH,
   }
 }
 
 function placementFrameStyle(p, canvasW, canvasH, { layer = 0, rotation = 0, opacity = 1 } = {}) {
+  const deg = Number(rotation) || 0
   return {
     position: 'absolute',
     left: `${((p.x || 0) / canvasW) * 100}%`,
     top: `${((p.y || 0) / canvasH) * 100}%`,
     width: `${((p.width || 100) / canvasW) * 100}%`,
     height: `${((p.height || 40) / canvasH) * 100}%`,
-    transform: rotation ? `rotate(${rotation}deg)` : undefined,
+    transform: deg ? `rotate(${deg}deg)` : undefined,
+    transformOrigin: 'center center',
     opacity: opacity != null ? opacity : 1,
     zIndex: layer || 0,
   }
@@ -346,6 +323,7 @@ function InteractiveElementShell({
   locked,
   editing,
   stageRef,
+  chromeHost,
   allElements,
   onSelect,
   onPlacementLive,
@@ -357,9 +335,11 @@ function InteractiveElementShell({
 }) {
   const p = el.placement || {}
   const dragRef = useRef(null)
+  const shellRef = useRef(null)
   const lastPlacementRef = useRef(null)
   const isText = isTextElement(el)
   const [isDropTarget, setIsDropTarget] = useState(false)
+  const [rotateBadge, setRotateBadge] = useState(null)
   const acceptsImageFill =
     editable && !locked && isPptDeviceFrameElement(el) && typeof onFillDeviceFrame === 'function'
 
@@ -378,8 +358,20 @@ function InteractiveElementShell({
       let next = { ...start }
 
       if (drag.mode === 'move') {
-        next.x = clamp(start.x + dx, 0, canvasW - (start.width || 40))
-        next.y = clamp(start.y + dy, 0, canvasH - (start.height || 40))
+        const w = start.width || 40
+        const h = start.height || 40
+        let nextX = start.x + dx
+        let nextY = start.y + dy
+        ;({ x: nextX, y: nextY } = clampPlacementOverflow(
+          nextX,
+          nextY,
+          w,
+          h,
+          canvasW,
+          canvasH
+        ))
+        next.x = nextX
+        next.y = nextY
         const { guides, snapDx, snapDy } = computePptSmartGuides(
           {
             x: next.x,
@@ -393,10 +385,30 @@ function InteractiveElementShell({
         )
         next.x += snapDx
         next.y += snapDy
+        ;({ x: next.x, y: next.y } = clampPlacementOverflow(
+          next.x,
+          next.y,
+          next.width || w,
+          next.height || h,
+          canvasW,
+          canvasH
+        ))
         onGuidesChange?.(guides)
       } else if (drag.mode === 'resize') {
         const minH = isText ? TEXT_MIN_HEIGHT : RESIZE_MIN_HEIGHT
         next = applyResizeFromHandle(drag.handle, start, dx, dy, canvasW, canvasH, minH)
+      } else if (drag.mode === 'rotate') {
+        const pointerAngle = pointerAngleFromCenter(e.clientX, e.clientY, drag.centerX, drag.centerY)
+        const raw = (start.rotation || 0) + (pointerAngle - drag.startPointerAngle)
+        const snapped = snapAngleStep(raw, { step: 90, threshold: 12 })
+        next.rotation = snapped
+        drag.moved = true
+        setRotateBadge({
+          x: e.clientX,
+          y: e.clientY - 18,
+          angle: normalizeAngle(snapped),
+          snapped: snapped % 90 === 0,
+        })
       }
 
       lastPlacementRef.current = next
@@ -416,6 +428,7 @@ function InteractiveElementShell({
         // ignore release errors
       }
       onGuidesChange?.([])
+      setRotateBadge(null)
       if (!drag.moved) return
       onPlacementCommit?.(el.id, lastPlacementRef.current || drag.startPlacement)
     }
@@ -452,13 +465,16 @@ function InteractiveElementShell({
     }
     lastPlacementRef.current = startPlacement
     const cursor =
-      mode === 'resize' ? resizeCursorForHandle(handle) : 'move'
+      mode === 'resize' ? resizeCursorForHandle(handle) : mode === 'rotate' ? 'grabbing' : 'move'
     lockDragCursor(cursor)
     try {
       e.currentTarget?.setPointerCapture?.(e.pointerId)
     } catch {
       // ignore capture errors
     }
+    const shellRect = shellRef.current?.getBoundingClientRect()
+    const centerX = shellRect ? shellRect.left + shellRect.width / 2 : e.clientX
+    const centerY = shellRect ? shellRect.top + shellRect.height / 2 : e.clientY
     dragRef.current = {
       mode,
       handle,
@@ -467,8 +483,11 @@ function InteractiveElementShell({
       startClientX: e.clientX,
       startClientY: e.clientY,
       startPlacement,
-      moved: mode === 'resize',
+      moved: mode === 'resize' || mode === 'rotate',
       captureTarget: e.currentTarget,
+      centerX,
+      centerY,
+      startPointerAngle: pointerAngleFromCenter(e.clientX, e.clientY, centerX, centerY),
     }
   }
 
@@ -522,21 +541,73 @@ function InteractiveElementShell({
     }
   }
 
+  const overflowsSlide = elementOverflowsSlide(p, canvasW, canvasH)
+  let overflowPaintStyle = null
+  if (overflowsSlide && !editing) {
+    if (selected) {
+      overflowPaintStyle = selectedOverflowMaskStyle(p, canvasW, canvasH, 0.45)
+    } else {
+      const clip = onSlideOnlyClipPath(p, canvasW, canvasH)
+      if (clip) {
+        overflowPaintStyle = { clipPath: clip, WebkitClipPath: clip }
+      }
+    }
+  }
+
   const frameStyle = {
     ...placementFrameStyle(p, canvasW, canvasH, {
       layer: el.layer,
       rotation: p.rotation,
       opacity: p.opacity,
     }),
-    outline: selected && !editing ? '2px solid #3B82F6' : undefined,
-    outlineOffset: selected && !editing ? 2 : undefined,
+    ...overflowPaintStyle,
     cursor: isText || !editable || locked ? 'pointer' : selected ? 'move' : 'pointer',
     touchAction: 'none',
-    overflow: isText ? 'visible' : undefined,
+    overflow: 'visible',
   }
+
+  const showChrome = selected && editable && !locked && !editing
+  const chromeFrameStyle = {
+    ...placementFrameStyle(p, canvasW, canvasH, {
+      layer: (el.layer || 0) + 1000,
+      rotation: p.rotation,
+      opacity: 1,
+    }),
+    outline: '2px solid #3B82F6',
+    outlineOffset: 2,
+    pointerEvents: 'none',
+  }
+
+  const handlesNode = showChrome ? (
+    <div className="ppt-canvas-el-handles">
+      <div aria-hidden>
+        {RESIZE_HANDLES.map((handle) => (
+          <span
+            key={handle.id}
+            className={`ppt-canvas-el-resize ppt-canvas-el-resize--${handle.id}`}
+            style={{ cursor: handle.cursor }}
+            onPointerDown={(e) => beginDrag(e, 'resize', handle.id)}
+          />
+        ))}
+        <span className="ppt-canvas-el-rotate-line" />
+      </div>
+      <button
+        type="button"
+        className="ppt-canvas-el-rotate"
+        title="Rotate"
+        aria-label="Rotate"
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => beginDrag(e, 'rotate')}
+      >
+        <MdRotateRight size={12} />
+      </button>
+    </div>
+  ) : null
 
   return (
     <div
+      ref={shellRef}
       role="button"
       tabIndex={0}
       data-element-id={el.id}
@@ -545,6 +616,7 @@ function InteractiveElementShell({
         isText && editing ? 'is-editing-text' : '',
         isDropTarget ? 'ppt-canvas-el--drop-target' : '',
         acceptsImageFill ? 'ppt-canvas-el--accepts-fill' : '',
+        selected && !editing ? 'ppt-canvas-el--selected' : '',
       ]
         .filter(Boolean)
         .join(' ') || undefined}
@@ -564,7 +636,7 @@ function InteractiveElementShell({
       onDrop={handleDrop}
       onPointerDown={(e) => {
         if (!editable || !selected || editing) return
-        if (e.target.closest?.('.ppt-canvas-el-resize, .ppt-text-drag')) return
+        if (e.target.closest?.('.ppt-canvas-el-resize, .ppt-text-drag, .ppt-canvas-el-rotate')) return
         if (isText) return
         if (e.target.closest?.('.ppt-table-cell-input')) return
         beginDrag(e, 'move')
@@ -611,18 +683,30 @@ function InteractiveElementShell({
           />
         </>
       )}
-      {selected && editable && !locked && !editing && (
-        <div className="ppt-canvas-el-handles" aria-hidden>
-          {RESIZE_HANDLES.map((handle) => (
-            <span
-              key={handle.id}
-              className={`ppt-canvas-el-resize ppt-canvas-el-resize--${handle.id}`}
-              style={{ cursor: handle.cursor }}
-              onPointerDown={(e) => beginDrag(e, 'resize', handle.id)}
-            />
-          ))}
-        </div>
-      )}
+      {/* Fallback handles when chrome host is unavailable */}
+      {showChrome && !chromeHost ? handlesNode : null}
+      {showChrome &&
+        chromeHost &&
+        createPortal(
+          <div
+            className="ppt-canvas-el-chrome"
+            data-chrome-for={el.id}
+            style={chromeFrameStyle}
+          >
+            {handlesNode}
+          </div>,
+          chromeHost
+        )}
+      {rotateBadge &&
+        createPortal(
+          <div
+            className={`ppt-rotate-angle-badge ${rotateBadge.snapped ? 'is-snapped' : ''}`}
+            style={{ left: rotateBadge.x, top: rotateBadge.y }}
+          >
+            {Math.round(rotateBadge.angle)}°
+          </div>,
+          document.body
+        )}
     </div>
   )
 }
@@ -646,6 +730,7 @@ function SlideStage({
   onFillDeviceFrame,
 }) {
   const stageRef = useRef(null)
+  const [chromeHost, setChromeHost] = useState(null)
   const canvas = resolveCanvasSize(slide, aspectRatio)
   const elements = (slide?.elements?.elements || []).filter(
     (el) =>
@@ -677,109 +762,140 @@ function SlideStage({
         aspectRatio: `${canvas.width} / ${canvas.height}`,
       }}
       onClick={(e) => {
-        if (e.target === e.currentTarget) onSelectElement?.(null)
+        // Empty slide / chrome (not an element) clears selection — Canva-style
+        if (e.target.closest?.('[data-element-id], .ppt-canvas-el-chrome, .ppt-canvas-el-handles, .ppt-canvas-el-resize, .ppt-canvas-el-rotate, .ppt-text-drag')) {
+          return
+        }
+        onSelectElement?.(null)
       }}
     >
-      <div
-        ref={stageRef}
-        className="aig-slide-stage"
-        style={{
-          ...slideBgStyle,
-          color: themeVisual.body,
-        }}
-      >
-        <PptCanvasGuidesOverlay guides={smartGuides} canvasW={canvas.width} canvasH={canvas.height} />
-        {hasElements ? (
-          elements.map((el, i) => (
-            <InteractiveElementShell
-              key={el.id || `el-${i}`}
-              el={el}
-              canvasW={canvas.width}
-              canvasH={canvas.height}
-              selected={selectedElementId === el.id}
-              editable={editable}
-              locked={!!el.locked}
-              editing={editingTextId === el.id}
-              stageRef={stageRef}
-              allElements={elements}
-              onSelect={onSelectElement}
-              onStartTextEdit={onStartTextEdit}
-              onPlacementLive={onPlacementLive}
-              onPlacementCommit={onPlacementCommit}
-              onGuidesChange={onGuidesChange}
-              onFillDeviceFrame={onFillDeviceFrame}
-            >
-              <PptCanvasElement
-                el={el}
-                palette={palette}
-                selected={selectedElementId === el.id}
-                canvasW={canvas.width}
-                editable={
-                  editable &&
-                  (el.type === 'text' ||
-                    el.type === 'textbox' ||
-                    el.type === 'table' ||
-                    selectedElementId === el.id)
-                }
-                editingText={editingTextId === el.id}
-                onStartTextEdit={() => {
-                  onSelectElement?.(el.id)
-                  onStartTextEdit?.(el.id)
-                }}
-                onEndTextEdit={(text, runs) => onEndTextEdit?.(el.id, text, runs)}
-                onHeightChange={(cssHeight, { commit = false, allowShrink = false } = {}) => {
-                  if (!editable) return
-                  const y = el.placement?.y || 0
-                  const curH = el.placement?.height || 40
-                  const nextH = Math.max(
-                    TEXT_MIN_HEIGHT,
-                    Math.min(
-                      canvas.height - y,
-                      Math.round(cssPxToCanvas(cssHeight, stageRef.current, canvas.height))
-                    )
-                  )
-                  if (allowShrink) {
-                    if (Math.abs(nextH - curH) <= 2) return
-                  } else if (nextH <= curH + 2) {
-                    return
-                  }
-                  const next = { ...(el.placement || {}), height: nextH }
-                  onPlacementLive?.(el.id, next)
-                  if (commit) onPlacementCommit?.(el.id, next)
-                }}
-                onTableCellChange={(ri, ci, val) => onTableCellChange?.(el.id, ri, ci, val)}
-                onTableActivate={() => onSelectElement?.(el.id)}
-                onImageAuthError={onImageAuthError}
-              />
-            </InteractiveElementShell>
-          ))
-        ) : (
-          <div className="aig-slide-mock">
-            <h1 className="aig-slide-mock-title" style={{ color: themeVisual.title }}>
-              {slide.title}
-            </h1>
-            <div className="aig-slide-mock-text" style={{ color: themeVisual.body }}>
-              {Array.isArray(slide.description) ? (
-                <ul style={{ paddingLeft: '32px', margin: 0 }}>
-                  {slide.description.map((pt, i) => (
-                    <li key={i} style={{ marginBottom: '12px' }}>
-                      {pt}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p style={{ margin: 0 }}>{slide.description}</p>
-              )}
+      <div className="aig-slide-stage-clip" style={slideBgStyle}>
+        <div
+          ref={stageRef}
+          className="aig-slide-stage"
+          style={{
+            ...slideBgStyle,
+            color: themeVisual.body,
+          }}
+        >
+          {!hasElements ? (
+            <div className="aig-slide-mock">
+              <h1 className="aig-slide-mock-title" style={{ color: themeVisual.title }}>
+                {slide.title}
+              </h1>
+              {slide.subtitle || slide.content ? (
+                <p className="aig-slide-mock-body">{slide.subtitle || slide.content}</p>
+              ) : null}
+              {Array.isArray(slide.description) && slide.description.length ? (
+                <div className="aig-slide-mock-text" style={{ color: themeVisual.body }}>
+                  <ul style={{ paddingLeft: '32px', margin: 0 }}>
+                    {slide.description.map((pt, i) => (
+                      <li key={i} style={{ marginBottom: '12px' }}>
+                        {pt}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : slide.description ? (
+                <div className="aig-slide-mock-text" style={{ color: themeVisual.body }}>
+                  <p style={{ margin: 0 }}>{slide.description}</p>
+                </div>
+              ) : null}
+              {fallbackImage ? (
+                <div className="aig-slide-mock-visual">
+                  <img className="aig-slide-mock-image" src={fallbackImage} alt="" />
+                </div>
+              ) : null}
             </div>
-
-            {fallbackImage && (
-              <div className="aig-slide-mock-visual">
-                <img src={fallbackImage} alt="" className="aig-slide-mock-image" />
-              </div>
-            )}
-          </div>
-        )}
+          ) : null}
+        </div>
       </div>
+      {/* Elements live outside the hard clip so selected overflow can paint
+          immediately (per-element clip/mask — no ghost remount on select). */}
+      <div className="aig-slide-stage-elements" style={{ color: themeVisual.body }}>
+        <PptCanvasGuidesOverlay guides={smartGuides} canvasW={canvas.width} canvasH={canvas.height} />
+        {hasElements
+          ? elements.map((el, i) => (
+              <InteractiveElementShell
+                key={el.id || `el-${i}`}
+                el={el}
+                canvasW={canvas.width}
+                canvasH={canvas.height}
+                selected={selectedElementId === el.id}
+                editable={editable}
+                locked={!!el.locked}
+                editing={editingTextId === el.id}
+                stageRef={stageRef}
+                chromeHost={chromeHost}
+                allElements={elements}
+                onSelect={onSelectElement}
+                onStartTextEdit={onStartTextEdit}
+                onPlacementLive={onPlacementLive}
+                onPlacementCommit={onPlacementCommit}
+                onGuidesChange={onGuidesChange}
+                onFillDeviceFrame={onFillDeviceFrame}
+              >
+                <PptCanvasElement
+                  el={el}
+                  palette={palette}
+                  selected={selectedElementId === el.id}
+                  canvasW={canvas.width}
+                  editable={
+                    editable &&
+                    (el.type === 'text' ||
+                      el.type === 'textbox' ||
+                      el.type === 'table' ||
+                      selectedElementId === el.id)
+                  }
+                  editingText={editingTextId === el.id}
+                  onStartTextEdit={() => {
+                    onSelectElement?.(el.id)
+                    onStartTextEdit?.(el.id)
+                  }}
+                  onEndTextEdit={(text, runs) => onEndTextEdit?.(el.id, text, runs)}
+                  onHeightChange={(cssHeight, { commit = false, allowShrink = false } = {}) => {
+                    if (!editable) return
+                    const y = el.placement?.y || 0
+                    const curH = el.placement?.height || 40
+                    const rawH = Math.round(
+                      cssPxToCanvas(cssHeight, stageRef.current, canvas.height)
+                    )
+                    const maxH = Math.max(
+                      TEXT_MIN_HEIGHT,
+                      canvas.height - y + minOverlapPx(curH) * 8
+                    )
+                    const nextH = Math.max(TEXT_MIN_HEIGHT, Math.min(maxH, rawH))
+                    if (allowShrink) {
+                      if (Math.abs(nextH - curH) <= 2) return
+                    } else if (nextH <= curH + 2) {
+                      return
+                    }
+                    const next = { ...(el.placement || {}), height: nextH }
+                    const placed = clampPlacementOverflow(
+                      next.x || 0,
+                      next.y || 0,
+                      next.width || 100,
+                      next.height,
+                      canvas.width,
+                      canvas.height
+                    )
+                    const committed = { ...next, ...placed, height: nextH }
+                    onPlacementLive?.(el.id, committed)
+                    if (commit) onPlacementCommit?.(el.id, committed)
+                  }}
+                  onTableCellChange={(ri, ci, val) => onTableCellChange?.(el.id, ri, ci, val)}
+                  onTableActivate={() => onSelectElement?.(el.id)}
+                  onImageAuthError={onImageAuthError}
+                />
+              </InteractiveElementShell>
+            ))
+          : null}
+      </div>
+      <div
+        ref={setChromeHost}
+        className="aig-slide-stage-chrome"
+        aria-hidden={!selectedElementId}
+      />
     </div>
   )
 }
@@ -2851,6 +2967,15 @@ export default function AIPptEditor({
           style={{
             marginLeft: showMinimap ? '260px' : '0',
             '--ppt-canvas-zoom': canvasZoom / 100,
+          }}
+          onMouseDown={(e) => {
+            // Click outside any slide canvas clears the selected element
+            if (e.target.closest?.('.aig-editor-canvas--stage, [data-element-id], .ppt-canvas-el-chrome, .aig-scroll-slide-hover-actions, .aig-canvas-controls, button, input, textarea, [contenteditable="true"]')) {
+              return
+            }
+            setSelectedElementId(null)
+            setEditingTextId(null)
+            setMultiSelectIds([])
           }}
         >
           <div className="aig-editor-scroll-container">

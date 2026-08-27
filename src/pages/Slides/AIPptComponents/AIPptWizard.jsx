@@ -4,10 +4,13 @@ import { Sparkles, ArrowUp, ArrowRight, Paperclip, Check, Globe, Image as ImageI
 import { MdDescription, MdMenuBook, MdInsights } from 'react-icons/md'
 import { useAuth } from '../../../contexts/AuthContext'
 import presentationService from '../../../services/presentationService'
-import brandKitService from '../../../services/brandKitService'
 import userService from '../../../services/userService'
 import { isInsufficientCreditsError } from '../../../services/creditsService'
 import { resolvePresentationWorkspaceContext } from '../../../utils/presentationContext'
+import {
+  listBrandKitsUsableInWorkspace,
+  ensureBrandKitInWorkspace,
+} from '../../../utils/brandKitWorkspace'
 import {
   PPT_AI_SLIDE_COUNTS,
   buildWizardThemeTokens,
@@ -656,6 +659,7 @@ export default function AIPptWizard({
   const [brandKits, setBrandKits] = useState([])
   const [selectedPackId, setSelectedPackId] = useState('')
   const [selectedBrandKitId, setSelectedBrandKitId] = useState('')
+  const [selectedBrandKitWorkspaceId, setSelectedBrandKitWorkspaceId] = useState('')
   const [themeMode, setThemeMode] = useState(null)
   const [workspaceHint, setWorkspaceHint] = useState(null)
   
@@ -678,7 +682,12 @@ export default function AIPptWizard({
         const [themesPayload, packsPayload, kits] = await Promise.all([
           presentationService.listThemes(ctx.workspaceId).catch(() => null),
           presentationService.listDeckPacks(ctx.workspaceId).catch(() => null),
-          brandKitService.list(ctx.workspaceId).catch(() => []),
+          listBrandKitsUsableInWorkspace(ctx.workspaceId).catch((err) => {
+            if (import.meta.env?.DEV) {
+              console.warn('[AIPptWizard] brand kits load failed', err)
+            }
+            return []
+          }),
         ])
 
         const themes =
@@ -701,6 +710,24 @@ export default function AIPptWizard({
       cancelled = true
     }
   }, [initialWorkspaceId, initialFolderId])
+
+  // Refresh brand kits when user opens the vibe step
+  useEffect(() => {
+    if (step !== 2 || !workspaceHint?.workspaceId) return undefined
+    let cancelled = false
+    listBrandKitsUsableInWorkspace(workspaceHint.workspaceId)
+      .then((kits) => {
+        if (!cancelled) setBrandKits(kits || [])
+      })
+      .catch((err) => {
+        if (import.meta.env?.DEV) {
+          console.warn('[AIPptWizard] brand kits refresh failed', err)
+        }
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [step, workspaceHint?.workspaceId])
 
   useEffect(() => {
     const fromAnon = recentsUserKey !== 'local' ? readRecentArtStyles('local') : []
@@ -793,6 +820,11 @@ export default function AIPptWizard({
     }
   }, [outline])
 
+  const handleSelectBrandKit = useCallback((id, kitWorkspaceId = null) => {
+    setSelectedBrandKitId(id ? String(id) : '')
+    setSelectedBrandKitWorkspaceId(id && kitWorkspaceId ? String(kitWorkspaceId) : '')
+  }, [])
+
   const handleGenerateOutline = async () => {
     setIsGenerating(true)
     setApiError('')
@@ -808,7 +840,22 @@ export default function AIPptWizard({
 
       const userPrompt = prompt.trim()
       const packId = selectedPackId || null
-      const brandKitId = selectedBrandKitId || null
+      let brandKitId = selectedBrandKitId || null
+      const selectedKit = brandKitId
+        ? brandKits.find((kit) => String(kit.id) === String(brandKitId))
+        : null
+      const sourceKitWorkspaceId =
+        selectedBrandKitWorkspaceId || selectedKit?.workspaceId || null
+
+      // Brand kits are workspace-scoped. Keep the deck in the presentation
+      // workspace; clone the kit into it when the pick came from personal/elsewhere.
+      if (brandKitId) {
+        brandKitId = await ensureBrandKitInWorkspace(
+          ctx.workspaceId,
+          brandKitId,
+          sourceKitWorkspaceId
+        )
+      }
 
       // Mutually exclusive with brand kit / pack — only send theme when those are unset
       const useCatalogTheme = !brandKitId && !packId
@@ -1225,7 +1272,7 @@ export default function AIPptWizard({
             workspaceId={workspaceHint?.workspaceId}
             brandKits={brandKits}
             selectedBrandKitId={selectedBrandKitId}
-            onSelectBrandKit={setSelectedBrandKitId}
+            onSelectBrandKit={handleSelectBrandKit}
             deckPacks={deckPacks}
             selectedPackId={selectedPackId}
             onSelectPack={setSelectedPackId}

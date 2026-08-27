@@ -16,6 +16,9 @@ export default function BrandKitsListView({
   error,
   brandKits,
   loading = false,
+  workspaces = [],
+  workspaceId = null,
+  onWorkspaceChange,
   menuOpen,
   setMenuOpen,
   setMenuRef,
@@ -36,6 +39,23 @@ export default function BrandKitsListView({
             </p>
           </div>
           <div className="videos-actions">
+            {workspaces.length > 0 && (
+              <label className="bk-workspace-select">
+                <span className="bk-workspace-select-label">Workspace</span>
+                <select
+                  value={workspaceId || ''}
+                  onChange={(e) => onWorkspaceChange?.(e.target.value)}
+                  aria-label="Brand kit workspace"
+                >
+                  {workspaces.map((ws) => (
+                    <option key={ws.id} value={ws.id}>
+                      {ws.name}
+                      {ws.isPersonal ? ' (Personal)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <div className="view-toggle">
               <button
                 type="button"
@@ -89,8 +109,9 @@ export default function BrandKitsListView({
                 </div>
                 <h2 className="bk-empty-title">No brand kits yet</h2>
                 <p className="bk-empty-desc">
-                  Create a Brand Kit with colors, fonts, logos, and voice to keep every presentation
-                  on-brand.
+                  {canWrite
+                    ? 'Create a Brand Kit in this workspace with colors, fonts, logos, and voice — then apply it to presentations here.'
+                    : 'No brand kits in this workspace yet. Ask an owner or admin to create one.'}
                 </p>
                 {canWrite && (
                   <button type="button" className="bk-empty-create-btn" onClick={openCreate}>

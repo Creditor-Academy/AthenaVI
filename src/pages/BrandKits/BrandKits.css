@@ -1,5 +1,33 @@
 /* Brand Kits — workspace branding surface */
 
+.bk-workspace-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 4px;
+}
+
+.bk-workspace-select-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--bk-muted, #64748b);
+  white-space: nowrap;
+}
+
+.bk-workspace-select select {
+  min-width: 180px;
+  max-width: 260px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--bk-border, #e2e8f0);
+  background: var(--bk-surface, #fff);
+  color: var(--bk-text, #0f172a);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
 .brandkits-page {
   --bk-accent: var(--primary, #2563eb);
   --bk-accent-soft: color-mix(in srgb, var(--primary, #2563eb) 12%, transparent);

@@ -6,7 +6,8 @@ import ColorFillPicker from './ColorFillPicker'
 import FontPicker from '../../../../components/shared/fonts/FontPicker'
 import LayoutPolishedPreview from '../../../../components/ppt/LayoutPolishedPreview'
 import { ensureGoogleFontLoaded } from '../../../../utils/googleFonts'
-import { slideBackgroundFill } from '../../../../utils/presentationHelpers'
+import { mediaFlipTransform, slideBackgroundFill } from '../../../../utils/presentationHelpers'
+import ElementTransformControls from '../ElementTransformControls'
 import { resolveLayoutSchemaById } from '../../../../utils/deckLayoutRegistry'
 import {
   pickSimilarLayouts,
@@ -408,7 +409,14 @@ function ImageDesignSection({
     <div className="ppt-element-props-grid ppt-image-design-panel">
       {c.url || c.src ? (
         <div className="ppt-design-image-preview">
-          <img src={c.url || c.src} alt="" />
+          <img
+            src={c.url || c.src}
+            alt=""
+            style={{
+              transform: mediaFlipTransform(c),
+              transformOrigin: 'center center',
+            }}
+          />
         </div>
       ) : null}
       <button
@@ -451,6 +459,14 @@ function ImageDesignSection({
           <option value="fill">Fill</option>
         </select>
       </div>
+      <ElementTransformControls
+        placement={p}
+        content={c}
+        showFlip
+        disabled={disabled}
+        onChangePlacement={onChangePlacement}
+        onChangeContent={onChangeContent}
+      />
       <div className="ppt-element-props-row">
         <span>Opacity</span>
         <input

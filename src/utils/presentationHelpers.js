@@ -20,6 +20,14 @@ export const PPT_CANVAS_SIZES = {
 
 export const DEFAULT_SLIDE_BG = '#FFFFFF'
 
+/** CSS transform for image/icon flip (local axes, before placement rotation). */
+export function mediaFlipTransform(content = {}) {
+  const flipH = content.flipHorizontal === true || content.scaleX === -1
+  const flipV = content.flipVertical === true || content.scaleY === -1
+  if (!flipH && !flipV) return undefined
+  return `scale(${flipH ? -1 : 1}, ${flipV ? -1 : 1})`
+}
+
 export function isSlideBackgroundElement(el, slide) {
   if (!el) return false
   // Keep BACKGROUND_IMAGE / hero photos in the element list so they paint as images.

@@ -5,6 +5,10 @@ import { InsufficientCreditsError } from '../../services/creditsService'
 import presentationService from '../../services/presentationService'
 import { resolvePresentationWorkspaceContext } from '../../utils/presentationContext'
 import {
+  listBrandKitWorkspaces,
+  resolveBrandKitsWorkspaceContext,
+} from '../../utils/brandKitWorkspace'
+import {
   canWriteBrandKits,
   emptyBrandKitData,
   newColorId,
@@ -64,6 +68,7 @@ function serializeBrandKitDraft({ kitName, slogan, isDefault, logoFile, kitData 
 function BrandKits() {
   const [workspaceId, setWorkspaceId] = useState(null)
   const [workspaceRole, setWorkspaceRole] = useState('MEMBER')
+  const [workspaces, setWorkspaces] = useState([])
   const [brandKits, setBrandKits] = useState([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState(() => {
@@ -250,12 +255,22 @@ function BrandKits() {
       setLoading(true)
       setError('')
       try {
-        const ctx = await resolvePresentationWorkspaceContext()
+        const [wsList, ctx] = await Promise.all([
+          listBrandKitWorkspaces(),
+          resolveBrandKitsWorkspaceContext(),
+        ])
         if (cancelled) return
-        setWorkspaceId(ctx.workspaceId)
-        setWorkspaceRole(ctx.workspace?.role || 'MEMBER')
+        setWorkspaces(wsList)
+        const selected =
+          wsList.find((ws) => String(ws.id) === String(ctx.workspaceId)) ||
+          wsList.find((ws) => ws.isPersonal) ||
+          wsList[0] ||
+          null
+        const wsId = selected?.id || ctx.workspaceId
+        setWorkspaceId(wsId)
+        setWorkspaceRole(selected?.role || ctx.workspace?.role || 'MEMBER')
         setFolderId(ctx.folderId || null)
-        await loadKits(ctx.workspaceId)
+        await loadKits(wsId)
       } catch (err) {
         if (!cancelled) setError(err.message || 'Failed to load brand kits')
       } finally {
@@ -266,6 +281,33 @@ function BrandKits() {
       cancelled = true
     }
   }, [loadKits])
+
+  const handleWorkspaceChange = useCallback(
+    async (nextWorkspaceId) => {
+      if (!nextWorkspaceId || String(nextWorkspaceId) === String(workspaceId)) return
+      const selected = workspaces.find((ws) => String(ws.id) === String(nextWorkspaceId))
+      setWorkspaceId(nextWorkspaceId)
+      setWorkspaceRole(selected?.role || 'MEMBER')
+      setShowEditor(false)
+      setIsWizardMode(false)
+      setEditingKitId(null)
+      setError('')
+      setLoading(true)
+      try {
+        const ctx = await resolvePresentationWorkspaceContext({
+          preferredWorkspaceId: nextWorkspaceId,
+        })
+        setFolderId(ctx.folderId || null)
+        await loadKits(nextWorkspaceId)
+      } catch (err) {
+        setError(err.message || 'Failed to load brand kits for this workspace')
+        setBrandKits([])
+      } finally {
+        setLoading(false)
+      }
+    },
+    [workspaceId, workspaces, loadKits]
+  )
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -1520,6 +1562,9 @@ function BrandKits() {
       error={error}
       brandKits={brandKits}
       loading={loading}
+      workspaces={workspaces}
+      workspaceId={workspaceId}
+      onWorkspaceChange={handleWorkspaceChange}
       menuOpen={menuOpen}
       setMenuOpen={setMenuOpen}
       setMenuRef={setMenuRef}
