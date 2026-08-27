@@ -24,6 +24,12 @@ import {
   Square,
   RectangleHorizontal,
   RectangleVertical,
+  ListOrdered,
+  GitBranch,
+  BarChart3,
+  RefreshCw,
+  Clock,
+  Columns2,
 } from 'lucide-react'
 import imageGenService, {
   ImageGenRateLimitError,
@@ -42,6 +48,11 @@ import art3 from '../../../assets/ai-img-gen/art-3.jpg'
 import art4 from '../../../assets/ai-img-gen/art-4.jpg'
 import art5 from '../../../assets/ai-img-gen/art-5.jpg'
 import art6 from '../../../assets/ai-img-gen/art-6.jpg'
+import canvasAtmosphere from '../../../assets/ai-img-gen/canvas-atmosphere.png'
+import formatSquarePreview from '../../../assets/ai-img-gen/format-square.jpg'
+import formatLandscapePreview from '../../../assets/ai-img-gen/format-landscape.jpg'
+import formatPortraitPreview from '../../../assets/ai-img-gen/format-portrait.jpg'
+import infoBoardPreview from '../../../assets/ai-img-gen/info-board.jpg'
 import linkedinBannerPreview from '../../../assets/ai-img-gen/Linkedin_Banner.png'
 import linkedinPostPreview from '../../../assets/ai-img-gen/Linkedin_post.png'
 import instagramPostPreview from '../../../assets/ai-img-gen/Instagram_post.png'
@@ -702,13 +713,28 @@ function LayoutSchematic({ layoutId, size = 'thumb' }) {
   )
 }
 
+const LAYOUT_ACCENT = {
+  auto: 'sky',
+  process: 'indigo',
+  timeline: 'cyan',
+  comparison: 'violet',
+  stats: 'blue',
+  hierarchy: 'slate',
+  list: 'teal',
+  cycle: 'sky',
+}
+
 function LayoutCard({ layout, selected, onSelect }) {
+  const accent = LAYOUT_ACCENT[layout.id] || 'sky'
   return (
-    <button
+    <motion.button
       type="button"
-      className={`aig-layout-card ${selected ? 'is-selected' : ''}`}
+      className={`aig-layout-card aig-layout-card--${accent} ${selected ? 'is-selected' : ''}`}
       onClick={() => onSelect(layout.id)}
       aria-pressed={selected}
+      whileHover={{ y: -4, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 28 }}
     >
       <div className="aig-layout-thumb">
         <LayoutSchematic layoutId={layout.id} size="thumb" />
@@ -722,7 +748,7 @@ function LayoutCard({ layout, selected, onSelect }) {
         <strong>{layout.label || layout.name}</strong>
         <span>{layout.description || layout.desc}</span>
       </div>
-    </button>
+    </motion.button>
   )
 }
 
@@ -741,12 +767,30 @@ const SOCIAL_FORMAT_PREVIEWS = {
   youtube_thumbnail: youtubeThumbnailPreview,
 }
 
+const FORMAT_PREVIEWS = {
+  square: formatSquarePreview,
+  landscape: formatLandscapePreview,
+  portrait: formatPortraitPreview,
+}
+
 function formatPreviewSrc(formatId) {
   const s = String(formatId || 'canvas')
+  if (FORMAT_PREVIEWS[s]) return FORMAT_PREVIEWS[s]
   if (SOCIAL_FORMAT_PREVIEWS[s]) return SOCIAL_FORMAT_PREVIEWS[s]
   let h = 0
   for (let i = 0; i < s.length; i += 1) h += s.charCodeAt(i) * (i + 3)
   return CANVAS_MOCK_IMAGES[h % CANVAS_MOCK_IMAGES.length]
+}
+
+function canvasWashTone(id) {
+  const s = String(id || '').toLowerCase()
+  if (s.includes('portrait') || s.includes('story') || s.includes('process') || s.includes('cycle')) {
+    return 'mist'
+  }
+  if (s.includes('square') || s.includes('post') || s.includes('stats') || s.includes('list')) {
+    return 'ice'
+  }
+  return 'deep'
 }
 
 function formatMockupKind(format) {
@@ -787,6 +831,18 @@ function formatPillIcon(format) {
   if (kind === 'phone') return RectangleVertical
   if (kind === 'banner' || kind === 'landscape') return RectangleHorizontal
   return Square
+}
+
+function layoutPillIcon(layoutId) {
+  const id = String(layoutId || '')
+  if (id === 'timeline') return Clock
+  if (id === 'comparison') return Columns2
+  if (id === 'stats') return BarChart3
+  if (id === 'hierarchy') return GitBranch
+  if (id === 'list') return ListOrdered
+  if (id === 'cycle') return RefreshCw
+  if (id === 'process') return ListOrdered
+  return Sparkles
 }
 
 function formatShowcaseCopy(format) {
@@ -953,50 +1009,194 @@ function CanvasCarousel({
   )
 }
 
-function FormatCard({ format, selected, onSelect, variant = 'image', layoutId }) {
-  const ratio = format.width / Math.max(format.height, 1)
-  const stage = 72
-  let previewW = stage
-  let previewH = stage / ratio
-  if (previewH > stage) {
-    previewH = stage
-    previewW = stage * ratio
+function CanvasPicker({
+  items,
+  selectedId,
+  format,
+  variant = 'image',
+  formats = [],
+  formatId,
+  onSelect,
+  onFormat,
+  onContinue,
+  mode,
+  onMode,
+  modeLocked,
+}) {
+  const list = items?.length ? items : []
+  const currentIndex = Math.max(0, list.findIndex((item) => item.id === selectedId))
+  const activeItem = list[currentIndex] || list[0]
+  const activeFormat = format || formats[0]
+  const copy = formatShowcaseCopy(activeFormat)
+  const infographic = variant === 'infographic'
+  const headline = infographic
+    ? activeItem?.description || 'Let the model pick a layout'
+    : copy.headline
+
+  if (!activeFormat || !activeItem) return null
+
+  const prev = list.length > 1 ? list[(currentIndex - 1 + list.length) % list.length] : null
+  const next = list.length > 1 ? list[(currentIndex + 1) % list.length] : null
+  const nextDistinct = next && next.id !== prev?.id ? next : null
+  const Icon = infographic ? layoutPillIcon(activeItem.id) : formatPillIcon(activeFormat)
+
+  const renderPeek = (item) => {
+    if (!item) return <span />
+    const peekFormat = infographic ? activeFormat : item.format || item
+    const size = canvasCardSize(peekFormat, 'peek')
+    return (
+      <button
+        type="button"
+        className="aig-choose-peek"
+        style={size}
+        onClick={() => onSelect(item)}
+        aria-label={`Select ${item.label}`}
+      >
+        <span className={`aig-canvas-wash aig-canvas-wash--${canvasWashTone(item.id)}`} aria-hidden />
+        {infographic ? (
+          <span className="aig-choose-peek-board">
+            <LayoutSchematic layoutId={item.id} size="thumb" />
+          </span>
+        ) : null}
+      </button>
+    )
   }
-  previewW = Math.max(22, Math.round(previewW))
-  previewH = Math.max(22, Math.round(previewH))
 
   return (
-    <button
-      type="button"
-      className={`aig-format-card ${selected ? 'is-selected' : ''}`}
-      onClick={() => onSelect(format)}
-      aria-pressed={selected}
-    >
-      <div className="aig-format-well">
-        {variant === 'infographic' ? (
-          <div
-            className="aig-format-artboard"
-            style={{ width: previewW, height: previewH }}
-            aria-hidden
-          >
-            <LayoutSchematic layoutId={layoutId} size="thumb" />
+    <div className={`aig-choose${infographic ? ' is-info' : ''}`}>
+      <aside className="aig-choose-col">
+        <h2>{infographic ? 'Choose canvas & layout' : 'Choose your canvas'}</h2>
+        <p className="aig-choose-lead">
+          {infographic
+            ? 'Pick a size, then a structure. Auto is fine if you are not sure.'
+            : 'Pick a format that fits your creative vision.'}
+        </p>
+
+        <nav className="aig-choose-mode" aria-label="Studio mode">
+          {MODE_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              className={mode === tab.id ? 'is-on' : ''}
+              aria-pressed={mode === tab.id}
+              disabled={modeLocked}
+              onClick={() => onMode?.(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </nav>
+
+        {infographic && formats.length ? (
+          <div className="aig-choose-sizes" role="listbox" aria-label="Canvas size">
+            {formats.map((fmt) => {
+              const SizeIcon = formatPillIcon(fmt)
+              return (
+                <button
+                  key={fmt.id}
+                  type="button"
+                  className={formatId === fmt.id ? 'is-on' : ''}
+                  aria-pressed={formatId === fmt.id}
+                  onClick={() => onFormat?.(fmt)}
+                >
+                  <SizeIcon size={13} strokeWidth={2.2} />
+                  {fmt.name}
+                </button>
+              )
+            })}
           </div>
-        ) : (
-          <CanvasMockup format={format} src={formatPreviewSrc(format.id)} size="card" />
-        )}
-        {selected && (
-          <span className="aig-format-check">
-            <Check size={12} strokeWidth={2.5} />
+        ) : null}
+
+        {infographic ? <p className="aig-choose-kicker">Structure</p> : null}
+        <div
+          className={infographic ? 'aig-choose-grid' : 'aig-choose-pills'}
+          role="listbox"
+          aria-label={infographic ? 'Structures' : 'Formats'}
+        >
+          {list.map((item) => {
+            const on = item.id === activeItem.id
+            const PillIcon = infographic
+              ? layoutPillIcon(item.id)
+              : formatPillIcon(item.format || item)
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className={`aig-choose-opt${infographic ? ' aig-choose-sq' : ''}${on ? ' is-on' : ''}`}
+                aria-pressed={on}
+                onClick={() => onSelect(item)}
+              >
+                {infographic ? (
+                  <span className="aig-choose-sq-art" aria-hidden>
+                    <LayoutSchematic layoutId={item.id} size="thumb" />
+                  </span>
+                ) : (
+                  <PillIcon size={16} strokeWidth={2.1} />
+                )}
+                <strong>{item.label}</strong>
+              </button>
+            )
+          })}
+        </div>
+
+        <button type="button" className="aig-choose-go" onClick={onContinue}>
+          Continue
+          <ChevronRight size={16} strokeWidth={2.4} />
+        </button>
+      </aside>
+
+      <div className="aig-choose-preview">
+        <div className="aig-choose-track">
+          {renderPeek(prev)}
+          <div
+            className="aig-choose-hero"
+            style={{ aspectRatio: `${activeFormat.width} / ${activeFormat.height}` }}
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeItem.id}
+                className="aig-choose-hero-fill"
+                initial={{ opacity: 0.4 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.22 }}
+              >
+                <span
+                  className={`aig-canvas-wash aig-canvas-wash--${canvasWashTone(activeItem.id)}`}
+                  aria-hidden
+                />
+                {infographic ? (
+                  <div className="aig-choose-hero-board">
+                    <LayoutSchematic layoutId={activeItem.id} size="stage" />
+                  </div>
+                ) : null}
+              </motion.div>
+            </AnimatePresence>
+            <div className="aig-choose-hero-shade" aria-hidden />
+            <span className="aig-choose-live">
+              <i />
+              Preview
+            </span>
+            <div className="aig-choose-hero-copy">
+              <span>
+                {currentIndex + 1} · {activeItem.label}
+              </span>
+              <p>{headline}</p>
+            </div>
+          </div>
+          {renderPeek(nextDistinct)}
+        </div>
+        <p className="aig-choose-meta">
+          <strong>
+            <Icon size={14} strokeWidth={2.2} />
+            {infographic ? `${activeItem.label} · ${activeFormat.name}` : activeFormat.name}
+          </strong>
+          <span>
+            {activeFormat.width} × {activeFormat.height} px
           </span>
-        )}
+        </p>
       </div>
-      <div className="aig-format-meta">
-        <strong>{format.name}</strong>
-        <span className="aig-format-size">
-          {format.width} × {format.height} px
-        </span>
-      </div>
-    </button>
+    </div>
   )
 }
 
@@ -1048,6 +1248,8 @@ function canvasStageSize(format) {
 }
 
 function CanvasPreview({ format, mode, infoLayoutId, infoLayoutName }) {
+  const [tilt, setTilt] = useState({ x: 0, y: 0 })
+
   if (!format) {
     return (
       <div className="aig-canvas-preview aig-canvas-preview--empty">
@@ -1061,18 +1263,35 @@ function CanvasPreview({ format, mode, infoLayoutId, infoLayoutName }) {
   }
 
   const isInfographic = mode === 'infographic'
-  const previewSrc = formatPreviewSrc(format.id)
+  const previewSrc = isInfographic ? infoBoardPreview : formatPreviewSrc(format.id)
   const kind = isInfographic ? 'board' : formatMockupKind(format)
   const { w, h } = canvasStageSize(format)
   const radius = kind === 'phone' ? 28 : kind === 'banner' ? 12 : 18
 
+  const onMove = (event) => {
+    const box = event.currentTarget.getBoundingClientRect()
+    const px = (event.clientX - box.left) / box.width - 0.5
+    const py = (event.clientY - box.top) / box.height - 0.5
+    setTilt({ x: py * -10, y: px * 12 })
+  }
+
   return (
     <div className="aig-canvas-preview">
-      <div className="aig-canvas-preview-well">
+      <div
+        className="aig-canvas-preview-well"
+        onMouseMove={onMove}
+        onMouseLeave={() => setTilt({ x: 0, y: 0 })}
+      >
         <motion.div
           className={`aig-mockup aig-mockup--${kind} aig-mockup--stage`}
           initial={false}
-          animate={{ width: w, height: h, borderRadius: radius }}
+          animate={{
+            width: w,
+            height: h,
+            borderRadius: radius,
+            rotateX: tilt.x,
+            rotateY: tilt.y,
+          }}
           transition={{
             type: 'spring',
             stiffness: 260,
@@ -1080,22 +1299,21 @@ function CanvasPreview({ format, mode, infoLayoutId, infoLayoutName }) {
             mass: 0.9,
           }}
         >
+          <img src={previewSrc} alt="" className="aig-canvas-preview-photo" />
           {isInfographic ? (
             <AnimatePresence mode="wait">
               <motion.div
                 key={infoLayoutId || 'layout'}
                 className="aig-canvas-preview-board"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.18 }}
+                initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.96 }}
+                transition={{ duration: 0.22 }}
               >
-                <LayoutSchematic layoutId={infoLayoutId} size="stage" />
+                <LayoutSchematic layoutId={infoLayoutId || 'auto'} size="stage" />
               </motion.div>
             </AnimatePresence>
-          ) : (
-            <img src={previewSrc} alt="" />
-          )}
+          ) : null}
         </motion.div>
       </div>
       <motion.div
@@ -1213,6 +1431,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
   const [archetypes, setArchetypes] = useState(FALLBACK_ARCHETYPES)
 
   const [formatId, setFormatId] = useState('square')
+  const [canvasPicked, setCanvasPicked] = useState(false)
   const [modelId, setModelId] = useState('gpt-image-1')
   const [styleId, setStyleId] = useState('cinematic')
   const [estimateAc, setEstimateAc] = useState(null)
@@ -2206,99 +2425,44 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
           {/* ── CANVAS ── */}
           {step === 'canvas' && (
             <motion.section key="canvas" className="aig-page aig-page--canvas" {...stepMotion}>
+              <div className="aig-canvas-atmosphere" aria-hidden>
+                <img src={canvasAtmosphere} alt="" />
+                <span className="aig-canvas-mesh" />
+                <span className="aig-canvas-orb aig-canvas-orb--a" />
+                <span className="aig-canvas-orb aig-canvas-orb--b" />
+                <span className="aig-canvas-orb aig-canvas-orb--c" />
+              </div>
               <div className="aig-canvas-board">
-                <header className="aig-canvas-board-head">
-                  <div className="aig-canvas-board-copy">
-                    <p className="aig-canvas-kicker">Step 1 of 2</p>
-                    <h2>{mode === 'infographic' ? 'Canvas & layout' : 'Choose a canvas'}</h2>
-                    <p>
-                      {mode === 'infographic'
-                        ? 'Pick a size, then a structure. Auto is fine if you are not sure.'
-                        : 'Pick the frame first. Style and model come next.'}
-                    </p>
-                  </div>
-                  <div className="aig-canvas-board-tools">
-                    <nav className="aig-tabs" aria-label="Studio mode">
-                      {MODE_TABS.map((tab) => (
-                        <button
-                          key={tab.id}
-                          type="button"
-                          className={mode === tab.id ? 'is-on' : ''}
-                          aria-pressed={mode === tab.id}
-                          disabled={threadModeLocked}
-                          onClick={() => switchMode(tab.id)}
-                        >
-                          {tab.label}
-                        </button>
-                      ))}
-                    </nav>
-                    <button
-                      type="button"
-                      className="aig-btn aig-btn--primary aig-btn--lg"
-                      disabled={!selectedFormat}
-                      onClick={() => setStep('options')}
-                    >
-                      Continue
-                    </button>
-                  </div>
-                </header>
-
-                <div className={`aig-canvas-board-grid${mode === 'infographic' ? ' is-info' : ''}`}>
-                  <div className="aig-canvas-board-main">
-                    <section className="aig-canvas-section">
-                      <div className="aig-canvas-section-head">
-                        <h3>Format</h3>
-                        <span>
-                          {selectedFormat
-                            ? `${selectedFormat.width} × ${selectedFormat.height}`
-                            : 'Select a size'}
-                        </span>
-                      </div>
-                      <div className="aig-canvas-format-row">
-                        {formatsForMode.map((f) => (
-                          <FormatCard
-                            key={f.id}
-                            format={f}
-                            selected={formatId === f.id}
-                            onSelect={(fmt) => setFormatId(fmt.id)}
-                            variant={mode === 'infographic' ? 'infographic' : 'image'}
-                            layoutId={infoLayout}
-                          />
-                        ))}
-                      </div>
-                    </section>
-
-                    {mode === 'infographic' && (
-                      <section className="aig-canvas-section">
-                        <div className="aig-canvas-section-head">
-                          <h3>Structure</h3>
-                          <span>{selectedInfoLayout?.label || 'Auto'}</span>
-                        </div>
-                        <div className="aig-layout-grid aig-layout-grid--studio">
-                          {archetypeOptions.map((layout) => (
-                            <LayoutCard
-                              key={layout.id}
-                              layout={layout}
-                              selected={infoLayout === layout.id}
-                              onSelect={setInfoLayout}
-                            />
-                          ))}
-                        </div>
-                      </section>
-                    )}
-                  </div>
-
-                  <aside className="aig-canvas-preview-col" aria-label="Canvas preview">
-                    <div className="aig-canvas-preview-card">
-                      <p className="aig-canvas-preview-kicker">Live preview</p>
-                      <CanvasPreview
-                        format={selectedFormat}
-                        mode={mode}
-                        infoLayoutId={infoLayout}
-                        infoLayoutName={selectedInfoLayout?.label}
-                      />
-                    </div>
-                  </aside>
+                <div className={`aig-canvas-stage-wrap${mode === 'infographic' ? ' is-info' : ''}`}>
+                  <CanvasPicker
+                    items={
+                      mode === 'infographic'
+                        ? archetypeOptions.map((a) => ({
+                            id: a.id,
+                            label: a.label,
+                            description: a.description,
+                          }))
+                        : formatsForMode.map((f) => ({
+                            ...f,
+                            label: f.name,
+                            format: f,
+                          }))
+                    }
+                    selectedId={mode === 'infographic' ? infoLayout : formatId}
+                    format={selectedFormat}
+                    formats={formatsForMode}
+                    formatId={formatId}
+                    variant={mode === 'infographic' ? 'infographic' : 'image'}
+                    mode={mode}
+                    modeLocked={threadModeLocked}
+                    onMode={switchMode}
+                    onFormat={(fmt) => setFormatId(fmt.id)}
+                    onSelect={(item) => {
+                      if (mode === 'infographic') setInfoLayout(item.id)
+                      else setFormatId(item.id)
+                    }}
+                    onContinue={() => setStep('options')}
+                  />
                 </div>
               </div>
             </motion.section>
