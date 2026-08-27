@@ -105,10 +105,8 @@ import {
 } from '../../../components/ppt/DeviceFrameVisual'
 import {
   minOverlapPx,
-  elementOverflowsCanvas as elementOverflowsSlide,
-  onCanvasOnlyClipPath as onSlideOnlyClipPath,
-  selectedOverflowMaskStyle,
   clampPlacementOverflow,
+  overflowPaintStyle,
 } from '../../../utils/canvasOverflowUtils'
 import {
   clearImageMediaPatch,
@@ -556,29 +554,28 @@ function InteractiveElementShell({
     }
   }
 
-  const overflowsSlide = elementOverflowsSlide(p, canvasW, canvasH)
-  let overflowPaintStyle = null
-  if (overflowsSlide && !editing) {
-    if (selected) {
-      overflowPaintStyle = selectedOverflowMaskStyle(p, canvasW, canvasH, 0.45)
-    } else {
-      const clip = onSlideOnlyClipPath(p, canvasW, canvasH)
-      if (clip) {
-        overflowPaintStyle = { clipPath: clip, WebkitClipPath: clip }
-      }
-    }
-  }
-
   const frameStyle = {
     ...placementFrameStyle(p, canvasW, canvasH, {
       layer: el.layer,
       rotation: p.rotation,
       opacity: p.opacity,
     }),
-    ...overflowPaintStyle,
+    ...overflowPaintStyle({
+      x: p.x,
+      y: p.y,
+      width: p.width,
+      height: p.height,
+      rotation: p.rotation,
+      canvasW,
+      canvasH,
+      selected,
+      editing,
+      outsideAlpha: 0.45,
+    }),
     cursor: isText || !editable || locked ? 'pointer' : selected ? 'move' : 'pointer',
     touchAction: 'none',
     overflow: 'visible',
+    outline: 'none',
   }
 
   const showChrome = selected && editable && !locked && !editing
@@ -988,12 +985,21 @@ export default function AIPptEditor({
   const brandKitMenuRef = useRef(null)
   const canvasSaveTimers = useRef({})
   const elementPatchTimers = useRef({})
+  const pendingPlacementRef = useRef({})
+  const nudgeBurstTimerRef = useRef(null)
+  const localSlidesRef = useRef(localSlides)
+  const elementMutationsRef = useRef(null)
   const imageRefreshInFlight = useRef(new Set())
   const layoutRepairPassRef = useRef('')
   const mainScrollRef = useRef(null)
   const slideContainerRefs = useRef({})
+  const keyCtxRef = useRef({})
 
   const history = usePptEditorHistory()
+
+  useEffect(() => {
+    localSlidesRef.current = localSlides
+  }, [localSlides])
 
   useEffect(() => {
     if (config.title) setDeckTitle(config.title)
@@ -1112,8 +1118,18 @@ export default function AIPptEditor({
       const current = prev[idx]
       const currentEls = current?.elements?.elements || []
       const incomingEls = normalized?.elements?.elements || []
-      const mergedElements =
-        incomingEls.length > 0
+
+      // While flip/rotate/nudge patches are pending, never let a server echo
+      // replace optimistic element transforms with stale placement/content.
+      const preserveLocalElements =
+        elementMutationsRef.current?.hasPendingPatchesForSlide?.(normalized.id) ||
+        Object.keys(pendingPlacementRef.current).some((k) =>
+          k.startsWith(`${normalized.id}:`)
+        )
+
+      const mergedElements = preserveLocalElements
+        ? currentEls
+        : incomingEls.length > 0
           ? incomingEls
           : currentEls.length > 0
             ? currentEls
@@ -1146,6 +1162,7 @@ export default function AIPptEditor({
           elements: mergedElements,
         },
       }
+      localSlidesRef.current = next
       return next
     })
   }, [aspectRatio])
@@ -1308,21 +1325,24 @@ export default function AIPptEditor({
   )
 
   const queueCanvasSave = useCallback(
-    (slideId, canvasDoc) => {
+    (slideId, _canvasDoc) => {
       if (!workspaceId || !presentationId || !slideId || isGenerating || viewOnly) return
       if (canvasSaveTimers.current[slideId]) {
         clearTimeout(canvasSaveTimers.current[slideId])
       }
       canvasSaveTimers.current[slideId] = setTimeout(async () => {
+        // Always persist the latest local canvas — never a stale snapshot from schedule time
+        const slide = localSlidesRef.current.find((s) => s.id === slideId)
+        const canvasDoc = slide?.elements
+        if (!canvasDoc) return
         try {
-          const result = await presentationService.saveCanvas(
+          await presentationService.saveCanvas(
             workspaceId,
             presentationId,
             slideId,
             canvasDoc
           )
-          const slide = extractSlideFromMutation(result)
-          if (slide) applySlideUpdate(slide)
+          // Do not applySlideUpdate — server echo races rapid flip/rotate/nudge
         } catch (err) {
           if (err instanceof PresentationConflictError) {
             setError('Presentation is generating — canvas edits are locked.')
@@ -1332,20 +1352,26 @@ export default function AIPptEditor({
         }
       }, CANVAS_SAVE_DEBOUNCE_MS)
     },
-    [workspaceId, presentationId, isGenerating, viewOnly, applySlideUpdate]
+    [workspaceId, presentationId, isGenerating, viewOnly]
   )
 
-  const pushHistorySnapshot = useCallback(() => {
-    history.pushSnapshot({
-      slides: localSlides,
-      selectedSlideId,
-      selectedElementId,
-    })
-  }, [history, localSlides, selectedSlideId, selectedElementId])
+  const pushHistorySnapshot = useCallback(
+    (snapshot) => {
+      history.pushSnapshot(
+        snapshot || {
+          slides: localSlidesRef.current,
+          selectedSlideId,
+          selectedElementId,
+        }
+      )
+    },
+    [history, selectedSlideId, selectedElementId]
+  )
 
   const restoreHistorySnapshot = useCallback((snapshot) => {
     if (!snapshot) return
     setLocalSlides(snapshot.slides)
+    localSlidesRef.current = snapshot.slides
     setSelectedSlideId(snapshot.selectedSlideId)
     setSelectedElementId(snapshot.selectedElementId)
   }, [])
@@ -1365,6 +1391,7 @@ export default function AIPptEditor({
     queueCanvasSave,
     pushHistory: pushHistorySnapshot,
   })
+  elementMutationsRef.current = elementMutations
 
   const handleUndo = useCallback(() => {
     restoreHistorySnapshot(
@@ -1440,6 +1467,23 @@ export default function AIPptEditor({
           if (viewOnly) { askOwner(); break }
           elementMutations.duplicateElement()
           break
+        case 'copy':
+          if (viewOnly) { askOwner(); break }
+          elementMutations.copySelection(ids)
+          break
+        case 'paste':
+          if (viewOnly) { askOwner(); break }
+          elementMutations.pasteClipboard()
+          break
+        case 'select-all': {
+          if (viewOnly) { askOwner(); break }
+          const allIds = (selectedSlide?.elements?.elements || []).map((el) => el.id)
+          if (allIds.length) {
+            setMultiSelectIds(allIds)
+            setSelectedElementId(allIds[0])
+          }
+          break
+        }
         case 'group':
           if (viewOnly) { askOwner(); break }
           elementMutations.groupSelection(ids)
@@ -1484,7 +1528,7 @@ export default function AIPptEditor({
           break
       }
     },
-    [handleUndo, handleRedo, elementMutations, multiSelectIds, selectedElementId, viewOnly, askOwner]
+    [handleUndo, handleRedo, elementMutations, multiSelectIds, selectedElementId, selectedSlide, viewOnly, askOwner]
   )
 
   const handleCropApply = useCallback(
@@ -1738,59 +1782,127 @@ export default function AIPptEditor({
 
   const handlePlacementLive = useCallback(
     (slideId, elementId, placement) => {
-      setLocalSlides((prev) =>
-        prev.map((s) => {
+      setLocalSlides((prev) => {
+        const next = prev.map((s) => {
           if (s.id !== slideId) return s
           const elements = (s.elements?.elements || []).map((el) =>
             el.id === elementId ? { ...el, placement: { ...el.placement, ...placement } } : el
           )
           return { ...s, elements: buildCanvasDoc(s, { aspectRatio, elements }) }
         })
-      )
+        localSlidesRef.current = next
+        return next
+      })
     },
     [aspectRatio]
   )
 
   const handlePlacementCommit = useCallback(
     (slideId, elementId, placement) => {
-      if (!workspaceId || !presentationId || isGenerating) return
+      if (!workspaceId || !presentationId || isGenerating || viewOnly) return
       const key = `${slideId}:${elementId}`
+      pendingPlacementRef.current[key] = placement
       if (elementPatchTimers.current[key]) {
         clearTimeout(elementPatchTimers.current[key])
       }
       elementPatchTimers.current[key] = setTimeout(async () => {
+        const latest = pendingPlacementRef.current[key]
+        delete pendingPlacementRef.current[key]
+        delete elementPatchTimers.current[key]
+        if (!latest) return
         try {
-          const result = await presentationService.updateElement(
+          await presentationService.updateElement(
             workspaceId,
             presentationId,
             slideId,
             elementId,
-            { placement }
+            { placement: latest }
           )
-          const slideFromApi = extractSlideFromMutation(result)
-          if (slideFromApi) applySlideUpdate(slideFromApi)
+          // Do not applySlideUpdate — delayed responses race newer local nudges/drags
         } catch (err) {
           if (err instanceof PresentationConflictError) {
             setError('Presentation is generating — canvas edits are locked.')
             return
           }
-          const slide = localSlides.find((s) => s.id === slideId)
+          const slide = localSlidesRef.current.find((s) => s.id === slideId)
           if (!slide) return
           const elements = (slide.elements?.elements || []).map((el) =>
-            el.id === elementId ? { ...el, placement: { ...el.placement, ...placement } } : el
+            el.id === elementId ? { ...el, placement: { ...el.placement, ...latest } } : el
           )
           queueCanvasSave(slideId, buildCanvasDoc(slide, { aspectRatio, elements }))
         }
-      }, CANVAS_SAVE_DEBOUNCE_MS)
+      }, 320)
+    },
+    [workspaceId, presentationId, isGenerating, viewOnly, aspectRatio, queueCanvasSave]
+  )
+
+  /** Immediate local nudge + debounced persist (Canva-style keyboard move). */
+  const nudgeSelectedElements = useCallback(
+    (dx, dy, ids) => {
+      const slideId = selectedSlideId
+      if (!slideId || isGenerating || viewOnly || !ids?.length) return
+
+      const idSet = new Set(ids.filter(Boolean))
+      if (!idSet.size) return
+
+      const slide = localSlidesRef.current.find((s) => s.id === slideId)
+      if (!slide) return
+      const canvas = slide.elements?.canvas || { width: 1920, height: 1080 }
+      const committed = []
+      const elements = (slide.elements?.elements || []).map((el) => {
+        if (!idSet.has(el.id) || !el.placement || el.locked) return el
+        const p = el.placement
+        const placed = clampPlacementOverflow(
+          (p.x || 0) + dx,
+          (p.y || 0) + dy,
+          p.width || 100,
+          p.height || 40,
+          canvas.width || 1920,
+          canvas.height || 1080
+        )
+        const placement = {
+          ...p,
+          x: Math.round(placed.x),
+          y: Math.round(placed.y),
+        }
+        committed.push({ elementId: el.id, placement })
+        return { ...el, placement }
+      })
+      if (!committed.length) return
+
+      // One history entry per continuous nudge burst
+      if (!nudgeBurstTimerRef.current) {
+        history.pushSnapshot({
+          slides: localSlidesRef.current,
+          selectedSlideId,
+          selectedElementId,
+        })
+      } else {
+        clearTimeout(nudgeBurstTimerRef.current)
+      }
+      nudgeBurstTimerRef.current = setTimeout(() => {
+        nudgeBurstTimerRef.current = null
+      }, 450)
+
+      const nextDoc = buildCanvasDoc(slide, { aspectRatio, elements })
+      setLocalSlides((prev) => {
+        const next = prev.map((s) => (s.id === slideId ? { ...s, elements: nextDoc } : s))
+        localSlidesRef.current = next
+        return next
+      })
+
+      for (const { elementId, placement } of committed) {
+        handlePlacementCommit(slideId, elementId, placement)
+      }
     },
     [
-      workspaceId,
-      presentationId,
+      selectedSlideId,
+      selectedElementId,
       isGenerating,
-      localSlides,
+      viewOnly,
       aspectRatio,
-      applySlideUpdate,
-      queueCanvasSave,
+      history,
+      handlePlacementCommit,
     ]
   )
 
@@ -1827,6 +1939,8 @@ export default function AIPptEditor({
       cancelled = true
       Object.values(canvasSaveTimers.current).forEach((t) => clearTimeout(t))
       Object.values(elementPatchTimers.current).forEach((t) => clearTimeout(t))
+      if (nudgeBurstTimerRef.current) clearTimeout(nudgeBurstTimerRef.current)
+      pendingPlacementRef.current = {}
     }
   }, [workspaceId, presentationId, outline, reloadPresentation, viewOnly])
 
@@ -2475,13 +2589,29 @@ export default function AIPptEditor({
       const existing = [...(slide?.elements?.elements || [])]
       const idx = existing.findIndex((el) => el.id === elementId)
       if (idx < 0) return
-      const swapWith = direction === 'forward' ? idx + 1 : idx - 1
-      if (swapWith < 0 || swapWith >= existing.length) return
-      ;[existing[idx], existing[swapWith]] = [existing[swapWith], existing[idx]]
-      const elementIds = existing.map((el) => el.id)
+
+      let next = existing
+      if (direction === 'toFront') {
+        if (idx >= existing.length - 1) return
+        const [item] = existing.splice(idx, 1)
+        existing.push(item)
+        next = existing
+      } else if (direction === 'toBack') {
+        if (idx <= 0) return
+        const [item] = existing.splice(idx, 1)
+        existing.unshift(item)
+        next = existing
+      } else {
+        const swapWith = direction === 'forward' ? idx + 1 : idx - 1
+        if (swapWith < 0 || swapWith >= existing.length) return
+        ;[existing[idx], existing[swapWith]] = [existing[swapWith], existing[idx]]
+        next = existing
+      }
+
+      const elementIds = next.map((el) => el.id)
       const nextDoc = buildCanvasDoc(slide, {
         aspectRatio,
-        elements: existing.map((el, i) => ({ ...el, layer: i + 1 })),
+        elements: next.map((el, i) => ({ ...el, layer: i + 1 })),
       })
       setLocalSlides((prev) =>
         prev.map((s) => (s.id === slideId ? { ...s, elements: nextDoc } : s))
@@ -2693,132 +2823,197 @@ export default function AIPptEditor({
     ]
   )
 
+  // Keep keyboard ctx fresh without rebinding the listener every nudge (key-repeat lag).
+  keyCtxRef.current = {
+    viewOnly,
+    editingTextId,
+    selectedElementId,
+    selectedSlideId,
+    multiSelectIds,
+    selectedSlide,
+    askOwner,
+    handleUndo,
+    handleRedo,
+    handleDeleteElement,
+    handleReorderSelected,
+    nudgeSelectedElements,
+    elementMutations,
+  }
+
   useEffect(() => {
     const onKey = (e) => {
+      const ctx = keyCtxRef.current
       const tag = String(e.target?.tagName || '').toLowerCase()
-      if (tag === 'input' || tag === 'textarea' || e.target?.isContentEditable) return
+      const typing =
+        tag === 'input' ||
+        tag === 'textarea' ||
+        tag === 'select' ||
+        e.target?.isContentEditable ||
+        e.target?.closest?.('.ppt-text-editable, .ppt-table-cell-input, [contenteditable="true"]')
+
+      if (typing) {
+        if (e.key === 'Escape' && ctx.editingTextId) {
+          e.preventDefault()
+          setEditingTextId(null)
+        }
+        return
+      }
 
       const mod = e.ctrlKey || e.metaKey
+      const key = String(e.key || '').toLowerCase()
+      const selectionIds = ctx.multiSelectIds.length
+        ? ctx.multiSelectIds
+        : [ctx.selectedElementId].filter(Boolean)
 
-      if (viewOnly) {
+      if (ctx.viewOnly) {
         const allowed =
-          (mod && (e.key === '=' || e.key === '+' || e.key === '-')) ||
-          (mod && e.key === 'Enter')
-        if (!allowed && (mod || e.key === 'Delete' || e.key === 'Backspace' || ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', '[', ']'].includes(e.key))) {
+          (mod && (key === '=' || key === '+' || key === '-')) ||
+          (mod && key === 'enter')
+        if (
+          !allowed &&
+          (mod ||
+            e.key === 'Delete' ||
+            e.key === 'Backspace' ||
+            ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', '[', ']'].includes(e.key))
+        ) {
           e.preventDefault()
-          askOwner()
+          ctx.askOwner()
         }
-        if (mod && e.key === 'Enter') {
+        if (mod && key === 'enter') {
           e.preventDefault()
           setPresentOpen(true)
         }
-        if (mod && (e.key === '=' || e.key === '+')) {
+        if (mod && (key === '=' || key === '+')) {
           e.preventDefault()
           setCanvasZoom((z) => Math.min(200, z + 10))
         }
-        if (mod && e.key === '-') {
+        if (mod && key === '-') {
           e.preventDefault()
           setCanvasZoom((z) => Math.max(40, z - 10))
         }
         return
       }
 
-      if (mod && e.key === 'z' && !e.shiftKey) {
+      if (e.key === 'Escape') {
         e.preventDefault()
-        handleUndo()
+        setEditingTextId(null)
+        setSelectedElementId(null)
+        setMultiSelectIds([])
+        setQuickMenuOpen(false)
         return
       }
-      if ((mod && e.key === 'y') || (mod && e.shiftKey && e.key === 'z')) {
+
+      if (
+        ctx.selectedElementId &&
+        (e.code === 'BracketRight' || e.code === 'BracketLeft' || e.key === ']' || e.key === '[')
+      ) {
+        const forward = e.code === 'BracketRight' || e.key === ']'
+        const extreme = (mod && e.shiftKey) || (mod && e.altKey)
         e.preventDefault()
-        handleRedo()
+        if (extreme) {
+          ctx.handleReorderSelected(forward ? 'toFront' : 'toBack')
+        } else {
+          ctx.handleReorderSelected(forward ? 'forward' : 'back')
+        }
         return
       }
-      if (mod && e.key === 'd') {
+
+      if (mod && key === 'z' && !e.shiftKey) {
         e.preventDefault()
-        elementMutations.duplicateElement()
+        ctx.handleUndo()
         return
       }
-      if (mod && e.key === 'g' && !e.shiftKey) {
+      if ((mod && key === 'y') || (mod && e.shiftKey && key === 'z')) {
         e.preventDefault()
-        elementMutations.groupSelection(
-          multiSelectIds.length ? multiSelectIds : [selectedElementId].filter(Boolean)
-        )
+        ctx.handleRedo()
         return
       }
-      if (mod && e.shiftKey && e.key === 'G') {
+      if (mod && key === 'a') {
         e.preventDefault()
-        elementMutations.ungroupSelection()
+        const ids = (ctx.selectedSlide?.elements?.elements || []).map((el) => el.id)
+        if (ids.length) {
+          setMultiSelectIds(ids)
+          setSelectedElementId(ids[0])
+        }
         return
       }
-      if (mod && e.key === 'l') {
+      if (mod && key === 'd') {
         e.preventDefault()
-        elementMutations.toggleLock()
+        ctx.elementMutations.duplicateElement()
         return
       }
-      if (mod && e.key === 'Enter') {
+      if (mod && key === 'c') {
+        e.preventDefault()
+        ctx.elementMutations.copySelection(selectionIds)
+        return
+      }
+      if (mod && key === 'x') {
+        e.preventDefault()
+        ctx.elementMutations.cutSelection(selectionIds, ctx.handleDeleteElement)
+        return
+      }
+      if (mod && key === 'v') {
+        e.preventDefault()
+        ctx.elementMutations.pasteClipboard()
+        return
+      }
+      if (mod && key === 'g' && !e.shiftKey) {
+        e.preventDefault()
+        ctx.elementMutations.groupSelection(selectionIds)
+        return
+      }
+      if (mod && key === 'g' && e.shiftKey) {
+        e.preventDefault()
+        ctx.elementMutations.ungroupSelection()
+        return
+      }
+      if (mod && key === 'l') {
+        e.preventDefault()
+        ctx.elementMutations.toggleLock()
+        return
+      }
+      if (mod && key === 'enter') {
         e.preventDefault()
         setPresentOpen(true)
         return
       }
-      if (mod && e.key === 'k') {
+      if (mod && key === 'k') {
         e.preventDefault()
         setQuickMenuOpen(true)
         return
       }
-      if (mod && (e.key === '=' || e.key === '+')) {
+      if (mod && (key === '=' || key === '+')) {
         e.preventDefault()
         setCanvasZoom((z) => Math.min(200, z + 10))
         return
       }
-      if (mod && e.key === '-') {
+      if (mod && key === '-') {
         e.preventDefault()
         setCanvasZoom((z) => Math.max(40, z - 10))
         return
       }
 
-      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedElementId) {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && ctx.selectedElementId) {
         e.preventDefault()
-        handleDeleteElement()
+        ctx.handleDeleteElement()
+        return
       }
-      if (e.key === ']' && selectedElementId) {
-        e.preventDefault()
-        handleReorderSelected('forward')
-      }
-      if (e.key === '[' && selectedElementId) {
-        e.preventDefault()
-        handleReorderSelected('back')
-      }
-      if (selectedElementId && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+
+      // Arrow nudge: immediate local move (1px / Shift 10px)
+      if (
+        selectionIds.length &&
+        ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)
+      ) {
         e.preventDefault()
         const step = e.shiftKey ? 10 : 1
-        const el = selectedSlide?.elements?.elements?.find((x) => x.id === selectedElementId)
-        if (!el?.placement || el.locked) return
-        const p = el.placement
-        const delta = {
-          ArrowUp: { y: (p.y || 0) - step },
-          ArrowDown: { y: (p.y || 0) + step },
-          ArrowLeft: { x: (p.x || 0) - step },
-          ArrowRight: { x: (p.x || 0) + step },
-        }[e.key]
-        handlePlacementCommit(selectedSlideId, selectedElementId, { ...p, ...delta })
+        const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0
+        const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0
+        ctx.nudgeSelectedElements(dx, dy, selectionIds)
       }
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [
-    selectedElementId,
-    selectedSlideId,
-    selectedSlide,
-    multiSelectIds,
-    handleDeleteElement,
-    handleReorderSelected,
-    handleUndo,
-    handleRedo,
-    handlePlacementCommit,
-    elementMutations,
-    viewOnly,
-    askOwner,
-  ])
+  }, [])
 
   const handleChangeTransition = async (transitionId) => {
     const slideId = selectedSlideId || localSlides[0]?.id
