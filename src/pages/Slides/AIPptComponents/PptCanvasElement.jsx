@@ -450,6 +450,7 @@ export default function PptCanvasElement({
   if (el.type === 'graphic') {
     return (
       <div
+        className="ppt-media-flip"
         style={{
           ...fillStyle,
           transform: mediaFlipTransform(el.content),
@@ -505,6 +506,7 @@ export default function PptCanvasElement({
         <img
           src={url}
           alt={c.alt || c.icon || ''}
+          className="ppt-media-flip"
           style={{
             width: '100%',
             height: '100%',
@@ -555,6 +557,7 @@ export default function PptCanvasElement({
         <img
           src={shapeImageUrl}
           alt={c.alt || ''}
+          className="ppt-media-flip"
           style={{
             ...fillStyle,
             objectFit: c.fit || 'cover',

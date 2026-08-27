@@ -652,14 +652,18 @@
   background: rgba(15, 23, 42, 0.5);
   display: grid;
   place-items: center;
+  padding: 24px;
 }
 
-.ppt-share-modal,
-.ppt-crop-modal {
+.ppt-share-modal {
   background: #fff;
   border-radius: 16px;
   padding: 24px;
   width: min(440px, 92vw);
+}
+
+.ppt-crop-modal {
+  background: #fff;
 }
 
 .ppt-quick-menu-overlay {
@@ -992,15 +996,21 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 32px;
+  min-height: 34px;
   padding: 6px 8px;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fff;
   color: #334155;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.ppt-transform-flip-btn:hover:not(:disabled):not(.is-active) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
 }
 
 .ppt-transform-flip-btn:disabled {
@@ -1009,9 +1019,9 @@
 }
 
 .ppt-transform-flip-btn.is-active {
-  border-color: #93c5fd;
-  background: #eff6ff;
-  color: #1d4ed8;
+  border-color: #0f172a;
+  background: #0f172a;
+  color: #fff;
 }
 
 .ppt-transform-flip-icon-v {
@@ -1025,7 +1035,8 @@
   gap: 4px;
 }
 
-.ppt-transform-rotate-icon {
+.ppt-transform-rotate-icon,
+.ppt-transform-rotate-step {
   width: 28px;
   height: 28px;
   display: inline-flex;
@@ -1037,27 +1048,79 @@
   color: #334155;
   cursor: pointer;
   padding: 0;
+  flex-shrink: 0;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.ppt-transform-rotate-icon:disabled {
+.ppt-transform-rotate-step {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.ppt-transform-rotate-icon:hover:not(:disabled),
+.ppt-transform-rotate-step:hover:not(:disabled) {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.ppt-transform-rotate-icon:disabled,
+.ppt-transform-rotate-step:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
 
 .ppt-transform-rotate-input {
-  width: 56px;
+  width: 48px;
   height: 28px;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   text-align: center;
   font-size: 13px;
+  font-variant-numeric: tabular-nums;
   color: #0f172a;
+  /* Hide native spinners — wrapping is handled by ± buttons / arrows */
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.ppt-transform-rotate-input::-webkit-outer-spin-button,
+.ppt-transform-rotate-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.ppt-transform-rotate-input:focus {
+  outline: none;
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.25);
 }
 
 .ppt-transform-rotate-unit {
   color: #64748b;
   font-size: 12px;
   font-weight: 600;
+}
+
+/* Instant mirror flip via scale — do not transition transform (scale through 0 squashes). */
+.ppt-media-flip {
+  transform-origin: center center;
+  transition: none;
+  backface-visibility: visible;
+}
+
+/* Placement rotation must stay instant so 1° / wrap steps do not interpolate the long way */
+[data-element-id] {
+  transition: outline 0.1s ease, outline-offset 0.1s ease;
+  outline: none;
+}
+
+/* Keyboard nudge uses focus-visible; hide native ring — selection chrome is enough */
+[data-element-id]:focus,
+[data-element-id]:focus-visible,
+[data-element-id]:focus-within {
+  outline: none !important;
+  box-shadow: none;
 }
 
 .ppt-toggle-label {
