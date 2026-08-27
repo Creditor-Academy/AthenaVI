@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import fontService from '../../../services/fontService'
 import { ensureGoogleFontLoaded, injectStylesheet } from '../../../utils/googleFonts'
+import {
+  builtinFontEntries,
+  isSystemFontFamily,
+  mergeBuiltinAndCatalogFonts,
+} from '../../../utils/legacyFonts'
 
 const FEATURED_CACHE_TTL_MS = 5 * 60 * 1000
 
@@ -17,14 +22,36 @@ async function loadFeaturedCatalog() {
   featuredInflight = fontService
     .getCatalog({ featured: true, limit: 100 })
     .then((data) => {
-      featuredCache = data
+      const merged = {
+        ...data,
+        fonts: mergeBuiltinAndCatalogFonts(data?.fonts || []),
+        pairings: data?.pairings || [],
+      }
+      featuredCache = merged
       featuredCacheAt = Date.now()
-      return data
+      return merged
+    })
+    .catch(() => {
+      const fallback = {
+        fonts: builtinFontEntries(),
+        pairings: [],
+      }
+      featuredCache = fallback
+      featuredCacheAt = Date.now()
+      return fallback
     })
     .finally(() => {
       featuredInflight = null
     })
   return featuredInflight
+}
+
+function filterBuiltinByQuery(q) {
+  const needle = String(q || '').trim().toLowerCase()
+  if (!needle) return builtinFontEntries()
+  return builtinFontEntries().filter((font) =>
+    String(font.family).toLowerCase().includes(needle)
+  )
 }
 
 /** Unique families from curated pairings (Recommended list). */
@@ -50,9 +77,10 @@ export function fontsFromPairings(pairings = [], catalogFonts = []) {
 
 /**
  * Featured catalog (cached) + debounced search.
+ * Always merges previous built-in fonts with Google catalog results.
  */
 export function useFontCatalog({ enabled = true, searchDebounceMs = 250 } = {}) {
-  const [fonts, setFonts] = useState([])
+  const [fonts, setFonts] = useState(() => builtinFontEntries())
   const [pairings, setPairings] = useState([])
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(false)
@@ -64,11 +92,11 @@ export function useFontCatalog({ enabled = true, searchDebounceMs = 250 } = {}) 
     setError('')
     try {
       const data = await loadFeaturedCatalog()
-      setFonts(data.fonts || [])
+      setFonts(data.fonts || builtinFontEntries())
       setPairings(data.pairings || [])
     } catch (err) {
       setError(err?.message || 'Failed to load fonts')
-      setFonts([])
+      setFonts(builtinFontEntries())
       setPairings([])
     } finally {
       setLoading(false)
@@ -86,7 +114,7 @@ export function useFontCatalog({ enabled = true, searchDebounceMs = 250 } = {}) 
     const q = String(query || '').trim()
     if (!q) {
       if (featuredCache) {
-        setFonts(featuredCache.fonts || [])
+        setFonts(featuredCache.fonts || builtinFontEntries())
         setPairings(featuredCache.pairings || [])
       }
       return undefined
@@ -99,14 +127,18 @@ export function useFontCatalog({ enabled = true, searchDebounceMs = 250 } = {}) 
       try {
         const data = await fontService.getCatalog({ q, limit: 100 })
         if (searchGen.current !== gen) return
-        setFonts(data.fonts || [])
+        setFonts(
+          mergeBuiltinAndCatalogFonts(data.fonts || [], {
+            builtins: filterBuiltinByQuery(q),
+          })
+        )
         if (Array.isArray(data.pairings) && data.pairings.length) {
           setPairings(data.pairings)
         }
       } catch (err) {
         if (searchGen.current !== gen) return
         setError(err?.message || 'Font search failed')
-        setFonts([])
+        setFonts(filterBuiltinByQuery(q))
       } finally {
         if (searchGen.current === gen) setLoading(false)
       }
@@ -134,6 +166,14 @@ export function useFontCatalog({ enabled = true, searchDebounceMs = 250 } = {}) 
 
 export function preloadFontPreview(font) {
   if (!font) return
-  if (font.cssUrl) injectStylesheet(font.cssUrl, `google-font-${String(font.family).replace(/\s+/g, '-').toLowerCase()}`)
-  else ensureGoogleFontLoaded(font.family)
+  const family = typeof font === 'string' ? font : font.family
+  if (isSystemFontFamily(family) || font?.source === 'system') return
+  if (font.cssUrl) {
+    injectStylesheet(
+      font.cssUrl,
+      `google-font-${String(font.family).replace(/\s+/g, '-').toLowerCase()}`
+    )
+  } else {
+    ensureGoogleFontLoaded(family)
+  }
 }

@@ -459,20 +459,28 @@ export function normalizeBrandKitList(payload) {
   const root = payload?.data ?? payload
   const list = Array.isArray(root)
     ? root
-    : root?.brandKits || root?.items || root?.kits || []
+    : root?.brandKits ||
+      root?.items ||
+      root?.kits ||
+      root?.results ||
+      (Array.isArray(root?.data) ? root.data : [])
   return (list || []).map(normalizeBrandKitSummary).filter(Boolean)
 }
 
 export function normalizeBrandKitSummary(kit) {
   if (!kit) return null
+  const nested = kit.brandKit || kit.kit
+  const source = nested && typeof nested === 'object' ? { ...nested, ...kit } : kit
+  const id = source.id || source._id || source.brandKitId
+  if (!id) return null
   return {
-    id: kit.id || kit._id,
-    name: kit.name || 'Untitled Brand Kit',
-    isDefault: Boolean(kit.isDefault),
-    mediaCount: kit.mediaCount ?? kit.media?.length ?? 0,
-    updatedAt: kit.updatedAt || kit.updated_at || kit.editedAt || null,
-    data: kit.data ? normalizeBrandKitData(kit.data) : null,
-    media: Array.isArray(kit.media) ? kit.media : [],
+    id,
+    name: source.name || 'Untitled Brand Kit',
+    isDefault: Boolean(source.isDefault),
+    mediaCount: source.mediaCount ?? source.media?.length ?? 0,
+    updatedAt: source.updatedAt || source.updated_at || source.editedAt || null,
+    data: source.data ? normalizeBrandKitData(source.data) : null,
+    media: Array.isArray(source.media) ? source.media : [],
   }
 }
 

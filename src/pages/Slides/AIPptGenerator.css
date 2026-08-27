@@ -1889,15 +1889,15 @@
 }
 
 .aig-suggestion-scene--brand {
-  background: linear-gradient(180deg, #ddd6fe 0%, #8b5cf6 34%, #6d28d9 66%, #4c1d95 100%);
+  background: linear-gradient(180deg, #ffedd5 0%, #fb923c 34%, #ea580c 66%, #9a3412 100%);
 }
 
 .aig-suggestion-scene--brand::before {
   background:
-    radial-gradient(circle at 80% 18%, #f5f3ff 0 11px, rgba(245, 243, 255, 0.4) 12px, transparent 22px),
-    radial-gradient(115% 88% at 10% 126%, #5b21b6 0 44%, transparent 45%),
-    radial-gradient(100% 82% at 70% 134%, #4c1d95 0 47%, transparent 48%),
-    radial-gradient(85% 70% at 44% 152%, #2e1065 0 40%, transparent 41%);
+    radial-gradient(circle at 80% 18%, #fff7ed 0 11px, rgba(255, 247, 237, 0.45) 12px, transparent 22px),
+    radial-gradient(115% 88% at 10% 126%, #c2410c 0 44%, transparent 45%),
+    radial-gradient(100% 82% at 70% 134%, #9a3412 0 47%, transparent 48%),
+    radial-gradient(85% 70% at 44% 152%, #7c2d12 0 40%, transparent 41%);
 }
 
 .aig-suggestion-scene--palette {
