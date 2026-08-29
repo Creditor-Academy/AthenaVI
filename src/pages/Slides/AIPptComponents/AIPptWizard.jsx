@@ -36,6 +36,23 @@ import temp2 from '../../../assets/Template_Image/gen_temp2.png'
 import temp3 from '../../../assets/Template_Image/gen_temp3.png'
 import temp4 from '../../../assets/Template_Image/gen_temp4.png'
 
+import styleScene from '../../../assets/slides_icons/style_scene.jpg'
+import stylePhoto from '../../../assets/slides_icons/style_photo.jpg'
+import styleStillLife from '../../../assets/slides_icons/style_still_life.jpg'
+import styleSpotColor from '../../../assets/slides_icons/style_spot_color.jpg'
+import styleIllustration from '../../../assets/slides_icons/style_illustration.jpg'
+import styleFlatLine from '../../../assets/slides_icons/style_flat_line.jpg'
+import styleModernArt from '../../../assets/slides_icons/style_modern_art.jpg'
+import styleIsometric from '../../../assets/slides_icons/style_isometric.jpg'
+import styleGouache from '../../../assets/slides_icons/style_gouache.jpg'
+import styleBoldPoster from '../../../assets/slides_icons/style_bold_poster.jpg'
+import styleWatercolor from '../../../assets/slides_icons/style_watercolor.jpg'
+import styleBauhaus from '../../../assets/slides_icons/style_bauhaus.jpg'
+import style3d from '../../../assets/slides_icons/style_3d.jpg'
+import styleNeonGlow from '../../../assets/slides_icons/style_neon_glow.jpg'
+import styleCinematic from '../../../assets/slides_icons/style_cinematic.jpg'
+import styleMesh from '../../../assets/slides_icons/style_mesh.jpg'
+
 import AIPptVibeStep from './AIPptVibeStep'
 import AIPptThemeModal from './AIPptThemeModal'
 import AIPptImageModal from './AIPptImageModal'
@@ -395,26 +412,26 @@ const TEMPLATES = [
 ]
 
 const IMAGE_STYLES = [
-  { id: 'scene', name: 'Scene', img: 'https://images.unsplash.com/photo-1582967788606-a171c1080cb0?q=80&w=200&auto=format&fit=crop', tags: ['Scenic'] },
-  { id: 'photo', name: 'Photo', img: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=200&auto=format&fit=crop', tags: ['Realistic'] },
-  { id: 'still-life', name: 'Still life', img: 'https://images.unsplash.com/photo-1541167760496-1628856ab772?q=80&w=200&auto=format&fit=crop', tags: ['Realistic'] },
-  { id: 'spot-color', name: 'Spot Color', img: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=200&auto=format&fit=crop', tags: ['Minimal'] },
+  { id: 'scene', name: 'Scene', img: styleScene, tags: ['Scenic'] },
+  { id: 'photo', name: 'Photo', img: stylePhoto, tags: ['Realistic'] },
+  { id: 'still-life', name: 'Still life', img: styleStillLife, tags: ['Realistic'] },
+  { id: 'spot-color', name: 'Spot Color', img: styleSpotColor, tags: ['Minimal'] },
   
-  { id: 'illustration', name: 'Illustration', img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=200&auto=format&fit=crop', tags: ['Playful'] },
-  { id: 'flat-line', name: 'Flat Line Art', img: 'https://images.unsplash.com/photo-1557672172-298e090bd0f1?q=80&w=200&auto=format&fit=crop', tags: ['Minimal'] },
-  { id: 'modern-art', name: 'Modern Art', img: 'https://images.unsplash.com/photo-1549490349-8643362247b5?q=80&w=200&auto=format&fit=crop', tags: ['Abstract'] },
+  { id: 'illustration', name: 'Illustration', img: styleIllustration, tags: ['Playful'] },
+  { id: 'flat-line', name: 'Flat Line Art', img: styleFlatLine, tags: ['Minimal'] },
+  { id: 'modern-art', name: 'Modern Art', img: styleModernArt, tags: ['Abstract'] },
   
-  { id: 'isometric', name: 'Isometric', img: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=200&auto=format&fit=crop', tags: ['Playful'] },
-  { id: 'gouache', name: 'Gouache Paint', img: 'https://images.unsplash.com/photo-1580136579312-94651dfd596d?q=80&w=200&auto=format&fit=crop', tags: ['Scenic'] },
-  { id: 'bold-poster', name: 'Bold Poster', img: 'https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=200&auto=format&fit=crop', tags: ['Bold'] },
+  { id: 'isometric', name: 'Isometric', img: styleIsometric, tags: ['Playful'] },
+  { id: 'gouache', name: 'Gouache Paint', img: styleGouache, tags: ['Scenic'] },
+  { id: 'bold-poster', name: 'Bold Poster', img: styleBoldPoster, tags: ['Bold'] },
   
-  { id: 'watercolor', name: 'Watercolor', img: 'https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=200&auto=format&fit=crop', tags: ['Scenic'] },
-  { id: 'bauhaus', name: 'Bauhaus', img: 'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?q=80&w=200&auto=format&fit=crop', tags: ['Bold', 'Minimal'] },
+  { id: 'watercolor', name: 'Watercolor', img: styleWatercolor, tags: ['Scenic'] },
+  { id: 'bauhaus', name: 'Bauhaus', img: styleBauhaus, tags: ['Bold', 'Minimal'] },
   
-  { id: '3d', name: '3D', img: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=200&auto=format&fit=crop', tags: ['Playful'] },
-  { id: 'neon-glow', name: 'Neon Glow', img: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=200&auto=format&fit=crop', tags: ['Bold'] },
-  { id: 'cinematic', name: 'Cinematic', img: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=200&auto=format&fit=crop', tags: ['Realistic', 'Scenic'] },
-  { id: 'mesh', name: 'Mesh', img: 'https://images.unsplash.com/photo-1550684376-efcbd6e3f031?q=80&w=200&auto=format&fit=crop', tags: ['Abstract'] },
+  { id: '3d', name: '3D', img: style3d, tags: ['Playful'] },
+  { id: 'neon-glow', name: 'Neon Glow', img: styleNeonGlow, tags: ['Bold'] },
+  { id: 'cinematic', name: 'Cinematic', img: styleCinematic, tags: ['Realistic', 'Scenic'] },
+  { id: 'mesh', name: 'Mesh', img: styleMesh, tags: ['Abstract'] },
 ]
 
 const IMAGE_SOURCES = [
