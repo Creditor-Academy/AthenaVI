@@ -4663,10 +4663,33 @@
   margin: 0;
 }
 
+.aig-model-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aig-model-group + .aig-model-group {
+  margin-top: 16px;
+}
+
+.aig-model-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
 .aig-model-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+.aig-badge--muted {
+  background: rgba(148, 163, 184, 0.18);
+  color: var(--text-muted);
 }
 
 .aig-model-card {

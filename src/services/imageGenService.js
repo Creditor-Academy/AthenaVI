@@ -35,9 +35,16 @@ const IMAGE_GENERATE_TIMEOUT_MS = 90_000
 const INFOGRAPHIC_GENERATE_TIMEOUT_MS = 120_000
 const TWEAK_TIMEOUT_MS = 90_000
 const INFOGRAPHIC_TWEAK_TIMEOUT_MS = 120_000
+const GEMINI_TIMEOUT_MS = 300_000
 const CONTEXT_TIMEOUT_MS = 90_000
 
-function timeoutForMode(mode, kind = 'generate') {
+function isGeminiRequest({ provider, modelId } = {}) {
+  if (provider === 'gemini') return true
+  return String(modelId || '').startsWith('gemini')
+}
+
+function timeoutForRequest({ mode, kind = 'generate', provider, modelId } = {}) {
+  if (isGeminiRequest({ provider, modelId })) return GEMINI_TIMEOUT_MS
   const infographic = mode === 'infographic'
   if (kind === 'tweak') return infographic ? INFOGRAPHIC_TWEAK_TIMEOUT_MS : TWEAK_TIMEOUT_MS
   return infographic ? INFOGRAPHIC_GENERATE_TIMEOUT_MS : IMAGE_GENERATE_TIMEOUT_MS
@@ -208,10 +215,13 @@ class ImageGenService {
         throw new ImageGenRateLimitError(payload.message || 'Rate limited', payload)
       }
 
-      if (response.status === 502 || response.status === 503) {
+      if (response.status === 502 || response.status === 503 || response.status === 504) {
         const payload = await this.readPayload(response)
         throw new ImageGenProviderError(
-          payload.message || 'Image provider unavailable',
+          payload.message ||
+            (response.status === 504
+              ? 'Image generation timed out. Try a faster model or retry.'
+              : 'Image provider unavailable'),
           payload,
           response.status
         )
@@ -231,7 +241,7 @@ class ImageGenService {
     } catch (error) {
       if (error?.name === 'AbortError') {
         const err = new Error(
-          'Generation timed out. Infographics can take two minutes or more — try again.'
+          'Generation timed out. Gemini Pro can take several minutes — try Flash, Flash Lite, or retry.'
         )
         err.status = 408
         throw err
@@ -330,7 +340,7 @@ class ImageGenService {
     return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.GENERATE(workspaceId), {
       method: 'POST',
       body: JSON.stringify(body),
-      timeoutMs: timeoutForMode(body?.mode),
+      timeoutMs: timeoutForRequest({ mode: body?.mode, modelId: body?.modelId }),
     })
   }
 
@@ -353,17 +363,17 @@ class ImageGenService {
     return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.REGENERATE(workspaceId, generationId), {
       method: 'POST',
       body: JSON.stringify(body),
-      timeoutMs: timeoutForMode(body?.mode),
+      timeoutMs: timeoutForRequest({ mode: body?.mode, modelId: body?.modelId }),
     })
   }
 
-  async tweak(workspaceId, generationId, instruction, { editMode, mode } = {}) {
+  async tweak(workspaceId, generationId, instruction, { editMode, mode, modelId, provider } = {}) {
     const payload = { instruction }
     if (editMode === 'spec' || editMode === 'pixel') payload.editMode = editMode
     return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.TWEAK(workspaceId, generationId), {
       method: 'POST',
       body: JSON.stringify(payload),
-      timeoutMs: timeoutForMode(mode, 'tweak'),
+      timeoutMs: timeoutForRequest({ mode, kind: 'tweak', modelId, provider }),
     })
   }
 
@@ -411,14 +421,19 @@ class ImageGenService {
     return data?.thread || data
   }
 
-  async sendThreadMessage(workspaceId, threadId, content, { fromGenerationId, editMode, mode } = {}) {
+  async sendThreadMessage(
+    workspaceId,
+    threadId,
+    content,
+    { fromGenerationId, editMode, mode, modelId, provider } = {}
+  ) {
     const body = { content }
     if (fromGenerationId) body.fromGenerationId = fromGenerationId
     if (editMode === 'spec' || editMode === 'pixel') body.editMode = editMode
     return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.THREAD_MESSAGES(workspaceId, threadId), {
       method: 'POST',
       body: JSON.stringify(body),
-      timeoutMs: timeoutForMode(mode, 'tweak'),
+      timeoutMs: timeoutForRequest({ mode, kind: 'tweak', modelId, provider }),
     })
   }
 

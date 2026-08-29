@@ -581,10 +581,19 @@ function friendlyError(err) {
     return err.message || 'Too many requests — wait a moment and try again.'
   }
   if (err instanceof ImageGenProviderError) {
+    if (err.status === 504) {
+      return 'Gemini timed out. Try Flash, Flash Lite, or retry.'
+    }
+    if (err.status === 503) {
+      return err.message || 'That Gemini model isn’t available on this server. Pick an OpenAI model.'
+    }
     return err.message || 'The image provider is unavailable right now.'
   }
   const details = collectApiErrorDetails(err)
   if (details.length) return details.join(' · ')
+  if (err?.status === 408) {
+    return err.message || 'Generation timed out. Try a faster model or retry.'
+  }
   if (err?.message && err.message !== 'Validation error') return err.message
   if (err?.status === 400) {
     return 'Couldn’t structure this as an infographic. Try a clearer prompt with steps, a comparison, or stats, then generate again.'
@@ -597,8 +606,41 @@ function getFriendlyModelName(model) {
     'gpt-image-1': 'Standard Quality',
     'gpt-image-1-hd': 'High Quality (HD)',
     'dall-e-3': 'DALL-E 3 (Legacy)',
+    'gemini-3-pro-image': 'Nano Banana Pro',
+    'gemini-3.1-flash-image': 'Nano Banana 2',
+    'gemini-3.1-flash-lite-image': 'Nano Banana 2 Lite',
   }
   return nameMap[model.id] || model.name
+}
+
+const PROVIDER_GROUP_LABEL = {
+  openai: 'OpenAI',
+  gemini: 'Google Gemini',
+}
+
+function groupModelsByProvider(models = []) {
+  const buckets = new Map()
+  models.forEach((m) => {
+    const key = m.provider || 'openai'
+    if (!buckets.has(key)) buckets.set(key, [])
+    buckets.get(key).push(m)
+  })
+  const order = ['openai', 'gemini']
+  const groups = []
+  order.forEach((key) => {
+    if (buckets.has(key)) groups.push({ id: key, label: PROVIDER_GROUP_LABEL[key] || key, models: buckets.get(key) })
+  })
+  buckets.forEach((list, key) => {
+    if (!order.includes(key)) {
+      groups.push({ id: key, label: PROVIDER_GROUP_LABEL[key] || key, models: list })
+    }
+  })
+  return groups
+}
+
+function isRecommendedModel(model, mode) {
+  if (mode === 'infographic') return model.id === 'gpt-image-1-hd'
+  return model.id === 'gpt-image-1' || Boolean(model.recommended)
 }
 
 function LayoutSchematic({ layoutId, size = 'thumb' }) {
@@ -1290,6 +1332,15 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
     () => models.filter((m) => !m.modes?.length || m.modes.includes(mode)).filter((m) => m.id !== 'dall-e-3'),
     [models, mode]
   )
+  const modelGroups = useMemo(() => groupModelsByProvider(modelsForMode), [modelsForMode])
+  const requestTimeoutOpts = useMemo(
+    () => ({
+      mode,
+      modelId,
+      provider: selectedModel?.provider,
+    }),
+    [mode, modelId, selectedModel?.provider]
+  )
   const genericFormats = useMemo(
     () => formats.filter((f) => f.category === 'generic' || ['square', 'landscape', 'portrait'].includes(f.id)),
     [formats]
@@ -1591,19 +1642,38 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
     })
   }
 
-  const openCreditsPanel = async () => {
+  const openCreditsPanel = () => {
     const needed = Number(estimateAc) > 0 ? Number(estimateAc) : 6
-    const snapshot =
-      (await refreshCredits(workspaceId)) || {
+    openCreditsGate(
+      {
         pool: creditBalance,
         personal: personalCredits,
         isTeam: isTeamPool,
-      }
-    openCreditsGate(snapshot, needed, true)
+      },
+      needed,
+      true
+    )
+    refreshCredits(workspaceId).then((snapshot) => {
+      if (!snapshot) return
+      setCreditsGate((prev) =>
+        prev?.manage
+          ? {
+              ...prev,
+              pool: snapshot.pool,
+              personal: snapshot.personal,
+              isTeam: snapshot.isTeam,
+            }
+          : prev
+      )
+    })
   }
 
   const assertCreditsForGenerate = async () => {
     const needed = Number(estimateAc) > 0 ? Number(estimateAc) : 6
+    if (creditBalance != null && Number(creditBalance) >= needed) {
+      refreshCredits(workspaceId)
+      return true
+    }
     const snapshot = await refreshCredits(workspaceId)
     if (!snapshot) return true
     if (snapshot.pool >= needed) return true
@@ -1651,11 +1721,11 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
         data = activeThreadId
           ? await imageGenService.sendThreadMessage(workspaceId, activeThreadId, instruction, {
               editMode: mode === 'infographic' && editMode !== 'auto' ? editMode : undefined,
-              mode,
+              ...requestTimeoutOpts,
             })
           : await imageGenService.tweak(workspaceId, parent.id, instruction, {
               editMode: mode === 'infographic' && editMode !== 'auto' ? editMode : undefined,
-              mode,
+              ...requestTimeoutOpts,
             })
       } else {
         data = await imageGenService.regenerate(workspaceId, parent.id, buildRegenerateBody())
@@ -1732,13 +1802,11 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
       setActionError('Add a prompt to generate.')
       return
     }
-    const canCharge = await assertCreditsForGenerate()
-    if (!canCharge) return
+
     const turnId = `turn_${Date.now()}`
     setActionError('')
     setIsGenerating(true)
     setChatsOpen(false)
-    setStep('workspace')
     setActiveGeneration(null)
     setActiveThreadId(null)
     setThread([
@@ -1751,7 +1819,15 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
         error: null,
       },
     ])
+    setStep('workspace')
+
     try {
+      const canCharge = await assertCreditsForGenerate()
+      if (!canCharge) {
+        setThread([])
+        setStep('options')
+        return
+      }
       const data = await imageGenService.generate(workspaceId, buildGenerateBody())
       applyResult(data, turnId)
     } catch (err) {
@@ -1845,11 +1921,11 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
         ? await imageGenService.sendThreadMessage(workspaceId, activeThreadId, instruction, {
             fromGenerationId: activeGeneration.id,
             editMode: mode === 'infographic' && editMode !== 'auto' ? editMode : undefined,
-            mode,
+            ...requestTimeoutOpts,
           })
         : await imageGenService.tweak(workspaceId, activeGeneration.id, instruction, {
             editMode: mode === 'infographic' && editMode !== 'auto' ? editMode : undefined,
-            mode,
+            ...requestTimeoutOpts,
           })
       applyResult(data, turnId)
     } catch (err) {
@@ -2378,7 +2454,11 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                     <h2>Model & style</h2>
                     <p>
                       {MODE_TABS.find((t) => t.id === mode)?.label || 'Image'} canvas
-                      {mode === 'infographic' ? ' · HD default · ~2 min' : ''}
+                      {selectedModel?.provider === 'gemini'
+                        ? ' · Gemini · allow up to ~5 min'
+                        : mode === 'infographic'
+                          ? ' · OpenAI HD default · ~2 min'
+                          : ''}
                     </p>
                   </div>
                   {estimateAc != null && (
@@ -2391,29 +2471,35 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
 
               <div className="aig-opt-block">
                 <h3>Model</h3>
-                <div className="aig-model-grid">
-                  {modelsForMode.map((m) => {
-                    const recommended =
-                      mode === 'infographic'
-                        ? m.id === 'gpt-image-1-hd' || Boolean(m.recommended)
-                        : Boolean(m.recommended)
-                    return (
-                      <button
-                        key={m.id}
-                        type="button"
-                        className={`aig-model-card ${modelId === m.id ? 'is-selected' : ''}`}
-                        onClick={() => setModelId(m.id)}
-                      >
-                        <div className="aig-model-top">
-                          <strong>{getFriendlyModelName(m)}</strong>
-                          {recommended && <span className="aig-badge">Recommended</span>}
-                        </div>
-                        <p>{m.description}</p>
-                        <span className="aig-model-cost">~{m.creditEstimate ?? '—'} AC</span>
-                      </button>
-                    )
-                  })}
-                </div>
+                {modelGroups.map((group) => (
+                  <div key={group.id} className="aig-model-group">
+                    <div className="aig-model-group-label">{group.label}</div>
+                    <div className="aig-model-grid">
+                      {group.models.map((m) => {
+                        const recommended = isRecommendedModel(m, mode)
+                        const draft1k = m.maxImageSize === '1K'
+                        return (
+                          <button
+                            key={m.id}
+                            type="button"
+                            className={`aig-model-card ${modelId === m.id ? 'is-selected' : ''}`}
+                            onClick={() => setModelId(m.id)}
+                          >
+                            <div className="aig-model-top">
+                              <strong>{getFriendlyModelName(m)}</strong>
+                              {recommended && <span className="aig-badge">Default</span>}
+                              {draft1k && (
+                                <span className="aig-badge aig-badge--muted">Draft · 1K</span>
+                              )}
+                            </div>
+                            <p>{m.description}</p>
+                            <span className="aig-model-cost">~{m.creditEstimate ?? '—'} AC</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className="aig-opt-block aig-opt-block--styles">
@@ -2488,11 +2574,21 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                   type="button"
                   className="aig-btn aig-btn--generate"
                   disabled={isGenerating || !prompt.trim()}
+                  aria-busy={isGenerating}
                   onClick={runGenerate}
                 >
-                  <Sparkles size={16} />
-                  {mode === 'infographic' ? 'Generate infographic' : 'Generate image'}
-                  {estimateAc != null && <em>{estimateAc} AC</em>}
+                  {isGenerating ? (
+                    <>
+                      <Loader2 size={16} className="aig-spin" />
+                      Processing…
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={16} />
+                      {mode === 'infographic' ? 'Generate infographic' : 'Generate image'}
+                      {estimateAc != null && <em>{estimateAc} AC</em>}
+                    </>
+                  )}
                 </button>
               </div>
               </div>
