@@ -208,6 +208,7 @@ function EditableText({
   const boxPaint =
     !usesRuns && isGradientFill(c.fill) ? textPaintStyle(c.fill, palette, color) : { color }
 
+  const clipToSlot = c.clipToSlot !== false
   const textStyle = {
     ...style,
     ...boxPaint,
@@ -240,8 +241,8 @@ function EditableText({
           WebkitTextFillColor: unsetIfRuns(usesRuns, boxPaint),
         }
       : {
-          height: 'auto',
-          overflow: 'visible',
+          height: clipToSlot ? '100%' : 'auto',
+          overflow: clipToSlot ? 'hidden' : 'visible',
         }),
   }
 
@@ -256,6 +257,7 @@ function EditableText({
         : c.verticalAlign === 'flex-end'
           ? 'flex-end'
           : 'flex-start',
+    overflow: clipToSlot ? 'hidden' : undefined,
   }
 
   const finishEdit = (node) => {

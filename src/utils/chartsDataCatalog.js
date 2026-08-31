@@ -149,47 +149,111 @@ const CATALOG = {
     tableSlot('TABLE_2', 'cols 7-12, rows 4-10'),
   ], { mode: 'table_dual_shared_header' }),
 
-  process_linear_v1: layoutBase('process_linear_v1', 'chart', [
+  process_linner_horti_v1: layoutBase('process_linner_horti_v1', 'chart', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'How it works', {
       typography: typo('heading', { fontSize: 28 }),
     }),
-    slot('STEP_1_CIRCLE', 'cols 2-3, rows 4-5', 'decoration', null, {
-      layer: 2,
-      aiOnly: true,
-      shapeHint: { aiOnly: true, kind: 'stepCircle', suggestedBehind: 'none' },
-    }),
-    slot('STEP_1_TITLE', 'cols 2-3, rows 5-6', 'heading', 'Discover', {
+    slot('STEP_1_TITLE', 'cols 2-3, rows 4-5', 'heading', 'Phase 1', {
       layer: 10,
-      typography: typo('heading', { fontSize: 18, align: 'center' }),
+      typography: typo('heading', { fontSize: 18, align: 'center', colorRole: 'primary' }),
     }),
-    body('STEP_1_BODY', 'cols 2-3, rows 6-8', 'Research and define', 2, {
+    body('STEP_1_BODY', 'cols 2-3, rows 8-10', 'Research and define the problem space.', 3, {
       typography: typo('body', { fontSize: 14, align: 'center' }),
     }),
-    slot('STEP_2_CIRCLE', 'cols 5-6, rows 4-5', 'decoration', null, {
-      layer: 2,
-      aiOnly: true,
-      shapeHint: { aiOnly: true, kind: 'stepCircle', suggestedBehind: 'none' },
-    }),
-    slot('STEP_2_TITLE', 'cols 5-6, rows 5-6', 'heading', 'Build', {
+    slot('STEP_2_TITLE', 'cols 5-6, rows 4-5', 'heading', 'Phase 2', {
       layer: 10,
-      typography: typo('heading', { fontSize: 18, align: 'center' }),
+      typography: typo('heading', { fontSize: 18, align: 'center', colorRole: 'primary' }),
     }),
-    body('STEP_2_BODY', 'cols 5-6, rows 6-8', 'Design and iterate', 2, {
+    body('STEP_2_BODY', 'cols 5-6, rows 8-10', 'Design and iterate on the solution.', 3, {
       typography: typo('body', { fontSize: 14, align: 'center' }),
     }),
-    slot('STEP_3_CIRCLE', 'cols 8-9, rows 4-5', 'decoration', null, {
-      layer: 2,
-      aiOnly: true,
-      shapeHint: { aiOnly: true, kind: 'stepCircle', suggestedBehind: 'none' },
-    }),
-    slot('STEP_3_TITLE', 'cols 8-9, rows 5-6', 'heading', 'Launch', {
+    slot('STEP_3_TITLE', 'cols 8-9, rows 4-5', 'heading', 'Phase 3', {
       layer: 10,
-      typography: typo('heading', { fontSize: 18, align: 'center' }),
+      typography: typo('heading', { fontSize: 18, align: 'center', colorRole: 'primary' }),
     }),
-    body('STEP_3_BODY', 'cols 8-9, rows 6-8', 'Ship and measure', 2, {
+    body('STEP_3_BODY', 'cols 8-9, rows 8-10', 'Ship, measure, and improve.', 3, {
       typography: typo('body', { fontSize: 14, align: 'center' }),
     }),
-  ], { mode: 'process_flow' }),
+  ], { mode: 'process_linner_horti' }),
+
+  process_linner_horti_four_v1: layoutBase('process_linner_horti_four_v1', 'chart', [
+    heading('HEADING', 'cols 2-11, rows 1-2', 'How it works', {
+      typography: typo('heading', { fontSize: 28 }),
+    }),
+    slot('STEP_1_TITLE', 'cols 1-3, rows 4-5', 'heading', 'Phase 1', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 18, align: 'center', colorRole: 'primary' }),
+    }),
+    body('STEP_1_BODY', 'cols 1-3, rows 8-10', 'Research and define.', 3, {
+      typography: typo('body', { fontSize: 14, align: 'center' }),
+    }),
+    slot('STEP_2_TITLE', 'cols 4-6, rows 4-5', 'heading', 'Phase 2', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 18, align: 'center', colorRole: 'primary' }),
+    }),
+    body('STEP_2_BODY', 'cols 4-6, rows 8-10', 'Design and iterate.', 3, {
+      typography: typo('body', { fontSize: 14, align: 'center' }),
+    }),
+    slot('STEP_3_TITLE', 'cols 7-9, rows 4-5', 'heading', 'Phase 3', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 18, align: 'center', colorRole: 'primary' }),
+    }),
+    body('STEP_3_BODY', 'cols 7-9, rows 8-10', 'Build and validate.', 3, {
+      typography: typo('body', { fontSize: 14, align: 'center' }),
+    }),
+    slot('STEP_4_TITLE', 'cols 10-12, rows 4-5', 'heading', 'Phase 4', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 18, align: 'center', colorRole: 'primary' }),
+    }),
+    body('STEP_4_BODY', 'cols 10-12, rows 8-10', 'Launch and scale.', 3, {
+      typography: typo('body', { fontSize: 14, align: 'center' }),
+    }),
+  ], { mode: 'process_linner_horti' }),
+
+  process_linner_numeric_v1: layoutBase('process_linner_numeric_v1', 'chart', [
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Process overview', {
+      typography: typo('heading', { fontSize: 28 }),
+    }),
+    slot('STEP_1_NUMBER', 'cols 2-4, rows 3-5', 'stat', '01', {
+      layer: 10,
+      typography: typo('stat', { fontSize: 72, align: 'center', colorRole: 'accent' }),
+      max_lines: 1,
+    }),
+    slot('STEP_1_TITLE', 'cols 2-4, rows 5-6', 'heading', 'SHAPE TITLE', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 15, align: 'center', fontWeight: 800 }),
+    }),
+    body('STEP_1_BODY', 'cols 2-4, rows 6-8', P.one, 3, {
+      typography: typo('body', { fontSize: 13, align: 'center' }),
+    }),
+    slot('STEP_1_ICON', 'cols 2-4, rows 8-9', 'decoration', null, { layer: 8 }),
+    slot('STEP_2_NUMBER', 'cols 5-7, rows 3-5', 'stat', '02', {
+      layer: 10,
+      typography: typo('stat', { fontSize: 72, align: 'center', colorRole: 'primary' }),
+      max_lines: 1,
+    }),
+    slot('STEP_2_TITLE', 'cols 5-7, rows 5-6', 'heading', 'SHAPE TITLE', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 15, align: 'center', fontWeight: 800 }),
+    }),
+    body('STEP_2_BODY', 'cols 5-7, rows 6-8', P.two, 3, {
+      typography: typo('body', { fontSize: 13, align: 'center' }),
+    }),
+    slot('STEP_2_ICON', 'cols 5-7, rows 8-9', 'decoration', null, { layer: 8 }),
+    slot('STEP_3_NUMBER', 'cols 8-10, rows 3-5', 'stat', '03', {
+      layer: 10,
+      typography: typo('stat', { fontSize: 72, align: 'center', colorRole: 'accent' }),
+      max_lines: 1,
+    }),
+    slot('STEP_3_TITLE', 'cols 8-10, rows 5-6', 'heading', 'SHAPE TITLE', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 15, align: 'center', fontWeight: 800 }),
+    }),
+    body('STEP_3_BODY', 'cols 8-10, rows 6-8', P.three, 3, {
+      typography: typo('body', { fontSize: 13, align: 'center' }),
+    }),
+    slot('STEP_3_ICON', 'cols 8-10, rows 8-9', 'decoration', null, { layer: 8 }),
+  ], { mode: 'process_linner_numeric' }),
 
   metric_single_v1: statLayout('metric_single_v1', 'stat', 1, 'stat_hero', [
     slot('STAT_VALUE', 'cols 3-10, rows 3-6', 'stat', '98%', {

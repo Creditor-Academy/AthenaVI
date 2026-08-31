@@ -6,7 +6,13 @@ import {
   findDeviceFrameSlot,
 } from './deviceFrameCanvas'
 import { buildContentBySlotIdFromSlideContent, mergeContentBySlotId } from './contentSlotMapping'
-import { fontSizeForTextSlot, resolveTypeScaleFontSize } from './canvasTypography'
+import { fontSizeForTextSlot, resolveTypeScaleFontSize, fitTextToSlot } from './canvasTypography'
+import {
+  compileLayoutGeometry,
+  getSlotPlacement,
+  geometrySnapshot,
+  validateLayoutGeometry,
+} from './compileLayoutGeometry'
 import { finalizeTimelineShapes } from './timelineShapeFinalize'
 import { isCatalogPlaceholderText } from './catalogPlaceholder'
 import { normalizeChartContent } from './chartContentNormalize'
@@ -242,13 +248,13 @@ function centerIconPlacement(placement) {
   }
 }
 
-function textPaddingForRole(role) {
-  if (role === 'stat') return { x: 28, y: 20 }
-  if (role === 'stat_label') return { x: 20, y: 18 }
-  if (role === 'heading' || role === 'quote') return { x: 22, y: 16 }
-  if (role === 'caption' || role === 'eyebrow') return { x: 16, y: 12 }
-  if (role === 'body') return { x: 22, y: 16 }
-  return { x: 16, y: 12 }
+function textPaddingForRole(role, slot = null) {
+  const slotPad = slot?.contentPadding
+  if (slotPad != null) {
+    if (typeof slotPad === 'number') return { x: slotPad, y: slotPad }
+    return { x: slotPad.x ?? slotPad.horizontal ?? 8, y: slotPad.y ?? slotPad.vertical ?? 8 }
+  }
+  return { x: 8, y: 8 }
 }
 
 const COLUMN_STACK_GAP_PX = 14
@@ -561,7 +567,13 @@ function buildTextElement(slot, placement, options) {
   let text = resolveSlotText(slot, contentBySlotId, schema, options)
   const ty = slot.typography || {}
   const overlay = isOverlayLayout(schema)
-  const fontSize = fontSizeForTextSlotFromOptions(slot, placement, options)
+  const pad = textPaddingForRole(role, slot)
+  const fitted = fitTextToSlot(text, slot, placement, {
+    ...options,
+    contentPadding: pad,
+  })
+  text = fitted.text
+  const fontSize = fitted.fontSize
   const verticalAlign = role === 'stat' || role === 'stat_label' ? 'center' : 'flex-start'
   const colorMap = colorRoleMapFromPalette(options.palette)
   let colorRole = ty.colorRole || null
@@ -587,7 +599,6 @@ function buildTextElement(slot, placement, options) {
   }
   const color = colorMap[colorRole] || colorMap.text
   const align = ty.align || textAlignForRole(role)
-  const pad = textPaddingForRole(role)
 
   // Strip raw markdown so editor preview matches backend rich-run rendering.
   let runs = undefined
@@ -626,11 +637,13 @@ function buildTextElement(slot, placement, options) {
       color,
       colorRole,
       fontFamily: resolveFontFamily(options, role),
-      lineHeight: ty.lineHeight || (role === 'stat' ? 1.08 : role === 'heading' ? 1.18 : 1.42),
+      lineHeight: fitted.lineHeight || ty.lineHeight || (role === 'stat' ? 1.08 : role === 'heading' ? 1.18 : 1.42),
       letterSpacing: ty.letterSpacing != null ? `${ty.letterSpacing}em` : role === 'heading' ? '-0.02em' : role === 'caption' ? '0.01em' : undefined,
       wrap: 'pre-wrap',
       padding: pad.y,
       paddingX: pad.x,
+      clipToSlot: slot.clipToSlot !== false,
+      slotMaxHeight: placement.height,
       ...(runs ? { runs } : {}),
     },
   }
@@ -1091,7 +1104,8 @@ export function compileDeckLayoutToElements(schema, options = {}) {
 
   const canvasW = options.canvas?.width || 1920
   const canvasH = options.canvas?.height || 1080
-  const { COLS, ROWS } = getGridDims(slots)
+  const canvas = { width: canvasW, height: canvasH }
+  const geometryMap = compileLayoutGeometry(schema, canvas)
   const contentBySlotId = mergeContentBySlotId(
     buildContentBySlotIdFromSlideContent(options.content, schema),
     options.contentBySlotId || {}
@@ -1104,13 +1118,8 @@ export function compileDeckLayoutToElements(schema, options = {}) {
     if (isDeviceFrameSlot(slot)) return []
     if (isAiOnlyShapeSlot(slot)) return []
 
-    const reg = parseRegion(slot.region)
-    if (!reg) return []
-
-    const adjusted = adjustSlotRegion(reg, slot, slots)
-    const inset = insetForRole(slot.role, slot.id, adjusted, COLS, ROWS)
-    const box = regionToBox(adjusted, COLS, ROWS, inset)
-    const placement = boxToPlacement(box, canvasW, canvasH)
+    const placement = getSlotPlacement(geometryMap, slot.id, slot)
+    if (!placement) return []
     const role = slot.role || 'body'
     const compileOptions = { ...options, schema, contentBySlotId }
     const slotIdUpper = String(slot.id || '').toUpperCase()
@@ -1175,19 +1184,18 @@ export function compileDeckLayoutToElements(schema, options = {}) {
     if (role === 'background' || /^METRIC_CARD_\d+_BG$|^TEXT_HALF_BG$|^SURFACE_|_bg$|_card_bg|_panel_bg/i.test(String(slot.id || ''))) {
       return [buildBackgroundElement(slot, placement, compileOptions)]
     }
-    if (role === 'decoration' && slot.shape) {
-      return [buildBackgroundElement(slot, placement, compileOptions)]
+    if (role === 'decoration') {
+      if (slot.shape) return [buildBackgroundElement(slot, placement, compileOptions)]
+      return [buildDecorationElement(slot, placement, compileOptions)]
     }
     if (role === 'image') {
       const frameSlot = findDeviceFrameSlot(slots, slot.id)
       if (frameSlot) {
         const imageEl = buildImageElement(slot, placement, contentBySlotId, compileOptions)
-        const frameReg = parseRegion(frameSlot.region)
-        const framePlacement = boxToPlacement(
-          regionToBox(frameReg, COLS, ROWS, 0.2),
-          canvasW,
-          canvasH
-        )
+        const framePlacement =
+          getSlotPlacement(geometryMap, frameSlot.id, frameSlot) ||
+          getSlotPlacement(geometryMap, frameSlot.id)
+        if (!framePlacement) return [imageEl]
         return buildDeviceFrameCanvasElements({
           frameSlot,
           imageSlot: slot,
@@ -1196,18 +1204,7 @@ export function compileDeckLayoutToElements(schema, options = {}) {
           layerBase: layerForSlot(frameSlot),
         })
       }
-      let imagePlacement = placement
-      if (/^METRIC_IMAGE_/i.test(String(slot.id || ''))) {
-        const size = Math.max(48, Math.round(Math.min(placement.width || 0, placement.height || 0)))
-        imagePlacement = {
-          ...placement,
-          x: Math.round((placement.x || 0) + ((placement.width || size) - size) / 2),
-          y: Math.round((placement.y || 0) + ((placement.height || size) - size) / 2),
-          width: size,
-          height: size,
-        }
-      }
-      return [buildImageElement(slot, imagePlacement, contentBySlotId, compileOptions)]
+      return [buildImageElement(slot, placement, contentBySlotId, compileOptions)]
     }
     if (role === 'chart') {
       const chartEl = buildChartElement(slot, placement, compileOptions)
@@ -1232,7 +1229,9 @@ export function compileDeckLayoutToElements(schema, options = {}) {
   result = finalizeTimelineShapes(result, schema, colorMap, { width: canvasW, height: canvasH })
   result = applyThemeSlideBackground(result, themedPalette, canvasW, canvasH)
   result = applyReadableTextContrastForPreview(result, colorRoleMapFromPalette(options.palette), schema)
-  result = packColumnTextStacks(result)
+  if (options.packColumnStacks === true) {
+    result = packColumnTextStacks(result)
+  }
   const hasLoadedOverlayImage = result.some((e) => {
     if (e.type !== 'image' || !e.content?.url) return false
     const slotId = String(e.slotId || '').toUpperCase()
@@ -1263,8 +1262,25 @@ export function compileDeckLayoutToElements(schema, options = {}) {
       ...result,
     ]
   }
+  if (options.debugGeometry) {
+    const snapshot = geometrySnapshot(schema, geometryMap, canvas)
+    const validation = validateLayoutGeometry(schema, result, geometryMap, canvas)
+    const drift = snapshot.slots.filter(
+      (s) =>
+        Math.abs(s.difference.x) > 1 ||
+        Math.abs(s.difference.y) > 1 ||
+        Math.abs(s.difference.width) > 1 ||
+        Math.abs(s.difference.height) > 1
+    )
+    if (drift.length || !validation.pass) {
+      console.debug('[layout-geometry]', schema?.layout_id, { snapshot, validation })
+    }
+  }
+
   return result
 }
+
+export { geometrySnapshot, validateLayoutGeometry, compileLayoutGeometry }
 
 export function isTextLayoutRole(role) {
   return TEXT_ROLES.has(role)

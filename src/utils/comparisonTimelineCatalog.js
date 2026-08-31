@@ -140,17 +140,17 @@ const CATALOG = {
   timeline_horizontal_v1: layoutBase('timeline_horizontal_v1', 'timeline', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Timeline', { max_lines: 2 }),
     ...milestoneSlots(4),
-  ], { mode: 'process_flow' }),
+  ], { mode: 'timeline_horizontal' }),
 
   timeline_milestones_v1: layoutBase('timeline_milestones_v1', 'timeline', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Key milestones', { max_lines: 2 }),
     ...milestoneDetailSlots(4),
-  ], { mode: 'process_flow' }),
+  ], { mode: 'timeline_horizontal' }),
 
   timeline_milestones_image_v1: layoutBase('timeline_milestones_image_v1', 'timeline', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Key milestones', { max_lines: 2 }),
     ...milestoneImageDetailSlots(4),
-  ], { mode: 'process_flow' }),
+  ], { mode: 'timeline_milestones_image' }),
 
   timeline_vertical_v1: layoutBase('timeline_vertical_v1', 'timeline', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Project phases', { max_lines: 2 }),
@@ -200,7 +200,7 @@ const CATALOG = {
       typography: typo('body', { fontSize: 14 }),
       max_lines: 3,
     }),
-  ], { mode: 'process_flow' }),
+  ], { mode: 'timeline_vertical' }),
 
   timeline_roadmap_v1: layoutBase('timeline_roadmap_v1', 'timeline', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Product roadmap', { max_lines: 2 }),
@@ -240,7 +240,7 @@ const CATALOG = {
       typography: typo('body', { fontSize: 14, align: 'center' }),
       max_lines: 3,
     }),
-  ], { mode: 'process_flow' }),
+  ], { mode: 'timeline_roadmap' }),
 
   timeline_process_steps_v1: layoutBase('timeline_process_steps_v1', 'timeline', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'How it works', { max_lines: 2 }),
@@ -280,7 +280,7 @@ const CATALOG = {
       typography: typo('body', { fontSize: 14, align: 'center' }),
       max_lines: 3,
     }),
-  ], { mode: 'process_flow' }),
+  ], { mode: 'timeline_process_steps' }),
 
   comparison_table_v1: layoutBase('comparison_table_v1', 'comparison', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Feature comparison', { max_lines: 2 }),

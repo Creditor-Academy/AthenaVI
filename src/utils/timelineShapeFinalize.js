@@ -1,4 +1,4 @@
-/** Post-compile timeline connector + card shapes (mirrors backend finalizeElementsDoc). */
+/** Post-compile timeline connector + Process Linner shapes (mirrors backend finalizeElementsDoc). */
 
 import { cycleSegmentInlineSvg, cycleSegmentPlacement, CYCLE_SEGMENT_COLORS, cycleOverlayPlacements } from './diagramCycleSvg'
 import { funnelStageInlineSvg, funnelStagePlacement, FUNNEL_TITLE_COLORS, FUNNEL_GEOM, FUNNEL_STAGE_COLORS, funnelOverlayPlacements } from './diagramFunnelSvg'
@@ -44,6 +44,13 @@ import {
   quoteTestimonialGeom,
   quoteStatementLeftGeom,
 } from './quoteGridLayout'
+import {
+  timelineNodeInlineSvg,
+  timelineSpineSegmentInlineSvg,
+  timelineChevronInlineSvg,
+  processPhaseCircleInlineSvg,
+  processNumericBadgeInlineSvg,
+} from './timelineProcessSvg'
 
 function paletteColor(palette, role, fallback) {
   if (!palette || typeof palette !== 'object') return fallback
@@ -56,11 +63,23 @@ function cardGroupKey(slotId) {
   if (m) return `milestone_${m[1]}`
   m = id.match(/^step_(\d+)_(title|body)$/i)
   if (m) return `step_${m[1]}`
-  m = id.match(/^STEP_(\d+)_(TITLE|BODY)$/)
+  m = id.match(/^STEP_(\d+)_(TITLE|BODY|NUMBER|ICON)$/)
   if (m) return `step_${m[1]}`
   m = id.match(/^CARD_(\d+)_(TITLE|BODY)$/i)
   if (m) return `card_${m[1]}`
   return null
+}
+
+function isProcessLinnerLayout(layoutId) {
+  return /^process_linner_/i.test(String(layoutId || ''))
+}
+
+function isProcessLinnerHortiLayout(layoutId) {
+  return /^process_linner_horti/i.test(String(layoutId || ''))
+}
+
+function isProcessLinnerNumericLayout(layoutId) {
+  return /^process_linner_numeric/i.test(String(layoutId || ''))
 }
 
 function separateCardBoxes(boxes, canvas, { edgeInset = 56, gap = 24 } = {}) {
@@ -95,8 +114,27 @@ function separateCardBoxes(boxes, canvas, { edgeInset = 56, gap = 24 } = {}) {
   })
 }
 
+function layoutHasExplicitCardBg(schema, groupKey) {
+  const slots = Array.isArray(schema?.slots) ? schema.slots : []
+  const m = String(groupKey || '').match(/^(card|row|bullet|item|milestone|step)_(\d+)$/i)
+  if (!m) return false
+  const kind = m[1].toLowerCase()
+  const n = m[2]
+  return slots.some((s) => {
+    const id = String(s.id || '')
+    return (
+      new RegExp(`^CARD_${n}_BG$`, 'i').test(id) ||
+      new RegExp(`^${kind}_${n}_BG$`, 'i').test(id) ||
+      new RegExp(`^MILESTONE_${n}_CARD_BG$`, 'i').test(id) ||
+      new RegExp(`^STEP_${n}_CIRCLE$`, 'i').test(id) ||
+      new RegExp(`^STEP_${n}_CARD_BG$`, 'i').test(id)
+    )
+  })
+}
+
 export function applyDefaultCardShapes(elements, schema, palette = {}, canvas = {}) {
   if (!Array.isArray(elements) || !schema?.slots?.length) return elements
+  if (isProcessLinnerLayout(schema.layout_id)) return elements
 
   const slots = schema.slots
   const next = [...elements]
@@ -105,6 +143,7 @@ export function applyDefaultCardShapes(elements, schema, palette = {}, canvas = 
   for (const slot of slots) {
     const key = cardGroupKey(slot.id)
     if (!key) continue
+    if (layoutHasExplicitCardBg(schema, key)) continue
     const role = String(slot.role || '').toLowerCase()
     if (!['heading', 'body', 'subheading', 'stat'].includes(role) && !/^milestone_/i.test(slot.id)) continue
     if (!groups.has(key)) groups.set(key, [])
@@ -160,8 +199,327 @@ export function applyDefaultCardShapes(elements, schema, palette = {}, canvas = 
   return next
 }
 
+function findStepTitleElements(elements) {
+  return elements
+    .filter(
+      (el) =>
+        (el.type === 'text' || el.type === 'textbox') &&
+        /^STEP_\d+_TITLE$/i.test(String(el.slotId || ''))
+    )
+    .sort((a, b) => (a.placement?.x ?? 0) - (b.placement?.x ?? 0))
+}
+
+function updateElementBySlotId(elements, slotId, patchFn) {
+  const idx = elements.findIndex((el) => el.slotId === slotId)
+  if (idx < 0) return elements
+  const next = [...elements]
+  next[idx] = patchFn(next[idx])
+  return next
+}
+
+export function applyProcessLinnerHortiShapes(elements, schema, palette = {}, canvas = {}) {
+  if (!Array.isArray(elements) || !schema?.slots?.length) return elements
+  const layoutId = String(schema.layout_id || '')
+  if (!isProcessLinnerHortiLayout(layoutId)) return elements
+  if (elements.some((el) => String(el.slotId || '') === 'PROCESS_LINNER_SPINE')) return elements
+
+  let next = [...elements]
+  const spineColor = paletteColor(palette, 'text', '#0F172A')
+  const phaseFill = paletteColor(
+    palette,
+    'cardBg',
+    'color-mix(in srgb, #e8b4a0 42%, #ffffff)'
+  )
+  const primaryColor = paletteColor(palette, 'primary', paletteColor(palette, 'accent', '#2563EB'))
+  const white = '#FFFFFF'
+
+  const titleEls = findStepTitleElements(next)
+  if (titleEls.length < 2) return elements
+
+  const SPINE_NODE = 28
+  const NUM_H = 18
+  const minTitleY = Math.min(...titleEls.map((t) => t.placement?.y ?? 0))
+  const spineY = Math.max(96, minTitleY - 100)
+
+  const centers = titleEls.map((el, i) => {
+    const p = el.placement || {}
+    return {
+      x: (p.x ?? 0) + (p.width ?? 0) / 2,
+      titleSlotId: el.slotId,
+      index: i + 1,
+    }
+  })
+
+  const spineX1 = centers[0].x
+  const spineX2 = centers[centers.length - 1].x
+  next.unshift({
+    id: `shp-plinner-spine-${Math.random().toString(36).slice(2, 9)}`,
+    type: 'shape',
+    layer: 1,
+    placement: {
+      x: Math.round(spineX1),
+      y: Math.round(spineY - 1),
+      width: Math.round(Math.max(8, spineX2 - spineX1)),
+      height: 2,
+      rotation: 0,
+      opacity: 1,
+    },
+    content: { shape: 'rect', fill: spineColor, layoutSurface: true },
+    role: 'decoration',
+    slotId: 'PROCESS_LINNER_SPINE',
+  })
+
+  centers.forEach((c) => {
+    const phaseRadius = c.index % 2 === 0 ? 105 : 90
+    const phaseSize = phaseRadius * 2
+    const phaseY = spineY + SPINE_NODE / 2 + 28 + phaseRadius
+    const phaseBottom = phaseY + phaseRadius
+
+    next.unshift({
+      id: `shp-plinner-node-${Math.random().toString(36).slice(2, 9)}`,
+      type: 'shape',
+      layer: 3,
+      placement: {
+        x: Math.round(c.x - SPINE_NODE / 2),
+        y: Math.round(spineY - SPINE_NODE / 2),
+        width: SPINE_NODE,
+        height: SPINE_NODE,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: { shape: 'ellipse', fill: spineColor, layoutSurface: true },
+      role: 'decoration',
+      slotId: `STEP_${c.index}_SPINE_NODE`,
+    })
+
+    next.unshift({
+      id: `txt-plinner-num-${Math.random().toString(36).slice(2, 9)}`,
+      type: 'text',
+      layer: 4,
+      placement: {
+        x: Math.round(c.x - SPINE_NODE / 2),
+        y: Math.round(spineY - NUM_H / 2),
+        width: SPINE_NODE,
+        height: NUM_H,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        text: String(c.index),
+        align: 'center',
+        fontSize: 12,
+        fontWeight: 700,
+        color: white,
+      },
+      role: 'caption',
+      slotId: `STEP_${c.index}_SPINE_NUM`,
+    })
+
+    next.unshift({
+      id: `shp-plinner-phase-${Math.random().toString(36).slice(2, 9)}`,
+      type: 'graphic',
+      layer: 2,
+      placement: {
+        x: Math.round(c.x - phaseRadius),
+        y: Math.round(phaseY - phaseRadius),
+        width: phaseSize,
+        height: phaseSize,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: timelineGraphicContent(processPhaseCircleInlineSvg(), phaseFill, `Phase ${c.index}`),
+      role: 'decoration',
+      slotId: `STEP_${c.index}_PHASE_CIRCLE`,
+    })
+
+    const titleEl = next.find((el) => el.slotId === c.titleSlotId)
+    if (titleEl) {
+      const titleHeight = Math.max(28, titleEl.placement?.height ?? 32)
+      next = updateElementBySlotId(next, c.titleSlotId, (el) => ({
+        ...el,
+        layer: 5,
+        placement: {
+          ...el.placement,
+          x: Math.round(c.x - phaseRadius + 16),
+          y: Math.round(phaseY - titleHeight / 2),
+          width: Math.round(phaseSize - 32),
+          height: titleHeight,
+        },
+        content: {
+          ...(el.content || {}),
+          align: 'center',
+          color: primaryColor,
+          colorRole: 'primary',
+        },
+      }))
+    }
+
+    const ANCHOR = 14
+    const anchorY = phaseBottom + 36
+    const connectorHeight = Math.max(12, anchorY - ANCHOR / 2 - phaseBottom - 4)
+
+    next.unshift({
+      id: `shp-plinner-conn-${Math.random().toString(36).slice(2, 9)}`,
+      type: 'shape',
+      layer: 1,
+      placement: {
+        x: Math.round(c.x - 1),
+        y: Math.round(phaseBottom + 4),
+        width: 2,
+        height: Math.round(connectorHeight),
+        rotation: 0,
+        opacity: 1,
+      },
+      content: { shape: 'rect', fill: spineColor, layoutSurface: true },
+      role: 'decoration',
+      slotId: `STEP_${c.index}_CONNECTOR`,
+    })
+
+    next.unshift({
+      id: `shp-plinner-anchor-${Math.random().toString(36).slice(2, 9)}`,
+      type: 'shape',
+      layer: 2,
+      placement: {
+        x: Math.round(c.x - ANCHOR / 2),
+        y: Math.round(anchorY - ANCHOR / 2),
+        width: ANCHOR,
+        height: ANCHOR,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        shape: 'ellipse',
+        fill: 'transparent',
+        stroke: spineColor,
+        strokeWidth: 2,
+        layoutSurface: true,
+      },
+      role: 'decoration',
+      slotId: `STEP_${c.index}_ANCHOR`,
+    })
+
+    const bodySlotId = `STEP_${c.index}_BODY`
+    const bodyEl = next.find((el) => el.slotId === bodySlotId)
+    if (bodyEl) {
+      const titleWidth = next.find((el) => el.slotId === c.titleSlotId)?.placement?.width
+      const bodyWidth = Math.max(bodyEl.placement?.width ?? 0, titleWidth ?? 200)
+      const bodyTop = anchorY + ANCHOR / 2 + 14
+      next = updateElementBySlotId(next, bodySlotId, (el) => ({
+        ...el,
+        placement: {
+          ...el.placement,
+          x: Math.round(c.x - bodyWidth / 2),
+          y: Math.round(bodyTop),
+          width: bodyWidth,
+        },
+        content: {
+          ...(el.content || {}),
+          align: 'center',
+        },
+      }))
+    }
+  })
+
+  return next
+}
+
+export function applyProcessLinnerNumericShapes(elements, schema, palette = {}, canvas = {}) {
+  if (!Array.isArray(elements) || !schema?.slots?.length) return elements
+  const layoutId = String(schema.layout_id || '')
+  if (!isProcessLinnerNumericLayout(layoutId)) return elements
+
+  let next = [...elements]
+  const lineColor = paletteColor(palette, 'text', '#0F172A')
+  const shadowColor = 'rgba(15, 23, 42, 0.12)'
+
+  const numberEls = next
+    .filter((el) => el.type === 'text' && /^STEP_\d+_NUMBER$/i.test(String(el.slotId || '')))
+    .sort((a, b) => (a.placement?.x ?? 0) - (b.placement?.x ?? 0))
+
+  numberEls.forEach((numEl) => {
+    const m = String(numEl.slotId || '').match(/^STEP_(\d+)_NUMBER$/i)
+    if (!m) return
+    const n = m[1]
+    const p = numEl.placement || {}
+    const slotLineY = (p.y ?? 0) + (p.height ?? 0) - 8
+    const lineWidth = Math.max(60, (p.width ?? 0) * 0.85)
+    const lineX = (p.x ?? 0) + ((p.width ?? 0) - lineWidth) / 2
+
+    if (!next.some((el) => el.slotId === `STEP_${n}_NUMBER_SLOT`)) {
+      next.unshift({
+        id: `shp-plinner-slot-${Math.random().toString(36).slice(2, 9)}`,
+        type: 'shape',
+        layer: 1,
+        placement: {
+          x: Math.round(lineX),
+          y: Math.round(slotLineY),
+          width: Math.round(lineWidth),
+          height: 3,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: { shape: 'rect', fill: lineColor, layoutSurface: true },
+        role: 'decoration',
+        slotId: `STEP_${n}_NUMBER_SLOT`,
+      })
+
+      next.unshift({
+        id: `shp-plinner-shadow-${Math.random().toString(36).slice(2, 9)}`,
+        type: 'shape',
+        layer: 0,
+        placement: {
+          x: Math.round((p.x ?? 0) + 4),
+          y: Math.round(slotLineY + 2),
+          width: Math.round(lineWidth - 8),
+          height: 6,
+          rotation: 0,
+          opacity: 0.35,
+        },
+        content: { shape: 'rect', fill: shadowColor, borderRadius: 3, layoutSurface: true },
+        role: 'decoration',
+        slotId: `STEP_${n}_NUMBER_SHADOW`,
+      })
+    }
+
+    const iconSlotId = `STEP_${n}_ICON`
+    const iconEl = next.find((el) => el.slotId === iconSlotId)
+    if (iconEl && iconEl.type === 'text') {
+      const ip = iconEl.placement || {}
+      const size = Math.min(ip.width ?? 48, ip.height ?? 48, 48)
+      const cx = (ip.x ?? 0) + (ip.width ?? size) / 2
+      const cy = (ip.y ?? 0) + (ip.height ?? size) / 2
+      next = next.filter((el) => el.slotId !== iconSlotId)
+      next.push({
+        id: `shp-plinner-icon-${Math.random().toString(36).slice(2, 9)}`,
+        type: 'shape',
+        slotId: iconSlotId,
+        layer: iconEl.layer ?? 8,
+        placement: {
+          x: Math.round(cx - size / 2),
+          y: Math.round(cy - size / 2),
+          width: size,
+          height: size,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          shape: 'circle',
+          fill: paletteColor(palette, 'iconFill', 'color-mix(in srgb, #64748b 18%, transparent)'),
+          stroke: paletteColor(palette, 'iconRing', 'color-mix(in srgb, #6366f1 32%, transparent)'),
+          strokeWidth: 1.5,
+          layoutSurface: true,
+        },
+        role: 'decoration',
+      })
+    }
+  })
+
+  return next
+}
+
 function isProcessFlowLayout(layoutId) {
   const id = String(layoutId || '').toLowerCase()
+  if (/^process_linner_horti/.test(id)) return false
   return (
     /timeline/.test(id) ||
     /process_linear/.test(id) ||
@@ -196,6 +554,8 @@ function findProcessAnchorElements(elements) {
 export function applyTimelineConnectorShapes(elements, schema, palette = {}, canvas = {}) {
   if (!Array.isArray(elements) || !schema?.slots?.length) return elements
   const layoutId = String(schema.layout_id || '').toLowerCase()
+  if (isProcessLinnerLayout(layoutId)) return elements
+  if (isProcessLinnerHortiLayout(layoutId)) return elements
   if (!isProcessFlowLayout(layoutId)) return elements
 
   if (
@@ -269,7 +629,7 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
       const cy = c.labelTop + 10
       next.unshift({
         id: `shp-timeline-node-${Math.random().toString(36).slice(2, 9)}`,
-        type: 'shape',
+        type: 'graphic',
         layer: 3,
         placement: {
           x: Math.round(spineX - NODE / 2),
@@ -279,7 +639,7 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
           rotation: 0,
           opacity: 1,
         },
-        content: { shape: 'ellipse', fill: accent, layoutSurface: true },
+        content: timelineGraphicContent(timelineNodeInlineSvg(), accent, `Timeline node ${c.index}`),
         role: 'decoration',
         slotId: `TIMELINE_NODE_${c.index}`,
       })
@@ -313,7 +673,7 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
     centers.forEach((c) => {
       next.unshift({
         id: `shp-timeline-node-${Math.random().toString(36).slice(2, 9)}`,
-        type: 'shape',
+        type: 'graphic',
         layer: 3,
         placement: {
           x: Math.round(Math.max(56, Math.min(c.x - NODE / 2, canvasW - NODE - 56))),
@@ -323,7 +683,7 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
           rotation: 0,
           opacity: 1,
         },
-        content: { shape: 'ellipse', fill: accent, layoutSurface: true },
+        content: timelineGraphicContent(timelineNodeInlineSvg(), accent, `Timeline node ${c.index}`),
         role: 'decoration',
         slotId: `TIMELINE_NODE_${c.index}`,
       })
@@ -359,10 +719,18 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
     const x1 = a.x + nodeR + 4
     const x2 = b.x - nodeR - 4
     const segW = Math.max(8, x2 - x1)
-    const lineY = axisY
+    let lineY = axisY
+    if (hasStepCircles) {
+      const circle = next.find(
+        (el) => String(el.slotId || '').toUpperCase() === `STEP_${i + 1}_CIRCLE`
+      )
+      if (circle?.placement) {
+        lineY = (circle.placement.y ?? 0) + (circle.placement.height ?? 0) / 2
+      }
+    }
     next.unshift({
       id: `shp-timeline-seg-${Math.random().toString(36).slice(2, 9)}`,
-      type: 'shape',
+      type: 'graphic',
       layer: 1,
       placement: {
         x: Math.round(x1),
@@ -372,7 +740,7 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
         rotation: 0,
         opacity: 0.95,
       },
-      content: { shape: 'rect', fill: muted, borderRadius: 2, layoutSurface: true },
+      content: timelineGraphicContent(timelineSpineSegmentInlineSvg(), muted, 'Timeline segment'),
       role: 'decoration',
       slotId: `TIMELINE_SEG_${i + 1}`,
     })
@@ -380,7 +748,7 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
     const chevronSize = 18
     next.unshift({
       id: `shp-timeline-arrow-${Math.random().toString(36).slice(2, 9)}`,
-      type: 'shape',
+      type: 'graphic',
       layer: 2,
       placement: {
         x: Math.round(midX - chevronSize / 2),
@@ -390,7 +758,7 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
         rotation: 0,
         opacity: 1,
       },
-      content: { shape: 'chevron-right', fill: accent, layoutSurface: true },
+      content: timelineGraphicContent(timelineChevronInlineSvg(), accent, 'Timeline arrow'),
       role: 'decoration',
       slotId: `TIMELINE_ARROW_${i + 1}`,
     })
@@ -400,7 +768,12 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
 }
 
 function isDiagramProcessStepsLayout(layoutId) {
-  return /diagram_process_steps/.test(String(layoutId || '').toLowerCase())
+  const id = String(layoutId || '').toLowerCase()
+  return /diagram_process_steps|timeline_process_steps/.test(id)
+}
+
+function timelineGraphicContent(svg, fill, alt = '') {
+  return { svg, colorMode: 'recolorable', fill, alt }
 }
 
 function newShapeId(prefix) {
@@ -564,7 +937,7 @@ export function layoutDiagramProcessSteps(elements, schema, palette = {}, canvas
     })
     chrome.push({
       id: newShapeId('shp-timeline-node'),
-      type: 'shape',
+      type: 'graphic',
       layer: 3,
       placement: {
         x: Math.round(centers[i] - nodeSize / 2),
@@ -574,7 +947,7 @@ export function layoutDiagramProcessSteps(elements, schema, palette = {}, canvas
         rotation: 0,
         opacity: 1,
       },
-      content: { shape: 'ellipse', fill: textColor, layoutSurface: true },
+      content: timelineGraphicContent(timelineNodeInlineSvg(), textColor, `Step ${i + 1}`),
       role: 'decoration',
       slotId: `TIMELINE_NODE_${i + 1}`,
     })
@@ -611,7 +984,7 @@ export function layoutDiagramProcessSteps(elements, schema, palette = {}, canvas
     const x2 = centers[i + 1] - nodeSize / 2 - 6
     chrome.push({
       id: newShapeId('shp-timeline-seg'),
-      type: 'shape',
+      type: 'graphic',
       layer: 1,
       placement: {
         x: Math.round(x1),
@@ -621,7 +994,7 @@ export function layoutDiagramProcessSteps(elements, schema, palette = {}, canvas
         rotation: 0,
         opacity: 0.95,
       },
-      content: { shape: 'rect', fill: textColor, borderRadius: 2, layoutSurface: true },
+      content: timelineGraphicContent(timelineSpineSegmentInlineSvg(), textColor, 'Process spine'),
       role: 'decoration',
       slotId: `TIMELINE_SEG_${i + 1}`,
     })
@@ -2317,6 +2690,8 @@ export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = 
     return layoutQuoteAttribution(elements, schema, palette, canvas)
   }
   let next = applyDefaultCardShapes(elements, schema, palette, canvas)
+  next = applyProcessLinnerHortiShapes(next, schema, palette, canvas)
+  next = applyProcessLinnerNumericShapes(next, schema, palette, canvas)
   next = applyTimelineConnectorShapes(next, schema, palette, canvas)
   return next
 }

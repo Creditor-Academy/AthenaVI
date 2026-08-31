@@ -15,6 +15,17 @@ const REGISTRY = {
   ...ALL_LAYOUT_CATALOGS,
 }
 
+/** Retired layout ids → current catalog entry (no persisted alias slides). */
+const LAYOUT_ID_ALIASES = {
+  process_linear_v1: 'process_linner_horti_v1',
+}
+
+export function normalizeLayoutId(layoutId) {
+  const key = String(layoutId || '').trim()
+  if (!key) return ''
+  return LAYOUT_ID_ALIASES[key] || key
+}
+
 const PLACEHOLDER_SLOT_MAP = {
   MAIN_TITLE: ['title'],
   HEADING: ['title'],
@@ -196,7 +207,9 @@ const LAYOUT_PREVIEW_MODES = {
   table_with_description_v1: 'table_with_desc',
   table_two_desc_v1: 'table_dual',
   table_two_same_header_v1: 'table_dual_shared_header',
-  process_linear_v1: 'process_flow',
+  process_linner_horti_v1: 'process_linner_horti',
+  process_linner_horti_four_v1: 'process_linner_horti',
+  process_linner_numeric_v1: 'process_linner_numeric',
   timeline_horizontal_v1: 'timeline_horizontal',
   timeline_milestones_v1: 'timeline_horizontal',
   timeline_milestones_image_v1: 'timeline_milestones_image',
@@ -487,6 +500,44 @@ function fillPreviewDataFromSlots(schema) {
         preview.slots?.[`STEP_${n}_TITLE`]?.text ||
         slotPlaceholderText(slots, `STEP_${n}_TITLE`) ||
         (n === 1 ? 'Discover' : n === 2 ? 'Build' : 'Launch'),
+      body:
+        preview.slots?.[`STEP_${n}_BODY`]?.text ||
+        slotPlaceholderText(slots, `STEP_${n}_BODY`) ||
+        'Short step description',
+    }))
+  }
+  if (mode === 'process_linner_horti' && !Array.isArray(preview.steps)) {
+    const stepNums = slots
+      .map((s) => String(s.id || '').match(/^STEP_(\d+)_TITLE$/i)?.[1])
+      .filter(Boolean)
+    const unique = [...new Set(stepNums)].sort((a, b) => Number(a) - Number(b))
+    const nums = unique.length ? unique : ['1', '2', '3']
+    preview.steps = nums.map((n) => ({
+      title:
+        preview.slots?.[`STEP_${n}_TITLE`]?.text ||
+        slotPlaceholderText(slots, `STEP_${n}_TITLE`) ||
+        `Phase ${n}`,
+      body:
+        preview.slots?.[`STEP_${n}_BODY`]?.text ||
+        slotPlaceholderText(slots, `STEP_${n}_BODY`) ||
+        'Short step description',
+    }))
+  }
+  if (mode === 'process_linner_numeric' && !Array.isArray(preview.steps)) {
+    const stepNums = slots
+      .map((s) => String(s.id || '').match(/^STEP_(\d+)_NUMBER$/i)?.[1])
+      .filter(Boolean)
+    const unique = [...new Set(stepNums)].sort((a, b) => Number(a) - Number(b))
+    const nums = unique.length ? unique : ['1', '2', '3']
+    preview.steps = nums.map((n) => ({
+      number:
+        preview.slots?.[`STEP_${n}_NUMBER`]?.text ||
+        slotPlaceholderText(slots, `STEP_${n}_NUMBER`) ||
+        String(n).padStart(2, '0'),
+      title:
+        preview.slots?.[`STEP_${n}_TITLE`]?.text ||
+        slotPlaceholderText(slots, `STEP_${n}_TITLE`) ||
+        'SHAPE TITLE',
       body:
         preview.slots?.[`STEP_${n}_BODY`]?.text ||
         slotPlaceholderText(slots, `STEP_${n}_BODY`) ||
@@ -813,10 +864,14 @@ export function buildLayoutSchemaMap(templates = []) {
 
 /** Resolve a layout schema: code catalog → saved map fallback. */
 export function resolveLayoutSchemaById(layoutId, layoutSchemaMap = {}) {
-  const key = String(layoutId || '').trim()
+  const key = normalizeLayoutId(layoutId)
   if (!key) return null
   const registered = getDeckLayoutSchema(key)
   if (registered) return normalizeLayoutSchemaForPreview(registered)
+  const rawKey = String(layoutId || '').trim()
+  if (layoutSchemaMap[rawKey]) {
+    return normalizeLayoutSchemaForPreview(layoutSchemaMap[rawKey])
+  }
   if (layoutSchemaMap[key]) {
     return normalizeLayoutSchemaForPreview(layoutSchemaMap[key])
   }
@@ -825,7 +880,7 @@ export function resolveLayoutSchemaById(layoutId, layoutSchemaMap = {}) {
 
 /** @returns {object|null} layout schema clone for preview */
 export function getDeckLayoutSchema(layoutId) {
-  const key = String(layoutId || '').trim()
+  const key = normalizeLayoutId(layoutId)
   if (!key || !REGISTRY[key]) return null
   return JSON.parse(JSON.stringify(REGISTRY[key]))
 }

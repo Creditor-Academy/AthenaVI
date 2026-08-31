@@ -26,7 +26,7 @@ Gallery category: `simple_slides` (filter only). AI selection uses `content_type
 | quote | `statement_left_v1`, `statement_large_v1` |
 | closing | `centered_text_cta_v1`, `para_image_cta_v1` |
 | grid | `grid_bento_three_v1`, `grid_insights_chart_v1`, `grid_six_images_v1`, `grid_metrics_mobile_v1`, `eight_short_texts_image_v1` |
-| chart | `chart_with_description_v1`, `chart_single_v1`, `table_single_v1`, `process_linear_v1` |
+| chart | `chart_with_description_v1`, `chart_single_v1`, `table_single_v1`, `process_linner_horti_v1`, `process_linner_numeric_v1` |
 | stat | `metric_single_v1`, `metric_three_v1`, `metric_six_para_v1` |
 
 ## Grid layouts (10 new)

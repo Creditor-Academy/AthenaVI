@@ -68,3 +68,92 @@ export function resolveTypeScaleFontSize(role, typeScale = {}) {
   const size = map[r]
   return size != null && Number(size) > 0 ? Number(size) : null
 }
+
+function estimateLineCount(text, charsPerLine) {
+  const lines = String(text || '').split(/\r?\n/)
+  let total = 0
+  for (const line of lines) {
+    const len = line.trim().length
+    total += Math.max(1, Math.ceil(len / Math.max(charsPerLine, 1)))
+  }
+  return total
+}
+
+function truncateToLines(text, maxLines) {
+  const raw = String(text ?? '')
+  if (maxLines <= 0) return ''
+  const lines = raw.split(/\r?\n/)
+  if (lines.length <= maxLines) return raw
+  return lines.slice(0, maxLines).join('\n')
+}
+
+function truncateToWords(text, maxWords) {
+  const words = String(text ?? '').trim().split(/\s+/).filter(Boolean)
+  if (words.length <= maxWords) return String(text ?? '')
+  return words.slice(0, maxWords).join(' ')
+}
+
+/**
+ * Fit text content inside a slot without changing slot geometry.
+ * Reduces font size, then line-height, then truncates as fallback.
+ */
+export function fitTextToSlot(text, slot, placement, options = {}) {
+  const role = String(slot?.role || 'body').toLowerCase()
+  const ty = slot?.typography || {}
+  const pad = options.contentPadding || { x: 8, y: 8 }
+  const innerW = Math.max(1, (placement?.width || 0) - (pad.x || 0) * 2)
+  const innerH = Math.max(1, (placement?.height || 0) - (pad.y || 0) * 2)
+  const canvasWidth = options.canvas?.width || options.canvasWidth || CANVAS_REF_WIDTH
+
+  const maxLines =
+    slot?.max_lines ||
+    (role === 'stat'
+      ? 1
+      : role === 'heading' || role === 'quote'
+        ? 2
+        : role === 'caption' || role === 'stat_label'
+          ? 2
+          : 4)
+
+  let fontSize =
+    ty.fontSize != null
+      ? Number(ty.fontSize)
+      : resolveTypeScaleFontSize(role, options.typeScale) ??
+        fontSizeForTextSlot(slot, placement, canvasWidth)
+
+  const minSize = role === 'stat' ? 20 : 12
+  const maxWords = slot?.max_words || null
+  let lineHeight = ty.lineHeight || (role === 'stat' ? 1.08 : role === 'heading' ? 1.18 : 1.42)
+  let content = String(text ?? '')
+
+  if (maxWords && maxWords > 0) {
+    content = truncateToWords(content, maxWords)
+  }
+
+  const charsPerLine = Math.max(8, Math.floor(innerW / (fontSize * 0.52)))
+
+  for (let attempt = 0; attempt < 24; attempt++) {
+    const lines = estimateLineCount(content, charsPerLine)
+    const requiredH = lines * fontSize * lineHeight
+    if (lines <= maxLines && requiredH <= innerH) break
+
+    if (fontSize > minSize) {
+      fontSize = Math.max(minSize, fontSize - 1)
+      continue
+    }
+
+    if (lineHeight > 1.05) {
+      lineHeight = Math.max(1.05, lineHeight - 0.04)
+      continue
+    }
+
+    content = truncateToLines(content, maxLines)
+    break
+  }
+
+  return {
+    text: content,
+    fontSize: Math.round(fontSize),
+    lineHeight,
+  }
+}

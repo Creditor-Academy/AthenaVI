@@ -878,9 +878,10 @@ function SlideStage({
                     const rawH = Math.round(
                       cssPxToCanvas(cssHeight, stageRef.current, canvas.height)
                     )
+                    const slotMaxH = el.content?.slotMaxHeight || el.placement?.height || curH
                     const maxH = Math.max(
                       TEXT_MIN_HEIGHT,
-                      canvas.height - y + minOverlapPx(curH) * 8
+                      Math.min(slotMaxH, canvas.height - y + minOverlapPx(curH) * 8)
                     )
                     const nextH = Math.max(TEXT_MIN_HEIGHT, Math.min(maxH, rawH))
                     if (allowShrink) {

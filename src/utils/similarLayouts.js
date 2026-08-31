@@ -20,7 +20,7 @@ export function layoutFamily(layoutId, contentType) {
   if (
     ct === 'diagram' ||
     /^diagram_/.test(id) ||
-    /process_step|process_flow|process_linear|funnel_|swot_|matrix_/.test(id)
+    /process_step|process_flow|process_linner|funnel_|swot_|matrix_/.test(id)
   ) {
     return 'diagram'
   }

@@ -11,6 +11,7 @@ import {
   buildLayoutSchemaMap,
   getDeckLayoutSchema,
   listDeckLayoutIds,
+  normalizeLayoutId,
   resolveLayoutSchemaById,
 } from './deckLayoutRegistry'
 import { parseRegion } from './layoutPreviewUtils'
@@ -46,6 +47,9 @@ export function buildLayoutSchemaMapFromTemplates(templates = []) {
     const registered = getDeckLayoutSchema(layoutId)
     if (registered?.slots?.length) map[layoutId] = registered
   }
+
+  // Retired ids always resolve to the current catalog schema.
+  map.process_linear_v1 = getDeckLayoutSchema('process_linner_horti_v1') || map.process_linear_v1
 
   return map
 }
@@ -86,7 +90,7 @@ export async function resolveLayoutSchema({
   layoutSchemaMap = {},
 }) {
   // Prefer code catalog whenever layout_id is known — avoids stale DB templates.
-  const key = String(layoutId || schema?.layout_id || '').trim()
+  const key = normalizeLayoutId(layoutId || schema?.layout_id || '')
   if (key) {
     const registered = getDeckLayoutSchema(key)
     if (registered?.slots?.length || layoutSchemaHasCanvasElements(registered)) return registered
@@ -103,7 +107,7 @@ export async function resolveLayoutSchema({
     try {
       const row = await presentationService.getTemplate(workspaceId, templateId)
       const resolved = row?.schema || row?.data?.schema || row?.template?.schema
-      const resolvedId = String(resolved?.layout_id || '').trim()
+      const resolvedId = normalizeLayoutId(resolved?.layout_id || '')
       if (resolvedId) {
         const registered = getDeckLayoutSchema(resolvedId)
         if (registered?.slots?.length || layoutSchemaHasCanvasElements(registered)) return registered
@@ -275,6 +279,7 @@ export function needsLayoutCanvasRepair(slide, elements = [], schema = null, opt
   if (needsLegacyBrokenLayout(list, slide?.title)) return true
   if (needsContentHydration(slide, list)) return true
   if (schemaCanvasSlotMismatch(list, schema)) return true
+  if (processLinnerCanvasMismatch(list, schema)) return true
 
   return false
 }
@@ -313,6 +318,34 @@ function schemaCanvasSlotMismatch(elements = [], schema = null) {
     ) {
       return true
     }
+  }
+
+  return false
+}
+
+function processLinnerCanvasMismatch(elements = [], schema = null) {
+  const layoutId = normalizeLayoutId(schema?.layout_id || '')
+  if (!/^process_linner_/i.test(layoutId)) return false
+
+  const list = Array.isArray(elements) ? elements : []
+  const hasLegacyFlowChrome = list.some(
+    (el) =>
+      /^TIMELINE_(ARROW|SEG|NODE)/i.test(String(el.slotId || '')) ||
+      /^STEP_\d+_CIRCLE$/i.test(String(el.slotId || ''))
+  )
+
+  if (/^process_linner_horti/i.test(layoutId)) {
+    const hasStepTitles = list.some((el) => /^STEP_\d+_TITLE$/i.test(String(el.slotId || '')))
+    const hasSpine = list.some((el) => String(el.slotId || '') === 'PROCESS_LINNER_SPINE')
+    if (!hasStepTitles) return false
+    return hasLegacyFlowChrome || !hasSpine
+  }
+
+  if (/^process_linner_numeric/i.test(layoutId)) {
+    const hasNumbers = list.some((el) => /^STEP_\d+_NUMBER$/i.test(String(el.slotId || '')))
+    const hasSlotLine = list.some((el) => /^STEP_\d+_NUMBER_SLOT$/i.test(String(el.slotId || '')))
+    if (!hasNumbers) return false
+    return hasLegacyFlowChrome || !hasSlotLine
   }
 
   return false
@@ -469,6 +502,7 @@ export async function applyCompiledLayoutToSlide({
     ...compileOptions,
     contentBySlotId,
     content,
+    debugGeometry: import.meta.env?.DEV === true,
   })
 
   const canvasDoc = buildCanvasDoc(null, {
