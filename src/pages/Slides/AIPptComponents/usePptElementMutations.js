@@ -68,13 +68,19 @@ export function usePptElementMutations({
     [selectedSlideId, selectedElementId, aspectRatio, pushHistory, setLocalSlides]
   )
 
+  const cancelPendingPatches = useCallback(() => {
+    Object.values(patchTimersRef.current).forEach((t) => clearTimeout(t))
+    patchTimersRef.current = {}
+    pendingPatchRef.current = {}
+  }, [])
+
   const patchElement = useCallback(
-    (elementId, patch, { slideId = selectedSlideId } = {}) => {
+    (elementId, patch, { slideId = selectedSlideId, history = true } = {}) => {
       if (!slideId || isGenerating) return
 
       const key = `${slideId}:${elementId}`
       const startingBurst = !patchTimersRef.current[key]
-      if (startingBurst) {
+      if (history && startingBurst) {
         pushHistory?.({
           slides: localSlidesRef.current,
           selectedSlideId,
@@ -346,6 +352,7 @@ export function usePptElementMutations({
 
   return {
     patchElement,
+    cancelPendingPatches,
     duplicateElement,
     copySelection,
     pasteClipboard,

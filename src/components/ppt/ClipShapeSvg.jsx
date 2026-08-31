@@ -10,6 +10,7 @@ export default function ClipShapeSvg({
   stroke = '#475569',
   strokeWidth = 3,
   outlined = false,
+  strokeDasharray,
   style = {},
   className = '',
 }) {
@@ -19,6 +20,7 @@ export default function ClipShapeSvg({
     stroke,
     strokeWidth,
     outlined,
+    strokeDasharray,
   })
   const el = clipShapeSvgElementProps(svgProps)
   if (!el) return null

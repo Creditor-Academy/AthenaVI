@@ -9,8 +9,8 @@ import {
   FiImage,
   FiZoomIn,
   FiZoomOut,
-  FiSidebar,
 } from 'react-icons/fi'
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { MdDragIndicator, MdOutlineColorLens, MdRotateRight } from 'react-icons/md'
 import { BsStars } from 'react-icons/bs'
 import { THEMES } from './AIPptWizard'
@@ -79,7 +79,7 @@ import {
   fetchLayoutSchemaMap,
   repairPresentationLayoutSlides,
 } from '../../../utils/layoutCanvasService'
-import { contentWithSyncedText, setPptTextSelection } from '../../../utils/pptTextContent'
+import { contentPlainText, contentWithSyncedText, setPptTextSelection } from '../../../utils/pptTextContent'
 import { PPT_DEFAULT_PLACEMENTS } from '../../../constants/pptInsertCatalog'
 import {
   collectSlideFontFamilies,
@@ -998,6 +998,7 @@ export default function AIPptEditor({
   const slideContainerRefs = useRef({})
   const keyCtxRef = useRef({})
   const placementHistoryArmedRef = useRef(true)
+  const skipTextCommitRef = useRef(false)
 
   const history = usePptEditorHistory()
 
@@ -1420,11 +1421,21 @@ export default function AIPptEditor({
         nudgeBurstTimerRef.current = null
       }
       placementHistoryArmedRef.current = true
+      elementMutationsRef.current?.cancelPendingPatches?.()
+      skipTextCommitRef.current = true
+      // Drop in-progress text edit without committing — otherwise the empty
+      // contenteditable would immediately re-patch and wipe the restored text.
+      setEditingTextId(null)
+      setPptTextSelection(null)
 
       setLocalSlides(snapshot.slides)
       localSlidesRef.current = snapshot.slides
       setSelectedSlideId(snapshot.selectedSlideId)
       setSelectedElementId(snapshot.selectedElementId)
+
+      queueMicrotask(() => {
+        skipTextCommitRef.current = false
+      })
 
       ;(snapshot.slides || []).forEach((slide) => {
         if (slide?.id && slide.elements) queueCanvasSave(slide.id, slide.elements)
@@ -1468,14 +1479,31 @@ export default function AIPptEditor({
     [elementMutations]
   )
 
+  const handleStartTextEdit = useCallback(
+    (elementId) => {
+      if (!elementId) return
+      if (elementId !== editingTextId) {
+        pushHistorySnapshot()
+      }
+      setEditingTextId(elementId)
+    },
+    [editingTextId, pushHistorySnapshot]
+  )
+
   const handleEndTextEdit = useCallback(
     (elementId, text, runs) => {
       setEditingTextId(null)
       setPptTextSelection(null)
+      if (skipTextCommitRef.current) return
       const el = selectedSlide?.elements?.elements?.find((e) => e.id === elementId)
-      elementMutations.patchElement(elementId, {
-        content: contentWithSyncedText(el?.content, text, runs),
-      })
+      if (!el) return
+      const nextContent = contentWithSyncedText(el.content, text, runs)
+      if (contentPlainText(el.content) === contentPlainText(nextContent)) return
+      elementMutations.patchElement(
+        elementId,
+        { content: nextContent },
+        { history: false }
+      )
     },
     [elementMutations, selectedSlide]
   )
@@ -2964,6 +2992,14 @@ export default function AIPptEditor({
       const active = document.activeElement
       const tag = String((e.target?.tagName || active?.tagName || '')).toLowerCase()
       const inFormField = tag === 'input' || tag === 'textarea' || tag === 'select'
+      const inSlideContentField = Boolean(
+        e.target?.closest?.(
+          '.ppt-text-editable, .ppt-element-props-textarea, .ppt-table-cell-input, .ppt-table-data-cell'
+        ) ||
+        active?.closest?.(
+          '.ppt-text-editable, .ppt-element-props-textarea, .ppt-table-cell-input, .ppt-table-data-cell'
+        )
+      )
       const inCanvasTextEdit =
         Boolean(ctx.editingTextId) &&
         (e.target?.isContentEditable ||
@@ -2974,9 +3010,10 @@ export default function AIPptEditor({
       const mod = e.ctrlKey || e.metaKey
       const key = String(e.key || '').toLowerCase()
 
-      // Canvas undo/redo always wins unless the user is typing in a field or editing text.
+      // Slide text uses editor history. Native undo on controlled fields flashes
+      // restored text then React overwrites it with the empty value.
       if (mod && (key === 'z' || key === 'y')) {
-        if (inFormField || inCanvasTextEdit) return
+        if ((inFormField || inCanvasTextEdit) && !inSlideContentField) return
         if (ctx.viewOnly) {
           e.preventDefault()
           ctx.askOwner()
@@ -3300,9 +3337,19 @@ export default function AIPptEditor({
           {presentationId && <span className="aig-editor-badge">Saved</span>}
         </div>
 
+        <svg className="aig-ai-star-grad" aria-hidden>
+          <defs>
+            <linearGradient id="aigAiStarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="var(--primary, #3b82f6)" />
+              <stop offset="100%" stopColor="#8b5cf6" />
+            </linearGradient>
+          </defs>
+        </svg>
+
         <div className="aig-editor-nav-center">
           <InsertToolbar
             orientation="horizontal"
+            clearanceLeft={showMinimap ? 276 : 88}
             disabled={isGenerating || busy || atElementCap}
             viewOnly={viewOnly}
             onViewOnlyAttempt={askOwner}
@@ -3431,9 +3478,8 @@ export default function AIPptEditor({
       <div className="aig-editor-workspace gamma-layout">
         <main
           ref={mainScrollRef}
-          className={`aig-editor-main-scroll ${sidebarOpen ? 'is-sidebar-open' : ''}`}
+          className={`aig-editor-main-scroll ${sidebarOpen ? 'is-sidebar-open' : ''} ${showMinimap ? 'is-minimap-open' : ''}`}
           style={{
-            marginLeft: showMinimap ? '260px' : '0',
             '--ppt-canvas-zoom': canvasZoom / 100,
           }}
           onMouseDown={(e) => {
@@ -3468,7 +3514,7 @@ export default function AIPptEditor({
                       <MdDragIndicator size={16} />
                     </button>
                     <button
-                      className={`aig-slide-action-btn ${slideAiEditId === slide.id ? 'is-active' : ''}`}
+                      className={`aig-slide-action-btn aig-slide-action-btn--ai ${slideAiEditId === slide.id ? 'is-active' : ''}`}
                       title="Edit with AI"
                       type="button"
                       disabled={!viewOnly && (busy || isGenerating)}
@@ -3529,7 +3575,7 @@ export default function AIPptEditor({
                       handlePlacementCommit(slide.id, elementId, placement)
                     }
                     onGuidesChange={selectedSlideId === slide.id ? setSmartGuides : undefined}
-                    onStartTextEdit={setEditingTextId}
+                    onStartTextEdit={handleStartTextEdit}
                     onEndTextEdit={handleEndTextEdit}
                     onTableCellChange={handleTableCellChange}
                     onImageAuthError={handleImageAuthError}
@@ -3634,88 +3680,136 @@ export default function AIPptEditor({
           usedFontFamilies={usedFontFamilies}
         />
 
-        {showMinimap ? (
-          <aside className="aig-editor-minimap">
-            <div className="aig-minimap-header">
-              {!viewOnly && (
-              <button
-                className="aig-minimap-add-btn"
-                type="button"
-                disabled={atDeckCap || isGenerating || busy}
-                onClick={() => openAddSlideModal(localSlides.length - 1)}
-                title="Add a new slide"
-              >
-                <FiPlus size={16} /> {atDeckCap ? 'Deck full (40)' : 'Add slide'}
-              </button>
-              )}
-              <button
-                className="aig-minimap-outline-btn"
-                type="button"
-                onClick={() => setShowMinimap(false)}
-                title="Hide outline"
-                aria-label="Hide outline"
-              >
-                <FiSidebar size={16} />
-              </button>
-            </div>
-            <div className="aig-minimap-scroll">
-              {localSlides.map((slide, idx) => (
-                <div
-                  key={slide.id}
-                  className={`aig-minimap-item ${selectedSlideId === slide.id ? 'active' : ''}`}
-                  onClick={() => {
-                    setSelectedSlideId(slide.id)
-                    setSelectedElementId(null)
-                    setEditingTextId(null)
-                  }}
-                  onContextMenu={(e) => {
-                    e.preventDefault()
-                    if (viewOnly) return
-                    handleDeleteSlide(slide.id)
-                  }}
-                >
-                  <span className="aig-minimap-num">{idx + 1}</span>
-                  <span
-                    className={`ppt-status-dot ppt-status-dot--sm ppt-status-dot--${
-                      slide.contributorStatus || slide.elements?.contributorStatus || 'none'
-                    }`}
-                    title={
-                      {
-                        none: 'No status',
-                        todo: 'To do',
-                        'in-progress': 'In progress',
-                        done: 'Done',
-                      }[slide.contributorStatus || slide.elements?.contributorStatus || 'none']
-                    }
-                    aria-hidden
-                  />
-                  <div className="aig-minimap-thumb" style={resolveSlideStageBackground(slide, themeVisual?.palette?.bg || themeVisual?.background || DEFAULT_SLIDE_BG)}>
-                    <MinimapSlidePreview
-                      slide={slide}
-                      themeVisual={themeVisual}
-                      themeId={config.theme}
-                      aspectRatio={aspectRatio}
-                      fallbackBg={themeVisual?.palette?.bg || themeVisual?.background || DEFAULT_SLIDE_BG}
-                      layoutSchemaMap={layoutSchemaMap}
-                    />
-                  </div>
+        <aside
+          className={`aig-editor-minimap aig-editor-minimap--float ${showMinimap ? 'is-open' : ''}`}
+          aria-label="Slides sidebar"
+        >
+          <div className="aig-minimap-shell">
+            <div className="aig-minimap-head">
+              {showMinimap ? (
+                <div className="aig-minimap-head-row">
+                  <strong>Slides</strong>
+                  <span className="aig-minimap-panel-count">{localSlides.length}</span>
+                  <span className="aig-minimap-head-spacer" />
+                  {!viewOnly && (
+                    <button
+                      className="aig-minimap-collapse-btn"
+                      type="button"
+                      disabled={atDeckCap || isGenerating || busy}
+                      onClick={() => openAddSlideModal(localSlides.length - 1)}
+                      title="Add slide"
+                      aria-label="Add slide"
+                    >
+                      <FiPlus size={16} />
+                    </button>
+                  )}
+                  <button
+                    className="aig-minimap-collapse-btn"
+                    type="button"
+                    onClick={() => setShowMinimap(false)}
+                    title="Collapse slides"
+                    aria-label="Collapse slides"
+                    aria-expanded
+                  >
+                    <PanelLeftClose size={16} strokeWidth={1.75} aria-hidden />
+                  </button>
                 </div>
-              ))}
+              ) : (
+                <div className="aig-minimap-head-collapsed">
+                  <button
+                    className="aig-minimap-collapse-btn"
+                    type="button"
+                    onClick={() => setShowMinimap(true)}
+                    title="Expand slides"
+                    aria-label="Expand slides"
+                    aria-expanded={false}
+                  >
+                    <PanelLeftOpen size={16} strokeWidth={1.75} aria-hidden />
+                  </button>
+                  {!viewOnly && (
+                    <button
+                      className="aig-minimap-collapse-btn"
+                      type="button"
+                      disabled={atDeckCap || isGenerating || busy}
+                      onClick={() => openAddSlideModal(localSlides.length - 1)}
+                      title="Add slide"
+                      aria-label="Add slide"
+                    >
+                      <FiPlus size={16} />
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
-          </aside>
-        ) : (
-          <div className="aig-editor-minimap-toggle">
-            <button
-              className="aig-minimap-outline-btn aig-minimap-outline-btn--alone"
-              type="button"
-              onClick={() => setShowMinimap(true)}
-              title="Show outline"
-              aria-label="Show outline"
-            >
-              <FiSidebar size={16} />
-            </button>
+
+            {showMinimap ? (
+              <div className="aig-minimap-scroll">
+                {localSlides.map((slide, idx) => (
+                  <div
+                    key={slide.id}
+                    className={`aig-minimap-item ${selectedSlideId === slide.id ? 'active' : ''}`}
+                    onClick={() => {
+                      setSelectedSlideId(slide.id)
+                      setSelectedElementId(null)
+                      setEditingTextId(null)
+                    }}
+                    onContextMenu={(e) => {
+                      e.preventDefault()
+                      if (viewOnly) return
+                      handleDeleteSlide(slide.id)
+                    }}
+                  >
+                    <span className="aig-minimap-num">{idx + 1}</span>
+                    <span
+                      className={`ppt-status-dot ppt-status-dot--sm ppt-status-dot--${
+                        slide.contributorStatus || slide.elements?.contributorStatus || 'none'
+                      }`}
+                      title={
+                        {
+                          none: 'No status',
+                          todo: 'To do',
+                          'in-progress': 'In progress',
+                          done: 'Done',
+                        }[slide.contributorStatus || slide.elements?.contributorStatus || 'none']
+                      }
+                      aria-hidden
+                    />
+                    <div className="aig-minimap-thumb" style={resolveSlideStageBackground(slide, themeVisual?.palette?.bg || themeVisual?.background || DEFAULT_SLIDE_BG)}>
+                      <MinimapSlidePreview
+                        slide={slide}
+                        themeVisual={themeVisual}
+                        themeId={config.theme}
+                        aspectRatio={aspectRatio}
+                        fallbackBg={themeVisual?.palette?.bg || themeVisual?.background || DEFAULT_SLIDE_BG}
+                        layoutSchemaMap={layoutSchemaMap}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="aig-minimap-rail-slides">
+                {localSlides.map((slide, idx) => (
+                  <button
+                    key={slide.id}
+                    type="button"
+                    className={`aig-minimap-rail-num ${selectedSlideId === slide.id ? 'is-active' : ''}`}
+                    title={`Slide ${idx + 1}`}
+                    aria-label={`Slide ${idx + 1}`}
+                    aria-current={selectedSlideId === slide.id ? 'true' : undefined}
+                    onClick={() => {
+                      setSelectedSlideId(slide.id)
+                      setSelectedElementId(null)
+                      setEditingTextId(null)
+                    }}
+                  >
+                    {idx + 1}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </aside>
       </div>
 
       <AddSlideModal

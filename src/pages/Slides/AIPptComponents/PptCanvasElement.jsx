@@ -145,12 +145,13 @@ function EditableText({
       liveRunsRef.current = null
       selRef.current = null
     }
+    const seedText = justStarted ? plainText : (liveTextRef.current ?? plainText)
     seedEditableNode(
       node,
       {
         ...c,
-        text: liveTextRef.current || plainText,
-        runs: justStarted ? collapseDuplicatedRuns(c) : c.runs,
+        text: seedText,
+        runs: justStarted ? collapseDuplicatedRuns(c) : liveRunsRef.current || c.runs,
       },
       palette
     )
@@ -303,6 +304,8 @@ function EditableText({
           style={textStyle}
           onPointerDown={(e) => editable && e.stopPropagation()}
           onInput={(e) => {
+            const inputType = e.nativeEvent?.inputType
+            if (inputType === 'historyUndo' || inputType === 'historyRedo') return
             typedRef.current = true
             liveTextRef.current = e.currentTarget.innerText ?? ''
             liveRunsRef.current = serializeEditableRuns(e.currentTarget)
@@ -388,7 +391,11 @@ function EditableTable({ content, editable, onCellChange, onActivate, style }) {
                         className="ppt-table-cell-input"
                         value={cell}
                         placeholder={c.hasHeader !== false && ri === 0 ? `Header ${ci + 1}` : 'Type here'}
-                        onChange={(e) => onCellChange?.(ri, ci, e.target.value)}
+                        onChange={(e) => {
+                          const inputType = e.nativeEvent?.inputType
+                          if (inputType === 'historyUndo' || inputType === 'historyRedo') return
+                          onCellChange?.(ri, ci, e.target.value)
+                        }}
                         onFocus={() => onActivate?.()}
                         onClick={(e) => {
                           e.stopPropagation()
@@ -654,9 +661,6 @@ export default function PptCanvasElement({
       const svgFill = rendered.outlined
         ? 'none'
         : rendered.fill || rendered.style?.background || '#475569'
-      const svgStroke = rendered.outlined
-        ? rendered.stroke || '#475569'
-        : 'none'
       const fillColor = typeof svgFill === 'string' ? svgFill : '#475569'
       const canSvg = Boolean(parsePolygonClipPath(rendered.clipPath))
       if (canSvg) {
@@ -665,8 +669,13 @@ export default function PptCanvasElement({
             <ClipShapeSvg
               clipPath={rendered.clipPath}
               fill={fillColor}
-              stroke={typeof svgStroke === 'string' ? svgStroke : '#475569'}
-              strokeWidth={rendered.strokeWidth || 3}
+              stroke={
+                rendered.strokeWidth > 0
+                  ? (typeof rendered.stroke === 'string' ? rendered.stroke : '#475569')
+                  : 'none'
+              }
+              strokeWidth={rendered.strokeWidth || 0}
+              strokeDasharray={rendered.strokeDasharray}
               outlined={Boolean(rendered.outlined)}
             />
             {inner}

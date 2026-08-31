@@ -1,0 +1,234 @@
+.ppt-boot {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  min-height: 100vh;
+  padding: 12px;
+  box-sizing: border-box;
+  background: var(--bg-sidebar, #eef2f7);
+  font-family: var(--font-family);
+  color: var(--text-main, #0f172a);
+}
+
+.ppt-boot-card {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--border-color, #e2e8f0) 85%, rgba(255, 255, 255, 0.08));
+  background: var(--bg-main, #ffffff);
+  box-shadow:
+    0 8px 32px rgba(var(--primary-rgb, 37, 99, 235), 0.12),
+    0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.ppt-boot-progress {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  height: 2px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--primary, #2563eb) 12%, transparent);
+}
+
+.ppt-boot-progress span {
+  display: block;
+  height: 100%;
+  width: 36%;
+  border-radius: 999px;
+  background: var(--primary, #2563eb);
+  animation: ppt-boot-progress 1.15s ease-in-out infinite;
+}
+
+.ppt-boot-topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 56px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border-color, #eef2f7);
+  flex-shrink: 0;
+}
+
+.ppt-boot-chip,
+.ppt-boot-dot,
+.ppt-boot-rail span {
+  display: block;
+  background: color-mix(in srgb, var(--text-muted, #94a3b8) 18%, transparent);
+}
+
+.ppt-boot-chip {
+  height: 10px;
+  width: 72px;
+  border-radius: 999px;
+}
+
+.ppt-boot-chip--wide {
+  width: 108px;
+}
+
+.ppt-boot-chip--sm {
+  width: 48px;
+}
+
+.ppt-boot-topbar-spacer {
+  flex: 1 1 auto;
+}
+
+.ppt-boot-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ppt-boot-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) 56px;
+  gap: 16px;
+  padding: 20px 16px 16px;
+}
+
+.ppt-boot-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--bg-sidebar, #f8fafc) 80%, #fff);
+  border: 1px solid var(--border-color, #eef2f7);
+}
+
+.ppt-boot-rail span {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+}
+
+.ppt-boot-stage {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+}
+
+.ppt-boot-canvas {
+  width: min(720px, 100%);
+  aspect-ratio: 16 / 9;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  border: 1px solid var(--border-color, #eef2f7);
+  background:
+    radial-gradient(ellipse at 50% 42%, color-mix(in srgb, var(--primary, #2563eb) 8%, transparent), transparent 58%),
+    var(--bg-card, #f8fafc);
+}
+
+.ppt-boot-mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.ppt-boot-stack {
+  position: relative;
+  width: 112px;
+  height: 72px;
+}
+
+.ppt-boot-stack span {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background: var(--bg-main, #fff);
+  border: 1px solid color-mix(in srgb, var(--primary, #2563eb) 22%, var(--border-color, #e2e8f0));
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.ppt-boot-stack span:nth-child(1) {
+  --x: 10px;
+  --y: -10px;
+  --s: 0.92;
+  opacity: 0.45;
+  animation: ppt-boot-layer 2.2s ease-in-out infinite;
+}
+
+.ppt-boot-stack span:nth-child(2) {
+  --x: 5px;
+  --y: -5px;
+  --s: 0.96;
+  opacity: 0.7;
+  animation: ppt-boot-layer 2.2s ease-in-out infinite 0.12s;
+}
+
+.ppt-boot-stack span:nth-child(3) {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--primary, #2563eb) 16%, #fff), #fff 55%);
+  animation: ppt-boot-front 2.2s ease-in-out infinite;
+}
+
+.ppt-boot-word {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted, #94a3b8);
+}
+
+@keyframes ppt-boot-progress {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(380%); }
+}
+
+@keyframes ppt-boot-layer {
+  0%, 100% { transform: translate(var(--x), var(--y)) scale(var(--s)); }
+  50% { transform: translate(var(--x), calc(var(--y) - 4px)) scale(var(--s)); }
+}
+
+@keyframes ppt-boot-front {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@media (max-width: 720px) {
+  .ppt-boot {
+    padding: 8px;
+  }
+
+  .ppt-boot-card {
+    border-radius: 12px;
+  }
+
+  .ppt-boot-body {
+    grid-template-columns: 1fr;
+    padding: 16px 12px 12px;
+  }
+
+  .ppt-boot-rail {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ppt-boot-progress span,
+  .ppt-boot-stack span {
+    animation: none;
+  }
+
+  .ppt-boot-progress span {
+    width: 40%;
+    transform: none;
+  }
+}

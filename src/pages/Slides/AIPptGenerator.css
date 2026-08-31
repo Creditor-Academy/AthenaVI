@@ -3531,148 +3531,6 @@
   color: #ffffff;
 }
 
-/* --- Editor boot: same shuffle language as AIPptGenerating slide reveal --- */
-.aig-editor-boot--shuffle {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  min-height: 100vh;
-  height: 100vh;
-  overflow: hidden;
-  z-index: 10;
-  font-family: var(--font-family);
-  color: var(--slides-ink, #0f172a);
-}
-
-.aig-editor-boot--shuffle .aig-bg-sky,
-.aig-editor-boot--shuffle .aig-bg-wave {
-  z-index: 0;
-}
-
-.aig-editor-boot-main {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  max-width: 960px;
-  margin: 0 auto;
-  flex: 1;
-}
-
-.aig-editor-boot-carousel {
-  height: 420px;
-}
-
-.aig-editor-boot-card {
-  max-width: 680px;
-}
-
-.aig-editor-boot-card-stage {
-  flex: 1;
-  min-height: 0;
-  padding: 7% 7% 5%;
-  display: flex;
-  flex-direction: column;
-  gap: 3.2%;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.98)),
-    var(--boot-accent, #0f172a);
-  overflow: hidden;
-}
-
-.aig-editor-boot-card-kicker,
-.aig-editor-boot-card-heading,
-.aig-editor-boot-card-lines span,
-.aig-editor-boot-card-tiles span {
-  display: block;
-  border-radius: 8px;
-  background: linear-gradient(
-    90deg,
-    rgba(15, 23, 42, 0.08) 0%,
-    rgba(15, 23, 42, 0.04) 45%,
-    rgba(15, 23, 42, 0.08) 90%
-  );
-  background-size: 200% 100%;
-  animation: aig-editor-boot-shimmer 1.4s ease-in-out infinite;
-}
-
-.aig-editor-boot-card-kicker {
-  width: 16%;
-  height: 8%;
-  border-radius: 999px;
-  background-color: color-mix(in srgb, var(--boot-accent, #0f172a) 28%, transparent);
-}
-
-.aig-editor-boot-card-heading {
-  width: 58%;
-  height: 16%;
-  margin-top: 1%;
-}
-
-.aig-editor-boot-card-lines {
-  display: flex;
-  flex-direction: column;
-  gap: 2.4%;
-  margin-top: 2%;
-}
-
-.aig-editor-boot-card-lines span {
-  width: 74%;
-  height: 7px;
-  min-height: 7px;
-}
-
-.aig-editor-boot-card-lines span.is-short {
-  width: 46%;
-}
-
-.aig-editor-boot-card-tiles {
-  margin-top: auto;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 3%;
-  height: 30%;
-}
-
-.aig-editor-boot-card-tiles span {
-  height: 100%;
-  border-radius: 10px;
-}
-
-@keyframes aig-editor-boot-shimmer {
-  0% { background-position: 100% 0; }
-  100% { background-position: -100% 0; }
-}
-
-.aig-editor-boot-title {
-  margin: 8px 0 0;
-  text-align: center;
-  max-width: 28ch;
-  font-size: clamp(22px, 3.2vw, 32px);
-}
-
-.aig-editor-boot--shuffle .aig-generating-text {
-  margin-top: 0;
-}
-
-.aig-editor-boot--shuffle .aig-realtime-header h3,
-.aig-editor-boot--shuffle .aig-generating-title,
-.aig-editor-boot--shuffle .aig-generating-text,
-.aig-editor-boot--shuffle .aig-realtime-title {
-  font-family: var(--font-family);
-}
-
-@media (max-width: 720px) {
-  .aig-editor-boot-carousel {
-    height: 340px;
-  }
-
-  .aig-editor-boot-card.aig-realtime-slide-card--layout {
-    height: 300px;
-    max-height: 300px;
-  }
-}
-
 /* --- STEP 6: MOCK EDITOR SCREEN --- */
 .aig-editor-container {
   display: flex;
@@ -3831,7 +3689,7 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 40px 88px 120px 24px;
+  padding: 40px 88px 120px 88px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3849,6 +3707,10 @@
   transform-origin: top center;
   transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform;
+}
+
+.aig-editor-main-scroll.is-minimap-open {
+  padding-left: 280px;
 }
 
 .aig-editor-main-scroll.is-sidebar-open .aig-editor-scroll-container {
@@ -3977,6 +3839,40 @@
 .aig-slide-action-btn.is-active {
   background: #ede9fe;
   color: #7c3aed;
+}
+
+.aig-ai-star-grad {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.aig-slide-action-btn--ai {
+  background: transparent;
+  color: #8b5cf6;
+  box-shadow: none;
+}
+
+.aig-slide-action-btn--ai svg {
+  fill: url(#aigAiStarGrad);
+}
+
+.aig-slide-action-btn--ai:hover:not(:disabled) {
+  background: #f1f5f9;
+  color: #8b5cf6;
+  filter: none;
+}
+
+.aig-slide-action-btn--ai.is-active {
+  background: #f5f3ff;
+  color: #8b5cf6;
+  box-shadow: none;
+}
+
+.aig-slide-action-btn--ai:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 /* Inline Add Slide Controls Between Slides */
@@ -4174,29 +4070,165 @@
 }
 
 /* --- Floating Minimap Outline (Left Side) --- */
+.aig-editor-minimap--float {
+  position: absolute;
+  top: 24px;
+  bottom: 24px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  z-index: 120;
+  pointer-events: none;
+}
+
+.aig-minimap-shell {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  width: 56px;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 10px 32px rgba(15, 23, 42, 0.12);
+  overflow: hidden;
+  transition: width 0.22s ease;
+}
+
+.aig-editor-minimap--float.is-open .aig-minimap-shell {
+  width: 240px;
+}
+
+.aig-minimap-head {
+  flex-shrink: 0;
+  padding: 10px 8px 8px;
+}
+
+.aig-editor-minimap--float.is-open .aig-minimap-head {
+  padding: 12px 12px 10px 16px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.aig-minimap-head-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+}
+
+.aig-minimap-head-row strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.aig-minimap-head-spacer {
+  flex: 1 1 auto;
+  min-width: 4px;
+}
+
+.aig-minimap-head-collapsed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.aig-minimap-collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.aig-minimap-collapse-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  color: var(--primary, #2563eb);
+}
+
+.aig-minimap-collapse-btn:focus-visible {
+  outline: 2px solid var(--primary, #2563eb);
+  outline-offset: 2px;
+}
+
+.aig-minimap-collapse-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.aig-minimap-rail-slides {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  padding: 8px 8px 10px;
+  border-top: 1px solid #eef2f7;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.aig-minimap-rail-num {
+  width: 32px;
+  min-height: 32px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.aig-minimap-rail-num:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.aig-minimap-rail-num.is-active {
+  background: linear-gradient(135deg, #ede9fe, #e0e7ff);
+  color: #5b21b6;
+}
+
+.aig-minimap-panel-count {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  background: #f1f5f9;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
 .aig-editor-minimap-toggle {
   position: absolute;
   top: 40px;
   left: 24px;
   z-index: 80;
 }
+
 .aig-float-btn.active {
   background: #e2e8f0;
   color: #0f172a;
-}
-
-.aig-editor-minimap {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  width: 260px;
-  background: #f8fafc;
-  border-right: 1px solid #e2e8f0;
-  display: flex;
-  flex-direction: column;
-  z-index: 120;
-  box-shadow: 4px 0 24px rgba(0,0,0,0.05);
 }
 
 .aig-minimap-header {
@@ -4256,12 +4288,17 @@
 }
 
 .aig-minimap-scroll {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
 }
 
 .aig-minimap-item {
@@ -4269,6 +4306,7 @@
   gap: 12px;
   cursor: pointer;
   align-items: flex-start;
+  flex-shrink: 0;
 }
 
 .aig-minimap-item .ppt-status-dot--sm {

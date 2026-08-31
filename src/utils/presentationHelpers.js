@@ -224,9 +224,38 @@ function resolveLineBorder(content, entry, fill, stroke, isOutlined) {
   const libBorder = entry?.style?.borderTop || '4px solid currentColor'
   const match = libBorder.match(/^(\d+(?:\.\d+)?)px\s+(solid|dashed|dotted)\s+/i)
   const width = content.strokeWidth != null ? content.strokeWidth : match ? Number(match[1]) : 4
-  const style = match?.[2]?.toLowerCase() || 'solid'
+  const style = content.borderStyle
+    ? shapeBorderCssStyle(content.borderStyle)
+    : match?.[2]?.toLowerCase() || 'solid'
+  if (style === 'none' || width <= 0) return 'none'
   const color = isOutlined ? stroke || fill : fill
   return `${width}px ${style} ${color}`
+}
+
+export const PPT_SHAPE_BORDER_STYLES = [
+  { id: 'solid', label: 'Line' },
+  { id: 'dashed', label: 'Dashed' },
+  { id: 'dotted', label: 'Dots' },
+]
+
+export function normalizeShapeBorderStyle(value) {
+  const v = String(value || 'solid').toLowerCase()
+  if (v === 'none' || v === 'hidden') return 'none'
+  if (v === 'dashed' || v === 'dash' || v === 'line-break' || v === 'break') return 'dashed'
+  if (v === 'dotted' || v === 'dot' || v === 'dots') return 'dotted'
+  return 'solid'
+}
+
+export function shapeBorderCssStyle(value) {
+  return normalizeShapeBorderStyle(value)
+}
+
+export function shapeStrokeDasharray(value, strokeWidth = 2) {
+  const style = normalizeShapeBorderStyle(value)
+  const w = Math.max(1, Number(strokeWidth) || 2)
+  if (style === 'dashed') return `${(w * 3.6).toFixed(1)} ${(w * 2.2).toFixed(1)}`
+  if (style === 'dotted') return `0 ${(w * 2.4).toFixed(1)}`
+  return undefined
 }
 
 /** Resolve stage pixels from slide.elements.canvas, then aspectRatio, then 16:9. */
@@ -1078,13 +1107,22 @@ export function buildCanvasShapeStyle(content = {}, palette = {}) {
   const fill = resolveFillCss(content.fill, palette, 'rgba(148,163,184,0.35)')
   const stroke = content.stroke ? resolveThemeColor(content.stroke, palette, content.stroke) : undefined
   const strokeWidth = content.strokeWidth != null ? content.strokeWidth : stroke ? 1 : 0
+  const borderStyle = normalizeShapeBorderStyle(content.borderStyle)
   const isOutlined = content.variant === 'outlined'
+  const hasBorder = borderStyle !== 'none' && (Number(strokeWidth) > 0 || isOutlined || Boolean(stroke))
+  const borderWidth = hasBorder ? Number(strokeWidth) || (isOutlined ? 3 : 1) : 0
+  const borderColor = stroke || fill
+  const cssBorder =
+    hasBorder && borderStyle !== 'none'
+      ? `${borderWidth}px ${borderStyle} ${borderColor}`
+      : undefined
+  const dasharray = hasBorder ? shapeStrokeDasharray(borderStyle, borderWidth) : undefined
   const shapeOpacity =
     content.opacity != null && Number.isFinite(Number(content.opacity))
       ? Number(content.opacity)
       : undefined
 
-  if (content.border && !content.clipPath) {
+  if (content.border && !content.clipPath && !content.borderStyle) {
     return {
       kind: 'box',
       style: {
@@ -1124,14 +1162,11 @@ export function buildCanvasShapeStyle(content = {}, palette = {}) {
   }
 
   const background = isOutlined ? 'transparent' : fill
-  const border =
-    stroke || isOutlined
-      ? `${strokeWidth || (isOutlined ? 3 : 1)}px solid ${stroke || fill}`
-      : undefined
+  const border = cssBorder
 
   if (clipPath) {
-    const outlineStroke = stroke || (isOutlined ? fill : undefined)
-    const outlineWidth = strokeWidth || (isOutlined ? 3 : 0)
+    const outlineStroke = hasBorder ? borderColor : undefined
+    const outlineWidth = hasBorder ? borderWidth : 0
     return {
       kind: 'clip',
       clipPath,
@@ -1139,6 +1174,7 @@ export function buildCanvasShapeStyle(content = {}, palette = {}) {
       fill: background,
       stroke: outlineStroke,
       strokeWidth: outlineWidth,
+      strokeDasharray: dasharray,
       style: {
         width: '100%',
         height: '100%',
