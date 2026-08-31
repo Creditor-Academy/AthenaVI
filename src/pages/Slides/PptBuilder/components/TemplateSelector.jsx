@@ -6,6 +6,7 @@ import '../PptBuilder.css'
 import '../../AIPptGenerator.css'
 import presentationService from '../../../../services/presentationService'
 import brandKitService from '../../../../services/brandKitService'
+import { dedupeBrandKitList } from '../../../../utils/brandKitHelpers'
 import { resolvePresentationWorkspaceContext } from '../../../../utils/presentationContext'
 import {
   normalizeDeckPacks,
@@ -244,8 +245,9 @@ export default function TemplateSelector({
         }
 
         setPacks(normalizeDeckPacks(packsPayload))
-        setBrandKits(kits || [])
-        const defaultKit = (kits || []).find((k) => k.isDefault) || (kits || [])[0]
+        const uniqueKits = dedupeBrandKitList(kits || [], { byName: true })
+        setBrandKits(uniqueKits)
+        const defaultKit = uniqueKits.find((k) => k.isDefault) || uniqueKits[0]
         if (defaultKit?.id) setSelectedBrandKitId(String(defaultKit.id))
       } catch (err) {
         if (!cancelled) {

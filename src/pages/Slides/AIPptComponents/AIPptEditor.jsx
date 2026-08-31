@@ -45,6 +45,7 @@ import { extractShareToken, getOrCreateViewerSessionId } from '../../../utils/pp
 import PptPresenceAvatars from './PptPresenceAvatars'
 import usePptPresence from './usePptPresence'
 import brandKitService from '../../../services/brandKitService'
+import { dedupeBrandKitList } from '../../../utils/brandKitHelpers'
 import assetService from '../../../services/assetService'
 import { isInsufficientCreditsError } from '../../../services/creditsService'
 import {
@@ -973,7 +974,6 @@ export default function AIPptEditor({
   const [quickMenuOpen, setQuickMenuOpen] = useState(false)
   const [slideAiEditId, setSlideAiEditId] = useState(null)
   const [cropModalOpen, setCropModalOpen] = useState(false)
-  const [deckVariables, setDeckVariables] = useState([])
   const [slideStyles, setSlideStyles] = useState({
     headerFont: 'Inter',
     bodyFont: 'Inter',
@@ -989,18 +989,33 @@ export default function AIPptEditor({
   const pendingPlacementRef = useRef({})
   const nudgeBurstTimerRef = useRef(null)
   const localSlidesRef = useRef(localSlides)
+  const selectedSlideIdRef = useRef(null)
+  const selectedElementIdRef = useRef(null)
   const elementMutationsRef = useRef(null)
   const imageRefreshInFlight = useRef(new Set())
   const layoutRepairPassRef = useRef('')
   const mainScrollRef = useRef(null)
   const slideContainerRefs = useRef({})
   const keyCtxRef = useRef({})
+  const placementHistoryArmedRef = useRef(true)
 
   const history = usePptEditorHistory()
 
   useEffect(() => {
     localSlidesRef.current = localSlides
   }, [localSlides])
+
+  useEffect(() => {
+    selectedSlideIdRef.current = selectedSlideId
+  }, [selectedSlideId])
+
+  useEffect(() => {
+    selectedElementIdRef.current = selectedElementId
+  }, [selectedElementId])
+
+  useEffect(() => {
+    history.reset()
+  }, [workspaceId, presentationId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (config.title) setDeckTitle(config.title)
@@ -1374,21 +1389,49 @@ export default function AIPptEditor({
       history.pushSnapshot(
         snapshot || {
           slides: localSlidesRef.current,
-          selectedSlideId,
-          selectedElementId,
+          selectedSlideId: selectedSlideIdRef.current,
+          selectedElementId: selectedElementIdRef.current,
         }
       )
     },
-    [history, selectedSlideId, selectedElementId]
+    [history]
   )
 
-  const restoreHistorySnapshot = useCallback((snapshot) => {
-    if (!snapshot) return
-    setLocalSlides(snapshot.slides)
-    localSlidesRef.current = snapshot.slides
-    setSelectedSlideId(snapshot.selectedSlideId)
-    setSelectedElementId(snapshot.selectedElementId)
-  }, [])
+  const currentHistorySnapshot = useCallback(
+    () => ({
+      slides: localSlidesRef.current,
+      selectedSlideId: selectedSlideIdRef.current,
+      selectedElementId: selectedElementIdRef.current,
+    }),
+    []
+  )
+
+  const restoreHistorySnapshot = useCallback(
+    (snapshot) => {
+      if (!snapshot?.slides) return
+
+      Object.values(elementPatchTimers.current).forEach((t) => clearTimeout(t))
+      Object.values(canvasSaveTimers.current).forEach((t) => clearTimeout(t))
+      elementPatchTimers.current = {}
+      canvasSaveTimers.current = {}
+      pendingPlacementRef.current = {}
+      if (nudgeBurstTimerRef.current) {
+        clearTimeout(nudgeBurstTimerRef.current)
+        nudgeBurstTimerRef.current = null
+      }
+      placementHistoryArmedRef.current = true
+
+      setLocalSlides(snapshot.slides)
+      localSlidesRef.current = snapshot.slides
+      setSelectedSlideId(snapshot.selectedSlideId)
+      setSelectedElementId(snapshot.selectedElementId)
+
+      ;(snapshot.slides || []).forEach((slide) => {
+        if (slide?.id && slide.elements) queueCanvasSave(slide.id, slide.elements)
+      })
+    },
+    [queueCanvasSave]
+  )
 
   const elementMutations = usePptElementMutations({
     localSlides,
@@ -1408,16 +1451,12 @@ export default function AIPptEditor({
   elementMutationsRef.current = elementMutations
 
   const handleUndo = useCallback(() => {
-    restoreHistorySnapshot(
-      history.undo({ slides: localSlides, selectedSlideId, selectedElementId })
-    )
-  }, [history, localSlides, selectedSlideId, selectedElementId, restoreHistorySnapshot])
+    restoreHistorySnapshot(history.undo(currentHistorySnapshot()))
+  }, [history, currentHistorySnapshot, restoreHistorySnapshot])
 
   const handleRedo = useCallback(() => {
-    restoreHistorySnapshot(
-      history.redo({ slides: localSlides, selectedSlideId, selectedElementId })
-    )
-  }, [history, localSlides, selectedSlideId, selectedElementId, restoreHistorySnapshot])
+    restoreHistorySnapshot(history.redo(currentHistorySnapshot()))
+  }, [history, currentHistorySnapshot, restoreHistorySnapshot])
 
   const handleChangeElementContent = useCallback(
     (elementId, content) => elementMutations.patchElement(elementId, { content }),
@@ -1578,6 +1617,7 @@ export default function AIPptEditor({
                 ],
               }
       const patch = patchFromBackgroundFill(fill, DEFAULT_SLIDE_BG)
+      pushHistorySnapshot()
       setLocalSlides((prev) =>
         prev.map((s) => {
           if (s.id !== slideId) return s
@@ -1608,13 +1648,14 @@ export default function AIPptEditor({
         queueCanvasSave(slideId, nextDoc)
       }
     },
-    [selectedSlideId, localSlides, workspaceId, presentationId, aspectRatio, queueCanvasSave]
+    [selectedSlideId, localSlides, workspaceId, presentationId, aspectRatio, queueCanvasSave, pushHistorySnapshot]
   )
 
   const handleBackgroundColorChange = useCallback(
     (color) => {
       const slideId = selectedSlideId || localSlides[0]?.id
       if (!slideId) return
+      pushHistorySnapshot()
       setLocalSlides((prev) =>
         prev.map((s) =>
           s.id === slideId
@@ -1677,7 +1718,7 @@ export default function AIPptEditor({
         queueCanvasSave(slideId, nextDoc)
       }
     },
-    [selectedSlideId, localSlides, workspaceId, presentationId, aspectRatio, queueCanvasSave]
+    [selectedSlideId, localSlides, workspaceId, presentationId, aspectRatio, queueCanvasSave, pushHistorySnapshot]
   )
 
   const handleToggleImageAsBackground = useCallback(
@@ -1695,6 +1736,7 @@ export default function AIPptEditor({
         return
       }
 
+      pushHistorySnapshot()
       const nextElements = (slide?.elements?.elements || []).map((item) => {
         if (item.id === elementId) {
           return {
@@ -1762,6 +1804,7 @@ export default function AIPptEditor({
       workspaceId,
       presentationId,
       queueCanvasSave,
+      pushHistorySnapshot,
     ]
   )
 
@@ -1796,6 +1839,10 @@ export default function AIPptEditor({
 
   const handlePlacementLive = useCallback(
     (slideId, elementId, placement) => {
+      if (placementHistoryArmedRef.current) {
+        placementHistoryArmedRef.current = false
+        pushHistorySnapshot()
+      }
       setLocalSlides((prev) => {
         const next = prev.map((s) => {
           if (s.id !== slideId) return s
@@ -1808,11 +1855,12 @@ export default function AIPptEditor({
         return next
       })
     },
-    [aspectRatio]
+    [aspectRatio, pushHistorySnapshot]
   )
 
   const handlePlacementCommit = useCallback(
     (slideId, elementId, placement) => {
+      placementHistoryArmedRef.current = true
       if (!workspaceId || !presentationId || isGenerating || viewOnly) return
       const key = `${slideId}:${elementId}`
       pendingPlacementRef.current[key] = placement
@@ -1946,7 +1994,7 @@ export default function AIPptEditor({
           presentationService.listElementPresets(workspaceId).catch(() => null),
         ])
         if (cancelled) return
-        setBrandKits(kits || [])
+        setBrandKits(dedupeBrandKitList(kits || [], { byName: true }))
         if (presetsPayload) {
           setElementPresets(normalizeElementPresets(presetsPayload).presets)
         }
@@ -2362,6 +2410,7 @@ export default function AIPptEditor({
       ...(payload.presetId ? { presetId: payload.presetId } : {}),
       ...(payload.role ? { role: payload.role } : type === 'graphic' ? { role: 'decoration' } : {}),
     }
+    pushHistorySnapshot()
     const optimisticDoc = buildCanvasDoc(slide, {
       aspectRatio,
       elements: [...existing, localEl],
@@ -2462,9 +2511,9 @@ export default function AIPptEditor({
     }
   }
 
-  const handleDeleteElement = useCallback(async () => {
+  const handleDeleteElement = useCallback(async (elementIdArg) => {
     const slideId = selectedSlideId || localSlides[0]?.id
-    const elementId = selectedElementId
+    const elementId = typeof elementIdArg === 'string' ? elementIdArg : selectedElementId
     if (!slideId || !elementId || isGenerating) return
 
     const slide = localSlides.find((s) => s.id === slideId)
@@ -2543,6 +2592,8 @@ export default function AIPptEditor({
       return
     }
 
+    if (!target) return
+    pushHistorySnapshot()
     const nextElements = elements.filter((el) => el.id !== elementId)
     const clearingBackground = slide?.backgroundImageElementId === elementId
     const nextDoc = buildCanvasDoc(slide, { aspectRatio, elements: nextElements })
@@ -2601,7 +2652,55 @@ export default function AIPptEditor({
     applySlideUpdate,
     refreshSlide,
     elementMutations,
+    pushHistorySnapshot,
   ])
+
+  const persistElementOrder = useCallback(
+    async (slideId, nextElements) => {
+      const slide = localSlides.find((s) => s.id === slideId)
+      if (!slide || isGenerating) return
+
+      const layered = nextElements.map((el, i) => ({ ...el, layer: i + 1 }))
+      const current = slide.elements?.elements || []
+      const unchanged =
+        current.length === layered.length &&
+        current.every(
+          (el, i) => el.id === layered[i].id && (el.layer || 0) === layered[i].layer
+        )
+      if (unchanged) return
+
+      pushHistorySnapshot()
+      const nextDoc = buildCanvasDoc(slide, { aspectRatio, elements: layered })
+      setLocalSlides((prev) =>
+        prev.map((s) => (s.id === slideId ? { ...s, elements: nextDoc } : s))
+      )
+
+      if (!workspaceId || !presentationId) return
+      try {
+        const result = await presentationService.reorderElements(
+          workspaceId,
+          presentationId,
+          slideId,
+          layered.map((el) => el.id)
+        )
+        const slideFromApi = extractSlideFromMutation(result)
+        if (slideFromApi) applySlideUpdate(slideFromApi)
+      } catch (err) {
+        setError(err.message || 'Failed to reorder elements')
+        await refreshSlide(slideId).catch(() => {})
+      }
+    },
+    [
+      localSlides,
+      isGenerating,
+      aspectRatio,
+      workspaceId,
+      presentationId,
+      applySlideUpdate,
+      refreshSlide,
+      pushHistorySnapshot,
+    ]
+  )
 
   const handleReorderSelected = useCallback(
     async (direction) => {
@@ -2632,41 +2731,36 @@ export default function AIPptEditor({
         next = existing
       }
 
-      const elementIds = next.map((el) => el.id)
-      const nextDoc = buildCanvasDoc(slide, {
-        aspectRatio,
-        elements: next.map((el, i) => ({ ...el, layer: i + 1 })),
-      })
-      setLocalSlides((prev) =>
-        prev.map((s) => (s.id === slideId ? { ...s, elements: nextDoc } : s))
-      )
-
-      if (!workspaceId || !presentationId) return
-      try {
-        const result = await presentationService.reorderElements(
-          workspaceId,
-          presentationId,
-          slideId,
-          elementIds
-        )
-        const slideFromApi = extractSlideFromMutation(result)
-        if (slideFromApi) applySlideUpdate(slideFromApi)
-      } catch (err) {
-        setError(err.message || 'Failed to reorder elements')
-        await refreshSlide(slideId).catch(() => {})
-      }
+      await persistElementOrder(slideId, next)
     },
     [
       selectedSlideId,
       selectedElementId,
       localSlides,
       isGenerating,
-      aspectRatio,
-      workspaceId,
-      presentationId,
-      applySlideUpdate,
-      refreshSlide,
+      persistElementOrder,
     ]
+  )
+
+  const handleReorderLayers = useCallback(
+    (frontToBackIds) => {
+      const slideId = selectedSlideId || localSlides[0]?.id
+      if (!slideId || isGenerating || !frontToBackIds?.length) return
+
+      const slide = localSlides.find((s) => s.id === slideId)
+      const existing = slide?.elements?.elements || []
+      const byId = new Map(existing.map((el) => [el.id, el]))
+      const backToFront = [...frontToBackIds]
+        .reverse()
+        .map((id) => byId.get(id))
+        .filter(Boolean)
+      const seen = new Set(backToFront.map((el) => el.id))
+      for (const el of existing) {
+        if (!seen.has(el.id)) backToFront.unshift(el)
+      }
+      persistElementOrder(slideId, backToFront)
+    },
+    [selectedSlideId, localSlides, isGenerating, persistElementOrder]
   )
 
   const handleImageAuthError = useCallback(
@@ -2867,13 +2961,35 @@ export default function AIPptEditor({
   useEffect(() => {
     const onKey = (e) => {
       const ctx = keyCtxRef.current
-      const tag = String(e.target?.tagName || '').toLowerCase()
-      const typing =
-        tag === 'input' ||
-        tag === 'textarea' ||
-        tag === 'select' ||
-        e.target?.isContentEditable ||
-        e.target?.closest?.('.ppt-text-editable, .ppt-table-cell-input, [contenteditable="true"]')
+      const active = document.activeElement
+      const tag = String((e.target?.tagName || active?.tagName || '')).toLowerCase()
+      const inFormField = tag === 'input' || tag === 'textarea' || tag === 'select'
+      const inCanvasTextEdit =
+        Boolean(ctx.editingTextId) &&
+        (e.target?.isContentEditable ||
+          active?.isContentEditable ||
+          e.target?.closest?.('.ppt-text-editable, .ppt-table-cell-input, [contenteditable="true"]') ||
+          active?.closest?.('.ppt-text-editable, .ppt-table-cell-input, [contenteditable="true"]'))
+
+      const mod = e.ctrlKey || e.metaKey
+      const key = String(e.key || '').toLowerCase()
+
+      // Canvas undo/redo always wins unless the user is typing in a field or editing text.
+      if (mod && (key === 'z' || key === 'y')) {
+        if (inFormField || inCanvasTextEdit) return
+        if (ctx.viewOnly) {
+          e.preventDefault()
+          ctx.askOwner()
+          return
+        }
+        e.preventDefault()
+        e.stopPropagation()
+        if (key === 'z' && !e.shiftKey) ctx.handleUndo()
+        else ctx.handleRedo()
+        return
+      }
+
+      const typing = inFormField || inCanvasTextEdit
 
       if (typing) {
         if (e.key === 'Escape' && ctx.editingTextId) {
@@ -2882,9 +2998,6 @@ export default function AIPptEditor({
         }
         return
       }
-
-      const mod = e.ctrlKey || e.metaKey
-      const key = String(e.key || '').toLowerCase()
       const selectionIds = ctx.multiSelectIds.length
         ? ctx.multiSelectIds
         : [ctx.selectedElementId].filter(Boolean)
@@ -2942,16 +3055,6 @@ export default function AIPptEditor({
         return
       }
 
-      if (mod && key === 'z' && !e.shiftKey) {
-        e.preventDefault()
-        ctx.handleUndo()
-        return
-      }
-      if ((mod && key === 'y') || (mod && e.shiftKey && key === 'z')) {
-        e.preventDefault()
-        ctx.handleRedo()
-        return
-      }
       if (mod && key === 'a') {
         e.preventDefault()
         const ids = (ctx.selectedSlide?.elements?.elements || []).map((el) => el.id)
@@ -3035,8 +3138,15 @@ export default function AIPptEditor({
         ctx.nudgeSelectedElements(dx, dy, selectionIds)
       }
     }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
+    document.addEventListener('keydown', onKey, true)
+    const onPointerUp = () => {
+      placementHistoryArmedRef.current = true
+    }
+    window.addEventListener('pointerup', onPointerUp)
+    return () => {
+      document.removeEventListener('keydown', onKey, true)
+      window.removeEventListener('pointerup', onPointerUp)
+    }
   }, [])
 
   const handleChangeTransition = async (transitionId) => {
@@ -3495,6 +3605,7 @@ export default function AIPptEditor({
           onBringForward={() => handleReorderSelected('forward')}
           onSendBackward={() => handleReorderSelected('back')}
           onDeleteElement={handleDeleteElement}
+          onReorderLayers={handleReorderLayers}
           onApplyLayout={handleApplyLayout}
           onResetBackground={() => handleBackgroundColorChange(DEFAULT_SLIDE_BG)}
           onAddBackgroundImage={openMediaForBackground}
@@ -3516,9 +3627,6 @@ export default function AIPptEditor({
           onCropImage={() => setCropModalOpen(true)}
           onToggleImageAsBackground={handleToggleImageAsBackground}
           onSpeakerNotesChange={elementMutations.updateSpeakerNotes}
-          deckVariables={deckVariables}
-          onVariablesChange={setDeckVariables}
-          onSyncVariables={elementMutations.syncVariables}
           slideStyles={slideStyles}
           onSlideStylesChange={setSlideStyles}
           onBackgroundGradientChange={handleBackgroundGradientChange}

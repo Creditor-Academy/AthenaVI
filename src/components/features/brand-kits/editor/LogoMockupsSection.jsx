@@ -554,19 +554,33 @@ export default function LogoMockupsSection({
     return () => document.removeEventListener('mousedown', onDoc)
   }, [menuKey])
 
-  // Combine server templates with default fallback catalog
+  // Combine server templates with default fallback catalog, then drop repeats
   const catalogList = useMemo(() => {
-    if (templates && templates.length > 0) {
-      return templates.map((tpl) => {
-        const fallback = DEFAULT_MOCKUP_CATALOG.find((d) => d.id === tpl.id)
-        return {
-          ...fallback,
-          ...tpl,
-          iconType: fallback?.iconType || tpl.category || 'tshirt',
-        }
-      })
+    const source =
+      templates && templates.length > 0
+        ? templates.map((tpl) => {
+            const fallback = DEFAULT_MOCKUP_CATALOG.find((d) => d.id === tpl.id)
+            return {
+              ...fallback,
+              ...tpl,
+              iconType: fallback?.iconType || tpl.category || 'tshirt',
+            }
+          })
+        : DEFAULT_MOCKUP_CATALOG
+
+    const seen = new Set()
+    const unique = []
+    for (const item of source) {
+      const id = String(item?.id || '').toLowerCase()
+      const label = String(item?.label || item?.name || '').trim().toLowerCase()
+      const key = id || (label ? `label:${label}` : '')
+      if (!key || seen.has(key)) continue
+      if (label && seen.has(`label:${label}`)) continue
+      seen.add(key)
+      if (label) seen.add(`label:${label}`)
+      unique.push(item)
     }
-    return DEFAULT_MOCKUP_CATALOG
+    return unique
   }, [templates])
 
   const filteredCatalog = useMemo(() => {
@@ -1047,10 +1061,11 @@ export default function LogoMockupsSection({
                   )
                 })}
 
-                {/* Brand Colors from Kit */}
+                {/* Brand Colors from Kit (skip hexes already in the preset row) */}
                 {(colors || []).map((color) => {
                   const hex = normalizeHex(color.hex)
                   if (!hex) return null
+                  if (PRESET_PRODUCT_COLORS.some((c) => normalizeHex(c.hex) === hex)) return null
                   const active = itemColor === hex
                   return (
                     <button

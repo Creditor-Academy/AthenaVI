@@ -1,6 +1,15 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
-const MAX_HISTORY = 50
+const MAX_HISTORY = 100
+
+function cloneSnapshot(snapshot) {
+  if (!snapshot) return null
+  try {
+    return JSON.parse(JSON.stringify(snapshot))
+  } catch {
+    return snapshot
+  }
+}
 
 function readFlags(pastRef, futureRef) {
   return {
@@ -11,6 +20,7 @@ function readFlags(pastRef, futureRef) {
 
 /**
  * Client-side undo/redo for PPT slide state snapshots.
+ * Snapshots are cloned so later canvas mutations cannot rewrite history.
  */
 export function usePptEditorHistory() {
   const pastRef = useRef([])
@@ -20,7 +30,9 @@ export function usePptEditorHistory() {
   const syncFlags = () => setFlags(readFlags(pastRef, futureRef))
 
   const pushSnapshot = useCallback((snapshot) => {
-    pastRef.current = [...pastRef.current.slice(-(MAX_HISTORY - 1)), snapshot]
+    const cloned = cloneSnapshot(snapshot)
+    if (!cloned) return
+    pastRef.current = [...pastRef.current.slice(-(MAX_HISTORY - 1)), cloned]
     futureRef.current = []
     syncFlags()
   }, [])
@@ -29,30 +41,41 @@ export function usePptEditorHistory() {
     if (!pastRef.current.length) return null
     const prev = pastRef.current[pastRef.current.length - 1]
     pastRef.current = pastRef.current.slice(0, -1)
-    futureRef.current = [currentSnapshot, ...futureRef.current]
+    const current = cloneSnapshot(currentSnapshot)
+    if (current) {
+      futureRef.current = [current, ...futureRef.current.slice(0, MAX_HISTORY - 1)]
+    }
     syncFlags()
-    return prev
+    return cloneSnapshot(prev)
   }, [])
 
   const redo = useCallback((currentSnapshot) => {
     if (!futureRef.current.length) return null
     const next = futureRef.current[0]
     futureRef.current = futureRef.current.slice(1)
-    pastRef.current = [...pastRef.current, currentSnapshot]
+    const current = cloneSnapshot(currentSnapshot)
+    if (current) {
+      pastRef.current = [...pastRef.current.slice(-(MAX_HISTORY - 1)), current]
+    }
     syncFlags()
-    return next
+    return cloneSnapshot(next)
   }, [])
 
-  return {
-    pushSnapshot,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-    reset: () => {
-      pastRef.current = []
-      futureRef.current = []
-      syncFlags()
-    },
-  }
+  const reset = useCallback(() => {
+    pastRef.current = []
+    futureRef.current = []
+    syncFlags()
+  }, [])
+
+  return useMemo(
+    () => ({
+      pushSnapshot,
+      undo,
+      redo,
+      canUndo,
+      canRedo,
+      reset,
+    }),
+    [pushSnapshot, undo, redo, canUndo, canRedo, reset]
+  )
 }
