@@ -1,12 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   FiMessageCircle,
   FiCheckCircle,
   FiUser,
   FiX,
   FiTrash2,
-  FiChevronUp,
-  FiChevronDown,
   FiFileText,
   FiLayers,
   FiType,
@@ -16,13 +15,13 @@ import {
   FiGrid,
   FiCode,
 } from 'react-icons/fi'
-import { MdOutlineDesignServices, MdOutlineAnimation } from 'react-icons/md'
+import { MdDragIndicator, MdOutlineDesignServices, MdOutlineAnimation } from 'react-icons/md'
+import { attachPointerDrag, exceedsDragThreshold } from '../../../../utils/pointerDrag'
 import { BsStars } from 'react-icons/bs'
 import { HiOutlineClipboard } from 'react-icons/hi'
 import DesignContextPanel from './DesignContextPanel'
 import presentationService from '../../../../services/presentationService'
 import PptCommentsPanel from '../PptCommentsPanel'
-import PptVariablesPanel from '../PptVariablesPanel'
 import SpeakerNotesPanel from '../SpeakerNotesPanel'
 import SlideTransitionPicker, { PPT_SLIDE_TRANSITIONS } from './SlideTransitionPicker'
 import { findTemplateForSlideLayout, templateRecordId } from '../../../../utils/similarLayouts'
@@ -50,7 +49,7 @@ const RAIL_TOOLS = [
   { id: 'comments', label: 'Comments', Icon: FiMessageCircle },
   { id: 'status', label: 'Status', Icon: HiOutlineClipboard },
   { id: 'notes', label: 'Speaker notes', Icon: FiFileText },
-  { id: 'variables', label: 'Variables', Icon: FiLayers },
+  { id: 'layers', label: 'Layers', Icon: FiLayers },
 ]
 
 export const PPT_SLIDE_STATUSES = [
@@ -80,12 +79,278 @@ function layerTypeIcon(type) {
   }
 }
 
+function layerLabel(el) {
+  const text = String(el?.content?.text || '').replace(/\s+/g, ' ').trim()
+  if (text) return text.slice(0, 28)
+  if (el?.type === 'image' || el?.type === 'icon') return el.content?.alt || el.content?.name || el.type
+  return el?.type || 'element'
+}
+
+function dropSlotFromPointer(listEl, clientY) {
+  const rows = [...(listEl?.querySelectorAll('[data-layer-id]') || [])]
+  if (!rows.length) return 0
+  for (let i = 0; i < rows.length; i += 1) {
+    const rect = rows[i].getBoundingClientRect()
+    if (clientY < rect.top + rect.height / 2) return i
+  }
+  return rows.length
+}
+
+function dropLineOffset(listEl, slot) {
+  const rows = [...(listEl?.querySelectorAll('[data-layer-id]') || [])]
+  if (!listEl || !rows.length) return 0
+  const listTop = listEl.getBoundingClientRect().top
+  if (slot <= 0) return rows[0].getBoundingClientRect().top - listTop - 3
+  if (slot >= rows.length) {
+    return rows[rows.length - 1].getBoundingClientRect().bottom - listTop + 3
+  }
+  const prev = rows[slot - 1].getBoundingClientRect()
+  const next = rows[slot].getBoundingClientRect()
+  return (prev.bottom + next.top) / 2 - listTop
+}
+
+function orderFromDropSlot(ids, draggingId, slot) {
+  const from = ids.indexOf(draggingId)
+  if (from < 0) return ids
+  const without = ids.filter((id) => id !== draggingId)
+  let insert = slot > from ? slot - 1 : slot
+  insert = Math.max(0, Math.min(without.length, insert))
+  const next = [...without]
+  next.splice(insert, 0, draggingId)
+  return next
+}
+
+function isNoopDrop(ids, draggingId, slot) {
+  const from = ids.indexOf(draggingId)
+  return from < 0 || slot === from || slot === from + 1
+}
+
+function LayersPanel({
+  slide,
+  selectedElementId,
+  disabled,
+  onSelectElement,
+  onDeleteElement,
+  onReorderLayers,
+}) {
+  const listRef = useRef(null)
+  const ghostRef = useRef(null)
+  const ghostPosRef = useRef({ x: 0, y: 0 })
+  const prevRectsRef = useRef(null)
+  const [draggingId, setDraggingId] = useState(null)
+  const [dropSlot, setDropSlot] = useState(null)
+  const [lineTop, setLineTop] = useState(0)
+  const [ghost, setGhost] = useState(null)
+
+  const sourceLayers = useMemo(
+    () =>
+      [...(slide?.elements?.elements || [])].sort((a, b) => (b.layer || 0) - (a.layer || 0)),
+    [slide]
+  )
+  const sourceIds = useMemo(() => sourceLayers.map((el) => el.id), [sourceLayers])
+  const layers = sourceLayers
+  const idsKey = sourceIds.join('|')
+
+  useLayoutEffect(() => {
+    const prev = prevRectsRef.current
+    const list = listRef.current
+    if (!prev || !list) return
+    list.querySelectorAll('[data-layer-id]').forEach((node) => {
+      const old = prev.get(node.getAttribute('data-layer-id'))
+      if (!old) return
+      const now = node.getBoundingClientRect()
+      const dy = old.top - now.top
+      if (Math.abs(dy) < 1) return
+      node.animate(
+        [{ transform: `translateY(${dy}px)` }, { transform: 'translateY(0px)' }],
+        { duration: 240, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
+      )
+    })
+    prevRectsRef.current = null
+  }, [idsKey])
+
+  useEffect(() => () => {
+    document.body.classList.remove('ppt-layers-dragging')
+  }, [])
+
+  const beginRowDrag = (e, id) => {
+    if (disabled || e.button !== 0) return
+    if (e.target.closest?.('[data-layer-delete]')) return
+    e.preventDefault()
+
+    const row = e.currentTarget
+    const rowRect = row.getBoundingClientRect()
+    const startX = e.clientX
+    const startY = e.clientY
+    const grabX = e.clientX - rowRect.left
+    const grabY = e.clientY - rowRect.top
+    let started = false
+    let slot = sourceIds.indexOf(id)
+
+    const moveGhost = (clientX, clientY) => {
+      const x = clientX - grabX
+      const y = clientY - grabY
+      ghostPosRef.current = { x, y }
+      const node = ghostRef.current
+      if (!node) return
+      node.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(0.6deg) scale(1.03)`
+    }
+
+    const updateSlot = (clientY) => {
+      const nextSlot = dropSlotFromPointer(listRef.current, clientY)
+      if (nextSlot === slot) return
+      slot = nextSlot
+      setDropSlot(nextSlot)
+      setLineTop(dropLineOffset(listRef.current, nextSlot))
+    }
+
+    attachPointerDrag(e, (mv) => {
+      if (!started) {
+        if (!exceedsDragThreshold(startX, startY, mv.clientX, mv.clientY)) return
+        started = true
+        const el = sourceLayers.find((item) => item.id === id)
+        const from = sourceIds.indexOf(id)
+        setDraggingId(id)
+        setGhost({
+          width: rowRect.width,
+          height: rowRect.height,
+          type: el?.type,
+          label: layerLabel(el),
+          num: sourceIds.length - from,
+          selected: selectedElementId === id,
+        })
+        document.body.classList.add('ppt-layers-dragging')
+        moveGhost(mv.clientX, mv.clientY)
+        updateSlot(mv.clientY)
+        return
+      }
+      moveGhost(mv.clientX, mv.clientY)
+      updateSlot(mv.clientY)
+    }, () => {
+      document.body.classList.remove('ppt-layers-dragging')
+      setDraggingId(null)
+      setDropSlot(null)
+      setGhost(null)
+      if (!started) {
+        onSelectElement?.(id)
+        return
+      }
+      if (isNoopDrop(sourceIds, id, slot)) return
+      const list = listRef.current
+      if (list) {
+        const map = new Map()
+        list.querySelectorAll('[data-layer-id]').forEach((node) => {
+          map.set(node.getAttribute('data-layer-id'), node.getBoundingClientRect())
+        })
+        prevRectsRef.current = map
+      }
+      onReorderLayers?.(orderFromDropSlot(sourceIds, id, slot))
+    })
+  }
+
+  const draggingEl = draggingId ? layers.find((el) => el.id === draggingId) : null
+  const GhostIcon = layerTypeIcon(ghost?.type || draggingEl?.type)
+  const showDropLine = dropSlot != null && draggingId && !isNoopDrop(sourceIds, draggingId, dropSlot)
+
+  return (
+    <div className="ppt-slide-panel ppt-layers-panel" role="region" aria-label="Layers">
+      <p className="ppt-slide-panel-hint">
+        Drag a layer to shuffle stacking order. Top is in front.
+      </p>
+      <div ref={listRef} className={`ppt-slide-layers ${draggingId ? 'is-dragging' : ''}`}>
+        {layers.length === 0 ? (
+          <div className="ppt-slide-layer-empty">No layers yet — insert from the top bar</div>
+        ) : (
+          layers.map((el, i) => {
+            const LayerIcon = layerTypeIcon(el.type)
+            const selected = selectedElementId === el.id
+            return (
+              <div
+                key={el.id || i}
+                data-layer-id={el.id}
+                role="button"
+                tabIndex={disabled ? -1 : 0}
+                className={`ppt-slide-layer-row ${selected ? 'is-selected' : ''} ${
+                  draggingId === el.id ? 'is-dragging' : ''
+                }`}
+                aria-label={`${layerLabel(el)}, layer ${layers.length - i}`}
+                aria-pressed={selected}
+                onPointerDown={(e) => beginRowDrag(e, el.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    onSelectElement?.(el.id)
+                  }
+                }}
+              >
+                <span className="ppt-slide-layer-grip" aria-hidden>
+                  <MdDragIndicator size={16} />
+                </span>
+                <span className="ppt-slide-layer-icon">
+                  <LayerIcon size={14} />
+                </span>
+                <span className="ppt-slide-layer-num">{layers.length - i}</span>
+                <span className="ppt-slide-layer-type">{layerLabel(el)}</span>
+                <button
+                  type="button"
+                  data-layer-delete
+                  className="ppt-slide-layer-delete"
+                  title="Delete layer"
+                  aria-label={`Delete ${layerLabel(el)}`}
+                  disabled={disabled}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDeleteElement?.(el.id)
+                  }}
+                >
+                  <FiTrash2 size={14} />
+                </button>
+              </div>
+            )
+          })
+        )}
+        {showDropLine && (
+          <div
+            className="ppt-slide-layer-drop-line"
+            style={{ top: lineTop }}
+            aria-hidden
+          />
+        )}
+      </div>
+      {ghost &&
+        createPortal(
+          <div
+            ref={ghostRef}
+            className={`ppt-slide-layer-row ppt-slide-layer-ghost ${ghost.selected ? 'is-selected' : ''}`}
+            style={{
+              width: ghost.width,
+              height: ghost.height,
+              transform: `translate3d(${ghostPosRef.current.x}px, ${ghostPosRef.current.y}px, 0) rotate(0.6deg) scale(1.03)`,
+            }}
+            aria-hidden
+          >
+            <span className="ppt-slide-layer-grip">
+              <MdDragIndicator size={16} />
+            </span>
+            <span className="ppt-slide-layer-icon">
+              <GhostIcon size={14} />
+            </span>
+            <span className="ppt-slide-layer-num">{ghost.num}</span>
+            <span className="ppt-slide-layer-type">{ghost.label}</span>
+          </div>,
+          document.body
+        )}
+    </div>
+  )
+}
+
 function StatusDot({ id }) {
   return <span className={`ppt-status-dot ppt-status-dot--${id}`} aria-hidden />
 }
 
 /**
- * Right floating rail: Design / Transition / Comments / Status + zoom + AI.
+ * Right floating rail: Design / Transition / Comments / Status / Notes / Layers + zoom + AI.
  */
 export default function EditorRightRail({
   zoom = 100,
@@ -101,6 +366,7 @@ export default function EditorRightRail({
   onBringForward,
   onSendBackward,
   onDeleteElement,
+  onReorderLayers,
   onApplyLayout,
   onResetBackground,
   onAddBackgroundImage,
@@ -114,9 +380,6 @@ export default function EditorRightRail({
   onCropImage,
   onToggleImageAsBackground,
   onSpeakerNotesChange,
-  deckVariables = [],
-  onVariablesChange,
-  onSyncVariables,
   slideStyles = {},
   onSlideStylesChange,
   onBackgroundGradientChange,
@@ -151,7 +414,7 @@ export default function EditorRightRail({
 
   useEffect(() => {
     if (designFocus && selectedElementId) {
-      setActive('design')
+      setActive((prev) => (prev === 'layers' ? prev : 'design'))
       setAiOpen(false)
     }
   }, [designFocus, selectedElementId, slide?.id])
@@ -285,49 +548,6 @@ export default function EditorRightRail({
                 disabled={disabled}
                 usedFontFamilies={usedFontFamilies}
               />
-
-              <div className="ppt-panel-section ppt-panel-section--layers">
-                <div className="ppt-slide-panel-label">Layers</div>
-                {selectedElementId && (
-                  <div className="ppt-slide-layer-actions">
-                    <button type="button" title="Bring forward" disabled={disabled} onClick={onBringForward}>
-                      <FiChevronUp size={14} />
-                    </button>
-                    <button type="button" title="Send backward" disabled={disabled} onClick={onSendBackward}>
-                      <FiChevronDown size={14} />
-                    </button>
-                    <button type="button" title="Delete" disabled={disabled} onClick={onDeleteElement}>
-                      <FiTrash2 size={14} />
-                    </button>
-                  </div>
-                )}
-                <div className="ppt-slide-layers">
-                  {(slide?.elements?.elements || []).length === 0 ? (
-                    <div className="ppt-slide-layer-empty">No layers yet — insert from the top bar</div>
-                  ) : (
-                    [...(slide?.elements?.elements || [])]
-                      .sort((a, b) => (b.layer || 0) - (a.layer || 0))
-                      .map((el, i) => {
-                        const LayerIcon = layerTypeIcon(el.type)
-                        return (
-                          <button
-                            key={el.id || i}
-                            type="button"
-                            className={`ppt-slide-layer-row ${selectedElementId === el.id ? 'is-selected' : ''}`}
-                            disabled={disabled}
-                            onClick={() => onSelectElement?.(el.id)}
-                          >
-                            <span className="ppt-slide-layer-icon">
-                              <LayerIcon size={14} />
-                            </span>
-                            <span className="ppt-slide-layer-num">{el.layer ?? i + 1}</span>
-                            <span className="ppt-slide-layer-type">{el.type || 'element'}</span>
-                          </button>
-                        )
-                      })
-                  )}
-                </div>
-              </div>
             </div>
           )}
 
@@ -362,15 +582,15 @@ export default function EditorRightRail({
             </div>
           )}
 
-          {active === 'variables' && (
-            <div className="ppt-slide-panel" role="region" aria-label="Variables">
-              <PptVariablesPanel
-                variables={deckVariables}
-                disabled={disabled}
-                onChange={onVariablesChange}
-                onSyncAll={onSyncVariables}
-              />
-            </div>
+          {active === 'layers' && (
+            <LayersPanel
+              slide={slide}
+              selectedElementId={selectedElementId}
+              disabled={disabled}
+              onSelectElement={onSelectElement}
+              onDeleteElement={onDeleteElement}
+              onReorderLayers={onReorderLayers}
+            />
           )}
 
           {active === 'status' && (

@@ -974,7 +974,6 @@ export default function AIPptEditor({
   const [quickMenuOpen, setQuickMenuOpen] = useState(false)
   const [slideAiEditId, setSlideAiEditId] = useState(null)
   const [cropModalOpen, setCropModalOpen] = useState(false)
-  const [deckVariables, setDeckVariables] = useState([])
   const [slideStyles, setSlideStyles] = useState({
     headerFont: 'Inter',
     bodyFont: 'Inter',
@@ -2512,9 +2511,9 @@ export default function AIPptEditor({
     }
   }
 
-  const handleDeleteElement = useCallback(async () => {
+  const handleDeleteElement = useCallback(async (elementIdArg) => {
     const slideId = selectedSlideId || localSlides[0]?.id
-    const elementId = selectedElementId
+    const elementId = typeof elementIdArg === 'string' ? elementIdArg : selectedElementId
     if (!slideId || !elementId || isGenerating) return
 
     const slide = localSlides.find((s) => s.id === slideId)
@@ -2656,6 +2655,53 @@ export default function AIPptEditor({
     pushHistorySnapshot,
   ])
 
+  const persistElementOrder = useCallback(
+    async (slideId, nextElements) => {
+      const slide = localSlides.find((s) => s.id === slideId)
+      if (!slide || isGenerating) return
+
+      const layered = nextElements.map((el, i) => ({ ...el, layer: i + 1 }))
+      const current = slide.elements?.elements || []
+      const unchanged =
+        current.length === layered.length &&
+        current.every(
+          (el, i) => el.id === layered[i].id && (el.layer || 0) === layered[i].layer
+        )
+      if (unchanged) return
+
+      pushHistorySnapshot()
+      const nextDoc = buildCanvasDoc(slide, { aspectRatio, elements: layered })
+      setLocalSlides((prev) =>
+        prev.map((s) => (s.id === slideId ? { ...s, elements: nextDoc } : s))
+      )
+
+      if (!workspaceId || !presentationId) return
+      try {
+        const result = await presentationService.reorderElements(
+          workspaceId,
+          presentationId,
+          slideId,
+          layered.map((el) => el.id)
+        )
+        const slideFromApi = extractSlideFromMutation(result)
+        if (slideFromApi) applySlideUpdate(slideFromApi)
+      } catch (err) {
+        setError(err.message || 'Failed to reorder elements')
+        await refreshSlide(slideId).catch(() => {})
+      }
+    },
+    [
+      localSlides,
+      isGenerating,
+      aspectRatio,
+      workspaceId,
+      presentationId,
+      applySlideUpdate,
+      refreshSlide,
+      pushHistorySnapshot,
+    ]
+  )
+
   const handleReorderSelected = useCallback(
     async (direction) => {
       const slideId = selectedSlideId || localSlides[0]?.id
@@ -2685,43 +2731,36 @@ export default function AIPptEditor({
         next = existing
       }
 
-      const elementIds = next.map((el) => el.id)
-      pushHistorySnapshot()
-      const nextDoc = buildCanvasDoc(slide, {
-        aspectRatio,
-        elements: next.map((el, i) => ({ ...el, layer: i + 1 })),
-      })
-      setLocalSlides((prev) =>
-        prev.map((s) => (s.id === slideId ? { ...s, elements: nextDoc } : s))
-      )
-
-      if (!workspaceId || !presentationId) return
-      try {
-        const result = await presentationService.reorderElements(
-          workspaceId,
-          presentationId,
-          slideId,
-          elementIds
-        )
-        const slideFromApi = extractSlideFromMutation(result)
-        if (slideFromApi) applySlideUpdate(slideFromApi)
-      } catch (err) {
-        setError(err.message || 'Failed to reorder elements')
-        await refreshSlide(slideId).catch(() => {})
-      }
+      await persistElementOrder(slideId, next)
     },
     [
       selectedSlideId,
       selectedElementId,
       localSlides,
       isGenerating,
-      aspectRatio,
-      workspaceId,
-      presentationId,
-      applySlideUpdate,
-      refreshSlide,
-      pushHistorySnapshot,
+      persistElementOrder,
     ]
+  )
+
+  const handleReorderLayers = useCallback(
+    (frontToBackIds) => {
+      const slideId = selectedSlideId || localSlides[0]?.id
+      if (!slideId || isGenerating || !frontToBackIds?.length) return
+
+      const slide = localSlides.find((s) => s.id === slideId)
+      const existing = slide?.elements?.elements || []
+      const byId = new Map(existing.map((el) => [el.id, el]))
+      const backToFront = [...frontToBackIds]
+        .reverse()
+        .map((id) => byId.get(id))
+        .filter(Boolean)
+      const seen = new Set(backToFront.map((el) => el.id))
+      for (const el of existing) {
+        if (!seen.has(el.id)) backToFront.unshift(el)
+      }
+      persistElementOrder(slideId, backToFront)
+    },
+    [selectedSlideId, localSlides, isGenerating, persistElementOrder]
   )
 
   const handleImageAuthError = useCallback(
@@ -3566,6 +3605,7 @@ export default function AIPptEditor({
           onBringForward={() => handleReorderSelected('forward')}
           onSendBackward={() => handleReorderSelected('back')}
           onDeleteElement={handleDeleteElement}
+          onReorderLayers={handleReorderLayers}
           onApplyLayout={handleApplyLayout}
           onResetBackground={() => handleBackgroundColorChange(DEFAULT_SLIDE_BG)}
           onAddBackgroundImage={openMediaForBackground}
@@ -3587,9 +3627,6 @@ export default function AIPptEditor({
           onCropImage={() => setCropModalOpen(true)}
           onToggleImageAsBackground={handleToggleImageAsBackground}
           onSpeakerNotesChange={elementMutations.updateSpeakerNotes}
-          deckVariables={deckVariables}
-          onVariablesChange={setDeckVariables}
-          onSyncVariables={elementMutations.syncVariables}
           slideStyles={slideStyles}
           onSlideStylesChange={setSlideStyles}
           onBackgroundGradientChange={handleBackgroundGradientChange}

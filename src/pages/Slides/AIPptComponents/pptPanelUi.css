@@ -201,19 +201,17 @@
   background: #fff;
 }
 
-.ppt-panel-section--layers {
-  margin-top: 4px;
+.ppt-layers-panel .ppt-slide-panel-hint {
+  margin: 0 0 16px;
 }
 
-.ppt-slide-layer-row:hover:not(:disabled):not(.is-selected) {
+.ppt-layers-panel .ppt-slide-layer-type {
+  text-transform: none;
+}
+
+.ppt-slide-layer-row:hover:not(.is-dragging):not(.is-selected) {
   background: #f8fafc;
   border-color: #cbd5e1;
-}
-
-.ppt-slide-layer-actions {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 10px;
 }
 
 .ppt-slide-layout-select {

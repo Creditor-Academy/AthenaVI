@@ -11,7 +11,6 @@ import {
   smartSwapElements,
   smartTidyElements,
 } from '../../../utils/pptSmartFormat'
-import { applyVariablesToSlides } from './PptVariablesPanel'
 
 const ELEMENT_PATCH_DEBOUNCE_MS = 320
 
@@ -331,14 +330,6 @@ export function usePptElementMutations({
     updateElements,
   ])
 
-  const syncVariables = useCallback(
-    (variables) => {
-      pushHistory?.({ slides: localSlides, selectedSlideId, selectedElementId })
-      setLocalSlides((prev) => applyVariablesToSlides(prev, variables))
-    },
-    [localSlides, selectedSlideId, selectedElementId, pushHistory, setLocalSlides]
-  )
-
   const updateSpeakerNotes = useCallback(
     (slideId, notes) => {
       setLocalSlides((prev) =>
@@ -364,7 +355,6 @@ export function usePptElementMutations({
     ungroupSelection,
     smartTidy,
     smartSwap,
-    syncVariables,
     updateSpeakerNotes,
     updateElements,
     /** True while a debounced element PATCH is waiting or in-flight for this slide. */
