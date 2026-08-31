@@ -24,6 +24,57 @@ function placementFrameStyle(p, canvasW, canvasH, { layer = 0, rotation = 0, opa
   }
 }
 
+function contentBounds(elements, canvasW, canvasH) {
+  let minX = Infinity
+  let minY = Infinity
+  let maxX = -Infinity
+  let maxY = -Infinity
+  for (const el of elements || []) {
+    const p = el.placement || {}
+    if (p.opacity === 0) continue
+    const x = Number(p.x) || 0
+    const y = Number(p.y) || 0
+    const w = Number(p.width) || 0
+    const h = Number(p.height) || 0
+    if (w < 8 && h < 8) continue
+    minX = Math.min(minX, x)
+    minY = Math.min(minY, y)
+    maxX = Math.max(maxX, x + w)
+    maxY = Math.max(maxY, y + h)
+  }
+  if (!Number.isFinite(minX)) return { x: 0, y: 0, w: canvasW, h: canvasH }
+  const padX = Math.max(32, (maxX - minX) * 0.05)
+  const padY = Math.max(32, (maxY - minY) * 0.05)
+  const x = Math.max(0, minX - padX)
+  const y = Math.max(0, minY - padY)
+  return {
+    x,
+    y,
+    w: Math.max(1, Math.min(canvasW - x, maxX + padX - x)),
+    h: Math.max(1, Math.min(canvasH - y, maxY + padY - y)),
+  }
+}
+
+/** Thumbnails shrink 1920px type to ~1px; bump labels so they still paint. */
+function boostMinimapElement(el) {
+  if (!el || (el.type !== 'text' && el.type !== 'textbox')) return el
+  const fs = Number(el.content?.fontSize) || 16
+  const k = fs < 20 ? 1.85 : fs < 30 ? 1.45 : 1.15
+  const p = el.placement || {}
+  return {
+    ...el,
+    placement: {
+      ...p,
+      height: Math.round(Math.max(p.height || 36, fs * k * 1.25)),
+    },
+    content: {
+      ...el.content,
+      fontSize: Math.round(fs * k),
+      lineHeight: 1.15,
+    },
+  }
+}
+
 function MinimapSlidePreview({
   slide,
   themeVisual,
@@ -48,6 +99,9 @@ function MinimapSlidePreview({
   const fallbackImage = hasElements ? null : getSlideImage(slide).url
   const palette = themeVisual?.palette || null
 
+  const bounds = contentBounds(elements, canvas.width, canvas.height)
+  const boundsKey = `${bounds.x},${bounds.y},${bounds.w},${bounds.h},${elements.length}`
+
   useEffect(() => {
     const node = hostRef.current
     if (!node) return undefined
@@ -55,13 +109,13 @@ function MinimapSlidePreview({
     const update = () => {
       const width = node.clientWidth || 1
       const height = node.clientHeight || 1
-      const scale = Math.min(width / canvas.width, height / canvas.height)
-      const scaledW = canvas.width * scale
-      const scaledH = canvas.height * scale
+      const scale = Math.min(width / bounds.w, height / bounds.h)
+      const scaledW = bounds.w * scale
+      const scaledH = bounds.h * scale
       setTransform({
         scale,
-        x: Math.max(0, (width - scaledW) / 2),
-        y: Math.max(0, (height - scaledH) / 2),
+        x: (width - scaledW) / 2 - bounds.x * scale,
+        y: (height - scaledH) / 2 - bounds.y * scale,
       })
     }
 
@@ -69,7 +123,7 @@ function MinimapSlidePreview({
     const observer = new ResizeObserver(update)
     observer.observe(node)
     return () => observer.disconnect()
-  }, [canvas.width, canvas.height])
+  }, [canvas.width, canvas.height, boundsKey, bounds.w, bounds.h, bounds.x, bounds.y])
 
   if (!hasElements && layoutSchema) {
     return (
@@ -106,7 +160,8 @@ function MinimapSlidePreview({
       >
         {hasElements ? (
           elements.map((el, i) => {
-            const p = el.placement || {}
+            const previewEl = boostMinimapElement(el)
+            const p = previewEl.placement || {}
             return (
               <div
                 key={el.id || `minimap-el-${i}`}
@@ -117,12 +172,13 @@ function MinimapSlidePreview({
                   opacity: p.opacity,
                 })}
               >
-                <PptCanvasElement
-                  el={el}
-                  palette={palette}
-                  editable={false}
-                  canvasW={canvas.width}
-                />
+                  <PptCanvasElement
+                    el={previewEl}
+                    palette={palette}
+                    editable={false}
+                    showEmptyTextHint
+                    canvasW={canvas.width}
+                  />
               </div>
             )
           })

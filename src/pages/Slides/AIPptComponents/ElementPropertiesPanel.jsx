@@ -121,7 +121,7 @@ export default function ElementPropertiesPanel({
         </button>
       </div>
 
-      {(element.type === 'shape' || element.type === 'embed') && (
+      {(element.type === 'shape' || element.type === 'embed' || element.type === 'graphic') && (
         <>
           <div className="ppt-element-props-row">
             <span>{isDeviceFrame ? 'Frame color' : 'Fill / border'}</span>
@@ -141,7 +141,7 @@ export default function ElementPropertiesPanel({
               }}
             />
           </div>
-          {!isDeviceFrame && (
+          {!isDeviceFrame && element.type !== 'graphic' && (
             <>
               <div className="ppt-element-props-row">
                 <span>Border width</span>

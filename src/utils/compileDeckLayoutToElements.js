@@ -1019,6 +1019,16 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
 
   return elements.map((el) => {
     if (el.type !== 'text' && el.type !== 'textbox') return el
+    if (
+      /^CYCLE_NUM_[1-4]$/i.test(String(el.slotId || '')) ||
+      /^FUNNEL_NUM_[1-4]$/i.test(String(el.slotId || '')) ||
+      /^PYRAMID_NUM_[1-5]$/i.test(String(el.slotId || '')) ||
+      /^SWOT_LETTER_[1-4]$/i.test(String(el.slotId || '')) ||
+      /^SWOT_HUB_(TITLE|SUB)$/i.test(String(el.slotId || '')) ||
+      /^funnel_[1-5]_title$/i.test(String(el.slotId || '')) ||
+      /^Q[1-4]_(TITLE|BODY)$/i.test(String(el.slotId || '')) ||
+      /^MATRIX_(CENTER|X_LABEL|Y_LABEL)$/i.test(String(el.slotId || ''))
+    ) return el
     const colorRole = String(el.content?.colorRole || '').toLowerCase()
     const rawColor = el.content?.color
     if (!rawColor) return el

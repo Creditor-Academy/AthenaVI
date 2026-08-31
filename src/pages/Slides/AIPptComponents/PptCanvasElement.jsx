@@ -448,11 +448,13 @@ export default function PptCanvasElement({
   }
 
   if (el.type === 'graphic') {
+    const inlineSvg = typeof el.content?.svg === 'string' && el.content.svg.includes('<svg')
     return (
       <div
         className="ppt-media-flip"
         style={{
           ...fillStyle,
+          pointerEvents: inlineSvg ? 'none' : undefined,
           transform: mediaFlipTransform(el.content),
           transformOrigin: 'center center',
         }}
@@ -467,6 +469,20 @@ export default function PptCanvasElement({
     const url = c.url || c.src || c.thumbnailUrl || c.previewUrl
     if (!url) {
       const radius = c.borderRadius != null ? c.borderRadius : 0
+      const avatarSlot = /^(PORTRAIT_IMAGE|AVATAR|AVATAR_\d+)$/i.test(String(el.slotId || ''))
+      if (el.type === 'image' && avatarSlot) {
+        return (
+          <div
+            style={{
+              ...fillStyle,
+              overflow: 'hidden',
+              borderRadius: 999,
+              background: 'transparent',
+            }}
+            aria-hidden
+          />
+        )
+      }
       if (el.type === 'image') {
         return (
           <EmptyImagePlaceholder

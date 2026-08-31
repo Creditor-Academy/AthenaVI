@@ -83,7 +83,39 @@ export function buildContentBySlotIdFromSlideContent(content = {}, schema = null
   if (subtitle) out.SUBTITLE = subtitle
   else if (summary) out.SUBTITLE = summary.split(/[.!?]/)[0]?.trim() || summary
   if (body) out.BODY = body
-  if (quote) out.QUOTE = quote
+  if (quote) {
+    out.QUOTE = quote
+    out.STATEMENT = quote
+  }
+  const authorName = String(content.author || content.name || content.attribution || '').trim()
+  const authorRole = String(content.role || content.authorTitle || content.titleLine || '').trim()
+  if (authorName) {
+    out.NAME = authorName
+    out.AUTHOR_NAME = authorName
+    out.ATTRIBUTION = authorName
+  }
+  if (authorRole) {
+    out.ROLE = authorRole
+    out.AUTHOR_TITLE = authorRole
+  }
+  const quotesList = Array.isArray(content.quotes)
+    ? content.quotes
+    : Array.isArray(content.testimonials)
+      ? content.testimonials
+      : []
+  quotesList.slice(0, 6).forEach((item, i) => {
+    const n = i + 1
+    if (typeof item === 'string') {
+      out[`QUOTE_${n}`] = item.trim()
+      return
+    }
+    const q = String(item?.text ?? item?.quote ?? '').trim()
+    const name = String(item?.name ?? item?.author ?? '').trim()
+    const role = String(item?.role ?? item?.title ?? item?.org ?? '').trim()
+    if (q) out[`QUOTE_${n}`] = q
+    if (name) out[`NAME_${n}`] = name
+    if (role) out[`ROLE_${n}`] = role
+  })
   if (ctaText) out.CTA = String(ctaText).trim()
   if (!out.BODY && summary) out.BODY = summary
   if (content.contact) {

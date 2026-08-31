@@ -6,7 +6,6 @@
 import {
   slot,
   typo,
-  displayTypo,
   centeredTypo,
   cardShape,
   surfaceHalf,
@@ -207,23 +206,60 @@ const CATALOG = {
   ]),
 
   statement_left_v1: layoutBase('statement_left_v1', 'quote', [
-    slot('EYEBROW', 'cols 2-10, rows 3-4', 'eyebrow', 'Section context', {
-      layer: 10,
-      typography: { ...typo('eyebrow'), letterSpacing: 0.08 },
+    slot(
+      'STATEMENT',
+      'cols 2-7, rows 3-6',
+      'quote',
+      'A very nice quote from a very nice client. Ask your client to share some thoughts about this project.',
+      {
+        layer: 10,
+        typography: typo('quote', { fontSize: 30, fontWeight: 700, lineHeight: 1.4 }),
+        max_lines: 5,
+      }
+    ),
+    slot('NAME', 'cols 3-7, rows 8-9', 'attribution', 'Gemine Macberry', {
+      layer: 12,
+      typography: typo('caption', { fontSize: 18, fontWeight: 700, colorRole: 'text' }),
       max_lines: 1,
     }),
-    slot('STATEMENT', 'cols 2-10, rows 4-7', 'quote', P.short, {
-      layer: 10,
-      typography: typo('quote', { fontSize: 30 }),
-      max_lines: 4,
+    slot('ROLE', 'cols 3-7, rows 9-10', 'caption', 'VP of Engineering at Acme Inc.', {
+      layer: 12,
+      typography: typo('caption', { fontSize: 15, colorRole: 'muted' }),
+      max_lines: 2,
+    }),
+    slot('PORTRAIT_IMAGE', 'cols 2-3, rows 8-10', 'image', null, {
+      layer: 13,
+      fit: 'cover',
+      borderRadius: 999,
     }),
   ], { mode: 'quote_attribution' }),
 
   statement_large_v1: layoutBase('statement_large_v1', 'quote', [
-    slot('STATEMENT', 'cols 2-10, rows 3-7', 'quote', P.short, {
-      layer: 10,
-      typography: displayTypo(),
-      max_lines: 4,
+    slot(
+      'STATEMENT',
+      'cols 2-10, rows 3-6',
+      'quote',
+      'A very nice quote from a very nice client. Ask your client to share some thoughts about this project.',
+      {
+        layer: 10,
+        typography: typo('quote', { fontSize: 36, fontWeight: 700, lineHeight: 1.4 }),
+        max_lines: 5,
+      }
+    ),
+    slot('NAME', 'cols 3-8, rows 8-9', 'attribution', 'Gemine Macberry', {
+      layer: 12,
+      typography: typo('caption', { fontSize: 18, fontWeight: 700, colorRole: 'text' }),
+      max_lines: 1,
+    }),
+    slot('ROLE', 'cols 3-8, rows 9-10', 'caption', 'VP of Engineering at Acme Inc.', {
+      layer: 12,
+      typography: typo('caption', { fontSize: 15, colorRole: 'muted' }),
+      max_lines: 2,
+    }),
+    slot('PORTRAIT_IMAGE', 'cols 2-3, rows 8-10', 'image', null, {
+      layer: 13,
+      fit: 'cover',
+      borderRadius: 999,
     }),
   ], { mode: 'quote_attribution' }),
 

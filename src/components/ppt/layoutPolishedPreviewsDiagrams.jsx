@@ -3,6 +3,11 @@
  */
 
 import { aspectRatioToCss } from '../../utils/deckPackTheme'
+import { buildCycleDiagramSvg } from '../../utils/diagramCycleSvg'
+import { funnelDiagramInlineSvg, FUNNEL_TITLE_COLORS } from '../../utils/diagramFunnelSvg'
+import { PYRAMID_COLORS, pyramidDiagramInlineSvg } from '../../utils/diagramPyramid'
+import { SWOT_COLORS, swotDiagramInlineSvg } from '../../utils/diagramSwotSvg'
+import { vennPreviewSvg } from '../../utils/diagramVennSvg'
 
 const PREVIEW_TITLE_FS = { large: '1.75rem', small: '0.36rem' }
 const PREVIEW_BODY_FS = { large: '0.72rem', small: '0.22rem' }
@@ -172,11 +177,79 @@ export function PolishedDiagramQuadrantsPreview({ previewHints, ...props }) {
   )
 }
 
+export function PolishedDiagramSwotPreview({ previewHints, ...props }) {
+  const { large } = props
+  const fp = frameProps(props)
+  const heading = slotText(previewHints, 'HEADING', 'SWOT analysis')
+  const quadrants = Array.isArray(previewHints.quadrants) && previewHints.quadrants.length
+    ? previewHints.quadrants.slice(0, 4)
+    : [
+        { title: 'Strengths', body: 'Key strengths' },
+        { title: 'Weaknesses', body: 'Areas to improve' },
+        { title: 'Opportunities', body: 'Market opportunities' },
+        { title: 'Threats', body: 'External risks' },
+      ]
+
+  return (
+    <div
+      {...fp}
+      style={{
+        ...fp.style,
+        padding: pad(large),
+        display: 'flex',
+        flexDirection: 'column',
+        gap: large ? 8 : 3,
+      }}
+    >
+      <div
+        style={{
+          fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small,
+          fontWeight: 800,
+          color: theme.text,
+          flexShrink: 0,
+        }}
+      >
+        {heading}
+      </div>
+      <div style={{ flex: 1, display: 'flex', minHeight: 0, gap: large ? 10 : 4 }}>
+        <div
+          style={{ width: '46%', minWidth: 0, display: 'flex' }}
+          dangerouslySetInnerHTML={{ __html: swotDiagramInlineSvg() }}
+        />
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
+          {quadrants.map((q, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: large ? 8 : 3, minWidth: 0 }}>
+              <div
+                style={{
+                  width: large ? 22 : 10,
+                  height: large ? 22 : 10,
+                  borderRadius: large ? 6 : 2,
+                  background: SWOT_COLORS[i],
+                  flexShrink: 0,
+                }}
+              />
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: large ? '0.62rem' : '0.22rem', fontWeight: 800, color: SWOT_COLORS[i], whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {q.title}
+                </div>
+                {q.body && (
+                  <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : PREVIEW_CAPTION_FS.small, color: theme.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {q.body}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function PolishedDiagramFunnelPreview({ previewHints, ...props }) {
   const { large } = props
   const fp = frameProps(props)
   const heading = slotText(previewHints, 'HEADING', 'Funnel')
-  const pyramid = previewHints.diagramVariant === 'pyramid'
   const tiers = Array.isArray(previewHints.funnelTiers) && previewHints.funnelTiers.length
     ? previewHints.funnelTiers.slice(0, 4)
     : [1, 2, 3, 4].map((n) => ({ title: `Stage ${n}`, body: 'Brief note' }))
@@ -202,62 +275,98 @@ export function PolishedDiagramFunnelPreview({ previewHints, ...props }) {
       >
         {heading}
       </div>
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          gap: large ? 6 : 2,
-          minHeight: 0,
-        }}
-      >
-        {tiers.map((tier, i) => {
-          const idx = pyramid ? tiers.length - 1 - i : i
-          const widthPct = pyramid ? 42 + idx * 14 : 88 - idx * 14
-          return (
-            <div
-              key={i}
-              style={{
-                width: `${Math.max(38, Math.min(92, widthPct))}%`,
-                margin: '0 auto',
-                boxSizing: 'border-box',
-                borderRadius: large ? 6 : 2,
-                border: `1px solid ${theme.accentBorder}`,
-                background: i === 0 ? theme.accentSoft : theme.card,
-                padding: large ? '6px 8px' : '2px 3px',
-                textAlign: 'center',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: large ? '0.72rem' : '0.26rem',
-                  fontWeight: 700,
-                  color: theme.text,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-              >
+      <div style={{ flex: 1, display: 'flex', alignItems: 'stretch', gap: large ? 10 : 4, minHeight: 0 }}>
+        <div
+          style={{ width: '46%', minWidth: 0, display: 'flex' }}
+          dangerouslySetInnerHTML={{ __html: funnelDiagramInlineSvg() }}
+        />
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
+          {tiers.map((tier, i) => (
+            <div key={i} style={{ minWidth: 0 }}>
+              <div style={{ fontSize: large ? '0.7rem' : '0.24rem', fontWeight: 700, color: FUNNEL_TITLE_COLORS[i], whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {tier.title}
               </div>
               {tier.body && (
-                <div
-                  style={{
-                    fontSize: large ? PREVIEW_CAPTION_FS.large : PREVIEW_CAPTION_FS.small,
-                    color: theme.muted,
-                    marginTop: large ? 2 : 0,
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
+                <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : PREVIEW_CAPTION_FS.small, color: theme.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {tier.body}
                 </div>
               )}
             </div>
-          )
-        })}
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function PolishedDiagramPyramidPreview({ previewHints, ...props }) {
+  const { large } = props
+  const fp = frameProps(props)
+  const heading = slotText(previewHints, 'HEADING', 'Priority pyramid')
+  const tiers = Array.isArray(previewHints.funnelTiers) && previewHints.funnelTiers.length
+    ? previewHints.funnelTiers.slice(0, 5)
+    : [1, 2, 3, 4, 5].map((n) => ({ title: `Title ${String(n).padStart(2, '0')}`, body: 'Brief note' }))
+
+  return (
+    <div
+      {...fp}
+      style={{
+        ...fp.style,
+        padding: pad(large),
+        display: 'flex',
+        flexDirection: 'column',
+        gap: large ? 8 : 3,
+      }}
+    >
+      <div
+        style={{
+          fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small,
+          fontWeight: 800,
+          color: theme.text,
+          flexShrink: 0,
+          textAlign: 'left',
+        }}
+      >
+        {heading}
+      </div>
+      <div style={{ flex: 1, display: 'flex', minHeight: 0, gap: large ? 10 : 4 }}>
+        <div
+          style={{ width: '48%', minWidth: 0, display: 'flex' }}
+          dangerouslySetInnerHTML={{ __html: pyramidDiagramInlineSvg() }}
+        />
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
+          {tiers.map((tier, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: large ? 8 : 3, minWidth: 0 }}>
+              <div
+                style={{
+                  width: large ? 36 : 16,
+                  height: large ? 30 : 13,
+                  flexShrink: 0,
+                  background: PYRAMID_COLORS[i],
+                  clipPath: 'polygon(0% 6%, 92% 50%, 0% 94%)',
+                  color: '#fff',
+                  fontSize: large ? '0.45rem' : '0.16rem',
+                  fontWeight: 800,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                {String(i + 1).padStart(2, '0')}
+              </div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: large ? '0.62rem' : '0.22rem', fontWeight: 800, color: theme.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {tier.title}
+                </div>
+                {tier.body && (
+                  <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : PREVIEW_CAPTION_FS.small, color: theme.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {tier.body}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -274,9 +383,6 @@ export function PolishedDiagramVennPreview({ previewHints, ...props }) {
         { title: 'Set B', body: 'Area B' },
         { title: 'Set C', body: 'Area C' },
       ]
-  const center = previewHints.vennCenter || slotText(previewHints, 'CENTER_BODY', 'Overlap')
-
-  const circleSize = large ? 72 : 26
 
   return (
     <div
@@ -286,7 +392,7 @@ export function PolishedDiagramVennPreview({ previewHints, ...props }) {
         padding: pad(large),
         display: 'flex',
         flexDirection: 'column',
-        gap: large ? 8 : 2,
+        gap: large ? 6 : 2,
       }}
     >
       <div
@@ -294,62 +400,25 @@ export function PolishedDiagramVennPreview({ previewHints, ...props }) {
           fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small,
           fontWeight: 800,
           color: theme.text,
+          flexShrink: 0,
         }}
       >
         {heading}
       </div>
-      <div style={{ flex: 1, position: 'relative', minHeight: large ? 100 : 36 }}>
-        {[
-          { left: '8%', top: '18%', color: theme.accentSoft },
-          { left: '38%', top: '8%', color: 'color-mix(in srgb, var(--preview-accent) 8%, var(--bg-card))' },
-          { left: '62%', top: '18%', color: theme.card },
-        ].map((pos, i) => (
-          <div
-            key={i}
-            style={{
-              position: 'absolute',
-              left: pos.left,
-              top: pos.top,
-              width: circleSize,
-              height: circleSize,
-              borderRadius: '50%',
-              border: `1.5px solid ${theme.accentBorder}`,
-              background: pos.color,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              textAlign: 'center',
-              padding: large ? 6 : 2,
-              boxSizing: 'border-box',
-            }}
-          >
-            <div style={{ fontSize: large ? '0.65rem' : '0.22rem', fontWeight: 700, color: theme.text }}>
-              {sets[i]?.title}
+      <div style={{ flex: 1, minHeight: 0, display: 'flex' }} dangerouslySetInnerHTML={{ __html: vennPreviewSvg() }} />
+      <div style={{ display: 'flex', gap: large ? 8 : 3 }}>
+        {sets.map((s, i) => (
+          <div key={i} style={{ flex: 1, minWidth: 0, textAlign: 'center' }}>
+            <div style={{ fontSize: large ? '0.58rem' : '0.2rem', fontWeight: 800, color: theme.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {s.title}
             </div>
+            {s.body && (
+              <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : PREVIEW_CAPTION_FS.small, color: theme.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {s.body}
+              </div>
+            )}
           </div>
         ))}
-        <div
-          style={{
-            position: 'absolute',
-            left: '50%',
-            top: '52%',
-            transform: 'translate(-50%, -50%)',
-            fontSize: large ? '0.58rem' : '0.2rem',
-            fontWeight: 600,
-            color: theme.accent,
-            background: theme.bg,
-            padding: large ? '2px 6px' : '1px 3px',
-            borderRadius: 999,
-            border: `1px solid ${theme.accentBorder}`,
-            maxWidth: '40%',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          {center}
-        </div>
       </div>
     </div>
   )
@@ -367,6 +436,9 @@ export function PolishedDiagramProcessStepsPreview({ previewHints, ...props }) {
         { title: '3. Execute', body: 'Build' },
         { title: '4. Review', body: 'Iterate' },
       ]
+  const count = Math.min(steps.length, 4)
+  const node = large ? 22 : 10
+  const cardBg = 'color-mix(in srgb, #c4b5a0 22%, var(--preview-bg, #ffffff))'
 
   return (
     <div
@@ -376,7 +448,7 @@ export function PolishedDiagramProcessStepsPreview({ previewHints, ...props }) {
         padding: pad(large),
         display: 'flex',
         flexDirection: 'column',
-        gap: large ? 10 : 3,
+        gap: large ? 18 : 6,
       }}
     >
       <div
@@ -384,42 +456,94 @@ export function PolishedDiagramProcessStepsPreview({ previewHints, ...props }) {
           fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small,
           fontWeight: 800,
           color: theme.text,
+          textAlign: 'center',
+          flexShrink: 0,
         }}
       >
         {heading}
       </div>
       <div
         style={{
+          position: 'relative',
+          height: large ? 64 : 24,
+          flexShrink: 0,
+          margin: large ? '2px 4%' : '1px 2%',
+        }}
+      >
+        <div
+          aria-hidden
+          style={{
+            position: 'absolute',
+            left: `${100 / (count * 2)}%`,
+            right: `${100 / (count * 2)}%`,
+            top: large ? 10 : 4,
+            height: large ? 4 : 2,
+            background: theme.text,
+            opacity: 0.8,
+            borderRadius: 2,
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'grid',
+            gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))`,
+            alignItems: 'start',
+          }}
+        >
+          {steps.slice(0, count).map((_, i) => (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: large ? 3 : 1 }}>
+              <div
+                style={{
+                  width: node,
+                  height: node,
+                  borderRadius: '50%',
+                  background: theme.text,
+                  zIndex: 1,
+                }}
+              />
+              <div
+                style={{
+                  fontSize: large ? '0.62rem' : '0.2rem',
+                  fontWeight: 700,
+                  color: theme.text,
+                  lineHeight: 1,
+                }}
+              >
+                {i + 1}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div
+        style={{
           flex: 1,
           display: 'grid',
-          gridTemplateColumns: `repeat(${Math.min(steps.length, 4)}, minmax(0, 1fr))`,
-          gap: large ? 8 : 2,
-          alignItems: 'start',
+          gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))`,
+          gap: large ? 10 : 3,
           minHeight: 0,
         }}
       >
-        {steps.map((step, i) => (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: large ? 6 : 2, minWidth: 0 }}>
+        {steps.slice(0, count).map((step, i) => (
+          <div
+            key={i}
+            style={{
+              background: cardBg,
+              borderRadius: large ? 10 : 4,
+              padding: large ? '18px 14px' : '6px 4px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: large ? 6 : 2,
+              minWidth: 0,
+              minHeight: 0,
+            }}
+          >
             <div
               style={{
-                width: large ? 36 : 12,
-                height: large ? 36 : 12,
-                borderRadius: '50%',
-                border: `2px solid ${theme.accentBorder}`,
-                background: theme.accentSoft,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: large ? '0.7rem' : '0.22rem',
-                fontWeight: 800,
-                color: theme.accent,
-              }}
-            >
-              {i + 1}
-            </div>
-            <div
-              style={{
-                fontSize: large ? '0.72rem' : '0.26rem',
+                fontSize: large ? '0.78rem' : '0.26rem',
                 fontWeight: 700,
                 color: theme.text,
                 textAlign: 'center',
@@ -439,22 +563,13 @@ export function PolishedDiagramProcessStepsPreview({ previewHints, ...props }) {
                   color: theme.muted,
                   textAlign: 'center',
                   display: '-webkit-box',
-                  WebkitLineClamp: 2,
+                  WebkitLineClamp: 3,
                   WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
                 }}
               >
                 {step.body}
               </div>
-            )}
-            {i < steps.length - 1 && (
-              <div
-                aria-hidden
-                style={{
-                  position: 'absolute',
-                  display: 'none',
-                }}
-              />
             )}
           </div>
         ))}
@@ -463,9 +578,187 @@ export function PolishedDiagramProcessStepsPreview({ previewHints, ...props }) {
   )
 }
 
+export function PolishedDiagramCyclePreview({ previewHints, ...props }) {
+  const { large } = props
+  const fp = frameProps(props)
+  const heading = slotText(previewHints, 'HEADING', 'Continuous cycle')
+  const quadrants = Array.isArray(previewHints.quadrants) && previewHints.quadrants.length
+    ? previewHints.quadrants.slice(0, 4)
+    : [
+        { title: 'Plan', body: 'Define the approach' },
+        { title: 'Do', body: 'Put it into action' },
+        { title: 'Check', body: 'Measure the result' },
+        { title: 'Act', body: 'Improve and repeat' },
+      ]
+  const svg = buildCycleDiagramSvg()
+  const labelStyle = {
+    fontSize: large ? '0.72rem' : '0.24rem',
+    fontWeight: 700,
+    color: theme.text,
+    lineHeight: 1.2,
+  }
+  const bodyStyle = {
+    fontSize: large ? PREVIEW_CAPTION_FS.large : PREVIEW_CAPTION_FS.small,
+    color: theme.muted,
+    lineHeight: 1.3,
+    display: '-webkit-box',
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: 'vertical',
+    overflow: 'hidden',
+  }
+
+  return (
+    <div
+      {...fp}
+      style={{
+        ...fp.style,
+        padding: pad(large),
+        display: 'flex',
+        flexDirection: 'column',
+        gap: large ? 8 : 2,
+      }}
+    >
+      <div
+        style={{
+          fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small,
+          fontWeight: 800,
+          color: theme.text,
+          textAlign: 'center',
+          flexShrink: 0,
+        }}
+      >
+        {heading}
+      </div>
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1.35fr 1fr',
+          gap: large ? 8 : 3,
+          alignItems: 'center',
+        }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '78%', textAlign: 'right', gap: large ? 16 : 6 }}>
+          <div>
+            <div style={labelStyle}>{quadrants[3]?.title || 'Act'}</div>
+            <div style={bodyStyle}>{quadrants[3]?.body}</div>
+          </div>
+          <div>
+            <div style={labelStyle}>{quadrants[2]?.title || 'Check'}</div>
+            <div style={bodyStyle}>{quadrants[2]?.body}</div>
+          </div>
+        </div>
+        <div
+          aria-hidden
+          style={{ width: '100%', height: '100%', minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;max-height:100%;" ') }}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '78%', textAlign: 'left', gap: large ? 16 : 6 }}>
+          <div>
+            <div style={labelStyle}>{quadrants[0]?.title || 'Plan'}</div>
+            <div style={bodyStyle}>{quadrants[0]?.body}</div>
+          </div>
+          <div>
+            <div style={labelStyle}>{quadrants[1]?.title || 'Do'}</div>
+            <div style={bodyStyle}>{quadrants[1]?.body}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function PolishedDiagramMatrixPreview({ previewHints, ...props }) {
+  const { large } = props
+  const fp = frameProps(props)
+  const heading = slotText(previewHints, 'HEADING', '2×2 matrix')
+  const quadrants = Array.isArray(previewHints.quadrants) && previewHints.quadrants.length
+    ? previewHints.quadrants.slice(0, 4)
+    : [
+        { title: 'High impact · Easy', body: 'Key point' },
+        { title: 'High impact · Hard', body: 'Key point' },
+        { title: 'Low impact · Easy', body: 'Key point' },
+        { title: 'Low impact · Hard', body: 'Key point' },
+      ]
+  const colors = ['#5B8FC4', '#5B8FC4', '#4A7EB0', '#4A7EB0']
+
+  return (
+    <div
+      {...fp}
+      style={{
+        ...fp.style,
+        padding: pad(large),
+        display: 'flex',
+        flexDirection: 'column',
+        gap: large ? 8 : 2,
+      }}
+    >
+      <div
+        style={{
+          fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small,
+          fontWeight: 800,
+          color: theme.text,
+          flexShrink: 0,
+        }}
+      >
+        {heading}
+      </div>
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: large ? 6 : 2 }}>
+        <div style={{ width: large ? 14 : 6, borderRadius: 4, background: '#6B9FD4', flexShrink: 0, alignSelf: 'stretch', marginBottom: large ? 16 : 6 }} />
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: large ? 6 : 2 }}>
+          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: large ? 6 : 2, minHeight: 0, position: 'relative' }}>
+            {quadrants.map((q, i) => (
+              <div
+                key={i}
+                style={{
+                  background: colors[i],
+                  borderRadius: large ? 10 : 4,
+                  padding: large ? 8 : 3,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  minHeight: 0,
+                }}
+              >
+                <div style={{ fontSize: large ? '0.62rem' : '0.2rem', fontWeight: 800, color: '#fff', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {q.title}
+                </div>
+                {q.body && (
+                  <div style={{ fontSize: large ? '0.5rem' : '0.16rem', color: 'rgba(255,255,255,0.85)', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {q.body}
+                  </div>
+                )}
+              </div>
+            ))}
+            <div
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: large ? 36 : 14,
+                height: large ? 36 : 14,
+                borderRadius: '50%',
+                background: '#fff',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.12)',
+              }}
+            />
+          </div>
+          <div style={{ height: large ? 14 : 6, borderRadius: 4, background: '#6B9FD4', flexShrink: 0 }} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export const DIAGRAM_PREVIEW_MODES = {
   diagram_quadrants: PolishedDiagramQuadrantsPreview,
+  diagram_swot: PolishedDiagramSwotPreview,
+  diagram_matrix: PolishedDiagramMatrixPreview,
   diagram_funnel: PolishedDiagramFunnelPreview,
+  diagram_pyramid: PolishedDiagramPyramidPreview,
   diagram_venn: PolishedDiagramVennPreview,
   diagram_process_steps: PolishedDiagramProcessStepsPreview,
+  diagram_cycle: PolishedDiagramCyclePreview,
 }

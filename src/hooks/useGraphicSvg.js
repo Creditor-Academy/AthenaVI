@@ -104,6 +104,9 @@ function sanitizeInlineSvg(raw) {
 }
 
 export function resolveGraphicThemeColor(content = {}, palette = {}) {
+  const fill = content.fill
+  if (typeof fill === 'string' && fill) return fill
+  if (fill && typeof fill === 'object' && fill.color) return fill.color
   const overrides = content.colorOverrides || {}
   if (typeof overrides.primary === 'string' && overrides.primary) return overrides.primary
   return palette?.primary || palette?.accent || '#6366F1'

@@ -608,6 +608,49 @@ function PolishedQuoteAttributionPreview({ previewHints, large, className, style
   )
 }
 
+function PolishedQuoteGridPreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const quote = previewHints.quoteText || 'A very nice quote from a very nice client. Ask your client to share some thoughts about this project.'
+  const author = previewHints.authorName || 'Gemine Macberry'
+  const authorTitle = previewHints.authorTitle || 'VP of Engineering at Acme Inc.'
+  const headingText = previewHints.slots?.HEADING?.text || 'Voices from our users'
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+
+  return (
+    <div className={className} style={{
+      position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+      fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box',
+      padding: large ? '6% 4%' : '8% 5%', display: 'flex', flexDirection: 'column', gap: large ? 14 : 5, ...style,
+    }}>
+      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small, fontWeight: 800, color: t.text }}>
+        {headingText}
+      </div>
+      <div style={{ display: 'flex', gap: large ? 12 : 4, flex: 1, minHeight: 0 }}>
+        {[0, 1, 2].map((i) => (
+          <div key={i} style={{
+            flex: 1, minWidth: 0, background: '#fff', border: '1px solid #E5E7EB', borderRadius: large ? 12 : 5,
+            padding: large ? '10px 12px 12px' : '4px 5px 5px', display: 'flex', flexDirection: 'column',
+          }}>
+            <div style={{ fontSize: large ? '1.4rem' : '0.42rem', color: '#1E3A5F', fontWeight: 700, lineHeight: 1, marginBottom: large ? 6 : 2 }}>&ldquo;</div>
+            <div style={{ fontSize: large ? '0.72rem' : '0.22rem', color: t.text, lineHeight: 1.4, fontWeight: 700, flex: 1 }}>
+              {quote}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: large ? 8 : 3, marginTop: large ? 10 : 3 }}>
+              <div style={{
+                width: large ? 28 : 10, height: large ? 28 : 10, borderRadius: '50%', background: '#E5E7EB', flexShrink: 0,
+              }} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: large ? '0.62rem' : '0.2rem', fontWeight: 700, color: t.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{author}</div>
+                <div style={{ fontSize: large ? '0.5rem' : '0.16rem', color: t.muted, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{authorTitle}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function PolishedLineChartMini({ large, values = [300, 800, 2500, 5000], labels = ['Q1', 'Q2', 'Q3', 'Q4'] }) {
   const t = LAYOUT_POLISHED_THEME
   const max = Math.max(...values, 1)
@@ -1950,6 +1993,9 @@ export default function LayoutPolishedPreview({
   }
   if (previewMode === 'quote_attribution') {
     return <PolishedQuoteAttributionPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
+  }
+  if (previewMode === 'quote_grid') {
+    return <PolishedQuoteGridPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
   }
   if (previewMode === 'chart_split') {
     return <PolishedChartSplitPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />

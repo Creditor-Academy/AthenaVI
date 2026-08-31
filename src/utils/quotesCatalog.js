@@ -4,77 +4,149 @@
 import {
   slot,
   typo,
-  centeredTypo,
   layoutBase,
   heading,
-  body,
-  imageLeft,
 } from './deckLayoutV2Helpers.js'
-
-const P = {
-  short: 'A concise testimonial or supporting line that reinforces credibility without overwhelming the slide.',
-}
 
 const CATALOG = {
   quote_portrait_v1: layoutBase('quote_portrait_v1', 'quote', [
-    slot('QUOTE', 'cols 5-11, rows 2-6', 'quote', 'Customer quote goes here — keep it under 25 words.', {
+    slot('QUOTE', 'cols 2-10, rows 3-6', 'quote', 'Customer quote goes here — keep it under 25 words.', {
       layer: 10,
-      typography: typo('quote', { fontSize: 28 }),
-      max_lines: 4,
+      typography: typo('quote', { fontSize: 32, fontWeight: 700, lineHeight: 1.4 }),
+      max_lines: 5,
     }),
-    slot('ATTRIBUTION', 'cols 5-11, rows 6-7', 'attribution', 'Name, Title', {
-      layer: 10,
-      typography: typo('caption', { fontWeight: 700 }),
+    slot('NAME', 'cols 3-8, rows 8-9', 'attribution', 'Gemine Macberry', {
+      layer: 11,
+      typography: typo('caption', { fontSize: 18, fontWeight: 700, colorRole: 'text' }),
+      max_lines: 1,
     }),
-    imageLeft('cols 1-4, rows 2-8', 'PORTRAIT_IMAGE', 'card'),
+    slot('ROLE', 'cols 3-8, rows 9-10', 'caption', 'VP of Engineering at Acme Inc.', {
+      layer: 11,
+      typography: typo('caption', { fontSize: 15, colorRole: 'muted' }),
+      max_lines: 2,
+    }),
+    slot('PORTRAIT_IMAGE', 'cols 2-3, rows 8-10', 'image', null, {
+      layer: 12,
+      fit: 'cover',
+      borderRadius: 999,
+    }),
   ], { mode: 'quote_attribution' }),
 
   quote_testimonial_card_v1: layoutBase('quote_testimonial_card_v1', 'quote', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'What customers say', { max_lines: 2 }),
-    slot('QUOTE', 'cols 2-11, rows 3-5', 'quote', 'Testimonial quote in a card-friendly length.', {
+    slot('QUOTE', 'cols 3-10, rows 3-6', 'quote', 'Testimonial quote in a card-friendly length.', {
       layer: 10,
-      typography: centeredTypo('quote', { fontSize: 26 }),
-      max_lines: 4,
+      typography: typo('quote', { fontSize: 26, fontWeight: 600, lineHeight: 1.4 }),
+      max_lines: 5,
     }),
-    slot('ATTRIBUTION', 'cols 2-11, rows 5-6', 'attribution', 'Customer name · Role · Company', {
-      layer: 10,
-      typography: centeredTypo('caption'),
+    slot('NAME', 'cols 4-9, rows 8-9', 'attribution', 'Gemine Macberry', {
+      layer: 12,
+      typography: typo('caption', { fontSize: 18, fontWeight: 700, colorRole: 'text' }),
+      max_lines: 1,
     }),
-    body('BODY', 'cols 3-10, rows 6-8', P.short, 2, {
-      typography: centeredTypo('body', { fontSize: 15 }),
+    slot('ROLE', 'cols 4-9, rows 9-10', 'caption', 'VP of Engineering at Acme Inc.', {
+      layer: 12,
+      typography: typo('caption', { fontSize: 15, colorRole: 'muted' }),
+      max_lines: 2,
+    }),
+    slot('PORTRAIT_IMAGE', 'cols 3-4, rows 8-10', 'image', null, {
+      layer: 13,
+      fit: 'cover',
+      borderRadius: 999,
+    }),
+  ], { mode: 'quote_attribution' }),
+
+  quote_attribution_v1: layoutBase('quote_attribution_v1', 'quote', [
+    slot(
+      'QUOTE',
+      'cols 2-7, rows 3-6',
+      'quote',
+      'A very nice quote from a very nice client. Ask your client to share some thoughts about this project.',
+      {
+        layer: 10,
+        typography: typo('quote', { fontSize: 30, fontWeight: 700, lineHeight: 1.4 }),
+        max_lines: 5,
+      }
+    ),
+    slot('NAME', 'cols 3-7, rows 8-9', 'attribution', 'Gemine Macberry', {
+      layer: 12,
+      typography: typo('caption', { fontSize: 18, fontWeight: 700, colorRole: 'text' }),
+      max_lines: 1,
+    }),
+    slot('ROLE', 'cols 3-7, rows 9-10', 'caption', 'VP of Engineering at Acme Inc.', {
+      layer: 12,
+      typography: typo('caption', { fontSize: 15, colorRole: 'muted' }),
+      max_lines: 2,
+    }),
+    slot('PORTRAIT_IMAGE', 'cols 2-3, rows 8-10', 'image', null, {
+      layer: 13,
+      fit: 'cover',
+      borderRadius: 999,
     }),
   ], { mode: 'quote_attribution' }),
 
   quote_grid_v1: layoutBase('quote_grid_v1', 'quote', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Voices from our users', { max_lines: 2 }),
-    slot('QUOTE_1', 'cols 1-4, rows 2-5', 'quote', 'Short quote one', {
+    slot('QUOTE_1', 'cols 1-4, rows 3-6', 'quote', 'A very nice quote from a very nice client. Ask your client to share some thoughts about this project.', {
       layer: 10,
-      typography: typo('body', { fontSize: 16, fontStyle: 'italic' }),
-      max_lines: 4,
+      typography: typo('quote', { fontSize: 22, fontWeight: 700, lineHeight: 1.45 }),
+      max_lines: 8,
     }),
-    slot('ATTR_1', 'cols 1-4, rows 5-6', 'attribution', 'Name · Role', {
+    slot('NAME_1', 'cols 2-4, rows 8-9', 'attribution', 'Gemine Macberry', {
+      layer: 11,
+      typography: typo('caption', { fontSize: 16, fontWeight: 700, colorRole: 'text' }),
+      max_lines: 1,
+    }),
+    slot('ROLE_1', 'cols 2-4, rows 9-10', 'caption', 'VP of Engineering at Acme Inc.', {
+      layer: 11,
+      typography: typo('caption', { fontSize: 13, colorRole: 'muted' }),
+      max_lines: 2,
+    }),
+    slot('AVATAR_1', 'cols 1-2, rows 8-10', 'image', null, {
+      layer: 12,
+      fit: 'cover',
+      borderRadius: 999,
+    }),
+    slot('QUOTE_2', 'cols 5-8, rows 3-6', 'quote', 'A very nice quote from a very nice client. Ask your client to share some thoughts about this project.', {
       layer: 10,
-      typography: typo('caption', { fontSize: 13 }),
+      typography: typo('quote', { fontSize: 22, fontWeight: 700, lineHeight: 1.45 }),
+      max_lines: 8,
     }),
-    slot('QUOTE_2', 'cols 5-8, rows 2-5', 'quote', 'Short quote two', {
+    slot('NAME_2', 'cols 6-8, rows 8-9', 'attribution', 'Gemine Macberry', {
+      layer: 11,
+      typography: typo('caption', { fontSize: 16, fontWeight: 700, colorRole: 'text' }),
+      max_lines: 1,
+    }),
+    slot('ROLE_2', 'cols 6-8, rows 9-10', 'caption', 'VP of Engineering at Acme Inc.', {
+      layer: 11,
+      typography: typo('caption', { fontSize: 13, colorRole: 'muted' }),
+      max_lines: 2,
+    }),
+    slot('AVATAR_2', 'cols 5-6, rows 8-10', 'image', null, {
+      layer: 12,
+      fit: 'cover',
+      borderRadius: 999,
+    }),
+    slot('QUOTE_3', 'cols 9-12, rows 3-6', 'quote', 'A very nice quote from a very nice client. Ask your client to share some thoughts about this project.', {
       layer: 10,
-      typography: typo('body', { fontSize: 16, fontStyle: 'italic' }),
-      max_lines: 4,
+      typography: typo('quote', { fontSize: 22, fontWeight: 700, lineHeight: 1.45 }),
+      max_lines: 8,
     }),
-    slot('ATTR_2', 'cols 5-8, rows 5-6', 'attribution', 'Name · Role', {
-      layer: 10,
-      typography: typo('caption', { fontSize: 13 }),
+    slot('NAME_3', 'cols 10-12, rows 8-9', 'attribution', 'Gemine Macberry', {
+      layer: 11,
+      typography: typo('caption', { fontSize: 16, fontWeight: 700, colorRole: 'text' }),
+      max_lines: 1,
     }),
-    slot('QUOTE_3', 'cols 9-12, rows 2-5', 'quote', 'Short quote three', {
-      layer: 10,
-      typography: typo('body', { fontSize: 16, fontStyle: 'italic' }),
-      max_lines: 4,
+    slot('ROLE_3', 'cols 10-12, rows 9-10', 'caption', 'VP of Engineering at Acme Inc.', {
+      layer: 11,
+      typography: typo('caption', { fontSize: 13, colorRole: 'muted' }),
+      max_lines: 2,
     }),
-    slot('ATTR_3', 'cols 9-12, rows 5-6', 'attribution', 'Name · Role', {
-      layer: 10,
-      typography: typo('caption', { fontSize: 13 }),
+    slot('AVATAR_3', 'cols 9-10, rows 8-10', 'image', null, {
+      layer: 12,
+      fit: 'cover',
+      borderRadius: 999,
     }),
-  ], { mode: 'quote_attribution' }),
+  ], { mode: 'quote_grid' }),
 }
 
 export default CATALOG

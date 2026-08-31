@@ -4311,17 +4311,23 @@
   transform-origin: top left;
   overflow: hidden;
   box-sizing: border-box;
-  container-type: inline-size;
 }
 
 .aig-minimap-preview-el {
   pointer-events: none;
+  overflow: visible;
 }
 
 .aig-minimap-preview-el .ppt-canvas-el-body,
 .aig-minimap-preview-el .ppt-text-display,
 .aig-minimap-preview-el .ppt-embed-iframe {
   pointer-events: none;
+}
+
+.aig-minimap-preview-el .ppt-text-display {
+  text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+  overflow: visible !important;
 }
 
 .aig-minimap-preview-mock {

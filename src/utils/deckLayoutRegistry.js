@@ -226,19 +226,20 @@ const LAYOUT_PREVIEW_MODES = {
   agenda_timeline_preview_v1: 'timeline_horizontal',
   quote_portrait_v1: 'quote_attribution',
   quote_testimonial_card_v1: 'quote_attribution',
-  quote_grid_v1: 'quote_attribution',
+  quote_attribution_v1: 'quote_attribution',
+  quote_grid_v1: 'quote_grid',
   team_featured_lead_v1: 'team_featured_lead',
   team_speaker_bio_v1: 'team_speaker_bio',
   team_org_simple_v1: 'team_org_simple',
   logo_wall_v1: 'grid_six_images',
   logo_partner_strip_v1: 'grid_three_images',
-  diagram_swot_v1: 'diagram_quadrants',
+  diagram_swot_v1: 'diagram_swot',
   diagram_funnel_v1: 'diagram_funnel',
-  diagram_matrix_v1: 'diagram_quadrants',
+  diagram_matrix_v1: 'diagram_matrix',
   diagram_process_steps_v1: 'diagram_process_steps',
-  diagram_cycle_v1: 'diagram_quadrants',
+  diagram_cycle_v1: 'diagram_cycle',
   diagram_venn_v1: 'diagram_venn',
-  diagram_pyramid_v1: 'diagram_funnel',
+  diagram_pyramid_v1: 'diagram_pyramid',
   metric_single_v1: 'stat_hero',
   metric_two_v1: 'stat_row',
   metric_three_v1: 'stat_row',
@@ -504,6 +505,30 @@ function fillPreviewDataFromSlots(schema) {
         'Brief description',
     }))
   }
+  if (mode === 'diagram_cycle' && !Array.isArray(preview.quadrants)) {
+    preview.quadrants = [1, 2, 3, 4].map((n) => ({
+      title:
+        preview.slots?.[`Q${n}_TITLE`]?.text ||
+        slotPlaceholderText(slots, `Q${n}_TITLE`) ||
+        (n === 1 ? 'Plan' : n === 2 ? 'Do' : n === 3 ? 'Check' : 'Act'),
+      body:
+        preview.slots?.[`Q${n}_BODY`]?.text ||
+        slotPlaceholderText(slots, `Q${n}_BODY`) ||
+        '',
+    }))
+  }
+  if (mode === 'diagram_swot' && !Array.isArray(preview.quadrants)) {
+    preview.quadrants = [1, 2, 3, 4].map((n) => ({
+      title:
+        preview.slots?.[`Q${n}_TITLE`]?.text ||
+        slotPlaceholderText(slots, `Q${n}_TITLE`) ||
+        (n === 1 ? 'Strengths' : n === 2 ? 'Weaknesses' : n === 3 ? 'Opportunities' : 'Threats'),
+      body:
+        preview.slots?.[`Q${n}_BODY`]?.text ||
+        slotPlaceholderText(slots, `Q${n}_BODY`) ||
+        '',
+    }))
+  }
   if (mode === 'diagram_quadrants' && !Array.isArray(preview.quadrants)) {
     preview.quadrants = [1, 2, 3, 4].map((n) => ({
       title:
@@ -530,9 +555,18 @@ function fillPreviewDataFromSlots(schema) {
         slotPlaceholderText(slots, `funnel_${n}_body`) ||
         '',
     }))
-    if (schema.layout_id === 'diagram_pyramid_v1' || schema.preview?.diagramVariant === 'pyramid') {
-      preview.diagramVariant = 'pyramid'
-    }
+  }
+  if (mode === 'diagram_pyramid' && !Array.isArray(preview.funnelTiers)) {
+    preview.funnelTiers = [1, 2, 3, 4, 5].map((n) => ({
+      title:
+        preview.slots?.[`funnel_${n}_title`]?.text ||
+        slotPlaceholderText(slots, `funnel_${n}_title`) ||
+        `Title ${String(n).padStart(2, '0')}`,
+      body:
+        preview.slots?.[`funnel_${n}_body`]?.text ||
+        slotPlaceholderText(slots, `funnel_${n}_body`) ||
+        '',
+    }))
   }
   if (mode === 'diagram_venn' && !Array.isArray(preview.vennSets)) {
     preview.vennSets = [1, 2, 3].map((n) => ({
@@ -555,9 +589,31 @@ function fillPreviewDataFromSlots(schema) {
     if (!Array.isArray(preview.stats)) preview.stats = buildStatsFromLayoutSlots(slots)
   }
   if (mode === 'quote_attribution') {
-    preview.quoteText = preview.quoteText ?? slotPlaceholderText(slots, 'QUOTE') ?? undefined
-    preview.authorName = preview.authorName ?? slotPlaceholderText(slots, 'AUTHOR_NAME') ?? undefined
-    preview.authorTitle = preview.authorTitle ?? slotPlaceholderText(slots, 'AUTHOR_TITLE') ?? undefined
+    preview.quoteText =
+      preview.quoteText ??
+      slotPlaceholderText(slots, 'QUOTE') ??
+      slotPlaceholderText(slots, 'STATEMENT') ??
+      undefined
+    preview.authorName =
+      preview.authorName ??
+      slotPlaceholderText(slots, 'NAME') ??
+      slotPlaceholderText(slots, 'AUTHOR_NAME') ??
+      slotPlaceholderText(slots, 'ATTRIBUTION') ??
+      undefined
+    preview.authorTitle =
+      preview.authorTitle ??
+      slotPlaceholderText(slots, 'ROLE') ??
+      slotPlaceholderText(slots, 'AUTHOR_TITLE') ??
+      undefined
+  }
+  if (mode === 'quote_grid') {
+    preview.quoteText =
+      preview.quoteText ??
+      slotPlaceholderText(slots, 'QUOTE_1') ??
+      'A very nice quote from a very nice client. Ask your client to share some thoughts about this project.'
+    preview.authorName = preview.authorName ?? slotPlaceholderText(slots, 'NAME_1') ?? 'Gemine Macberry'
+    preview.authorTitle =
+      preview.authorTitle ?? slotPlaceholderText(slots, 'ROLE_1') ?? 'VP of Engineering at Acme Inc.'
   }
   if (mode === 'comparison_columns' || mode === 'pricing_plans' || mode === 'pricing_four_para') {
     const columns = buildPlansFromLayoutSlots(slots) || buildComparisonColumnsFromSlots(slots, preview)
