@@ -264,7 +264,18 @@ export function resolveButtonStyle(kitData, kind = 'primary') {
 export function normalizeBrandKitData(data = {}) {
   const empty = emptyBrandKitData()
   const fontsIn = data.fonts || {}
-  const colors = Array.isArray(data.colors) && data.colors.length ? data.colors : empty.colors
+  const rawColors = Array.isArray(data.colors) && data.colors.length ? data.colors : empty.colors
+  const colors = (() => {
+    const seen = new Set()
+    const unique = []
+    for (const color of rawColors) {
+      const id = String(color?.id || '')
+      if (!id || seen.has(id)) continue
+      seen.add(id)
+      unique.push(color)
+    }
+    return unique.length ? unique : empty.colors
+  })()
   const colorRoles = reconcileColorRoles(colors, {
     ...empty.colorRoles,
     ...(data.colorRoles || {}),
@@ -455,6 +466,30 @@ export function validateBrandKitData(data) {
   return null
 }
 
+/**
+ * Collapse duplicate kits. Same id always drops. When `byName` is true,
+ * cloned copies that share a display name (e.g. personal kit copied into a
+ * team workspace on every generate) are collapsed, keeping the first /
+ * default entry.
+ */
+export function dedupeBrandKitList(kits, { byName = false } = {}) {
+  const out = []
+  const seenId = new Set()
+  const seenName = new Set()
+  for (const kit of kits || []) {
+    const id = String(kit?.id || '')
+    if (!id || seenId.has(id)) continue
+    seenId.add(id)
+    if (byName) {
+      const name = String(kit.name || '').trim().toLowerCase()
+      if (name && seenName.has(name)) continue
+      if (name) seenName.add(name)
+    }
+    out.push(kit)
+  }
+  return out
+}
+
 export function normalizeBrandKitList(payload) {
   const root = payload?.data ?? payload
   const list = Array.isArray(root)
@@ -464,7 +499,7 @@ export function normalizeBrandKitList(payload) {
       root?.kits ||
       root?.results ||
       (Array.isArray(root?.data) ? root.data : [])
-  return (list || []).map(normalizeBrandKitSummary).filter(Boolean)
+  return dedupeBrandKitList((list || []).map(normalizeBrandKitSummary).filter(Boolean))
 }
 
 export function normalizeBrandKitSummary(kit) {

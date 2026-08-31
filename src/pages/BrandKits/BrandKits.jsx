@@ -10,6 +10,7 @@ import {
 } from '../../utils/brandKitWorkspace'
 import {
   canWriteBrandKits,
+  dedupeBrandKitList,
   emptyBrandKitData,
   newColorId,
   normalizeBrandKitData,
@@ -234,7 +235,13 @@ function BrandKits() {
 
   const loadKits = useCallback(async (wsId) => {
     const list = await brandKitService.list(wsId)
-    setBrandKits(list)
+    const ranked = [...(list || [])].sort((a, b) => {
+      if (Boolean(b.isDefault) !== Boolean(a.isDefault)) return b.isDefault ? 1 : -1
+      const tb = Date.parse(b.updatedAt || '') || 0
+      const ta = Date.parse(a.updatedAt || '') || 0
+      return tb - ta
+    })
+    setBrandKits(dedupeBrandKitList(ranked, { byName: true }))
   }, [])
 
   useEffect(() => {

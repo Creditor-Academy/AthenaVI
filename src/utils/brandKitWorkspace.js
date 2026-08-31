@@ -1,6 +1,6 @@
 import brandKitService from '../services/brandKitService.js'
 import workspaceService from '../services/workspaceService.js'
-import { canWriteBrandKits } from './brandKitHelpers.js'
+import { canWriteBrandKits, dedupeBrandKitList } from './brandKitHelpers.js'
 import { resolvePresentationWorkspaceContext } from './presentationContext.js'
 
 function normalizeWorkspace(ws) {
@@ -29,7 +29,15 @@ function normalizeWorkspace(ws) {
 /** Workspaces the user can open for Brand Kit management (read all; write OWNER/ADMIN). */
 export async function listBrandKitWorkspaces() {
   const raw = (await workspaceService.listWorkspaces()) || []
-  return raw.map(normalizeWorkspace).filter(Boolean)
+  const seen = new Set()
+  const unique = []
+  for (const ws of raw.map(normalizeWorkspace).filter(Boolean)) {
+    const id = String(ws.id)
+    if (seen.has(id)) continue
+    seen.add(id)
+    unique.push(ws)
+  }
+  return unique
 }
 
 /**
@@ -90,12 +98,15 @@ export async function listBrandKitsUsableInWorkspace(workspaceId) {
     }
   }
 
-  merged.sort((a, b) => {
+  // Target workspace is added first, so same-name personal clones drop.
+  const unique = dedupeBrandKitList(merged, { byName: true })
+
+  unique.sort((a, b) => {
     if (Boolean(b.isDefault) !== Boolean(a.isDefault)) return b.isDefault ? 1 : -1
     return String(a.name || '').localeCompare(String(b.name || ''))
   })
 
-  return merged
+  return unique
 }
 
 /** @deprecated Prefer listBrandKitsUsableInWorkspace(presentationWorkspaceId) */
@@ -142,6 +153,20 @@ export async function ensureBrandKitInWorkspace(
 
   if (!detail?.id) {
     throw new Error('Brand kit not found')
+  }
+
+  // Reuse a same-name kit already in the target instead of cloning again.
+  try {
+    const existing = await brandKitService.list(targetWorkspaceId)
+    const nameKey = String(detail.name || '').trim().toLowerCase()
+    const match = nameKey
+      ? (existing || []).find(
+          (kit) => String(kit.name || '').trim().toLowerCase() === nameKey
+        )
+      : null
+    if (match?.id) return String(match.id)
+  } catch {
+    // fall through to create
   }
 
   const created = await brandKitService.create(targetWorkspaceId, {

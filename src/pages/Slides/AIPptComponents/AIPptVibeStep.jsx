@@ -9,6 +9,7 @@ import { MdDashboard } from 'react-icons/md'
 import presentationService from '../../../services/presentationService'
 import brandKitService from '../../../services/brandKitService'
 import { listBrandKitsUsableInWorkspace } from '../../../utils/brandKitWorkspace'
+import { dedupeBrandKitList } from '../../../utils/brandKitHelpers'
 import {
   normalizeDeckPackDetail,
   resolvePackThumbnailUrl,
@@ -197,7 +198,10 @@ export default function AIPptVibeStep({
   const [brandKitsLoading, setBrandKitsLoading] = useState(false)
   const [brandKitsError, setBrandKitsError] = useState('')
 
-  const effectiveBrandKits = loadedBrandKits ?? brandKits
+  const effectiveBrandKits = useMemo(
+    () => dedupeBrandKitList(loadedBrandKits ?? brandKits, { byName: true }),
+    [loadedBrandKits, brandKits]
+  )
 
   const loadBrandKits = useCallback(async () => {
     if (!workspaceId) {
