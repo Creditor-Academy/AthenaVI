@@ -47,6 +47,7 @@ export default function InsertToolbar({
   onMediaAttached,
   insertDisabledReason,
   orientation = 'horizontal',
+  clearanceLeft = 88,
 }) {
   const [openTool, setOpenTool] = useState(null)
   const [panelPos, setPanelPos] = useState({ top: 80, left: null })
@@ -91,8 +92,7 @@ export default function InsertToolbar({
         left = (viewportW - panelW) / 2
       }
 
-      // Keep clear of the left outline / Add slide rail (~260px)
-      const minLeft = 280
+      const minLeft = clearanceLeft
       left = Math.max(minLeft, Math.min(left, viewportW - panelW - margin))
 
       setPanelPos({
@@ -109,7 +109,7 @@ export default function InsertToolbar({
       cancelAnimationFrame(raf)
       window.removeEventListener('resize', place)
     }
-  }, [openTool])
+  }, [openTool, clearanceLeft])
 
   const handleInsert = (payload) => {
     onInsert?.(payload)

@@ -78,7 +78,7 @@ export default function ElementToolbar({
   }
 
   const fontFamilyControl = (
-    <div className="ppt-element-toolbar-font-picker">
+    <div className={`ppt-element-toolbar-font-picker ${isPanel ? 'is-panel' : ''}`}>
       <FontPicker
         label={isPanel ? '' : ''}
         value={c.fontFamily || 'Inter'}
@@ -155,20 +155,6 @@ export default function ElementToolbar({
     </>
   )
 
-  const caseButtons = CASE_OPTIONS.map(({ id, title, label }) => (
-    <button
-      key={id}
-      type="button"
-      className={`ppt-element-toolbar-btn ppt-element-toolbar-btn--case ${c.textTransform === id ? 'is-active' : ''}`}
-      disabled={disabled}
-      onClick={() => setCase(id)}
-      title={title}
-      aria-pressed={c.textTransform === id}
-    >
-      <span className="ppt-case-glyph">{label}</span>
-    </button>
-  ))
-
   const alignButtons = ALIGN_OPTIONS.map(({ id, Icon, title }) => (
     <button
       key={id}
@@ -199,7 +185,7 @@ export default function ElementToolbar({
     <div className="ppt-element-toolbar-color" title="Text color">
       <ColorFillPicker
         key={element.id}
-        compact={!isPanel}
+        compact
         title="Text color"
         value={fill}
         palette={palette}
@@ -209,64 +195,173 @@ export default function ElementToolbar({
     </div>
   )
 
-  const spacingControls = (
-    <>
-      <input
-        type="number"
-        className="ppt-element-toolbar-spacing"
-        title="Line spacing"
-        aria-label="Line spacing"
-        value={c.lineHeight ?? 1.25}
-        min={0.8}
-        max={3}
-        step={0.05}
-        disabled={disabled}
-        onChange={(e) => patch({ lineHeight: Number(e.target.value) || 1.25 })}
-      />
-      <input
-        type="number"
-        className="ppt-element-toolbar-spacing"
-        title="Letter spacing"
-        aria-label="Letter spacing"
-        value={c.letterSpacing ?? 0}
-        min={-5}
-        max={40}
-        step={0.5}
-        disabled={disabled}
-        onChange={(e) => {
-          const next = Number(e.target.value)
-          patch({ letterSpacing: Number.isFinite(next) ? next : 0 })
-        }}
-      />
-    </>
-  )
-
-  const styleDivider = <span className="ppt-element-toolbar-divider" aria-hidden="true">|</span>
+  const wrapOn = (c.wrap || 'pre-wrap') !== 'nowrap'
 
   if (isPanel) {
     return (
-      <div
-        className="ppt-element-toolbar ppt-element-toolbar--panel ppt-text-style-panel"
-        role="toolbar"
-        aria-label="Text style"
-      >
-        <div className="ppt-text-style-heading">Style</div>
-        <div className="ppt-text-style-font">{fontFamilyControl}</div>
-        <div className="ppt-text-style-flow">
-          {sizeControl}
-          {formatButtons}
-          {styleDivider}
-          {caseButtons}
-          {styleDivider}
-          {alignButtons}
-          {styleDivider}
-          {listButtons}
-          {styleDivider}
-          {spacingControls}
-          {styleDivider}
-          {colorControl}
-        </div>
-      </div>
+      <>
+        <section className="ppt-props-group">
+          <header className="ppt-props-group-head">
+            <h3 className="ppt-props-group-title">Font</h3>
+          </header>
+          <div className="ppt-props-group-body">
+            {fontFamilyControl}
+            <div className="ppt-text-font-row">
+              {sizeControl}
+              {colorControl}
+            </div>
+            <div className="ppt-icon-cluster" role="group" aria-label="Text style">
+              {formatButtons}
+            </div>
+          </div>
+        </section>
+
+        <section className="ppt-props-group">
+          <header className="ppt-props-group-head">
+            <h3 className="ppt-props-group-title">Alignment</h3>
+          </header>
+          <div className="ppt-props-group-body">
+            <div className="ppt-segmented ppt-segmented--4" role="radiogroup" aria-label="Text alignment">
+              {ALIGN_OPTIONS.map(({ id, Icon, title }) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="radio"
+                  aria-checked={(c.align || 'left') === id}
+                  className={`ppt-segmented-btn ${(c.align || 'left') === id ? 'is-active' : ''}`}
+                  disabled={disabled}
+                  title={title}
+                  onClick={() => patch({ align: id })}
+                >
+                  <Icon size={15} aria-hidden />
+                </button>
+              ))}
+            </div>
+            <div className="ppt-icon-cluster" role="group" aria-label="List style">
+              {listButtons}
+            </div>
+            <div className="ppt-segmented ppt-segmented--3" role="radiogroup" aria-label="Letter case">
+              {CASE_OPTIONS.map(({ id, title, label }) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="radio"
+                  aria-checked={c.textTransform === id}
+                  className={`ppt-segmented-btn ${c.textTransform === id ? 'is-active' : ''}`}
+                  disabled={disabled}
+                  title={title}
+                  onClick={() => setCase(id)}
+                >
+                  <span className="ppt-case-glyph">{label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="ppt-props-group">
+          <header className="ppt-props-group-head">
+            <h3 className="ppt-props-group-title">Spacing</h3>
+          </header>
+          <div className="ppt-props-group-body">
+            <div className="ppt-props-row">
+              <span className="ppt-props-row-label">Line height</span>
+              <div className="ppt-props-row-control">
+                <div className="ppt-size-stepper" title="Line height">
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    aria-label="Decrease line height"
+                    onClick={() =>
+                      patch({ lineHeight: Math.max(0.8, Number(((c.lineHeight ?? 1.25) - 0.05).toFixed(2))) })
+                    }
+                  >
+                    <FiMinus size={14} />
+                  </button>
+                  <input
+                    type="number"
+                    className="ppt-size-stepper-input"
+                    value={c.lineHeight ?? 1.25}
+                    min={0.8}
+                    max={3}
+                    step={0.05}
+                    disabled={disabled}
+                    aria-label="Line height"
+                    onChange={(e) => patch({ lineHeight: Number(e.target.value) || 1.25 })}
+                  />
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    aria-label="Increase line height"
+                    onClick={() =>
+                      patch({ lineHeight: Math.min(3, Number(((c.lineHeight ?? 1.25) + 0.05).toFixed(2))) })
+                    }
+                  >
+                    <FiPlus size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="ppt-props-row">
+              <span className="ppt-props-row-label">Letter spacing</span>
+              <div className="ppt-props-row-control">
+                <div className="ppt-size-stepper" title="Letter spacing">
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    aria-label="Decrease letter spacing"
+                    onClick={() =>
+                      patch({
+                        letterSpacing: Math.max(-5, Number(((c.letterSpacing ?? 0) - 0.5).toFixed(1))),
+                      })
+                    }
+                  >
+                    <FiMinus size={14} />
+                  </button>
+                  <input
+                    type="number"
+                    className="ppt-size-stepper-input"
+                    value={c.letterSpacing ?? 0}
+                    min={-5}
+                    max={40}
+                    step={0.5}
+                    disabled={disabled}
+                    aria-label="Letter spacing"
+                    onChange={(e) => {
+                      const next = Number(e.target.value)
+                      patch({ letterSpacing: Number.isFinite(next) ? next : 0 })
+                    }}
+                  />
+                  <button
+                    type="button"
+                    disabled={disabled}
+                    aria-label="Increase letter spacing"
+                    onClick={() =>
+                      patch({
+                        letterSpacing: Math.min(40, Number(((c.letterSpacing ?? 0) + 0.5).toFixed(1))),
+                      })
+                    }
+                  >
+                    <FiPlus size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="ppt-props-row ppt-props-row--switch">
+              <span className="ppt-props-row-label">Wrap text</span>
+              <button
+                type="button"
+                className={`ppt-toggle-switch ${wrapOn ? 'is-on' : ''}`}
+                role="switch"
+                aria-checked={wrapOn}
+                aria-label="Wrap text"
+                disabled={disabled}
+                onClick={() => patch({ wrap: wrapOn ? 'nowrap' : 'pre-wrap' })}
+              />
+            </div>
+          </div>
+        </section>
+      </>
     )
   }
 

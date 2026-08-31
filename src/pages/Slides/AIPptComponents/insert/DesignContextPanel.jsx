@@ -6,8 +6,15 @@ import SlideTransitionPicker from './SlideTransitionPicker'
 import ColorFillPicker from './ColorFillPicker'
 import FontPicker from '../../../../components/shared/fonts/FontPicker'
 import LayoutPolishedPreview from '../../../../components/ppt/LayoutPolishedPreview'
+import { measureTextContentSize } from '../../../../utils/canvasTransformUtils'
 import { ensureGoogleFontLoaded } from '../../../../utils/googleFonts'
-import { mediaFlipTransform, slideBackgroundFill } from '../../../../utils/presentationHelpers'
+import {
+  mediaFlipTransform,
+  PPT_SHAPE_BORDER_STYLES,
+  normalizeShapeBorderStyle,
+  slideBackgroundFill,
+} from '../../../../utils/presentationHelpers'
+import { normalizeFillValue } from '../../../../utils/pptTextContent'
 import ElementTransformControls from '../ElementTransformControls'
 import { resolveLayoutSchemaById } from '../../../../utils/deckLayoutRegistry'
 import {
@@ -27,6 +34,32 @@ const IMAGE_FIT_OPTIONS = [
 ]
 
 export { DEFAULT_SLIDE_BG }
+
+function themePaletteSwatches(themeVisual) {
+  const p = themeVisual?.palette || {}
+  const colors = [p.bg, p.primary, p.accent, p.secondary, p.text, p.muted]
+  const seen = new Set()
+  const out = []
+  for (const color of colors) {
+    const key = String(color || '').trim().toLowerCase()
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    out.push(color)
+  }
+  return out.slice(0, 5)
+}
+
+function fitTextBoxToContent(element) {
+  const frame = document.querySelector(`[data-element-id="${element.id}"]`)
+  if (!frame) return null
+  const textEl =
+    frame.querySelector('.ppt-text-display, .ppt-text-editable') || frame
+  const measured = measureTextContentSize(textEl, { paddingX: 0, paddingY: 4 })
+  if (!measured) return null
+  const framePx = frame.getBoundingClientRect().height || 1
+  const current = Number(element.placement?.height) || 40
+  return Math.max(24, Math.round((measured.height / framePx) * current))
+}
 
 function SimilarLayoutThumb({ schema, aspectRatio }) {
   if (!schema) {
@@ -78,7 +111,7 @@ function SlideDesignSection({
   }
 
   return (
-    <div className="ppt-props-stack">
+    <div className="ppt-props-stack ppt-slide-design-panel">
       <section className="ppt-props-group">
         <header className="ppt-props-group-head">
           <h3 className="ppt-props-group-title">Background</h3>
@@ -119,6 +152,64 @@ function SlideDesignSection({
               <FiRefreshCw size={14} aria-hidden />
               Reset
             </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="ppt-props-group">
+        <header className="ppt-props-group-head">
+          <h3 className="ppt-props-group-title">Theme</h3>
+        </header>
+        <div className="ppt-props-group-body">
+          <div className="ppt-theme-preview">
+            <div className="ppt-theme-swatches" aria-hidden>
+              {themePaletteSwatches(themeVisual).map((color) => (
+                <span
+                  key={color}
+                  className="ppt-theme-swatch"
+                  style={{ background: color }}
+                />
+              ))}
+            </div>
+            <span className="ppt-theme-name">{themeVisual?.name || 'Default'}</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="ppt-props-group">
+        <header className="ppt-props-group-head">
+          <h3 className="ppt-props-group-title">Fonts</h3>
+        </header>
+        <div className="ppt-props-group-body">
+          <div className="ppt-props-row ppt-props-row--stack">
+            <span className="ppt-props-row-label">Heading</span>
+            <FontPicker
+              label=""
+              value={slideStyles?.headerFont || 'Inter'}
+              disabled={disabled}
+              compact
+              menuLabel="Heading font"
+              usedFontFamilies={usedFontFamilies}
+              onChange={(family) => {
+                ensureGoogleFontLoaded(family)
+                onSlideStylesChange?.({ ...slideStyles, headerFont: family })
+              }}
+            />
+          </div>
+          <div className="ppt-props-row ppt-props-row--stack">
+            <span className="ppt-props-row-label">Body</span>
+            <FontPicker
+              label=""
+              value={slideStyles?.bodyFont || 'Inter'}
+              disabled={disabled}
+              compact
+              menuLabel="Body font"
+              usedFontFamilies={usedFontFamilies}
+              onChange={(family) => {
+                ensureGoogleFontLoaded(family)
+                onSlideStylesChange?.({ ...slideStyles, bodyFont: family })
+              }}
+            />
           </div>
         </div>
       </section>
@@ -181,49 +272,6 @@ function SlideDesignSection({
           />
         </div>
       </section>
-
-      <section className="ppt-props-group">
-        <header className="ppt-props-group-head">
-          <h3 className="ppt-props-group-title">Default fonts</h3>
-        </header>
-        <div className="ppt-props-group-body ppt-slide-style-grid">
-          <div className="ppt-slide-style-row">
-            <FontPicker
-              label="Header"
-              value={slideStyles?.headerFont || 'Inter'}
-              disabled={disabled}
-              compact
-              usedFontFamilies={usedFontFamilies}
-              onChange={(family) => {
-                ensureGoogleFontLoaded(family)
-                onSlideStylesChange?.({ ...slideStyles, headerFont: family })
-              }}
-            />
-          </div>
-          <div className="ppt-slide-style-row">
-            <FontPicker
-              label="Body"
-              value={slideStyles?.bodyFont || 'Inter'}
-              disabled={disabled}
-              compact
-              usedFontFamilies={usedFontFamilies}
-              onChange={(family) => {
-                ensureGoogleFontLoaded(family)
-                onSlideStylesChange?.({ ...slideStyles, bodyFont: family })
-              }}
-            />
-          </div>
-        </div>
-      </section>
-
-      <section className="ppt-props-group">
-        <header className="ppt-props-group-head">
-          <h3 className="ppt-props-group-title">Theme</h3>
-        </header>
-        <div className="ppt-props-group-body">
-          <div className="ppt-props-static-value">{themeVisual?.name || 'Default'}</div>
-        </div>
-      </section>
     </div>
   )
 }
@@ -280,7 +328,11 @@ function TableDesignSection({ element, onChangeContent, disabled }) {
                   value={cell}
                   disabled={disabled}
                   placeholder={c.hasHeader !== false && ri === 0 ? `Header ${ci + 1}` : 'Value'}
-                  onChange={(e) => updateCell(ri, ci, e.target.value)}
+                  onChange={(e) => {
+                    const inputType = e.nativeEvent?.inputType
+                    if (inputType === 'historyUndo' || inputType === 'historyRedo') return
+                    updateCell(ri, ci, e.target.value)
+                  }}
                 />
               ))
             )}
@@ -414,6 +466,279 @@ function ChartDesignSection({ element, palette, onChangeContent, disabled }) {
   )
 }
 
+function clampInt(value, min, max, fallback) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return fallback
+  return Math.max(min, Math.min(max, Math.round(n)))
+}
+
+function fillSolidColor(fill, fallback = '#0f172a') {
+  const normalized = normalizeFillValue(fill, fallback)
+  return normalized?.type === 'gradient' ? normalized.stops?.[0]?.color : normalized?.color
+}
+
+function ShapeDesignSection({
+  element,
+  palette,
+  onChangeContent,
+  onChangePlacement,
+  onToggleLock,
+  onReplaceImage,
+  onClearDeviceFrameScreen,
+  disabled,
+}) {
+  const c = element?.content || {}
+  const p = element?.placement || {}
+  const opacity = p.opacity != null ? Math.round(p.opacity * 100) : 100
+  const isDeviceFrame = Boolean(c.deviceFrame || c.shape === 'device-frame')
+  const isEmbed = element?.type === 'embed'
+  const strokeWidth = clampInt(c.strokeWidth, 0, 20, 2)
+  const cornerRadius = clampInt(c.borderRadius, 0, 64, isEmbed ? 8 : 0)
+  const borderStyle = normalizeShapeBorderStyle(c.borderStyle)
+
+  const patchContent = (updates) => onChangeContent?.(updates)
+  const ensureVisibleStroke = (patch = {}) => {
+    if ((c.strokeWidth ?? 0) <= 0) patch.strokeWidth = 2
+    if (!c.stroke) patch.stroke = fillSolidColor(c.fill, '#0f172a')
+    return patch
+  }
+
+  return (
+    <div className="ppt-props-stack ppt-shape-design-panel">
+      <section className="ppt-props-group">
+        <header className="ppt-props-group-head">
+          <h3 className="ppt-props-group-title">Color</h3>
+        </header>
+        <div className="ppt-props-group-body">
+          <div className="ppt-props-row ppt-props-row--fill">
+            <span className="ppt-props-row-label">{isDeviceFrame ? 'Frame' : 'Fill'}</span>
+            <div className="ppt-props-row-control">
+              <ColorFillPicker
+                title={isDeviceFrame ? 'Frame color' : 'Fill color'}
+                value={normalizeFillValue(
+                  isDeviceFrame ? c.stroke || c.frameColor || c.fill : c.fill,
+                  '#1e293b'
+                )}
+                palette={palette}
+                disabled={disabled}
+                fallbackHex="#1e293b"
+                onChange={(fill) => {
+                  const color = fillSolidColor(fill, '#1e293b')
+                  if (isDeviceFrame) {
+                    patchContent({ stroke: color, frameColor: color, fill: color })
+                    return
+                  }
+                  patchContent({ fill })
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {!isDeviceFrame && (
+        <section className="ppt-props-group">
+          <header className="ppt-props-group-head">
+            <h3 className="ppt-props-group-title">Border</h3>
+          </header>
+          <div className="ppt-props-group-body">
+            <div className="ppt-props-row ppt-props-row--fill">
+              <span className="ppt-props-row-label">Color</span>
+              <div className="ppt-props-row-control">
+                <ColorFillPicker
+                  title="Border color"
+                  value={normalizeFillValue(c.stroke, '#0f172a')}
+                  palette={palette}
+                  disabled={disabled}
+                  fallbackHex="#0f172a"
+                  onChange={(fill) => {
+                    const color = fillSolidColor(fill, '#0f172a')
+                    patchContent(ensureVisibleStroke({ stroke: color }))
+                  }}
+                />
+              </div>
+            </div>
+            <div className="ppt-props-row">
+              <span className="ppt-props-row-label">Weight</span>
+              <div className="ppt-props-row-control">
+                <div className="ppt-size-stepper" title="Border weight">
+                  <button
+                    type="button"
+                    disabled={disabled || strokeWidth <= 0}
+                    aria-label="Decrease border weight"
+                    onClick={() => patchContent({ strokeWidth: Math.max(0, strokeWidth - 1) })}
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    className="ppt-size-stepper-input"
+                    min={0}
+                    max={20}
+                    value={strokeWidth}
+                    disabled={disabled}
+                    aria-label="Border weight"
+                    onChange={(e) =>
+                      patchContent({ strokeWidth: clampInt(e.target.value, 0, 20, strokeWidth) })
+                    }
+                  />
+                  <button
+                    type="button"
+                    disabled={disabled || strokeWidth >= 20}
+                    aria-label="Increase border weight"
+                    onClick={() => patchContent({ strokeWidth: Math.min(20, strokeWidth + 1) })}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div className="ppt-props-row ppt-props-row--stack">
+              <span className="ppt-props-row-label">Style</span>
+              <div className="ppt-shape-border-styles" role="radiogroup" aria-label="Border style">
+                {PPT_SHAPE_BORDER_STYLES.map((opt) => {
+                  const active = borderStyle === opt.id
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      role="radio"
+                      className={`ppt-shape-border-style ${active ? 'is-active' : ''}`}
+                      title={opt.label}
+                      aria-label={opt.label}
+                      aria-checked={active}
+                      disabled={disabled}
+                      onClick={() => patchContent(ensureVisibleStroke({ borderStyle: opt.id }))}
+                    >
+                      <span className={`ppt-shape-border-style-line ppt-shape-border-style-line--${opt.id}`} />
+                      <span className="ppt-shape-border-style-label">{opt.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {!isDeviceFrame && (
+        <section className="ppt-props-group">
+          <header className="ppt-props-group-head">
+            <h3 className="ppt-props-group-title">Corners</h3>
+          </header>
+          <div className="ppt-props-group-body">
+            <div className="ppt-props-row ppt-props-row--slider">
+              <span className="ppt-props-row-label">Radius</span>
+              <div className="ppt-props-slider">
+                <input
+                  type="range"
+                  min={0}
+                  max={64}
+                  value={cornerRadius}
+                  disabled={disabled}
+                  aria-label="Corner radius"
+                  onChange={(e) =>
+                    patchContent({ borderRadius: clampInt(e.target.value, 0, 64, 0) })
+                  }
+                />
+                <span className="ppt-props-slider-value">{cornerRadius}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {isDeviceFrame && (
+        <section className="ppt-props-group">
+          <header className="ppt-props-group-head">
+            <h3 className="ppt-props-group-title">Screen</h3>
+          </header>
+          <div className="ppt-props-group-body">
+            <p className="ppt-props-empty">
+              Drag an image from Media onto this frame, or click an image while it is selected.
+            </p>
+            <div className="ppt-props-actions ppt-props-actions--stack">
+              <button
+                type="button"
+                className="ppt-props-action-btn"
+                disabled={disabled}
+                onClick={onReplaceImage}
+              >
+                <FiImage size={15} aria-hidden />
+                Replace screen image
+              </button>
+              {(c.screenUrl || c.url || c.src) && (
+                <button
+                  type="button"
+                  className="ppt-props-action-btn ppt-props-action-btn--ghost"
+                  disabled={disabled}
+                  onClick={onClearDeviceFrameScreen}
+                >
+                  Clear screen image
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      <section className="ppt-props-group">
+        <header className="ppt-props-group-head">
+          <h3 className="ppt-props-group-title">Transform</h3>
+        </header>
+        <div className="ppt-props-group-body">
+          <ElementTransformControls
+            key={element?.id || 'shape-transform'}
+            placement={p}
+            content={c}
+            disabled={disabled}
+            onChangePlacement={onChangePlacement}
+            onChangeContent={onChangeContent}
+          />
+        </div>
+      </section>
+
+      <section className="ppt-props-group">
+        <header className="ppt-props-group-head">
+          <h3 className="ppt-props-group-title">Appearance</h3>
+        </header>
+        <div className="ppt-props-group-body">
+          <div className="ppt-props-row ppt-props-row--slider">
+            <span className="ppt-props-row-label">Transparency</span>
+            <div className="ppt-props-slider">
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={opacity}
+                disabled={disabled}
+                aria-label="Transparency"
+                onChange={(e) =>
+                  onChangePlacement?.({ opacity: Number(e.target.value) / 100 })
+                }
+              />
+              <span className="ppt-props-slider-value">{opacity}%</span>
+            </div>
+          </div>
+          <div className="ppt-props-row ppt-props-row--switch">
+            <span className="ppt-props-row-label">Lock position</span>
+            <button
+              type="button"
+              className={`ppt-props-lock-btn ${element?.locked ? 'is-locked' : ''}`}
+              disabled={disabled}
+              onClick={onToggleLock}
+              aria-pressed={!!element?.locked}
+            >
+              {element?.locked ? <FiLock size={14} aria-hidden /> : <FiUnlock size={14} aria-hidden />}
+              {element?.locked ? 'Locked' : 'Unlocked'}
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
 function ImageDesignSection({
   element,
   slide,
@@ -434,28 +759,25 @@ function ImageDesignSection({
 
   return (
     <div className="ppt-props-stack ppt-image-design-panel">
-      {(c.url || c.src) && (
-        <section className="ppt-props-group ppt-props-group--preview">
-          <div className="ppt-design-image-preview">
-          <img
-            src={c.url || c.src}
-            alt=""
-            className="ppt-media-flip"
-            style={{
-              transform: mediaFlipTransform(c),
-              transformOrigin: 'center center',
-            }}
-          />
-          </div>
-        </section>
-      )}
-
       <section className="ppt-props-group">
         <header className="ppt-props-group-head">
           <h3 className="ppt-props-group-title">Media</h3>
         </header>
         <div className="ppt-props-group-body">
-          <div className="ppt-props-actions ppt-props-actions--stack">
+          {(c.url || c.src) && (
+            <div className="ppt-design-image-preview">
+              <img
+                src={c.url || c.src}
+                alt=""
+                className="ppt-media-flip"
+                style={{
+                  transform: mediaFlipTransform(c),
+                  transformOrigin: 'center center',
+                }}
+              />
+            </div>
+          )}
+          <div className="ppt-props-actions">
             <button
               type="button"
               className="ppt-props-action-btn"
@@ -463,7 +785,7 @@ function ImageDesignSection({
               onClick={onReplaceImage}
             >
               <FiImage size={15} aria-hidden />
-              Replace image
+              Replace
             </button>
             <button
               type="button"
@@ -472,7 +794,7 @@ function ImageDesignSection({
               onClick={onCropImage}
             >
               <FiCrop size={15} aria-hidden />
-              Crop &amp; fit
+              Crop
             </button>
           </div>
         </div>
@@ -480,7 +802,7 @@ function ImageDesignSection({
 
       <section className="ppt-props-group">
         <header className="ppt-props-group-head">
-          <h3 className="ppt-props-group-title">Position</h3>
+          <h3 className="ppt-props-group-title">Crop &amp; fit</h3>
         </header>
         <div className="ppt-props-group-body">
           <div className="ppt-props-row ppt-props-row--stack">
@@ -539,15 +861,15 @@ function ImageDesignSection({
         </header>
         <div className="ppt-props-group-body">
           <div className="ppt-props-row ppt-props-row--slider">
-            <span className="ppt-props-row-label">Opacity</span>
+            <span className="ppt-props-row-label">Transparency</span>
             <div className="ppt-props-slider">
               <input
                 type="range"
-                min={10}
+                min={0}
                 max={100}
                 value={opacity}
                 disabled={disabled}
-                aria-label="Opacity"
+                aria-label="Transparency"
                 onChange={(e) =>
                   onChangePlacement?.({ opacity: Number(e.target.value) / 100 })
                 }
@@ -566,6 +888,100 @@ function ImageDesignSection({
             >
               {element?.locked ? <FiLock size={14} aria-hidden /> : <FiUnlock size={14} aria-hidden />}
               {element?.locked ? 'Locked' : 'Unlocked'}
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function TextDesignSection({
+  element,
+  palette,
+  usedFontFamilies = [],
+  onChangeContent,
+  onChangePlacement,
+  onToggleLock,
+  disabled,
+}) {
+  const p = element?.placement || {}
+  const c = element?.content || {}
+  const opacity = p.opacity != null ? Math.round(p.opacity * 100) : 100
+
+  return (
+    <div className="ppt-props-stack ppt-text-design-panel">
+      <ElementToolbar
+        element={element}
+        palette={palette}
+        disabled={disabled}
+        variant="panel"
+        usedFontFamilies={usedFontFamilies}
+        onChange={(content) => onChangeContent?.(content)}
+      />
+
+      <section className="ppt-props-group">
+        <header className="ppt-props-group-head">
+          <h3 className="ppt-props-group-title">Transform</h3>
+        </header>
+        <div className="ppt-props-group-body">
+          <ElementTransformControls
+            key={element?.id || 'text-transform'}
+            placement={p}
+            content={c}
+            disabled={disabled}
+            onChangePlacement={onChangePlacement}
+            onChangeContent={onChangeContent}
+          />
+        </div>
+      </section>
+
+      <section className="ppt-props-group">
+        <header className="ppt-props-group-head">
+          <h3 className="ppt-props-group-title">Appearance</h3>
+        </header>
+        <div className="ppt-props-group-body">
+          <div className="ppt-props-row ppt-props-row--slider">
+            <span className="ppt-props-row-label">Transparency</span>
+            <div className="ppt-props-slider">
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={opacity}
+                disabled={disabled}
+                aria-label="Transparency"
+                onChange={(e) =>
+                  onChangePlacement?.({ opacity: Number(e.target.value) / 100 })
+                }
+              />
+              <span className="ppt-props-slider-value">{opacity}%</span>
+            </div>
+          </div>
+          <div className="ppt-props-row ppt-props-row--switch">
+            <span className="ppt-props-row-label">Lock position</span>
+            <button
+              type="button"
+              className={`ppt-props-lock-btn ${element?.locked ? 'is-locked' : ''}`}
+              disabled={disabled}
+              onClick={onToggleLock}
+              aria-pressed={!!element?.locked}
+            >
+              {element?.locked ? <FiLock size={14} aria-hidden /> : <FiUnlock size={14} aria-hidden />}
+              {element?.locked ? 'Locked' : 'Unlocked'}
+            </button>
+          </div>
+          <div className="ppt-props-actions">
+            <button
+              type="button"
+              className="ppt-props-action-btn"
+              disabled={disabled}
+              onClick={() => {
+                const nextH = fitTextBoxToContent(element)
+                if (nextH) onChangePlacement?.({ height: nextH })
+              }}
+            >
+              Fit to text
             </button>
           </div>
         </div>
@@ -610,6 +1026,7 @@ export default function DesignContextPanel({
   onChangeElementPlacement,
   onToggleElementLock,
   onReplaceImage,
+  onClearDeviceFrameScreen,
   onCropImage,
   onToggleImageAsBackground,
   onChangeTransition,
@@ -641,23 +1058,14 @@ export default function DesignContextPanel({
       )}
 
       {(focus === 'text' || focus === 'textbox') && element && (
-        <ElementPropertiesPanel
+        <TextDesignSection
           element={element}
           palette={palette}
           disabled={disabled}
+          usedFontFamilies={usedFontFamilies}
           onChangeContent={onChangeElementContent}
           onChangePlacement={onChangeElementPlacement}
           onToggleLock={onToggleElementLock}
-          toolbar={
-            <ElementToolbar
-              element={element}
-              palette={palette}
-              disabled={disabled}
-              variant="panel"
-              usedFontFamilies={usedFontFamilies}
-              onChange={(content) => onChangeElementContent?.(content)}
-            />
-          }
         />
       )}
 
@@ -674,6 +1082,19 @@ export default function DesignContextPanel({
             onToggleImageAsBackground?.(element.id, enabled)
           }
           disabled={disabled}
+        />
+      )}
+
+      {(focus === 'shape' || focus === 'embed') && element && (
+        <ShapeDesignSection
+          element={element}
+          palette={palette}
+          disabled={disabled}
+          onChangeContent={onChangeElementContent}
+          onChangePlacement={onChangeElementPlacement}
+          onToggleLock={onToggleElementLock}
+          onReplaceImage={onReplaceImage}
+          onClearDeviceFrameScreen={onClearDeviceFrameScreen}
         />
       )}
 
@@ -694,7 +1115,7 @@ export default function DesignContextPanel({
         />
       )}
 
-      {!['slide', 'text', 'textbox', 'image', 'icon', 'chart', 'table'].includes(focus) && element && (
+      {!['slide', 'text', 'textbox', 'image', 'icon', 'chart', 'table', 'shape', 'embed'].includes(focus) && element && (
         <ElementPropertiesPanel
           element={element}
           palette={palette}
@@ -703,6 +1124,7 @@ export default function DesignContextPanel({
           onChangePlacement={onChangeElementPlacement}
           onToggleLock={onToggleElementLock}
           onReplaceImage={onReplaceImage}
+          onClearDeviceFrameScreen={onClearDeviceFrameScreen}
           onCropImage={onCropImage}
         />
       )}

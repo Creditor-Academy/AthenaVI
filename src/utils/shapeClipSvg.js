@@ -28,15 +28,19 @@ export function buildClipShapeSvgProps({
   stroke = '#475569',
   strokeWidth = 3,
   outlined = false,
+  strokeDasharray,
 }) {
   const points = parsePolygonClipPath(clipPath)
   if (!points) return null
+  const width = Number(strokeWidth) || 0
+  const showStroke = Boolean(stroke && stroke !== 'none' && width > 0)
   return {
     viewBox: '0 0 100 100',
     points,
     fill: outlined ? 'none' : fill,
-    stroke: outlined ? stroke || fill : 'none',
-    strokeWidth: outlined ? Math.max(1.5, Number(strokeWidth) || 3) : 0,
+    stroke: showStroke ? stroke || fill : 'none',
+    strokeWidth: showStroke ? Math.max(1, width) : 0,
+    strokeDasharray: showStroke ? strokeDasharray : undefined,
     strokeLinejoin: 'round',
     strokeLinecap: 'round',
   }
@@ -59,6 +63,7 @@ export function clipShapeSvgElementProps(svgProps, { pad = 4 } = {}) {
       fill: svgProps.fill,
       stroke: svgProps.stroke,
       strokeWidth: sw,
+      strokeDasharray: svgProps.strokeDasharray,
       strokeLinejoin: svgProps.strokeLinejoin || 'round',
       strokeLinecap: svgProps.strokeLinecap || 'round',
       vectorEffect: 'non-scaling-stroke',

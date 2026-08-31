@@ -207,8 +207,13 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
             <ClipShapeSvg
               clipPath={rendered.clipPath}
               fill={typeof svgFill === 'string' ? svgFill : '#475569'}
-              stroke={rendered.stroke || '#475569'}
-              strokeWidth={rendered.strokeWidth || 3}
+              stroke={
+                rendered.strokeWidth > 0
+                  ? (rendered.stroke || '#475569')
+                  : 'none'
+              }
+              strokeWidth={rendered.strokeWidth || 0}
+              strokeDasharray={rendered.strokeDasharray}
               outlined={Boolean(rendered.outlined)}
             />
           </div>
