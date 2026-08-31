@@ -32,6 +32,7 @@ import AIPptGenerator from '../Slides/AIPptGenerator.jsx'
 import PptBuilder from '../Slides/PptBuilder/PptBuilder.jsx'
 import AIImageStudio from '../Slides/AIStudio/AIImageStudio.jsx'
 import AIPptEditor from '../Slides/AIPptComponents/AIPptEditor.jsx'
+import PptDeckOpenBoot from '../Slides/AIPptComponents/PptDeckOpenBoot.jsx'
 import SlidesComingSoon from '../Slides/SlidesComingSoon.jsx'
 import { getAvatarTypeOption } from '../Avatars/avatarTypeOptions.js'
 import NotificationsQuickModal from '../../components/ui/NotificationsQuickModal/NotificationsQuickModal.jsx'
@@ -494,12 +495,15 @@ function Dashboard({ onCreate, initialSection }) {
   }
 
   if (section === 'editor') {
+    if (!editorData?.workspaceId || !editorData?.presentationId) {
+      return <PptDeckOpenBoot title={editorData?.config?.title || editorData?.title || ''} />
+    }
     return (
       <AIPptEditor
         outline={editorData?.outline || []}
         config={editorData?.config || {}}
-        workspaceId={editorData?.workspaceId}
-        presentationId={editorData?.presentationId}
+        workspaceId={editorData.workspaceId}
+        presentationId={editorData.presentationId}
         onBack={() => {
           setPresentationCreateContext(null)
           clearPresentationEditorSession()

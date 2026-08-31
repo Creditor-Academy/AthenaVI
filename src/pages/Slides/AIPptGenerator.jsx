@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './AIPptGenerator.css'
 
 import AIPptWizard from './AIPptComponents/AIPptWizard'
+import PptDeckOpenBoot from './AIPptComponents/PptDeckOpenBoot'
 import AIPptOutline from './AIPptComponents/AIPptOutline'
 import AIPptGenerating from './AIPptComponents/AIPptGenerating'
 import PptHistorySidebar from './AIPptComponents/PptHistorySidebar'
@@ -61,6 +62,8 @@ export default function AIPptGenerator({
   const [isBusy, setIsBusy] = useState(false)
   const [flowNonce, setFlowNonce] = useState(0)
   const [wizardStep, setWizardStep] = useState(1)
+  const [openingEditor, setOpeningEditor] = useState(false)
+  const [openingTitle, setOpeningTitle] = useState('')
 
   const handleWizardComplete = (generatedOutline, generatorConfig, apiSession) => {
     setOutlineData(generatedOutline)
@@ -151,30 +154,36 @@ export default function AIPptGenerator({
 
   const handleOpenHistoryItem = (item) => {
     if (!item?.id || !item?.workspaceId) return
-    setSession({
+    const title = item.title || 'Untitled Presentation'
+    setOpeningTitle(title)
+    setOpeningEditor(true)
+    onOpenPresentation?.({
+      outline: [],
+      config: {
+        title,
+        theme: item.themeId || 'petrol',
+        workspaceId: item.workspaceId,
+        presentationId: item.id,
+      },
       workspaceId: item.workspaceId,
       presentationId: item.id,
       folderId: item.folderId || null,
-      title: item.title || 'Untitled Presentation',
-      themeId: item.themeId || null,
     })
-    setConfig({
-      title: item.title || 'Untitled Presentation',
-      theme: item.themeId || 'petrol',
-      workspaceId: item.workspaceId,
-      presentationId: item.id,
-    })
-    setFlowError('')
-    setStage('preview')
   }
 
   const handleEditPreview = (data) => {
+    setOpeningTitle(data?.config?.title || data?.title || '')
+    setOpeningEditor(true)
     onOpenPresentation?.(data)
   }
 
   const showHistorySidebar = stage === 'preview' || (stage === 'wizard' && wizardStep === 1)
   const isDayPage = stage === 'wizard'
   const dayBackground = PPT_DAY_BACKGROUNDS[promptDaypart] || PPT_DAY_BACKGROUNDS.afternoon
+
+  if (openingEditor) {
+    return <PptDeckOpenBoot title={openingTitle} />
+  }
 
   return (
     <div

@@ -27,7 +27,7 @@ import ImageCropModal from './ImageCropModal'
 import PptQuickMenu from './PptQuickMenu'
 import SlideEditAiPanel from './SlideEditAiPanel'
 import MinimapSlidePreview from './MinimapSlidePreview'
-import PptEditorBootScreen from './PptEditorBootScreen'
+import PptDeckOpenBoot from './PptDeckOpenBoot'
 import { usePptEditorHistory } from '../../../hooks/usePptEditorHistory'
 import { usePptElementMutations } from './usePptElementMutations'
 import { computePptSmartGuides } from '../../../utils/pptSmartGuides'
@@ -3297,7 +3297,7 @@ export default function AIPptEditor({
   }
 
   if (loading) {
-    return <PptEditorBootScreen title={deckTitle} />
+    return <PptDeckOpenBoot title={deckTitle} />
   }
 
   return (

@@ -16,6 +16,13 @@ import {
 } from './utils/dashboardRouting.js'
 import { parseProjectCommentsDeepLink } from './utils/inboxNotifications.js'
 import SessionExpiredModal from './components/ui/SessionExpiredModal/SessionExpiredModal.jsx'
+import PptDeckOpenBoot from './pages/Slides/AIPptComponents/PptDeckOpenBoot.jsx'
+
+function isPptEditorBootPath() {
+  const path = readClientPath()
+  if (isPublicPresentationPath(path)) return false
+  return resolveDashboardSectionFromPath(path) === 'editor'
+}
 
 function mergeCreateConfigFromDeepLink(prev) {
   const deepLink = parseProjectCommentsDeepLink()
@@ -132,6 +139,7 @@ const ProtectedRoute = ({ children, setView }) => {
   }, [isAuthenticated, isSessionExpired, loading, setView])
 
   if (loading) {
+    if (isPptEditorBootPath()) return <PptDeckOpenBoot />
     return (
       <div style={{
         display: 'flex',
@@ -200,19 +208,22 @@ const SessionExpiredModalContainer = ({ setView }) => {
   )
 }
 
-const PageFallback = () => (
-  <div style={{
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: '#f8fafc',
-    color: '#64748b',
-    fontSize: '15px'
-  }}>
-    Loading page...
-  </div>
-)
+const PageFallback = () => {
+  if (isPptEditorBootPath()) return <PptDeckOpenBoot />
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: '#f8fafc',
+      color: '#64748b',
+      fontSize: '15px'
+    }}>
+      Loading page...
+    </div>
+  )
+}
 
 // App Component with Auth Protection
 function App() {
