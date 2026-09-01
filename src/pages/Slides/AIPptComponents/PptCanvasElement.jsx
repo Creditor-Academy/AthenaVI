@@ -478,15 +478,17 @@ export default function PptCanvasElement({
     const url = c.url || c.src || c.thumbnailUrl || c.previewUrl
     if (!url) {
       const radius = c.borderRadius != null ? c.borderRadius : 0
-      const avatarSlot = /^(PORTRAIT_IMAGE|AVATAR|AVATAR_\d+)$/i.test(String(el.slotId || ''))
-      if (el.type === 'image' && avatarSlot) {
+      const avatarSlot = /^(AVATAR|AVATAR_\d+)$/i.test(String(el.slotId || ''))
+      const circular = c.borderRadius === 999 || c.borderRadius === '50%'
+      if (el.type === 'image' && (avatarSlot || (circular && /PORTRAIT_IMAGE/i.test(String(el.slotId || ''))))) {
         return (
           <div
             style={{
               ...fillStyle,
               overflow: 'hidden',
               borderRadius: 999,
-              background: 'transparent',
+              background: c.placeholderFill || '#C5CDD8',
+              boxShadow: 'inset 0 0 0 2px #9AA3B2',
             }}
             aria-hidden
           />

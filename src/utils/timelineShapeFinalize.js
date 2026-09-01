@@ -43,6 +43,7 @@ import {
   quotePortraitGeom,
   quoteTestimonialGeom,
   quoteStatementLeftGeom,
+  quoteAttributionSplitGeom,
 } from './quoteGridLayout'
 import {
   timelineNodeInlineSvg,
@@ -2118,7 +2119,6 @@ function layoutQuoteSingleCard(elements, palette, canvas, geom, opts = {}) {
   const muted = paletteColor(palette, 'muted', '#6B7280')
   const cardFill = paletteColor(palette, 'cardBg', '#FFFFFF')
   const markFill = paletteColor(palette, 'primary', QUOTE_MARK_COLOR)
-  const avatarFill = paletteColor(palette, 'surface', '#D5DCE6')
   const quoteSize = opts.quoteSize || 32
   const quoteWeight = opts.quoteWeight || 700
   const prevBySlot = new Map(
@@ -2134,7 +2134,7 @@ function layoutQuoteSingleCard(elements, palette, canvas, geom, opts = {}) {
   const hasName = stripped.some((el) => /^NAME(_\d+)?$/i.test(String(el.slotId || '')))
   const cleaned = stripped.filter((el) => {
     const sid = String(el.slotId || '').toUpperCase()
-    if (hasName && sid === 'ATTRIBUTION') return false
+    if (hasName && /^(ATTRIBUTION|ATTR|AUTHOR|AUTHOR_NAME)$/i.test(sid)) return false
     return true
   })
   const g = geom
@@ -2163,6 +2163,8 @@ function layoutQuoteSingleCard(elements, palette, canvas, geom, opts = {}) {
           lineHeight: 1.4,
           color: textColor,
           wrap: 'wrap',
+          clipToSlot: false,
+          fontStyle: 'italic',
         },
       }
     }
@@ -2177,9 +2179,11 @@ function layoutQuoteSingleCard(elements, palette, canvas, geom, opts = {}) {
           verticalAlign: 'center',
           fontSize: 18,
           fontWeight: 700,
-          lineHeight: 1.2,
+          lineHeight: 1.35,
           color: textColor,
-          wrap: 'wrap',
+          wrap: 'nowrap',
+          clipToSlot: false,
+          verticalAlign: 'flex-start',
         },
       }
     }
@@ -2191,22 +2195,29 @@ function layoutQuoteSingleCard(elements, palette, canvas, geom, opts = {}) {
         content: {
           ...base,
           align: 'left',
-          verticalAlign: 'flex-start',
+          verticalAlign: 'center',
           fontSize: 15,
           fontWeight: 400,
           lineHeight: 1.3,
           color: muted,
           wrap: 'wrap',
+          clipToSlot: false,
         },
       }
     }
     if (isAvatarSlotId(sid)) {
-      const url = el.content?.url || el.content?.src
       return {
         ...el,
         layer: 13,
-        placement: { ...g.avatar, rotation: 0, opacity: url ? 1 : 0.02 },
-        content: { ...(el.content || {}), fit: 'cover', borderRadius: 999, shadow: undefined, boxShadow: undefined },
+        placement: { ...g.avatar, rotation: 0, opacity: 1 },
+        content: {
+          ...(el.content || {}),
+          fit: 'cover',
+          borderRadius: 999,
+          placeholderFill: '#C5CDD8',
+          shadow: undefined,
+          boxShadow: undefined,
+        },
       }
     }
     return el
@@ -2254,7 +2265,12 @@ function layoutQuoteSingleCard(elements, palette, canvas, geom, opts = {}) {
       type: 'shape',
       layer: 11,
       placement: { ...g.avatar, rotation: 0, opacity: 1 },
-      content: { shape: 'ellipse', fill: prevA?.content?.fill || avatarFill },
+      content: {
+        shape: 'ellipse',
+        fill: prevA?.content?.fill || '#C5CDD8',
+        stroke: '#9AA3B2',
+        strokeWidth: 2,
+      },
       role: 'decoration',
       slotId: 'QUOTE_AVATAR_BG',
     },
@@ -2265,7 +2281,7 @@ function layoutQuoteSingleCard(elements, palette, canvas, geom, opts = {}) {
       type: 'image',
       layer: 13,
       placement: { ...g.avatar, rotation: 0, opacity: 1 },
-      content: { fit: 'cover', borderRadius: 999, placeholderFill: 'transparent' },
+      content: { fit: 'cover', borderRadius: 999, placeholderFill: '#C5CDD8' },
       role: 'image',
       slotId: 'PORTRAIT_IMAGE',
     })
@@ -2311,15 +2327,202 @@ export function layoutStatementLeft(elements, schema, palette = {}, canvas = {})
 }
 
 export function layoutQuoteAttribution(elements, schema, palette = {}, canvas = {}) {
+  if (!Array.isArray(elements)) return elements
   const canvasW = canvas.width || 1920
   const canvasH = canvas.height || 1080
-  return layoutQuoteSingleCard(elements, palette, canvas, quoteStatementLeftGeom(canvasW, canvasH), {
-    quoteSize: 30,
-    quoteWeight: 700,
+  const textColor = paletteColor(palette, 'text', '#1F2937')
+  const muted = paletteColor(palette, 'muted', '#6B7280')
+  const cardFill = paletteColor(palette, 'cardBg', '#FFFFFF')
+  const markFill = paletteColor(palette, 'primary', QUOTE_MARK_COLOR)
+  const g = quoteAttributionSplitGeom(canvasW, canvasH)
+  const decoIds = /^(QUOTE_CARD|QUOTE_MARK|QUOTE_AVATAR_BG)$/i
+  const prevBySlot = new Map(
+    (elements || [])
+      .filter((el) => decoIds.test(String(el.slotId || '')))
+      .map((el) => [String(el.slotId || '').toUpperCase(), el])
+  )
+  const stripped = elements.filter(
+    (el) =>
+      !decoIds.test(String(el.slotId || '')) &&
+      !/^(HEADING|BODY|EYEBROW)$/i.test(String(el.slotId || ''))
+  )
+  const hasName = stripped.some((el) => /^NAME(_\d+)?$/i.test(String(el.slotId || '')))
+  const cleaned = stripped.filter((el) => {
+    const sid = String(el.slotId || '').toUpperCase()
+    if (hasName && /^(ATTRIBUTION|ATTR|AUTHOR|AUTHOR_NAME)$/i.test(sid)) return false
+    if ((el.type === 'image' || el.type === 'icon') && sid !== 'PORTRAIT_IMAGE' && sid !== 'AVATAR') return false
+    return true
   })
+  const next = cleaned.map((el) => {
+    const sid = String(el.slotId || '').toUpperCase()
+    const base = {
+      ...(el.content || {}),
+      letterSpacing: '0',
+      padding: 0,
+      paddingX: 0,
+      stroke: undefined,
+      strokeWidth: 0,
+      fontStyle: 'normal',
+    }
+    if (sid === 'QUOTE' || sid === 'STATEMENT') {
+      return {
+        ...el,
+        layer: 10,
+        placement: { ...g.quote, rotation: 0, opacity: 1 },
+        content: {
+          ...base,
+          align: 'left',
+          verticalAlign: 'flex-start',
+          fontSize: 30,
+          fontWeight: 700,
+          lineHeight: 1.4,
+          color: textColor,
+          wrap: 'wrap',
+          clipToSlot: false,
+          fontStyle: 'italic',
+        },
+      }
+    }
+    if (sid === 'NAME' || sid === 'AUTHOR_NAME' || sid === 'ATTRIBUTION') {
+      return {
+        ...el,
+        layer: 12,
+        placement: { ...g.name, rotation: 0, opacity: 1 },
+        content: {
+          ...base,
+          align: 'left',
+          verticalAlign: 'flex-start',
+          fontSize: 18,
+          fontWeight: 700,
+          lineHeight: 1.35,
+          color: textColor,
+          wrap: 'nowrap',
+          clipToSlot: false,
+        },
+      }
+    }
+    if (sid === 'ROLE' || sid === 'AUTHOR_TITLE') {
+      return {
+        ...el,
+        layer: 12,
+        placement: { ...g.role, rotation: 0, opacity: 1 },
+        content: {
+          ...base,
+          align: 'left',
+          verticalAlign: 'flex-start',
+          fontSize: 15,
+          fontWeight: 400,
+          lineHeight: 1.3,
+          color: muted,
+          wrap: 'wrap',
+          clipToSlot: false,
+        },
+      }
+    }
+    if (sid === 'AVATAR') {
+      return {
+        ...el,
+        layer: 14,
+        placement: { ...g.avatar, rotation: 0, opacity: 1 },
+        content: {
+          ...(el.content || {}),
+          fit: 'cover',
+          borderRadius: 999,
+          placeholderFill: '#C5CDD8',
+        },
+      }
+    }
+    if (sid === 'PORTRAIT_IMAGE') {
+      return {
+        ...el,
+        layer: 13,
+        placement: { ...g.image, rotation: 0, opacity: 1 },
+        content: {
+          ...(el.content || {}),
+          fit: 'cover',
+          borderRadius: '0 22px 22px 0',
+        },
+      }
+    }
+    return el
+  })
+  const hasHero = next.some((el) => String(el.slotId || '').toUpperCase() === 'PORTRAIT_IMAGE')
+  const hasAvatar = next.some((el) => String(el.slotId || '').toUpperCase() === 'AVATAR')
+  const prevC = prevBySlot.get('QUOTE_CARD')
+  const prevM = prevBySlot.get('QUOTE_MARK')
+  const prevA = prevBySlot.get('QUOTE_AVATAR_BG')
+  const deco = [
+    {
+      id: prevC?.id || newShapeId('shp-qacard'),
+      type: 'shape',
+      layer: 1,
+      placement: { ...g.card, rotation: 0, opacity: 1 },
+      content: {
+        shape: 'rect',
+        fill: prevC?.content?.fill || cardFill,
+        borderRadius: 22,
+        stroke: QUOTE_CARD_BORDER,
+        strokeWidth: 1.5,
+        layoutSurface: true,
+      },
+      role: 'decoration',
+      slotId: 'QUOTE_CARD',
+    },
+    {
+      id: prevM?.id || newShapeId('shp-qamark'),
+      type: 'graphic',
+      layer: 8,
+      placement: { ...g.mark, rotation: 0, opacity: 1 },
+      content: {
+        svg: quoteMarkInlineSvg(),
+        colorMode: 'recolorable',
+        fill: prevM?.content?.fill || markFill,
+        alt: 'Quote',
+      },
+      role: 'decoration',
+      slotId: 'QUOTE_MARK',
+    },
+    {
+      id: prevA?.id || newShapeId('shp-qaavbg'),
+      type: 'shape',
+      layer: 11,
+      placement: { ...g.avatar, rotation: 0, opacity: 1 },
+      content: {
+        shape: 'ellipse',
+        fill: prevA?.content?.fill || '#C5CDD8',
+        stroke: '#9AA3B2',
+        strokeWidth: 2,
+      },
+      role: 'decoration',
+      slotId: 'QUOTE_AVATAR_BG',
+    },
+  ]
+  if (!hasHero) {
+    deco.push({
+      id: newShapeId('img-qasplit'),
+      type: 'image',
+      layer: 13,
+      placement: { ...g.image, rotation: 0, opacity: 1 },
+      content: { fit: 'cover', borderRadius: '0 22px 22px 0' },
+      role: 'image',
+      slotId: 'PORTRAIT_IMAGE',
+    })
+  }
+  if (!hasAvatar) {
+    deco.push({
+      id: newShapeId('img-qaav'),
+      type: 'image',
+      layer: 14,
+      placement: { ...g.avatar, rotation: 0, opacity: 1 },
+      content: { fit: 'cover', borderRadius: 999, placeholderFill: '#C5CDD8' },
+      role: 'image',
+      slotId: 'AVATAR',
+    })
+  }
+  return [...deco, ...next]
 }
 
-const QUOTE_GRID_DECO = /^(QUOTE_CARD_|QUOTE_MARK_)/i
+const QUOTE_GRID_DECO = /^(QUOTE_CARD_|QUOTE_MARK_|QUOTE_AVATAR_BG_)/i
 
 export function layoutQuoteGrid(elements, schema, palette = {}, canvas = {}) {
   if (!Array.isArray(elements)) return elements
@@ -2336,9 +2539,14 @@ export function layoutQuoteGrid(elements, schema, palette = {}, canvas = {}) {
       .map((el) => [String(el.slotId || '').toUpperCase(), el])
   )
   const stripped = elements.filter((el) => !QUOTE_GRID_DECO.test(String(el.slotId || '')))
+  const hasName = stripped.some((el) => /^NAME_[1-3]$/i.test(String(el.slotId || '')))
+  const cleaned = stripped.filter((el) => {
+    if (hasName && /^(ATTR)_[1-3]$/i.test(String(el.slotId || ''))) return false
+    return true
+  })
   const geoms = [0, 1, 2].map((i) => quoteGridCardGeom(i, frame))
 
-  const next = stripped.map((el) => {
+  const next = cleaned.map((el) => {
     const sid = String(el.slotId || '')
     const base = {
       ...(el.content || {}),
@@ -2388,6 +2596,8 @@ export function layoutQuoteGrid(elements, schema, palette = {}, canvas = {}) {
           lineHeight: 1.45,
           color: textColor,
           wrap: 'wrap',
+          clipToSlot: false,
+          fontStyle: 'italic',
         },
       }
     }
@@ -2407,6 +2617,7 @@ export function layoutQuoteGrid(elements, schema, palette = {}, canvas = {}) {
           lineHeight: 1.2,
           color: textColor,
           wrap: 'wrap',
+          clipToSlot: false,
         },
       }
     }
@@ -2420,12 +2631,13 @@ export function layoutQuoteGrid(elements, schema, palette = {}, canvas = {}) {
         content: {
           ...base,
           align: 'left',
-          verticalAlign: 'flex-start',
+          verticalAlign: 'center',
           fontSize: 13,
           fontWeight: 400,
           lineHeight: 1.3,
           color: muted,
           wrap: 'wrap',
+          clipToSlot: false,
         },
       }
     }
@@ -2434,9 +2646,14 @@ export function layoutQuoteGrid(elements, schema, palette = {}, canvas = {}) {
       const i = Number(avM[1]) - 1
       return {
         ...el,
-        layer: 12,
+        layer: 13,
         placement: { ...geoms[i].avatar, rotation: 0, opacity: 1 },
-        content: { ...(el.content || {}), fit: 'cover', borderRadius: 999 },
+        content: {
+          ...(el.content || {}),
+          fit: 'cover',
+          borderRadius: 999,
+          placeholderFill: '#C5CDD8',
+        },
       }
     }
     return el
@@ -2482,14 +2699,30 @@ export function layoutQuoteGrid(elements, schema, palette = {}, canvas = {}) {
       role: 'decoration',
       slotId: markId,
     })
+    const avBgId = `QUOTE_AVATAR_BG_${i + 1}`
+    const prevA = prevBySlot.get(avBgId)
+    deco.push({
+      id: prevA?.id || newShapeId('shp-qavbg'),
+      type: 'shape',
+      layer: 11,
+      placement: { ...g.avatar, rotation: 0, opacity: 1 },
+      content: {
+        shape: 'ellipse',
+        fill: prevA?.content?.fill || '#C5CDD8',
+        stroke: '#9AA3B2',
+        strokeWidth: 2,
+      },
+      role: 'decoration',
+      slotId: avBgId,
+    })
     const avId = `AVATAR_${i + 1}`
     if (!seenAvatar.has(avId)) {
       deco.push({
         id: newShapeId('img-qav'),
         type: 'image',
-        layer: 12,
+        layer: 13,
         placement: { ...g.avatar, rotation: 0, opacity: 1 },
-        content: { fit: 'cover', borderRadius: 999, placeholderFill: '#E5E7EB' },
+        content: { fit: 'cover', borderRadius: 999, placeholderFill: '#C5CDD8' },
         role: 'image',
         slotId: avId,
       })
@@ -2649,7 +2882,7 @@ export function layoutDiagramVenn(elements, schema, palette = {}, canvas = {}) {
 }
 
 export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = {}) {
-  const layoutId = schema?.layout_id
+  const layoutId = schema?.layout_id || schema?.id || schema?.layoutId
   if (isDiagramProcessStepsLayout(layoutId)) {
     return layoutDiagramProcessSteps(elements, schema, palette, canvas)
   }
@@ -2686,8 +2919,14 @@ export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = 
   if (isStatementLeftLayout(layoutId)) {
     return layoutStatementLeft(elements, schema, palette, canvas)
   }
-  if (isQuoteAttributionLayout(layoutId) || isQuoteSingleCardFromSlots(schema)) {
+  if (isQuoteAttributionLayout(layoutId)) {
     return layoutQuoteAttribution(elements, schema, palette, canvas)
+  }
+  if (isQuoteSingleCardFromSlots(schema)) {
+    return layoutQuoteSingleCard(elements, palette, canvas, quoteStatementLeftGeom(canvas.width || 1920, canvas.height || 1080), {
+      quoteSize: 30,
+      quoteWeight: 700,
+    })
   }
   let next = applyDefaultCardShapes(elements, schema, palette, canvas)
   next = applyProcessLinnerHortiShapes(next, schema, palette, canvas)

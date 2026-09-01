@@ -77,10 +77,15 @@ const CATALOG = {
       typography: typo('caption', { fontSize: 15, colorRole: 'muted' }),
       max_lines: 2,
     }),
-    slot('PORTRAIT_IMAGE', 'cols 2-3, rows 8-10', 'image', null, {
-      layer: 13,
+    slot('AVATAR', 'cols 2-3, rows 8-10', 'image', null, {
+      layer: 14,
       fit: 'cover',
       borderRadius: 999,
+    }),
+    slot('PORTRAIT_IMAGE', 'cols 8-12, rows 1-10', 'image', null, {
+      layer: 13,
+      fit: 'cover',
+      borderRadius: 0,
     }),
   ], { mode: 'quote_attribution' }),
 
