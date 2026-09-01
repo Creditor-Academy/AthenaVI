@@ -10,6 +10,7 @@ import {
   FiZoomIn,
   FiZoomOut,
   FiExternalLink,
+  FiCheck,
 } from 'react-icons/fi'
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { MdDragIndicator, MdOutlineColorLens, MdRotateRight } from 'react-icons/md'
@@ -48,7 +49,7 @@ import { extractShareToken, getOrCreateViewerSessionId } from '../../../utils/pp
 import PptPresenceAvatars from './PptPresenceAvatars'
 import usePptPresence from './usePptPresence'
 import brandKitService from '../../../services/brandKitService'
-import { dedupeBrandKitList } from '../../../utils/brandKitHelpers'
+import { dedupeBrandKitList, primaryLogoUrlFromKit, brandKitInitials } from '../../../utils/brandKitHelpers'
 import assetService from '../../../services/assetService'
 import { isInsufficientCreditsError } from '../../../services/creditsService'
 import {
@@ -58,6 +59,7 @@ import {
   extractSlideFromMutation,
   extractSlidesFromPresentation,
   extractDeckPackId,
+  extractAppliedBrandKitId,
   extractGenerationPrompt,
   getSlideImage,
   isSlideBackgroundElement,
@@ -986,6 +988,9 @@ export default function AIPptEditor({
   const [brandKits, setBrandKits] = useState([])
   const [brandKitOpen, setBrandKitOpen] = useState(false)
   const [applyingBrandKit, setApplyingBrandKit] = useState(false)
+  const [appliedBrandKitId, setAppliedBrandKitId] = useState(
+    () => extractAppliedBrandKitId(initialDeck, config)
+  )
   const [deckTitle, setDeckTitle] = useState(config.title || 'Untitled Presentation')
   const [deckPackId, setDeckPackId] = useState(config.packId || null)
   const [generationPrompt, setGenerationPrompt] = useState(
@@ -1018,6 +1023,7 @@ export default function AIPptEditor({
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [layoutSchemaMap, setLayoutSchemaMap] = useState({})
   const brandKitMenuRef = useRef(null)
+  const brandKitLogoFetchRef = useRef(new Set())
   const canvasSaveTimers = useRef({})
   const elementPatchTimers = useRef({})
   const pendingPlacementRef = useRef({})
@@ -1330,6 +1336,8 @@ export default function AIPptEditor({
     setDeckPackId(extractDeckPackId(data) || deckPackIdRef.current)
     const nextPrompt = extractGenerationPrompt(data, config)
     if (nextPrompt) setGenerationPrompt(nextPrompt)
+    const nextBrandKitId = extractAppliedBrandKitId(data, config)
+    if (nextBrandKitId) setAppliedBrandKitId(nextBrandKitId)
     if (data?.title || data?.presentation?.title) {
       setDeckTitle(data?.title || data?.presentation?.title)
     }
@@ -2225,6 +2233,8 @@ export default function AIPptEditor({
     }
     const nextPrompt = extractGenerationPrompt(initialDeck, config)
     if (nextPrompt) setGenerationPrompt(nextPrompt)
+    const nextBrandKitId = extractAppliedBrandKitId(initialDeck, config)
+    if (nextBrandKitId) setAppliedBrandKitId(nextBrandKitId)
     if (slides[0]?.id) setSelectedSlideId((prev) => prev || slides[0].id)
     setLoading(false)
   }, [viewOnly, initialDeck, config.screenSize, config.aspectRatio])
@@ -2243,6 +2253,43 @@ export default function AIPptEditor({
     return () => document.removeEventListener('click', onDocClick)
   }, [])
 
+  useEffect(() => {
+    if (!brandKitOpen || viewOnly || !workspaceId || !brandKits.length) return undefined
+    const missing = brandKits.filter((kit) => {
+      if (primaryLogoUrlFromKit(kit)) return false
+      return !brandKitLogoFetchRef.current.has(String(kit.id))
+    })
+    if (!missing.length) return undefined
+
+    missing.forEach((kit) => brandKitLogoFetchRef.current.add(String(kit.id)))
+    let cancelled = false
+    Promise.all(
+      missing.map((kit) =>
+        brandKitService.get(kit.workspaceId || workspaceId, kit.id).catch(() => null)
+      )
+    ).then((details) => {
+      if (cancelled) return
+      const byId = new Map(
+        details.filter(Boolean).map((detail) => [String(detail.id), detail])
+      )
+      if (!byId.size) return
+      setBrandKits((prev) =>
+        prev.map((kit) => {
+          const detail = byId.get(String(kit.id))
+          if (!detail) return kit
+          return {
+            ...kit,
+            ...detail,
+            media: Array.isArray(detail.media) && detail.media.length ? detail.media : kit.media,
+          }
+        })
+      )
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [brandKitOpen, viewOnly, workspaceId, brandKits])
+
   const handleApplyBrandKit = async (brandKitId) => {
     if (viewOnly) {
       askOwner()
@@ -2251,6 +2298,7 @@ export default function AIPptEditor({
     if (!workspaceId || !presentationId || !brandKitId || isGenerating) return
     setApplyingBrandKit(true)
     setBrandKitOpen(false)
+    setAppliedBrandKitId(String(brandKitId))
     setError('')
     try {
       await presentationService.applyBrandKit(workspaceId, presentationId, brandKitId)
@@ -3613,22 +3661,43 @@ export default function AIPptEditor({
               <span className="aig-editor-btn-label">{applyingBrandKit ? 'Applying…' : 'Brand Kit'}</span>
             </button>
             {brandKitOpen && (
-              <div className="aig-export-dropdown">
+              <div className="aig-export-dropdown aig-brandkit-dropdown" role="menu">
                 {!brandKits.length && (
-                  <button type="button" disabled>
-                    No brand kits
-                  </button>
+                  <p className="aig-brandkit-empty">No brand kits in this workspace</p>
                 )}
-                {brandKits.map((kit) => (
-                  <button
-                    key={kit.id}
-                    type="button"
-                    onClick={() => handleApplyBrandKit(kit.id)}
-                  >
-                    {kit.name}
-                    {kit.isDefault ? ' · Default' : ''}
-                  </button>
-                ))}
+                {brandKits.map((kit) => {
+                  const selected = String(appliedBrandKitId) === String(kit.id)
+                  const logoUrl = primaryLogoUrlFromKit(kit)
+                  return (
+                    <button
+                      key={kit.id}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={selected}
+                      className={`aig-brandkit-option ${selected ? 'is-selected' : ''}`}
+                      onClick={() => handleApplyBrandKit(kit.id)}
+                    >
+                      <span className="aig-brandkit-option-logo" aria-hidden>
+                        {logoUrl ? (
+                          <img src={logoUrl} alt="" />
+                        ) : (
+                          <span>{brandKitInitials(kit.name)}</span>
+                        )}
+                      </span>
+                      <span className="aig-brandkit-option-copy">
+                        <span className="aig-brandkit-option-name">{kit.name}</span>
+                        {kit.isDefault ? (
+                          <span className="aig-brandkit-option-meta">Default</span>
+                        ) : null}
+                      </span>
+                      {selected ? (
+                        <FiCheck className="aig-brandkit-option-check" size={16} aria-hidden />
+                      ) : (
+                        <span className="aig-brandkit-option-check" aria-hidden />
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             )}
           </div>

@@ -815,6 +815,29 @@ export function extractDeckPackId(presentation) {
   return metrics?.deckPack?.packId || null
 }
 
+export function extractAppliedBrandKitId(presentation, fallbackConfig = {}) {
+  const metrics =
+    presentation?.deck?.generationMetrics ||
+    presentation?.generationMetrics ||
+    presentation?.presentation?.deck?.generationMetrics ||
+    null
+  const tokens =
+    presentation?.deck?.themeTokens ||
+    presentation?.themeTokens ||
+    presentation?.presentation?.deck?.themeTokens ||
+    null
+  const candidates = [
+    metrics?.deckPack?.brandKitId,
+    tokens?.brand?.brandKitId,
+    fallbackConfig.brandKitId,
+  ]
+  for (const value of candidates) {
+    const text = value == null ? '' : String(value).trim()
+    if (text) return text
+  }
+  return ''
+}
+
 function firstNonEmptyText(...values) {
   for (const value of values) {
     const text = typeof value === 'string' ? value.trim() : ''
@@ -993,6 +1016,7 @@ export function normalizeSlideForEditor(slide, index = 0, aspectRatio = '16:9') 
     contributorStatus:
       slide?.contributorStatus || elementsDoc?.contributorStatus || 'none',
     speakerNotes: slide?.speakerNotes || elementsDoc?.speakerNotes || '',
+  }
 }
 
 /**
