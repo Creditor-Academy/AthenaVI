@@ -96,9 +96,26 @@ class BrandKitService {
     return this.unwrap(json)
   }
 
-  async list(workspaceId) {
-    const data = await this.request(API_CONFIG.ENDPOINTS.BRAND_KITS.LIST(workspaceId))
-    return normalizeBrandKitList(data)
+  async list(workspaceId, { includePersonal } = {}) {
+    const fetchList = async (endpoint) => {
+      const data = await this.request(endpoint)
+      return normalizeBrandKitList(data)
+    }
+
+    const base = API_CONFIG.ENDPOINTS.BRAND_KITS.LIST(workspaceId)
+    if (includePersonal !== false) {
+      return fetchList(base)
+    }
+
+    try {
+      return await fetchList(`${base}${base.includes('?') ? '&' : '?'}includePersonal=false`)
+    } catch (err) {
+      if (err?.status !== 400) throw err
+      const all = await fetchList(base)
+      return (all || []).filter(
+        (kit) => !kit.workspaceId || String(kit.workspaceId) === String(workspaceId)
+      )
+    }
   }
 
   async get(workspaceId, brandKitId) {

@@ -8,6 +8,7 @@ import {
   normalizeLibraryCategoryId,
 } from '../../utils/workspaceLibrary.js'
 import PresentationCardThumb from '../../components/ppt/PresentationCardThumb.jsx'
+import ProjectSceneThumbnail from '../../components/features/workspace/workspace/ProjectSceneThumbnail.jsx'
 
 function resolveOwnerLabel(video) {
   const candidates = [
@@ -72,6 +73,17 @@ function ExportVideoCard({
   const thumbMedia =
     category === 'presentation' ? (
       <PresentationCardThumb item={video} title={title} />
+    ) : category === 'image' && thumbSrc ? (
+      <img
+        src={thumbSrc}
+        alt=""
+        className="work-card-image-bg"
+        loading="lazy"
+        decoding="async"
+        draggable={false}
+      />
+    ) : category === 'image' ? (
+      <DefaultProjectThumbnail title={title} category="image" showLabel={false} />
     ) : thumbSrc ? (
       <img
         src={thumbSrc}
@@ -82,11 +94,7 @@ function ExportVideoCard({
         draggable={false}
       />
     ) : (
-      <DefaultProjectThumbnail
-        title={title}
-        category={category === 'image' ? 'image' : 'video'}
-        showLabel={false}
-      />
+      <ProjectSceneThumbnail video={video} />
     )
 
   return (

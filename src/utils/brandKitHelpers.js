@@ -510,6 +510,8 @@ export function normalizeBrandKitSummary(kit) {
   if (!id) return null
   return {
     id,
+    workspaceId: source.workspaceId || source.workspace_id || null,
+    originWorkspaceId: source.originWorkspaceId || source.origin_workspace_id || null,
     name: source.name || 'Untitled Brand Kit',
     isDefault: Boolean(source.isDefault),
     mediaCount: source.mediaCount ?? source.media?.length ?? 0,
@@ -727,6 +729,35 @@ export function findLogoMedia(mediaList, role) {
     if (kind && kind !== 'logo') return false
     return logoRolesMatch(m.role || m.name, role)
   })
+}
+
+function brandMediaUrl(media) {
+  return media?.url || media?.src || media?.presignedUrl || media?.cdnUrl || null
+}
+
+/** Primary (or first available) logo URL for kit list rows. */
+export function primaryLogoUrlFromKit(kit) {
+  const media = Array.isArray(kit?.media) ? kit.media : []
+  const logos = media.filter((item) => {
+    const kind = String(item.kind || item.type || '').toLowerCase()
+    return !kind || kind === 'logo'
+  })
+  const primary =
+    findLogoMedia(logos, 'primary') ||
+    findLogoMedia(logos, 'light') ||
+    logos[0] ||
+    media.find((item) => brandMediaUrl(item))
+  return brandMediaUrl(primary)
+}
+
+export function brandKitInitials(name) {
+  const parts = String(name || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+  if (!parts.length) return 'BK'
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
 }
 
 export const MEDIA_KINDS = ['logo', 'photo', 'graphic', 'mockup']

@@ -78,7 +78,52 @@ export function resolvePresentationThumbnailUrl(item) {
     slide0?.thumbnail,
     imageRefUrl,
     slide0?.content?.imageUrl,
+    slide0?.content?.image,
     slide0?.backgroundImage
+  )
+}
+
+/** Best-effort image URL for a video library/project card (prefer first scene). */
+export function resolveVideoThumbnailUrl(item) {
+  if (!item || typeof item !== 'object') return null
+  const scenes = Array.isArray(item.scenes)
+    ? item.scenes
+    : Array.isArray(item.data?.scenes)
+      ? item.data.scenes
+      : []
+  const scene = scenes[0] || item.coverScene || null
+  const clips = Array.isArray(scene?.clips) ? scene.clips : []
+  const avatarClip = clips.find(
+    (clip) =>
+      String(clip?.type || '').toLowerCase() === 'avatar' ||
+      String(clip?.kind || '').toLowerCase() === 'avatar'
+  )
+  const imageClip = clips.find((clip) => String(clip?.type || '').toLowerCase() === 'image')
+  const videoClip = clips.find((clip) => String(clip?.type || '').toLowerCase() === 'video')
+  const bg =
+    scene?.background && typeof scene.background === 'object'
+      ? scene.background.value
+      : scene?.background
+
+  return firstNonEmptyUrl(
+    item.thumbnailUrl,
+    item.thumbnail,
+    item.coverUrl,
+    item.previewUrl,
+    scene?.thumbnail,
+    scene?.thumbnailUrl,
+    scene?.previewImage,
+    scene?.avatar,
+    scene?.cover,
+    scene?.backgroundImage,
+    bg,
+    avatarClip?.src,
+    avatarClip?.previewImage,
+    avatarClip?.thumbnail,
+    imageClip?.src,
+    imageClip?.url,
+    videoClip?.poster,
+    videoClip?.thumbnail
   )
 }
 
@@ -258,8 +303,11 @@ export function normalizeLibraryItem(item, { workspaceId } = {}) {
     }
   }
 
+  const videoThumb = resolveVideoThumbnailUrl(item)
   return {
     ...base,
+    thumbnail: videoThumb || base.thumbnail,
+    thumbnailUrl: videoThumb || base.thumbnailUrl,
     status: item.status || 'draft',
     storageBytes: item.storageBytes ?? item.sizeBytes ?? null,
   }

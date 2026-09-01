@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   FiPlay,
@@ -9,6 +9,8 @@ import {
   FiImage,
   FiZoomIn,
   FiZoomOut,
+  FiExternalLink,
+  FiCheck,
 } from 'react-icons/fi'
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { MdDragIndicator, MdOutlineColorLens, MdRotateRight } from 'react-icons/md'
@@ -26,7 +28,9 @@ import ExportPresentationModal from './ExportPresentationModal'
 import ImageCropModal from './ImageCropModal'
 import PptQuickMenu from './PptQuickMenu'
 import SlideEditAiPanel from './SlideEditAiPanel'
-import MinimapSlidePreview from './MinimapSlidePreview'
+import MinimapSlideCard from './MinimapSlideCard'
+import MinimapInsertGap from './MinimapInsertGap'
+import PptConfirmModal from './PptConfirmModal'
 import PptDeckOpenBoot from './PptDeckOpenBoot'
 import { usePptEditorHistory } from '../../../hooks/usePptEditorHistory'
 import { usePptElementMutations } from './usePptElementMutations'
@@ -45,7 +49,7 @@ import { extractShareToken, getOrCreateViewerSessionId } from '../../../utils/pp
 import PptPresenceAvatars from './PptPresenceAvatars'
 import usePptPresence from './usePptPresence'
 import brandKitService from '../../../services/brandKitService'
-import { dedupeBrandKitList } from '../../../utils/brandKitHelpers'
+import { dedupeBrandKitList, primaryLogoUrlFromKit, brandKitInitials } from '../../../utils/brandKitHelpers'
 import assetService from '../../../services/assetService'
 import { isInsufficientCreditsError } from '../../../services/creditsService'
 import {
@@ -55,6 +59,8 @@ import {
   extractSlideFromMutation,
   extractSlidesFromPresentation,
   extractDeckPackId,
+  extractAppliedBrandKitId,
+  extractGenerationPrompt,
   getSlideImage,
   isSlideBackgroundElement,
   normalizeElementPresets,
@@ -118,6 +124,25 @@ import './pptEditorExtras.css'
 import '../AIPptGenerator.css'
 
 const CANVAS_SAVE_DEBOUNCE_MS = 600
+
+function isOptimisticSlideId(id) {
+  const value = String(id || '')
+  return value.startsWith('new-slide-') || value.startsWith('dup-slide-')
+}
+
+function createdSlideIdFromPayload(payload) {
+  const slide = extractSlideFromMutation(payload)
+  return (
+    slide?.id ||
+    payload?.id ||
+    payload?.slideId ||
+    payload?.slide?.id ||
+    payload?.data?.id ||
+    payload?._id ||
+    null
+  )
+}
+
 const TEXT_BORDER_DRAG_PX = 8
 const TEXT_MIN_HEIGHT = 24
 const RESIZE_MIN_WIDTH = 40
@@ -948,7 +973,9 @@ export default function AIPptEditor({
     }
     return outline || []
   })
-  const [showMinimap, setShowMinimap] = useState(true)
+  const [showMinimap, setShowMinimap] = useState(
+    () => typeof window === 'undefined' || window.innerWidth >= 1100
+  )
   const [deckStatus, setDeckStatus] = useState('READY')
   const [aspectRatio, setAspectRatio] = useState(config.screenSize || config.aspectRatio || '16:9')
   const [loading, setLoading] = useState(
@@ -965,10 +992,20 @@ export default function AIPptEditor({
   const [brandKits, setBrandKits] = useState([])
   const [brandKitOpen, setBrandKitOpen] = useState(false)
   const [applyingBrandKit, setApplyingBrandKit] = useState(false)
+  const [appliedBrandKitId, setAppliedBrandKitId] = useState(
+    () => extractAppliedBrandKitId(initialDeck, config)
+  )
   const [deckTitle, setDeckTitle] = useState(config.title || 'Untitled Presentation')
   const [deckPackId, setDeckPackId] = useState(config.packId || null)
+  const [generationPrompt, setGenerationPrompt] = useState(
+    () => extractGenerationPrompt(initialDeck, config)
+  )
   const [addSlideOpen, setAddSlideOpen] = useState(false)
   const [addAfterIndex, setAddAfterIndex] = useState(null)
+  const [minimapTransitionAfterIndex, setMinimapTransitionAfterIndex] = useState(null)
+  const [minimapMenuSlideId, setMinimapMenuSlideId] = useState(null)
+  const [minimapDragId, setMinimapDragId] = useState(null)
+  const [minimapDropIndex, setMinimapDropIndex] = useState(null)
   const [canvasZoom, setCanvasZoom] = useState(100)
   const [smartGuides, setSmartGuides] = useState([])
   const [editingTextId, setEditingTextId] = useState(null)
@@ -979,6 +1016,7 @@ export default function AIPptEditor({
   const [quickMenuOpen, setQuickMenuOpen] = useState(false)
   const [slideAiEditId, setSlideAiEditId] = useState(null)
   const [cropModalOpen, setCropModalOpen] = useState(false)
+  const [deleteSlideId, setDeleteSlideId] = useState(null)
   const [slideStyles, setSlideStyles] = useState({
     headerFont: 'Inter',
     bodyFont: 'Inter',
@@ -989,6 +1027,7 @@ export default function AIPptEditor({
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [layoutSchemaMap, setLayoutSchemaMap] = useState({})
   const brandKitMenuRef = useRef(null)
+  const brandKitLogoFetchRef = useRef(new Set())
   const canvasSaveTimers = useRef({})
   const elementPatchTimers = useRef({})
   const pendingPlacementRef = useRef({})
@@ -999,11 +1038,15 @@ export default function AIPptEditor({
   const elementMutationsRef = useRef(null)
   const imageRefreshInFlight = useRef(new Set())
   const layoutRepairPassRef = useRef('')
-  const mainScrollRef = useRef(null)
   const slideContainerRefs = useRef({})
+  const minimapItemRefs = useRef({})
+  const slideSelectSourceRef = useRef(null)
   const keyCtxRef = useRef({})
   const placementHistoryArmedRef = useRef(true)
   const skipTextCommitRef = useRef(false)
+  const slidePersistQueueRef = useRef(Promise.resolve())
+  const slideIdMapRef = useRef({})
+  const minimapDragIdRef = useRef(null)
 
   const history = usePptEditorHistory()
 
@@ -1100,13 +1143,48 @@ export default function AIPptEditor({
     localSlides.find((s) => s.id === selectedSlideId) || localSlides[0] || null
   const selectedElement =
     selectedSlide?.elements?.elements?.find((el) => el.id === selectedElementId) || null
+  const pendingDeleteSlide = localSlides.find((s) => s.id === deleteSlideId) || null
+  const pendingDeleteTitle =
+    pendingDeleteSlide?.title || pendingDeleteSlide?.content?.title || ''
+
+  const selectSlide = useCallback((slideId, source = 'program') => {
+    if (!slideId) return
+    slideSelectSourceRef.current = source
+    if (slideId === selectedSlideIdRef.current) {
+      if (source === 'sidebar') {
+        slideContainerRefs.current[slideId]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+      return
+    }
+    setSelectedSlideId(slideId)
+    if (source === 'sidebar' || source === 'canvas') {
+      setSelectedElementId(null)
+      setEditingTextId(null)
+      setMultiSelectIds([])
+    }
+  }, [])
 
   useEffect(() => {
     if (!selectedSlideId) return
-    const node = slideContainerRefs.current[selectedSlideId]
-    if (!node) return
-    node.scrollIntoView({ behavior: 'smooth', block: 'center' })
-  }, [selectedSlideId])
+    const source = slideSelectSourceRef.current
+    slideSelectSourceRef.current = null
+    if (!source) return
+
+    const canvasNode = slideContainerRefs.current[selectedSlideId]
+    const thumb = minimapItemRefs.current[selectedSlideId]
+
+    if (source === 'canvas') {
+      thumb?.scrollIntoView({ behavior: 'auto', block: 'nearest' })
+      return
+    }
+
+    if (source === 'sidebar' || source === 'program') {
+      if (source === 'program') {
+        thumb?.scrollIntoView({ behavior: 'auto', block: 'nearest' })
+      }
+      canvasNode?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }, [selectedSlideId, showMinimap])
   const designFocus = (() => {
     const type = String(selectedElement?.type || '').toLowerCase()
     if (type) return type
@@ -1260,6 +1338,10 @@ export default function AIPptEditor({
     )
     setDeckStatus(deckStatusRaw)
     setDeckPackId(extractDeckPackId(data) || deckPackIdRef.current)
+    const nextPrompt = extractGenerationPrompt(data, config)
+    if (nextPrompt) setGenerationPrompt(nextPrompt)
+    const nextBrandKitId = extractAppliedBrandKitId(data, config)
+    if (nextBrandKitId) setAppliedBrandKitId(nextBrandKitId)
     if (data?.title || data?.presentation?.title) {
       setDeckTitle(data?.title || data?.presentation?.title)
     }
@@ -1305,6 +1387,8 @@ export default function AIPptEditor({
     if (!workspaceId || !presentationId || !localSlides.length) return
     if (!Object.keys(layoutSchemaMap).length) return
     if (isGenerating) return
+
+    if (localSlides.some((slide) => isOptimisticSlideId(slide.id))) return undefined
 
     const passKey = `${presentationId}:${localSlides.length}:${deckStatus}`
     if (layoutRepairPassRef.current === passKey) return
@@ -1402,6 +1486,42 @@ export default function AIPptEditor({
     },
     [history]
   )
+
+  const enqueueSlidePersist = useCallback((task) => {
+    slidePersistQueueRef.current = slidePersistQueueRef.current
+      .then(() => task())
+      .catch(() => {})
+  }, [])
+
+  const resolvePersistedSlideId = useCallback((id) => {
+    let current = id
+    const seen = new Set()
+    while (slideIdMapRef.current[current] && !seen.has(current)) {
+      seen.add(current)
+      current = slideIdMapRef.current[current]
+    }
+    return current
+  }, [])
+
+  const remapSlideId = useCallback((tempId, realId) => {
+    if (!tempId || !realId || tempId === realId) return
+    slideIdMapRef.current[tempId] = realId
+    setLocalSlides((prev) => {
+      const next = prev.map((slide) => (slide.id === tempId ? { ...slide, id: realId } : slide))
+      localSlidesRef.current = next
+      return next
+    })
+    slideSelectSourceRef.current = 'canvas'
+    setSelectedSlideId((prev) => (prev === tempId ? realId : prev))
+    if (minimapItemRefs.current[tempId]) {
+      minimapItemRefs.current[realId] = minimapItemRefs.current[tempId]
+      delete minimapItemRefs.current[tempId]
+    }
+    if (slideContainerRefs.current[tempId]) {
+      slideContainerRefs.current[realId] = slideContainerRefs.current[tempId]
+      delete slideContainerRefs.current[tempId]
+    }
+  }, [])
 
   const currentHistorySnapshot = useCallback(
     () => ({
@@ -2115,6 +2235,10 @@ export default function AIPptEditor({
     if (initialDeck?.title || initialDeck?.presentation?.title) {
       setDeckTitle(initialDeck?.title || initialDeck?.presentation?.title)
     }
+    const nextPrompt = extractGenerationPrompt(initialDeck, config)
+    if (nextPrompt) setGenerationPrompt(nextPrompt)
+    const nextBrandKitId = extractAppliedBrandKitId(initialDeck, config)
+    if (nextBrandKitId) setAppliedBrandKitId(nextBrandKitId)
     if (slides[0]?.id) setSelectedSlideId((prev) => prev || slides[0].id)
     setLoading(false)
   }, [viewOnly, initialDeck, config.screenSize, config.aspectRatio])
@@ -2133,6 +2257,43 @@ export default function AIPptEditor({
     return () => document.removeEventListener('click', onDocClick)
   }, [])
 
+  useEffect(() => {
+    if (!brandKitOpen || viewOnly || !workspaceId || !brandKits.length) return undefined
+    const missing = brandKits.filter((kit) => {
+      if (primaryLogoUrlFromKit(kit)) return false
+      return !brandKitLogoFetchRef.current.has(String(kit.id))
+    })
+    if (!missing.length) return undefined
+
+    missing.forEach((kit) => brandKitLogoFetchRef.current.add(String(kit.id)))
+    let cancelled = false
+    Promise.all(
+      missing.map((kit) =>
+        brandKitService.get(kit.workspaceId || workspaceId, kit.id).catch(() => null)
+      )
+    ).then((details) => {
+      if (cancelled) return
+      const byId = new Map(
+        details.filter(Boolean).map((detail) => [String(detail.id), detail])
+      )
+      if (!byId.size) return
+      setBrandKits((prev) =>
+        prev.map((kit) => {
+          const detail = byId.get(String(kit.id))
+          if (!detail) return kit
+          return {
+            ...kit,
+            ...detail,
+            media: Array.isArray(detail.media) && detail.media.length ? detail.media : kit.media,
+          }
+        })
+      )
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [brandKitOpen, viewOnly, workspaceId, brandKits])
+
   const handleApplyBrandKit = async (brandKitId) => {
     if (viewOnly) {
       askOwner()
@@ -2141,6 +2302,7 @@ export default function AIPptEditor({
     if (!workspaceId || !presentationId || !brandKitId || isGenerating) return
     setApplyingBrandKit(true)
     setBrandKitOpen(false)
+    setAppliedBrandKitId(String(brandKitId))
     setError('')
     try {
       await presentationService.applyBrandKit(workspaceId, presentationId, brandKitId)
@@ -2160,136 +2322,118 @@ export default function AIPptEditor({
 
   const openAddSlideModal = (afterIndex = null) => {
     if (atDeckCap || isGenerating || busy) return
+    setMinimapTransitionAfterIndex(null)
     setAddAfterIndex(afterIndex == null ? localSlides.length - 1 : afterIndex)
     setAddSlideOpen(true)
   }
 
-  const handleAddSlide = async (index, options = {}) => {
-    if (atDeckCap || isGenerating) return
+  const handleAddSlide = (index, options = {}) => {
+    if (localSlidesRef.current.length >= PPT_CAPS.DECK_MAX_SLIDES || isGenerating) return
 
     const seed = options.seed || null
-    const templateId = options.templateId || null
     const layoutId = options.layoutId || null
     const layoutSchema = options.schema || null
     const title = seed?.title || options.name || 'Blank Slide'
     const description = seed?.description ?? 'Double click to add content.'
     let seedElements = Array.isArray(seed?.elements) ? seed.elements : []
-
-    if (!workspaceId || !presentationId) {
-      const canvas = resolveCanvasSize(null, aspectRatio)
-      const schema =
-        layoutSchema ||
-        (layoutId ? resolveLayoutSchemaById(layoutId, layoutSchemaMap) : null)
-      if (!seedElements.length && layoutSchemaHasCanvasElements(schema)) {
-        seedElements = resolveLayoutCanvasElementsDoc(schema)?.elements || []
-      } else if (!seedElements.length && schema?.slots?.length) {
-        seedElements = compileDeckLayoutToElements(schema, {
-          canvas,
-          ...themeCompileOptions,
-          slideTitle: title,
-        })
-      }
-      const newSlide = {
-        id: `new-slide-${Date.now()}`,
-        title,
-        description,
-        layoutId: layoutId || schema?.layout_id || null,
-        elements: {
-          version: 1,
-          canvas,
-          elements: seedElements,
-        },
-      }
-      const updated = [...localSlides]
-      updated.splice(index + 1, 0, newSlide)
-      setLocalSlides(updated)
-      setSelectedSlideId(newSlide.id)
-      return
+    const canvas = resolveCanvasSize(null, aspectRatio)
+    const schema =
+      layoutSchema ||
+      (layoutId ? resolveLayoutSchemaById(layoutId, layoutSchemaMap) : null)
+    if (!seedElements.length && layoutSchemaHasCanvasElements(schema)) {
+      seedElements = resolveLayoutCanvasElementsDoc(schema)?.elements || []
+    } else if (!seedElements.length && schema?.slots?.length) {
+      seedElements = compileDeckLayoutToElements(schema, {
+        canvas,
+        ...themeCompileOptions,
+        slideTitle: title,
+      })
     }
 
-    setBusy(true)
+    const tempId = `new-slide-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    const newSlide = {
+      id: tempId,
+      title,
+      description,
+      layoutId: layoutId || schema?.layout_id || null,
+      elements: {
+        version: 1,
+        canvas,
+        elements: seedElements,
+      },
+      transition: 'none',
+      contributorStatus: 'none',
+      status: 'READY',
+    }
+
+    pushHistorySnapshot()
     setError('')
-    try {
-      const afterSlideId = localSlides[index]?.id
-      const created = await presentationService.addSlide(workspaceId, presentationId, {
-        afterSlideId: afterSlideId || undefined,
-        ...(title ? { title } : {}),
-        ...(layoutId ? { layoutId } : {}),
-      })
-      const newSlideId =
-        created?.id ||
-        created?.slideId ||
-        created?.slide?.id ||
-        created?._id ||
-        null
+    setLocalSlides((prev) => {
+      const next = [...prev]
+      const insertAt = Math.max(0, Math.min(index + 1, next.length))
+      next.splice(insertAt, 0, newSlide)
+      localSlidesRef.current = next
+      return next
+    })
+    selectSlide(tempId, 'sidebar')
 
-      let mergeFromElements = []
-      const hasSlotLayout = Boolean(layoutSchema?.slots?.length)
-      const hasCanvasLayout = layoutSchemaHasCanvasElements(layoutSchema)
-      const hasLayoutTarget = templateId || layoutId || hasSlotLayout || hasCanvasLayout
+    if (!workspaceId || !presentationId) return
 
-      if (templateId && newSlideId) {
-        try {
-          const applyResult = await presentationService.applyLayout(
-            workspaceId,
-            presentationId,
-            newSlideId,
-            templateId
-          )
-          const appliedSlide = extractSlideFromMutation(applyResult)
-          mergeFromElements = appliedSlide?.elements?.elements || []
-        } catch {
-          // Backend apply-layout may be incomplete — client compile below is the source of truth.
+    enqueueSlidePersist(async () => {
+      if (!localSlidesRef.current.some((slide) => slide.id === tempId)) return
+      try {
+        const currentIdx = localSlidesRef.current.findIndex((slide) => slide.id === tempId)
+        const prevSlide = currentIdx > 0 ? localSlidesRef.current[currentIdx - 1] : null
+        const nextSlide =
+          currentIdx >= 0 && currentIdx < localSlidesRef.current.length - 1
+            ? localSlidesRef.current[currentIdx + 1]
+            : null
+        const afterSlideId =
+          prevSlide && !isOptimisticSlideId(prevSlide.id) ? prevSlide.id : undefined
+        const beforeSlideId =
+          !afterSlideId && nextSlide && !isOptimisticSlideId(nextSlide.id)
+            ? nextSlide.id
+            : undefined
+        const created = await presentationService.addSlide(workspaceId, presentationId, {
+          afterSlideId,
+          beforeSlideId,
+          ...(title ? { title } : {}),
+          ...(layoutId ? { layoutId } : {}),
+        })
+        const newSlideId = createdSlideIdFromPayload(created)
+        if (!newSlideId) throw new Error('Failed to add slide')
+        if (!localSlidesRef.current.some((slide) => slide.id === tempId)) {
+          presentationService
+            .deleteSlide(workspaceId, presentationId, newSlideId)
+            .catch(() => {})
+          return
         }
-      }
-
-      if (seedElements.length && newSlideId) {
-        try {
-          const canvasDoc = buildCanvasDoc(
-            { elements: { version: 1, elements: seedElements } },
-            { aspectRatio, elements: seedElements }
-          )
+        remapSlideId(tempId, newSlideId)
+        const latest = localSlidesRef.current.find((slide) => slide.id === newSlideId)
+        if (latest?.elements) {
           await presentationService.saveCanvas(
             workspaceId,
             presentationId,
             newSlideId,
-            canvasDoc
+            latest.elements
           )
-        } catch {
-          // Keep slide even if seed canvas fails
         }
-      } else if (hasLayoutTarget && newSlideId) {
-        try {
-          await applyCompiledLayoutToSlide({
-            workspaceId,
-            presentationId,
-            slideId: newSlideId,
-            templateId,
-            layoutId,
-            schema: layoutSchema,
-            layoutSchemaMap,
-            aspectRatio,
-            ...themeCompileOptions,
-            slideTitle: title,
-            mergeFromElements,
-          })
-        } catch (err) {
-          setError(err.message || 'Failed to apply layout structure')
+      } catch (err) {
+        setLocalSlides((prev) => {
+          const next = prev.filter((slide) => slide.id !== tempId)
+          localSlidesRef.current = next
+          return next
+        })
+        setSelectedSlideId((prev) =>
+          prev === tempId ? localSlidesRef.current[Math.max(0, index)]?.id || prev : prev
+        )
+        if (err instanceof PresentationConflictError) {
+          setError('Presentation is generating — edits are locked until it finishes.')
+        } else {
+          setError(err.message || 'Failed to add slide')
         }
       }
-
-      await reloadPresentation()
-
-      if (newSlideId) setSelectedSlideId(newSlideId)
-    } catch (err) {
-      if (err instanceof PresentationConflictError) {
-        setError('Presentation is generating — edits are locked until it finishes.')
-      } else {
-        setError(err.message || 'Failed to add slide')
-      }
-    } finally {
-      setBusy(false)
-    }
+    })
   }
 
   const handlePickAddSlide = async (pick) => {
@@ -2341,32 +2485,138 @@ export default function AIPptEditor({
     })
   }
 
-  const handleDuplicateSlide = async (slideId) => {
-    if (atDeckCap || isGenerating || !workspaceId || !presentationId) return
-    setBusy(true)
-    try {
-      await presentationService.duplicateSlide(workspaceId, presentationId, slideId)
-      await reloadPresentation()
-    } catch (err) {
-      setError(err.message || 'Failed to duplicate slide')
-    } finally {
-      setBusy(false)
+  const handleDuplicateSlide = (slideId) => {
+    if (localSlidesRef.current.length >= PPT_CAPS.DECK_MAX_SLIDES || isGenerating) return
+    const source = localSlidesRef.current.find((slide) => slide.id === slideId)
+    if (!source) return
+
+    const sourceIndex = localSlidesRef.current.findIndex((slide) => slide.id === slideId)
+    const tempId = `dup-slide-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    const clone = {
+      ...JSON.parse(JSON.stringify(source)),
+      id: tempId,
+      status: 'READY',
+      manuallyEdited: true,
     }
+
+    pushHistorySnapshot()
+    setError('')
+    setLocalSlides((prev) => {
+      const next = [...prev]
+      next.splice(sourceIndex + 1, 0, clone)
+      localSlidesRef.current = next
+      return next
+    })
+    selectSlide(tempId, 'sidebar')
+
+    if (!workspaceId || !presentationId) return
+
+    enqueueSlidePersist(async () => {
+      if (!localSlidesRef.current.some((slide) => slide.id === tempId)) return
+      const persistSourceId = resolvePersistedSlideId(slideId)
+      if (isOptimisticSlideId(persistSourceId)) return
+      try {
+        const created = await presentationService.duplicateSlide(
+          workspaceId,
+          presentationId,
+          persistSourceId
+        )
+        const newSlideId = createdSlideIdFromPayload(created)
+        if (!newSlideId) throw new Error('Failed to duplicate slide')
+        if (!localSlidesRef.current.some((slide) => slide.id === tempId)) {
+          presentationService
+            .deleteSlide(workspaceId, presentationId, newSlideId)
+            .catch(() => {})
+          return
+        }
+        remapSlideId(tempId, newSlideId)
+      } catch (err) {
+        setLocalSlides((prev) => {
+          const next = prev.filter((slide) => slide.id !== tempId)
+          localSlidesRef.current = next
+          return next
+        })
+        setSelectedSlideId((prev) => (prev === tempId ? persistSourceId : prev))
+        setError(err.message || 'Failed to duplicate slide')
+      }
+    })
   }
 
-  const handleDeleteSlide = async (slideId) => {
-    if (isGenerating || !workspaceId || !presentationId || localSlides.length <= 1) return
-    if (!window.confirm('Delete this slide?')) return
-    setBusy(true)
-    try {
-      await presentationService.deleteSlide(workspaceId, presentationId, slideId)
-      await reloadPresentation()
-    } catch (err) {
-      setError(err.message || 'Failed to delete slide')
-    } finally {
-      setBusy(false)
-    }
+  const handleDeleteSlide = (slideId) => {
+    if (isGenerating || localSlidesRef.current.length <= 1) return
+    setDeleteSlideId(slideId)
   }
+
+  const confirmDeleteSlide = () => {
+    const slideId = deleteSlideId
+    setDeleteSlideId(null)
+    if (!slideId || isGenerating || localSlidesRef.current.length <= 1) return
+
+    const current = localSlidesRef.current
+    const idx = current.findIndex((slide) => slide.id === slideId)
+    if (idx < 0) return
+    const fallbackId = (current[idx + 1] || current[idx - 1])?.id
+
+    pushHistorySnapshot()
+    setError('')
+    setLocalSlides((prev) => {
+      const next = prev.filter((slide) => slide.id !== slideId)
+      localSlidesRef.current = next
+      return next
+    })
+    if (selectedSlideIdRef.current === slideId) {
+      selectSlide(fallbackId, 'sidebar')
+    }
+
+    if (!workspaceId || !presentationId) return
+
+    enqueueSlidePersist(async () => {
+      const persistId = resolvePersistedSlideId(slideId)
+      if (isOptimisticSlideId(persistId)) return
+      try {
+        await presentationService.deleteSlide(workspaceId, presentationId, persistId)
+      } catch (err) {
+        setError(err.message || 'Failed to delete slide')
+      }
+    })
+  }
+
+  const persistSlideOrder = useCallback(() => {
+    enqueueSlidePersist(async () => {
+      if (!workspaceId || !presentationId) return
+      const ids = localSlidesRef.current.map((slide) => resolvePersistedSlideId(slide.id))
+      if (ids.length < 2 || ids.some(isOptimisticSlideId)) return
+      try {
+        await presentationService.reorderSlides(workspaceId, presentationId, ids)
+      } catch (err) {
+        setError(err.message || 'Failed to reorder slides')
+      }
+    })
+  }, [workspaceId, presentationId, enqueueSlidePersist, resolvePersistedSlideId])
+
+  const handleReorderSlides = useCallback(
+    (fromIndex, dropIndex) => {
+      const slides = localSlidesRef.current
+      if (fromIndex == null || dropIndex == null) return
+      if (fromIndex < 0 || fromIndex >= slides.length) return
+      let insertAt = dropIndex
+      if (fromIndex < dropIndex) insertAt -= 1
+      insertAt = Math.max(0, Math.min(insertAt, slides.length - 1))
+      if (insertAt === fromIndex) return
+
+      pushHistorySnapshot()
+      setMinimapMenuSlideId(null)
+      setLocalSlides((prev) => {
+        const next = [...prev]
+        const [moved] = next.splice(fromIndex, 1)
+        next.splice(insertAt, 0, moved)
+        localSlidesRef.current = next
+        return next
+      })
+      persistSlideOrder()
+    },
+    [persistSlideOrder, pushHistorySnapshot]
+  )
 
   const handleSlideAiEdit = async (slide, { prompt, actionId, target = 'full' } = {}) => {
     if (!workspaceId || !presentationId || isGenerating) return
@@ -2452,96 +2702,70 @@ export default function AIPptEditor({
     setSelectedSlideId(slideId)
     setSelectedElementId(localEl.id)
     setError('')
-    setLocalSlides((prev) =>
-      prev.map((s) =>
+    setLocalSlides((prev) => {
+      const next = prev.map((s) =>
         s.id === slideId
           ? { ...s, elements: optimisticDoc, backgroundColor: s.backgroundColor || DEFAULT_SLIDE_BG }
           : s
       )
-    )
+      localSlidesRef.current = next
+      return next
+    })
 
     if (!workspaceId || !presentationId) return
 
-    setBusy(true)
-    try {
-      const body =
-        payload.presetId && !payload.content && !payload.placement
-          ? { presetId: payload.presetId }
-          : {
-              type,
-              placement,
-              content,
-              layer: existing.length + 1,
-              ...(payload.presetId ? { presetId: payload.presetId } : {}),
-              ...(payload.role ? { role: payload.role } : {}),
-            }
+    const persistInserted = async () => {
+      try {
+        const body =
+          payload.presetId && !payload.content && !payload.placement
+            ? { presetId: payload.presetId }
+            : {
+                type,
+                placement,
+                content,
+                layer: existing.length + 1,
+                ...(payload.presetId ? { presetId: payload.presetId } : {}),
+                ...(payload.role ? { role: payload.role } : {}),
+              }
 
-      const result = await presentationService.insertElement(
-        workspaceId,
-        presentationId,
-        slideId,
-        body
-      )
-      const slideFromApi = extractSlideFromMutation(result)
-      const elementFromApi = extractElementFromMutation(result)
-      if (elementFromApi?.id) {
-        setLocalSlides((prev) =>
-          prev.map((s) => {
-            if (s.id !== slideId) return s
-            const els = (s.elements?.elements || []).map((el) =>
-              el.id === localEl.id ? { ...el, ...elementFromApi, id: elementFromApi.id } : el
-            )
-            const hasServerEl = els.some((el) => el.id === elementFromApi.id)
-            const nextEls = hasServerEl
-              ? els
-              : [...els.filter((el) => el.id !== localEl.id), elementFromApi]
-            return { ...s, elements: buildCanvasDoc(s, { aspectRatio, elements: nextEls }) }
-          })
+        const result = await presentationService.insertElement(
+          workspaceId,
+          presentationId,
+          slideId,
+          body
         )
-        setSelectedElementId(elementFromApi.id)
-      }
-      if (slideFromApi) {
-        applySlideUpdate(slideFromApi)
-      } else if (!elementFromApi?.id) {
-        await refreshSlide(slideId)
-      }
-    } catch (err) {
-      if (err instanceof PresentationConflictError) {
-        setError('Presentation is generating — edits are locked until it finishes.')
-      } else if (err?.status === 400) {
-        setError(err.message || `Max ${PPT_CAPS.ELEMENTS_PER_SLIDE} elements per slide`)
-      } else {
-        // Fallback: full canvas replace so rich local content is not lost
-        try {
-          const localEl = {
-            id: `el-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-            type,
-            content,
-            placement,
-            layer: existing.length + 1,
-            ...(payload.presetId ? { presetId: payload.presetId } : {}),
-          }
-          const canvasDoc = buildCanvasDoc(slide, {
-            aspectRatio,
-            elements: [...existing, localEl],
+        const elementFromApi = extractElementFromMutation(result)
+        if (elementFromApi?.id) {
+          setLocalSlides((prev) => {
+            const next = prev.map((s) => {
+              if (s.id !== slideId) return s
+              const els = (s.elements?.elements || []).map((el) =>
+                el.id === localEl.id ? { ...el, id: elementFromApi.id } : el
+              )
+              return { ...s, elements: buildCanvasDoc(s, { aspectRatio, elements: els }) }
+            })
+            localSlidesRef.current = next
+            return next
           })
-          const saved = await presentationService.saveCanvas(
-            workspaceId,
-            presentationId,
-            slideId,
-            canvasDoc
-          )
-          const slideFromApi = extractSlideFromMutation(saved)
-          if (slideFromApi) applySlideUpdate(slideFromApi)
-          else await refreshSlide(slideId)
-          setSelectedElementId(localEl.id)
-        } catch (saveErr) {
-          setError(saveErr.message || err.message || 'Failed to insert element')
+          setSelectedElementId((prev) => (prev === localEl.id ? elementFromApi.id : prev))
         }
+        const latest = localSlidesRef.current.find((s) => s.id === slideId)
+        if (latest?.elements) queueCanvasSave(slideId, latest.elements)
+      } catch (err) {
+        if (err instanceof PresentationConflictError) {
+          setError('Presentation is generating — edits are locked until it finishes.')
+          return
+        }
+        if (err?.status === 400) {
+          setError(err.message || `Max ${PPT_CAPS.ELEMENTS_PER_SLIDE} elements per slide`)
+          return
+        }
+        const latest = localSlidesRef.current.find((s) => s.id === slideId)
+        if (latest?.elements) queueCanvasSave(slideId, latest.elements)
       }
-    } finally {
-      setBusy(false)
     }
+
+    void persistInserted()
   }
 
   const handleDeleteElement = useCallback(async (elementIdArg) => {
@@ -2630,8 +2854,8 @@ export default function AIPptEditor({
     const nextElements = elements.filter((el) => el.id !== elementId)
     const clearingBackground = slide?.backgroundImageElementId === elementId
     const nextDoc = buildCanvasDoc(slide, { aspectRatio, elements: nextElements })
-    setLocalSlides((prev) =>
-      prev.map((s) =>
+    setLocalSlides((prev) => {
+      const next = prev.map((s) =>
         s.id === slideId
           ? {
               ...s,
@@ -2646,7 +2870,9 @@ export default function AIPptEditor({
             }
           : s
       )
-    )
+      localSlidesRef.current = next
+      return next
+    })
     setSelectedElementId(null)
 
     if (!workspaceId || !presentationId) return
@@ -2662,17 +2888,16 @@ export default function AIPptEditor({
     }
 
     try {
-      const result = await presentationService.deleteElement(
+      await presentationService.deleteElement(
         workspaceId,
         presentationId,
         slideId,
         elementId
       )
-      const slideFromApi = extractSlideFromMutation(result)
-      if (slideFromApi) applySlideUpdate(slideFromApi)
     } catch (err) {
       setError(err.message || 'Failed to delete element')
-      await refreshSlide(slideId).catch(() => {})
+      const latest = localSlidesRef.current.find((s) => s.id === slideId)
+      if (latest?.elements) queueCanvasSave(slideId, latest.elements)
     }
   }, [
     selectedSlideId,
@@ -2682,8 +2907,7 @@ export default function AIPptEditor({
     aspectRatio,
     workspaceId,
     presentationId,
-    applySlideUpdate,
-    refreshSlide,
+    queueCanvasSave,
     elementMutations,
     pushHistorySnapshot,
   ])
@@ -2704,24 +2928,24 @@ export default function AIPptEditor({
 
       pushHistorySnapshot()
       const nextDoc = buildCanvasDoc(slide, { aspectRatio, elements: layered })
-      setLocalSlides((prev) =>
-        prev.map((s) => (s.id === slideId ? { ...s, elements: nextDoc } : s))
-      )
+      setLocalSlides((prev) => {
+        const next = prev.map((s) => (s.id === slideId ? { ...s, elements: nextDoc } : s))
+        localSlidesRef.current = next
+        return next
+      })
 
       if (!workspaceId || !presentationId) return
-      try {
-        const result = await presentationService.reorderElements(
+      queueCanvasSave(slideId, nextDoc)
+      presentationService
+        .reorderElements(
           workspaceId,
           presentationId,
           slideId,
           layered.map((el) => el.id)
         )
-        const slideFromApi = extractSlideFromMutation(result)
-        if (slideFromApi) applySlideUpdate(slideFromApi)
-      } catch (err) {
-        setError(err.message || 'Failed to reorder elements')
-        await refreshSlide(slideId).catch(() => {})
-      }
+        .catch(() => {
+          queueCanvasSave(slideId, nextDoc)
+        })
     },
     [
       localSlides,
@@ -2729,8 +2953,7 @@ export default function AIPptEditor({
       aspectRatio,
       workspaceId,
       presentationId,
-      applySlideUpdate,
-      refreshSlide,
+      queueCanvasSave,
       pushHistorySnapshot,
     ]
   )
@@ -2906,71 +3129,71 @@ export default function AIPptEditor({
 
   const handleApplyLayout = useCallback(
     async (templateId) => {
-      const slideId = selectedSlideId || localSlides[0]?.id
-      if (!slideId || !templateId || !workspaceId || !presentationId || isGenerating) return
-      setBusy(true)
+      const slideId = selectedSlideId || localSlidesRef.current[0]?.id
+      if (!slideId || !templateId || isGenerating) return
+      const slide = localSlidesRef.current.find((s) => s.id === slideId)
+      if (!slide) return
+
+      const originalElements = slide?.elements?.elements || []
+      const originalContent =
+        slide?.content && typeof slide.content === 'object' ? { ...slide.content } : {}
+      if (slide?.imageRef && !originalContent.imageRef) {
+        originalContent.imageRef = slide.imageRef
+      }
+
+      pushHistorySnapshot()
       setError('')
+      setSelectedElementId(null)
+
       try {
-        const slide = localSlides.find((s) => s.id === slideId)
-        const originalElements = slide?.elements?.elements || []
-        const originalContent =
-          slide?.content && typeof slide.content === 'object' ? { ...slide.content } : {}
-        if (slide?.imageRef && !originalContent.imageRef) {
-          originalContent.imageRef = slide.imageRef
-        }
-        let appliedLayoutId = slide?.layoutId || slide?.layout_id || null
-
-        try {
-          const result = await presentationService.applyLayout(
-            workspaceId,
-            presentationId,
-            slideId,
-            templateId
-          )
-          const updated = extractSlideFromMutation(result)
-          if (updated?.layoutId || updated?.layout_id) {
-            appliedLayoutId = updated.layoutId || updated.layout_id
-          }
-        } catch {
-          // Client compile below replaces broken backend layout structure.
-        }
-
-        await applyCompiledLayoutToSlide({
+        const canvasDoc = await applyCompiledLayoutToSlide({
           workspaceId,
           presentationId,
           slideId,
           templateId,
-          layoutId: appliedLayoutId,
+          layoutId: slide?.layoutId || slide?.layout_id || null,
           layoutSchemaMap,
           aspectRatio,
           ...themeCompileOptions,
           slideTitle: slide?.title || originalContent.title || '',
           slideContent: originalContent,
           mergeFromElements: originalElements,
+          skipSave: true,
         })
+        if (canvasDoc) {
+          setLocalSlides((prev) => {
+            const next = prev.map((s) =>
+              s.id === slideId ? { ...s, elements: canvasDoc, layoutId: s.layoutId } : s
+            )
+            localSlidesRef.current = next
+            return next
+          })
+          if (workspaceId && presentationId) queueCanvasSave(slideId, canvasDoc)
+        }
 
-        await refreshSlide(slideId)
-        setSelectedElementId(null)
+        if (workspaceId && presentationId) {
+          presentationService
+            .applyLayout(workspaceId, presentationId, slideId, templateId)
+            .catch(() => {})
+        }
       } catch (err) {
         if (err instanceof PresentationConflictError) {
           setError('Cannot apply layout while generating.')
         } else {
           setError(err.message || 'Failed to apply layout')
         }
-      } finally {
-        setBusy(false)
       }
     },
     [
       selectedSlideId,
-      localSlides,
       workspaceId,
       presentationId,
       isGenerating,
-      refreshSlide,
       layoutSchemaMap,
       aspectRatio,
-      themeVisual?.palette,
+      themeCompileOptions,
+      queueCanvasSave,
+      pushHistorySnapshot,
     ]
   )
 
@@ -3191,11 +3414,12 @@ export default function AIPptEditor({
     }
   }, [])
 
-  const handleChangeTransition = async (transitionId) => {
-    const slideId = selectedSlideId || localSlides[0]?.id
+  const handleChangeTransition = async (transitionId, targetSlideId) => {
+    const slideId = targetSlideId || selectedSlideId || localSlides[0]?.id
     if (!slideId || isGenerating) return
 
     const slide = localSlides.find((s) => s.id === slideId)
+    if (!slide) return
     const nextElements = {
       ...buildCanvasDoc(slide, { aspectRatio }),
       transition: transitionId,
@@ -3214,15 +3438,21 @@ export default function AIPptEditor({
 
     if (!workspaceId || !presentationId) return
 
-    try {
-      await presentationService.patchSlide(workspaceId, presentationId, slideId, {
+    queueCanvasSave(slideId, nextElements)
+    presentationService
+      .patchSlide(workspaceId, presentationId, slideId, {
         transition: transitionId,
       })
-      queueCanvasSave(slideId, nextElements)
-    } catch {
-      // Keep optimistic local selection even if sync fails
-    }
+      .catch(() => {})
   }
+
+  const closeMinimapTransition = useCallback(() => {
+    setMinimapTransitionAfterIndex(null)
+  }, [])
+
+  const closeMinimapMenu = useCallback(() => {
+    setMinimapMenuSlideId(null)
+  }, [])
 
   const handleChangeSlideStatus = async (statusId) => {
     const slideId = selectedSlideId || localSlides[0]?.id
@@ -3245,21 +3475,13 @@ export default function AIPptEditor({
 
     if (!workspaceId || !presentationId) return
 
-    try {
-      await presentationService.patchSlide(workspaceId, presentationId, slideId, {
+    queueCanvasSave(slideId, nextElements)
+    presentationService
+      .patchSlide(workspaceId, presentationId, slideId, {
         contributorStatus: statusId,
       })
-      queueCanvasSave(slideId, nextElements)
-    } catch {
-      // Keep optimistic local selection
-    }
+      .catch(() => {})
   }
-
-  const generationPrompt =
-    config.prompt ||
-    config.generationPrompt ||
-    config.outline ||
-    [config.title, config.tone, config.audience].filter(Boolean).join(' · ')
 
   const handleRename = () => {
     if (viewOnly) {
@@ -3411,8 +3633,15 @@ export default function AIPptEditor({
             />
           )}
           {viewOnly && canOpenInEditor && (
-            <button className="aig-editor-btn-secondary" type="button" onClick={onOpenInEditor}>
-              Open in editor
+            <button
+              className="aig-editor-btn-secondary"
+              type="button"
+              onClick={onOpenInEditor}
+              title="Open in editor"
+              aria-label="Open in editor"
+            >
+              <FiExternalLink size={16} />
+              <span className="aig-editor-btn-label">Open in editor</span>
             </button>
           )}
           {!viewOnly && (
@@ -3430,34 +3659,63 @@ export default function AIPptEditor({
               }}
               disabled={!viewOnly && (!presentationId || busy || isGenerating || applyingBrandKit)}
               title="Apply Brand Kit"
+              aria-label="Apply Brand Kit"
             >
               <MdOutlineColorLens size={16} />
-              {applyingBrandKit ? 'Applying…' : 'Brand Kit'}
+              <span className="aig-editor-btn-label">{applyingBrandKit ? 'Applying…' : 'Brand Kit'}</span>
             </button>
             {brandKitOpen && (
-              <div className="aig-export-dropdown">
+              <div className="aig-export-dropdown aig-brandkit-dropdown" role="menu">
                 {!brandKits.length && (
-                  <button type="button" disabled>
-                    No brand kits
-                  </button>
+                  <p className="aig-brandkit-empty">No brand kits in this workspace</p>
                 )}
-                {brandKits.map((kit) => (
-                  <button
-                    key={kit.id}
-                    type="button"
-                    onClick={() => handleApplyBrandKit(kit.id)}
-                  >
-                    {kit.name}
-                    {kit.isDefault ? ' · Default' : ''}
-                  </button>
-                ))}
+                {brandKits.map((kit) => {
+                  const selected = String(appliedBrandKitId) === String(kit.id)
+                  const logoUrl = primaryLogoUrlFromKit(kit)
+                  return (
+                    <button
+                      key={kit.id}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={selected}
+                      className={`aig-brandkit-option ${selected ? 'is-selected' : ''}`}
+                      onClick={() => handleApplyBrandKit(kit.id)}
+                    >
+                      <span className="aig-brandkit-option-logo" aria-hidden>
+                        {logoUrl ? (
+                          <img src={logoUrl} alt="" />
+                        ) : (
+                          <span>{brandKitInitials(kit.name)}</span>
+                        )}
+                      </span>
+                      <span className="aig-brandkit-option-copy">
+                        <span className="aig-brandkit-option-name">{kit.name}</span>
+                        {kit.isDefault ? (
+                          <span className="aig-brandkit-option-meta">Default</span>
+                        ) : null}
+                      </span>
+                      {selected ? (
+                        <FiCheck className="aig-brandkit-option-check" size={16} aria-hidden />
+                      ) : (
+                        <span className="aig-brandkit-option-check" aria-hidden />
+                      )}
+                    </button>
+                  )
+                })}
               </div>
             )}
           </div>
           )}
           {!viewOnly && (
-            <button className="aig-editor-btn-secondary" type="button" onClick={() => setShareOpen(true)}>
-              <FiShare2 size={16} /> Share
+            <button
+              className="aig-editor-btn-secondary"
+              type="button"
+              onClick={() => setShareOpen(true)}
+              title="Share"
+              aria-label="Share"
+            >
+              <FiShare2 size={16} />
+              <span className="aig-editor-btn-label">Share</span>
             </button>
           )}
           <button
@@ -3465,11 +3723,21 @@ export default function AIPptEditor({
             type="button"
             onClick={() => (viewOnly ? askOwner() : setExportModalOpen(true))}
             disabled={!viewOnly && (!presentationId || busy)}
+            title="Export"
+            aria-label="Export"
           >
-            <FiDownload size={16} /> Export
+            <FiDownload size={16} />
+            <span className="aig-editor-btn-label">Export</span>
           </button>
-          <button className="aig-editor-btn-primary" type="button" onClick={() => setPresentOpen(true)}>
-            <FiPlay size={16} /> Present
+          <button
+            className="aig-editor-btn-primary"
+            type="button"
+            onClick={() => setPresentOpen(true)}
+            title="Present"
+            aria-label="Present"
+          >
+            <FiPlay size={16} />
+            <span className="aig-editor-btn-label">Present</span>
           </button>
         </div>
       </nav>
@@ -3482,7 +3750,6 @@ export default function AIPptEditor({
 
       <div className="aig-editor-workspace gamma-layout">
         <main
-          ref={mainScrollRef}
           className={`aig-editor-main-scroll ${sidebarOpen ? 'is-sidebar-open' : ''} ${showMinimap ? 'is-minimap-open' : ''}`}
           style={{
             '--ppt-canvas-zoom': canvasZoom / 100,
@@ -3506,11 +3773,7 @@ export default function AIPptEditor({
                   else delete slideContainerRefs.current[slide.id]
                 }}
                 className={`aig-scroll-slide-container ${selectedSlideId === slide.id ? 'is-selected' : ''}`}
-                onClick={() => {
-                  setSelectedSlideId(slide.id)
-                  setSelectedElementId(null)
-                  setEditingTextId(null)
-                }}
+                onClick={() => selectSlide(slide.id, 'canvas')}
               >
                 <div className="aig-scroll-slide-wrapper">
                   {!viewOnly && (
@@ -3711,7 +3974,11 @@ export default function AIPptEditor({
                   <button
                     className="aig-minimap-collapse-btn"
                     type="button"
-                    onClick={() => setShowMinimap(false)}
+                    onClick={() => {
+                      setMinimapTransitionAfterIndex(null)
+                      setMinimapMenuSlideId(null)
+                      setShowMinimap(false)
+                    }}
                     title="Collapse slides"
                     aria-label="Collapse slides"
                     aria-expanded
@@ -3748,74 +4015,170 @@ export default function AIPptEditor({
             </div>
 
             {showMinimap ? (
-              <div className="aig-minimap-scroll">
-                {localSlides.map((slide, idx) => (
-                  <div
-                    key={slide.id}
-                    className={`aig-minimap-item ${selectedSlideId === slide.id ? 'active' : ''}`}
-                    onClick={() => {
-                      setSelectedSlideId(slide.id)
-                      setSelectedElementId(null)
-                      setEditingTextId(null)
-                    }}
-                    onContextMenu={(e) => {
-                      e.preventDefault()
-                      if (viewOnly) return
-                      handleDeleteSlide(slide.id)
-                    }}
-                  >
-                    <span className="aig-minimap-num">{idx + 1}</span>
-                    <span
-                      className={`ppt-status-dot ppt-status-dot--sm ppt-status-dot--${
-                        slide.contributorStatus || slide.elements?.contributorStatus || 'none'
-                      }`}
-                      title={
-                        {
-                          none: 'No status',
-                          todo: 'To do',
-                          'in-progress': 'In progress',
-                          done: 'Done',
-                        }[slide.contributorStatus || slide.elements?.contributorStatus || 'none']
-                      }
-                      aria-hidden
-                    />
-                    <div className="aig-minimap-thumb" style={resolveSlideStageBackground(slide, themeVisual?.palette?.bg || themeVisual?.background || DEFAULT_SLIDE_BG)}>
-                      <MinimapSlidePreview
+              <div
+                className={`aig-minimap-scroll ${minimapDragId ? 'is-reordering' : ''}`}
+                onDragOver={(e) => {
+                  if (!minimapDragIdRef.current) return
+                  e.preventDefault()
+                  e.dataTransfer.dropEffect = 'move'
+                  const items = [...e.currentTarget.querySelectorAll('[data-minimap-slide]')]
+                  let nextIndex = items.length
+                  for (let i = 0; i < items.length; i += 1) {
+                    const rect = items[i].getBoundingClientRect()
+                    if (e.clientY < rect.top + rect.height / 2) {
+                      nextIndex = i
+                      break
+                    }
+                  }
+                  setMinimapDropIndex((prev) => (prev === nextIndex ? prev : nextIndex))
+                }}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  const fromId =
+                    minimapDragIdRef.current ||
+                    e.dataTransfer.getData('application/x-athena-slide') ||
+                    e.dataTransfer.getData('text/plain')
+                  const fromIndex = localSlidesRef.current.findIndex((s) => s.id === fromId)
+                  handleReorderSlides(fromIndex, minimapDropIndex)
+                  minimapDragIdRef.current = null
+                  setMinimapDragId(null)
+                  setMinimapDropIndex(null)
+                }}
+                onDragLeave={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget)) setMinimapDropIndex(null)
+                }}
+              >
+                {localSlides.map((slide, idx) => {
+                  const nextSlide = localSlides[idx + 1]
+                  const nextTransition =
+                    nextSlide?.transition || nextSlide?.elements?.transition || 'none'
+                  const betweenSlides = Boolean(nextSlide)
+                  const dropEdge =
+                    minimapDragId && minimapDropIndex === idx
+                      ? 'before'
+                      : minimapDragId &&
+                          minimapDropIndex === localSlides.length &&
+                          idx === localSlides.length - 1
+                        ? 'after'
+                        : null
+                  return (
+                    <Fragment key={slide.id}>
+                      <MinimapSlideCard
                         slide={slide}
+                        index={idx}
+                        total={localSlides.length}
+                        selected={selectedSlideId === slide.id}
+                        viewOnly={viewOnly}
+                        canDelete={localSlides.length > 1}
+                        atDeckCap={atDeckCap}
+                        disabled={isGenerating}
+                        menuOpen={minimapMenuSlideId === slide.id}
+                        dropEdge={dropEdge}
+                        dragging={minimapDragId === slide.id}
                         themeVisual={themeVisual}
                         themeId={config.theme}
                         aspectRatio={aspectRatio}
-                        fallbackBg={themeVisual?.palette?.bg || themeVisual?.background || DEFAULT_SLIDE_BG}
                         layoutSchemaMap={layoutSchemaMap}
+                        itemRef={(node) => {
+                          if (node) minimapItemRefs.current[slide.id] = node
+                          else delete minimapItemRefs.current[slide.id]
+                        }}
+                        onSelect={(id) => selectSlide(id, 'sidebar')}
+                        onOpenMenu={(id) => {
+                          setMinimapTransitionAfterIndex(null)
+                          setMinimapMenuSlideId(id)
+                        }}
+                        onCloseMenu={closeMinimapMenu}
+                        onDuplicate={() => handleDuplicateSlide(slide.id)}
+                        onDelete={() => handleDeleteSlide(slide.id)}
+                        onAddAfter={() => openAddSlideModal(idx)}
+                        onMoveUp={() => handleReorderSlides(idx, idx - 1)}
+                        onMoveDown={() => handleReorderSlides(idx, idx + 2)}
+                        onEditAi={() => {
+                          selectSlide(slide.id, 'sidebar')
+                          setSelectedElementId(null)
+                          setEditingTextId(null)
+                          setSlideAiEditId((prev) => (prev === slide.id ? null : slide.id))
+                        }}
+                        onDragStart={(id) => {
+                          minimapDragIdRef.current = id
+                          setMinimapDragId(id)
+                        }}
+                        onDragEnd={() => {
+                          minimapDragIdRef.current = null
+                          setMinimapDragId(null)
+                          setMinimapDropIndex(null)
+                        }}
                       />
-                    </div>
-                  </div>
-                ))}
+                      {!viewOnly && (
+                        <MinimapInsertGap
+                          disabled={isGenerating || busy}
+                          addDisabled={atDeckCap || isGenerating || busy}
+                          showTransition={betweenSlides}
+                          hasTransition={betweenSlides && nextTransition !== 'none'}
+                          transitionValue={nextTransition}
+                          transitionOpen={minimapTransitionAfterIndex === idx}
+                          onAdd={() => openAddSlideModal(idx)}
+                          onToggleTransition={() =>
+                            setMinimapTransitionAfterIndex((openIdx) => (openIdx === idx ? null : idx))
+                          }
+                          onPickTransition={(transitionId) => {
+                            if (nextSlide?.id) handleChangeTransition(transitionId, nextSlide.id)
+                            setMinimapTransitionAfterIndex(null)
+                          }}
+                          onCloseTransition={closeMinimapTransition}
+                        />
+                      )}
+                    </Fragment>
+                  )
+                })}
               </div>
             ) : (
               <div className="aig-minimap-rail-slides">
                 {localSlides.map((slide, idx) => (
-                  <button
-                    key={slide.id}
-                    type="button"
-                    className={`aig-minimap-rail-num ${selectedSlideId === slide.id ? 'is-active' : ''}`}
-                    title={`Slide ${idx + 1}`}
-                    aria-label={`Slide ${idx + 1}`}
-                    aria-current={selectedSlideId === slide.id ? 'true' : undefined}
-                    onClick={() => {
-                      setSelectedSlideId(slide.id)
-                      setSelectedElementId(null)
-                      setEditingTextId(null)
-                    }}
-                  >
-                    {idx + 1}
-                  </button>
+                  <Fragment key={slide.id}>
+                    <button
+                      type="button"
+                      className={`aig-minimap-rail-num ${selectedSlideId === slide.id ? 'is-active' : ''}`}
+                      ref={(node) => {
+                        if (node) minimapItemRefs.current[slide.id] = node
+                        else delete minimapItemRefs.current[slide.id]
+                      }}
+                      title={`Slide ${idx + 1}`}
+                      aria-label={`Slide ${idx + 1}`}
+                      aria-current={selectedSlideId === slide.id ? 'true' : undefined}
+                      onClick={() => selectSlide(slide.id, 'sidebar')}
+                    >
+                      {idx + 1}
+                    </button>
+                    {!viewOnly && (
+                      <MinimapInsertGap
+                        compact
+                        addDisabled={atDeckCap || isGenerating || busy}
+                        onAdd={() => openAddSlideModal(idx)}
+                      />
+                    )}
+                  </Fragment>
                 ))}
               </div>
             )}
           </div>
         </aside>
       </div>
+
+      <PptConfirmModal
+        open={Boolean(deleteSlideId)}
+        title="Delete this slide?"
+        message={
+          pendingDeleteTitle
+            ? `“${pendingDeleteTitle}” will be removed from this presentation.`
+            : 'This slide will be removed from the presentation.'
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onClose={() => setDeleteSlideId(null)}
+        onConfirm={confirmDeleteSlide}
+      />
 
       <AddSlideModal
         open={addSlideOpen}

@@ -815,6 +815,62 @@ export function extractDeckPackId(presentation) {
   return metrics?.deckPack?.packId || null
 }
 
+export function extractAppliedBrandKitId(presentation, fallbackConfig = {}) {
+  const metrics =
+    presentation?.deck?.generationMetrics ||
+    presentation?.generationMetrics ||
+    presentation?.presentation?.deck?.generationMetrics ||
+    null
+  const tokens =
+    presentation?.deck?.themeTokens ||
+    presentation?.themeTokens ||
+    presentation?.presentation?.deck?.themeTokens ||
+    null
+  const candidates = [
+    metrics?.deckPack?.brandKitId,
+    tokens?.brand?.brandKitId,
+    fallbackConfig.brandKitId,
+  ]
+  for (const value of candidates) {
+    const text = value == null ? '' : String(value).trim()
+    if (text) return text
+  }
+  return ''
+}
+
+function firstNonEmptyText(...values) {
+  for (const value of values) {
+    const text = typeof value === 'string' ? value.trim() : ''
+    if (text) return text
+  }
+  return ''
+}
+
+/** Original wizard prompt used to generate the deck (not title/tone fallbacks). */
+export function extractGenerationPrompt(presentation, fallbackConfig = {}) {
+  const deck =
+    presentation?.deck ||
+    presentation?.presentation?.deck ||
+    presentation ||
+    {}
+  const metrics =
+    deck.generationMetrics ||
+    presentation?.generationMetrics ||
+    presentation?.presentation?.deck?.generationMetrics ||
+    null
+  const selections = metrics?.generationFlow?.selections || {}
+  const outline = deck.outline || presentation?.outline || {}
+
+  return firstNonEmptyText(
+    presentation?.generationPrompt,
+    selections.prompt,
+    fallbackConfig.prompt,
+    fallbackConfig.generationPrompt,
+    outline.sourcePrompt,
+    outline.prompt
+  )
+}
+
 export function extractPresentationId(payload) {
   return (
     payload?.id ||
@@ -950,6 +1006,7 @@ export function normalizeSlideForEditor(slide, index = 0, aspectRatio = '16:9') 
       ...(elementsDoc?.contributorStatus
         ? { contributorStatus: elementsDoc.contributorStatus }
         : {}),
+      ...(elementsDoc?.speakerNotes != null ? { speakerNotes: elementsDoc.speakerNotes } : {}),
     },
     manuallyEdited: Boolean(slide?.manuallyEdited),
     status: slide?.status || 'READY',
@@ -958,6 +1015,7 @@ export function normalizeSlideForEditor(slide, index = 0, aspectRatio = '16:9') 
     transition: slide?.transition || elementsDoc?.transition || 'none',
     contributorStatus:
       slide?.contributorStatus || elementsDoc?.contributorStatus || 'none',
+    speakerNotes: slide?.speakerNotes || elementsDoc?.speakerNotes || '',
   }
 }
 
@@ -1058,6 +1116,9 @@ export function buildCanvasDoc(slide, { aspectRatio = '16:9', elements, backgrou
     ...(slide?.elements?.transition ? { transition: slide.elements.transition } : {}),
     ...(slide?.elements?.contributorStatus
       ? { contributorStatus: slide.elements.contributorStatus }
+      : {}),
+    ...(slide?.elements?.speakerNotes != null || slide?.speakerNotes
+      ? { speakerNotes: slide?.elements?.speakerNotes ?? slide.speakerNotes }
       : {}),
   }
 }

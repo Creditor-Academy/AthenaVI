@@ -19,6 +19,7 @@ import ContextMenu from './ContextMenu.jsx';
 import UserIdentity from './UserIdentity.jsx';
 import DefaultProjectThumbnail from './DefaultProjectThumbnail.jsx';
 import PresentationCardThumb from '../../../ppt/PresentationCardThumb.jsx';
+import ProjectSceneThumbnail from './ProjectSceneThumbnail.jsx';
 import { formatWorkspaceCredits } from './WorkspaceCreditsBadge.jsx';
 import { resolveLibraryKind } from '../../../../utils/workspaceLibrary.js';
 
@@ -340,11 +341,12 @@ function LibraryThumb({ item, kind }) {
         );
     }
     const src = item.thumbnail || item.thumbnailUrl;
-    return src ? (
+    if (src) {
+      return (
         <img src={src} alt={title} className="wsc-library-thumb-img" loading="lazy" decoding="async" />
-    ) : (
-        <DefaultProjectThumbnail title={title} category="video" showLabel={false} />
-    );
+      );
+    }
+    return <ProjectSceneThumbnail video={item} />;
 }
 
 export const VideoCard = ({ video, onClick, contextProps }) => {

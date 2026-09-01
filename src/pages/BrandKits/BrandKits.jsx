@@ -92,6 +92,7 @@ function BrandKits() {
   const [kitData, setKitData] = useState(emptyBrandKitData())
   const [kitMedia, setKitMedia] = useState([])
   const [isDefault, setIsDefault] = useState(false)
+  const [settingDefaultId, setSettingDefaultId] = useState(null)
   const [menuOpen, setMenuOpen] = useState(null)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -234,14 +235,18 @@ function BrandKits() {
   }, [])
 
   const loadKits = useCallback(async (wsId) => {
-    const list = await brandKitService.list(wsId)
-    const ranked = [...(list || [])].sort((a, b) => {
+    const list = await brandKitService.list(wsId, { includePersonal: false })
+    const local = (list || []).filter((kit) => {
+      if (!kit?.workspaceId) return true
+      return String(kit.workspaceId) === String(wsId)
+    })
+    const ranked = [...local].sort((a, b) => {
       if (Boolean(b.isDefault) !== Boolean(a.isDefault)) return b.isDefault ? 1 : -1
       const tb = Date.parse(b.updatedAt || '') || 0
       const ta = Date.parse(a.updatedAt || '') || 0
       return tb - ta
     })
-    setBrandKits(dedupeBrandKitList(ranked, { byName: true }))
+    setBrandKits(dedupeBrandKitList(ranked))
   }, [])
 
   useEffect(() => {
@@ -318,11 +323,9 @@ function BrandKits() {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      Object.keys(menuRefs.current).forEach((itemId) => {
-        if (menuRefs.current[itemId] && !menuRefs.current[itemId].contains(event.target)) {
-          setMenuOpen(null)
-        }
-      })
+      const wraps = Object.values(menuRefs.current).filter(Boolean)
+      const insideOpenMenu = wraps.some((el) => el.contains(event.target))
+      if (!insideOpenMenu) setMenuOpen(null)
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -457,11 +460,7 @@ function BrandKits() {
           isDefault,
         })
         if (isDefault) {
-          try {
-            await brandKitService.setDefault(workspaceId, editingKitId)
-          } catch {
-            // ignore
-          }
+          await brandKitService.setDefault(workspaceId, editingKitId)
         }
       } else {
         const created = await brandKitService.create(workspaceId, {
@@ -472,11 +471,7 @@ function BrandKits() {
         targetKitId = created.id
         setEditingKitId(created.id)
         if (isDefault && created.id) {
-          try {
-            await brandKitService.setDefault(workspaceId, created.id)
-          } catch {
-            // ignore
-          }
+          await brandKitService.setDefault(workspaceId, created.id)
         }
       }
 
@@ -555,15 +550,47 @@ function BrandKits() {
   }
 
   const handleSetDefault = async (kitId) => {
-    if (!canWrite || !workspaceId) return
+    if (!canWrite) {
+      setError('Only workspace owners and admins can change the default brand kit')
+      setMenuOpen(null)
+      return
+    }
+    if (!workspaceId || !kitId) {
+      setError('Could not set default brand kit')
+      setMenuOpen(null)
+      return
+    }
+    const alreadyDefault = brandKits.some(
+      (kit) => String(kit.id) === String(kitId) && kit.isDefault
+    )
+    if (alreadyDefault) {
+      setMenuOpen(null)
+      return
+    }
     setError('')
+    setSettingDefaultId(kitId)
+    setBrandKits((prev) =>
+      prev.map((kit) => ({
+        ...kit,
+        isDefault: String(kit.id) === String(kitId),
+      }))
+    )
+    if (String(editingKitId) === String(kitId)) setIsDefault(true)
     try {
       await brandKitService.setDefault(workspaceId, kitId)
       await loadKits(workspaceId)
+      showToast('Default brand kit updated', 'success')
     } catch (err) {
-      setError(err.message || 'Failed to set default')
+      handleApiError(err, 'Failed to set default')
+      try {
+        await loadKits(workspaceId)
+      } catch {
+        // keep optimistic state if reload fails
+      }
+    } finally {
+      setSettingDefaultId(null)
+      setMenuOpen(null)
     }
-    setMenuOpen(null)
   }
 
   const handleCopyId = (kitId) => {
@@ -1577,6 +1604,7 @@ function BrandKits() {
       setMenuRef={setMenuRef}
       openEdit={openEdit}
       handleSetDefault={handleSetDefault}
+      settingDefaultId={settingDefaultId}
       handleCopyId={handleCopyId}
       handleDelete={handleDelete}
     />

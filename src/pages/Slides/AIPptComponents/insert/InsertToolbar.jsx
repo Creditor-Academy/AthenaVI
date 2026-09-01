@@ -79,10 +79,17 @@ export default function InsertToolbar({
     const place = () => {
       const btn = buttonRefs.current[openTool]
       const panel = panelRef.current
-      const navBottom = 76
-      const margin = 16
+      const navEl = document.querySelector('.aig-editor-nav')
+      const navBottom = navEl ? Math.ceil(navEl.getBoundingClientRect().bottom) : 76
+      const margin = 12
       const viewportW = window.innerWidth
-      const panelW = panel?.offsetWidth || (openTool === 'table' || openTool === 'text' ? 320 : 720)
+      const compact = viewportW < 1100
+      const minLeft = compact ? margin : clearanceLeft
+      const defaultW = openTool === 'table' || openTool === 'text' ? 320 : 720
+      const panelW = Math.min(
+        panel?.offsetWidth || defaultW,
+        Math.max(200, viewportW - minLeft - margin)
+      )
 
       let left
       if (btn) {
@@ -92,7 +99,6 @@ export default function InsertToolbar({
         left = (viewportW - panelW) / 2
       }
 
-      const minLeft = clearanceLeft
       left = Math.max(minLeft, Math.min(left, viewportW - panelW - margin))
 
       setPanelPos({

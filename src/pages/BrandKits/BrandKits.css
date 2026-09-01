@@ -461,6 +461,11 @@
   color: var(--bk-muted);
 }
 
+.menu-item:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 .brandkit-menu-wrap {
   position: absolute;
   top: 18px;

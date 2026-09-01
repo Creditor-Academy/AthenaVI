@@ -35,7 +35,7 @@
 .ppt-insert-portal {
   position: fixed;
   z-index: 3200;
-  max-width: calc(100vw - 300px);
+  max-width: min(720px, calc(100vw - 24px));
   animation: ppt-insert-in 0.16s ease-out;
 }
 
@@ -1334,7 +1334,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 220px;
+  max-width: min(280px, 42vw);
 }
 
 .ppt-file-menu-privacy {
@@ -1346,7 +1346,7 @@
   position: absolute;
   top: calc(100% + 8px);
   left: 0;
-  width: 300px;
+  width: min(300px, calc(100vw - 24px));
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 14px;
@@ -2375,20 +2375,224 @@ body.ppt-layers-dragging * {
   border-width: 0 1.5px 1.5px 0;
 }
 
-/* Top nav insert center */
-.aig-editor-nav--gamma {
-  display: grid;
-  grid-template-columns: minmax(180px, 1fr) auto minmax(180px, 1fr);
-  align-items: center;
-  gap: 12px;
+/* Top bar: title/actions on row 1, insert tools on row 2 — never overlap */
+.aig-editor-container {
+  container-type: inline-size;
+  container-name: ppt-editor;
 }
 
-.aig-editor-nav--gamma .aig-editor-nav-center {
-  justify-self: center;
+.aig-editor-nav.aig-editor-nav--gamma {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  grid-template-areas:
+    'left right'
+    'center center';
+  align-items: center;
+  column-gap: 12px;
+  row-gap: 0;
+  padding: 6px 16px 4px;
+}
+
+.aig-editor-nav--gamma .aig-editor-nav-left {
+  grid-area: left;
+  min-width: 0;
 }
 
 .aig-editor-nav--gamma .aig-editor-nav-right {
+  grid-area: right;
   justify-self: end;
+  flex-shrink: 0;
+}
+
+.aig-editor-nav--gamma .aig-editor-nav-center {
+  grid-area: center;
+  justify-self: stretch;
+  min-width: 0;
+  max-width: 100%;
+  justify-content: center;
+  padding: 2px 0 4px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.aig-editor-nav--gamma .aig-ai-star-grad {
+  grid-area: left;
+  justify-self: start;
+}
+
+.ppt-insert-toolbar--horizontal {
+  max-width: 100%;
+  justify-content: center;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.ppt-insert-toolbar--horizontal::-webkit-scrollbar {
+  display: none;
+}
+
+.ppt-insert-tool-wrap {
+  flex-shrink: 0;
+}
+
+.ppt-presence-avatars {
+  position: relative;
+  z-index: 1;
+  margin-right: 8px;
+}
+
+/* Wide editor: one row, leftover space is only for insert tools */
+@container ppt-editor (min-width: 1520px) {
+  .aig-editor-nav.aig-editor-nav--gamma {
+    grid-template-columns: max-content minmax(0, 1fr) max-content;
+    grid-template-areas: 'left center right';
+    padding: 8px 20px;
+  }
+
+  .aig-editor-nav--gamma .aig-editor-nav-center {
+    justify-self: center;
+    border-top: none;
+    padding: 0;
+    overflow-x: auto;
+  }
+}
+
+@container ppt-editor (max-width: 1180px) {
+  .aig-editor-btn-label {
+    display: none;
+  }
+
+  .aig-editor-btn-secondary,
+  .aig-editor-btn-primary {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    gap: 0;
+  }
+
+  .aig-editor-badge {
+    display: none;
+  }
+
+  .ppt-file-menu-privacy {
+    display: none;
+  }
+}
+
+@container ppt-editor (max-width: 720px) {
+  .ppt-insert-tool-label {
+    display: none;
+  }
+
+  .ppt-insert-tool-btn--labeled {
+    min-width: 40px;
+    padding: 8px;
+    gap: 0;
+  }
+
+  .aig-editor-nav.aig-editor-nav--gamma {
+    padding: 6px 10px 2px;
+    column-gap: 8px;
+  }
+
+  .aig-editor-nav-right {
+    gap: 4px;
+  }
+
+  .ppt-file-menu-title {
+    max-width: min(140px, 36vw);
+  }
+}
+
+@container ppt-editor (max-width: 520px) {
+  .ppt-file-menu-meta {
+    display: none;
+  }
+
+  .ppt-presence-avatars {
+    display: none;
+  }
+
+  .aig-editor-btn-secondary,
+  .aig-editor-btn-primary {
+    width: 32px;
+    height: 32px;
+  }
+
+  .ppt-file-menu-trigger {
+    width: 32px;
+    height: 32px;
+  }
+
+  .ppt-insert-portal {
+    max-width: calc(100vw - 24px);
+  }
+}
+
+@container ppt-editor (max-width: 1024px) {
+  .ppt-editor-sidebar--float {
+    top: 12px;
+    right: 10px;
+    max-height: calc(100% - 24px);
+  }
+
+  .ppt-editor-sidebar {
+    --ppt-sidebar-panel: min(320px, calc(100cqi - 84px));
+  }
+
+  .ppt-editor-sidebar-panel {
+    max-height: min(560px, calc(100% - 8px));
+  }
+
+  .ppt-editor-sidebar-rail {
+    min-height: 240px;
+    padding: 8px 6px;
+  }
+}
+
+@container ppt-editor (max-width: 800px) {
+  .ppt-editor-sidebar--float {
+    top: 8px;
+    right: 6px;
+  }
+
+  .ppt-editor-sidebar {
+    --ppt-sidebar-rail: 48px;
+    --ppt-sidebar-panel: min(300px, calc(100cqi - 64px));
+  }
+
+  .ppt-editor-sidebar-btn,
+  .ppt-editor-sidebar-ai {
+    width: 36px;
+    height: 36px;
+  }
+
+  .ppt-editor-sidebar-rail {
+    border-radius: 12px;
+    min-height: 200px;
+  }
+
+  .ppt-insert-portal {
+    max-width: calc(100cqi - 16px);
+  }
+}
+
+@container ppt-editor (max-width: 560px) {
+  .ppt-editor-sidebar-panel {
+    right: auto;
+    left: auto;
+    top: calc(100% + 8px);
+    width: min(300px, calc(100cqi - 16px));
+    max-height: min(70dvh, 480px);
+    transform-origin: top right;
+  }
+
+  .ppt-slide-panel,
+  .ppt-ai-prompt-panel {
+    width: min(280px, calc(100cqi - 16px));
+    max-height: min(60dvh, 420px);
+  }
 }
 
 .ppt-fill-picker {
