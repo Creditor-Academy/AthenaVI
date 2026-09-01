@@ -12,6 +12,7 @@ import DEVICE_FRAMES_CATALOG from './deviceFramesCatalog.js'
 import COMPARISON_TIMELINE_CATALOG from './comparisonTimelineCatalog.js'
 import QUOTES_CATALOG from './quotesCatalog.js'
 import DIAGRAMS_CATALOG from './diagramsCatalog.js'
+import CLOSING_CATALOG from './closingCatalog.js'
 
 export const ALL_LAYOUT_CATALOGS = {
   ...SIMPLE_CATALOG,
@@ -24,6 +25,7 @@ export const ALL_LAYOUT_CATALOGS = {
   ...COMPARISON_TIMELINE_CATALOG,
   ...QUOTES_CATALOG,
   ...DIAGRAMS_CATALOG,
+  ...CLOSING_CATALOG,
 }
 
 export default ALL_LAYOUT_CATALOGS

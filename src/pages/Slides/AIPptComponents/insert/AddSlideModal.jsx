@@ -16,6 +16,7 @@ import {
   enrichLayoutSchemaForPreview,
   getDeckLayoutSchema,
   listDeckLayoutIds,
+  mergeCatalogLayoutTemplates,
 } from '../../../../utils/deckLayoutRegistry'
 import {
   layoutSchemaHasCanvasElements,
@@ -72,7 +73,7 @@ function layoutCategoryId(layout) {
   const ct = String(
     layout?.schema?.content_type || layout?.contentType || layout?.rawContentType || ''
   ).toLowerCase()
-  const layoutId = String(layout?.schema?.layout_id || '').toLowerCase()
+  const layoutId = String(layout?.schema?.layout_id || layout?.layoutId || '').toLowerCase()
   const fromApi = Array.isArray(layout?.categories) ? layout.categories.find((c) => c !== 'all') : null
   if (fromApi) return fromApi
 
@@ -81,11 +82,11 @@ function layoutCategoryId(layout) {
   if (ct === 'timeline') return 'timeline_and_plans'
   if (ct === 'pricing' || layoutId.includes('pricing')) return 'pricing'
   if (ct === 'agenda') return 'agenda'
+  if (ct === 'closing') return 'closing'
   if (ct === 'team') return 'people_and_team'
   if (ct === 'quote') return 'quotes_and_testimonials'
   if (ct === 'device_frames' || layoutId.startsWith('device_')) return 'device_frames'
   if (ct === 'diagram' || layoutId.startsWith('diagram_')) return 'diagrams'
-  if (ct === 'closing') return 'closing'
   if (ct === 'comparison' || ct === 'pros_cons') return 'simple_slides'
   if (['title', 'bullet_list', 'section_divider', 'image+text', 'image_text'].includes(ct)) {
     return 'simple_slides'
@@ -370,6 +371,11 @@ export default function AddSlideModal({
     [layoutTemplates, templatePacks]
   )
 
+  const galleryLayouts = useMemo(
+    () => mergeCatalogLayoutTemplates(layoutTemplates),
+    [layoutTemplates]
+  )
+
   const filteredPacks = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return templatePacks
@@ -390,16 +396,16 @@ export default function AddSlideModal({
 
   const filteredLayouts = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return layoutTemplates.filter((layout) => {
+    return galleryLayouts.filter((layout) => {
       if (layoutCategory !== 'all' && layoutCategoryId(layout) !== layoutCategory) return false
       if (!q) return true
-      const haystack = [layout.name, layout.rawContentType, layout.schema?.layout_id]
+      const haystack = [layout.name, layout.rawContentType, layout.schema?.layout_id, layout.layoutId]
         .filter(Boolean)
         .join(' ')
         .toLowerCase()
       return haystack.includes(q)
     })
-  }, [layoutTemplates, query, layoutCategory])
+  }, [galleryLayouts, query, layoutCategory])
 
   const remainingSlots = Math.max(0, PPT_CAPS.DECK_MAX_SLIDES - slideCount)
 
@@ -432,11 +438,12 @@ export default function AddSlideModal({
   }
 
   const pickLayout = (layout) => {
+    const layoutId = layout.schema?.layout_id || layout.layoutId || null
     onPick?.({
       source: 'layout',
       templateId: layout.templateId || layout.id,
-      layoutId: layout.schema?.layout_id || null,
-      schema: layout.schema || null,
+      layoutId,
+      schema: (layoutId && getDeckLayoutSchema(layoutId)) || layout.schema || null,
       name: layout.name,
     })
   }
@@ -673,9 +680,10 @@ export default function AddSlideModal({
                   const previewSchema = layout.schema
                     ? enrichLayoutSchemaForPreview(layout.schema)
                     : null
+                  const cardKey = layout.schema?.layout_id || layout.layoutId || layout.id
                   return (
                     <button
-                      key={layout.id}
+                      key={cardKey}
                       type="button"
                       className="ppt-add-slide-card"
                       disabled={disabled}

@@ -27,11 +27,14 @@ export function layoutFamily(layoutId, contentType) {
   if (ct === 'device_frames' || /^device_/.test(id)) return 'device'
   if (ct === 'chart' || ct === 'stat' || /chart_|donut_|metrics_/.test(id)) return 'chart'
   if (ct === 'timeline' || /^timeline_/.test(id)) return 'timeline'
+  if (ct === 'closing') return 'closing'
   if (ct === 'team' || /team_|people_/.test(id)) return 'team'
   if (ct === 'quote' || /quote_/.test(id)) return 'quote'
   if (ct === 'pricing' || /pricing_/.test(id)) return 'pricing'
   if (ct === 'agenda' || /agenda_/.test(id)) return 'agenda'
-  if (ct === 'closing' || /closing_|thank_you/.test(id)) return 'closing'
+  if (/closing_|thank_you|contact_.*cta|speaker_bio|minimal_text_cta|overlay_image_cta|image_para_cta|para_image_cta/.test(id)) {
+    return 'closing'
+  }
   if (ct === 'grid' || /^grid_/.test(id)) return 'grid'
   if (ct === 'title' || /title_|hero_|fullbleed|cover_/.test(id)) return 'title'
   if (ct === 'comparison' || /comparison_|pros_cons/.test(id)) return 'comparison'
@@ -89,6 +92,84 @@ function sameStructure(a, b) {
   return keys.every((k) => Number(a[k] || 0) === Number(b[k] || 0))
 }
 
+/** Explicit similar-layout links for curated picker groups (shown on canvas rail). */
+export const LAYOUT_SIMILAR_OVERRIDES = {
+  contact_left_image_v1: ['contact_right_image_v1', 'contact_image_bottom_v1'],
+  contact_right_image_v1: ['contact_left_image_v1', 'contact_image_bottom_v1'],
+  contact_image_bottom_v1: ['contact_left_image_v1', 'contact_right_image_v1'],
+  team_speaker_bio_v1: ['speaker_bio_image_right_v1', 'speaker_bio_centered_v1'],
+  speaker_bio_image_right_v1: ['team_speaker_bio_v1', 'speaker_bio_centered_v1'],
+  speaker_bio_centered_v1: ['team_speaker_bio_v1', 'speaker_bio_image_right_v1'],
+  centered_text_cta_v1: ['closing_thank_you_v1', 'minimal_text_cta_v1'],
+  closing_thank_you_v1: ['centered_text_cta_v1', 'minimal_text_cta_v1'],
+  minimal_text_cta_v1: ['centered_text_cta_v1', 'closing_thank_you_v1'],
+  closing_contact_cta_v1: ['contact_card_cta_v1', 'contact_split_cta_v1'],
+  contact_card_cta_v1: ['closing_contact_cta_v1', 'contact_split_cta_v1'],
+  contact_split_cta_v1: ['closing_contact_cta_v1', 'contact_card_cta_v1'],
+  para_image_cta_v1: ['image_para_cta_v1', 'overlay_image_cta_v1'],
+  image_para_cta_v1: ['para_image_cta_v1', 'overlay_image_cta_v1'],
+  overlay_image_cta_v1: ['para_image_cta_v1', 'image_para_cta_v1'],
+  diagram_cycle_v1: ['diagram_cycle_horizontal_v1', 'diagram_cycle_ring_v1'],
+  diagram_cycle_horizontal_v1: ['diagram_cycle_v1', 'diagram_cycle_ring_v1'],
+  diagram_cycle_ring_v1: ['diagram_cycle_v1', 'diagram_cycle_horizontal_v1'],
+  diagram_funnel_v1: ['diagram_funnel_horizontal_v1', 'diagram_funnel_stacked_v1'],
+  diagram_funnel_horizontal_v1: ['diagram_funnel_v1', 'diagram_funnel_stacked_v1'],
+  diagram_funnel_stacked_v1: ['diagram_funnel_v1', 'diagram_funnel_horizontal_v1'],
+  diagram_matrix_v1: ['diagram_matrix_grid_v1', 'diagram_matrix_quadrant_v1'],
+  diagram_matrix_grid_v1: ['diagram_matrix_v1', 'diagram_matrix_quadrant_v1'],
+  diagram_matrix_quadrant_v1: ['diagram_matrix_v1', 'diagram_matrix_grid_v1'],
+  diagram_process_steps_v1: ['diagram_process_horizontal_v1', 'diagram_process_vertical_v1'],
+  diagram_process_horizontal_v1: ['diagram_process_steps_v1', 'diagram_process_vertical_v1'],
+  diagram_process_vertical_v1: ['diagram_process_steps_v1', 'diagram_process_horizontal_v1'],
+  diagram_pyramid_v1: ['diagram_pyramid_layers_v1', 'diagram_pyramid_inverted_v1'],
+  diagram_pyramid_layers_v1: ['diagram_pyramid_v1', 'diagram_pyramid_inverted_v1'],
+  diagram_pyramid_inverted_v1: ['diagram_pyramid_v1', 'diagram_pyramid_layers_v1'],
+  diagram_swot_v1: ['diagram_swot_grid_v1', 'diagram_swot_cards_v1'],
+  diagram_swot_grid_v1: ['diagram_swot_v1', 'diagram_swot_cards_v1'],
+  diagram_swot_cards_v1: ['diagram_swot_v1', 'diagram_swot_grid_v1'],
+  diagram_venn_v1: ['diagram_venn_three_circle_v1', 'diagram_venn_stacked_v1'],
+  diagram_venn_three_circle_v1: ['diagram_venn_v1', 'diagram_venn_stacked_v1'],
+  diagram_venn_stacked_v1: ['diagram_venn_v1', 'diagram_venn_three_circle_v1'],
+  agenda_minimal_v1: ['agenda_editorial_v1', 'agenda_cards_v1'],
+  agenda_editorial_v1: ['agenda_minimal_v1', 'agenda_cards_v1'],
+  agenda_cards_v1: ['agenda_minimal_v1', 'agenda_editorial_v1'],
+  agenda_numbered_v1: ['agenda_numbered_bold_v1', 'agenda_numbered_timeline_v1'],
+  agenda_numbered_bold_v1: ['agenda_numbered_v1', 'agenda_numbered_timeline_v1'],
+  agenda_numbered_timeline_v1: ['agenda_numbered_v1', 'agenda_numbered_bold_v1'],
+  agenda_three_columns_hero_v1: ['agenda_three_cards_hero_v1', 'agenda_three_panel_hero_v1'],
+  agenda_three_cards_hero_v1: ['agenda_three_columns_hero_v1', 'agenda_three_panel_hero_v1'],
+  agenda_three_panel_hero_v1: ['agenda_three_columns_hero_v1', 'agenda_three_cards_hero_v1'],
+  agenda_three_columns_v1: ['agenda_three_cards_v1', 'agenda_three_tiles_v1'],
+  agenda_three_cards_v1: ['agenda_three_columns_v1', 'agenda_three_tiles_v1'],
+  agenda_three_tiles_v1: ['agenda_three_columns_v1', 'agenda_three_cards_v1'],
+  agenda_timeline_preview_v1: ['agenda_vertical_roadmap_v1', 'agenda_progress_path_v1'],
+  agenda_vertical_roadmap_v1: ['agenda_timeline_preview_v1', 'agenda_progress_path_v1'],
+  agenda_progress_path_v1: ['agenda_timeline_preview_v1', 'agenda_vertical_roadmap_v1'],
+  agenda_two_column_v1: ['agenda_split_panel_v1', 'agenda_asymmetric_v1'],
+  agenda_split_panel_v1: ['agenda_two_column_v1', 'agenda_asymmetric_v1'],
+  agenda_asymmetric_v1: ['agenda_two_column_v1', 'agenda_split_panel_v1'],
+}
+
+function resolveOverrideTemplates(currentLayoutId, layoutTemplates, layoutSchemaMap, overrideIds, limit) {
+  const list = Array.isArray(layoutTemplates) ? layoutTemplates : []
+  const out = []
+  const seen = new Set()
+  for (const lid of overrideIds) {
+    const id = String(lid || '').trim()
+    if (!id || id === currentLayoutId || seen.has(id)) continue
+    const tpl =
+      list.find((t) => templateLayoutId(t) === id) ||
+      (layoutSchemaMap?.[id]
+        ? { id, schema: layoutSchemaMap[id], contentType: layoutSchemaMap[id].content_type }
+        : null)
+    if (!tpl) continue
+    seen.add(id)
+    out.push(tpl)
+    if (out.length >= limit) break
+  }
+  return out
+}
+
 function candidateSchema(tpl, layoutSchemaMap) {
   const layoutId = templateLayoutId(tpl)
   return tpl?.schema || (layoutId && layoutSchemaMap?.[layoutId]) || null
@@ -121,9 +202,23 @@ function scoreSimilarLayout(candidate, { currentLayoutId, currentFamily, current
  */
 export function pickSimilarLayouts(slide, layoutTemplates = [], layoutSchemaMap = {}, limit = 3) {
   const list = Array.isArray(layoutTemplates) ? layoutTemplates : []
-  if (!list.length || limit <= 0) return []
+  if (!list.length && !layoutSchemaMap) return []
+  if (limit <= 0) return []
 
   const currentLayoutId = String(slide?.layoutId || slide?.layout_id || '').trim()
+  const overrideIds = LAYOUT_SIMILAR_OVERRIDES[currentLayoutId]
+  if (overrideIds?.length) {
+    const fromOverrides = resolveOverrideTemplates(
+      currentLayoutId,
+      list,
+      layoutSchemaMap,
+      overrideIds,
+      limit
+    )
+    if (fromOverrides.length) return fromOverrides
+  }
+
+  if (!list.length) return []
   const currentSchema =
     (currentLayoutId && layoutSchemaMap?.[currentLayoutId]) ||
     list.find((tpl) => templateLayoutId(tpl) === currentLayoutId)?.schema ||

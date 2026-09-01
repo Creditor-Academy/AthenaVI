@@ -377,10 +377,10 @@ export const DECK_LAYOUT_STARTERS = {
   contact_split: {
     label: 'Contact — image left',
     suggestedName: 'Contact Left Image',
-    contentType: 'team',
+    contentType: 'closing',
     schema: {
       layout_id: 'contact_left_image_v1',
-      content_type: 'team',
+      content_type: 'closing',
       schemaVersion: 2,
       grid: '12-col',
       preview: { mode: 'contact_split_left' },

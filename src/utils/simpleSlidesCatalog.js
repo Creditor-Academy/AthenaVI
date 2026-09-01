@@ -10,7 +10,6 @@ import {
   cardShape,
   surfaceHalf,
   overlayScrim,
-  ctaPill,
   layoutBase,
   previewSlot,
   SAMPLE_PARA,
@@ -326,13 +325,6 @@ const CATALOG = {
     slot('IMAGE_3', 'cols 9-12, rows 4-10', 'image', null, { layer: 2, fit: 'cover' }),
   ]),
 
-  para_image_cta_v1: layoutBase('para_image_cta_v1', 'closing', [
-    body('BODY', 'cols 2-6, rows 2-5', P.short, 4),
-    ctaPill('cols 2-5, rows 6-7'),
-    slot('CTA', 'cols 2-5, rows 6-7', 'cta', 'Book a demo', { layer: 10, typography: typo('cta') }),
-    imageRight(),
-  ], { mode: 'closing_cta' }),
-
   three_cards_image_text_v1: layoutBase('three_cards_image_text_v1', 'image+text', [
     heading('HEADING', 'cols 2-11, rows 2-3', 'Product highlights', { typography: typo('heading', { fontSize: 32 }) }),
     slot('IMAGE_1', 'cols 1-4, rows 3-7', 'image', null, { layer: 2, fit: 'cover' }),
@@ -467,23 +459,6 @@ const CATALOG = {
     body('ROW_3_BODY', 'cols 8-10, rows 5-8', P.three, 3, { typography: typo('body', { fontSize: 15 }) }),
   ], { mode: 'intro_three_para_icons' }),
 
-  centered_text_cta_v1: layoutBase('centered_text_cta_v1', 'closing', [
-    slot('HEADING', 'cols 3-10, rows 3-5', 'heading', 'Thank you', {
-      layer: 10,
-      typography: centeredTypo('heading'),
-    }),
-    slot('SUBTITLE', 'cols 3-10, rows 5-6', 'subheading', "Let's build something great together", {
-      layer: 10,
-      typography: centeredTypo('subheading'),
-    }),
-    ctaPill('cols 4-9, rows 6-7'),
-    slot('CTA', 'cols 4-9, rows 6-7', 'cta', 'Book a demo', { layer: 10, typography: typo('cta') }),
-    slot('CONTACT', 'cols 4-9, rows 8-9', 'caption', 'hello@company.com', {
-      layer: 10,
-      typography: centeredTypo('caption'),
-    }),
-  ], { mode: 'closing_cta' }),
-
   headline_right_text_v1: layoutBase('headline_right_text_v1', 'image+text', [
     heading('HEADLINE', 'cols 2-6, rows 2-4', 'Section headline'),
     body('BODY', 'cols 7-11, rows 2-8', P.one, 4),
@@ -594,30 +569,6 @@ const CATALOG = {
     }),
     body('RIGHT_BODY', 'cols 7-12, rows 3-9', P.short, 5),
   ]),
-
-  closing_thank_you_v1: layoutBase('closing_thank_you_v1', 'closing', [
-    slot('HEADING', 'cols 2-11, rows 4-6', 'heading', 'Thank you', {
-      layer: 10,
-      typography: centeredTypo('heading', { fontSize: 56 }),
-    }),
-    slot('SUBTITLE', 'cols 3-10, rows 6-7', 'subheading', 'Questions?', {
-      layer: 10,
-      typography: centeredTypo('subheading'),
-    }),
-  ], { mode: 'closing_cta' }),
-
-  closing_contact_cta_v1: layoutBase('closing_contact_cta_v1', 'closing', [
-    slot('HEADING', 'cols 2-11, rows 2-4', 'heading', "Let's connect", {
-      layer: 10,
-      typography: centeredTypo('heading'),
-    }),
-    slot('CONTACT', 'cols 3-10, rows 4-6', 'contact', 'hello@company.com', {
-      layer: 10,
-      typography: centeredTypo('body', { fontSize: 20 }),
-    }),
-    ctaPill('cols 4-9, rows 6-7'),
-    slot('CTA', 'cols 4-9, rows 6-7', 'cta', 'Get in touch', { layer: 10, typography: typo('cta') }),
-  ], { mode: 'closing_cta' }),
 }
 
 export default CATALOG

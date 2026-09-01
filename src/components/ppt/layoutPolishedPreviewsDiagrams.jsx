@@ -190,6 +190,19 @@ export function PolishedDiagramSwotPreview({ previewHints, ...props }) {
         { title: 'Threats', body: 'External risks' },
       ]
 
+  if (previewHints.diagramVariant === 'cards') {
+    return (
+      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 8 : 3 }}>
+        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small, fontWeight: 800, color: theme.text }}>{heading}</div>
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: large ? 8 : 3, minHeight: 0 }}>
+          {quadrants.map((q, i) => (
+            <QuadrantCell key={i} title={q.title} body={q.body} large={large} accent={i === 0} />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
       {...fp}
@@ -253,6 +266,9 @@ export function PolishedDiagramFunnelPreview({ previewHints, ...props }) {
   const tiers = Array.isArray(previewHints.funnelTiers) && previewHints.funnelTiers.length
     ? previewHints.funnelTiers.slice(0, 4)
     : [1, 2, 3, 4].map((n) => ({ title: `Stage ${n}`, body: 'Brief note' }))
+  const variant = previewHints.diagramVariant
+  const stacked = variant === 'stacked'
+  const horizontal = variant === 'horizontal'
 
   return (
     <div
@@ -275,9 +291,23 @@ export function PolishedDiagramFunnelPreview({ previewHints, ...props }) {
       >
         {heading}
       </div>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'stretch', gap: large ? 10 : 4, minHeight: 0 }}>
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: stacked ? 'column' : horizontal ? 'column' : 'row',
+          alignItems: 'stretch',
+          gap: large ? 10 : 4,
+          minHeight: 0,
+        }}
+      >
         <div
-          style={{ width: '46%', minWidth: 0, display: 'flex' }}
+          style={{
+            width: stacked || horizontal ? '100%' : '46%',
+            minWidth: 0,
+            minHeight: stacked || horizontal ? (large ? 80 : 32) : undefined,
+            display: 'flex',
+          }}
           dangerouslySetInnerHTML={{ __html: funnelDiagramInlineSvg() }}
         />
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
@@ -331,7 +361,12 @@ export function PolishedDiagramPyramidPreview({ previewHints, ...props }) {
       </div>
       <div style={{ flex: 1, display: 'flex', minHeight: 0, gap: large ? 10 : 4 }}>
         <div
-          style={{ width: '48%', minWidth: 0, display: 'flex' }}
+          style={{
+            width: '48%',
+            minWidth: 0,
+            display: 'flex',
+            transform: previewHints.diagramVariant === 'inverted' ? 'scaleY(-1)' : undefined,
+          }}
           dangerouslySetInnerHTML={{ __html: pyramidDiagramInlineSvg() }}
         />
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly' }}>
@@ -437,6 +472,7 @@ export function PolishedDiagramProcessStepsPreview({ previewHints, ...props }) {
         { title: '4. Review', body: 'Iterate' },
       ]
   const count = Math.min(steps.length, 4)
+  const vertical = previewHints.diagramVariant === 'vertical'
   const node = large ? 22 : 10
   const cardBg = 'color-mix(in srgb, #c4b5a0 22%, var(--preview-bg, #ffffff))'
 
@@ -465,11 +501,16 @@ export function PolishedDiagramProcessStepsPreview({ previewHints, ...props }) {
       <div
         style={{
           position: 'relative',
-          height: large ? 64 : 24,
+          height: vertical ? 'auto' : large ? 64 : 24,
           flexShrink: 0,
           margin: large ? '2px 4%' : '1px 2%',
+          display: vertical ? 'flex' : 'block',
+          flexDirection: vertical ? 'column' : undefined,
+          gap: vertical ? (large ? 8 : 3) : undefined,
+          alignItems: vertical ? 'center' : undefined,
         }}
       >
+        {!vertical && (
         <div
           aria-hidden
           style={{
@@ -483,13 +524,15 @@ export function PolishedDiagramProcessStepsPreview({ previewHints, ...props }) {
             borderRadius: 2,
           }}
         />
+        )}
         <div
           style={{
-            position: 'absolute',
-            inset: 0,
+            position: vertical ? 'relative' : 'absolute',
+            inset: vertical ? undefined : 0,
             display: 'grid',
-            gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))`,
+            gridTemplateColumns: vertical ? '1fr' : `repeat(${count}, minmax(0, 1fr))`,
             alignItems: 'start',
+            gap: vertical ? (large ? 8 : 3) : undefined,
           }}
         >
           {steps.slice(0, count).map((_, i) => (
@@ -521,7 +564,7 @@ export function PolishedDiagramProcessStepsPreview({ previewHints, ...props }) {
         style={{
           flex: 1,
           display: 'grid',
-          gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))`,
+          gridTemplateColumns: vertical ? '1fr' : `repeat(${count}, minmax(0, 1fr))`,
           gap: large ? 10 : 3,
           minHeight: 0,
         }}
@@ -590,6 +633,20 @@ export function PolishedDiagramCyclePreview({ previewHints, ...props }) {
         { title: 'Check', body: 'Measure the result' },
         { title: 'Act', body: 'Improve and repeat' },
       ]
+
+  if (previewHints.diagramVariant === 'horizontal') {
+    return (
+      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 8 : 3 }}>
+        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small, fontWeight: 800, color: theme.text, textAlign: 'center' }}>{heading}</div>
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: large ? 8 : 3, minHeight: 0 }}>
+          {quadrants.map((q, i) => (
+            <QuadrantCell key={i} title={q.title} body={q.body} large={large} accent={i === 0} />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   const svg = buildCycleDiagramSvg()
   const labelStyle = {
     fontSize: large ? '0.72rem' : '0.24rem',
@@ -682,6 +739,7 @@ export function PolishedDiagramMatrixPreview({ previewHints, ...props }) {
         { title: 'Low impact · Hard', body: 'Key point' },
       ]
   const colors = ['#5B8FC4', '#5B8FC4', '#4A7EB0', '#4A7EB0']
+  const showAxis = previewHints.diagramVariant !== 'grid'
 
   return (
     <div
@@ -705,7 +763,7 @@ export function PolishedDiagramMatrixPreview({ previewHints, ...props }) {
         {heading}
       </div>
       <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: large ? 6 : 2 }}>
-        <div style={{ width: large ? 14 : 6, borderRadius: 4, background: '#6B9FD4', flexShrink: 0, alignSelf: 'stretch', marginBottom: large ? 16 : 6 }} />
+        {showAxis && <div style={{ width: large ? 14 : 6, borderRadius: 4, background: '#6B9FD4', flexShrink: 0, alignSelf: 'stretch', marginBottom: large ? 16 : 6 }} />}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: large ? 6 : 2 }}>
           <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr', gap: large ? 6 : 2, minHeight: 0, position: 'relative' }}>
             {quadrants.map((q, i) => (
@@ -745,7 +803,7 @@ export function PolishedDiagramMatrixPreview({ previewHints, ...props }) {
               }}
             />
           </div>
-          <div style={{ height: large ? 14 : 6, borderRadius: 4, background: '#6B9FD4', flexShrink: 0 }} />
+          {showAxis && <div style={{ height: large ? 14 : 6, borderRadius: 4, background: '#6B9FD4', flexShrink: 0 }} />}
         </div>
       </div>
     </div>

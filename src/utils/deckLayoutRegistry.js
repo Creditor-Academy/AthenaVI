@@ -173,6 +173,35 @@ function buildAgendaColumnsFromSlots(slots) {
   return columns.length ? columns : null
 }
 
+function buildAgendaItemsFromNumberedSlots(slots) {
+  const items = []
+  for (let i = 1; i <= 6; i += 1) {
+    const text = slotPlaceholderText(slots, `ITEM_${i}`)
+    if (text) items.push(text)
+  }
+  return items.length ? items : null
+}
+
+function buildAgendaItemsFromMinimalBody(slots) {
+  const body =
+    slotPlaceholderText(slots, 'BODY') ||
+    'Topic one\nTopic two\nTopic three\nTopic four'
+  const items = String(body)
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+  return items.length ? items : null
+}
+
+function buildAgendaMilestonesFromSlots(slots) {
+  const milestones = []
+  for (let i = 1; i <= 6; i += 1) {
+    const label = slotPlaceholderText(slots, `milestone_${i}_label`)
+    if (label) milestones.push(label)
+  }
+  return milestones.length ? milestones : null
+}
+
 /** Known layout_id → polished preview mode (overrides stale preview.mode in saved schemas). */
 const LAYOUT_PREVIEW_MODES = {
   statement_left_v1: 'quote_attribution',
@@ -180,7 +209,7 @@ const LAYOUT_PREVIEW_MODES = {
   eight_short_texts_image_v1: 'eight_short_texts',
   two_cards_image_text_v1: 'two_image_columns',
   centered_text_cta_v1: 'closing_cta',
-  para_image_cta_v1: 'closing_cta',
+  para_image_cta_v1: 'closing_image_right',
   intro_three_para_icons_v1: 'intro_three_para_icons',
   // Grids
   grid_bento_three_v1: 'grid_bento_three',
@@ -233,16 +262,36 @@ const LAYOUT_PREVIEW_MODES = {
   title_statement_v1: 'title_centered',
   closing_thank_you_v1: 'closing_cta',
   closing_contact_cta_v1: 'closing_cta',
+  minimal_text_cta_v1: 'closing_cta',
+  contact_card_cta_v1: 'closing_cta',
+  contact_split_cta_v1: 'contact_split_cta',
+  contact_image_bottom_v1: 'contact_split_bottom',
+  team_speaker_bio_v1: 'speaker_bio_left',
+  speaker_bio_image_right_v1: 'speaker_bio_right',
+  speaker_bio_centered_v1: 'speaker_bio_centered',
+  image_para_cta_v1: 'closing_image_left',
+  overlay_image_cta_v1: 'closing_overlay',
   agenda_numbered_v1: 'agenda_numbered',
   agenda_minimal_v1: 'agenda_minimal',
   agenda_two_column_v1: 'agenda_two_columns',
-  agenda_timeline_preview_v1: 'timeline_horizontal',
+  agenda_timeline_preview_v1: 'process_flow',
+  agenda_editorial_v1: 'agenda_minimal',
+  agenda_cards_v1: 'agenda_minimal',
+  agenda_numbered_bold_v1: 'agenda_numbered',
+  agenda_numbered_timeline_v1: 'agenda_numbered',
+  agenda_three_cards_hero_v1: 'agenda_three_columns_hero',
+  agenda_three_panel_hero_v1: 'agenda_three_columns_hero',
+  agenda_three_cards_v1: 'agenda_three_columns',
+  agenda_three_tiles_v1: 'agenda_three_columns',
+  agenda_vertical_roadmap_v1: 'process_flow',
+  agenda_progress_path_v1: 'process_flow',
+  agenda_split_panel_v1: 'agenda_two_columns',
+  agenda_asymmetric_v1: 'agenda_two_columns',
   quote_portrait_v1: 'quote_attribution',
   quote_testimonial_card_v1: 'quote_attribution',
   quote_attribution_v1: 'quote_attribution',
   quote_grid_v1: 'quote_grid',
   team_featured_lead_v1: 'team_featured_lead',
-  team_speaker_bio_v1: 'team_speaker_bio',
   team_org_simple_v1: 'team_org_simple',
   logo_wall_v1: 'grid_six_images',
   logo_partner_strip_v1: 'grid_three_images',
@@ -253,6 +302,20 @@ const LAYOUT_PREVIEW_MODES = {
   diagram_cycle_v1: 'diagram_cycle',
   diagram_venn_v1: 'diagram_venn',
   diagram_pyramid_v1: 'diagram_pyramid',
+  diagram_cycle_horizontal_v1: 'diagram_cycle',
+  diagram_cycle_ring_v1: 'diagram_cycle',
+  diagram_funnel_horizontal_v1: 'diagram_funnel',
+  diagram_funnel_stacked_v1: 'diagram_funnel',
+  diagram_matrix_grid_v1: 'diagram_matrix',
+  diagram_matrix_quadrant_v1: 'diagram_matrix',
+  diagram_process_horizontal_v1: 'diagram_process_steps',
+  diagram_process_vertical_v1: 'diagram_process_steps',
+  diagram_pyramid_layers_v1: 'diagram_pyramid',
+  diagram_pyramid_inverted_v1: 'diagram_pyramid',
+  diagram_swot_grid_v1: 'diagram_swot',
+  diagram_swot_cards_v1: 'diagram_swot',
+  diagram_venn_three_circle_v1: 'diagram_venn',
+  diagram_venn_stacked_v1: 'diagram_venn',
   metric_single_v1: 'stat_hero',
   metric_two_v1: 'stat_row',
   metric_three_v1: 'stat_row',
@@ -269,7 +332,6 @@ const LAYOUT_PREVIEW_MODES = {
   // Agenda
   agenda_three_columns_v1: 'agenda_three_columns',
   agenda_three_columns_hero_v1: 'agenda_three_columns_hero',
-  // People & team
   contact_left_image_v1: 'contact_split_left',
   contact_right_image_v1: 'contact_split_right',
   team_three_horizontal_v1: 'team_three_horizontal',
@@ -696,9 +758,26 @@ function fillPreviewDataFromSlots(schema) {
   if ((mode === 'agenda_three_columns' || mode === 'agenda_three_columns_hero') && !Array.isArray(preview.agendaColumns)) {
     preview.agendaColumns = buildAgendaColumnsFromSlots(slots)
   }
+  if (mode === 'agenda_two_columns' && !Array.isArray(preview.agendaColumns)) {
+    preview.agendaColumns = buildAgendaColumnsFromSlots(slots)
+  }
+  if (mode === 'agenda_numbered' && !Array.isArray(preview.agendaItems)) {
+    preview.agendaItems = buildAgendaItemsFromNumberedSlots(slots)
+  }
+  if (mode === 'agenda_minimal' && !Array.isArray(preview.agendaItems)) {
+    preview.agendaItems = buildAgendaItemsFromMinimalBody(slots)
+  }
+  if (mode === 'process_flow' && !Array.isArray(preview.milestones)) {
+    preview.milestones = buildAgendaMilestonesFromSlots(slots)
+  }
   if (
     mode === 'contact_split_left'
     || mode === 'contact_split_right'
+    || mode === 'contact_split_bottom'
+    || mode === 'contact_split_cta'
+    || mode === 'speaker_bio_left'
+    || mode === 'speaker_bio_right'
+    || mode === 'speaker_bio_centered'
     || mode === 'team_three_horizontal'
     || mode === 'team_vertical_list'
     || mode === 'team_grid_four'
@@ -887,6 +966,45 @@ export function getDeckLayoutSchema(layoutId) {
 
 export function listDeckLayoutIds() {
   return Object.keys(REGISTRY)
+}
+
+export function humanLayoutName(layoutId) {
+  return String(layoutId || '')
+    .replace(/_v\d+$/, '')
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+/**
+ * Gallery list for Add Slide → Layouts: one row per shipped catalog layout,
+ * overlaying DB template ids when seeded (templateId for API apply).
+ */
+export function mergeCatalogLayoutTemplates(dbLayouts = []) {
+  const dbByLayoutId = new Map()
+  for (const row of dbLayouts) {
+    const lid = normalizeLayoutId(row?.schema?.layout_id || row?.layout_id || '')
+    if (!lid || dbByLayoutId.has(lid)) continue
+    dbByLayoutId.set(lid, row)
+  }
+
+  return listDeckLayoutIds()
+    .map((layoutId) => {
+      const schema = getDeckLayoutSchema(layoutId)
+      if (!schema?.slots?.length && !layoutSchemaHasPreviewCanvas(schema)) return null
+
+      const db = dbByLayoutId.get(layoutId)
+      return {
+        id: db?.id || db?.templateId || layoutId,
+        templateId: db?.templateId || db?.id || null,
+        layoutId,
+        name: db?.name || humanLayoutName(layoutId),
+        rawContentType: schema.content_type,
+        schema,
+        previewUrl: db?.previewUrl || null,
+      }
+    })
+    .filter(Boolean)
 }
 
 /** Resolve slide-level and per-slot image URLs from pack TemplateMedia rows. */

@@ -1,5 +1,5 @@
 /**
- * Agenda DECK_LAYOUT v2 catalog — three-column agenda layouts.
+ * Agenda DECK_LAYOUT v2 catalog — 6 core + 12 similar-variant layouts.
  */
 
 import {
@@ -78,5 +78,33 @@ const CATALOG = {
     }),
   ], { mode: 'process_flow' }),
 }
+
+function agendaFromSource(layoutId, sourceId, agendaVariant) {
+  const source = CATALOG[sourceId]
+  if (!source?.slots?.length) {
+    throw new Error(`agendaFromSource: missing source ${sourceId}`)
+  }
+  return layoutBase(
+    layoutId,
+    'agenda',
+    JSON.parse(JSON.stringify(source.slots)),
+    { mode: source.preview?.mode, agendaVariant }
+  )
+}
+
+Object.assign(CATALOG, {
+  agenda_editorial_v1: agendaFromSource('agenda_editorial_v1', 'agenda_minimal_v1', 'editorial'),
+  agenda_cards_v1: agendaFromSource('agenda_cards_v1', 'agenda_minimal_v1', 'cards'),
+  agenda_numbered_bold_v1: agendaFromSource('agenda_numbered_bold_v1', 'agenda_numbered_v1', 'bold'),
+  agenda_numbered_timeline_v1: agendaFromSource('agenda_numbered_timeline_v1', 'agenda_numbered_v1', 'timeline'),
+  agenda_three_cards_hero_v1: agendaFromSource('agenda_three_cards_hero_v1', 'agenda_three_columns_hero_v1', 'cards'),
+  agenda_three_panel_hero_v1: agendaFromSource('agenda_three_panel_hero_v1', 'agenda_three_columns_hero_v1', 'panel'),
+  agenda_three_cards_v1: agendaFromSource('agenda_three_cards_v1', 'agenda_three_columns_v1', 'cards'),
+  agenda_three_tiles_v1: agendaFromSource('agenda_three_tiles_v1', 'agenda_three_columns_v1', 'tiles'),
+  agenda_vertical_roadmap_v1: agendaFromSource('agenda_vertical_roadmap_v1', 'agenda_timeline_preview_v1', 'vertical'),
+  agenda_progress_path_v1: agendaFromSource('agenda_progress_path_v1', 'agenda_timeline_preview_v1', 'path'),
+  agenda_split_panel_v1: agendaFromSource('agenda_split_panel_v1', 'agenda_two_column_v1', 'split_panel'),
+  agenda_asymmetric_v1: agendaFromSource('agenda_asymmetric_v1', 'agenda_two_column_v1', 'asymmetric'),
+})
 
 export default CATALOG

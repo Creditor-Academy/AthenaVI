@@ -1,5 +1,5 @@
 /**
- * People & Team DECK_LAYOUT v2 catalog — 9 contact / team layouts.
+ * People & Team DECK_LAYOUT v2 catalog — 9 team layouts.
  */
 
 import {
@@ -11,7 +11,6 @@ import {
   body,
   heading,
   memberFields,
-  contactInfoFields,
 } from './deckLayoutV2Helpers.js'
 
 function teamGridLayout(id, memberCount, previewMode, memberRegions) {
@@ -27,16 +26,6 @@ function teamGridLayout(id, memberCount, previewMode, memberRegions) {
 }
 
 const CATALOG = {
-  contact_left_image_v1: layoutBase('contact_left_image_v1', 'team', [
-    slot('CONTACT_IMAGE', 'cols 1-6, rows 1-10', 'image', null, { layer: 2, fit: 'cover' }),
-    ...contactInfoFields(7, 11),
-  ], { mode: 'contact_split_left' }),
-
-  contact_right_image_v1: layoutBase('contact_right_image_v1', 'team', [
-    ...contactInfoFields(2, 6),
-    slot('CONTACT_IMAGE', 'cols 7-12, rows 1-10', 'image', null, { layer: 2, fit: 'cover' }),
-  ], { mode: 'contact_split_right' }),
-
   team_three_horizontal_v1: layoutBase('team_three_horizontal_v1', 'team', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Meet the team', {
       typography: typo('heading', { fontSize: 32, align: 'center' }),
@@ -281,19 +270,6 @@ const CATALOG = {
     }),
     body('MEMBER_1_BIO', 'cols 6-11, rows 5-8', 'Short bio highlighting experience and vision.', 4),
   ], { mode: 'team_featured_lead' }),
-
-  team_speaker_bio_v1: layoutBase('team_speaker_bio_v1', 'team', [
-    slot('MEMBER_1_IMAGE', 'cols 1-5, rows 2-9', 'image', null, { layer: 2, fit: 'cover' }),
-    slot('MEMBER_1_NAME', 'cols 6-11, rows 2-3', 'heading', 'Speaker name', {
-      layer: 10,
-      typography: typo('heading', { fontSize: 28 }),
-    }),
-    slot('MEMBER_1_ROLE', 'cols 6-11, rows 3-4', 'subheading', 'Title · Organization', {
-      layer: 10,
-      typography: typo('subheading'),
-    }),
-    body('MEMBER_1_BIO', 'cols 6-11, rows 4-9', 'Speaker bio with credentials and talk focus.', 6),
-  ], { mode: 'team_speaker_bio' }),
 
   team_org_simple_v1: layoutBase('team_org_simple_v1', 'team', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Organization', { max_lines: 2 }),

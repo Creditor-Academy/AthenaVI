@@ -1,5 +1,5 @@
 /**
- * Diagram DECK_LAYOUT v2 catalog — SWOT, funnel, matrix, process, etc.
+ * Diagram DECK_LAYOUT v2 catalog — 7 core + 14 similar-variant layouts.
  */
 import {
   slot,
@@ -219,5 +219,35 @@ const CATALOG = {
     ...pyramidTier(5, [7, 12, 11, 12]),
   ], { mode: 'diagram_pyramid' }),
 }
+
+function diagramFromSource(layoutId, sourceId, diagramVariant) {
+  const source = CATALOG[sourceId]
+  if (!source?.slots?.length) {
+    throw new Error(`diagramFromSource: missing source ${sourceId}`)
+  }
+  return layoutBase(
+    layoutId,
+    'diagram',
+    JSON.parse(JSON.stringify(source.slots)),
+    { mode: source.preview?.mode, diagramVariant }
+  )
+}
+
+Object.assign(CATALOG, {
+  diagram_cycle_horizontal_v1: diagramFromSource('diagram_cycle_horizontal_v1', 'diagram_cycle_v1', 'horizontal'),
+  diagram_cycle_ring_v1: diagramFromSource('diagram_cycle_ring_v1', 'diagram_cycle_v1', 'ring'),
+  diagram_funnel_horizontal_v1: diagramFromSource('diagram_funnel_horizontal_v1', 'diagram_funnel_v1', 'horizontal'),
+  diagram_funnel_stacked_v1: diagramFromSource('diagram_funnel_stacked_v1', 'diagram_funnel_v1', 'stacked'),
+  diagram_matrix_grid_v1: diagramFromSource('diagram_matrix_grid_v1', 'diagram_matrix_v1', 'grid'),
+  diagram_matrix_quadrant_v1: diagramFromSource('diagram_matrix_quadrant_v1', 'diagram_matrix_v1', 'quadrant'),
+  diagram_process_horizontal_v1: diagramFromSource('diagram_process_horizontal_v1', 'diagram_process_steps_v1', 'horizontal'),
+  diagram_process_vertical_v1: diagramFromSource('diagram_process_vertical_v1', 'diagram_process_steps_v1', 'vertical'),
+  diagram_pyramid_layers_v1: diagramFromSource('diagram_pyramid_layers_v1', 'diagram_pyramid_v1', 'layers'),
+  diagram_pyramid_inverted_v1: diagramFromSource('diagram_pyramid_inverted_v1', 'diagram_pyramid_v1', 'inverted'),
+  diagram_swot_grid_v1: diagramFromSource('diagram_swot_grid_v1', 'diagram_swot_v1', 'grid'),
+  diagram_swot_cards_v1: diagramFromSource('diagram_swot_cards_v1', 'diagram_swot_v1', 'cards'),
+  diagram_venn_three_circle_v1: diagramFromSource('diagram_venn_three_circle_v1', 'diagram_venn_v1', 'three_circle'),
+  diagram_venn_stacked_v1: diagramFromSource('diagram_venn_stacked_v1', 'diagram_venn_v1', 'stacked'),
+})
 
 export default CATALOG

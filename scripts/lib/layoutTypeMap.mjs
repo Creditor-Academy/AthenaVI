@@ -15,7 +15,7 @@ export const LAYOUT_TYPE_MAP = {
   StatsHighlight: { layoutId: 'metric_single_v1', contentType: 'stat' },
   Cover: { layoutId: 'title_image_logo_v1', contentType: 'title' },
   TwoColumn: { layoutId: 'section_with_image_v1', contentType: 'image+text' },
-  ContactSplit: { layoutId: 'contact_left_image_v1', contentType: 'team' },
+  ContactSplit: { layoutId: 'contact_left_image_v1', contentType: 'closing' },
   PricingPlans: { layoutId: 'pricing_three_plans_v1', contentType: 'pricing' },
   TeamGrid: { layoutId: 'team_four_v1', contentType: 'team' },
   DeviceFrames: { layoutId: 'device_phone_vertical_split_v1', contentType: 'device_frames' },

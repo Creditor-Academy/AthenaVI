@@ -200,70 +200,10 @@ export function PolishedPricingComparisonTablePreview({ previewHints, ...props }
   )
 }
 
-export function PolishedAgendaThreeColumnsPreview({ previewHints, ...props }) {
-  const { large } = props
-  const fp = frameProps(props)
-  const columns = previewHints.agendaColumns || [
-    { heading: 'Morning', items: ['1.1 Opening remarks', '1.2 Key topic', '1.3 Discussion'] },
-    { heading: 'Afternoon', items: ['2.1 Workshop', '2.2 Breakout', '2.3 Summary'] },
-    { heading: 'Evening', items: ['3.1 Networking', '3.2 Q&A', '3.3 Closing'] },
-  ]
-  return (
-    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 12 : 4 }}>
-      <div style={{ textAlign: 'center', fontSize: large ? PREVIEW_TITLE_FS.large : '0.42rem', fontWeight: 800, color: theme.text }}>
-        {previewHints.slots?.HEADING?.text || 'Agenda'}
-      </div>
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 16 : 4 }}>
-        {columns.slice(0, 3).map((col, i) => (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3 }}>
-            <div style={{ fontSize: large ? '0.95rem' : '0.32rem', fontWeight: 800, color: theme.text }}>{col.heading}</div>
-            {(col.items || []).slice(0, 4).map((item, j) => (
-              <div key={j} style={{ fontSize: large ? PREVIEW_BODY_FS.large : '0.26rem', color: theme.muted, lineHeight: 1.35 }}>{item}</div>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-export function PolishedAgendaThreeColumnsHeroPreview({ previewHints, ...props }) {
-  const { large } = props
-  const fp = frameProps(props)
-  const columns = previewHints.agendaColumns || [
-    { heading: 'Discover', items: ['Product overview', 'Customer stories', 'Pricing transparency'] },
-    { heading: 'Evaluate', items: ['Feature comparisons', 'Integration docs', 'Security overview'] },
-    { heading: 'Act', items: ['Free trial signup', 'Demo booking', 'Partner portal access'] },
-  ]
-  const heroSrc = previewHints.slots?.HERO_IMAGE?.imageUrl || previewHints.imageUrl || ''
-  return (
-    <div {...fp} style={{ ...fp.style, display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ height: large ? '38%' : '34%', minHeight: large ? 80 : 28, flexShrink: 0, width: '100%' }}>
-        <PreviewImage large={large} fullBleed src={heroSrc} />
-      </div>
-      <div style={{ flex: 1, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 3 }}>
-        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.38rem', fontWeight: 800, color: theme.text }}>
-          {previewHints.slots?.HEADING?.text || "What You'll Find"}
-        </div>
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 14 : 4 }}>
-          {columns.slice(0, 3).map((col, i) => (
-            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: large ? 6 : 2 }}>
-              <div style={{ fontSize: large ? '0.72rem' : '0.22rem', fontWeight: 800, letterSpacing: '0.08em', color: theme.muted }}>
-                {String(i + 1).padStart(2, '0')}
-              </div>
-              <div style={{ fontSize: large ? '0.82rem' : '0.28rem', fontWeight: 800, letterSpacing: '0.04em', color: theme.text, textTransform: 'uppercase' }}>
-                {col.heading}
-              </div>
-              {(col.items || []).slice(0, 3).map((item, j) => (
-                <div key={j} style={{ fontSize: large ? PREVIEW_BODY_FS.large : '0.24rem', color: theme.muted, lineHeight: 1.4 }}>{item}</div>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
+export {
+  PolishedAgendaThreeColumnsPreview,
+  PolishedAgendaThreeColumnsHeroPreview,
+} from './layoutPolishedPreviewsAgenda.jsx'
 
 export function PolishedContactSplitLeftPreview({ previewHints, ...props }) {
   const { large } = props
@@ -283,6 +223,90 @@ export function PolishedContactSplitRightPreview({ previewHints, ...props }) {
     <div {...fp} style={{ ...fp.style, display: 'grid', gridTemplateColumns: '1fr 1fr', height: '100%' }}>
       <ContactPanel previewHints={previewHints} large={large} />
       <div style={{ minHeight: 0 }}><ImagePh large={large} /></div>
+    </div>
+  )
+}
+
+export function PolishedContactSplitBottomPreview({ previewHints, ...props }) {
+  const { large } = props
+  const fp = frameProps(props)
+  return (
+    <div {...fp} style={{ ...fp.style, display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div style={{ flex: '0 0 42%', padding: pad(large), display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <ContactPanel previewHints={previewHints} large={large} />
+      </div>
+      <div style={{ flex: 1, minHeight: 0 }}><ImagePh large={large} /></div>
+    </div>
+  )
+}
+
+function SpeakerBioPanel({ previewHints, large, align = 'left' }) {
+  const members = previewHints.members?.length ? previewHints.members : defaultMembers(1)
+  const m = members[0] || defaultMembers(1)[0]
+  const isCenter = align === 'center'
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3, textAlign: isCenter ? 'center' : 'left', alignItems: isCenter ? 'center' : 'flex-start' }}>
+      <div style={{ fontSize: large ? '0.82rem' : '0.3rem', fontWeight: 800, color: theme.text }}>{m.name}</div>
+      <div style={{ fontSize: large ? '0.62rem' : '0.24rem', color: theme.muted }}>{m.role}</div>
+      <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : '0.24rem', color: theme.muted, lineHeight: 1.4 }}>
+        {previewHints.slots?.MEMBER_1_BIO?.text || 'Speaker bio with credentials and talk focus.'}
+      </div>
+    </div>
+  )
+}
+
+export function PolishedSpeakerBioLeftPreview({ previewHints, ...props }) {
+  const { large } = props
+  const fp = frameProps(props)
+  return (
+    <div {...fp} style={{ ...fp.style, display: 'grid', gridTemplateColumns: '1fr 1.1fr', height: '100%' }}>
+      <div style={{ minHeight: 0 }}><ImagePh large={large} /></div>
+      <div style={{ padding: pad(large), display: 'flex', alignItems: 'center' }}>
+        <SpeakerBioPanel previewHints={previewHints} large={large} />
+      </div>
+    </div>
+  )
+}
+
+export function PolishedSpeakerBioRightPreview({ previewHints, ...props }) {
+  const { large } = props
+  const fp = frameProps(props)
+  return (
+    <div {...fp} style={{ ...fp.style, display: 'grid', gridTemplateColumns: '1.1fr 1fr', height: '100%' }}>
+      <div style={{ padding: pad(large), display: 'flex', alignItems: 'center' }}>
+        <SpeakerBioPanel previewHints={previewHints} large={large} />
+      </div>
+      <div style={{ minHeight: 0 }}><ImagePh large={large} /></div>
+    </div>
+  )
+}
+
+export function PolishedSpeakerBioCenteredPreview({ previewHints, ...props }) {
+  const { large } = props
+  const fp = frameProps(props)
+  return (
+    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: large ? 10 : 4, height: '100%' }}>
+      <div style={{ width: large ? '28%' : '22%', aspectRatio: '1', borderRadius: '50%', overflow: 'hidden' }}>
+        <ImagePh large={large} />
+      </div>
+      <SpeakerBioPanel previewHints={previewHints} large={large} align="center" />
+    </div>
+  )
+}
+
+export function PolishedContactSplitCtaPreview({ previewHints, ...props }) {
+  const { large } = props
+  const fp = frameProps(props)
+  const ctaText = previewHints.slots?.CTA?.text || 'Get in touch'
+  return (
+    <div {...fp} style={{ ...fp.style, display: 'grid', gridTemplateColumns: '1fr 1fr', height: '100%', padding: pad(large), gap: large ? 12 : 4 }}>
+      <ContactPanel previewHints={previewHints} large={large} />
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: large ? 10 : 3, textAlign: 'center' }}>
+        <div style={{ fontSize: large ? '0.72rem' : '0.28rem', fontWeight: 800, color: theme.text }}>
+          {previewHints.slots?.CTA_HEADING?.text || 'Ready to talk?'}
+        </div>
+        <div style={{ fontSize: large ? '0.62rem' : '0.24rem', fontWeight: 700, color: theme.accent }}>{ctaText}</div>
+      </div>
     </div>
   )
 }
@@ -458,10 +482,13 @@ export function PolishedTeamByDepartmentPreview({ previewHints, ...props }) {
 export const PEOPLE_PRICING_PREVIEW_MODES = {
   pricing_four_para: PolishedPricingFourParaPreview,
   pricing_comparison_table: PolishedPricingComparisonTablePreview,
-  agenda_three_columns: PolishedAgendaThreeColumnsPreview,
-  agenda_three_columns_hero: PolishedAgendaThreeColumnsHeroPreview,
   contact_split_left: PolishedContactSplitLeftPreview,
   contact_split_right: PolishedContactSplitRightPreview,
+  contact_split_bottom: PolishedContactSplitBottomPreview,
+  contact_split_cta: PolishedContactSplitCtaPreview,
+  speaker_bio_left: PolishedSpeakerBioLeftPreview,
+  speaker_bio_right: PolishedSpeakerBioRightPreview,
+  speaker_bio_centered: PolishedSpeakerBioCenteredPreview,
   team_three_horizontal: PolishedTeamThreeHorizontalPreview,
   team_vertical_list: PolishedTeamVerticalListPreview,
   team_grid_four: PolishedTeamGridFourPreview,

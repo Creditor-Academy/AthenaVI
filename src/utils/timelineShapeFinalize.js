@@ -526,7 +526,7 @@ function isProcessFlowLayout(layoutId) {
     /process_linear/.test(id) ||
     /diagram_process/.test(id) ||
     /process_steps/.test(id) ||
-    /agenda_timeline/.test(id)
+    /agenda_timeline|agenda_vertical_roadmap|agenda_progress_path/.test(id)
   )
 }
 

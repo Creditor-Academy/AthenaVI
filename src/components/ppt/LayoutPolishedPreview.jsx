@@ -10,6 +10,7 @@ import { EXTENDED_PREVIEW_MODES } from './layoutPolishedPreviewsExtended.jsx'
 import { PEOPLE_PRICING_PREVIEW_MODES } from './layoutPolishedPreviewsPeoplePricing.jsx'
 import { DEVICE_FRAMES_PREVIEW_MODES } from './layoutPolishedPreviewsDeviceFrames.jsx'
 import { DIAGRAM_PREVIEW_MODES } from './layoutPolishedPreviewsDiagrams.jsx'
+import { AGENDA_PREVIEW_MODES } from './layoutPolishedPreviewsAgenda.jsx'
 import { TIMELINE_PROCESS_PREVIEW_MODES } from './layoutPolishedPreviewsTimelineProcess.jsx'
 import LayoutSvgPreview from './LayoutSvgPreview'
 
@@ -1160,6 +1161,54 @@ function PolishedEightShortTextsPreview({ previewHints, large, className, style,
   )
 }
 
+function PolishedClosingImageSplitPreview({ previewHints, large, className, style, fill, aspectRatio, imageSide = 'right' }) {
+  const t = LAYOUT_POLISHED_THEME
+  const bodyMeta = previewHints.slots?.BODY || {}
+  const ctaMeta = previewHints.slots?.CTA || {}
+  const { display: bodyText } = formatPreviewText(bodyMeta.text || 'Closing message with a clear call to action.', { bold: false, uppercase: false })
+  const { display: ctaText } = formatPreviewText(ctaMeta.text || 'Book a demo', { bold: true, uppercase: false })
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+  const textCol = (
+    <div style={{ padding: large ? '10% 8%' : '12% 8%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: large ? 10 : 4 }}>
+      <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : '0.28rem', color: t.muted, lineHeight: 1.45 }}>{bodyText}</div>
+      {ctaText && <div style={{ fontSize: large ? '0.9rem' : '0.32rem', fontWeight: 700, color: t.accent }}>{ctaText}</div>}
+    </div>
+  )
+  const imageCol = (
+    <div style={{ minHeight: 0, background: t.surface }}>
+      <PolishedImagePlaceholder large={large} src={resolvePreviewImageSrc(previewHints)} />
+    </div>
+  )
+  return (
+    <div className={className} style={{ position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden', display: 'grid', gridTemplateColumns: '1fr 1fr', ...style }}>
+      {imageSide === 'left' ? (<>{imageCol}{textCol}</>) : (<>{textCol}{imageCol}</>)}
+    </div>
+  )
+}
+
+function PolishedClosingOverlayPreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const headingMeta = previewHints.slots?.HEADING || {}
+  const bodyMeta = previewHints.slots?.BODY || {}
+  const ctaMeta = previewHints.slots?.CTA || {}
+  const { display: headingText } = formatPreviewText(headingMeta.text || 'Thank you', { bold: true, uppercase: false })
+  const { display: bodyText } = formatPreviewText(bodyMeta.text || '', { bold: false, uppercase: false })
+  const { display: ctaText } = formatPreviewText(ctaMeta.text || 'Get in touch', { bold: true, uppercase: false })
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+  return (
+    <div className={className} style={{ position: 'relative', ...frameStyle, overflow: 'hidden', borderRadius: large ? 12 : 6, ...style }}>
+      <div style={{ position: 'absolute', inset: 0 }}>
+        <PolishedImagePlaceholder large={large} src={resolvePreviewImageSrc(previewHints)} />
+      </div>
+      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }} />
+      <div style={{ position: 'relative', zIndex: 1, height: '100%', padding: large ? '10% 8%' : '12% 8%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: large ? 10 : 4, textAlign: 'center', color: '#fff' }}>
+        <div style={{ fontSize: large ? '1.8rem' : '0.62rem', fontWeight: 800, lineHeight: 1.1 }}>{headingText}</div>
+        {bodyText && <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : '0.26rem', opacity: 0.9, maxWidth: '85%', lineHeight: 1.4 }}>{bodyText}</div>}
+        {ctaText && <div style={{ fontSize: large ? '0.95rem' : '0.32rem', fontWeight: 700 }}>{ctaText}</div>}
+      </div>
+    </div>
+  )
+}
+
 function PolishedClosingCtaPreview({ previewHints, large, className, style, fill, aspectRatio }) {
   const t = LAYOUT_POLISHED_THEME
   const headingMeta = previewHints.slots?.HEADING || {}
@@ -1313,6 +1362,19 @@ export default function LayoutPolishedPreview({
       />
     )
   }
+  const AgendaPreview = AGENDA_PREVIEW_MODES[previewMode]
+  if (AgendaPreview) {
+    return (
+      <AgendaPreview
+        previewHints={previewHints}
+        large={large}
+        fill={fill}
+        className={className}
+        style={style}
+        aspectRatio={aspectRatio}
+      />
+    )
+  }
   if (previewMode === 'stat_cards_image') {
     return <PolishedStatCardsImagePreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
   }
@@ -1327,6 +1389,15 @@ export default function LayoutPolishedPreview({
   }
   if (previewMode === 'closing_cta') {
     return <PolishedClosingCtaPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
+  }
+  if (previewMode === 'closing_image_right') {
+    return <PolishedClosingImageSplitPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} imageSide="right" />
+  }
+  if (previewMode === 'closing_image_left') {
+    return <PolishedClosingImageSplitPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} imageSide="left" />
+  }
+  if (previewMode === 'closing_overlay') {
+    return <PolishedClosingOverlayPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
   }
 
   const ExtendedPreview = EXTENDED_PREVIEW_MODES[previewMode]
