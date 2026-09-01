@@ -3,11 +3,12 @@
  */
 
 import { aspectRatioToCss } from '../../utils/deckPackTheme'
-import { buildCycleDiagramSvg } from '../../utils/diagramCycleSvg'
+import { buildCycleDiagramSvg, cycleNodePalette, cycleNodeTopArcSvg, cycleNodeBotArcSvg, cycleNodeIconSvg } from '../../utils/diagramCycleSvg'
 import { funnelDiagramInlineSvg, FUNNEL_TITLE_COLORS } from '../../utils/diagramFunnelSvg'
 import { PYRAMID_COLORS, pyramidDiagramInlineSvg } from '../../utils/diagramPyramid'
 import { SWOT_COLORS, swotDiagramInlineSvg } from '../../utils/diagramSwotSvg'
 import { vennPreviewSvg } from '../../utils/diagramVennSvg'
+import { PROCESS_STEP_COLORS, processRibbonInlineSvg, processIconInlineSvg } from '../../utils/diagramProcessStepsSvg'
 
 const PREVIEW_TITLE_FS = { large: '1.75rem', small: '0.36rem' }
 const PREVIEW_BODY_FS = { large: '0.72rem', small: '0.22rem' }
@@ -466,15 +467,12 @@ export function PolishedDiagramProcessStepsPreview({ previewHints, ...props }) {
   const steps = Array.isArray(previewHints.steps) && previewHints.steps.length
     ? previewHints.steps.slice(0, 4)
     : [
-        { title: '1. Start', body: 'Begin' },
-        { title: '2. Plan', body: 'Design' },
-        { title: '3. Execute', body: 'Build' },
-        { title: '4. Review', body: 'Iterate' },
+        { title: 'STEP #01', body: 'Describe this step.' },
+        { title: 'STEP #02', body: 'Describe this step.' },
+        { title: 'STEP #03', body: 'Describe this step.' },
+        { title: 'STEP #04', body: 'Describe this step.' },
       ]
   const count = Math.min(steps.length, 4)
-  const vertical = previewHints.diagramVariant === 'vertical'
-  const node = large ? 22 : 10
-  const cardBg = 'color-mix(in srgb, #c4b5a0 22%, var(--preview-bg, #ffffff))'
 
   return (
     <div
@@ -484,7 +482,7 @@ export function PolishedDiagramProcessStepsPreview({ previewHints, ...props }) {
         padding: pad(large),
         display: 'flex',
         flexDirection: 'column',
-        gap: large ? 18 : 6,
+        gap: large ? 12 : 4,
       }}
     >
       <div
@@ -500,111 +498,54 @@ export function PolishedDiagramProcessStepsPreview({ previewHints, ...props }) {
       </div>
       <div
         style={{
-          position: 'relative',
-          height: vertical ? 'auto' : large ? 64 : 24,
-          flexShrink: 0,
-          margin: large ? '2px 4%' : '1px 2%',
-          display: vertical ? 'flex' : 'block',
-          flexDirection: vertical ? 'column' : undefined,
-          gap: vertical ? (large ? 8 : 3) : undefined,
-          alignItems: vertical ? 'center' : undefined,
-        }}
-      >
-        {!vertical && (
-        <div
-          aria-hidden
-          style={{
-            position: 'absolute',
-            left: `${100 / (count * 2)}%`,
-            right: `${100 / (count * 2)}%`,
-            top: large ? 10 : 4,
-            height: large ? 4 : 2,
-            background: theme.text,
-            opacity: 0.8,
-            borderRadius: 2,
-          }}
-        />
-        )}
-        <div
-          style={{
-            position: vertical ? 'relative' : 'absolute',
-            inset: vertical ? undefined : 0,
-            display: 'grid',
-            gridTemplateColumns: vertical ? '1fr' : `repeat(${count}, minmax(0, 1fr))`,
-            alignItems: 'start',
-            gap: vertical ? (large ? 8 : 3) : undefined,
-          }}
-        >
-          {steps.slice(0, count).map((_, i) => (
-            <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: large ? 3 : 1 }}>
-              <div
-                style={{
-                  width: node,
-                  height: node,
-                  borderRadius: '50%',
-                  background: theme.text,
-                  zIndex: 1,
-                }}
-              />
-              <div
-                style={{
-                  fontSize: large ? '0.62rem' : '0.2rem',
-                  fontWeight: 700,
-                  color: theme.text,
-                  lineHeight: 1,
-                }}
-              >
-                {i + 1}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div
-        style={{
           flex: 1,
           display: 'grid',
-          gridTemplateColumns: vertical ? '1fr' : `repeat(${count}, minmax(0, 1fr))`,
-          gap: large ? 10 : 3,
+          gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))`,
+          gap: large ? 10 : 4,
           minHeight: 0,
         }}
       >
-        {steps.slice(0, count).map((step, i) => (
-          <div
-            key={i}
-            style={{
-              background: cardBg,
-              borderRadius: large ? 10 : 4,
-              padding: large ? '18px 14px' : '6px 4px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: large ? 6 : 2,
-              minWidth: 0,
-              minHeight: 0,
-            }}
-          >
+        {steps.slice(0, count).map((step, i) => {
+          const color = PROCESS_STEP_COLORS[i % PROCESS_STEP_COLORS.length]
+          return (
             <div
+              key={i}
               style={{
-                fontSize: large ? '0.78rem' : '0.26rem',
-                fontWeight: 700,
-                color: theme.text,
-                textAlign: 'center',
-                lineHeight: 1.2,
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
+                background: '#F2F2F2',
+                borderRadius: 8,
+                padding: large ? '10px 0 8px' : '4px 0 3px',
+                display: 'flex',
+                flexDirection: 'column',
+                minWidth: 0,
                 overflow: 'hidden',
               }}
             >
-              {step.title}
-            </div>
-            {step.body && (
+              <div
+                style={{
+                  height: large ? 42 : 18,
+                  color,
+                  marginTop: large ? 8 : 3,
+                  marginRight: large ? 10 : 4,
+                  marginBottom: large ? 14 : 5,
+                }}
+                dangerouslySetInnerHTML={{ __html: processRibbonInlineSvg() }}
+              />
+              <div
+                style={{
+                  fontSize: large ? '0.72rem' : '0.22rem',
+                  fontWeight: 800,
+                  color,
+                  padding: large ? '0 10px' : '0 3px',
+                  marginBottom: large ? 10 : 4,
+                }}
+              >
+                {step.title}
+              </div>
               <div
                 style={{
                   fontSize: large ? PREVIEW_CAPTION_FS.large : PREVIEW_CAPTION_FS.small,
                   color: theme.muted,
-                  textAlign: 'center',
+                  padding: large ? '10px 10px 0' : '4px 3px 0',
                   display: '-webkit-box',
                   WebkitLineClamp: 3,
                   WebkitBoxOrient: 'vertical',
@@ -613,9 +554,18 @@ export function PolishedDiagramProcessStepsPreview({ previewHints, ...props }) {
               >
                 {step.body}
               </div>
-            )}
-          </div>
-        ))}
+              <div
+                style={{
+                  width: large ? 28 : 12,
+                  height: large ? 28 : 12,
+                  color,
+                  margin: 'auto auto 4px',
+                }}
+                dangerouslySetInnerHTML={{ __html: processIconInlineSvg(i) }}
+              />
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -635,13 +585,27 @@ export function PolishedDiagramCyclePreview({ previewHints, ...props }) {
       ]
 
   if (previewHints.diagramVariant === 'horizontal') {
+    const cols = (
+      Array.isArray(previewHints.quadrants) && previewHints.quadrants.length
+        ? previewHints.quadrants
+        : [{ title: 'A' }, { title: 'B' }, { title: 'C' }, { title: 'D' }, { title: 'E' }]
+    ).slice(0, 5)
     return (
-      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 8 : 3 }}>
+      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column' }}>
         <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small, fontWeight: 800, color: theme.text, textAlign: 'center' }}>{heading}</div>
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: large ? 8 : 3, minHeight: 0 }}>
-          {quadrants.map((q, i) => (
-            <QuadrantCell key={i} title={q.title} body={q.body} large={large} accent={i === 0} />
-          ))}
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 0, marginTop: large ? 10 : 4 }}>
+          {cols.map((_, i) => {
+            const pal = cycleNodePalette(i)
+            const size = large ? 56 : 24
+            const overlap = large ? -16 : -7
+            return (
+              <div key={i} style={{ width: size, height: size, position: 'relative', marginLeft: i === 0 ? 0 : overlap, zIndex: i + 1, color: pal.top }}>
+                <div style={{ position: 'absolute', inset: 0, color: pal.top }} dangerouslySetInnerHTML={{ __html: cycleNodeTopArcSvg() }} />
+                <div style={{ position: 'absolute', inset: 0, color: pal.bot }} dangerouslySetInnerHTML={{ __html: cycleNodeBotArcSvg() }} />
+                <div style={{ position: 'absolute', inset: '22%', color: pal.accent }} dangerouslySetInnerHTML={{ __html: cycleNodeIconSvg(i) }} />
+              </div>
+            )
+          })}
         </div>
       </div>
     )

@@ -70,16 +70,22 @@ function pyramidTier(n, cols) {
 }
 
 function processStep(n, colStart, colEnd) {
+  const pad = String(n).padStart(2, '0')
   return [
-    slot(`step_${n}_title`, `cols ${colStart}-${colEnd}, rows 6-7`, 'heading', `${n}. Step ${n}`, {
-      layer: 10,
-      typography: typo('heading', { fontSize: 18, align: 'center' }),
+    slot(`step_${n}_label`, `cols ${colStart}-${colEnd}, rows 3-4`, 'caption', pad, {
+      layer: 12,
+      typography: centeredTypo('caption', { fontSize: 36, fontWeight: 800, colorRole: 'textOnImage' }),
       max_lines: 1,
     }),
-    slot(`step_${n}_body`, `cols ${colStart}-${colEnd}, rows 8-10`, 'body', P.cell, {
+    slot(`step_${n}_title`, `cols ${colStart}-${colEnd}, rows 5-6`, 'heading', `STEP #${pad}`, {
       layer: 10,
-      typography: typo('body', { fontSize: 14, align: 'center' }),
-      max_lines: 4,
+      typography: typo('heading', { fontSize: 18, fontWeight: 800 }),
+      max_lines: 1,
+    }),
+    slot(`step_${n}_body`, `cols ${colStart}-${colEnd}, rows 7-10`, 'body', P.cell, {
+      layer: 10,
+      typography: typo('body', { fontSize: 15 }),
+      max_lines: 5,
     }),
   ]
 }
@@ -249,5 +255,9 @@ Object.assign(CATALOG, {
   diagram_venn_three_circle_v1: diagramFromSource('diagram_venn_three_circle_v1', 'diagram_venn_v1', 'three_circle'),
   diagram_venn_stacked_v1: diagramFromSource('diagram_venn_stacked_v1', 'diagram_venn_v1', 'stacked'),
 })
+
+CATALOG.diagram_cycle_horizontal_v1.slots.push(
+  ...quadrantSlots('Q5', 10, 12, 8, 10, 'Improve', P.cell),
+)
 
 export default CATALOG

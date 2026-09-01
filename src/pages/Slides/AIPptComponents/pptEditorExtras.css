@@ -487,6 +487,18 @@
   word-break: break-word;
 }
 
+/* Overlapping SVG (cycle rings, etc.): hit the painted path, not the bounding box. */
+.ppt-graphic-paint-hit {
+  pointer-events: none;
+}
+.ppt-graphic-paint-hit svg {
+  pointer-events: none;
+  overflow: visible;
+}
+.ppt-graphic-paint-hit svg * {
+  pointer-events: visiblePainted;
+}
+
 .ppt-chart-renderer {
   width: 100%;
   height: 100%;

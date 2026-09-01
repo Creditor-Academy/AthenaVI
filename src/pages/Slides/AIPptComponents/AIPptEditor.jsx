@@ -556,6 +556,9 @@ function InteractiveElementShell({
     }
   }
 
+  const paintHitGraphic =
+    el.type === 'graphic' && typeof el.content?.svg === 'string' && el.content.svg.includes('<svg')
+
   const frameStyle = {
     ...placementFrameStyle(p, canvasW, canvasH, {
       layer: el.layer,
@@ -578,6 +581,7 @@ function InteractiveElementShell({
     touchAction: 'none',
     overflow: 'visible',
     outline: 'none',
+    ...(paintHitGraphic ? { pointerEvents: 'none' } : null),
   }
 
   const showChrome = selected && editable && !locked && !editing

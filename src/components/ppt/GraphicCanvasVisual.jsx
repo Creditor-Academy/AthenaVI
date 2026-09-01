@@ -1,5 +1,16 @@
 import useGraphicSvg, { resolveGraphicThemeColor } from '../../hooks/useGraphicSvg'
 
+/** Hit-test painted strokes/fills only so empty SVG boxes don't steal clicks. */
+function svgWithPaintHits(markup) {
+  if (typeof markup !== 'string' || !markup.includes('<svg')) return markup
+  return markup.replace(/<svg\b([^>]*)>/i, (_, attrs = '') => {
+    let next = attrs
+    if (!/pointer-events=/i.test(next)) next += ' pointer-events="visiblePainted"'
+    if (!/style=/i.test(next)) next += ' style="width:100%;height:100%;display:block"'
+    return `<svg${next}>`
+  })
+}
+
 /**
  * Render a catalog SVG graphic on the PPT canvas / insert panel.
  *
@@ -35,7 +46,9 @@ export default function GraphicCanvasVisual({ content = {}, palette = {}, style 
         }}
         role="img"
         aria-label={content.alt || 'Graphic'}
-        dangerouslySetInnerHTML={{ __html: inlineMarkup }}
+        dangerouslySetInnerHTML={{
+          __html: svgWithPaintHits(inlineMarkup),
+        }}
       />
     )
   }
@@ -56,7 +69,7 @@ export default function GraphicCanvasVisual({ content = {}, palette = {}, style 
         }}
         role="img"
         aria-label={content.alt || 'Graphic'}
-        dangerouslySetInnerHTML={{ __html: inlineSvg }}
+        dangerouslySetInnerHTML={{ __html: svgWithPaintHits(inlineSvg) }}
       />
     )
   }

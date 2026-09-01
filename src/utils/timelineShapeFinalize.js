@@ -1,6 +1,15 @@
 /** Post-compile timeline connector + Process Linner shapes (mirrors backend finalizeElementsDoc). */
 
-import { cycleSegmentInlineSvg, cycleSegmentPlacement, CYCLE_SEGMENT_COLORS, cycleOverlayPlacements } from './diagramCycleSvg'
+import {
+  cycleSegmentInlineSvg,
+  cycleSegmentPlacement,
+  CYCLE_SEGMENT_COLORS,
+  cycleOverlayPlacements,
+  cycleNodePalette,
+  cycleNodeTopArcSvg,
+  cycleNodeBotArcSvg,
+  cycleNodeIconSvg,
+} from './diagramCycleSvg'
 import { funnelStageInlineSvg, funnelStagePlacement, FUNNEL_TITLE_COLORS, FUNNEL_GEOM, FUNNEL_STAGE_COLORS, funnelOverlayPlacements } from './diagramFunnelSvg'
 import { matrixQuadPlacement, matrixArrowPlacement, matrixArrowInlineSvg, MATRIX_GEOM, MATRIX_QUAD_COLORS, MATRIX_ARROW_COLOR, matrixOverlayPlacements } from './diagramMatrixSvg'
 import {
@@ -33,6 +42,12 @@ import {
   vennFrame,
   vennSetGeom,
 } from './diagramVennSvg'
+import {
+  PROCESS_STEP_COLORS,
+  processRibbonInlineSvg,
+  processRibbonLabelBox,
+  processIconInlineSvg,
+} from './diagramProcessStepsSvg'
 import {
   QUOTE_GRID_N,
   QUOTE_MARK_COLOR,
@@ -770,7 +785,7 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
 
 function isDiagramProcessStepsLayout(layoutId) {
   const id = String(layoutId || '').toLowerCase()
-  return /diagram_process_steps|timeline_process_steps/.test(id)
+  return /diagram_process_steps|diagram_process_horizontal|diagram_process_vertical|timeline_process_steps/.test(id)
 }
 
 function timelineGraphicContent(svg, fill, alt = '') {
@@ -782,47 +797,68 @@ function newShapeId(prefix) {
 }
 
 /**
- * Canonical 4-column process diagram: title, numbered timeline, equal cards.
- * Generic card/timeline heuristics overlap this layout when slots sit too high.
+ * Equal 4-column cards: gray panel, arrow ribbon + number, STEP title, body, icon.
  */
 export function layoutDiagramProcessSteps(elements, schema, palette = {}, canvas = {}) {
   if (!Array.isArray(elements)) return elements
   const canvasW = canvas.width || 1920
   const canvasH = canvas.height || 1080
   const textColor = paletteColor(palette, 'text', '#1F2937')
-  const cardBg = paletteColor(palette, 'cardBg', 'color-mix(in srgb, #c4b5a0 28%, #f8f4ee)')
+  const muted = paletteColor(palette, 'muted', '#6B7280')
+  const cardFill = '#F2F2F2'
+  const colors = PROCESS_STEP_COLORS
 
   const stepNums = [
     ...new Set(
       elements
-        .map((el) => String(el.slotId || '').match(/^step_(\d+)_(title|body)$/i)?.[1])
+        .map((el) => String(el.slotId || '').match(/^step_(\d+)_(title|body|label)$/i)?.[1])
         .filter(Boolean)
         .map((n) => Number(n))
     ),
   ].sort((a, b) => a - b)
   const n = stepNums.length || 4
-  const insetX = 64
-  const insetY = 52
-  const headingH = 88
-  const nodeSize = 48
-  const numH = 36
-  const titleToTimeline = 32
-  const numToCards = 72
-  const cardGap = 22
-  const bottomInset = 72
-  const cardTop = insetY + headingH + titleToTimeline + nodeSize + numH + numToCards
-  const cardH = Math.min(520, Math.max(360, canvasH - cardTop - bottomInset))
+  const insetX = 48
+  const insetY = 56
+  const headingH = 72
+  const gap = 28
   const usableW = canvasW - insetX * 2
-  const cardW = (usableW - cardGap * (n - 1)) / n
-  const axisY = insetY + headingH + titleToTimeline + nodeSize / 2
+  const cardW = (usableW - gap * (n - 1)) / n
+  const cardTop = insetY + headingH + 56
+  const cardH = Math.min(680, canvasH - cardTop - 56)
+  const padX = 28
+  const ribbonInsetR = 28
+  const ribbonTopPad = 32
+  const ribbonH = 148
+  const ribbonY = cardTop + ribbonTopPad
+  const titleH = 44
+  const titleY = ribbonY + Math.round(ribbonH * (124 / 148)) + 36
+  const icon = 80
+  const iconY = cardTop + cardH - 40 - icon
+  const bodyY = titleY + titleH + 28
+  const bodyH = Math.max(64, iconY - bodyY - 20)
 
-  const stripped = elements.filter((el) => {
-    const sid = String(el.slotId || '')
-    return !/^AUTO_CARD_BG_/i.test(sid) && !/^TIMELINE_(NODE|SEG|ARROW|SPINE)/i.test(sid)
-  })
+  const PROCESS_DECO =
+    /^(AUTO_CARD_BG_|TIMELINE_(NODE|SEG|ARROW|SPINE)|PROCESS_(BADGE|BAR|DIVIDER|CARD|RIBBON|ICON)_)/i
+  const prevBySlot = new Map(
+    (elements || [])
+      .filter((el) => /^PROCESS_(CARD|RIBBON|ICON)_/i.test(String(el.slotId || '')))
+      .map((el) => [String(el.slotId || '').toUpperCase(), el])
+  )
+  const stripped = elements.filter((el) => !PROCESS_DECO.test(String(el.slotId || '')))
+  const seenLabel = new Set(
+    stripped.filter((el) => /^step_\d+_label$/i.test(String(el.slotId || ''))).map((el) => String(el.slotId).toLowerCase())
+  )
 
   const next = stripped.map((el) => {
     const sid = String(el.slotId || '')
+    const base = {
+      ...(el.content || {}),
+      letterSpacing: '0',
+      padding: 0,
+      paddingX: 0,
+      stroke: undefined,
+      strokeWidth: 0,
+    }
     if (sid.toUpperCase() === 'HEADING') {
       return {
         ...el,
@@ -836,89 +872,119 @@ export function layoutDiagramProcessSteps(elements, schema, palette = {}, canvas
           opacity: 1,
         },
         content: {
-          ...(el.content || {}),
+          ...base,
           align: 'center',
           verticalAlign: 'center',
-          fontSize: Math.min(Number(el.content?.fontSize) || 34, 36),
+          fontSize: 36,
           fontWeight: 800,
-          letterSpacing: '0',
           lineHeight: 1.15,
-          padding: 0,
-          paddingX: 0,
-          stroke: undefined,
-          strokeWidth: 0,
-          shadow: undefined,
+          color: textColor,
+          clipToSlot: false,
         },
       }
     }
+    const labelM = sid.match(/^step_(\d+)_label$/i)
     const titleM = sid.match(/^step_(\d+)_title$/i)
     const bodyM = sid.match(/^step_(\d+)_body$/i)
-    const idx = titleM ? stepNums.indexOf(Number(titleM[1])) : bodyM ? stepNums.indexOf(Number(bodyM[1])) : -1
+    const num = Number((labelM || titleM || bodyM)?.[1])
+    const idx = stepNums.indexOf(num)
     if (idx < 0) return el
-    const cardX = insetX + idx * (cardW + cardGap)
-    const padX = 28
-    const padY = 40
-    const titleH = 72
-    if (titleM) {
+    const cardX = insetX + idx * (cardW + gap)
+    const color = colors[idx % colors.length]
+    const ribbonW = cardW - ribbonInsetR
+    const ribbonX = cardX
+    if (labelM) {
+      const box = processRibbonLabelBox(ribbonX, ribbonY, ribbonW, ribbonH)
+      const pad = String(idx + 1).padStart(2, '0')
+      const raw = String(el.content?.text || '').trim()
+      const text = /^\d+$/.test(raw.replace(/^#/, '')) || !raw || /process/i.test(raw) ? pad : raw
       return {
         ...el,
-        layer: Math.max(el.layer || 0, 10),
+        layer: 12,
+        placement: { ...box, rotation: 0, opacity: 1 },
+        content: {
+          ...base,
+          text,
+          align: 'left',
+          verticalAlign: 'center',
+          fontSize: 36,
+          fontWeight: 800,
+          lineHeight: 1,
+          color: '#FFFFFF',
+          wrap: 'nowrap',
+          clipToSlot: false,
+        },
+      }
+    }
+    if (titleM) {
+      const pad = String(idx + 1).padStart(2, '0')
+      const raw = String(el.content?.text || '').trim()
+      const text = !raw || /text here|double-click/i.test(raw) ? `STEP #${pad}` : raw
+      return {
+        ...el,
+        layer: 10,
         placement: {
-          ...(el.placement || {}),
           x: Math.round(cardX + padX),
-          y: Math.round(cardTop + padY),
+          y: Math.round(titleY),
           width: Math.round(cardW - padX * 2),
           height: titleH,
           rotation: 0,
           opacity: 1,
         },
         content: {
-          ...(el.content || {}),
-          align: 'center',
+          ...base,
+          text,
+          align: 'left',
           verticalAlign: 'center',
           fontSize: 22,
-          fontWeight: 700,
-          letterSpacing: '0',
-          lineHeight: 1.25,
-          padding: 0,
-          paddingX: 0,
+          fontWeight: 800,
+          lineHeight: 1.2,
+          letterSpacing: '0.06em',
+          color,
+          wrap: 'nowrap',
+          clipToSlot: false,
         },
       }
     }
     return {
       ...el,
-      layer: Math.max(el.layer || 0, 10),
+      layer: 10,
       placement: {
-        ...(el.placement || {}),
         x: Math.round(cardX + padX),
-        y: Math.round(cardTop + padY + titleH + 12),
+        y: Math.round(bodyY),
         width: Math.round(cardW - padX * 2),
-        height: Math.round(Math.max(80, cardH - padY * 2 - titleH - 12)),
+        height: Math.round(bodyH),
         rotation: 0,
         opacity: 1,
       },
       content: {
-        ...(el.content || {}),
-        align: 'center',
+        ...base,
+        align: 'left',
         verticalAlign: 'flex-start',
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: 400,
-        lineHeight: 1.4,
-        padding: 0,
-        paddingX: 0,
+        lineHeight: 1.5,
+        color: muted,
+        wrap: 'wrap',
+        clipToSlot: false,
       },
     }
   })
 
   const chrome = []
-  const centers = Array.from({ length: n }, (_, i) => insetX + i * (cardW + cardGap) + cardW / 2)
-
   for (let i = 0; i < n; i += 1) {
-    const cardX = insetX + i * (cardW + cardGap)
+    const cardX = insetX + i * (cardW + gap)
+    const color = colors[i % colors.length]
+    const cardId = `PROCESS_CARD_${i + 1}`
+    const ribbonId = `PROCESS_RIBBON_${i + 1}`
+    const iconId = `PROCESS_ICON_${i + 1}`
+    const prevC = prevBySlot.get(cardId)
+    const prevR = prevBySlot.get(ribbonId)
+    const prevI = prevBySlot.get(iconId)
     chrome.push({
-      id: newShapeId('shp-card'),
+      id: prevC?.id || newShapeId('shp-pcard'),
       type: 'shape',
-      layer: 0,
+      layer: 1,
       placement: {
         x: Math.round(cardX),
         y: Math.round(cardTop),
@@ -929,76 +995,340 @@ export function layoutDiagramProcessSteps(elements, schema, palette = {}, canvas
       },
       content: {
         shape: 'rect',
-        fill: cardBg,
-        borderRadius: 18,
+        fill: prevC?.content?.fill || cardFill,
+        borderRadius: 16,
         layoutSurface: true,
       },
       role: 'decoration',
-      slotId: `AUTO_CARD_BG_step_${stepNums[i] || i + 1}`,
+      slotId: cardId,
     })
     chrome.push({
-      id: newShapeId('shp-timeline-node'),
+      id: prevR?.id || newShapeId('shp-prib'),
       type: 'graphic',
-      layer: 3,
+      layer: 8,
       placement: {
-        x: Math.round(centers[i] - nodeSize / 2),
-        y: Math.round(axisY - nodeSize / 2),
-        width: nodeSize,
-        height: nodeSize,
-        rotation: 0,
-        opacity: 1,
-      },
-      content: timelineGraphicContent(timelineNodeInlineSvg(), textColor, `Step ${i + 1}`),
-      role: 'decoration',
-      slotId: `TIMELINE_NODE_${i + 1}`,
-    })
-    chrome.push({
-      id: newShapeId('txt-timeline-num'),
-      type: 'text',
-      layer: 4,
-      placement: {
-        x: Math.round(centers[i] - nodeSize / 2),
-        y: Math.round(axisY + nodeSize / 2 + 8),
-        width: nodeSize,
-        height: numH,
+        x: Math.round(cardX),
+        y: Math.round(ribbonY),
+        width: Math.round(cardW - ribbonInsetR),
+        height: ribbonH,
         rotation: 0,
         opacity: 1,
       },
       content: {
-        text: String(i + 1),
-        align: 'center',
-        verticalAlign: 'center',
-        fontSize: 18,
-        fontWeight: 700,
-        letterSpacing: '0',
-        padding: 0,
-        paddingX: 0,
-        color: textColor,
+        svg: processRibbonInlineSvg(),
+        colorMode: 'recolorable',
+        fill: color,
+        alt: `Step ${i + 1}`,
       },
-      role: 'caption',
-      slotId: `TIMELINE_NODE_NUM_${i + 1}`,
+      role: 'decoration',
+      slotId: ribbonId,
     })
+    chrome.push({
+      id: prevI?.id || newShapeId('shp-pico'),
+      type: 'graphic',
+      layer: 8,
+      placement: {
+        x: Math.round(cardX + (cardW - icon) / 2),
+        y: Math.round(iconY),
+        width: icon,
+        height: icon,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        svg: processIconInlineSvg(i),
+        colorMode: 'recolorable',
+        fill: color,
+        alt: 'Step icon',
+      },
+      role: 'decoration',
+      slotId: iconId,
+    })
+    const labelSlot = `step_${stepNums[i] || i + 1}_label`
+    if (!seenLabel.has(labelSlot.toLowerCase())) {
+      const box = processRibbonLabelBox(cardX, ribbonY, cardW - ribbonInsetR, ribbonH)
+      chrome.push({
+        id: newShapeId('txt-plabel'),
+        type: 'text',
+        layer: 12,
+        placement: { ...box, rotation: 0, opacity: 1 },
+        content: {
+          text: String(i + 1).padStart(2, '0'),
+          align: 'left',
+          verticalAlign: 'center',
+          fontSize: 36,
+          fontWeight: 800,
+          lineHeight: 1,
+          color: '#FFFFFF',
+          letterSpacing: '0',
+          padding: 0,
+          wrap: 'nowrap',
+          clipToSlot: false,
+        },
+        role: 'caption',
+        slotId: labelSlot,
+      })
+    }
   }
 
-  for (let i = 0; i < n - 1; i += 1) {
-    const x1 = centers[i] + nodeSize / 2 + 6
-    const x2 = centers[i + 1] - nodeSize / 2 - 6
-    chrome.push({
-      id: newShapeId('shp-timeline-seg'),
-      type: 'graphic',
-      layer: 1,
+  return [...chrome, ...next]
+}
+
+function isHorizontalCycleLayout(schema) {
+  const id = String(schema?.layout_id || schema?.layoutId || '').toLowerCase()
+  const variant = String(schema?.preview?.diagramVariant || '').toLowerCase()
+  return variant === 'horizontal' || (id.includes('cycle') && id.includes('horizontal'))
+}
+
+function layoutDiagramCycleHorizontal(elements, schema, palette = {}, canvas = {}) {
+  if (!Array.isArray(elements)) return elements
+  const canvasW = canvas.width || 1920
+  const canvasH = canvas.height || 1080
+  const textColor = paletteColor(palette, 'text', '#1F2937')
+  const muted = paletteColor(palette, 'muted', '#6B7280')
+  const n = 5
+  const insetX = 40
+  const headingY = 28
+  const headingH = 56
+  const node = 440
+  const colW = Math.round(node * 0.76)
+  const rowW = node + colW * (n - 1)
+  const startX = Math.round((canvasW - rowW) / 2)
+  const titleH = 44
+  const bodyH = 96
+  const titleW = Math.max(160, colW - 32)
+  const stepsH = node + 48 + titleH + 10 + bodyH
+  const nodeY = Math.round((canvasH - stepsH) / 2)
+  const titleY = nodeY + node + 48
+  const bodyY = titleY + titleH + 10
+
+  const CYCLE_DECO =
+    /^(CYCLE_(RING|HUB|LOOP|SEG_|BAR_|DROP_|DOT_|ICON_|FLOW_|ARC_)|AUTO_CARD_BG_)/i
+  const prevBySlot = new Map(
+    (elements || [])
+      .filter((el) => /^CYCLE_(LOOP|BAR_|DROP_|DOT_|ICON_|FLOW_|SEG_|HUB|ARC_)/i.test(String(el.slotId || '')))
+      .map((el) => [String(el.slotId || '').toUpperCase(), el])
+  )
+  const stripped = elements.filter((el) => !CYCLE_DECO.test(String(el.slotId || '')))
+
+  const next = stripped.map((el) => {
+    const sid = String(el.slotId || '')
+    const base = {
+      ...(el.content || {}),
+      letterSpacing: '0',
+      padding: 0,
+      paddingX: 0,
+      stroke: undefined,
+      strokeWidth: 0,
+    }
+    if (sid.toUpperCase() === 'HEADING') {
+      return {
+        ...el,
+        layer: 50,
+        placement: {
+          x: insetX,
+          y: headingY,
+          width: canvasW - insetX * 2,
+          height: headingH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 32,
+          fontWeight: 800,
+          color: textColor,
+          clipToSlot: false,
+        },
+      }
+    }
+    if (/^CYCLE_(CENTER|NUM_)/i.test(sid)) {
+      return { ...el, placement: { ...(el.placement || {}), opacity: 0, width: 1, height: 1, x: 0, y: 0 } }
+    }
+    const m = sid.match(/^Q([1-5])_(TITLE|BODY)$/i)
+    if (!m) return el
+    const idx = Number(m[1]) - 1
+    const isTitle = String(m[2]).toUpperCase() === 'TITLE'
+    const x = startX + idx * colW
+    const tx = Math.round(x + (node - titleW) / 2)
+    if (isTitle) {
+      return {
+        ...el,
+        layer: 50,
+        placement: {
+          x: tx,
+          y: Math.round(titleY),
+          width: titleW,
+          height: titleH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 17,
+          fontWeight: 800,
+          lineHeight: 1.2,
+          color: textColor,
+          wrap: 'wrap',
+          clipToSlot: false,
+        },
+      }
+    }
+    return {
+      ...el,
+      layer: 50,
       placement: {
-        x: Math.round(x1),
-        y: Math.round(axisY - 2.5),
-        width: Math.round(Math.max(8, x2 - x1)),
-        height: 5,
+        x: tx,
+        y: Math.round(bodyY),
+        width: titleW,
+        height: bodyH,
         rotation: 0,
-        opacity: 0.95,
+        opacity: 1,
       },
-      content: timelineGraphicContent(timelineSpineSegmentInlineSvg(), textColor, 'Process spine'),
+      content: {
+        ...base,
+        align: 'center',
+        verticalAlign: 'flex-start',
+        fontSize: 14,
+        fontWeight: 400,
+        lineHeight: 1.45,
+        color: muted,
+        wrap: 'wrap',
+        clipToSlot: false,
+      },
+    }
+  })
+
+  const chrome = []
+  for (let i = 0; i < n; i += 1) {
+    const pal = cycleNodePalette(i)
+    const x = startX + i * colW
+    const topId = `CYCLE_ARC_TOP_${i + 1}`
+    const botId = `CYCLE_ARC_BOT_${i + 1}`
+    const iconId = `CYCLE_ICON_${i + 1}`
+    const prevT = prevBySlot.get(topId)
+    const prevB = prevBySlot.get(botId)
+    const prevI = prevBySlot.get(iconId)
+    const pad = Math.round(node * 0.06)
+    const box = {
+      x: Math.round(x - pad),
+      y: Math.round(nodeY - pad),
+      width: node + pad * 2,
+      height: node + pad,
+      rotation: 0,
+      opacity: 1,
+    }
+    chrome.push({
+      id: prevT?.id || newShapeId('shp-ctop'),
+      type: 'graphic',
+      layer: 3 + i * 3,
+      placement: { ...box },
+      content: {
+        svg: cycleNodeTopArcSvg(),
+        colorMode: 'recolorable',
+        fill: pal.top,
+        alt: 'Top arc',
+      },
       role: 'decoration',
-      slotId: `TIMELINE_SEG_${i + 1}`,
+      slotId: topId,
     })
+    chrome.push({
+      id: prevB?.id || newShapeId('shp-cbot'),
+      type: 'graphic',
+      layer: 4 + i * 3,
+      placement: { ...box },
+      content: {
+        svg: cycleNodeBotArcSvg(),
+        colorMode: 'recolorable',
+        fill: pal.bot,
+        alt: 'Bottom arc',
+      },
+      role: 'decoration',
+      slotId: botId,
+    })
+    const icon = 112
+    chrome.push({
+      id: prevI?.id || newShapeId('shp-cico'),
+      type: 'graphic',
+      layer: 20 + i,
+      placement: {
+        x: Math.round(x + (node - icon) / 2),
+        y: Math.round(nodeY + (node - icon) / 2),
+        width: icon,
+        height: icon,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        svg: cycleNodeIconSvg(i),
+        colorMode: 'recolorable',
+        fill: pal.accent,
+        alt: 'Step icon',
+      },
+      role: 'decoration',
+      slotId: iconId,
+    })
+    const hasT = next.some((el) => String(el.slotId || '').toUpperCase() === `Q${i + 1}_TITLE`)
+    const hasBd = next.some((el) => String(el.slotId || '').toUpperCase() === `Q${i + 1}_BODY`)
+    if (!hasT) {
+      next.push({
+        id: newShapeId('txt-cq'),
+        type: 'text',
+        layer: 50,
+        slotId: `Q${i + 1}_TITLE`,
+        role: 'heading',
+        placement: {
+          x: Math.round(x + (node - titleW) / 2),
+          y: Math.round(titleY),
+          width: titleW,
+          height: titleH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          text: 'Your Text Here',
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 18,
+          fontWeight: 800,
+          color: textColor,
+          wrap: 'wrap',
+          clipToSlot: false,
+        },
+      })
+    }
+    if (!hasBd) {
+      next.push({
+        id: newShapeId('txt-cb'),
+        type: 'text',
+        layer: 50,
+        slotId: `Q${i + 1}_BODY`,
+        role: 'body',
+        placement: {
+          x: Math.round(x + (node - titleW) / 2),
+          y: Math.round(bodyY),
+          width: titleW,
+          height: bodyH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          text: 'Describe this step in a few lines.',
+          align: 'center',
+          verticalAlign: 'flex-start',
+          fontSize: 14,
+          fontWeight: 400,
+          lineHeight: 1.45,
+          color: muted,
+          wrap: 'wrap',
+          clipToSlot: false,
+        },
+      })
+    }
   }
 
   return [...chrome, ...next]
@@ -1009,6 +1339,9 @@ function isDiagramCycleLayout(layoutId) {
 }
 
 export function layoutDiagramCycle(elements, schema, palette = {}, canvas = {}) {
+  if (isHorizontalCycleLayout(schema)) {
+    return layoutDiagramCycleHorizontal(elements, schema, palette, canvas)
+  }
   if (!Array.isArray(elements)) return elements
   const canvasW = canvas.width || 1920
   const canvasH = canvas.height || 1080
