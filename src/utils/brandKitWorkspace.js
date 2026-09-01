@@ -49,11 +49,13 @@ export async function resolveBrandKitsWorkspaceContext(preferredWorkspaceId = nu
   })
 }
 
-function tagKits(kits, workspace) {
+function tagKits(kits, workspace, { inheritDefault = true } = {}) {
   return (kits || []).map((kit) => ({
     ...kit,
+    originWorkspaceId: kit.originWorkspaceId || kit.workspaceId || null,
     workspaceId: workspace.id,
     workspaceName: workspace.name || workspace.title || 'Workspace',
+    isDefault: inheritDefault ? Boolean(kit.isDefault) : false,
   }))
 }
 
@@ -74,11 +76,11 @@ export async function listBrandKitsUsableInWorkspace(workspaceId) {
   const seen = new Set()
   const merged = []
 
-  const addFrom = async (ws) => {
+  const addFrom = async (ws, options) => {
     if (!ws?.id) return
     try {
-      const kits = await brandKitService.list(ws.id)
-      for (const kit of tagKits(kits, ws)) {
+      const kits = await brandKitService.list(ws.id, { includePersonal: false })
+      for (const kit of tagKits(kits, ws, options)) {
         const id = String(kit?.id || '')
         if (!id || seen.has(id)) continue
         seen.add(id)
@@ -94,7 +96,7 @@ export async function listBrandKitsUsableInWorkspace(workspaceId) {
   if (canWriteBrandKits(target.role)) {
     const personal = workspaces.find((ws) => ws.isPersonal)
     if (personal && String(personal.id) !== String(target.id)) {
-      await addFrom(personal)
+      await addFrom(personal, { inheritDefault: false })
     }
   }
 

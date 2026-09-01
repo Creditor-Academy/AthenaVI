@@ -15,6 +15,7 @@ export default function KitCard({
   setMenuRef,
   onEdit,
   onSetDefault,
+  settingDefault = false,
   onCopyId,
   onDelete,
   index,
@@ -73,6 +74,7 @@ export default function KitCard({
         <div
           className={`brandkit-menu-wrap${menuOpen === kit.id ? ' is-open' : ''}`}
           ref={(el) => setMenuRef?.(kit.id, el)}
+          onMouseDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
         >
           <button
@@ -86,19 +88,44 @@ export default function KitCard({
           </button>
           {menuOpen === kit.id && (
             <div className="brandkit-menu">
-              <button type="button" className="menu-item" onClick={() => onSetDefault(kit.id)}>
+              <button
+                type="button"
+                className="menu-item"
+                disabled={kit.isDefault || settingDefault}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  if (!kit.isDefault) onSetDefault(kit.id)
+                }}
+              >
                 {kit.isDefault ? (
-                  <MdStarBorder className="menu-icon" />
-                ) : (
                   <MdStar className="menu-icon" />
+                ) : (
+                  <MdStarBorder className="menu-icon" />
                 )}
-                {kit.isDefault ? 'Default kit' : 'Set as default'}
+                {kit.isDefault ? 'Default kit' : settingDefault ? 'Setting…' : 'Set as default'}
               </button>
-              <button type="button" className="menu-item" onClick={() => onCopyId(kit.id)}>
+              <button
+                type="button"
+                className="menu-item"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  onCopyId(kit.id)
+                }}
+              >
                 <MdContentCopy className="menu-icon" />
                 Copy ID
               </button>
-              <button type="button" className="menu-item delete" onClick={() => onDelete(kit.id)}>
+              <button
+                type="button"
+                className="menu-item delete"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  onDelete(kit.id)
+                }}
+              >
                 <MdDelete className="menu-icon" />
                 Delete
               </button>

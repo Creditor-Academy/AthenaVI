@@ -5,7 +5,7 @@ import {
   pickUserRef,
   resolveUserDisplayName
 } from '../../utils/workspaceUsers.js';
-import { resolveLibraryKind } from '../../utils/workspaceLibrary.js';
+import { resolveLibraryKind, resolvePresentationThumbnailUrl, resolveVideoThumbnailUrl } from '../../utils/workspaceLibrary.js';
 import workspaceService from '../../services/workspaceService.js';
 
 // ---------------------------------------------------------------------------
@@ -177,6 +177,13 @@ export function normalizeVideo(video, currentUserId, authUser, userLookup) {
         ? 'Untitled Image'
         : 'Untitled Video';
 
+  const thumb =
+    kind === 'presentation'
+      ? resolvePresentationThumbnailUrl(video)
+      : kind === 'image'
+        ? video.thumbnail || video.thumbnailUrl || video.url || null
+        : resolveVideoThumbnailUrl(video)
+
   return {
     ...video,
     id: video.id || video._id,
@@ -192,8 +199,8 @@ export function normalizeVideo(video, currentUserId, authUser, userLookup) {
     lastEditedBy: lastModifiedBy,
     lastEditedAt: updatedAt,
     sizeBytes: sizeBytes ?? video.sizeBytes ?? null,
-    thumbnail: video.thumbnail || video.thumbnailUrl || video.url || null,
-    thumbnailUrl: video.thumbnailUrl || video.thumbnail || video.url || null,
+    thumbnail: thumb || video.thumbnail || video.thumbnailUrl || video.url || null,
+    thumbnailUrl: thumb || video.thumbnailUrl || video.thumbnail || video.url || null,
   };
 }
 

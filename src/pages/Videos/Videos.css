@@ -698,6 +698,19 @@
   background: #0f172a;
 }
 
+.videos-page .videos-export-card .project-scene-thumb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.videos-page .videos-export-card .project-scene-thumb > div {
+  width: 100%;
+  height: 100%;
+}
+
 .videos-page .videos-export-card .work-card-ppt-thumb-host .work-card-image-bg,
 .videos-page .videos-export-card .work-card-ppt-thumb-host .ppt-thumb-fade {
   position: absolute;

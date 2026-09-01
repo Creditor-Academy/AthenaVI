@@ -24,6 +24,7 @@ export default function BrandKitsListView({
   setMenuRef,
   openEdit,
   handleSetDefault,
+  settingDefaultId,
   handleCopyId,
   handleDelete,
 }) {
@@ -137,6 +138,7 @@ export default function BrandKitsListView({
                       setMenuRef={setMenuRef}
                       onEdit={openEdit}
                       onSetDefault={handleSetDefault}
+                      settingDefault={String(settingDefaultId) === String(kit.id)}
                       onCopyId={handleCopyId}
                       onDelete={handleDelete}
                     />

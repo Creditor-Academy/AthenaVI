@@ -511,6 +511,7 @@ export function normalizeBrandKitSummary(kit) {
   return {
     id,
     workspaceId: source.workspaceId || source.workspace_id || null,
+    originWorkspaceId: source.originWorkspaceId || source.origin_workspace_id || null,
     name: source.name || 'Untitled Brand Kit',
     isDefault: Boolean(source.isDefault),
     mediaCount: source.mediaCount ?? source.media?.length ?? 0,
