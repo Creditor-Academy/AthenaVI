@@ -14,13 +14,25 @@
   position: relative;
   pointer-events: auto;
   width: min(82%, 420px);
-  max-width: 420px;
+  max-width: min(420px, calc(100% - 16px));
   overflow: hidden;
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 18px;
   box-shadow: 0 14px 36px rgba(15, 23, 42, 0.12);
   padding: 14px 14px 12px;
+}
+
+@media (max-width: 720px) {
+  .ppt-slide-ai-overlay {
+    padding: 10px;
+  }
+
+  .ppt-slide-ai-panel {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 14px;
+  }
 }
 
 .ppt-slide-ai-badge {

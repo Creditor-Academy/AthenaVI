@@ -410,7 +410,7 @@ export default function EditorRightRail({
     slide?.slideStatus ||
     'none'
 
-  const panelOpen = Boolean(active) || aiOpen
+  const panelOpen = Boolean(active)
 
   useEffect(() => {
     if (designFocus && selectedElementId) {
@@ -424,7 +424,7 @@ export default function EditorRightRail({
   }, [panelOpen, onOpenChange])
 
   useEffect(() => {
-    if (!panelOpen) return undefined
+    if (!panelOpen && !aiOpen) return undefined
     const onKey = (e) => {
       if (e.key === 'Escape') {
         setActive(null)
@@ -433,7 +433,7 @@ export default function EditorRightRail({
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [panelOpen])
+  }, [panelOpen, aiOpen])
 
   useEffect(() => {
     if (active !== 'design' || !workspaceId) return undefined
@@ -492,9 +492,8 @@ export default function EditorRightRail({
     setAiOpen(false)
   }
 
-  const panelTitle = aiOpen
-    ? 'AI prompt'
-    : active === 'design'
+  const panelTitle =
+    active === 'design'
       ? DESIGN_PANEL_TITLES[designFocus] || 'Design'
       : RAIL_TOOLS.find((t) => t.id === active)?.label || ''
 
@@ -624,18 +623,6 @@ export default function EditorRightRail({
               </div>
             </div>
           )}
-
-          {aiOpen && (
-            <div className="ppt-ai-prompt-panel" role="region" aria-label="AI prompt">
-              {generationPrompt?.trim() ? (
-                <p className="ppt-ai-prompt-body">{generationPrompt.trim()}</p>
-              ) : (
-                <p className="ppt-slide-panel-hint">
-                  No generation prompt was saved for this deck. Create via AI PPT wizard to capture one.
-                </p>
-              )}
-            </div>
-          )}
         </div>
       </div>
 
@@ -673,10 +660,6 @@ export default function EditorRightRail({
             aria-label="AI prompt"
             aria-expanded={aiOpen}
             onClick={() => {
-              if (viewOnly) {
-                onViewOnlyAttempt?.()
-                return
-              }
               setActive(null)
               setAiOpen((v) => !v)
             }}
@@ -685,6 +668,52 @@ export default function EditorRightRail({
           </button>
         </div>
       </div>
+      {aiOpen &&
+        createPortal(
+          <div
+            className="ppt-editor-modal-overlay"
+            onClick={() => setAiOpen(false)}
+          >
+            <div
+              className="ppt-editor-modal ppt-editor-modal--prompt"
+              role="dialog"
+              aria-label="AI prompt"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <header className="ppt-editor-modal-head">
+                <div className="ppt-editor-modal-head-text">
+                  <span className="ppt-editor-modal-kicker">Generation</span>
+                  <h3 className="ppt-editor-modal-title">AI prompt</h3>
+                </div>
+                <button
+                  type="button"
+                  className="ppt-editor-modal-close"
+                  onClick={() => setAiOpen(false)}
+                  aria-label="Close"
+                >
+                  <FiX size={18} />
+                </button>
+              </header>
+              {generationPrompt?.trim() ? (
+                <p className="ppt-ai-prompt-body">{generationPrompt.trim()}</p>
+              ) : (
+                <p className="ppt-editor-modal-lead">
+                  No generation prompt was saved for this deck. Create via AI PPT wizard to capture one.
+                </p>
+              )}
+              <footer className="ppt-editor-modal-foot">
+                <button
+                  type="button"
+                  className="ppt-editor-modal-btn ppt-editor-modal-btn--primary"
+                  onClick={() => setAiOpen(false)}
+                >
+                  Close
+                </button>
+              </footer>
+            </div>
+          </div>,
+          document.body
+        )}
     </aside>
   )
 }

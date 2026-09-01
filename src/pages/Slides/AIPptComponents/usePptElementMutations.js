@@ -64,8 +64,10 @@ export function usePptElementMutations({
         localSlidesRef.current = next
         return next
       })
+      const latest = localSlidesRef.current.find((s) => s.id === slideId)
+      if (latest?.elements) queueCanvasSave?.(slideId, latest.elements)
     },
-    [selectedSlideId, selectedElementId, aspectRatio, pushHistory, setLocalSlides]
+    [selectedSlideId, selectedElementId, aspectRatio, pushHistory, setLocalSlides, queueCanvasSave]
   )
 
   const cancelPendingPatches = useCallback(() => {
@@ -339,7 +341,15 @@ export function usePptElementMutations({
   const updateSpeakerNotes = useCallback(
     (slideId, notes) => {
       setLocalSlides((prev) =>
-        prev.map((s) => (s.id === slideId ? { ...s, speakerNotes: notes } : s))
+        prev.map((s) =>
+          s.id === slideId
+            ? {
+                ...s,
+                speakerNotes: notes,
+                elements: { ...(s.elements || {}), speakerNotes: notes },
+              }
+            : s
+        )
       )
       if (workspaceId && presentationId) {
         presentationService

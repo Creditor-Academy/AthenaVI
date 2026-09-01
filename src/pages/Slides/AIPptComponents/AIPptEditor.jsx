@@ -58,6 +58,7 @@ import {
   extractSlideFromMutation,
   extractSlidesFromPresentation,
   extractDeckPackId,
+  extractGenerationPrompt,
   getSlideImage,
   isSlideBackgroundElement,
   normalizeElementPresets,
@@ -987,6 +988,9 @@ export default function AIPptEditor({
   const [applyingBrandKit, setApplyingBrandKit] = useState(false)
   const [deckTitle, setDeckTitle] = useState(config.title || 'Untitled Presentation')
   const [deckPackId, setDeckPackId] = useState(config.packId || null)
+  const [generationPrompt, setGenerationPrompt] = useState(
+    () => extractGenerationPrompt(initialDeck, config)
+  )
   const [addSlideOpen, setAddSlideOpen] = useState(false)
   const [addAfterIndex, setAddAfterIndex] = useState(null)
   const [minimapTransitionAfterIndex, setMinimapTransitionAfterIndex] = useState(null)
@@ -1324,6 +1328,8 @@ export default function AIPptEditor({
     )
     setDeckStatus(deckStatusRaw)
     setDeckPackId(extractDeckPackId(data) || deckPackIdRef.current)
+    const nextPrompt = extractGenerationPrompt(data, config)
+    if (nextPrompt) setGenerationPrompt(nextPrompt)
     if (data?.title || data?.presentation?.title) {
       setDeckTitle(data?.title || data?.presentation?.title)
     }
@@ -2217,6 +2223,8 @@ export default function AIPptEditor({
     if (initialDeck?.title || initialDeck?.presentation?.title) {
       setDeckTitle(initialDeck?.title || initialDeck?.presentation?.title)
     }
+    const nextPrompt = extractGenerationPrompt(initialDeck, config)
+    if (nextPrompt) setGenerationPrompt(nextPrompt)
     if (slides[0]?.id) setSelectedSlideId((prev) => prev || slides[0].id)
     setLoading(false)
   }, [viewOnly, initialDeck, config.screenSize, config.aspectRatio])
@@ -2324,10 +2332,19 @@ export default function AIPptEditor({
       try {
         const currentIdx = localSlidesRef.current.findIndex((slide) => slide.id === tempId)
         const prevSlide = currentIdx > 0 ? localSlidesRef.current[currentIdx - 1] : null
+        const nextSlide =
+          currentIdx >= 0 && currentIdx < localSlidesRef.current.length - 1
+            ? localSlidesRef.current[currentIdx + 1]
+            : null
         const afterSlideId =
           prevSlide && !isOptimisticSlideId(prevSlide.id) ? prevSlide.id : undefined
+        const beforeSlideId =
+          !afterSlideId && nextSlide && !isOptimisticSlideId(nextSlide.id)
+            ? nextSlide.id
+            : undefined
         const created = await presentationService.addSlide(workspaceId, presentationId, {
           afterSlideId,
+          beforeSlideId,
           ...(title ? { title } : {}),
           ...(layoutId ? { layoutId } : {}),
         })
@@ -3369,14 +3386,12 @@ export default function AIPptEditor({
 
     if (!workspaceId || !presentationId) return
 
-    try {
-      await presentationService.patchSlide(workspaceId, presentationId, slideId, {
+    queueCanvasSave(slideId, nextElements)
+    presentationService
+      .patchSlide(workspaceId, presentationId, slideId, {
         transition: transitionId,
       })
-      queueCanvasSave(slideId, nextElements)
-    } catch {
-      // Keep optimistic local selection even if sync fails
-    }
+      .catch(() => {})
   }
 
   const closeMinimapTransition = useCallback(() => {
@@ -3408,21 +3423,13 @@ export default function AIPptEditor({
 
     if (!workspaceId || !presentationId) return
 
-    try {
-      await presentationService.patchSlide(workspaceId, presentationId, slideId, {
+    queueCanvasSave(slideId, nextElements)
+    presentationService
+      .patchSlide(workspaceId, presentationId, slideId, {
         contributorStatus: statusId,
       })
-      queueCanvasSave(slideId, nextElements)
-    } catch {
-      // Keep optimistic local selection
-    }
+      .catch(() => {})
   }
-
-  const generationPrompt =
-    config.prompt ||
-    config.generationPrompt ||
-    config.outline ||
-    [config.title, config.tone, config.audience].filter(Boolean).join(' · ')
 
   const handleRename = () => {
     if (viewOnly) {
