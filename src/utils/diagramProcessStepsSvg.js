@@ -45,3 +45,7 @@ export function processIconInlineSvg(index = 0) {
     `<circle cx="32" cy="32" r="14"/><path d="M32 22v20M26 28h8c3 0 5 2 5 4s-2 4-5 4h-8"/><circle cx="18" cy="18" r="3"/><circle cx="46" cy="18" r="3"/><circle cx="18" cy="46" r="3"/><circle cx="46" cy="46" r="3"/><path d="M20.2 20.2 26 26M43.8 20.2 38 26M20.2 43.8 26 38M43.8 43.8 38 38"/>`
   )
 }
+
+export function processFlowArrowInlineSvg() {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 24" width="100%" height="100%" preserveAspectRatio="none"><path fill="currentColor" d="M0 9h42V3l22 9-22 9v-6H0z"/></svg>`
+}

@@ -305,7 +305,6 @@ const LAYOUT_PREVIEW_MODES = {
   diagram_cycle_horizontal_v1: 'diagram_cycle',
   diagram_cycle_ring_v1: 'diagram_cycle',
   diagram_funnel_horizontal_v1: 'diagram_funnel',
-  diagram_funnel_stacked_v1: 'diagram_funnel',
   diagram_matrix_grid_v1: 'diagram_matrix',
   diagram_matrix_quadrant_v1: 'diagram_matrix',
   diagram_process_horizontal_v1: 'diagram_process_steps',
@@ -619,15 +618,41 @@ function fillPreviewDataFromSlots(schema) {
     }))
   }
   if (mode === 'diagram_cycle' && !Array.isArray(preview.quadrants)) {
+    const ringOrH =
+      /cycle_(ring|horizontal)/.test(String(schema.layout_id || '')) ||
+      preview.diagramVariant === 'ring' ||
+      preview.diagramVariant === 'horizontal'
+    const count = ringOrH ? 5 : 4
+    preview.quadrants = Array.from({ length: count }, (_, i) => {
+      const n = i + 1
+      return {
+        title:
+          preview.slots?.[`Q${n}_TITLE`]?.text ||
+          slotPlaceholderText(slots, `Q${n}_TITLE`) ||
+          (n === 1 ? 'Plan' : n === 2 ? 'Do' : n === 3 ? 'Check' : n === 4 ? 'Act' : 'Improve'),
+        body:
+          preview.slots?.[`Q${n}_BODY`]?.text ||
+          slotPlaceholderText(slots, `Q${n}_BODY`) ||
+          '',
+      }
+    })
+  }
+  if (mode === 'diagram_matrix' && !Array.isArray(preview.quadrants)) {
+    const matrixTitles = [
+      'High impact · Easy',
+      'High impact · Hard',
+      'Low impact · Easy',
+      'Low impact · Hard',
+    ]
     preview.quadrants = [1, 2, 3, 4].map((n) => ({
       title:
         preview.slots?.[`Q${n}_TITLE`]?.text ||
         slotPlaceholderText(slots, `Q${n}_TITLE`) ||
-        (n === 1 ? 'Plan' : n === 2 ? 'Do' : n === 3 ? 'Check' : 'Act'),
+        matrixTitles[n - 1],
       body:
         preview.slots?.[`Q${n}_BODY`]?.text ||
         slotPlaceholderText(slots, `Q${n}_BODY`) ||
-        '',
+        'Two to three lines explaining this section.',
     }))
   }
   if (mode === 'diagram_swot' && !Array.isArray(preview.quadrants)) {

@@ -69,7 +69,7 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
           textDecoration: [c.underline && 'underline', c.strikethrough && 'line-through']
             .filter(Boolean)
             .join(' ') || undefined,
-          textAlign: c.align || 'left',
+          textAlign: c.textAlign || c.align || 'left',
           textTransform: c.textTransform || undefined,
           whiteSpace: 'pre-wrap',
           lineHeight: c.lineHeight ?? 1.25,

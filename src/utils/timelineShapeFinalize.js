@@ -9,9 +9,17 @@ import {
   cycleNodeTopArcSvg,
   cycleNodeBotArcSvg,
   cycleNodeIconSvg,
+  CYCLE_RING_N,
+  CYCLE_RING_COLORS,
+  CYCLE_RING_GEOM,
+  cycleRingSegSvg,
+  cycleRingSegPlacement,
+  cycleRingDiamondSvg,
+  cycleRingCalloutSvg,
+  cycleRingCallouts,
 } from './diagramCycleSvg'
-import { funnelStageInlineSvg, funnelStagePlacement, FUNNEL_TITLE_COLORS, FUNNEL_GEOM, FUNNEL_STAGE_COLORS, funnelOverlayPlacements } from './diagramFunnelSvg'
-import { matrixQuadPlacement, matrixArrowPlacement, matrixArrowInlineSvg, MATRIX_GEOM, MATRIX_QUAD_COLORS, MATRIX_ARROW_COLOR, matrixOverlayPlacements } from './diagramMatrixSvg'
+import { funnelStageInlineSvg, funnelStagePlacement, FUNNEL_TITLE_COLORS, FUNNEL_GEOM, FUNNEL_STAGE_COLORS, funnelOverlayPlacements, FUNNEL_H_GEOM, funnelHSegInlineSvg, funnelHSegPlacement, funnelHOverlayPlacements } from './diagramFunnelSvg'
+import { matrixQuadPlacement, matrixArrowPlacement, matrixArrowInlineSvg, MATRIX_GEOM, MATRIX_QUAD_COLORS, MATRIX_ARROW_COLOR, matrixOverlayPlacements, MATRIX_GRID_COLORS, MATRIX_Q_TINTS, MATRIX_Q_TITLE, MATRIX_Q_AXIS, matrixQuadrantCrossInlineSvg } from './diagramMatrixSvg'
 import {
   PYRAMID_N,
   PYRAMID_COLORS,
@@ -19,6 +27,7 @@ import {
   pyramidStageInlineSvg,
   pyramidGraphicBox,
   pyramidLegendPlacements,
+  pyramidModeFromSchema,
   PYRAMID_BADGE_CLIP,
 } from './diagramPyramid'
 import {
@@ -32,6 +41,8 @@ import {
   swotDashInlineSvg,
   swotGraphicBox,
   swotOverlayPlacements,
+  swotModeFromSchema,
+  swotQuadFrame,
 } from './diagramSwotSvg'
 import {
   VENN_N,
@@ -41,12 +52,16 @@ import {
   vennIconInlineSvg,
   vennFrame,
   vennSetGeom,
+  vennModeFromSchema,
+  vennThreeCircleFrame,
+  vennStackedFrame,
 } from './diagramVennSvg'
 import {
   PROCESS_STEP_COLORS,
   processRibbonInlineSvg,
   processRibbonLabelBox,
   processIconInlineSvg,
+  processFlowArrowInlineSvg,
 } from './diagramProcessStepsSvg'
 import {
   QUOTE_GRID_N,
@@ -796,11 +811,534 @@ function newShapeId(prefix) {
   return `${prefix}-${Math.random().toString(36).slice(2, 9)}`
 }
 
+function isProcessHorizontalLayout(schema) {
+  const id = String(schema?.layout_id || schema?.layoutId || '').toLowerCase()
+  const variant = String(schema?.preview?.diagramVariant || '').toLowerCase()
+  const isProcess = /diagram_process|timeline_process_steps/.test(id)
+  return isProcess && (variant === 'horizontal' || id.includes('horizontal'))
+}
+
+function isProcessVerticalLayout(schema) {
+  const id = String(schema?.layout_id || schema?.layoutId || '').toLowerCase()
+  const variant = String(schema?.preview?.diagramVariant || '').toLowerCase()
+  const isProcess = /diagram_process|timeline_process_steps/.test(id)
+  return isProcess && (variant === 'vertical' || id.includes('vertical'))
+}
+
+function processStepNumsFromElements(elements) {
+  return [
+    ...new Set(
+      (elements || [])
+        .map((el) => String(el.slotId || '').match(/^step_(\d+)_(title|body|label)$/i)?.[1])
+        .filter(Boolean)
+        .map((n) => Number(n))
+    ),
+  ].sort((a, b) => a - b)
+}
+
+const PROCESS_LAYOUT_DECO =
+  /^(AUTO_CARD_BG_|TIMELINE_(NODE|SEG|ARROW|SPINE)|PROCESS_(BADGE|BAR|DIVIDER|CARD|RIBBON|ICON|NODE|CONN|SPINE)_)/i
+
+/**
+ * Left-to-right numbered nodes with arrow connectors; title + body under each step.
+ */
+function layoutDiagramProcessHorizontal(elements, schema, palette = {}, canvas = {}) {
+  if (!Array.isArray(elements)) return elements
+  const canvasW = canvas.width || 1920
+  const canvasH = canvas.height || 1080
+  const textColor = paletteColor(palette, 'text', '#1F2937')
+  const muted = paletteColor(palette, 'muted', '#6B7280')
+  const colors = PROCESS_STEP_COLORS
+  const stepNums = processStepNumsFromElements(elements)
+  const n = stepNums.length || 4
+  const insetX = 72
+  const headingH = 80
+  const colW = (canvasW - insetX * 2) / n
+  const nodeD = 112
+  const titleH = 44
+  const bodyH = 120
+  const gapNodeToTitle = 36
+  const gapTitleToBody = 12
+  const headingY = 56
+  const diagramH = nodeD + gapNodeToTitle + titleH + gapTitleToBody + bodyH
+  const belowHeading = headingY + headingH
+  const flowY = Math.max(belowHeading + 24, belowHeading + Math.round((canvasH - belowHeading - diagramH) / 2))
+  const titleY = flowY + nodeD + gapNodeToTitle
+  const bodyY = titleY + titleH + gapTitleToBody
+  const arrowH = 28
+  const padX = 16
+
+  const prevBySlot = new Map(
+    (elements || [])
+      .filter((el) => /^PROCESS_(NODE|CONN)_/i.test(String(el.slotId || '')))
+      .map((el) => [String(el.slotId || '').toUpperCase(), el])
+  )
+  const stripped = elements.filter((el) => !PROCESS_LAYOUT_DECO.test(String(el.slotId || '')))
+  const seenLabel = new Set(
+    stripped.filter((el) => /^step_\d+_label$/i.test(String(el.slotId || ''))).map((el) => String(el.slotId).toLowerCase())
+  )
+
+  const colX = (idx) => insetX + idx * colW
+  const nodeX = (idx) => Math.round(colX(idx) + (colW - nodeD) / 2)
+
+  const next = stripped.map((el) => {
+    const sid = String(el.slotId || '')
+    const base = {
+      ...(el.content || {}),
+      letterSpacing: '0',
+      padding: 0,
+      paddingX: 0,
+      stroke: undefined,
+      strokeWidth: 0,
+    }
+    if (sid.toUpperCase() === 'HEADING') {
+      return {
+        ...el,
+        placement: {
+          ...(el.placement || {}),
+          x: insetX,
+          y: headingY,
+          width: canvasW - insetX * 2,
+          height: headingH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 36,
+          fontWeight: 800,
+          lineHeight: 1.15,
+          color: textColor,
+          clipToSlot: false,
+        },
+      }
+    }
+    const labelM = sid.match(/^step_(\d+)_label$/i)
+    const titleM = sid.match(/^step_(\d+)_title$/i)
+    const bodyM = sid.match(/^step_(\d+)_body$/i)
+    const num = Number((labelM || titleM || bodyM)?.[1])
+    const idx = stepNums.indexOf(num)
+    if (idx < 0) return el
+    const color = colors[idx % colors.length]
+    if (labelM) {
+      const pad = String(idx + 1).padStart(2, '0')
+      const raw = String(el.content?.text || '').trim()
+      const text = /^\d+$/.test(raw.replace(/^#/, '')) || !raw || /process/i.test(raw) ? pad : raw
+      return {
+        ...el,
+        layer: 12,
+        placement: {
+          x: nodeX(idx),
+          y: Math.round(flowY),
+          width: nodeD,
+          height: nodeD,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          text,
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 32,
+          fontWeight: 800,
+          lineHeight: 1,
+          color: '#FFFFFF',
+          wrap: 'nowrap',
+          clipToSlot: false,
+        },
+      }
+    }
+    if (titleM) {
+      const pad = String(idx + 1).padStart(2, '0')
+      const raw = String(el.content?.text || '').trim()
+      const text = !raw || /text here|double-click/i.test(raw) ? `STEP #${pad}` : raw
+      return {
+        ...el,
+        layer: 10,
+        placement: {
+          x: Math.round(colX(idx) + padX),
+          y: Math.round(titleY),
+          width: Math.round(colW - padX * 2),
+          height: titleH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          text,
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 22,
+          fontWeight: 800,
+          lineHeight: 1.2,
+          color,
+          wrap: 'nowrap',
+          clipToSlot: false,
+        },
+      }
+    }
+    return {
+      ...el,
+      layer: 10,
+      placement: {
+        x: Math.round(colX(idx) + padX),
+        y: Math.round(bodyY),
+        width: Math.round(colW - padX * 2),
+        height: Math.round(bodyH),
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        ...base,
+        align: 'center',
+        verticalAlign: 'flex-start',
+        fontSize: 15,
+        fontWeight: 400,
+        lineHeight: 1.5,
+        color: muted,
+        wrap: 'wrap',
+        clipToSlot: false,
+      },
+    }
+  })
+
+  const chrome = []
+  for (let i = 0; i < n; i += 1) {
+    const color = colors[i % colors.length]
+    const nodeId = `PROCESS_NODE_${i + 1}`
+    const prevN = prevBySlot.get(nodeId)
+    chrome.push({
+      id: prevN?.id || newShapeId('shp-pnode'),
+      type: 'shape',
+      layer: 8,
+      placement: {
+        x: nodeX(i),
+        y: Math.round(flowY),
+        width: nodeD,
+        height: nodeD,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: { shape: 'ellipse', fill: prevN?.content?.fill || color, layoutSurface: true },
+      role: 'decoration',
+      slotId: nodeId,
+    })
+    if (i < n - 1) {
+      const ax = nodeX(i) + nodeD + 12
+      const aw = Math.max(24, nodeX(i + 1) - ax - 12)
+      const connId = `PROCESS_CONN_${i + 1}`
+      const prevC = prevBySlot.get(connId)
+      chrome.push({
+        id: prevC?.id || newShapeId('shp-pconn'),
+        type: 'graphic',
+        layer: 6,
+        placement: {
+          x: Math.round(ax),
+          y: Math.round(flowY + (nodeD - arrowH) / 2),
+          width: Math.round(aw),
+          height: arrowH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          svg: processFlowArrowInlineSvg(),
+          colorMode: 'recolorable',
+          fill: prevC?.content?.fill || color,
+          alt: 'Next step',
+        },
+        role: 'decoration',
+        slotId: connId,
+      })
+    }
+    const labelSlot = `step_${stepNums[i] || i + 1}_label`
+    if (!seenLabel.has(labelSlot.toLowerCase())) {
+      chrome.push({
+        id: newShapeId('txt-plabel'),
+        type: 'text',
+        layer: 12,
+        placement: {
+          x: nodeX(i),
+          y: Math.round(flowY),
+          width: nodeD,
+          height: nodeD,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          text: String(i + 1).padStart(2, '0'),
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 32,
+          fontWeight: 800,
+          lineHeight: 1,
+          color: '#FFFFFF',
+          letterSpacing: '0',
+          padding: 0,
+          wrap: 'nowrap',
+          clipToSlot: false,
+        },
+        role: 'caption',
+        slotId: labelSlot,
+      })
+    }
+  }
+
+  return [...chrome, ...next]
+}
+
+/**
+ * Top-to-bottom roadmap: spine on the left, numbered nodes, title + body in rows.
+ */
+function layoutDiagramProcessVertical(elements, schema, palette = {}, canvas = {}) {
+  if (!Array.isArray(elements)) return elements
+  const canvasW = canvas.width || 1920
+  const canvasH = canvas.height || 1080
+  const textColor = paletteColor(palette, 'text', '#1F2937')
+  const muted = paletteColor(palette, 'muted', '#6B7280')
+  const colors = PROCESS_STEP_COLORS
+  const stepNums = processStepNumsFromElements(elements)
+  const n = stepNums.length || 4
+  const headingY = 56
+  const headingH = 80
+  const leftX = 96
+  const nodeD = 96
+  const spineW = 8
+  const rowGap = 24
+  const contentTop = headingY + headingH + 40
+  const usableH = canvasH - contentTop - 48
+  const rowH = (usableH - rowGap * (n - 1)) / n
+  const textX = leftX + nodeD + 40
+  const textW = canvasW - textX - 80
+  const titleH = 48
+
+  const prevBySlot = new Map(
+    (elements || [])
+      .filter((el) => /^PROCESS_(NODE|SPINE)_/i.test(String(el.slotId || '')))
+      .map((el) => [String(el.slotId || '').toUpperCase(), el])
+  )
+  const stripped = elements.filter((el) => !PROCESS_LAYOUT_DECO.test(String(el.slotId || '')))
+  const seenLabel = new Set(
+    stripped.filter((el) => /^step_\d+_label$/i.test(String(el.slotId || ''))).map((el) => String(el.slotId).toLowerCase())
+  )
+
+  const rowY = (idx) => contentTop + idx * (rowH + rowGap)
+  const nodeY = (idx) => Math.round(rowY(idx) + (rowH - nodeD) / 2)
+
+  const next = stripped.map((el) => {
+    const sid = String(el.slotId || '')
+    const base = {
+      ...(el.content || {}),
+      letterSpacing: '0',
+      padding: 0,
+      paddingX: 0,
+      stroke: undefined,
+      strokeWidth: 0,
+    }
+    if (sid.toUpperCase() === 'HEADING') {
+      return {
+        ...el,
+        placement: {
+          ...(el.placement || {}),
+          x: 72,
+          y: headingY,
+          width: canvasW - 144,
+          height: headingH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          align: 'left',
+          verticalAlign: 'center',
+          fontSize: 36,
+          fontWeight: 800,
+          lineHeight: 1.15,
+          color: textColor,
+          clipToSlot: false,
+        },
+      }
+    }
+    const labelM = sid.match(/^step_(\d+)_label$/i)
+    const titleM = sid.match(/^step_(\d+)_title$/i)
+    const bodyM = sid.match(/^step_(\d+)_body$/i)
+    const num = Number((labelM || titleM || bodyM)?.[1])
+    const idx = stepNums.indexOf(num)
+    if (idx < 0) return el
+    const color = colors[idx % colors.length]
+    if (labelM) {
+      const pad = String(idx + 1).padStart(2, '0')
+      const raw = String(el.content?.text || '').trim()
+      const text = /^\d+$/.test(raw.replace(/^#/, '')) || !raw || /process/i.test(raw) ? pad : raw
+      return {
+        ...el,
+        layer: 12,
+        placement: {
+          x: leftX,
+          y: nodeY(idx),
+          width: nodeD,
+          height: nodeD,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          text,
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 28,
+          fontWeight: 800,
+          lineHeight: 1,
+          color: '#FFFFFF',
+          wrap: 'nowrap',
+          clipToSlot: false,
+        },
+      }
+    }
+    if (titleM) {
+      const pad = String(idx + 1).padStart(2, '0')
+      const raw = String(el.content?.text || '').trim()
+      const text = !raw || /text here|double-click/i.test(raw) ? `STEP #${pad}` : raw
+      return {
+        ...el,
+        layer: 10,
+        placement: {
+          x: Math.round(textX),
+          y: Math.round(rowY(idx) + 16),
+          width: Math.round(textW),
+          height: titleH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          text,
+          align: 'left',
+          verticalAlign: 'center',
+          fontSize: 24,
+          fontWeight: 800,
+          lineHeight: 1.2,
+          color,
+          wrap: 'nowrap',
+          clipToSlot: false,
+        },
+      }
+    }
+    return {
+      ...el,
+      layer: 10,
+      placement: {
+        x: Math.round(textX),
+        y: Math.round(rowY(idx) + 16 + titleH + 8),
+        width: Math.round(textW),
+        height: Math.max(48, Math.round(rowH - 16 - titleH - 24)),
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        ...base,
+        align: 'left',
+        verticalAlign: 'flex-start',
+        fontSize: 16,
+        fontWeight: 400,
+        lineHeight: 1.5,
+        color: muted,
+        wrap: 'wrap',
+        clipToSlot: false,
+      },
+    }
+  })
+
+  const chrome = []
+  const firstCY = nodeY(0) + nodeD / 2
+  const lastCY = nodeY(n - 1) + nodeD / 2
+  const prevSpine = prevBySlot.get('PROCESS_SPINE_1')
+  chrome.push({
+    id: prevSpine?.id || newShapeId('shp-pspine'),
+    type: 'shape',
+    layer: 1,
+    placement: {
+      x: Math.round(leftX + nodeD / 2 - spineW / 2),
+      y: Math.round(firstCY),
+      width: spineW,
+      height: Math.max(8, Math.round(lastCY - firstCY)),
+      rotation: 0,
+      opacity: 1,
+    },
+    content: {
+      shape: 'rect',
+      fill: prevSpine?.content?.fill || '#CBD5E1',
+      borderRadius: 4,
+      layoutSurface: true,
+    },
+    role: 'decoration',
+    slotId: 'PROCESS_SPINE_1',
+  })
+  for (let i = 0; i < n; i += 1) {
+    const color = colors[i % colors.length]
+    const nodeId = `PROCESS_NODE_${i + 1}`
+    const prevN = prevBySlot.get(nodeId)
+    chrome.push({
+      id: prevN?.id || newShapeId('shp-pnode'),
+      type: 'shape',
+      layer: 8,
+      placement: {
+        x: leftX,
+        y: nodeY(i),
+        width: nodeD,
+        height: nodeD,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: { shape: 'ellipse', fill: prevN?.content?.fill || color, layoutSurface: true },
+      role: 'decoration',
+      slotId: nodeId,
+    })
+    const labelSlot = `step_${stepNums[i] || i + 1}_label`
+    if (!seenLabel.has(labelSlot.toLowerCase())) {
+      chrome.push({
+        id: newShapeId('txt-plabel'),
+        type: 'text',
+        layer: 12,
+        placement: {
+          x: leftX,
+          y: nodeY(i),
+          width: nodeD,
+          height: nodeD,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          text: String(i + 1).padStart(2, '0'),
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 28,
+          fontWeight: 800,
+          lineHeight: 1,
+          color: '#FFFFFF',
+          letterSpacing: '0',
+          padding: 0,
+          wrap: 'nowrap',
+          clipToSlot: false,
+        },
+        role: 'caption',
+        slotId: labelSlot,
+      })
+    }
+  }
+
+  return [...chrome, ...next]
+}
+
 /**
  * Equal 4-column cards: gray panel, arrow ribbon + number, STEP title, body, icon.
  */
 export function layoutDiagramProcessSteps(elements, schema, palette = {}, canvas = {}) {
   if (!Array.isArray(elements)) return elements
+  if (isProcessHorizontalLayout(schema)) return layoutDiagramProcessHorizontal(elements, schema, palette, canvas)
+  if (isProcessVerticalLayout(schema)) return layoutDiagramProcessVertical(elements, schema, palette, canvas)
   const canvasW = canvas.width || 1920
   const canvasH = canvas.height || 1080
   const textColor = paletteColor(palette, 'text', '#1F2937')
@@ -838,7 +1376,7 @@ export function layoutDiagramProcessSteps(elements, schema, palette = {}, canvas
   const bodyH = Math.max(64, iconY - bodyY - 20)
 
   const PROCESS_DECO =
-    /^(AUTO_CARD_BG_|TIMELINE_(NODE|SEG|ARROW|SPINE)|PROCESS_(BADGE|BAR|DIVIDER|CARD|RIBBON|ICON)_)/i
+    /^(AUTO_CARD_BG_|TIMELINE_(NODE|SEG|ARROW|SPINE)|PROCESS_(BADGE|BAR|DIVIDER|CARD|RIBBON|ICON|NODE|CONN|SPINE)_)/i
   const prevBySlot = new Map(
     (elements || [])
       .filter((el) => /^PROCESS_(CARD|RIBBON|ICON)_/i.test(String(el.slotId || '')))
@@ -1078,6 +1616,12 @@ function isHorizontalCycleLayout(schema) {
   const id = String(schema?.layout_id || schema?.layoutId || '').toLowerCase()
   const variant = String(schema?.preview?.diagramVariant || '').toLowerCase()
   return variant === 'horizontal' || (id.includes('cycle') && id.includes('horizontal'))
+}
+
+function isRingCycleLayout(schema) {
+  const id = String(schema?.layout_id || schema?.layoutId || '').toLowerCase()
+  const variant = String(schema?.preview?.diagramVariant || '').toLowerCase()
+  return variant === 'ring' || (id.includes('cycle') && id.includes('ring'))
 }
 
 function layoutDiagramCycleHorizontal(elements, schema, palette = {}, canvas = {}) {
@@ -1338,9 +1882,219 @@ function isDiagramCycleLayout(layoutId) {
   return /diagram_cycle/.test(String(layoutId || '').toLowerCase())
 }
 
+function layoutDiagramCycleRing(elements, schema, palette = {}, canvas = {}) {
+  if (!Array.isArray(elements)) return elements
+  const canvasW = canvas.width || 1920
+  const canvasH = canvas.height || 1080
+  const textColor = paletteColor(palette, 'text', '#1F2937')
+  const n = CYCLE_RING_N
+  const insetX = 40
+  const headingY = 40
+  const headingH = 64
+  const cycleSize = 580
+  const cycleX = Math.round((canvasW - cycleSize) / 2)
+  const cycleY = Math.min(
+    canvasH - cycleSize - 140,
+    Math.max(headingY + headingH + 72, Math.round((canvasH - cycleSize) / 2 + 72))
+  )
+  const scale = cycleSize / CYCLE_RING_GEOM.view
+  const cx = cycleX + cycleSize / 2
+  const cy = cycleY + cycleSize / 2
+  const rOut = CYCLE_RING_GEOM.rOut * scale
+  const hubR = CYCLE_RING_GEOM.hubR * scale
+  const callouts = cycleRingCallouts(cx, cy, rOut)
+
+  const CYCLE_DECO =
+    /^(CYCLE_(RING|HUB|LOOP|SEG_|BAR_|DROP_|DOT_|ICON_|FLOW_|ARC_|LEAD_|DIAMOND)|AUTO_CARD_BG_)/i
+  const prevBySlot = new Map(
+    (elements || [])
+      .filter((el) => /^CYCLE_(SEG_|HUB|LEAD_|DIAMOND|ICON_)/i.test(String(el.slotId || '')))
+      .map((el) => [String(el.slotId || '').toUpperCase(), el])
+  )
+  const stripped = elements.filter((el) => !CYCLE_DECO.test(String(el.slotId || '')))
+
+  const next = stripped.map((el) => {
+    const sid = String(el.slotId || '')
+    const base = {
+      ...(el.content || {}),
+      letterSpacing: '0',
+      padding: 0,
+      paddingX: 0,
+      stroke: undefined,
+      strokeWidth: 0,
+    }
+    if (sid.toUpperCase() === 'HEADING') {
+      return {
+        ...el,
+        layer: 50,
+        placement: {
+          x: insetX,
+          y: headingY,
+          width: canvasW - insetX * 2,
+          height: headingH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 28,
+          fontWeight: 800,
+          lineHeight: 1.25,
+          color: textColor,
+          clipToSlot: false,
+        },
+      }
+    }
+    if (/^CYCLE_(CENTER|NUM_)/i.test(sid) || /^Q[1-5]_BODY$/i.test(sid)) return null
+    const m = sid.match(/^Q([1-5])_TITLE$/i)
+    if (!m) return el
+    const idx = Number(m[1]) - 1
+    const c = callouts[idx]
+    if (!c) return el
+    return {
+      ...el,
+      layer: 50,
+      placement: {
+        x: c.text.x,
+        y: c.text.y,
+        width: c.text.width,
+        height: c.text.height,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        ...base,
+        align: c.text.align,
+        verticalAlign: 'center',
+        fontSize: 17,
+        fontWeight: 600,
+        color: textColor,
+        wrap: 'wrap',
+        clipToSlot: false,
+        lineHeight: 1.2,
+      },
+    }
+  }).filter(Boolean)
+
+  const chrome = []
+  for (let i = 0; i < n; i += 1) {
+    const slotId = `CYCLE_SEG_${i + 1}`
+    const prev = prevBySlot.get(slotId)
+    const fill = prev?.content?.fill || CYCLE_RING_COLORS[i]
+    chrome.push({
+      id: prev?.id || newShapeId('shp-rseg'),
+      type: 'graphic',
+      layer: 2 + i,
+      placement: cycleRingSegPlacement(cycleX, cycleY, cycleSize, i),
+      content: {
+        svg: cycleRingSegSvg(i),
+        colorMode: 'recolorable',
+        fill,
+        alt: `Cycle ring ${i + 1}`,
+      },
+      role: 'decoration',
+      slotId,
+    })
+    const leadId = `CYCLE_LEAD_${i + 1}`
+    const prevL = prevBySlot.get(leadId)
+    const call = callouts[i]
+    chrome.push({
+      id: prevL?.id || newShapeId('shp-rlead'),
+      type: 'graphic',
+      layer: 12 + i,
+      placement: { ...call.box },
+      content: {
+        svg: cycleRingCalloutSvg(call.localPts, call.localBar, call.box.width, call.box.height),
+        colorMode: 'recolorable',
+        fill: prevL?.content?.fill || CYCLE_RING_COLORS[i],
+        alt: `Callout ${i + 1}`,
+      },
+      role: 'decoration',
+      slotId: leadId,
+    })
+    const hasT = next.some((el) => String(el.slotId || '').toUpperCase() === `Q${i + 1}_TITLE`)
+    if (!hasT) {
+      next.push({
+        id: newShapeId('txt-rlabel'),
+        type: 'text',
+        layer: 50,
+        slotId: `Q${i + 1}_TITLE`,
+        role: 'heading',
+        placement: {
+          x: call.text.x,
+          y: call.text.y,
+          width: call.text.width,
+          height: call.text.height,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          text: 'Sample text here',
+          align: call.text.align,
+          verticalAlign: 'center',
+          fontSize: 17,
+          fontWeight: 600,
+          color: textColor,
+          wrap: 'wrap',
+          clipToSlot: false,
+          lineHeight: 1.2,
+        },
+      })
+    }
+  }
+
+  const prevHub = prevBySlot.get('CYCLE_HUB')
+  chrome.push({
+    id: prevHub?.id || newShapeId('shp-rhub'),
+    type: 'shape',
+    layer: 8,
+    placement: {
+      x: Math.round(cx - hubR),
+      y: Math.round(cy - hubR),
+      width: Math.round(hubR * 2),
+      height: Math.round(hubR * 2),
+      rotation: 0,
+      opacity: 1,
+    },
+    content: { shape: 'ellipse', fill: prevHub?.content?.fill || '#ffffff' },
+    role: 'decoration',
+    slotId: 'CYCLE_HUB',
+  })
+  const prevD = prevBySlot.get('CYCLE_DIAMOND')
+  const dia = Math.round(hubR * 0.72)
+  chrome.push({
+    id: prevD?.id || newShapeId('shp-rdia'),
+    type: 'graphic',
+    layer: 20,
+    placement: {
+      x: Math.round(cx - dia / 2),
+      y: Math.round(cy - dia / 2),
+      width: dia,
+      height: dia,
+      rotation: 0,
+      opacity: 1,
+    },
+    content: {
+      svg: cycleRingDiamondSvg(),
+      colorMode: 'recolorable',
+      fill: prevD?.content?.fill || '#9CA3AF',
+      alt: 'Center icon',
+    },
+    role: 'decoration',
+    slotId: 'CYCLE_DIAMOND',
+  })
+
+  return [...chrome, ...next]
+}
+
 export function layoutDiagramCycle(elements, schema, palette = {}, canvas = {}) {
   if (isHorizontalCycleLayout(schema)) {
     return layoutDiagramCycleHorizontal(elements, schema, palette, canvas)
+  }
+  if (isRingCycleLayout(schema)) {
+    return layoutDiagramCycleRing(elements, schema, palette, canvas)
   }
   if (!Array.isArray(elements)) return elements
   const canvasW = canvas.width || 1920
@@ -1601,12 +2355,13 @@ function isDiagramPyramidLayout(layoutId) {
 
 export function layoutDiagramPyramid(elements, schema, palette = {}, canvas = {}) {
   if (!Array.isArray(elements)) return elements
+  const mode = pyramidModeFromSchema(schema)
   const canvasW = canvas.width || 1920
   const canvasH = canvas.height || 1080
   const textColor = paletteColor(palette, 'text', '#1F2937')
   const muted = paletteColor(palette, 'muted', '#6B7280')
-  const frame = pyramidGraphicBox(canvasW, canvasH)
-  const legend = pyramidLegendPlacements(frame)
+  const frame = pyramidGraphicBox(canvasW, canvasH, mode)
+  const legend = pyramidLegendPlacements(frame, mode)
   const colors = [
     paletteColor(palette, 'accent', PYRAMID_COLORS[0]),
     paletteColor(palette, 'secondary', PYRAMID_COLORS[1]),
@@ -1648,9 +2403,11 @@ export function layoutDiagramPyramid(elements, schema, palette = {}, canvas = {}
           ...base,
           align: 'left',
           verticalAlign: 'center',
-          fontSize: 40,
+          fontSize: 36,
           fontWeight: 800,
+          lineHeight: 1.2,
           color: textColor,
+          clipToSlot: false,
         },
       }
     }
@@ -1666,11 +2423,12 @@ export function layoutDiagramPyramid(elements, schema, palette = {}, canvas = {}
           text: el.content?.text || String(i + 1).padStart(2, '0'),
           align: 'center',
           verticalAlign: 'center',
-          fontSize: 20,
+          fontSize: mode === 'layers' ? 26 : 15,
           fontWeight: 800,
           wrap: 'nowrap',
           lineHeight: 1,
           color: '#ffffff',
+          clipToSlot: false,
         },
       }
     }
@@ -1687,7 +2445,9 @@ export function layoutDiagramPyramid(elements, schema, palette = {}, canvas = {}
           verticalAlign: 'center',
           fontSize: 22,
           fontWeight: 800,
+          lineHeight: 1.2,
           color: textColor,
+          clipToSlot: false,
         },
       }
     }
@@ -1726,13 +2486,14 @@ export function layoutDiagramPyramid(elements, schema, palette = {}, canvas = {}
         text: String(i + 1).padStart(2, '0'),
         align: 'center',
         verticalAlign: 'center',
-        fontSize: 20,
+        fontSize: mode === 'layers' ? 26 : 15,
         fontWeight: 800,
         wrap: 'nowrap',
         lineHeight: 1,
         color: '#ffffff',
         padding: 0,
         paddingX: 0,
+        clipToSlot: false,
       },
     })
   }
@@ -1746,9 +2507,9 @@ export function layoutDiagramPyramid(elements, schema, palette = {}, canvas = {}
       id: prev?.id || newShapeId('shp-pyramid-seg'),
       type: 'graphic',
       layer: 3 + i,
-      placement: { ...pyramidStagePlacement(graphicX, graphicY, graphicW, graphicH, i), rotation: 0, opacity: 1 },
+      placement: { ...pyramidStagePlacement(graphicX, graphicY, graphicW, graphicH, i, mode), rotation: 0, opacity: 1 },
       content: {
-        svg: pyramidStageInlineSvg(i),
+        svg: pyramidStageInlineSvg(i, mode),
         colorMode: 'recolorable',
         fill,
         alt: `Pyramid stage ${i + 1}`,
@@ -1758,7 +2519,9 @@ export function layoutDiagramPyramid(elements, schema, palette = {}, canvas = {}
     }
   })
 
-  const badges = [0, 1, 2, 3, 4].map((i) => {
+  const badges = mode === 'layers'
+    ? []
+    : [0, 1, 2, 3, 4].map((i) => {
     const slotId = `PYRAMID_BADGE_${i + 1}`
     const prev = prevBySlot.get(slotId)
     return {
@@ -1779,8 +2542,269 @@ export function layoutDiagramPyramid(elements, schema, palette = {}, canvas = {}
   return [...segs, ...badges, ...next, ...extras]
 }
 
+function isHorizontalFunnelLayout(schema) {
+  const id = String(schema?.layout_id || schema?.layoutId || '').toLowerCase()
+  const variant = String(schema?.preview?.diagramVariant || '').toLowerCase()
+  return variant === 'horizontal' || (id.includes('funnel') && id.includes('horizontal'))
+}
+
+function layoutDiagramFunnelHorizontal(elements, schema, palette = {}, canvas = {}) {
+  if (!Array.isArray(elements)) return elements
+  const canvasW = canvas.width || 1920
+  const canvasH = canvas.height || 1080
+  const textColor = paletteColor(palette, 'text', '#1F2937')
+  const muted = paletteColor(palette, 'muted', '#6B7280')
+  const colors = FUNNEL_STAGE_COLORS.slice()
+  const cardFills = ['#EEF1F6', '#E8F0FE', '#FFF3EB', '#F1F5F9']
+
+  const headingH = 80
+  const cardH = 176
+  const barH = 8
+  const headingGap = 16
+  const cardGapY = 28
+  const cardGapX = 18
+  const padX = 16
+  const titleH = 34
+  const topInset = 56
+  const bottomInset = 40
+  const maxBlock = canvasH - topInset - bottomInset
+  const graphicH = Math.min(
+    Math.round((canvasW - 140) * (FUNNEL_H_GEOM.viewH / FUNNEL_H_GEOM.viewW)),
+    maxBlock - headingH - cardH - headingGap - cardGapY,
+  )
+  const graphicW = Math.round(graphicH * (FUNNEL_H_GEOM.viewW / FUNNEL_H_GEOM.viewH))
+  const blockH = headingH + headingGap + graphicH + cardGapY + cardH
+  const headingY = topInset + Math.max(0, Math.round((maxBlock - blockH) / 2))
+  const graphicX = Math.round((canvasW - graphicW) / 2)
+  const graphicY = headingY + headingH + headingGap
+  const overlay = funnelHOverlayPlacements(graphicX, graphicY, graphicW, graphicH)
+  const cardY = graphicY + graphicH + cardGapY
+  const cardW = (graphicW - cardGapX * 3) / 4
+
+  const prevBySlot = new Map(
+    (elements || [])
+      .filter((el) => /^(FUNNEL_SEG_[1-4]|FUNNEL_CARD_[1-4]|FUNNEL_BAR_[1-4])$/i.test(String(el.slotId || '')))
+      .map((el) => [String(el.slotId || '').toUpperCase(), el]),
+  )
+  const stripped = elements.filter(
+    (el) =>
+      !/^FUNNEL_(SEG|TAB|LID|SHADE|RING|CARD|BAR)_/i.test(String(el.slotId || '')) &&
+      String(el.slotId || '') !== 'FUNNEL_RING',
+  )
+  const extras = []
+
+  const next = stripped.map((el) => {
+    const sid = String(el.slotId || '')
+    const base = {
+      ...(el.content || {}),
+      letterSpacing: '0',
+      padding: 0,
+      paddingX: 0,
+      stroke: undefined,
+      strokeWidth: 0,
+    }
+    if (sid.toUpperCase() === 'HEADING') {
+      return {
+        ...el,
+        placement: {
+          ...(el.placement || {}),
+          x: 80,
+          y: headingY,
+          width: canvasW - 160,
+          height: headingH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 40,
+          fontWeight: 800,
+          color: textColor,
+          clipToSlot: false,
+        },
+      }
+    }
+    const numM = sid.match(/^FUNNEL_NUM_([1-4])$/i)
+    if (numM) {
+      const i = Number(numM[1]) - 1
+      return {
+        ...el,
+        layer: 12,
+        placement: { ...overlay.stages[i].num, rotation: 0, opacity: 1 },
+        content: {
+          ...base,
+          text: el.content?.text || String(i + 1).padStart(2, '0'),
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 20,
+          fontWeight: 800,
+          wrap: 'nowrap',
+          lineHeight: 1,
+          color: '#ffffff',
+        },
+      }
+    }
+    const titleM = sid.match(/^funnel_([1-4])_title$/i)
+    if (titleM) {
+      const i = Number(titleM[1]) - 1
+      const x = graphicX + i * (cardW + cardGapX)
+      return {
+        ...el,
+        layer: 10,
+        placement: {
+          x: Math.round(x + padX),
+          y: cardY + barH + 12,
+          width: Math.round(cardW - padX * 2),
+          height: titleH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 18,
+          fontWeight: 800,
+          color: FUNNEL_TITLE_COLORS[i],
+        },
+      }
+    }
+    const bodyM = sid.match(/^funnel_([1-4])_body$/i)
+    if (bodyM) {
+      const i = Number(bodyM[1]) - 1
+      const x = graphicX + i * (cardW + cardGapX)
+      return {
+        ...el,
+        layer: 10,
+        placement: {
+          x: Math.round(x + padX),
+          y: cardY + barH + 12 + titleH + 4,
+          width: Math.round(cardW - padX * 2),
+          height: cardH - barH - titleH - 28,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          align: 'center',
+          verticalAlign: 'flex-start',
+          fontSize: 14,
+          fontWeight: 400,
+          color: muted,
+          lineHeight: 1.4,
+        },
+      }
+    }
+    return el
+  })
+
+  for (let i = 0; i < 4; i += 1) {
+    const numId = `FUNNEL_NUM_${i + 1}`
+    if (next.some((el) => String(el.slotId || '').toUpperCase() === numId)) continue
+    extras.push({
+      id: newShapeId('txt-funnel-h-num'),
+      type: 'text',
+      slotId: numId,
+      role: 'caption',
+      layer: 12,
+      placement: { ...overlay.stages[i].num, rotation: 0, opacity: 1 },
+      content: {
+        text: String(i + 1).padStart(2, '0'),
+        align: 'center',
+        verticalAlign: 'center',
+        fontSize: 20,
+        fontWeight: 800,
+        wrap: 'nowrap',
+        lineHeight: 1,
+        color: '#ffffff',
+        padding: 0,
+        paddingX: 0,
+      },
+    })
+  }
+
+  const chrome = []
+  for (let i = 0; i < 4; i += 1) {
+    const x = Math.round(graphicX + i * (cardW + cardGapX))
+    const fill = prevBySlot.get(`FUNNEL_SEG_${i + 1}`)?.content?.fill || colors[i]
+    const cardId = `FUNNEL_CARD_${i + 1}`
+    const barId = `FUNNEL_BAR_${i + 1}`
+    const prevC = prevBySlot.get(cardId)
+    const prevB = prevBySlot.get(barId)
+    chrome.push({
+      id: prevC?.id || newShapeId('shp-funnel-card'),
+      type: 'shape',
+      layer: 1,
+      placement: {
+        x,
+        y: cardY,
+        width: Math.round(cardW),
+        height: cardH,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        shape: 'rect',
+        fill: prevC?.content?.fill || cardFills[i],
+        borderRadius: 16,
+        layoutSurface: true,
+      },
+      role: 'decoration',
+      slotId: cardId,
+    })
+    chrome.push({
+      id: prevB?.id || newShapeId('shp-funnel-bar'),
+      type: 'shape',
+      layer: 2,
+      placement: {
+        x,
+        y: cardY,
+        width: Math.round(cardW),
+        height: barH,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        shape: 'rect',
+        fill: prevB?.content?.fill || fill,
+        borderRadius: 16,
+      },
+      role: 'decoration',
+      slotId: barId,
+    })
+  }
+
+  const segs = [0, 1, 2, 3].map((i) => {
+    const slotId = `FUNNEL_SEG_${i + 1}`
+    const prev = prevBySlot.get(slotId)
+    const fill = prev?.content?.fill || colors[i]
+    return {
+      id: prev?.id || newShapeId('shp-funnel-h-seg'),
+      type: 'graphic',
+      layer: 4 + i,
+      placement: { ...funnelHSegPlacement(graphicX, graphicY, graphicW, graphicH, i), rotation: 0, opacity: 1 },
+      content: {
+        svg: funnelHSegInlineSvg(i),
+        colorMode: 'recolorable',
+        fill,
+        stroke: typeof fill === 'string' ? fill : fill?.color,
+        alt: `Funnel stage ${i + 1}`,
+      },
+      role: 'decoration',
+      slotId,
+    }
+  })
+
+  return [...chrome, ...segs, ...next, ...extras]
+}
+
 export function layoutDiagramFunnel(elements, schema, palette = {}, canvas = {}) {
   if (!Array.isArray(elements)) return elements
+  if (isHorizontalFunnelLayout(schema)) {
+    return layoutDiagramFunnelHorizontal(elements, schema, palette, canvas)
+  }
   const canvasW = canvas.width || 1920
   const canvasH = canvas.height || 1080
   const textColor = paletteColor(palette, 'text', '#1F2937')
@@ -1974,8 +2998,394 @@ function isDiagramMatrixLayout(layoutId) {
   return /diagram_matrix/.test(id)
 }
 
+function isMatrixGridLayout(schema) {
+  const id = String(schema?.layout_id || schema?.layoutId || '').toLowerCase()
+  const variant = String(schema?.preview?.diagramVariant || '').toLowerCase()
+  return variant === 'grid' || (id.includes('matrix') && id.includes('grid'))
+}
+
+function isMatrixQuadrantLayout(schema) {
+  const id = String(schema?.layout_id || schema?.layoutId || '').toLowerCase()
+  const variant = String(schema?.preview?.diagramVariant || '').toLowerCase()
+  return variant === 'quadrant' || (id.includes('matrix') && id.includes('quadrant'))
+}
+
+function layoutDiagramMatrixGrid(elements, schema, palette = {}, canvas = {}) {
+  if (!Array.isArray(elements)) return elements
+  const canvasW = canvas.width || 1920
+  const canvasH = canvas.height || 1080
+  const textColor = paletteColor(palette, 'text', '#1F2937')
+  const colors = MATRIX_GRID_COLORS.slice()
+  const headingY = 48
+  const headingH = 72
+  const insetX = 72
+  const gap = 22
+  const gridTop = headingY + headingH + 28
+  const gridH = canvasH - gridTop - 48
+  const gridW = canvasW - insetX * 2
+  const cellW = (gridW - gap) / 2
+  const cellH = (gridH - gap) / 2
+  const padX = 36
+  const titleH = 48
+
+  const prevBySlot = new Map(
+    (elements || [])
+      .filter((el) => /^MATRIX_QUAD_[1-4]$/i.test(String(el.slotId || '')))
+      .map((el) => [String(el.slotId || '').toUpperCase(), el]),
+  )
+  const stripped = elements.filter(
+    (el) =>
+      !/^MATRIX_(RING|QUAD_[1-4]|ARROW_[XY]|HUB|CROSS)$/i.test(String(el.slotId || '')) &&
+      !/^MATRIX_(CENTER|X_LABEL|Y_LABEL)$/i.test(String(el.slotId || '')),
+  )
+
+  const cellBox = (i) => {
+    const col = i % 2
+    const row = Math.floor(i / 2)
+    return {
+      x: Math.round(insetX + col * (cellW + gap)),
+      y: Math.round(gridTop + row * (cellH + gap)),
+      w: Math.round(cellW),
+      h: Math.round(cellH),
+    }
+  }
+
+  const next = stripped.map((el) => {
+    const sid = String(el.slotId || '')
+    const base = {
+      ...(el.content || {}),
+      letterSpacing: '0',
+      padding: 0,
+      paddingX: 0,
+      stroke: undefined,
+      strokeWidth: 0,
+    }
+    if (sid.toUpperCase() === 'HEADING') {
+      return {
+        ...el,
+        placement: {
+          x: insetX,
+          y: headingY,
+          width: canvasW - insetX * 2,
+          height: headingH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 36,
+          fontWeight: 800,
+          color: textColor,
+          clipToSlot: false,
+        },
+      }
+    }
+    const qM = sid.match(/^Q([1-4])_(TITLE|BODY)$/i)
+    if (qM) {
+      const i = Number(qM[1]) - 1
+      const isTitle = String(qM[2]).toUpperCase() === 'TITLE'
+      const c = cellBox(i)
+      return {
+        ...el,
+        layer: 12,
+        placement: {
+          x: c.x + padX,
+          y: isTitle ? c.y + Math.round(c.h * 0.28) : c.y + Math.round(c.h * 0.28) + titleH + 8,
+          width: c.w - padX * 2,
+          height: isTitle ? titleH : Math.round(c.h * 0.32),
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          align: 'center',
+          verticalAlign: isTitle ? 'center' : 'flex-start',
+          fontSize: isTitle ? 24 : 16,
+          fontWeight: isTitle ? 800 : 400,
+          color: '#ffffff',
+          lineHeight: isTitle ? 1.15 : 1.4,
+        },
+      }
+    }
+    return el
+  })
+
+  const quads = [0, 1, 2, 3].map((i) => {
+    const c = cellBox(i)
+    const slotId = `MATRIX_QUAD_${i + 1}`
+    const prev = prevBySlot.get(slotId)
+    return {
+      id: prev?.id || newShapeId('shp-matrix-grid'),
+      type: 'shape',
+      layer: 3,
+      placement: { x: c.x, y: c.y, width: c.w, height: c.h, rotation: 0, opacity: 1 },
+      content: {
+        shape: 'rect',
+        borderRadius: 28,
+        fill: prev?.content?.fill || colors[i],
+      },
+      role: 'decoration',
+      slotId,
+    }
+  })
+
+  return [...quads, ...next]
+}
+
+function layoutDiagramMatrixQuadrant(elements, schema, palette = {}, canvas = {}) {
+  if (!Array.isArray(elements)) return elements
+  const canvasW = canvas.width || 1920
+  const canvasH = canvas.height || 1080
+  const textColor = paletteColor(palette, 'text', '#1F2937')
+  const tints = MATRIX_Q_TINTS.slice()
+  const titles = MATRIX_Q_TITLE.slice()
+  const headingY = 80
+  const headingH = 88
+  const yLabelW = 56
+  const xLabelH = 44
+  const plotX = 88 + yLabelW
+  const plotY = headingY + headingH + 12
+  const plotW = canvasW - plotX - 72
+  const plotH = canvasH - plotY - 36 - xLabelH
+  const cellW = plotW / 2
+  const cellH = plotH / 2
+  const padX = 48
+  const titleH = 42
+  const bodyH = 70
+  const stackGap = 8
+
+  const prevBySlot = new Map(
+    (elements || [])
+      .filter((el) => /^(MATRIX_QUAD_[1-4]|MATRIX_CROSS)$/i.test(String(el.slotId || '')))
+      .map((el) => [String(el.slotId || '').toUpperCase(), el]),
+  )
+  const stripped = elements.filter(
+    (el) =>
+      !/^MATRIX_(RING|QUAD_[1-4]|ARROW_[XY]|HUB|CROSS)$/i.test(String(el.slotId || '')) &&
+      String(el.slotId || '').toUpperCase() !== 'MATRIX_CENTER',
+  )
+
+  const cellBox = (i) => {
+    const col = i % 2
+    const row = Math.floor(i / 2)
+    return {
+      x: Math.round(plotX + col * cellW),
+      y: Math.round(plotY + row * cellH),
+      w: Math.round(cellW),
+      h: Math.round(cellH),
+    }
+  }
+
+  const next = stripped.map((el) => {
+    const sid = String(el.slotId || '')
+    const base = {
+      ...(el.content || {}),
+      letterSpacing: '0',
+      padding: 0,
+      paddingX: 0,
+      stroke: undefined,
+      strokeWidth: 0,
+    }
+    if (sid.toUpperCase() === 'HEADING') {
+      return {
+        ...el,
+        placement: {
+          x: 72,
+          y: headingY,
+          width: canvasW - 144,
+          height: headingH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 32,
+          fontWeight: 800,
+          lineHeight: 1.1,
+          color: textColor,
+          clipToSlot: false,
+        },
+      }
+    }
+    const qM = sid.match(/^Q([1-4])_(TITLE|BODY)$/i)
+    if (qM) {
+      const i = Number(qM[1]) - 1
+      const isTitle = String(qM[2]).toUpperCase() === 'TITLE'
+      const c = cellBox(i)
+      const stackH = titleH + stackGap + bodyH
+      const stackY = c.y + Math.round((c.h - stackH) / 2)
+      return {
+        ...el,
+        layer: 12,
+        placement: {
+          x: c.x + padX,
+          y: isTitle ? stackY : stackY + titleH + stackGap,
+          width: c.w - padX * 2,
+          height: isTitle ? titleH : bodyH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: isTitle ? 20 : 15,
+          fontWeight: isTitle ? 800 : 400,
+          color: isTitle ? titles[i] : '#4B5563',
+          lineHeight: isTitle ? 1.2 : 1.4,
+        },
+      }
+    }
+    if (sid.toUpperCase() === 'MATRIX_Y_LABEL') {
+      return {
+        ...el,
+        layer: 12,
+        placement: {
+          x: Math.round(88 + yLabelW / 2 - plotH * 0.28),
+          y: Math.round(plotY + plotH / 2 - 22),
+          width: Math.round(plotH * 0.56),
+          height: 44,
+          rotation: -90,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 16,
+          fontWeight: 700,
+          color: MATRIX_Q_AXIS,
+          wrap: 'nowrap',
+        },
+      }
+    }
+    if (sid.toUpperCase() === 'MATRIX_X_LABEL') {
+      return {
+        ...el,
+        layer: 12,
+        placement: {
+          x: plotX,
+          y: plotY + plotH + 8,
+          width: plotW,
+          height: xLabelH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 16,
+          fontWeight: 700,
+          color: MATRIX_Q_AXIS,
+          wrap: 'nowrap',
+        },
+      }
+    }
+    return el
+  })
+
+  const extras = []
+  if (!next.some((el) => String(el.slotId || '').toUpperCase() === 'MATRIX_Y_LABEL')) {
+    extras.push({
+      id: newShapeId('txt-matrix-qy'),
+      type: 'text',
+      slotId: 'MATRIX_Y_LABEL',
+      role: 'caption',
+      layer: 12,
+      placement: {
+        x: Math.round(88 + yLabelW / 2 - plotH * 0.28),
+        y: Math.round(plotY + plotH / 2 - 22),
+        width: Math.round(plotH * 0.56),
+        height: 44,
+        rotation: -90,
+        opacity: 1,
+      },
+      content: {
+        text: 'Impact',
+        align: 'center',
+        verticalAlign: 'center',
+        fontSize: 16,
+        fontWeight: 700,
+        color: MATRIX_Q_AXIS,
+        wrap: 'nowrap',
+        padding: 0,
+      },
+    })
+  }
+  if (!next.some((el) => String(el.slotId || '').toUpperCase() === 'MATRIX_X_LABEL')) {
+    extras.push({
+      id: newShapeId('txt-matrix-qx'),
+      type: 'text',
+      slotId: 'MATRIX_X_LABEL',
+      role: 'caption',
+      layer: 12,
+      placement: {
+        x: plotX,
+        y: plotY + plotH + 8,
+        width: plotW,
+        height: xLabelH,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        text: 'Effort',
+        align: 'center',
+        verticalAlign: 'center',
+        fontSize: 16,
+        fontWeight: 700,
+        color: MATRIX_Q_AXIS,
+        wrap: 'nowrap',
+        padding: 0,
+      },
+    })
+  }
+
+  const quads = [0, 1, 2, 3].map((i) => {
+    const c = cellBox(i)
+    const slotId = `MATRIX_QUAD_${i + 1}`
+    const prev = prevBySlot.get(slotId)
+    return {
+      id: prev?.id || newShapeId('shp-matrix-q'),
+      type: 'shape',
+      layer: 2,
+      placement: { x: c.x, y: c.y, width: c.w, height: c.h, rotation: 0, opacity: 1 },
+      content: {
+        shape: 'rect',
+        borderRadius: 0,
+        fill: prev?.content?.fill || tints[i],
+      },
+      role: 'decoration',
+      slotId,
+    }
+  })
+  const prevCross = prevBySlot.get('MATRIX_CROSS')
+  const cross = {
+    id: prevCross?.id || newShapeId('shp-matrix-cross'),
+    type: 'graphic',
+    layer: 6,
+    placement: { x: plotX, y: plotY, width: plotW, height: plotH, rotation: 0, opacity: 1 },
+    content: {
+      svg: matrixQuadrantCrossInlineSvg(),
+      colorMode: 'recolorable',
+      fill: prevCross?.content?.fill || MATRIX_Q_AXIS,
+      alt: 'Quadrant axes',
+    },
+    role: 'decoration',
+    slotId: 'MATRIX_CROSS',
+  }
+
+  return [...quads, cross, ...next, ...extras]
+}
+
 export function layoutDiagramMatrix(elements, schema, palette = {}, canvas = {}) {
   if (!Array.isArray(elements)) return elements
+  if (isMatrixGridLayout(schema)) return layoutDiagramMatrixGrid(elements, schema, palette, canvas)
+  if (isMatrixQuadrantLayout(schema)) return layoutDiagramMatrixQuadrant(elements, schema, palette, canvas)
   const canvasW = canvas.width || 1920
   const canvasH = canvas.height || 1080
   const textColor = paletteColor(palette, 'text', '#1F2937')
@@ -2221,8 +3631,373 @@ function isDiagramSwotLayout(layoutId) {
   return /diagram_swot/.test(id)
 }
 
+const SWOT_CHROME =
+  /^(SWOT_SEG_[1-4]|SWOT_ICON_[1-4]|SWOT_DASH_[1-4]|SWOT_HUB|SWOT_LETTER_[1-4]|SWOT_CARD_[1-4]|SWOT_BAR_[1-4])$/i
+
+function layoutDiagramSwotGrid(elements, schema, palette = {}, canvas = {}) {
+  if (!Array.isArray(elements)) return elements
+  const canvasW = canvas.width || 1920
+  const canvasH = canvas.height || 1080
+  const textColor = paletteColor(palette, 'text', '#1F2937')
+  const frame = swotQuadFrame(canvasW, canvasH, 'grid')
+  const colors = SWOT_COLORS.slice()
+  const prevBySlot = new Map(
+    (elements || [])
+      .filter((el) => /^SWOT_CARD_[1-4]$/i.test(String(el.slotId || '')))
+      .map((el) => [String(el.slotId || '').toUpperCase(), el])
+  )
+  const stripped = elements.filter((el) => !SWOT_CHROME.test(String(el.slotId || '')))
+  const seenLetter = new Set(
+    stripped.filter((el) => /^SWOT_LETTER_[1-4]$/i.test(String(el.slotId || ''))).map((el) => String(el.slotId).toUpperCase())
+  )
+
+  const next = stripped.map((el) => {
+    const sid = String(el.slotId || '')
+    const base = {
+      ...(el.content || {}),
+      letterSpacing: '0',
+      padding: 0,
+      paddingX: 0,
+      stroke: undefined,
+      strokeWidth: 0,
+    }
+    if (sid.toUpperCase() === 'HEADING') {
+      return {
+        ...el,
+        placement: {
+          ...(el.placement || {}),
+          x: frame.insetX,
+          y: frame.headingY,
+          width: canvasW - frame.insetX * 2,
+          height: frame.headingH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          align: 'left',
+          verticalAlign: 'center',
+          fontSize: 36,
+          fontWeight: 800,
+          lineHeight: 1.2,
+          color: textColor,
+          clipToSlot: false,
+        },
+      }
+    }
+    if (/^SWOT_HUB_(TITLE|SUB)$/i.test(sid)) {
+      return { ...el, placement: { x: -40, y: -40, width: 1, height: 1, rotation: 0, opacity: 0 } }
+    }
+    const letterM = sid.match(/^SWOT_LETTER_([1-4])$/i)
+    const titleM = sid.match(/^Q([1-4])_TITLE$/i)
+    const bodyM = sid.match(/^Q([1-4])_BODY$/i)
+    const num = Number((letterM || titleM || bodyM)?.[1])
+    if (!num) return el
+    const i = num - 1
+    const cell = frame.cells[i]
+    const pad = 28
+    const letterW = 96
+    const letterH = 88
+    if (letterM) {
+      return {
+        ...el,
+        layer: 12,
+        placement: { x: cell.x + pad, y: cell.y + pad, width: letterW, height: letterH, rotation: 0, opacity: 1 },
+        content: {
+          ...base,
+          text: SWOT_LETTERS[i],
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 36,
+          fontWeight: 800,
+          wrap: 'nowrap',
+          lineHeight: 1,
+          color: '#ffffff',
+          clipToSlot: false,
+        },
+      }
+    }
+    if (titleM) {
+      const raw = String(el.content?.text || '').trim()
+      const text = !raw || /text here|double-click/i.test(raw) ? SWOT_LABELS[i] : raw
+      return {
+        ...el,
+        layer: 10,
+        placement: {
+          x: cell.x + pad + letterW + 12,
+          y: cell.y + pad + 8,
+          width: cell.width - pad * 2 - letterW - 12,
+          height: 56,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          text,
+          align: 'left',
+          verticalAlign: 'center',
+          fontSize: 26,
+          fontWeight: 800,
+          color: '#ffffff',
+          clipToSlot: false,
+        },
+      }
+    }
+    return {
+      ...el,
+      layer: 10,
+      placement: {
+        x: cell.x + pad,
+        y: cell.y + pad + letterH + 12,
+        width: cell.width - pad * 2,
+        height: Math.max(80, cell.height - pad * 2 - letterH - 12),
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        ...base,
+        align: 'left',
+        verticalAlign: 'flex-start',
+        fontSize: 16,
+        fontWeight: 400,
+        lineHeight: 1.4,
+        color: '#ffffff',
+        wrap: 'wrap',
+        clipToSlot: false,
+      },
+    }
+  })
+
+  const chrome = []
+  for (let i = 0; i < 4; i += 1) {
+    const cell = frame.cells[i]
+    const slotId = `SWOT_CARD_${i + 1}`
+    const prev = prevBySlot.get(slotId)
+    chrome.push({
+      id: prev?.id || newShapeId('shp-swot-card'),
+      type: 'shape',
+      layer: 1,
+      placement: { ...cell, rotation: 0, opacity: 1 },
+      content: { shape: 'rect', fill: prev?.content?.fill || colors[i], borderRadius: 20, layoutSurface: true },
+      role: 'decoration',
+      slotId,
+    })
+    const letterId = `SWOT_LETTER_${i + 1}`
+    if (!seenLetter.has(letterId)) {
+      chrome.push({
+        id: newShapeId('txt-swot-ltr'),
+        type: 'text',
+        layer: 12,
+        placement: { x: cell.x + 28, y: cell.y + 28, width: 96, height: 88, rotation: 0, opacity: 1 },
+        content: {
+          text: SWOT_LETTERS[i],
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 36,
+          fontWeight: 800,
+          wrap: 'nowrap',
+          lineHeight: 1,
+          color: '#ffffff',
+          padding: 0,
+          clipToSlot: false,
+        },
+        role: 'caption',
+        slotId: letterId,
+      })
+    }
+  }
+  return [...chrome, ...next]
+}
+
+function layoutDiagramSwotCards(elements, schema, palette = {}, canvas = {}) {
+  if (!Array.isArray(elements)) return elements
+  const canvasW = canvas.width || 1920
+  const canvasH = canvas.height || 1080
+  const textColor = paletteColor(palette, 'text', '#1F2937')
+  const muted = paletteColor(palette, 'muted', '#6B7280')
+  const frame = swotQuadFrame(canvasW, canvasH, 'cards')
+  const colors = SWOT_COLORS.slice()
+  const barH = 92
+  const prevBySlot = new Map(
+    (elements || [])
+      .filter((el) => /^SWOT_(CARD|BAR)_[1-4]$/i.test(String(el.slotId || '')))
+      .map((el) => [String(el.slotId || '').toUpperCase(), el])
+  )
+  const stripped = elements.filter((el) => !SWOT_CHROME.test(String(el.slotId || '')))
+  const seenLetter = new Set(
+    stripped.filter((el) => /^SWOT_LETTER_[1-4]$/i.test(String(el.slotId || ''))).map((el) => String(el.slotId).toUpperCase())
+  )
+
+  const next = stripped.map((el) => {
+    const sid = String(el.slotId || '')
+    const base = {
+      ...(el.content || {}),
+      letterSpacing: '0',
+      padding: 0,
+      paddingX: 0,
+      stroke: undefined,
+      strokeWidth: 0,
+    }
+    if (sid.toUpperCase() === 'HEADING') {
+      return {
+        ...el,
+        placement: {
+          ...(el.placement || {}),
+          x: frame.insetX,
+          y: frame.headingY,
+          width: canvasW - frame.insetX * 2,
+          height: frame.headingH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          align: 'left',
+          verticalAlign: 'center',
+          fontSize: 36,
+          fontWeight: 800,
+          lineHeight: 1.2,
+          color: textColor,
+          clipToSlot: false,
+        },
+      }
+    }
+    if (/^SWOT_HUB_(TITLE|SUB)$/i.test(sid)) {
+      return { ...el, placement: { x: -40, y: -40, width: 1, height: 1, rotation: 0, opacity: 0 } }
+    }
+    const letterM = sid.match(/^SWOT_LETTER_([1-4])$/i)
+    const titleM = sid.match(/^Q([1-4])_TITLE$/i)
+    const bodyM = sid.match(/^Q([1-4])_BODY$/i)
+    const num = Number((letterM || titleM || bodyM)?.[1])
+    if (!num) return el
+    const i = num - 1
+    const cell = frame.cells[i]
+    const pad = 28
+    if (letterM) {
+      return {
+        ...el,
+        layer: 12,
+        placement: { x: cell.x + pad, y: cell.y + 10, width: 64, height: barH - 20, rotation: 0, opacity: 1 },
+        content: {
+          ...base,
+          text: SWOT_LETTERS[i],
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 32,
+          fontWeight: 800,
+          wrap: 'nowrap',
+          color: '#ffffff',
+          clipToSlot: false,
+        },
+      }
+    }
+    if (titleM) {
+      const raw = String(el.content?.text || '').trim()
+      const text = !raw || /text here|double-click/i.test(raw) ? SWOT_LABELS[i] : raw
+      return {
+        ...el,
+        layer: 10,
+        placement: {
+          x: cell.x + pad + 72,
+          y: cell.y + 10,
+          width: cell.width - pad * 2 - 72,
+          height: barH - 20,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          text,
+          align: 'left',
+          verticalAlign: 'center',
+          fontSize: 22,
+          fontWeight: 800,
+          color: '#ffffff',
+          clipToSlot: false,
+        },
+      }
+    }
+    return {
+      ...el,
+      layer: 10,
+      placement: {
+        x: cell.x + pad,
+        y: cell.y + barH + 24,
+        width: cell.width - pad * 2,
+        height: Math.max(64, cell.height - barH - 48),
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        ...base,
+        align: 'left',
+        verticalAlign: 'flex-start',
+        fontSize: 16,
+        fontWeight: 400,
+        lineHeight: 1.45,
+        color: muted,
+        wrap: 'wrap',
+        clipToSlot: false,
+      },
+    }
+  })
+
+  const chrome = []
+  for (let i = 0; i < 4; i += 1) {
+    const cell = frame.cells[i]
+    const cardId = `SWOT_CARD_${i + 1}`
+    const barId = `SWOT_BAR_${i + 1}`
+    const prevC = prevBySlot.get(cardId)
+    const prevB = prevBySlot.get(barId)
+    chrome.push({
+      id: prevC?.id || newShapeId('shp-swot-card'),
+      type: 'shape',
+      layer: 1,
+      placement: { ...cell, rotation: 0, opacity: 1 },
+      content: { shape: 'rect', fill: prevC?.content?.fill || '#F8FAFC', borderRadius: 20, layoutSurface: true },
+      role: 'decoration',
+      slotId: cardId,
+    })
+    chrome.push({
+      id: prevB?.id || newShapeId('shp-swot-bar'),
+      type: 'shape',
+      layer: 2,
+      placement: { x: cell.x, y: cell.y, width: cell.width, height: barH, rotation: 0, opacity: 1 },
+      content: { shape: 'rect', fill: prevB?.content?.fill || colors[i], borderRadius: 20, layoutSurface: true },
+      role: 'decoration',
+      slotId: barId,
+    })
+    const letterId = `SWOT_LETTER_${i + 1}`
+    if (!seenLetter.has(letterId)) {
+      chrome.push({
+        id: newShapeId('txt-swot-ltr'),
+        type: 'text',
+        layer: 12,
+        placement: { x: cell.x + 28, y: cell.y + 10, width: 64, height: barH - 20, rotation: 0, opacity: 1 },
+        content: {
+          text: SWOT_LETTERS[i],
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 32,
+          fontWeight: 800,
+          wrap: 'nowrap',
+          color: '#ffffff',
+          padding: 0,
+          clipToSlot: false,
+        },
+        role: 'caption',
+        slotId: letterId,
+      })
+    }
+  }
+  return [...chrome, ...next]
+}
+
 export function layoutDiagramSwot(elements, schema, palette = {}, canvas = {}) {
   if (!Array.isArray(elements)) return elements
+  const mode = swotModeFromSchema(schema)
+  if (mode === 'grid') return layoutDiagramSwotGrid(elements, schema, palette, canvas)
+  if (mode === 'cards') return layoutDiagramSwotCards(elements, schema, palette, canvas)
   const canvasW = canvas.width || 1920
   const canvasH = canvas.height || 1080
   const textColor = paletteColor(palette, 'text', '#1F2937')
@@ -2241,7 +4016,7 @@ export function layoutDiagramSwot(elements, schema, palette = {}, canvas = {}) {
       .map((el) => [String(el.slotId || '').toUpperCase(), el])
   )
   const stripped = elements.filter(
-    (el) => !/^(SWOT_SEG_[1-4]|SWOT_ICON_[1-4]|SWOT_DASH_[1-4]|SWOT_HUB|SWOT_LETTER_[1-4])$/i.test(String(el.slotId || ''))
+    (el) => !/^(SWOT_SEG_[1-4]|SWOT_ICON_[1-4]|SWOT_DASH_[1-4]|SWOT_HUB|SWOT_LETTER_[1-4]|SWOT_CARD_[1-4]|SWOT_BAR_[1-4])$/i.test(String(el.slotId || ''))
   )
   const extras = []
 
@@ -3065,8 +4840,162 @@ export function layoutQuoteGrid(elements, schema, palette = {}, canvas = {}) {
   return [...deco, ...next]
 }
 
+const VENN_CHROME = /^(VENN_(OUTER|MID|CORE|ICON)_[1-3])$/i
+
+function layoutDiagramVennOverlap(elements, schema, palette, canvas, kind) {
+  const canvasW = canvas.width || 1920
+  const canvasH = canvas.height || 1080
+  const textColor = paletteColor(palette, 'text', '#1F2937')
+  const muted = paletteColor(palette, 'muted', '#6B7280')
+  const frame = kind === 'stacked' ? vennStackedFrame(canvasW, canvasH) : vennThreeCircleFrame(canvasW, canvasH)
+  const colors = VENN_COLORS.slice()
+  const prevBySlot = new Map(
+    (elements || [])
+      .filter((el) => /^VENN_OUTER_[1-3]$/i.test(String(el.slotId || '')))
+      .map((el) => [String(el.slotId || '').toUpperCase(), el])
+  )
+  const stripped = elements.filter(
+    (el) =>
+      !VENN_CHROME.test(String(el.slotId || '')) &&
+      !(kind === 'stacked' && String(el.slotId || '').toUpperCase() === 'CENTER_BODY')
+  )
+  const hasCenter = kind !== 'stacked' && stripped.some((el) => String(el.slotId || '').toUpperCase() === 'CENTER_BODY')
+
+  const next = stripped.map((el) => {
+    const sid = String(el.slotId || '')
+    const base = {
+      ...(el.content || {}),
+      letterSpacing: '0',
+      padding: 0,
+      paddingX: 0,
+      stroke: undefined,
+      strokeWidth: 0,
+    }
+    if (sid.toUpperCase() === 'HEADING') {
+      return {
+        ...el,
+        placement: {
+          ...(el.placement || {}),
+          x: 56,
+          y: frame.headingY,
+          width: canvasW - 112,
+          height: frame.headingH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: {
+          ...base,
+          align: 'left',
+          verticalAlign: 'center',
+          fontSize: 36,
+          fontWeight: 800,
+          lineHeight: 1.2,
+          color: textColor,
+          clipToSlot: false,
+        },
+      }
+    }
+    if (sid.toUpperCase() === 'CENTER_BODY') {
+      return {
+        ...el,
+        layer: 12,
+        placement: { ...frame.center, rotation: 0, opacity: 1 },
+        content: {
+          ...base,
+          text: el.content?.text || 'Shared overlap',
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: kind === 'stacked' ? 16 : 18,
+          fontWeight: 700,
+          color: textColor,
+          wrap: 'wrap',
+          clipToSlot: false,
+        },
+      }
+    }
+    const titleM = sid.match(/^Q([1-3])_TITLE$/i)
+    const bodyM = sid.match(/^Q([1-3])_BODY$/i)
+    const num = Number((titleM || bodyM)?.[1])
+    if (!num) return el
+    const i = num - 1
+    if (titleM) {
+      return {
+        ...el,
+        layer: 10,
+        placement: { ...frame.labels[i].title, rotation: 0, opacity: 1 },
+        content: {
+          ...base,
+          align: kind === 'stacked' ? 'left' : i === 2 ? 'center' : i === 0 ? 'left' : 'left',
+          verticalAlign: 'center',
+          fontSize: 22,
+          fontWeight: 800,
+          lineHeight: 1.2,
+          color: colors[i],
+          clipToSlot: false,
+        },
+      }
+    }
+    return {
+      ...el,
+      layer: 10,
+      placement: { ...frame.labels[i].body, rotation: 0, opacity: 1 },
+      content: {
+        ...base,
+        align: kind === 'stacked' ? 'left' : i === 2 ? 'center' : 'left',
+        verticalAlign: 'flex-start',
+        fontSize: 15,
+        fontWeight: 400,
+        lineHeight: 1.4,
+        color: muted,
+        wrap: 'wrap',
+        clipToSlot: false,
+      },
+    }
+  })
+
+  const extras = []
+  if (kind !== 'stacked' && !hasCenter) {
+    extras.push({
+      id: newShapeId('txt-venn-c'),
+      type: 'text',
+      slotId: 'CENTER_BODY',
+      role: 'caption',
+      layer: 12,
+      placement: { ...frame.center, rotation: 0, opacity: 1 },
+      content: {
+        text: 'Shared overlap',
+        align: 'center',
+        verticalAlign: 'center',
+        fontSize: kind === 'stacked' ? 16 : 18,
+        fontWeight: 700,
+        color: textColor,
+        padding: 0,
+        clipToSlot: false,
+      },
+    })
+  }
+
+  const rings = [0, 1, 2].map((i) => {
+    const slotId = `VENN_OUTER_${i + 1}`
+    const prev = prevBySlot.get(slotId)
+    return {
+      id: prev?.id || newShapeId('shp-venn-o'),
+      type: 'shape',
+      layer: 2 + i,
+      placement: { ...frame.circles[i], rotation: 0, opacity: 0.62 },
+      content: { shape: 'ellipse', fill: prev?.content?.fill || colors[i] },
+      role: 'decoration',
+      slotId,
+    }
+  })
+  return [...rings, ...next, ...extras]
+}
+
 export function layoutDiagramVenn(elements, schema, palette = {}, canvas = {}) {
   if (!Array.isArray(elements)) return elements
+  const mode = vennModeFromSchema(schema)
+  if (mode === 'three_circle') return layoutDiagramVennOverlap(elements, schema, palette, canvas, 'three_circle')
+  if (mode === 'stacked') return layoutDiagramVennOverlap(elements, schema, palette, canvas, 'stacked')
   const canvasW = canvas.width || 1920
   const canvasH = canvas.height || 1080
   const textColor = paletteColor(palette, 'text', '#1F2937')

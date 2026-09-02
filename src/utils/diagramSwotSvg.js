@@ -189,3 +189,34 @@ export function swotDiagramInlineSvg(colors = SWOT_COLORS) {
   parts.push(`<text x="${hubX}" y="${hubY + 36}" text-anchor="middle" fill="#6b7280" font-size="22" font-weight="600" font-family="system-ui,sans-serif">Analysis</text>`)
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${viewW} ${viewH}" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">${parts.join('')}</svg>`
 }
+
+export function swotModeFromSchema(schema) {
+  const id = String(schema?.layout_id || schema?.layoutId || '').toLowerCase()
+  const variant = String(schema?.preview?.diagramVariant || '').toLowerCase()
+  if (variant === 'grid' || (id.includes('swot') && id.includes('grid'))) return 'grid'
+  if (variant === 'cards' || (id.includes('swot') && id.includes('cards'))) return 'cards'
+  return 'classic'
+}
+
+export function swotQuadFrame(canvasW, canvasH, mode = 'grid') {
+  const headingY = 56
+  const headingH = 88
+  const insetX = 64
+  const gap = mode === 'cards' ? 36 : 18
+  const top = headingY + headingH + 28
+  const gridH = canvasH - top - 48
+  const gridW = canvasW - insetX * 2
+  const cellW = (gridW - gap) / 2
+  const cellH = (gridH - gap) / 2
+  const cells = [0, 1, 2, 3].map((i) => {
+    const col = i % 2
+    const row = Math.floor(i / 2)
+    return {
+      x: Math.round(insetX + col * (cellW + gap)),
+      y: Math.round(top + row * (cellH + gap)),
+      width: Math.round(cellW),
+      height: Math.round(cellH),
+    }
+  })
+  return { headingY, headingH, cells, insetX, canvasW }
+}

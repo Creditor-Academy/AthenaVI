@@ -607,6 +607,9 @@ function InteractiveElementShell({
     overflow: 'visible',
     outline: 'none',
     ...(paintHitGraphic ? { pointerEvents: 'none' } : null),
+    ...((p.opacity ?? 1) === 0 || ((p.width || 0) <= 2 && (p.height || 0) <= 2)
+      ? { pointerEvents: 'none' }
+      : null),
   }
 
   const showChrome = selected && editable && !locked && !editing
@@ -2340,14 +2343,14 @@ export default function AIPptEditor({
     const schema =
       layoutSchema ||
       (layoutId ? resolveLayoutSchemaById(layoutId, layoutSchemaMap) : null)
-    if (!seedElements.length && layoutSchemaHasCanvasElements(schema)) {
-      seedElements = resolveLayoutCanvasElementsDoc(schema)?.elements || []
-    } else if (!seedElements.length && schema?.slots?.length) {
+    if (!seedElements.length && schema?.slots?.length) {
       seedElements = compileDeckLayoutToElements(schema, {
         canvas,
         ...themeCompileOptions,
         slideTitle: title,
       })
+    } else if (!seedElements.length && layoutSchemaHasCanvasElements(schema)) {
+      seedElements = resolveLayoutCanvasElementsDoc(schema)?.elements || []
     }
 
     const tempId = `new-slide-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`

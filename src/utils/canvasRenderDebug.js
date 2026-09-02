@@ -47,9 +47,28 @@ export function isOverlayScrimElement(el) {
   return role === 'design_overlay' || slotId === 'OVERLAY_SCRIM'
 }
 
+/** Empty leftover slots from cycle-ring compile (bodies, numbers, 1×1 ghosts). */
+export function isCycleRingGhostElement(el, slide) {
+  if (!el) return false
+  const p = el.placement || {}
+  if ((p.opacity ?? 1) === 0) return true
+  const sid = String(el.slotId || '').toUpperCase()
+  const layoutId = String(slide?.layoutId || slide?.layout_id || '').toLowerCase()
+  const siblings = slide?.elements?.elements || []
+  const isRing =
+    (layoutId.includes('cycle') && layoutId.includes('ring')) ||
+    siblings.some((e) => /^CYCLE_(LEAD_|DIAMOND|SEG_5)/i.test(String(e.slotId || '')))
+  if (!isRing) return false
+  if ((Number(p.width) || 0) <= 2 && (Number(p.height) || 0) <= 2) return true
+  if (/^CYCLE_(CENTER|NUM_)/.test(sid)) return true
+  if (/^Q[1-5]_BODY$/.test(sid)) return true
+  return false
+}
+
 /** Drop full-slide scrims when there is no full-bleed image to darken. */
 export function shouldPaintElement(el, slide, canvasW, canvasH) {
   if (!el) return false
+  if (isCycleRingGhostElement(el, slide)) return false
   if (isOverlayScrimElement(el) && !slideHasFullBleedOverlayImage(slide, canvasW, canvasH)) {
     return false
   }

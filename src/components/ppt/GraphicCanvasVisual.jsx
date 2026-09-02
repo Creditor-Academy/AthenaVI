@@ -3,12 +3,14 @@ import useGraphicSvg, { resolveGraphicThemeColor } from '../../hooks/useGraphicS
 /** Hit-test painted strokes/fills only so empty SVG boxes don't steal clicks. */
 function svgWithPaintHits(markup) {
   if (typeof markup !== 'string' || !markup.includes('<svg')) return markup
-  return markup.replace(/<svg\b([^>]*)>/i, (_, attrs = '') => {
-    let next = attrs
-    if (!/pointer-events=/i.test(next)) next += ' pointer-events="visiblePainted"'
-    if (!/style=/i.test(next)) next += ' style="width:100%;height:100%;display:block"'
-    return `<svg${next}>`
+  let next = markup.replace(/<svg\b([^>]*)>/i, (_, attrs = '') => {
+    let a = attrs
+    if (!/pointer-events=/i.test(a)) a += ' pointer-events="none"'
+    if (!/style=/i.test(a)) a += ' style="width:100%;height:100%;display:block"'
+    return `<svg${a}>`
   })
+  next = next.replace(/<(path|circle|polygon|rect|ellipse)\b(?![^>]*pointer-events=)/gi, '<$1 pointer-events="visiblePainted"')
+  return next
 }
 
 /**
