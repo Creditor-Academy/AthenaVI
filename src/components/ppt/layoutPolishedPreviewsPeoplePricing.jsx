@@ -70,7 +70,7 @@ function TableMini({ large, headers = ['A', 'B', 'C'], rows = [] }) {
   )
 }
 
-function PlanCards({ previewHints, large, count = 3 }) {
+export function PlanCards({ previewHints, large, count = 3, variant = 'default', layout = 'row' }) {
   const columns = Array.isArray(previewHints.columns)?.length
     ? previewHints.columns.slice(0, count)
     : [
@@ -86,40 +86,96 @@ function PlanCards({ previewHints, large, count = 3 }) {
         ? columns.findIndex((col) => col.highlighted)
         : count >= 3 ? 1 : 0
 
-  return (
-    <div style={{ flex: 1, display: 'grid', gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))`, gap: large ? 14 : 4, alignItems: 'stretch' }}>
-      {columns.map((col, i) => {
-        const highlighted = i === highlightIndex
-        return (
-          <div key={i} style={{
-            border: `${large ? 2 : 1}px solid ${highlighted ? theme.accentBorder : `color-mix(in srgb, ${theme.text} 12%, transparent)`}`,
-            background: highlighted ? theme.accentSoft : 'transparent',
-            borderRadius: large ? 12 : 4, padding: large ? '14px 12px' : '4px 3px',
-            display: 'flex', flexDirection: 'column', gap: large ? 10 : 3, minWidth: 0,
-          }}>
-            <div style={{
-              alignSelf: 'flex-start', padding: large ? '5px 12px' : '2px 5px', borderRadius: 99,
-              background: theme.accentSoft, fontSize: large ? '0.82rem' : '0.3rem', fontWeight: 700,
-              color: highlighted ? theme.accent : theme.text,
-            }}>
-              {col.label}
-            </div>
-            {col.price && (
-              <div style={{ fontSize: large ? '1.85rem' : '0.62rem', fontWeight: 800, color: theme.text, lineHeight: 1 }}>
-                {col.price}
-              </div>
-            )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 5 : 2 }}>
-              {(col.items || []).slice(0, 5).map((item, j) => (
-                <div key={j} style={{ display: 'flex', gap: large ? 6 : 2, alignItems: 'flex-start' }}>
-                  <span style={{ color: theme.muted, fontSize: large ? '0.75rem' : '0.28rem' }}>•</span>
-                  <span style={{ fontSize: large ? '0.72rem' : '0.28rem', color: theme.muted, lineHeight: 1.35 }}>{item}</span>
-                </div>
-              ))}
-            </div>
+  const cardChrome = (highlighted) => {
+    const isCards = variant === 'cards'
+    return {
+      border: `${large ? 2 : 1}px solid ${highlighted ? theme.accentBorder : isCards ? `color-mix(in srgb, ${theme.text} 22%, transparent)` : `color-mix(in srgb, ${theme.text} 12%, transparent)`}`,
+      background: highlighted ? theme.accentSoft : 'transparent',
+      borderRadius: large ? 12 : 4,
+      padding: large ? '14px 12px' : '4px 3px',
+      boxShadow: isCards ? (large ? '0 6px 18px color-mix(in srgb, var(--text-main, #000) 10%, transparent)' : '0 2px 6px color-mix(in srgb, var(--text-main, #000) 8%, transparent)') : undefined,
+      transform: variant === 'featured' && highlighted ? (large ? 'scale(1.04)' : 'scale(1.03)') : undefined,
+      zIndex: variant === 'featured' && highlighted ? 1 : undefined,
+    }
+  }
+
+  const renderCard = (col, i) => {
+    const highlighted = i === highlightIndex
+    return (
+      <div key={i} style={{
+        ...cardChrome(highlighted),
+        display: 'flex', flexDirection: 'column', gap: large ? 10 : 3, minWidth: 0,
+      }}>
+        <div style={{
+          alignSelf: 'flex-start', padding: large ? '5px 12px' : '2px 5px', borderRadius: 99,
+          background: theme.accentSoft, fontSize: large ? '0.82rem' : '0.3rem', fontWeight: 700,
+          color: highlighted ? theme.accent : theme.text,
+        }}>
+          {col.label}
+        </div>
+        {col.price && (
+          <div style={{ fontSize: large ? '1.85rem' : '0.62rem', fontWeight: 800, color: theme.text, lineHeight: 1 }}>
+            {col.price}
           </div>
-        )
-      })}
+        )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 5 : 2 }}>
+          {(col.items || []).slice(0, 5).map((item, j) => (
+            <div key={j} style={{ display: 'flex', gap: large ? 6 : 2, alignItems: 'flex-start' }}>
+              <span style={{ color: theme.muted, fontSize: large ? '0.75rem' : '0.28rem' }}>•</span>
+              <span style={{ fontSize: large ? '0.72rem' : '0.28rem', color: theme.muted, lineHeight: 1.35 }}>{item}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (layout === 'split') {
+    const side = columns.filter((_, i) => i !== highlightIndex)
+    const hero = columns[highlightIndex] || columns[0]
+    return (
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1.35fr 0.65fr', gap: large ? 14 : 4, alignItems: 'stretch', minHeight: 0 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.max(side.length, 1)}, minmax(0, 1fr))`, gap: large ? 10 : 3 }}>
+          {side.map((col) => renderCard(col, columns.indexOf(col)))}
+        </div>
+        <div style={{
+          borderRadius: large ? 12 : 4,
+          background: `linear-gradient(160deg, ${theme.accentSoft}, color-mix(in srgb, ${theme.accent} 18%, transparent))`,
+          border: `1px solid ${theme.accentBorder}`,
+          padding: large ? '14px 12px' : '4px 3px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          gap: large ? 8 : 2,
+        }}>
+          <div style={{ fontSize: large ? '0.82rem' : '0.3rem', fontWeight: 800, color: theme.accent }}>{hero?.label || 'Featured'}</div>
+          <div style={{ fontSize: large ? '1.4rem' : '0.55rem', fontWeight: 800, color: theme.text }}>{hero?.price || '$299'}</div>
+          <div style={{ fontSize: large ? '0.62rem' : '0.24rem', color: theme.muted }}>Most popular choice</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (layout === 'stack') {
+    const hero = columns[highlightIndex] || columns[0]
+    const rest = columns.filter((_, i) => i !== highlightIndex)
+    return (
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: large ? 10 : 3, minHeight: 0 }}>
+        {renderCard(hero, highlightIndex)}
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${rest.length}, minmax(0, 1fr))`, gap: large ? 10 : 3 }}>
+          {rest.map((col) => renderCard(col, columns.indexOf(col)))}
+        </div>
+      </div>
+    )
+  }
+
+  const gridStyle = layout === 'grid'
+    ? { gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gridTemplateRows: 'repeat(2, minmax(0, 1fr))' }
+    : { gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }
+
+  return (
+    <div style={{ flex: 1, display: 'grid', ...gridStyle, gap: large ? 14 : 4, alignItems: 'stretch' }}>
+      {columns.map((col, i) => renderCard(col, i))}
     </div>
   )
 }
@@ -170,6 +226,9 @@ function ContactPanel({ previewHints, large }) {
 export function PolishedPricingFourParaPreview({ previewHints, ...props }) {
   const { large } = props
   const fp = frameProps(props)
+  const variant = previewHints.pricingVariant || 'default'
+  const planVariant = variant === 'cards' ? 'cards' : 'default'
+  const planLayout = variant === 'grid' ? 'grid' : 'row'
   return (
     <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 3 }}>
       <div style={{ textAlign: 'center', fontSize: large ? PREVIEW_TITLE_FS.large : '0.38rem', fontWeight: 800, color: theme.text }}>
@@ -178,7 +237,50 @@ export function PolishedPricingFourParaPreview({ previewHints, ...props }) {
       <div style={{ textAlign: 'center', fontSize: large ? PREVIEW_BODY_FS.large : '0.28rem', color: theme.muted }}>
         {previewHints.bodyText || 'Pick the plan that fits your team.'}
       </div>
-      <PlanCards previewHints={previewHints} large={large} count={4} />
+      <PlanCards previewHints={previewHints} large={large} count={4} variant={planVariant} layout={planLayout} />
+    </div>
+  )
+}
+
+function comparisonCardsFromTable(headers, rows) {
+  const planHeaders = headers.slice(1)
+  const priceRow = rows.find((row) => /price/i.test(String(row[0] || ''))) || rows[rows.length - 1]
+  return planHeaders.slice(0, 3).map((label, i) => ({
+    label,
+    price: priceRow?.[i + 1] || '$99',
+    items: rows
+      .filter((row) => row !== priceRow)
+      .slice(0, 4)
+      .map((row) => `${row[0]}: ${row[i + 1] || '—'}`),
+  }))
+}
+
+function ComparisonMatrix({ large, headers, rows }) {
+  const featureRows = rows.length ? rows : [
+    ['Users', '1', '5', 'Unlimited'],
+    ['Storage', '5 GB', '50 GB', '500 GB'],
+    ['Support', 'Email', 'Priority', 'Dedicated'],
+  ]
+  const cols = headers.length ? headers : ['Feature', 'Basic', 'Standard', 'Pro']
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 5 : 2, fontSize: large ? '0.58rem' : '0.22rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: `1.2fr repeat(${cols.length - 1}, 1fr)`, gap: large ? 4 : 1, fontWeight: 700, color: theme.text }}>
+        {cols.map((h) => <div key={h} style={{ padding: large ? '4px 6px' : '1px 2px', background: theme.card, borderRadius: 2, textAlign: h === cols[0] ? 'left' : 'center' }}>{h}</div>)}
+      </div>
+      {featureRows.map((row, ri) => (
+        <div key={ri} style={{ display: 'grid', gridTemplateColumns: `1.2fr repeat(${cols.length - 1}, 1fr)`, gap: large ? 4 : 1, color: theme.muted }}>
+          <div style={{ padding: large ? '4px 6px' : '1px 2px', background: theme.card, borderRadius: 2 }}>{row[0]}</div>
+          {row.slice(1, cols.length).map((cell, ci) => {
+            const val = String(cell || '').trim()
+            const mark = /^(yes|✓|true|included|unlimited|\d)/i.test(val) && !/^no|—|-$/i.test(val) ? '✓' : '—'
+            return (
+              <div key={ci} style={{ padding: large ? '4px 6px' : '1px 2px', background: theme.card, borderRadius: 2, textAlign: 'center', color: mark === '✓' ? theme.accent : theme.muted, fontWeight: mark === '✓' ? 700 : 400 }}>
+                {mark}
+              </div>
+            )
+          })}
+        </div>
+      ))}
     </div>
   )
 }
@@ -186,6 +288,7 @@ export function PolishedPricingFourParaPreview({ previewHints, ...props }) {
 export function PolishedPricingComparisonTablePreview({ previewHints, ...props }) {
   const { large } = props
   const fp = frameProps(props)
+  const variant = previewHints.pricingVariant || 'table'
   const headers = previewHints.tableHeaders || ['Feature', 'Basic', 'Standard', 'Pro']
   const rows = previewHints.tableRows || []
   return (
@@ -193,9 +296,22 @@ export function PolishedPricingComparisonTablePreview({ previewHints, ...props }
       <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.38rem', fontWeight: 800, color: theme.text }}>
         {previewHints.slots?.HEADING?.text || 'Plan comparison'}
       </div>
-      <div style={{ flex: 1, background: theme.card, borderRadius: large ? 8 : 3, padding: large ? 10 : 4 }}>
-        <TableMini large={large} headers={headers} rows={rows} />
-      </div>
+      {variant === 'cards' ? (
+        <PlanCards
+          previewHints={{ ...previewHints, columns: comparisonCardsFromTable(headers, rows) }}
+          large={large}
+          count={3}
+          variant="cards"
+        />
+      ) : variant === 'matrix' ? (
+        <div style={{ flex: 1, background: theme.card, borderRadius: large ? 8 : 3, padding: large ? 10 : 4 }}>
+          <ComparisonMatrix large={large} headers={headers} rows={rows} />
+        </div>
+      ) : (
+        <div style={{ flex: 1, background: theme.card, borderRadius: large ? 8 : 3, padding: large ? 10 : 4 }}>
+          <TableMini large={large} headers={headers} rows={rows} />
+        </div>
+      )}
     </div>
   )
 }

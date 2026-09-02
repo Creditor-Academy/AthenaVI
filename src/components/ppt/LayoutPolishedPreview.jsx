@@ -7,11 +7,12 @@ import { previewImageFrameStyle, PreviewImageIcon } from './layoutPreviewImageSh
 import { layoutSchemaHasCanvasElements, resolveLayoutCanvasElementsDoc } from '../../utils/videoTemplateToCanvasElements'
 import CanvasElementsPreview from './CanvasElementsPreview'
 import { EXTENDED_PREVIEW_MODES } from './layoutPolishedPreviewsExtended.jsx'
-import { PEOPLE_PRICING_PREVIEW_MODES } from './layoutPolishedPreviewsPeoplePricing.jsx'
+import { PEOPLE_PRICING_PREVIEW_MODES, PlanCards } from './layoutPolishedPreviewsPeoplePricing.jsx'
 import { DEVICE_FRAMES_PREVIEW_MODES } from './layoutPolishedPreviewsDeviceFrames.jsx'
 import { DIAGRAM_PREVIEW_MODES } from './layoutPolishedPreviewsDiagrams.jsx'
 import { AGENDA_PREVIEW_MODES } from './layoutPolishedPreviewsAgenda.jsx'
 import { TIMELINE_PROCESS_PREVIEW_MODES } from './layoutPolishedPreviewsTimelineProcess.jsx'
+import { resolvePreviewMode } from '../../utils/deckLayoutRegistry'
 import LayoutSvgPreview from './LayoutSvgPreview'
 
 const LAYOUT_POLISHED_THEME = {
@@ -442,22 +443,11 @@ function PolishedPricingPlansPreview({ previewHints, large, className, style, fi
     bold: false,
     uppercase: eyebrowMeta.uppercase ?? true,
   })
-  const columns = Array.isArray(previewHints.columns)?.length
-    ? previewHints.columns
-    : [
-        { label: 'Basic', price: '$99', items: ['The first point', 'The second point', 'The third point'] },
-        { label: 'Standard', price: '$299', items: ['The first point', 'The second point', 'The third point', 'The fourth point'] },
-        { label: 'Pro', price: '$999', items: ['The first point', 'The second point', 'The third point', 'The fourth point', 'The final point'] },
-      ]
-  const columnHighlightIndex = columns.findIndex((col) => col.highlighted)
-  const highlightIndex =
-    typeof previewHints.highlightedColumnIndex === 'number'
-      ? previewHints.highlightedColumnIndex
-      : columnHighlightIndex >= 0
-        ? columnHighlightIndex
-        : columns.length >= 3
-          ? 1
-          : 0
+  const variant = previewHints.pricingVariant || 'horizontal'
+  const planVariant = variant === 'featured' ? 'featured' : 'default'
+  const planLayout = variant === 'split' ? 'split' : variant === 'stack' ? 'stack' : 'row'
+  const columns = Array.isArray(previewHints.columns)?.length ? previewHints.columns : null
+  const count = columns?.length || 3
   const frameStyle = fill
     ? { width: '100%', height: '100%', aspectRatio: 'unset' }
     : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
@@ -473,40 +463,13 @@ function PolishedPricingPlansPreview({ previewHints, large, className, style, fi
       <div style={{ textAlign: 'center', fontSize: large ? '0.62rem' : '0.28rem', fontWeight: 700, letterSpacing: '0.14em', color: t.muted, textTransform: 'uppercase' }}>
         {eyebrowText}
       </div>
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))`, gap: large ? 14 : 4, alignItems: 'stretch' }}>
-        {columns.map((col, i) => {
-          const highlighted = i === highlightIndex
-          return (
-          <div key={i} style={{
-            border: `${large ? 2 : 1}px solid ${highlighted ? t.accentBorder : `color-mix(in srgb, ${t.text} 12%, transparent)`}`,
-            background: highlighted ? t.accentSoft : 'transparent',
-            borderRadius: large ? 12 : 4, padding: large ? '14px 12px' : '4px 3px',
-            display: 'flex', flexDirection: 'column', gap: large ? 10 : 3, minWidth: 0,
-          }}>
-            <div style={{
-              alignSelf: 'flex-start', padding: large ? '5px 12px' : '2px 5px', borderRadius: 99,
-              background: t.accentSoft, fontSize: large ? '0.82rem' : '0.3rem', fontWeight: 700,
-              color: highlighted ? t.accent : t.text,
-            }}>
-              {col.label}
-            </div>
-            {col.price && (
-              <div style={{ fontSize: large ? '1.85rem' : '0.62rem', fontWeight: 800, color: t.text, lineHeight: 1 }}>
-                {col.price}
-              </div>
-            )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 5 : 2 }}>
-              {(col.items || []).slice(0, 5).map((item, j) => (
-                <div key={j} style={{ display: 'flex', gap: large ? 6 : 2, alignItems: 'flex-start' }}>
-                  <span style={{ color: t.muted, fontSize: large ? '0.75rem' : '0.28rem', lineHeight: 1.4 }}>•</span>
-                  <span style={{ fontSize: large ? '0.72rem' : '0.28rem', color: t.muted, lineHeight: 1.35 }}>{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          )
-        })}
-      </div>
+      <PlanCards
+        previewHints={previewHints}
+        large={large}
+        count={count}
+        variant={planVariant}
+        layout={planLayout}
+      />
     </div>
   )
 }
@@ -1259,8 +1222,11 @@ export default function LayoutPolishedPreview({
 }) {
   const resolvedSlots = filterPreviewSlots(slots.length ? slots : schema?.slots ?? [])
   const hasSlots = resolvedSlots.length > 0
-  const previewHints = schema?.preview ?? {}
-  const previewMode = previewHints.mode
+  const previewHints = {
+    ...(schema?.preview ?? {}),
+    layout_id: schema?.layout_id || schema?.layoutId,
+  }
+  const previewMode = resolvePreviewMode(schema) || previewHints.mode
   const cssAspect = aspectRatioToCss(aspectRatio)
 
   const frameStyle = fill
