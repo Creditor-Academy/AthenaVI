@@ -34,6 +34,31 @@ export function canPptUngroup(elements, selectedIds) {
   return isPptGroup(el)
 }
 
+/** Expand selected ids so groups include their children. */
+export function expandPptSelectionIds(elements = [], selectedIds = []) {
+  const idSet = new Set((selectedIds || []).filter(Boolean))
+  for (const el of elements) {
+    if (idSet.has(el.id) && isPptGroup(el)) {
+      for (const cid of el.childIds || []) idSet.add(cid)
+    }
+  }
+  return [...idSet]
+}
+
+/** Ids that should move together when dragging one of the selected elements. */
+export function collectPptMoveIds(elements = [], selectedIds = [], draggedId) {
+  const seed = new Set((selectedIds || []).filter(Boolean))
+  if (draggedId) seed.add(draggedId)
+  const dragged = elements.find((el) => el.id === draggedId)
+  if (dragged?.groupId) {
+    seed.add(dragged.groupId)
+  }
+  return expandPptSelectionIds(elements, [...seed]).filter((id) => {
+    const el = elements.find((e) => e.id === id)
+    return el && !el.locked
+  })
+}
+
 export function getPptUnionBounds(elements) {
   let minX = Infinity
   let minY = Infinity

@@ -255,6 +255,14 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/elements/${elementId}`,
       SLIDE_ELEMENTS_REORDER: (workspaceId, presentationId, slideId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/elements/reorder`,
+      SLIDE_ELEMENTS_BATCH: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/elements/batch`,
+      SLIDE_ELEMENTS_GROUP: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/elements/group`,
+      SLIDE_ELEMENTS_UNGROUP: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/elements/ungroup`,
+      SLIDE_ELEMENTS_ALIGN: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/elements/align`,
       SLIDE_MEDIA: (workspaceId, presentationId, slideId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/media`,
       ATTACH_ASSET: (workspaceId, presentationId, slideId) =>

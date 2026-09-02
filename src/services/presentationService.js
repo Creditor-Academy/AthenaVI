@@ -396,6 +396,50 @@ class PresentationService {
     )
   }
 
+  batchUpdateElements(workspaceId, presentationId, slideId, patches) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE_ELEMENTS_BATCH(
+        workspaceId,
+        presentationId,
+        slideId
+      ),
+      { method: 'PATCH', body: JSON.stringify({ patches }) }
+    )
+  }
+
+  groupElements(workspaceId, presentationId, slideId, elementIds) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE_ELEMENTS_GROUP(
+        workspaceId,
+        presentationId,
+        slideId
+      ),
+      { method: 'POST', body: JSON.stringify({ elementIds }) }
+    )
+  }
+
+  ungroupElements(workspaceId, presentationId, slideId, elementId) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE_ELEMENTS_UNGROUP(
+        workspaceId,
+        presentationId,
+        slideId
+      ),
+      { method: 'POST', body: JSON.stringify({ elementId }) }
+    )
+  }
+
+  alignElements(workspaceId, presentationId, slideId, elementIds, alignment) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE_ELEMENTS_ALIGN(
+        workspaceId,
+        presentationId,
+        slideId
+      ),
+      { method: 'POST', body: JSON.stringify({ elementIds, alignment }) }
+    )
+  }
+
   deleteElement(workspaceId, presentationId, slideId, elementId) {
     return this.request(
       API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE_ELEMENT(
