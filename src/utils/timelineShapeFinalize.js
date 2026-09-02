@@ -64,6 +64,21 @@ import {
   processFlowArrowInlineSvg,
 } from './diagramProcessStepsSvg'
 import {
+  isAgendaHeroLayout,
+  isAgendaMinimalLayout,
+  isAgendaNumberedLayout,
+  isAgendaThreeColumnLayout,
+  isAgendaTimelineLayout,
+  isAgendaTwoColumnLayout,
+} from './agendaSharedSvg.js'
+import {
+  layoutAgendaMinimal,
+  layoutAgendaNumbered,
+  layoutAgendaColumns,
+  layoutAgendaTimeline,
+  layoutAgendaTwoColumn,
+} from './agendaFinalize.js'
+import {
   QUOTE_GRID_N,
   QUOTE_MARK_COLOR,
   QUOTE_CARD_BORDER,
@@ -562,7 +577,7 @@ function isProcessFlowLayout(layoutId) {
     /process_linear/.test(id) ||
     /diagram_process/.test(id) ||
     /process_steps/.test(id) ||
-    /agenda_timeline|agenda_vertical_roadmap|agenda_progress_path/.test(id)
+    /agenda_timeline|agenda_vertical_roadmap|agenda_curved_timeline|agenda_progress_path/.test(id)
   )
 }
 
@@ -5189,6 +5204,21 @@ export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = 
   }
   if (isDeviceTabletCenteredLayout(layoutId)) {
     return layoutDeviceTabletCentered(elements, schema, palette, canvas)
+  }
+  if (isAgendaMinimalLayout(layoutId)) {
+    return layoutAgendaMinimal(elements, schema, palette, canvas)
+  }
+  if (isAgendaNumberedLayout(layoutId)) {
+    return layoutAgendaNumbered(elements, schema, palette, canvas)
+  }
+  if (isAgendaHeroLayout(layoutId) || isAgendaThreeColumnLayout(layoutId)) {
+    return layoutAgendaColumns(elements, schema, palette, canvas)
+  }
+  if (isAgendaTimelineLayout(layoutId)) {
+    return layoutAgendaTimeline(elements, schema, palette, canvas)
+  }
+  if (isAgendaTwoColumnLayout(layoutId)) {
+    return layoutAgendaTwoColumn(elements, schema, palette, canvas)
   }
   if (isQuoteGridLayout(layoutId)) {
     return layoutQuoteGrid(elements, schema, palette, canvas)

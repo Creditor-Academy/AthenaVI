@@ -21,7 +21,7 @@ const CATALOG = {
     ...agendaColumn(1, 1, 4),
     ...agendaColumn(2, 5, 8),
     ...agendaColumn(3, 9, 12),
-  ], { mode: 'agenda_three_columns' }),
+  ], { mode: 'agenda_three_columns', agendaVariant: 'default' }),
 
   agenda_three_columns_hero_v1: layoutBase('agenda_three_columns_hero_v1', 'agenda', [
     heroImage('cols 1-12, rows 1-4', 'HERO_IMAGE', { imageStyle: 'flat' }),
@@ -31,7 +31,7 @@ const CATALOG = {
     ...agendaColumn(1, 1, 4, 7),
     ...agendaColumn(2, 5, 8, 7),
     ...agendaColumn(3, 9, 12, 7),
-  ], { mode: 'agenda_three_columns_hero' }),
+  ], { mode: 'agenda_three_columns_hero', agendaVariant: 'default' }),
 
   agenda_numbered_v1: layoutBase('agenda_numbered_v1', 'agenda', [
     heading('HEADING', 'cols 2-11, rows 1-2', "Today's agenda", {
@@ -41,7 +41,7 @@ const CATALOG = {
     body('ITEM_2', 'cols 3-10, rows 4-5', '02 · Market context', 1, { typography: typo('body', { fontWeight: 600 }) }),
     body('ITEM_3', 'cols 3-10, rows 5-6', '03 · Product demo', 1, { typography: typo('body', { fontWeight: 600 }) }),
     body('ITEM_4', 'cols 3-10, rows 6-7', '04 · Q&A', 1, { typography: typo('body', { fontWeight: 600 }) }),
-  ], { mode: 'agenda_numbered' }),
+  ], { mode: 'agenda_numbered', agendaVariant: 'default' }),
 
   agenda_minimal_v1: layoutBase('agenda_minimal_v1', 'agenda', [
     heading('HEADING', 'cols 2-11, rows 2-4', 'Agenda', {
@@ -50,13 +50,13 @@ const CATALOG = {
     body('BODY', 'cols 3-10, rows 4-8', 'Topic one\nTopic two\nTopic three\nTopic four', 6, {
       typography: centeredTypo('body', { fontSize: 20 }),
     }),
-  ], { mode: 'agenda_minimal' }),
+  ], { mode: 'agenda_minimal', agendaVariant: 'default' }),
 
   agenda_two_column_v1: layoutBase('agenda_two_column_v1', 'agenda', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Session overview', { max_lines: 2 }),
     ...agendaColumn(1, 1, 6, 3),
     ...agendaColumn(2, 7, 12, 3),
-  ], { mode: 'agenda_two_columns' }),
+  ], { mode: 'agenda_two_columns', agendaVariant: 'default' }),
 
   agenda_timeline_preview_v1: layoutBase('agenda_timeline_preview_v1', 'agenda', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Roadmap preview', { max_lines: 2 }),
@@ -76,7 +76,7 @@ const CATALOG = {
       layer: 10,
       typography: typo('caption', { fontSize: 13, align: 'center', fontWeight: 700 }),
     }),
-  ], { mode: 'process_flow' }),
+  ], { mode: 'process_flow', agendaVariant: 'default' }),
 }
 
 function agendaFromSource(layoutId, sourceId, agendaVariant) {
@@ -101,6 +101,7 @@ Object.assign(CATALOG, {
   agenda_three_panel_hero_v1: agendaFromSource('agenda_three_panel_hero_v1', 'agenda_three_columns_hero_v1', 'panel'),
   agenda_three_cards_v1: agendaFromSource('agenda_three_cards_v1', 'agenda_three_columns_v1', 'cards'),
   agenda_three_tiles_v1: agendaFromSource('agenda_three_tiles_v1', 'agenda_three_columns_v1', 'tiles'),
+  agenda_three_icons_v1: agendaFromSource('agenda_three_icons_v1', 'agenda_three_columns_v1', 'coloured'),
   agenda_vertical_roadmap_v1: agendaFromSource('agenda_vertical_roadmap_v1', 'agenda_timeline_preview_v1', 'vertical'),
   agenda_progress_path_v1: agendaFromSource('agenda_progress_path_v1', 'agenda_timeline_preview_v1', 'path'),
   agenda_split_panel_v1: agendaFromSource('agenda_split_panel_v1', 'agenda_two_column_v1', 'split_panel'),

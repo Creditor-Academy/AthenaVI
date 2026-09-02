@@ -283,6 +283,7 @@ const LAYOUT_PREVIEW_MODES = {
   agenda_three_panel_hero_v1: 'agenda_three_columns_hero',
   agenda_three_cards_v1: 'agenda_three_columns',
   agenda_three_tiles_v1: 'agenda_three_columns',
+  agenda_three_icons_v1: 'agenda_three_columns',
   agenda_vertical_roadmap_v1: 'process_flow',
   agenda_progress_path_v1: 'process_flow',
   agenda_split_panel_v1: 'agenda_two_columns',
@@ -324,10 +325,18 @@ const LAYOUT_PREVIEW_MODES = {
   metric_three_vertical_v1: 'stat_vertical',
   // Pricing
   pricing_three_plans_v1: 'pricing_plans',
+  pricing_three_plans_featured_v1: 'pricing_plans',
   pricing_three_highlight_v1: 'pricing_plans',
+  pricing_three_highlight_split_v1: 'pricing_plans',
+  pricing_three_highlight_stack_v1: 'pricing_plans',
   pricing_four_plans_v1: 'pricing_plans',
+  pricing_four_plans_featured_v1: 'pricing_plans',
   pricing_four_para_v1: 'pricing_four_para',
+  pricing_four_para_cards_v1: 'pricing_four_para',
+  pricing_four_para_grid_v1: 'pricing_four_para',
   pricing_comparison_table_v1: 'pricing_comparison_table',
+  pricing_comparison_cards_v1: 'pricing_comparison_table',
+  pricing_comparison_matrix_v1: 'pricing_comparison_table',
   // Agenda
   agenda_three_columns_v1: 'agenda_three_columns',
   agenda_three_columns_hero_v1: 'agenda_three_columns_hero',
@@ -945,6 +954,8 @@ function mergeRegistryPreviewFallback(schema) {
       merged.highlightedPlanIndex ??
       rp.highlightedColumnIndex ??
       registered.highlightedPlanIndex,
+    pricingVariant: mp.pricingVariant ?? rp.pricingVariant,
+    agendaVariant: mp.agendaVariant ?? rp.agendaVariant,
   }
 
   if (!Array.isArray(merged.slots) || merged.slots.length === 0) {
