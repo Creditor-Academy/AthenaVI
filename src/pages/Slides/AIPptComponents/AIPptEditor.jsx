@@ -700,7 +700,7 @@ function InteractiveElementShell({
         }
       }}
     >
-      <div className="ppt-canvas-el-body">{children}</div>
+      <div className={`ppt-canvas-el-body${isDeviceFrame ? ' ppt-canvas-el-body--device-frame' : ''}${el.content?.clipToSlot === false ? ' ppt-canvas-el-body--no-clip' : ''}`}>{children}</div>
       {isText && selected && editable && !locked && !editing && (
         <>
           <span

@@ -35,6 +35,51 @@ export function findDeviceFrameSlot(slots, imageSlotId) {
   )
 }
 
+/** Fit a device into its slot without stretching (portrait 9:19.5, landscape 19.5:9). */
+export function fitDeviceFramePlacement(placement, kind) {
+  const p = placement || {}
+  const x = p.x ?? 0
+  const y = p.y ?? 0
+  const w = Math.max(1, p.width ?? 400)
+  const h = Math.max(1, p.height ?? 300)
+  let aspect = null
+  if (kind === 'phone_landscape') aspect = 19.5 / 9
+  if (kind === 'phone') {
+    aspect = 9 / 19.5
+    const mx = w * 0.01
+    const my = h * 0.01
+    const innerW = Math.max(1, w - mx * 2)
+    const innerH = Math.max(1, h - my * 2)
+    let rw = innerW
+    let rh = rw / aspect
+    if (rh > innerH) {
+      rh = innerH
+      rw = rh * aspect
+    }
+    return {
+      ...p,
+      x: Math.round(x + (w - rw) / 2),
+      y: Math.round(y + (h - rh) / 2),
+      width: Math.round(rw),
+      height: Math.round(rh),
+    }
+  }
+  if (!aspect) return { ...p, x, y, width: w, height: h }
+  let rw = w
+  let rh = rw / aspect
+  if (rh > h) {
+    rh = h
+    rw = rh * aspect
+  }
+  return {
+    ...p,
+    x: Math.round(x + (w - rw) / 2),
+    y: Math.round(y + (h - rh) / 2),
+    width: Math.round(rw),
+    height: Math.round(rh),
+  }
+}
+
 function insetScreenRect(placement, kind) {
   const p = placement || {}
   const x = p.x ?? 0
@@ -64,39 +109,38 @@ function insetScreenRect(placement, kind) {
     }
   }
   if (kind === 'phone_landscape') {
-    const padX = w * 0.08
-    const padY = h * 0.14
+    const bezel = Math.max(10, Math.round(Math.min(w, h) * 0.032))
     return {
-      x: Math.round(x + padX),
-      y: Math.round(y + padY),
-      width: Math.max(40, Math.round(w - padX * 2)),
-      height: Math.max(40, Math.round(h - padY * 2)),
+      x: Math.round(x + bezel),
+      y: Math.round(y + bezel),
+      width: Math.max(40, Math.round(w - bezel * 2)),
+      height: Math.max(40, Math.round(h - bezel * 2)),
     }
   }
   if (kind === 'watch') {
-    const size = Math.min(w, h) * 0.55
+    const caseW = w * 0.76
+    const caseH = h * 0.54
     return {
-      x: Math.round(x + (w - size) / 2),
-      y: Math.round(y + (h - size) / 2),
-      width: Math.max(24, Math.round(size)),
-      height: Math.max(24, Math.round(size)),
+      x: Math.round(x + (w - caseW) / 2),
+      y: Math.round(y + (h - caseH) / 2),
+      width: Math.max(24, Math.round(caseW)),
+      height: Math.max(24, Math.round(caseH)),
     }
   }
-  // phone vertical
-  const padX = w * 0.21
-  const padY = h * 0.05
+  // phone vertical — thin even bezel once the box is 9:19.5
+  const bezel = Math.max(8, Math.round(Math.min(w, h) * 0.022))
   return {
-    x: Math.round(x + padX),
-    y: Math.round(y + padY),
-    width: Math.max(40, Math.round(w - padX * 2)),
-    height: Math.max(40, Math.round(h - padY * 2)),
+    x: Math.round(x + bezel),
+    y: Math.round(y + bezel),
+    width: Math.max(40, Math.round(w - bezel * 2)),
+    height: Math.max(40, Math.round(h - bezel * 2)),
   }
 }
 
 function frameRadius(kind, large = false) {
   if (kind === 'watch') return large ? 18 : 10
-  if (kind === 'phone') return large ? 28 : 18
-  if (kind === 'phone_landscape') return large ? 18 : 12
+  if (kind === 'phone') return large ? 28 : 22
+  if (kind === 'phone_landscape') return large ? 34 : 22
   if (kind === 'tablet') return large ? 22 : 14
   return large ? 16 : 10
 }
@@ -112,9 +156,13 @@ export function buildDeviceFrameCanvasElements({
   layerBase = 8,
 }) {
   const kind = deviceFrameKindFromSlot(frameSlot)
-  const screen = insetScreenRect(framePlacement, kind)
-  const radius = frameRadius(kind)
+  const isPhone = kind === 'phone' || kind === 'phone_landscape'
+  const fitted = fitDeviceFramePlacement(framePlacement, kind)
+  const screen = insetScreenRect(fitted, kind)
+  const radius = frameRadius(kind, isPhone)
   const elements = []
+  const nest = isPhone ? 0 : 2
+  const phoneShadow = '0 22px 54px rgba(15,23,42,0.22), 0 4px 12px rgba(15,23,42,0.12)'
 
   elements.push({
     id: `slot-${frameSlot.id}`,
@@ -122,49 +170,32 @@ export function buildDeviceFrameCanvasElements({
     type: 'shape',
     role: 'device_frame',
     layer: layerBase,
-    placement: framePlacement,
+    placement: fitted,
     content: {
       shape: 'rounded-rect',
-      fill: FRAME_FILL,
+      fill: isPhone ? FRAME_OUTER : FRAME_FILL,
       stroke: FRAME_OUTER,
-      strokeWidth: 4,
+      strokeWidth: isPhone ? 0 : 4,
       borderRadius: radius,
-      shadow: '0 8px 24px rgba(15,23,42,0.18)',
-      boxShadow: '0 8px 24px rgba(15,23,42,0.18)',
+      shadow: isPhone ? phoneShadow : '0 8px 24px rgba(15,23,42,0.18)',
+      boxShadow: isPhone
+        ? kind === 'phone'
+          ? 'inset 0 0 0 1px rgba(226,232,240,0.28), 0 28px 64px rgba(15,23,42,0.18), 0 8px 18px rgba(15,23,42,0.08)'
+          : phoneShadow
+        : '0 8px 24px rgba(15,23,42,0.18)',
       deviceFrame: kind,
       layoutSurface: true,
     },
   })
 
-  if (kind === 'laptop') {
-    const barH = Math.max(8, Math.round(screen.height * 0.07))
-    elements.push({
-      id: `slot-${frameSlot.id}__bar`,
-      slotId: `${frameSlot.id}__bar`,
-      type: 'shape',
-      role: 'device_frame',
-      layer: layerBase + 1,
-      placement: {
-        x: screen.x,
-        y: screen.y,
-        width: screen.width,
-        height: barH,
-      },
-      content: {
-        shape: 'rounded-rect',
-        fill: '#334155',
-        borderRadius: 4,
-        layoutSurface: true,
-      },
-    })
+  const imageInset = {
+    x: screen.x + nest,
+    y: screen.y + (kind === 'laptop' ? Math.max(8, Math.round(screen.height * 0.07)) : nest),
+    width: Math.max(20, screen.width - nest * 2),
+    height: Math.max(20, screen.height - (kind === 'laptop' ? Math.max(8, Math.round(screen.height * 0.07)) + nest : nest * 2)),
   }
 
-  const imageInset = {
-    x: screen.x + 3,
-    y: screen.y + (kind === 'laptop' ? Math.max(8, Math.round(screen.height * 0.07)) : 3),
-    width: Math.max(20, screen.width - 6),
-    height: Math.max(20, screen.height - (kind === 'laptop' ? Math.max(8, Math.round(screen.height * 0.07)) + 3 : 6)),
-  }
+  const { shadow: _shadow, boxShadow: _boxShadow, ...screenImageContent } = imageContent || {}
 
   elements.push({
     id: `slot-${imageSlot.id}`,
@@ -174,57 +205,13 @@ export function buildDeviceFrameCanvasElements({
     layer: layerBase + 2,
     placement: imageInset,
     content: {
-      ...imageContent,
-      fit: imageContent.fit || 'cover',
-      borderRadius: kind === 'phone' ? 14 : 6,
+      ...screenImageContent,
+      fit: screenImageContent.fit || 'cover',
+      borderRadius: kind === 'phone' ? 28 : kind === 'phone_landscape' ? 22 : 6,
+      shadow: undefined,
+      boxShadow: undefined,
     },
   })
-
-  if (kind === 'laptop') {
-    elements.push({
-      id: `slot-${frameSlot.id}__base`,
-      slotId: `${frameSlot.id}__base`,
-      type: 'shape',
-      role: 'device_frame',
-      layer: layerBase,
-      placement: {
-        x: Math.round(framePlacement.x + framePlacement.width * 0.02),
-        y: Math.round(framePlacement.y + framePlacement.height * 0.9),
-        width: Math.round(framePlacement.width * 0.96),
-        height: Math.max(6, Math.round(framePlacement.height * 0.04)),
-      },
-      content: {
-        shape: 'rounded-rect',
-        fill: '#475569',
-        stroke: FRAME_OUTER,
-        strokeWidth: 2,
-        borderRadius: 4,
-        layoutSurface: true,
-      },
-    })
-  }
-
-  if (kind === 'phone') {
-    elements.push({
-      id: `slot-${frameSlot.id}__home`,
-      slotId: `${frameSlot.id}__home`,
-      type: 'shape',
-      role: 'device_frame',
-      layer: layerBase + 1,
-      placement: {
-        x: Math.round(framePlacement.x + framePlacement.width * 0.42),
-        y: Math.round(framePlacement.y + framePlacement.height * 0.93),
-        width: Math.round(framePlacement.width * 0.16),
-        height: Math.max(3, Math.round(framePlacement.height * 0.012)),
-      },
-      content: {
-        shape: 'rounded-rect',
-        fill: '#cbd5e1',
-        borderRadius: 99,
-        layoutSurface: true,
-      },
-    })
-  }
 
   return elements
 }

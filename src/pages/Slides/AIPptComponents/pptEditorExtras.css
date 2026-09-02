@@ -473,6 +473,11 @@
   pointer-events: none;
 }
 
+.ppt-canvas-el-body--device-frame,
+.ppt-canvas-el-body--no-clip {
+  overflow: visible;
+}
+
 .is-editing-text,
 .is-editing-text .ppt-canvas-el-body {
   overflow: visible;

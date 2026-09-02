@@ -569,7 +569,12 @@ export default function PptCanvasElement({
       const frameColor = resolveDeviceFrameColor(c, palette)
       return (
         <div style={{ ...fillStyle, position: 'relative' }}>
-          <DeviceFrameVisual kind={deviceKind} src={screenSrc} frameColor={frameColor} />
+          <DeviceFrameVisual
+            kind={deviceKind}
+            src={c.layoutSurface ? undefined : screenSrc}
+            chromeOnly={Boolean(c.layoutSurface)}
+            frameColor={frameColor}
+          />
           {selected && !screenSrc && (
             <div className="ppt-device-frame-drop-hint" aria-hidden>
               Drop image here
