@@ -9,7 +9,6 @@ import {
   body,
   slot,
   deviceScreenSlot,
-  deviceSplitCopy,
   SAMPLE_PARA,
 } from './deckLayoutV2Helpers.js'
 import { HIGHLIGHT_FEATURES } from './devicePhoneHighlightsLayout.js'
@@ -118,20 +117,38 @@ const CATALOG = {
   ], { mode: 'device_multi_cluster' }),
 
   device_tablet_centered_v1: layoutBase('device_tablet_centered_v1', 'device_frames', [
-    heading('HEADING', 'cols 3-10, rows 1-2', 'Describe this mockup', {
-      typography: typo('heading', { fontSize: 32, align: 'center' }),
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Describe this mockup', {
+      typography: typo('heading', { fontSize: 36, align: 'center', fontWeight: 800, lineHeight: 1.2 }),
+      max_lines: 1,
+      clipToSlot: false,
     }),
-    ...deviceScreenSlot('DEVICE_IMAGE', 'cols 4-9, rows 4-10', 'tablet', 'TABLET_FRAME'),
+    ...deviceScreenSlot('DEVICE_IMAGE', 'cols 3-10, rows 3-9', 'tablet', 'TABLET_FRAME'),
   ], { mode: 'device_tablet_centered' }),
 
   device_tablet_split_v1: layoutBase('device_tablet_split_v1', 'device_frames', [
-    ...deviceSplitCopy('cols 1-6'),
-    ...deviceScreenSlot('DEVICE_IMAGE', 'cols 8-12, rows 2-9', 'tablet', 'TABLET_FRAME'),
+    heading('HEADING', 'cols 1-5, rows 3-5', 'Describe this mockup', {
+      typography: typo('heading', { fontSize: 36, lineHeight: 1.2, fontWeight: 800 }),
+      max_lines: 2,
+      clipToSlot: false,
+    }),
+    body('BODY', 'cols 1-5, rows 5-8', P.short, 4, {
+      typography: typo('body', { fontSize: 18, lineHeight: 1.5 }),
+      clipToSlot: false,
+    }),
+    ...deviceScreenSlot('DEVICE_IMAGE', 'cols 7-11, rows 2-9', 'tablet', 'TABLET_FRAME'),
   ], { mode: 'device_tablet_split' }),
 
   device_laptop_split_v1: layoutBase('device_laptop_split_v1', 'device_frames', [
-    ...deviceSplitCopy('cols 1-6'),
-    ...deviceScreenSlot('DEVICE_IMAGE', 'cols 7-12, rows 3-9', 'laptop', 'LAPTOP_FRAME'),
+    heading('HEADING', 'cols 1-5, rows 3-5', 'Describe this mockup', {
+      typography: typo('heading', { fontSize: 36, lineHeight: 1.2, fontWeight: 800 }),
+      max_lines: 2,
+      clipToSlot: false,
+    }),
+    body('BODY', 'cols 1-5, rows 5-9', P.short, 4, {
+      typography: typo('body', { fontSize: 18, lineHeight: 1.5 }),
+      clipToSlot: false,
+    }),
+    ...deviceScreenSlot('DEVICE_IMAGE', 'cols 7-11, rows 2-9', 'laptop', 'LAPTOP_FRAME'),
   ], { mode: 'device_laptop_split' }),
 }
 

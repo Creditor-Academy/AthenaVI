@@ -174,7 +174,7 @@ function LaptopFrame({ large, style = {}, src = '' }) {
         <div style={{ height: large ? 10 : 4, background: '#334155', flexShrink: 0 }} />
         <div style={{ flex: 1, minHeight: 0 }}><ImagePh large={large} src={src} /></div>
       </div>
-      <div style={{ width: '112%', height: large ? 10 : 4, marginTop: large ? -2 : -1, borderRadius: large ? 5 : 2, background: '#475569', border: `${large ? 2 : 1}px solid ${theme.frameOuter}` }} />
+      <div style={{ width: '100%', height: large ? 10 : 4, marginTop: large ? -2 : -1, borderRadius: large ? 5 : 2, background: '#475569', border: `${large ? 2 : 1}px solid ${theme.frameOuter}` }} />
     </div>
   )
 }
@@ -552,8 +552,8 @@ export function PolishedDeviceTabletCenteredPreview({ previewHints, ...props }) 
       <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.38rem', fontWeight: 800, color: theme.text, textAlign: 'center' }}>
         {previewHints.slots?.HEADING?.text || 'Describe this mockup'}
       </div>
-      <div style={{ flex: 1, width: '100%', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden' }}>
-        <TabletFrame large={large} cropBottom />
+      <div style={{ flex: 1, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 0 }}>
+        <TabletFrame large={large} style={{ width: '78%', height: 'auto', aspectRatio: '4 / 3', maxHeight: '100%' }} />
       </div>
     </div>
   )
@@ -565,7 +565,9 @@ export function PolishedDeviceTabletSplitPreview({ previewHints, ...props }) {
   return (
     <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1fr 1fr', gap: large ? 12 : 4, alignItems: 'center' }}>
       <SplitCopy previewHints={previewHints} large={large} />
-      <DeviceStage large={large}><TabletFrame large={large} /></DeviceStage>
+      <DeviceStage large={large}>
+        <TabletFrame large={large} style={{ width: 'auto', height: '92%', aspectRatio: '3 / 4', maxWidth: '72%' }} />
+      </DeviceStage>
     </div>
   )
 }

@@ -284,7 +284,7 @@ function LaptopFrame({ src, compact = false, theme, chromeOnly = false }) {
       </div>
       <div
         style={{
-          width: '112%',
+          width: '100%',
           height: compact ? 5 : 10,
           marginTop: compact ? -1 : -2,
           borderRadius: compact ? 3 : 5,

@@ -78,6 +78,9 @@ import {
 import { isDevicePhoneHighlightsLayout, layoutDevicePhoneHighlights } from './devicePhoneHighlightsLayout'
 import { isDevicePhoneTripleLayout, layoutDevicePhoneTriple } from './devicePhoneTripleLayout'
 import { isDeviceMultiClusterLayout, layoutDeviceMultiCluster } from './deviceMultiClusterLayout'
+import { isDeviceLaptopSplitLayout, layoutDeviceLaptopSplit } from './deviceLaptopSplitLayout'
+import { isDeviceTabletSplitLayout, layoutDeviceTabletSplit } from './deviceTabletSplitLayout'
+import { isDeviceTabletCenteredLayout, layoutDeviceTabletCentered } from './deviceTabletCenteredLayout'
 import {
   timelineNodeInlineSvg,
   timelineSpineSegmentInlineSvg,
@@ -5177,6 +5180,15 @@ export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = 
   }
   if (isDeviceMultiClusterLayout(layoutId)) {
     return layoutDeviceMultiCluster(elements, schema, palette, canvas)
+  }
+  if (isDeviceLaptopSplitLayout(layoutId)) {
+    return layoutDeviceLaptopSplit(elements, schema, palette, canvas)
+  }
+  if (isDeviceTabletSplitLayout(layoutId)) {
+    return layoutDeviceTabletSplit(elements, schema, palette, canvas)
+  }
+  if (isDeviceTabletCenteredLayout(layoutId)) {
+    return layoutDeviceTabletCentered(elements, schema, palette, canvas)
   }
   if (isQuoteGridLayout(layoutId)) {
     return layoutQuoteGrid(elements, schema, palette, canvas)
