@@ -102,6 +102,7 @@ import {
   timelineChevronInlineSvg,
   processPhaseCircleInlineSvg,
   processNumericBadgeInlineSvg,
+  resolveTimelineMeta,
 } from './timelineProcessSvg'
 
 function paletteColor(palette, role, fallback) {
@@ -624,7 +625,10 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
   const accent = paletteColor(palette, 'accent', paletteColor(palette, 'primary', '#6366F1'))
   const muted = paletteColor(palette, 'muted', '#94A3B8')
   const textColor = paletteColor(palette, 'text', '#0F172A')
+  const cardFill = paletteColor(palette, 'cardBg', '#F1F5F9')
   const canvasW = canvas.width || 1920
+  const canvasH = canvas.height || 1080
+  const { family, variant } = resolveTimelineMeta(schema)
 
   const imageEls = next.filter(
     (el) => el.type === 'image' && /^IMAGE_\d+$/i.test(String(el.slotId || ''))
@@ -633,6 +637,10 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
   if (labelEls.length < 2) return elements
 
   const isVertical = /timeline_vertical/.test(layoutId)
+    || (family === 'process' && variant === 'vertical')
+  const useChevrons = !['path', 'lanes', 'image_right', 'image_top'].includes(variant)
+  const useCardChrome = variant === 'cards'
+    || (family === 'milestones' && variant === 'default')
   const NODE = 48
   const NUM_H = 22
   const hasStepCircles = next.some((el) => /^STEP_\d+_CIRCLE$/i.test(String(el.slotId || '')))
@@ -647,14 +655,42 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
   })
 
   let axisY
-  if (/timeline_milestones_image/.test(layoutId) && imageEls.length) {
+  if ((/timeline_milestones_image/.test(layoutId) || family === 'milestones_image') && imageEls.length) {
     axisY =
       Math.max(...imageEls.map((el) => (el.placement?.y ?? 0) + (el.placement?.height ?? 0))) + 28
+  } else if (variant === 'image_top') {
+    axisY = Math.min(...centers.map((c) => c.labelTop)) - NODE - NUM_H - 12
+    axisY = Math.max(120, axisY)
   } else if (isVertical) {
     axisY = null
   } else {
     axisY = Math.min(...centers.map((c) => c.labelTop)) - NODE - NUM_H - 12
     axisY = Math.max(72, axisY)
+  }
+
+  if (family === 'roadmap' && variant === 'lanes') {
+    const laneCount = 3
+    const laneH = Math.round((canvasH * 0.42) / laneCount)
+    const laneY0 = Math.round(canvasH * 0.22)
+    for (let lane = 0; lane < laneCount; lane += 1) {
+      next.unshift({
+        id: newShapeId('shp-timeline-lane'),
+        type: 'shape',
+        layer: 0,
+        placement: {
+          x: 64,
+          y: laneY0 + lane * (laneH + 8),
+          width: canvasW - 128,
+          height: laneH,
+          rotation: 0,
+          opacity: 1,
+        },
+        content: { shape: 'rect', fill: cardFill, borderRadius: 12, layoutSurface: true },
+        role: 'decoration',
+        slotId: `TIMELINE_LANE_${lane + 1}`,
+      })
+    }
+    return next
   }
 
   if (isVertical) {
@@ -679,6 +715,24 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
     })
     centers.forEach((c) => {
       const cy = c.labelTop + 10
+      if (useCardChrome || (family === 'vertical' && variant === 'cards')) {
+        next.unshift({
+          id: newShapeId('shp-timeline-card'),
+          type: 'shape',
+          layer: 1,
+          placement: {
+            x: Math.round(spineX + 20),
+            y: Math.round(cy - 28),
+            width: Math.round(canvasW * 0.28),
+            height: 56,
+            rotation: 0,
+            opacity: 1,
+          },
+          content: { shape: 'rect', fill: cardFill, borderRadius: 10, layoutSurface: true },
+          role: 'decoration',
+          slotId: `TIMELINE_CARD_${c.index}`,
+        })
+      }
       next.unshift({
         id: `shp-timeline-node-${Math.random().toString(36).slice(2, 9)}`,
         type: 'graphic',
@@ -723,6 +777,25 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
 
   if (!hasStepCircles) {
     centers.forEach((c) => {
+      if (useCardChrome) {
+        const cardW = Math.round((canvasW - 128) / Math.max(centers.length, 1) * 0.82)
+        next.unshift({
+          id: newShapeId('shp-timeline-card'),
+          type: 'shape',
+          layer: 1,
+          placement: {
+            x: Math.round(c.x - cardW / 2),
+            y: Math.round(axisY + NODE / 2 + 8),
+            width: cardW,
+            height: 88,
+            rotation: 0,
+            opacity: 1,
+          },
+          content: { shape: 'rect', fill: cardFill, borderRadius: 10, layoutSurface: true },
+          role: 'decoration',
+          slotId: `TIMELINE_CARD_${c.index}`,
+        })
+      }
       next.unshift({
         id: `shp-timeline-node-${Math.random().toString(36).slice(2, 9)}`,
         type: 'graphic',
@@ -780,22 +853,25 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
         lineY = (circle.placement.y ?? 0) + (circle.placement.height ?? 0) / 2
       }
     }
-    next.unshift({
-      id: `shp-timeline-seg-${Math.random().toString(36).slice(2, 9)}`,
-      type: 'graphic',
-      layer: 1,
-      placement: {
-        x: Math.round(x1),
-        y: Math.round(lineY - 1.5),
-        width: Math.round(segW),
-        height: 3,
-        rotation: 0,
-        opacity: 0.95,
-      },
-      content: timelineGraphicContent(timelineSpineSegmentInlineSvg(), muted, 'Timeline segment'),
-      role: 'decoration',
-      slotId: `TIMELINE_SEG_${i + 1}`,
-    })
+    if (variant !== 'path') {
+      next.unshift({
+        id: `shp-timeline-seg-${Math.random().toString(36).slice(2, 9)}`,
+        type: 'graphic',
+        layer: 1,
+        placement: {
+          x: Math.round(x1),
+          y: Math.round(lineY - 1.5),
+          width: Math.round(segW),
+          height: 3,
+          rotation: 0,
+          opacity: 0.95,
+        },
+        content: timelineGraphicContent(timelineSpineSegmentInlineSvg(), muted, 'Timeline segment'),
+        role: 'decoration',
+        slotId: `TIMELINE_SEG_${i + 1}`,
+      })
+    }
+    if (!useChevrons) continue
     const midX = (a.x + b.x) / 2
     const chevronSize = 18
     next.unshift({
@@ -821,7 +897,7 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
 
 function isDiagramProcessStepsLayout(layoutId) {
   const id = String(layoutId || '').toLowerCase()
-  return /diagram_process_steps|diagram_process_horizontal|diagram_process_vertical|timeline_process_steps/.test(id)
+  return /diagram_process_steps|diagram_process_horizontal|diagram_process_vertical|timeline_process_steps|timeline_process_horizontal|timeline_process_vertical/.test(id)
 }
 
 function timelineGraphicContent(svg, fill, alt = '') {
@@ -834,15 +910,15 @@ function newShapeId(prefix) {
 
 function isProcessHorizontalLayout(schema) {
   const id = String(schema?.layout_id || schema?.layoutId || '').toLowerCase()
-  const variant = String(schema?.preview?.diagramVariant || '').toLowerCase()
-  const isProcess = /diagram_process|timeline_process_steps/.test(id)
+  const variant = String(schema?.preview?.diagramVariant || schema?.preview?.timelineVariant || '').toLowerCase()
+  const isProcess = /diagram_process|timeline_process/.test(id)
   return isProcess && (variant === 'horizontal' || id.includes('horizontal'))
 }
 
 function isProcessVerticalLayout(schema) {
   const id = String(schema?.layout_id || schema?.layoutId || '').toLowerCase()
-  const variant = String(schema?.preview?.diagramVariant || '').toLowerCase()
-  const isProcess = /diagram_process|timeline_process_steps/.test(id)
+  const variant = String(schema?.preview?.diagramVariant || schema?.preview?.timelineVariant || '').toLowerCase()
+  const isProcess = /diagram_process|timeline_process/.test(id)
   return isProcess && (variant === 'vertical' || id.includes('vertical'))
 }
 

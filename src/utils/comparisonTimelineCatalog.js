@@ -140,17 +140,17 @@ const CATALOG = {
   timeline_horizontal_v1: layoutBase('timeline_horizontal_v1', 'timeline', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Timeline', { max_lines: 2 }),
     ...milestoneSlots(4),
-  ], { mode: 'timeline_horizontal' }),
+  ], { mode: 'timeline_horizontal', timelineVariant: 'default' }),
 
   timeline_milestones_v1: layoutBase('timeline_milestones_v1', 'timeline', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Key milestones', { max_lines: 2 }),
     ...milestoneDetailSlots(4),
-  ], { mode: 'timeline_horizontal' }),
+  ], { mode: 'timeline_horizontal', timelineVariant: 'default' }),
 
   timeline_milestones_image_v1: layoutBase('timeline_milestones_image_v1', 'timeline', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Key milestones', { max_lines: 2 }),
     ...milestoneImageDetailSlots(4),
-  ], { mode: 'timeline_milestones_image' }),
+  ], { mode: 'timeline_milestones_image', timelineVariant: 'default' }),
 
   timeline_vertical_v1: layoutBase('timeline_vertical_v1', 'timeline', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Project phases', { max_lines: 2 }),
@@ -200,7 +200,7 @@ const CATALOG = {
       typography: typo('body', { fontSize: 14 }),
       max_lines: 3,
     }),
-  ], { mode: 'timeline_vertical' }),
+  ], { mode: 'timeline_vertical', timelineVariant: 'default' }),
 
   timeline_roadmap_v1: layoutBase('timeline_roadmap_v1', 'timeline', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Product roadmap', { max_lines: 2 }),
@@ -240,7 +240,7 @@ const CATALOG = {
       typography: typo('body', { fontSize: 14, align: 'center' }),
       max_lines: 3,
     }),
-  ], { mode: 'timeline_roadmap' }),
+  ], { mode: 'timeline_roadmap', timelineVariant: 'default' }),
 
   timeline_process_steps_v1: layoutBase('timeline_process_steps_v1', 'timeline', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'How it works', { max_lines: 2 }),
@@ -280,7 +280,7 @@ const CATALOG = {
       typography: typo('body', { fontSize: 14, align: 'center' }),
       max_lines: 3,
     }),
-  ], { mode: 'timeline_process_steps' }),
+  ], { mode: 'timeline_process_steps', timelineVariant: 'default' }),
 
   comparison_table_v1: layoutBase('comparison_table_v1', 'comparison', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Feature comparison', { max_lines: 2 }),
@@ -337,5 +337,33 @@ const CATALOG = {
     }),
   ]),
 }
+
+function timelineFromSource(layoutId, sourceId, timelineVariant) {
+  const source = CATALOG[sourceId]
+  if (!source?.slots?.length) {
+    throw new Error(`timelineFromSource: missing source ${sourceId}`)
+  }
+  return layoutBase(
+    layoutId,
+    'timeline',
+    JSON.parse(JSON.stringify(source.slots)),
+    { mode: source.preview?.mode, timelineVariant }
+  )
+}
+
+Object.assign(CATALOG, {
+  timeline_horizontal_nodes_v1: timelineFromSource('timeline_horizontal_nodes_v1', 'timeline_horizontal_v1', 'nodes'),
+  timeline_horizontal_cards_v1: timelineFromSource('timeline_horizontal_cards_v1', 'timeline_horizontal_v1', 'cards'),
+  timeline_milestones_image_right_v1: timelineFromSource('timeline_milestones_image_right_v1', 'timeline_milestones_image_v1', 'image_right'),
+  timeline_milestones_image_top_v1: timelineFromSource('timeline_milestones_image_top_v1', 'timeline_milestones_image_v1', 'image_top'),
+  timeline_milestones_cards_v1: timelineFromSource('timeline_milestones_cards_v1', 'timeline_milestones_v1', 'cards'),
+  timeline_milestones_path_v1: timelineFromSource('timeline_milestones_path_v1', 'timeline_milestones_v1', 'path'),
+  timeline_roadmap_horizontal_v1: timelineFromSource('timeline_roadmap_horizontal_v1', 'timeline_roadmap_v1', 'horizontal'),
+  timeline_roadmap_lanes_v1: timelineFromSource('timeline_roadmap_lanes_v1', 'timeline_roadmap_v1', 'lanes'),
+  timeline_process_horizontal_v1: timelineFromSource('timeline_process_horizontal_v1', 'timeline_process_steps_v1', 'horizontal'),
+  timeline_process_vertical_v1: timelineFromSource('timeline_process_vertical_v1', 'timeline_process_steps_v1', 'vertical'),
+  timeline_vertical_nodes_v1: timelineFromSource('timeline_vertical_nodes_v1', 'timeline_vertical_v1', 'nodes'),
+  timeline_vertical_cards_v1: timelineFromSource('timeline_vertical_cards_v1', 'timeline_vertical_v1', 'cards'),
+})
 
 export default CATALOG

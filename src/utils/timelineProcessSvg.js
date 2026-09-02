@@ -190,6 +190,183 @@ export function milestonesImageTimelineInlineSvg(count = 3, { accent = '#6366f1'
   return svgWrap(viewW, viewH, parts.join(''))
 }
 
+/** Horizontal timeline with card blocks below spine. */
+export function horizontalTimelineCardsInlineSvg(count = 4, { accent = '#6366f1', card = '#f1f5f9', spine = '#94a3b8' } = {}) {
+  const n = Math.max(2, Math.min(4, Number(count) || 4))
+  const viewW = 1000
+  const viewH = 200
+  const pad = 40
+  const usable = viewW - pad * 2
+  const colW = usable / n
+  const spineY = 32
+  const cardH = 88
+  const parts = [
+    `<rect x="${pad}" y="${spineY - 1}" width="${usable}" height="2" fill="${spine}" opacity="0.55"/>`,
+  ]
+  for (let i = 0; i < n; i += 1) {
+    const cx = pad + i * colW + colW / 2
+    const cardW = colW * 0.82
+    parts.push(`<circle cx="${cx}" cy="${spineY}" r="16" fill="${accent}"/>`)
+    parts.push(
+      `<text x="${cx}" y="${spineY + 4}" text-anchor="middle" fill="#fff" font-size="10" font-weight="800" font-family="system-ui,sans-serif">${i + 1}</text>`
+    )
+    parts.push(
+      `<rect x="${cx - cardW / 2}" y="${spineY + 22}" width="${cardW}" height="${cardH}" rx="8" fill="${card}" stroke="color-mix(in srgb, ${spine} 35%, transparent)" stroke-width="1"/>`
+    )
+  }
+  return svgWrap(viewW, viewH, parts.join(''))
+}
+
+/** Curved path timeline with milestone nodes. */
+export function milestonesPathInlineSvg(count = 4, { accent = '#6366f1', spine = '#94a3b8' } = {}) {
+  const n = Math.max(2, Math.min(4, Number(count) || 4))
+  const viewW = 1000
+  const viewH = 140
+  const pad = 48
+  const usable = viewW - pad * 2
+  const step = usable / (n - 1)
+  const parts = []
+  const points = []
+  for (let i = 0; i < n; i += 1) {
+    const x = pad + i * step
+    const y = 70 + (i % 2 === 0 ? -18 : 18)
+    points.push({ x, y })
+  }
+  if (points.length > 1) {
+    let d = `M ${points[0].x} ${points[0].y}`
+    for (let i = 1; i < points.length; i += 1) {
+      const prev = points[i - 1]
+      const cur = points[i]
+      const mx = (prev.x + cur.x) / 2
+      d += ` C ${mx} ${prev.y}, ${mx} ${cur.y}, ${cur.x} ${cur.y}`
+    }
+    parts.push(`<path d="${d}" fill="none" stroke="${spine}" stroke-width="3" stroke-linecap="round" opacity="0.7"/>`)
+  }
+  points.forEach((p, i) => {
+    parts.push(`<circle cx="${p.x}" cy="${p.y}" r="20" fill="${accent}"/>`)
+    parts.push(
+      `<text x="${p.x}" y="${p.y + 5}" text-anchor="middle" fill="#fff" font-size="12" font-weight="700" font-family="system-ui,sans-serif">${i + 1}</text>`
+    )
+  })
+  return svgWrap(viewW, viewH, parts.join(''))
+}
+
+/** Roadmap swim-lane rows. */
+export function roadmapLanesInlineSvg(count = 4, { accent = '#6366f1', lane = '#f8fafc', spine = '#94a3b8' } = {}) {
+  const n = Math.max(2, Math.min(4, Number(count) || 4))
+  const viewW = 1000
+  const viewH = 200
+  const pad = 40
+  const laneH = 44
+  const gap = 12
+  const parts = []
+  const lanes = Math.min(3, n)
+  for (let lane = 0; lane < lanes; lane += 1) {
+    const y = 16 + lane * (laneH + gap)
+    parts.push(`<rect x="${pad}" y="${y}" width="${viewW - pad * 2}" height="${laneH}" rx="8" fill="${lane}" stroke="color-mix(in srgb, ${spine} 30%, transparent)" stroke-width="1"/>`)
+    const cx = pad + 60 + lane * 120
+    parts.push(`<circle cx="${cx}" cy="${y + laneH / 2}" r="14" fill="${accent}"/>`)
+    parts.push(
+      `<text x="${cx}" y="${y + laneH / 2 + 4}" text-anchor="middle" fill="#fff" font-size="9" font-weight="800" font-family="system-ui,sans-serif">${lane + 1}</text>`
+    )
+    parts.push(`<rect x="${pad + 100}" y="${y + laneH / 2 - 1}" width="${viewW - pad * 2 - 120}" height="2" fill="${spine}" opacity="0.4"/>`)
+  }
+  return svgWrap(viewW, viewH, parts.join(''))
+}
+
+/** Milestones image split — image panel on right. */
+export function milestonesImageSplitInlineSvg(count = 3, { accent = '#6366f1', image = '#e2e8f0', spine = '#1f2937' } = {}) {
+  const n = Math.max(2, Math.min(4, Number(count) || 3))
+  const viewW = 1000
+  const viewH = 220
+  const leftW = 520
+  const pad = 32
+  const parts = [
+    `<rect x="${leftW + 24}" y="16" width="${viewW - leftW - 48}" height="${viewH - 32}" rx="12" fill="${image}" stroke="#94a3b8" stroke-width="1"/>`,
+  ]
+  const step = (leftW - pad * 2) / Math.max(1, n - 1)
+  const spineY = viewH - 56
+  for (let i = 0; i < n; i += 1) {
+    const cx = pad + i * step
+    parts.push(`<circle cx="${cx}" cy="${spineY}" r="16" fill="${accent}"/>`)
+    parts.push(
+      `<text x="${cx}" y="${spineY + 4}" text-anchor="middle" fill="#fff" font-size="10" font-weight="700" font-family="system-ui,sans-serif">${i + 1}</text>`
+    )
+  }
+  if (n > 1) {
+    parts.push(`<rect x="${pad}" y="${spineY - 2}" width="${leftW - pad * 2}" height="4" rx="2" fill="${spine}" opacity="0.75"/>`)
+  }
+  return svgWrap(viewW, viewH, parts.join(''))
+}
+
+/** Vertical timeline with card blocks along spine. */
+export function verticalTimelineCardsInlineSvg(count = 3, { accent = '#6366f1', card = '#f1f5f9', spine = '#94a3b8' } = {}) {
+  const n = Math.max(2, Math.min(4, Number(count) || 3))
+  const viewW = 200
+  const viewH = 320
+  const spineX = 28
+  const padY = 24
+  const usable = viewH - padY * 2
+  const step = usable / (n - 1)
+  const cardW = 140
+  const cardH = 52
+  const parts = [
+    `<rect x="${spineX - 1.5}" y="${padY}" width="3" height="${usable}" rx="1.5" fill="${spine}" opacity="0.7"/>`,
+  ]
+  for (let i = 0; i < n; i += 1) {
+    const cy = padY + i * step
+    parts.push(`<circle cx="${spineX}" cy="${cy}" r="16" fill="${accent}"/>`)
+    parts.push(
+      `<rect x="${spineX + 24}" y="${cy - cardH / 2}" width="${cardW}" height="${cardH}" rx="8" fill="${card}" stroke="color-mix(in srgb, ${spine} 35%, transparent)" stroke-width="1"/>`
+    )
+  }
+  return svgWrap(viewW, viewH, parts.join(''))
+}
+
+export const TIMELINE_LAYOUT_META = {
+  timeline_horizontal_v1: { family: 'horizontal', variant: 'default' },
+  timeline_horizontal_nodes_v1: { family: 'horizontal', variant: 'nodes' },
+  timeline_horizontal_cards_v1: { family: 'horizontal', variant: 'cards' },
+  timeline_milestones_v1: { family: 'milestones', variant: 'default' },
+  timeline_milestones_cards_v1: { family: 'milestones', variant: 'cards' },
+  timeline_milestones_path_v1: { family: 'milestones', variant: 'path' },
+  timeline_milestones_image_v1: { family: 'milestones_image', variant: 'default' },
+  timeline_milestones_image_right_v1: { family: 'milestones_image', variant: 'image_right' },
+  timeline_milestones_image_top_v1: { family: 'milestones_image', variant: 'image_top' },
+  timeline_roadmap_v1: { family: 'roadmap', variant: 'default' },
+  timeline_roadmap_horizontal_v1: { family: 'roadmap', variant: 'horizontal' },
+  timeline_roadmap_lanes_v1: { family: 'roadmap', variant: 'lanes' },
+  timeline_process_steps_v1: { family: 'process', variant: 'default' },
+  timeline_process_horizontal_v1: { family: 'process', variant: 'horizontal' },
+  timeline_process_vertical_v1: { family: 'process', variant: 'vertical' },
+  timeline_vertical_v1: { family: 'vertical', variant: 'default' },
+  timeline_vertical_nodes_v1: { family: 'vertical', variant: 'nodes' },
+  timeline_vertical_cards_v1: { family: 'vertical', variant: 'cards' },
+}
+
+export function resolveTimelineVariant(layoutId, preview = {}) {
+  const id = String(layoutId || '').toLowerCase()
+  if (TIMELINE_LAYOUT_META[id]) return TIMELINE_LAYOUT_META[id].variant
+  return preview?.timelineVariant || 'default'
+}
+
+export function resolveTimelineMeta(schema = {}) {
+  const layoutId = schema?.layout_id || schema?.layoutId || schema?.id || ''
+  const id = String(layoutId).toLowerCase()
+  const fromMeta = TIMELINE_LAYOUT_META[id]
+  if (fromMeta) return fromMeta
+  const variant = schema?.preview?.timelineVariant || 'default'
+  const mode = schema?.preview?.mode || ''
+  const familyByMode = {
+    timeline_horizontal: 'horizontal',
+    timeline_milestones_image: 'milestones_image',
+    timeline_roadmap: 'roadmap',
+    timeline_process_steps: 'process',
+    timeline_vertical: 'vertical',
+  }
+  return { family: familyByMode[mode] || 'horizontal', variant }
+}
+
 /** Canvas frame for horizontal timeline chrome graphic. */
 export function horizontalTimelineFrame(canvasW, canvasH, stepCount = 4) {
   const n = Math.max(2, stepCount)

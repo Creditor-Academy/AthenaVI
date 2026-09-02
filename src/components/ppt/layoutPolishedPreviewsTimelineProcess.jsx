@@ -5,11 +5,16 @@
 import { aspectRatioToCss } from '../../utils/deckPackTheme'
 import {
   horizontalTimelineInlineSvg,
+  horizontalTimelineCardsInlineSvg,
   verticalTimelineInlineSvg,
+  verticalTimelineCardsInlineSvg,
   processLinnerHortiInlineSvg,
   processLinnerNumericInlineSvg,
   roadmapTimelineInlineSvg,
+  roadmapLanesInlineSvg,
   milestonesImageTimelineInlineSvg,
+  milestonesImageSplitInlineSvg,
+  milestonesPathInlineSvg,
 } from '../../utils/timelineProcessSvg'
 
 const PREVIEW_TITLE_FS = { large: '1.75rem', small: '0.36rem' }
@@ -126,6 +131,8 @@ function StepLabels({ steps, large, count, columns }) {
 export function PolishedProcessFlowPreview({ previewHints, large, ...props }) {
   const fp = frameProps({ ...props, large })
   const heading = slotText(previewHints, 'HEADING', 'How it works')
+  const variant = previewHints.timelineVariant || 'default'
+  const isMilestones = Boolean(previewHints?.slots?.milestone_1_detail)
   const steps = resolveSteps(previewHints, [
     { title: 'Discover', body: 'Identify the problem.' },
     { title: 'Build', body: 'Design the solution.' },
@@ -133,15 +140,27 @@ export function PolishedProcessFlowPreview({ previewHints, large, ...props }) {
   ])
   const count = Math.min(steps.length, 4)
 
+  let chromeHtml = horizontalTimelineInlineSvg(count, { accent: theme.accent, spine: theme.text, showChevrons: true })
+  let chromeHeight = large ? 64 : 24
+  if (variant === 'cards' || (variant === 'default' && isMilestones)) {
+    chromeHtml = horizontalTimelineCardsInlineSvg(count, { accent: theme.accent, card: theme.card })
+    chromeHeight = large ? 100 : 38
+  } else if (variant === 'path') {
+    chromeHtml = milestonesPathInlineSvg(count, { accent: theme.accent })
+    chromeHeight = large ? 72 : 28
+  } else if (variant === 'nodes') {
+    chromeHtml = horizontalTimelineInlineSvg(count, { accent: theme.accent, spine: theme.text, showChevrons: true })
+  }
+
   return (
     <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 14 : 5 }}>
       <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 800, color: theme.text, flexShrink: 0 }}>
         {heading}
       </div>
       <SvgChrome
-        html={horizontalTimelineInlineSvg(count, { accent: theme.accent, spine: theme.text, showChevrons: true })}
+        html={chromeHtml}
         large={large}
-        style={{ height: large ? 64 : 24, margin: large ? '0 2%' : '0 1%' }}
+        style={{ height: chromeHeight, margin: large ? '0 2%' : '0 1%' }}
       />
       <StepLabels steps={steps} large={large} count={count} />
     </div>
@@ -155,6 +174,7 @@ export function PolishedTimelineHorizontalPreview(props) {
 export function PolishedTimelineRoadmapPreview({ previewHints, large, ...props }) {
   const fp = frameProps({ ...props, large })
   const heading = slotText(previewHints, 'HEADING', 'Product roadmap')
+  const variant = previewHints.timelineVariant || 'default'
   const steps = resolveSteps(previewHints, [
     { title: 'Q1', body: 'Foundation' },
     { title: 'Q2', body: 'Growth' },
@@ -162,6 +182,9 @@ export function PolishedTimelineRoadmapPreview({ previewHints, large, ...props }
     { title: 'Q4', body: 'Enterprise' },
   ])
   const count = Math.min(steps.length, 4)
+  const chromeHtml = variant === 'lanes'
+    ? roadmapLanesInlineSvg(count, { accent: theme.accent, lane: theme.card })
+    : roadmapTimelineInlineSvg(count, { accent: theme.accent, card: theme.card })
 
   return (
     <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 12 : 4 }}>
@@ -169,11 +192,11 @@ export function PolishedTimelineRoadmapPreview({ previewHints, large, ...props }
         {heading}
       </div>
       <SvgChrome
-        html={roadmapTimelineInlineSvg(count, { accent: theme.accent, card: theme.card })}
+        html={chromeHtml}
         large={large}
-        style={{ height: large ? 120 : 44 }}
+        style={{ height: large ? (variant === 'lanes' ? 100 : 120) : (variant === 'lanes' ? 38 : 44) }}
       />
-      <StepLabels steps={steps} large={large} count={count} />
+      {variant !== 'lanes' && <StepLabels steps={steps} large={large} count={count} />}
     </div>
   )
 }
@@ -181,12 +204,17 @@ export function PolishedTimelineRoadmapPreview({ previewHints, large, ...props }
 export function PolishedTimelineVerticalPreview({ previewHints, large, ...props }) {
   const fp = frameProps({ ...props, large })
   const heading = slotText(previewHints, 'HEADING', 'Project phases')
+  const variant = previewHints.timelineVariant || 'default'
   const steps = resolveSteps(previewHints, [
     { title: 'Phase 1', body: 'Discovery and planning' },
     { title: 'Phase 2', body: 'Build and iterate' },
     { title: 'Phase 3', body: 'Launch and scale' },
   ])
   const count = Math.min(steps.length, 3)
+  const useCards = variant === 'cards'
+  const spineHtml = useCards
+    ? verticalTimelineCardsInlineSvg(count, { accent: theme.accent, card: theme.card })
+    : verticalTimelineInlineSvg(count, { accent: theme.accent })
 
   return (
     <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 4 }}>
@@ -195,18 +223,20 @@ export function PolishedTimelineVerticalPreview({ previewHints, large, ...props 
       </div>
       <div style={{ flex: 1, display: 'flex', gap: large ? 16 : 6, minHeight: 0 }}>
         <SvgChrome
-          html={verticalTimelineInlineSvg(count, { accent: theme.accent })}
+          html={spineHtml}
           large={large}
-          style={{ width: large ? 56 : 22, height: '100%', flexShrink: 0 }}
+          style={{ width: useCards ? (large ? 120 : 44) : (large ? 56 : 22), height: '100%', flexShrink: 0 }}
         />
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-around', gap: large ? 8 : 3 }}>
-          {steps.slice(0, count).map((step, i) => (
-            <div key={i}>
-              <div style={{ fontSize: large ? '0.75rem' : '0.28rem', fontWeight: 700, color: theme.text }}>{step.title}</div>
-              <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : PREVIEW_CAPTION_FS.small, color: theme.muted }}>{step.body}</div>
-            </div>
-          ))}
-        </div>
+        {!useCards && (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-around', gap: large ? 8 : 3 }}>
+            {steps.slice(0, count).map((step, i) => (
+              <div key={i}>
+                <div style={{ fontSize: large ? '0.75rem' : '0.28rem', fontWeight: 700, color: theme.text }}>{step.title}</div>
+                <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : PREVIEW_CAPTION_FS.small, color: theme.muted }}>{step.body}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -215,12 +245,46 @@ export function PolishedTimelineVerticalPreview({ previewHints, large, ...props 
 export function PolishedTimelineMilestonesImagePreview({ previewHints, large, ...props }) {
   const fp = frameProps({ ...props, large })
   const heading = slotText(previewHints, 'HEADING', 'Key milestones')
+  const variant = previewHints.timelineVariant || 'default'
   const steps = resolveSteps(previewHints, [
     { title: 'Start', body: 'Kickoff' },
     { title: 'Build', body: 'Ship MVP' },
     { title: 'Grow', body: 'Scale' },
   ])
   const count = Math.min(steps.length, 3)
+
+  if (variant === 'image_right') {
+    return (
+      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 4 }}>
+        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 800, color: theme.text, flexShrink: 0 }}>
+          {heading}
+        </div>
+        <SvgChrome
+          html={milestonesImageSplitInlineSvg(count, { accent: theme.accent })}
+          large={large}
+          style={{ height: large ? 120 : 46 }}
+        />
+        <StepLabels steps={steps} large={large} count={count} columns="1fr 1fr 1fr" />
+      </div>
+    )
+  }
+
+  if (variant === 'image_top') {
+    return (
+      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 4 }}>
+        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 800, color: theme.text, flexShrink: 0 }}>
+          {heading}
+        </div>
+        <div style={{ height: large ? 48 : 18, background: theme.card, borderRadius: large ? 8 : 3, marginBottom: large ? 4 : 2 }} />
+        <SvgChrome
+          html={horizontalTimelineInlineSvg(count, { accent: theme.accent, spine: theme.text, showChevrons: false })}
+          large={large}
+          style={{ height: large ? 48 : 20 }}
+        />
+        <StepLabels steps={steps} large={large} count={count} />
+      </div>
+    )
+  }
 
   return (
     <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 4 }}>
@@ -238,6 +302,13 @@ export function PolishedTimelineMilestonesImagePreview({ previewHints, large, ..
 }
 
 export function PolishedTimelineProcessStepsPreview({ previewHints, large, ...props }) {
+  const variant = previewHints.timelineVariant || 'default'
+  if (variant === 'horizontal') {
+    return <PolishedProcessLinnerHortiPreview previewHints={previewHints} large={large} {...props} />
+  }
+  if (variant === 'vertical') {
+    return <PolishedTimelineVerticalPreview previewHints={{ ...previewHints, timelineVariant: 'nodes' }} large={large} {...props} />
+  }
   return <PolishedProcessFlowPreview previewHints={previewHints} large={large} {...props} />
 }
 
