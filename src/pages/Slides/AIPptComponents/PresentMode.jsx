@@ -175,7 +175,12 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
       const frameColor = resolveDeviceFrameColor(c, palette)
       return (
         <div style={style}>
-          <DeviceFrameVisual kind={deviceKind} src={screenSrc} frameColor={frameColor} />
+          <DeviceFrameVisual
+            kind={deviceKind}
+            src={c.layoutSurface ? undefined : screenSrc}
+            chromeOnly={Boolean(c.layoutSurface)}
+            frameColor={frameColor}
+          />
         </div>
       )
     }

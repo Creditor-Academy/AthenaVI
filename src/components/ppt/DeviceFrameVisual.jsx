@@ -54,7 +54,10 @@ function buildFrameTheme(frameColor = DEFAULT_FRAME) {
   }
 }
 
-function ScreenPlaceholder({ src, style }) {
+function ScreenPlaceholder({ src, style, chromeOnly = false, fill = '#0f172a' }) {
+  if (chromeOnly) {
+    return <div style={{ width: '100%', height: '100%', background: fill, ...style }} />
+  }
   if (src) {
     return (
       <img
@@ -82,9 +85,56 @@ function ScreenPlaceholder({ src, style }) {
 }
 
 /** Narrow portrait phone — rounded, dynamic island, home indicator. */
-function PhoneFrame({ landscape = false, src, compact = false, theme }) {
-  const border = compact ? 3 : 6
-  const radius = landscape ? (compact ? 10 : 16) : (compact ? 18 : 28)
+function PhoneFrame({ landscape = false, src, compact = false, theme, chromeOnly = false }) {
+  if (landscape) {
+    const border = compact ? 4 : 12
+    const radius = compact ? 14 : 34
+    return (
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          borderRadius: radius,
+          border: `${border}px solid ${theme.frameOuter}`,
+          background: theme.frameOuter,
+          overflow: 'hidden',
+          boxShadow: compact
+            ? '0 4px 14px rgba(15,23,42,0.16)'
+            : '0 22px 54px rgba(15,23,42,0.22), 0 4px 12px rgba(15,23,42,0.12)',
+          boxSizing: 'border-box',
+          position: 'relative',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            left: compact ? 4 : 7,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: compact ? 3 : 5,
+            height: compact ? '20%' : '15%',
+            borderRadius: 99,
+            background: theme.camera,
+            zIndex: 3,
+            pointerEvents: 'none',
+          }}
+        />
+        <div
+          style={{
+            width: '100%',
+            height: '100%',
+            borderRadius: Math.max(6, radius - border),
+            overflow: 'hidden',
+          }}
+        >
+          <ScreenPlaceholder src={src} chromeOnly={chromeOnly} fill={theme.frameOuter} />
+        </div>
+      </div>
+    )
+  }
+
+  const border = compact ? 3 : 8
+  const radius = compact ? 16 : 28
 
   return (
     <div
@@ -93,70 +143,59 @@ function PhoneFrame({ landscape = false, src, compact = false, theme }) {
         height: '100%',
         borderRadius: radius,
         border: `${border}px solid ${theme.frameOuter}`,
-        outline: `${compact ? 1.5 : 3}px solid ${theme.frame}`,
-        outlineOffset: compact ? -1 : -2,
-        background: theme.bezel,
+        background: theme.frameOuter,
         overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        boxShadow: compact ? '0 2px 8px rgba(15,23,42,0.12)' : '0 8px 24px rgba(15,23,42,0.18)',
+        boxShadow: compact
+          ? '0 4px 14px rgba(15,23,42,0.16)'
+          : 'inset 0 0 0 1px rgba(226,232,240,0.28), 0 28px 64px rgba(15,23,42,0.18), 0 8px 18px rgba(15,23,42,0.08)',
         boxSizing: 'border-box',
         position: 'relative',
       }}
     >
-      {!landscape && (
-        <div
-          style={{
-            position: 'absolute',
-            top: compact ? 5 : 10,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            width: compact ? '24%' : '28%',
-            height: compact ? 3 : 6,
-            borderRadius: 99,
-            background: theme.camera,
-            zIndex: 2,
-          }}
-        />
-      )}
-      {!landscape && <div style={{ height: compact ? 8 : 14, flexShrink: 0 }} />}
       <div
         style={{
-          flex: 1,
-          minHeight: 0,
+          position: 'absolute',
+          top: compact ? 6 : 10,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: compact ? '26%' : '30%',
+          height: compact ? 4 : 7,
+          borderRadius: 99,
+          background: theme.camera,
+          zIndex: 3,
+          pointerEvents: 'none',
+        }}
+      />
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          borderRadius: Math.max(8, radius - border),
           overflow: 'hidden',
-          margin: landscape ? (compact ? '6px 8px' : '10px 14px') : (compact ? '0 5px' : '0 8px'),
-          borderRadius: landscape ? (compact ? 4 : 8) : (compact ? 6 : 10),
         }}
       >
-        <ScreenPlaceholder src={src} />
+        <ScreenPlaceholder src={src} chromeOnly={chromeOnly} fill={theme.frameOuter} />
       </div>
-      {!landscape && (
-        <div
-          style={{
-            height: compact ? 8 : 14,
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <div
-            style={{
-              width: compact ? '22%' : '26%',
-              height: compact ? 2 : 4,
-              borderRadius: 99,
-              background: theme.home,
-            }}
-          />
-        </div>
-      )}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: compact ? 5 : 8,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: compact ? '28%' : '30%',
+          height: compact ? 3 : 5,
+          borderRadius: 99,
+          background: 'rgba(255,255,255,0.35)',
+          zIndex: 3,
+          pointerEvents: 'none',
+        }}
+      />
     </div>
   )
 }
 
 /** Wider tablet — squarer corners, front camera dot, no home bar. */
-function TabletFrame({ landscape = false, src, compact = false, theme }) {
+function TabletFrame({ landscape = false, src, compact = false, theme, chromeOnly = false }) {
   const border = compact ? 2.5 : 5
   const radius = compact ? 6 : 12
 
@@ -202,13 +241,13 @@ function TabletFrame({ landscape = false, src, compact = false, theme }) {
           borderRadius: compact ? 3 : 6,
         }}
       >
-        <ScreenPlaceholder src={src} />
+        <ScreenPlaceholder src={src} chromeOnly={chromeOnly} />
       </div>
     </div>
   )
 }
 
-function LaptopFrame({ src, compact = false, theme }) {
+function LaptopFrame({ src, compact = false, theme, chromeOnly = false }) {
   const border = compact ? 3 : 6
   return (
     <div
@@ -240,7 +279,7 @@ function LaptopFrame({ src, compact = false, theme }) {
       >
         <div style={{ height: compact ? 5 : 10, background: theme.bar, flexShrink: 0 }} />
         <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
-          <ScreenPlaceholder src={src} />
+          <ScreenPlaceholder src={src} chromeOnly={chromeOnly} />
         </div>
       </div>
       <div
@@ -258,7 +297,7 @@ function LaptopFrame({ src, compact = false, theme }) {
   )
 }
 
-function MonitorFrame({ src, compact = false, theme }) {
+function MonitorFrame({ src, compact = false, theme, chromeOnly = false }) {
   const border = compact ? 3 : 8
   return (
     <div
@@ -288,7 +327,7 @@ function MonitorFrame({ src, compact = false, theme }) {
           boxSizing: 'border-box',
         }}
       >
-        <ScreenPlaceholder src={src} />
+        <ScreenPlaceholder src={src} chromeOnly={chromeOnly} />
       </div>
       <div
         style={{
@@ -303,43 +342,59 @@ function MonitorFrame({ src, compact = false, theme }) {
   )
 }
 
-function WatchFrame({ src, compact = false, theme }) {
+function WatchFrame({ src, compact = false, theme, chromeOnly = false }) {
+  const strapW = compact ? '30%' : '32%'
   return (
     <div
       style={{
         width: '100%',
         height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         position: 'relative',
         boxSizing: 'border-box',
       }}
     >
       <div
         style={{
-          width: '72%',
-          height: '88%',
-          borderRadius: compact ? 10 : 18,
-          border: `${compact ? 2 : 3}px solid ${theme.frameOuter}`,
-          outline: `${compact ? 1 : 2}px solid ${theme.frame}`,
+          position: 'absolute',
+          left: '50%',
+          top: '3%',
+          transform: 'translateX(-50%)',
+          width: strapW,
+          height: '94%',
+          background: theme.frameOuter,
+          borderRadius: compact ? 6 : 12,
+          zIndex: 0,
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          left: '50%',
+          top: '23%',
+          transform: 'translateX(-50%)',
+          width: compact ? '78%' : '76%',
+          height: compact ? '54%' : '54%',
+          borderRadius: compact ? 12 : 20,
+          border: `${compact ? 2 : 4}px solid ${theme.frameOuter}`,
           background: theme.bezel,
           overflow: 'hidden',
           boxShadow: compact ? '0 2px 6px rgba(0,0,0,0.08)' : '0 4px 12px rgba(15,23,42,0.14)',
           boxSizing: 'border-box',
+          zIndex: 1,
         }}
       >
-        <ScreenPlaceholder src={src} style={{ borderRadius: compact ? 6 : 10 }} />
+        <ScreenPlaceholder src={src} chromeOnly={chromeOnly} style={{ borderRadius: compact ? 6 : 12 }} />
       </div>
       <div
         style={{
           position: 'absolute',
-          right: compact ? '8%' : '10%',
-          top: '38%',
-          width: compact ? 3 : 5,
-          height: compact ? 8 : 14,
+          right: compact ? '4%' : '6%',
+          top: '46%',
+          width: compact ? 3 : 6,
+          height: compact ? 10 : 16,
           borderRadius: 2,
           background: theme.frame,
+          zIndex: 2,
         }}
       />
     </div>
@@ -362,6 +417,7 @@ export default function DeviceFrameVisual({
   src,
   frameColor = DEFAULT_FRAME,
   compact = false,
+  chromeOnly = false,
   className = '',
   style = {},
 }) {
@@ -369,7 +425,7 @@ export default function DeviceFrameVisual({
   const Render = FRAME_RENDERERS[kind] || FRAME_RENDERERS.phone
   return (
     <div className={className} style={{ width: '100%', height: '100%', ...style }}>
-      <Render src={src} compact={compact} theme={theme} />
+      <Render src={src} compact={compact} chromeOnly={chromeOnly} theme={theme} />
     </div>
   )
 }

@@ -403,7 +403,7 @@ export function inferPreviewMode(schema) {
     const layoutKey = String(layoutId || '').toLowerCase()
     if (ids.includes('WATCH_IMAGE')) return 'device_multi_cluster'
     if (ids.includes('DEVICE_IMAGE_3') || layoutKey.includes('triple')) return 'device_phone_triple'
-    if (ids.includes('CALLOUT_L_HEADING') || layoutKey.includes('highlights')) return 'device_phone_highlights'
+    if (ids.includes('FEATURE_L1_HEADING') || ids.includes('CALLOUT_L_HEADING') || layoutKey.includes('highlights')) return 'device_phone_highlights'
     if (ids.includes('LAPTOP_IMAGE') || layoutKey.includes('laptop')) return 'device_laptop_split'
     if (ids.includes('TABLET_IMAGE') || (layoutKey.includes('tablet') && ids.includes('BODY'))) return 'device_tablet_split'
     if (layoutKey.includes('tablet') && ids.includes('HEADING') && !ids.includes('BODY')) return 'device_tablet_centered'
@@ -820,16 +820,11 @@ function fillPreviewDataFromSlots(schema) {
     preview.bodyText = preview.bodyText ?? slotPlaceholderText(slots, 'BODY')
   }
   if (mode === 'device_phone_highlights') {
-    preview.callouts = [
-      {
-        heading: slotPlaceholderText(slots, 'CALLOUT_L_HEADING') || 'A highlight feature',
-        body: slotPlaceholderText(slots, 'CALLOUT_L_BODY') || 'Say something about it here.',
-      },
-      {
-        heading: slotPlaceholderText(slots, 'CALLOUT_R_HEADING') || 'Another highlight',
-        body: slotPlaceholderText(slots, 'CALLOUT_R_BODY') || 'Say something about it here.',
-      },
-    ]
+    preview.heading = slotPlaceholderText(slots, 'HEADING') || 'Highlights that matter'
+    preview.callouts = ['L1', 'L2', 'L3', 'R1', 'R2', 'R3'].map((key) => ({
+      heading: slotPlaceholderText(slots, `FEATURE_${key}_HEADING`) || `Title 0${key === 'L1' ? 1 : key === 'L2' ? 2 : key === 'L3' ? 3 : key === 'R1' ? 4 : key === 'R2' ? 5 : 6}`,
+      body: slotPlaceholderText(slots, `FEATURE_${key}_BODY`) || `Description 0${key === 'L1' ? 1 : key === 'L2' ? 2 : key === 'L3' ? 3 : key === 'R1' ? 4 : key === 'R2' ? 5 : 6}`,
+    }))
   }
   if (mode === 'team_by_department' && !Array.isArray(preview.departments)) {
     preview.departments = [1, 2, 3].map((n) => ({

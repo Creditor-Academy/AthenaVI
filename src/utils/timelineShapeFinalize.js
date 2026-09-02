@@ -75,6 +75,9 @@ import {
   quoteStatementLeftGeom,
   quoteAttributionSplitGeom,
 } from './quoteGridLayout'
+import { isDevicePhoneHighlightsLayout, layoutDevicePhoneHighlights } from './devicePhoneHighlightsLayout'
+import { isDevicePhoneTripleLayout, layoutDevicePhoneTriple } from './devicePhoneTripleLayout'
+import { isDeviceMultiClusterLayout, layoutDeviceMultiCluster } from './deviceMultiClusterLayout'
 import {
   timelineNodeInlineSvg,
   timelineSpineSegmentInlineSvg,
@@ -5165,6 +5168,15 @@ export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = 
   }
   if (isDiagramVennLayout(layoutId)) {
     return layoutDiagramVenn(elements, schema, palette, canvas)
+  }
+  if (isDevicePhoneHighlightsLayout(layoutId)) {
+    return layoutDevicePhoneHighlights(elements, schema, palette, canvas)
+  }
+  if (isDevicePhoneTripleLayout(layoutId)) {
+    return layoutDevicePhoneTriple(elements, schema, palette, canvas)
+  }
+  if (isDeviceMultiClusterLayout(layoutId)) {
+    return layoutDeviceMultiCluster(elements, schema, palette, canvas)
   }
   if (isQuoteGridLayout(layoutId)) {
     return layoutQuoteGrid(elements, schema, palette, canvas)
