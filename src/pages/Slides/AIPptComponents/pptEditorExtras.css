@@ -1174,3 +1174,88 @@
   padding: 0 !important;
   background: #ffffff !important;
 }
+
+.ppt-el-ctx-menu {
+  position: fixed;
+  z-index: 9800;
+  min-width: 220px;
+  padding: 6px 0;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
+}
+
+.ppt-el-ctx-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: #0f172a;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ppt-el-ctx-item:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.ppt-el-ctx-item:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ppt-el-ctx-item.is-danger {
+  color: #b91c1c;
+}
+
+.ppt-el-ctx-item kbd {
+  font-size: 11px;
+  font-weight: 500;
+  color: #94a3b8;
+  background: none;
+}
+
+.ppt-el-ctx-sep {
+  height: 1px;
+  margin: 4px 0;
+  background: #e2e8f0;
+}
+
+.ppt-el-ctx-sub {
+  position: relative;
+}
+
+.ppt-el-ctx-sub-trigger {
+  width: 100%;
+}
+
+.ppt-el-ctx-sub-trigger svg {
+  flex-shrink: 0;
+  color: #94a3b8;
+}
+
+.ppt-el-ctx-sub-panel {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 100%;
+  margin-left: 4px;
+  min-width: 148px;
+  padding: 6px 0;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
+  z-index: 1;
+}
+
+.ppt-el-ctx-sub:hover:not(.is-disabled) .ppt-el-ctx-sub-panel,
+.ppt-el-ctx-sub:focus-within:not(.is-disabled) .ppt-el-ctx-sub-panel {
+  display: block;
+}

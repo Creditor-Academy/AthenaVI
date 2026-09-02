@@ -27,6 +27,7 @@ import SharePresentationModal from './SharePresentationModal'
 import ExportPresentationModal from './ExportPresentationModal'
 import ImageCropModal from './ImageCropModal'
 import PptQuickMenu from './PptQuickMenu'
+import PptElementContextMenu from './PptElementContextMenu'
 import SlideEditAiPanel from './SlideEditAiPanel'
 import MinimapSlideCard from './MinimapSlideCard'
 import MinimapInsertGap from './MinimapInsertGap'
@@ -35,6 +36,12 @@ import PptDeckOpenBoot from './PptDeckOpenBoot'
 import { usePptEditorHistory } from '../../../hooks/usePptEditorHistory'
 import { usePptElementMutations } from './usePptElementMutations'
 import { computePptSmartGuides } from '../../../utils/pptSmartGuides'
+import {
+  canPptGroup,
+  canPptUngroup,
+  collectPptMoveIds,
+  isPptGroup,
+} from '../../../utils/pptGroupUtils'
 import { exceedsDragThreshold } from '../../../utils/pointerDrag'
 import {
   normalizeAngle,
@@ -141,6 +148,20 @@ function createdSlideIdFromPayload(payload) {
     payload?._id ||
     null
   )
+}
+
+function normalizePlacementPatches(elementIdOrPatches, placement) {
+  if (
+    elementIdOrPatches &&
+    typeof elementIdOrPatches === 'object' &&
+    placement == null
+  ) {
+    return elementIdOrPatches
+  }
+  if (typeof elementIdOrPatches === 'string' && placement) {
+    return { [elementIdOrPatches]: placement }
+  }
+  return {}
 }
 
 const TEXT_BORDER_DRAG_PX = 8
@@ -348,6 +369,8 @@ function InteractiveElementShell({
   canvasW,
   canvasH,
   selected,
+  isPrimary = false,
+  selectedIds = [],
   editable,
   locked,
   editing,
@@ -355,6 +378,7 @@ function InteractiveElementShell({
   chromeHost,
   allElements,
   onSelect,
+  onContextMenu,
   onPlacementLive,
   onPlacementCommit,
   onGuidesChange,
@@ -367,6 +391,7 @@ function InteractiveElementShell({
   const dragRef = useRef(null)
   const shellRef = useRef(null)
   const lastPlacementRef = useRef(null)
+  const lastPatchesRef = useRef(null)
   const isText = isTextElement(el)
   const isImageSlot = el.type === 'image'
   const isDeviceFrame = isPptDeviceFrameElement(el)
@@ -448,7 +473,30 @@ function InteractiveElementShell({
       }
 
       lastPlacementRef.current = next
-      onPlacementLive?.(el.id, next)
+      const patches = { [el.id]: next }
+      if (drag.mode === 'move' && drag.moveIds?.length) {
+        const primaryStart = drag.startPlacement
+        const totalDx = next.x - (primaryStart.x || 0)
+        const totalDy = next.y - (primaryStart.y || 0)
+        for (const id of drag.moveIds) {
+          if (id === el.id) continue
+          const startP = drag.startPlacements?.[id]
+          if (!startP) continue
+          let nx = startP.x + totalDx
+          let ny = startP.y + totalDy
+          ;({ x: nx, y: ny } = clampPlacementOverflow(
+            nx,
+            ny,
+            startP.width || 40,
+            startP.height || 40,
+            canvasW,
+            canvasH
+          ))
+          patches[id] = { ...startP, x: nx, y: ny }
+        }
+      }
+      lastPatchesRef.current = patches
+      onPlacementLive?.(patches)
     }
 
     const onUp = (e) => {
@@ -466,7 +514,7 @@ function InteractiveElementShell({
       onGuidesChange?.([])
       setRotateBadge(null)
       if (!drag.moved) return
-      onPlacementCommit?.(el.id, lastPlacementRef.current || drag.startPlacement)
+      onPlacementCommit?.(lastPatchesRef.current || { [el.id]: lastPlacementRef.current || drag.startPlacement })
     }
 
     window.addEventListener('pointermove', onMove)
@@ -478,7 +526,7 @@ function InteractiveElementShell({
       window.removeEventListener('pointercancel', onUp)
       unlockDragCursor()
     }
-  }, [canvasW, canvasH, el.id, allElements, locked, isText, onGuidesChange, onPlacementCommit, onPlacementLive, stageRef])
+  }, [canvasW, canvasH, el.id, allElements, locked, isText, onGuidesChange, onPlacementCommit, onPlacementLive, stageRef, selectedIds])
 
   const beginDrag = (e, mode, handle = null) => {
     if (!editable || !selected || !stageRef?.current || locked || editing) return
@@ -500,6 +548,23 @@ function InteractiveElementShell({
       opacity: p.opacity != null ? p.opacity : 1,
     }
     lastPlacementRef.current = startPlacement
+    const moveIds =
+      mode === 'move' ? collectPptMoveIds(allElements || [], selectedIds, el.id) : [el.id]
+    const startPlacements = {}
+    for (const id of moveIds) {
+      const item = (allElements || []).find((itemEl) => itemEl.id === id)
+      const ip = item?.placement || (id === el.id ? startPlacement : null)
+      if (!ip) continue
+      startPlacements[id] = {
+        x: ip.x || 0,
+        y: ip.y || 0,
+        width: ip.width || 100,
+        height: ip.height || 40,
+        rotation: ip.rotation || 0,
+        opacity: ip.opacity != null ? ip.opacity : 1,
+      }
+    }
+    lastPatchesRef.current = { [el.id]: startPlacement }
     const cursor =
       mode === 'resize' ? resizeCursorForHandle(handle) : mode === 'rotate' ? 'grabbing' : 'move'
     lockDragCursor(cursor)
@@ -519,6 +584,8 @@ function InteractiveElementShell({
       startClientX: e.clientX,
       startClientY: e.clientY,
       startPlacement,
+      startPlacements,
+      moveIds,
       moved: mode === 'resize' || mode === 'rotate',
       captureTarget: e.currentTarget,
       centerX,
@@ -607,19 +674,23 @@ function InteractiveElementShell({
     overflow: 'visible',
     outline: 'none',
     ...(paintHitGraphic ? { pointerEvents: 'none' } : null),
+    ...(el.type === 'group' ? { pointerEvents: 'none', background: 'transparent' } : null),
     ...((p.opacity ?? 1) === 0 || ((p.width || 0) <= 2 && (p.height || 0) <= 2)
       ? { pointerEvents: 'none' }
       : null),
   }
 
-  const showChrome = selected && editable && !locked && !editing
+  const inSelectedGroup = Boolean(el.groupId && selectedIds.includes(el.groupId))
+  const isGroupEl = el.type === 'group'
+  const showChrome = selected && editable && !locked && !editing && isPrimary && !inSelectedGroup
+  const showOutline = selected && !editing && !showChrome && !inSelectedGroup && !isGroupEl
   const chromeFrameStyle = {
     ...placementFrameStyle(p, canvasW, canvasH, {
       layer: (el.layer || 0) + 1000,
       rotation: p.rotation,
       opacity: 1,
     }),
-    outline: '2px solid #3B82F6',
+    outline: isPrimary && !locked ? '2px solid #3B82F6' : '2px solid #93c5fd',
     outlineOffset: 2,
     pointerEvents: 'none',
   }
@@ -669,18 +740,25 @@ function InteractiveElementShell({
       style={frameStyle}
       onClick={(e) => {
         e.stopPropagation()
-        onSelect?.(el.id)
+        onSelect?.(el.id, e)
       }}
       onDoubleClick={(e) => {
         if (!editable || locked || !isText) return
+        if (e.shiftKey || e.ctrlKey || e.metaKey) return
         e.stopPropagation()
-        onSelect?.(el.id)
+        onSelect?.(el.id, e)
         onStartTextEdit?.(el.id)
+      }}
+      onContextMenu={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+        onContextMenu?.(el.id, e)
       }}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onPointerDown={(e) => {
+        if (e.button === 2) return
         if (!editable || !selected || editing) return
         if (e.target.closest?.('.ppt-canvas-el-resize, .ppt-text-drag, .ppt-canvas-el-rotate')) return
         if (isText) return
@@ -731,7 +809,7 @@ function InteractiveElementShell({
       )}
       {/* Fallback handles when chrome host is unavailable */}
       {showChrome && !chromeHost ? handlesNode : null}
-      {showChrome &&
+      {(showChrome || showOutline) &&
         chromeHost &&
         createPortal(
           <div
@@ -743,6 +821,9 @@ function InteractiveElementShell({
           </div>,
           chromeHost
         )}
+      {showOutline && !chromeHost ? (
+        <div className="ppt-canvas-el-chrome" data-chrome-for={el.id} style={chromeFrameStyle} />
+      ) : null}
       {rotateBadge &&
         createPortal(
           <div
@@ -762,10 +843,12 @@ function SlideStage({
   themeVisual,
   aspectRatio,
   selectedElementId,
+  selectedElementIds = [],
   editingTextId,
   editable = false,
   smartGuides = [],
   onSelectElement,
+  onContextMenuElement,
   onPlacementLive,
   onPlacementCommit,
   onGuidesChange,
@@ -780,6 +863,12 @@ function SlideStage({
   const stageRef = useRef(null)
   const [chromeHost, setChromeHost] = useState(null)
   const canvas = resolveCanvasSize(slide, aspectRatio)
+  const selectedIds =
+    selectedElementIds?.length
+      ? selectedElementIds
+      : selectedElementId
+        ? [selectedElementId]
+        : []
   const elements = (slide?.elements?.elements || []).filter(
     (el) =>
       !isSlideBackgroundElement(el, slide) &&
@@ -815,6 +904,10 @@ function SlideStage({
           return
         }
         onSelectElement?.(null)
+      }}
+      onContextMenu={(e) => {
+        if (e.target.closest?.('[data-element-id]')) return
+        e.preventDefault()
       }}
     >
       <div className="aig-slide-stage-clip" style={slideBgStyle}>
@@ -869,7 +962,12 @@ function SlideStage({
                 el={el}
                 canvasW={canvas.width}
                 canvasH={canvas.height}
-                selected={selectedElementId === el.id}
+                selected={
+                  selectedIds.includes(el.id) ||
+                  Boolean(el.groupId && selectedIds.includes(el.groupId))
+                }
+                isPrimary={selectedElementId === el.id}
+                selectedIds={selectedIds}
                 editable={editable}
                 locked={!!el.locked}
                 editing={editingTextId === el.id}
@@ -877,6 +975,7 @@ function SlideStage({
                 chromeHost={chromeHost}
                 allElements={elements}
                 onSelect={onSelectElement}
+                onContextMenu={onContextMenuElement}
                 onStartTextEdit={onStartTextEdit}
                 onPlacementLive={onPlacementLive}
                 onPlacementCommit={onPlacementCommit}
@@ -887,7 +986,10 @@ function SlideStage({
                 <PptCanvasElement
                   el={el}
                   palette={palette}
-                  selected={selectedElementId === el.id}
+                  selected={
+                    selectedIds.includes(el.id) ||
+                    Boolean(el.groupId && selectedIds.includes(el.groupId))
+                  }
                   canvasW={canvas.width}
                   showEmptyTextHint={showEmptyTextHint}
                   editable={
@@ -945,7 +1047,7 @@ function SlideStage({
       <div
         ref={setChromeHost}
         className="aig-slide-stage-chrome"
-        aria-hidden={!selectedElementId}
+        aria-hidden={!selectedIds.length}
       />
     </div>
   )
@@ -1027,6 +1129,7 @@ export default function AIPptEditor({
     bodySize: 22,
   })
   const [multiSelectIds, setMultiSelectIds] = useState([])
+  const [elementContextMenu, setElementContextMenu] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [layoutSchemaMap, setLayoutSchemaMap] = useState({})
   const brandKitMenuRef = useRef(null)
@@ -1038,6 +1141,7 @@ export default function AIPptEditor({
   const localSlidesRef = useRef(localSlides)
   const selectedSlideIdRef = useRef(null)
   const selectedElementIdRef = useRef(null)
+  const multiSelectIdsRef = useRef([])
   const elementMutationsRef = useRef(null)
   const imageRefreshInFlight = useRef(new Set())
   const layoutRepairPassRef = useRef('')
@@ -1064,6 +1168,10 @@ export default function AIPptEditor({
   useEffect(() => {
     selectedElementIdRef.current = selectedElementId
   }, [selectedElementId])
+
+  useEffect(() => {
+    multiSelectIdsRef.current = multiSelectIds
+  }, [multiSelectIds])
 
   useEffect(() => {
     history.reset()
@@ -1146,6 +1254,15 @@ export default function AIPptEditor({
     localSlides.find((s) => s.id === selectedSlideId) || localSlides[0] || null
   const selectedElement =
     selectedSlide?.elements?.elements?.find((el) => el.id === selectedElementId) || null
+  const canvasSelectionIds = multiSelectIds.length
+    ? multiSelectIds
+    : [selectedElementId].filter(Boolean)
+  const canvasElements = selectedSlide?.elements?.elements || []
+  const canGroupSelection = canPptGroup(canvasElements, canvasSelectionIds)
+  const canUngroupSelection = canPptUngroup(canvasElements, canvasSelectionIds)
+  const selectionLocked =
+    canvasSelectionIds.length > 0 &&
+    canvasSelectionIds.every((id) => Boolean(canvasElements.find((el) => el.id === id)?.locked))
   const pendingDeleteSlide = localSlides.find((s) => s.id === deleteSlideId) || null
   const pendingDeleteTitle =
     pendingDeleteSlide?.title || pendingDeleteSlide?.content?.title || ''
@@ -1199,6 +1316,74 @@ export default function AIPptEditor({
     0,
     localSlides.findIndex((s) => s.id === (selectedSlideId || selectedSlide?.id))
   )
+  const selectCanvasElement = useCallback((slideId, id, event) => {
+    if (viewOnly) return
+    if (slideId && slideId !== selectedSlideIdRef.current) {
+      setSelectedSlideId(slideId)
+    }
+    setElementContextMenu(null)
+    if (!id) {
+      setSelectedElementId(null)
+      setMultiSelectIds((prev) => (prev.length ? [] : prev))
+      setEditingTextId(null)
+      return
+    }
+    const additive = !!(event?.shiftKey || event?.ctrlKey || event?.metaKey)
+    const slide =
+      localSlidesRef.current.find((s) => s.id === slideId) ||
+      localSlidesRef.current.find((s) => s.id === selectedSlideIdRef.current)
+    const els = slide?.elements?.elements || []
+    const clicked = els.find((e) => e.id === id)
+    const targetId = !additive && clicked?.groupId ? clicked.groupId : id
+
+    if (additive) {
+      setMultiSelectIds((prev) => {
+        const curPrimary = selectedElementIdRef.current
+        const base = prev.length ? prev : curPrimary ? [curPrimary] : []
+        if (base.includes(targetId)) {
+          const next = base.filter((x) => x !== targetId)
+          setSelectedElementId(next[next.length - 1] || null)
+          return next
+        }
+        setSelectedElementId(targetId)
+        return [...base, targetId]
+      })
+      setEditingTextId(null)
+      return
+    }
+
+    const currentMulti = multiSelectIdsRef.current
+    const alreadySingle =
+      selectedElementIdRef.current === targetId &&
+      (currentMulti.length === 0 ||
+        (currentMulti.length === 1 && currentMulti[0] === targetId))
+    if (alreadySingle) return
+
+    setSelectedElementId(targetId)
+    setMultiSelectIds([targetId])
+    setEditingTextId((prev) => (prev === targetId ? prev : null))
+  }, [viewOnly])
+
+  const openElementContextMenu = useCallback((slideId, id, event) => {
+    if (viewOnly || !id || !event) return
+    const els =
+      (localSlidesRef.current.find((s) => s.id === slideId)?.elements?.elements || [])
+    const clicked = els.find((e) => e.id === id)
+    const targetId = clicked?.groupId ? clicked.groupId : id
+    const current = multiSelectIdsRef.current.length
+      ? multiSelectIdsRef.current
+      : [selectedElementIdRef.current].filter(Boolean)
+    if (!current.includes(targetId) && !current.includes(id)) {
+      setSelectedSlideId(slideId)
+      setSelectedElementId(targetId)
+      setMultiSelectIds([targetId])
+      setEditingTextId(null)
+    } else if (slideId) {
+      setSelectedSlideId(slideId)
+    }
+    setElementContextMenu({ x: event.clientX, y: event.clientY, slideId })
+  }, [viewOnly])
+
   const askOwner = useCallback(() => {
     if (viewOnly) setViewOnlyNotice(true)
   }, [viewOnly])
@@ -1578,6 +1763,7 @@ export default function AIPptEditor({
     selectedSlideId,
     selectedElementId,
     setSelectedElementId,
+    setMultiSelectIds,
     aspectRatio,
     workspaceId,
     presentationId,
@@ -1674,7 +1860,7 @@ export default function AIPptEditor({
           break
         case 'duplicate':
           if (viewOnly) { askOwner(); break }
-          elementMutations.duplicateElement()
+          elementMutations.duplicateElement(ids)
           break
         case 'copy':
           if (viewOnly) { askOwner(); break }
@@ -1699,11 +1885,11 @@ export default function AIPptEditor({
           break
         case 'ungroup':
           if (viewOnly) { askOwner(); break }
-          elementMutations.ungroupSelection()
+          elementMutations.ungroupSelection(ids)
           break
         case 'lock':
           if (viewOnly) { askOwner(); break }
-          elementMutations.toggleLock()
+          elementMutations.toggleLock(ids)
           break
         case 'present':
           setPresentOpen(true)
@@ -1994,7 +2180,10 @@ export default function AIPptEditor({
   )
 
   const handlePlacementLive = useCallback(
-    (slideId, elementId, placement) => {
+    (slideId, elementIdOrPatches, placement) => {
+      const patches = normalizePlacementPatches(elementIdOrPatches, placement)
+      const ids = Object.keys(patches)
+      if (!ids.length) return
       if (placementHistoryArmedRef.current) {
         placementHistoryArmedRef.current = false
         pushHistorySnapshot()
@@ -2003,7 +2192,7 @@ export default function AIPptEditor({
         const next = prev.map((s) => {
           if (s.id !== slideId) return s
           const elements = (s.elements?.elements || []).map((el) =>
-            el.id === elementId ? { ...el, placement: { ...el.placement, ...placement } } : el
+            patches[el.id] ? { ...el, placement: { ...el.placement, ...patches[el.id] } } : el
           )
           return { ...s, elements: buildCanvasDoc(s, { aspectRatio, elements }) }
         })
@@ -2015,41 +2204,89 @@ export default function AIPptEditor({
   )
 
   const handlePlacementCommit = useCallback(
-    (slideId, elementId, placement) => {
+    (slideId, elementIdOrPatches, placement) => {
+      const patches = normalizePlacementPatches(elementIdOrPatches, placement)
+      const ids = Object.keys(patches)
+      if (!ids.length) return
       placementHistoryArmedRef.current = true
       if (!workspaceId || !presentationId || isGenerating || viewOnly) return
-      const key = `${slideId}:${elementId}`
-      pendingPlacementRef.current[key] = placement
-      if (elementPatchTimers.current[key]) {
-        clearTimeout(elementPatchTimers.current[key])
-      }
-      elementPatchTimers.current[key] = setTimeout(async () => {
-        const latest = pendingPlacementRef.current[key]
-        delete pendingPlacementRef.current[key]
-        delete elementPatchTimers.current[key]
-        if (!latest) return
-        try {
-          await presentationService.updateElement(
-            workspaceId,
-            presentationId,
-            slideId,
-            elementId,
-            { placement: latest }
-          )
-          // Do not applySlideUpdate — delayed responses race newer local nudges/drags
-        } catch (err) {
-          if (err instanceof PresentationConflictError) {
-            setError('Presentation is generating — canvas edits are locked.')
-            return
+
+      if (ids.length > 1) {
+        for (const elementId of ids) {
+          const key = `${slideId}:${elementId}`
+          if (elementPatchTimers.current[key]) {
+            clearTimeout(elementPatchTimers.current[key])
+            delete elementPatchTimers.current[key]
           }
-          const slide = localSlidesRef.current.find((s) => s.id === slideId)
-          if (!slide) return
-          const elements = (slide.elements?.elements || []).map((el) =>
-            el.id === elementId ? { ...el, placement: { ...el.placement, ...latest } } : el
-          )
-          queueCanvasSave(slideId, buildCanvasDoc(slide, { aspectRatio, elements }))
+          delete pendingPlacementRef.current[key]
         }
-      }, 320)
+        const batchKey = `${slideId}:__batch__`
+        if (elementPatchTimers.current[batchKey]) {
+          clearTimeout(elementPatchTimers.current[batchKey])
+        }
+        elementPatchTimers.current[batchKey] = setTimeout(async () => {
+          delete elementPatchTimers.current[batchKey]
+          const slide = localSlidesRef.current.find((s) => s.id === slideId)
+          if (!slide?.elements) return
+          const batchPatches = (slide.elements.elements || [])
+            .filter((el) => ids.includes(el.id) && el.placement)
+            .map((el) => ({ id: el.id, placement: el.placement }))
+          if (!batchPatches.length) return
+          try {
+            await presentationService.batchUpdateElements(
+              workspaceId,
+              presentationId,
+              slideId,
+              batchPatches
+            )
+          } catch (err) {
+            if (err instanceof PresentationConflictError) {
+              setError('Presentation is generating — canvas edits are locked.')
+              return
+            }
+            queueCanvasSave(slideId, slide.elements)
+          }
+        }, 320)
+        return
+      }
+
+      const scheduleOne = (elementId, nextPlacement) => {
+        const key = `${slideId}:${elementId}`
+        pendingPlacementRef.current[key] = nextPlacement
+        if (elementPatchTimers.current[key]) {
+          clearTimeout(elementPatchTimers.current[key])
+        }
+        elementPatchTimers.current[key] = setTimeout(async () => {
+          const latest = pendingPlacementRef.current[key]
+          delete pendingPlacementRef.current[key]
+          delete elementPatchTimers.current[key]
+          if (!latest) return
+          try {
+            await presentationService.updateElement(
+              workspaceId,
+              presentationId,
+              slideId,
+              elementId,
+              { placement: latest }
+            )
+          } catch (err) {
+            if (err instanceof PresentationConflictError) {
+              setError('Presentation is generating — canvas edits are locked.')
+              return
+            }
+            const slide = localSlidesRef.current.find((s) => s.id === slideId)
+            if (!slide) return
+            const elements = (slide.elements?.elements || []).map((el) =>
+              el.id === elementId ? { ...el, placement: { ...el.placement, ...latest } } : el
+            )
+            queueCanvasSave(slideId, buildCanvasDoc(slide, { aspectRatio, elements }))
+          }
+        }, 320)
+      }
+
+      for (const elementId of ids) {
+        scheduleOne(elementId, patches[elementId])
+      }
     },
     [workspaceId, presentationId, isGenerating, viewOnly, aspectRatio, queueCanvasSave]
   )
@@ -2060,11 +2297,12 @@ export default function AIPptEditor({
       const slideId = selectedSlideId
       if (!slideId || isGenerating || viewOnly || !ids?.length) return
 
-      const idSet = new Set(ids.filter(Boolean))
-      if (!idSet.size) return
-
       const slide = localSlidesRef.current.find((s) => s.id === slideId)
       if (!slide) return
+      const idSet = new Set(
+        collectPptMoveIds(slide.elements?.elements || [], ids.filter(Boolean), ids[0])
+      )
+      if (!idSet.size) return
       const canvas = slide.elements?.canvas || { width: 1920, height: 1080 }
       const committed = []
       const elements = (slide.elements?.elements || []).map((el) => {
@@ -2109,9 +2347,11 @@ export default function AIPptEditor({
         return next
       })
 
+      const patches = {}
       for (const { elementId, placement } of committed) {
-        handlePlacementCommit(slideId, elementId, placement)
+        patches[elementId] = placement
       }
+      handlePlacementCommit(slideId, patches)
     },
     [
       selectedSlideId,
@@ -2773,12 +3013,82 @@ export default function AIPptEditor({
 
   const handleDeleteElement = useCallback(async (elementIdArg) => {
     const slideId = selectedSlideId || localSlides[0]?.id
-    const elementId = typeof elementIdArg === 'string' ? elementIdArg : selectedElementId
+    const requested = Array.isArray(elementIdArg)
+      ? elementIdArg.filter(Boolean)
+      : typeof elementIdArg === 'string'
+        ? [elementIdArg]
+        : (multiSelectIds.length ? multiSelectIds : [selectedElementId].filter(Boolean))
+    const elementId = requested[0]
     if (!slideId || !elementId || isGenerating) return
 
     const slide = localSlides.find((s) => s.id === slideId)
     const existing = slide?.elements?.elements || []
     const elements = Array.isArray(existing) ? existing : []
+
+    if (requested.length > 1) {
+      const hardDelete = new Set()
+      for (const id of requested) {
+        const target = elements.find((el) => el.id === id)
+        if (!target) continue
+        if (isLayoutBoundImageSlot(target)) {
+          const hasMedia = Boolean(
+            target.content?.url ||
+              target.content?.src ||
+              target.content?.thumbnailUrl ||
+              target.content?.previewUrl
+          )
+          if (hasMedia) {
+            await elementMutations.patchElement(id, { content: clearImageMediaPatch() })
+          }
+          continue
+        }
+        hardDelete.add(id)
+        if (isPptGroup(target)) {
+          for (const cid of target.childIds || []) hardDelete.add(cid)
+        }
+      }
+      if (!hardDelete.size) {
+        setSelectedElementId(null)
+        setMultiSelectIds([])
+        return
+      }
+      pushHistorySnapshot()
+      const nextElements = elements
+        .filter((el) => !hardDelete.has(el.id))
+        .map((el) => {
+          if (!isPptGroup(el)) return el
+          const childIds = (el.childIds || []).filter((cid) => !hardDelete.has(cid))
+          return { ...el, childIds }
+        })
+        .filter((el) => !(isPptGroup(el) && (el.childIds || []).length < 2))
+      const clearingBackground = hardDelete.has(slide?.backgroundImageElementId)
+      const nextDoc = buildCanvasDoc(slide, { aspectRatio, elements: nextElements })
+      setLocalSlides((prev) => {
+        const next = prev.map((s) =>
+          s.id === slideId
+            ? {
+                ...s,
+                elements: nextDoc,
+                ...(clearingBackground
+                  ? {
+                      backgroundImage: undefined,
+                      backgroundImageFit: undefined,
+                      backgroundImageElementId: undefined,
+                    }
+                  : {}),
+              }
+            : s
+        )
+        localSlidesRef.current = next
+        return next
+      })
+      setSelectedElementId(null)
+      setMultiSelectIds([])
+      if (!workspaceId || !presentationId) return
+      queueCanvasSave(slideId, nextDoc)
+      return
+    }
+
     const target = elements.find((el) => el.id === elementId)
 
     // Layout image slots: clear media so the empty placeholder stays in place.
@@ -2854,8 +3164,12 @@ export default function AIPptEditor({
 
     if (!target) return
     pushHistorySnapshot()
-    const nextElements = elements.filter((el) => el.id !== elementId)
-    const clearingBackground = slide?.backgroundImageElementId === elementId
+    const removeIds = new Set([elementId])
+    if (isPptGroup(target)) {
+      for (const cid of target.childIds || []) removeIds.add(cid)
+    }
+    const nextElements = elements.filter((el) => !removeIds.has(el.id))
+    const clearingBackground = removeIds.has(slide?.backgroundImageElementId)
     const nextDoc = buildCanvasDoc(slide, { aspectRatio, elements: nextElements })
     setLocalSlides((prev) => {
       const next = prev.map((s) =>
@@ -2877,6 +3191,7 @@ export default function AIPptEditor({
       return next
     })
     setSelectedElementId(null)
+    setMultiSelectIds([])
 
     if (!workspaceId || !presentationId) return
 
@@ -2891,12 +3206,16 @@ export default function AIPptEditor({
     }
 
     try {
-      await presentationService.deleteElement(
-        workspaceId,
-        presentationId,
-        slideId,
-        elementId
-      )
+      if (removeIds.size === 1) {
+        await presentationService.deleteElement(
+          workspaceId,
+          presentationId,
+          slideId,
+          elementId
+        )
+      } else {
+        queueCanvasSave(slideId, nextDoc)
+      }
     } catch (err) {
       setError(err.message || 'Failed to delete element')
       const latest = localSlidesRef.current.find((s) => s.id === slideId)
@@ -2905,6 +3224,7 @@ export default function AIPptEditor({
   }, [
     selectedSlideId,
     selectedElementId,
+    multiSelectIds,
     localSlides,
     isGenerating,
     aspectRatio,
@@ -3305,6 +3625,7 @@ export default function AIPptEditor({
         setSelectedElementId(null)
         setMultiSelectIds([])
         setQuickMenuOpen(false)
+        setElementContextMenu(null)
         return
       }
 
@@ -3334,7 +3655,7 @@ export default function AIPptEditor({
       }
       if (mod && key === 'd') {
         e.preventDefault()
-        ctx.elementMutations.duplicateElement()
+        ctx.elementMutations.duplicateElement(selectionIds)
         return
       }
       if (mod && key === 'c') {
@@ -3359,12 +3680,12 @@ export default function AIPptEditor({
       }
       if (mod && key === 'g' && e.shiftKey) {
         e.preventDefault()
-        ctx.elementMutations.ungroupSelection()
+        ctx.elementMutations.ungroupSelection(selectionIds)
         return
       }
       if (mod && key === 'l') {
         e.preventDefault()
-        ctx.elementMutations.toggleLock()
+        ctx.elementMutations.toggleLock(selectionIds)
         return
       }
       if (mod && key === 'enter') {
@@ -3388,9 +3709,9 @@ export default function AIPptEditor({
         return
       }
 
-      if ((e.key === 'Delete' || e.key === 'Backspace') && ctx.selectedElementId) {
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectionIds.length) {
         e.preventDefault()
-        ctx.handleDeleteElement()
+        ctx.handleDeleteElement(selectionIds)
         return
       }
 
@@ -3750,6 +4071,54 @@ export default function AIPptEditor({
         onClose={() => setQuickMenuOpen(false)}
         onCommand={handleQuickCommand}
       />
+      {elementContextMenu && !viewOnly ? (
+        <PptElementContextMenu
+          x={elementContextMenu.x}
+          y={elementContextMenu.y}
+          canGroup={canGroupSelection}
+          canUngroup={canUngroupSelection}
+          locked={selectionLocked}
+          canPaste={elementMutations.hasClipboard()}
+          hasSelection={canvasSelectionIds.length > 0}
+          onClose={() => setElementContextMenu(null)}
+          onCut={() => {
+            elementMutations.cutSelection(canvasSelectionIds, handleDeleteElement)
+            setElementContextMenu(null)
+          }}
+          onCopy={() => {
+            elementMutations.copySelection(canvasSelectionIds)
+            setElementContextMenu(null)
+          }}
+          onPaste={() => {
+            elementMutations.pasteClipboard()
+            setElementContextMenu(null)
+          }}
+          onDuplicate={() => {
+            elementMutations.duplicateElement(canvasSelectionIds)
+            setElementContextMenu(null)
+          }}
+          onDelete={() => {
+            handleDeleteElement(canvasSelectionIds)
+            setElementContextMenu(null)
+          }}
+          onGroup={() => {
+            elementMutations.groupSelection(canvasSelectionIds)
+            setElementContextMenu(null)
+          }}
+          onUngroup={() => {
+            elementMutations.ungroupSelection(canvasSelectionIds)
+            setElementContextMenu(null)
+          }}
+          onToggleLock={() => {
+            elementMutations.toggleLock(canvasSelectionIds)
+            setElementContextMenu(null)
+          }}
+          onAlign={(alignment) => {
+            elementMutations.alignSelection(canvasSelectionIds, alignment)
+            setElementContextMenu(null)
+          }}
+        />
+      ) : null}
 
       <div className="aig-editor-workspace gamma-layout">
         <main
@@ -3765,6 +4134,7 @@ export default function AIPptEditor({
             setSelectedElementId(null)
             setEditingTextId(null)
             setMultiSelectIds([])
+            setElementContextMenu(null)
           }}
         >
           <div className="aig-editor-scroll-container">
@@ -3831,19 +4201,30 @@ export default function AIPptEditor({
                     selectedElementId={
                       selectedSlideId === slide.id ? selectedElementId : null
                     }
+                    selectedElementIds={
+                      selectedSlideId === slide.id
+                        ? multiSelectIds.length
+                          ? multiSelectIds
+                          : selectedElementId
+                            ? [selectedElementId]
+                            : []
+                        : []
+                    }
                     editingTextId={selectedSlideId === slide.id ? editingTextId : null}
                     smartGuides={selectedSlideId === slide.id ? smartGuides : []}
-                    onSelectElement={(id) => {
+                    onSelectElement={(id, event) => {
                       if (viewOnly) return
-                      setSelectedSlideId(slide.id)
-                      setSelectedElementId(id)
-                      setEditingTextId((prev) => (prev === id ? prev : null))
+                      selectCanvasElement(slide.id, id, event)
                     }}
-                    onPlacementLive={(elementId, placement) =>
-                      handlePlacementLive(slide.id, elementId, placement)
+                    onContextMenuElement={(id, event) => {
+                      if (viewOnly) return
+                      openElementContextMenu(slide.id, id, event)
+                    }}
+                    onPlacementLive={(elementIdOrPatches, placement) =>
+                      handlePlacementLive(slide.id, elementIdOrPatches, placement)
                     }
-                    onPlacementCommit={(elementId, placement) =>
-                      handlePlacementCommit(slide.id, elementId, placement)
+                    onPlacementCommit={(elementIdOrPatches, placement) =>
+                      handlePlacementCommit(slide.id, elementIdOrPatches, placement)
                     }
                     onGuidesChange={selectedSlideId === slide.id ? setSmartGuides : undefined}
                     onStartTextEdit={handleStartTextEdit}
@@ -3932,7 +4313,7 @@ export default function AIPptEditor({
           onChangeElementPlacement={handleChangeElementPlacement}
           layoutSchemaMap={layoutSchemaMap}
           aspectRatio={aspectRatio || '16:9'}
-          onToggleElementLock={() => elementMutations.toggleLock()}
+          onToggleElementLock={() => elementMutations.toggleLock(canvasSelectionIds)}
           onReplaceImage={() =>
             setError(
               isPptDeviceFrameElement(selectedElement)

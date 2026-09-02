@@ -764,10 +764,12 @@ export default function PptCanvasElement({
   if (el.type === 'group') {
     return (
       <div
+        aria-hidden
         style={{
           ...fillStyle,
-          border: '1px dashed rgba(59,130,246,0.45)',
-          background: 'rgba(59,130,246,0.04)',
+          pointerEvents: 'none',
+          background: 'transparent',
+          border: 'none',
         }}
       />
     )

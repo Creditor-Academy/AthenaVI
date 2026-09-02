@@ -4,8 +4,10 @@ import {
   canPptGroup,
   canPptUngroup,
   createPptGroup,
+  expandPptSelectionIds,
   ungroupPptElement,
 } from '../../../utils/pptGroupUtils'
+import { alignPptElements } from '../../../utils/pptAlignUtils'
 import {
   findSmartSwapTarget,
   smartSwapElements,
@@ -23,6 +25,7 @@ export function usePptElementMutations({
   selectedSlideId,
   selectedElementId,
   setSelectedElementId,
+  setMultiSelectIds,
   aspectRatio,
   workspaceId,
   presentationId,
@@ -183,49 +186,71 @@ export function usePptElementMutations({
     ]
   )
 
-  const duplicateElement = useCallback(() => {
-    const slide = getSlide()
-    if (!slide || !selectedElementId || isGenerating) return
-    const source = slide.elements?.elements?.find((el) => el.id === selectedElementId)
-    if (!source) return
+  const cloneElementsWithOffset = (sources, layerStart) => {
+    const stamp = Date.now()
+    const idMap = new Map()
+    const clones = sources.map((source, index) => {
+      const id = `el-${stamp}-${index}-${Math.random().toString(36).slice(2, 6)}`
+      idMap.set(source.id, id)
+      return {
+        ...source,
+        id,
+        placement: {
+          ...source.placement,
+          x: (source.placement?.x || 0) + 24,
+          y: (source.placement?.y || 0) + 24,
+        },
+        layer: layerStart + 1 + index,
+      }
+    })
+    return clones.map((clone) => {
+      const next = { ...clone }
+      if (Array.isArray(clone.childIds)) {
+        next.childIds = clone.childIds.map((cid) => idMap.get(cid) || cid)
+      }
+      if (clone.groupId && idMap.has(clone.groupId)) {
+        next.groupId = idMap.get(clone.groupId)
+      }
+      return next
+    })
+  }
 
-    pushHistory?.({ slides: localSlidesRef.current, selectedSlideId, selectedElementId })
+  const duplicateElement = useCallback(
+    (ids = []) => {
+      const slide = getSlide()
+      if (!slide || isGenerating) return
+      const requested = (ids.length ? ids : [selectedElementId]).filter(Boolean)
+      const expanded = expandPptSelectionIds(slide.elements?.elements || [], requested)
+      const sources = (slide.elements?.elements || []).filter((el) => expanded.includes(el.id))
+      if (!sources.length) return
 
-    const clone = {
-      ...source,
-      id: `el-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      placement: {
-        ...source.placement,
-        x: (source.placement?.x || 0) + 24,
-        y: (source.placement?.y || 0) + 24,
-      },
-      layer: (slide.elements?.elements?.length || 0) + 1,
-    }
-
-    updateElements(
-      slide.id,
-      (els) => [...els, clone],
-      { history: false }
-    )
-    setSelectedElementId(clone.id)
-  }, [
-    getSlide,
-    selectedElementId,
-    isGenerating,
-    selectedSlideId,
-    pushHistory,
-    updateElements,
-    setSelectedElementId,
-  ])
+      pushHistory?.({ slides: localSlidesRef.current, selectedSlideId, selectedElementId })
+      const clones = cloneElementsWithOffset(sources, slide.elements?.elements?.length || 0)
+      updateElements(slide.id, (els) => [...els, ...clones], { history: false })
+      const last = clones[clones.length - 1]
+      if (last) setSelectedElementId(last.id)
+      setMultiSelectIds?.(clones.map((c) => c.id))
+    },
+    [
+      getSlide,
+      selectedElementId,
+      isGenerating,
+      selectedSlideId,
+      pushHistory,
+      updateElements,
+      setSelectedElementId,
+      setMultiSelectIds,
+    ]
+  )
 
   const copySelection = useCallback(
     (ids = []) => {
       const slide = getSlide()
       if (!slide) return false
-      const idSet = new Set(ids.filter(Boolean))
-      if (!idSet.size && selectedElementId) idSet.add(selectedElementId)
-      if (!idSet.size) return false
-      const selected = (slide.elements?.elements || []).filter((el) => idSet.has(el.id))
+      const requested = (ids.length ? ids : [selectedElementId]).filter(Boolean)
+      const expanded = expandPptSelectionIds(slide.elements?.elements || [], requested)
+      if (!expanded.length) return false
+      const selected = (slide.elements?.elements || []).filter((el) => expanded.includes(el.id))
       if (!selected.length) return false
       clipboardRef.current = JSON.parse(JSON.stringify(selected))
       return true
@@ -233,24 +258,20 @@ export function usePptElementMutations({
     [getSlide, selectedElementId]
   )
 
+  const hasClipboard = useCallback(() => clipboardRef.current.length > 0, [])
+
   const pasteClipboard = useCallback(() => {
     const slide = getSlide()
     if (!slide || isGenerating || !clipboardRef.current?.length) return
     pushHistory?.({ slides: localSlidesRef.current, selectedSlideId, selectedElementId })
-    const stamp = Date.now()
-    const clones = clipboardRef.current.map((source, index) => ({
-      ...source,
-      id: `el-${stamp}-${index}-${Math.random().toString(36).slice(2, 6)}`,
-      placement: {
-        ...source.placement,
-        x: (source.placement?.x || 0) + 24,
-        y: (source.placement?.y || 0) + 24,
-      },
-      layer: (slide.elements?.elements?.length || 0) + 1 + index,
-    }))
+    const clones = cloneElementsWithOffset(
+      clipboardRef.current,
+      slide.elements?.elements?.length || 0
+    )
     updateElements(slide.id, (els) => [...els, ...clones], { history: false })
     const last = clones[clones.length - 1]
     if (last) setSelectedElementId(last.id)
+    setMultiSelectIds?.(clones.map((c) => c.id))
   }, [
     getSlide,
     isGenerating,
@@ -259,50 +280,125 @@ export function usePptElementMutations({
     pushHistory,
     updateElements,
     setSelectedElementId,
+    setMultiSelectIds,
   ])
 
   const cutSelection = useCallback(
     (ids = [], onDelete) => {
       if (!copySelection(ids)) return
-      onDelete?.()
+      onDelete?.(ids)
     },
     [copySelection]
   )
 
-  const toggleLock = useCallback(() => {
-    if (!selectedElementId) return
-    const slide = getSlide()
-    const el = slide?.elements?.elements?.find((e) => e.id === selectedElementId)
-    patchElement(selectedElementId, { locked: !el?.locked })
-  }, [selectedElementId, getSlide, patchElement])
+  const toggleLock = useCallback(
+    (ids = []) => {
+      const slide = getSlide()
+      const idList = (ids.length ? ids : [selectedElementId]).filter(Boolean)
+      if (!idList.length || !slide) return
+      const selected = (slide.elements?.elements || []).filter((e) => idList.includes(e.id))
+      if (!selected.length) return
+      const shouldLock = selected.some((e) => !e.locked)
+      if (idList.length === 1) {
+        patchElement(idList[0], { locked: shouldLock })
+        return
+      }
+      pushHistory?.({ slides: localSlidesRef.current, selectedSlideId, selectedElementId })
+      updateElements(
+        slide.id,
+        (els) => els.map((el) => (idList.includes(el.id) ? { ...el, locked: shouldLock } : el)),
+        { history: false }
+      )
+    },
+    [
+      selectedElementId,
+      selectedSlideId,
+      getSlide,
+      patchElement,
+      pushHistory,
+      updateElements,
+    ]
+  )
 
   const groupSelection = useCallback(
     (selectedIds) => {
       const slide = getSlide()
       if (!slide || !canPptGroup(slide.elements?.elements || [], selectedIds)) return
       pushHistory?.({ slides: localSlides, selectedSlideId, selectedElementId })
-      updateElements(slide.id, (els) => createPptGroup(els, selectedIds), { history: false })
+      let createdId = null
+      updateElements(
+        slide.id,
+        (els) => {
+          const next = createPptGroup(els, selectedIds)
+          const created = next.find((el) => el.type === 'group' && !els.some((o) => o.id === el.id))
+          createdId = created?.id || null
+          return next
+        },
+        { history: false }
+      )
+      if (createdId) {
+        setSelectedElementId(null)
+        setMultiSelectIds?.([])
+      }
     },
-    [getSlide, localSlides, selectedSlideId, selectedElementId, pushHistory, updateElements]
+    [
+      getSlide,
+      localSlides,
+      selectedSlideId,
+      selectedElementId,
+      pushHistory,
+      updateElements,
+      setSelectedElementId,
+      setMultiSelectIds,
+    ]
   )
 
-  const ungroupSelection = useCallback(() => {
-    const slide = getSlide()
-    if (!slide || !canPptUngroup(slide.elements?.elements || [], [selectedElementId])) return
-    pushHistory?.({ slides: localSlides, selectedSlideId, selectedElementId })
-    updateElements(
-      slide.id,
-      (els) => ungroupPptElement(els, selectedElementId),
-      { history: false }
-    )
-  }, [
-    getSlide,
-    selectedElementId,
-    localSlides,
-    selectedSlideId,
-    pushHistory,
-    updateElements,
-  ])
+  const ungroupSelection = useCallback(
+    (ids = []) => {
+      const slide = getSlide()
+      const targetId = (ids.length ? ids[0] : selectedElementId) || null
+      if (!slide || !targetId || !canPptUngroup(slide.elements?.elements || [], [targetId])) return
+      const group = (slide.elements?.elements || []).find((el) => el.id === targetId)
+      const childIds = [...(group?.childIds || [])]
+      pushHistory?.({ slides: localSlides, selectedSlideId, selectedElementId })
+      updateElements(slide.id, (els) => ungroupPptElement(els, targetId), { history: false })
+      setSelectedElementId(childIds[0] || null)
+      setMultiSelectIds?.(childIds)
+    },
+    [
+      getSlide,
+      selectedElementId,
+      localSlides,
+      selectedSlideId,
+      pushHistory,
+      updateElements,
+      setSelectedElementId,
+      setMultiSelectIds,
+    ]
+  )
+
+  const alignSelection = useCallback(
+    (ids, alignment) => {
+      const slide = getSlide()
+      if (!slide || !alignment) return
+      const selectedIds = (ids?.length ? ids : [selectedElementId]).filter(Boolean)
+      if (!selectedIds.length) return
+      const canvas = slide.elements?.canvas || { width: 1920, height: 1080 }
+      pushHistory?.({ slides: localSlidesRef.current, selectedSlideId, selectedElementId })
+      updateElements(
+        slide.id,
+        (els) => alignPptElements(els, selectedIds, alignment, canvas),
+        { history: false }
+      )
+    },
+    [
+      getSlide,
+      selectedElementId,
+      selectedSlideId,
+      pushHistory,
+      updateElements,
+    ]
+  )
 
   const smartTidy = useCallback(
     (selectedIds) => {
@@ -366,10 +462,12 @@ export function usePptElementMutations({
     duplicateElement,
     copySelection,
     pasteClipboard,
+    hasClipboard,
     cutSelection,
     toggleLock,
     groupSelection,
     ungroupSelection,
+    alignSelection,
     smartTidy,
     smartSwap,
     updateSpeakerNotes,
