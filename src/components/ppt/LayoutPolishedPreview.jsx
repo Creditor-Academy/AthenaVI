@@ -12,6 +12,7 @@ import { DEVICE_FRAMES_PREVIEW_MODES } from './layoutPolishedPreviewsDeviceFrame
 import { DIAGRAM_PREVIEW_MODES } from './layoutPolishedPreviewsDiagrams.jsx'
 import { AGENDA_PREVIEW_MODES } from './layoutPolishedPreviewsAgenda.jsx'
 import { TIMELINE_PROCESS_PREVIEW_MODES } from './layoutPolishedPreviewsTimelineProcess.jsx'
+import { QUOTE_PREVIEW_MODES } from './layoutPolishedPreviewsQuotes.jsx'
 import LayoutSvgPreview from './LayoutSvgPreview'
 
 const LAYOUT_POLISHED_THEME = {
@@ -1314,6 +1315,19 @@ export default function LayoutPolishedPreview({
   }
   if (previewMode === 'team_staggered') {
     return <PolishedTeamStaggeredPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
+  }
+  const QuotePreview = QUOTE_PREVIEW_MODES[previewMode]
+  if (QuotePreview) {
+    return (
+      <QuotePreview
+        previewHints={previewHints}
+        large={large}
+        fill={fill}
+        className={className}
+        style={style}
+        aspectRatio={aspectRatio}
+      />
+    )
   }
   if (previewMode === 'quote_attribution') {
     return <PolishedQuoteAttributionPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />

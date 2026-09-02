@@ -204,8 +204,8 @@ function buildAgendaMilestonesFromSlots(slots) {
 
 /** Known layout_id → polished preview mode (overrides stale preview.mode in saved schemas). */
 const LAYOUT_PREVIEW_MODES = {
-  statement_left_v1: 'quote_attribution',
-  statement_large_v1: 'quote_attribution',
+  statement_left_v1: 'statement_left',
+  statement_large_v1: 'statement_large',
   eight_short_texts_image_v1: 'eight_short_texts',
   two_cards_image_text_v1: 'two_image_columns',
   centered_text_cta_v1: 'closing_cta',
@@ -287,9 +287,9 @@ const LAYOUT_PREVIEW_MODES = {
   agenda_progress_path_v1: 'process_flow',
   agenda_split_panel_v1: 'agenda_two_columns',
   agenda_asymmetric_v1: 'agenda_two_columns',
-  quote_portrait_v1: 'quote_attribution',
-  quote_testimonial_card_v1: 'quote_attribution',
-  quote_attribution_v1: 'quote_attribution',
+  quote_portrait_v1: 'quote_portrait',
+  quote_testimonial_card_v1: 'quote_testimonial',
+  quote_attribution_v1: 'quote_attribution_split',
   quote_grid_v1: 'quote_grid',
   team_featured_lead_v1: 'team_featured_lead',
   team_org_simple_v1: 'team_org_simple',
@@ -443,7 +443,16 @@ export function inferPreviewMode(schema) {
   if (memberCount >= 6 && !ids.some((id) => id.startsWith('DEPT_'))) return 'team_grid_six'
   if (ct === 'stat' || (roles.has('stat') && roles.has('stat_label'))) return 'stat_row'
   if (ct === 'chart' || roles.has('chart')) return 'chart_split'
-  if (ct === 'quote' || roles.has('quote')) return 'quote_attribution'
+  if (ct === 'quote' || roles.has('quote')) {
+    const id = String(schema?.layout_id || '')
+    if (/statement_left/i.test(id)) return 'statement_left'
+    if (/statement_large/i.test(id)) return 'statement_large'
+    if (/quote_portrait/i.test(id)) return 'quote_portrait'
+    if (/quote_testimonial/i.test(id)) return 'quote_testimonial'
+    if (/quote_grid/i.test(id)) return 'quote_grid'
+    if (/quote_attribution/i.test(id)) return 'quote_attribution_split'
+    return 'quote_attribution'
+  }
   if (ct === 'team' || ids.some((id) => id.startsWith('MEMBER'))) return 'team_staggered'
   if (ct === 'closing' || roles.has('cta')) return 'closing_cta'
   if (ids.includes('COL_1_IMAGE') && ids.includes('COL_2_IMAGE')) return 'two_image_columns'
@@ -726,7 +735,14 @@ function fillPreviewDataFromSlots(schema) {
   if (mode === 'stat_cards_image') {
     if (!Array.isArray(preview.stats)) preview.stats = buildStatsFromLayoutSlots(slots)
   }
-  if (mode === 'quote_attribution') {
+  if (
+    mode === 'quote_attribution' ||
+    mode === 'quote_attribution_split' ||
+    mode === 'statement_left' ||
+    mode === 'statement_large' ||
+    mode === 'quote_portrait' ||
+    mode === 'quote_testimonial'
+  ) {
     preview.quoteText =
       preview.quoteText ??
       slotPlaceholderText(slots, 'QUOTE') ??

@@ -231,7 +231,7 @@ const CATALOG = {
       fit: 'cover',
       borderRadius: 999,
     }),
-  ], { mode: 'quote_attribution' }),
+  ], { mode: 'statement_left' }),
 
   statement_large_v1: layoutBase('statement_large_v1', 'quote', [
     slot(
@@ -260,7 +260,7 @@ const CATALOG = {
       fit: 'cover',
       borderRadius: 999,
     }),
-  ], { mode: 'quote_attribution' }),
+  ], { mode: 'statement_large' }),
 
   para_title_left_image_boxed_v1: layoutBase('para_title_left_image_boxed_v1', 'image+text', [
     cardShape('cols 2-5, rows 3-8', 'IMAGE_CARD_BG', 10, 'HERO_IMAGE'),

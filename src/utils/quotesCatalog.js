@@ -30,7 +30,7 @@ const CATALOG = {
       fit: 'cover',
       borderRadius: 999,
     }),
-  ], { mode: 'quote_attribution' }),
+  ], { mode: 'quote_portrait' }),
 
   quote_testimonial_card_v1: layoutBase('quote_testimonial_card_v1', 'quote', [
     slot('QUOTE', 'cols 3-10, rows 3-6', 'quote', 'Testimonial quote in a card-friendly length.', {
@@ -53,7 +53,7 @@ const CATALOG = {
       fit: 'cover',
       borderRadius: 999,
     }),
-  ], { mode: 'quote_attribution' }),
+  ], { mode: 'quote_testimonial' }),
 
   quote_attribution_v1: layoutBase('quote_attribution_v1', 'quote', [
     slot(
@@ -87,7 +87,7 @@ const CATALOG = {
       fit: 'cover',
       borderRadius: 0,
     }),
-  ], { mode: 'quote_attribution' }),
+  ], { mode: 'quote_attribution_split' }),
 
   quote_grid_v1: layoutBase('quote_grid_v1', 'quote', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Voices from our users', { max_lines: 2 }),
