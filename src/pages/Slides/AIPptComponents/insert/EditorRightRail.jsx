@@ -22,6 +22,7 @@ import { HiOutlineClipboard } from 'react-icons/hi'
 import DesignContextPanel from './DesignContextPanel'
 import presentationService from '../../../../services/presentationService'
 import PptCommentsPanel from '../PptCommentsPanel'
+import PptPublicCommentsPanel from '../PptPublicCommentsPanel'
 import SpeakerNotesPanel from '../SpeakerNotesPanel'
 import SlideTransitionPicker, { PPT_SLIDE_TRANSITIONS } from './SlideTransitionPicker'
 import { findTemplateForSlideLayout, templateRecordId } from '../../../../utils/similarLayouts'
@@ -389,6 +390,11 @@ export default function EditorRightRail({
   aspectRatio = '16:9',
   disabled = false,
   viewOnly = false,
+  canComment = false,
+  canResolveComments = false,
+  shareToken = '',
+  commentsUpdatedAt = null,
+  shareIsAnonymous = true,
   onViewOnlyAttempt,
   onOpenChange,
   usedFontFamilies = [],
@@ -478,6 +484,11 @@ export default function EditorRightRail({
   }, [slide?.id, slide?.layoutId, slide?.layout_id, layoutTemplates])
 
   const toggle = (id) => {
+    if (id === 'comments' && viewOnly && canComment) {
+      setAiOpen(false)
+      setActive((prev) => (prev === id ? null : id))
+      return
+    }
     if (viewOnly) {
       onViewOnlyAttempt?.()
       return
@@ -562,12 +573,23 @@ export default function EditorRightRail({
 
           {active === 'comments' && (
             <div className="ppt-slide-panel ppt-slide-panel--sm" role="region" aria-label="Comments">
-              <PptCommentsPanel
-                workspaceId={workspaceId}
-                presentationId={presentationId}
-                slideId={slide?.id}
-                disabled={disabled}
-              />
+              {viewOnly && canComment ? (
+                <PptPublicCommentsPanel
+                  token={shareToken}
+                  slideId={slide?.id}
+                  canComment={canComment}
+                  canResolveComments={canResolveComments}
+                  isAnonymous={shareIsAnonymous}
+                  commentsUpdatedAt={commentsUpdatedAt}
+                />
+              ) : (
+                <PptCommentsPanel
+                  workspaceId={workspaceId}
+                  presentationId={presentationId}
+                  slideId={slide?.id}
+                  disabled={disabled}
+                />
+              )}
             </div>
           )}
 
@@ -628,16 +650,16 @@ export default function EditorRightRail({
 
       <div className="ppt-editor-sidebar-rail">
         <div className="ppt-editor-sidebar-rail-tools">
-          {RAIL_TOOLS.map((tool) => {
+          {RAIL_TOOLS.filter((tool) => !(viewOnly && tool.id === 'comments' && !canComment)).map((tool) => {
             const Icon = tool.Icon
             return (
               <button
                 key={tool.id}
                 type="button"
                 className={`ppt-editor-sidebar-btn ${active === tool.id ? 'is-active' : ''}`}
-                title={viewOnly ? 'View only' : tool.label}
+                title={viewOnly && !(tool.id === 'comments' && canComment) ? 'View only' : tool.label}
                 disabled={disabled && !viewOnly}
-                aria-disabled={disabled || viewOnly}
+                aria-disabled={disabled || (viewOnly && !(tool.id === 'comments' && canComment))}
                 aria-label={tool.label}
                 aria-expanded={active === tool.id}
                 onClick={() => toggle(tool.id)}
@@ -660,6 +682,10 @@ export default function EditorRightRail({
             aria-label="AI prompt"
             aria-expanded={aiOpen}
             onClick={() => {
+              if (viewOnly) {
+                onViewOnlyAttempt?.()
+                return
+              }
               setActive(null)
               setAiOpen((v) => !v)
             }}

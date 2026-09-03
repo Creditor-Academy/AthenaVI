@@ -553,24 +553,37 @@ class PresentationService {
     return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE(workspaceId, presentationId))
   }
 
+  enableShareRole(workspaceId, presentationId, role) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE_ROLE(workspaceId, presentationId, role),
+      { method: 'PUT' }
+    )
+  }
+
+  updateShareRole(workspaceId, presentationId, role, payload = {}) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE_ROLE(workspaceId, presentationId, role),
+      { method: 'PATCH', body: JSON.stringify(payload) }
+    )
+  }
+
+  rotateShareRole(workspaceId, presentationId, role) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE_ROLE_ROTATE(workspaceId, presentationId, role),
+      { method: 'POST' }
+    )
+  }
+
   enableShareLink(workspaceId, presentationId) {
-    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE(workspaceId, presentationId), {
-      method: 'PUT',
-    })
+    return this.enableShareRole(workspaceId, presentationId, 'viewer')
   }
 
   updateShareLink(workspaceId, presentationId, payload = {}) {
-    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE(workspaceId, presentationId), {
-      method: 'PATCH',
-      body: JSON.stringify(payload),
-    })
+    return this.updateShareRole(workspaceId, presentationId, 'viewer', payload)
   }
 
   rotateShareLink(workspaceId, presentationId) {
-    return this.request(
-      API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE_ROTATE(workspaceId, presentationId),
-      { method: 'POST' }
-    )
+    return this.rotateShareRole(workspaceId, presentationId, 'viewer')
   }
 
   async pollSharePresence(workspaceId, presentationId, { viewerSessionId, slideIndex } = {}) {

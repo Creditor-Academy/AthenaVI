@@ -280,6 +280,10 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/duplicate`,
       SHARE: (workspaceId, presentationId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/share`,
+      SHARE_ROLE: (workspaceId, presentationId, role) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/share/${role}`,
+      SHARE_ROLE_ROTATE: (workspaceId, presentationId, role) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/share/${role}/rotate`,
       SHARE_ROTATE: (workspaceId, presentationId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/share/rotate`,
       SHARE_VIEWERS: (workspaceId, presentationId) =>
@@ -291,6 +295,15 @@ const API_CONFIG = {
       PUBLIC_DECK: (token) => `/api/p/${encodeURIComponent(token)}`,
       PUBLIC_SESSION: (token) => `/api/p/${encodeURIComponent(token)}/session`,
       PUBLIC_PRESENCE: (token) => `/api/p/${encodeURIComponent(token)}/presence`,
+      PUBLIC_COMMENTS: (token) => `/api/p/${encodeURIComponent(token)}/comments`,
+      PUBLIC_COMMENT: (token, commentId) =>
+        `/api/p/${encodeURIComponent(token)}/comments/${encodeURIComponent(commentId)}`,
+      PUBLIC_COMMENT_RESOLVE: (token, commentId) =>
+        `/api/p/${encodeURIComponent(token)}/comments/${encodeURIComponent(commentId)}/resolve`,
+      PUBLIC_COMMENT_UNRESOLVE: (token, commentId) =>
+        `/api/p/${encodeURIComponent(token)}/comments/${encodeURIComponent(commentId)}/unresolve`,
+      PUBLIC_COMMENT_MENTIONS: (token) =>
+        `/api/p/${encodeURIComponent(token)}/comments/mentionable-users`,
     },
   },
   

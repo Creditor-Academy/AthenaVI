@@ -711,6 +711,95 @@
   margin-bottom: 16px;
 }
 
+.ppt-share-modal-wide {
+  width: min(760px, 100%);
+}
+
+.ppt-share-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 4px 0 8px;
+}
+
+.ppt-share-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.ppt-share-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.ppt-share-card-head > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.ppt-share-card-head strong {
+  display: block;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.ppt-share-card-head p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.45;
+}
+
+.ppt-share-card-icon {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: var(--primary, #2563eb);
+}
+
+.ppt-share-card-head .ppt-share-switch {
+  margin-left: auto;
+}
+
+.ppt-comment-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.ppt-comment-action {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  color: var(--primary, #2563eb);
+  cursor: pointer;
+}
+
+.ppt-comment-resolved {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+@media (max-width: 680px) {
+  .ppt-share-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .ppt-export-format-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

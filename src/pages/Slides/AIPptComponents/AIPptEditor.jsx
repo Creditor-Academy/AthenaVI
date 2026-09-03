@@ -1062,6 +1062,9 @@ export default function AIPptEditor({
   viewOnly = false,
   initialDeck = null,
   canOpenInEditor = false,
+  canComment = false,
+  canResolveComments = false,
+  shareSession = null,
   onOpenInEditor,
   generatingBanner = '',
   presenceToken = '',
@@ -1387,7 +1390,11 @@ export default function AIPptEditor({
   const askOwner = useCallback(() => {
     if (viewOnly) setViewOnlyNotice(true)
   }, [viewOnly])
-  const { viewers, viewerCount, contentUpdatedAt } = usePptPresence({
+  const previewCanComment = Boolean(
+    canComment || shareSession?.canComment || shareSession?.linkRole === 'reviewer'
+  )
+  const previewCanResolve = Boolean(canResolveComments || shareSession?.canResolveComments)
+  const { viewers, viewerCount, contentUpdatedAt, commentsUpdatedAt } = usePptPresence({
     token: shareToken,
     workspaceId: viewOnly ? undefined : workspaceId,
     presentationId: viewOnly ? undefined : presentationId,
@@ -2434,8 +2441,12 @@ export default function AIPptEditor({
       .getShareLink(workspaceId, presentationId)
       .then((data) => {
         if (cancelled) return
-        const share = data?.share || data || {}
-        const token = extractShareToken(share.token || data?.token || share.url || data?.url)
+        const viewer = data?.viewer || data?.share?.viewer
+        const reviewer = data?.reviewer || data?.share?.reviewer
+        const token =
+          extractShareToken(viewer?.token || viewer?.url) ||
+          extractShareToken(reviewer?.token || reviewer?.url) ||
+          extractShareToken(data?.share?.token || data?.token || data?.url)
         if (token) setShareToken(token)
       })
       .catch(() => {})
@@ -3949,13 +3960,11 @@ export default function AIPptEditor({
         </div>
 
         <div className="aig-editor-nav-right">
-          {!viewOnly && (
-            <PptPresenceAvatars
-              viewers={viewers}
-              viewerCount={viewerCount}
-              selfViewer={selfViewer}
-            />
-          )}
+          <PptPresenceAvatars
+            viewers={viewers}
+            viewerCount={viewerCount}
+            selfViewer={selfViewer}
+          />
           {viewOnly && canOpenInEditor && (
             <button
               className="aig-editor-btn-secondary"
@@ -4294,6 +4303,11 @@ export default function AIPptEditor({
           presentationId={presentationId}
           disabled={isGenerating || busy}
           viewOnly={viewOnly}
+          canComment={previewCanComment}
+          canResolveComments={previewCanResolve}
+          shareToken={shareToken}
+          commentsUpdatedAt={commentsUpdatedAt}
+          shareIsAnonymous={shareSession?.self?.isAnonymous !== false}
           onViewOnlyAttempt={askOwner}
           designFocus={designFocus}
           onOpenChange={setSidebarOpen}

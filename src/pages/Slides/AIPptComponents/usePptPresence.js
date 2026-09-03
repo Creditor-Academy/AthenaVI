@@ -8,7 +8,7 @@ import {
   mergePresenceViewers,
 } from '../../../utils/pptShareSession'
 
-const DEFAULT_INTERVAL_MS = 8000
+const DEFAULT_INTERVAL_MS = 12000
 
 function mergePresence(current, incoming) {
   if (!incoming) return current
@@ -24,6 +24,7 @@ function mergePresence(current, incoming) {
     viewers,
     viewerCount: Math.max(viewers.length, reported - collapsed),
     contentUpdatedAt: incoming.contentUpdatedAt || current?.contentUpdatedAt || null,
+    commentsUpdatedAt: incoming.commentsUpdatedAt || current?.commentsUpdatedAt || null,
     token: incoming.token || current?.token || '',
     url: incoming.url || current?.url || '',
   }
@@ -40,8 +41,10 @@ export default function usePptPresence({
   const [viewers, setViewers] = useState([])
   const [viewerCount, setViewerCount] = useState(0)
   const [contentUpdatedAt, setContentUpdatedAt] = useState(null)
+  const [commentsUpdatedAt, setCommentsUpdatedAt] = useState(null)
   const slideIndexRef = useRef(slideIndex)
   const renderedVersion = useRef(null)
+  const commentsVersion = useRef(null)
   const onShareTokenRef = useRef(onShareToken)
 
   slideIndexRef.current = slideIndex
@@ -58,7 +61,14 @@ export default function usePptPresence({
 
     const beat = async () => {
       if (cancelled) return
-      let next = { viewers: [], viewerCount: 0, contentUpdatedAt: null, token: '', url: '' }
+      let next = {
+        viewers: [],
+        viewerCount: 0,
+        contentUpdatedAt: null,
+        commentsUpdatedAt: null,
+        token: '',
+        url: '',
+      }
       const index = Number.isFinite(Number(slideIndexRef.current)) ? Number(slideIndexRef.current) : 0
 
       if (token) {
@@ -106,6 +116,10 @@ export default function usePptPresence({
           renderedVersion.current = next.contentUpdatedAt
           setContentUpdatedAt(next.contentUpdatedAt)
         }
+        if (next.commentsUpdatedAt && next.commentsUpdatedAt !== commentsVersion.current) {
+          commentsVersion.current = next.commentsUpdatedAt
+          setCommentsUpdatedAt(next.commentsUpdatedAt)
+        }
         delay = delay === DEFAULT_INTERVAL_MS ? DEFAULT_INTERVAL_MS : delay
       }
 
@@ -133,5 +147,5 @@ export default function usePptPresence({
     }
   }, [token, workspaceId, presentationId, enabled])
 
-  return { viewers, viewerCount, contentUpdatedAt }
+  return { viewers, viewerCount, contentUpdatedAt, commentsUpdatedAt }
 }
