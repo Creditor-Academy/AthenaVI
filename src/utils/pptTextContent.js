@@ -1,22 +1,36 @@
 import { resolveFillCss, resolveThemeColor } from './presentationHelpers'
 
+/** Safe plain text for canvas rendering — never return objects (invalid React children). */
+export function coercePlainText(value) {
+  if (value == null) return ''
+  if (typeof value === 'string') return value
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+  if (typeof value === 'object') {
+    if (Array.isArray(value)) return value.map(coercePlainText).filter(Boolean).join('\n')
+    const nested = value.text ?? value.body ?? value.title ?? value.label ?? value.heading
+    if (nested != null && nested !== value) return coercePlainText(nested)
+    return ''
+  }
+  return String(value)
+}
+
 export function joinedRunText(content) {
   const runs = content?.runs
   if (!Array.isArray(runs) || !runs.length) return ''
-  return runs.map((run) => run?.text || '').join('')
+  return runs.map((run) => coercePlainText(run?.text)).join('')
 }
 
 /** Longest of stored text vs joined rich runs — never drop hero copy. */
 export function contentPlainText(content) {
   const c = content || {}
-  const fromText = String(c.text || '')
+  const fromText = coercePlainText(c.text)
   const fromRuns = joinedRunText(c)
   return fromRuns.length > fromText.length ? fromRuns : fromText
 }
 
 export function contentUsesFullRuns(content) {
   const c = content || {}
-  const fromText = String(c.text || '')
+  const fromText = coercePlainText(c.text)
   const fromRuns = joinedRunText(c)
   return Boolean(c.runs?.length) && fromRuns.length >= fromText.length
 }
@@ -152,7 +166,7 @@ function cloneRunStyle(run) {
 export function mergeAdjacentRuns(runs) {
   const out = []
   for (const run of runs || []) {
-    const text = run?.text || ''
+    const text = coercePlainText(run?.text)
     if (!text) continue
     const last = out[out.length - 1]
     if (last && styleKey(last) === styleKey(run)) last.text += text
@@ -199,7 +213,7 @@ export function expandRuns(content) {
   const text = contentPlainText(c)
   const runs = collapseDuplicatedRuns(c)
   if (contentUsesFullRuns({ ...c, runs }) && runs.length) {
-    return runs.map((run) => ({ ...run, text: run?.text || '' }))
+    return runs.map((run) => ({ ...run, text: coercePlainText(run?.text) }))
   }
   const fill = c.fill || (c.color ? { type: 'solid', color: c.color } : null)
   return [

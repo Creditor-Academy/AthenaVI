@@ -18,6 +18,7 @@ import GraphicCanvasVisual from '../../../components/ppt/GraphicCanvasVisual'
 import { parsePolygonClipPath } from '../../../utils/shapeClipSvg'
 import { shouldPaintElement } from '../../../utils/canvasRenderDebug'
 import {
+  coercePlainText,
   contentUsesFullRuns,
   isGradientFill,
   resolveTextHex,
@@ -79,6 +80,8 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
         {usesRuns
           ? c.runs.map((run, i) => {
               const fill = runFill(run, { type: 'solid', color })
+              const text =
+                typeof run?.text === 'string' || typeof run?.text === 'number' ? run.text : ''
               return (
                 <span
                   key={i}
@@ -89,11 +92,11 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
                     fontFamily: run.fontFamily || baseStyle.fontFamily,
                   }}
                 >
-                  {run.text}
+                  {text}
                 </span>
               )
             })
-          : c.text || ''}
+          : coercePlainText(c.text)}
       </div>
     )
   }
@@ -239,7 +242,7 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
             {cells.map((row, ri) => (
               <tr key={ri}>
                 {(row || []).map((cell, ci) => (
-                  <td key={ci}>{cell}</td>
+                  <td key={ci}>{coercePlainText(cell)}</td>
                 ))}
               </tr>
             ))}

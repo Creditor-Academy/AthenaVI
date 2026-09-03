@@ -406,10 +406,11 @@ function resolveSlotText(slot, contentBySlotId, schema, options = {}) {
     }
   }
 
-  // Keep metric/stat catalog samples so empty authoring still looks like stats, not generic edit hints
+  // Keep metric/stat/member catalog samples so empty authoring still looks designed.
+  const memberSlot = /^MEMBER_\d+_(NAME|ROLE|EMAIL|BIO|BODY|DESC)$/i.test(String(slotId || ''))
   if (
     placeholder &&
-    (!hasSlideContent || role === 'stat' || role === 'stat_label')
+    (!hasSlideContent || role === 'stat' || role === 'stat_label' || memberSlot)
   ) {
     return placeholder
   }
@@ -1203,6 +1204,7 @@ export function compileDeckLayoutToElements(schema, options = {}) {
           framePlacement,
           imageContent: imageEl.content,
           layerBase: layerForSlot(frameSlot),
+          themeTokens: compileOptions?.themeTokens || compileOptions?.theme || null,
         })
       }
       return [buildImageElement(slot, placement, contentBySlotId, compileOptions)]

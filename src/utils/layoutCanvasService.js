@@ -363,6 +363,12 @@ function needsContentHydration(slide, elements = []) {
     String(content.body || content.summary || content.cta || content.subtitle || '').trim() ||
       (Array.isArray(content.bullets) && content.bullets.length) ||
       (Array.isArray(content.columns) && content.columns.length) ||
+      (Array.isArray(content.members) && content.members.length) ||
+      (Array.isArray(content.team) && content.team.length) ||
+      (Array.isArray(content.people) && content.people.length) ||
+      (Array.isArray(content.diagram?.cells) && content.diagram.cells.length) ||
+      (Array.isArray(content.cells) && content.cells.length) ||
+      (Array.isArray(content.funnel) && content.funnel.length) ||
       content.chart
   )
   if (hasCopy) {

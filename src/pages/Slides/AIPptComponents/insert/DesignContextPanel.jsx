@@ -455,7 +455,7 @@ function ChartDesignSection({ element, palette, onChangeContent, disabled }) {
               fallbackHex="#7C3AED"
               onChange={(fill) => {
                 const nc = [...colors]
-                nc[i] = fill
+                nc[i] = fillSolidColor(fill, '#7C3AED')
                 onChangeContent?.({ ...c, colors: nc })
               }}
             />

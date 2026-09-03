@@ -1,5 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
-import { FiCopy, FiCheck, FiX, FiAlertCircle, FiRefreshCw, FiEye, FiMessageCircle, FiLink } from 'react-icons/fi'
+import {
+  FiCopy,
+  FiCheck,
+  FiX,
+  FiAlertCircle,
+  FiRefreshCw,
+  FiEye,
+  FiMessageCircle,
+  FiShare2,
+} from 'react-icons/fi'
 import presentationService, { PresentationConflictError } from '../../../services/presentationService'
 import { extractShareToken, buildShareUrl } from '../../../utils/pptShareSession'
 import './pptPanelUi.css'
@@ -64,13 +73,13 @@ function ShareAccessRow({
   const live = Boolean(link.enabled)
 
   return (
-    <article className={`ppt-share-access ${live ? 'is-live' : ''}`}>
-      <div className="ppt-share-access-row">
-        <span className="ppt-share-access-icon" aria-hidden>
-          <Icon size={16} />
+    <article className={`ppt-share-card ${live ? 'is-live' : ''} ${neverCreated ? 'is-idle' : ''}`}>
+      <div className="ppt-share-card-top">
+        <span className="ppt-share-card-icon" aria-hidden>
+          <Icon size={18} />
         </span>
-        <div className="ppt-share-access-copy">
-          <div className="ppt-share-access-title">
+        <div className="ppt-share-card-copy">
+          <div className="ppt-share-card-title">
             <strong>{title}</strong>
             {!neverCreated && (
               <span className={`ppt-share-pill ${live ? 'is-on' : ''}`}>{live ? 'On' : 'Off'}</span>
@@ -92,39 +101,39 @@ function ShareAccessRow({
       </div>
 
       {neverCreated ? (
-        <p className="ppt-share-access-empty">Turn this on to create a shareable link.</p>
+        <p className="ppt-share-card-hint">Turn this on to create a shareable link.</p>
       ) : (
-        <div className="ppt-share-access-link">
-          <div className="ppt-share-access-link-row">
+        <div className="ppt-share-card-link">
+          <div className="ppt-share-urlbar">
             <input
               id={inputId}
               type="text"
               readOnly
-              className="ppt-share-access-input"
+              className="ppt-share-urlbar-input"
               value={loading ? 'Loading…' : copyUrl || 'Reset the link to get a URL'}
               aria-label={`${title} link`}
             />
             <button
               type="button"
-              className={`ppt-share-copy-btn ${copied ? 'is-copied' : ''}`}
+              className={`ppt-share-urlbar-copy ${copied ? 'is-copied' : ''}`}
               onClick={onCopy}
               disabled={!copyUrl}
               title={copyUrl ? 'Copy link' : 'Reset the link to get a copyable URL'}
             >
               {copied ? <FiCheck size={16} /> : <FiCopy size={16} />}
-              {copied ? 'Copied' : 'Copy'}
+              <span>{copied ? 'Copied' : 'Copy'}</span>
             </button>
           </div>
           {needsRotate && (
-            <p className="ppt-share-access-note">Reset once to recover a copyable URL.</p>
+            <p className="ppt-share-card-hint">Reset once to recover a copyable URL.</p>
           )}
           {!live && (
-            <p className="ppt-share-access-note">Paused — the same URL works again when you turn this on.</p>
+            <p className="ppt-share-card-hint">Paused — the same URL works again when you turn this on.</p>
           )}
           {confirmRotate ? (
             <div className="ppt-share-reset-confirm">
               <p>Everyone with the current link will lose access.</p>
-              <div>
+              <div className="ppt-share-reset-actions">
                 <button type="button" className="ppt-share-text-btn" onClick={onCancelRotate} disabled={busy}>
                   Cancel
                 </button>
@@ -321,18 +330,25 @@ export default function SharePresentationModal({
       className="ppt-editor-modal-overlay"
       onClick={(e) => e.target === e.currentTarget && onClose?.()}
     >
-      <div className="ppt-editor-modal ppt-share-modal" role="dialog" aria-label="Share presentation">
-        <header className="ppt-editor-modal-head">
-          <div className="ppt-editor-modal-head-text">
-            <span className="ppt-editor-modal-kicker">Share</span>
-            <h3 className="ppt-editor-modal-title">{title}</h3>
+      <div className="ppt-editor-modal ppt-share-modal" role="dialog" aria-labelledby="ppt-share-title">
+        <header className="ppt-share-head">
+          <div className="ppt-share-head-main">
+            <span className="ppt-share-head-icon" aria-hidden>
+              <FiShare2 size={18} />
+            </span>
+            <div className="ppt-share-head-text">
+              <h3 id="ppt-share-title">Share</h3>
+              <p>{title}</p>
+            </div>
           </div>
           <button type="button" className="ppt-editor-modal-close" onClick={onClose} aria-label="Close">
             <FiX size={18} />
           </button>
         </header>
 
-        <p className="ppt-share-lead">Anyone with a link can open this presentation. Pick who can only view, and who can comment.</p>
+        <p className="ppt-share-lead">
+          Create a view-only link, a comment link, or both. Each link is independent.
+        </p>
 
         {generating && (
           <div className="ppt-editor-modal-alert ppt-editor-modal-alert--warn" role="status">
@@ -348,16 +364,8 @@ export default function SharePresentationModal({
           </div>
         )}
 
-        <section className="ppt-share-panel" aria-label="Anyone with the link">
-          <div className="ppt-share-panel-head">
-            <span className="ppt-share-panel-icon" aria-hidden>
-              <FiLink size={15} />
-            </span>
-            <div>
-              <strong>Anyone with the link</strong>
-              <p>Two independent links. Turning one on does not enable the other.</p>
-            </div>
-          </div>
+        <section className="ppt-share-roles" aria-label="Anyone with the link">
+          <p className="ppt-share-roles-label">Anyone with the link</p>
 
           <ShareAccessRow
             role="viewer"
@@ -395,7 +403,7 @@ export default function SharePresentationModal({
           />
         </section>
 
-        <footer className="ppt-editor-modal-foot">
+        <footer className="ppt-share-foot">
           <button type="button" className="ppt-editor-modal-btn ppt-editor-modal-btn--primary" onClick={onClose}>
             Done
           </button>

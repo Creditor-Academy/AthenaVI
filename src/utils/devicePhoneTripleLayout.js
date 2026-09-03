@@ -1,5 +1,7 @@
 /** Three overlapping portrait phones with left/right copy. Plain gray band — no accent color. */
 
+import { deviceFrameChromeColors } from './deviceFrameCanvas'
+
 export const TRIPLE_COPY = [
   { key: 'L', heading: 'Title 01', body: 'Description 01' },
   { key: 'R', heading: 'Title 02', body: 'Description 02' },
@@ -129,13 +131,18 @@ function textStyle(isHeading, textColor, muted) {
 /**
  * @returns {object[]}
  */
-export function layoutDevicePhoneTriple(elements, schema, palette = {}, canvas = {}) {
+export function layoutDevicePhoneTriple(elements, schema, palette = {}, canvas = {}, themeTokens = null) {
   if (!Array.isArray(elements)) return elements
   const canvasW = canvas.width || 1920
   const canvasH = canvas.height || 1080
-  const textColor = (palette && palette.text) || '#1F2937'
-  const muted = (palette && palette.muted) || '#6B7280'
+  const titleColor = (palette && palette.text) || '#1F2937'
+  const bandText = '#111827'
+  const bandMuted = '#4B5563'
+  const chromeTheme = themeTokens || { appearance: undefined, palette }
   const g = tripleGeom(canvasW, canvasH)
+
+  const priorHeading = elements.find((el) => MAIN_HEADING.test(String(el.slotId || '')))
+  const headingText = String(priorHeading?.content?.text || '').trim() || 'Describe this mockup'
 
   const stripped = elements.filter((el) => {
     const sid = String(el.slotId || '')
@@ -149,7 +156,23 @@ export function layoutDevicePhoneTriple(elements, schema, palette = {}, canvas =
     if (phoneN || role === 'device_frame') {
       const n = phoneN ? Number(phoneN[1]) : /_3$/.test(sid) ? 3 : /_2$/.test(sid) ? 2 : /_1$/.test(sid) ? 1 : 0
       const phone = g.phones.find((p) => p.n === n)
-      if (phone) return placePhone(el, phone)
+      if (phone) {
+        const placed = placePhone(el, phone)
+        if (role === 'device_frame' || /FRAME/.test(sid)) {
+          const kind = String(placed.content?.deviceFrame || 'phone')
+          const chrome = deviceFrameChromeColors(chromeTheme, kind)
+          return {
+            ...placed,
+            content: {
+              ...(placed.content || {}),
+              fill: chrome.fill,
+              stroke: chrome.stroke,
+              strokeWidth: chrome.strokeWidth,
+            },
+          }
+        }
+        return placed
+      }
     }
     const copyM = sid.match(/^((?:HEADING|BODY))_([LR])$/)
     if (copyM) {
@@ -171,7 +194,8 @@ export function layoutDevicePhoneTriple(elements, schema, palette = {}, canvas =
         },
         content: {
           ...(el.content || {}),
-          ...textStyle(isHeading, textColor, muted),
+          ...textStyle(isHeading, bandText, bandMuted),
+          colorRole: isHeading ? 'text' : 'muted',
         },
       }
     }
@@ -195,13 +219,13 @@ export function layoutDevicePhoneTriple(elements, schema, palette = {}, canvas =
       opacity: 1,
     },
     content: {
-      text: 'Describe this mockup',
+      text: headingText,
       align: 'center',
       verticalAlign: 'flex-start',
       fontSize: 32,
       fontWeight: 800,
       lineHeight: 1.4,
-      color: textColor,
+      color: titleColor,
       letterSpacing: '0',
       padding: 12,
       paddingX: 12,
@@ -221,7 +245,7 @@ export function layoutDevicePhoneTriple(elements, schema, palette = {}, canvas =
         slotId: headId,
         layer: 14,
         placement: { x: Math.round(x), y: Math.round(g.textY), width: Math.round(g.textW), height: g.headH, rotation: 0, opacity: 1 },
-        content: { text: copy.heading, ...textStyle(true, textColor, muted) },
+        content: { text: copy.heading, ...textStyle(true, bandText, bandMuted), colorRole: 'text' },
       })
     }
     if (!have.has(bodyId)) {
@@ -232,7 +256,7 @@ export function layoutDevicePhoneTriple(elements, schema, palette = {}, canvas =
         slotId: bodyId,
         layer: 14,
         placement: { x: Math.round(x), y: Math.round(g.textY + g.headH + 10), width: Math.round(g.textW), height: g.bodyH, rotation: 0, opacity: 1 },
-        content: { text: copy.body, ...textStyle(false, textColor, muted) },
+        content: { text: copy.body, ...textStyle(false, bandText, bandMuted), colorRole: 'muted' },
       })
     }
   }

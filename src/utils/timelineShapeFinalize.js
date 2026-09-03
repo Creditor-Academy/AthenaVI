@@ -18,7 +18,7 @@ import {
   cycleRingCalloutSvg,
   cycleRingCallouts,
 } from './diagramCycleSvg'
-import { funnelStageInlineSvg, funnelStagePlacement, FUNNEL_TITLE_COLORS, FUNNEL_GEOM, FUNNEL_STAGE_COLORS, funnelOverlayPlacements, FUNNEL_H_GEOM, funnelHSegInlineSvg, funnelHSegPlacement, funnelHOverlayPlacements } from './diagramFunnelSvg'
+import { funnelStageInlineSvg, funnelStagePlacement, FUNNEL_TITLE_COLORS, FUNNEL_GEOM, FUNNEL_STAGE_COLORS, funnelOverlayPlacements, packFunnelStageTextBlocks, FUNNEL_H_GEOM, funnelHSegInlineSvg, funnelHSegPlacement, funnelHOverlayPlacements } from './diagramFunnelSvg'
 import { matrixQuadPlacement, matrixArrowPlacement, matrixArrowInlineSvg, MATRIX_GEOM, MATRIX_QUAD_COLORS, MATRIX_ARROW_COLOR, matrixOverlayPlacements, MATRIX_GRID_COLORS, MATRIX_Q_TINTS, MATRIX_Q_TITLE, MATRIX_Q_AXIS, matrixQuadrantCrossInlineSvg } from './diagramMatrixSvg'
 import {
   PYRAMID_N,
@@ -2917,21 +2917,78 @@ export function layoutDiagramFunnel(elements, schema, palette = {}, canvas = {})
   const muted = paletteColor(palette, 'muted', '#6B7280')
 
   const headingY = 36
-  const headingH = 78
-  const graphicH = Math.min(900, canvasH - headingY - headingH - 40)
-  const graphicW = Math.round(graphicH * (FUNNEL_GEOM.viewW / FUNNEL_GEOM.viewH))
-  const graphicY = headingY + headingH + 6
-  const graphicX = 72
+  const headingH = 72
+  const bottomPad = 48
+  const bodyByStage = [0, 1, 2, 3].map((i) => {
+    const el = elements.find((e) => new RegExp(`^funnel_${i + 1}_body$`, 'i').test(String(e.slotId || '')))
+    return String(el?.content?.text || '').trim()
+  })
+  // Prefer a slightly smaller funnel so right-side copy has room; shrink further if still tight.
+  let graphicScale = 0.82
+  let graphicH = 0
+  let graphicW = 0
+  let graphicY = 0
+  let graphicX = 72
+  let overlay = { stages: [] }
+  let textX = 0
+  let textWidth = 400
+  let packed = { packs: [], bodyFontSize: 16, titleFontSize: 22, titleH: 34 }
+
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    graphicH = Math.min(Math.round(860 * graphicScale), canvasH - headingY - headingH - bottomPad)
+    graphicW = Math.round(graphicH * (FUNNEL_GEOM.viewW / FUNNEL_GEOM.viewH))
+    graphicY = headingY + headingH + 6
+    graphicX = 72
+    overlay = funnelOverlayPlacements(graphicX, graphicY, graphicW, graphicH)
+    textX = graphicX + graphicW + 36
+    textWidth = Math.max(320, canvasW - textX - 64)
+    packed = packFunnelStageTextBlocks({
+      stages: overlay.stages,
+      bodies: bodyByStage,
+      textWidth,
+      titleH: 34,
+      titleBodyGap: 6,
+      stageGap: 20,
+      bodyFontSize: 15,
+      titleFontSize: 20,
+      bodyLineHeight: 1.35,
+      regionBottomMax: canvasH - bottomPad,
+    })
+    const last = packed.packs[packed.packs.length - 1]
+    const fits = last && last.bodyY + last.bodyH <= canvasH - bottomPad + 2
+    if (fits && packed.bodyFontSize >= 13) break
+    graphicScale -= 0.08
+  }
+
+  const textPack = packed.packs
+  const bodyFontSize = packed.bodyFontSize
+  const titleFontSize = packed.titleFontSize
+  const bgLum = (() => {
+    const bg = String(palette?.bg || palette?.background || '')
+    const s = bg.replace('#', '')
+    if (s.length !== 6) return 1
+    const r = parseInt(s.slice(0, 2), 16) / 255
+    const g = parseInt(s.slice(2, 4), 16) / 255
+    const b = parseInt(s.slice(4, 6), 16) / 255
+    const lin = (c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
+    return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+  })()
+  const darkDeck = bgLum < 0.45
+  const titleColors = darkDeck
+    ? [
+        paletteColor(palette, 'secondary', '#93C5FD'),
+        paletteColor(palette, 'primary', '#BFDBFE'),
+        paletteColor(palette, 'accent', '#FDBA74'),
+        paletteColor(palette, 'muted', '#CBD5E1'),
+      ]
+    : FUNNEL_TITLE_COLORS
+
   const colors = [
     paletteColor(palette, 'accent', FUNNEL_STAGE_COLORS[0]),
     paletteColor(palette, 'secondary', FUNNEL_STAGE_COLORS[1]),
     paletteColor(palette, 'primary', FUNNEL_STAGE_COLORS[2]),
     paletteColor(palette, 'highlight', FUNNEL_STAGE_COLORS[3]),
   ]
-  const overlay = funnelOverlayPlacements(graphicX, graphicY, graphicW, graphicH)
-  const textX = graphicX + graphicW + 28
-  const textWidth = Math.max(360, canvasW - textX - 72)
-
   const prevBySlot = new Map(
     (elements || [])
       .filter((el) => /^FUNNEL_SEG_[1-4]$/i.test(String(el.slotId || '')))
@@ -2970,9 +3027,10 @@ export function layoutDiagramFunnel(elements, schema, palette = {}, canvas = {})
           ...base,
           align: 'center',
           verticalAlign: 'center',
-          fontSize: 42,
+          fontSize: 36,
           fontWeight: 800,
           color: textColor,
+          clipToSlot: true,
         },
       }
     }
@@ -2988,7 +3046,7 @@ export function layoutDiagramFunnel(elements, schema, palette = {}, canvas = {})
           text: el.content?.text || String(i + 1).padStart(2, '0'),
           align: 'center',
           verticalAlign: 'center',
-          fontSize: 28,
+          fontSize: Math.max(18, Math.round(26 * graphicScale)),
           fontWeight: 800,
           wrap: 'nowrap',
           lineHeight: 1,
@@ -2999,15 +3057,15 @@ export function layoutDiagramFunnel(elements, schema, palette = {}, canvas = {})
     const titleM = sid.match(/^funnel_([1-4])_title$/i)
     if (titleM) {
       const i = Number(titleM[1]) - 1
-      const st = overlay.stages[i]
+      const pack = textPack[i] || { titleY: overlay.stages[i].y, titleH: packed.titleH }
       return {
         ...el,
         layer: 10,
         placement: {
           x: textX,
-          y: st.y + Math.round(st.h * 0.22),
+          y: pack.titleY,
           width: textWidth,
-          height: 38,
+          height: pack.titleH,
           rotation: 0,
           opacity: 1,
         },
@@ -3015,24 +3073,28 @@ export function layoutDiagramFunnel(elements, schema, palette = {}, canvas = {})
           ...base,
           align: 'left',
           verticalAlign: 'center',
-          fontSize: 22,
+          fontSize: titleFontSize,
           fontWeight: 700,
-          color: FUNNEL_TITLE_COLORS[i],
+          color: titleColors[i],
+          clipToSlot: true,
         },
       }
     }
     const bodyM = sid.match(/^funnel_([1-4])_body$/i)
     if (bodyM) {
       const i = Number(bodyM[1]) - 1
-      const st = overlay.stages[i]
+      const pack = textPack[i] || {
+        bodyY: overlay.stages[i].y + 40,
+        bodyH: Math.max(40, overlay.stages[i].h - 88),
+      }
       return {
         ...el,
         layer: 10,
         placement: {
           x: textX,
-          y: st.y + Math.round(st.h * 0.22) + 40,
+          y: pack.bodyY,
           width: textWidth,
-          height: Math.max(40, st.h - 88),
+          height: pack.bodyH,
           rotation: 0,
           opacity: 1,
         },
@@ -3040,10 +3102,12 @@ export function layoutDiagramFunnel(elements, schema, palette = {}, canvas = {})
           ...base,
           align: 'left',
           verticalAlign: 'flex-start',
-          fontSize: 16,
+          fontSize: bodyFontSize,
           fontWeight: 400,
           color: muted,
-          lineHeight: 1.4,
+          lineHeight: 1.35,
+          clipToSlot: true,
+          wrap: 'pre-wrap',
         },
       }
     }
@@ -5276,7 +5340,7 @@ export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = 
     return layoutDevicePhoneHighlights(elements, schema, palette, canvas)
   }
   if (isDevicePhoneTripleLayout(layoutId)) {
-    return layoutDevicePhoneTriple(elements, schema, palette, canvas)
+    return layoutDevicePhoneTriple(elements, schema, palette, canvas, { palette })
   }
   if (isDeviceMultiClusterLayout(layoutId)) {
     return layoutDeviceMultiCluster(elements, schema, palette, canvas)

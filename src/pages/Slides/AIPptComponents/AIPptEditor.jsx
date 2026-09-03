@@ -36,6 +36,7 @@ import PptDeckOpenBoot from './PptDeckOpenBoot'
 import { usePptEditorHistory } from '../../../hooks/usePptEditorHistory'
 import { usePptElementMutations } from './usePptElementMutations'
 import { computePptSmartGuides } from '../../../utils/pptSmartGuides'
+import { coercePlainText } from '../../../utils/pptTextContent'
 import {
   canPptGroup,
   canPptUngroup,
@@ -922,24 +923,33 @@ function SlideStage({
           {!hasElements ? (
             <div className="aig-slide-mock">
               <h1 className="aig-slide-mock-title" style={{ color: themeVisual.title }}>
-                {slide.title}
+                {coercePlainText(slide.title || slide.content?.title)}
               </h1>
-              {slide.subtitle || slide.content ? (
-                <p className="aig-slide-mock-body">{slide.subtitle || slide.content}</p>
-              ) : null}
+              {(() => {
+                const body = coercePlainText(
+                  slide.subtitle ||
+                    slide.content?.subtitle ||
+                    slide.content?.body ||
+                    (typeof slide.content === 'string' ? slide.content : '')
+                )
+                return body ? <p className="aig-slide-mock-body">{body}</p> : null
+              })()}
               {Array.isArray(slide.description) && slide.description.length ? (
                 <div className="aig-slide-mock-text" style={{ color: themeVisual.body }}>
                   <ul style={{ paddingLeft: '32px', margin: 0 }}>
-                    {slide.description.map((pt, i) => (
-                      <li key={i} style={{ marginBottom: '12px' }}>
-                        {pt}
-                      </li>
-                    ))}
+                    {slide.description.map((pt, i) => {
+                      const line = coercePlainText(pt)
+                      return line ? (
+                        <li key={i} style={{ marginBottom: '12px' }}>
+                          {line}
+                        </li>
+                      ) : null
+                    })}
                   </ul>
                 </div>
-              ) : slide.description ? (
+              ) : coercePlainText(slide.description) ? (
                 <div className="aig-slide-mock-text" style={{ color: themeVisual.body }}>
-                  <p style={{ margin: 0 }}>{slide.description}</p>
+                  <p style={{ margin: 0 }}>{coercePlainText(slide.description)}</p>
                 </div>
               ) : null}
               {fallbackImage ? (
@@ -4246,7 +4256,9 @@ export default function AIPptEditor({
 
                   <SlideEditAiPanel
                     open={slideAiEditId === slide.id}
-                    slideTitle={slide.title || slide.content?.title || `Slide ${idx + 1}`}
+                    slideTitle={
+                      coercePlainText(slide.title || slide.content?.title) || `Slide ${idx + 1}`
+                    }
                     disabled={viewOnly || isGenerating || busy}
                     busy={busy && slideAiEditId === slide.id}
                     onClose={() => setSlideAiEditId(null)}
