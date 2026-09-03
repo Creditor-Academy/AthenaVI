@@ -480,7 +480,7 @@ export default function PptCanvasElement({
       const radius = c.borderRadius != null ? c.borderRadius : 0
       const avatarSlot = /^(AVATAR|AVATAR_\d+)$/i.test(String(el.slotId || ''))
       const circular = c.borderRadius === 999 || c.borderRadius === '50%'
-      if (el.type === 'image' && (avatarSlot || (circular && /PORTRAIT_IMAGE/i.test(String(el.slotId || ''))))) {
+      if (el.type === 'image' && avatarSlot) {
         return (
           <div
             style={{
@@ -496,13 +496,15 @@ export default function PptCanvasElement({
       }
       if (el.type === 'image') {
         const clipPath = c.clipPath || buildImageClipPath(c.imageMask)
+        const round = circular || radius === 999 || radius === '50%'
         return (
           <EmptyImagePlaceholder
             className="ppt-image-skeleton ppt-image-skeleton--empty"
-            borderRadius={clipPath ? 0 : radius}
+            borderRadius={clipPath ? 0 : (round ? 999 : radius)}
             style={{
               ...fillStyle,
               ...(clipPath ? { clipPath, WebkitClipPath: clipPath } : {}),
+              ...(round && !clipPath ? { borderRadius: 999, overflow: 'hidden' } : {}),
             }}
           />
         )

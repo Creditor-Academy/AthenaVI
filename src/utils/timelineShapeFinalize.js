@@ -98,7 +98,13 @@ import { isDeviceTabletSplitLayout, layoutDeviceTabletSplit } from './deviceTabl
 import { isDeviceTabletCenteredLayout, layoutDeviceTabletCentered } from './deviceTabletCenteredLayout'
 import { isTeamThreeHorizontalLayout, layoutTeamThreeHorizontal } from './teamThreeHorizontalLayout'
 import { isTeamThreeVerticalLayout, layoutTeamThreeVertical } from './teamThreeVerticalLayout'
+import { isTeamThreeFullCardsLayout, layoutTeamThreeFullCards } from './teamThreeFullCardsLayout'
 import { isTeamFourLayout, layoutTeamFour } from './teamFourLayout'
+import { isTeamFiveLayout, layoutTeamFive } from './teamFiveLayout'
+import { isTeamSixLayout, layoutTeamSix } from './teamSixLayout'
+import { isTeamByDepartmentLayout, layoutTeamByDepartment } from './teamByDepartmentLayout'
+import { isTeamFeaturedLeadLayout, layoutTeamFeaturedLead } from './teamFeaturedLeadLayout'
+import { isTeamOrgSimpleLayout, layoutTeamOrgSimple } from './teamOrgSimpleLayout'
 import {
   timelineNodeInlineSvg,
   timelineSpineSegmentInlineSvg,
@@ -5290,8 +5296,26 @@ export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = 
   if (isTeamThreeVerticalLayout(layoutId)) {
     return layoutTeamThreeVertical(elements, schema, palette, canvas)
   }
+  if (isTeamThreeFullCardsLayout(layoutId)) {
+    return layoutTeamThreeFullCards(elements, schema, palette, canvas)
+  }
   if (isTeamFourLayout(layoutId)) {
     return layoutTeamFour(elements, schema, palette, canvas)
+  }
+  if (isTeamFiveLayout(layoutId)) {
+    return layoutTeamFive(elements, schema, palette, canvas)
+  }
+  if (isTeamSixLayout(layoutId)) {
+    return layoutTeamSix(elements, schema, palette, canvas)
+  }
+  if (isTeamByDepartmentLayout(layoutId)) {
+    return layoutTeamByDepartment(elements, schema, palette, canvas)
+  }
+  if (isTeamFeaturedLeadLayout(layoutId)) {
+    return layoutTeamFeaturedLead(elements, schema, palette, canvas)
+  }
+  if (isTeamOrgSimpleLayout(layoutId)) {
+    return layoutTeamOrgSimple(elements, schema, palette, canvas)
   }
   if (isAgendaMinimalLayout(layoutId)) {
     return layoutAgendaMinimal(elements, schema, palette, canvas)

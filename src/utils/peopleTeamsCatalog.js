@@ -13,18 +13,6 @@ import {
   memberFields,
 } from './deckLayoutV2Helpers.js'
 
-function teamGridLayout(id, memberCount, previewMode, memberRegions) {
-  const slots = [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'Meet the team', {
-      typography: typo('heading', { fontSize: 32, align: 'center' }),
-    }),
-  ]
-  for (let i = 1; i <= memberCount; i += 1) {
-    slots.push(...memberFields(i, memberRegions[i - 1] || {}))
-  }
-  return layoutBase(id, 'team', slots, { mode: previewMode })
-}
-
 const CATALOG = {
   team_three_horizontal_v1: layoutBase('team_three_horizontal_v1', 'team', [
     heading('HEADING', 'cols 1-12, rows 1-1', 'Meet the team', {
@@ -139,114 +127,110 @@ const CATALOG = {
     }),
   ], { mode: 'team_grid_four' }),
 
-  team_five_v1: teamGridLayout('team_five_v1', 5, 'team_grid_five', [
-    {
-      image: 'cols 1-3, rows 3-5',
-      name: 'cols 1-3, rows 5-6',
-      role: 'cols 1-3, rows 6-7',
-      email: 'cols 1-3, rows 7-8',
-    },
-    {
-      image: 'cols 5-7, rows 3-5',
-      name: 'cols 5-7, rows 5-6',
-      role: 'cols 5-7, rows 6-7',
-      email: 'cols 5-7, rows 7-8',
-    },
-    {
-      image: 'cols 9-11, rows 3-5',
-      name: 'cols 9-11, rows 5-6',
-      role: 'cols 9-11, rows 6-7',
-      email: 'cols 9-11, rows 7-8',
-    },
-    {
-      image: 'cols 3-5, rows 8-9',
-      name: 'cols 3-5, rows 9-10',
-      role: 'cols 3-5, rows 10-10',
-      email: 'cols 3-5, rows 10-10',
-    },
-    {
-      image: 'cols 7-9, rows 8-9',
-      name: 'cols 7-9, rows 9-10',
-      role: 'cols 7-9, rows 10-10',
-      email: 'cols 7-9, rows 10-10',
-    },
-  ]),
-
-  team_six_v1: teamGridLayout('team_six_v1', 6, 'team_grid_six', [
-    {
-      image: 'cols 1-3, rows 3-5',
-      name: 'cols 1-3, rows 5-6',
-      role: 'cols 1-3, rows 6-7',
-      email: 'cols 1-3, rows 7-8',
-    },
-    {
-      image: 'cols 5-7, rows 3-5',
-      name: 'cols 5-7, rows 5-6',
-      role: 'cols 5-7, rows 6-7',
-      email: 'cols 5-7, rows 7-8',
-    },
-    {
-      image: 'cols 9-11, rows 3-5',
-      name: 'cols 9-11, rows 5-6',
-      role: 'cols 9-11, rows 6-7',
-      email: 'cols 9-11, rows 7-8',
-    },
-    {
-      image: 'cols 1-3, rows 8-9',
-      name: 'cols 1-3, rows 9-10',
-      role: 'cols 1-3, rows 10-10',
+  team_five_v1: layoutBase('team_five_v1', 'team', [
+    heading('HEADING', 'cols 2-11, rows 1-1', 'Meet the team', {
+      typography: typo('heading', { fontSize: 28, align: 'center' }),
+    }),
+    ...memberFields(1, {
+      image: 'cols 3-5, rows 2-4',
+      name: 'cols 3-5, rows 5-5',
+      role: 'cols 3-5, rows 6-6',
+      email: 'cols 3-5, rows 7-7',
+    }),
+    body('MEMBER_1_BIO', 'cols 3-5, rows 8-8', 'Leads product vision and keeps the team focused on what matters.', 4, {
+      typography: centeredTypo('body', { fontSize: 13 }),
+    }),
+    ...memberFields(2, {
+      image: 'cols 8-10, rows 2-4',
+      name: 'cols 8-10, rows 5-5',
+      role: 'cols 8-10, rows 6-6',
+      email: 'cols 8-10, rows 7-7',
+    }),
+    body('MEMBER_2_BIO', 'cols 8-10, rows 8-8', 'Builds the platform and sets the technical bar for the work we ship.', 4, {
+      typography: centeredTypo('body', { fontSize: 13 }),
+    }),
+    ...memberFields(3, {
+      image: 'cols 1-3, rows 6-8',
+      name: 'cols 1-3, rows 9-9',
+      role: 'cols 1-3, rows 9-9',
       email: 'cols 1-3, rows 10-10',
-    },
-    {
-      image: 'cols 5-7, rows 8-9',
-      name: 'cols 5-7, rows 9-10',
-      role: 'cols 5-7, rows 10-10',
+    }),
+    body('MEMBER_3_BIO', 'cols 1-3, rows 10-10', 'Runs day-to-day operations so the team can move with clarity.', 4, {
+      typography: centeredTypo('body', { fontSize: 13 }),
+    }),
+    ...memberFields(4, {
+      image: 'cols 5-7, rows 6-8',
+      name: 'cols 5-7, rows 9-9',
+      role: 'cols 5-7, rows 9-9',
       email: 'cols 5-7, rows 10-10',
-    },
-    {
-      image: 'cols 9-11, rows 8-9',
-      name: 'cols 9-11, rows 9-10',
-      role: 'cols 9-11, rows 10-10',
+    }),
+    body('MEMBER_4_BIO', 'cols 5-7, rows 10-10', 'Guides partnerships and growth with a steady, practical point of view.', 4, {
+      typography: centeredTypo('body', { fontSize: 13 }),
+    }),
+    ...memberFields(5, {
+      image: 'cols 9-11, rows 6-8',
+      name: 'cols 9-11, rows 9-9',
+      role: 'cols 9-11, rows 9-9',
       email: 'cols 9-11, rows 10-10',
-    },
-  ]),
+    }),
+    body('MEMBER_5_BIO', 'cols 9-11, rows 10-10', 'Shapes the visual language and makes every slide feel considered.', 4, {
+      typography: centeredTypo('body', { fontSize: 13 }),
+    }),
+  ], { mode: 'team_grid_five' }),
+
+  team_six_v1: layoutBase('team_six_v1', 'team', [
+    heading('HEADING', 'cols 1-12, rows 1-1', 'TEAM MEMBERS', {
+      typography: typo('heading', { fontSize: 28, align: 'left' }),
+    }),
+    slot('SUBHEADING', 'cols 1-8, rows 2-2', 'subheading', 'Enter your sub headline here', {
+      layer: 10,
+      typography: typo('subheading', { fontSize: 16, align: 'left' }),
+      max_lines: 1,
+    }),
+    ...[1, 2, 3, 4, 5, 6].flatMap((n) => {
+      const col = ((n - 1) % 3) * 4 + 1
+      const row = n <= 3 ? 3 : 7
+      return [
+        ...memberFields(n, {
+          image: `cols ${col}-${col + 2}, rows ${row}-${row + 1}`,
+          name: `cols ${col}-${col + 2}, rows ${row + 2}-${row + 2}`,
+          role: `cols ${col}-${col + 2}, rows ${row + 3}-${row + 3}`,
+          email: `cols ${col}-${col + 2}, rows ${row + 4}-${row + 4}`,
+        }),
+        body(`MEMBER_${n}_BIO`, `cols ${col}-${col + 2}, rows ${row + 3}-${row + 4}`, SAMPLE_PARA.short, 4, {
+          typography: typo('body', { fontSize: 13 }),
+        }),
+      ]
+    }),
+  ], { mode: 'team_grid_six' }),
 
   team_three_full_cards_v1: layoutBase('team_three_full_cards_v1', 'team', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'Meet the team', {
+    heading('HEADING', 'cols 2-11, rows 1-1', 'Meet the team', {
       typography: typo('heading', { fontSize: 32, align: 'center' }),
     }),
-    slot('MEMBER_1_IMAGE', 'cols 1-4, rows 2-8', 'image', null, { layer: 2, fit: 'cover' }),
-    slot('MEMBER_1_NAME', 'cols 1-4, rows 8-9', 'heading', 'Johanna Doe', {
-      layer: 10,
-      typography: typo('heading', { fontSize: 16, align: 'center' }),
+    ...memberFields(1, {
+      image: 'cols 1-4, rows 2-7',
+      name: 'cols 1-4, rows 8-8',
+      role: 'cols 1-4, rows 9-9',
+      email: 'cols 1-4, rows 10-10',
     }),
-    slot('MEMBER_1_ROLE', 'cols 1-4, rows 9-10', 'caption', 'Co-founder & CEO', {
-      layer: 10,
-      typography: typo('caption', { align: 'center' }),
+    ...memberFields(2, {
+      image: 'cols 5-8, rows 2-7',
+      name: 'cols 5-8, rows 8-8',
+      role: 'cols 5-8, rows 9-9',
+      email: 'cols 5-8, rows 10-10',
     }),
-    slot('MEMBER_2_IMAGE', 'cols 5-8, rows 2-8', 'image', null, { layer: 2, fit: 'cover' }),
-    slot('MEMBER_2_NAME', 'cols 5-8, rows 8-9', 'heading', 'Jane Doe', {
-      layer: 10,
-      typography: typo('heading', { fontSize: 16, align: 'center' }),
-    }),
-    slot('MEMBER_2_ROLE', 'cols 5-8, rows 9-10', 'caption', 'Co-founder & CTO', {
-      layer: 10,
-      typography: typo('caption', { align: 'center' }),
-    }),
-    slot('MEMBER_3_IMAGE', 'cols 9-12, rows 2-8', 'image', null, { layer: 2, fit: 'cover' }),
-    slot('MEMBER_3_NAME', 'cols 9-12, rows 8-9', 'heading', 'Joe Doe', {
-      layer: 10,
-      typography: typo('heading', { fontSize: 16, align: 'center' }),
-    }),
-    slot('MEMBER_3_ROLE', 'cols 9-12, rows 9-10', 'caption', 'Co-founder & COO', {
-      layer: 10,
-      typography: typo('caption', { align: 'center' }),
+    ...memberFields(3, {
+      image: 'cols 9-12, rows 2-7',
+      name: 'cols 9-12, rows 8-8',
+      role: 'cols 9-12, rows 9-9',
+      email: 'cols 9-12, rows 10-10',
     }),
   ], { mode: 'team_full_image_cards' }),
 
   team_by_department_v1: layoutBase('team_by_department_v1', 'team', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'Team by department', {
-      typography: typo('heading', { fontSize: 32, align: 'center' }),
+    heading('HEADING', 'cols 1-8, rows 1-1', 'Team by department', {
+      typography: typo('heading', { fontSize: 32, align: 'left' }),
     }),
     heading('DEPT_1_HEADING', 'cols 1-4, rows 2-3', 'Leadership', {
       typography: typo('heading', { fontSize: 20 }),
@@ -296,49 +280,49 @@ const CATALOG = {
   ], { mode: 'team_by_department' }),
 
   team_featured_lead_v1: layoutBase('team_featured_lead_v1', 'team', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'Leadership', { max_lines: 2 }),
-    slot('MEMBER_1_IMAGE', 'cols 2-5, rows 2-8', 'image', null, { layer: 2, fit: 'cover' }),
-    slot('MEMBER_1_NAME', 'cols 6-11, rows 3-4', 'heading', 'Founder name', {
-      layer: 10,
-      typography: typo('heading', { fontSize: 32 }),
+    heading('HEADING', 'cols 7-12, rows 2-2', 'Leadership', {
+      typography: typo('heading', { fontSize: 16, align: 'left' }),
     }),
-    slot('MEMBER_1_ROLE', 'cols 6-11, rows 4-5', 'subheading', 'CEO & Co-founder', {
+    slot('MEMBER_1_IMAGE', 'cols 1-5, rows 3-9', 'image', null, { layer: 2, fit: 'cover' }),
+    slot('MEMBER_1_NAME', 'cols 7-12, rows 3-4', 'heading', 'Johanna Doe', {
       layer: 10,
-      typography: typo('subheading'),
+      typography: typo('heading', { fontSize: 36, align: 'left' }),
     }),
-    body('MEMBER_1_BIO', 'cols 6-11, rows 5-8', 'Short bio highlighting experience and vision.', 4),
+    slot('MEMBER_1_ROLE', 'cols 7-12, rows 5-5', 'subheading', 'Co-founder & CEO', {
+      layer: 10,
+      typography: typo('subheading', { align: 'left' }),
+    }),
+    body('MEMBER_1_BIO', 'cols 7-12, rows 6-9', 'Leads the company with a clear point of view. She sets the product direction and keeps the team focused on work that matters.', 5, {
+      typography: typo('body', { fontSize: 16, align: 'left' }),
+    }),
   ], { mode: 'team_featured_lead' }),
 
   team_org_simple_v1: layoutBase('team_org_simple_v1', 'team', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'Organization', { max_lines: 2 }),
-    slot('MEMBER_1_NAME', 'cols 5-8, rows 2-3', 'heading', 'CEO', {
-      layer: 10,
-      typography: centeredTypo('heading', { fontSize: 22 }),
+    heading('HEADING', 'cols 1-3, rows 4-6', 'Team Structure', {
+      typography: typo('heading', { fontSize: 32, align: 'left' }),
+      max_lines: 2,
     }),
-    slot('MEMBER_2_NAME', 'cols 2-4, rows 4-5', 'heading', 'Engineering', {
-      layer: 10,
-      typography: centeredTypo('heading', { fontSize: 18 }),
-    }),
-    slot('MEMBER_3_NAME', 'cols 5-7, rows 4-5', 'heading', 'Product', {
-      layer: 10,
-      typography: centeredTypo('heading', { fontSize: 18 }),
-    }),
-    slot('MEMBER_4_NAME', 'cols 8-10, rows 4-5', 'heading', 'Design', {
-      layer: 10,
-      typography: centeredTypo('heading', { fontSize: 18 }),
-    }),
-    slot('MEMBER_5_NAME', 'cols 2-4, rows 6-7', 'heading', 'Sales', {
-      layer: 10,
-      typography: centeredTypo('heading', { fontSize: 16 }),
-    }),
-    slot('MEMBER_6_NAME', 'cols 5-7, rows 6-7', 'heading', 'Marketing', {
-      layer: 10,
-      typography: centeredTypo('heading', { fontSize: 16 }),
-    }),
-    slot('MEMBER_7_NAME', 'cols 8-10, rows 6-7', 'heading', 'Ops', {
-      layer: 10,
-      typography: centeredTypo('heading', { fontSize: 16 }),
-    }),
+    ...[
+      { n: 1, image: 'cols 4-5, rows 4-6', name: 'cols 4-5, rows 7-7', role: 'cols 4-5, rows 8-8', person: { name: 'Jonas', role: 'Designation' } },
+      { n: 2, image: 'cols 6-7, rows 2-4', name: 'cols 6-7, rows 4-4', role: 'cols 6-7, rows 5-5', person: { name: 'Maria', role: 'Designation' } },
+      { n: 3, image: 'cols 8-9, rows 2-4', name: 'cols 8-9, rows 4-4', role: 'cols 8-9, rows 5-5', person: { name: 'Harry', role: 'Designation' } },
+      { n: 4, image: 'cols 6-7, rows 5-7', name: 'cols 6-7, rows 7-7', role: 'cols 6-7, rows 8-8', person: { name: 'Warner', role: 'Designation' } },
+      { n: 5, image: 'cols 8-9, rows 5-7', name: 'cols 8-9, rows 7-7', role: 'cols 8-9, rows 8-8', person: { name: 'Zenda', role: 'Designation' } },
+      { n: 6, image: 'cols 6-7, rows 8-10', name: 'cols 6-7, rows 10-10', role: 'cols 6-7, rows 10-10', person: { name: 'Tony', role: 'Designation' } },
+      { n: 7, image: 'cols 8-9, rows 8-10', name: 'cols 8-9, rows 10-10', role: 'cols 8-9, rows 10-10', person: { name: 'Peter', role: 'Designation' } },
+    ].flatMap(({ n, image, name, role, person }) => [
+      slot(`MEMBER_${n}_IMAGE`, image, 'image', null, { layer: 2, fit: 'cover' }),
+      slot(`MEMBER_${n}_NAME`, name, 'heading', person.name, {
+        layer: 10,
+        typography: centeredTypo('heading', { fontSize: 16 }),
+        max_lines: 1,
+      }),
+      slot(`MEMBER_${n}_ROLE`, role, 'caption', person.role, {
+        layer: 10,
+        typography: centeredTypo('caption', { fontSize: 12 }),
+        max_lines: 1,
+      }),
+    ]),
   ], { mode: 'team_org_simple' }),
 }
 
