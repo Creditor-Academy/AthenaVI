@@ -1,5 +1,5 @@
 /**
- * Grids DECK_LAYOUT v2 catalog — 10 bento / mosaic / mixed grid layouts.
+ * Grids DECK_LAYOUT v2 catalog — 12 core + 24 similar-variant layouts.
  */
 
 import {
@@ -213,6 +213,35 @@ const CATALOG = {
     slot('IMAGE_3', 'cols 8-10, rows 4-6', 'image', null, { layer: 2, fit: 'contain' }),
   ], { mode: 'grid_three_images' }),
 }
+
+function gridsFromSource(layoutId, sourceId, gridVariant, extraPreview = {}) {
+  const source = CATALOG[sourceId]
+  if (!source?.slots?.length) {
+    throw new Error(`gridsFromSource: missing source ${sourceId}`)
+  }
+  const { mode, ...restPreview } = source.preview || {}
+  return layoutBase(
+    layoutId,
+    source.content_type,
+    JSON.parse(JSON.stringify(source.slots)),
+    { mode, gridVariant, ...restPreview, ...extraPreview }
+  )
+}
+
+Object.assign(CATALOG, {
+  grid_four_mosaic_v1: gridsFromSource('grid_four_mosaic_v1', 'grid_bento_four_v1', 'mosaic'),
+  grid_three_asymmetric_v1: gridsFromSource('grid_three_asymmetric_v1', 'grid_bento_three_v1', 'asymmetric'),
+  grid_device_mockups_feature_v1: gridsFromSource('grid_device_mockups_feature_v1', 'grid_device_mockups_v1', 'feature'),
+  grid_images_text_mosaic_v1: gridsFromSource('grid_images_text_mosaic_v1', 'grid_images_text_cards_v1', 'mosaic'),
+  grid_insights_chart_split_v1: gridsFromSource('grid_insights_chart_split_v1', 'grid_insights_chart_v1', 'split'),
+  grid_metrics_asymmetric_v1: gridsFromSource('grid_metrics_asymmetric_v1', 'grid_metrics_masonry_v1', 'asymmetric'),
+  grid_metrics_devices_v1: gridsFromSource('grid_metrics_devices_v1', 'grid_metrics_mobile_v1', 'devices'),
+  grid_six_images_mosaic_v1: gridsFromSource('grid_six_images_mosaic_v1', 'grid_six_images_v1', 'mosaic'),
+  grid_text_image_mosaic_v1: gridsFromSource('grid_text_image_mosaic_v1', 'grid_text_image_cards_v1', 'mosaic'),
+  grid_three_images_text_asymmetric_v1: gridsFromSource('grid_three_images_text_asymmetric_v1', 'grid_three_images_text_v1', 'asymmetric'),
+  logo_partner_grid_v1: gridsFromSource('logo_partner_grid_v1', 'logo_partner_strip_v1', 'grid'),
+  logo_wall_masonry_v1: gridsFromSource('logo_wall_masonry_v1', 'logo_wall_v1', 'masonry'),
+})
 
 export default CATALOG
 

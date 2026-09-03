@@ -571,6 +571,115 @@ const CATALOG = {
   ]),
 }
 
+function simpleSlidesFromSource(layoutId, sourceId, variant, extraPreview = {}) {
+  const source = CATALOG[sourceId]
+  if (!source?.slots?.length) {
+    throw new Error(`simpleSlidesFromSource: missing source ${sourceId}`)
+  }
+  const { mode, ...restPreview } = source.preview || {}
+  const isGrid = source.content_type === 'grid'
+  const variantField = isGrid ? { gridVariant: variant } : { slideVariant: variant }
+  return layoutBase(
+    layoutId,
+    source.content_type,
+    JSON.parse(JSON.stringify(source.slots)),
+    { mode, ...variantField, ...restPreview, ...extraPreview }
+  )
+}
+
+Object.assign(CATALOG, {
+  eight_short_texts_image_right_v1: simpleSlidesFromSource(
+    'eight_short_texts_image_right_v1',
+    'eight_short_texts_image_v1',
+    'right'
+  ),
+  intro_three_para_icons_horizontal_v1: simpleSlidesFromSource(
+    'intro_three_para_icons_horizontal_v1',
+    'intro_three_para_icons_v1',
+    'horizontal'
+  ),
+  bullet_list_numbered_vertical_v1: simpleSlidesFromSource(
+    'bullet_list_numbered_vertical_v1',
+    'bullet_list_numbered_v1',
+    'vertical'
+  ),
+  bullet_list_split_v1: simpleSlidesFromSource('bullet_list_split_v1', 'bullet_list_two_column_v1', 'split'),
+  four_images_text_mosaic_v1: simpleSlidesFromSource('four_images_text_mosaic_v1', 'four_images_text_v1', 'mosaic'),
+  four_para_image_grid_v1: simpleSlidesFromSource('four_para_image_grid_v1', 'four_para_image_v1', 'grid'),
+  full_bg_image_overlay_bottom_v1: simpleSlidesFromSource(
+    'full_bg_image_overlay_bottom_v1',
+    'full_bg_image_overlay_v1',
+    'bottom'
+  ),
+  full_bg_image_overlay_side_v1: simpleSlidesFromSource(
+    'full_bg_image_overlay_side_v1',
+    'full_bg_image_overlay_v1',
+    'side'
+  ),
+  para_landscape_image_top_v1: simpleSlidesFromSource('para_landscape_image_top_v1', 'para_landscape_image_v1', 'top'),
+  para_landscape_image_bottom_v1: simpleSlidesFromSource(
+    'para_landscape_image_bottom_v1',
+    'para_landscape_image_v1',
+    'bottom'
+  ),
+  para_three_images_horizontal_v1: simpleSlidesFromSource(
+    'para_three_images_horizontal_v1',
+    'para_three_images_v1',
+    'horizontal'
+  ),
+  para_three_images_staggered_v1: simpleSlidesFromSource(
+    'para_three_images_staggered_v1',
+    'para_three_images_v1',
+    'staggered'
+  ),
+  para_title_left_image_overlay_v1: simpleSlidesFromSource(
+    'para_title_left_image_overlay_v1',
+    'para_title_left_image_boxed_v1',
+    'overlay'
+  ),
+  para_title_right_image_overlay_v1: simpleSlidesFromSource(
+    'para_title_right_image_overlay_v1',
+    'para_title_right_image_boxed_v1',
+    'overlay'
+  ),
+  section_divider_band_full_v1: simpleSlidesFromSource('section_divider_band_full_v1', 'section_divider_band_v1', 'full'),
+  section_divider_split_diagonal_v1: simpleSlidesFromSource(
+    'section_divider_split_diagonal_v1',
+    'section_divider_split_v1',
+    'diagonal'
+  ),
+  section_divider_split_image_v1: simpleSlidesFromSource(
+    'section_divider_split_image_v1',
+    'section_divider_split_v1',
+    'image'
+  ),
+  section_left_image_fullheight_v1: simpleSlidesFromSource(
+    'section_left_image_fullheight_v1',
+    'section_left_image_v1',
+    'fullheight'
+  ),
+  section_right_image_fullheight_v1: simpleSlidesFromSource(
+    'section_right_image_fullheight_v1',
+    'section_right_image_v1',
+    'fullheight'
+  ),
+  text_two_column_split_v1: simpleSlidesFromSource('text_two_column_split_v1', 'text_two_column_v1', 'split'),
+  title_statement_split_v1: simpleSlidesFromSource('title_statement_split_v1', 'title_statement_v1', 'split'),
+  title_fullbleed_overlay_v1: simpleSlidesFromSource('title_fullbleed_overlay_v1', 'title_fullbleed_v1', 'overlay'),
+  title_with_logo_corner_v1: simpleSlidesFromSource('title_with_logo_corner_v1', 'title_with_logo_v1', 'corner'),
+  title_with_logo_centered_v1: simpleSlidesFromSource('title_with_logo_centered_v1', 'title_with_logo_v1', 'centered'),
+  two_para_right_image_bottom_v1: simpleSlidesFromSource(
+    'two_para_right_image_bottom_v1',
+    'two_para_right_image_v1',
+    'bottom'
+  ),
+  wide_image_statement_overlay_v1: simpleSlidesFromSource(
+    'wide_image_statement_overlay_v1',
+    'wide_image_statement_bottom_v1',
+    'overlay'
+  ),
+})
+
 export default CATALOG
 
 export const SIMPLE_SLIDES_LAYOUT_IDS = Object.keys(CATALOG)

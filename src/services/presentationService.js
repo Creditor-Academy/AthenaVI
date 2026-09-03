@@ -553,24 +553,64 @@ class PresentationService {
     return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE(workspaceId, presentationId))
   }
 
+  enableShareRole(workspaceId, presentationId, role) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE_ROLE(workspaceId, presentationId, role),
+      { method: 'PUT' }
+    )
+  }
+
+  updateShareRole(workspaceId, presentationId, role, payload = {}) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE_ROLE(workspaceId, presentationId, role),
+      { method: 'PATCH', body: JSON.stringify(payload) }
+    )
+  }
+
+  rotateShareRole(workspaceId, presentationId, role) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE_ROLE_ROTATE(workspaceId, presentationId, role),
+      { method: 'POST' }
+    )
+  }
+
   enableShareLink(workspaceId, presentationId) {
-    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE(workspaceId, presentationId), {
-      method: 'PUT',
-    })
+    return this.enableShareRole(workspaceId, presentationId, 'viewer')
   }
 
   updateShareLink(workspaceId, presentationId, payload = {}) {
-    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE(workspaceId, presentationId), {
-      method: 'PATCH',
+    return this.updateShareRole(workspaceId, presentationId, 'viewer', payload)
+  }
+
+  rotateShareLink(workspaceId, presentationId) {
+    return this.rotateShareRole(workspaceId, presentationId, 'viewer')
+  }
+
+  listPresentationComments(workspaceId, presentationId, params = {}) {
+    return this.request(
+      `${API_CONFIG.ENDPOINTS.PRESENTATIONS.COMMENTS(workspaceId, presentationId)}${this.buildQuery(params)}`
+    )
+  }
+
+  createPresentationComment(workspaceId, presentationId, payload) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.COMMENTS(workspaceId, presentationId), {
+      method: 'POST',
       body: JSON.stringify(payload),
     })
   }
 
-  rotateShareLink(workspaceId, presentationId) {
+  deletePresentationComment(workspaceId, presentationId, commentId) {
     return this.request(
-      API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE_ROTATE(workspaceId, presentationId),
-      { method: 'POST' }
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.COMMENT(workspaceId, presentationId, commentId),
+      { method: 'DELETE' }
     )
+  }
+
+  resolvePresentationComment(workspaceId, presentationId, commentId, resolve = true) {
+    const endpoint = resolve
+      ? API_CONFIG.ENDPOINTS.PRESENTATIONS.COMMENT_RESOLVE(workspaceId, presentationId, commentId)
+      : API_CONFIG.ENDPOINTS.PRESENTATIONS.COMMENT_UNRESOLVE(workspaceId, presentationId, commentId)
+    return this.request(endpoint, { method: 'POST' })
   }
 
   async pollSharePresence(workspaceId, presentationId, { viewerSessionId, slideIndex } = {}) {

@@ -17,8 +17,8 @@
   border: 2px solid #ffffff;
   box-sizing: border-box;
   overflow: hidden;
-  background: #ede9fe;
-  color: #4c1d95;
+  background: color-mix(in srgb, var(--primary) 14%, #fff);
+  color: var(--primary-dark);
   font-size: 10px;
   font-weight: 750;
   display: inline-flex;

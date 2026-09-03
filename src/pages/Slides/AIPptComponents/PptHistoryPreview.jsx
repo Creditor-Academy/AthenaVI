@@ -7,7 +7,7 @@ import {
   toApiThemeId,
   buildWizardThemeTokens,
 } from '../../../utils/presentationHelpers'
-import { THEMES } from './AIPptWizard'
+import { THEMES } from '../../../constants/pptWizardThemes'
 import MinimapSlidePreview from './MinimapSlidePreview'
 import './PptHistoryPreview.css'
 

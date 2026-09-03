@@ -19,6 +19,11 @@ import {
   mergeCatalogLayoutTemplates,
 } from '../../../../utils/deckLayoutRegistry'
 import {
+  isBrowsePrimaryLayout,
+  pickSimilarLayouts,
+  templateLayoutId,
+} from '../../../../utils/similarLayouts'
+import {
   layoutSchemaHasCanvasElements,
   slideHasCanvasElements,
 } from '../../../../utils/videoTemplateToCanvasElements'
@@ -371,10 +376,19 @@ export default function AddSlideModal({
     [layoutTemplates, templatePacks]
   )
 
-  const galleryLayouts = useMemo(
+  const allGalleryLayouts = useMemo(
     () => mergeCatalogLayoutTemplates(layoutTemplates),
     [layoutTemplates]
   )
+
+  const fullLayoutSchemaMap = useMemo(() => {
+    const map = { ...layoutSchemaMap }
+    for (const row of allGalleryLayouts) {
+      const id = String(row?.schema?.layout_id || row?.layoutId || '').trim()
+      if (id && row.schema) map[id] = row.schema
+    }
+    return map
+  }, [allGalleryLayouts, layoutSchemaMap])
 
   const filteredPacks = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -396,7 +410,7 @@ export default function AddSlideModal({
 
   const filteredLayouts = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return galleryLayouts.filter((layout) => {
+    return allGalleryLayouts.filter((layout) => {
       if (layoutCategory !== 'all' && layoutCategoryId(layout) !== layoutCategory) return false
       if (!q) return true
       const haystack = [layout.name, layout.rawContentType, layout.schema?.layout_id, layout.layoutId]
@@ -405,7 +419,85 @@ export default function AddSlideModal({
         .toLowerCase()
       return haystack.includes(q)
     })
-  }, [galleryLayouts, query, layoutCategory])
+  }, [allGalleryLayouts, query, layoutCategory])
+
+  const layoutPairs = useMemo(() => {
+    const byId = new Map()
+    for (const row of allGalleryLayouts) {
+      const id = String(row?.schema?.layout_id || row?.layoutId || '').trim()
+      if (id) byId.set(id, row)
+    }
+
+    const matchedIds = new Set(
+      filteredLayouts
+        .map((row) => String(row?.schema?.layout_id || row?.layoutId || '').trim())
+        .filter(Boolean)
+    )
+
+    const visited = new Set()
+    const groups = []
+    const q = query.trim()
+
+    const resolveRow = (rowLike) => {
+      if (!rowLike) return null
+      if (typeof rowLike === 'string') return byId.get(rowLike) || null
+      const id = templateLayoutId(rowLike) || String(rowLike.layoutId || '').trim()
+      return byId.get(id) || rowLike
+    }
+
+    const seeds = [
+      ...filteredLayouts.filter((row) => isBrowsePrimaryLayout(row.schema || row)),
+      ...filteredLayouts.filter((row) => !isBrowsePrimaryLayout(row.schema || row)),
+    ]
+
+    for (const layout of seeds) {
+      const seedId = String(layout?.schema?.layout_id || layout?.layoutId || '').trim()
+      if (!seedId || visited.has(seedId)) continue
+
+      const peers = pickSimilarLayouts(
+        { layoutId: seedId },
+        allGalleryLayouts,
+        fullLayoutSchemaMap,
+        2
+      )
+
+      const group = []
+      const tryAdd = (rowLike) => {
+        const row = resolveRow(rowLike)
+        const id = String(
+          row?.schema?.layout_id || row?.layoutId || templateLayoutId(row) || ''
+        ).trim()
+        if (!id || visited.has(id) || !byId.has(id)) return
+        if (layoutCategory !== 'all' && layoutCategoryId(row) !== layoutCategory) return
+        // Keep family together when search hits one member.
+        if (!matchedIds.has(id) && !(q && matchedIds.has(seedId))) return
+        visited.add(id)
+        group.push(byId.get(id))
+      }
+
+      tryAdd(layout)
+      for (const peer of peers) tryAdd(peer)
+      if (group.length) groups.push(group)
+    }
+
+    return groups
+  }, [allGalleryLayouts, filteredLayouts, fullLayoutSchemaMap, layoutCategory, query])
+
+  const layoutResultCount = useMemo(
+    () => layoutPairs.reduce((sum, group) => sum + group.length, 0),
+    [layoutPairs]
+  )
+
+  const layoutResultLabel = useMemo(() => {
+    const n = layoutResultCount
+    if (loading) return null
+    const cat =
+      layoutCategory === 'all'
+        ? null
+        : LAYOUT_CATEGORIES.find((c) => c.id === layoutCategory)?.label
+    const suffix = cat ? ` in ${cat}` : ''
+    return `${n} layout${n === 1 ? '' : 's'}${suffix}`
+  }, [layoutResultCount, layoutCategory, loading])
 
   const remainingSlots = Math.max(0, PPT_CAPS.DECK_MAX_SLIDES - slideCount)
 
@@ -438,13 +530,15 @@ export default function AddSlideModal({
   }
 
   const pickLayout = (layout) => {
-    const layoutId = layout.schema?.layout_id || layout.layoutId || null
+    const layoutId = layout.schema?.layout_id || layout.layoutId || templateLayoutId(layout) || null
+    const schema =
+      (layoutId && getDeckLayoutSchema(layoutId)) || layout.schema || null
     onPick?.({
       source: 'layout',
       templateId: layout.templateId || layout.id,
       layoutId,
-      schema: (layoutId && getDeckLayoutSchema(layoutId)) || layout.schema || null,
-      name: layout.name,
+      schema,
+      name: layout.name || layout.label || layoutId || 'Layout',
     })
   }
 
@@ -490,35 +584,38 @@ export default function AddSlideModal({
         className="ppt-add-slide-modal"
         role="dialog"
         aria-modal="true"
-        aria-label="Templates and Layouts"
+        aria-label="Add a slide"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="ppt-add-slide-modal-head">
-          <div className="ppt-add-slide-tabs" role="tablist">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === 'templates'}
-              className={`ppt-add-slide-tab ${tab === 'templates' ? 'is-active' : ''}`}
-              onClick={() => {
-                setTab('templates')
-                setSelectedPack(null)
-              }}
-            >
-              Templates
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === 'layouts'}
-              className={`ppt-add-slide-tab ${tab === 'layouts' ? 'is-active' : ''}`}
-              onClick={() => {
-                setTab('layouts')
-                setSelectedPack(null)
-              }}
-            >
-              Layouts
-            </button>
+          <div className="ppt-add-slide-head-copy">
+            <h2 className="ppt-add-slide-title">Add a slide</h2>
+            <div className="ppt-add-slide-tabs" role="tablist" aria-label="Add slide source">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tab === 'templates'}
+                className={`ppt-add-slide-tab ${tab === 'templates' ? 'is-active' : ''}`}
+                onClick={() => {
+                  setTab('templates')
+                  setSelectedPack(null)
+                }}
+              >
+                Templates
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tab === 'layouts'}
+                className={`ppt-add-slide-tab ${tab === 'layouts' ? 'is-active' : ''}`}
+                onClick={() => {
+                  setTab('layouts')
+                  setSelectedPack(null)
+                }}
+              >
+                Layouts
+              </button>
+            </div>
           </div>
           <button type="button" className="ppt-add-slide-close" onClick={onClose} aria-label="Close">
             <FiX size={18} />
@@ -526,32 +623,40 @@ export default function AddSlideModal({
         </div>
 
         {!selectedPack && (
-          <div className="ppt-add-slide-search">
-            <FiSearch size={16} aria-hidden />
-            <input
-              type="search"
-              placeholder="Search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              autoFocus
-            />
-          </div>
-        )}
+          <div className="ppt-add-slide-toolbar">
+            <div className="ppt-add-slide-search">
+              <FiSearch size={16} aria-hidden />
+              <input
+                type="search"
+                placeholder={tab === 'layouts' ? 'Search layouts' : 'Search templates'}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                autoFocus
+              />
+            </div>
 
-        {tab === 'layouts' && !selectedPack && (
-          <div className="ppt-add-slide-categories" role="tablist" aria-label="Layout categories">
-            {LAYOUT_CATEGORIES.map((category) => (
-              <button
-                key={category.id}
-                type="button"
-                role="tab"
-                aria-selected={layoutCategory === category.id}
-                className={`ppt-add-slide-category ${layoutCategory === category.id ? 'is-active' : ''}`}
-                onClick={() => setLayoutCategory(category.id)}
-              >
-                {category.label}
-              </button>
-            ))}
+            {tab === 'layouts' && (
+              <div className="ppt-add-slide-categories" role="tablist" aria-label="Layout categories">
+                {LAYOUT_CATEGORIES.map((category) => (
+                  <button
+                    key={category.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={layoutCategory === category.id}
+                    className={`ppt-add-slide-category ${layoutCategory === category.id ? 'is-active' : ''}`}
+                    onClick={() => setLayoutCategory(category.id)}
+                  >
+                    {category.label}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {tab === 'layouts' && layoutResultLabel ? (
+              <div className="ppt-add-slide-result-count" aria-live="polite">
+                {layoutResultLabel}
+              </div>
+            ) : null}
           </div>
         )}
 
@@ -675,36 +780,50 @@ export default function AddSlideModal({
           {tab === 'layouts' && (
             <>
               {loading && <div className="ppt-add-slide-loading">Loading layouts…</div>}
-              <div className="ppt-add-slide-grid ppt-add-slide-grid--layouts">
-                {filteredLayouts.map((layout) => {
-                  const previewSchema = layout.schema
-                    ? enrichLayoutSchemaForPreview(layout.schema)
-                    : null
-                  const cardKey = layout.schema?.layout_id || layout.layoutId || layout.id
+              <div className="ppt-add-slide-layout-groups">
+                {layoutPairs.map((group) => {
+                  const groupKey = group
+                    .map((row) => row?.schema?.layout_id || row?.layoutId || row?.id)
+                    .join('|')
                   return (
-                    <button
-                      key={cardKey}
-                      type="button"
-                      className="ppt-add-slide-card"
-                      disabled={disabled}
-                      onClick={() => pickLayout(layout)}
+                    <div
+                      key={groupKey}
+                      className={`ppt-add-slide-layout-pair ppt-add-slide-layout-pair--${Math.min(group.length, 3)}`}
+                      role="group"
                     >
-                      <div className="ppt-add-slide-card-thumb ppt-add-slide-card-thumb--layout">
-                        <GalleryPreview
-                          schema={previewSchema}
-                          previewUrl={layout.previewUrl}
-                          fallbackName={layout.name}
-                        />
-                      </div>
-                      <div className="ppt-add-slide-card-name" title={layout.name}>
-                        {layout.name}
-                      </div>
-                    </button>
+                      {group.map((layout) => {
+                        const previewSchema = layout.schema
+                          ? enrichLayoutSchemaForPreview(layout.schema)
+                          : null
+                        const cardKey =
+                          layout.schema?.layout_id || layout.layoutId || layout.id
+                        return (
+                          <button
+                            key={cardKey}
+                            type="button"
+                            className="ppt-add-slide-card"
+                            disabled={disabled}
+                            onClick={() => pickLayout(layout)}
+                          >
+                            <div className="ppt-add-slide-card-thumb ppt-add-slide-card-thumb--layout">
+                              <GalleryPreview
+                                schema={previewSchema}
+                                previewUrl={layout.previewUrl}
+                                fallbackName={layout.name}
+                              />
+                            </div>
+                            <div className="ppt-add-slide-card-name" title={layout.name}>
+                              {layout.name}
+                            </div>
+                          </button>
+                        )
+                      })}
+                    </div>
                   )
                 })}
               </div>
-              {!loading && !filteredLayouts.length && (
-                <div className="ppt-add-slide-empty">No layouts match your search</div>
+              {!loading && !layoutPairs.length && (
+                <div className="ppt-add-slide-empty">No layouts match your filters</div>
               )}
             </>
           )}

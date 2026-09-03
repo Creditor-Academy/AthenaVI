@@ -82,14 +82,11 @@ function pricingFromSource(layoutId, sourceId, pricingVariant, extraPreview = {}
 
 Object.assign(CATALOG, {
   pricing_comparison_cards_v1: pricingFromSource('pricing_comparison_cards_v1', 'pricing_comparison_table_v1', 'cards'),
-  pricing_comparison_matrix_v1: pricingFromSource('pricing_comparison_matrix_v1', 'pricing_comparison_table_v1', 'matrix'),
   pricing_four_para_cards_v1: pricingFromSource('pricing_four_para_cards_v1', 'pricing_four_para_v1', 'cards'),
-  pricing_four_para_grid_v1: pricingFromSource('pricing_four_para_grid_v1', 'pricing_four_para_v1', 'grid'),
   pricing_four_plans_featured_v1: pricingFromSource('pricing_four_plans_featured_v1', 'pricing_four_plans_v1', 'featured', {
     highlightedColumnIndex: 1,
   }),
   pricing_three_highlight_split_v1: pricingFromSource('pricing_three_highlight_split_v1', 'pricing_three_highlight_v1', 'split'),
-  pricing_three_highlight_stack_v1: pricingFromSource('pricing_three_highlight_stack_v1', 'pricing_three_highlight_v1', 'stack'),
   pricing_three_plans_featured_v1: pricingFromSource('pricing_three_plans_featured_v1', 'pricing_three_plans_v1', 'featured', {
     highlightedColumnIndex: 1,
   }),

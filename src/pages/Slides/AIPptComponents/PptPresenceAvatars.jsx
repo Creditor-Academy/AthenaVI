@@ -2,7 +2,13 @@ import { useState } from 'react'
 import { samePresencePerson } from '../../../utils/pptShareSession'
 import './PptPresenceAvatars.css'
 
-const RING_COLORS = ['#7c3aed', '#1e3a5f', '#0f766e', '#b45309', '#be123c', '#2563eb']
+function ringColors() {
+  const primary =
+    (typeof document !== 'undefined' &&
+      getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()) ||
+    '#2563eb'
+  return [primary, '#1e3a5f', '#0f766e', '#b45309', '#be123c']
+}
 
 const ANIMALS = [
   { emoji: '🦊', name: 'Fox' },
@@ -105,6 +111,7 @@ export default function PptPresenceAvatars({
   const overflow = Math.max(0, total - merged.length)
   if (!merged.length && overflow <= 0) return null
 
+  const colors = ringColors()
   return (
     <ul className="ppt-presence-avatars" aria-label={`${total} people in this presentation`}>
       {merged.slice(0, 8).map((viewer, index) => {
@@ -125,7 +132,7 @@ export default function PptPresenceAvatars({
             photo={photo}
             animal={animal?.emoji}
             title={`${name}${slide}`}
-            ring={RING_COLORS[index % RING_COLORS.length]}
+            ring={colors[index % colors.length]}
             zIndex={20 - index}
           />
         )

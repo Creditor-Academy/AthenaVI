@@ -1,5 +1,5 @@
 /**
- * Charts & data DECK_LAYOUT v2 catalog — 21 chart, stat, table, process layouts.
+ * Charts & data DECK_LAYOUT v2 catalog — 23 core + 46 similar-variant layouts.
  */
 
 import {
@@ -325,6 +325,46 @@ const CATALOG = {
     ...statPair(3, 'cols 4-9, rows 7-8', 'cols 4-9, rows 8-9', '500+', 'Active teams'),
   ]),
 }
+
+function chartsDataFromSource(layoutId, sourceId, dataVariant, extraPreview = {}) {
+  const source = CATALOG[sourceId]
+  if (!source?.slots?.length) {
+    throw new Error(`chartsDataFromSource: missing source ${sourceId}`)
+  }
+  const { mode, chartStyle, ...restPreview } = source.preview || {}
+  return layoutBase(
+    layoutId,
+    source.content_type,
+    JSON.parse(JSON.stringify(source.slots)),
+    { mode, chartStyle, dataVariant, ...restPreview, ...extraPreview }
+  )
+}
+
+Object.assign(CATALOG, {
+  chart_donut_context_right_v1: chartsDataFromSource('chart_donut_context_right_v1', 'chart_donut_context_v1', 'right'),
+  chart_exponential_desc_side_v1: chartsDataFromSource('chart_exponential_desc_side_v1', 'chart_exponential_desc_v1', 'side'),
+  chart_with_description_side_v1: chartsDataFromSource('chart_with_description_side_v1', 'chart_with_description_v1', 'side'),
+  chart_single_split_v1: chartsDataFromSource('chart_single_split_v1', 'chart_single_v1', 'split'),
+  chart_three_context_cards_v1: chartsDataFromSource('chart_three_context_cards_v1', 'chart_three_context_v1', 'cards'),
+  chart_three_donut_cards_v1: chartsDataFromSource('chart_three_donut_cards_v1', 'chart_three_donut_v1', 'cards'),
+  chart_three_cards_v1: chartsDataFromSource('chart_three_cards_v1', 'chart_three_v1', 'cards'),
+  chart_two_cards_split_v1: chartsDataFromSource('chart_two_cards_split_v1', 'chart_two_cards_v1', 'split'),
+  chart_two_split_v1: chartsDataFromSource('chart_two_split_v1', 'chart_two_v1', 'split'),
+  metric_five_cards_v1: chartsDataFromSource('metric_five_cards_v1', 'metric_five_v1', 'cards'),
+  metric_four_cards_v1: chartsDataFromSource('metric_four_cards_v1', 'metric_four_v1', 'cards'),
+  metric_three_cards_v1: chartsDataFromSource('metric_three_cards_v1', 'metric_three_v1', 'cards'),
+  metric_single_split_v1: chartsDataFromSource('metric_single_split_v1', 'metric_single_v1', 'split'),
+  metric_six_cards_v1: chartsDataFromSource('metric_six_cards_v1', 'metric_six_para_v1', 'cards'),
+  metric_three_vertical_cards_v1: chartsDataFromSource('metric_three_vertical_cards_v1', 'metric_three_vertical_v1', 'cards'),
+  metric_two_split_v1: chartsDataFromSource('metric_two_split_v1', 'metric_two_v1', 'split'),
+  process_linear_four_cards_v1: chartsDataFromSource('process_linear_four_cards_v1', 'process_linner_horti_four_v1', 'cards'),
+  process_linear_horizontal_v2: chartsDataFromSource('process_linear_horizontal_v2', 'process_linner_horti_v1', 'horizontal'),
+  process_linear_numeric_cards_v1: chartsDataFromSource('process_linear_numeric_cards_v1', 'process_linner_numeric_v1', 'cards'),
+  table_single_cards_v1: chartsDataFromSource('table_single_cards_v1', 'table_single_v1', 'cards'),
+  table_two_desc_cards_v1: chartsDataFromSource('table_two_desc_cards_v1', 'table_two_desc_v1', 'cards'),
+  table_two_same_header_cards_v1: chartsDataFromSource('table_two_same_header_cards_v1', 'table_two_same_header_v1', 'cards'),
+  table_with_description_side_v1: chartsDataFromSource('table_with_description_side_v1', 'table_with_description_v1', 'side'),
+})
 
 export default CATALOG
 

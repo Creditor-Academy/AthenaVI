@@ -185,6 +185,7 @@ function formatPreviewText(text, { bold, uppercase }) {
 
 function PolishedStatRowPreview({ previewHints, large, className, style, fill, aspectRatio }) {
   const t = LAYOUT_POLISHED_THEME
+  const variant = previewHints.dataVariant || 'default'
   const headingMeta = previewHints.slots?.HEADING || {}
   const { display: headingText, fontWeight: headingWeight } = formatPreviewText(
     headingMeta.text || 'Section title',
@@ -235,7 +236,8 @@ function PolishedStatRowPreview({ previewHints, large, className, style, fill, a
         style={{
           flex: 1,
           display: 'grid',
-          gridTemplateColumns: `repeat(${stats.length}, minmax(0, 1fr))`,
+          gridTemplateColumns: variant === 'split' ? '1fr 1fr' : `repeat(${stats.length}, minmax(0, 1fr))`,
+          gridTemplateRows: variant === 'split' ? '1fr 1fr' : undefined,
           gap: large ? 20 : 6,
           alignItems: 'center',
           minHeight: 0,
@@ -251,7 +253,9 @@ function PolishedStatRowPreview({ previewHints, large, className, style, fill, a
               justifyContent: 'center',
               gap: large ? 8 : 3,
               textAlign: 'center',
-              padding: large ? '0 8px' : '0 2px',
+              padding: large ? (variant === 'cards' ? '12px 8px' : '0 8px') : (variant === 'cards' ? '4px 2px' : '0 2px'),
+              background: variant === 'cards' ? t.card : 'transparent',
+              borderRadius: variant === 'cards' ? (large ? 10 : 4) : 0,
             }}
           >
             <div
@@ -288,6 +292,7 @@ function PolishedStatRowPreview({ previewHints, large, className, style, fill, a
 
 function PolishedComparisonColumnsPreview({ previewHints, large, className, style, fill, aspectRatio }) {
   const t = LAYOUT_POLISHED_THEME
+  const variant = previewHints.slideVariant || 'default'
   const headingMeta = previewHints.slots?.HEADING || {}
   const subtitleMeta = previewHints.slots?.SUBTITLE || {}
   const { display: headingText, fontWeight: headingWeight } = formatPreviewText(
@@ -305,7 +310,11 @@ function PolishedComparisonColumnsPreview({ previewHints, large, className, styl
         { label: 'Pro', items: ['$79 / month', 'Up to 25 users', 'Advanced features'] },
         { label: 'Enterprise', items: ['Custom pricing', 'Unlimited users', 'SSO & security'] },
       ]
-  const highlightIndex = columns.length >= 3 ? 1 : 0
+  const highlightIndex = variant === 'highlight' || columns.length >= 3 ? 1 : (variant === 'cards' ? 0 : -1)
+  const useCenterline = variant === 'centerline'
+  const useSplit = variant === 'split'
+  const useGrid = variant === 'grid'
+  const useBalanced = variant === 'balanced'
 
   const frameStyle = fill
     ? { width: '100%', height: '100%', aspectRatio: 'unset' }
@@ -329,7 +338,7 @@ function PolishedComparisonColumnsPreview({ previewHints, large, className, styl
         ...style,
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 6 : 2 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 6 : 2, textAlign: useBalanced ? 'center' : 'left' }}>
         <div
           style={{
             fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small,
@@ -357,12 +366,33 @@ function PolishedComparisonColumnsPreview({ previewHints, large, className, styl
         style={{
           flex: 1,
           display: 'grid',
-          gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))`,
+          gridTemplateColumns: useSplit
+            ? '1fr'
+            : useGrid
+              ? `repeat(${Math.min(columns.length, 2)}, minmax(0, 1fr))`
+              : `repeat(${columns.length}, minmax(0, 1fr))`,
+          gridTemplateRows: useSplit ? `repeat(${columns.length}, 1fr)` : undefined,
           gap: large ? 12 : 4,
           alignItems: 'stretch',
           minHeight: 0,
+          position: 'relative',
         }}
       >
+        {useCenterline && columns.length >= 2 && (
+          <div
+            style={{
+              position: 'absolute',
+              left: '50%',
+              top: large ? 8 : 2,
+              bottom: large ? 8 : 2,
+              width: large ? 2 : 1,
+              background: t.accent,
+              opacity: 0.35,
+              transform: 'translateX(-50%)',
+              zIndex: 1,
+            }}
+          />
+        )}
         {columns.map((column, index) => {
           const highlighted = index === highlightIndex
           return (
@@ -372,12 +402,13 @@ function PolishedComparisonColumnsPreview({ previewHints, large, className, styl
                 boxSizing: 'border-box',
                 borderRadius: large ? 10 : 4,
                 border: `${large ? 1.5 : 0.8}px solid ${highlighted ? t.accentBorder : 'color-mix(in srgb, var(--border-color) 70%, transparent)'}`,
-                background: highlighted ? t.accentSoft : t.card,
+                background: highlighted ? t.accentSoft : (variant === 'cards' ? t.card : t.card),
                 padding: large ? '12px 10px' : '4px 3px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: large ? 8 : 3,
                 minWidth: 0,
+                zIndex: 2,
               }}
             >
               <div
@@ -685,6 +716,7 @@ function PolishedShapeArrow({ large }) {
 
 function PolishedGridInsightsChartPreview({ previewHints, large, className, style, fill, aspectRatio }) {
   const t = LAYOUT_POLISHED_THEME
+  const variant = previewHints.gridVariant || 'default'
   const headingMeta = previewHints.slots?.CHART_HEADING || previewHints.slots?.HEADING || {}
   const heading = headingMeta.text || 'Revenue growth'
   const insights = previewHints.insights || [{ label: 'Insight one' }, { label: 'Insight two' }, { label: 'Insight three' }]
@@ -692,6 +724,53 @@ function PolishedGridInsightsChartPreview({ previewHints, large, className, styl
   const sideBody = previewHints.sideBody || 'Summarize what the chart means.'
   const values = previewHints.chartValues || [120, 240, 180, 320, 410]
   const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+
+  if (variant === 'focus') {
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box',
+        padding: large ? '6% 5%' : '8% 5%', display: 'flex', flexDirection: 'column', gap: large ? 10 : 3, ...style,
+      }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 8 : 3 }}>
+          {insights.slice(0, 3).map((item, i) => (
+            <div key={i} style={{ background: t.card, borderRadius: large ? 8 : 4, padding: large ? '6px 8px' : '2px 3px', textAlign: 'center', fontSize: large ? '0.58rem' : '0.22rem', fontWeight: 700, color: t.text }}>{item.label}</div>
+          ))}
+        </div>
+        <div style={{ flex: 1, background: t.card, borderRadius: large ? 10 : 4, padding: large ? '10px 12px' : '4px 5px', display: 'flex', flexDirection: 'column', gap: large ? 8 : 3, minHeight: 0 }}>
+          <div style={{ fontSize: large ? '0.95rem' : '0.34rem', fontWeight: 800, color: t.text }}>{heading}</div>
+          <div style={{ flex: 1, minHeight: large ? 120 : 40 }}><PolishedBarChart large={large} values={values} /></div>
+        </div>
+      </div>
+    )
+  }
+
+  if (variant === 'split') {
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box',
+        padding: large ? '6% 5%' : '8% 5%', display: 'grid',
+        gridTemplateColumns: '1fr 1fr', gap: large ? 12 : 4, ...style,
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3, minHeight: 0 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: large ? 6 : 2 }}>
+            {insights.slice(0, 3).map((item, i) => (
+              <div key={i} style={{ background: t.card, borderRadius: large ? 8 : 4, padding: large ? '6px 8px' : '2px 3px', fontSize: large ? '0.58rem' : '0.22rem', fontWeight: 700, color: t.text }}>{item.label}</div>
+            ))}
+          </div>
+          <div style={{ background: t.card, borderRadius: large ? 8 : 3, padding: large ? 8 : 3, flex: 1 }}>
+            <div style={{ fontSize: large ? '0.68rem' : '0.26rem', fontWeight: 700, color: t.text }}>{sideHeading}</div>
+            <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: t.muted }}>{sideBody}</div>
+          </div>
+        </div>
+        <div style={{ background: t.card, borderRadius: large ? 10 : 4, padding: large ? '10px 12px' : '4px 5px', display: 'flex', flexDirection: 'column', gap: large ? 8 : 3, minHeight: 0 }}>
+          <div style={{ fontSize: large ? '0.95rem' : '0.34rem', fontWeight: 800, color: t.text }}>{heading}</div>
+          <div style={{ flex: 1, minHeight: large ? 100 : 36 }}><PolishedBarChart large={large} values={values} /></div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={className} style={{
@@ -730,28 +809,49 @@ function PolishedGridInsightsChartPreview({ previewHints, large, className, styl
 
 function PolishedChartFullWidthPreview({ previewHints, large, className, style, fill, aspectRatio }) {
   const t = LAYOUT_POLISHED_THEME
+  const variant = previewHints.dataVariant || 'default'
   const headingMeta = previewHints.slots?.HEADING || {}
   const heading = headingMeta.text || 'Quarterly performance overview'
   const body = previewHints.bodyText || 'Use this slide when the data is the hero of the story.'
   const values = previewHints.chartValues || [45, 62, 78, 91]
   const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+  const isSplit = variant === 'split'
+  const isLarge = variant === 'large'
 
   return (
     <div className={className} style={{
       position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
       fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box',
-      padding: large ? '7% 6%' : '9% 5%', display: 'flex', gap: large ? 12 : 4, ...style,
+      padding: large ? '7% 6%' : '9% 5%',
+      display: isSplit ? 'grid' : 'flex',
+      gridTemplateColumns: isSplit ? '1fr 1.4fr' : undefined,
+      gap: large ? 12 : 4, ...style,
     }}>
-      <PolishedShapeAccentBar large={large} />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: large ? 10 : 4, minWidth: 0 }}>
-        <div style={{ fontSize: large ? '1.15rem' : '0.4rem', fontWeight: 800, color: t.text }}>{heading}</div>
-        <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: t.muted, lineHeight: 1.4 }}>{body}</div>
-        <div style={{ flex: 1, minHeight: large ? 120 : 40, background: t.card, borderRadius: large ? 10 : 4, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      {!isSplit && <PolishedShapeAccentBar large={large} />}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: large ? 10 : 4, minWidth: 0, justifyContent: isSplit ? 'center' : undefined }}>
+        {!isLarge && (
+          <>
+            <div style={{ fontSize: large ? '1.15rem' : '0.4rem', fontWeight: 800, color: t.text }}>{heading}</div>
+            <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: t.muted, lineHeight: 1.4 }}>{body}</div>
+          </>
+        )}
+        <div style={{
+          flex: 1,
+          minHeight: isLarge ? (large ? 160 : 52) : (large ? 120 : 40),
+          background: t.card,
+          borderRadius: large ? 10 : 4,
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+        }}>
           <div style={{ flex: 1, minHeight: 0 }}><PolishedBarChart large={large} values={values} /></div>
           {previewHints.chartCaption && (
             <div style={{ fontSize: large ? '0.58rem' : '0.22rem', color: t.muted, textAlign: 'center', paddingBottom: large ? 6 : 2 }}>{previewHints.chartCaption}</div>
           )}
         </div>
+        {isLarge && (
+          <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : PREVIEW_CAPTION_FS.small, color: t.muted, textAlign: 'center' }}>{heading}</div>
+        )}
       </div>
     </div>
   )
@@ -794,12 +894,15 @@ function PolishedChartImageSplitPreview({ previewHints, large, className, style,
 
 function PolishedImageGalleryThreePreview({ previewHints, large, className, style, fill, aspectRatio }) {
   const t = LAYOUT_POLISHED_THEME
+  const variant = previewHints.slideVariant || 'default'
   const headingMeta = previewHints.slots?.HEADING || {}
   const subtitleMeta = previewHints.slots?.SUBTITLE || {}
   const heading = headingMeta.text || 'Product highlights'
   const subtitle = subtitleMeta.text || 'Show three visuals with short labels.'
   const gallery = previewHints.gallery || [{ label: 'Feature A' }, { label: 'Feature B' }, { label: 'Feature C' }]
   const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+  const count = variant === 'mosaic' || variant === 'grid' ? Math.min(gallery.length || 4, 4) : Math.min(gallery.length || 3, 3)
+  const items = gallery.length ? gallery.slice(0, count) : Array.from({ length: count }, (_, i) => ({ label: `Feature ${String.fromCharCode(65 + i)}` }))
 
   return (
     <div className={className} style={{
@@ -809,10 +912,25 @@ function PolishedImageGalleryThreePreview({ previewHints, large, className, styl
     }}>
       <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 800, color: t.text }}>{heading}</div>
       <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : '0.28rem', color: t.muted }}>{subtitle}</div>
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 14 : 4, minHeight: 0 }}>
-        {gallery.slice(0, 3).map((item, i) => (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3, minWidth: 0 }}>
-            <div style={{ flex: 1, minHeight: large ? 90 : 28, borderRadius: large ? 8 : 3, overflow: 'hidden', background: t.card }}>
+      <div style={{
+        flex: 1,
+        display: 'grid',
+        gridTemplateColumns: variant === 'mosaic' ? '1.4fr 1fr 1fr' : variant === 'horizontal' ? `repeat(${items.length}, 1fr)` : variant === 'staggered' ? '1fr 1.2fr 0.9fr' : `repeat(${Math.min(items.length, 3)}, 1fr)`,
+        gridTemplateRows: variant === 'mosaic' && items.length > 3 ? '1.2fr 0.8fr' : undefined,
+        gap: large ? 14 : 4,
+        minHeight: 0,
+      }}>
+        {items.map((item, i) => (
+          <div key={i} style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: large ? 8 : 3,
+            minWidth: 0,
+            marginTop: variant === 'staggered' && i % 2 === 1 ? (large ? 14 : 4) : 0,
+            gridColumn: variant === 'mosaic' && i === 0 ? '1 / 2' : undefined,
+            gridRow: variant === 'mosaic' && i === 0 ? '1 / 3' : undefined,
+          }}>
+            <div style={{ flex: 1, minHeight: large ? 90 : 28, borderRadius: large ? 8 : 3, overflow: 'hidden', background: t.card, border: variant === 'framed' ? `2px solid ${t.accentBorder}` : 'none' }}>
               <PolishedImagePlaceholder large={large} src={item.imageUrl || resolvePreviewImageSrc(previewHints)} />
             </div>
             <div style={{ fontSize: large ? '0.68rem' : '0.26rem', fontWeight: 700, color: t.text, textAlign: 'center' }}>{item.label}</div>
@@ -863,6 +981,7 @@ function PolishedStatCardsImagePreview({ previewHints, large, className, style, 
 
 function PolishedChartSplitPreview({ previewHints, large, className, style, fill, aspectRatio }) {
   const t = LAYOUT_POLISHED_THEME
+  const variant = previewHints.dataVariant || 'default'
   const headingMeta = previewHints.slots?.HEADING || {}
   const { display: headingText } = formatPreviewText(
     headingMeta.text || 'A chart is easier to understand with a meaningful title',
@@ -873,37 +992,81 @@ function PolishedChartSplitPreview({ previewHints, large, className, style, fill
   const labels = previewHints.chartLabels || ['Q1', 'Q2', 'Q3', 'Q4']
   const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
 
+  const isBottom = variant === 'bottom'
+  const isSide = variant === 'side'
+  const gridStyle = isBottom
+    ? { display: 'flex', flexDirection: 'column', gap: large ? 16 : 5 }
+    : {
+        display: 'grid',
+        gridTemplateColumns: isSide ? '1fr 1fr' : '1fr 1fr',
+        gridTemplateAreas: isSide ? '"chart text"' : undefined,
+        gap: large ? 20 : 6,
+        alignItems: 'center',
+      }
+
+  const textBlock = (
+    <div style={isSide ? { gridArea: 'text' } : undefined}>
+      <div style={{ fontSize: large ? '1.15rem' : '0.38rem', fontWeight: 800, color: t.text, lineHeight: 1.2, marginBottom: large ? 10 : 3 }}>{headingText}</div>
+      <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: t.muted, lineHeight: 1.4 }}>{body}</div>
+    </div>
+  )
+  const chartBlock = (
+    <div style={{ minHeight: 0, height: isBottom ? (large ? 100 : 36) : '100%', ...(isSide ? { gridArea: 'chart' } : {}) }}>
+      <PolishedLineChartMini large={large} values={values} labels={labels} />
+      <div style={{ textAlign: 'center', fontSize: large ? '0.58rem' : '0.22rem', color: t.muted, marginTop: large ? 4 : 1 }}>
+        {previewHints.chartCaption || 'This chart has a subtitle'}
+      </div>
+    </div>
+  )
+
   return (
     <div className={className} style={{
       position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
       fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box',
-      padding: large ? '8% 7%' : '10% 6%', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: large ? 20 : 6, alignItems: 'center', ...style,
+      padding: large ? '8% 7%' : '10% 6%', ...gridStyle, ...style,
     }}>
-      <div>
-        <div style={{ fontSize: large ? '1.15rem' : '0.38rem', fontWeight: 800, color: t.text, lineHeight: 1.2, marginBottom: large ? 10 : 3 }}>{headingText}</div>
-        <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: t.muted, lineHeight: 1.4 }}>{body}</div>
-      </div>
-      <div style={{ minHeight: 0, height: '100%' }}>
-        <PolishedLineChartMini large={large} values={values} labels={labels} />
-        <div style={{ textAlign: 'center', fontSize: large ? '0.58rem' : '0.22rem', color: t.muted, marginTop: large ? 4 : 1 }}>
-          {previewHints.chartCaption || 'This chart has a subtitle'}
-        </div>
-      </div>
+      {isSide ? (<>{chartBlock}{textBlock}</>) : isBottom ? (<>{textBlock}{chartBlock}</>) : (<>{textBlock}{chartBlock}</>)}
     </div>
   )
 }
 
 function PolishedTwoImageColumnsPreview({ previewHints, large, className, style, fill, aspectRatio }) {
   const t = LAYOUT_POLISHED_THEME
-  const eyebrowMeta = previewHints.slots?.EYEBROW || {}
+  const variant = previewHints.slideVariant || 'default'
+  const eyebrowMeta = previewHints.slots?.EYEBROW || previewHints.slots?.HEADING || {}
   const { display: eyebrowText } = formatPreviewText(eyebrowMeta.text || 'Describe this slide', { bold: false, uppercase: false })
   const columns = Array.isArray(previewHints.columns) && previewHints.columns.length
-    ? previewHints.columns.slice(0, 2)
+    ? previewHints.columns.slice(0, variant === 'grid' || variant === 'icon_rows' ? 3 : 2)
     : [
         { title: 'Make your point', body: 'Expand on it here. Why is it important? Why does it matter?' },
         { title: 'Make another point', body: "You already know that it's important. But what about your listeners?" },
+        { title: 'Third point', body: 'Keep each card scannable and short.' },
       ]
   const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+  const shown = variant === 'grid' || variant === 'icon_rows' ? columns.slice(0, 3) : columns.slice(0, 2)
+
+  if (variant === 'icon_rows') {
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box',
+        padding: large ? '7% 6%' : '10% 5%', display: 'flex', flexDirection: 'column', gap: large ? 12 : 4, ...style,
+      }}>
+        <div style={{ fontSize: large ? PREVIEW_SUBTITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 700, color: t.text }}>{eyebrowText}</div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: large ? 10 : 3, justifyContent: 'center' }}>
+          {shown.map((col, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: large ? 10 : 3, background: t.card, borderRadius: large ? 8 : 3, padding: large ? 10 : 4 }}>
+              <PolishedIconCircle size={large ? 24 : 10} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: large ? '0.72rem' : '0.3rem', fontWeight: 800, color: t.text }}>{col.title}</div>
+                <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: t.muted }}>{col.body}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={className} style={{
@@ -912,9 +1075,16 @@ function PolishedTwoImageColumnsPreview({ previewHints, large, className, style,
       padding: large ? '7% 6%' : '10% 5%', display: 'flex', flexDirection: 'column', gap: large ? 12 : 4, ...style,
     }}>
       <div style={{ fontSize: large ? PREVIEW_SUBTITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 700, color: t.text }}>{eyebrowText}</div>
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: large ? 16 : 5, minHeight: 0 }}>
-        {columns.map((col, i) => (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3, minWidth: 0 }}>
+      <div style={{
+        flex: 1,
+        display: 'grid',
+        gridTemplateColumns: variant === 'grid' ? 'repeat(3, 1fr)' : variant === 'top' || variant === 'bottom' ? '1fr' : '1fr 1fr',
+        gridTemplateRows: variant === 'top' || variant === 'bottom' ? 'auto 1fr' : undefined,
+        gap: large ? 16 : 5,
+        minHeight: 0,
+      }}>
+        {shown.map((col, i) => (
+          <div key={i} style={{ display: 'flex', flexDirection: variant === 'bottom' ? 'column-reverse' : 'column', gap: large ? 8 : 3, minWidth: 0, background: variant === 'cards' ? t.card : 'transparent', borderRadius: variant === 'cards' || variant === 'framed' ? (large ? 8 : 3) : 0, padding: variant === 'cards' ? (large ? 8 : 3) : 0, border: variant === 'framed' ? `2px solid ${t.accentBorder}` : 'none' }}>
             <div style={{ flex: large ? '0 0 42%' : '0 0 38%', minHeight: large ? 80 : 24, borderRadius: large ? 8 : 3, overflow: 'hidden' }}>
               <PolishedImagePlaceholder large={large} src={col.imageUrl || resolvePreviewImageSrc(previewHints)} />
             </div>
@@ -929,6 +1099,7 @@ function PolishedTwoImageColumnsPreview({ previewHints, large, className, style,
 
 function PolishedIntroThreeParaIconsPreview({ previewHints, large, className, style, fill, aspectRatio }) {
   const t = LAYOUT_POLISHED_THEME
+  const variant = previewHints.gridVariant || 'default'
   const introMeta = previewHints.slots?.INTRO || {}
   const { display: introText } = formatPreviewText(introMeta.text || 'Three pillars', {
     bold: introMeta.bold ?? true,
@@ -946,6 +1117,75 @@ function PolishedIntroThreeParaIconsPreview({ previewHints, large, className, st
   const frameStyle = fill
     ? { width: '100%', height: '100%', aspectRatio: 'unset' }
     : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+
+  if (variant === 'radial') {
+    return (
+      <div
+        className={className}
+        style={{
+          position: 'relative',
+          ...frameStyle,
+          background: t.bg,
+          overflow: 'hidden',
+          fontFamily: 'system-ui, sans-serif',
+          borderRadius: large ? 12 : 6,
+          boxSizing: 'border-box',
+          padding: large ? '8% 7%' : '10% 6%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: large ? 14 : 5,
+          ...style,
+        }}
+      >
+        <div style={{ fontSize: large ? PREVIEW_SUBTITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 700, color: t.muted }}>{introText}</div>
+        <div style={{ flex: 1, width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: large ? 12 : 4, alignItems: 'center' }}>
+          {columns.map((col, i) => (
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: large ? 6 : 2, textAlign: 'center' }}>
+              <PolishedIconCircle size={large ? 32 : 12} />
+              <div style={{ fontSize: large ? '0.85rem' : '0.3rem', fontWeight: 800, color: t.text }}>{col.title}</div>
+              <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: t.muted, lineHeight: 1.3 }}>{col.body}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (variant === 'horizontal') {
+    return (
+      <div
+        className={className}
+        style={{
+          position: 'relative',
+          ...frameStyle,
+          background: t.bg,
+          overflow: 'hidden',
+          fontFamily: 'system-ui, sans-serif',
+          borderRadius: large ? 12 : 6,
+          boxSizing: 'border-box',
+          padding: large ? '8% 7%' : '10% 6%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: large ? 14 : 5,
+          ...style,
+        }}
+      >
+        <div style={{ fontSize: large ? PREVIEW_SUBTITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 700, color: t.muted }}>{introText}</div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: large ? 12 : 4, justifyContent: 'center' }}>
+          {columns.map((col, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: large ? 12 : 4 }}>
+              <PolishedIconCircle size={large ? 28 : 10} />
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: large ? '0.95rem' : '0.34rem', fontWeight: 800, color: t.text }}>{col.title}</div>
+                <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : '0.28rem', color: t.muted, lineHeight: 1.35 }}>{col.body}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div
@@ -1023,6 +1263,7 @@ function PolishedIntroThreeParaIconsPreview({ previewHints, large, className, st
 
 function PolishedEightShortTextsPreview({ previewHints, large, className, style, fill, aspectRatio }) {
   const t = LAYOUT_POLISHED_THEME
+  const variant = previewHints.gridVariant || 'default'
   const headingMeta = previewHints.slots?.HEADING || {}
   const { display: headingText } = formatPreviewText(
     headingMeta.text || 'Describe this slide',
@@ -1035,6 +1276,109 @@ function PolishedEightShortTextsPreview({ previewHints, large, className, style,
         desc: 'A short description',
       }))
   const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+  const isCenter = variant === 'center'
+  const isRight = variant === 'right' || variant === 'default'
+
+  const pointsBlock = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 12 : 4, minWidth: 0, minHeight: 0, ...(isCenter ? { width: '100%' } : {}) }}>
+      <div
+        style={{
+          fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_SUBTITLE_FS.small,
+          fontWeight: 800,
+          color: t.text,
+          lineHeight: 1.15,
+          textTransform: headingMeta.uppercase ? 'uppercase' : 'none',
+          textAlign: isCenter ? 'center' : 'left',
+        }}
+      >
+        {headingText}
+      </div>
+      <div
+        style={{
+          flex: 1,
+          display: 'grid',
+          gridTemplateColumns: isCenter ? 'repeat(4, 1fr)' : '1fr 1fr',
+          gap: large ? '10px 14px' : '3px 5px',
+          alignContent: 'start',
+          minHeight: 0,
+        }}
+      >
+        {points.map((point, i) => (
+          <div
+            key={i}
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: large ? 8 : 3,
+              minWidth: 0,
+              flexDirection: isCenter ? 'column' : 'row',
+              textAlign: isCenter ? 'center' : 'left',
+            }}
+          >
+            <PolishedIconCircle size={large ? 22 : 10} />
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div
+                style={{
+                  fontSize: large ? '0.72rem' : '0.28rem',
+                  fontWeight: 700,
+                  color: t.text,
+                  lineHeight: 1.2,
+                  marginBottom: large ? 2 : 1,
+                }}
+              >
+                {point.label}
+              </div>
+              <div
+                style={{
+                  fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem',
+                  color: t.muted,
+                  lineHeight: 1.3,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}
+              >
+                {point.desc}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+
+  const imageBlock = (
+    <div style={{ minHeight: isCenter ? (large ? 80 : 28) : 0, borderRadius: large ? 10 : 4, overflow: 'hidden', ...(isCenter ? { width: '60%', alignSelf: 'center' } : {}) }}>
+      <PolishedImagePlaceholder large={large} src={resolvePreviewImageSrc(previewHints)} />
+    </div>
+  )
+
+  if (isCenter) {
+    return (
+      <div
+        className={className}
+        style={{
+          position: 'relative',
+          ...frameStyle,
+          background: t.bg,
+          overflow: 'hidden',
+          fontFamily: 'system-ui, sans-serif',
+          borderRadius: large ? 12 : 6,
+          boxSizing: 'border-box',
+          padding: large ? '7% 6%' : '10% 5%',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: large ? 14 : 5,
+          alignItems: 'stretch',
+          ...style,
+        }}
+      >
+        {imageBlock}
+        {pointsBlock}
+      </div>
+    )
+  }
 
   return (
     <div
@@ -1049,125 +1393,312 @@ function PolishedEightShortTextsPreview({ previewHints, large, className, style,
         boxSizing: 'border-box',
         padding: large ? '7% 6%' : '10% 5%',
         display: 'grid',
-        gridTemplateColumns: '1.05fr 0.95fr',
+        gridTemplateColumns: isRight ? '1.05fr 0.95fr' : '0.95fr 1.05fr',
         gap: large ? 16 : 5,
         alignItems: 'stretch',
         ...style,
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 12 : 4, minWidth: 0, minHeight: 0 }}>
-        <div
-          style={{
-            fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_SUBTITLE_FS.small,
-            fontWeight: 800,
-            color: t.text,
-            lineHeight: 1.15,
-            textTransform: headingMeta.uppercase ? 'uppercase' : 'none',
-          }}
-        >
-          {headingText}
-        </div>
-        <div
-          style={{
-            flex: 1,
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: large ? '10px 14px' : '3px 5px',
-            alignContent: 'start',
-            minHeight: 0,
-          }}
-        >
-          {points.map((point, i) => (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: large ? 8 : 3,
-                minWidth: 0,
-              }}
-            >
-              <PolishedIconCircle size={large ? 22 : 10} />
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div
-                  style={{
-                    fontSize: large ? '0.72rem' : '0.28rem',
-                    fontWeight: 700,
-                    color: t.text,
-                    lineHeight: 1.2,
-                    marginBottom: large ? 2 : 1,
-                  }}
-                >
-                  {point.label}
-                </div>
-                <div
-                  style={{
-                    fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem',
-                    color: t.muted,
-                    lineHeight: 1.3,
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                  }}
-                >
-                  {point.desc}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div style={{ minHeight: 0, borderRadius: large ? 10 : 4, overflow: 'hidden' }}>
-        <PolishedImagePlaceholder large={large} src={resolvePreviewImageSrc(previewHints)} />
-      </div>
+      {isRight ? (<>{pointsBlock}{imageBlock}</>) : (<>{imageBlock}{pointsBlock}</>)}
     </div>
   )
 }
 
 function PolishedClosingImageSplitPreview({ previewHints, large, className, style, fill, aspectRatio, imageSide = 'right' }) {
   const t = LAYOUT_POLISHED_THEME
+  const variant = previewHints.slideVariant || 'default'
+  const headingMeta = previewHints.slots?.HEADING || previewHints.slots?.MAIN_TITLE || {}
   const bodyMeta = previewHints.slots?.BODY || {}
   const ctaMeta = previewHints.slots?.CTA || {}
+  const { display: headingText } = formatPreviewText(headingMeta.text || '', { bold: true, uppercase: false })
   const { display: bodyText } = formatPreviewText(bodyMeta.text || 'Closing message with a clear call to action.', { bold: false, uppercase: false })
   const { display: ctaText } = formatPreviewText(ctaMeta.text || 'Book a demo', { bold: true, uppercase: false })
   const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+  const isBottom = variant === 'bottom'
+  const isFramed = variant === 'framed' || variant === 'fullheight'
+  const isOverlay = variant === 'overlay'
   const textCol = (
     <div style={{ padding: large ? '10% 8%' : '12% 8%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: large ? 10 : 4 }}>
+      {headingText && <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 800, color: t.text }}>{headingText}</div>}
       <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : '0.28rem', color: t.muted, lineHeight: 1.45 }}>{bodyText}</div>
       {ctaText && <div style={{ fontSize: large ? '0.9rem' : '0.32rem', fontWeight: 700, color: t.accent }}>{ctaText}</div>}
     </div>
   )
   const imageCol = (
-    <div style={{ minHeight: 0, background: t.surface }}>
+    <div style={{
+      minHeight: isBottom ? (large ? 100 : 36) : 0,
+      background: t.surface,
+      border: isFramed ? `3px solid ${t.accentBorder}` : 'none',
+      borderRadius: isFramed ? (large ? 12 : 4) : 0,
+      overflow: 'hidden',
+      position: 'relative',
+      margin: isFramed && !isBottom ? (large ? 12 : 4) : 0,
+    }}>
       <PolishedImagePlaceholder large={large} src={resolvePreviewImageSrc(previewHints)} />
+      {isOverlay && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.28)' }} />}
     </div>
   )
+  if (isBottom) {
+    return (
+      <div className={className} style={{ position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden', display: 'flex', flexDirection: 'column', ...style }}>
+        {textCol}
+        {imageCol}
+      </div>
+    )
+  }
   return (
-    <div className={className} style={{ position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden', display: 'grid', gridTemplateColumns: '1fr 1fr', ...style }}>
+    <div className={className} style={{ position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden', display: 'grid', gridTemplateColumns: variant === 'fullheight' ? (imageSide === 'left' ? '1.15fr 0.85fr' : '0.85fr 1.15fr') : '1fr 1fr', ...style }}>
       {imageSide === 'left' ? (<>{imageCol}{textCol}</>) : (<>{textCol}{imageCol}</>)}
     </div>
   )
 }
 
 function PolishedClosingOverlayPreview({ previewHints, large, className, style, fill, aspectRatio }) {
-  const headingMeta = previewHints.slots?.HEADING || {}
-  const bodyMeta = previewHints.slots?.BODY || {}
+  const variant = previewHints.slideVariant || 'default'
+  const headingMeta = previewHints.slots?.HEADING || previewHints.slots?.MAIN_TITLE || {}
+  const bodyMeta = previewHints.slots?.BODY || previewHints.slots?.STATEMENT || {}
   const ctaMeta = previewHints.slots?.CTA || {}
   const { display: headingText } = formatPreviewText(headingMeta.text || 'Thank you', { bold: true, uppercase: false })
   const { display: bodyText } = formatPreviewText(bodyMeta.text || '', { bold: false, uppercase: false })
   const { display: ctaText } = formatPreviewText(ctaMeta.text || 'Get in touch', { bold: true, uppercase: false })
   const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+  const contentAlign = variant === 'bottom' ? 'flex-end' : variant === 'side' ? 'flex-start' : 'center'
+  const textAlign = variant === 'side' ? 'left' : 'center'
   return (
     <div className={className} style={{ position: 'relative', ...frameStyle, overflow: 'hidden', borderRadius: large ? 12 : 6, ...style }}>
       <div style={{ position: 'absolute', inset: 0 }}>
         <PolishedImagePlaceholder large={large} src={resolvePreviewImageSrc(previewHints)} />
       </div>
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }} />
-      <div style={{ position: 'relative', zIndex: 1, height: '100%', padding: large ? '10% 8%' : '12% 8%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: large ? 10 : 4, textAlign: 'center', color: '#fff' }}>
-        <div style={{ fontSize: large ? '1.8rem' : '0.62rem', fontWeight: 800, lineHeight: 1.1 }}>{headingText}</div>
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        background: variant === 'side'
+          ? 'linear-gradient(90deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.15) 70%)'
+          : variant === 'bottom'
+            ? 'linear-gradient(0deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.15) 55%)'
+            : 'rgba(0,0,0,0.45)',
+      }} />
+      <div style={{
+        position: 'relative',
+        zIndex: 1,
+        height: '100%',
+        padding: large ? '10% 8%' : '12% 8%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: variant === 'side' ? 'flex-start' : 'center',
+        justifyContent: contentAlign,
+        gap: large ? 10 : 4,
+        textAlign,
+        color: '#fff',
+        maxWidth: variant === 'side' ? '55%' : '100%',
+      }}>
+        <div style={{ fontSize: large ? (variant === 'center' ? '2rem' : '1.8rem') : '0.62rem', fontWeight: 800, lineHeight: 1.1 }}>{headingText}</div>
         {bodyText && <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : '0.26rem', opacity: 0.9, maxWidth: '85%', lineHeight: 1.4 }}>{bodyText}</div>}
         {ctaText && <div style={{ fontSize: large ? '0.95rem' : '0.32rem', fontWeight: 700 }}>{ctaText}</div>}
+      </div>
+    </div>
+  )
+}
+
+function PolishedTitleCenteredPreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const variant = previewHints.slideVariant || 'default'
+  const headingMeta = previewHints.slots?.MAIN_TITLE || previewHints.slots?.HEADING || previewHints.slots?.HEADLINE || {}
+  const bodyMeta = previewHints.slots?.BODY || previewHints.slots?.SUBTITLE || {}
+  const { display: headingText } = formatPreviewText(headingMeta.text || 'Presentation title', { bold: true, uppercase: false })
+  const { display: bodyText } = formatPreviewText(bodyMeta.text || '', { bold: false, uppercase: false })
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+  const isOffset = variant === 'offset' || variant === 'corner'
+  const isLarge = variant === 'large' || variant === 'statement'
+  const isSplit = variant === 'split'
+  const hasFrame = variant === 'frame' || variant === 'framed'
+  const hasGlow = variant === 'glow' || variant === 'gradient' || variant === 'orbit' || variant === 'shape'
+  return (
+    <div className={className} style={{
+      position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+      fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box',
+      padding: large ? '10% 8%' : '12% 7%',
+      display: isSplit ? 'grid' : 'flex',
+      gridTemplateColumns: isSplit ? '1fr 1fr' : undefined,
+      flexDirection: 'column',
+      alignItems: isOffset ? 'flex-start' : 'center',
+      justifyContent: 'center',
+      gap: large ? 12 : 4,
+      textAlign: isOffset || isSplit ? 'left' : 'center',
+      ...style,
+    }}>
+      {hasGlow && (
+        <div style={{
+          position: 'absolute',
+          width: large ? 180 : 60,
+          height: large ? 180 : 60,
+          borderRadius: '50%',
+          background: variant === 'glow' ? t.accentSoft : `linear-gradient(135deg, ${t.accentSoft}, ${t.card})`,
+          opacity: 0.9,
+          right: variant === 'orbit' ? '8%' : '12%',
+          top: '18%',
+          border: variant === 'shape' || variant === 'orbit' ? `2px solid ${t.accentBorder}` : 'none',
+        }} />
+      )}
+      {hasFrame && (
+        <div style={{
+          position: 'absolute',
+          inset: large ? 24 : 8,
+          border: `1.5px solid ${t.accentBorder}`,
+          borderRadius: large ? 8 : 3,
+          pointerEvents: 'none',
+        }} />
+      )}
+      {(variant === 'image' || variant === 'overlay') && (
+        <div style={{ position: 'absolute', inset: 0, opacity: variant === 'overlay' ? 0.35 : 0.55 }}>
+          <PolishedImagePlaceholder large={large} src={resolvePreviewImageSrc(previewHints)} />
+        </div>
+      )}
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: large ? 10 : 3, alignItems: isOffset || isSplit ? 'flex-start' : 'center', maxWidth: isSplit ? 'none' : '90%' }}>
+        {(variant === 'corner' || previewHints.slots?.LOGO) && (
+          <div style={{ width: large ? 48 : 16, height: large ? 20 : 8, background: t.card, borderRadius: 4, marginBottom: large ? 8 : 2, alignSelf: variant === 'corner' ? 'flex-start' : 'center' }} />
+        )}
+        <div style={{ fontSize: large ? (isLarge ? '2.4rem' : '1.8rem') : (isLarge ? '0.8rem' : '0.62rem'), fontWeight: 800, color: t.text, lineHeight: 1.1 }}>{headingText}</div>
+        {bodyText && <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : '0.28rem', color: t.muted, lineHeight: 1.4 }}>{bodyText}</div>}
+        {(variant === 'centered' || variant === 'default') && (
+          <div style={{ width: large ? 40 : 14, height: large ? 3 : 1, background: t.accent, borderRadius: 99, marginTop: large ? 4 : 1 }} />
+        )}
+      </div>
+    </div>
+  )
+}
+
+function PolishedSectionDividerPreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const variant = previewHints.slideVariant || 'default'
+  const headingMeta = previewHints.slots?.HEADING || {}
+  const subtitleMeta = previewHints.slots?.SUBTITLE || {}
+  const numberMeta = previewHints.slots?.SECTION_NUMBER || {}
+  const { display: headingText } = formatPreviewText(headingMeta.text || 'Section title', { bold: true, uppercase: false })
+  const { display: subtitleText } = formatPreviewText(subtitleMeta.text || '', { bold: false, uppercase: false })
+  const { display: numberText } = formatPreviewText(numberMeta.text || '02', { bold: true, uppercase: false })
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+  const isBand = variant === 'full' || variant === 'center' || previewHints.mode === 'section_divider'
+  return (
+    <div className={className} style={{
+      position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+      fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box',
+      display: variant === 'diagonal' || variant === 'image' || variant === 'side' ? 'grid' : 'flex',
+      gridTemplateColumns: variant === 'diagonal' || variant === 'image' || variant === 'side' ? '1fr 1fr' : undefined,
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: large ? 10 : 3,
+      ...style,
+    }}>
+      {(variant === 'full' || variant === 'center') && (
+        <div style={{
+          position: 'absolute',
+          left: variant === 'center' ? '15%' : 0,
+          right: variant === 'center' ? '15%' : 0,
+          top: '38%',
+          height: large ? 56 : 18,
+          background: t.accentSoft,
+          borderRadius: variant === 'center' ? (large ? 8 : 3) : 0,
+        }} />
+      )}
+      {variant === 'diagonal' && (
+        <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(115deg, ${t.accentSoft} 0%, ${t.accentSoft} 48%, ${t.bg} 48%)` }} />
+      )}
+      {variant === 'image' && (
+        <div style={{ minHeight: 0 }}><PolishedImagePlaceholder large={large} src={resolvePreviewImageSrc(previewHints)} /></div>
+      )}
+      <div style={{
+        position: 'relative',
+        zIndex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: variant === 'side' ? 'flex-start' : 'center',
+        gap: large ? 8 : 3,
+        textAlign: variant === 'side' ? 'left' : 'center',
+        padding: large ? '8%' : '10%',
+        border: variant === 'frame' ? `1.5px solid ${t.accentBorder}` : 'none',
+        borderRadius: variant === 'frame' ? (large ? 10 : 4) : 0,
+      }}>
+        {(numberText || variant === 'circle') && (
+          <div style={{
+            fontSize: large ? (variant === 'large' ? '3rem' : '2.2rem') : '0.7rem',
+            fontWeight: 900,
+            color: t.accent,
+            width: variant === 'circle' ? (large ? 64 : 22) : 'auto',
+            height: variant === 'circle' ? (large ? 64 : 22) : 'auto',
+            borderRadius: variant === 'circle' ? '50%' : 0,
+            border: variant === 'circle' ? `2px solid ${t.accentBorder}` : 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>{numberText}</div>
+        )}
+        <div style={{ fontSize: large ? (variant === 'large' ? '2rem' : '1.5rem') : '0.55rem', fontWeight: 800, color: t.text }}>{headingText}</div>
+        {subtitleText && <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : '0.26rem', color: t.muted }}>{subtitleText}</div>}
+        {isBand && variant === 'default' && <div style={{ width: large ? 64 : 20, height: large ? 4 : 1.5, background: t.accent, borderRadius: 99 }} />}
+      </div>
+    </div>
+  )
+}
+
+function PolishedBulletListPreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const variant = previewHints.slideVariant || 'default'
+  const headingMeta = previewHints.slots?.HEADING || {}
+  const { display: headingText } = formatPreviewText(headingMeta.text || 'Key points', { bold: true, uppercase: false })
+  const items = Array.isArray(previewHints.points) && previewHints.points.length
+    ? previewHints.points
+    : [1, 2, 3, 4].map((n) => ({
+        label: previewHints.slots?.[`ITEM_${n}`]?.text || previewHints.slots?.[`POINT_${n}`]?.text || `Point ${n}`,
+      }))
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+  const isVertical = variant === 'vertical' || variant === 'path'
+  const isGrid = variant === 'grid' || variant === 'quadrant'
+  return (
+    <div className={className} style={{
+      position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+      fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box',
+      padding: large ? '8% 7%' : '10% 6%', display: 'flex', flexDirection: 'column', gap: large ? 12 : 4, ...style,
+    }}>
+      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 800, color: t.text }}>{headingText}</div>
+      <div style={{
+        flex: 1,
+        display: isGrid ? 'grid' : 'flex',
+        gridTemplateColumns: isGrid ? '1fr 1fr' : undefined,
+        flexDirection: 'column',
+        gap: large ? 10 : 3,
+        position: 'relative',
+      }}>
+        {variant === 'path' && (
+          <div style={{ position: 'absolute', left: large ? 14 : 5, top: large ? 8 : 2, bottom: large ? 8 : 2, width: large ? 2 : 1, background: t.accent, opacity: 0.35 }} />
+        )}
+        {items.slice(0, isGrid ? 4 : 5).map((item, i) => (
+          <div key={i} style={{
+            display: 'flex',
+            alignItems: isVertical ? 'flex-start' : 'center',
+            gap: large ? 10 : 3,
+            background: variant === 'cards' ? t.card : 'transparent',
+            borderRadius: variant === 'cards' ? (large ? 8 : 3) : 0,
+            padding: variant === 'cards' ? (large ? 10 : 4) : 0,
+            zIndex: 1,
+          }}>
+            <div style={{
+              width: large ? 28 : 10,
+              height: large ? 28 : 10,
+              borderRadius: '50%',
+              background: t.accentSoft,
+              color: t.accent,
+              fontWeight: 800,
+              fontSize: large ? '0.72rem' : '0.26rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}>{String(i + 1).padStart(2, '0')}</div>
+            <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : '0.28rem', color: t.text, fontWeight: 600 }}>{item.label || item}</div>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -1266,6 +1797,42 @@ export default function LayoutPolishedPreview({
   if (previewMode === 'comparison_columns') {
     return (
       <PolishedComparisonColumnsPreview
+        previewHints={previewHints}
+        large={large}
+        fill={fill}
+        className={className}
+        style={style}
+        aspectRatio={aspectRatio}
+      />
+    )
+  }
+  if (previewMode === 'title_centered') {
+    return (
+      <PolishedTitleCenteredPreview
+        previewHints={previewHints}
+        large={large}
+        fill={fill}
+        className={className}
+        style={style}
+        aspectRatio={aspectRatio}
+      />
+    )
+  }
+  if (previewMode === 'section_divider') {
+    return (
+      <PolishedSectionDividerPreview
+        previewHints={previewHints}
+        large={large}
+        fill={fill}
+        className={className}
+        style={style}
+        aspectRatio={aspectRatio}
+      />
+    )
+  }
+  if (previewMode === 'bullet_list') {
+    return (
+      <PolishedBulletListPreview
         previewHints={previewHints}
         large={large}
         fill={fill}

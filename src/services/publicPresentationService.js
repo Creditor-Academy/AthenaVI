@@ -58,7 +58,7 @@ class PublicPresentationService {
     if (
       allowAuth &&
       headers.Authorization &&
-      (response.status === 401 || response.status === 403)
+      (response.status === 401 || (response.status === 403 && method === 'GET'))
     ) {
       return this.request(endpoint, { method, body, etag, keepalive, allowAuth: false })
     }
@@ -128,6 +128,49 @@ class PublicPresentationService {
       `${API_CONFIG.ENDPOINTS.PRESENTATIONS.PUBLIC_PRESENCE(token)}${query}`,
       { method: 'DELETE', keepalive: true }
     ).catch(() => null)
+  }
+
+  listComments(token, { slideId, cursor, limit } = {}) {
+    const search = new URLSearchParams()
+    if (slideId) search.set('slideId', slideId)
+    if (cursor) search.set('cursor', cursor)
+    if (limit) search.set('limit', String(limit))
+    const query = search.toString()
+    const path = API_CONFIG.ENDPOINTS.PRESENTATIONS.PUBLIC_COMMENTS(token)
+    return this.request(query ? `${path}?${query}` : path)
+  }
+
+  createComment(token, body) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.PUBLIC_COMMENTS(token), {
+      method: 'POST',
+      body,
+    })
+  }
+
+  updateComment(token, commentId, body) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.PUBLIC_COMMENT(token, commentId), {
+      method: 'PATCH',
+      body,
+    })
+  }
+
+  deleteComment(token, commentId, viewerSessionId) {
+    const path = API_CONFIG.ENDPOINTS.PRESENTATIONS.PUBLIC_COMMENT(token, commentId)
+    const query = viewerSessionId
+      ? `?viewerSessionId=${encodeURIComponent(viewerSessionId)}`
+      : ''
+    return this.request(`${path}${query}`, { method: 'DELETE' })
+  }
+
+  resolveComment(token, commentId, resolve = true) {
+    const endpoint = resolve
+      ? API_CONFIG.ENDPOINTS.PRESENTATIONS.PUBLIC_COMMENT_RESOLVE(token, commentId)
+      : API_CONFIG.ENDPOINTS.PRESENTATIONS.PUBLIC_COMMENT_UNRESOLVE(token, commentId)
+    return this.request(endpoint, { method: 'POST' })
+  }
+
+  listMentionableUsers(token) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.PUBLIC_COMMENT_MENTIONS(token))
   }
 }
 

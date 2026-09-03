@@ -1,6 +1,7 @@
 const TOKEN_KEY = (presentationId) => `athenavi:ppt-share-token:${presentationId}`
 const URL_KEY = (presentationId) => `athenavi:ppt-share-url:${presentationId}`
 const VIEWER_SESSION_KEY = 'athenavi:ppt-viewer-session-id'
+const REVIEWER_DISPLAY_NAME_KEY = 'athenavi:ppt-reviewer-display-name'
 
 export function extractShareToken(value) {
   if (!value) return ''
@@ -130,7 +131,14 @@ export function mergePresenceViewers(...lists) {
 
 export function extractPresencePayload(payload) {
   if (!payload) {
-    return { viewers: [], viewerCount: 0, contentUpdatedAt: null, token: '', url: '' }
+    return {
+      viewers: [],
+      viewerCount: 0,
+      contentUpdatedAt: null,
+      commentsUpdatedAt: null,
+      token: '',
+      url: '',
+    }
   }
   const root = payload.data && typeof payload.data === 'object' ? { ...payload, ...payload.data } : payload
   const share = root.share && typeof root.share === 'object' ? root.share : {}
@@ -148,6 +156,7 @@ export function extractPresencePayload(payload) {
     viewers,
     viewerCount,
     contentUpdatedAt: root.contentUpdatedAt || share.contentUpdatedAt || null,
+    commentsUpdatedAt: root.commentsUpdatedAt || share.commentsUpdatedAt || null,
     token: root.token || share.token || '',
     url: root.url || share.url || share.publicUrl || '',
   }
@@ -205,4 +214,23 @@ export function getOrCreateViewerSessionId() {
   } catch {
     return crypto.randomUUID()
   }
+}
+
+export function readReviewerDisplayName() {
+  try {
+    return String(localStorage.getItem(REVIEWER_DISPLAY_NAME_KEY) || '').trim()
+  } catch {
+    return ''
+  }
+}
+
+export function writeReviewerDisplayName(name) {
+  const value = String(name || '').trim().slice(0, 80)
+  try {
+    if (value) localStorage.setItem(REVIEWER_DISPLAY_NAME_KEY, value)
+    else localStorage.removeItem(REVIEWER_DISPLAY_NAME_KEY)
+  } catch {
+    /* ignore */
+  }
+  return value
 }

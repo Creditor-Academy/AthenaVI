@@ -89,6 +89,7 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true)
       window.history.replaceState({ view: 'dashboard' }, '', '/dashboard')
       window.dispatchEvent(new CustomEvent('auth:oauth-complete'))
+      window.dispatchEvent(new CustomEvent('auth:session-ready'))
     }
 
     const checkAuth = async () => {
@@ -161,6 +162,7 @@ export const AuthProvider = ({ children }) => {
       const { user: userData } = await authService.login(credentials)
       setUser(userData)
       setIsAuthenticated(true)
+      window.dispatchEvent(new CustomEvent('auth:session-ready'))
       return { success: true }
     } catch (error) {
       return {
@@ -178,6 +180,7 @@ export const AuthProvider = ({ children }) => {
       const { user: newUser, workspace } = await authService.register(userData)
       setUser(newUser)
       setIsAuthenticated(true)
+      window.dispatchEvent(new CustomEvent('auth:session-ready'))
       return { success: true, workspace: workspace || null }
     } catch (error) {
       return {
@@ -279,6 +282,7 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true)
       window.history.replaceState({ view: 'dashboard' }, '', '/dashboard')
       window.dispatchEvent(new CustomEvent('auth:oauth-complete'))
+      window.dispatchEvent(new CustomEvent('auth:session-ready'))
       return { success: true }
     } catch (error) {
       console.error('handleGoogleCallback error:', error)
@@ -386,5 +390,3 @@ export const useAuth = () => {
   }
   return context
 }
-
-export default AuthContext

@@ -1,23 +1,157 @@
 import { useEffect, useRef, useState } from 'react'
-import { FiCopy, FiShare2, FiX, FiAlertCircle, FiRefreshCw } from 'react-icons/fi'
+import { FiCopy, FiCheck, FiX, FiAlertCircle, FiRefreshCw, FiEye, FiMessageCircle, FiLink } from 'react-icons/fi'
 import presentationService, { PresentationConflictError } from '../../../services/presentationService'
 import { extractShareToken, buildShareUrl } from '../../../utils/pptShareSession'
 import './pptPanelUi.css'
 
-function unwrapShare(data) {
-  const share = data?.share || data || {}
-  const token = share.token || data?.token || ''
-  const url = share.url || data?.url || (token ? buildShareUrl(token) : '')
+const EMPTY_LINK = {
+  exists: false,
+  enabled: false,
+  url: '',
+  token: '',
+}
+
+function unwrapLink(raw, fallbackToken, fallbackUrl) {
+  if (!raw || raw.exists === false) {
+    return { ...EMPTY_LINK }
+  }
+  const token = raw.token || fallbackToken || ''
+  const url = raw.url || fallbackUrl || (token ? buildShareUrl(token) : '')
   return {
-    enabled: Boolean(share.enabled ?? share.isEnabled),
-    exists:
-      share.exists !== false &&
-      (Boolean(share.enabled) || Boolean(url) || Boolean(token) || Boolean(share.expired)),
-    expired: Boolean(share.expired),
+    exists: true,
+    enabled: Boolean(raw.enabled ?? raw.isEnabled),
     url,
     token,
-    expiresAt: share.expiresAt || share.expires_at || '',
+    role: raw.role || '',
   }
+}
+
+function unwrapShareState(data) {
+  const root = data && typeof data === 'object' ? data : {}
+  return {
+    viewer: unwrapLink(root.viewer, root.viewerToken, root.viewerUrl),
+    reviewer: unwrapLink(root.reviewer, root.reviewerToken, root.reviewerUrl),
+  }
+}
+
+function unwrapRoleResponse(data) {
+  const root = data && typeof data === 'object' ? data : {}
+  const link = root.link && typeof root.link === 'object' ? root.link : root
+  return unwrapLink(link, root.token, root.url)
+}
+
+function ShareAccessRow({
+  role,
+  title,
+  description,
+  icon: Icon,
+  link,
+  loading,
+  busy,
+  generating,
+  copied,
+  confirmRotate,
+  onToggle,
+  onCopy,
+  onAskRotate,
+  onCancelRotate,
+  onConfirmRotate,
+}) {
+  const neverCreated = !loading && !link.exists
+  const needsRotate = Boolean(link.exists && !link.url)
+  const copyUrl = link.url || ''
+  const inputId = `ppt-share-url-${role}`
+  const live = Boolean(link.enabled)
+
+  return (
+    <article className={`ppt-share-access ${live ? 'is-live' : ''}`}>
+      <div className="ppt-share-access-row">
+        <span className="ppt-share-access-icon" aria-hidden>
+          <Icon size={16} />
+        </span>
+        <div className="ppt-share-access-copy">
+          <div className="ppt-share-access-title">
+            <strong>{title}</strong>
+            {!neverCreated && (
+              <span className={`ppt-share-pill ${live ? 'is-on' : ''}`}>{live ? 'On' : 'Off'}</span>
+            )}
+          </div>
+          <p>{description}</p>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-label={`Enable ${title} link`}
+          aria-checked={live}
+          className={`ppt-share-switch ${live ? 'is-on' : ''}`}
+          disabled={loading || busy || generating}
+          onClick={onToggle}
+        >
+          <span />
+        </button>
+      </div>
+
+      {neverCreated ? (
+        <p className="ppt-share-access-empty">Turn this on to create a shareable link.</p>
+      ) : (
+        <div className="ppt-share-access-link">
+          <div className="ppt-share-access-link-row">
+            <input
+              id={inputId}
+              type="text"
+              readOnly
+              className="ppt-share-access-input"
+              value={loading ? 'Loading…' : copyUrl || 'Reset the link to get a URL'}
+              aria-label={`${title} link`}
+            />
+            <button
+              type="button"
+              className={`ppt-share-copy-btn ${copied ? 'is-copied' : ''}`}
+              onClick={onCopy}
+              disabled={!copyUrl}
+              title={copyUrl ? 'Copy link' : 'Reset the link to get a copyable URL'}
+            >
+              {copied ? <FiCheck size={16} /> : <FiCopy size={16} />}
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+          {needsRotate && (
+            <p className="ppt-share-access-note">Reset once to recover a copyable URL.</p>
+          )}
+          {!live && (
+            <p className="ppt-share-access-note">Paused — the same URL works again when you turn this on.</p>
+          )}
+          {confirmRotate ? (
+            <div className="ppt-share-reset-confirm">
+              <p>Everyone with the current link will lose access.</p>
+              <div>
+                <button type="button" className="ppt-share-text-btn" onClick={onCancelRotate} disabled={busy}>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="ppt-share-text-btn ppt-share-text-btn--danger"
+                  onClick={onConfirmRotate}
+                  disabled={busy || generating}
+                >
+                  Reset now
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="ppt-share-text-btn"
+              onClick={onAskRotate}
+              disabled={busy || generating}
+            >
+              <FiRefreshCw size={13} /> Reset link
+            </button>
+          )}
+        </div>
+      )}
+    </article>
+  )
 }
 
 export default function SharePresentationModal({
@@ -28,17 +162,14 @@ export default function SharePresentationModal({
   onClose,
   onShareToken,
 }) {
-  const [share, setShare] = useState(null)
+  const [links, setLinks] = useState({ viewer: { ...EMPTY_LINK }, reviewer: { ...EMPTY_LINK } })
   const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [copied, setCopied] = useState(false)
-  const [confirmRotate, setConfirmRotate] = useState(false)
+  const [copied, setCopied] = useState('')
+  const [confirmRotate, setConfirmRotate] = useState('')
 
   const generating = String(deckStatus || '').toUpperCase() === 'GENERATING'
-  const copyUrl = share?.url || ''
-  const neverCreated = !loading && share && !share.exists && !share.enabled
-  const needsRotate = Boolean(share?.exists && !copyUrl)
   const onShareTokenRef = useRef(onShareToken)
   onShareTokenRef.current = onShareToken
 
@@ -50,10 +181,24 @@ export default function SharePresentationModal({
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  const applyShare = (next) => {
-    setShare(next)
-    const token = extractShareToken(next.token || next.url)
+  const publishToken = (nextLinks) => {
+    const token =
+      extractShareToken(nextLinks.viewer?.token || nextLinks.viewer?.url) ||
+      extractShareToken(nextLinks.reviewer?.token || nextLinks.reviewer?.url)
     if (token) onShareTokenRef.current?.(token)
+  }
+
+  const applyLinks = (next) => {
+    setLinks(next)
+    publishToken(next)
+  }
+
+  const patchRole = (role, nextLink) => {
+    setLinks((prev) => {
+      const next = { ...prev, [role]: nextLink }
+      publishToken(next)
+      return next
+    })
   }
 
   useEffect(() => {
@@ -68,7 +213,7 @@ export default function SharePresentationModal({
       try {
         const data = await presentationService.getShareLink(workspaceId, presentationId)
         if (cancelled) return
-        applyShare(unwrapShare(data))
+        applyLinks(unwrapShareState(data))
       } catch (err) {
         if (cancelled) return
         setError(err.message || 'Could not load share settings.')
@@ -82,17 +227,20 @@ export default function SharePresentationModal({
     }
   }, [workspaceId, presentationId])
 
-  const run = async (fn) => {
+  const run = async (fn, role) => {
     setBusy(true)
     setError('')
     try {
       const data = await fn()
-      const next = unwrapShare(data)
-      applyShare(next)
-      return next
+      const nextLink = unwrapRoleResponse(data)
+      if (role) patchRole(role, nextLink)
+      else applyLinks(unwrapShareState(data))
+      return nextLink
     } catch (err) {
       if (err instanceof PresentationConflictError) {
         setError('Sharing is unavailable while this deck is generating.')
+      } else if (err?.status === 404 && role) {
+        setError('Turn this link on first to create it.')
       } else {
         setError(err.message || 'Share update failed.')
       }
@@ -102,34 +250,67 @@ export default function SharePresentationModal({
     }
   }
 
-  const handleToggle = async () => {
+  const handleToggle = async (role) => {
     if (generating || busy || loading) return
-    if (!share?.exists) {
-      await run(() => presentationService.enableShareLink(workspaceId, presentationId))
-      return
-    }
-    if (share.enabled) {
-      await run(() =>
-        presentationService.updateShareLink(workspaceId, presentationId, { enabled: false })
+    const current = links[role]
+    if (!current?.exists) {
+      await run(
+        () => presentationService.enableShareRole(workspaceId, presentationId, role),
+        role
       )
       return
     }
-    await run(() =>
-      presentationService.updateShareLink(workspaceId, presentationId, { enabled: true })
+    if (current.enabled) {
+      await run(
+        () => presentationService.updateShareRole(workspaceId, presentationId, role, { enabled: false }),
+        role
+      )
+      return
+    }
+    setBusy(true)
+    setError('')
+    try {
+      const data = await presentationService.updateShareRole(workspaceId, presentationId, role, {
+        enabled: true,
+      })
+      patchRole(role, unwrapRoleResponse(data))
+    } catch (err) {
+      if (err?.status === 404) {
+        try {
+          const created = await presentationService.enableShareRole(workspaceId, presentationId, role)
+          patchRole(role, unwrapRoleResponse(created))
+        } catch (createErr) {
+          if (createErr instanceof PresentationConflictError) {
+            setError('Sharing is unavailable while this deck is generating.')
+          } else {
+            setError(createErr.message || 'Share update failed.')
+          }
+        }
+      } else if (err instanceof PresentationConflictError) {
+        setError('Sharing is unavailable while this deck is generating.')
+      } else {
+        setError(err.message || 'Share update failed.')
+      }
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleRotate = async (role) => {
+    const next = await run(
+      () => presentationService.rotateShareRole(workspaceId, presentationId, role),
+      role
     )
+    if (next) setConfirmRotate('')
   }
 
-  const handleRotate = async () => {
-    const next = await run(() => presentationService.rotateShareLink(workspaceId, presentationId))
-    if (next) setConfirmRotate(false)
-  }
-
-  const copyLink = async () => {
+  const copyLink = async (role) => {
+    const copyUrl = links[role]?.url
     if (!copyUrl) return
     try {
       await navigator.clipboard.writeText(copyUrl)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setCopied(role)
+      setTimeout(() => setCopied(''), 2000)
     } catch {
       setError('Copy failed — select the link and copy it manually.')
     }
@@ -140,10 +321,10 @@ export default function SharePresentationModal({
       className="ppt-editor-modal-overlay"
       onClick={(e) => e.target === e.currentTarget && onClose?.()}
     >
-      <div className="ppt-editor-modal" role="dialog" aria-label="Share preview">
+      <div className="ppt-editor-modal ppt-share-modal" role="dialog" aria-label="Share presentation">
         <header className="ppt-editor-modal-head">
           <div className="ppt-editor-modal-head-text">
-            <span className="ppt-editor-modal-kicker">Share preview</span>
+            <span className="ppt-editor-modal-kicker">Share</span>
             <h3 className="ppt-editor-modal-title">{title}</h3>
           </div>
           <button type="button" className="ppt-editor-modal-close" onClick={onClose} aria-label="Close">
@@ -151,13 +332,7 @@ export default function SharePresentationModal({
           </button>
         </header>
 
-        <div className="ppt-editor-modal-callout">
-          <FiShare2 size={16} />
-          <p>
-            Anyone with this link can view the deck read-only. Copy it whenever you like and send it to
-            as many people as you want.
-          </p>
-        </div>
+        <p className="ppt-share-lead">Anyone with a link can open this presentation. Pick who can only view, and who can comment.</p>
 
         {generating && (
           <div className="ppt-editor-modal-alert ppt-editor-modal-alert--warn" role="status">
@@ -173,103 +348,55 @@ export default function SharePresentationModal({
           </div>
         )}
 
-        {needsRotate && (
-          <div className="ppt-editor-modal-alert ppt-editor-modal-alert--info" role="status">
-            This link was created before full URLs were stored. Reset it once to get a copyable URL.
-          </div>
-        )}
-
-        <div className="ppt-share-toggle-row">
-          <div>
-            <strong>View-only link</strong>
-            <p>
-              {neverCreated
-                ? 'No link yet. Turn this on to create one.'
-                : share?.enabled
-                  ? 'Link is on. Copy it anytime — it stays the same until you reset it.'
-                  : 'Link is paused. Guests will see an unavailable page until you turn it back on.'}
-            </p>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={Boolean(share?.enabled)}
-            className={`ppt-share-switch ${share?.enabled ? 'is-on' : ''}`}
-            disabled={loading || busy || generating}
-            onClick={handleToggle}
-          >
-            <span />
-          </button>
-        </div>
-
-        {(copyUrl || share?.exists) && (
-          <>
-            <label className="ppt-editor-modal-field-label" htmlFor="ppt-share-url">
-              Preview link
-            </label>
-            <div className="ppt-editor-modal-link-row">
-              <input
-                id="ppt-share-url"
-                type="text"
-                readOnly
-                className="ppt-editor-modal-link-input"
-                value={loading ? 'Loading…' : copyUrl || 'Reset the link to get a URL'}
-              />
-              <button
-                type="button"
-                className="ppt-editor-modal-btn ppt-editor-modal-btn--primary"
-                onClick={copyLink}
-                disabled={!copyUrl}
-                title={copyUrl ? 'Copy link' : 'Reset the link to get a copyable URL'}
-              >
-                <FiCopy size={15} /> {copied ? 'Copied' : 'Copy'}
-              </button>
+        <section className="ppt-share-panel" aria-label="Anyone with the link">
+          <div className="ppt-share-panel-head">
+            <span className="ppt-share-panel-icon" aria-hidden>
+              <FiLink size={15} />
+            </span>
+            <div>
+              <strong>Anyone with the link</strong>
+              <p>Two independent links. Turning one on does not enable the other.</p>
             </div>
-            <p className="ppt-editor-modal-hint">
-              Disable pauses this URL. Reset issues a new one and the old copies stop working.
-            </p>
-          </>
-        )}
-
-        {share?.exists && (
-          <div className="ppt-share-reset-row">
-            {confirmRotate ? (
-              <>
-                <p className="ppt-editor-modal-hint" style={{ margin: 0 }}>
-                  Everyone holding the old link will lose access. Disable instead if you only want a pause.
-                </p>
-                <button
-                  type="button"
-                  className="ppt-editor-modal-btn ppt-editor-modal-btn--ghost"
-                  onClick={() => setConfirmRotate(false)}
-                  disabled={busy}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="ppt-editor-modal-btn ppt-editor-modal-btn--primary"
-                  onClick={handleRotate}
-                  disabled={busy || generating}
-                >
-                  Reset now
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                className="ppt-editor-modal-btn ppt-editor-modal-btn--ghost"
-                onClick={() => setConfirmRotate(true)}
-                disabled={busy || generating}
-              >
-                <FiRefreshCw size={15} /> Reset link
-              </button>
-            )}
           </div>
-        )}
+
+          <ShareAccessRow
+            role="viewer"
+            title="Can view"
+            description="Preview only — no comments"
+            icon={FiEye}
+            link={links.viewer}
+            loading={loading}
+            busy={busy}
+            generating={generating}
+            copied={copied === 'viewer'}
+            confirmRotate={confirmRotate === 'viewer'}
+            onToggle={() => handleToggle('viewer')}
+            onCopy={() => copyLink('viewer')}
+            onAskRotate={() => setConfirmRotate('viewer')}
+            onCancelRotate={() => setConfirmRotate('')}
+            onConfirmRotate={() => handleRotate('viewer')}
+          />
+          <ShareAccessRow
+            role="reviewer"
+            title="Can comment"
+            description="Preview plus feedback from guests or teammates"
+            icon={FiMessageCircle}
+            link={links.reviewer}
+            loading={loading}
+            busy={busy}
+            generating={generating}
+            copied={copied === 'reviewer'}
+            confirmRotate={confirmRotate === 'reviewer'}
+            onToggle={() => handleToggle('reviewer')}
+            onCopy={() => copyLink('reviewer')}
+            onAskRotate={() => setConfirmRotate('reviewer')}
+            onCancelRotate={() => setConfirmRotate('')}
+            onConfirmRotate={() => handleRotate('reviewer')}
+          />
+        </section>
 
         <footer className="ppt-editor-modal-foot">
-          <button type="button" className="ppt-editor-modal-btn ppt-editor-modal-btn--ghost" onClick={onClose}>
+          <button type="button" className="ppt-editor-modal-btn ppt-editor-modal-btn--primary" onClick={onClose}>
             Done
           </button>
         </footer>

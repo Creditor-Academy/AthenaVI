@@ -38,7 +38,8 @@ export default function PublicPresentation() {
 
   useEffect(() => {
     document.title = 'Shared presentation'
-    return setNoReferrerMeta()
+    const restore = setNoReferrerMeta()
+    return restore
   }, [])
 
   const loadDeck = useCallback(
@@ -58,9 +59,10 @@ export default function PublicPresentation() {
         if (withSession) {
           try {
             const sessionResult = await publicPresentationService.getSession(token)
-            setSession(sessionResult.data || null)
+            const nextSession = sessionResult.data || sessionResult || null
+            setSession(nextSession)
           } catch {
-            /* session is optional — still show the deck */
+            setSession(null)
           }
         }
         setError('')
@@ -125,6 +127,9 @@ export default function PublicPresentation() {
       workspaceId={session?.workspaceId || deck?.workspaceId}
       presentationId={session?.presentationId || deck?.presentationId || deck?.id}
       canOpenInEditor={Boolean(session?.canOpenInEditor)}
+      canComment={Boolean(session?.canComment) || session?.linkRole === 'reviewer'}
+      canResolveComments={Boolean(session?.canResolveComments)}
+      shareSession={session}
       onOpenInEditor={handleOpenInEditor}
       onContentUpdated={handleContentUpdated}
       onBack={() => window.location.assign('/')}

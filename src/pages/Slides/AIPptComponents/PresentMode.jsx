@@ -24,6 +24,7 @@ import {
   runFill,
   textPaintStyle,
 } from '../../../utils/pptTextContent'
+import { PPT_SLIDE_TRANSITIONS } from '../../../constants/pptSlideEditorOptions'
 import './PresentMode.css'
 
 function PresentElement({ el, palette, canvasW, canvasH, focused }) {

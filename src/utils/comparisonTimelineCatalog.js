@@ -351,19 +351,32 @@ function timelineFromSource(layoutId, sourceId, timelineVariant) {
   )
 }
 
+function comparisonFromSource(layoutId, sourceId, slideVariant, extraPreview = {}) {
+  const source = CATALOG[sourceId]
+  if (!source?.slots?.length) {
+    throw new Error(`comparisonFromSource: missing source ${sourceId}`)
+  }
+  const { mode, ...restPreview } = source.preview || {}
+  return layoutBase(
+    layoutId,
+    source.content_type,
+    JSON.parse(JSON.stringify(source.slots)),
+    { mode, slideVariant, ...restPreview, ...extraPreview }
+  )
+}
+
 Object.assign(CATALOG, {
-  timeline_horizontal_nodes_v1: timelineFromSource('timeline_horizontal_nodes_v1', 'timeline_horizontal_v1', 'nodes'),
   timeline_horizontal_cards_v1: timelineFromSource('timeline_horizontal_cards_v1', 'timeline_horizontal_v1', 'cards'),
   timeline_milestones_image_right_v1: timelineFromSource('timeline_milestones_image_right_v1', 'timeline_milestones_image_v1', 'image_right'),
-  timeline_milestones_image_top_v1: timelineFromSource('timeline_milestones_image_top_v1', 'timeline_milestones_image_v1', 'image_top'),
   timeline_milestones_cards_v1: timelineFromSource('timeline_milestones_cards_v1', 'timeline_milestones_v1', 'cards'),
-  timeline_milestones_path_v1: timelineFromSource('timeline_milestones_path_v1', 'timeline_milestones_v1', 'path'),
   timeline_roadmap_horizontal_v1: timelineFromSource('timeline_roadmap_horizontal_v1', 'timeline_roadmap_v1', 'horizontal'),
-  timeline_roadmap_lanes_v1: timelineFromSource('timeline_roadmap_lanes_v1', 'timeline_roadmap_v1', 'lanes'),
   timeline_process_horizontal_v1: timelineFromSource('timeline_process_horizontal_v1', 'timeline_process_steps_v1', 'horizontal'),
-  timeline_process_vertical_v1: timelineFromSource('timeline_process_vertical_v1', 'timeline_process_steps_v1', 'vertical'),
-  timeline_vertical_nodes_v1: timelineFromSource('timeline_vertical_nodes_v1', 'timeline_vertical_v1', 'nodes'),
   timeline_vertical_cards_v1: timelineFromSource('timeline_vertical_cards_v1', 'timeline_vertical_v1', 'cards'),
+  bullet_list_grid_v1: comparisonFromSource('bullet_list_grid_v1', 'bullet_list_cards_v1', 'grid'),
+  comparison_side_by_side_cards_v1: comparisonFromSource('comparison_side_by_side_cards_v1', 'comparison_side_by_side_v1', 'cards'),
+  comparison_side_by_side_centerline_v1: comparisonFromSource('comparison_side_by_side_centerline_v1', 'comparison_side_by_side_v1', 'centerline'),
+  comparison_table_grid_v1: comparisonFromSource('comparison_table_grid_v1', 'comparison_table_v1', 'grid'),
+  section_divider_numbered_circle_v1: comparisonFromSource('section_divider_numbered_circle_v1', 'section_divider_numbered_v1', 'circle'),
 })
 
 export default CATALOG
