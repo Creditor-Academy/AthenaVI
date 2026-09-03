@@ -175,12 +175,54 @@ export function buildContentBySlotIdFromSlideContent(content = {}, schema = null
     out[`COL_${n}_BODY`] = colBody
     out[`ROW_${n}_TITLE`] = colTitle
     out[`ROW_${n}_BODY`] = colBody
+    out[`FEATURE_${n}_TITLE`] = colTitle
+    out[`FEATURE_${n}_BODY`] = colBody
     out[`BODY_${n}`] = colBody || (hasDedicatedTitles ? '' : colTitle)
     out[`METRIC_TITLE_${n}`] = colTitle
     out[`METRIC_BODY_${n}`] = colBody
     if (colTitle) out[`IMAGE_${n}_LABEL`] = colTitle
     if (bulletText) out[`BULLET_${n}`] = bulletText
   })
+
+  // Device phone-highlights: FEATURE_L1..L3, R1..R3 → columns[0..5]
+  const featureKeys = ['L1', 'L2', 'L3', 'R1', 'R2', 'R3']
+  featureKeys.forEach((key, i) => {
+    const col = columns[i]
+    if (!col) return
+    const colTitle = String(col?.title ?? col?.heading ?? col?.label ?? '').trim()
+    const colBody = String(col?.body ?? col?.text ?? '').trim()
+    if (colTitle) out[`FEATURE_${key}_HEADING`] = colTitle
+    if (colBody) out[`FEATURE_${key}_BODY`] = colBody
+  })
+
+  // Device phone-triple side copy
+  if (columns[0]) {
+    const t = String(columns[0]?.title ?? columns[0]?.heading ?? '').trim()
+    const b = String(columns[0]?.body ?? columns[0]?.text ?? '').trim()
+    if (t) out.HEADING_L = t
+    if (b) out.BODY_L = b
+  }
+  if (columns[1]) {
+    const t = String(columns[1]?.title ?? columns[1]?.heading ?? '').trim()
+    const b = String(columns[1]?.body ?? columns[1]?.text ?? '').trim()
+    if (t) out.HEADING_R = t
+    if (b) out.BODY_R = b
+  }
+
+  // Multi-cluster / device title lines
+  const titleParts = title.split(/\n+/).map((s) => s.trim()).filter(Boolean)
+  const titleRuns = Array.isArray(content.titleRuns)
+    ? content.titleRuns.map((r) => String(r?.text || '').trim()).filter(Boolean)
+    : []
+  if (titleParts.length >= 2) {
+    out.HEADING = `${titleParts[0]}\n${titleParts.slice(1).join(' ')}`
+    out.HEADING_2 = titleParts.slice(1).join(' ')
+  } else if (titleRuns.length >= 2) {
+    out.HEADING = `${titleRuns[0]}\n${titleRuns.slice(1).join(' ')}`
+    out.HEADING_2 = titleRuns.slice(1).join(' ')
+  }
+  if (subtitle) out.SUBHEADING = subtitle
+  else if (summary) out.SUBHEADING = summary.split(/[.!?]/)[0]?.trim() || summary
 
   if (statAt(content, 0)) {
     out.STAT_1_VALUE = String(statAt(content, 0).value ?? '')
@@ -217,6 +259,41 @@ export function buildContentBySlotIdFromSlideContent(content = {}, schema = null
   }
 
   mapChartToSlots(content, schema, out)
+
+  const members = Array.isArray(content.members)
+    ? content.members
+    : Array.isArray(content.team)
+      ? content.team
+      : Array.isArray(content.people)
+        ? content.people
+        : []
+  members.slice(0, 8).forEach((member, i) => {
+    const n = i + 1
+    if (!member) return
+    if (typeof member === 'string') {
+      const name = member.trim()
+      if (name) out[`MEMBER_${n}_NAME`] = name
+      return
+    }
+    const name = String(member.name ?? '').trim()
+    const role = String(member.role ?? member.title ?? '').trim()
+    const email = String(member.email ?? '').trim()
+    const bio = String(member.bio ?? member.body ?? member.description ?? '').trim()
+    if (name) {
+      out[`MEMBER_${n}_NAME`] = name
+      out[`MEMBER_${n}_name`] = name
+    }
+    if (role) {
+      out[`MEMBER_${n}_ROLE`] = role
+      out[`MEMBER_${n}_TITLE`] = role
+    }
+    if (email) out[`MEMBER_${n}_EMAIL`] = email
+    if (bio) {
+      out[`MEMBER_${n}_BIO`] = bio
+      out[`MEMBER_${n}_BODY`] = bio
+      out[`MEMBER_${n}_DESC`] = bio
+    }
+  })
 
   const timelineItems = Array.isArray(content.timeline)
     ? content.timeline

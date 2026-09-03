@@ -1294,7 +1294,12 @@ export function resolveThemeColor(value, palette = {}, fallback = undefined) {
   ) {
     return raw
   }
-  if (palette?.[raw]) return palette[raw]
+  if (palette?.[raw] != null) {
+    const hit = palette[raw]
+    if (typeof hit === 'string') return hit
+    if (hit && typeof hit === 'object') return resolveThemeColor(hit, palette, fallback)
+    return fallback !== undefined ? fallback : raw
+  }
   return fallback !== undefined ? fallback : raw
 }
 

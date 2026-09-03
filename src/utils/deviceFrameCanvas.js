@@ -1,9 +1,44 @@
 /** Compile device frame chrome + inset screen placement for canvas elements. */
 
-const FRAME_STROKE = '#0f172a'
-const FRAME_OUTER = '#1e293b'
-const FRAME_FILL = '#f8fafc'
+const FRAME_STROKE_LIGHT = '#0f172a'
+const FRAME_OUTER_LIGHT = '#1e293b'
+const FRAME_FILL_LIGHT = '#f8fafc'
+const FRAME_STROKE_DARK = '#6B7280'
+const FRAME_OUTER_DARK = '#9CA3AF'
+const FRAME_FILL_DARK = '#D1D5DB'
 const SCREEN_FILL = '#e2e8f0'
+
+function isDarkThemeTokens(themeTokens = {}) {
+  const appearance = String(themeTokens?.appearance || '').toLowerCase()
+  if (appearance === 'dark') return true
+  if (appearance === 'light') return false
+  const bg = themeTokens?.palette?.bg || themeTokens?.palette?.background || ''
+  const s = String(bg).replace('#', '')
+  if (s.length !== 6) return false
+  const r = parseInt(s.slice(0, 2), 16) / 255
+  const g = parseInt(s.slice(2, 4), 16) / 255
+  const b = parseInt(s.slice(4, 6), 16) / 255
+  const lin = (c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)
+  const lum = 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+  return lum < 0.45
+}
+
+export function deviceFrameChromeColors(themeTokens = {}, kind = 'phone') {
+  const dark = isDarkThemeTokens(themeTokens)
+  const isPhone = kind === 'phone' || kind === 'phone_landscape'
+  if (dark) {
+    return {
+      fill: isPhone ? FRAME_OUTER_DARK : FRAME_FILL_DARK,
+      stroke: FRAME_STROKE_DARK,
+      strokeWidth: isPhone ? 0 : 3,
+    }
+  }
+  return {
+    fill: isPhone ? FRAME_OUTER_LIGHT : FRAME_FILL_LIGHT,
+    stroke: FRAME_STROKE_LIGHT,
+    strokeWidth: isPhone ? 0 : 4,
+  }
+}
 
 export function deviceFrameKindFromSlot(slot = {}) {
   const id = String(slot.id || '').toUpperCase()
@@ -154,6 +189,7 @@ export function buildDeviceFrameCanvasElements({
   framePlacement,
   imageContent = {},
   layerBase = 8,
+  themeTokens = null,
 }) {
   const kind = deviceFrameKindFromSlot(frameSlot)
   const isPhone = kind === 'phone' || kind === 'phone_landscape'
@@ -163,6 +199,7 @@ export function buildDeviceFrameCanvasElements({
   const elements = []
   const nest = isPhone ? 0 : 2
   const phoneShadow = '0 22px 54px rgba(15,23,42,0.22), 0 4px 12px rgba(15,23,42,0.12)'
+  const chrome = deviceFrameChromeColors(themeTokens, kind)
 
   elements.push({
     id: `slot-${frameSlot.id}`,
@@ -173,9 +210,9 @@ export function buildDeviceFrameCanvasElements({
     placement: fitted,
     content: {
       shape: 'rounded-rect',
-      fill: isPhone ? FRAME_OUTER : FRAME_FILL,
-      stroke: FRAME_OUTER,
-      strokeWidth: isPhone ? 0 : 4,
+      fill: chrome.fill,
+      stroke: chrome.stroke,
+      strokeWidth: chrome.strokeWidth,
       borderRadius: radius,
       shadow: isPhone ? phoneShadow : '0 8px 24px rgba(15,23,42,0.18)',
       boxShadow: isPhone
@@ -215,3 +252,5 @@ export function buildDeviceFrameCanvasElements({
 
   return elements
 }
+
+export { SCREEN_FILL }

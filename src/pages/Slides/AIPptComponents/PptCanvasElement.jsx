@@ -71,11 +71,14 @@ function RichTextDisplay({ runs, palette, baseStyle = {} }) {
   const fallback = baseStyle.color || '#0F172A'
   return (
     <span className="ppt-rich-text">
-      {runs.map((run, i) => (
-        <span key={i} style={runPaintStyle(run, palette, fallback)}>
-          {run.text}
-        </span>
-      ))}
+      {runs.map((run, i) => {
+        const text = typeof run?.text === 'string' || typeof run?.text === 'number' ? run.text : ''
+        return (
+          <span key={i} style={runPaintStyle(run, palette, fallback)}>
+            {text}
+          </span>
+        )
+      })}
     </span>
   )
 }
@@ -404,8 +407,8 @@ function EditableTable({ content, editable, onCellChange, onActivate, style }) {
                           onActivate?.()
                         }}
                       />
-                    ) : (
-                      cell
+                      ) : (
+                      typeof cell === 'string' || typeof cell === 'number' ? cell : ''
                     )}
                   </Tag>
                 )
@@ -607,7 +610,9 @@ export default function PptCanvasElement({
       )
     }
     if (shapeElementUsesNativeStyle(el)) {
-      const shapeLabel = c.label || c.text
+      const rawLabel = c.label || c.text
+      const shapeLabel =
+        typeof rawLabel === 'string' || typeof rawLabel === 'number' ? rawLabel : ''
       const isImagePlaceholder = shapeLabel === 'Image placeholder'
       const inner = shapeLabel ? (
         <div
@@ -636,7 +641,9 @@ export default function PptCanvasElement({
     }
 
     const rendered = buildCanvasShapeStyle(c, palette)
-    const shapeLabel = c.label || c.text
+    const rawLabel = c.label || c.text
+    const shapeLabel =
+      typeof rawLabel === 'string' || typeof rawLabel === 'number' ? rawLabel : ''
     const inner = shapeLabel ? (
       <div
         style={{
