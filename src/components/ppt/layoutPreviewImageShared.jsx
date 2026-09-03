@@ -54,10 +54,10 @@ export function PreviewImage({ large = false, hero = false, fullBleed = false, s
   )
 }
 
-export function PreviewImageIcon({ large = false, stroke = '#64748b' }) {
-  const size = large ? 28 : 10
+export function PreviewImageIcon({ large = false, stroke = '#64748b', fill = false }) {
+  const size = fill ? '42%' : (large ? 28 : 10)
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ opacity: 0.45 }} aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ opacity: 0.5 }} aria-hidden>
       <rect x="3" y="5" width="18" height="14" rx="2" stroke={stroke} strokeWidth="1.5" />
       <path d="M7 15l3.5-3.5 2.5 2.5L17 10l4 5" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" />
     </svg>

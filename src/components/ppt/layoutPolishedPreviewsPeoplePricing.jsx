@@ -44,10 +44,10 @@ function pad(large) {
   return large ? '6% 5%' : '8% 5%'
 }
 
-function ImagePh({ large, circle, hero = false }) {
+function ImagePh({ large, circle, hero = false, fillIcon = false }) {
   return (
     <div style={previewImageFrameStyle({ large, circle, hero })}>
-      <PreviewImageIcon large={large} />
+      <PreviewImageIcon large={large} fill={fillIcon} />
     </div>
   )
 }
@@ -867,52 +867,73 @@ export function PolishedTeamFeaturedLeadPreview({ previewHints, ...props }) {
     <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden', background: `color-mix(in srgb, ${accent} 22%, #ffffff)` }}>
       <div style={{
         position: 'absolute',
-        width: '56%',
-        height: '100%',
-        left: '22%',
-        top: 0,
+        width: '72%',
+        height: '150%',
+        left: '10%',
+        top: '-25%',
         borderRadius: '50%',
         background: '#ffffff',
       }} />
-      <div style={{ position: 'relative', zIndex: 1, height: '100%', display: 'grid', gridTemplateColumns: '0.92fr 1.08fr', alignItems: 'center' }}>
+      <div style={{
+        position: 'relative',
+        zIndex: 1,
+        height: '100%',
+        display: 'grid',
+        gridTemplateColumns: '1fr 1.15fr',
+        alignItems: 'center',
+        gap: large ? 8 : 4,
+        padding: large ? '4% 5% 4% 3%' : '5% 4%',
+        boxSizing: 'border-box',
+      }}>
         <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
           <div style={{
             position: 'absolute',
-            width: large ? 78 : 34,
-            height: large ? 78 : 34,
+            height: '86%',
+            aspectRatio: '1',
             borderRadius: 999,
-            border: `2px solid color-mix(in srgb, ${accent} 28%, #ffffff)`,
+            border: `${large ? 5 : 2}px solid color-mix(in srgb, ${accent} 32%, #ffffff)`,
             boxSizing: 'border-box',
           }} />
           <div style={{
             position: 'relative',
-            width: large ? 52 : 22,
-            height: large ? 52 : 22,
+            height: '72%',
+            aspectRatio: '1',
             borderRadius: 999,
             overflow: 'hidden',
           }}>
-            <ImagePh large={large} />
+            <ImagePh large={large} circle fillIcon />
           </div>
           <div style={{
             position: 'absolute',
-            left: '58%',
-            width: large ? 12 : 6,
-            height: large ? 12 : 6,
+            left: '70%',
+            top: '62%',
+            height: '11%',
+            aspectRatio: '1',
             borderRadius: 999,
             background: accent,
           }} />
         </div>
-        <div style={{ padding: large ? '8% 8% 8% 2%' : '6% 5% 6% 2%' }}>
-          <div style={{ fontSize: large ? '0.26rem' : '0.1rem', fontWeight: 700, letterSpacing: 1.2, color: accent }}>
+        <div style={{ minWidth: 0, paddingRight: large ? '2%' : 0 }}>
+          <div style={{ fontSize: large ? '0.78rem' : '0.24rem', fontWeight: 700, letterSpacing: 1.6, color: accent }}>
             {(previewHints.slots?.HEADING?.text || 'Leadership').toUpperCase()}
           </div>
-          <div style={{ fontSize: large ? '0.32rem' : '0.12rem', fontWeight: 800, color: theme.text, marginTop: large ? 8 : 3, lineHeight: 1.1 }}>
+          <div style={{ fontSize: large ? '1.2rem' : '0.38rem', fontWeight: 800, color: theme.text, marginTop: large ? 8 : 3, lineHeight: 1.05 }}>
             {String(name).toUpperCase()}
           </div>
-          <div style={{ fontSize: large ? '0.26rem' : '0.1rem', color: theme.muted, marginTop: large ? 6 : 2 }}>
+          <div style={{ fontSize: large ? '0.78rem' : '0.24rem', color: theme.text, opacity: 0.72, marginTop: large ? 8 : 3, lineHeight: 1.2 }}>
             {String(role).toUpperCase()}
           </div>
-          <div style={{ fontSize: large ? '0.22rem' : '0.09rem', color: theme.muted, marginTop: large ? 10 : 4, lineHeight: 1.4 }}>{bio}</div>
+          <div style={{
+            fontSize: large ? '0.72rem' : '0.22rem',
+            color: theme.text,
+            opacity: 0.62,
+            marginTop: large ? 12 : 5,
+            lineHeight: 1.35,
+            display: '-webkit-box',
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}>{bio}</div>
         </div>
       </div>
     </div>
