@@ -143,11 +143,13 @@ function buildMembersFromLayoutSlots(slots, max = 6) {
     const name = slotPlaceholderText(slots, `MEMBER_${i}_NAME`)
     const role = slotPlaceholderText(slots, `MEMBER_${i}_ROLE`)
     const email = slotPlaceholderText(slots, `MEMBER_${i}_EMAIL`)
-    if (name || role || email) {
+    const bio = slotPlaceholderText(slots, `MEMBER_${i}_BIO`)
+    if (name || role || email || bio) {
       members.push({
         name: name || `Member ${i}`,
         role: role || 'Role',
         email: email || 'email@example.com',
+        bio: bio || '',
       })
     }
   }

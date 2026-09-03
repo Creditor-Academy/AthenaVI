@@ -495,11 +495,15 @@ export default function PptCanvasElement({
         )
       }
       if (el.type === 'image') {
+        const clipPath = c.clipPath || buildImageClipPath(c.imageMask)
         return (
           <EmptyImagePlaceholder
             className="ppt-image-skeleton ppt-image-skeleton--empty"
-            borderRadius={radius}
-            style={fillStyle}
+            borderRadius={clipPath ? 0 : radius}
+            style={{
+              ...fillStyle,
+              ...(clipPath ? { clipPath, WebkitClipPath: clipPath } : {}),
+            }}
           />
         )
       }

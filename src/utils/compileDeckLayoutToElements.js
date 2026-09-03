@@ -1040,7 +1040,8 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
       /^SWOT_HUB_(TITLE|SUB)$/i.test(String(el.slotId || '')) ||
       /^funnel_[1-5]_title$/i.test(String(el.slotId || '')) ||
       /^Q[1-4]_(TITLE|BODY)$/i.test(String(el.slotId || '')) ||
-      /^MATRIX_(CENTER|X_LABEL|Y_LABEL)$/i.test(String(el.slotId || ''))
+      /^MATRIX_(CENTER|X_LABEL|Y_LABEL)$/i.test(String(el.slotId || '')) ||
+      /^MEMBER_\d+_(NAME|ROLE|BIO|BODY|DESC|EMAIL)$/i.test(String(el.slotId || ''))
     ) return el
     const colorRole = String(el.content?.colorRole || '').toLowerCase()
     const rawColor = el.content?.color
@@ -1287,7 +1288,15 @@ export function isTextLayoutRole(role) {
 }
 
 export function hasOverlappingTextPlacements(elements = []) {
-  const textEls = (elements || []).filter((el) => el.type === 'text')
+  const textEls = (elements || []).filter((el) => {
+    if (el.type !== 'text') return false
+    const opacity = el.placement?.opacity ?? el.content?.opacity ?? 1
+    if (opacity <= 0) return false
+    const x = el.placement?.x ?? 0
+    const y = el.placement?.y ?? 0
+    if (x < -40 || y < -40) return false
+    return true
+  })
   for (let i = 0; i < textEls.length; i += 1) {
     const a = textEls[i].placement || {}
     for (let j = i + 1; j < textEls.length; j += 1) {

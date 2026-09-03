@@ -431,18 +431,49 @@ export function PolishedTeamThreeHorizontalPreview({ previewHints, ...props }) {
   const { large } = props
   const fp = frameProps(props)
   const members = previewHints.members?.length ? previewHints.members.slice(0, 3) : defaultMembers(3)
+  const hexClip = 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)'
   return (
-    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 14 : 4 }}>
-      <div style={{ textAlign: 'center', fontSize: large ? PREVIEW_TITLE_FS.large : '0.38rem', fontWeight: 800, color: theme.text }}>
+    <div {...fp} style={{ ...fp.style, padding: large ? '5% 5%' : '6% 5%', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ textAlign: 'center', fontSize: large ? PREVIEW_TITLE_FS.large : '0.34rem', fontWeight: 800, color: theme.text, flexShrink: 0 }}>
         {previewHints.slots?.HEADING?.text || 'Meet the team'}
       </div>
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 12 : 3, alignItems: 'start' }}>
+      <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 16 : 5, alignItems: 'stretch' }}>
         {members.map((m, i) => (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: large ? 6 : 2, textAlign: 'center' }}>
-            <MemberAvatar large={large} size={large ? 48 : 16} />
-            <div style={{ fontSize: large ? '0.58rem' : '0.22rem', fontWeight: 800, letterSpacing: '0.06em', color: theme.text, textTransform: 'uppercase' }}>{m.name}</div>
-            <div style={{ fontSize: large ? '0.52rem' : '0.2rem', fontWeight: 700, color: theme.text, opacity: 0.85 }}>{m.role}</div>
-            <div style={{ fontSize: large ? '0.48rem' : '0.18rem', color: theme.muted }}>{m.email}</div>
+          <div key={i} style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0, paddingTop: large ? 18 : 8, height: '100%' }}>
+            <div style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              top: large ? 22 : 10,
+              bottom: 0,
+              background: theme.bg,
+              border: `1px solid ${theme.accentBorder}`,
+              borderRadius: large ? 10 : 5,
+              boxShadow: '0 4px 12px rgba(15,23,42,0.06)',
+            }} />
+            <div style={{
+              position: 'relative',
+              zIndex: 1,
+              width: large ? 52 : 22,
+              height: large ? 52 : 22,
+              background: theme.accent,
+              clipPath: hexClip,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <div style={{ width: '86%', height: '86%', clipPath: hexClip, overflow: 'hidden' }}>
+                <ImagePh large={large} />
+              </div>
+            </div>
+            <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: large ? '8px 8px 10px' : '3px 3px 5px', width: '100%' }}>
+              <div style={{ fontSize: large ? '0.52rem' : '0.18rem', fontWeight: 800, color: theme.text, lineHeight: 1.2 }}>{m.name}</div>
+              <div style={{ fontSize: large ? '0.4rem' : '0.14rem', color: theme.muted, lineHeight: 1.3, marginTop: 2 }}>{m.role}</div>
+              <div style={{ fontSize: large ? '0.36rem' : '0.12rem', color: theme.muted, lineHeight: 1.3 }}>{m.email}</div>
+              <div style={{ fontSize: large ? '0.38rem' : '0.13rem', color: theme.muted, lineHeight: 1.35, marginTop: large ? 6 : 2 }}>
+                {m.bio || previewHints.slots?.[`MEMBER_${i + 1}_BIO`]?.text || 'Short bio about this teammate and what they bring to the work.'}
+              </div>
+            </div>
           </div>
         ))}
       </div>
@@ -454,19 +485,45 @@ export function PolishedTeamVerticalListPreview({ previewHints, ...props }) {
   const { large } = props
   const fp = frameProps(props)
   const members = previewHints.members?.length ? previewHints.members.slice(0, 3) : defaultMembers(3)
+  const hexClip = 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)'
   return (
-    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: large ? 16 : 4, alignItems: 'center' }}>
-      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.38rem', fontWeight: 800, color: theme.text, lineHeight: 1.2 }}>
-        {previewHints.slots?.HEADING?.text || 'Management and leadership'}
+    <div {...fp} style={{ ...fp.style, display: 'grid', gridTemplateColumns: '1.45fr 1fr', height: '100%', overflow: 'hidden' }}>
+      <div style={{ padding: large ? '8% 6% 8% 7%' : '8% 5%', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+        <div style={{ fontSize: large ? '0.72rem' : '0.28rem', fontWeight: 800, color: theme.text, marginBottom: large ? 10 : 4, flexShrink: 0 }}>
+          {previewHints.slots?.HEADING?.text || 'Meet the team'}
+        </div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly', gap: large ? 8 : 3 }}>
+          {members.map((m, i) => (
+            <div key={i} style={{ textAlign: 'right', minWidth: 0 }}>
+              <div style={{ fontSize: large ? '0.5rem' : '0.18rem', fontWeight: 800, color: theme.text, lineHeight: 1.2 }}>{m.name}</div>
+              <div style={{ fontSize: large ? '0.36rem' : '0.13rem', color: theme.muted, marginTop: 2 }}>{m.role}</div>
+              <div style={{ marginLeft: 'auto', marginTop: large ? 6 : 2, width: large ? 28 : 12, height: large ? 2 : 1, background: theme.accent, borderRadius: 1 }} />
+              <div style={{ fontSize: large ? '0.32rem' : '0.11rem', color: theme.muted, lineHeight: 1.35, marginTop: large ? 6 : 2 }}>
+                {m.bio || 'Short bio about this teammate.'}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 14 : 4 }}>
-        {members.map((m, i) => (
-          <div key={i} style={{ display: 'flex', gap: large ? 10 : 3, alignItems: 'center' }}>
-            <MemberAvatar large={large} size={large ? 40 : 14} />
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: large ? '0.62rem' : '0.24rem', fontWeight: 800, color: theme.text }}>{m.name}</div>
-              <div style={{ fontSize: large ? '0.54rem' : '0.2rem', fontWeight: 700, color: theme.text, opacity: 0.85 }}>{m.role}</div>
-              <div style={{ fontSize: large ? '0.48rem' : '0.18rem', color: theme.muted }}>{m.email}</div>
+      <div style={{ position: 'relative', background: theme.accent, height: '100%' }}>
+        {members.map((_, i) => (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              left: large ? -26 : -11,
+              top: `${14 + i * 28}%`,
+              width: large ? 52 : 22,
+              height: large ? 52 : 22,
+              background: '#fff',
+              clipPath: hexClip,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <div style={{ width: '84%', height: '84%', clipPath: hexClip, overflow: 'hidden' }}>
+              <ImagePh large={large} />
             </div>
           </div>
         ))}
@@ -504,12 +561,59 @@ function TeamGridPreview({ previewHints, large, count, rows }) {
 export function PolishedTeamGridFourPreview(props) {
   const { previewHints, large } = props
   const fp = frameProps(props)
+  const members = previewHints.members?.length ? previewHints.members.slice(0, 4) : defaultMembers(4)
+  const cards = ['#E11D48', '#EA580C', '#0F766E', '#155E75']
+  const radius = large ? 10 : 5
   return (
-    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 3 }}>
-      <div style={{ textAlign: 'center', fontSize: large ? PREVIEW_TITLE_FS.large : '0.38rem', fontWeight: 800, color: theme.text }}>
-        {previewHints.slots?.HEADING?.text || 'Meet the team'}
+    <div {...fp} style={{ ...fp.style, padding: large ? '5% 4%' : '6% 4%', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flexShrink: 0, marginBottom: large ? 8 : 3 }}>
+        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.32rem', fontWeight: 800, color: theme.text, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+          {previewHints.slots?.HEADING?.text || 'Meet the team'}
+        </div>
+        <div style={{ fontSize: large ? '0.28rem' : '0.11rem', color: theme.text, marginTop: large ? 16 : 6 }}>
+          {previewHints.slots?.SUBHEADING?.text || 'Enter your sub headline here.'}
+        </div>
       </div>
-      <TeamGridPreview previewHints={previewHints} large={large} count={4} rows={[[0, 1], [2, 3]]} />
+      <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: large ? 10 : 4, alignItems: 'center' }}>
+        {members.map((m, i) => {
+          const card = cards[i]
+          return (
+            <div key={i} style={{ position: 'relative', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+              <div style={{
+                width: '100%',
+                aspectRatio: '1 / 1.08',
+                borderRadius: radius,
+                overflow: 'hidden',
+                background: `color-mix(in srgb, ${card} 22%, #fff)`,
+                border: '1px solid rgba(15,23,42,0.12)',
+                boxSizing: 'border-box',
+              }}>
+                <ImagePh large={large} />
+              </div>
+              <div style={{
+                marginTop: large ? -12 : -5,
+                background: card,
+                borderRadius: radius,
+                display: 'flex',
+                flexDirection: 'column',
+                position: 'relative',
+                zIndex: 1,
+                boxShadow: '0 4px 10px rgba(15,23,42,0.1)',
+              }}>
+                <div style={{ padding: large ? '16px 6px 18px' : '7px 2px 8px', textAlign: 'center', color: '#fff' }}>
+                  <div style={{ fontSize: large ? '0.36rem' : '0.12rem', fontWeight: 800 }}>{m.name}</div>
+                  <div style={{ fontSize: large ? '0.24rem' : '0.09rem', fontStyle: 'italic', opacity: 0.95 }}>({m.role})</div>
+                </div>
+                <div style={{
+                  height: large ? 8 : 4,
+                  background: `color-mix(in srgb, ${card} 72%, #000)`,
+                  borderRadius: `0 0 ${radius}px ${radius}px`,
+                }} />
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }

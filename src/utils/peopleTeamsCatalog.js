@@ -27,79 +27,117 @@ function teamGridLayout(id, memberCount, previewMode, memberRegions) {
 
 const CATALOG = {
   team_three_horizontal_v1: layoutBase('team_three_horizontal_v1', 'team', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'Meet the team', {
-      typography: typo('heading', { fontSize: 32, align: 'center' }),
+    heading('HEADING', 'cols 1-12, rows 1-1', 'Meet the team', {
+      typography: typo('heading', { fontSize: 28, align: 'center' }),
     }),
     ...memberFields(1, {
-      image: 'cols 2-4, rows 4-6',
-      name: 'cols 2-4, rows 6-7',
-      role: 'cols 2-4, rows 7-8',
-      email: 'cols 2-4, rows 8-9',
+      image: 'cols 1-4, rows 2-6',
+      name: 'cols 1-4, rows 7-7',
+      role: 'cols 1-4, rows 8-8',
+      email: 'cols 1-4, rows 9-9',
+    }),
+    body('MEMBER_1_BIO', 'cols 1-4, rows 10-10', SAMPLE_PARA.short, 4, {
+      typography: centeredTypo('body', { fontSize: 14 }),
     }),
     ...memberFields(2, {
-      image: 'cols 5-7, rows 4-6',
-      name: 'cols 5-7, rows 6-7',
-      role: 'cols 5-7, rows 7-8',
-      email: 'cols 5-7, rows 8-9',
+      image: 'cols 5-8, rows 2-6',
+      name: 'cols 5-8, rows 7-7',
+      role: 'cols 5-8, rows 8-8',
+      email: 'cols 5-8, rows 9-9',
+    }),
+    body('MEMBER_2_BIO', 'cols 5-8, rows 10-10', SAMPLE_PARA.short, 4, {
+      typography: centeredTypo('body', { fontSize: 14 }),
     }),
     ...memberFields(3, {
-      image: 'cols 8-10, rows 4-6',
-      name: 'cols 8-10, rows 6-7',
-      role: 'cols 8-10, rows 7-8',
-      email: 'cols 8-10, rows 8-9',
+      image: 'cols 9-12, rows 2-6',
+      name: 'cols 9-12, rows 7-7',
+      role: 'cols 9-12, rows 8-8',
+      email: 'cols 9-12, rows 9-9',
+    }),
+    body('MEMBER_3_BIO', 'cols 9-12, rows 10-10', SAMPLE_PARA.short, 4, {
+      typography: centeredTypo('body', { fontSize: 14 }),
     }),
   ], { mode: 'team_three_horizontal' }),
 
   team_three_vertical_v1: layoutBase('team_three_vertical_v1', 'team', [
-    heading('HEADING', 'cols 1-5, rows 3-6', 'Management and leadership', {
-      typography: typo('heading', { fontSize: 36 }),
+    heading('HEADING', 'cols 1-6, rows 1-1', 'Meet the team', {
+      typography: typo('heading', { fontSize: 28, align: 'left' }),
     }),
     ...memberFields(1, {
       image: 'cols 7-8, rows 2-4',
-      name: 'cols 9-12, rows 2-3',
-      role: 'cols 9-12, rows 3-4',
-      email: 'cols 9-12, rows 4-5',
+      name: 'cols 1-6, rows 2-2',
+      role: 'cols 1-6, rows 3-3',
+      email: 'cols 1-6, rows 3-4',
+    }),
+    body('MEMBER_1_BIO', 'cols 1-6, rows 4-4', SAMPLE_PARA.short, 3, {
+      typography: typo('body', { fontSize: 14, align: 'right' }),
     }),
     ...memberFields(2, {
       image: 'cols 7-8, rows 5-7',
-      name: 'cols 9-12, rows 5-6',
-      role: 'cols 9-12, rows 6-7',
-      email: 'cols 9-12, rows 7-8',
+      name: 'cols 1-6, rows 5-5',
+      role: 'cols 1-6, rows 6-6',
+      email: 'cols 1-6, rows 6-7',
+    }),
+    body('MEMBER_2_BIO', 'cols 1-6, rows 7-7', SAMPLE_PARA.short, 3, {
+      typography: typo('body', { fontSize: 14, align: 'right' }),
     }),
     ...memberFields(3, {
       image: 'cols 7-8, rows 8-10',
-      name: 'cols 9-12, rows 8-9',
-      role: 'cols 9-12, rows 9-10',
-      email: 'cols 9-12, rows 10-11',
+      name: 'cols 1-6, rows 8-8',
+      role: 'cols 1-6, rows 9-9',
+      email: 'cols 1-6, rows 9-10',
+    }),
+    body('MEMBER_3_BIO', 'cols 1-6, rows 10-10', SAMPLE_PARA.short, 3, {
+      typography: typo('body', { fontSize: 14, align: 'right' }),
     }),
   ], { mode: 'team_vertical_list' }),
 
-  team_four_v1: teamGridLayout('team_four_v1', 4, 'team_grid_four', [
-    {
-      image: 'cols 2-4, rows 3-5',
-      name: 'cols 2-4, rows 5-6',
-      role: 'cols 2-4, rows 6-7',
-      email: 'cols 2-4, rows 7-8',
-    },
-    {
-      image: 'cols 7-9, rows 3-5',
-      name: 'cols 7-9, rows 5-6',
-      role: 'cols 7-9, rows 6-7',
-      email: 'cols 7-9, rows 7-8',
-    },
-    {
-      image: 'cols 2-4, rows 8-9',
-      name: 'cols 2-4, rows 9-10',
-      role: 'cols 2-4, rows 10-10',
-      email: 'cols 2-4, rows 10-10',
-    },
-    {
-      image: 'cols 7-9, rows 8-9',
-      name: 'cols 7-9, rows 9-10',
-      role: 'cols 7-9, rows 10-10',
-      email: 'cols 7-9, rows 10-10',
-    },
-  ]),
+  team_four_v1: layoutBase('team_four_v1', 'team', [
+    heading('HEADING', 'cols 1-12, rows 1-1', 'Meet the team', {
+      typography: typo('heading', { fontSize: 28, align: 'left' }),
+    }),
+    slot('SUBHEADING', 'cols 1-8, rows 2-2', 'subheading', 'Enter your sub headline here.', {
+      layer: 10,
+      typography: typo('subheading', { fontSize: 16, align: 'left' }),
+      max_lines: 1,
+    }),
+    ...memberFields(1, {
+      image: 'cols 1-3, rows 2-5',
+      name: 'cols 1-3, rows 6-6',
+      role: 'cols 1-3, rows 7-7',
+      email: 'cols 1-3, rows 8-8',
+    }),
+    body('MEMBER_1_BIO', 'cols 1-3, rows 9-10', SAMPLE_PARA.short, 4, {
+      typography: centeredTypo('body', { fontSize: 13 }),
+    }),
+    ...memberFields(2, {
+      image: 'cols 4-6, rows 6-9',
+      name: 'cols 4-6, rows 2-2',
+      role: 'cols 4-6, rows 3-3',
+      email: 'cols 4-6, rows 4-4',
+    }),
+    body('MEMBER_2_BIO', 'cols 4-6, rows 5-5', SAMPLE_PARA.short, 4, {
+      typography: centeredTypo('body', { fontSize: 13 }),
+    }),
+    ...memberFields(3, {
+      image: 'cols 7-9, rows 2-5',
+      name: 'cols 7-9, rows 6-6',
+      role: 'cols 7-9, rows 7-7',
+      email: 'cols 7-9, rows 8-8',
+    }),
+    body('MEMBER_3_BIO', 'cols 7-9, rows 9-10', SAMPLE_PARA.short, 4, {
+      typography: centeredTypo('body', { fontSize: 13 }),
+    }),
+    ...memberFields(4, {
+      image: 'cols 10-12, rows 6-9',
+      name: 'cols 10-12, rows 2-2',
+      role: 'cols 10-12, rows 3-3',
+      email: 'cols 10-12, rows 4-4',
+    }),
+    body('MEMBER_4_BIO', 'cols 10-12, rows 5-5', SAMPLE_PARA.short, 4, {
+      typography: centeredTypo('body', { fontSize: 13 }),
+    }),
+  ], { mode: 'team_grid_four' }),
 
   team_five_v1: teamGridLayout('team_five_v1', 5, 'team_grid_five', [
     {
