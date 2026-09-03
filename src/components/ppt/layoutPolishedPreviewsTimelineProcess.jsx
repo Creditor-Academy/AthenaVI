@@ -313,6 +313,10 @@ export function PolishedTimelineProcessStepsPreview({ previewHints, large, ...pr
 }
 
 export function PolishedProcessLinnerHortiPreview({ previewHints, large, ...props }) {
+  const variant = previewHints.dataVariant || previewHints.timelineVariant || 'default'
+  if (variant === 'path' || variant === 'cards') {
+    return <PolishedProcessFlowPreview previewHints={{ ...previewHints, timelineVariant: variant }} large={large} {...props} />
+  }
   const fp = frameProps({ ...props, large })
   const heading = slotText(previewHints, 'HEADING', 'How it works')
   const steps = resolveSteps(previewHints, [
@@ -338,6 +342,10 @@ export function PolishedProcessLinnerHortiPreview({ previewHints, large, ...prop
 }
 
 export function PolishedProcessLinnerNumericPreview({ previewHints, large, ...props }) {
+  const variant = previewHints.dataVariant || previewHints.timelineVariant || 'default'
+  if (variant === 'path' || variant === 'cards') {
+    return <PolishedProcessFlowPreview previewHints={{ ...previewHints, timelineVariant: variant }} large={large} {...props} />
+  }
   const fp = frameProps({ ...props, large })
   const heading = slotText(previewHints, 'HEADING', 'Process overview')
   const steps = resolveSteps(previewHints, [1, 2, 3].map((n) => ({
