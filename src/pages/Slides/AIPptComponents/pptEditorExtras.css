@@ -674,9 +674,7 @@
 
 .ppt-share-modal {
   background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  width: min(440px, 92vw);
+  border-radius: 20px;
 }
 
 .ppt-crop-modal {
