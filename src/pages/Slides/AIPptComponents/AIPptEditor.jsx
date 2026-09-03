@@ -15,7 +15,7 @@ import {
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { MdDragIndicator, MdOutlineColorLens, MdRotateRight } from 'react-icons/md'
 import { BsStars } from 'react-icons/bs'
-import { THEMES } from './AIPptWizard'
+import { THEMES } from '../../../constants/pptWizardThemes'
 import InsertToolbar from './insert/InsertToolbar'
 import EditorFileMenu from './insert/EditorFileMenu'
 import EditorRightRail from './insert/EditorRightRail'

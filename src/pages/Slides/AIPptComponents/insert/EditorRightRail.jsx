@@ -24,13 +24,12 @@ import presentationService from '../../../../services/presentationService'
 import PptCommentsPanel from '../PptCommentsPanel'
 import PptPublicCommentsPanel from '../PptPublicCommentsPanel'
 import SpeakerNotesPanel from '../SpeakerNotesPanel'
-import SlideTransitionPicker, { PPT_SLIDE_TRANSITIONS } from './SlideTransitionPicker'
+import SlideTransitionPicker from './SlideTransitionPicker'
+import { PPT_SLIDE_STATUSES } from '../../../../constants/pptSlideEditorOptions'
 import { findTemplateForSlideLayout, templateRecordId } from '../../../../utils/similarLayouts'
 import './insertPanels.css'
 import '../pptEditorExtras.css'
 import '../pptPanelUi.css'
-
-export { PPT_SLIDE_TRANSITIONS }
 
 const DESIGN_PANEL_TITLES = {
   slide: 'Slide design',
@@ -51,13 +50,6 @@ const RAIL_TOOLS = [
   { id: 'status', label: 'Status', Icon: HiOutlineClipboard },
   { id: 'notes', label: 'Speaker notes', Icon: FiFileText },
   { id: 'layers', label: 'Layers', Icon: FiLayers },
-]
-
-export const PPT_SLIDE_STATUSES = [
-  { id: 'none', label: 'No status' },
-  { id: 'todo', label: 'To do' },
-  { id: 'in-progress', label: 'In progress' },
-  { id: 'done', label: 'Done' },
 ]
 
 function layerTypeIcon(type) {
@@ -514,7 +506,10 @@ export default function EditorRightRail({
       ref={rootRef}
       aria-label="Editor sidebar"
     >
-      <div className="ppt-editor-sidebar-panel" aria-hidden={!panelOpen}>
+      <div
+        className={`ppt-editor-sidebar-panel ${active === 'comments' ? 'ppt-editor-sidebar-panel--comments' : ''}`}
+        aria-hidden={!panelOpen}
+      >
         <div className="ppt-editor-sidebar-panel-head">
           <strong>{panelTitle}</strong>
           <button type="button" className="ppt-slide-panel-close" onClick={closePanel} aria-label="Close panel">
@@ -572,7 +567,7 @@ export default function EditorRightRail({
           )}
 
           {active === 'comments' && (
-            <div className="ppt-slide-panel ppt-slide-panel--sm" role="region" aria-label="Comments">
+            <div className="ppt-slide-panel ppt-slide-panel--sm ppt-slide-panel--comments" role="region" aria-label="Comments">
               {viewOnly && canComment ? (
                 <PptPublicCommentsPanel
                   token={shareToken}
@@ -588,6 +583,7 @@ export default function EditorRightRail({
                   presentationId={presentationId}
                   slideId={slide?.id}
                   disabled={disabled}
+                  commentsUpdatedAt={commentsUpdatedAt}
                 />
               )}
             </div>

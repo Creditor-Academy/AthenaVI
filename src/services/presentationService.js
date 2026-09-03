@@ -586,6 +586,33 @@ class PresentationService {
     return this.rotateShareRole(workspaceId, presentationId, 'viewer')
   }
 
+  listPresentationComments(workspaceId, presentationId, params = {}) {
+    return this.request(
+      `${API_CONFIG.ENDPOINTS.PRESENTATIONS.COMMENTS(workspaceId, presentationId)}${this.buildQuery(params)}`
+    )
+  }
+
+  createPresentationComment(workspaceId, presentationId, payload) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.COMMENTS(workspaceId, presentationId), {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  }
+
+  deletePresentationComment(workspaceId, presentationId, commentId) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.COMMENT(workspaceId, presentationId, commentId),
+      { method: 'DELETE' }
+    )
+  }
+
+  resolvePresentationComment(workspaceId, presentationId, commentId, resolve = true) {
+    const endpoint = resolve
+      ? API_CONFIG.ENDPOINTS.PRESENTATIONS.COMMENT_RESOLVE(workspaceId, presentationId, commentId)
+      : API_CONFIG.ENDPOINTS.PRESENTATIONS.COMMENT_UNRESOLVE(workspaceId, presentationId, commentId)
+    return this.request(endpoint, { method: 'POST' })
+  }
+
   async pollSharePresence(workspaceId, presentationId, { viewerSessionId, slideIndex } = {}) {
     const key = `${workspaceId}:${presentationId}`
     const remembered = sharePresenceRoute.get(key)

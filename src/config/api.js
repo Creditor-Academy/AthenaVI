@@ -292,6 +292,16 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/share/presence`,
       PRESENCE: (workspaceId, presentationId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/presence`,
+      COMMENTS: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/comments`,
+      COMMENT: (workspaceId, presentationId, commentId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/comments/${commentId}`,
+      COMMENT_RESOLVE: (workspaceId, presentationId, commentId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/comments/${commentId}/resolve`,
+      COMMENT_UNRESOLVE: (workspaceId, presentationId, commentId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/comments/${commentId}/unresolve`,
+      COMMENT_MENTIONS: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/comments/mentionable-users`,
       PUBLIC_DECK: (token) => `/api/p/${encodeURIComponent(token)}`,
       PUBLIC_SESSION: (token) => `/api/p/${encodeURIComponent(token)}/session`,
       PUBLIC_PRESENCE: (token) => `/api/p/${encodeURIComponent(token)}/presence`,

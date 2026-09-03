@@ -5,28 +5,10 @@ import {
   readReviewerDisplayName,
   writeReviewerDisplayName,
 } from '../../../utils/pptShareSession'
+import { PptCommentComposer, PptCommentThread, PptCommentsShell } from './PptCommentThread'
+import { commentListFromPayload, isCommentResolved } from './pptCommentUtils'
 import './pptEditorExtras.css'
 import './pptPanelUi.css'
-
-function commentList(payload) {
-  const data = payload?.data || payload || {}
-  const list = data.comments || data.items || []
-  return Array.isArray(list) ? list : []
-}
-
-function commentText(comment) {
-  return comment?.body || comment?.text || ''
-}
-
-function commentAuthor(comment) {
-  return (
-    comment?.authorName ||
-    comment?.displayName ||
-    comment?.author?.name ||
-    comment?.author?.displayName ||
-    'Guest'
-  )
-}
 
 export default function PptPublicCommentsPanel({
   token,
@@ -44,6 +26,8 @@ export default function PptPublicCommentsPanel({
   const [nameDraft, setNameDraft] = useState(() => readReviewerDisplayName())
   const [creating, setCreating] = useState(false)
   const [mentions, setMentions] = useState([])
+  const [replyTo, setReplyTo] = useState(null)
+  const [replyDraft, setReplyDraft] = useState('')
 
   const viewerSessionId = useMemo(() => getOrCreateViewerSessionId(), [])
   const needsName = Boolean(canComment && isAnonymous && !guestName)
@@ -57,7 +41,7 @@ export default function PptPublicCommentsPanel({
     setError('')
     try {
       const result = await publicPresentationService.listComments(token, { slideId })
-      setComments(commentList(result.data || result))
+      setComments(commentListFromPayload(result.data || result))
     } catch (err) {
       setError(err.message || 'Could not load comments.')
     } finally {
@@ -100,6 +84,12 @@ export default function PptPublicCommentsPanel({
     setError('')
   }
 
+  const guestFields = () => {
+    const payload = { viewerSessionId }
+    if (isAnonymous) payload.displayName = guestName
+    return payload
+  }
+
   const submit = async () => {
     const text = draft.trim()
     if (!text || !canComment || !slideId) return
@@ -110,17 +100,40 @@ export default function PptPublicCommentsPanel({
     setCreating(true)
     setError('')
     try {
-      const payload = {
+      await publicPresentationService.createComment(token, {
         body: text,
         slideId,
-        viewerSessionId,
-      }
-      if (isAnonymous) payload.displayName = guestName
-      await publicPresentationService.createComment(token, payload)
+        ...guestFields(),
+      })
       setDraft('')
       await loadThread()
     } catch (err) {
       setError(err.message || 'Could not post comment.')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const submitReply = async (parent) => {
+    const text = replyDraft.trim()
+    if (!text || isCommentResolved(parent)) return
+    if (isAnonymous && !guestName) {
+      setError('Enter a name to comment.')
+      return
+    }
+    setCreating(true)
+    setError('')
+    try {
+      await publicPresentationService.createComment(token, {
+        body: text,
+        parentId: parent.id,
+        ...guestFields(),
+      })
+      setReplyDraft('')
+      setReplyTo(null)
+      await loadThread()
+    } catch (err) {
+      setError(err.message || 'Could not post reply.')
     } finally {
       setCreating(false)
     }
@@ -139,6 +152,7 @@ export default function PptPublicCommentsPanel({
   const removeComment = async (comment) => {
     try {
       await publicPresentationService.deleteComment(token, comment.id, viewerSessionId)
+      if (replyTo === comment.id) setReplyTo(null)
       await loadThread()
     } catch (err) {
       setError(err.message || 'Could not delete comment.')
@@ -148,111 +162,82 @@ export default function PptPublicCommentsPanel({
   if (!canComment) return null
 
   return (
-    <div className="ppt-comments-panel">
-      {needsName && (
-        <div className="ppt-public-comment-name">
-          <p className="ppt-slide-panel-hint" style={{ marginTop: 0 }}>
-            Choose a name so reviewers know who left feedback.
-          </p>
-          <input
-            type="text"
-            maxLength={80}
-            className="ppt-editor-modal-link-input"
-            placeholder="Your name"
-            value={nameDraft}
-            onChange={(e) => setNameDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                saveGuestName()
-              }
-            }}
-          />
-          <button
-            type="button"
-            className="ppt-slide-panel-btn ppt-slide-panel-btn--block"
-            style={{ marginTop: 8 }}
-            onClick={saveGuestName}
-            disabled={!nameDraft.trim()}
-          >
-            Continue
-          </button>
-        </div>
-      )}
-
-      {loading && <p className="ppt-slide-panel-hint">Loading comments…</p>}
-      {error && (
-        <p className="ppt-slide-panel-hint" style={{ color: '#dc2626' }}>
-          {error}
-        </p>
-      )}
-
-      <div className="ppt-comments-panel-list">
-        {comments.length === 0 && !loading && !needsName && (
-          <p className="ppt-slide-panel-hint">No comments on this slide yet.</p>
-        )}
-        {comments.map((c) => {
-          const resolved = Boolean(c.resolved || c.isResolved)
-          return (
-            <div key={c.id} className="ppt-comment-item">
-              <strong>{commentAuthor(c)}</strong>
-              {resolved ? <span className="ppt-comment-resolved">Resolved</span> : null}
-              <p style={{ margin: '4px 0 0' }}>{commentText(c)}</p>
-              <div className="ppt-comment-actions">
-                {canResolveComments && !c.parentId ? (
-                  <button
-                    type="button"
-                    className="ppt-comment-action"
-                    onClick={() => resolveThread(c, !resolved)}
-                  >
-                    {resolved ? 'Reopen' : 'Resolve'}
-                  </button>
-                ) : null}
-                <button
-                  type="button"
-                  className="ppt-comment-action"
-                  onClick={() => removeComment(c)}
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {!needsName && (
-        <div className="ppt-comment-form" style={{ marginTop: 12 }}>
-          <textarea
-            placeholder="Add a comment…"
-            value={draft}
-            disabled={creating}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit()
-            }}
-          />
-          {canResolveComments && mentions.length > 0 && (
-            <p className="ppt-slide-panel-hint">
-              Teammates you can mention:{' '}
-              {mentions
-                .slice(0, 6)
-                .map((u) => u.name || u.email)
-                .filter(Boolean)
-                .join(', ')}
-            </p>
-          )}
-          <button
-            type="button"
-            className="ppt-slide-panel-btn ppt-slide-panel-btn--block"
-            style={{ marginTop: 8 }}
-            disabled={creating || !draft.trim()}
-            onClick={submit}
-          >
-            {creating ? 'Posting…' : 'Post comment'}
-          </button>
-        </div>
-      )}
-    </div>
+    <PptCommentsShell
+      loading={loading}
+      error={error}
+      empty={comments.length === 0 && !needsName}
+      header={
+        needsName ? (
+          <div className="ppt-cmt-name-gate">
+            <p>Choose a name so reviewers know who left feedback.</p>
+            <input
+              type="text"
+              maxLength={80}
+              className="ppt-cmt-name-input"
+              placeholder="Your name"
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  saveGuestName()
+                }
+              }}
+            />
+            <button
+              type="button"
+              className="ppt-cmt-name-btn"
+              onClick={saveGuestName}
+              disabled={!nameDraft.trim()}
+            >
+              Continue
+            </button>
+          </div>
+        ) : null
+      }
+      composer={
+        needsName ? null : (
+          <div>
+            {canResolveComments && mentions.length > 0 ? (
+              <p className="ppt-cmt-mentions">
+                Mention:{' '}
+                {mentions
+                  .slice(0, 6)
+                  .map((u) => u.name || u.email)
+                  .filter(Boolean)
+                  .join(', ')}
+              </p>
+            ) : null}
+            <PptCommentComposer
+              value={draft}
+              onChange={setDraft}
+              onSubmit={submit}
+              submitting={creating && !replyTo}
+              placeholder="Add a comment…"
+            />
+          </div>
+        )
+      }
+    >
+      {comments.map((c) => (
+        <PptCommentThread
+          key={c.id}
+          comment={c}
+          canReply={!isCommentResolved(c) && !needsName}
+          canResolve={canResolveComments}
+          submitting={creating && replyTo === c.id}
+          replyOpen={replyTo === c.id}
+          replyDraft={replyDraft}
+          onReply={() => {
+            setReplyTo(replyTo === c.id ? null : c.id)
+            setReplyDraft('')
+          }}
+          onReplyDraft={setReplyDraft}
+          onSubmitReply={() => submitReply(c)}
+          onResolve={resolveThread}
+          onDelete={removeComment}
+        />
+      ))}
+    </PptCommentsShell>
   )
 }

@@ -1,79 +1,147 @@
-import { useState } from 'react'
-import { useProjectComments } from '../../../hooks/useProjectComments'
+import { useCallback, useEffect, useState } from 'react'
+import presentationService from '../../../services/presentationService'
+import { PptCommentComposer, PptCommentThread, PptCommentsShell } from './PptCommentThread'
+import { commentListFromPayload, isCommentResolved } from './pptCommentUtils'
 import './pptEditorExtras.css'
+import './pptPanelUi.css'
 
-/**
- * Slide-level comments panel — reuses project comment infrastructure.
- * Presentations are treated as projects for comment API purposes.
- */
 export default function PptCommentsPanel({
   workspaceId,
   presentationId,
   slideId,
   disabled = false,
+  commentsUpdatedAt = null,
 }) {
-  const {
-    comments,
-    loading,
-    error,
-    createComment,
-    creating,
-  } = useProjectComments(workspaceId, presentationId, {
-    enabled: Boolean(workspaceId && presentationId),
-  })
-
+  const [comments, setComments] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [draft, setDraft] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [replyTo, setReplyTo] = useState(null)
+  const [replyDraft, setReplyDraft] = useState('')
 
-  const slideComments = comments.filter(
-    (c) => !c.slideId || c.slideId === slideId
-  )
+  const loadThread = useCallback(async () => {
+    if (!workspaceId || !presentationId || !slideId) {
+      setComments([])
+      return
+    }
+    setLoading(true)
+    setError('')
+    try {
+      const data = await presentationService.listPresentationComments(workspaceId, presentationId, {
+        slideId,
+      })
+      setComments(commentListFromPayload(data))
+    } catch (err) {
+      setError(err.message || 'Could not load comments.')
+    } finally {
+      setLoading(false)
+    }
+  }, [workspaceId, presentationId, slideId])
 
-  const submit = async () => {
+  useEffect(() => {
+    loadThread()
+  }, [loadThread, commentsUpdatedAt])
+
+  const submitRoot = async () => {
     const text = draft.trim()
-    if (!text || disabled) return
-    await createComment({
-      text,
-      slideId,
-      context: 'presentation',
-    })
-    setDraft('')
+    if (!text || disabled || !slideId) return
+    setCreating(true)
+    setError('')
+    try {
+      await presentationService.createPresentationComment(workspaceId, presentationId, {
+        body: text,
+        slideId,
+      })
+      setDraft('')
+      await loadThread()
+    } catch (err) {
+      setError(err.message || 'Could not post comment.')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const submitReply = async (parent) => {
+    const text = replyDraft.trim()
+    if (!text || disabled || isCommentResolved(parent)) return
+    setCreating(true)
+    setError('')
+    try {
+      await presentationService.createPresentationComment(workspaceId, presentationId, {
+        body: text,
+        parentId: parent.id,
+      })
+      setReplyDraft('')
+      setReplyTo(null)
+      await loadThread()
+    } catch (err) {
+      setError(err.message || 'Could not post reply.')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const resolveThread = async (comment, resolve) => {
+    try {
+      await presentationService.resolvePresentationComment(
+        workspaceId,
+        presentationId,
+        comment.id,
+        resolve
+      )
+      await loadThread()
+    } catch (err) {
+      setError(err.message || 'Could not update thread.')
+    }
+  }
+
+  const removeComment = async (comment) => {
+    try {
+      await presentationService.deletePresentationComment(workspaceId, presentationId, comment.id)
+      if (replyTo === comment.id) setReplyTo(null)
+      await loadThread()
+    } catch (err) {
+      setError(err.message || 'Could not delete comment.')
+    }
   }
 
   return (
-    <div className="ppt-comments-panel">
-      {loading && <p className="ppt-slide-panel-hint">Loading comments…</p>}
-      {error && <p className="ppt-slide-panel-hint" style={{ color: '#dc2626' }}>{error}</p>}
-      <div className="ppt-comments-panel-list">
-        {slideComments.length === 0 && !loading && (
-          <p className="ppt-slide-panel-hint">No comments on this slide yet.</p>
-        )}
-        {slideComments.map((c) => (
-          <div key={c.id} className="ppt-comment-item">
-            <strong>{c.authorName || c.author?.name || 'User'}</strong>
-            <p style={{ margin: '4px 0 0' }}>{c.text || c.body}</p>
-          </div>
-        ))}
-      </div>
-      <div className="ppt-comment-form" style={{ marginTop: 12 }}>
-        <textarea
-          placeholder="Add a comment…"
+    <PptCommentsShell
+      loading={loading}
+      error={error}
+      empty={comments.length === 0}
+      composer={
+        <PptCommentComposer
           value={draft}
-          disabled={disabled || creating}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) submit()
-          }}
+          onChange={setDraft}
+          onSubmit={submitRoot}
+          disabled={disabled}
+          submitting={creating && !replyTo}
+          placeholder="Add a comment…"
         />
-        <button
-          type="button"
-          className="ppt-slide-panel-btn ppt-slide-panel-btn--block"
-          style={{ marginTop: 8 }}
-          disabled={disabled || creating || !draft.trim()}
-          onClick={submit}
-        >
-          {creating ? 'Posting…' : 'Post comment'}
-        </button>
-      </div>
-    </div>
+      }
+    >
+      {comments.map((c) => (
+        <PptCommentThread
+          key={c.id}
+          comment={c}
+          canReply={!isCommentResolved(c)}
+          canResolve
+          disabled={disabled}
+          submitting={creating && replyTo === c.id}
+          replyOpen={replyTo === c.id}
+          replyDraft={replyDraft}
+          onReply={() => {
+            setReplyTo(replyTo === c.id ? null : c.id)
+            setReplyDraft('')
+          }}
+          onReplyDraft={setReplyDraft}
+          onSubmitReply={() => submitReply(c)}
+          onResolve={resolveThread}
+          onDelete={removeComment}
+        />
+      ))}
+    </PptCommentsShell>
   )
 }

@@ -1582,6 +1582,18 @@
   scrollbar-color: #cbd5e1 transparent;
 }
 
+.ppt-editor-sidebar-panel--comments {
+  width: 320px;
+}
+
+.ppt-editor-sidebar-panel--comments .ppt-editor-sidebar-panel-head {
+  padding: 20px 20px 16px;
+}
+
+.ppt-editor-sidebar-panel--comments .ppt-editor-sidebar-panel-body {
+  padding: 18px 20px 22px;
+}
+
 .ppt-editor-sidebar-panel-body .ppt-slide-panel,
 .ppt-editor-sidebar-panel-body .ppt-ai-prompt-panel {
   position: static;
@@ -2035,6 +2047,10 @@
 
 .ppt-slide-panel--sm {
   width: 260px;
+}
+
+.ppt-slide-panel--comments {
+  width: 100%;
 }
 
 .ppt-slide-panel-head {
