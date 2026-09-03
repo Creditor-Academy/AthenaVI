@@ -297,8 +297,6 @@ export function specToThreeColumnContent(spec) {
 }
 
 export function isAgendaThreeColumnColouredLayout(layoutId, family, variant) {
-  const id = String(layoutId || '').toLowerCase();
-  if (id === 'agenda_three_icons_v1') return true;
   return family === 'three_col' && variant === 'coloured';
 }
 

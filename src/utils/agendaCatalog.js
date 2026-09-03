@@ -94,18 +94,7 @@ function agendaFromSource(layoutId, sourceId, agendaVariant) {
 
 Object.assign(CATALOG, {
   agenda_editorial_v1: agendaFromSource('agenda_editorial_v1', 'agenda_minimal_v1', 'editorial'),
-  agenda_cards_v1: agendaFromSource('agenda_cards_v1', 'agenda_minimal_v1', 'cards'),
-  agenda_numbered_bold_v1: agendaFromSource('agenda_numbered_bold_v1', 'agenda_numbered_v1', 'bold'),
-  agenda_numbered_timeline_v1: agendaFromSource('agenda_numbered_timeline_v1', 'agenda_numbered_v1', 'timeline'),
-  agenda_three_cards_hero_v1: agendaFromSource('agenda_three_cards_hero_v1', 'agenda_three_columns_hero_v1', 'cards'),
-  agenda_three_panel_hero_v1: agendaFromSource('agenda_three_panel_hero_v1', 'agenda_three_columns_hero_v1', 'panel'),
-  agenda_three_cards_v1: agendaFromSource('agenda_three_cards_v1', 'agenda_three_columns_v1', 'cards'),
-  agenda_three_tiles_v1: agendaFromSource('agenda_three_tiles_v1', 'agenda_three_columns_v1', 'tiles'),
-  agenda_three_icons_v1: agendaFromSource('agenda_three_icons_v1', 'agenda_three_columns_v1', 'coloured'),
-  agenda_vertical_roadmap_v1: agendaFromSource('agenda_vertical_roadmap_v1', 'agenda_timeline_preview_v1', 'vertical'),
-  agenda_progress_path_v1: agendaFromSource('agenda_progress_path_v1', 'agenda_timeline_preview_v1', 'path'),
-  agenda_split_panel_v1: agendaFromSource('agenda_split_panel_v1', 'agenda_two_column_v1', 'split_panel'),
-  agenda_asymmetric_v1: agendaFromSource('agenda_asymmetric_v1', 'agenda_two_column_v1', 'asymmetric'),
-})
+  agenda_cards_v1: agendaFromSource('agenda_cards_v1', 'agenda_minimal_v1', 'cards'),  agenda_numbered_timeline_v1: agendaFromSource('agenda_numbered_timeline_v1', 'agenda_numbered_v1', 'timeline'),
+  agenda_three_cards_hero_v1: agendaFromSource('agenda_three_cards_hero_v1', 'agenda_three_columns_hero_v1', 'cards'),  agenda_three_cards_v1: agendaFromSource('agenda_three_cards_v1', 'agenda_three_columns_v1', 'cards'),  agenda_vertical_roadmap_v1: agendaFromSource('agenda_vertical_roadmap_v1', 'agenda_timeline_preview_v1', 'vertical'),  agenda_split_panel_v1: agendaFromSource('agenda_split_panel_v1', 'agenda_two_column_v1', 'split_panel'),})
 
 export default CATALOG

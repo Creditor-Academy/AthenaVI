@@ -325,22 +325,16 @@ export function verticalTimelineCardsInlineSvg(count = 3, { accent = '#6366f1', 
 
 export const TIMELINE_LAYOUT_META = {
   timeline_horizontal_v1: { family: 'horizontal', variant: 'default' },
-  timeline_horizontal_nodes_v1: { family: 'horizontal', variant: 'nodes' },
   timeline_horizontal_cards_v1: { family: 'horizontal', variant: 'cards' },
   timeline_milestones_v1: { family: 'milestones', variant: 'default' },
   timeline_milestones_cards_v1: { family: 'milestones', variant: 'cards' },
-  timeline_milestones_path_v1: { family: 'milestones', variant: 'path' },
   timeline_milestones_image_v1: { family: 'milestones_image', variant: 'default' },
   timeline_milestones_image_right_v1: { family: 'milestones_image', variant: 'image_right' },
-  timeline_milestones_image_top_v1: { family: 'milestones_image', variant: 'image_top' },
   timeline_roadmap_v1: { family: 'roadmap', variant: 'default' },
   timeline_roadmap_horizontal_v1: { family: 'roadmap', variant: 'horizontal' },
-  timeline_roadmap_lanes_v1: { family: 'roadmap', variant: 'lanes' },
   timeline_process_steps_v1: { family: 'process', variant: 'default' },
   timeline_process_horizontal_v1: { family: 'process', variant: 'horizontal' },
-  timeline_process_vertical_v1: { family: 'process', variant: 'vertical' },
   timeline_vertical_v1: { family: 'vertical', variant: 'default' },
-  timeline_vertical_nodes_v1: { family: 'vertical', variant: 'nodes' },
   timeline_vertical_cards_v1: { family: 'vertical', variant: 'cards' },
 }
 
