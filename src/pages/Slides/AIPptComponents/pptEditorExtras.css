@@ -8,7 +8,7 @@
 .ppt-canvas-guide-v,
 .ppt-canvas-guide-h {
   position: absolute;
-  background: #3b82f6;
+  background: var(--primary);
 }
 
 .ppt-canvas-guide-v {
@@ -52,8 +52,8 @@
 }
 
 .ppt-element-toolbar-btn.is-active {
-  background: #eff6ff;
-  color: #2563eb;
+  background: color-mix(in srgb, var(--primary) 12%, #fff);
+  color: var(--primary);
 }
 
 .ppt-element-toolbar-divider {
@@ -123,7 +123,7 @@
 
 .ppt-size-stepper button:hover:not(:disabled) {
   background: #eef2ff;
-  color: #4f46e5;
+  color: var(--primary-hover);
 }
 
 .ppt-size-stepper button:disabled {
@@ -417,7 +417,7 @@
 }
 
 .ppt-canvas-el--drop-target {
-  outline: 2px dashed #3b82f6 !important;
+  outline: 2px dashed var(--primary) !important;
   outline-offset: 4px !important;
 }
 
@@ -762,7 +762,7 @@
 
 .ppt-element-props-textarea:focus {
   outline: none;
-  border-color: #c4b5fd;
+  border-color: color-mix(in srgb, var(--primary) 40%, #fff);
 }
 
 .ppt-comments-panel-list {

@@ -3902,8 +3902,8 @@ export default function AIPptEditor({
         <svg className="aig-ai-star-grad" aria-hidden>
           <defs>
             <linearGradient id="aigAiStarGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="var(--primary, #3b82f6)" />
-              <stop offset="100%" stopColor="#8b5cf6" />
+              <stop offset="0%" stopColor="var(--primary)" />
+              <stop offset="100%" stopColor="var(--primary-dark)" />
             </linearGradient>
           </defs>
         </svg>

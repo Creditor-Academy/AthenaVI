@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FiCopy, FiShare2, FiX, FiAlertCircle, FiRefreshCw, FiEye, FiMessageCircle } from 'react-icons/fi'
+import { FiCopy, FiCheck, FiX, FiAlertCircle, FiRefreshCw, FiEye, FiMessageCircle, FiLink } from 'react-icons/fi'
 import presentationService, { PresentationConflictError } from '../../../services/presentationService'
 import { extractShareToken, buildShareUrl } from '../../../utils/pptShareSession'
 import './pptPanelUi.css'
@@ -40,7 +40,7 @@ function unwrapRoleResponse(data) {
   return unwrapLink(link, root.token, root.url)
 }
 
-function ShareLinkCard({
+function ShareAccessRow({
   role,
   title,
   description,
@@ -61,100 +61,94 @@ function ShareLinkCard({
   const needsRotate = Boolean(link.exists && !link.url)
   const copyUrl = link.url || ''
   const inputId = `ppt-share-url-${role}`
+  const live = Boolean(link.enabled)
 
   return (
-    <article className="ppt-share-card">
-      <header className="ppt-share-card-head">
-        <span className="ppt-share-card-icon" aria-hidden>
+    <article className={`ppt-share-access ${live ? 'is-live' : ''}`}>
+      <div className="ppt-share-access-row">
+        <span className="ppt-share-access-icon" aria-hidden>
           <Icon size={16} />
         </span>
-        <div>
-          <strong>{title}</strong>
+        <div className="ppt-share-access-copy">
+          <div className="ppt-share-access-title">
+            <strong>{title}</strong>
+            {!neverCreated && (
+              <span className={`ppt-share-pill ${live ? 'is-on' : ''}`}>{live ? 'On' : 'Off'}</span>
+            )}
+          </div>
           <p>{description}</p>
         </div>
         <button
           type="button"
           role="switch"
           aria-label={`Enable ${title} link`}
-          aria-checked={Boolean(link.enabled)}
-          className={`ppt-share-switch ${link.enabled ? 'is-on' : ''}`}
+          aria-checked={live}
+          className={`ppt-share-switch ${live ? 'is-on' : ''}`}
           disabled={loading || busy || generating}
           onClick={onToggle}
         >
           <span />
         </button>
-      </header>
+      </div>
 
       {neverCreated ? (
-        <p className="ppt-editor-modal-hint" style={{ margin: 0 }}>
-          No link yet. Turn this on to create one.
-        </p>
+        <p className="ppt-share-access-empty">Turn this on to create a shareable link.</p>
       ) : (
-        <>
-          <label className="ppt-editor-modal-field-label" htmlFor={inputId}>
-            {title} URL
-          </label>
-          <div className="ppt-editor-modal-link-row">
+        <div className="ppt-share-access-link">
+          <div className="ppt-share-access-link-row">
             <input
               id={inputId}
               type="text"
               readOnly
-              className="ppt-editor-modal-link-input"
+              className="ppt-share-access-input"
               value={loading ? 'Loading…' : copyUrl || 'Reset the link to get a URL'}
+              aria-label={`${title} link`}
             />
             <button
               type="button"
-              className="ppt-editor-modal-btn ppt-editor-modal-btn--primary"
+              className={`ppt-share-copy-btn ${copied ? 'is-copied' : ''}`}
               onClick={onCopy}
               disabled={!copyUrl}
               title={copyUrl ? 'Copy link' : 'Reset the link to get a copyable URL'}
             >
-              <FiCopy size={15} /> {copied ? 'Copied' : 'Copy'}
+              {copied ? <FiCheck size={16} /> : <FiCopy size={16} />}
+              {copied ? 'Copied' : 'Copy'}
             </button>
           </div>
-          <p className="ppt-editor-modal-hint">
-            {link.enabled
-              ? 'Link is on. Disable pauses this URL; reset issues a new one.'
-              : 'Link is paused. Guests will see an unavailable page until you turn it back on.'}
-          </p>
           {needsRotate && (
-            <p className="ppt-editor-modal-hint">
-              This link was created before a URL was stored. Reset it once to get a copyable URL.
-            </p>
+            <p className="ppt-share-access-note">Reset once to recover a copyable URL.</p>
+          )}
+          {!live && (
+            <p className="ppt-share-access-note">Paused — the same URL works again when you turn this on.</p>
           )}
           {confirmRotate ? (
-            <div className="ppt-share-reset-row" style={{ marginBottom: 0 }}>
-              <p className="ppt-editor-modal-hint" style={{ margin: 0, flex: '1 1 100%' }}>
-                Everyone with the current link will lose access.
-              </p>
-              <button
-                type="button"
-                className="ppt-editor-modal-btn ppt-editor-modal-btn--ghost"
-                onClick={onCancelRotate}
-                disabled={busy}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="ppt-editor-modal-btn ppt-editor-modal-btn--primary"
-                onClick={onConfirmRotate}
-                disabled={busy || generating}
-              >
-                Reset now
-              </button>
+            <div className="ppt-share-reset-confirm">
+              <p>Everyone with the current link will lose access.</p>
+              <div>
+                <button type="button" className="ppt-share-text-btn" onClick={onCancelRotate} disabled={busy}>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="ppt-share-text-btn ppt-share-text-btn--danger"
+                  onClick={onConfirmRotate}
+                  disabled={busy || generating}
+                >
+                  Reset now
+                </button>
+              </div>
             </div>
           ) : (
             <button
               type="button"
-              className="ppt-editor-modal-btn ppt-editor-modal-btn--ghost"
+              className="ppt-share-text-btn"
               onClick={onAskRotate}
               disabled={busy || generating}
             >
-              <FiRefreshCw size={15} /> Reset link
+              <FiRefreshCw size={13} /> Reset link
             </button>
           )}
-        </>
+        </div>
       )}
     </article>
   )
@@ -327,7 +321,7 @@ export default function SharePresentationModal({
       className="ppt-editor-modal-overlay"
       onClick={(e) => e.target === e.currentTarget && onClose?.()}
     >
-      <div className="ppt-editor-modal ppt-share-modal-wide" role="dialog" aria-label="Share presentation">
+      <div className="ppt-editor-modal ppt-share-modal" role="dialog" aria-label="Share presentation">
         <header className="ppt-editor-modal-head">
           <div className="ppt-editor-modal-head-text">
             <span className="ppt-editor-modal-kicker">Share</span>
@@ -338,13 +332,7 @@ export default function SharePresentationModal({
           </button>
         </header>
 
-        <div className="ppt-editor-modal-callout">
-          <FiShare2 size={16} />
-          <p>
-            Viewer is read-only. Reviewer can leave comments. Each link is independent — turning one
-            on does not enable the other. Links stay valid until you disable or reset them.
-          </p>
-        </div>
+        <p className="ppt-share-lead">Anyone with a link can open this presentation. Pick who can only view, and who can comment.</p>
 
         {generating && (
           <div className="ppt-editor-modal-alert ppt-editor-modal-alert--warn" role="status">
@@ -360,11 +348,21 @@ export default function SharePresentationModal({
           </div>
         )}
 
-        <div className="ppt-share-card-grid">
-          <ShareLinkCard
+        <section className="ppt-share-panel" aria-label="Anyone with the link">
+          <div className="ppt-share-panel-head">
+            <span className="ppt-share-panel-icon" aria-hidden>
+              <FiLink size={15} />
+            </span>
+            <div>
+              <strong>Anyone with the link</strong>
+              <p>Two independent links. Turning one on does not enable the other.</p>
+            </div>
+          </div>
+
+          <ShareAccessRow
             role="viewer"
-            title="Viewer"
-            description="Anyone with this link can preview the deck. No comments."
+            title="Can view"
+            description="Preview only — no comments"
             icon={FiEye}
             link={links.viewer}
             loading={loading}
@@ -378,10 +376,10 @@ export default function SharePresentationModal({
             onCancelRotate={() => setConfirmRotate('')}
             onConfirmRotate={() => handleRotate('viewer')}
           />
-          <ShareLinkCard
+          <ShareAccessRow
             role="reviewer"
-            title="Reviewer"
-            description="Same preview, plus comments from guests or teammates."
+            title="Can comment"
+            description="Preview plus feedback from guests or teammates"
             icon={FiMessageCircle}
             link={links.reviewer}
             loading={loading}
@@ -395,10 +393,10 @@ export default function SharePresentationModal({
             onCancelRotate={() => setConfirmRotate('')}
             onConfirmRotate={() => handleRotate('reviewer')}
           />
-        </div>
+        </section>
 
         <footer className="ppt-editor-modal-foot">
-          <button type="button" className="ppt-editor-modal-btn ppt-editor-modal-btn--ghost" onClick={onClose}>
+          <button type="button" className="ppt-editor-modal-btn ppt-editor-modal-btn--primary" onClick={onClose}>
             Done
           </button>
         </footer>

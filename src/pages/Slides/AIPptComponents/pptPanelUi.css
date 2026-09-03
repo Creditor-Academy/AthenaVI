@@ -34,8 +34,8 @@
 .ppt-editor-sidebar-panel-body select:focus,
 .ppt-editor-sidebar-panel-body textarea:focus {
   outline: none;
-  border-color: #a78bfa;
-  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.18);
+  border-color: color-mix(in srgb, var(--primary) 55%, #fff);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.18);
 }
 
 .ppt-panel-input--number {
@@ -107,7 +107,7 @@
 }
 
 .ppt-panel-checkbox-row input {
-  accent-color: #7c3aed;
+  accent-color: var(--primary);
 }
 
 .ppt-color-swatch-row {
@@ -137,7 +137,7 @@
 
 .ppt-color-swatch-btn:hover .ppt-color-swatch-fill {
   transform: scale(1.06);
-  box-shadow: 0 0 0 1px #c4b5fd, 0 4px 12px rgba(124, 58, 237, 0.18);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 40%, #fff), 0 4px 12px rgba(var(--primary-rgb), 0.18);
 }
 
 .ppt-color-swatch-input {
@@ -219,9 +219,9 @@
 }
 
 .ppt-shape-border-style.is-active {
-  border-color: #7c3aed;
-  background: #f5f3ff;
-  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.16);
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, #fff);
+  box-shadow: 0 0 0 1px rgba(var(--primary-rgb), 0.16);
 }
 
 .ppt-shape-border-style:disabled {
@@ -258,19 +258,19 @@
 
 .ppt-shape-border-style.is-active .ppt-shape-border-style-line,
 .ppt-shape-border-style.is-active .ppt-shape-border-style-line--solid {
-  background: #5b21b6;
+  background: var(--primary-dark);
 }
 
 .ppt-shape-border-style.is-active .ppt-shape-border-style-line--dashed {
   background: repeating-linear-gradient(
     90deg,
-    #5b21b6 0 7px,
+    var(--primary-dark) 0 7px,
     transparent 7px 11px
   );
 }
 
 .ppt-shape-border-style.is-active .ppt-shape-border-style-line--dotted {
-  background: radial-gradient(circle closest-side, #5b21b6 90%, transparent) 0 / 8px 5px repeat-x;
+  background: radial-gradient(circle closest-side, var(--primary-dark) 90%, transparent) 0 / 8px 5px repeat-x;
 }
 
 .ppt-shape-border-style-label {
@@ -281,7 +281,7 @@
 }
 
 .ppt-shape-border-style.is-active .ppt-shape-border-style-label {
-  color: #5b21b6;
+  color: var(--primary-dark);
 }
 
 .ppt-shape-design-panel .ppt-size-stepper {
@@ -413,7 +413,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #7c3aed;
+  color: var(--primary);
   margin-bottom: 4px;
 }
 
@@ -466,17 +466,17 @@
   align-items: flex-start;
   padding: 14px 16px;
   margin-bottom: 16px;
-  background: linear-gradient(135deg, #f5f3ff 0%, #eff6ff 100%);
-  border: 1px solid #e9d5ff;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 10%, #fff) 0%, #eff6ff 100%);
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, #fff);
   border-radius: 14px;
-  color: #5b21b6;
+  color: var(--primary-dark);
 }
 
 .ppt-editor-modal-callout p {
   margin: 0;
   font-size: 13px;
   line-height: 1.5;
-  color: #4c1d95;
+  color: var(--primary-dark);
 }
 
 .ppt-editor-modal-callout svg {
@@ -553,8 +553,8 @@
 
 .ppt-editor-modal-link-input:focus {
   outline: none;
-  border-color: #a78bfa;
-  box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.18);
+  border-color: color-mix(in srgb, var(--primary) 55%, #fff);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.18);
 }
 
 .ppt-editor-modal-foot {
@@ -608,9 +608,9 @@
 }
 
 .ppt-editor-modal-btn--primary {
-  background: linear-gradient(135deg, #6366f1 0%, #7c3aed 100%);
+  background: var(--primary);
   color: #fff;
-  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.28);
+  box-shadow: 0 4px 14px rgba(var(--primary-rgb), 0.28);
 }
 
 .ppt-editor-modal-btn--primary:hover:not(:disabled) {
@@ -671,12 +671,12 @@
 }
 
 .ppt-share-switch {
-  width: 44px;
-  height: 26px;
+  width: 40px;
+  height: 24px;
   border: none;
   border-radius: 999px;
   background: #cbd5e1;
-  padding: 3px;
+  padding: 2px;
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -687,15 +687,16 @@
   height: 20px;
   border-radius: 50%;
   background: #fff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
   transition: transform 0.16s ease;
 }
 
 .ppt-share-switch.is-on {
-  background: var(--primary, #2563eb);
+  background: var(--primary);
 }
 
 .ppt-share-switch.is-on span {
-  transform: translateX(18px);
+  transform: translateX(16px);
 }
 
 .ppt-share-switch:disabled {
@@ -703,73 +704,242 @@
   cursor: not-allowed;
 }
 
-.ppt-share-reset-row {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
+.ppt-share-modal {
+  width: min(480px, 100%);
+}
+
+.ppt-share-lead {
+  margin: 0 0 18px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #64748b;
+}
+
+.ppt-share-panel {
   margin-bottom: 16px;
-}
-
-.ppt-share-modal-wide {
-  width: min(760px, 100%);
-}
-
-.ppt-share-card-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin: 4px 0 8px;
-}
-
-.ppt-share-card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 0;
-  padding: 16px;
-  border: 1.5px solid #e2e8f0;
+  border: 1px solid #e2e8f0;
   border-radius: 16px;
+  overflow: hidden;
   background: #fff;
 }
 
-.ppt-share-card-head {
+.ppt-share-panel-head {
   display: flex;
   align-items: flex-start;
   gap: 12px;
+  padding: 14px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #eef2f7;
 }
 
-.ppt-share-card-head > div {
-  min-width: 0;
-  flex: 1;
-}
-
-.ppt-share-card-head strong {
-  display: block;
-  font-size: 14px;
-  color: #0f172a;
-}
-
-.ppt-share-card-head p {
-  margin: 4px 0 0;
-  font-size: 12px;
-  color: #64748b;
-  line-height: 1.45;
-}
-
-.ppt-share-card-icon {
+.ppt-share-panel-icon {
   width: 32px;
   height: 32px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
   border-radius: 10px;
-  background: #eff6ff;
-  color: var(--primary, #2563eb);
+  background: color-mix(in srgb, var(--primary) 10%, #fff);
+  color: var(--primary);
 }
 
-.ppt-share-card-head .ppt-share-switch {
-  margin-left: auto;
+.ppt-share-panel-head strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.ppt-share-panel-head p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.ppt-share-access {
+  padding: 14px 16px 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.ppt-share-access:first-of-type {
+  border-top: none;
+}
+
+.ppt-share-access-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ppt-share-access-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.ppt-share-access.is-live .ppt-share-access-icon {
+  background: color-mix(in srgb, var(--primary) 10%, #fff);
+  color: var(--primary);
+}
+
+.ppt-share-access-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.ppt-share-access-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ppt-share-access-copy strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.ppt-share-access-copy p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.ppt-share-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.ppt-share-pill.is-on {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.ppt-share-access-empty {
+  margin: 8px 0 0 48px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.ppt-share-access-link {
+  margin: 10px 0 0 48px;
+}
+
+.ppt-share-access-link-row {
+  display: flex;
+  gap: 8px;
+}
+
+.ppt-share-access-input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0 12px;
+  font-size: 12px;
+  color: #475569;
+  background: #f8fafc;
+}
+
+.ppt-share-access-input:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--primary) 40%, #fff);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12);
+}
+
+.ppt-share-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.ppt-share-copy-btn:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.ppt-share-copy-btn.is-copied {
+  background: #047857;
+}
+
+.ppt-share-copy-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ppt-share-access-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #94a3b8;
+}
+
+.ppt-share-text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ppt-share-text-btn:hover:not(:disabled) {
+  color: #0f172a;
+}
+
+.ppt-share-text-btn--danger {
+  color: #dc2626;
+  margin-left: 12px;
+}
+
+.ppt-share-text-btn--danger:hover:not(:disabled) {
+  color: #b91c1c;
+}
+
+.ppt-share-text-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ppt-share-reset-confirm {
+  margin-top: 8px;
+}
+
+.ppt-share-reset-confirm p {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: #92400e;
 }
 
 .ppt-comment-actions {
@@ -792,12 +962,6 @@
   font-size: 11px;
   font-weight: 600;
   color: #64748b;
-}
-
-@media (max-width: 680px) {
-  .ppt-share-card-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 .ppt-export-format-grid {
@@ -826,14 +990,14 @@
 }
 
 .ppt-export-format-card:hover:not(:disabled) {
-  border-color: #c4b5fd;
+  border-color: color-mix(in srgb, var(--primary) 40%, #fff);
   background: #faf5ff;
 }
 
 .ppt-export-format-card.is-active {
-  border-color: #7c3aed;
+  border-color: var(--primary);
   background: linear-gradient(135deg, #faf5ff 0%, #eff6ff 100%);
-  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.12);
+  box-shadow: 0 0 0 1px rgba(var(--primary-rgb), 0.12);
 }
 
 .ppt-export-format-card:disabled {
@@ -853,8 +1017,8 @@
 }
 
 .ppt-export-format-card.is-active .ppt-export-format-icon {
-  background: #ede9fe;
-  color: #6d28d9;
+  background: color-mix(in srgb, var(--primary) 14%, #fff);
+  color: var(--primary-hover);
 }
 
 .ppt-export-format-label {
@@ -876,8 +1040,8 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: #7c3aed;
-  background: #f5f3ff;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, #fff);
   padding: 3px 7px;
   border-radius: 6px;
 }

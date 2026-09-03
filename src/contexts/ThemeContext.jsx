@@ -82,39 +82,60 @@ export const ThemeProvider = ({ children }) => {
     return { theme: st, mode: sm, customPrimary: sp };
   });
 
-  // On mount: try to load server-saved appearance settings for authenticated users
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return; // no authenticated user
+  const applyServerAppearance = (appearance) => {
+    if (!appearance) return;
 
-    let mounted = true;
-    (async () => {
+    let serverTheme = appearance.themePalette || appearance.theme || null;
+    if (serverTheme === 'default') serverTheme = 'original';
+    const serverMode = appearance.interfaceMode || appearance.mode || null;
+    const serverCustom = appearance.customAccentColor || appearance.customPrimary || null;
+
+    if (serverTheme) {
+      setTheme(serverTheme);
+      localStorage.setItem('athenavi-theme', serverTheme);
+    }
+    if (serverMode) {
+      setMode(serverMode);
+      localStorage.setItem('athenavi-mode', serverMode);
+    }
+    if (serverCustom) {
+      setCustomPrimary(serverCustom);
+      localStorage.setItem('athenavi-custom-primary', serverCustom);
+    }
+
+    setSavedSettings((prev) => ({
+      theme: serverTheme || prev.theme,
+      mode: serverMode || prev.mode,
+      customPrimary: serverCustom || prev.customPrimary,
+    }));
+  };
+
+  // Load on mount (refresh) and again when a session starts (login / OAuth).
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadAppearance = async () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
       try {
         const appearance = await userService.getAppearanceSettings();
-        if (!mounted || !appearance) return;
-
-        // API returns field names: interfaceMode, themePalette, customAccentColor
-        let serverTheme = appearance.themePalette || appearance.theme || null;
-        if (serverTheme === 'default') serverTheme = 'original';
-        const serverMode = appearance.interfaceMode || null;
-        const serverCustom = appearance.customAccentColor || appearance.customPrimary || null;
-
-        if (serverTheme) setTheme(serverTheme);
-        if (serverMode) setMode(serverMode);
-        if (serverCustom) setCustomPrimary(serverCustom);
-
-        // Update saved settings snapshot
-        setSavedSettings({
-          theme: serverTheme || savedSettings.theme,
-          mode: serverMode || savedSettings.mode,
-          customPrimary: serverCustom || savedSettings.customPrimary
-        });
+        if (cancelled || !appearance) return;
+        applyServerAppearance(appearance);
       } catch (err) {
         console.warn('Could not load server appearance settings, falling back to local:', err.message || err);
       }
-    })();
+    };
 
-    return () => { mounted = false };
+    loadAppearance();
+    window.addEventListener('auth:session-ready', loadAppearance);
+    window.addEventListener('auth:oauth-complete', loadAppearance);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('auth:session-ready', loadAppearance);
+      window.removeEventListener('auth:oauth-complete', loadAppearance);
+    };
   }, []);
 
   // These are for the "applied but not yet saved" or preview state

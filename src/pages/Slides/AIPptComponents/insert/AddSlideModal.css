@@ -60,8 +60,8 @@
 }
 
 .ppt-add-slide-tab.is-active {
-  color: #7c3aed !important;
-  border-bottom-color: #7c3aed !important;
+  color: var(--primary) !important;
+  border-bottom-color: var(--primary) !important;
 }
 
 .ppt-add-slide-tab:hover:not(.is-active) {

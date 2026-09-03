@@ -3578,7 +3578,7 @@
 .aig-editor-badge {
   font-size: 11px;
   font-weight: 700;
-  background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+  background: var(--primary);
   color: white;
   padding: 2px 8px;
   border-radius: 4px;
@@ -3852,8 +3852,8 @@
 }
 
 .aig-slide-action-btn.is-active {
-  background: #ede9fe;
-  color: #7c3aed;
+  background: color-mix(in srgb, var(--primary) 14%, #fff);
+  color: var(--primary);
 }
 
 .aig-ai-star-grad {
@@ -3865,7 +3865,7 @@
 
 .aig-slide-action-btn--ai {
   background: transparent;
-  color: #8b5cf6;
+  color: var(--primary);
   box-shadow: none;
 }
 
@@ -3875,13 +3875,13 @@
 
 .aig-slide-action-btn--ai:hover:not(:disabled) {
   background: #f1f5f9;
-  color: #8b5cf6;
+  color: var(--primary);
   filter: none;
 }
 
 .aig-slide-action-btn--ai.is-active {
-  background: #f5f3ff;
-  color: #8b5cf6;
+  background: color-mix(in srgb, var(--primary) 10%, #fff);
+  color: var(--primary);
   box-shadow: none;
 }
 
@@ -4221,8 +4221,8 @@
 }
 
 .aig-minimap-rail-num.is-active {
-  background: linear-gradient(135deg, #ede9fe, #e0e7ff);
-  color: #5b21b6;
+  background: color-mix(in srgb, var(--primary) 14%, #fff);
+  color: var(--primary);
 }
 
 .aig-minimap-panel-count {
@@ -4487,7 +4487,7 @@
   height: 3px;
   border-radius: 99px;
   background: var(--primary, #6366f1);
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.18);
+  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.18);
   z-index: 3;
   pointer-events: none;
 }
@@ -5184,7 +5184,7 @@
 }
 
 .ppt-rotate-angle-badge.is-snapped {
-  background: #2563eb;
+  background: var(--primary);
 }
 
 /* Keep the active drag cursor stable while pointer moves over other elements */
@@ -5322,7 +5322,7 @@ html.ppt-drag-cursor-lock * {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
-  color: #2563eb;
+  color: var(--primary);
 }
 
 .aig-preset-chip-row {
