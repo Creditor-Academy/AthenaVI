@@ -144,29 +144,34 @@ export const ThemeProvider = ({ children }) => {
   // The user wants to "Apply" to permanently save.
 
   useEffect(() => {
-    // Apply changes to the DOM instantly
-    document.documentElement.setAttribute('data-theme', theme);
-    document.documentElement.setAttribute('data-mode', mode);
-    document.documentElement.className = `theme-${theme} mode-${mode}`;
+    const root = document.documentElement;
+    root.setAttribute('data-theme', theme);
+    root.setAttribute('data-mode', mode);
+
+    const themeClass = `theme-${theme}`;
+    const modeClass = `mode-${mode}`;
+    Array.from(root.classList).forEach((cls) => {
+      if ((cls.startsWith('theme-') && cls !== themeClass) || (cls.startsWith('mode-') && cls !== modeClass)) {
+        root.classList.remove(cls);
+      }
+    });
+    root.classList.add(themeClass, modeClass);
 
     if (theme === 'custom') {
-      document.documentElement.style.setProperty('--primary', customPrimary);
-      document.documentElement.style.setProperty('--primary-rgb', hexToRgbString(customPrimary));
-      document.documentElement.style.setProperty('--primary-hover', shiftHex(customPrimary, -18));
-      document.documentElement.style.setProperty('--primary-light', shiftHex(customPrimary, 36));
-      document.documentElement.style.setProperty('--primary-dark', shiftHex(customPrimary, -42));
-      document.documentElement.style.setProperty('--primary-contrast', getContrastColor(customPrimary));
+      root.style.setProperty('--primary', customPrimary);
+      root.style.setProperty('--primary-rgb', hexToRgbString(customPrimary));
+      root.style.setProperty('--primary-hover', shiftHex(customPrimary, -18));
+      root.style.setProperty('--primary-light', shiftHex(customPrimary, 36));
+      root.style.setProperty('--primary-dark', shiftHex(customPrimary, -42));
+      root.style.setProperty('--primary-contrast', getContrastColor(customPrimary));
     } else {
-      document.documentElement.style.removeProperty('--primary');
-      document.documentElement.style.removeProperty('--primary-rgb');
-      document.documentElement.style.removeProperty('--primary-hover');
-      document.documentElement.style.removeProperty('--primary-light');
-      document.documentElement.style.removeProperty('--primary-dark');
-      document.documentElement.style.removeProperty('--primary-contrast');
+      root.style.removeProperty('--primary');
+      root.style.removeProperty('--primary-rgb');
+      root.style.removeProperty('--primary-hover');
+      root.style.removeProperty('--primary-light');
+      root.style.removeProperty('--primary-dark');
+      root.style.removeProperty('--primary-contrast');
     }
-    
-    // We don't save to localStorage here if we want an explicit "Apply" button
-    // But the user said "Theme should be visible once we click"
   }, [theme, mode, customPrimary]);
 
   const saveSettings = () => {

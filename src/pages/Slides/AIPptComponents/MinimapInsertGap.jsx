@@ -5,8 +5,8 @@ import { MdOutlineAnimation } from 'react-icons/md'
 import SlideTransitionPicker from './insert/SlideTransitionPicker'
 
 function placePopover(anchor) {
-  const popW = 280
-  const popH = 400
+  const popW = 300
+  const popH = 460
   const rect = anchor.getBoundingClientRect()
   let left = rect.right + 10
   let top = rect.top + rect.height / 2

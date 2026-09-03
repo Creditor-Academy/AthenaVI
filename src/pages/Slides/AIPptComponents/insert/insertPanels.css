@@ -1692,21 +1692,21 @@
 }
 
 .ppt-transition-panel {
-  width: 320px;
+  width: 308px;
 }
 
 .ppt-transition-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px 10px;
-  padding-top: 4px;
+  gap: 14px 10px;
+  padding-top: 2px;
 }
 
 .ppt-transition-card {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
+  align-items: stretch;
+  gap: 7px;
   border: none;
   background: transparent;
   padding: 0;
@@ -1720,112 +1720,317 @@
 }
 
 .ppt-transition-thumb {
+  position: relative;
   width: 100%;
-  aspect-ratio: 4 / 3;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 14px;
-  background: #fff;
-  display: grid;
-  place-items: center;
-  color: #64748b;
-  transition: border-color 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
-}
-
-.ppt-transition-thumb-svg {
-  width: 78%;
-  height: auto;
-  display: block;
+  aspect-ratio: 16 / 10;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #e8eef5;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
 }
 
 .ppt-transition-grid--compact {
   grid-template-columns: 1fr 1fr;
-  gap: 10px 8px;
+  gap: 12px 8px;
 }
 
 .ppt-transition-grid--compact .ppt-transition-thumb {
-  border-radius: 12px;
+  border-radius: 10px;
 }
 
-.ppt-transition-card:hover:not(:disabled) .ppt-transition-thumb--fade .ppt-transition-thumb-svg,
-.ppt-transition-card.is-active .ppt-transition-thumb--fade .ppt-transition-thumb-svg {
-  animation: pptTransitionFadePreview 1.6s ease-in-out infinite;
+.ppt-tx-stage {
+  position: absolute;
+  inset: 8px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #dbe4ee;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
 }
 
-.ppt-transition-card:hover:not(:disabled) .ppt-transition-thumb--slide-left .ppt-transition-thumb-svg,
-.ppt-transition-card.is-active .ppt-transition-thumb--slide-left .ppt-transition-thumb-svg {
-  animation: pptTransitionSlideLeftPreview 1.4s ease-in-out infinite;
+.ppt-tx-stage--none {
+  inset: 10px 12px;
 }
 
-.ppt-transition-card:hover:not(:disabled) .ppt-transition-thumb--slide-right .ppt-transition-thumb-svg,
-.ppt-transition-card.is-active .ppt-transition-thumb--slide-right .ppt-transition-thumb-svg {
-  animation: pptTransitionSlideRightPreview 1.4s ease-in-out infinite;
+.ppt-tx-slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 8px 7px;
+  box-sizing: border-box;
+  border-radius: 6px;
 }
 
-.ppt-transition-card:hover:not(:disabled) .ppt-transition-thumb--slide-up .ppt-transition-thumb-svg,
-.ppt-transition-card.is-active .ppt-transition-thumb--slide-up .ppt-transition-thumb-svg {
-  animation: pptTransitionSlideUpPreview 1.4s ease-in-out infinite;
+.ppt-tx-slide--a {
+  z-index: 1;
+  background: linear-gradient(180deg, #ffffff 0%, #f4f7fb 100%);
 }
 
-.ppt-transition-card:hover:not(:disabled) .ppt-transition-thumb--slide-down .ppt-transition-thumb-svg,
-.ppt-transition-card.is-active .ppt-transition-thumb--slide-down .ppt-transition-thumb-svg {
-  animation: pptTransitionSlideDownPreview 1.4s ease-in-out infinite;
+.ppt-tx-slide--b {
+  z-index: 2;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 16%, #fff) 0%,
+    color-mix(in srgb, var(--primary) 8%, #fff) 100%
+  );
 }
 
-.ppt-transition-card:hover:not(:disabled) .ppt-transition-thumb--continuity .ppt-transition-thumb-svg,
-.ppt-transition-card.is-active .ppt-transition-thumb--continuity .ppt-transition-thumb-svg {
-  animation: pptTransitionContinuityPreview 1.6s ease-in-out infinite;
+.ppt-tx-chrome {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 2px;
 }
 
-@keyframes pptTransitionFadePreview {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.45; }
+.ppt-tx-chrome i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #cbd5e1;
 }
 
-@keyframes pptTransitionSlideLeftPreview {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(-8%); }
+.ppt-tx-slide--b .ppt-tx-chrome i {
+  background: color-mix(in srgb, var(--primary) 45%, #fff);
 }
 
-@keyframes pptTransitionSlideRightPreview {
-  0%, 100% { transform: translateX(0); }
-  50% { transform: translateX(8%); }
+.ppt-tx-line {
+  display: block;
+  height: 3px;
+  width: 72%;
+  border-radius: 99px;
+  background: #e2e8f0;
 }
 
-@keyframes pptTransitionSlideUpPreview {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8%); }
+.ppt-tx-line--lg {
+  width: 54%;
+  height: 5px;
+  background: #cbd5e1;
 }
 
-@keyframes pptTransitionSlideDownPreview {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(8%); }
+.ppt-tx-line--sm {
+  width: 40%;
 }
 
-@keyframes pptTransitionContinuityPreview {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(0.96); }
+.ppt-tx-slide--b .ppt-tx-line {
+  background: color-mix(in srgb, var(--primary) 28%, #fff);
+}
+
+.ppt-tx-slide--b .ppt-tx-line--lg {
+  background: color-mix(in srgb, var(--primary) 55%, #fff);
+}
+
+.ppt-tx-block {
+  margin-top: auto;
+  height: 14px;
+  width: 38%;
+  border-radius: 3px;
+  background: #e2e8f0;
+}
+
+.ppt-tx-slide--b .ppt-tx-block {
+  background: color-mix(in srgb, var(--primary) 42%, #fff);
+  width: 48%;
+}
+
+.ppt-tx-none-mark {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background:
+    linear-gradient(
+      115deg,
+      transparent 46%,
+      #94a3b8 46%,
+      #94a3b8 52%,
+      transparent 52%
+    );
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.ppt-transition-thumb--fade .ppt-tx-slide--b {
+  opacity: 0;
+}
+
+.ppt-transition-thumb--slide-left .ppt-tx-slide--b,
+.ppt-transition-thumb--slide-right .ppt-tx-slide--b,
+.ppt-transition-thumb--slide-up .ppt-tx-slide--b,
+.ppt-transition-thumb--slide-down .ppt-tx-slide--b {
+  transform: translateX(100%);
+}
+
+.ppt-transition-thumb--slide-right .ppt-tx-slide--b {
+  transform: translateX(-100%);
+}
+
+.ppt-transition-thumb--slide-up .ppt-tx-slide--b {
+  transform: translateY(100%);
+}
+
+.ppt-transition-thumb--slide-down .ppt-tx-slide--b {
+  transform: translateY(-100%);
+}
+
+.ppt-transition-thumb--continuity .ppt-tx-slide--b {
+  opacity: 0;
+  transform: scale(1.12);
+}
+
+.ppt-transition-card:hover:not(:disabled) .ppt-transition-thumb--fade .ppt-tx-slide--b,
+.ppt-transition-card.is-active .ppt-transition-thumb--fade .ppt-tx-slide--b {
+  animation: pptTxFadeIn 1.8s ease-in-out infinite;
+}
+
+.ppt-transition-card:hover:not(:disabled) .ppt-transition-thumb--slide-left .ppt-tx-slide--a,
+.ppt-transition-card.is-active .ppt-transition-thumb--slide-left .ppt-tx-slide--a {
+  animation: pptTxExitLeft 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.ppt-transition-card:hover:not(:disabled) .ppt-transition-thumb--slide-left .ppt-tx-slide--b,
+.ppt-transition-card.is-active .ppt-transition-thumb--slide-left .ppt-tx-slide--b {
+  animation: pptTxEnterRight 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.ppt-transition-card:hover:not(:disabled) .ppt-transition-thumb--slide-right .ppt-tx-slide--a,
+.ppt-transition-card.is-active .ppt-transition-thumb--slide-right .ppt-tx-slide--a {
+  animation: pptTxExitRight 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.ppt-transition-card:hover:not(:disabled) .ppt-transition-thumb--slide-right .ppt-tx-slide--b,
+.ppt-transition-card.is-active .ppt-transition-thumb--slide-right .ppt-tx-slide--b {
+  animation: pptTxEnterLeft 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.ppt-transition-card:hover:not(:disabled) .ppt-transition-thumb--slide-up .ppt-tx-slide--a,
+.ppt-transition-card.is-active .ppt-transition-thumb--slide-up .ppt-tx-slide--a {
+  animation: pptTxExitUp 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.ppt-transition-card:hover:not(:disabled) .ppt-transition-thumb--slide-up .ppt-tx-slide--b,
+.ppt-transition-card.is-active .ppt-transition-thumb--slide-up .ppt-tx-slide--b {
+  animation: pptTxEnterDown 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.ppt-transition-card:hover:not(:disabled) .ppt-transition-thumb--slide-down .ppt-tx-slide--a,
+.ppt-transition-card.is-active .ppt-transition-thumb--slide-down .ppt-tx-slide--a {
+  animation: pptTxExitDown 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.ppt-transition-card:hover:not(:disabled) .ppt-transition-thumb--slide-down .ppt-tx-slide--b,
+.ppt-transition-card.is-active .ppt-transition-thumb--slide-down .ppt-tx-slide--b {
+  animation: pptTxEnterUp 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.ppt-transition-card:hover:not(:disabled) .ppt-transition-thumb--continuity .ppt-tx-slide--a,
+.ppt-transition-card.is-active .ppt-transition-thumb--continuity .ppt-tx-slide--a {
+  animation: pptTxContinuityA 1.9s ease-in-out infinite;
+}
+
+.ppt-transition-card:hover:not(:disabled) .ppt-transition-thumb--continuity .ppt-tx-slide--b,
+.ppt-transition-card.is-active .ppt-transition-thumb--continuity .ppt-tx-slide--b {
+  animation: pptTxContinuityB 1.9s ease-in-out infinite;
+}
+
+@keyframes pptTxFadeIn {
+  0%, 12% { opacity: 0; }
+  42%, 58% { opacity: 1; }
+  88%, 100% { opacity: 0; }
+}
+
+@keyframes pptTxExitLeft {
+  0%, 12% { transform: translateX(0); }
+  42%, 58% { transform: translateX(-100%); }
+  88%, 100% { transform: translateX(0); }
+}
+
+@keyframes pptTxEnterRight {
+  0%, 12% { transform: translateX(100%); }
+  42%, 58% { transform: translateX(0); }
+  88%, 100% { transform: translateX(100%); }
+}
+
+@keyframes pptTxExitRight {
+  0%, 12% { transform: translateX(0); }
+  42%, 58% { transform: translateX(100%); }
+  88%, 100% { transform: translateX(0); }
+}
+
+@keyframes pptTxEnterLeft {
+  0%, 12% { transform: translateX(-100%); }
+  42%, 58% { transform: translateX(0); }
+  88%, 100% { transform: translateX(-100%); }
+}
+
+@keyframes pptTxExitUp {
+  0%, 12% { transform: translateY(0); }
+  42%, 58% { transform: translateY(-100%); }
+  88%, 100% { transform: translateY(0); }
+}
+
+@keyframes pptTxEnterDown {
+  0%, 12% { transform: translateY(100%); }
+  42%, 58% { transform: translateY(0); }
+  88%, 100% { transform: translateY(100%); }
+}
+
+@keyframes pptTxExitDown {
+  0%, 12% { transform: translateY(0); }
+  42%, 58% { transform: translateY(100%); }
+  88%, 100% { transform: translateY(0); }
+}
+
+@keyframes pptTxEnterUp {
+  0%, 12% { transform: translateY(-100%); }
+  42%, 58% { transform: translateY(0); }
+  88%, 100% { transform: translateY(-100%); }
+}
+
+@keyframes pptTxContinuityA {
+  0%, 14% { transform: scale(1); opacity: 1; }
+  46%, 58% { transform: scale(0.86); opacity: 0; }
+  90%, 100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pptTxContinuityB {
+  0%, 14% { transform: scale(1.12); opacity: 0; }
+  46%, 58% { transform: scale(1); opacity: 1; }
+  90%, 100% { transform: scale(1.12); opacity: 0; }
 }
 
 .ppt-transition-label {
   font-size: 12px;
   font-weight: 600;
+  letter-spacing: -0.01em;
   color: #475569;
 }
 
 .ppt-transition-card:hover:not(:disabled) .ppt-transition-thumb {
-  border-color: color-mix(in srgb, var(--primary) 40%, #fff);
-  background: #faf5ff;
+  border-color: color-mix(in srgb, var(--primary) 38%, #e2e8f0);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
 }
 
 .ppt-transition-card.is-active .ppt-transition-thumb {
   border-color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 10%, #fff);
-  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.15);
-  color: var(--primary-hover);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--primary) 22%, transparent),
+    0 8px 18px rgba(15, 23, 42, 0.08);
 }
 
 .ppt-transition-card.is-active .ppt-transition-label {
-  color: var(--primary-hover);
+  color: var(--primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ppt-transition-card .ppt-tx-slide--a,
+  .ppt-transition-card .ppt-tx-slide--b {
+    animation: none !important;
+  }
 }
 
 .ppt-slide-panel--sm {

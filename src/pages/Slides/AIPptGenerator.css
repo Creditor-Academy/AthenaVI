@@ -3721,7 +3721,6 @@
   transform: translateX(0) scale(var(--ppt-canvas-zoom, 1));
   transform-origin: top center;
   transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform;
 }
 
 .aig-editor-main-scroll.is-minimap-open {
@@ -3744,7 +3743,7 @@
 }
 
 .aig-scroll-slide-container.is-selected {
-  background: rgba(var(--primary-rgb), 0.05);
+  background: color-mix(in srgb, var(--primary) 6%, transparent);
 }
 
 .aig-scroll-slide-wrapper {
@@ -4437,22 +4436,24 @@
 .aig-minimap-transition-pop {
   position: fixed;
   z-index: 420;
-  width: 280px;
-  max-height: min(420px, calc(100vh - 24px));
+  width: 300px;
+  max-height: min(480px, calc(100vh - 24px));
   overflow-y: auto;
   transform: translateY(-50%);
   background: #fff;
   border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.18);
-  padding: 12px 12px 14px;
+  border-radius: 18px;
+  box-shadow: 0 20px 56px rgba(15, 23, 42, 0.16);
+  padding: 14px 14px 16px;
 }
 
 .aig-minimap-transition-pop-title {
-  margin: 0 0 10px;
-  font-size: 13px;
+  margin: 0 0 12px;
+  font-size: 11px;
   font-weight: 700;
-  color: #0f172a;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
 }
 
 .aig-minimap-transition-pop .ppt-transition-label {
@@ -5047,8 +5048,6 @@
   overflow: hidden !important;
   clip-path: inset(0 round 12px);
   -webkit-clip-path: inset(0 round 12px);
-  isolation: isolate;
-  contain: paint;
   z-index: 1;
 }
 
