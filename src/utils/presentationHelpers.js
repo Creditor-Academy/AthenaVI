@@ -677,6 +677,10 @@ export function buildImageClipPath(imageMask) {
     return 'ellipse(92% 100% at 100% 100%)'
   }
 
+  if (type === 'hexagon') {
+    return 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)'
+  }
+
   return null
 }
 

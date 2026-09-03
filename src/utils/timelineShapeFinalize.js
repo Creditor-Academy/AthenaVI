@@ -96,6 +96,9 @@ import { isDeviceMultiClusterLayout, layoutDeviceMultiCluster } from './deviceMu
 import { isDeviceLaptopSplitLayout, layoutDeviceLaptopSplit } from './deviceLaptopSplitLayout'
 import { isDeviceTabletSplitLayout, layoutDeviceTabletSplit } from './deviceTabletSplitLayout'
 import { isDeviceTabletCenteredLayout, layoutDeviceTabletCentered } from './deviceTabletCenteredLayout'
+import { isTeamThreeHorizontalLayout, layoutTeamThreeHorizontal } from './teamThreeHorizontalLayout'
+import { isTeamThreeVerticalLayout, layoutTeamThreeVertical } from './teamThreeVerticalLayout'
+import { isTeamFourLayout, layoutTeamFour } from './teamFourLayout'
 import {
   timelineNodeInlineSvg,
   timelineSpineSegmentInlineSvg,
@@ -5280,6 +5283,15 @@ export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = 
   }
   if (isDeviceTabletCenteredLayout(layoutId)) {
     return layoutDeviceTabletCentered(elements, schema, palette, canvas)
+  }
+  if (isTeamThreeHorizontalLayout(layoutId)) {
+    return layoutTeamThreeHorizontal(elements, schema, palette, canvas)
+  }
+  if (isTeamThreeVerticalLayout(layoutId)) {
+    return layoutTeamThreeVertical(elements, schema, palette, canvas)
+  }
+  if (isTeamFourLayout(layoutId)) {
+    return layoutTeamFour(elements, schema, palette, canvas)
   }
   if (isAgendaMinimalLayout(layoutId)) {
     return layoutAgendaMinimal(elements, schema, palette, canvas)

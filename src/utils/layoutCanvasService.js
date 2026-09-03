@@ -275,7 +275,7 @@ export function needsLayoutCanvasRepair(slide, elements = [], schema = null, opt
   if (slots.length && !list.length) return true
   if (!list.length) return false
 
-  if (hasOverlappingTextPlacements(list)) return true
+  if (hasOverlappingTextPlacements(list) && !list.some((el) => /^TEAM_FOUR_(CARD|PHOTO_BG)_/i.test(String(el.slotId || '')))) return true
   if (needsLegacyBrokenLayout(list, slide?.title)) return true
   if (needsContentHydration(slide, list)) return true
   if (schemaCanvasSlotMismatch(list, schema)) return true
