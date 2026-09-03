@@ -593,71 +593,91 @@ Object.assign(CATALOG, {
     'eight_short_texts_image_v1',
     'right'
   ),
-  eight_short_texts_image_center_v1: simpleSlidesFromSource(
-    'eight_short_texts_image_center_v1',
-    'eight_short_texts_image_v1',
-    'center'
-  ),
   intro_three_para_icons_horizontal_v1: simpleSlidesFromSource(
     'intro_three_para_icons_horizontal_v1',
     'intro_three_para_icons_v1',
     'horizontal'
   ),
-  intro_three_para_icons_radial_v1: simpleSlidesFromSource(
-    'intro_three_para_icons_radial_v1',
-    'intro_three_para_icons_v1',
-    'radial'
+  bullet_list_numbered_vertical_v1: simpleSlidesFromSource(
+    'bullet_list_numbered_vertical_v1',
+    'bullet_list_numbered_v1',
+    'vertical'
   ),
-  bullet_list_numbered_vertical_v1: simpleSlidesFromSource('bullet_list_numbered_vertical_v1', 'bullet_list_numbered_v1', 'vertical'),
-  bullet_list_numbered_path_v1: simpleSlidesFromSource('bullet_list_numbered_path_v1', 'bullet_list_numbered_v1', 'path'),
   bullet_list_split_v1: simpleSlidesFromSource('bullet_list_split_v1', 'bullet_list_two_column_v1', 'split'),
-  bullet_list_two_column_cards_v1: simpleSlidesFromSource('bullet_list_two_column_cards_v1', 'bullet_list_two_column_v1', 'cards'),
-  four_images_text_grid_v1: simpleSlidesFromSource('four_images_text_grid_v1', 'four_images_text_v1', 'grid'),
   four_images_text_mosaic_v1: simpleSlidesFromSource('four_images_text_mosaic_v1', 'four_images_text_v1', 'mosaic'),
   four_para_image_grid_v1: simpleSlidesFromSource('four_para_image_grid_v1', 'four_para_image_v1', 'grid'),
-  four_para_image_quadrant_v1: simpleSlidesFromSource('four_para_image_quadrant_v1', 'four_para_image_v1', 'quadrant'),
-  full_bg_image_overlay_bottom_v1: simpleSlidesFromSource('full_bg_image_overlay_bottom_v1', 'full_bg_image_overlay_v1', 'bottom'),
-  full_bg_image_overlay_side_v1: simpleSlidesFromSource('full_bg_image_overlay_side_v1', 'full_bg_image_overlay_v1', 'side'),
-  headline_centered_statement_v1: simpleSlidesFromSource('headline_centered_statement_v1', 'headline_centered_v1', 'statement'),
-  headline_centered_frame_v1: simpleSlidesFromSource('headline_centered_frame_v1', 'headline_centered_v1', 'frame'),
+  full_bg_image_overlay_bottom_v1: simpleSlidesFromSource(
+    'full_bg_image_overlay_bottom_v1',
+    'full_bg_image_overlay_v1',
+    'bottom'
+  ),
+  full_bg_image_overlay_side_v1: simpleSlidesFromSource(
+    'full_bg_image_overlay_side_v1',
+    'full_bg_image_overlay_v1',
+    'side'
+  ),
   para_landscape_image_top_v1: simpleSlidesFromSource('para_landscape_image_top_v1', 'para_landscape_image_v1', 'top'),
-  para_landscape_image_bottom_v1: simpleSlidesFromSource('para_landscape_image_bottom_v1', 'para_landscape_image_v1', 'bottom'),
-  para_three_images_horizontal_v1: simpleSlidesFromSource('para_three_images_horizontal_v1', 'para_three_images_v1', 'horizontal'),
-  para_three_images_staggered_v1: simpleSlidesFromSource('para_three_images_staggered_v1', 'para_three_images_v1', 'staggered'),
-  para_title_left_image_framed_v1: simpleSlidesFromSource('para_title_left_image_framed_v1', 'para_title_left_image_boxed_v1', 'framed'),
-  para_title_left_image_overlay_v1: simpleSlidesFromSource('para_title_left_image_overlay_v1', 'para_title_left_image_boxed_v1', 'overlay'),
-  para_title_right_image_framed_v1: simpleSlidesFromSource('para_title_right_image_framed_v1', 'para_title_right_image_boxed_v1', 'framed'),
-  para_title_right_image_overlay_v1: simpleSlidesFromSource('para_title_right_image_overlay_v1', 'para_title_right_image_boxed_v1', 'overlay'),
+  para_landscape_image_bottom_v1: simpleSlidesFromSource(
+    'para_landscape_image_bottom_v1',
+    'para_landscape_image_v1',
+    'bottom'
+  ),
+  para_three_images_horizontal_v1: simpleSlidesFromSource(
+    'para_three_images_horizontal_v1',
+    'para_three_images_v1',
+    'horizontal'
+  ),
+  para_three_images_staggered_v1: simpleSlidesFromSource(
+    'para_three_images_staggered_v1',
+    'para_three_images_v1',
+    'staggered'
+  ),
+  para_title_left_image_overlay_v1: simpleSlidesFromSource(
+    'para_title_left_image_overlay_v1',
+    'para_title_left_image_boxed_v1',
+    'overlay'
+  ),
+  para_title_right_image_overlay_v1: simpleSlidesFromSource(
+    'para_title_right_image_overlay_v1',
+    'para_title_right_image_boxed_v1',
+    'overlay'
+  ),
   section_divider_band_full_v1: simpleSlidesFromSource('section_divider_band_full_v1', 'section_divider_band_v1', 'full'),
-  section_divider_band_center_v1: simpleSlidesFromSource('section_divider_band_center_v1', 'section_divider_band_v1', 'center'),
-  section_divider_centered_large_v1: simpleSlidesFromSource('section_divider_centered_large_v1', 'section_divider_centered_v1', 'large'),
-  section_divider_centered_frame_v1: simpleSlidesFromSource('section_divider_centered_frame_v1', 'section_divider_centered_v1', 'frame'),
-  section_divider_split_diagonal_v1: simpleSlidesFromSource('section_divider_split_diagonal_v1', 'section_divider_split_v1', 'diagonal'),
-  section_divider_split_image_v1: simpleSlidesFromSource('section_divider_split_image_v1', 'section_divider_split_v1', 'image'),
-  section_left_image_framed_v1: simpleSlidesFromSource('section_left_image_framed_v1', 'section_left_image_v1', 'framed'),
-  section_left_image_fullheight_v1: simpleSlidesFromSource('section_left_image_fullheight_v1', 'section_left_image_v1', 'fullheight'),
-  section_right_image_framed_v1: simpleSlidesFromSource('section_right_image_framed_v1', 'section_right_image_v1', 'framed'),
-  section_right_image_fullheight_v1: simpleSlidesFromSource('section_right_image_fullheight_v1', 'section_right_image_v1', 'fullheight'),
+  section_divider_split_diagonal_v1: simpleSlidesFromSource(
+    'section_divider_split_diagonal_v1',
+    'section_divider_split_v1',
+    'diagonal'
+  ),
+  section_divider_split_image_v1: simpleSlidesFromSource(
+    'section_divider_split_image_v1',
+    'section_divider_split_v1',
+    'image'
+  ),
+  section_left_image_fullheight_v1: simpleSlidesFromSource(
+    'section_left_image_fullheight_v1',
+    'section_left_image_v1',
+    'fullheight'
+  ),
+  section_right_image_fullheight_v1: simpleSlidesFromSource(
+    'section_right_image_fullheight_v1',
+    'section_right_image_v1',
+    'fullheight'
+  ),
   text_two_column_split_v1: simpleSlidesFromSource('text_two_column_split_v1', 'text_two_column_v1', 'split'),
-  text_two_column_balanced_v1: simpleSlidesFromSource('text_two_column_balanced_v1', 'text_two_column_v1', 'balanced'),
-  title_minimal_centered_v1: simpleSlidesFromSource('title_minimal_centered_v1', 'title_minimal_v1', 'centered'),
-  title_minimal_offset_v1: simpleSlidesFromSource('title_minimal_offset_v1', 'title_minimal_v1', 'offset'),
-  title_fullbleed_image_v1: simpleSlidesFromSource('title_fullbleed_image_v1', 'title_fullbleed_v1', 'image'),
-  title_fullbleed_overlay_v1: simpleSlidesFromSource('title_fullbleed_overlay_v1', 'title_fullbleed_v1', 'overlay'),
-  title_hero_left_shape_v1: simpleSlidesFromSource('title_hero_left_shape_v1', 'title_hero_left_blob_v1', 'shape'),
-  title_hero_left_orbit_v1: simpleSlidesFromSource('title_hero_left_orbit_v1', 'title_hero_left_blob_v1', 'orbit'),
-  title_hero_left_gradient_v1: simpleSlidesFromSource('title_hero_left_gradient_v1', 'title_hero_left_fade_v1', 'gradient'),
-  title_hero_left_glow_v1: simpleSlidesFromSource('title_hero_left_glow_v1', 'title_hero_left_fade_v1', 'glow'),
-  title_hero_right_gradient_v1: simpleSlidesFromSource('title_hero_right_gradient_v1', 'title_hero_right_fade_v1', 'gradient'),
-  title_hero_right_glow_v1: simpleSlidesFromSource('title_hero_right_glow_v1', 'title_hero_right_fade_v1', 'glow'),
-  title_statement_large_v1: simpleSlidesFromSource('title_statement_large_v1', 'title_statement_v1', 'large'),
   title_statement_split_v1: simpleSlidesFromSource('title_statement_split_v1', 'title_statement_v1', 'split'),
+  title_fullbleed_overlay_v1: simpleSlidesFromSource('title_fullbleed_overlay_v1', 'title_fullbleed_v1', 'overlay'),
   title_with_logo_corner_v1: simpleSlidesFromSource('title_with_logo_corner_v1', 'title_with_logo_v1', 'corner'),
   title_with_logo_centered_v1: simpleSlidesFromSource('title_with_logo_centered_v1', 'title_with_logo_v1', 'centered'),
-  two_para_right_image_bottom_v1: simpleSlidesFromSource('two_para_right_image_bottom_v1', 'two_para_right_image_v1', 'bottom'),
-  two_para_right_image_framed_v1: simpleSlidesFromSource('two_para_right_image_framed_v1', 'two_para_right_image_v1', 'framed'),
-  wide_image_statement_overlay_v1: simpleSlidesFromSource('wide_image_statement_overlay_v1', 'wide_image_statement_bottom_v1', 'overlay'),
-  wide_image_statement_center_v1: simpleSlidesFromSource('wide_image_statement_center_v1', 'wide_image_statement_bottom_v1', 'center'),
+  two_para_right_image_bottom_v1: simpleSlidesFromSource(
+    'two_para_right_image_bottom_v1',
+    'two_para_right_image_v1',
+    'bottom'
+  ),
+  wide_image_statement_overlay_v1: simpleSlidesFromSource(
+    'wide_image_statement_overlay_v1',
+    'wide_image_statement_bottom_v1',
+    'overlay'
+  ),
 })
 
 export default CATALOG

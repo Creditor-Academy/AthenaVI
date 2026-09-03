@@ -229,30 +229,18 @@ function gridsFromSource(layoutId, sourceId, gridVariant, extraPreview = {}) {
 }
 
 Object.assign(CATALOG, {
-  grid_four_asymmetric_v1: gridsFromSource('grid_four_asymmetric_v1', 'grid_bento_four_v1', 'asymmetric'),
   grid_four_mosaic_v1: gridsFromSource('grid_four_mosaic_v1', 'grid_bento_four_v1', 'mosaic'),
   grid_three_asymmetric_v1: gridsFromSource('grid_three_asymmetric_v1', 'grid_bento_three_v1', 'asymmetric'),
-  grid_three_staggered_v1: gridsFromSource('grid_three_staggered_v1', 'grid_bento_three_v1', 'staggered'),
-  grid_device_mockups_staggered_v1: gridsFromSource('grid_device_mockups_staggered_v1', 'grid_device_mockups_v1', 'staggered'),
   grid_device_mockups_feature_v1: gridsFromSource('grid_device_mockups_feature_v1', 'grid_device_mockups_v1', 'feature'),
-  grid_images_text_split_v1: gridsFromSource('grid_images_text_split_v1', 'grid_images_text_cards_v1', 'split'),
   grid_images_text_mosaic_v1: gridsFromSource('grid_images_text_mosaic_v1', 'grid_images_text_cards_v1', 'mosaic'),
   grid_insights_chart_split_v1: gridsFromSource('grid_insights_chart_split_v1', 'grid_insights_chart_v1', 'split'),
-  grid_insights_chart_focus_v1: gridsFromSource('grid_insights_chart_focus_v1', 'grid_insights_chart_v1', 'focus'),
   grid_metrics_asymmetric_v1: gridsFromSource('grid_metrics_asymmetric_v1', 'grid_metrics_masonry_v1', 'asymmetric'),
-  grid_metrics_staggered_v1: gridsFromSource('grid_metrics_staggered_v1', 'grid_metrics_masonry_v1', 'staggered'),
   grid_metrics_devices_v1: gridsFromSource('grid_metrics_devices_v1', 'grid_metrics_mobile_v1', 'devices'),
-  grid_metrics_phone_stack_v1: gridsFromSource('grid_metrics_phone_stack_v1', 'grid_metrics_mobile_v1', 'phone_stack'),
   grid_six_images_mosaic_v1: gridsFromSource('grid_six_images_mosaic_v1', 'grid_six_images_v1', 'mosaic'),
-  grid_six_images_staggered_v1: gridsFromSource('grid_six_images_staggered_v1', 'grid_six_images_v1', 'staggered'),
-  grid_text_image_split_v1: gridsFromSource('grid_text_image_split_v1', 'grid_text_image_cards_v1', 'split'),
   grid_text_image_mosaic_v1: gridsFromSource('grid_text_image_mosaic_v1', 'grid_text_image_cards_v1', 'mosaic'),
-  grid_three_images_text_horizontal_v1: gridsFromSource('grid_three_images_text_horizontal_v1', 'grid_three_images_text_v1', 'horizontal'),
   grid_three_images_text_asymmetric_v1: gridsFromSource('grid_three_images_text_asymmetric_v1', 'grid_three_images_text_v1', 'asymmetric'),
   logo_partner_grid_v1: gridsFromSource('logo_partner_grid_v1', 'logo_partner_strip_v1', 'grid'),
-  logo_partner_wall_v1: gridsFromSource('logo_partner_wall_v1', 'logo_partner_strip_v1', 'wall'),
   logo_wall_masonry_v1: gridsFromSource('logo_wall_masonry_v1', 'logo_wall_v1', 'masonry'),
-  logo_wall_centered_v1: gridsFromSource('logo_wall_centered_v1', 'logo_wall_v1', 'centered'),
 })
 
 export default CATALOG
