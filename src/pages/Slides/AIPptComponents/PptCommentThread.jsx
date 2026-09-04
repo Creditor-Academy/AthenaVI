@@ -119,6 +119,8 @@ export function PptCommentThread({
   onSubmitReply,
   submitting = false,
   disabled = false,
+  highlighted = false,
+  replyComposer = null,
 }) {
   const replies = commentReplies(comment)
   const resolved = isCommentResolved(comment)
@@ -136,7 +138,7 @@ export function PptCommentThread({
   const showReplies = replies.length === 1 || expanded
 
   return (
-    <div className="ppt-cmt-thread">
+    <div className={`ppt-cmt-thread ${highlighted ? 'is-highlighted' : ''}`}>
       <CommentBody
         comment={comment}
         resolved={resolved}
@@ -204,16 +206,18 @@ export function PptCommentThread({
 
       {replyOpen ? (
         <div className="ppt-cmt-reply-box">
-          <PptCommentComposer
-            compact
-            autoFocus
-            placeholder="Reply…"
-            value={replyDraft}
-            onChange={onReplyDraft}
-            onSubmit={onSubmitReply}
-            disabled={disabled || resolved}
-            submitting={submitting}
-          />
+          {replyComposer || (
+            <PptCommentComposer
+              compact
+              autoFocus
+              placeholder="Reply…"
+              value={replyDraft}
+              onChange={onReplyDraft}
+              onSubmit={onSubmitReply}
+              disabled={disabled || resolved}
+              submitting={submitting}
+            />
+          )}
         </div>
       ) : null}
     </div>

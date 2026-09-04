@@ -324,7 +324,7 @@ function LibraryThumb({ item, kind }) {
     if (kind === 'image') {
         const src = item.head?.url || item.url || item.thumbnail || item.thumbnailUrl;
         return src ? (
-            <img src={src} alt={title} className="wsc-library-thumb-img" loading="lazy" decoding="async" />
+            <img src={src} alt={title} className="wsc-library-thumb-img" loading="lazy" decoding="async" draggable={false} />
         ) : (
             <DefaultProjectThumbnail title={title} category="image" showLabel={false} />
         );
@@ -343,7 +343,7 @@ function LibraryThumb({ item, kind }) {
     const src = item.thumbnail || item.thumbnailUrl;
     if (src) {
       return (
-        <img src={src} alt={title} className="wsc-library-thumb-img" loading="lazy" decoding="async" />
+        <img src={src} alt={title} className="wsc-library-thumb-img" loading="lazy" decoding="async" draggable={false} />
       );
     }
     return <ProjectSceneThumbnail video={item} />;

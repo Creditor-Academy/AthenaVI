@@ -134,6 +134,10 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/projects/${projectId}/comments/${commentId}`,
       MENTIONABLE_USERS: (workspaceId, projectId) =>
         `/api/workspaces/${workspaceId}/projects/${projectId}/comments/mentionable-users`,
+      RESOLVE: (workspaceId, projectId, commentId) =>
+        `/api/workspaces/${workspaceId}/projects/${projectId}/comments/${commentId}/resolve`,
+      UNRESOLVE: (workspaceId, projectId, commentId) =>
+        `/api/workspaces/${workspaceId}/projects/${projectId}/comments/${commentId}/unresolve`,
     },
 
     // Shared Google Fonts catalog (user-scoped)

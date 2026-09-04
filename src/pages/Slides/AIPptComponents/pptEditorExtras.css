@@ -836,6 +836,12 @@
   padding-bottom: 4px;
 }
 
+.ppt-cmt-thread.is-highlighted {
+  border-radius: 12px;
+  padding: 8px;
+  background: color-mix(in srgb, var(--primary) 8%, #fff);
+}
+
 .ppt-cmt-row {
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr);
