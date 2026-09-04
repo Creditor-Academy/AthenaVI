@@ -1,3 +1,16 @@
+export function normalizeProgressStatus(val) {
+  if (val === null) return null
+  if (val === 'TODO' || val === 'IN_PROGRESS' || val === 'COMPLETED') return val
+  if (typeof val === 'string') {
+    const lower = val.toLowerCase().replace(/-/g, '_')
+    if (lower === 'todo') return 'TODO'
+    if (lower === 'in_progress' || lower === 'inprogress') return 'IN_PROGRESS'
+    if (lower === 'completed' || lower === 'done') return 'COMPLETED'
+    if (lower === 'none' || lower === 'null' || lower === '') return null
+  }
+  return null
+}
+
 /** Caps from PRESENTATION_FRONTEND_INTEGRATION */
 import { SHAPE_LIBRARY } from '../constants/shapeLibrary'
 
@@ -1014,6 +1027,26 @@ export function normalizeSlideForEditor(slide, index = 0, aspectRatio = '16:9') 
     },
     manuallyEdited: Boolean(slide?.manuallyEdited),
     status: slide?.status || 'READY',
+    progressStatus: (() => {
+      if (Object.prototype.hasOwnProperty.call(slide || {}, 'progressStatus')) {
+        return slide.progressStatus ?? null
+      }
+      const legacy =
+        slide?.contributorStatus ||
+        elementsDoc?.contributorStatus ||
+        elementsDoc?.progressStatus
+      if (legacy == null || legacy === '' || legacy === 'none' || legacy === 'NONE') return null
+      const upper = String(legacy).toUpperCase().replace(/-/g, '_')
+      if (upper === 'TODO') return 'TODO'
+      if (upper === 'IN_PROGRESS' || upper === 'INPROGRESS' || upper === 'IN-PROGRESS') {
+        return 'IN_PROGRESS'
+      }
+      if (upper === 'COMPLETED' || upper === 'DONE') return 'COMPLETED'
+      if (String(legacy).toLowerCase() === 'todo') return 'TODO'
+      if (String(legacy).toLowerCase() === 'in-progress') return 'IN_PROGRESS'
+      if (String(legacy).toLowerCase() === 'done') return 'COMPLETED'
+      return null
+    })(),
     layoutId: slide?.layoutId || slide?.layout_id || null,
     imageRef: slide?.imageRef || null,
     transition: slide?.transition || elementsDoc?.transition || 'none',

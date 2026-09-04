@@ -9,6 +9,7 @@ import {
   FiTrash2,
 } from 'react-icons/fi'
 import { BsStars } from 'react-icons/bs'
+import { PPT_PROGRESS_STATUSES, resolveSlideProgressStatus, progressStatusLabel, progressStatusDotClass } from '../../../constants/pptSlideEditorOptions'
 import MinimapSlidePreview from './MinimapSlidePreview'
 import { resolveSlideStageBackground, DEFAULT_SLIDE_BG } from '../../../utils/presentationHelpers'
 
@@ -47,6 +48,7 @@ export default function MinimapSlideCard({
   onMoveUp,
   onMoveDown,
   onEditAi,
+  onChangeStatus,
   onDragStart,
   onDragEnd,
   itemRef,
@@ -96,7 +98,11 @@ export default function MinimapSlideCard({
     fn?.()
   }
 
-  const status = slide.contributorStatus || slide.elements?.contributorStatus || 'none'
+  const progressStatus = resolveSlideProgressStatus(slide)
+  const statusKey = progressStatusDotClass(progressStatus)
+  // Editors always see the chip; reviewers see it when the API includes progressStatus.
+  const showProgress =
+    !viewOnly || (slide && Object.prototype.hasOwnProperty.call(slide, 'progressStatus'))
   const fallbackBg = themeVisual?.palette?.bg || themeVisual?.background || DEFAULT_SLIDE_BG
 
   return (
@@ -130,18 +136,13 @@ export default function MinimapSlideCard({
       onDragEnd={() => onDragEnd?.()}
     >
       <span className="aig-minimap-num">{index + 1}</span>
-      <span
-        className={`ppt-status-dot ppt-status-dot--sm ppt-status-dot--${status}`}
-        title={
-          {
-            none: 'No status',
-            todo: 'To do',
-            'in-progress': 'In progress',
-            done: 'Done',
-          }[status]
-        }
-        aria-hidden
-      />
+      {showProgress && (
+        <span
+          className={`ppt-status-dot ppt-status-dot--sm ppt-status-dot--${statusKey}`}
+          title={progressStatusLabel(progressStatus)}
+          aria-hidden
+        />
+      )}
       <div
         className="aig-minimap-thumb"
         style={resolveSlideStageBackground(slide, fallbackBg)}
@@ -233,6 +234,26 @@ export default function MinimapSlideCard({
               <FiChevronDown size={15} />
               Move down
             </button>
+            <div className="aig-minimap-slide-menu-sep" />
+            {!viewOnly && (
+              <>
+                <div className="aig-minimap-slide-menu-sep" />
+                <div className="aig-minimap-menu-header" style={{ padding: '4px 12px', fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase' }}>Status</div>
+                {PPT_PROGRESS_STATUSES.map((opt) => (
+                  <button
+                    key={opt.id ?? 'none'}
+                    type="button"
+                    role="menuitem"
+                    className={`aig-minimap-slide-menu-item ${progressStatus === opt.id ? 'is-active' : ''}`}
+                    disabled={disabled}
+                    onClick={run(() => onChangeStatus?.(slide.id, opt.id))}
+                  >
+                    <span className={`ppt-status-dot ppt-status-dot--sm ppt-status-dot--${opt.id || 'NONE'}`} />
+                    {opt.label}
+                  </button>
+                ))}
+              </>
+            )}
             <div className="aig-minimap-slide-menu-sep" />
             <button
               type="button"
