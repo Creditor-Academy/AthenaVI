@@ -42,6 +42,7 @@ import {
   specToThreeCardsContent,
 } from './agendaThreeCards.js'
 import { agendaNumberedBlocksPreviewSvg } from './agendaNumberedBlocks.js'
+import { agendaNumberedTimelinePreviewSvg } from './agendaNumberedTimeline.js'
 
 export {
   AGENDA_GEOM,
@@ -149,7 +150,10 @@ export function agendaDiagramInlineSvg(family, variant, colors = {}, opts = {}) 
 }
 
 export function agendaPreviewSvg(family, variant, colors = {}, opts = {}) {
-  if (family === 'numbered' && variant !== 'cards' && variant !== 'path' && variant !== 'timeline') {
+  if (family === 'numbered' && (variant === 'path' || variant === 'timeline')) {
+    return agendaNumberedTimelinePreviewSvg()
+  }
+  if (family === 'numbered' && variant !== 'cards') {
     return agendaNumberedBlocksPreviewSvg(colors)
   }
   if (family === 'three_col' && variant === 'cards') {

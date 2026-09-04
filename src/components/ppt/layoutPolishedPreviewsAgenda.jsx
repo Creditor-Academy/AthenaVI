@@ -204,17 +204,51 @@ export function PolishedAgendaNumberedPreview({ previewHints, ...props }) {
   }
 
   if (variant === 'timeline') {
+    const stops = items.slice(0, 4)
+    const pals = ['#7CB342', '#2F6FED', '#E53935', '#FF6E40']
+    const notes = [
+      ['Kickoff notes', 'Desired outcome'],
+      ['Market snapshot', 'Key constraints'],
+      ['Live walkthrough', 'Proof points'],
+      ['Open questions', 'Next steps'],
+    ]
     return (
-      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 4 }}>
-        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small, fontWeight: 800, color: theme.text, textAlign: 'center' }}>{heading}</div>
-        <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: large ? 12 : 4, paddingLeft: large ? 24 : 10 }}>
-          <div aria-hidden style={{ position: 'absolute', left: large ? 10 : 4, top: '8%', bottom: '8%', width: large ? 3 : 1, background: theme.accent, opacity: 0.5, borderRadius: 2 }} />
-          {items.slice(0, 4).map((item, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: large ? 10 : 4 }}>
-              <div style={{ width: large ? 14 : 6, height: large ? 14 : 6, borderRadius: '50%', background: theme.accent, flexShrink: 0, zIndex: 1 }} />
-              <div style={{ fontSize: large ? '0.72rem' : '0.26rem', fontWeight: 600, color: theme.text }}>{item}</div>
-            </div>
-          ))}
+      <div {...fp} style={{ ...fp.style, display: 'flex', flexDirection: 'column', height: '100%', background: '#fff', padding: large ? '6% 4% 3%' : '7% 3% 3%', boxSizing: 'border-box' }}>
+        <div style={{ textAlign: 'center', fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small, fontWeight: 800, color: theme.text, marginBottom: large ? 8 : 4 }}>{heading}</div>
+        <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
+          <div aria-hidden style={{ position: 'absolute', left: '2%', right: '2%', top: '32%', height: large ? 3 : 1.5, background: '#C5CAD3' }} />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'space-between' }}>
+            {stops.map((item, i) => {
+              const pal = pals[i]
+              const low = i % 2 === 0
+              return (
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+                  <div style={{ position: 'absolute', top: '32%', width: 0, height: low ? '42%' : '22%', borderLeft: `${large ? 2 : 1}px solid ${pal}` }} />
+                  <div style={{ marginTop: '12%', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1 }}>
+                    <div style={{ fontSize: large ? '0.48rem' : '0.16rem', fontWeight: 800, color: pal, marginBottom: large ? 6 : 2 }}>{String(i + 1).padStart(2, '0')}</div>
+                    <div style={{
+                      width: large ? 42 : 16,
+                      height: large ? 42 : 16,
+                      borderRadius: 999,
+                      background: pal,
+                      boxShadow: `0 0 0 ${large ? 7 : 3}px color-mix(in srgb, ${pal} 30%, transparent), 0 0 0 ${large ? 13 : 5}px color-mix(in srgb, ${pal} 18%, transparent), 0 0 0 ${large ? 19 : 7}px color-mix(in srgb, ${pal} 10%, transparent)`,
+                    }} />
+                  </div>
+                  <div style={{
+                    marginTop: low ? (large ? 36 : 12) : (large ? 18 : 6),
+                    textAlign: 'center',
+                    padding: '0 4px',
+                    width: '100%',
+                  }}>
+                    <div style={{ fontSize: large ? '0.52rem' : '0.15rem', fontWeight: 800, color: theme.text, lineHeight: 1.2 }}>{item.replace(/^\s*\d+\s*[·.:\-)]\s*/, '')}</div>
+                    {(notes[i] || []).map((note) => (
+                      <div key={note} style={{ fontSize: large ? '0.36rem' : '0.11rem', color: theme.muted, textAlign: 'left', marginTop: large ? 2 : 1, lineHeight: 1.25 }}>• {note}</div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
     )

@@ -102,6 +102,13 @@ Object.assign(CATALOG, {
   agenda_split_panel_v1: agendaFromSource('agenda_split_panel_v1', 'agenda_two_column_v1', 'split_panel'),
 })
 
+CATALOG.agenda_numbered_timeline_v1.slots.push(
+  body('ITEM_1_BODY', 'cols 1-3, rows 7-8', '• Kickoff notes\n• Desired outcome', 3, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+  body('ITEM_2_BODY', 'cols 4-6, rows 7-8', '• Market snapshot\n• Key constraints', 3, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+  body('ITEM_3_BODY', 'cols 7-9, rows 7-8', '• Live walkthrough\n• Proof points', 3, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+  body('ITEM_4_BODY', 'cols 10-12, rows 7-8', '• Open questions\n• Next steps', 3, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+)
+
 CATALOG.agenda_numbered_v1.slots.push(
   body('ITEM_5', 'cols 3-6, rows 8-9', 'Workshop breakout', 3, { typography: typo('body', { fontWeight: 400, fontSize: 14 }) }),
   body('ITEM_6', 'cols 7-10, rows 8-9', 'Closing remarks', 3, { typography: typo('body', { fontWeight: 400, fontSize: 14 }) }),
