@@ -49,6 +49,7 @@ import {
   saveAvatarsActiveSection,
 } from '../../utils/avatarsNavigationStorage.js'
 import { clearWorkspaceNavigation } from '../../utils/workspaceNavigationStorage.js'
+import { persistWorkspaceFolderNavigation } from '../../utils/navigateToWorkspaceFolder.js'
 import {
   dashboardPathForSection,
   resolveDashboardSectionFromPath,
@@ -407,8 +408,15 @@ function Dashboard({ onCreate, initialSection }) {
     }
   }, [section])
 
+  // Keep folder drill-down when moving into create/editor flows so Exit can return there.
   useEffect(() => {
-    if (section !== 'workspace') {
+    const preserveNav =
+      section === 'workspace' ||
+      section === 'editor' ||
+      section === 'ppt-ai' ||
+      section === 'ppt-builder' ||
+      section === 'image-ai'
+    if (!preserveNav) {
       clearWorkspaceNavigation()
     }
   }, [section])
@@ -506,8 +514,35 @@ function Dashboard({ onCreate, initialSection }) {
         presentationId={editorData.presentationId}
         onBack={() => {
           setPresentationCreateContext(null)
+          const session = loadPresentationEditorSession()
+          persistWorkspaceFolderNavigation({
+            workspaceId:
+              editorData.workspaceId ||
+              session?.workspaceId ||
+              editorData.config?.workspaceId,
+            folderId:
+              editorData.folderId ||
+              session?.folderId ||
+              editorData.config?.folderId ||
+              null,
+            workspace:
+              editorData.workspaceName ||
+              editorData.config?.workspace ||
+              editorData.config?.workspaceName ||
+              '',
+            folder:
+              editorData.folderName ||
+              editorData.config?.folder ||
+              editorData.config?.folderName ||
+              '',
+          })
+          try {
+            sessionStorage.setItem('workspaceActiveRootTab', 'workspace')
+          } catch {
+            /* ignore */
+          }
           clearPresentationEditorSession()
-          goToSection('home')
+          goToSection('workspace')
         }}
       />
     )

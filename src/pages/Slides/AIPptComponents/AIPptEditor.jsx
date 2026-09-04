@@ -54,6 +54,7 @@ import presentationService, {
   PresentationConflictError,
 } from '../../../services/presentationService'
 import { extractShareToken, getOrCreateViewerSessionId } from '../../../utils/pptShareSession'
+import { savePresentationEditorSession } from '../../../utils/presentationEditorSession'
 import PptPresenceAvatars from './PptPresenceAvatars'
 import usePptPresence from './usePptPresence'
 import brandKitService from '../../../services/brandKitService'
@@ -1568,6 +1569,30 @@ export default function AIPptEditor({
       setDeckTitle(data?.title || data?.presentation?.title)
     }
     if (slides[0]?.id) setSelectedSlideId((prev) => prev || slides[0].id)
+
+    const resolvedFolderId =
+      data?.folderId ||
+      data?.project?.folderId ||
+      data?.presentation?.folderId ||
+      data?.deck?.folderId ||
+      config?.folderId ||
+      null
+    if (workspaceId && presentationId) {
+      savePresentationEditorSession({
+        outline: [],
+        config: {
+          ...config,
+          title: data?.title || data?.presentation?.title || config?.title,
+          workspaceId,
+          presentationId,
+          folderId: resolvedFolderId,
+        },
+        workspaceId,
+        presentationId,
+        folderId: resolvedFolderId,
+      })
+    }
+
     if (!generating && !viewOnly && slides.length) {
       syncPresentationThumbnailFromSlides({
         workspaceId,
@@ -1578,7 +1603,7 @@ export default function AIPptEditor({
       })
     }
     return data
-  }, [workspaceId, presentationId, config.screenSize, config.aspectRatio, viewOnly])
+  }, [workspaceId, presentationId, config, viewOnly])
 
   useEffect(() => {
     if (viewOnly || isGenerating) return undefined
@@ -2658,7 +2683,7 @@ export default function AIPptEditor({
         elements: seedElements,
       },
       transition: 'none',
-      contributorStatus: 'none',
+      progressStatus: null,
       status: 'READY',
     }
 
@@ -3831,31 +3856,23 @@ export default function AIPptEditor({
     setMinimapMenuSlideId(null)
   }, [])
 
-  const handleChangeSlideStatus = async (statusId) => {
-    const slideId = selectedSlideId || localSlides[0]?.id
+  const handleChangeSlideStatus = async (statusId, targetSlideId) => {
+    const slideId = targetSlideId || selectedSlideId || localSlides[0]?.id
     if (!slideId || isGenerating) return
 
-    const slide = localSlides.find((s) => s.id === slideId)
-    const nextElements = {
-      ...buildCanvasDoc(slide, { aspectRatio }),
-      contributorStatus: statusId,
-      ...(slide?.elements?.transition ? { transition: slide.elements.transition } : {}),
-    }
+    const progressStatus =
+      statusId == null || statusId === 'none' || statusId === 'NONE' ? null : statusId
 
     setLocalSlides((prev) =>
-      prev.map((s) =>
-        s.id === slideId
-          ? { ...s, contributorStatus: statusId, elements: nextElements }
-          : s
-      )
+      prev.map((s) => (s.id === slideId ? { ...s, progressStatus } : s))
     )
 
     if (!workspaceId || !presentationId) return
 
-    queueCanvasSave(slideId, nextElements)
+    // Progress-only PATCH — do not canvas-save (avoids flipping manuallyEdited).
     presentationService
       .patchSlide(workspaceId, presentationId, slideId, {
-        contributorStatus: statusId,
+        progressStatus,
       })
       .catch(() => {})
   }
@@ -4547,6 +4564,7 @@ export default function AIPptEditor({
                           setEditingTextId(null)
                           setSlideAiEditId((prev) => (prev === slide.id ? null : slide.id))
                         }}
+                        onChangeStatus={(id, status) => handleChangeSlideStatus(status, id)}
                         onDragStart={(id) => {
                           minimapDragIdRef.current = id
                           setMinimapDragId(id)

@@ -2,7 +2,6 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   FiMessageCircle,
-  FiCheckCircle,
   FiUser,
   FiX,
   FiTrash2,
@@ -25,7 +24,7 @@ import PptCommentsPanel from '../PptCommentsPanel'
 import PptPublicCommentsPanel from '../PptPublicCommentsPanel'
 import SpeakerNotesPanel from '../SpeakerNotesPanel'
 import SlideTransitionPicker from './SlideTransitionPicker'
-import { PPT_SLIDE_STATUSES } from '../../../../constants/pptSlideEditorOptions'
+import { PPT_SLIDE_STATUSES, resolveSlideProgressStatus, progressStatusDotClass } from '../../../../constants/pptSlideEditorOptions'
 import { findTemplateForSlideLayout, templateRecordId } from '../../../../utils/similarLayouts'
 import './insertPanels.css'
 import '../pptEditorExtras.css'
@@ -339,7 +338,8 @@ function LayersPanel({
 }
 
 function StatusDot({ id }) {
-  return <span className={`ppt-status-dot ppt-status-dot--${id}`} aria-hidden />
+  const key = progressStatusDotClass(id)
+  return <span className={`ppt-status-dot ppt-status-dot--${key}`} aria-hidden />
 }
 
 /**
@@ -347,7 +347,7 @@ function StatusDot({ id }) {
  */
 export default function EditorRightRail({
   zoom = 100,
-  deckStatus = 'READY',
+  deckStatus: _deckStatus = 'READY',
   generationPrompt = '',
   slide = null,
   themeVisual = null,
@@ -403,10 +403,7 @@ export default function EditorRightRail({
     slide?.elements?.transition ||
     'none'
 
-  const currentSlideStatus =
-    slide?.contributorStatus ||
-    slide?.slideStatus ||
-    'none'
+  const currentSlideStatus = resolveSlideProgressStatus(slide)
 
   const panelOpen = Boolean(active)
 
@@ -611,33 +608,39 @@ export default function EditorRightRail({
           )}
 
           {active === 'status' && (
-            <div className="ppt-slide-panel ppt-slide-panel--sm ppt-status-panel" role="region" aria-label="Status">
-              <div className="ppt-status-options">
+            <div className="ppt-slide-panel ppt-status-panel" role="region" aria-label="Slide status">
+              <p className="ppt-status-panel-lead">
+                Mark this slide’s progress so collaborators can see what’s left at a glance.
+              </p>
+
+              <div className="ppt-status-options" role="listbox" aria-label="Choose status">
                 {PPT_SLIDE_STATUSES.map((opt) => {
                   const selected = currentSlideStatus === opt.id
                   return (
                     <button
-                      key={opt.id}
+                      key={opt.id ?? 'none'}
                       type="button"
+                      role="option"
+                      aria-selected={selected}
                       className={`ppt-status-option ${selected ? 'is-active' : ''}`}
                       disabled={disabled}
                       onClick={() => onChangeSlideStatus?.(opt.id)}
                     >
                       <StatusDot id={opt.id} />
-                      <span>{opt.label}</span>
+                      <span className="ppt-status-option-copy">
+                        <span className="ppt-status-option-label">{opt.label}</span>
+                        {opt.hint ? (
+                          <span className="ppt-status-option-hint">{opt.hint}</span>
+                        ) : null}
+                      </span>
+                      {selected ? (
+                        <span className="ppt-status-option-check" aria-hidden>
+                          ✓
+                        </span>
+                      ) : null}
                     </button>
                   )
                 })}
-              </div>
-
-              <div className="ppt-slide-panel-section">
-                <div className="ppt-status-row">
-                  <FiCheckCircle size={16} />
-                  <span>Deck: {String(deckStatus || 'READY')}</span>
-                </div>
-                <div className="ppt-status-row">
-                  <span>Elements: {(slide?.elements?.elements || []).length}</span>
-                </div>
               </div>
             </div>
           )}
