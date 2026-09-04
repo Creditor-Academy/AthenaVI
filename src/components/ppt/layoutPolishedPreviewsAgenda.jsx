@@ -61,7 +61,7 @@ function defaultAgendaItems() {
 }
 
 function defaultNumberedItems() {
-  return ['01 · Opening and goals', '02 · Market context', '03 · Product demo', '04 · Q&A']
+  return ['Opening and goals', 'Market context', 'Product demo', 'Q&A', 'Workshop breakout', 'Closing remarks']
 }
 
 function defaultMilestones() {
@@ -204,36 +204,110 @@ export function PolishedAgendaNumberedPreview({ previewHints, ...props }) {
   }
 
   if (variant === 'timeline') {
+    const stops = items.slice(0, 4)
+    const pals = ['#7CB342', '#2F6FED', '#E53935', '#FF6E40']
+    const notes = [
+      ['Kickoff notes', 'Desired outcome'],
+      ['Market snapshot', 'Key constraints'],
+      ['Live walkthrough', 'Proof points'],
+      ['Open questions', 'Next steps'],
+    ]
     return (
-      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 4 }}>
-        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small, fontWeight: 800, color: theme.text, textAlign: 'center' }}>{heading}</div>
-        <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: large ? 12 : 4, paddingLeft: large ? 24 : 10 }}>
-          <div aria-hidden style={{ position: 'absolute', left: large ? 10 : 4, top: '8%', bottom: '8%', width: large ? 3 : 1, background: theme.accent, opacity: 0.5, borderRadius: 2 }} />
-          {items.slice(0, 4).map((item, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: large ? 10 : 4 }}>
-              <div style={{ width: large ? 14 : 6, height: large ? 14 : 6, borderRadius: '50%', background: theme.accent, flexShrink: 0, zIndex: 1 }} />
-              <div style={{ fontSize: large ? '0.72rem' : '0.26rem', fontWeight: 600, color: theme.text }}>{item}</div>
-            </div>
-          ))}
+      <div {...fp} style={{ ...fp.style, display: 'flex', flexDirection: 'column', height: '100%', background: '#fff', padding: large ? '6% 4% 3%' : '7% 3% 3%', boxSizing: 'border-box' }}>
+        <div style={{ textAlign: 'center', fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small, fontWeight: 800, color: theme.text, marginBottom: large ? 8 : 4 }}>{heading}</div>
+        <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
+          <div aria-hidden style={{ position: 'absolute', left: '2%', right: '2%', top: '32%', height: large ? 3 : 1.5, background: '#C5CAD3' }} />
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'space-between' }}>
+            {stops.map((item, i) => {
+              const pal = pals[i]
+              const low = i % 2 === 0
+              return (
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+                  <div style={{ position: 'absolute', top: '32%', width: 0, height: low ? '42%' : '22%', borderLeft: `${large ? 2 : 1}px solid ${pal}` }} />
+                  <div style={{ marginTop: '12%', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 1 }}>
+                    <div style={{ fontSize: large ? '0.48rem' : '0.16rem', fontWeight: 800, color: pal, marginBottom: large ? 6 : 2 }}>{String(i + 1).padStart(2, '0')}</div>
+                    <div style={{
+                      width: large ? 42 : 16,
+                      height: large ? 42 : 16,
+                      borderRadius: 999,
+                      background: pal,
+                      boxShadow: `0 0 0 ${large ? 7 : 3}px color-mix(in srgb, ${pal} 30%, transparent), 0 0 0 ${large ? 13 : 5}px color-mix(in srgb, ${pal} 18%, transparent), 0 0 0 ${large ? 19 : 7}px color-mix(in srgb, ${pal} 10%, transparent)`,
+                    }} />
+                  </div>
+                  <div style={{
+                    marginTop: low ? (large ? 36 : 12) : (large ? 18 : 6),
+                    textAlign: 'center',
+                    padding: '0 4px',
+                    width: '100%',
+                  }}>
+                    <div style={{ fontSize: large ? '0.52rem' : '0.15rem', fontWeight: 800, color: theme.text, lineHeight: 1.2 }}>{item.replace(/^\s*\d+\s*[·.:\-)]\s*/, '')}</div>
+                    {(notes[i] || []).map((note) => (
+                      <div key={note} style={{ fontSize: large ? '0.36rem' : '0.11rem', color: theme.muted, textAlign: 'left', marginTop: large ? 2 : 1, lineHeight: 1.25 }}>• {note}</div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div {...fp}>
-      <AgendaSvgChrome previewHints={previewHints} itemCount={items.length} />
-      <AgendaTextLayer style={{ padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 4 }}>
-        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small, fontWeight: 800, color: theme.text, textAlign: 'center' }}>{heading}</div>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: large ? 8 : 3 }}>
-          {items.slice(0, 4).map((item, i) => (
-            <div key={i} style={{ display: 'flex', gap: large ? 10 : 4, alignItems: 'baseline' }}>
-              <div style={{ fontSize: large ? '0.9rem' : '0.32rem', fontWeight: 800, color: theme.accent, minWidth: large ? 28 : 12 }}>{String(i + 1).padStart(2, '0')}</div>
-              <div style={{ fontSize: large ? '0.72rem' : '0.26rem', fontWeight: 600, color: theme.text }}>{item}</div>
+    <div {...fp} style={{ ...fp.style, display: 'flex', flexDirection: 'column', height: '100%', background: '#fff', padding: large ? '6% 4% 5%' : '7% 4% 5%', boxSizing: 'border-box' }}>
+      <div style={{ textAlign: 'center', fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small, fontWeight: 800, color: theme.text, flexShrink: 0, lineHeight: 1.15, marginBottom: large ? 10 : 4 }}>{heading}</div>
+      <div style={{ flex: 1, minHeight: 0, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: '1fr 1fr', gap: large ? 10 : 4 }}>
+        {Array.from({ length: 6 }, (_, i) => {
+          const pal = [
+            { main: '#2F9E6B', fill: '#E5F6EC' },
+            { main: '#E94B8C', fill: '#FCE8F1' },
+            { main: '#7A5C9E', fill: '#EDE6F6' },
+            { main: '#5C4E9A', fill: '#E8E4F6' },
+            { main: '#3B8FD9', fill: '#E2F0FB' },
+            { main: '#D94A8A', fill: '#F9E4EE' },
+          ][i]
+          const item = items[i] || ''
+          return (
+            <div key={i} style={{ position: 'relative', minWidth: 0 }}>
+              <div style={{
+                position: 'absolute',
+                left: large ? 10 : 4,
+                right: 0,
+                top: large ? 4 : 2,
+                bottom: large ? 4 : 2,
+                background: pal.fill,
+                border: `${large ? 1.5 : 1}px dashed ${pal.main}`,
+                clipPath: 'polygon(18% 0, 100% 0, 82% 100%, 0 100%)',
+              }} />
+              <div style={{
+                position: 'relative',
+                zIndex: 1,
+                height: '100%',
+                display: 'flex',
+                alignItems: 'flex-end',
+                padding: large ? '4px 10px 2px 6px' : '2px 4px 1px 2px',
+              }}>
+                <div style={{
+                  fontSize: large ? '1.35rem' : '0.42rem',
+                  fontWeight: 800,
+                  color: pal.main,
+                  lineHeight: 0.85,
+                  flexShrink: 0,
+                  textShadow: `1px 2px 0 color-mix(in srgb, ${pal.main} 28%, transparent)`,
+                  marginRight: large ? 6 : 2,
+                }}>{i + 1}</div>
+                <div style={{ minWidth: 0, alignSelf: 'flex-start', paddingTop: large ? 4 : 1 }}>
+                  <div style={{ fontSize: large ? '0.52rem' : '0.16rem', fontWeight: 800, color: pal.main, lineHeight: 1.2 }}>Agenda {String(i + 1).padStart(2, '0')}</div>
+                  {item ? (
+                    <div style={{ fontSize: large ? '0.38rem' : '0.12rem', color: theme.muted, lineHeight: 1.3, marginTop: large ? 2 : 1 }}>{item.replace(/^\s*\d+\s*[·.:\-)]\s*/, '')}</div>
+                  ) : null}
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
-      </AgendaTextLayer>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -246,18 +320,61 @@ export function PolishedAgendaThreeColumnsPreview({ previewHints, ...props }) {
   const variant = previewHints.agendaVariant
 
   if (variant === 'cards') {
+    const pals = [
+      { main: '#1E4B8C', light: '#3A6CB0' },
+      { main: '#6B7280', light: '#9CA3AF' },
+      { main: '#2A9B8F', light: '#4DB8AC' },
+    ]
     return (
-      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 4 }}>
-        <div style={{ textAlign: 'center', fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small, fontWeight: 800, color: theme.text }}>{heading}</div>
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 12 : 4 }}>
-          {columns.slice(0, 3).map((col, i) => (
-            <div key={i} style={{ borderRadius: large ? 12 : 4, border: `1px solid ${theme.accentBorder}`, background: theme.card, padding: large ? '12px 10px' : '4px 3px', boxShadow: '0 6px 16px rgba(0,0,0,0.06)', display: 'flex', flexDirection: 'column', gap: large ? 6 : 2 }}>
-              <div style={{ fontSize: large ? '0.82rem' : '0.28rem', fontWeight: 800, color: theme.text }}>{col.heading}</div>
-              {(col.items || []).slice(0, 3).map((item, j) => (
-                <div key={j} style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : PREVIEW_CAPTION_FS.small, color: theme.muted }}>{item}</div>
-              ))}
-            </div>
-          ))}
+      <div {...fp} style={{ ...fp.style, display: 'flex', flexDirection: 'column', height: '100%', background: '#f4f5f7', padding: large ? '7% 2% 4%' : '8% 2% 5%', boxSizing: 'border-box' }}>
+        <div style={{ textAlign: 'center', fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small, fontWeight: 800, color: theme.text, marginBottom: large ? 10 : 4, flexShrink: 0, lineHeight: 1.15 }}>{heading}</div>
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', justifyContent: 'center', alignItems: 'stretch', gap: large ? 6 : 3, padding: 0 }}>
+          {columns.slice(0, 3).map((col, i) => {
+            const pal = pals[i]
+            return (
+              <div key={i} style={{
+                flex: 1,
+                background: '#fff',
+                borderRadius: large ? 10 : 4,
+                boxShadow: '0 8px 18px rgba(31,41,55,0.12)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                padding: large ? '10px 0 12px' : '4px 0 5px',
+              }}>
+                <div style={{
+                  width: large ? 36 : 14,
+                  height: large ? 36 : 14,
+                  borderRadius: 999,
+                  border: `${large ? 2 : 1}px solid ${pal.main}`,
+                  boxShadow: `inset 0 0 0 ${large ? 3 : 1}px #fff, inset 0 0 0 ${large ? 5 : 2}px ${pal.main}`,
+                  marginBottom: large ? 8 : 3,
+                }} />
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '86%',
+                  background: `linear-gradient(${pal.light}, ${pal.main})`,
+                  color: '#fff',
+                  textAlign: 'center',
+                  fontWeight: 800,
+                  fontSize: large ? '0.58rem' : '0.18rem',
+                  padding: 0,
+                  height: large ? 28 : 12,
+                  lineHeight: 1,
+                }}>{col.heading}</div>
+                <div style={{ width: '86%', marginTop: large ? 10 : 4 }}>
+                  {(col.items || []).slice(0, 3).map((item, j) => (
+                    <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: large ? 6 : 2, marginTop: j ? (large ? 6 : 2) : 0 }}>
+                      <div style={{ width: large ? 7 : 3, height: large ? 7 : 3, background: pal.main, transform: 'rotate(45deg)', marginTop: large ? 4 : 2, flexShrink: 0 }} />
+                      <div style={{ fontSize: large ? '0.48rem' : '0.14rem', color: theme.muted, lineHeight: 1.3 }}>{item}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
     )
@@ -311,21 +428,62 @@ export function PolishedAgendaThreeColumnsPreview({ previewHints, ...props }) {
   }
 
   return (
-    <div {...fp}>
-      <AgendaSvgChrome previewHints={previewHints} itemCount={3} />
-      <AgendaTextLayer style={{ padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 12 : 4 }}>
-        <div style={{ textAlign: 'center', fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small, fontWeight: 800, color: theme.text }}>{heading}</div>
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 16 : 4, paddingTop: large ? 40 : 14 }}>
-          {columns.slice(0, 3).map((col, i) => (
-            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: large ? 6 : 2, alignItems: 'center', textAlign: 'center' }}>
-              <div style={{ fontSize: large ? '0.95rem' : '0.32rem', fontWeight: 800, color: theme.text }}>{col.heading}</div>
-              {(col.items || []).slice(0, 3).map((item, j) => (
-                <div key={j} style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : PREVIEW_CAPTION_FS.small, color: theme.muted, lineHeight: 1.35 }}>{item}</div>
-              ))}
+    <div {...fp} style={{ ...fp.style, display: 'flex', flexDirection: 'column', height: '100%', background: '#ffffff', padding: large ? '5% 5% 4%' : '6% 4% 5%', boxSizing: 'border-box' }}>
+      <div style={{ textAlign: 'center', fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small, fontWeight: 800, color: theme.text, marginBottom: large ? 10 : 4, flexShrink: 0 }}>
+        {heading}
+      </div>
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', justifyContent: 'center', alignItems: 'stretch', gap: large ? 16 : 6, padding: large ? '2% 9% 3%' : '4% 8% 4%' }}>
+        {columns.slice(0, 3).map((col, i) => {
+          const pal = DEFAULT_COLUMN_PALETTE[i % DEFAULT_COLUMN_PALETTE.length]
+          const rings = ['solid', 'dashed', 'dotted']
+          return (
+            <div key={i} style={{ position: 'relative', width: '28%', maxWidth: large ? 180 : 72, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: large ? 18 : 8, paddingBottom: large ? 12 : 5 }}>
+              <div style={{
+                position: 'absolute',
+                top: large ? 18 : 8,
+                left: 0,
+                right: 0,
+                bottom: large ? 2 : 1,
+                border: `${large ? 2 : 1}px solid ${pal.main}`,
+                borderRadius: large ? 12 : 6,
+                background: '#fff',
+              }} />
+              <div style={{
+                position: 'relative',
+                zIndex: 2,
+                width: large ? 44 : 16,
+                height: large ? 44 : 16,
+                borderRadius: 999,
+                background: pal.main,
+                boxShadow: `0 0 0 ${large ? 5 : 2}px #fff, 0 0 0 ${large ? 8 : 3.5}px ${pal.main}`,
+                border: rings[i] === 'solid' ? 'none' : `${large ? 2 : 1}px ${rings[i]} ${pal.main}`,
+                flexShrink: 0,
+              }} />
+              <div style={{
+                position: 'relative',
+                zIndex: 1,
+                width: '100%',
+                marginTop: large ? 16 : 6,
+                background: pal.main,
+                color: '#fff',
+                textAlign: 'center',
+                fontWeight: 800,
+                fontSize: large ? '0.82rem' : '0.24rem',
+                padding: large ? '8px 0' : '3px 0',
+              }}>{String(i + 1).padStart(2, '0')}</div>
+              <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', padding: large ? '10px 8px 12px' : '4px 3px 6px', width: '100%', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <div style={{ fontSize: large ? '0.78rem' : '0.24rem', fontWeight: 800, color: theme.text, lineHeight: 1.2 }}>{col.heading}</div>
+                <div style={{ fontSize: large ? '0.52rem' : '0.16rem', color: theme.muted, lineHeight: 1.35, marginTop: large ? 8 : 3 }}>
+                  {(col.items || []).slice(0, 3).map((item, j) => (
+                    <div key={j} style={{ marginTop: j ? (large ? 6 : 2) : 0 }}>{item}</div>
+                  ))}
+                </div>
+                <div style={{ width: large ? 28 : 12, height: large ? 4 : 2, borderRadius: 99, background: pal.main, margin: 'auto auto 0' }} />
+              </div>
             </div>
-          ))}
-        </div>
-      </AgendaTextLayer>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -378,32 +536,62 @@ export function PolishedAgendaThreeColumnsHeroPreview({ previewHints, ...props }
   }
 
   if (variant === 'cards') {
+    const pals = [
+      { main: '#1E4B8C', light: '#3A6CB0' },
+      { main: '#6B7280', light: '#9CA3AF' },
+      { main: '#2A9B8F', light: '#4DB8AC' },
+    ]
     return (
-      <div {...fp} style={{ ...fp.style, display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <div {...fp} style={{ ...fp.style, display: 'flex', flexDirection: 'column', height: '100%', background: '#f4f5f7' }}>
         {heroStrip}
-        <div style={{ flex: 1, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 3, minHeight: 0 }}>
-          <div style={titleStyle}>{heading}</div>
-          <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 12 : 4 }}>
-            {columns.slice(0, 3).map((col, i) => (
-              <div
-                key={i}
-                style={{
-                  borderRadius: large ? 10 : 4,
-                  border: `1px solid ${theme.accentBorder}`,
-                  background: theme.card,
-                  padding: large ? '10px 8px' : '3px 4px',
+        <div style={{ flex: 1, minHeight: 0, padding: large ? '6px 10px 8px' : '3px 4px 4px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ ...titleStyle, textAlign: 'center', marginBottom: large ? 6 : 2 }}>{heading}</div>
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', gap: large ? 8 : 3 }}>
+            {columns.slice(0, 3).map((col, i) => {
+              const pal = pals[i]
+              return (
+                <div key={i} style={{
+                  flex: 1,
+                  background: '#fff',
+                  borderRadius: large ? 8 : 3,
+                  boxShadow: '0 8px 18px rgba(31,41,55,0.12)',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: large ? 4 : 2,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-                }}
-              >
-                <div style={{ fontSize: large ? '0.72rem' : '0.26rem', fontWeight: 800, color: theme.text }}>{col.heading}</div>
-                {(col.items || []).slice(0, 2).map((item, j) => (
-                  <div key={j} style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : PREVIEW_CAPTION_FS.small, color: theme.muted, lineHeight: 1.35 }}>{item}</div>
-                ))}
-              </div>
-            ))}
+                  alignItems: 'center',
+                  padding: large ? '6px 0 8px' : '3px 0 4px',
+                }}>
+                  <div style={{
+                    width: large ? 22 : 10,
+                    height: large ? 22 : 10,
+                    borderRadius: 999,
+                    border: `${large ? 2 : 1}px solid ${pal.main}`,
+                    boxShadow: `inset 0 0 0 ${large ? 2 : 1}px #fff, inset 0 0 0 ${large ? 4 : 2}px ${pal.main}`,
+                    marginBottom: large ? 5 : 2,
+                  }} />
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '86%',
+                    background: `linear-gradient(${pal.light}, ${pal.main})`,
+                    color: '#fff',
+                    textAlign: 'center',
+                    fontWeight: 800,
+                    fontSize: large ? '0.48rem' : '0.16rem',
+                    height: large ? 20 : 9,
+                    lineHeight: 1,
+                  }}>{col.heading}</div>
+                  <div style={{ width: '86%', marginTop: large ? 6 : 2 }}>
+                    {(col.items || []).slice(0, 3).map((item, j) => (
+                      <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: large ? 5 : 2, marginTop: j ? (large ? 4 : 1) : 0 }}>
+                        <div style={{ width: large ? 6 : 3, height: large ? 6 : 3, background: pal.main, transform: 'rotate(45deg)', marginTop: large ? 3 : 1, flexShrink: 0 }} />
+                        <div style={{ fontSize: large ? '0.4rem' : '0.12rem', color: theme.muted, lineHeight: 1.25 }}>{item}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>
@@ -413,18 +601,36 @@ export function PolishedAgendaThreeColumnsHeroPreview({ previewHints, ...props }
   return (
     <div {...fp} style={{ ...fp.style, display: 'flex', flexDirection: 'column', height: '100%' }}>
       {heroStrip}
-      <div style={{ flex: 1, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 3 }}>
-        <div style={titleStyle}>{heading}</div>
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 14 : 4 }}>
-          {columns.slice(0, 3).map((col, i) => (
-            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: large ? 6 : 2 }}>
-              <div style={{ fontSize: large ? '0.72rem' : '0.22rem', fontWeight: 800, letterSpacing: '0.08em', color: theme.muted }}>{String(i + 1).padStart(2, '0')}</div>
-              <div style={{ fontSize: large ? '0.82rem' : '0.28rem', fontWeight: 800, color: theme.text }}>{col.heading}</div>
-              {(col.items || []).slice(0, 3).map((item, j) => (
-                <div key={j} style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_CAPTION_FS.small, color: theme.muted, lineHeight: 1.4 }}>{item}</div>
-              ))}
-            </div>
-          ))}
+      <div style={{ flex: 1, padding: large ? '8px 16px 12px' : '4px 6px 5px', display: 'flex', flexDirection: 'column', minHeight: 0, background: '#fff' }}>
+        <div style={{ ...titleStyle, textAlign: 'center', marginBottom: large ? 8 : 3 }}>{heading}</div>
+        <div style={{ flex: 1, display: 'flex', gap: large ? 12 : 4, minHeight: 0 }}>
+          {columns.slice(0, 3).map((col, i) => {
+            const pal = ['#1E4B8C', '#6B7280', '#2A9B8F'][i]
+            return (
+              <div key={i} style={{
+                flex: 1,
+                background: '#fff',
+                borderRadius: large ? 10 : 4,
+                boxShadow: '0 8px 18px rgba(31,41,55,0.12)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                padding: large ? '10px 8px' : '4px 3px',
+              }}>
+                <div style={{
+                  width: large ? 28 : 12,
+                  height: large ? 28 : 12,
+                  borderRadius: 999,
+                  border: `${large ? 2 : 1}px solid ${pal}`,
+                  marginBottom: large ? 6 : 2,
+                }} />
+                <div style={{ fontSize: large ? '0.72rem' : '0.24rem', fontWeight: 800, color: theme.text, textAlign: 'center' }}>{col.heading}</div>
+                {(col.items || []).slice(0, 3).map((item, j) => (
+                  <div key={j} style={{ fontSize: large ? '0.48rem' : '0.14rem', color: theme.muted, textAlign: 'center', marginTop: large ? 4 : 1 }}>{item}</div>
+                ))}
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>

@@ -36,6 +36,13 @@ import {
   isAgendaThreeColumnColouredLayout,
   specToThreeColumnContent,
 } from './agendaThreeColumn.js'
+import {
+  agendaThreeCardsPreviewSvg,
+  isAgendaThreeCardsLayout,
+  specToThreeCardsContent,
+} from './agendaThreeCards.js'
+import { agendaNumberedBlocksPreviewSvg } from './agendaNumberedBlocks.js'
+import { agendaNumberedTimelinePreviewSvg } from './agendaNumberedTimeline.js'
 
 export {
   AGENDA_GEOM,
@@ -58,6 +65,8 @@ export {
   agendaDividerInlineSvg,
   isAgendaThreeColumnColouredLayout,
   specToThreeColumnContent,
+  isAgendaThreeCardsLayout,
+  specToThreeCardsContent,
 }
 
 export function agendaChromeSpecs(family, variant, itemCount = 4) {
@@ -141,7 +150,16 @@ export function agendaDiagramInlineSvg(family, variant, colors = {}, opts = {}) 
 }
 
 export function agendaPreviewSvg(family, variant, colors = {}, opts = {}) {
-  if (family === 'three_col' && variant === 'coloured') {
+  if (family === 'numbered' && (variant === 'path' || variant === 'timeline')) {
+    return agendaNumberedTimelinePreviewSvg()
+  }
+  if (family === 'numbered' && variant !== 'cards') {
+    return agendaNumberedBlocksPreviewSvg(colors)
+  }
+  if (family === 'three_col' && variant === 'cards') {
+    return agendaThreeCardsPreviewSvg(colors)
+  }
+  if (family === 'three_col' && variant !== 'panels' && variant !== 'step') {
     return agendaThreeColumnPreviewSvg(colors)
   }
   return agendaDiagramInlineSvg(family, variant, {

@@ -37,10 +37,10 @@ const CATALOG = {
     heading('HEADING', 'cols 2-11, rows 1-2', "Today's agenda", {
       typography: typo('heading', { fontSize: 34, align: 'center' }),
     }),
-    body('ITEM_1', 'cols 3-10, rows 3-4', '01 · Opening and goals', 1, { typography: typo('body', { fontWeight: 600 }) }),
-    body('ITEM_2', 'cols 3-10, rows 4-5', '02 · Market context', 1, { typography: typo('body', { fontWeight: 600 }) }),
-    body('ITEM_3', 'cols 3-10, rows 5-6', '03 · Product demo', 1, { typography: typo('body', { fontWeight: 600 }) }),
-    body('ITEM_4', 'cols 3-10, rows 6-7', '04 · Q&A', 1, { typography: typo('body', { fontWeight: 600 }) }),
+    body('ITEM_1', 'cols 3-10, rows 3-4', 'Opening and goals', 3, { typography: typo('body', { fontWeight: 400, fontSize: 14 }) }),
+    body('ITEM_2', 'cols 3-10, rows 4-5', 'Market context', 3, { typography: typo('body', { fontWeight: 400, fontSize: 14 }) }),
+    body('ITEM_3', 'cols 3-10, rows 5-6', 'Product demo', 3, { typography: typo('body', { fontWeight: 400, fontSize: 14 }) }),
+    body('ITEM_4', 'cols 3-10, rows 6-7', 'Q&A', 3, { typography: typo('body', { fontWeight: 400, fontSize: 14 }) }),
   ], { mode: 'agenda_numbered', agendaVariant: 'default' }),
 
   agenda_minimal_v1: layoutBase('agenda_minimal_v1', 'agenda', [
@@ -94,7 +94,24 @@ function agendaFromSource(layoutId, sourceId, agendaVariant) {
 
 Object.assign(CATALOG, {
   agenda_editorial_v1: agendaFromSource('agenda_editorial_v1', 'agenda_minimal_v1', 'editorial'),
-  agenda_cards_v1: agendaFromSource('agenda_cards_v1', 'agenda_minimal_v1', 'cards'),  agenda_numbered_timeline_v1: agendaFromSource('agenda_numbered_timeline_v1', 'agenda_numbered_v1', 'timeline'),
-  agenda_three_cards_hero_v1: agendaFromSource('agenda_three_cards_hero_v1', 'agenda_three_columns_hero_v1', 'cards'),  agenda_three_cards_v1: agendaFromSource('agenda_three_cards_v1', 'agenda_three_columns_v1', 'cards'),  agenda_vertical_roadmap_v1: agendaFromSource('agenda_vertical_roadmap_v1', 'agenda_timeline_preview_v1', 'vertical'),  agenda_split_panel_v1: agendaFromSource('agenda_split_panel_v1', 'agenda_two_column_v1', 'split_panel'),})
+  agenda_cards_v1: agendaFromSource('agenda_cards_v1', 'agenda_minimal_v1', 'cards'),
+  agenda_numbered_timeline_v1: agendaFromSource('agenda_numbered_timeline_v1', 'agenda_numbered_v1', 'timeline'),
+  agenda_three_cards_hero_v1: agendaFromSource('agenda_three_cards_hero_v1', 'agenda_three_columns_hero_v1', 'cards'),
+  agenda_three_cards_v1: agendaFromSource('agenda_three_cards_v1', 'agenda_three_columns_v1', 'cards'),
+  agenda_vertical_roadmap_v1: agendaFromSource('agenda_vertical_roadmap_v1', 'agenda_timeline_preview_v1', 'vertical'),
+  agenda_split_panel_v1: agendaFromSource('agenda_split_panel_v1', 'agenda_two_column_v1', 'split_panel'),
+})
+
+CATALOG.agenda_numbered_timeline_v1.slots.push(
+  body('ITEM_1_BODY', 'cols 1-3, rows 7-8', '• Kickoff notes\n• Desired outcome', 3, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+  body('ITEM_2_BODY', 'cols 4-6, rows 7-8', '• Market snapshot\n• Key constraints', 3, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+  body('ITEM_3_BODY', 'cols 7-9, rows 7-8', '• Live walkthrough\n• Proof points', 3, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+  body('ITEM_4_BODY', 'cols 10-12, rows 7-8', '• Open questions\n• Next steps', 3, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+)
+
+CATALOG.agenda_numbered_v1.slots.push(
+  body('ITEM_5', 'cols 3-6, rows 8-9', 'Workshop breakout', 3, { typography: typo('body', { fontWeight: 400, fontSize: 14 }) }),
+  body('ITEM_6', 'cols 7-10, rows 8-9', 'Closing remarks', 3, { typography: typo('body', { fontWeight: 400, fontSize: 14 }) }),
+)
 
 export default CATALOG
