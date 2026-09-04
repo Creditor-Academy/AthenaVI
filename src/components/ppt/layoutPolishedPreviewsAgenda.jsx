@@ -141,23 +141,22 @@ export function PolishedAgendaMinimalPreview({ previewHints, ...props }) {
         <AgendaTextLayer>
           <div style={{
             position: 'absolute',
-            left: '6%',
-            top: '38%',
-            width: '30%',
-            textAlign: 'center',
-            fontSize: large ? '0.72rem' : '0.22rem',
-            fontWeight: 700,
-            color: theme.muted,
-            lineHeight: 1.2,
+            left: '5%',
+            top: '3%',
+            right: '5%',
+            fontSize: large ? '0.85rem' : '0.26rem',
+            fontWeight: 800,
+            color: theme.text,
+            lineHeight: 1.1,
           }}>
-            {heading}
+            {heading === 'Agenda' ? "Today's agenda" : heading}
           </div>
           <div style={{
             position: 'absolute',
-            left: '54%',
-            right: '8%',
-            top: '14%',
-            bottom: '14%',
+            left: '55%',
+            right: '7%',
+            top: '18%',
+            bottom: '12%',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
@@ -167,8 +166,8 @@ export function PolishedAgendaMinimalPreview({ previewHints, ...props }) {
                 height: '16%',
                 display: 'flex',
                 alignItems: 'center',
-                paddingLeft: large ? 10 : 4,
-                fontSize: large ? '0.55rem' : '0.16rem',
+                paddingLeft: large ? 14 : 5,
+                fontSize: large ? '0.52rem' : '0.16rem',
                 fontWeight: 600,
                 color: '#fff',
                 whiteSpace: 'nowrap',
@@ -186,13 +185,59 @@ export function PolishedAgendaMinimalPreview({ previewHints, ...props }) {
 
   if (variant === 'cards') {
     return (
-      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 4 }}>
-        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small, fontWeight: 800, color: theme.text }}>{heading}</div>
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: large ? 10 : 3, alignItems: 'stretch' }}>
-          {items.slice(0, 4).map((item, i) => (
-            <AgendaCard key={i} title={item} large={large} index={i} elevated />
-          ))}
-        </div>
+      <div {...fp}>
+        <AgendaSvgChrome previewHints={{ ...previewHints, agendaVariant: 'cards', layout_id: previewHints.layout_id || 'agenda_cards_v1' }} itemCount={4} />
+        <AgendaTextLayer>
+          <div style={{
+            position: 'absolute',
+            left: '5%',
+            top: '3%',
+            fontSize: large ? '0.85rem' : '0.26rem',
+            fontWeight: 800,
+            color: theme.text,
+          }}>
+            {heading}
+          </div>
+          <div style={{
+            position: 'absolute',
+            left: '5%',
+            right: '5%',
+            top: '16%',
+            bottom: '6%',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gridTemplateRows: '1fr 1fr',
+            gap: large ? 12 : 4,
+          }}>
+            {items.slice(0, 4).map((item, i) => (
+              <div key={i} style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                padding: large ? '18px 16px 12px 52px' : '6px 6px 4px 18px',
+                minWidth: 0,
+              }}>
+                <div style={{
+                  fontSize: large ? '0.55rem' : '0.16rem',
+                  fontWeight: 700,
+                  color: theme.text,
+                  lineHeight: 1.2,
+                }}>
+                  {item}
+                </div>
+                <div style={{
+                  marginTop: large ? 8 : 3,
+                  fontSize: large ? '0.38rem' : '0.12rem',
+                  fontWeight: 400,
+                  color: theme.muted,
+                  lineHeight: 1.3,
+                }}>
+                  {['Set the purpose and what a good outcome looks like.', 'Share the context, constraints, and what is already decided.', 'Walk through the proposal and the proof behind it.', 'Agree owners, dates, and the next concrete steps.'][i]}
+                </div>
+              </div>
+            ))}
+          </div>
+        </AgendaTextLayer>
       </div>
     )
   }
@@ -723,18 +768,22 @@ export function PolishedAgendaTwoColumnsPreview({ previewHints, ...props }) {
   }
 
   return (
-    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 4 }}>
-      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small, fontWeight: 800, color: theme.text }}>{heading}</div>
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: large ? 16 : 6 }}>
-        {columns.map((col, i) => (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: large ? 6 : 2 }}>
-            <div style={{ fontSize: large ? '0.82rem' : '0.28rem', fontWeight: 800, color: theme.text }}>{col.heading}</div>
-            {(col.items || []).slice(0, 4).map((item, j) => (
-              <div key={j} style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_CAPTION_FS.small, color: theme.muted }}>{item}</div>
-            ))}
-          </div>
-        ))}
-      </div>
+    <div {...fp}>
+      <AgendaSvgChrome previewHints={{ ...previewHints, agendaVariant: 'default', layout_id: previewHints.layout_id || 'agenda_two_column_v1' }} itemCount={5} />
+      <AgendaTextLayer>
+        <div style={{
+          position: 'absolute',
+          left: '4%',
+          top: '2%',
+          right: '4%',
+          fontSize: large ? '0.72rem' : '0.22rem',
+          fontWeight: 800,
+          color: theme.text,
+          lineHeight: 1.1,
+        }}>
+          {heading}
+        </div>
+      </AgendaTextLayer>
     </div>
   )
 }

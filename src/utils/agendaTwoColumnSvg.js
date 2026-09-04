@@ -5,6 +5,10 @@ import {
   createAgendaSpecBuilder,
   overlayBox,
 } from './agendaSharedSvg.js'
+import {
+  agendaTwoColumnRibbonChromeSpecs,
+  agendaTwoColumnRibbonOverlayPlacements,
+} from './agendaTwoColumnRibbons.js'
 
 export function twoColVariantFromSchema(schema) {
   const variant = schema?.preview?.agendaVariant
@@ -14,6 +18,9 @@ export function twoColVariantFromSchema(schema) {
 }
 
 export function agendaTwoColumnChromeSpecs(variant = 'default') {
+  if (variant !== 'split_visual' && variant !== 'split_panel' && variant !== 'asymmetric') {
+    return agendaTwoColumnRibbonChromeSpecs()
+  }
   const { specs, pushIcon, pushSpine, pushCard, pushBadge, pushDivider } = createAgendaSpecBuilder()
 
   if (variant === 'split_visual' || variant === 'split_panel') {
@@ -46,7 +53,10 @@ export function agendaTwoColumnChromeSpecs(variant = 'default') {
   return specs
 }
 
-export function agendaTwoColumnOverlayPlacements(gx, gy, gw, gh) {
+export function agendaTwoColumnOverlayPlacements(gx, gy, gw, gh, variant = 'default') {
+  if (variant !== 'split_visual' && variant !== 'split_panel' && variant !== 'asymmetric') {
+    return agendaTwoColumnRibbonOverlayPlacements(gx, gy, gw, gh)
+  }
   const overlay = { items: [], columns: [], milestones: [], heading: null }
   overlay.heading = overlayBox(gx, gy, gw, gh, 520, 80, 400, 64)
   for (let c = 0; c < 2; c += 1) {

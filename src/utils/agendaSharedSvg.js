@@ -20,7 +20,7 @@ export const AGENDA_LAYOUT_META = {
   agenda_minimal_v1: { family: 'minimal', variant: 'default' },
   agenda_editorial_v1: { family: 'minimal', variant: 'editorial' },
   agenda_icon_list_v1: { family: 'minimal', variant: 'icon_list' },
-  agenda_cards_v1: { family: 'minimal', variant: 'icon_list' },
+  agenda_cards_v1: { family: 'minimal', variant: 'cards' },
   agenda_numbered_v1: { family: 'numbered', variant: 'default' },
   agenda_numbered_cards_v1: { family: 'numbered', variant: 'cards' },
   agenda_numbered_path_v1: { family: 'numbered', variant: 'path' },
