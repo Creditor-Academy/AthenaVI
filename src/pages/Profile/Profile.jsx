@@ -27,6 +27,7 @@ import {
   formatCreditTransactionTitle,
   formatCreditTransactionSubtitle,
   formatCreditTransactionType,
+  collapsePresentationCreditTransactions,
 } from '../../utils/creditTransactions.js'
 import LoadingDots from '../../components/ui/LoadingDots/LoadingDots.jsx'
 
@@ -204,7 +205,7 @@ const Profile = () => {
         creditsService.getPersonalBalance().catch(() => null),
         storageService.getPersonalQuota().catch(() => null),
         videoLibraryService.listUserVideos({ take: 1, skip: 0, status: 'completed' }).catch(() => null),
-        creditsService.getPersonalHistory({ page: 1, limit: 5 }).catch(() => null),
+        creditsService.getPersonalHistory({ page: 1, limit: 40 }).catch(() => null),
         workspaceService.listWorkspaces().catch(() => []),
       ])
 
@@ -227,7 +228,11 @@ const Profile = () => {
         setVideosExported(videosResult.pagination?.total ?? videosResult.videos?.length ?? 0)
       }
       if (historyResult?.transactions) {
-        setRecentActivity(historyResult.transactions.map(mapCreditTxToActivity))
+        setRecentActivity(
+          collapsePresentationCreditTransactions(historyResult.transactions)
+            .slice(0, 5)
+            .map(mapCreditTxToActivity)
+        )
       } else {
         setRecentActivity([])
       }
