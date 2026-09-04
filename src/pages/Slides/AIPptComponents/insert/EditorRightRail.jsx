@@ -24,7 +24,7 @@ import PptCommentsPanel from '../PptCommentsPanel'
 import PptPublicCommentsPanel from '../PptPublicCommentsPanel'
 import SpeakerNotesPanel from '../SpeakerNotesPanel'
 import SlideTransitionPicker from './SlideTransitionPicker'
-import { PPT_SLIDE_STATUSES, resolveSlideProgressStatus, progressStatusDotClass, progressStatusLabel } from '../../../../constants/pptSlideEditorOptions'
+import { PPT_SLIDE_STATUSES, resolveSlideProgressStatus, progressStatusDotClass } from '../../../../constants/pptSlideEditorOptions'
 import { findTemplateForSlideLayout, templateRecordId } from '../../../../utils/similarLayouts'
 import './insertPanels.css'
 import '../pptEditorExtras.css'
@@ -609,18 +609,9 @@ export default function EditorRightRail({
 
           {active === 'status' && (
             <div className="ppt-slide-panel ppt-status-panel" role="region" aria-label="Slide status">
-              <div className="ppt-status-panel-intro">
-                <p className="ppt-status-panel-lead">
-                  Mark this slide’s progress so collaborators can see what’s left at a glance.
-                </p>
-                <div className={`ppt-status-current ppt-status-current--${progressStatusDotClass(currentSlideStatus)}`}>
-                  <StatusDot id={currentSlideStatus} />
-                  <div className="ppt-status-current-text">
-                    <span className="ppt-status-current-label">Current</span>
-                    <strong>{progressStatusLabel(currentSlideStatus)}</strong>
-                  </div>
-                </div>
-              </div>
+              <p className="ppt-status-panel-lead">
+                Mark this slide’s progress so collaborators can see what’s left at a glance.
+              </p>
 
               <div className="ppt-status-options" role="listbox" aria-label="Choose status">
                 {PPT_SLIDE_STATUSES.map((opt) => {

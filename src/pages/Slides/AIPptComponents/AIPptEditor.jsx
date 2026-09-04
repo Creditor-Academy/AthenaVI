@@ -54,6 +54,7 @@ import presentationService, {
   PresentationConflictError,
 } from '../../../services/presentationService'
 import { extractShareToken, getOrCreateViewerSessionId } from '../../../utils/pptShareSession'
+import { savePresentationEditorSession } from '../../../utils/presentationEditorSession'
 import PptPresenceAvatars from './PptPresenceAvatars'
 import usePptPresence from './usePptPresence'
 import brandKitService from '../../../services/brandKitService'
@@ -1568,6 +1569,30 @@ export default function AIPptEditor({
       setDeckTitle(data?.title || data?.presentation?.title)
     }
     if (slides[0]?.id) setSelectedSlideId((prev) => prev || slides[0].id)
+
+    const resolvedFolderId =
+      data?.folderId ||
+      data?.project?.folderId ||
+      data?.presentation?.folderId ||
+      data?.deck?.folderId ||
+      config?.folderId ||
+      null
+    if (workspaceId && presentationId) {
+      savePresentationEditorSession({
+        outline: [],
+        config: {
+          ...config,
+          title: data?.title || data?.presentation?.title || config?.title,
+          workspaceId,
+          presentationId,
+          folderId: resolvedFolderId,
+        },
+        workspaceId,
+        presentationId,
+        folderId: resolvedFolderId,
+      })
+    }
+
     if (!generating && !viewOnly && slides.length) {
       syncPresentationThumbnailFromSlides({
         workspaceId,
@@ -1578,7 +1603,7 @@ export default function AIPptEditor({
       })
     }
     return data
-  }, [workspaceId, presentationId, config.screenSize, config.aspectRatio, viewOnly])
+  }, [workspaceId, presentationId, config, viewOnly])
 
   useEffect(() => {
     if (viewOnly || isGenerating) return undefined
