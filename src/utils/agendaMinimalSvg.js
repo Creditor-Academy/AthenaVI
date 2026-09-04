@@ -7,6 +7,18 @@ import {
   createAgendaSpecBuilder,
   overlayBox,
 } from './agendaSharedSvg.js'
+import {
+  agendaMinimalQuietChromeSpecs,
+  agendaMinimalQuietOverlayPlacements,
+} from './agendaMinimalQuiet.js'
+import {
+  agendaEditorialChromeSpecs,
+  agendaEditorialOverlayPlacements,
+} from './agendaEditorialHub.js'
+import {
+  agendaCardsChromeSpecs,
+  agendaCardsOverlayPlacements,
+} from './agendaCardsTiles.js'
 
 export function minimalVariantFromSchema(schema) {
   const variant = schema?.preview?.agendaVariant
@@ -15,6 +27,15 @@ export function minimalVariantFromSchema(schema) {
 }
 
 export function agendaMinimalChromeSpecs(variant = 'default', itemCount = 4) {
+  if (variant === 'editorial') {
+    return agendaEditorialChromeSpecs()
+  }
+  if (variant === 'cards') {
+    return agendaCardsChromeSpecs()
+  }
+  if (variant !== 'icon_list') {
+    return agendaMinimalQuietChromeSpecs()
+  }
   const n = clampAgendaItemCount(itemCount)
   const { specs, pushIcon, pushSpine, pushCard, pushDivider } = createAgendaSpecBuilder()
 
@@ -31,14 +52,6 @@ export function agendaMinimalChromeSpecs(variant = 'default', itemCount = 4) {
     pushCard('AGENDA_TITLE_BLOCK', 48, 100, 200, 120)
     return specs
   }
-  if (variant === 'editorial') {
-    for (let i = 0; i < n; i += 1) {
-      const y = 180 + i * 72
-      pushIcon(`AGENDA_ICON_${i + 1}`, 720, y, 22, i)
-      pushDivider(`AGENDA_DIVIDER_${i + 1}`, 520, y + 26, 380)
-    }
-    return specs
-  }
   pushCard('AGENDA_TITLE_BLOCK', 48, 100, 280, 360)
   for (let i = 0; i < n; i += 1) {
     const y = 140 + i * 72
@@ -49,6 +62,15 @@ export function agendaMinimalChromeSpecs(variant = 'default', itemCount = 4) {
 }
 
 export function agendaMinimalOverlayPlacements(gx, gy, gw, gh, variant = 'default', opts = {}) {
+  if (variant === 'editorial') {
+    return agendaEditorialOverlayPlacements(gx, gy, gw, gh)
+  }
+  if (variant === 'cards') {
+    return agendaCardsOverlayPlacements(gx, gy, gw, gh)
+  }
+  if (variant !== 'icon_list') {
+    return agendaMinimalQuietOverlayPlacements(gx, gy, gw, gh)
+  }
   const n = clampAgendaItemCount(opts.itemCount)
   const overlay = { items: [], columns: [], milestones: [], heading: null }
   overlay.heading = overlayBox(gx, gy, gw, gh, 48, 80, 280, 80)
