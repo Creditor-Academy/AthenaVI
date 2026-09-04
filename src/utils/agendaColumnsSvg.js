@@ -10,6 +10,14 @@ import {
   agendaThreeColumnChromeSpecs,
   agendaThreeColumnOverlayPlacements,
 } from './agendaThreeColumn.js'
+import {
+  agendaThreeCardsChromeSpecs,
+  agendaThreeCardsOverlayPlacements,
+} from './agendaThreeCards.js'
+import {
+  agendaHeroCardsChromeSpecs,
+  agendaHeroCardsOverlayPlacements,
+} from './agendaHeroCards.js'
 
 export function columnsVariantFromSchema(schema) {
   const variant = schema?.preview?.agendaVariant
@@ -19,7 +27,16 @@ export function columnsVariantFromSchema(schema) {
 }
 
 export function agendaColumnsChromeSpecs(family, variant = 'default') {
-  if (family === 'three_col' && variant === 'coloured') {
+  if (family === 'hero' && variant === 'cards') {
+    return agendaThreeCardsChromeSpecs({ hero: true })
+  }
+  if (family === 'hero' && variant !== 'panels') {
+    return agendaHeroCardsChromeSpecs()
+  }
+  if (family === 'three_col' && variant === 'cards') {
+    return agendaThreeCardsChromeSpecs()
+  }
+  if (family === 'three_col' && variant !== 'panels' && variant !== 'step') {
     return agendaThreeColumnChromeSpecs()
   }
   const { specs, pushIcon, pushCard, pushBadge, pushArrow } = createAgendaSpecBuilder()
@@ -59,7 +76,16 @@ export function agendaColumnsChromeSpecs(family, variant = 'default') {
 }
 
 export function agendaColumnsOverlayPlacements(gx, gy, gw, gh, family, variant = 'default') {
-  if (family === 'three_col' && variant === 'coloured') {
+  if (family === 'hero' && variant === 'cards') {
+    return agendaThreeCardsOverlayPlacements(gx, gy, gw, gh, { hero: true })
+  }
+  if (family === 'hero' && variant !== 'panels') {
+    return agendaHeroCardsOverlayPlacements(gx, gy, gw, gh)
+  }
+  if (family === 'three_col' && variant === 'cards') {
+    return agendaThreeCardsOverlayPlacements(gx, gy, gw, gh)
+  }
+  if (family === 'three_col' && variant !== 'panels' && variant !== 'step') {
     return agendaThreeColumnOverlayPlacements(gx, gy, gw, gh)
   }
   const overlay = { items: [], columns: [], milestones: [], heading: null }
