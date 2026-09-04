@@ -44,13 +44,25 @@ const CATALOG = {
   ], { mode: 'agenda_numbered', agendaVariant: 'default' }),
 
   agenda_minimal_v1: layoutBase('agenda_minimal_v1', 'agenda', [
-    heading('HEADING', 'cols 2-11, rows 2-4', 'Agenda', {
-      typography: typo('heading', { fontSize: 40, align: 'center' }),
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Agenda', {
+      typography: typo('heading', { fontSize: 44, align: 'left' }),
     }),
-    body('BODY', 'cols 3-10, rows 4-8', 'Topic one\nTopic two\nTopic three\nTopic four', 6, {
-      typography: centeredTypo('body', { fontSize: 20 }),
-    }),
+    body('ITEM_1', 'cols 3-11, rows 3-4', 'Opening and goals', 1, { typography: typo('body', { fontWeight: 600, fontSize: 22 }) }),
+    body('ITEM_2', 'cols 3-11, rows 4-5', 'Context and constraints', 1, { typography: typo('body', { fontWeight: 600, fontSize: 22 }) }),
+    body('ITEM_3', 'cols 3-11, rows 5-6', 'Proposal and proof', 1, { typography: typo('body', { fontWeight: 600, fontSize: 22 }) }),
+    body('ITEM_4', 'cols 3-11, rows 6-7', 'Decisions and next steps', 1, { typography: typo('body', { fontWeight: 600, fontSize: 22 }) }),
   ], { mode: 'agenda_minimal', agendaVariant: 'default' }),
+
+  agenda_editorial_v1: layoutBase('agenda_editorial_v1', 'agenda', [
+    heading('HEADING', 'cols 2-5, rows 4-6', 'Agenda', {
+      typography: typo('heading', { fontSize: 22, align: 'center' }),
+    }),
+    body('ITEM_1', 'cols 6-12, rows 2-3', 'Opening and goals', 1, { typography: typo('body', { fontWeight: 600, fontSize: 16 }) }),
+    body('ITEM_2', 'cols 6-12, rows 3-4', 'Context and constraints', 1, { typography: typo('body', { fontWeight: 600, fontSize: 16 }) }),
+    body('ITEM_3', 'cols 6-12, rows 4-5', 'Proposal and proof', 1, { typography: typo('body', { fontWeight: 600, fontSize: 16 }) }),
+    body('ITEM_4', 'cols 6-12, rows 5-6', 'Decisions and owners', 1, { typography: typo('body', { fontWeight: 600, fontSize: 16 }) }),
+    body('ITEM_5', 'cols 6-12, rows 6-7', 'Q&A and next steps', 1, { typography: typo('body', { fontWeight: 600, fontSize: 16 }) }),
+  ], { mode: 'agenda_minimal', agendaVariant: 'editorial' }),
 
   agenda_two_column_v1: layoutBase('agenda_two_column_v1', 'agenda', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Session overview', { max_lines: 2 }),
@@ -93,7 +105,6 @@ function agendaFromSource(layoutId, sourceId, agendaVariant) {
 }
 
 Object.assign(CATALOG, {
-  agenda_editorial_v1: agendaFromSource('agenda_editorial_v1', 'agenda_minimal_v1', 'editorial'),
   agenda_cards_v1: agendaFromSource('agenda_cards_v1', 'agenda_minimal_v1', 'cards'),
   agenda_numbered_timeline_v1: agendaFromSource('agenda_numbered_timeline_v1', 'agenda_numbered_v1', 'timeline'),
   agenda_three_cards_hero_v1: agendaFromSource('agenda_three_cards_hero_v1', 'agenda_three_columns_hero_v1', 'cards'),

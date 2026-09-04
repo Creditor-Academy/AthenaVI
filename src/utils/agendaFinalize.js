@@ -39,8 +39,20 @@ import {
   isAgendaNumberedTimelineTextSlot,
   specToNumberedTimelineContent,
 } from './agendaNumberedTimeline.js'
+import {
+  agendaMinimalQuietGraphicFrame,
+  isAgendaMinimalQuietLayout,
+  isAgendaMinimalQuietTextSlot,
+  specToMinimalQuietContent,
+} from './agendaMinimalQuiet.js'
+import {
+  agendaEditorialGraphicFrame,
+  isAgendaEditorialLayout,
+  isAgendaEditorialTextSlot,
+  specToEditorialContent,
+} from './agendaEditorialHub.js'
 
-const AGENDA_CHROME_RE = /^AGENDA_(INFOGRAPHIC_CHROME|SPINE|PATH|SPLIT_LINE|TIMELINE|CURVE|TITLE_BLOCK|VISUAL_BLOCK|ZONE_|PANEL_|CARD_|ICON_|BADGE_|DIVIDER_|ARROW_|NODE_|COL_BLOCK_|COL_BAND_|COL_ICON_|COL_NUM_|COL_RULE|COL_CHROME_|NUM_CHROME_|NUM_TL_)/i
+const AGENDA_CHROME_RE = /^AGENDA_(INFOGRAPHIC_CHROME|SPINE|PATH|SPLIT_LINE|TIMELINE|CURVE|TITLE_BLOCK|VISUAL_BLOCK|ZONE_|PANEL_|CARD_|ICON_|BADGE_|DIVIDER_|ARROW_|NODE_|COL_BLOCK_|COL_BAND_|COL_ICON_|COL_NUM_|COL_RULE|COL_CHROME_|NUM_CHROME_|NUM_TL_|MIN_|ED_)/i
 
 function paletteColor(palette, role, fallback) {
   const v = palette?.[role] || palette?.colors?.[role]
@@ -63,14 +75,14 @@ function textBase(el) {
 }
 
 function repositionAgendaTextElements(elements, overlay, options) {
-  const { textColor, columnTextColor, isColouredThreeCol, isThreeCards, isThreeCardsHero, isHeroCards, isNumberedBlocks, isNumberedTimeline, headingY, headingH, canvasW } = options
+  const { textColor, columnTextColor, isColouredThreeCol, isThreeCards, isThreeCardsHero, isHeroCards, isNumberedBlocks, isNumberedTimeline, isMinimalQuiet, isEditorial, headingY, headingH, canvasW } = options
   const isRibbonCards = isThreeCards || isThreeCardsHero
   const stacked = isColouredThreeCol || isRibbonCards || isHeroCards || isNumberedBlocks || isNumberedTimeline
   return elements.map((el) => {
     const sid = String(el.slotId || '')
     const base = textBase(el)
     if (sid.toUpperCase() === 'HEADING') {
-      const h = isRibbonCards || isHeroCards || isNumberedBlocks || isNumberedTimeline
+      const h = isRibbonCards || isHeroCards || isNumberedBlocks || isNumberedTimeline || isMinimalQuiet || isEditorial
         ? (overlay.heading || { x: Math.round(canvasW * 0.06), y: headingY, width: Math.round(canvasW * 0.88), height: headingH })
         : stacked
         ? { x: Math.round(canvasW * 0.06), y: headingY, width: Math.round(canvasW * 0.88), height: headingH }
@@ -80,11 +92,11 @@ function repositionAgendaTextElements(elements, overlay, options) {
         placement: { ...h, rotation: 0, opacity: 1 },
         content: {
           ...base,
-          align: stacked ? 'center' : 'left',
+          align: isEditorial ? 'center' : stacked ? 'center' : 'left',
           verticalAlign: 'center',
-          fontSize: isHeroCards || isThreeCardsHero ? 32 : isNumberedBlocks || isNumberedTimeline ? 34 : isThreeCards ? 36 : stacked ? 40 : 36,
-          fontWeight: 800,
-          color: textColor,
+          fontSize: isEditorial ? 22 : isMinimalQuiet ? 44 : isHeroCards || isThreeCardsHero ? 32 : isNumberedBlocks || isNumberedTimeline ? 34 : isThreeCards ? 36 : stacked ? 40 : 36,
+          fontWeight: isEditorial ? 700 : 800,
+          color: isEditorial ? '#4B5563' : textColor,
           lineHeight: 1.1,
           clipToSlot: true,
         },
@@ -129,6 +141,20 @@ function repositionAgendaTextElements(elements, overlay, options) {
               wrap: 'wrap',
               clipToSlot: true,
               lineHeight: 1.35,
+            }
+            : isMinimalQuiet
+            ? {
+              ...colouredColumnTextContent(el.content, { color: textColor, fontSize: 22, fontWeight: 600, align: 'left', verticalAlign: 'center' }),
+              wrap: 'nowrap',
+              clipToSlot: true,
+              lineHeight: 1,
+            }
+            : isEditorial
+            ? {
+              ...colouredColumnTextContent(el.content, { color: '#ffffff', fontSize: 16, fontWeight: 600, align: 'left', verticalAlign: 'center' }),
+              wrap: 'nowrap',
+              clipToSlot: true,
+              lineHeight: 1,
             }
             : { ...base, align: 'left', verticalAlign: 'center', fontSize: 18, fontWeight: 600, color: textColor },
         }
@@ -224,7 +250,7 @@ function repositionAgendaTextElements(elements, overlay, options) {
 
 function injectAgendaChrome(specs, frame, palette, options) {
   const { graphicX, graphicY, graphicW, graphicH } = frame
-  const { prevBySlot, accent, soft, isColouredThreeCol, isThreeCards, isThreeCardsHero, isHeroCards, isNumberedBlocks, isNumberedTimeline } = options
+  const { prevBySlot, accent, soft, isColouredThreeCol, isThreeCards, isThreeCardsHero, isHeroCards, isNumberedBlocks, isNumberedTimeline, isMinimalQuiet, isEditorial } = options
   const isRibbonCards = isThreeCards || isThreeCardsHero
   const sx = graphicW / 1000
   const sy = graphicH / 560
@@ -262,6 +288,10 @@ function injectAgendaChrome(specs, frame, palette, options) {
       ? specToNumberedBlocksContent(spec)
       : isNumberedTimeline
       ? specToNumberedTimelineContent(spec)
+      : isMinimalQuiet
+      ? specToMinimalQuietContent(spec)
+      : isEditorial
+      ? specToEditorialContent(spec)
       : isColouredThreeCol
         ? specToThreeColumnContent(spec)
         : specToGraphicContent(spec, accent, soft)
@@ -307,6 +337,8 @@ function layoutAgendaFamily(elements, schema, palette = {}, canvas = {}) {
   const isHeroCards = isAgendaHeroCardsLayout(layoutId, family, variant)
   const isNumberedBlocks = isAgendaNumberedBlocksLayout(layoutId, family, variant)
   const isNumberedTimeline = isAgendaNumberedTimelineLayout(layoutId, family, variant)
+  const isMinimalQuiet = isAgendaMinimalQuietLayout(layoutId, family, variant)
+  const isEditorial = isAgendaEditorialLayout(layoutId, family, variant)
   const isRibbonCards = isThreeCards || isThreeCardsHero
   const stacked = isColouredThreeCol || isRibbonCards || isHeroCards || isNumberedBlocks || isNumberedTimeline
   const itemCount = schema?.preview?.agendaItems?.length
@@ -324,6 +356,10 @@ function layoutAgendaFamily(elements, schema, palette = {}, canvas = {}) {
     ? agendaNumberedBlocksGraphicFrame(canvasW, canvasH)
     : isNumberedTimeline
     ? agendaNumberedTimelineGraphicFrame(canvasW, canvasH)
+    : isMinimalQuiet
+    ? agendaMinimalQuietGraphicFrame(canvasW, canvasH)
+    : isEditorial
+    ? agendaEditorialGraphicFrame(canvasW, canvasH)
     : isColouredThreeCol
       ? agendaThreeColumnGraphicFrame(canvasW, canvasH)
       : agendaGraphicFrame(canvasW, canvasH)
@@ -340,6 +376,10 @@ function layoutAgendaFamily(elements, schema, palette = {}, canvas = {}) {
     ? stripped.filter((el) => isAgendaNumberedTimelineTextSlot(el.slotId))
     : isNumberedBlocks
     ? stripped.filter((el) => isAgendaNumberedBlocksTextSlot(el.slotId))
+    : isMinimalQuiet
+    ? stripped.filter((el) => isAgendaMinimalQuietTextSlot(el.slotId))
+    : isEditorial
+    ? stripped.filter((el) => isAgendaEditorialTextSlot(el.slotId))
     : stacked
     ? stripped.filter((el) => isAgendaThreeColumnTextSlot(el.slotId) || /^HERO_IMAGE$/i.test(String(el.slotId || '')))
     : stripped
@@ -353,6 +393,8 @@ function layoutAgendaFamily(elements, schema, palette = {}, canvas = {}) {
     isHeroCards,
     isNumberedBlocks,
     isNumberedTimeline,
+    isMinimalQuiet,
+    isEditorial,
     headingY,
     headingH,
     canvasW,
@@ -376,7 +418,7 @@ function layoutAgendaFamily(elements, schema, palette = {}, canvas = {}) {
     chromeSpecs,
     frame,
     palette,
-    { prevBySlot, accent, soft, isColouredThreeCol, isThreeCards, isThreeCardsHero, isHeroCards, isNumberedBlocks, isNumberedTimeline }
+    { prevBySlot, accent, soft, isColouredThreeCol, isThreeCards, isThreeCardsHero, isHeroCards, isNumberedBlocks, isNumberedTimeline, isMinimalQuiet, isEditorial }
   )
 
   return [...chrome, ...next]

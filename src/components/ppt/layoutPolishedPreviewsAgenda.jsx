@@ -133,19 +133,53 @@ export function PolishedAgendaMinimalPreview({ previewHints, ...props }) {
   const variant = previewHints.agendaVariant
 
   if (variant === 'editorial') {
+    const stops = items.slice(0, 5)
+    const labels = stops.length ? stops : ['Opening and goals', 'Context and constraints', 'Proposal and proof', 'Decisions and owners', 'Q&A and next steps']
     return (
-      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 12 : 4 }}>
-        <div style={{ fontSize: large ? '2rem' : '0.72rem', fontWeight: 800, color: theme.text, lineHeight: 1.05, maxWidth: '70%' }}>
-          {heading}
-        </div>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: large ? 10 : 4 }}>
-          {items.slice(0, 4).map((item, i) => (
-            <div key={i} style={{ display: 'flex', gap: large ? 12 : 4, alignItems: 'baseline', borderTop: `1px solid color-mix(in srgb, ${theme.text} 12%, transparent)`, paddingTop: large ? 8 : 3 }}>
-              <div style={{ fontSize: large ? '1.4rem' : '0.48rem', fontWeight: 800, color: theme.accent, lineHeight: 1 }}>{String(i + 1).padStart(2, '0')}</div>
-              <div style={{ fontSize: large ? '0.82rem' : '0.28rem', fontWeight: 600, color: theme.text }}>{item}</div>
-            </div>
-          ))}
-        </div>
+      <div {...fp}>
+        <AgendaSvgChrome previewHints={{ ...previewHints, agendaVariant: 'editorial', layout_id: previewHints.layout_id || 'agenda_editorial_v1' }} itemCount={5} />
+        <AgendaTextLayer>
+          <div style={{
+            position: 'absolute',
+            left: '6%',
+            top: '38%',
+            width: '30%',
+            textAlign: 'center',
+            fontSize: large ? '0.72rem' : '0.22rem',
+            fontWeight: 700,
+            color: theme.muted,
+            lineHeight: 1.2,
+          }}>
+            {heading}
+          </div>
+          <div style={{
+            position: 'absolute',
+            left: '54%',
+            right: '8%',
+            top: '14%',
+            bottom: '14%',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+          }}>
+            {labels.map((item, i) => (
+              <div key={i} style={{
+                height: '16%',
+                display: 'flex',
+                alignItems: 'center',
+                paddingLeft: large ? 10 : 4,
+                fontSize: large ? '0.55rem' : '0.16rem',
+                fontWeight: 600,
+                color: '#fff',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}>
+                {item}
+              </div>
+            ))}
+          </div>
+        </AgendaTextLayer>
       </div>
     )
   }
@@ -166,11 +200,16 @@ export function PolishedAgendaMinimalPreview({ previewHints, ...props }) {
   return (
     <div {...fp}>
       <AgendaSvgChrome previewHints={previewHints} itemCount={items.length} />
-      <AgendaTextLayer style={{ padding: pad(large), display: 'grid', gridTemplateColumns: '1fr 1fr', gap: large ? 16 : 6, alignItems: 'start' }}>
-        <div style={{ fontSize: large ? '1.6rem' : '0.58rem', fontWeight: 800, color: theme.text, lineHeight: 1.1 }}>{heading}</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3 }}>
-          {items.slice(0, 5).map((item, i) => (
-            <div key={i} style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>{item}</div>
+      <AgendaTextLayer style={{ padding: large ? '28px 48px 28px 56px' : '10px 16px 10px 18px', boxSizing: 'border-box' }}>
+        <div style={{ fontSize: large ? '1.7rem' : '0.52rem', fontWeight: 800, color: theme.text, lineHeight: 1.1, marginBottom: large ? 10 : 4 }}>
+          {heading}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 10 : 3 }}>
+          {items.slice(0, 4).map((item, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: large ? 14 : 6, minHeight: large ? 36 : 14 }}>
+              <div style={{ width: large ? 28 : 10, flexShrink: 0 }} />
+              <div style={{ fontSize: large ? '0.92rem' : '0.28rem', fontWeight: 600, color: theme.text }}>{item}</div>
+            </div>
           ))}
         </div>
       </AgendaTextLayer>

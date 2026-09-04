@@ -43,6 +43,8 @@ import {
 } from './agendaThreeCards.js'
 import { agendaNumberedBlocksPreviewSvg } from './agendaNumberedBlocks.js'
 import { agendaNumberedTimelinePreviewSvg } from './agendaNumberedTimeline.js'
+import { agendaMinimalQuietPreviewSvg } from './agendaMinimalQuiet.js'
+import { agendaEditorialPreviewSvg } from './agendaEditorialHub.js'
 
 export {
   AGENDA_GEOM,
@@ -150,6 +152,12 @@ export function agendaDiagramInlineSvg(family, variant, colors = {}, opts = {}) 
 }
 
 export function agendaPreviewSvg(family, variant, colors = {}, opts = {}) {
+  if (family === 'minimal' && variant === 'editorial') {
+    return agendaEditorialPreviewSvg()
+  }
+  if (family === 'minimal' && variant !== 'editorial' && variant !== 'icon_list' && variant !== 'cards') {
+    return agendaMinimalQuietPreviewSvg()
+  }
   if (family === 'numbered' && (variant === 'path' || variant === 'timeline')) {
     return agendaNumberedTimelinePreviewSvg()
   }

@@ -898,7 +898,7 @@ function fillPreviewDataFromSlots(schema) {
     preview.agendaItems = buildAgendaItemsFromNumberedSlots(slots)
   }
   if (mode === 'agenda_minimal' && !Array.isArray(preview.agendaItems)) {
-    preview.agendaItems = buildAgendaItemsFromMinimalBody(slots)
+    preview.agendaItems = buildAgendaItemsFromNumberedSlots(slots) || buildAgendaItemsFromMinimalBody(slots)
   }
   if (mode === 'process_flow' && !Array.isArray(preview.milestones)) {
     preview.milestones = buildAgendaMilestonesFromSlots(slots)
