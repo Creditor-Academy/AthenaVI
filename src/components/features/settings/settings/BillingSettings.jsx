@@ -28,6 +28,7 @@ import {
   isTeamWorkspaceType,
   isPrivateWorkspaceType,
   sumRecentUsageCredits,
+  collapsePresentationCreditTransactions,
 } from '../../../../utils/creditTransactions.js'
 import { formatBytes } from '../../../../utils/formatSize.js'
 import { formatStorageTransactionType, formatStorageUpgradeStatus, formatStorageUpgradeUrgency, getStorageUpgradeStatusVariant } from '../../../../utils/storageQuota.js'
@@ -233,14 +234,15 @@ function BillingSettings() {
     setHistoryLoading(true)
     try {
       const { workspaceType, role } = resolveBillingContext(workspaceId, typeHint)
+      // Larger page so a full deck's outline/slide/image charges can collapse into one row.
       const result = await creditsService.getHistoryForWorkspaceContext(workspaceId, {
         workspaceType,
         role,
         page,
-        limit: 10,
+        limit: 50,
       })
 
-      setHistory(result.transactions)
+      setHistory(collapsePresentationCreditTransactions(result.transactions))
       setHistoryPagination(result.pagination)
       setHistoryPage(page)
     } finally {
@@ -256,7 +258,7 @@ function BillingSettings() {
         workspaceType,
         role,
         page: 1,
-        limit: 50,
+        limit: 100,
       })
       setRecentUsage(sumRecentUsageCredits(result.transactions))
     } catch {

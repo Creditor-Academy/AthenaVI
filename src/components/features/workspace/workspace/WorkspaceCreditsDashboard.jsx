@@ -10,6 +10,7 @@ import {
   MdAccessTime,
 } from 'react-icons/md'
 import creditsService from '../../../../services/creditsService.js'
+import { collapsePresentationCreditTransactions } from '../../../../utils/creditTransactions.js'
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -114,6 +115,10 @@ function resolveActivityLabel(tx) {
   if (d.feature === 'heygen_video') {
     const base = 'Avatar video'
     return d.projectName ? `${base} in "${d.projectName}"` : base
+  }
+
+  if (d.feature === 'ppt_generation' || String(d.feature || '').startsWith('ppt_')) {
+    return d.displayName || d.label || TYPE_LABELS[tx.type] || tx.type || '—'
   }
 
   return d.label || TYPE_LABELS[tx.type] || tx.type || '—'
@@ -232,6 +237,7 @@ function LoadingState({ cols = 4 }) {
 // ---------------------------------------------------------------------------
 function TxTable({ transactions, loading, emptyLabel }) {
   if (loading) return <LoadingState cols={4} />
+  const rows = collapsePresentationCreditTransactions(transactions)
   return (
     <div className="wcd-table-wrap">
       <table className="wcd-table">
@@ -244,10 +250,10 @@ function TxTable({ transactions, loading, emptyLabel }) {
           </tr>
         </thead>
         <tbody>
-          {transactions.length === 0 ? (
+          {rows.length === 0 ? (
             <tr><td colSpan={4}><EmptyState label={emptyLabel} /></td></tr>
           ) : (
-            transactions.map((tx, i) => (
+            rows.map((tx, i) => (
               <tr key={tx.id || i}>
                 <td><ActivityCell tx={tx} /></td>
                 <td><TypeBadge type={tx.type} /></td>
@@ -279,7 +285,7 @@ function MyUsagePanel({ workspaceId }) {
     setLoading(true)
     setError(null)
     try {
-      const result = await creditsService.getMyWorkspaceHistory(workspaceId, { page: p, limit: 10 })
+      const result = await creditsService.getMyWorkspaceHistory(workspaceId, { page: p, limit: 50 })
       setData(result)
     } catch (err) {
       setError(err.message || 'Failed to load usage')
@@ -328,7 +334,7 @@ function WorkspaceHistoryPanel({ workspaceId }) {
     setLoading(true)
     setError(null)
     try {
-      const result = await creditsService.getWorkspaceHistory(workspaceId, { page: p, limit: 10 })
+      const result = await creditsService.getWorkspaceHistory(workspaceId, { page: p, limit: 50 })
       setData(result)
     } catch (err) {
       setError(err.message || 'Failed to load history')
