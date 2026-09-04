@@ -8,14 +8,33 @@ import {
   MdPresentToAll,
 } from 'react-icons/md'
 import presentationService from '../../services/presentationService'
+import { ensureFontCssUrl } from '../../utils/googleFonts'
+import {
+  captureNodeToJpegBlob,
+  stashPreviewHandoff,
+} from '../../utils/deckPreviewCapture'
 import ExportPresentationModal from '../Slides/AIPptComponents/ExportPresentationModal'
+import DeckLiveSlideStage, { resolvePreviewThemeVisual } from './DeckLiveSlideStage'
 import './PresentationDeckPreviewModal.css'
 
-const MAX_POLL_MS = 60_000
-const DEFAULT_POLL_MS = 1200
+const PAGE_LIMIT = 8
+
+/** In-memory preview cache so re-open can send If-None-Match and keep slides. */
+const previewCache = new Map()
 
 function sortSlides(slides) {
   return [...(slides || [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+}
+
+function mergeSlides(existing, incoming) {
+  const map = new Map()
+  for (const s of existing || []) {
+    if (s?.id) map.set(s.id, s)
+  }
+  for (const s of incoming || []) {
+    if (s?.id) map.set(s.id, s)
+  }
+  return sortSlides([...map.values()])
 }
 
 function aspectBoxRatio(aspectRatio) {
@@ -28,8 +47,8 @@ function aspectBoxRatio(aspectRatio) {
 function statusLabel(status) {
   const s = String(status || '').toUpperCase()
   if (s === 'READY') return 'Ready'
-  if (s === 'PARTIAL') return 'Generating…'
-  if (s === 'PENDING') return 'Preparing…'
+  if (s === 'GENERATING') return 'Generating…'
+  if (s === 'FAILED') return 'Failed'
   return s || '—'
 }
 
@@ -38,183 +57,361 @@ function isNetworkDown(err) {
   return /failed to fetch|networkerror|econnrefused|network/i.test(msg)
 }
 
-function cardFallbackUrl(item) {
-  return item?.thumbnailUrl || item?.thumbnail || ''
+function FilmstripThumb({
+  slide,
+  index,
+  active,
+  aspectRatio,
+  themeVisual,
+  fontsReady,
+  onSelect,
+  buttonRef,
+}) {
+  const hostRef = useRef(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const node = hostRef.current
+    if (!node || typeof IntersectionObserver === 'undefined') {
+      setVisible(true)
+      return undefined
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) setVisible(true)
+      },
+      { root: null, rootMargin: '120px 0px', threshold: 0.01 }
+    )
+    io.observe(node)
+    return () => io.disconnect()
+  }, [])
+
+  return (
+    <button
+      ref={(node) => {
+        hostRef.current = node
+        if (typeof buttonRef === 'function') buttonRef(node)
+        else if (buttonRef) buttonRef.current = node
+      }}
+      type="button"
+      className={`deck-preview-thumb ${active ? 'is-active' : ''} ${
+        !slide || !fontsReady ? 'is-pending' : ''
+      }`}
+      onClick={() => onSelect(index)}
+      aria-label={`Slide ${index + 1}${slide?.title ? `: ${slide.title}` : ''}`}
+      aria-current={active ? 'true' : undefined}
+    >
+      <span className="deck-preview-thumb-num">{index + 1}</span>
+      <span
+        className="deck-preview-thumb-frame"
+        style={{ aspectRatio: aspectBoxRatio(aspectRatio) }}
+      >
+        {slide && fontsReady && visible ? (
+          <DeckLiveSlideStage
+            slide={slide}
+            themeVisual={themeVisual}
+            aspectRatio={aspectRatio}
+            className="deck-preview-thumb-live"
+          />
+        ) : (
+          <span className="deck-preview-thumb-placeholder">
+            <span className="deck-preview-shimmer" />
+          </span>
+        )}
+      </span>
+    </button>
+  )
 }
 
-export default function PresentationDeckPreviewModal({
-  item,
-  onClose,
-  onEdit,
-}) {
+export default function PresentationDeckPreviewModal({ item, onClose, onEdit }) {
   const workspaceId = item?.workspaceId
   const presentationId = item?.id || item?._id
   const titleFallback = item?.title || item?.name || 'Presentation'
+  const cacheKey = `${workspaceId || ''}:${presentationId || ''}`
 
-  const [deck, setDeck] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [meta, setMeta] = useState(() => previewCache.get(cacheKey)?.meta || null)
+  const [slides, setSlides] = useState(() => previewCache.get(cacheKey)?.slides || [])
+  const [loading, setLoading] = useState(!previewCache.get(cacheKey)?.slides?.length)
   const [error, setError] = useState('')
   const [activeIndex, setActiveIndex] = useState(0)
   const [exportOpen, setExportOpen] = useState(false)
-  const [imgLoaded, setImgLoaded] = useState(false)
-  const [pollTimedOut, setPollTimedOut] = useState(false)
+  const [fontsReady, setFontsReady] = useState(false)
+  const [mainReady, setMainReady] = useState(false)
 
-  const etagRef = useRef(null)
-  const pollStartedAtRef = useRef(0)
-  const lastPollMsRef = useRef(0)
-  const lastStatusRef = useRef('PENDING')
-  const filmstripRef = useRef(null)
+  const etagRef = useRef(previewCache.get(cacheKey)?.etag || null)
+  const nextOffsetRef = useRef(null)
+  const pagingRef = useRef(false)
+  const coverAttemptedRef = useRef(false)
+  const coverStaleRef = useRef(false)
+  const slideOneHostRef = useRef(null)
   const activeThumbRef = useRef(null)
-  const loadedUrlsRef = useRef(new Set())
+  const pollTimerRef = useRef(null)
+  const deckRef = useRef(null)
 
-  const slides = useMemo(() => sortSlides(deck?.slides), [deck?.slides])
+  const aspectRatio = meta?.aspectRatio || item?.aspectRatio || '16:9'
+  const themeVisual = useMemo(
+    () => resolvePreviewThemeVisual(meta?.themeTokens, meta?.themeTokens?.wizardColorThemeId),
+    [meta?.themeTokens]
+  )
   const activeSlide = slides[activeIndex] || null
-  const aspectRatio = deck?.aspectRatio || item?.aspectRatio || '16:9'
-  const previewStatus = deck?.previewStatus || 'PENDING'
-  const stillGenerating = previewStatus === 'PENDING' || previewStatus === 'PARTIAL'
-  const readyCount = Number(deck?.readyCount) || slides.filter((s) => s.previewImageUrl).length
-  const provisionalUrl = cardFallbackUrl(item)
+  const slideCount = meta?.slideCount ?? slides.length
+  const deckStatus = String(meta?.status || '').toUpperCase()
+  const stillGenerating = deckStatus === 'GENERATING'
 
-  // Preload slide images in background so main stage switching is instant
-  useEffect(() => {
-    if (!slides || !slides.length) return
-    slides.forEach((slide) => {
-      const url = slide?.previewImageUrl
-      if (url && !loadedUrlsRef.current.has(url)) {
-        const img = new Image()
-        img.onload = () => loadedUrlsRef.current.add(url)
-        img.src = url
-        if (img.complete) loadedUrlsRef.current.add(url)
+  const persistCache = useCallback(
+    (nextMeta, nextSlides, etag) => {
+      if (!cacheKey) return
+      previewCache.set(cacheKey, {
+        meta: nextMeta,
+        slides: nextSlides,
+        etag: etag || etagRef.current,
+      })
+    },
+    [cacheKey]
+  )
+
+  const applyPage = useCallback(
+    (payload, { replace = false } = {}) => {
+      if (!payload || payload.notModified) return
+      const nextMeta = {
+        id: payload.id,
+        title: payload.title,
+        status: payload.status,
+        aspectRatio: payload.aspectRatio || '16:9',
+        locale: payload.locale,
+        themeTokens: payload.themeTokens || null,
+        fontCssUrl: payload.fontCssUrl || null,
+        contentUpdatedAt: payload.contentUpdatedAt,
+        slideCount: payload.slideCount,
+        coverStale: Boolean(payload.coverStale),
+        nextPollMs: Number(payload.nextPollMs) || 0,
       }
+      coverStaleRef.current = nextMeta.coverStale
+      setMeta(nextMeta)
+      setSlides((prev) => {
+        const merged = replace
+          ? sortSlides(payload.slides || [])
+          : mergeSlides(prev, payload.slides || [])
+        persistCache(nextMeta, merged, payload.etag)
+        deckRef.current = { ...nextMeta, slides: merged }
+        return merged
+      })
+      setError('')
+      setLoading(false)
+      nextOffsetRef.current =
+        payload.nextOffset == null || payload.nextOffset === undefined
+          ? null
+          : Number(payload.nextOffset)
+      setActiveIndex((prev) => {
+        const count = Math.max(
+          Number(payload.slideCount) || 0,
+          (payload.slides || []).length
+        )
+        if (!count) return 0
+        return Math.min(prev, Math.max(0, count - 1))
+      })
+    },
+    [persistCache]
+  )
+
+  const waitForFonts = useCallback(async (fontCssUrl, themeTokens) => {
+    if (fontCssUrl) ensureFontCssUrl(fontCssUrl)
+    try {
+      if (document.fonts?.ready) {
+        await Promise.race([
+          document.fonts.ready,
+          new Promise((r) => setTimeout(r, 2500)),
+        ])
+      } else {
+        await new Promise((r) => setTimeout(r, 120))
+      }
+    } catch {
+      /* ignore */
+    }
+    // themeTokens unused — fontCssUrl is the deck stylesheet
+    void themeTokens
+    setFontsReady(true)
+  }, [])
+
+  const fetchPage = useCallback(
+    async ({ offset = 0, limit = PAGE_LIMIT, etag } = {}) => {
+      if (!workspaceId || !presentationId) {
+        setError('Missing presentation id')
+        setLoading(false)
+        return null
+      }
+      try {
+        const payload = await presentationService.getPresentationPreview(
+          workspaceId,
+          presentationId,
+          { etag, offset, limit }
+        )
+        if (payload?.etag) etagRef.current = payload.etag
+        return payload
+      } catch (err) {
+        const message = isNetworkDown(err)
+          ? 'API is unreachable. Start the backend on port 9000, then retry.'
+          : err?.message || 'Could not load deck preview'
+        setError(message)
+        setLoading(false)
+        return null
+      }
+    },
+    [workspaceId, presentationId]
+  )
+
+  const pageRemaining = useCallback(async () => {
+    if (pagingRef.current) return
+    pagingRef.current = true
+    try {
+      while (nextOffsetRef.current != null) {
+        const offset = nextOffsetRef.current
+        // eslint-disable-next-line no-await-in-loop
+        const payload = await fetchPage({ offset, limit: PAGE_LIMIT })
+        if (!payload || payload.notModified) break
+        applyPage(payload)
+        if (payload.nextOffset == null) {
+          nextOffsetRef.current = null
+          break
+        }
+        if (Number(payload.nextOffset) === offset) {
+          nextOffsetRef.current = null
+          break
+        }
+      }
+    } finally {
+      pagingRef.current = false
+    }
+  }, [fetchPage, applyPage])
+
+  const loadInitial = useCallback(async () => {
+    setLoading(true)
+    setError('')
+    setFontsReady(false)
+    setMainReady(false)
+    coverAttemptedRef.current = false
+
+    const cached = previewCache.get(cacheKey)
+    const payload = await fetchPage({
+      offset: 0,
+      limit: PAGE_LIMIT,
+      etag: etagRef.current || cached?.etag || null,
     })
-  }, [slides])
+    if (!payload) return
+
+    if (payload.notModified) {
+      if (cached?.slides?.length) {
+        setMeta(cached.meta)
+        setSlides(cached.slides)
+        deckRef.current = { ...cached.meta, slides: cached.slides }
+        coverStaleRef.current = Boolean(cached.meta?.coverStale)
+        setLoading(false)
+        await waitForFonts(cached.meta?.fontCssUrl, cached.meta?.themeTokens)
+        // If deck is generating, still poll
+        if ((cached.meta?.nextPollMs || 0) > 0) {
+          /* polling effect handles */
+        }
+        return
+      }
+      // 304 with empty cache — refetch without etag
+      const fresh = await fetchPage({ offset: 0, limit: PAGE_LIMIT })
+      if (!fresh || fresh.notModified) {
+        setLoading(false)
+        return
+      }
+      applyPage(fresh, { replace: true })
+      await waitForFonts(fresh.fontCssUrl, fresh.themeTokens)
+      pageRemaining()
+      return
+    }
+
+    applyPage(payload, { replace: true })
+    await waitForFonts(payload.fontCssUrl, payload.themeTokens)
+    pageRemaining()
+  }, [cacheKey, fetchPage, applyPage, waitForFonts, pageRemaining])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      if (cancelled) return
+      await loadInitial()
+    })()
+    return () => {
+      cancelled = true
+      if (pollTimerRef.current) {
+        window.clearTimeout(pollTimerRef.current)
+        pollTimerRef.current = null
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- remount per presentation
+  }, [workspaceId, presentationId])
+
+  // Poll only while the deck is still GENERATING (nextPollMs > 0).
+  useEffect(() => {
+    const nextPoll = Number(meta?.nextPollMs) || 0
+    if (nextPoll <= 0) return undefined
+
+    let cancelled = false
+    const schedule = (ms) => {
+      pollTimerRef.current = window.setTimeout(async () => {
+        if (cancelled) return
+        const payload = await fetchPage({ offset: 0, limit: PAGE_LIMIT })
+        if (cancelled) return
+        if (!payload || payload.notModified) {
+          schedule(nextPoll)
+          return
+        }
+        applyPage(payload, { replace: true })
+        await waitForFonts(payload.fontCssUrl, payload.themeTokens)
+        const again = Number(payload.nextPollMs) || 0
+        if (again > 0) schedule(again)
+        if (payload.nextOffset != null) pageRemaining()
+      }, ms)
+    }
+    schedule(nextPoll)
+    return () => {
+      cancelled = true
+      if (pollTimerRef.current) {
+        window.clearTimeout(pollTimerRef.current)
+        pollTimerRef.current = null
+      }
+    }
+  }, [meta?.nextPollMs, fetchPage, applyPage, waitForFonts, pageRemaining])
+
+  const slide0 = slides.find((s) => (s.order ?? 0) === 0) || slides[0] || null
+  const needsCoverCapture = Boolean(meta?.coverStale) && Boolean(slide0)
+
+  // Cover capture — once per modal open when coverStale, after slide 1 is on screen.
+  useEffect(() => {
+    if (!fontsReady || !mainReady) return
+    if (!needsCoverCapture || coverAttemptedRef.current) return
+    if (!workspaceId || !presentationId) return
+    const node = slideOneHostRef.current
+    if (!node) return
+
+    coverAttemptedRef.current = true
+    ;(async () => {
+      try {
+        const blob = await captureNodeToJpegBlob(node, { quality: 0.82, pixelRatio: 1 })
+        if (!blob) return
+        await presentationService.uploadThumbnailImage(workspaceId, presentationId, blob)
+      } catch {
+        /* fire-and-forget */
+      }
+    })()
+  }, [fontsReady, mainReady, needsCoverCapture, workspaceId, presentationId])
 
   const goTo = useCallback(
     (index) => {
-      if (!slides.length) return
-      const next = Math.max(0, Math.min(slides.length - 1, index))
-      const targetUrl = slides[next]?.previewImageUrl
-      setActiveIndex(next)
-      if (targetUrl && loadedUrlsRef.current.has(targetUrl)) {
-        setImgLoaded(true)
-      } else {
-        setImgLoaded(false)
-      }
+      const total = Math.max(slideCount, slides.length)
+      if (!total) return
+      setActiveIndex(Math.max(0, Math.min(total - 1, index)))
     },
-    [slides]
+    [slideCount, slides.length]
   )
 
   const goPrev = useCallback(() => goTo(activeIndex - 1), [activeIndex, goTo])
   const goNext = useCallback(() => goTo(activeIndex + 1), [activeIndex, goTo])
-
-  const applyPreviewPayload = useCallback((payload) => {
-    if (!payload || payload.notModified) return
-    setDeck(payload)
-    setError('')
-    setLoading(false)
-    lastStatusRef.current = String(payload.previewStatus || '').toUpperCase() || 'READY'
-    lastPollMsRef.current = Number(payload.nextPollMs) || 0
-    setActiveIndex((prev) => {
-      const count = Array.isArray(payload.slides) ? payload.slides.length : 0
-      if (count === 0) return 0
-      return Math.min(prev, count - 1)
-    })
-  }, [])
-
-  const shouldContinuePolling = useCallback((payload) => {
-    const elapsed = Date.now() - pollStartedAtRef.current
-    if (elapsed >= MAX_POLL_MS) {
-      setPollTimedOut(true)
-      return false
-    }
-    if (payload && !payload.notModified) {
-      const status = String(payload.previewStatus || '').toUpperCase()
-      const nextPoll = Number(payload.nextPollMs)
-      if (Number.isFinite(nextPoll) && nextPoll > 0) return true
-      return status === 'PENDING' || status === 'PARTIAL'
-    }
-    const status = lastStatusRef.current
-    return (
-      lastPollMsRef.current > 0 ||
-      status === 'PENDING' ||
-      status === 'PARTIAL'
-    )
-  }, [])
-
-  const pollDelayFor = useCallback((payload) => {
-    if (payload && !payload.notModified) {
-      const nextPoll = Number(payload.nextPollMs)
-      if (Number.isFinite(nextPoll) && nextPoll > 0) return nextPoll
-    }
-    if (lastPollMsRef.current > 0) return lastPollMsRef.current
-    return DEFAULT_POLL_MS
-  }, [])
-
-  const fetchPreview = useCallback(async () => {
-    if (!workspaceId || !presentationId) {
-      setError('Missing presentation id')
-      setLoading(false)
-      return null
-    }
-    try {
-      const payload = await presentationService.getPresentationPreview(
-        workspaceId,
-        presentationId,
-        { etag: etagRef.current }
-      )
-      if (payload?.etag) etagRef.current = payload.etag
-      if (!payload?.notModified) applyPreviewPayload(payload)
-      return payload
-    } catch (err) {
-      const message = isNetworkDown(err)
-        ? 'API is unreachable. Start the backend on port 9000, then retry.'
-        : err?.message || 'Could not load deck preview'
-      setError(message)
-      setLoading(false)
-      return null
-    }
-  }, [workspaceId, presentationId, applyPreviewPayload])
-
-  useEffect(() => {
-    let cancelled = false
-    let timer = null
-    etagRef.current = null
-    pollStartedAtRef.current = Date.now()
-    lastPollMsRef.current = 0
-    lastStatusRef.current = 'PENDING'
-    setLoading(true)
-    setError('')
-    setDeck(null)
-    setActiveIndex(0)
-    setImgLoaded(false)
-    setPollTimedOut(false)
-
-    const schedule = (ms) => {
-      if (cancelled) return
-      timer = window.setTimeout(async () => {
-        if (cancelled) return
-        const payload = await fetchPreview()
-        if (cancelled || !payload) return
-        if (shouldContinuePolling(payload)) {
-          schedule(pollDelayFor(payload))
-        }
-      }, ms)
-    }
-
-    ;(async () => {
-      const payload = await fetchPreview()
-      if (cancelled || !payload) return
-      if (shouldContinuePolling(payload)) {
-        schedule(pollDelayFor(payload))
-      }
-    })()
-
-    return () => {
-      cancelled = true
-      if (timer) window.clearTimeout(timer)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount per presentation
-  }, [workspaceId, presentationId, fetchPreview, shouldContinuePolling, pollDelayFor])
 
   useEffect(() => {
     const onKey = (e) => {
@@ -244,15 +441,22 @@ export default function PresentationDeckPreviewModal({
   }, [activeIndex])
 
   const handleEdit = () => {
-    onEdit?.(item)
+    const handoff = deckRef.current || {
+      ...meta,
+      slides,
+    }
+    stashPreviewHandoff(presentationId, handoff)
+    onEdit?.({
+      ...item,
+      id: presentationId,
+      workspaceId,
+      previewDeck: handoff,
+    })
     onClose?.()
   }
 
-  const slideCount = deck?.slideCount ?? slides.length
-  // Always show a JPEG when we have one — never hide it behind PENDING status.
-  const mainUrl = activeSlide?.previewImageUrl || (!deck ? provisionalUrl : null) || null
-  const waitingForFirstSnapshot = Boolean(deck) && !mainUrl && stillGenerating && !pollTimedOut
-  const showFailedState = Boolean(deck) && !mainUrl && (pollTimedOut || !stillGenerating)
+  const filmstripSlots = Math.max(slideCount || 0, slides.length)
+  const onMainRendered = useCallback(() => setMainReady(true), [])
 
   return (
     <>
@@ -269,13 +473,13 @@ export default function PresentationDeckPreviewModal({
             <div className="deck-preview-header-meta">
               <div className="deck-preview-titles">
                 <div className="deck-preview-title-row">
-                  <h2>{deck?.title || titleFallback}</h2>
+                  <h2>{meta?.title || titleFallback}</h2>
                   <span className="deck-preview-badge">Presentation</span>
                 </div>
                 <p>
                   {slideCount ? `${slideCount} slide${slideCount === 1 ? '' : 's'}` : '—'}
                   <span aria-hidden>·</span>
-                  {statusLabel(previewStatus)}
+                  {statusLabel(deckStatus || meta?.status)}
                   <span aria-hidden>·</span>
                   {aspectRatio}
                 </p>
@@ -315,57 +519,34 @@ export default function PresentationDeckPreviewModal({
             <aside className="deck-preview-filmstrip" aria-label="Slides">
               <div className="deck-preview-filmstrip-head">
                 <span>Slides</span>
-                <span>{slides.length || slideCount || 0}</span>
+                <span>{filmstripSlots || 0}</span>
               </div>
-              <div className="deck-preview-filmstrip-list" ref={filmstripRef}>
+              <div className="deck-preview-filmstrip-list">
                 {loading && !slides.length
                   ? Array.from({ length: Math.min(6, item?.slideCount || 4) }).map((_, i) => (
                       <div key={`skel-${i}`} className="deck-preview-thumb is-skeleton" />
                     ))
                   : null}
 
-                {slides.map((slide, index) => {
-                  const url = slide.previewImageUrl
-                  const pending = !url
+                {Array.from({ length: filmstripSlots }).map((_, index) => {
+                  const slide = slides[index] || null
                   const active = index === activeIndex
                   return (
-                    <button
-                      key={slide.id || index}
-                      type="button"
-                      ref={active ? activeThumbRef : null}
-                      className={`deck-preview-thumb ${active ? 'is-active' : ''} ${
-                        pending ? 'is-pending' : ''
-                      }`}
-                      onClick={() => goTo(index)}
-                      aria-label={`Slide ${index + 1}${slide.title ? `: ${slide.title}` : ''}`}
-                      aria-current={active ? 'true' : undefined}
-                    >
-                      <span className="deck-preview-thumb-num">{index + 1}</span>
-                      <span
-                        className="deck-preview-thumb-frame"
-                        style={{ aspectRatio: aspectBoxRatio(aspectRatio) }}
-                      >
-                        {pending ? (
-                          <span className="deck-preview-thumb-placeholder">
-                            <span className="deck-preview-shimmer" />
-                          </span>
-                        ) : (
-                          <img
-                            src={url}
-                            alt=""
-                            draggable={false}
-                            loading="lazy"
-                            onLoad={() => {
-                              if (url) loadedUrlsRef.current.add(url)
-                            }}
-                          />
-                        )}
-                      </span>
-                    </button>
+                    <FilmstripThumb
+                      key={slide?.id || `slot-${index}`}
+                      slide={slide}
+                      index={index}
+                      active={active}
+                      aspectRatio={aspectRatio}
+                      themeVisual={themeVisual}
+                      fontsReady={fontsReady}
+                      onSelect={goTo}
+                      buttonRef={active ? activeThumbRef : null}
+                    />
                   )
                 })}
 
-                {!loading && !slides.length ? (
+                {!loading && !filmstripSlots ? (
                   <p className="deck-preview-filmstrip-empty">No slides yet</p>
                 ) : null}
               </div>
@@ -373,82 +554,72 @@ export default function PresentationDeckPreviewModal({
 
             <section className="deck-preview-stage-wrap">
               <div className="deck-preview-stage">
-                {loading && !deck && !provisionalUrl ? (
+                {loading && !slides.length ? (
                   <div className="deck-preview-placeholder">
                     <div className="deck-preview-shimmer" />
                     <p>Loading deck preview…</p>
                   </div>
-                ) : error && !deck && !provisionalUrl ? (
+                ) : error && !slides.length ? (
                   <div className="deck-preview-placeholder">
                     <MdPresentToAll size={48} />
                     <p>{error}</p>
-                    <button type="button" className="deck-preview-btn deck-preview-btn--ghost" onClick={fetchPreview}>
+                    <button
+                      type="button"
+                      className="deck-preview-btn deck-preview-btn--ghost"
+                      onClick={loadInitial}
+                    >
                       Retry
                     </button>
                   </div>
-                ) : waitingForFirstSnapshot ? (
-                  <div className="deck-preview-placeholder is-pending">
-                    <div className="deck-preview-shimmer" />
-                    <p>
-                      {readyCount > 0
-                        ? `Rendered ${readyCount} of ${slideCount || slides.length} slides…`
-                        : 'Rendering first slide snapshot…'}
-                    </p>
-                    <span className="deck-preview-hint">This usually takes a few seconds</span>
-                  </div>
-                ) : showFailedState ? (
+                ) : !fontsReady ? (
                   <div className="deck-preview-placeholder">
-                    <MdPresentToAll size={48} />
-                    <p>
-                      {error ||
-                        (pollTimedOut
-                          ? 'Snapshots are still generating. Open the editor, or retry in a moment.'
-                          : 'Preview not ready for this slide yet')}
-                    </p>
-                    <div className="deck-preview-placeholder-actions">
-                      <button
-                        type="button"
-                        className="deck-preview-btn deck-preview-btn--ghost"
-                        onClick={() => {
-                          setPollTimedOut(false)
-                          pollStartedAtRef.current = Date.now()
-                          fetchPreview()
-                        }}
-                      >
-                        Retry
-                      </button>
-                      <button
-                        type="button"
-                        className="deck-preview-btn deck-preview-btn--primary"
-                        onClick={handleEdit}
-                      >
-                        <MdEdit size={16} />
-                        Edit
-                      </button>
-                    </div>
+                    <div className="deck-preview-shimmer" />
+                    <p>Preparing fonts…</p>
+                  </div>
+                ) : !activeSlide ? (
+                  <div className="deck-preview-placeholder">
+                    <div className="deck-preview-shimmer" />
+                    <p>{stillGenerating ? 'Generating slides…' : 'Loading slide…'}</p>
                   </div>
                 ) : (
-                  <img
-                    key={mainUrl}
-                    src={mainUrl}
-                    alt={activeSlide?.title || `Slide ${activeIndex + 1}`}
-                    className={`deck-preview-main-img ${imgLoaded ? 'is-ready' : ''}`}
+                  <div
+                    className="deck-preview-live-frame"
                     style={{ aspectRatio: aspectBoxRatio(aspectRatio) }}
-                    draggable={false}
-                    onLoad={() => {
-                      if (mainUrl) loadedUrlsRef.current.add(mainUrl)
-                      setImgLoaded(true)
-                    }}
-                    ref={(imgNode) => {
-                      if (imgNode && imgNode.complete && imgNode.naturalWidth > 0) {
-                        if (mainUrl) loadedUrlsRef.current.add(mainUrl)
-                        setImgLoaded(true)
+                  >
+                    <DeckLiveSlideStage
+                      key={activeSlide.id || activeIndex}
+                      slide={activeSlide}
+                      themeVisual={themeVisual}
+                      aspectRatio={aspectRatio}
+                      className="deck-preview-main-live"
+                      onRendered={
+                        !needsCoverCapture || activeSlide?.id === slide0?.id
+                          ? onMainRendered
+                          : undefined
                       }
-                    }}
-                  />
+                      stageRef={
+                        activeSlide?.id === slide0?.id ? slideOneHostRef : undefined
+                      }
+                    />
+                  </div>
                 )}
 
-                {slides.length > 1 ? (
+                {needsCoverCapture &&
+                fontsReady &&
+                slide0 &&
+                activeSlide?.id !== slide0.id ? (
+                  <div className="deck-preview-cover-capture" aria-hidden="true">
+                    <DeckLiveSlideStage
+                      slide={slide0}
+                      themeVisual={themeVisual}
+                      aspectRatio={aspectRatio}
+                      stageRef={slideOneHostRef}
+                      onRendered={onMainRendered}
+                    />
+                  </div>
+                ) : null}
+
+                {slides.length > 1 || filmstripSlots > 1 ? (
                   <>
                     <button
                       type="button"
@@ -463,7 +634,7 @@ export default function PresentationDeckPreviewModal({
                       type="button"
                       className="deck-preview-nav deck-preview-nav--next"
                       onClick={goNext}
-                      disabled={activeIndex >= slides.length - 1}
+                      disabled={activeIndex >= filmstripSlots - 1}
                       aria-label="Next slide"
                     >
                       <MdChevronRight size={28} />
@@ -474,19 +645,17 @@ export default function PresentationDeckPreviewModal({
 
               <footer className="deck-preview-footer">
                 <span className="deck-preview-counter">
-                  {slides.length ? `${activeIndex + 1} / ${slides.length}` : '0 / 0'}
+                  {filmstripSlots ? `${activeIndex + 1} / ${filmstripSlots}` : '0 / 0'}
                 </span>
                 <span className="deck-preview-slide-title">
-                  {activeSlide?.title || (slides.length ? `Slide ${activeIndex + 1}` : '')}
+                  {activeSlide?.title || (filmstripSlots ? `Slide ${activeIndex + 1}` : '')}
                 </span>
-                {stillGenerating && !pollTimedOut ? (
-                  <span className="deck-preview-live-pill">
-                    {readyCount > 0
-                      ? `${readyCount}/${slideCount || slides.length} ready`
-                      : 'Updating previews'}
-                  </span>
+                {stillGenerating ? (
+                  <span className="deck-preview-live-pill">Generating</span>
                 ) : null}
-                {error && deck ? <span className="deck-preview-live-pill is-warn">{error}</span> : null}
+                {error && slides.length ? (
+                  <span className="deck-preview-live-pill is-warn">{error}</span>
+                ) : null}
               </footer>
             </section>
           </div>
@@ -497,7 +666,7 @@ export default function PresentationDeckPreviewModal({
         <ExportPresentationModal
           workspaceId={workspaceId}
           presentationId={presentationId}
-          title={deck?.title || titleFallback}
+          title={meta?.title || titleFallback}
           onClose={() => setExportOpen(false)}
         />
       ) : null}

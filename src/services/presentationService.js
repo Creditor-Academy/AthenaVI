@@ -195,18 +195,23 @@ class PresentationService {
   }
 
   /**
-   * Lightweight Canva-style deck preview for My Work / dashboard modals.
-   * Returns JPEG snapshot URLs per slide — not the full canvas payload.
-   * Supports ETag / If-None-Match → 304 while polling.
+   * Live-render deck preview for My Work / dashboard modals.
+   * Returns canvas documents (same shape as the editor), paged via offset/limit.
+   * Supports ETag / If-None-Match → 304.
    */
-  async getPresentationPreview(workspaceId, presentationId, { etag } = {}) {
+  async getPresentationPreview(
+    workspaceId,
+    presentationId,
+    { etag, offset = 0, limit = 8 } = {}
+  ) {
     const headers = {
       ...getAuthHeaders(),
     }
     if (etag) headers['If-None-Match'] = etag
 
+    const query = this.buildQuery({ offset, limit })
     const response = await fetch(
-      buildUrl(API_CONFIG.ENDPOINTS.PRESENTATIONS.PREVIEW(workspaceId, presentationId)),
+      `${buildUrl(API_CONFIG.ENDPOINTS.PRESENTATIONS.PREVIEW(workspaceId, presentationId))}${query}`,
       { method: 'GET', headers }
     )
 
@@ -237,8 +242,45 @@ class PresentationService {
   }
 
   /**
-   * Persist deck cover thumbnail for library / My Work cards.
-   * Backend should store `thumbnailUrl` on the presentation and return it from library lists.
+   * Upload a captured cover image for the My Work card grid.
+   * Multipart field `file` — JPEG / PNG / WebP, max 2 MB.
+   * `{ skipped: true }` means throttled within 10s — treat as success.
+   */
+  async uploadThumbnailImage(workspaceId, presentationId, file) {
+    if (!file) return null
+    const token = localStorage.getItem('accessToken')
+    const headers = {}
+    if (token) headers.Authorization = `Bearer ${token}`
+
+    const form = new FormData()
+    const blob = file instanceof Blob ? file : null
+    if (!blob) return null
+    const name =
+      (typeof File !== 'undefined' && file instanceof File && file.name) || 'cover.jpg'
+    form.append('file', blob, name)
+
+    const response = await fetch(
+      buildUrl(API_CONFIG.ENDPOINTS.PRESENTATIONS.THUMBNAIL_IMAGE(workspaceId, presentationId)),
+      { method: 'PUT', headers, body: form }
+    )
+
+    if (!response.ok) {
+      const payload = await this.readPayload(response)
+      const err = new Error(
+        formatValidationMessage(payload) || `Cover upload failed: ${response.status}`
+      )
+      err.status = response.status
+      err.data = payload
+      throw err
+    }
+
+    const json = await response.json().catch(() => ({}))
+    return this.unwrap(json) || json?.data || json
+  }
+
+  /**
+   * Persist deck cover thumbnail for library / My Work cards (JSON URL pointer).
+   * Prefer uploadThumbnailImage when capturing from the live preview.
    * Quiet by default — older backends may not implement this yet.
    */
   updateThumbnail(workspaceId, presentationId, { thumbnailUrl, slideId } = {}) {

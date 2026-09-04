@@ -109,6 +109,7 @@ import {
 } from '../../../utils/canvasRenderDebug'
 import { hydrateSlidesGraphicElements } from '../../../utils/hydrateGraphicElements'
 import { resetSlideLoadQueue } from '../../../utils/slideLoadQueue'
+import { takePreviewHandoff } from '../../../utils/deckPreviewCapture'
 import SlideContentGate from './SlideContentGate'
 import { syncPresentationThumbnailFromSlides } from '../../../utils/presentationThumbSync'
 import {
@@ -2417,6 +2418,21 @@ export default function AIPptEditor({
 
     ;(async () => {
       try {
+        const handoff = takePreviewHandoff(presentationId)
+        if (!cancelled && handoff?.slides?.length) {
+          setLocalSlides(handoff.slides)
+          localSlidesRef.current = handoff.slides
+          if (handoff.themeTokens) setThemeTokens(handoff.themeTokens)
+          if (handoff.fontCssUrl) setFontCssUrl(handoff.fontCssUrl)
+          if (handoff.aspectRatio) {
+            const a = handoff.aspectRatio === '9:16' ? '16:9' : handoff.aspectRatio
+            setAspectRatio(a)
+          }
+          if (handoff.title) setDeckTitle(handoff.title)
+          if (handoff.status) setDeckStatus(handoff.status)
+          if (handoff.slides[0]?.id) setSelectedSlideId(handoff.slides[0].id)
+          setLoading(false)
+        }
         await reloadPresentation()
         const [kits, presetsPayload] = await Promise.all([
           brandKitService.list(workspaceId).catch(() => []),

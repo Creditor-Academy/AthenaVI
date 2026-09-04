@@ -243,6 +243,8 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/generate`,
       THUMBNAIL: (workspaceId, presentationId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/thumbnail`,
+      THUMBNAIL_IMAGE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/thumbnail/image`,
       SLIDES: (workspaceId, presentationId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides`,
       SLIDE: (workspaceId, presentationId, slideId) =>
