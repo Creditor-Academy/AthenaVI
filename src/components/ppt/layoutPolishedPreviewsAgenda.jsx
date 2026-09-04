@@ -730,20 +730,23 @@ export function PolishedAgendaTwoColumnsPreview({ previewHints, ...props }) {
 
   if (variant === 'split_panel') {
     return (
-      <div {...fp} style={{ ...fp.style, display: 'grid', gridTemplateColumns: '1fr 1fr', height: '100%' }}>
-        <div style={{ background: theme.accentSoft, padding: pad(large), display: 'flex', alignItems: 'center' }}>
-          <div style={{ fontSize: large ? '1.2rem' : '0.42rem', fontWeight: 800, color: theme.text, lineHeight: 1.15 }}>{heading}</div>
-        </div>
-        <div style={{ padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 4, justifyContent: 'center' }}>
-          {columns.map((col, i) => (
-            <div key={i}>
-              <div style={{ fontSize: large ? '0.78rem' : '0.28rem', fontWeight: 800, color: theme.text }}>{col.heading}</div>
-              {(col.items || []).slice(0, 3).map((item, j) => (
-                <div key={j} style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : PREVIEW_CAPTION_FS.small, color: theme.muted }}>{item}</div>
-              ))}
-            </div>
-          ))}
-        </div>
+      <div {...fp}>
+        <AgendaSvgChrome previewHints={{ ...previewHints, agendaVariant: 'split_panel', layout_id: previewHints.layout_id || 'agenda_split_panel_v1' }} itemCount={4} />
+        <AgendaTextLayer>
+          <div style={{
+            position: 'absolute',
+            left: '38%',
+            right: '4%',
+            top: '2.5%',
+            textAlign: 'center',
+            fontSize: large ? '0.62rem' : '0.2rem',
+            fontWeight: 800,
+            letterSpacing: '0.08em',
+            color: theme.text,
+          }}>
+            {heading === 'Session overview' ? 'TABLE OF CONTENT' : heading}
+          </div>
+        </AgendaTextLayer>
       </div>
     )
   }

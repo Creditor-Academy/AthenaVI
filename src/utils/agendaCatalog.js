@@ -11,6 +11,7 @@ import {
   body,
   agendaColumn,
   heroImage,
+  imageLeft,
 } from './deckLayoutV2Helpers.js'
 
 const CATALOG = {
@@ -149,9 +150,19 @@ Object.assign(CATALOG, {
 })
 
 CATALOG.agenda_split_panel_v1 = layoutBase('agenda_split_panel_v1', 'agenda', [
-  heading('HEADING', 'cols 2-11, rows 1-2', 'Session overview', { max_lines: 2 }),
-  ...agendaColumn(1, 1, 6, 3),
-  ...agendaColumn(2, 7, 12, 3),
+  imageLeft('cols 1-5, rows 1-10', 'HERO_IMAGE', 'hero'),
+  heading('HEADING', 'cols 4-12, rows 1-2', 'TABLE OF CONTENT', {
+    typography: typo('heading', { fontSize: 28, align: 'center' }),
+    max_lines: 1,
+  }),
+  body('ITEM_1', 'cols 7-12, rows 3-4', 'EDIT TEXT HERE', 1, { typography: typo('body', { fontWeight: 800, fontSize: 16 }) }),
+  body('ITEM_1_BODY', 'cols 7-12, rows 4-5', 'You can edit this text. Editable text', 2, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+  body('ITEM_2', 'cols 7-12, rows 4-5', 'EDIT TEXT HERE', 1, { typography: typo('body', { fontWeight: 800, fontSize: 16 }) }),
+  body('ITEM_2_BODY', 'cols 7-12, rows 5-6', 'You can edit this text. Editable text', 2, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+  body('ITEM_3', 'cols 7-12, rows 5-6', 'EDIT TEXT HERE', 1, { typography: typo('body', { fontWeight: 800, fontSize: 16 }) }),
+  body('ITEM_3_BODY', 'cols 7-12, rows 6-7', 'You can edit this text. Editable text', 2, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+  body('ITEM_4', 'cols 7-12, rows 6-7', 'EDIT TEXT HERE', 1, { typography: typo('body', { fontWeight: 800, fontSize: 16 }) }),
+  body('ITEM_4_BODY', 'cols 7-12, rows 7-8', 'You can edit this text. Editable text', 2, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
 ], { mode: 'agenda_two_columns', agendaVariant: 'split_panel' })
 
 CATALOG.agenda_cards_v1.slots.push(

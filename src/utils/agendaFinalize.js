@@ -63,8 +63,15 @@ import {
   isAgendaTwoColumnRibbonTextSlot,
   specToTwoColumnRibbonContent,
 } from './agendaTwoColumnRibbons.js'
+import {
+  agendaSplitPanelGraphicFrame,
+  agendaSplitPanelImageClip,
+  isAgendaSplitPanelLayout,
+  isAgendaSplitPanelTextSlot,
+  specToSplitPanelContent,
+} from './agendaSplitPanel.js'
 
-const AGENDA_CHROME_RE = /^AGENDA_(INFOGRAPHIC_CHROME|SPINE|PATH|SPLIT_LINE|TIMELINE|CURVE|TITLE_BLOCK|VISUAL_BLOCK|ZONE_|PANEL_|CARD_|ICON_|BADGE_|DIVIDER_|ARROW_|NODE_|COL_BLOCK_|COL_BAND_|COL_ICON_|COL_NUM_|COL_RULE|COL_CHROME_|NUM_CHROME_|NUM_TL_|MIN_|ED_|CRD_|TC_)/i
+const AGENDA_CHROME_RE = /^AGENDA_(INFOGRAPHIC_CHROME|SPINE|PATH|SPLIT_LINE|TIMELINE|CURVE|TITLE_BLOCK|VISUAL_BLOCK|ZONE_|PANEL_|CARD_|ICON_|BADGE_|DIVIDER_|ARROW_|NODE_|COL_BLOCK_|COL_BAND_|COL_ICON_|COL_NUM_|COL_RULE|COL_CHROME_|NUM_CHROME_|NUM_TL_|MIN_|ED_|CRD_|TC_|SP_)/i
 
 function paletteColor(palette, role, fallback) {
   const v = palette?.[role] || palette?.colors?.[role]
@@ -87,14 +94,14 @@ function textBase(el) {
 }
 
 function repositionAgendaTextElements(elements, overlay, options) {
-  const { textColor, columnTextColor, isColouredThreeCol, isThreeCards, isThreeCardsHero, isHeroCards, isNumberedBlocks, isNumberedTimeline, isMinimalQuiet, isEditorial, isAgendaCards, isTwoColRibbon, headingY, headingH, canvasW } = options
+  const { textColor, columnTextColor, isColouredThreeCol, isThreeCards, isThreeCardsHero, isHeroCards, isNumberedBlocks, isNumberedTimeline, isMinimalQuiet, isEditorial, isAgendaCards, isTwoColRibbon, isSplitPanel, headingY, headingH, canvasW } = options
   const isRibbonCards = isThreeCards || isThreeCardsHero
   const stacked = isColouredThreeCol || isRibbonCards || isHeroCards || isNumberedBlocks || isNumberedTimeline
   return elements.map((el) => {
     const sid = String(el.slotId || '')
     const base = textBase(el)
     if (sid.toUpperCase() === 'HEADING') {
-      const h = isRibbonCards || isHeroCards || isNumberedBlocks || isNumberedTimeline || isMinimalQuiet || isEditorial || isAgendaCards || isTwoColRibbon
+      const h = isRibbonCards || isHeroCards || isNumberedBlocks || isNumberedTimeline || isMinimalQuiet || isEditorial || isAgendaCards || isTwoColRibbon || isSplitPanel
         ? (overlay.heading || { x: Math.round(canvasW * 0.06), y: headingY, width: Math.round(canvasW * 0.88), height: headingH })
         : stacked
         ? { x: Math.round(canvasW * 0.06), y: headingY, width: Math.round(canvasW * 0.88), height: headingH }
@@ -104,18 +111,19 @@ function repositionAgendaTextElements(elements, overlay, options) {
         placement: { ...h, rotation: 0, opacity: 1 },
         content: {
           ...base,
-          align: isTwoColRibbon ? 'left' : stacked ? 'center' : 'left',
+          align: isSplitPanel ? 'center' : isTwoColRibbon ? 'left' : stacked ? 'center' : 'left',
           verticalAlign: 'center',
-          fontSize: isTwoColRibbon ? 28 : isEditorial || isAgendaCards ? 32 : isMinimalQuiet ? 44 : isHeroCards || isThreeCardsHero ? 32 : isNumberedBlocks || isNumberedTimeline ? 34 : isThreeCards ? 36 : stacked ? 40 : 36,
+          fontSize: isSplitPanel ? 28 : isTwoColRibbon ? 28 : isEditorial || isAgendaCards ? 32 : isMinimalQuiet ? 44 : isHeroCards || isThreeCardsHero ? 32 : isNumberedBlocks || isNumberedTimeline ? 34 : isThreeCards ? 36 : stacked ? 40 : 36,
           fontWeight: 800,
           color: textColor,
           lineHeight: 1.1,
           clipToSlot: true,
+          letterSpacing: isSplitPanel ? '0.08em' : '0',
         },
       }
     }
     const itemBodyM = sid.match(/^ITEM_(\d+)_BODY$/i)
-    if (itemBodyM && (isNumberedTimeline || isAgendaCards) && overlay.itemBodies?.length) {
+    if (itemBodyM && (isNumberedTimeline || isAgendaCards || isSplitPanel) && overlay.itemBodies?.length) {
       const box = overlay.itemBodies[Number(itemBodyM[1]) - 1]
       if (box) {
         return {
@@ -125,7 +133,7 @@ function repositionAgendaTextElements(elements, overlay, options) {
           content: {
             ...colouredColumnTextContent(el.content, {
               color: '#6B7280',
-              fontSize: isAgendaCards ? 14 : 13,
+              fontSize: isSplitPanel ? 13 : isAgendaCards ? 14 : 13,
               fontWeight: 400,
               align: 'left',
               verticalAlign: 'flex-start',
@@ -184,6 +192,14 @@ function repositionAgendaTextElements(elements, overlay, options) {
               lineHeight: 1.2,
               padding: 0,
               paddingX: 0,
+            }
+            : isSplitPanel
+            ? {
+              ...colouredColumnTextContent(el.content, { color: '#111827', fontSize: 16, fontWeight: 800, align: 'left', verticalAlign: 'center' }),
+              wrap: 'nowrap',
+              clipToSlot: true,
+              lineHeight: 1.1,
+              letterSpacing: '0.04em',
             }
             : { ...base, align: 'left', verticalAlign: 'center', fontSize: 18, fontWeight: 600, color: textColor },
         }
@@ -310,7 +326,7 @@ function repositionAgendaTextElements(elements, overlay, options) {
 
 function injectAgendaChrome(specs, frame, palette, options) {
   const { graphicX, graphicY, graphicW, graphicH } = frame
-  const { prevBySlot, accent, soft, isColouredThreeCol, isThreeCards, isThreeCardsHero, isHeroCards, isNumberedBlocks, isNumberedTimeline, isMinimalQuiet, isEditorial, isAgendaCards, isTwoColRibbon } = options
+  const { prevBySlot, accent, soft, isColouredThreeCol, isThreeCards, isThreeCardsHero, isHeroCards, isNumberedBlocks, isNumberedTimeline, isMinimalQuiet, isEditorial, isAgendaCards, isTwoColRibbon, isSplitPanel } = options
   const isRibbonCards = isThreeCards || isThreeCardsHero
   const sx = graphicW / 1000
   const sy = graphicH / 560
@@ -356,6 +372,8 @@ function injectAgendaChrome(specs, frame, palette, options) {
       ? specToAgendaCardsContent(spec)
       : isTwoColRibbon
       ? specToTwoColumnRibbonContent(spec)
+      : isSplitPanel
+      ? specToSplitPanelContent(spec)
       : isColouredThreeCol
         ? specToThreeColumnContent(spec)
         : specToGraphicContent(spec, accent, soft)
@@ -405,6 +423,7 @@ function layoutAgendaFamily(elements, schema, palette = {}, canvas = {}) {
   const isEditorial = isAgendaEditorialLayout(layoutId, family, variant)
   const isAgendaCards = isAgendaCardsLayout(layoutId, family, variant)
   const isTwoColRibbon = isAgendaTwoColumnRibbonLayout(layoutId, family, variant)
+  const isSplitPanel = isAgendaSplitPanelLayout(layoutId, family, variant)
   const isRibbonCards = isThreeCards || isThreeCardsHero
   const stacked = isColouredThreeCol || isRibbonCards || isHeroCards || isNumberedBlocks || isNumberedTimeline
   const itemCount = schema?.preview?.agendaItems?.length
@@ -430,6 +449,8 @@ function layoutAgendaFamily(elements, schema, palette = {}, canvas = {}) {
     ? agendaCardsGraphicFrame(canvasW, canvasH)
     : isTwoColRibbon
     ? agendaTwoColumnRibbonGraphicFrame(canvasW, canvasH)
+    : isSplitPanel
+    ? agendaSplitPanelGraphicFrame(canvasW, canvasH)
     : isColouredThreeCol
       ? agendaThreeColumnGraphicFrame(canvasW, canvasH)
       : agendaGraphicFrame(canvasW, canvasH)
@@ -454,6 +475,8 @@ function layoutAgendaFamily(elements, schema, palette = {}, canvas = {}) {
     ? stripped.filter((el) => isAgendaCardsTextSlot(el.slotId))
     : isTwoColRibbon
     ? stripped.filter((el) => isAgendaTwoColumnRibbonTextSlot(el.slotId))
+    : isSplitPanel
+    ? stripped.filter((el) => isAgendaSplitPanelTextSlot(el.slotId))
     : stacked
     ? stripped.filter((el) => isAgendaThreeColumnTextSlot(el.slotId) || /^HERO_IMAGE$/i.test(String(el.slotId || '')))
     : stripped
@@ -471,10 +494,27 @@ function layoutAgendaFamily(elements, schema, palette = {}, canvas = {}) {
     isEditorial,
     isAgendaCards,
     isTwoColRibbon,
+    isSplitPanel,
     headingY,
     headingH,
     canvasW,
   })
+  if (isSplitPanel && overlay.hero) {
+    next = next.map((el) => {
+      if (String(el.slotId || '').toUpperCase() !== 'HERO_IMAGE') return el
+      return {
+        ...el,
+        layer: 2,
+        placement: { ...overlay.hero, rotation: 0, opacity: 1 },
+        content: {
+          ...(el.content || {}),
+          clipPath: agendaSplitPanelImageClip(),
+          objectFit: 'cover',
+          fit: 'cover',
+        },
+      }
+    })
+  }
   if (isHeroCards || isThreeCardsHero) {
     const imageH = heroH || Math.round(canvasH * 0.36)
     next = next.map((el) => {
@@ -494,7 +534,7 @@ function layoutAgendaFamily(elements, schema, palette = {}, canvas = {}) {
     chromeSpecs,
     frame,
     palette,
-    { prevBySlot, accent, soft, isColouredThreeCol, isThreeCards, isThreeCardsHero, isHeroCards, isNumberedBlocks, isNumberedTimeline, isMinimalQuiet, isEditorial, isAgendaCards, isTwoColRibbon }
+    { prevBySlot, accent, soft, isColouredThreeCol, isThreeCards, isThreeCardsHero, isHeroCards, isNumberedBlocks, isNumberedTimeline, isMinimalQuiet, isEditorial, isAgendaCards, isTwoColRibbon, isSplitPanel }
   )
 
   return [...chrome, ...next]

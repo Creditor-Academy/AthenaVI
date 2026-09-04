@@ -47,6 +47,7 @@ import { agendaMinimalQuietPreviewSvg } from './agendaMinimalQuiet.js'
 import { agendaEditorialPreviewSvg } from './agendaEditorialHub.js'
 import { agendaCardsPreviewSvg } from './agendaCardsTiles.js'
 import { agendaTwoColumnRibbonPreviewSvg } from './agendaTwoColumnRibbons.js'
+import { agendaSplitPanelPreviewSvg } from './agendaSplitPanel.js'
 
 export {
   AGENDA_GEOM,
@@ -175,7 +176,10 @@ export function agendaPreviewSvg(family, variant, colors = {}, opts = {}) {
   if (family === 'three_col' && variant !== 'panels' && variant !== 'step') {
     return agendaThreeColumnPreviewSvg(colors)
   }
-  if (family === 'two_col' && variant !== 'split_visual' && variant !== 'split_panel' && variant !== 'asymmetric') {
+  if (family === 'two_col' && variant === 'split_panel') {
+    return agendaSplitPanelPreviewSvg()
+  }
+  if (family === 'two_col' && variant !== 'split_visual' && variant !== 'asymmetric') {
     return agendaTwoColumnRibbonPreviewSvg()
   }
   return agendaDiagramInlineSvg(family, variant, {
