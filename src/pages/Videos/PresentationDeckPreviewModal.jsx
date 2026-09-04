@@ -65,6 +65,7 @@ export default function PresentationDeckPreviewModal({
   const lastStatusRef = useRef('PENDING')
   const filmstripRef = useRef(null)
   const activeThumbRef = useRef(null)
+  const loadedUrlsRef = useRef(new Set())
 
   const slides = useMemo(() => sortSlides(deck?.slides), [deck?.slides])
   const activeSlide = slides[activeIndex] || null
@@ -74,14 +75,33 @@ export default function PresentationDeckPreviewModal({
   const readyCount = Number(deck?.readyCount) || slides.filter((s) => s.previewImageUrl).length
   const provisionalUrl = cardFallbackUrl(item)
 
+  // Preload slide images in background so main stage switching is instant
+  useEffect(() => {
+    if (!slides || !slides.length) return
+    slides.forEach((slide) => {
+      const url = slide?.previewImageUrl
+      if (url && !loadedUrlsRef.current.has(url)) {
+        const img = new Image()
+        img.onload = () => loadedUrlsRef.current.add(url)
+        img.src = url
+        if (img.complete) loadedUrlsRef.current.add(url)
+      }
+    })
+  }, [slides])
+
   const goTo = useCallback(
     (index) => {
       if (!slides.length) return
       const next = Math.max(0, Math.min(slides.length - 1, index))
+      const targetUrl = slides[next]?.previewImageUrl
       setActiveIndex(next)
-      setImgLoaded(false)
+      if (targetUrl && loadedUrlsRef.current.has(targetUrl)) {
+        setImgLoaded(true)
+      } else {
+        setImgLoaded(false)
+      }
     },
-    [slides.length]
+    [slides]
   )
 
   const goPrev = useCallback(() => goTo(activeIndex - 1), [activeIndex, goTo])
@@ -247,9 +267,11 @@ export default function PresentationDeckPreviewModal({
         <div className="deck-preview-shell">
           <header className="deck-preview-header">
             <div className="deck-preview-header-meta">
-              <span className="deck-preview-badge">Presentation</span>
               <div className="deck-preview-titles">
-                <h2>{deck?.title || titleFallback}</h2>
+                <div className="deck-preview-title-row">
+                  <h2>{deck?.title || titleFallback}</h2>
+                  <span className="deck-preview-badge">Presentation</span>
+                </div>
                 <p>
                   {slideCount ? `${slideCount} slide${slideCount === 1 ? '' : 's'}` : '—'}
                   <span aria-hidden>·</span>
@@ -290,6 +312,65 @@ export default function PresentationDeckPreviewModal({
           </header>
 
           <div className="deck-preview-body">
+            <aside className="deck-preview-filmstrip" aria-label="Slides">
+              <div className="deck-preview-filmstrip-head">
+                <span>Slides</span>
+                <span>{slides.length || slideCount || 0}</span>
+              </div>
+              <div className="deck-preview-filmstrip-list" ref={filmstripRef}>
+                {loading && !slides.length
+                  ? Array.from({ length: Math.min(6, item?.slideCount || 4) }).map((_, i) => (
+                      <div key={`skel-${i}`} className="deck-preview-thumb is-skeleton" />
+                    ))
+                  : null}
+
+                {slides.map((slide, index) => {
+                  const url = slide.previewImageUrl
+                  const pending = !url
+                  const active = index === activeIndex
+                  return (
+                    <button
+                      key={slide.id || index}
+                      type="button"
+                      ref={active ? activeThumbRef : null}
+                      className={`deck-preview-thumb ${active ? 'is-active' : ''} ${
+                        pending ? 'is-pending' : ''
+                      }`}
+                      onClick={() => goTo(index)}
+                      aria-label={`Slide ${index + 1}${slide.title ? `: ${slide.title}` : ''}`}
+                      aria-current={active ? 'true' : undefined}
+                    >
+                      <span className="deck-preview-thumb-num">{index + 1}</span>
+                      <span
+                        className="deck-preview-thumb-frame"
+                        style={{ aspectRatio: aspectBoxRatio(aspectRatio) }}
+                      >
+                        {pending ? (
+                          <span className="deck-preview-thumb-placeholder">
+                            <span className="deck-preview-shimmer" />
+                          </span>
+                        ) : (
+                          <img
+                            src={url}
+                            alt=""
+                            draggable={false}
+                            loading="lazy"
+                            onLoad={() => {
+                              if (url) loadedUrlsRef.current.add(url)
+                            }}
+                          />
+                        )}
+                      </span>
+                    </button>
+                  )
+                })}
+
+                {!loading && !slides.length ? (
+                  <p className="deck-preview-filmstrip-empty">No slides yet</p>
+                ) : null}
+              </div>
+            </aside>
+
             <section className="deck-preview-stage-wrap">
               <div className="deck-preview-stage">
                 {loading && !deck && !provisionalUrl ? (
@@ -352,8 +433,18 @@ export default function PresentationDeckPreviewModal({
                     src={mainUrl}
                     alt={activeSlide?.title || `Slide ${activeIndex + 1}`}
                     className={`deck-preview-main-img ${imgLoaded ? 'is-ready' : ''}`}
+                    style={{ aspectRatio: aspectBoxRatio(aspectRatio) }}
                     draggable={false}
-                    onLoad={() => setImgLoaded(true)}
+                    onLoad={() => {
+                      if (mainUrl) loadedUrlsRef.current.add(mainUrl)
+                      setImgLoaded(true)
+                    }}
+                    ref={(imgNode) => {
+                      if (imgNode && imgNode.complete && imgNode.naturalWidth > 0) {
+                        if (mainUrl) loadedUrlsRef.current.add(mainUrl)
+                        setImgLoaded(true)
+                      }
+                    }}
                   />
                 )}
 
@@ -398,57 +489,6 @@ export default function PresentationDeckPreviewModal({
                 {error && deck ? <span className="deck-preview-live-pill is-warn">{error}</span> : null}
               </footer>
             </section>
-
-            <aside className="deck-preview-filmstrip" aria-label="Slides">
-              <div className="deck-preview-filmstrip-head">
-                <span>Slides</span>
-                <span>{slides.length || slideCount || 0}</span>
-              </div>
-              <div className="deck-preview-filmstrip-list" ref={filmstripRef}>
-                {loading && !slides.length
-                  ? Array.from({ length: Math.min(6, item?.slideCount || 4) }).map((_, i) => (
-                      <div key={`skel-${i}`} className="deck-preview-thumb is-skeleton" />
-                    ))
-                  : null}
-
-                {slides.map((slide, index) => {
-                  const url = slide.previewImageUrl
-                  const pending = !url
-                  const active = index === activeIndex
-                  return (
-                    <button
-                      key={slide.id || index}
-                      type="button"
-                      ref={active ? activeThumbRef : null}
-                      className={`deck-preview-thumb ${active ? 'is-active' : ''} ${
-                        pending ? 'is-pending' : ''
-                      }`}
-                      onClick={() => goTo(index)}
-                      aria-label={`Slide ${index + 1}${slide.title ? `: ${slide.title}` : ''}`}
-                      aria-current={active ? 'true' : undefined}
-                    >
-                      <span className="deck-preview-thumb-num">{index + 1}</span>
-                      <span
-                        className="deck-preview-thumb-frame"
-                        style={{ aspectRatio: aspectBoxRatio(aspectRatio) }}
-                      >
-                        {pending ? (
-                          <span className="deck-preview-thumb-placeholder">
-                            <span className="deck-preview-shimmer" />
-                          </span>
-                        ) : (
-                          <img src={url} alt="" draggable={false} loading="lazy" />
-                        )}
-                      </span>
-                    </button>
-                  )
-                })}
-
-                {!loading && !slides.length ? (
-                  <p className="deck-preview-filmstrip-empty">No slides yet</p>
-                ) : null}
-              </div>
-            </aside>
           </div>
         </div>
       </div>
