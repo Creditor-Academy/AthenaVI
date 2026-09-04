@@ -108,6 +108,8 @@ import {
   shouldPaintElement,
 } from '../../../utils/canvasRenderDebug'
 import { hydrateSlidesGraphicElements } from '../../../utils/hydrateGraphicElements'
+import { resetSlideLoadQueue } from '../../../utils/slideLoadQueue'
+import SlideContentGate from './SlideContentGate'
 import { syncPresentationThumbnailFromSlides } from '../../../utils/presentationThumbSync'
 import {
   parseCanvasDragData,
@@ -1530,8 +1532,22 @@ export default function AIPptEditor({
       }
     }
 
-    slides = await hydrateSlidesGraphicElements(slides)
-
+    // Paint slide shells immediately, then hydrate graphics one slide at a time.
+    resetSlideLoadQueue()
+    setLocalSlides(slides)
+    localSlidesRef.current = slides
+    slides = await hydrateSlidesGraphicElements(slides, {
+      sequential: true,
+      onSlideHydrated: (hydrated, idx) => {
+        setLocalSlides((prev) => {
+          const base = Array.isArray(prev) && prev.length ? prev : slides
+          const next = [...base]
+          next[idx] = hydrated
+          localSlidesRef.current = next
+          return next
+        })
+      },
+    })
     setLocalSlides(slides)
     localSlidesRef.current = slides
     setThemeTokens(tokens)
@@ -4211,48 +4227,53 @@ export default function AIPptEditor({
                   </div>
                   )}
 
-                  <SlideStage
+                  <SlideContentGate
                     slide={slide}
-                    themeVisual={themeVisual}
-                    aspectRatio={aspectRatio}
-                    editable={!viewOnly && !isGenerating && !busy && selectedSlideId === slide.id}
-                    showEmptyTextHint={!viewOnly && !isGenerating}
-                    selectedElementId={
-                      selectedSlideId === slide.id ? selectedElementId : null
-                    }
-                    selectedElementIds={
-                      selectedSlideId === slide.id
-                        ? multiSelectIds.length
-                          ? multiSelectIds
-                          : selectedElementId
-                            ? [selectedElementId]
-                            : []
-                        : []
-                    }
-                    editingTextId={selectedSlideId === slide.id ? editingTextId : null}
-                    smartGuides={selectedSlideId === slide.id ? smartGuides : []}
-                    onSelectElement={(id, event) => {
-                      if (viewOnly) return
-                      selectCanvasElement(slide.id, id, event)
-                    }}
-                    onContextMenuElement={(id, event) => {
-                      if (viewOnly) return
-                      openElementContextMenu(slide.id, id, event)
-                    }}
-                    onPlacementLive={(elementIdOrPatches, placement) =>
-                      handlePlacementLive(slide.id, elementIdOrPatches, placement)
-                    }
-                    onPlacementCommit={(elementIdOrPatches, placement) =>
-                      handlePlacementCommit(slide.id, elementIdOrPatches, placement)
-                    }
-                    onGuidesChange={selectedSlideId === slide.id ? setSmartGuides : undefined}
-                    onStartTextEdit={handleStartTextEdit}
-                    onEndTextEdit={handleEndTextEdit}
-                    onTableCellChange={handleTableCellChange}
-                    onImageAuthError={handleImageAuthError}
-                    onFillDeviceFrame={handleFillDeviceFrame}
-                    onFillImage={handleFillImage}
-                  />
+                    priority={selectedSlideId === slide.id || idx === 0}
+                  >
+                    <SlideStage
+                      slide={slide}
+                      themeVisual={themeVisual}
+                      aspectRatio={aspectRatio}
+                      editable={!viewOnly && !isGenerating && !busy && selectedSlideId === slide.id}
+                      showEmptyTextHint={!viewOnly && !isGenerating}
+                      selectedElementId={
+                        selectedSlideId === slide.id ? selectedElementId : null
+                      }
+                      selectedElementIds={
+                        selectedSlideId === slide.id
+                          ? multiSelectIds.length
+                            ? multiSelectIds
+                            : selectedElementId
+                              ? [selectedElementId]
+                              : []
+                          : []
+                      }
+                      editingTextId={selectedSlideId === slide.id ? editingTextId : null}
+                      smartGuides={selectedSlideId === slide.id ? smartGuides : []}
+                      onSelectElement={(id, event) => {
+                        if (viewOnly) return
+                        selectCanvasElement(slide.id, id, event)
+                      }}
+                      onContextMenuElement={(id, event) => {
+                        if (viewOnly) return
+                        openElementContextMenu(slide.id, id, event)
+                      }}
+                      onPlacementLive={(elementIdOrPatches, placement) =>
+                        handlePlacementLive(slide.id, elementIdOrPatches, placement)
+                      }
+                      onPlacementCommit={(elementIdOrPatches, placement) =>
+                        handlePlacementCommit(slide.id, elementIdOrPatches, placement)
+                      }
+                      onGuidesChange={selectedSlideId === slide.id ? setSmartGuides : undefined}
+                      onStartTextEdit={handleStartTextEdit}
+                      onEndTextEdit={handleEndTextEdit}
+                      onTableCellChange={handleTableCellChange}
+                      onImageAuthError={handleImageAuthError}
+                      onFillDeviceFrame={handleFillDeviceFrame}
+                      onFillImage={handleFillImage}
+                    />
+                  </SlideContentGate>
 
                   <SlideEditAiPanel
                     open={slideAiEditId === slide.id}

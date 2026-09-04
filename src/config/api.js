@@ -219,6 +219,8 @@ const API_CONFIG = {
       LIST: (workspaceId) => `/api/workspaces/${workspaceId}/presentations`,
       ONE: (workspaceId, presentationId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}`,
+      PREVIEW: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/preview`,
       TEMPLATES: (workspaceId) => `/api/workspaces/${workspaceId}/presentation-templates`,
       DECK_PACKS: (workspaceId) => `/api/workspaces/${workspaceId}/presentation-deck-packs`,
       DECK_PACK: (workspaceId, packId) =>

@@ -9,7 +9,6 @@ import {
   MdFilterList,
   MdGridView,
   MdImage,
-  MdPresentToAll,
   MdSlideshow,
   MdSort,
   MdVideoLibrary,
@@ -23,12 +22,12 @@ import {
   normalizeLibraryItem,
   normalizeLibraryCategories,
   normalizeLibraryCategoryId,
-  resolvePresentationThumbnailUrl,
 } from '../../utils/workspaceLibrary.js'
 import '../../components/features/workspace/workspace/WorkspaceStyles.css'
 import VideosSkeleton from '../page-skeleton/VideosSkeleton'
 import ExportVideoCard from './ExportVideoCard.jsx'
 import ExportVideoRow from './ExportVideoRow.jsx'
+import PresentationDeckPreviewModal from './PresentationDeckPreviewModal.jsx'
 import { VideosToolbarDropdown } from './VideosToolbar.jsx'
 import {
   applyVideoFilters,
@@ -239,9 +238,8 @@ function Videos({ onEdit, onOpenImage }) {
     setPreviewItem(item)
     const kind = normalizeWorkCategoryId(item.category || item.kind)
     if (kind === 'presentation') {
-      setPreviewUrl(
-        resolvePresentationThumbnailUrl(item) || item.thumbnailUrl || item.thumbnail || ''
-      )
+      // Deck images load via GET .../presentations/:id/preview — never list thumbnailUrl.
+      setPreviewUrl('')
       return
     }
     if (kind === 'image') {
@@ -494,18 +492,22 @@ function Videos({ onEdit, onOpenImage }) {
         </main>
       </div>
 
-      {previewItem ? (
+      {previewItem && previewKind === 'presentation' ? (
+        <PresentationDeckPreviewModal
+          item={previewItem}
+          onClose={() => setPreviewItem(null)}
+          onEdit={onEdit || onOpenImage ? handleOpenProject : undefined}
+        />
+      ) : null}
+
+      {previewItem && previewKind !== 'presentation' ? (
         <div className="videos-preview-modal work-preview-modal" role="dialog" aria-modal="true">
           <div className="videos-preview-backdrop" onClick={() => setPreviewItem(null)} />
           <div className="videos-preview-panel work-preview-panel">
             <header className="videos-preview-header">
               <div className="preview-header-meta">
                 <span className={`preview-cat-badge badge-${previewKind || 'video'}`}>
-                  {previewKind === 'presentation'
-                    ? 'Presentation'
-                    : previewKind === 'image'
-                      ? 'Image'
-                      : 'Video'}
+                  {previewKind === 'image' ? 'Image' : 'Video'}
                 </span>
                 <h3>{previewItem.title || previewItem.name}</h3>
               </div>
@@ -525,46 +527,7 @@ function Videos({ onEdit, onOpenImage }) {
               </div>
             </header>
 
-            {previewKind === 'presentation' ? (
-              <div className="ppt-preview-container">
-                <div className="ppt-preview-stage">
-                  {previewUrl ? (
-                    <img
-                      src={previewUrl}
-                      alt={previewItem.title || previewItem.name}
-                      className="ppt-slide-preview-img"
-                    />
-                  ) : (
-                    <div className="ppt-slide-placeholder">
-                      <MdPresentToAll size={64} />
-                      <h4>{previewItem.title || previewItem.name}</h4>
-                      <p>Presentation deck</p>
-                    </div>
-                  )}
-                </div>
-                <div className="ppt-preview-footer">
-                  <div className="ppt-meta-info">
-                    {previewItem.slideCount != null ? (
-                      <span>{previewItem.slideCount} slides</span>
-                    ) : null}
-                    {previewItem.deckStatus ? <span>{previewItem.deckStatus}</span> : null}
-                    {previewItem.aspectRatio ? <span>{previewItem.aspectRatio}</span> : null}
-                  </div>
-                  {(onEdit || onOpenImage) && (
-                    <button
-                      type="button"
-                      className="btn-primary"
-                      onClick={() => {
-                        handleOpenProject(previewItem)
-                        setPreviewItem(null)
-                      }}
-                    >
-                      Open Presentation
-                    </button>
-                  )}
-                </div>
-              </div>
-            ) : previewKind === 'image' ? (
+            {previewKind === 'image' ? (
               <div className="image-preview-container">
                 {previewUrl ? (
                   <img src={previewUrl} alt={previewItem.title || previewItem.name} />

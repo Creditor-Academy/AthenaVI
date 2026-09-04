@@ -195,6 +195,48 @@ class PresentationService {
   }
 
   /**
+   * Lightweight Canva-style deck preview for My Work / dashboard modals.
+   * Returns JPEG snapshot URLs per slide — not the full canvas payload.
+   * Supports ETag / If-None-Match → 304 while polling.
+   */
+  async getPresentationPreview(workspaceId, presentationId, { etag } = {}) {
+    const headers = {
+      ...getAuthHeaders(),
+    }
+    if (etag) headers['If-None-Match'] = etag
+
+    const response = await fetch(
+      buildUrl(API_CONFIG.ENDPOINTS.PRESENTATIONS.PREVIEW(workspaceId, presentationId)),
+      { method: 'GET', headers }
+    )
+
+    if (response.status === 304) {
+      return {
+        notModified: true,
+        etag: etag || response.headers.get('ETag') || response.headers.get('etag') || null,
+      }
+    }
+
+    if (!response.ok) {
+      const payload = await this.readPayload(response)
+      const err = new Error(
+        formatValidationMessage(payload) || `Preview request failed: ${response.status}`
+      )
+      err.status = response.status
+      err.data = payload
+      throw err
+    }
+
+    const json = await response.json().catch(() => ({}))
+    const data = this.unwrap(json) || {}
+    return {
+      ...data,
+      notModified: false,
+      etag: response.headers.get('ETag') || response.headers.get('etag') || etag || null,
+    }
+  }
+
+  /**
    * Persist deck cover thumbnail for library / My Work cards.
    * Backend should store `thumbnailUrl` on the presentation and return it from library lists.
    * Quiet by default — older backends may not implement this yet.
