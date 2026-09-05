@@ -48,6 +48,8 @@ import { agendaEditorialPreviewSvg } from './agendaEditorialHub.js'
 import { agendaCardsPreviewSvg } from './agendaCardsTiles.js'
 import { agendaTwoColumnRibbonPreviewSvg } from './agendaTwoColumnRibbons.js'
 import { agendaSplitPanelPreviewSvg } from './agendaSplitPanel.js'
+import { agendaTimelineHexPreviewSvg } from './agendaTimelineHex.js'
+import { agendaVerticalRoadmapPreviewSvg } from './agendaVerticalRoadmap.js'
 
 export {
   AGENDA_GEOM,
@@ -175,6 +177,12 @@ export function agendaPreviewSvg(family, variant, colors = {}, opts = {}) {
   }
   if (family === 'three_col' && variant !== 'panels' && variant !== 'step') {
     return agendaThreeColumnPreviewSvg(colors)
+  }
+  if (family === 'timeline' && variant === 'vertical') {
+    return agendaVerticalRoadmapPreviewSvg()
+  }
+  if (family === 'timeline' && variant !== 'vertical' && variant !== 'curved' && variant !== 'path') {
+    return agendaTimelineHexPreviewSvg()
   }
   if (family === 'two_col' && variant === 'split_panel') {
     return agendaSplitPanelPreviewSvg()

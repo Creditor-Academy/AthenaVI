@@ -109,23 +109,25 @@ const CATALOG = {
   ], { mode: 'agenda_two_columns', agendaVariant: 'default' }),
 
   agenda_timeline_preview_v1: layoutBase('agenda_timeline_preview_v1', 'agenda', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'Roadmap preview', { max_lines: 2 }),
-    slot('milestone_1_label', 'cols 1-3, rows 4-5', 'subheading', 'Phase 1', {
-      layer: 10,
-      typography: typo('caption', { fontSize: 13, align: 'center', fontWeight: 700 }),
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Timeline Agenda Template', {
+      typography: typo('heading', { fontSize: 30, align: 'center' }),
     }),
-    slot('milestone_2_label', 'cols 4-6, rows 4-5', 'subheading', 'Phase 2', {
+    slot('SUBHEADING', 'cols 4-9, rows 2-3', 'subheading', 'For Time - Sensitive Events', {
       layer: 10,
-      typography: typo('caption', { fontSize: 13, align: 'center', fontWeight: 700 }),
+      typography: typo('caption', { fontSize: 14, align: 'center', fontWeight: 500 }),
     }),
-    slot('milestone_3_label', 'cols 7-9, rows 4-5', 'subheading', 'Phase 3', {
-      layer: 10,
-      typography: typo('caption', { fontSize: 13, align: 'center', fontWeight: 700 }),
-    }),
-    slot('milestone_4_label', 'cols 10-12, rows 4-5', 'subheading', 'Phase 4', {
-      layer: 10,
-      typography: typo('caption', { fontSize: 13, align: 'center', fontWeight: 700 }),
-    }),
+    body('ITEM_1', 'cols 1-2, rows 3-4', 'Idea', 1, { typography: typo('body', { fontWeight: 800, fontSize: 15, align: 'center' }) }),
+    body('ITEM_1_BODY', 'cols 1-2, rows 6-9', '• Kickoff notes\n• Desired outcome\n• Owners', 4, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+    body('ITEM_2', 'cols 3-4, rows 3-4', 'Timeline', 1, { typography: typo('body', { fontWeight: 800, fontSize: 15, align: 'center' }) }),
+    body('ITEM_2_BODY', 'cols 3-4, rows 6-9', '• Sequence\n• Checkpoints\n• Buffer', 4, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+    body('ITEM_3', 'cols 5-6, rows 3-4', 'Budget', 1, { typography: typo('body', { fontWeight: 800, fontSize: 15, align: 'center' }) }),
+    body('ITEM_3_BODY', 'cols 5-6, rows 6-9', '• Spend plan\n• Constraints\n• Approvals', 4, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+    body('ITEM_4', 'cols 7-8, rows 3-4', 'Marketing', 1, { typography: typo('body', { fontWeight: 800, fontSize: 15, align: 'center' }) }),
+    body('ITEM_4_BODY', 'cols 7-8, rows 6-9', '• Channels\n• Message\n• Assets', 4, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+    body('ITEM_5', 'cols 9-10, rows 3-4', 'Logistics', 1, { typography: typo('body', { fontWeight: 800, fontSize: 15, align: 'center' }) }),
+    body('ITEM_5_BODY', 'cols 9-10, rows 6-9', '• Venue\n• Staffing\n• Run of show', 4, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+    body('ITEM_6', 'cols 11-12, rows 3-4', 'Emergencies', 1, { typography: typo('body', { fontWeight: 800, fontSize: 15, align: 'center' }) }),
+    body('ITEM_6_BODY', 'cols 11-12, rows 6-9', '• Risks\n• Contacts\n• Fallback', 4, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
   ], { mode: 'process_flow', agendaVariant: 'default' }),
 }
 
@@ -146,8 +148,26 @@ Object.assign(CATALOG, {
   agenda_numbered_timeline_v1: agendaFromSource('agenda_numbered_timeline_v1', 'agenda_numbered_v1', 'timeline'),
   agenda_three_cards_hero_v1: agendaFromSource('agenda_three_cards_hero_v1', 'agenda_three_columns_hero_v1', 'cards'),
   agenda_three_cards_v1: agendaFromSource('agenda_three_cards_v1', 'agenda_three_columns_v1', 'cards'),
-  agenda_vertical_roadmap_v1: agendaFromSource('agenda_vertical_roadmap_v1', 'agenda_timeline_preview_v1', 'vertical'),
 })
+
+CATALOG.agenda_vertical_roadmap_v1 = layoutBase('agenda_vertical_roadmap_v1', 'agenda', [
+  heading('HEADING', 'cols 2-11, rows 1-2', 'Vertical Timeline Template', {
+    typography: typo('heading', { fontSize: 30, align: 'center' }),
+    max_lines: 1,
+  }),
+  body('ITEM_1_YEAR', 'cols 1-3, rows 3-4', '2021', 1, { typography: typo('body', { fontWeight: 800, fontSize: 22 }) }),
+  body('ITEM_1', 'cols 1-6, rows 3-4', 'Add your text here', 1, { typography: typo('body', { fontWeight: 700, fontSize: 16 }) }),
+  body('ITEM_1_BODY', 'cols 1-6, rows 4-5', 'Describe this milestone in one or two short lines for the audience.', 2, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+  body('ITEM_2_YEAR', 'cols 7-9, rows 4-5', '2022', 1, { typography: typo('body', { fontWeight: 800, fontSize: 22 }) }),
+  body('ITEM_2', 'cols 7-12, rows 4-5', 'Add your text here', 1, { typography: typo('body', { fontWeight: 700, fontSize: 16 }) }),
+  body('ITEM_2_BODY', 'cols 7-12, rows 5-6', 'Describe this milestone in one or two short lines for the audience.', 2, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+  body('ITEM_3_YEAR', 'cols 1-3, rows 6-7', '2023', 1, { typography: typo('body', { fontWeight: 800, fontSize: 22 }) }),
+  body('ITEM_3', 'cols 1-6, rows 6-7', 'Add your text here', 1, { typography: typo('body', { fontWeight: 700, fontSize: 16 }) }),
+  body('ITEM_3_BODY', 'cols 1-6, rows 7-8', 'Describe this milestone in one or two short lines for the audience.', 2, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+  body('ITEM_4_YEAR', 'cols 7-9, rows 8-9', '2024', 1, { typography: typo('body', { fontWeight: 800, fontSize: 22 }) }),
+  body('ITEM_4', 'cols 7-12, rows 8-9', 'Add your text here', 1, { typography: typo('body', { fontWeight: 700, fontSize: 16 }) }),
+  body('ITEM_4_BODY', 'cols 7-12, rows 9-10', 'Describe this milestone in one or two short lines for the audience.', 2, { typography: typo('body', { fontWeight: 400, fontSize: 13 }) }),
+], { mode: 'process_flow', agendaVariant: 'vertical' })
 
 CATALOG.agenda_split_panel_v1 = layoutBase('agenda_split_panel_v1', 'agenda', [
   imageLeft('cols 1-5, rows 1-10', 'HERO_IMAGE', 'hero'),

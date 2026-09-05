@@ -800,18 +800,58 @@ export function PolishedAgendaTimelinePreview({ previewHints, ...props }) {
   const count = Math.min(milestones.length, 4)
 
   if (variant === 'vertical') {
+    const years = ['2021', '2022', '2023', '2024']
+    const titles = years.map((_, i) => slotText(previewHints, `ITEM_${i + 1}`, 'Add your text here'))
     return (
-      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: 'auto 1fr', gap: large ? 16 : 6 }}>
-        <div style={{ position: 'relative', width: large ? 4 : 2, background: theme.accent, opacity: 0.4, borderRadius: 2, margin: `${large ? 12 : 4}px 0` }} />
-        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 14 : 5 }}>
-          <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small, fontWeight: 800, color: theme.text }}>{heading}</div>
-          {milestones.slice(0, count).map((label, i) => (
-            <div key={i} style={{ display: 'flex', gap: large ? 10 : 4, alignItems: 'center' }}>
-              <div style={{ width: large ? 12 : 5, height: large ? 12 : 5, borderRadius: '50%', background: theme.accent, flexShrink: 0 }} />
-              <div style={{ fontSize: large ? '0.72rem' : '0.26rem', fontWeight: 600, color: theme.text }}>{label}</div>
-            </div>
-          ))}
-        </div>
+      <div {...fp}>
+        <AgendaSvgChrome previewHints={{ ...previewHints, agendaVariant: 'vertical', layout_id: previewHints.layout_id || 'agenda_vertical_roadmap_v1' }} itemCount={4} />
+        <AgendaTextLayer>
+          <div style={{
+            position: 'absolute',
+            left: '8%',
+            right: '8%',
+            top: '1.8%',
+            textAlign: 'center',
+            fontSize: large ? '0.68rem' : '0.2rem',
+            fontWeight: 800,
+            color: theme.text,
+          }}>
+            {heading === 'Roadmap preview' ? 'Vertical Timeline Template' : heading}
+          </div>
+          {years.map((year, i) => {
+            const left = i % 2 === 0
+            return (
+              <div
+                key={year}
+                style={{
+                  position: 'absolute',
+                  left: left ? '4%' : '55%',
+                  width: '37%',
+                  top: `${11.5 + i * 21.4}%`,
+                  textAlign: 'left',
+                }}
+              >
+                <div style={{
+                  fontSize: large ? '0.42rem' : '0.14rem',
+                  fontWeight: 800,
+                  color: ['#8BC34A', '#F0A202', '#E85D75', '#4A90D9'][i],
+                  display: 'inline',
+                  marginRight: 6,
+                }}>
+                  {slotText(previewHints, `ITEM_${i + 1}_YEAR`, year)}
+                </div>
+                <div style={{
+                  fontSize: large ? '0.32rem' : '0.12rem',
+                  fontWeight: 700,
+                  color: '#4B5563',
+                  display: 'inline',
+                }}>
+                  {titles[i]}
+                </div>
+              </div>
+            )
+          })}
+        </AgendaTextLayer>
       </div>
     )
   }
@@ -833,16 +873,52 @@ export function PolishedAgendaTimelinePreview({ previewHints, ...props }) {
     )
   }
 
+  const titles = ['Idea', 'Timeline', 'Budget', 'Marketing', 'Logistics', 'Emergencies']
   return (
     <div {...fp}>
-      <AgendaSvgChrome previewHints={previewHints} itemCount={count} />
-      <AgendaTextLayer style={{ padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 4 }}>
-        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_TITLE_FS.small, fontWeight: 800, color: theme.text }}>{heading}</div>
-        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: `repeat(${count}, 1fr)`, gap: large ? 8 : 3, alignItems: 'end', paddingTop: large ? 50 : 16 }}>
-          {milestones.slice(0, count).map((label, i) => (
-            <div key={i} style={{ fontSize: large ? '0.62rem' : '0.22rem', fontWeight: 700, color: theme.text, textAlign: 'center' }}>{label}</div>
-          ))}
+      <AgendaSvgChrome previewHints={{ ...previewHints, agendaVariant: 'default', layout_id: previewHints.layout_id || 'agenda_timeline_preview_v1' }} itemCount={6} />
+      <AgendaTextLayer>
+        <div style={{
+          position: 'absolute',
+          left: '8%',
+          right: '8%',
+          top: '1.8%',
+          textAlign: 'center',
+          fontSize: large ? '0.7rem' : '0.22rem',
+          fontWeight: 800,
+          color: theme.text,
+        }}>
+          {heading === 'Roadmap preview' ? 'Timeline Agenda Template' : heading}
         </div>
+        <div style={{
+          position: 'absolute',
+          left: '31%',
+          right: '31%',
+          top: '8.8%',
+          textAlign: 'center',
+          fontSize: large ? '0.32rem' : '0.12rem',
+          fontWeight: 500,
+          color: '#374151',
+        }}>
+          {slotText(previewHints, 'SUBHEADING', 'For Time - Sensitive Events')}
+        </div>
+        {titles.map((title, i) => (
+          <div
+            key={title}
+            style={{
+              position: 'absolute',
+              left: `${2.2 + i * 16.3}%`,
+              width: '15.4%',
+              top: '15.6%',
+              textAlign: 'center',
+              fontSize: large ? '0.38rem' : '0.13rem',
+              fontWeight: 800,
+              color: theme.text,
+            }}
+          >
+            {slotText(previewHints, `ITEM_${i + 1}`, title)}
+          </div>
+        ))}
       </AgendaTextLayer>
     </div>
   )

@@ -1883,6 +1883,21 @@ export default function LayoutPolishedPreview({
   if (previewMode === 'image_gallery_three') {
     return <PolishedImageGalleryThreePreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
   }
+  const layoutId = String(schema?.layout_id || schema?.layoutId || '')
+  const isAgendaLayout = /^agenda_/i.test(layoutId) || schema?.content_type === 'agenda'
+  const AgendaPreview = AGENDA_PREVIEW_MODES[previewMode]
+  if (isAgendaLayout && AgendaPreview) {
+    return (
+      <AgendaPreview
+        previewHints={previewHints}
+        large={large}
+        fill={fill}
+        className={className}
+        style={style}
+        aspectRatio={aspectRatio}
+      />
+    )
+  }
   const TimelineProcessPreview = TIMELINE_PROCESS_PREVIEW_MODES[previewMode]
   if (TimelineProcessPreview) {
     return (
@@ -1909,7 +1924,6 @@ export default function LayoutPolishedPreview({
       />
     )
   }
-  const AgendaPreview = AGENDA_PREVIEW_MODES[previewMode]
   if (AgendaPreview) {
     return (
       <AgendaPreview

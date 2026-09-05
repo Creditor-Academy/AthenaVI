@@ -71,7 +71,21 @@ import {
   specToSplitPanelContent,
 } from './agendaSplitPanel.js'
 
-const AGENDA_CHROME_RE = /^AGENDA_(INFOGRAPHIC_CHROME|SPINE|PATH|SPLIT_LINE|TIMELINE|CURVE|TITLE_BLOCK|VISUAL_BLOCK|ZONE_|PANEL_|CARD_|ICON_|BADGE_|DIVIDER_|ARROW_|NODE_|COL_BLOCK_|COL_BAND_|COL_ICON_|COL_NUM_|COL_RULE|COL_CHROME_|NUM_CHROME_|NUM_TL_|MIN_|ED_|CRD_|TC_|SP_)/i
+import {
+  agendaTimelineHexGraphicFrame,
+  isAgendaTimelineHexLayout,
+  isAgendaTimelineHexTextSlot,
+  specToTimelineHexContent,
+} from './agendaTimelineHex.js'
+import {
+  agendaVerticalRoadmapGraphicFrame,
+  isAgendaVerticalRoadmapLayout,
+  isAgendaVerticalRoadmapTextSlot,
+  specToVerticalRoadmapContent,
+  VR_PALETTE,
+} from './agendaVerticalRoadmap.js'
+
+const AGENDA_CHROME_RE = /^AGENDA_(INFOGRAPHIC_CHROME|SPINE|PATH|SPLIT_LINE|TIMELINE|CURVE|TITLE_BLOCK|VISUAL_BLOCK|ZONE_|PANEL_|CARD_|ICON_|BADGE_|DIVIDER_|ARROW_|NODE_|COL_BLOCK_|COL_BAND_|COL_ICON_|COL_NUM_|COL_RULE|COL_CHROME_|NUM_CHROME_|NUM_TL_|MIN_|ED_|CRD_|TC_|SP_|TLH_|VR_)/i
 
 function paletteColor(palette, role, fallback) {
   const v = palette?.[role] || palette?.colors?.[role]
@@ -94,14 +108,14 @@ function textBase(el) {
 }
 
 function repositionAgendaTextElements(elements, overlay, options) {
-  const { textColor, columnTextColor, isColouredThreeCol, isThreeCards, isThreeCardsHero, isHeroCards, isNumberedBlocks, isNumberedTimeline, isMinimalQuiet, isEditorial, isAgendaCards, isTwoColRibbon, isSplitPanel, headingY, headingH, canvasW } = options
+  const { textColor, columnTextColor, isColouredThreeCol, isThreeCards, isThreeCardsHero, isHeroCards, isNumberedBlocks, isNumberedTimeline, isMinimalQuiet, isEditorial, isAgendaCards, isTwoColRibbon, isSplitPanel, isTimelineHex, isVerticalRoadmap, headingY, headingH, canvasW } = options
   const isRibbonCards = isThreeCards || isThreeCardsHero
   const stacked = isColouredThreeCol || isRibbonCards || isHeroCards || isNumberedBlocks || isNumberedTimeline
   return elements.map((el) => {
     const sid = String(el.slotId || '')
     const base = textBase(el)
     if (sid.toUpperCase() === 'HEADING') {
-      const h = isRibbonCards || isHeroCards || isNumberedBlocks || isNumberedTimeline || isMinimalQuiet || isEditorial || isAgendaCards || isTwoColRibbon || isSplitPanel
+      const h = isRibbonCards || isHeroCards || isNumberedBlocks || isNumberedTimeline || isMinimalQuiet || isEditorial || isAgendaCards || isTwoColRibbon || isSplitPanel || isTimelineHex || isVerticalRoadmap
         ? (overlay.heading || { x: Math.round(canvasW * 0.06), y: headingY, width: Math.round(canvasW * 0.88), height: headingH })
         : stacked
         ? { x: Math.round(canvasW * 0.06), y: headingY, width: Math.round(canvasW * 0.88), height: headingH }
@@ -111,9 +125,9 @@ function repositionAgendaTextElements(elements, overlay, options) {
         placement: { ...h, rotation: 0, opacity: 1 },
         content: {
           ...base,
-          align: isSplitPanel ? 'center' : isTwoColRibbon ? 'left' : stacked ? 'center' : 'left',
+          align: isTimelineHex || isVerticalRoadmap || isSplitPanel ? 'center' : isTwoColRibbon ? 'left' : stacked ? 'center' : 'left',
           verticalAlign: 'center',
-          fontSize: isSplitPanel ? 28 : isTwoColRibbon ? 28 : isEditorial || isAgendaCards ? 32 : isMinimalQuiet ? 44 : isHeroCards || isThreeCardsHero ? 32 : isNumberedBlocks || isNumberedTimeline ? 34 : isThreeCards ? 36 : stacked ? 40 : 36,
+          fontSize: isTimelineHex || isVerticalRoadmap ? 30 : isSplitPanel ? 28 : isTwoColRibbon ? 28 : isEditorial || isAgendaCards ? 32 : isMinimalQuiet ? 44 : isHeroCards || isThreeCardsHero ? 32 : isNumberedBlocks || isNumberedTimeline ? 34 : isThreeCards ? 36 : stacked ? 40 : 36,
           fontWeight: 800,
           color: textColor,
           lineHeight: 1.1,
@@ -122,8 +136,24 @@ function repositionAgendaTextElements(elements, overlay, options) {
         },
       }
     }
+    if (sid.toUpperCase() === 'SUBHEADING' && isTimelineHex && overlay.subheading) {
+      return {
+        ...el,
+        layer: 12,
+        placement: { ...overlay.subheading, rotation: 0, opacity: 1 },
+        content: {
+          ...base,
+          align: 'center',
+          verticalAlign: 'center',
+          fontSize: 14,
+          fontWeight: 500,
+          color: '#374151',
+          clipToSlot: true,
+        },
+      }
+    }
     const itemBodyM = sid.match(/^ITEM_(\d+)_BODY$/i)
-    if (itemBodyM && (isNumberedTimeline || isAgendaCards || isSplitPanel) && overlay.itemBodies?.length) {
+    if (itemBodyM && (isNumberedTimeline || isAgendaCards || isSplitPanel || isTimelineHex || isVerticalRoadmap) && overlay.itemBodies?.length) {
       const box = overlay.itemBodies[Number(itemBodyM[1]) - 1]
       if (box) {
         return {
@@ -133,14 +163,37 @@ function repositionAgendaTextElements(elements, overlay, options) {
           content: {
             ...colouredColumnTextContent(el.content, {
               color: '#6B7280',
-              fontSize: isSplitPanel ? 13 : isAgendaCards ? 14 : 13,
+              fontSize: isVerticalRoadmap || isTimelineHex ? 13 : isSplitPanel ? 13 : isAgendaCards ? 14 : 13,
               fontWeight: 400,
               align: 'left',
               verticalAlign: 'flex-start',
             }),
             wrap: 'wrap',
             clipToSlot: true,
-            lineHeight: 1.35,
+            lineHeight: isVerticalRoadmap || isTimelineHex ? 1.45 : 1.35,
+          },
+        }
+      }
+    }
+    const yearM = sid.match(/^ITEM_(\d+)_YEAR$/i)
+    if (yearM && isVerticalRoadmap && overlay.years?.length) {
+      const i = Number(yearM[1]) - 1
+      const box = overlay.years[i]
+      if (box) {
+        return {
+          ...el,
+          layer: 12,
+          placement: { ...box, rotation: 0, opacity: 1 },
+          content: {
+            ...colouredColumnTextContent(el.content, {
+              color: VR_PALETTE[i % VR_PALETTE.length].main,
+              fontSize: 22,
+              fontWeight: 800,
+              align: 'left',
+              verticalAlign: 'center',
+            }),
+            clipToSlot: true,
+            lineHeight: 1,
           },
         }
       }
@@ -200,6 +253,20 @@ function repositionAgendaTextElements(elements, overlay, options) {
               clipToSlot: true,
               lineHeight: 1.1,
               letterSpacing: '0.04em',
+            }
+            : isVerticalRoadmap
+            ? {
+              ...colouredColumnTextContent(el.content, { color: '#4B5563', fontSize: 16, fontWeight: 700, align: 'left', verticalAlign: 'center' }),
+              wrap: 'nowrap',
+              clipToSlot: true,
+              lineHeight: 1.1,
+            }
+            : isTimelineHex
+            ? {
+              ...colouredColumnTextContent(el.content, { color: '#111827', fontSize: 15, fontWeight: 800, align: 'center', verticalAlign: 'center' }),
+              wrap: 'nowrap',
+              clipToSlot: true,
+              lineHeight: 1.1,
             }
             : { ...base, align: 'left', verticalAlign: 'center', fontSize: 18, fontWeight: 600, color: textColor },
         }
@@ -326,7 +393,7 @@ function repositionAgendaTextElements(elements, overlay, options) {
 
 function injectAgendaChrome(specs, frame, palette, options) {
   const { graphicX, graphicY, graphicW, graphicH } = frame
-  const { prevBySlot, accent, soft, isColouredThreeCol, isThreeCards, isThreeCardsHero, isHeroCards, isNumberedBlocks, isNumberedTimeline, isMinimalQuiet, isEditorial, isAgendaCards, isTwoColRibbon, isSplitPanel } = options
+  const { prevBySlot, accent, soft, isColouredThreeCol, isThreeCards, isThreeCardsHero, isHeroCards, isNumberedBlocks, isNumberedTimeline, isMinimalQuiet, isEditorial, isAgendaCards, isTwoColRibbon, isSplitPanel, isTimelineHex, isVerticalRoadmap } = options
   const isRibbonCards = isThreeCards || isThreeCardsHero
   const sx = graphicW / 1000
   const sy = graphicH / 560
@@ -374,6 +441,10 @@ function injectAgendaChrome(specs, frame, palette, options) {
       ? specToTwoColumnRibbonContent(spec)
       : isSplitPanel
       ? specToSplitPanelContent(spec)
+      : isTimelineHex
+      ? specToTimelineHexContent(spec)
+      : isVerticalRoadmap
+      ? specToVerticalRoadmapContent(spec)
       : isColouredThreeCol
         ? specToThreeColumnContent(spec)
         : specToGraphicContent(spec, accent, soft)
@@ -424,6 +495,8 @@ function layoutAgendaFamily(elements, schema, palette = {}, canvas = {}) {
   const isAgendaCards = isAgendaCardsLayout(layoutId, family, variant)
   const isTwoColRibbon = isAgendaTwoColumnRibbonLayout(layoutId, family, variant)
   const isSplitPanel = isAgendaSplitPanelLayout(layoutId, family, variant)
+  const isTimelineHex = isAgendaTimelineHexLayout(layoutId, family, variant)
+  const isVerticalRoadmap = isAgendaVerticalRoadmapLayout(layoutId, family, variant)
   const isRibbonCards = isThreeCards || isThreeCardsHero
   const stacked = isColouredThreeCol || isRibbonCards || isHeroCards || isNumberedBlocks || isNumberedTimeline
   const itemCount = schema?.preview?.agendaItems?.length
@@ -451,6 +524,10 @@ function layoutAgendaFamily(elements, schema, palette = {}, canvas = {}) {
     ? agendaTwoColumnRibbonGraphicFrame(canvasW, canvasH)
     : isSplitPanel
     ? agendaSplitPanelGraphicFrame(canvasW, canvasH)
+    : isTimelineHex
+    ? agendaTimelineHexGraphicFrame(canvasW, canvasH)
+    : isVerticalRoadmap
+    ? agendaVerticalRoadmapGraphicFrame(canvasW, canvasH)
     : isColouredThreeCol
       ? agendaThreeColumnGraphicFrame(canvasW, canvasH)
       : agendaGraphicFrame(canvasW, canvasH)
@@ -477,6 +554,10 @@ function layoutAgendaFamily(elements, schema, palette = {}, canvas = {}) {
     ? stripped.filter((el) => isAgendaTwoColumnRibbonTextSlot(el.slotId))
     : isSplitPanel
     ? stripped.filter((el) => isAgendaSplitPanelTextSlot(el.slotId))
+    : isTimelineHex
+    ? stripped.filter((el) => isAgendaTimelineHexTextSlot(el.slotId))
+    : isVerticalRoadmap
+    ? stripped.filter((el) => isAgendaVerticalRoadmapTextSlot(el.slotId))
     : stacked
     ? stripped.filter((el) => isAgendaThreeColumnTextSlot(el.slotId) || /^HERO_IMAGE$/i.test(String(el.slotId || '')))
     : stripped
@@ -495,6 +576,8 @@ function layoutAgendaFamily(elements, schema, palette = {}, canvas = {}) {
     isAgendaCards,
     isTwoColRibbon,
     isSplitPanel,
+    isTimelineHex,
+    isVerticalRoadmap,
     headingY,
     headingH,
     canvasW,
@@ -534,7 +617,7 @@ function layoutAgendaFamily(elements, schema, palette = {}, canvas = {}) {
     chromeSpecs,
     frame,
     palette,
-    { prevBySlot, accent, soft, isColouredThreeCol, isThreeCards, isThreeCardsHero, isHeroCards, isNumberedBlocks, isNumberedTimeline, isMinimalQuiet, isEditorial, isAgendaCards, isTwoColRibbon, isSplitPanel }
+    { prevBySlot, accent, soft, isColouredThreeCol, isThreeCards, isThreeCardsHero, isHeroCards, isNumberedBlocks, isNumberedTimeline, isMinimalQuiet, isEditorial, isAgendaCards, isTwoColRibbon, isSplitPanel, isTimelineHex, isVerticalRoadmap }
   )
 
   return [...chrome, ...next]
