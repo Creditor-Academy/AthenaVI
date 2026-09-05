@@ -18,6 +18,8 @@ import { isPricingFourPlansLayout } from './pricingFourPlans.js'
 import { isPricingFourPlansFeaturedLayout } from './pricingFourPlansFeatured.js'
 import { isPricingFourParaLayout } from './pricingFourPara.js'
 import { isPricingFourParaCardsLayout } from './pricingFourParaCards.js'
+import { isPricingComparisonTableLayout } from './pricingComparisonTable.js'
+import { isPricingComparisonCardsLayout } from './pricingComparisonCards.js'
 import { isCatalogPlaceholderText } from './catalogPlaceholder'
 import { normalizeChartContent } from './chartContentNormalize'
 
@@ -424,9 +426,12 @@ function resolveSlotText(slot, contentBySlotId, schema, options = {}) {
   const keepPricingFourPara = /pricing_four_para_v1$/i.test(String(schema?.layout_id || ''))
     && !/cards/i.test(String(schema?.layout_id || ''))
   const keepPricingFourParaCards = /pricing_four_para_cards_v1$/i.test(String(schema?.layout_id || ''))
+  const keepPricingComparisonTable = /pricing_comparison_table_v1$/i.test(String(schema?.layout_id || ''))
+    && !/cards/i.test(String(schema?.layout_id || ''))
+  const keepPricingComparisonCards = /pricing_comparison_cards_v1$/i.test(String(schema?.layout_id || ''))
   if (
     placeholder &&
-    (!hasSlideContent || role === 'stat' || role === 'stat_label' || memberSlot || keepPricingThreePlans || keepPricingThreePlansFeatured || keepPricingThreeHighlight || keepPricingThreeHighlightSplit || keepPricingFourPlans || keepPricingFourPlansFeatured || keepPricingFourPara || keepPricingFourParaCards)
+    (!hasSlideContent || role === 'stat' || role === 'stat_label' || memberSlot || keepPricingThreePlans || keepPricingThreePlansFeatured || keepPricingThreeHighlight || keepPricingThreeHighlightSplit || keepPricingFourPlans || keepPricingFourPlansFeatured || keepPricingFourPara || keepPricingFourParaCards || keepPricingComparisonTable || keepPricingComparisonCards)
   ) {
     return placeholder
   }
@@ -1062,7 +1067,9 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
       (isPricingFourPlansLayout(schema?.layout_id) && /^PLAN_\d+_/i.test(String(el.slotId || ''))) ||
       (isPricingFourPlansFeaturedLayout(schema?.layout_id) && /^PLAN_\d+_/i.test(String(el.slotId || ''))) ||
       (isPricingFourParaLayout(schema?.layout_id) && (/^PLAN_\d+_/i.test(String(el.slotId || '')) || String(el.slotId || '').toUpperCase() === 'BODY')) ||
-      (isPricingFourParaCardsLayout(schema?.layout_id) && (/^PLAN_\d+_/i.test(String(el.slotId || '')) || String(el.slotId || '').toUpperCase() === 'BODY'))
+      (isPricingFourParaCardsLayout(schema?.layout_id) && (/^PLAN_\d+_/i.test(String(el.slotId || '')) || String(el.slotId || '').toUpperCase() === 'BODY')) ||
+      (isPricingComparisonTableLayout(schema?.layout_id) && (/^PLAN_\d+_/i.test(String(el.slotId || '')) || /^FEATURE_\d+$/i.test(String(el.slotId || '')) || String(el.slotId || '').toUpperCase() === 'HEADING')) ||
+      (isPricingComparisonCardsLayout(schema?.layout_id) && /^PLAN_\d+_/i.test(String(el.slotId || '')))
     ) return el
     const colorRole = String(el.content?.colorRole || '').toLowerCase()
     const rawColor = el.content?.color

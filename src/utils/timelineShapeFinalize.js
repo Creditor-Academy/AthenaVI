@@ -86,6 +86,8 @@ import { isPricingFourPlansLayout, layoutPricingFourPlans } from './pricingFourP
 import { isPricingFourPlansFeaturedLayout, layoutPricingFourPlansFeatured } from './pricingFourPlansFeatured.js'
 import { isPricingFourParaLayout, layoutPricingFourPara } from './pricingFourPara.js'
 import { isPricingFourParaCardsLayout, layoutPricingFourParaCards } from './pricingFourParaCards.js'
+import { isPricingComparisonTableLayout, layoutPricingComparisonTable } from './pricingComparisonTable.js'
+import { isPricingComparisonCardsLayout, layoutPricingComparisonCards } from './pricingComparisonCards.js'
 import {
   QUOTE_GRID_N,
   QUOTE_MARK_COLOR,
@@ -5397,6 +5399,12 @@ export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = 
   }
   if (isPricingThreeHighlightSplitLayout(layoutId)) {
     return layoutPricingThreeHighlightSplit(elements, schema, palette, canvas)
+  }
+  if (isPricingComparisonCardsLayout(layoutId)) {
+    return layoutPricingComparisonCards(elements, schema, palette, canvas)
+  }
+  if (isPricingComparisonTableLayout(layoutId)) {
+    return layoutPricingComparisonTable(elements, schema, palette, canvas)
   }
   if (isPricingFourParaCardsLayout(layoutId)) {
     return layoutPricingFourParaCards(elements, schema, palette, canvas)

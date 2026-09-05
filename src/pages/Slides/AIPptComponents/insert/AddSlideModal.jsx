@@ -23,10 +23,7 @@ import {
   pickSimilarLayouts,
   templateLayoutId,
 } from '../../../../utils/similarLayouts'
-import {
-  layoutSchemaHasCanvasElements,
-  slideHasCanvasElements,
-} from '../../../../utils/videoTemplateToCanvasElements'
+import { isCompiledPricingLayout } from '../../../../utils/pricingCompiledPreview'
 import './AddSlideModal.css'
 
 /** Internal render size — scaled down to card; large previews keep text readable. */
@@ -231,7 +228,8 @@ function ScaledPreview({ children, baseWidth = PREVIEW_BASE_W, baseHeight = PREV
 }
 
 function GalleryPreview({ schema, previewUrl, fallbackName, themeId, aspectRatio = '16:9' }) {
-  if (previewUrl) {
+  const compiledPricing = isCompiledPricingLayout(schema?.layout_id || schema?.layoutId)
+  if (previewUrl && !compiledPricing) {
     return <img src={previewUrl} alt="" className="ppt-add-slide-card-image" />
   }
   if (schema?.slots?.length || layoutSchemaHasCanvasElements(schema) || schema?.preview?.mode === 'canvas_elements') {

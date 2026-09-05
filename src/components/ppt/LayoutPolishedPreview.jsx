@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import {
   filterPreviewSlots,
   getGridDims,
@@ -23,6 +24,7 @@ import { TIMELINE_PROCESS_PREVIEW_MODES } from './layoutPolishedPreviewsTimeline
 import { resolvePreviewMode } from '../../utils/deckLayoutRegistry'
 import { QUOTE_PREVIEW_MODES } from './layoutPolishedPreviewsQuotes.jsx'
 import LayoutSvgPreview from './LayoutSvgPreview'
+import { compilePricingLayoutPreviewSlide } from '../../utils/pricingCompiledPreview.js'
 
 const LAYOUT_POLISHED_THEME = {
   bg: 'var(--preview-bg, var(--bg-card, #ffffff))',
@@ -1927,10 +1929,26 @@ export default function LayoutPolishedPreview({
   }
   const previewMode = resolvePreviewMode(schema) || previewHints.mode
   const cssAspect = aspectRatioToCss(aspectRatio)
+  const compiledPricingSlide = useMemo(
+    () => compilePricingLayoutPreviewSlide(schema, aspectRatio),
+    [schema, aspectRatio],
+  )
 
   const frameStyle = fill
     ? { width: '100%', height: '100%', aspectRatio: 'unset', minHeight: 0 }
     : { width: '100%', aspectRatio: cssAspect }
+
+  if (compiledPricingSlide) {
+    return (
+      <CanvasElementsPreview
+        slide={compiledPricingSlide}
+        aspectRatio={aspectRatio}
+        fill={fill}
+        className={className}
+        style={{ ...frameStyle, ...style }}
+      />
+    )
+  }
 
   if (previewMode === 'canvas_elements' || layoutSchemaHasCanvasElements(schema)) {
     const elementsDoc = resolveLayoutCanvasElementsDoc(schema) || {}

@@ -327,4 +327,46 @@ CATALOG.pricing_four_para_cards_v1 = layoutBase('pricing_four_para_cards_v1', 'p
   }),
 ], { mode: 'pricing_four_para', pricingVariant: 'cards' })
 
+const PCT_FEATURE = 'LOREM IPSUM IS SIMPLY DUMMY'
+CATALOG.pricing_comparison_table_v1 = layoutBase('pricing_comparison_table_v1', 'pricing', [
+  heading('HEADING', 'cols 1-4, rows 1-2', 'PRICING TABLE', {
+    typography: typo('heading', { fontSize: 18, align: 'left' }),
+    max_lines: 1,
+  }),
+  ...[1, 2, 3, 4].flatMap((n) => {
+    const prices = ['FREE', '$20', '$50', '$100']
+    const names = ['LIGHT', 'PROFESSIONAL', 'EXTENDED', 'FULL']
+    const storage = ['10GB', '50GB', '200GB', '1TB']
+    const col = n === 1 ? '4-6' : n === 2 ? '6-8' : n === 3 ? '8-10' : '10-12'
+    return [
+      slot(`PLAN_${n}_PRICE`, `cols ${col}, rows 1-2`, 'stat', prices[n - 1], { layer: 10, typography: typo('stat', { fontSize: 22, align: 'center' }), max_lines: 1 }),
+      slot(`PLAN_${n}_LABEL`, `cols ${col}, rows 1-2`, 'caption', names[n - 1], { layer: 10, typography: typo('caption', { fontSize: 10, align: 'center' }), max_lines: 1 }),
+      slot(`PLAN_${n}_ITEM_1`, `cols ${col}, rows 2-3`, 'stat', storage[n - 1], { layer: 10, typography: typo('stat', { fontSize: 16, align: 'center' }), max_lines: 1 }),
+    ]
+  }),
+  ...[1, 2, 3, 4, 5, 6, 7].map((n) => (
+    slot(`FEATURE_${n}`, 'cols 1-4, rows 2-3', 'body', PCT_FEATURE, { layer: 10, typography: typo('body', { fontSize: 11 }), max_lines: 1 })
+  )),
+], { mode: 'pricing_comparison_table', pricingVariant: 'table' })
+
+CATALOG.pricing_comparison_cards_v1 = layoutBase('pricing_comparison_cards_v1', 'pricing', [
+  heading('HEADING', 'cols 2-11, rows 1-2', 'Compare plans', {
+    typography: typo('heading', { fontSize: 22, align: 'center' }),
+    max_lines: 1,
+  }),
+  ...[1, 2, 3, 4].flatMap((n) => {
+    const names = ['Light', 'Professional', 'Extended', 'Full']
+    const prices = ['FREE', '$20', '$50', '$100']
+    const ctas = ['Select Light', 'Select Pro', 'Select Extended', 'Select Full']
+    const features = ['Cloud storage included', 'Team seats on the plan', 'Email support window', 'Usage analytics', 'SSO and admin tools']
+    const col = n === 1 ? '1-3' : n === 2 ? '4-6' : n === 3 ? '7-9' : '10-12'
+    return [
+      slot(`PLAN_${n}_LABEL`, `cols ${col}, rows 2-3`, 'heading', names[n - 1], { layer: 10, typography: typo('heading', { fontSize: 13 }), max_lines: 1 }),
+      slot(`PLAN_${n}_PRICE`, `cols ${col}, rows 2-3`, 'stat', prices[n - 1], { layer: 10, typography: typo('stat', { fontSize: 28, align: 'left' }), max_lines: 1 }),
+      ...features.map((text, i) => slot(`PLAN_${n}_ITEM_${i + 1}`, `cols ${col}, rows ${3 + i}-${4 + i}`, 'body', text, { layer: 10, typography: typo('body', { fontSize: 12 }), max_lines: 1 })),
+      slot(`PLAN_${n}_CTA`, `cols ${col}, rows 9-10`, 'caption', ctas[n - 1], { layer: 10, typography: typo('caption', { fontSize: 12, fontWeight: 700 }), max_lines: 1 }),
+    ]
+  }),
+], { mode: 'pricing_comparison_table', pricingVariant: 'cards' })
+
 export default CATALOG
