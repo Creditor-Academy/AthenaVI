@@ -78,6 +78,14 @@ import {
   layoutAgendaTimeline,
   layoutAgendaTwoColumn,
 } from './agendaFinalize.js'
+import { isPricingThreePlansLayout, layoutPricingThreePlans } from './pricingThreePlans.js'
+import { isPricingThreePlansFeaturedLayout, layoutPricingThreePlansFeatured } from './pricingThreePlansFeatured.js'
+import { isPricingThreeHighlightLayout, layoutPricingThreeHighlight } from './pricingThreeHighlight.js'
+import { isPricingThreeHighlightSplitLayout, layoutPricingThreeHighlightSplit } from './pricingThreeHighlightSplit.js'
+import { isPricingFourPlansLayout, layoutPricingFourPlans } from './pricingFourPlans.js'
+import { isPricingFourPlansFeaturedLayout, layoutPricingFourPlansFeatured } from './pricingFourPlansFeatured.js'
+import { isPricingFourParaLayout, layoutPricingFourPara } from './pricingFourPara.js'
+import { isPricingFourParaCardsLayout, layoutPricingFourParaCards } from './pricingFourParaCards.js'
 import {
   QUOTE_GRID_N,
   QUOTE_MARK_COLOR,
@@ -5380,6 +5388,30 @@ export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = 
   }
   if (isTeamOrgSimpleLayout(layoutId)) {
     return layoutTeamOrgSimple(elements, schema, palette, canvas)
+  }
+  if (isPricingThreePlansFeaturedLayout(layoutId)) {
+    return layoutPricingThreePlansFeatured(elements, schema, palette, canvas)
+  }
+  if (isPricingThreeHighlightLayout(layoutId)) {
+    return layoutPricingThreeHighlight(elements, schema, palette, canvas)
+  }
+  if (isPricingThreeHighlightSplitLayout(layoutId)) {
+    return layoutPricingThreeHighlightSplit(elements, schema, palette, canvas)
+  }
+  if (isPricingFourParaCardsLayout(layoutId)) {
+    return layoutPricingFourParaCards(elements, schema, palette, canvas)
+  }
+  if (isPricingFourParaLayout(layoutId)) {
+    return layoutPricingFourPara(elements, schema, palette, canvas)
+  }
+  if (isPricingFourPlansFeaturedLayout(layoutId)) {
+    return layoutPricingFourPlansFeatured(elements, schema, palette, canvas)
+  }
+  if (isPricingFourPlansLayout(layoutId)) {
+    return layoutPricingFourPlans(elements, schema, palette, canvas)
+  }
+  if (isPricingThreePlansLayout(layoutId)) {
+    return layoutPricingThreePlans(elements, schema, palette, canvas)
   }
   if (isAgendaMinimalLayout(layoutId)) {
     return layoutAgendaMinimal(elements, schema, palette, canvas)

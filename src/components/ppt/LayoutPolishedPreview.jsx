@@ -8,6 +8,14 @@ import { layoutSchemaHasCanvasElements, resolveLayoutCanvasElementsDoc } from '.
 import CanvasElementsPreview from './CanvasElementsPreview'
 import { EXTENDED_PREVIEW_MODES } from './layoutPolishedPreviewsExtended.jsx'
 import { PEOPLE_PRICING_PREVIEW_MODES, PlanCards } from './layoutPolishedPreviewsPeoplePricing.jsx'
+import { isPricingThreePlansLayout, pricingThreePlansPreviewSvg } from '../../utils/pricingThreePlans.js'
+import { isPricingThreePlansFeaturedLayout, pricingThreePlansFeaturedPreviewSvg } from '../../utils/pricingThreePlansFeatured.js'
+import { isPricingThreeHighlightLayout, pricingThreeHighlightPreviewSvg } from '../../utils/pricingThreeHighlight.js'
+import { isPricingThreeHighlightSplitLayout, pricingThreeHighlightSplitPreviewSvg } from '../../utils/pricingThreeHighlightSplit.js'
+import { isPricingFourPlansLayout, pricingFourPlansPreviewSvg } from '../../utils/pricingFourPlans.js'
+import { isPricingFourPlansFeaturedLayout, pricingFourPlansFeaturedPreviewSvg } from '../../utils/pricingFourPlansFeatured.js'
+import { isPricingFourParaLayout, pricingFourParaPreviewSvg } from '../../utils/pricingFourPara.js'
+import { isPricingFourParaCardsLayout, pricingFourParaCardsPreviewSvg } from '../../utils/pricingFourParaCards.js'
 import { DEVICE_FRAMES_PREVIEW_MODES } from './layoutPolishedPreviewsDeviceFrames.jsx'
 import { DIAGRAM_PREVIEW_MODES } from './layoutPolishedPreviewsDiagrams.jsx'
 import { AGENDA_PREVIEW_MODES } from './layoutPolishedPreviewsAgenda.jsx'
@@ -470,6 +478,168 @@ function PolishedComparisonColumnsPreview({ previewHints, large, className, styl
 
 function PolishedPricingPlansPreview({ previewHints, large, className, style, fill, aspectRatio }) {
   const t = LAYOUT_POLISHED_THEME
+  const frameStyle = fill
+    ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+    : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+
+  if (isPricingFourPlansFeaturedLayout(previewHints.layout_id)) {
+    const svg = pricingFourPlansFeaturedPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+        <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+          <div style={{
+            position: 'absolute', left: '4%', top: '2.6%', fontSize: large ? '0.42rem' : '0.16rem', fontWeight: 800, color: t.text,
+          }}>Pricing Table</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isPricingFourPlansLayout(previewHints.layout_id)) {
+    const svg = pricingFourPlansPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+        <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+          <div style={{
+            position: 'absolute', left: '4%', top: '3%', fontSize: large ? '0.42rem' : '0.16rem', fontWeight: 700, color: t.text,
+          }}>Pricing Table</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isPricingThreeHighlightSplitLayout(previewHints.layout_id)) {
+    const svg = pricingThreeHighlightSplitPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+        <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+          <div style={{
+            position: 'absolute', left: '10%', right: '10%', top: '3%', textAlign: 'center',
+            fontSize: large ? '0.5rem' : '0.18rem', fontWeight: 800, color: t.text,
+          }}>Slide Title Here</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isPricingThreeHighlightLayout(previewHints.layout_id)) {
+    const svg = pricingThreeHighlightPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+        <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+          <div style={{
+            position: 'absolute', left: '10%', right: '10%', top: '4%', textAlign: 'center',
+            fontSize: large ? '0.55rem' : '0.2rem', fontWeight: 800, color: t.text,
+          }}>Slide Title Here</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isPricingThreePlansFeaturedLayout(previewHints.layout_id)) {
+    const svg = pricingThreePlansFeaturedPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+        <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+          <div style={{
+            position: 'absolute', left: '4%', top: '7.2%', fontSize: large ? '0.55rem' : '0.2rem', fontWeight: 800, color: t.text, letterSpacing: '0.04em',
+          }}>PRICING PLANS</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isPricingThreePlansLayout(previewHints.layout_id)) {
+    const svg = pricingThreePlansPreviewSvg()
+    const plans = [
+      { label: 'Basic Plan', price: '$49', color: '#2EC4D6' },
+      { label: 'Standard Plan', price: '$79', color: '#8BC34A' },
+      { label: 'Premium Plan', price: '$99', color: '#E8A317' },
+    ]
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+        <div style={{
+          position: 'relative', zIndex: 1, width: '100%', height: '100%',
+        }}>
+          <div style={{
+            position: 'absolute', left: '8%', right: '8%', top: '1.8%', textAlign: 'center',
+            fontSize: large ? '0.62rem' : '0.2rem', fontWeight: 800, color: '#1B3A4B',
+          }}>
+            Three Pricing Table Slide
+          </div>
+          <div style={{
+            position: 'absolute', left: '12%', right: '12%', top: '9%', textAlign: 'center',
+            fontSize: large ? '0.28rem' : '0.11rem', color: '#6B7280',
+          }}>
+            Present complex data in an easy-to-understand way.
+          </div>
+          {plans.map((plan, i) => (
+            <div
+              key={plan.label}
+              style={{
+                position: 'absolute',
+                left: `${2.8 + i * 32.4}%`,
+                width: '29.6%',
+                top: '22%',
+                paddingLeft: '12%',
+              }}
+            >
+              <div style={{ fontSize: large ? '0.55rem' : '0.18rem', fontWeight: 800, color: plan.color }}>{plan.price}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   const eyebrowMeta = previewHints.slots?.EYEBROW || {}
   const { display: eyebrowText } = formatPreviewText(eyebrowMeta.text || 'Describe this slide', {
     bold: false,
@@ -480,9 +650,6 @@ function PolishedPricingPlansPreview({ previewHints, large, className, style, fi
   const planLayout = variant === 'split' ? 'split' : variant === 'stack' ? 'stack' : 'row'
   const columns = Array.isArray(previewHints.columns)?.length ? previewHints.columns : null
   const count = columns?.length || 3
-  const frameStyle = fill
-    ? { width: '100%', height: '100%', aspectRatio: 'unset' }
-    : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
 
   return (
     <div className={className} style={{
@@ -1959,6 +2126,57 @@ export default function LayoutPolishedPreview({
   }
   if (previewMode === 'closing_overlay') {
     return <PolishedClosingOverlayPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
+  }
+
+  if (previewMode === 'pricing_four_para' && isPricingFourParaCardsLayout(previewHints.layout_id)) {
+    const svg = pricingFourParaCardsPreviewSvg()
+    const t = LAYOUT_POLISHED_THEME
+    const frameStyle = fill
+      ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+      : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+        <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+          <div style={{
+            position: 'absolute', left: '0', right: '0', top: '2.2%', textAlign: 'center',
+            fontSize: large ? '0.38rem' : '0.14rem', fontWeight: 800, color: t.text,
+          }}>Membership cards</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (previewMode === 'pricing_four_para' && isPricingFourParaLayout(previewHints.layout_id)) {
+    const svg = pricingFourParaPreviewSvg()
+    const t = LAYOUT_POLISHED_THEME
+    const frameStyle = fill
+      ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+      : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+        <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+          <div style={{
+            position: 'absolute', left: '3.6%', top: '2.8%', fontSize: large ? '0.4rem' : '0.15rem', fontWeight: 800, color: t.text,
+          }}>Choose a plan</div>
+        </div>
+      </div>
+    )
   }
 
   const ExtendedPreview = EXTENDED_PREVIEW_MODES[previewMode]

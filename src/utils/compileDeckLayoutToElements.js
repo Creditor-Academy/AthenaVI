@@ -14,6 +14,10 @@ import {
   validateLayoutGeometry,
 } from './compileLayoutGeometry'
 import { finalizeTimelineShapes } from './timelineShapeFinalize'
+import { isPricingFourPlansLayout } from './pricingFourPlans.js'
+import { isPricingFourPlansFeaturedLayout } from './pricingFourPlansFeatured.js'
+import { isPricingFourParaLayout } from './pricingFourPara.js'
+import { isPricingFourParaCardsLayout } from './pricingFourParaCards.js'
 import { isCatalogPlaceholderText } from './catalogPlaceholder'
 import { normalizeChartContent } from './chartContentNormalize'
 
@@ -408,9 +412,21 @@ function resolveSlotText(slot, contentBySlotId, schema, options = {}) {
 
   // Keep metric/stat/member catalog samples so empty authoring still looks designed.
   const memberSlot = /^MEMBER_\d+_(NAME|ROLE|EMAIL|BIO|BODY|DESC)$/i.test(String(slotId || ''))
+  const keepPricingThreePlans = /pricing_three_plans_v1$/i.test(String(schema?.layout_id || ''))
+    && !/featured|highlight/i.test(String(schema?.layout_id || ''))
+  const keepPricingThreePlansFeatured = /pricing_three_plans_featured_v1$/i.test(String(schema?.layout_id || ''))
+  const keepPricingThreeHighlight = /pricing_three_highlight_v1$/i.test(String(schema?.layout_id || ''))
+    && !/split/i.test(String(schema?.layout_id || ''))
+  const keepPricingThreeHighlightSplit = /pricing_three_highlight_split_v1$/i.test(String(schema?.layout_id || ''))
+  const keepPricingFourPlans = /pricing_four_plans_v1$/i.test(String(schema?.layout_id || ''))
+    && !/featured/i.test(String(schema?.layout_id || ''))
+  const keepPricingFourPlansFeatured = /pricing_four_plans_featured_v1$/i.test(String(schema?.layout_id || ''))
+  const keepPricingFourPara = /pricing_four_para_v1$/i.test(String(schema?.layout_id || ''))
+    && !/cards/i.test(String(schema?.layout_id || ''))
+  const keepPricingFourParaCards = /pricing_four_para_cards_v1$/i.test(String(schema?.layout_id || ''))
   if (
     placeholder &&
-    (!hasSlideContent || role === 'stat' || role === 'stat_label' || memberSlot)
+    (!hasSlideContent || role === 'stat' || role === 'stat_label' || memberSlot || keepPricingThreePlans || keepPricingThreePlansFeatured || keepPricingThreeHighlight || keepPricingThreeHighlightSplit || keepPricingFourPlans || keepPricingFourPlansFeatured || keepPricingFourPara || keepPricingFourParaCards)
   ) {
     return placeholder
   }
@@ -1042,7 +1058,11 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
       /^funnel_[1-5]_title$/i.test(String(el.slotId || '')) ||
       /^Q[1-4]_(TITLE|BODY)$/i.test(String(el.slotId || '')) ||
       /^MATRIX_(CENTER|X_LABEL|Y_LABEL)$/i.test(String(el.slotId || '')) ||
-      /^MEMBER_\d+_(NAME|ROLE|BIO|BODY|DESC|EMAIL)$/i.test(String(el.slotId || ''))
+      /^MEMBER_\d+_(NAME|ROLE|BIO|BODY|DESC|EMAIL)$/i.test(String(el.slotId || '')) ||
+      (isPricingFourPlansLayout(schema?.layout_id) && /^PLAN_\d+_/i.test(String(el.slotId || ''))) ||
+      (isPricingFourPlansFeaturedLayout(schema?.layout_id) && /^PLAN_\d+_/i.test(String(el.slotId || ''))) ||
+      (isPricingFourParaLayout(schema?.layout_id) && (/^PLAN_\d+_/i.test(String(el.slotId || '')) || String(el.slotId || '').toUpperCase() === 'BODY')) ||
+      (isPricingFourParaCardsLayout(schema?.layout_id) && (/^PLAN_\d+_/i.test(String(el.slotId || '')) || String(el.slotId || '').toUpperCase() === 'BODY'))
     ) return el
     const colorRole = String(el.content?.colorRole || '').toLowerCase()
     const rawColor = el.content?.color
