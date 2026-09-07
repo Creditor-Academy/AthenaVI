@@ -13,6 +13,7 @@ import { isTimelineHorizontalLayout } from './timelineHorizontal.js'
 import { isTimelineVerticalLayout } from './timelineVertical.js'
 import { isTimelineVerticalCardsLayout } from './timelineVerticalCards.js'
 import { isTimelineRoadmapLayout } from './timelineRoadmap.js'
+import { isTimelineRoadmapHorizontalLayout } from './timelineRoadmapHorizontal.js'
 import { isTimelineHorizontalCardsLayout } from './timelineHorizontalCards.js'
 import { isTimelineMilestonesLayout } from './timelineMilestones.js'
 import { isTimelineMilestonesCardsLayout } from './timelineMilestonesCards.js'
@@ -39,6 +40,7 @@ export function isCompiledPricingLayout(layoutId) {
     || isTimelineVerticalLayout(layoutId)
     || isTimelineVerticalCardsLayout(layoutId)
     || isTimelineRoadmapLayout(layoutId)
+    || isTimelineRoadmapHorizontalLayout(layoutId)
 }
 
 export function compilePricingLayoutPreviewSlide(schema, aspectRatio = '16:9') {

@@ -369,7 +369,6 @@ Object.assign(CATALOG, {
   timeline_horizontal_cards_v1: timelineFromSource('timeline_horizontal_cards_v1', 'timeline_horizontal_v1', 'cards'),
   timeline_milestones_image_right_v1: timelineFromSource('timeline_milestones_image_right_v1', 'timeline_milestones_image_v1', 'image_right'),
   timeline_milestones_cards_v1: timelineFromSource('timeline_milestones_cards_v1', 'timeline_milestones_v1', 'cards'),
-  timeline_roadmap_horizontal_v1: timelineFromSource('timeline_roadmap_horizontal_v1', 'timeline_roadmap_v1', 'horizontal'),
   timeline_process_horizontal_v1: timelineFromSource('timeline_process_horizontal_v1', 'timeline_process_steps_v1', 'horizontal'),
   timeline_vertical_cards_v1: timelineFromSource('timeline_vertical_cards_v1', 'timeline_vertical_v1', 'cards'),
   bullet_list_grid_v1: comparisonFromSource('bullet_list_grid_v1', 'bullet_list_cards_v1', 'grid'),
@@ -540,6 +539,31 @@ CATALOG.timeline_vertical_cards_v1 = layoutBase('timeline_vertical_cards_v1', 't
     ]
   }),
 ], { mode: 'timeline_vertical', timelineVariant: 'cards' })
+
+const TLRH_BODY = 'Maecenas non laoreet odio. Fusce lobortis porttitor purus, vel vestibulum libero pharetra vel.'
+CATALOG.timeline_roadmap_horizontal_v1 = layoutBase('timeline_roadmap_horizontal_v1', 'timeline', [
+  heading('HEADING', 'cols 1-12, rows 1-2', 'Roadmap Timeline Template', {
+    typography: typo('heading', { fontSize: 26, align: 'center' }),
+    max_lines: 2,
+  }),
+  ...[1, 2, 3, 4, 5, 6].flatMap((n) => {
+    const years = ['2022', '2023', '2024', '2025', '2026', '2027']
+    const col = n === 1 ? '1-2' : n === 2 ? '3-4' : n === 3 ? '5-6' : n === 4 ? '7-8' : n === 5 ? '9-10' : '11-12'
+    const peak = n % 2 === 1
+    return [
+      slot(`milestone_${n}_label`, `cols ${col}, rows ${peak ? '2-3' : '8-9'}`, 'caption', years[n - 1], {
+        layer: 10,
+        typography: typo('caption', { fontSize: 18, align: 'center', fontWeight: 800 }),
+        max_lines: 1,
+      }),
+      slot(`milestone_${n}_detail`, `cols ${col}, rows ${peak ? '7-10' : '3-6'}`, 'body', TLRH_BODY, {
+        layer: 10,
+        typography: typo('body', { fontSize: 11, align: 'center' }),
+        max_lines: 5,
+      }),
+    ]
+  }),
+], { mode: 'timeline_roadmap', timelineVariant: 'horizontal' })
 
 CATALOG.timeline_roadmap_v1 = layoutBase('timeline_roadmap_v1', 'timeline', [
   slot('SUBHEADING', 'cols 1-4, rows 1-2', 'caption', 'TIMELINE', {
