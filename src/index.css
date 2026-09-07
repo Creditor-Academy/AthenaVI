@@ -295,18 +295,11 @@ body {
 }
 
 .page-header-title,
-.workspace-header-title h1,
-.workspace-header-title h2,
-.videos-page-title,
 .library-page-title {
   margin: 0 !important;
-  font-size: 1.75rem !important; /* 28px uniform across all headers */
   font-weight: 700 !important;
-  letter-spacing: -0.025em !important;
   color: var(--text-main) !important;
-  line-height: 1.25 !important;
   text-align: left !important;
-  font-family: var(--font-family, inherit) !important;
 }
 
 .page-header-subtitle,

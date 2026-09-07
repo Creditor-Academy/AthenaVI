@@ -32,25 +32,22 @@
 }
 
 .library-page-header {
-  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
   padding-bottom: 0;
   border-bottom: none;
+  flex-wrap: wrap;
 }
 
 .library-header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
   justify-content: flex-end;
-}
-
-.library-page-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
 }
 
 .library-page-header-title-group {
@@ -79,12 +76,12 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 14px 6px 10px;
-  height: 42px;
+  padding: 0 14px 0 10px;
+  height: 40px;
   box-sizing: border-box;
   background: var(--bg-card, #ffffff);
   border: 1px solid var(--border-color, #e2e8f0);
-  border-radius: 12px;
+  border-radius: 999px;
   color: var(--text-main, #0f172a);
   font-size: 13px;
   font-weight: 600;
@@ -111,9 +108,9 @@
 }
 
 .library-workspace-trigger-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -758,7 +755,8 @@
 
 .library-search-input {
   width: 220px;
-  height: 38px;
+  height: 40px;
+  box-sizing: border-box;
   padding: 0 32px 0 36px;
   border-radius: 999px;
   border: 1px solid var(--border-color, #e2e8f0);
@@ -801,7 +799,8 @@
 }
 
 .btn-upload-primary {
-  height: 38px;
+  height: 40px;
+  box-sizing: border-box;
   padding: 0 18px;
   background: var(--primary);
   color: var(--primary-contrast, #ffffff);
@@ -830,10 +829,12 @@
   box-shadow: none;
 }
 
-.view-toggle {
+.library-page .view-toggle {
   display: flex;
   align-items: center;
   gap: 2px;
+  height: 40px;
+  box-sizing: border-box;
   background: var(--bg-surface, #f8fafc);
   border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 999px;
@@ -841,9 +842,9 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-.view-toggle-btn {
-  width: 36px;
-  height: 36px;
+.library-page .view-toggle-btn {
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -855,12 +856,12 @@
   transition: all 0.2s;
 }
 
-.view-toggle-btn:hover {
+.library-page .view-toggle-btn:hover {
   background: var(--bg-surface);
   color: var(--text-main);
 }
 
-.view-toggle-btn.active {
+.library-page .view-toggle-btn.active {
   background: var(--primary);
   color: #ffffff;
   box-shadow: 0 2px 4px rgba(var(--primary-rgb), 0.3);

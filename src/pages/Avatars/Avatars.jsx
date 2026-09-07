@@ -508,31 +508,12 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
   return (
     <div className="videos-page avatars-page">
       <div className="videos-shell">
-        <header className="videos-page-header">
-          <div className="videos-title-section">
-            <h1 className="videos-page-title">Avatars</h1>
-            <p className="videos-page-subtitle">{getAvatarSectionSubtitle(activeSection)}</p>
+        <header className="videos-page-header page-header">
+          <div className="videos-title-section page-header-title-section">
+            <h1 className="videos-page-title page-header-title">Avatars</h1>
+            <p className="videos-page-subtitle page-header-subtitle">{getAvatarSectionSubtitle(activeSection)}</p>
           </div>
-          <div className="videos-actions">
-            <div className="view-toggle">
-              <button
-                className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
-                onClick={() => setViewMode('grid')}
-                title="Grid view"
-                type="button"
-              >
-                <MdGridView />
-              </button>
-              <button
-                className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-                onClick={() => setViewMode('list')}
-                title="List view"
-                type="button"
-              >
-                <MdViewList />
-              </button>
-            </div>
-
+          <div className="videos-actions page-header-actions">
             <VideosToolbarDropdown
               label="Filter"
               icon={MdFilterList}
@@ -543,6 +524,29 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
               menuLabel="Filter avatars"
             />
 
+            <div className="view-toggle" role="group" aria-label="View mode">
+              <button
+                className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                onClick={() => setViewMode('grid')}
+                title="Grid view"
+                aria-label="Grid view"
+                aria-pressed={viewMode === 'grid'}
+                type="button"
+              >
+                <MdGridView size={18} />
+              </button>
+              <button
+                className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setViewMode('list')}
+                title="List view"
+                aria-label="List view"
+                aria-pressed={viewMode === 'list'}
+                type="button"
+              >
+                <MdViewList size={18} />
+              </button>
+            </div>
+
             <VideosToolbarDropdown
               label="Sort"
               icon={MdSort}
@@ -552,6 +556,7 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
               onChange={setSortBy}
               menuLabel="Sort avatars"
             />
+
             {activeSection === 'private' && onCreateAvatar ? (
               <>
                 <button
@@ -560,46 +565,50 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
                   onClick={() => onCreate?.()}
                 >
                   <MdAdd size={18} />
-                  Create Video
+                  <span>Create Video</span>
                 </button>
                 <button
                   type="button"
-                  className="btn-primary videos-create-btn"
+                  className="videos-create-btn"
                   onClick={onCreateAvatar}
                 >
                   <MdAdd size={18} />
-                  Create Avatar
+                  <span>Create Avatar</span>
                 </button>
               </>
             ) : onCreate ? (
-              <button type="button" className="btn-primary videos-create-btn" onClick={onCreate}>
+              <button type="button" className="videos-create-btn" onClick={onCreate}>
                 <MdAdd size={18} />
-                Create Video
+                <span>Create Video</span>
               </button>
             ) : null}
           </div>
         </header>
 
-        <div className="videos-tab-switch" role="tablist" aria-label="Avatar sections">
-          {AVATAR_SECTION_TABS.map((tab) => {
-            const Icon = TAB_ICONS[tab.id];
-            const isActive = activeSection === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                className={`videos-tab-btn ${isActive ? 'active' : ''}`}
-                onClick={() => setActiveSection(tab.id)}
-              >
-                <span className="videos-tab-icon" aria-hidden>
+        <div
+          className="workspace-root-tabs-wrapper work-root-tabs-wrapper"
+          role="tablist"
+          aria-label="Avatar sections"
+        >
+          <div className="workspace-root-tabs">
+            {AVATAR_SECTION_TABS.map((tab) => {
+              const Icon = TAB_ICONS[tab.id];
+              const isActive = activeSection === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`workspace-root-tab ${isActive ? 'active' : ''}`}
+                  onClick={() => setActiveSection(tab.id)}
+                >
                   <Icon size={18} />
-                </span>
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <VideosToolbar

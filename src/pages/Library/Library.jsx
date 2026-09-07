@@ -489,12 +489,11 @@ function Library() {
   return (
     <div className="library-page">
       <div className="library-shell">
-        <header className="library-page-header">
-          <div className="library-page-header-row">
-            <div className="library-page-header-title-group">
-              <h1 className="library-page-title">Library</h1>
+        <header className="library-page-header page-header">
+          <div className="library-page-header-title-group page-header-title-section">
+              <h1 className="library-page-title page-header-title">Library</h1>
               {selectedWorkspace ? (
-                <p className="library-page-subtitle">
+                <p className="library-page-subtitle page-header-subtitle">
                   {uploading
                     ? 'Uploading…'
                     : assetsLoading
@@ -502,13 +501,13 @@ function Library() {
                       : `${assets.length} asset${assets.length === 1 ? '' : 's'} in ${selectedWorkspace.name || 'workspace'}`}
                 </p>
               ) : !workspaceLoading ? (
-                <p className="library-page-subtitle library-page-subtitle--muted">
+                <p className="library-page-subtitle page-header-subtitle library-page-subtitle--muted">
                   Create a workspace to upload and manage assets.
                 </p>
               ) : null}
             </div>
 
-            <div className="library-header-actions">
+            <div className="library-header-actions page-header-actions">
               {workspaces.length > 0 ? (
                 <div className="library-workspace-dropdown-container" ref={workspaceDropdownRef}>
                   <button
@@ -584,8 +583,69 @@ function Library() {
                   ) : null}
                 </div>
               ) : null}
+
+              {!isUnsupportedCategory && (
+                <div className="library-search">
+                  <MdSearch className="library-search-icon" size={18} aria-hidden />
+                  <input
+                    ref={searchRef}
+                    type="text"
+                    className="library-search-input"
+                    placeholder="Search assets..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    aria-label="Search assets"
+                  />
+                  {searchQuery ? (
+                    <button
+                      type="button"
+                      className="library-search-clear"
+                      onClick={() => setSearchQuery('')}
+                      aria-label="Clear search"
+                    >
+                      <MdClose size={14} />
+                    </button>
+                  ) : null}
+                </div>
+              )}
+
+              {!isUnsupportedCategory && (
+                <div className="view-toggle" role="group" aria-label="View mode">
+                  <button
+                    type="button"
+                    className={`view-toggle-btn ${activeView === 'grid' ? 'active' : ''}`}
+                    onClick={() => setActiveView('grid')}
+                    aria-label="Grid view"
+                    aria-pressed={activeView === 'grid'}
+                    title="Grid View"
+                  >
+                    <MdGridView size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    className={`view-toggle-btn ${activeView === 'list' ? 'active' : ''}`}
+                    onClick={() => setActiveView('list')}
+                    aria-label="List view"
+                    aria-pressed={activeView === 'list'}
+                    title="List View"
+                  >
+                    <MdViewList size={18} />
+                  </button>
+                </div>
+              )}
+
+              {!isUnsupportedCategory && (
+                <button
+                  type="button"
+                  className="btn-upload-primary videos-create-btn"
+                  onClick={() => setShowUploadModal(true)}
+                  disabled={!workspaceId || uploading}
+                >
+                  <MdCloudUpload size={18} />
+                  <span>{uploading ? 'Uploading…' : 'Upload'}</span>
+                </button>
+              )}
             </div>
-          </div>
         </header>
 
         {assetsError ? (
@@ -597,116 +657,50 @@ function Library() {
           </div>
         ) : null}
 
-        <div className="library-toolbar">
-          <div className="library-toolbar-left">
-            <div className="library-category-pills" role="tablist" aria-label="Asset categories">
-              {CATEGORY_CARDS.map((cat) => {
-                const Icon = cat.Icon
-                const isSelected = selectedCategory === cat.id
+        <div
+          className="workspace-root-tabs-wrapper work-root-tabs-wrapper"
+          role="tablist"
+          aria-label="Asset categories"
+        >
+          <div className="workspace-root-tabs">
+            {CATEGORY_CARDS.map((cat) => {
+              const Icon = cat.Icon
+              const isActive = selectedCategory === cat.id
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`workspace-root-tab ${isActive ? 'active' : ''}`}
+                  onClick={() => handleCategoryClick(cat)}
+                >
+                  <Icon size={18} />
+                  <span>{cat.label}</span>
+                </button>
+              )
+            })}
+          </div>
+
+          {selectedCategory === 'media' && (
+            <div className="library-subtabs" role="tablist" aria-label="Media types" style={{ marginLeft: '24px' }}>
+              {mediaTabs.map((tab) => {
+                const isActive = activeTab === tab.id
                 return (
                   <button
-                    key={cat.id}
+                    key={tab.id}
                     type="button"
                     role="tab"
-                    aria-selected={isSelected}
-                    className={`library-category-pill ${isSelected ? 'is-selected' : ''}`}
-                    onClick={() => handleCategoryClick(cat)}
+                    aria-selected={isActive}
+                    className={`library-subtab ${isActive ? 'is-active' : ''}`}
+                    onClick={() => setActiveTab(tab.id)}
                   >
-                    <Icon className="library-category-pill-icon" size={16} strokeWidth={1.75} aria-hidden />
-                    <span>{cat.label}</span>
+                    {tab.label}
                   </button>
                 )
               })}
             </div>
-
-            {selectedCategory === 'media' && (
-              <span className="library-toolbar-divider" aria-hidden />
-            )}
-
-            {selectedCategory === 'media' && (
-              <div className="library-subtabs" role="tablist" aria-label="Media types">
-                {mediaTabs.map((tab) => {
-                  const isActive = activeTab === tab.id
-                  return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      role="tab"
-                      aria-selected={isActive}
-                      className={`library-subtab ${isActive ? 'is-active' : ''}`}
-                      onClick={() => setActiveTab(tab.id)}
-                    >
-                      {tab.label}
-                    </button>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-
-          <div className="library-toolbar-right">
-            {!isUnsupportedCategory && (
-              <div className="library-search">
-                <MdSearch className="library-search-icon" size={18} aria-hidden />
-                <input
-                  ref={searchRef}
-                  type="text"
-                  className="library-search-input"
-                  placeholder="Search assets..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  aria-label="Search assets"
-                />
-                {searchQuery ? (
-                  <button
-                    type="button"
-                    className="library-search-clear"
-                    onClick={() => setSearchQuery('')}
-                    aria-label="Clear search"
-                  >
-                    <MdClose size={14} />
-                  </button>
-                ) : null}
-              </div>
-            )}
-
-            {!isUnsupportedCategory && (
-              <div className="view-toggle" role="group" aria-label="View mode">
-                <button
-                  type="button"
-                  className={`view-toggle-btn ${activeView === 'grid' ? 'active' : ''}`}
-                  onClick={() => setActiveView('grid')}
-                  aria-label="Grid view"
-                  aria-pressed={activeView === 'grid'}
-                  title="Grid View"
-                >
-                  <MdGridView size={18} />
-                </button>
-                <button
-                  type="button"
-                  className={`view-toggle-btn ${activeView === 'list' ? 'active' : ''}`}
-                  onClick={() => setActiveView('list')}
-                  aria-label="List view"
-                  aria-pressed={activeView === 'list'}
-                  title="List View"
-                >
-                  <MdViewList size={18} />
-                </button>
-              </div>
-            )}
-
-            {!isUnsupportedCategory && (
-              <button
-                type="button"
-                className="btn-upload-primary"
-                onClick={() => setShowUploadModal(true)}
-                disabled={!workspaceId || uploading}
-              >
-                <MdCloudUpload size={18} />
-                <span>{uploading ? 'Uploading…' : 'Upload'}</span>
-              </button>
-            )}
-          </div>
+          )}
         </div>
 
         {selectedCategory && (

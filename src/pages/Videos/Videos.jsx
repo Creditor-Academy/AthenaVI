@@ -354,9 +354,6 @@ function Videos({ onEdit, onOpenImage }) {
         <header className="videos-page-header">
           <div className="videos-title-section">
             <h1 className="videos-page-title">My Work</h1>
-            <p className="videos-page-subtitle">
-              Manage and view all your videos, presentations, and images in one place.
-            </p>
           </div>
 
           <div className="videos-actions">

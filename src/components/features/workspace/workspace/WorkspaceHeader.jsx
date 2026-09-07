@@ -48,25 +48,20 @@ const WorkspaceHeader = ({
     const currentSortLabel = sortOptions.find((opt) => opt.value === sortBy)?.label || 'Sort By';
 
     return (
-        <header className="workspace-header-container page-header">
-            <div className="workspace-header-title page-header-title-section">
-                <div className="workspace-title-row">
-                    {showBack && onBack && (
-                        <button
-                            type="button"
-                            className="workspace-back-btn"
-                            onClick={onBack}
-                            title={backLabel}
-                            aria-label={backLabel}
-                        >
-                            <MdArrowBack size={20} />
-                        </button>
-                    )}
-                    <h1 className="page-header-title">Workspaces</h1>
-                </div>
-                <p className="page-header-subtitle">
-                    Manage workspaces, project folders, and team assets.
-                </p>
+        <div className="workspace-header-container">
+            <div className="workspace-header-title">
+                {showBack && onBack && (
+                    <button
+                        type="button"
+                        className="workspace-back-btn"
+                        onClick={onBack}
+                        title={backLabel}
+                        aria-label={backLabel}
+                    >
+                        <MdArrowBack size={20} />
+                    </button>
+                )}
+                <h2>Workspaces</h2>
             </div>
 
             <div className="workspace-header-actions">
@@ -183,16 +178,20 @@ const WorkspaceHeader = ({
 
                 <button
                     type="button"
-                    className="videos-create-btn"
+                    className="workspace-header-control workspace-header-control--primary workspace-header-control--interactive"
                     onClick={onCreateClick}
                     title="Create"
                     aria-label="Create new item"
                 >
-                    <MdAdd size={18} />
-                    <span>Create</span>
+                    <span className="workspace-header-control__icon" aria-hidden>
+                        <MdAdd size={18} />
+                    </span>
+                    <span className="workspace-header-control__body">
+                        <span className="workspace-header-control__value">Create</span>
+                    </span>
                 </button>
             </div>
-        </header>
+        </div>
     );
 };
 

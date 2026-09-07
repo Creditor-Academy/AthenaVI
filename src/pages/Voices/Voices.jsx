@@ -482,26 +482,30 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
           </div>
         </header>
 
-        <div className="videos-tab-switch" role="tablist" aria-label="Voice sections">
-          {VOICE_SECTION_TABS.map((tab) => {
-            const Icon = TAB_ICONS[tab.id];
-            const isActive = activeSection === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                className={`videos-tab-btn ${isActive ? 'active' : ''}`}
-                onClick={() => setActiveSection(tab.id)}
-              >
-                <span className="videos-tab-icon" aria-hidden>
+        <div
+          className="workspace-root-tabs-wrapper work-root-tabs-wrapper"
+          role="tablist"
+          aria-label="Voice sections"
+        >
+          <div className="workspace-root-tabs">
+            {VOICE_SECTION_TABS.map((tab) => {
+              const Icon = TAB_ICONS[tab.id];
+              const isActive = activeSection === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`workspace-root-tab ${isActive ? 'active' : ''}`}
+                  onClick={() => setActiveSection(tab.id)}
+                >
                   <Icon size={18} />
-                </span>
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <VideosToolbar
