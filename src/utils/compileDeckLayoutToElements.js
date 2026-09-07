@@ -393,6 +393,19 @@ function fontWeightForRole(role) {
   return 400
 }
 
+function lookupSlotValue(contentBySlotId, slotId) {
+  if (!contentBySlotId || slotId == null) return undefined
+  if (contentBySlotId[slotId] != null) return contentBySlotId[slotId]
+  const key = String(slotId)
+  if (contentBySlotId[key] != null) return contentBySlotId[key]
+  const upper = key.toUpperCase()
+  const lower = key.toLowerCase()
+  if (contentBySlotId[upper] != null) return contentBySlotId[upper]
+  if (contentBySlotId[lower] != null) return contentBySlotId[lower]
+  const found = Object.keys(contentBySlotId).find((k) => k.toLowerCase() === lower)
+  return found ? contentBySlotId[found] : undefined
+}
+
 function resolveSlotText(slot, contentBySlotId, schema, options = {}) {
   const slotId = slot?.id
   const role = String(slot?.role || '')
@@ -400,7 +413,7 @@ function resolveSlotText(slot, contentBySlotId, schema, options = {}) {
   const content = options.content && typeof options.content === 'object' ? options.content : null
   const hasSlideContent = Boolean(content && (content.title || content.body || content.summary || content.bullets))
 
-  const mapped = contentBySlotId ? (contentBySlotId[slotId] ?? contentBySlotId[String(slotId || '').toUpperCase()]) : undefined
+  const mapped = lookupSlotValue(contentBySlotId, slotId)
   if (mapped != null) {
     const merged = String(mapped).trim()
     if (merged && !isCatalogPlaceholderText(merged) && !isLikelyBadMergedText(merged, slot, schema)) {
