@@ -243,42 +243,36 @@ const CATALOG = {
   ], { mode: 'timeline_roadmap', timelineVariant: 'default' }),
 
   timeline_process_steps_v1: layoutBase('timeline_process_steps_v1', 'timeline', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'How it works', { max_lines: 2 }),
-    slot('step_1_title', 'cols 1-3, rows 3-4', 'heading', '1. Discover', {
-      layer: 10,
-      typography: typo('heading', { fontSize: 18, align: 'center' }),
+    heading('HEADING', 'cols 1-12, rows 1-2', 'How it works', {
+      typography: typo('heading', { fontSize: 28, align: 'left' }),
+      max_lines: 1,
     }),
-    slot('step_1_body', 'cols 1-3, rows 4-6', 'body', 'Understand the problem', {
-      layer: 10,
-      typography: typo('body', { fontSize: 14, align: 'center' }),
-      max_lines: 3,
-    }),
-    slot('step_2_title', 'cols 4-6, rows 3-4', 'heading', '2. Design', {
-      layer: 10,
-      typography: typo('heading', { fontSize: 18, align: 'center' }),
-    }),
-    slot('step_2_body', 'cols 4-6, rows 4-6', 'body', 'Shape the solution', {
-      layer: 10,
-      typography: typo('body', { fontSize: 14, align: 'center' }),
-      max_lines: 3,
-    }),
-    slot('step_3_title', 'cols 7-9, rows 3-4', 'heading', '3. Build', {
-      layer: 10,
-      typography: typo('heading', { fontSize: 18, align: 'center' }),
-    }),
-    slot('step_3_body', 'cols 7-9, rows 4-6', 'body', 'Ship the MVP', {
-      layer: 10,
-      typography: typo('body', { fontSize: 14, align: 'center' }),
-      max_lines: 3,
-    }),
-    slot('step_4_title', 'cols 10-12, rows 3-4', 'heading', '4. Launch', {
-      layer: 10,
-      typography: typo('heading', { fontSize: 18, align: 'center' }),
-    }),
-    slot('step_4_body', 'cols 10-12, rows 4-6', 'body', 'Go to market', {
-      layer: 10,
-      typography: typo('body', { fontSize: 14, align: 'center' }),
-      max_lines: 3,
+    ...[1, 2, 3, 4, 5, 6].flatMap((n) => {
+      const labels = ['01', '02', '03', '04', '05', '06']
+      const titles = ['Discover', 'Design', 'Build', 'Launch', 'Scale', 'Title']
+      const col = n === 1 ? '1-2' : n === 2 ? '3-4' : n === 3 ? '5-6' : n === 4 ? '7-8' : n === 5 ? '9-10' : '11-12'
+      return [
+        slot(`step_${n}_label`, `cols ${col}, rows 5-6`, 'caption', labels[n - 1], {
+          layer: 10,
+          typography: typo('caption', { fontSize: 28, align: 'center', fontWeight: 800 }),
+          max_lines: 1,
+        }),
+        slot(`step_${n}_title`, `cols ${col}, rows ${n % 2 === 1 ? '7-8' : '4-5'}`, 'heading', titles[n - 1], {
+          layer: 10,
+          typography: typo('heading', { fontSize: 14, align: 'center', fontWeight: 700 }),
+          max_lines: 1,
+        }),
+        slot(`step_${n}_desc`, `cols ${col}, rows ${n % 2 === 1 ? '3-4' : '8-9'}`, 'body', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.', {
+          layer: 10,
+          typography: typo('body', { fontSize: 11, align: 'center' }),
+          max_lines: 2,
+        }),
+        slot(`step_${n}_detail`, `cols ${col}, rows ${n % 2 === 1 ? '9-10' : '2-3'}`, 'body', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.', {
+          layer: 10,
+          typography: typo('body', { fontSize: 10, align: 'center' }),
+          max_lines: 3,
+        }),
+      ]
     }),
   ], { mode: 'timeline_process_steps', timelineVariant: 'default' }),
 
@@ -369,7 +363,33 @@ Object.assign(CATALOG, {
   timeline_horizontal_cards_v1: timelineFromSource('timeline_horizontal_cards_v1', 'timeline_horizontal_v1', 'cards'),
   timeline_milestones_image_right_v1: timelineFromSource('timeline_milestones_image_right_v1', 'timeline_milestones_image_v1', 'image_right'),
   timeline_milestones_cards_v1: timelineFromSource('timeline_milestones_cards_v1', 'timeline_milestones_v1', 'cards'),
-  timeline_process_horizontal_v1: timelineFromSource('timeline_process_horizontal_v1', 'timeline_process_steps_v1', 'horizontal'),
+  timeline_process_horizontal_v1: layoutBase('timeline_process_horizontal_v1', 'timeline', [
+    heading('HEADING', 'cols 1-12, rows 1-2', 'Horizontal Timeline Infographic', {
+      typography: typo('heading', { fontSize: 32, align: 'center' }),
+      max_lines: 1,
+    }),
+    ...[1, 2, 3, 4, 5, 6].flatMap((n) => {
+      const years = ['1980', '1985', '2000', '2005', '2010', '2015']
+      const col = n === 1 ? '1-2' : n === 2 ? '3-4' : n === 3 ? '5-6' : n === 4 ? '7-8' : n === 5 ? '9-10' : '11-12'
+      return [
+        slot(`step_${n}_year`, `cols ${col}, rows 6-7`, 'caption', years[n - 1], {
+          layer: 10,
+          typography: typo('caption', { fontSize: 20, align: 'center', fontWeight: 700 }),
+          max_lines: 1,
+        }),
+        slot(`step_${n}_title`, `cols ${col}, rows 8-9`, 'heading', 'Add Your Text Here', {
+          layer: 10,
+          typography: typo('heading', { fontSize: 16, align: 'center', fontWeight: 700 }),
+          max_lines: 1,
+        }),
+        slot(`step_${n}_desc`, `cols ${col}, rows 9-10`, 'body', 'Lorem ipsum dolor sit amet.', {
+          layer: 10,
+          typography: typo('body', { fontSize: 11, align: 'center' }),
+          max_lines: 2,
+        }),
+      ]
+    }),
+  ], { mode: 'timeline_process_horizontal', timelineVariant: 'horizontal' }),
   timeline_vertical_cards_v1: timelineFromSource('timeline_vertical_cards_v1', 'timeline_vertical_v1', 'cards'),
   bullet_list_grid_v1: comparisonFromSource('bullet_list_grid_v1', 'bullet_list_cards_v1', 'grid'),
   comparison_side_by_side_cards_v1: comparisonFromSource('comparison_side_by_side_cards_v1', 'comparison_side_by_side_v1', 'cards'),

@@ -93,6 +93,8 @@ import { isTimelineVerticalLayout, layoutTimelineVertical } from './timelineVert
 import { isTimelineVerticalCardsLayout, layoutTimelineVerticalCards } from './timelineVerticalCards.js'
 import { isTimelineRoadmapLayout, layoutTimelineRoadmap } from './timelineRoadmap.js'
 import { isTimelineRoadmapHorizontalLayout, layoutTimelineRoadmapHorizontal } from './timelineRoadmapHorizontal.js'
+import { isTimelineProcessStepsHorizontalLayout, layoutTimelineProcessStepsHorizontal } from './timelineProcessStepsHorizontal.js'
+import { isTimelineProcessHorizontalLayout, layoutTimelineProcessHorizontal } from './diagramProcessHorizontal.js'
 import { isTimelineHorizontalCardsLayout, layoutTimelineHorizontalCards } from './timelineHorizontalCards.js'
 import { isTimelineMilestonesLayout, layoutTimelineMilestones } from './timelineMilestones.js'
 import { isTimelineMilestonesCardsLayout, layoutTimelineMilestonesCards } from './timelineMilestonesCards.js'
@@ -639,6 +641,7 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
   if (isTimelineVerticalLayout(layoutId)) return elements
   if (isTimelineRoadmapLayout(layoutId)) return elements
   if (isTimelineRoadmapHorizontalLayout(layoutId)) return elements
+  if (isTimelineProcessStepsHorizontalLayout(layoutId)) return elements
   if (isTimelineVerticalCardsLayout(layoutId)) return elements
   if (isTimelineMilestonesImageLayout(layoutId)) return elements
   if (isTimelineMilestonesImageRightLayout(layoutId)) return elements
@@ -5347,6 +5350,12 @@ export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = 
   const layoutId = schema?.layout_id || schema?.id || schema?.layoutId
   if (isTimelineRoadmapHorizontalLayout(layoutId)) {
     return layoutTimelineRoadmapHorizontal(elements, schema, palette, canvas)
+  }
+  if (isTimelineProcessStepsHorizontalLayout(layoutId)) {
+    return layoutTimelineProcessStepsHorizontal(elements, schema, palette, canvas)
+  }
+  if (isTimelineProcessHorizontalLayout(layoutId)) {
+    return layoutTimelineProcessHorizontal(elements, schema, palette, canvas)
   }
   if (isTimelineRoadmapLayout(layoutId)) {
     return layoutTimelineRoadmap(elements, schema, palette, canvas)
