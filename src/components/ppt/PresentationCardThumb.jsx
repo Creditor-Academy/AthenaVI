@@ -20,7 +20,8 @@ export default function PresentationCardThumb({
 }) {
   const presentationId = item?.id || ''
   const workspaceId = item?.workspaceId || ''
-  const catalogUrl = resolvePresentationThumbnailUrl(item)
+  // User requested Slide 1 canvas instead of flat generated images
+  const catalogUrl = null // resolvePresentationThumbnailUrl(item)
 
   const hostRef = useRef(null)
   const loadedForIdRef = useRef('')
@@ -146,7 +147,16 @@ export default function PresentationCardThumb({
         <DefaultProjectThumbnail title={title} category="ppt" showLabel={false} />
       ) : null}
 
-      {imageUrl ? (
+      {slide ? (
+        <div className="ppt-thumb-slide-wrap ppt-thumb-fade is-ready">
+          <CanvasElementsPreview
+            slide={slide}
+            aspectRatio={aspectRatio}
+            fill
+            className={canvasClassName}
+          />
+        </div>
+      ) : imageUrl ? (
         <img
           key={imageUrl}
           src={imageUrl}
@@ -164,17 +174,6 @@ export default function PresentationCardThumb({
             setVisible(true)
           }}
         />
-      ) : null}
-
-      {slide && !imageUrl ? (
-        <div className="ppt-thumb-slide-wrap ppt-thumb-fade is-ready">
-          <CanvasElementsPreview
-            slide={slide}
-            aspectRatio={aspectRatio}
-            fill
-            className={canvasClassName}
-          />
-        </div>
       ) : null}
     </div>
   )

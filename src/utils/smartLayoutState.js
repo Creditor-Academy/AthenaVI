@@ -1,4 +1,4 @@
-import { getDeckLayoutSchema } from './deckLayoutRegistry'
+import { getDeckLayoutSchema } from './deckLayoutRegistry.js'
 
 /**
  * Given a layout schema and the actual content to render, determine the "Smart State".
