@@ -7,7 +7,7 @@ import {
     MdMail,
     MdMonetizationOn,
     MdArrowBack,
-    MdMovieCreation,
+    MdAdd,
 } from 'react-icons/md';
 import LoadingDots from '../../../ui/LoadingDots/LoadingDots.jsx';
 
@@ -122,7 +122,6 @@ const WorkspaceHeader = ({
                             <MdSort size={16} />
                         </span>
                         <span className="workspace-header-control__body">
-                            <span className="workspace-header-control__label">Sort</span>
                             <span className="workspace-header-control__value">{currentSortLabel}</span>
                         </span>
                         <MdKeyboardArrowDown
@@ -165,7 +164,6 @@ const WorkspaceHeader = ({
                             <MdMail size={16} />
                         </span>
                         <span className="workspace-header-control__body">
-                            <span className="workspace-header-control__label">Invites</span>
                             <span className="workspace-header-control__value">
                                 {invitationCount > 0 ? `${invitationCount} new` : 'Inbox'}
                             </span>
@@ -182,13 +180,14 @@ const WorkspaceHeader = ({
                     type="button"
                     className="workspace-header-control workspace-header-control--primary workspace-header-control--interactive"
                     onClick={onCreateClick}
+                    title="Create"
+                    aria-label="Create new item"
                 >
                     <span className="workspace-header-control__icon" aria-hidden>
-                        <MdMovieCreation size={16} />
+                        <MdAdd size={18} />
                     </span>
                     <span className="workspace-header-control__body">
-                        <span className="workspace-header-control__label">Create</span>
-                        <span className="workspace-header-control__value">New Video</span>
+                        <span className="workspace-header-control__value">Create</span>
                     </span>
                 </button>
             </div>

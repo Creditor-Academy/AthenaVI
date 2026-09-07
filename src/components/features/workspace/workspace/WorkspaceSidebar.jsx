@@ -38,19 +38,20 @@ const WorkspaceSidebar = ({
     .workspace-sidebar-panel {
       width: 420px;
       height: 100vh;
-      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-      border-left: 1px solid rgba(226, 232, 240, 0.8);
-      box-shadow: -20px 0 40px rgba(0, 0, 0, 0.1);
+      background: var(--bg-card, #ffffff);
+      border-left: 1px solid var(--border-color, rgba(226, 232, 240, 0.8));
+      box-shadow: -20px 0 40px rgba(0, 0, 0, 0.2);
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      color: var(--text-main);
     }
 
     .sidebar-header {
       padding: 24px 32px;
-      background: rgba(255, 255, 255, 0.8);
+      background: var(--bg-surface, rgba(255, 255, 255, 0.8));
       backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+      border-bottom: 1px solid var(--border-color, rgba(226, 232, 240, 0.8));
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -59,7 +60,7 @@ const WorkspaceSidebar = ({
     .sidebar-title {
       font-size: 24px;
       font-weight: 700;
-      color: #1e293b;
+      color: var(--text-main, #1e293b);
       margin: 0;
       display: flex;
       align-items: center;
@@ -68,7 +69,7 @@ const WorkspaceSidebar = ({
 
     .sidebar-subtitle {
       font-size: 14px;
-      color: #64748b;
+      color: var(--text-muted, #64748b);
       margin: 4px 0 0 0;
     }
 
@@ -76,20 +77,19 @@ const WorkspaceSidebar = ({
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      border: none;
-      background: rgba(255, 255, 255, 0.8);
-      color: #64748b;
+      border: 1px solid var(--border-color, rgba(226, 232, 240, 0.8));
+      background: var(--bg-surface, rgba(255, 255, 255, 0.8));
+      color: var(--text-muted, #64748b);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.2s ease;
-      border: 1px solid rgba(226, 232, 240, 0.8);
     }
 
     .sidebar-close:hover {
-      background: #f1f5f9;
-      color: #475569;
+      background: color-mix(in srgb, var(--primary) 10%, var(--bg-surface));
+      color: var(--text-main, #475569);
       transform: scale(1.05);
     }
 
@@ -106,7 +106,7 @@ const WorkspaceSidebar = ({
     .section-title {
       font-size: 12px;
       font-weight: 700;
-      color: #64748b;
+      color: var(--text-muted, #64748b);
       text-transform: uppercase;
       letter-spacing: 0.05em;
       margin: 0 0 16px 0;
@@ -121,8 +121,8 @@ const WorkspaceSidebar = ({
     }
 
     .workspace-card {
-      background: white;
-      border: 2px solid #f1f5f9;
+      background: var(--bg-surface, white);
+      border: 2px solid var(--border-color, #f1f5f9);
       border-radius: 16px;
       padding: 20px;
       cursor: pointer;
@@ -138,15 +138,15 @@ const WorkspaceSidebar = ({
       left: 0;
       right: 0;
       height: 4px;
-      background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+      background: linear-gradient(90deg, var(--primary, #3b82f6) 0%, color-mix(in srgb, var(--primary) 70%, #2563eb) 100%);
       opacity: 0;
       transition: opacity 0.3s ease;
     }
 
     .workspace-card:hover {
-      border-color: #3b82f6;
+      border-color: var(--primary, #3b82f6);
       transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+      box-shadow: 0 8px 24px color-mix(in srgb, var(--primary) 15%, transparent);
     }
 
     .workspace-card:hover::before {
@@ -154,9 +154,9 @@ const WorkspaceSidebar = ({
     }
 
     .workspace-card.active {
-      border-color: #3b82f6;
-      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.1);
+      border-color: var(--primary, #3b82f6);
+      background: color-mix(in srgb, var(--primary) 10%, var(--bg-card));
+      box-shadow: 0 4px 16px color-mix(in srgb, var(--primary) 12%, transparent);
     }
 
     .workspace-card.active::before {
@@ -183,15 +183,15 @@ const WorkspaceSidebar = ({
     }
 
     .workspace-icon.private {
-      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-      color: #64748b;
-      border: 1px solid #e2e8f0;
+      background: color-mix(in srgb, var(--text-muted) 8%, var(--bg-card));
+      color: var(--text-muted, #64748b);
+      border: 1px solid var(--border-color, #e2e8f0);
     }
 
     .workspace-icon.team {
-      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-      color: #2563eb;
-      border: 1px solid #93c5fd;
+      background: color-mix(in srgb, var(--primary) 14%, var(--bg-card));
+      color: var(--primary, #2563eb);
+      border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border-color));
     }
 
     .workspace-info {
@@ -202,14 +202,14 @@ const WorkspaceSidebar = ({
     .workspace-name {
       font-size: 16px;
       font-weight: 600;
-      color: #1e293b;
+      color: var(--text-main, #1e293b);
       margin: 0 0 4px 0;
       line-height: 1.3;
     }
 
     .workspace-type {
       font-size: 12px;
-      color: #64748b;
+      color: var(--text-muted, #64748b);
       margin: 0;
       display: flex;
       align-items: center;
@@ -218,8 +218,8 @@ const WorkspaceSidebar = ({
 
     .workspace-badge {
       padding: 2px 8px;
-      background: #f1f5f9;
-      color: #64748b;
+      background: var(--border-color, #f1f5f9);
+      color: var(--text-muted, #64748b);
       border-radius: 12px;
       font-size: 10px;
       font-weight: 500;
@@ -228,14 +228,14 @@ const WorkspaceSidebar = ({
     }
 
     .workspace-badge.team {
-      background: #dbeafe;
-      color: #2563eb;
+      background: color-mix(in srgb, var(--primary) 16%, var(--bg-card));
+      color: var(--primary, #2563eb);
     }
 
     .workspace-badge.private {
-      background: #f8fafc;
-      color: #64748b;
-      border: 1px solid #e2e8f0;
+      background: var(--bg-card);
+      color: var(--text-muted, #64748b);
+      border: 1px solid var(--border-color, #e2e8f0);
     }
 
     .workspace-check {
@@ -244,8 +244,8 @@ const WorkspaceSidebar = ({
       right: 16px;
       width: 24px;
       height: 24px;
-      background: #3b82f6;
-      color: white;
+      background: var(--primary, #3b82f6);
+      color: var(--primary-contrast, white);
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -261,8 +261,8 @@ const WorkspaceSidebar = ({
     }
 
     .create-workspace-card {
-      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-      border: 2px dashed #cbd5e1;
+      background: color-mix(in srgb, var(--primary) 4%, var(--bg-card));
+      border: 2px dashed var(--border-color, #cbd5e1);
       border-radius: 16px;
       padding: 32px 20px;
       cursor: pointer;
@@ -275,16 +275,16 @@ const WorkspaceSidebar = ({
     }
 
     .create-workspace-card:hover {
-      border-color: #3b82f6;
-      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border-color: var(--primary, #3b82f6);
+      background: color-mix(in srgb, var(--primary) 10%, var(--bg-card));
       transform: translateY(-2px);
     }
 
     .create-icon {
       width: 48px;
       height: 48px;
-      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-      color: #2563eb;
+      background: color-mix(in srgb, var(--primary) 14%, var(--bg-card));
+      color: var(--primary, #2563eb);
       border-radius: 12px;
       display: flex;
       align-items: center;
@@ -295,14 +295,14 @@ const WorkspaceSidebar = ({
     .create-text {
       font-size: 14px;
       font-weight: 600;
-      color: #475569;
+      color: var(--text-main, #475569);
     }
 
     .sidebar-footer {
       padding: 20px 32px;
-      background: rgba(255, 255, 255, 0.8);
+      background: var(--bg-surface, rgba(255, 255, 255, 0.8));
       backdrop-filter: blur(20px);
-      border-top: 1px solid rgba(226, 232, 240, 0.8);
+      border-top: 1px solid var(--border-color, rgba(226, 232, 240, 0.8));
     }
 
     .footer-stats {
@@ -310,7 +310,7 @@ const WorkspaceSidebar = ({
       justify-content: space-between;
       align-items: center;
       font-size: 12px;
-      color: #64748b;
+      color: var(--text-muted, #64748b);
     }
 
     /* Scrollbar Styling */
