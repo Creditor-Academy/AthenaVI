@@ -88,6 +88,15 @@ import { isPricingFourParaLayout, layoutPricingFourPara } from './pricingFourPar
 import { isPricingFourParaCardsLayout, layoutPricingFourParaCards } from './pricingFourParaCards.js'
 import { isPricingComparisonTableLayout, layoutPricingComparisonTable } from './pricingComparisonTable.js'
 import { isPricingComparisonCardsLayout, layoutPricingComparisonCards } from './pricingComparisonCards.js'
+import { isTimelineHorizontalLayout, layoutTimelineHorizontal } from './timelineHorizontal.js'
+import { isTimelineVerticalLayout, layoutTimelineVertical } from './timelineVertical.js'
+import { isTimelineVerticalCardsLayout, layoutTimelineVerticalCards } from './timelineVerticalCards.js'
+import { isTimelineRoadmapLayout, layoutTimelineRoadmap } from './timelineRoadmap.js'
+import { isTimelineHorizontalCardsLayout, layoutTimelineHorizontalCards } from './timelineHorizontalCards.js'
+import { isTimelineMilestonesLayout, layoutTimelineMilestones } from './timelineMilestones.js'
+import { isTimelineMilestonesCardsLayout, layoutTimelineMilestonesCards } from './timelineMilestonesCards.js'
+import { isTimelineMilestonesImageLayout, layoutTimelineMilestonesImage } from './timelineMilestonesImage.js'
+import { isTimelineMilestonesImageRightLayout, layoutTimelineMilestonesImageRight } from './timelineMilestonesImageRight.js'
 import {
   QUOTE_GRID_N,
   QUOTE_MARK_COLOR,
@@ -626,6 +635,15 @@ function findProcessAnchorElements(elements) {
 export function applyTimelineConnectorShapes(elements, schema, palette = {}, canvas = {}) {
   if (!Array.isArray(elements) || !schema?.slots?.length) return elements
   const layoutId = String(schema.layout_id || '').toLowerCase()
+  if (isTimelineVerticalLayout(layoutId)) return elements
+  if (isTimelineRoadmapLayout(layoutId)) return elements
+  if (isTimelineVerticalCardsLayout(layoutId)) return elements
+  if (isTimelineMilestonesImageLayout(layoutId)) return elements
+  if (isTimelineMilestonesImageRightLayout(layoutId)) return elements
+  if (isTimelineMilestonesCardsLayout(layoutId)) return elements
+  if (isTimelineMilestonesLayout(layoutId)) return elements
+  if (isTimelineHorizontalCardsLayout(layoutId)) return elements
+  if (isTimelineHorizontalLayout(layoutId)) return elements
   if (isProcessLinnerLayout(layoutId)) return elements
   if (isProcessLinnerHortiLayout(layoutId)) return elements
   if (!isProcessFlowLayout(layoutId)) return elements
@@ -5325,6 +5343,33 @@ export function layoutDiagramVenn(elements, schema, palette = {}, canvas = {}) {
 
 export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = {}) {
   const layoutId = schema?.layout_id || schema?.id || schema?.layoutId
+  if (isTimelineRoadmapLayout(layoutId)) {
+    return layoutTimelineRoadmap(elements, schema, palette, canvas)
+  }
+  if (isTimelineVerticalCardsLayout(layoutId)) {
+    return layoutTimelineVerticalCards(elements, schema, palette, canvas)
+  }
+  if (isTimelineVerticalLayout(layoutId)) {
+    return layoutTimelineVertical(elements, schema, palette, canvas)
+  }
+  if (isTimelineMilestonesImageRightLayout(layoutId)) {
+    return layoutTimelineMilestonesImageRight(elements, schema, palette, canvas)
+  }
+  if (isTimelineMilestonesImageLayout(layoutId)) {
+    return layoutTimelineMilestonesImage(elements, schema, palette, canvas)
+  }
+  if (isTimelineMilestonesCardsLayout(layoutId)) {
+    return layoutTimelineMilestonesCards(elements, schema, palette, canvas)
+  }
+  if (isTimelineMilestonesLayout(layoutId)) {
+    return layoutTimelineMilestones(elements, schema, palette, canvas)
+  }
+  if (isTimelineHorizontalCardsLayout(layoutId)) {
+    return layoutTimelineHorizontalCards(elements, schema, palette, canvas)
+  }
+  if (isTimelineHorizontalLayout(layoutId)) {
+    return layoutTimelineHorizontal(elements, schema, palette, canvas)
+  }
   if (isDiagramProcessStepsLayout(layoutId)) {
     return layoutDiagramProcessSteps(elements, schema, palette, canvas)
   }

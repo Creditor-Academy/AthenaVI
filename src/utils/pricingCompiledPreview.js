@@ -9,6 +9,15 @@ import { isPricingFourParaLayout } from './pricingFourPara.js'
 import { isPricingFourParaCardsLayout } from './pricingFourParaCards.js'
 import { isPricingComparisonTableLayout } from './pricingComparisonTable.js'
 import { isPricingComparisonCardsLayout } from './pricingComparisonCards.js'
+import { isTimelineHorizontalLayout } from './timelineHorizontal.js'
+import { isTimelineVerticalLayout } from './timelineVertical.js'
+import { isTimelineVerticalCardsLayout } from './timelineVerticalCards.js'
+import { isTimelineRoadmapLayout } from './timelineRoadmap.js'
+import { isTimelineHorizontalCardsLayout } from './timelineHorizontalCards.js'
+import { isTimelineMilestonesLayout } from './timelineMilestones.js'
+import { isTimelineMilestonesCardsLayout } from './timelineMilestonesCards.js'
+import { isTimelineMilestonesImageLayout } from './timelineMilestonesImage.js'
+import { isTimelineMilestonesImageRightLayout } from './timelineMilestonesImageRight.js'
 
 export function isCompiledPricingLayout(layoutId) {
   return isPricingThreePlansLayout(layoutId)
@@ -21,6 +30,15 @@ export function isCompiledPricingLayout(layoutId) {
     || isPricingFourParaCardsLayout(layoutId)
     || isPricingComparisonTableLayout(layoutId)
     || isPricingComparisonCardsLayout(layoutId)
+    || isTimelineHorizontalLayout(layoutId)
+    || isTimelineHorizontalCardsLayout(layoutId)
+    || isTimelineMilestonesLayout(layoutId)
+    || isTimelineMilestonesCardsLayout(layoutId)
+    || isTimelineMilestonesImageLayout(layoutId)
+    || isTimelineMilestonesImageRightLayout(layoutId)
+    || isTimelineVerticalLayout(layoutId)
+    || isTimelineVerticalCardsLayout(layoutId)
+    || isTimelineRoadmapLayout(layoutId)
 }
 
 export function compilePricingLayoutPreviewSlide(schema, aspectRatio = '16:9') {

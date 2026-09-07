@@ -20,6 +20,15 @@ import { isPricingFourParaLayout } from './pricingFourPara.js'
 import { isPricingFourParaCardsLayout } from './pricingFourParaCards.js'
 import { isPricingComparisonTableLayout } from './pricingComparisonTable.js'
 import { isPricingComparisonCardsLayout } from './pricingComparisonCards.js'
+import { isTimelineHorizontalLayout } from './timelineHorizontal.js'
+import { isTimelineVerticalLayout } from './timelineVertical.js'
+import { isTimelineVerticalCardsLayout } from './timelineVerticalCards.js'
+import { isTimelineRoadmapLayout } from './timelineRoadmap.js'
+import { isTimelineHorizontalCardsLayout } from './timelineHorizontalCards.js'
+import { isTimelineMilestonesLayout } from './timelineMilestones.js'
+import { isTimelineMilestonesCardsLayout } from './timelineMilestonesCards.js'
+import { isTimelineMilestonesImageLayout } from './timelineMilestonesImage.js'
+import { isTimelineMilestonesImageRightLayout } from './timelineMilestonesImageRight.js'
 import { isCatalogPlaceholderText } from './catalogPlaceholder'
 import { normalizeChartContent } from './chartContentNormalize'
 
@@ -429,9 +438,23 @@ function resolveSlotText(slot, contentBySlotId, schema, options = {}) {
   const keepPricingComparisonTable = /pricing_comparison_table_v1$/i.test(String(schema?.layout_id || ''))
     && !/cards/i.test(String(schema?.layout_id || ''))
   const keepPricingComparisonCards = /pricing_comparison_cards_v1$/i.test(String(schema?.layout_id || ''))
+  const keepTimelineHorizontal = /timeline_horizontal_v1$/i.test(String(schema?.layout_id || ''))
+    && !/cards/i.test(String(schema?.layout_id || ''))
+  const keepTimelineHorizontalCards = /timeline_horizontal_cards_v1$/i.test(String(schema?.layout_id || ''))
+  const keepTimelineMilestones = /timeline_milestones_v1$/i.test(String(schema?.layout_id || ''))
+    && !/cards|image/i.test(String(schema?.layout_id || ''))
+  const keepTimelineMilestonesCards = /timeline_milestones_cards_v1$/i.test(String(schema?.layout_id || ''))
+  const keepTimelineMilestonesImage = /timeline_milestones_image_v1$/i.test(String(schema?.layout_id || ''))
+    && !/right|top/i.test(String(schema?.layout_id || ''))
+  const keepTimelineMilestonesImageRight = /timeline_milestones_image_right_v1$/i.test(String(schema?.layout_id || ''))
+  const keepTimelineVertical = /timeline_vertical_v1$/i.test(String(schema?.layout_id || ''))
+    && !/cards/i.test(String(schema?.layout_id || ''))
+  const keepTimelineVerticalCards = /timeline_vertical_cards_v1$/i.test(String(schema?.layout_id || ''))
+  const keepTimelineRoadmap = /timeline_roadmap_v1$/i.test(String(schema?.layout_id || ''))
+    && !/horizontal|lanes/i.test(String(schema?.layout_id || ''))
   if (
     placeholder &&
-    (!hasSlideContent || role === 'stat' || role === 'stat_label' || memberSlot || keepPricingThreePlans || keepPricingThreePlansFeatured || keepPricingThreeHighlight || keepPricingThreeHighlightSplit || keepPricingFourPlans || keepPricingFourPlansFeatured || keepPricingFourPara || keepPricingFourParaCards || keepPricingComparisonTable || keepPricingComparisonCards)
+    (!hasSlideContent || role === 'stat' || role === 'stat_label' || memberSlot || keepPricingThreePlans || keepPricingThreePlansFeatured || keepPricingThreeHighlight || keepPricingThreeHighlightSplit || keepPricingFourPlans || keepPricingFourPlansFeatured || keepPricingFourPara || keepPricingFourParaCards || keepPricingComparisonTable || keepPricingComparisonCards || keepTimelineHorizontal || keepTimelineHorizontalCards || keepTimelineMilestones || keepTimelineMilestonesCards || keepTimelineMilestonesImage || keepTimelineMilestonesImageRight || keepTimelineVertical || keepTimelineVerticalCards || keepTimelineRoadmap)
   ) {
     return placeholder
   }
@@ -1069,7 +1092,16 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
       (isPricingFourParaLayout(schema?.layout_id) && (/^PLAN_\d+_/i.test(String(el.slotId || '')) || String(el.slotId || '').toUpperCase() === 'BODY')) ||
       (isPricingFourParaCardsLayout(schema?.layout_id) && (/^PLAN_\d+_/i.test(String(el.slotId || '')) || String(el.slotId || '').toUpperCase() === 'BODY')) ||
       (isPricingComparisonTableLayout(schema?.layout_id) && (/^PLAN_\d+_/i.test(String(el.slotId || '')) || /^FEATURE_\d+$/i.test(String(el.slotId || '')) || String(el.slotId || '').toUpperCase() === 'HEADING')) ||
-      (isPricingComparisonCardsLayout(schema?.layout_id) && /^PLAN_\d+_/i.test(String(el.slotId || '')))
+      (isPricingComparisonCardsLayout(schema?.layout_id) && /^PLAN_\d+_/i.test(String(el.slotId || ''))) ||
+      (isTimelineHorizontalLayout(schema?.layout_id) && /^milestone_\d+_(label|num)$/i.test(String(el.slotId || ''))) ||
+      (isTimelineHorizontalCardsLayout(schema?.layout_id) && /^milestone_\d+_(num|label|foot)$/i.test(String(el.slotId || ''))) ||
+      (isTimelineMilestonesLayout(schema?.layout_id) && /^milestone_\d+_(label|num|title)$/i.test(String(el.slotId || ''))) ||
+      (isTimelineMilestonesCardsLayout(schema?.layout_id) && /^milestone_\d+_(label|num|detail)$/i.test(String(el.slotId || ''))) ||
+      (isTimelineMilestonesImageLayout(schema?.layout_id) && /^milestone_\d+_(label|num)$/i.test(String(el.slotId || ''))) ||
+      (isTimelineMilestonesImageRightLayout(schema?.layout_id) && /^milestone_\d+_(label|num)$/i.test(String(el.slotId || ''))) ||
+      (isTimelineVerticalLayout(schema?.layout_id) && /^milestone_\d+_num$/i.test(String(el.slotId || ''))) ||
+      (isTimelineVerticalCardsLayout(schema?.layout_id) && /^milestone_\d+_(label|num)$/i.test(String(el.slotId || ''))) ||
+      (isTimelineRoadmapLayout(schema?.layout_id) && /^milestone_\d+_label$/i.test(String(el.slotId || '')))
     ) return el
     const colorRole = String(el.content?.colorRole || '').toLowerCase()
     const rawColor = el.content?.color

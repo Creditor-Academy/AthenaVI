@@ -379,4 +379,185 @@ Object.assign(CATALOG, {
   section_divider_numbered_circle_v1: comparisonFromSource('section_divider_numbered_circle_v1', 'section_divider_numbered_v1', 'circle'),
 })
 
+const TLH_BODY = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.'
+CATALOG.timeline_horizontal_v1 = layoutBase('timeline_horizontal_v1', 'timeline', [
+  heading('HEADING', 'cols 1-12, rows 1-2', '5-Year Horizontal Timeline', {
+    typography: typo('heading', { fontSize: 22, align: 'left' }),
+    max_lines: 1,
+  }),
+  ...[1, 2, 3, 4, 5].flatMap((n) => {
+    const years = ['2021', '2022', '2023', '2024', '2025']
+    const col = n === 1 ? '1-3' : n === 2 ? '3-5' : n === 3 ? '5-7' : n === 4 ? '7-9' : '10-12'
+    return [
+      slot(`milestone_${n}_label`, `cols ${col}, rows 2-3`, 'caption', years[n - 1], { layer: 10, typography: typo('caption', { fontSize: 16, align: 'center', fontWeight: 800 }), max_lines: 1 }),
+      slot(`milestone_${n}_num`, `cols ${col}, rows 3-4`, 'stat', String(n), { layer: 10, typography: typo('stat', { fontSize: 12, align: 'center' }), max_lines: 1 }),
+      slot(`milestone_${n}_detail`, `cols ${col}, rows 5-10`, 'body', TLH_BODY, { layer: 10, typography: typo('body', { fontSize: 11, align: 'center' }), max_lines: 6 }),
+    ]
+  }),
+], { mode: 'timeline_horizontal', timelineVariant: 'default' })
+
+CATALOG.timeline_horizontal_cards_v1 = layoutBase('timeline_horizontal_cards_v1', 'timeline', [
+  heading('HEADING', 'cols 1-12, rows 1-2', 'Horizontal Swim-Lane Timeline', {
+    typography: typo('heading', { fontSize: 22, align: 'left' }),
+    max_lines: 1,
+  }),
+  ...[1, 2, 3, 4, 5].flatMap((n) => {
+    const phases = [
+      ['Phase 01', 'Discovery', 'Kickoff', '• Stakeholder interviews\n• Market research\n• Define KPIs'],
+      ['Phase 02', 'Design', 'Prototype', '• Design system\n• Prototyping\n• User testing'],
+      ['Phase 03', 'Development', 'Build', '• Core features\n• API build\n• QA & testing'],
+      ['Phase 04', 'Launch', 'Go live', '• Go-to-market\n• Press release\n• Onboarding'],
+      ['Phase 05', 'Scale', 'Expand', '• New markets\n• V2 planning\n• Growth KPIs'],
+    ]
+    const [kicker, title, foot, detail] = phases[n - 1]
+    const col = n === 1 ? '1-3' : n === 2 ? '3-5' : n === 3 ? '5-7' : n === 4 ? '7-9' : '10-12'
+    return [
+      slot(`milestone_${n}_label`, `cols ${col}, rows 2-3`, 'caption', kicker, { layer: 10, typography: typo('caption', { fontSize: 11, align: 'left', fontWeight: 700 }), max_lines: 1 }),
+      slot(`milestone_${n}_title`, `cols ${col}, rows 3-4`, 'subheading', title, { layer: 10, typography: typo('heading', { fontSize: 16, align: 'left', fontWeight: 800 }), max_lines: 1 }),
+      slot(`milestone_${n}_detail`, `cols ${col}, rows 4-7`, 'body', detail, { layer: 10, typography: typo('body', { fontSize: 11, align: 'left' }), max_lines: 5 }),
+      slot(`milestone_${n}_num`, `cols ${col}, rows 7-8`, 'stat', String(n).padStart(2, '0'), { layer: 10, typography: typo('stat', { fontSize: 14, align: 'center' }), max_lines: 1 }),
+      slot(`milestone_${n}_foot`, `cols ${col}, rows 9-10`, 'caption', foot, { layer: 10, typography: typo('caption', { fontSize: 11, align: 'center', fontWeight: 700 }), max_lines: 1 }),
+    ]
+  }),
+], { mode: 'timeline_horizontal', timelineVariant: 'cards' })
+
+CATALOG.timeline_milestones_v1 = layoutBase('timeline_milestones_v1', 'timeline', [
+  heading('HEADING', 'cols 1-12, rows 1-2', 'Key milestones', {
+    typography: typo('heading', { fontSize: 22, align: 'left' }),
+    max_lines: 1,
+  }),
+  ...[1, 2, 3, 4, 5, 6].flatMap((n) => {
+    const ribbons = ['Launch', 'Capital', 'Insights', 'Growth', 'Campus', 'Global']
+    const years = ['2018', '2019', '2020', '2021', '2022', '2023']
+    const col = n <= 2 ? `${n * 2 - 1}-${n * 2}` : n === 3 ? '5-6' : n === 4 ? '7-8' : n === 5 ? '9-10' : '11-12'
+    return [
+      slot(`milestone_${n}_card`, `cols ${col}, rows 2-4`, 'body', 'Insert your desired text here.', { layer: 10, typography: typo('body', { fontSize: 10, align: 'center' }), max_lines: 3 }),
+      slot(`milestone_${n}_label`, `cols ${col}, rows 4-5`, 'caption', ribbons[n - 1], { layer: 10, typography: typo('caption', { fontSize: 11, align: 'center', fontWeight: 700 }), max_lines: 1 }),
+      slot(`milestone_${n}_num`, `cols ${col}, rows 5-6`, 'stat', years[n - 1], { layer: 10, typography: typo('stat', { fontSize: 11, align: 'center' }), max_lines: 1 }),
+      slot(`milestone_${n}_title`, `cols ${col}, rows 6-7`, 'subheading', `Option 0${n}`, { layer: 10, typography: typo('heading', { fontSize: 12, align: 'center', fontWeight: 800 }), max_lines: 1 }),
+      slot(`milestone_${n}_detail`, `cols ${col}, rows 7-10`, 'body', 'This is a sample text. Insert your desired text here.', { layer: 10, typography: typo('body', { fontSize: 10, align: 'center' }), max_lines: 4 }),
+    ]
+  }),
+], { mode: 'timeline_horizontal', timelineVariant: 'default' })
+
+CATALOG.timeline_milestones_cards_v1 = layoutBase('timeline_milestones_cards_v1', 'timeline', [
+  heading('HEADING', 'cols 1-12, rows 1-2', 'Key milestones', {
+    typography: typo('heading', { fontSize: 20, align: 'left' }),
+    max_lines: 1,
+  }),
+  ...[1, 2, 3, 4, 5].flatMap((n) => {
+    const years = ['2027', '2028', '2029', '2030', '2031']
+    const col = n === 1 ? '1-3' : n === 2 ? '3-5' : n === 3 ? '5-7' : n === 4 ? '7-9' : '10-12'
+    return [
+      slot(`milestone_${n}_num`, `cols ${col}, rows 2-3`, 'stat', years[n - 1], { layer: 10, typography: typo('stat', { fontSize: 16, align: 'center', fontWeight: 800 }), max_lines: 1 }),
+      slot(`milestone_${n}_label`, `cols ${col}, rows 5-6`, 'caption', `Milestone 0${n}`, { layer: 10, typography: typo('caption', { fontSize: 13, align: 'center', fontWeight: 700 }), max_lines: 1 }),
+      slot(`milestone_${n}_detail`, `cols ${col}, rows 6-10`, 'body', 'Insert your desired text here. This is a sample text.', { layer: 10, typography: typo('body', { fontSize: 12, align: 'center' }), max_lines: 6 }),
+    ]
+  }),
+], { mode: 'timeline_horizontal', timelineVariant: 'cards' })
+
+CATALOG.timeline_milestones_image_v1 = layoutBase('timeline_milestones_image_v1', 'timeline', [
+  heading('HEADING', 'cols 1-10, rows 1-2', 'Company milestones', {
+    typography: typo('heading', { fontSize: 22, align: 'left' }),
+    max_lines: 1,
+  }),
+  slot('SUBHEADING', 'cols 1-8, rows 2-3', 'caption', 'INFOGRAPHIC TEMPLATE', {
+    layer: 10,
+    typography: typo('caption', { fontSize: 10, align: 'left', fontWeight: 600 }),
+    max_lines: 1,
+  }),
+  ...[1, 2, 3, 4, 5, 6].flatMap((n) => {
+    const years = ['1998', '2001', '2005', '2011', '2013', '2017']
+    const titles = ['FOUNDATION', 'EXPANSION', 'PRODUCT', 'SCALE', 'PARTNERS', 'GLOBAL']
+    const col = n === 1 ? '1-2' : n === 2 ? '3-4' : n === 3 ? '5-6' : n === 4 ? '7-8' : n === 5 ? '9-10' : '11-12'
+    return [
+      slot(`IMAGE_${n}`, `cols ${col}, rows 4-6`, 'image', null, { layer: 8, fit: 'cover' }),
+      slot(`milestone_${n}_num`, `cols ${col}, rows 3-4`, 'stat', years[n - 1], { layer: 10, typography: typo('stat', { fontSize: 16, align: 'center', fontWeight: 800 }), max_lines: 1 }),
+      slot(`milestone_${n}_label`, `cols ${col}, rows 6-7`, 'caption', titles[n - 1], { layer: 10, typography: typo('caption', { fontSize: 10, align: 'center', fontWeight: 800 }), max_lines: 1 }),
+      slot(`milestone_${n}_detail`, `cols ${col}, rows 7-9`, 'body', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.', { layer: 10, typography: typo('body', { fontSize: 9, align: 'center' }), max_lines: 4 }),
+    ]
+  }),
+], { mode: 'timeline_milestones_image', timelineVariant: 'default' })
+
+CATALOG.timeline_milestones_image_right_v1 = layoutBase('timeline_milestones_image_right_v1', 'timeline', [
+  heading('HEADING', 'cols 1-8, rows 1-2', 'Milestones at a glance', {
+    typography: typo('heading', { fontSize: 22, align: 'left' }),
+    max_lines: 1,
+  }),
+  slot('SUBHEADING', 'cols 1-8, rows 2-3', 'caption', 'CHAPTER TIMELINE', {
+    layer: 10,
+    typography: typo('caption', { fontSize: 10, align: 'left', fontWeight: 600 }),
+    max_lines: 1,
+  }),
+  ...[1, 2, 3, 4].flatMap((n) => {
+    const years = ['2018', '2021', '2023', '2026']
+    const titles = ['LAUNCH', 'GROWTH', 'PRODUCT', 'GLOBAL']
+    const row = n === 1 ? '3-4' : n === 2 ? '5-6' : n === 3 ? '7-8' : '9-10'
+    return [
+      slot(`IMAGE_${n}`, `cols 10-12, rows ${row}`, 'image', null, { layer: 8, fit: 'cover' }),
+      slot(`milestone_${n}_num`, `cols 1-3, rows ${row}`, 'stat', years[n - 1], { layer: 10, typography: typo('stat', { fontSize: 16, align: 'left', fontWeight: 800 }), max_lines: 1 }),
+      slot(`milestone_${n}_label`, `cols 3-9, rows ${row}`, 'caption', titles[n - 1], { layer: 10, typography: typo('caption', { fontSize: 13, align: 'left', fontWeight: 800 }), max_lines: 1 }),
+      slot(`milestone_${n}_detail`, `cols 3-9, rows ${row}`, 'body', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.', { layer: 10, typography: typo('body', { fontSize: 11, align: 'left' }), max_lines: 3 }),
+    ]
+  }),
+], { mode: 'timeline_milestones_image', timelineVariant: 'image_right' })
+
+CATALOG.timeline_vertical_v1 = layoutBase('timeline_vertical_v1', 'timeline', [
+  heading('HEADING', 'cols 1-10, rows 1-2', 'Five staged vertical timeline', {
+    typography: typo('heading', { fontSize: 22, align: 'left' }),
+    max_lines: 1,
+  }),
+  ...[1, 2, 3, 4, 5].flatMap((n) => {
+    const nums = ['01', '02', '03', '04', '05']
+    const titles = ['Discover', 'Design', 'Build', 'Launch', 'Scale']
+    const subs = ['Research and scope', 'Prototype and test', 'Engineer the core', 'Go to market', 'Grow and expand']
+    const row = n === 1 ? '2-3' : n === 2 ? '4-5' : n === 3 ? '6-7' : n === 4 ? '8-9' : '10-11'
+    const side = n % 2 === 1 ? '8-12' : '1-5'
+    const numCol = n % 2 === 1 ? '7-8' : '5-6'
+    return [
+      slot(`milestone_${n}_num`, `cols ${numCol}, rows ${row}`, 'stat', nums[n - 1], { layer: 10, typography: typo('stat', { fontSize: 18, align: 'center', fontWeight: 800 }), max_lines: 1 }),
+      slot(`milestone_${n}_label`, `cols ${side}, rows ${row}`, 'caption', titles[n - 1], { layer: 10, typography: typo('caption', { fontSize: 14, align: n % 2 === 1 ? 'left' : 'right', fontWeight: 800 }), max_lines: 1 }),
+      slot(`milestone_${n}_title`, `cols ${side}, rows ${row}`, 'caption', subs[n - 1], { layer: 10, typography: typo('caption', { fontSize: 10, align: n % 2 === 1 ? 'left' : 'right' }), max_lines: 1 }),
+      slot(`milestone_${n}_detail`, `cols ${side}, rows ${row}`, 'body', 'Bring your presentation to life. Capture your audience\'s attention.', { layer: 10, typography: typo('body', { fontSize: 10, align: n % 2 === 1 ? 'left' : 'right' }), max_lines: 2 }),
+    ]
+  }),
+], { mode: 'timeline_vertical', timelineVariant: 'default' })
+
+CATALOG.timeline_vertical_cards_v1 = layoutBase('timeline_vertical_cards_v1', 'timeline', [
+  heading('HEADING', 'cols 1-8, rows 1-2', '5 Stage Planning Process', {
+    typography: typo('heading', { fontSize: 22, align: 'left' }),
+    max_lines: 1,
+  }),
+  ...[1, 2, 3, 4, 5].flatMap((n) => {
+    const dates = ['JAN 2023', 'MAR 2023', 'JUN 2023', 'SEP 2023', 'DEC 2023']
+    const titles = ['STAGE 1: MASTER PLAN', 'STAGE 2: PERMITS', 'STAGE 3: DESIGN', 'STAGE 4: SCHEDULE', 'STAGE 5: BUILD']
+    const row = n === 1 ? '2-3' : n === 2 ? '4-5' : n === 3 ? '6-7' : n === 4 ? '8-9' : '10-11'
+    const side = n % 2 === 1 ? '1-5' : '8-12'
+    return [
+      slot(`milestone_${n}_num`, `cols ${side}, rows ${row}`, 'stat', dates[n - 1], { layer: 10, typography: typo('stat', { fontSize: 10, align: 'left', fontWeight: 800 }), max_lines: 1 }),
+      slot(`milestone_${n}_label`, `cols ${side}, rows ${row}`, 'caption', titles[n - 1], { layer: 10, typography: typo('caption', { fontSize: 10, align: 'left', fontWeight: 800 }), max_lines: 1 }),
+      slot(`milestone_${n}_detail`, `cols ${side}, rows ${row}`, 'body', 'Plan, coordinate, and deliver this stage with clear owners and checkpoints.', { layer: 10, typography: typo('body', { fontSize: 10, align: 'left' }), max_lines: 3 }),
+    ]
+  }),
+], { mode: 'timeline_vertical', timelineVariant: 'cards' })
+
+CATALOG.timeline_roadmap_v1 = layoutBase('timeline_roadmap_v1', 'timeline', [
+  slot('SUBHEADING', 'cols 1-4, rows 1-2', 'caption', 'TIMELINE', {
+    layer: 10,
+    typography: typo('caption', { fontSize: 11, align: 'left', fontWeight: 700 }),
+    max_lines: 1,
+  }),
+  heading('HEADING', 'cols 1-8, rows 1-2', 'Timeline roadmap with milestones', {
+    typography: typo('heading', { fontSize: 22, align: 'left' }),
+    max_lines: 1,
+  }),
+  ...[1, 2, 3, 4, 5].flatMap((n) => {
+    const titles = ['Kickoff', 'Scope', 'Build', 'Launch', 'Scale']
+    return [
+      slot(`milestone_${n}_label`, `cols 1-4, rows ${n + 1}-${n + 2}`, 'caption', titles[n - 1], { layer: 10, typography: typo('caption', { fontSize: 13, align: 'left', fontWeight: 800 }), max_lines: 1 }),
+      slot(`milestone_${n}_detail`, `cols 1-4, rows ${n + 2}-${n + 3}`, 'body', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor.', { layer: 10, typography: typo('body', { fontSize: 10, align: 'left' }), max_lines: 3 }),
+    ]
+  }),
+], { mode: 'timeline_roadmap', timelineVariant: 'default' })
+
 export default CATALOG

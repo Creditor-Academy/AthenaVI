@@ -9,7 +9,7 @@ function svgWithPaintHits(markup) {
     if (!/style=/i.test(a)) a += ' style="width:100%;height:100%;display:block"'
     return `<svg${a}>`
   })
-  next = next.replace(/<(path|circle|polygon|rect|ellipse)\b(?![^>]*pointer-events=)/gi, '<$1 pointer-events="visiblePainted"')
+  next = next.replace(/<(path|circle|polygon|rect|ellipse|line|polyline)\b(?![^>]*pointer-events=)/gi, '<$1 pointer-events="visiblePainted"')
   return next
 }
 

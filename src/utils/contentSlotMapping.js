@@ -313,7 +313,19 @@ export function buildContentBySlotIdFromSlideContent(content = {}, schema = null
         ? ''
         : String(item?.detail ?? item?.body ?? item?.text ?? item?.description ?? '').trim()
     out[`milestone_${n}_label`] = label
+    out[`milestone_${n}_title`] = typeof item === 'string'
+      ? ''
+      : String(item?.title ?? item?.phase ?? item?.heading ?? item?.name ?? item?.option ?? '').trim()
+    out[`milestone_${n}_card`] = typeof item === 'string'
+      ? ''
+      : String(item?.card ?? item?.summary ?? item?.blurb ?? '').trim()
+    out[`milestone_${n}_num`] = typeof item === 'string'
+      ? ''
+      : String(item?.year ?? item?.num ?? '').trim()
     out[`milestone_${n}_detail`] = detail
+    out[`milestone_${n}_foot`] = typeof item === 'string'
+      ? ''
+      : String(item?.focus ?? item?.caption ?? item?.footer ?? '').trim()
     out[`milestone_${n}`] = label && detail ? `${label}\n${detail}` : label || detail
   })
 
