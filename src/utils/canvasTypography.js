@@ -121,7 +121,7 @@ export function fitTextToSlot(text, slot, placement, options = {}) {
       : resolveTypeScaleFontSize(role, options.typeScale) ??
         fontSizeForTextSlot(slot, placement, canvasWidth)
 
-  const minSize = role === 'stat' ? 20 : 12
+  const minSize = options.minFontSize ?? (role === 'stat' ? 20 : 12)
   const maxWords = slot?.max_words || null
   let lineHeight = ty.lineHeight || (role === 'stat' ? 1.08 : role === 'heading' ? 1.18 : 1.42)
   let content = String(text ?? '')

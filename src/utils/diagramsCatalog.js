@@ -133,6 +133,16 @@ const CATALOG = {
     }),
   ], { mode: 'diagram_matrix' }),
 
+  diagram_process_steps_3: layoutBase('diagram_process_steps_3', 'diagram', [
+    heading('HEADING', 'cols 1-12, rows 1-2', 'Process steps', {
+      max_lines: 2,
+      typography: centeredTypo('heading', { fontSize: 36 }),
+    }),
+    ...processStep(1, 2, 4),
+    ...processStep(2, 5, 8),
+    ...processStep(3, 9, 11),
+  ], { mode: 'diagram_process_steps' }),
+
   diagram_process_steps_v1: layoutBase('diagram_process_steps_v1', 'diagram', [
     heading('HEADING', 'cols 1-12, rows 1-2', 'Process steps', {
       max_lines: 2,
@@ -142,7 +152,15 @@ const CATALOG = {
     ...processStep(2, 4, 6),
     ...processStep(3, 7, 9),
     ...processStep(4, 10, 12),
-  ], { mode: 'diagram_process_steps' }),
+  ], { 
+    mode: 'diagram_process_steps',
+    smartBehavior: {
+      itemCount: {
+        3: 'diagram_process_steps_3',
+        4: 'diagram_process_steps_v1'
+      }
+    }
+  }),
 
   diagram_cycle_v1: layoutBase('diagram_cycle_v1', 'diagram', [
     heading('HEADING', 'cols 1-12, rows 1-2', 'Continuous cycle', {
