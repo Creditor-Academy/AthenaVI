@@ -34,17 +34,19 @@ export async function resolvePresentationThumbPayload(item) {
   }
 
   const updatedAt = item.lastModifiedAt || item.updatedAt || item.completedAt || null
-  const catalogUrl = resolvePresentationThumbnailUrl(item)
-  if (catalogUrl) {
-    setCachedPresentationThumb({
-      workspaceId,
-      presentationId,
-      imageUrl: catalogUrl,
-      aspectRatio: item.aspectRatio || '16:9',
-      updatedAt,
-    }).catch(() => {})
-    return { imageUrl: catalogUrl, slide: null, aspectRatio: item.aspectRatio || '16:9' }
-  }
+  // The user requested to see the full slide 1 canvas instead of the flat generated image.
+  // We skip the early catalogUrl return so it fetches the actual slide data.
+  // const catalogUrl = resolvePresentationThumbnailUrl(item)
+  // if (catalogUrl) {
+  //   setCachedPresentationThumb({
+  //     workspaceId,
+  //     presentationId,
+  //     imageUrl: catalogUrl,
+  //     aspectRatio: item.aspectRatio || '16:9',
+  //     updatedAt,
+  //   }).catch(() => {})
+  //   return { imageUrl: catalogUrl, slide: null, aspectRatio: item.aspectRatio || '16:9' }
+  // }
 
   const cached = await getCachedPresentationThumb(workspaceId, presentationId, updatedAt)
   if (cached?.imageUrl || cached?.slide) {
@@ -68,12 +70,12 @@ export async function resolvePresentationThumbPayload(item) {
       if (!slide) {
         return { imageUrl: null, slide: null, aspectRatio }
       }
-      const imageUrl = pickFirstSlideImage(slide, deck)
       const elements = slide?.elements?.elements || slide?.elements || []
       const hasCanvas = Array.isArray(elements) && elements.length > 0
+      const imageUrl = hasCanvas ? null : pickFirstSlideImage(slide, deck) // Ignore flat image if we have a real canvas
       const payload = {
         imageUrl,
-        slide: imageUrl || hasCanvas ? slide : null,
+        slide: hasCanvas ? slide : null,
         aspectRatio,
       }
 
@@ -118,14 +120,17 @@ export function syncPresentationThumbnailFromSlides({
 } = {}) {
   if (!workspaceId || !presentationId) return
   const slide = Array.isArray(slides) && slides.length ? slides[0] : null
-  const imageUrl = pickFirstSlideImage(slide)
+  const elements = slide?.elements?.elements || slide?.elements || []
+  const hasCanvas = Array.isArray(elements) && elements.length > 0
+  const imageUrl = hasCanvas ? null : pickFirstSlideImage(slide)
+  
   if (!imageUrl && !slide) return
 
   setCachedPresentationThumb({
     workspaceId,
     presentationId,
     imageUrl,
-    slide: imageUrl ? null : slide,
+    slide: hasCanvas ? slide : null,
     aspectRatio,
     updatedAt,
   }).catch(() => {})

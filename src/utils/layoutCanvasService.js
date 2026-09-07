@@ -17,6 +17,7 @@ import {
 import { parseRegion } from './layoutPreviewUtils'
 import { buildCanvasDoc, resolveCanvasSize } from './presentationHelpers'
 import { layoutSchemaHasCanvasElements, resolveLayoutCanvasElementsDoc } from './videoTemplateToCanvasElements'
+import { resolveSmartLayoutState } from './smartLayoutState'
 
 function unwrapTemplateList(payload) {
   if (Array.isArray(payload)) return payload
@@ -493,9 +494,12 @@ export async function applyCompiledLayoutToSlide({
     ...(slideTitle && !(slideContent && slideContent.title) ? { title: slideTitle } : {}),
   }
   if (!content.title && slideTitle) content.title = slideTitle
-  const extracted = extractContentBySlotFromElements(mergeFromElements, resolvedSchema)
+
+  const smartSchema = resolveSmartLayoutState(resolvedSchema, content)
+
+  const extracted = extractContentBySlotFromElements(mergeFromElements, smartSchema)
   const contentBySlotId = mergeContentBySlotId(
-    buildContentBySlotIdFromSlideContent(content, resolvedSchema),
+    buildContentBySlotIdFromSlideContent(content, smartSchema),
     extracted
   )
   const compileOptions = buildThemeCompileOptions(themeTokens, {
@@ -503,7 +507,7 @@ export async function applyCompiledLayoutToSlide({
     fonts,
     typeScale,
   })
-  const elements = compileDeckLayoutToElements(resolvedSchema, {
+  const elements = compileDeckLayoutToElements(smartSchema, {
     canvas,
     ...compileOptions,
     contentBySlotId,

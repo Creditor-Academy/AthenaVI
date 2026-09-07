@@ -4,7 +4,7 @@
  */
 
 const DB_NAME = 'athenavi-ppt-thumbs'
-const DB_VERSION = 1
+const DB_VERSION = 2
 const STORE = 'thumbs'
 const MAX_ENTRIES = 200
 
@@ -23,10 +23,11 @@ function openDb() {
     request.onerror = () => reject(request.error || new Error('Failed to open thumb cache'))
     request.onupgradeneeded = () => {
       const db = request.result
-      if (!db.objectStoreNames.contains(STORE)) {
-        const store = db.createObjectStore(STORE, { keyPath: 'key' })
-        store.createIndex('byAccessedAt', 'accessedAt')
+      if (db.objectStoreNames.contains(STORE)) {
+        db.deleteObjectStore(STORE)
       }
+      const store = db.createObjectStore(STORE, { keyPath: 'key' })
+      store.createIndex('byAccessedAt', 'accessedAt')
     }
     request.onsuccess = () => resolve(request.result)
   }).catch((err) => {

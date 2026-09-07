@@ -1,5 +1,6 @@
 /** Map slide content objects to per-slot text for canvas compile. */
 import { normalizeChartContent } from './chartContentNormalize'
+import { normalizeContentForLayout } from './contentContract'
 
 function columnAt(content, index) {
   const cols = content?.columns
@@ -64,198 +65,181 @@ function mapChartToSlots(content, schema, out) {
   })
 }
 
-export function buildContentBySlotIdFromSlideContent(content = {}, schema = null) {
+export function buildContentBySlotIdFromSlideContent(rawContent = {}, schema = null) {
   const out = {}
-  if (!content || typeof content !== 'object') return out
+  if (!rawContent || typeof rawContent !== 'object') return out
 
-  const title = content.title != null ? String(content.title).trim() : ''
-  const subtitle = content.subtitle != null ? String(content.subtitle).trim() : ''
-  const body = content.body != null ? String(content.body).trim() : ''
-  const quote = content.quote != null ? String(content.quote).trim() : ''
-  const summary = content.summary != null ? String(content.summary).trim() : ''
-  const ctaText = content.cta || content.callToAction
+  const content = normalizeContentForLayout(rawContent, schema)
+  const slots = Array.isArray(schema?.slots) ? schema.slots : []
 
-  if (title) {
-    out.HEADING = title
-    out.TITLE = title
-    out.MAIN_TITLE = title
+  // Globals
+  if (content.title) {
+    out.HEADING = content.title
+    out.MAIN_TITLE = content.title
+    out.TITLE = content.title
+    out.HEADING_L = content.title
   }
-  if (subtitle) out.SUBTITLE = subtitle
-  else if (summary) out.SUBTITLE = summary.split(/[.!?]/)[0]?.trim() || summary
-  if (body) out.BODY = body
-  if (quote) {
-    out.QUOTE = quote
-    out.STATEMENT = quote
+  if (content.subtitle) {
+    out.SUBTITLE = content.subtitle
+    out.SUBHEADING = content.subtitle
   }
-  const authorName = String(content.author || content.name || content.attribution || '').trim()
-  const authorRole = String(content.role || content.authorTitle || content.titleLine || '').trim()
-  if (authorName) {
-    out.NAME = authorName
-    out.AUTHOR_NAME = authorName
-    out.ATTRIBUTION = authorName
+  if (content.body) {
+    out.BODY = content.body
+    out.BODY_L = content.body
   }
-  if (authorRole) {
-    out.ROLE = authorRole
-    out.AUTHOR_TITLE = authorRole
+  if (content.quote) {
+    out.QUOTE = content.quote
+    out.STATEMENT = content.quote
   }
-  const quotesList = Array.isArray(content.quotes)
-    ? content.quotes
-    : Array.isArray(content.testimonials)
-      ? content.testimonials
-      : []
-  quotesList.slice(0, 6).forEach((item, i) => {
-    const n = i + 1
-    if (typeof item === 'string') {
-      out[`QUOTE_${n}`] = item.trim()
-      return
-    }
-    const q = String(item?.text ?? item?.quote ?? '').trim()
-    const name = String(item?.name ?? item?.author ?? '').trim()
-    const role = String(item?.role ?? item?.title ?? item?.org ?? '').trim()
-    if (q) out[`QUOTE_${n}`] = q
-    if (name) out[`NAME_${n}`] = name
-    if (role) out[`ROLE_${n}`] = role
-  })
-  if (ctaText) out.CTA = String(ctaText).trim()
-  if (!out.BODY && summary) out.BODY = summary
+  if (content.cta) {
+    out.CTA = content.cta
+  }
   if (content.contact) {
     if (typeof content.contact === 'string') out.CONTACT = content.contact
     else {
-      const parts = [content.contact.email, content.contact.phone, content.contact.address]
-        .map((part) => (part != null ? String(part).trim() : ''))
+      out.CONTACT = [content.contact.email, content.contact.phone, content.contact.address]
         .filter(Boolean)
-      if (parts.length) out.CONTACT = parts.join(' · ')
+        .join(' · ')
     }
   }
-
-  const bullets = Array.isArray(content.bullets) ? content.bullets : []
-  if (bullets.length) {
-    out.BULLETS = bullets
-      .map((item) => (typeof item === 'string' ? item : String(item?.text ?? item?.label ?? '')))
-      .filter(Boolean)
-      .map((line) => (String(line).startsWith('•') ? String(line) : `• ${line}`))
-      .join('\n')
+  if (content.bullets && !content.body) {
+     out.BODY = content.bullets.map(b => typeof b === 'string' ? b : String(b?.text || b?.label)).filter(Boolean).map(l => l.startsWith('•') ? l : `• ${l}`).join('\n')
   }
-  bullets.slice(0, 8).forEach((item, i) => {
-    const text = typeof item === 'string' ? item : String(item?.text ?? item?.label ?? '')
-    out[`BULLET_${i + 1}`] = text
-  })
-  if (!out.BODY && bullets.length) out.BODY = out.BULLETS
 
-  const columns = Array.isArray(content.columns) ? content.columns : []
-  const slideTitleLower = String(content.title || '').trim().toLowerCase()
-  const seenColTitles = new Set()
-  const slots = Array.isArray(schema?.slots) ? schema.slots : []
-  const hasDedicatedTitles = slots.some((s) =>
-    /^(card|col|row|feature)_\d+_title$/i.test(String(s.id || ''))
-  )
-  columns.slice(0, 6).forEach((col, i) => {
-    const n = i + 1
-    let colTitle = String(col?.title ?? col?.heading ?? col?.label ?? '').trim()
-    const colBody = String(col?.body ?? col?.text ?? '').trim()
-    const titleLower = colTitle.toLowerCase()
-    if (!colTitle || titleLower === slideTitleLower || seenColTitles.has(titleLower)) {
-      const words = colBody.split(/\s+/).filter(Boolean).slice(0, 4).join(' ')
-      const wordsLower = words.toLowerCase()
-      colTitle =
-        words && wordsLower !== slideTitleLower && !seenColTitles.has(wordsLower)
-          ? words
-          : `Aspect ${n}`
+  // Strict mapping based on actual slots to avoid overflow
+  for (const slot of slots) {
+    const id = String(slot.id || '').toUpperCase()
+
+    // Match column-like slots
+    const colMatch = id.match(/^(?:CARD|COL|ROW|FEATURE|METRIC)_(\d+)_(TITLE|BODY|HEADING)$/i) || id.match(/^METRIC_(TITLE|BODY)_(\d+)$/i)
+    if (colMatch && Array.isArray(content.columns)) {
+      const idxStr = colMatch[1] === 'TITLE' || colMatch[1] === 'BODY' ? colMatch[2] : colMatch[1]
+      const fieldStr = colMatch[1] === 'TITLE' || colMatch[1] === 'BODY' ? colMatch[1] : colMatch[2]
+      
+      const idx = parseInt(idxStr, 10) - 1
+      const field = fieldStr.toUpperCase()
+      const col = content.columns[idx]
+      if (col) {
+        if ((field === 'TITLE' || field === 'HEADING') && (col.title || col.heading || col.label)) out[slot.id] = col.title || col.heading || col.label
+        if (field === 'BODY' && (col.body || col.text)) out[slot.id] = col.body || col.text
+      }
     }
-    seenColTitles.add(colTitle.toLowerCase())
-    const bulletText =
-      hasDedicatedTitles
-        ? colBody || colTitle
-        : colTitle && colBody
-          ? `${colTitle}\n${colBody}`
-          : colBody || colTitle
-    out[`CARD_${n}_TITLE`] = colTitle
-    out[`CARD_${n}_BODY`] = colBody
-    out[`COL_${n}_TITLE`] = colTitle
-    out[`COL_${n}_BODY`] = colBody
-    out[`ROW_${n}_TITLE`] = colTitle
-    out[`ROW_${n}_BODY`] = colBody
-    out[`FEATURE_${n}_TITLE`] = colTitle
-    out[`FEATURE_${n}_BODY`] = colBody
-    out[`BODY_${n}`] = colBody || (hasDedicatedTitles ? '' : colTitle)
-    out[`METRIC_TITLE_${n}`] = colTitle
-    out[`METRIC_BODY_${n}`] = colBody
-    if (colTitle) out[`IMAGE_${n}_LABEL`] = colTitle
-    if (bulletText) out[`BULLET_${n}`] = bulletText
-  })
 
-  // Device phone-highlights: FEATURE_L1..L3, R1..R3 → columns[0..5]
-  const featureKeys = ['L1', 'L2', 'L3', 'R1', 'R2', 'R3']
-  featureKeys.forEach((key, i) => {
-    const col = columns[i]
-    if (!col) return
-    const colTitle = String(col?.title ?? col?.heading ?? col?.label ?? '').trim()
-    const colBody = String(col?.body ?? col?.text ?? '').trim()
-    if (colTitle) out[`FEATURE_${key}_HEADING`] = colTitle
-    if (colBody) out[`FEATURE_${key}_BODY`] = colBody
-  })
+    const bodyMatch = id.match(/^BODY_(\d+)$/i)
+    if (bodyMatch && Array.isArray(content.columns)) {
+      const idx = parseInt(bodyMatch[1], 10) - 1
+      const col = content.columns[idx]
+      if (col && (col.body || col.text)) out[slot.id] = col.body || col.text
+    }
+    const labelMatch = id.match(/^IMAGE_(\d+)_LABEL$/i)
+    if (labelMatch && Array.isArray(content.columns)) {
+      const idx = parseInt(labelMatch[1], 10) - 1
+      const col = content.columns[idx]
+      if (col && (col.title || col.heading || col.label)) out[slot.id] = col.title || col.heading || col.label
+    }
 
-  // Device phone-triple side copy
-  if (columns[0]) {
-    const t = String(columns[0]?.title ?? columns[0]?.heading ?? '').trim()
-    const b = String(columns[0]?.body ?? columns[0]?.text ?? '').trim()
-    if (t) out.HEADING_L = t
-    if (b) out.BODY_L = b
-  }
-  if (columns[1]) {
-    const t = String(columns[1]?.title ?? columns[1]?.heading ?? '').trim()
-    const b = String(columns[1]?.body ?? columns[1]?.text ?? '').trim()
-    if (t) out.HEADING_R = t
-    if (b) out.BODY_R = b
-  }
+    // Match stats
+    const statMatch = id.match(/^STAT_(\d+)_(VALUE|LABEL)$/i)
+    if (statMatch && Array.isArray(content.stats)) {
+      const idx = parseInt(statMatch[1], 10) - 1
+      const field = statMatch[2].toUpperCase()
+      const stat = content.stats[idx]
+      if (stat) {
+        if (field === 'VALUE' && stat.value) out[slot.id] = stat.value
+        if (field === 'LABEL' && stat.label) out[slot.id] = stat.label
+      }
+    }
 
-  // Multi-cluster / device title lines
-  const titleParts = title.split(/\n+/).map((s) => s.trim()).filter(Boolean)
-  const titleRuns = Array.isArray(content.titleRuns)
-    ? content.titleRuns.map((r) => String(r?.text || '').trim()).filter(Boolean)
-    : []
-  if (titleParts.length >= 2) {
-    out.HEADING = `${titleParts[0]}\n${titleParts.slice(1).join(' ')}`
-    out.HEADING_2 = titleParts.slice(1).join(' ')
-  } else if (titleRuns.length >= 2) {
-    out.HEADING = `${titleRuns[0]}\n${titleRuns.slice(1).join(' ')}`
-    out.HEADING_2 = titleRuns.slice(1).join(' ')
-  }
-  if (subtitle) out.SUBHEADING = subtitle
-  else if (summary) out.SUBHEADING = summary.split(/[.!?]/)[0]?.trim() || summary
+    // Match members
+    const memberMatch = id.match(/^MEMBER_(\d+)_(NAME|ROLE|BIO|EMAIL)$/i)
+    if (memberMatch && Array.isArray(content.members)) {
+      const idx = parseInt(memberMatch[1], 10) - 1
+      const field = memberMatch[2].toUpperCase()
+      const member = content.members[idx]
+      if (member) {
+        if (field === 'NAME' && member.name) out[slot.id] = member.name
+        if (field === 'ROLE' && (member.role || member.title)) out[slot.id] = member.role || member.title
+        if (field === 'BIO' && (member.bio || member.description)) out[slot.id] = member.bio || member.description
+        if (field === 'EMAIL' && member.email) out[slot.id] = member.email
+      }
+    }
 
-  if (statAt(content, 0)) {
-    out.STAT_1_VALUE = String(statAt(content, 0).value ?? '')
-    out.STAT_1_LABEL = String(statAt(content, 0).label ?? '')
-  }
-  if (statAt(content, 1)) {
-    out.STAT_2_VALUE = String(statAt(content, 1).value ?? '')
-    out.STAT_2_LABEL = String(statAt(content, 1).label ?? '')
-  }
+    // Match timeline
+    const mileMatch = id.match(/^MILESTONE_(\d+)_(LABEL|DETAIL)$/i)
+    if (mileMatch && Array.isArray(content.timeline)) {
+      const idx = parseInt(mileMatch[1], 10) - 1
+      const field = mileMatch[2].toUpperCase()
+      const item = content.timeline[idx]
+      if (item) {
+        if (field === 'LABEL' && item.label) out[slot.id] = item.label
+        if (field === 'DETAIL' && item.detail) out[slot.id] = item.detail
+      }
+    }
+    const legacyMileMatch = id.match(/^MILESTONE_(\d+)$/i)
+    if (legacyMileMatch && Array.isArray(content.timeline)) {
+      const idx = parseInt(legacyMileMatch[1], 10) - 1
+      const item = content.timeline[idx]
+      if (item) {
+        out[slot.id] = item.label && item.detail ? `${item.label}\n${item.detail}` : item.label || item.detail
+      }
+    }
 
-  if (columnAt(content, 0) && !out.METRIC_TITLE_1) {
-    out.METRIC_TITLE_1 = String(columnAt(content, 0).title ?? columnAt(content, 0).heading ?? '')
-    out.METRIC_BODY_1 = String(columnAt(content, 0).body ?? columnAt(content, 0).text ?? '')
-  }
-  if (columnAt(content, 1) && !out.METRIC_TITLE_2) {
-    out.METRIC_TITLE_2 = String(columnAt(content, 1).title ?? columnAt(content, 1).heading ?? '')
-    out.METRIC_BODY_2 = String(columnAt(content, 1).body ?? columnAt(content, 1).text ?? '')
-  }
-  if (columnAt(content, 2) && !out.METRIC_TITLE_3) {
-    out.METRIC_TITLE_3 = String(columnAt(content, 2).title ?? columnAt(content, 2).heading ?? '')
-    out.METRIC_BODY_3 = String(columnAt(content, 2).body ?? columnAt(content, 2).text ?? '')
-  }
+    // Match diagrams
+    const qMatch = id.match(/^Q(\d+)_(TITLE|BODY)$/i) || id.match(/^(?:FUNNEL|STEP)_(\d+)_(TITLE|BODY)$/i)
+    if (qMatch) {
+      const idx = parseInt(qMatch[1], 10) - 1
+      const field = qMatch[2].toUpperCase()
+      const cells = content.diagram?.cells || content.cells || content.quadrants || content.steps || content.funnel
+      if (Array.isArray(cells)) {
+        const cell = cells[idx]
+        if (cell) {
+          if (field === 'TITLE' && (cell.title || cell.label || cell.heading)) out[slot.id] = cell.title || cell.label || cell.heading
+          if (field === 'BODY' && (cell.body || cell.text || cell.detail)) out[slot.id] = cell.body || cell.text || cell.detail
+        }
+      }
+    }
 
-  const agendaCols = content.agenda?.columns
-  if (Array.isArray(agendaCols)) {
-    agendaCols.slice(0, 3).forEach((col, i) => {
-      const n = i + 1
-      out[`AGENDA_COL_${n}_HEADING`] = String(col?.heading ?? col?.title ?? '')
-      const items = Array.isArray(col?.items) ? col.items : []
-      items.slice(0, 4).forEach((item, j) => {
-        out[`AGENDA_COL_${n}_ITEM_${j + 1}`] = typeof item === 'string' ? item : String(item?.text ?? '')
-      })
-    })
+    // Match bullets and items
+    const bulletMatch = id.match(/^BULLET_(\d+)$/i)
+    if (bulletMatch && Array.isArray(content.bullets)) {
+      const idx = parseInt(bulletMatch[1], 10) - 1
+      const b = content.bullets[idx]
+      if (b) out[slot.id] = typeof b === 'string' ? b : String(b.text || b.label)
+    }
+
+    const itemMatch = id.match(/^ITEM_(\d+)$/i)
+    if (itemMatch && Array.isArray(content.items)) {
+      const idx = parseInt(itemMatch[1], 10) - 1
+      const it = content.items[idx]
+      if (it) out[slot.id] = typeof it === 'string' ? it : String(it.title || it.label || it.text)
+    }
+
+    // Match quotes
+    const quoteMatch = id.match(/^QUOTE_(\d+)$/i)
+    if (quoteMatch && Array.isArray(content.quotes)) {
+      const idx = parseInt(quoteMatch[1], 10) - 1
+      const q = content.quotes[idx]
+      if (q) out[slot.id] = typeof q === 'string' ? q : String(q.text || q.quote)
+    }
+    
+    // Match agenda
+    const agendaHeadingMatch = id.match(/^AGENDA_COL_(\d+)_HEADING$/i)
+    if (agendaHeadingMatch && Array.isArray(content.agenda?.columns)) {
+      const idx = parseInt(agendaHeadingMatch[1], 10) - 1
+      const col = content.agenda.columns[idx]
+      if (col && (col.heading || col.title)) out[slot.id] = col.heading || col.title
+    }
+    
+    const agendaItemMatch = id.match(/^AGENDA_COL_(\d+)_ITEM_(\d+)$/i)
+    if (agendaItemMatch && Array.isArray(content.agenda?.columns)) {
+      const colIdx = parseInt(agendaItemMatch[1], 10) - 1
+      const itemIdx = parseInt(agendaItemMatch[2], 10) - 1
+      const col = content.agenda.columns[colIdx]
+      if (col && Array.isArray(col.items)) {
+        const item = col.items[itemIdx]
+        if (item) out[slot.id] = typeof item === 'string' ? item : String(item.text || '')
+      }
+    }
   }
 
   mapChartToSlots(content, schema, out)
@@ -397,6 +381,15 @@ export function buildContentBySlotIdFromSlideContent(content = {}, schema = null
         out[`${slot.id}__url`] = heroUrl
       }
     }
+  }
+
+  // Diagnostic logging
+  if (import.meta?.env?.DEV) {
+    console.log('[slotBindings] Strict mapping complete for schema:', schema?.layout_id, {
+      rawContent,
+      normalizedContent: content,
+      out
+    })
   }
 
   return out

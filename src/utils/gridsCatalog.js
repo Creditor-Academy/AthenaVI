@@ -31,7 +31,15 @@ const CATALOG = {
     gridImage(2, 'cols 9-12, rows 1-5'),
     gridImage(3, 'cols 1-4, rows 6-10'),
     gridImage(4, 'cols 5-12, rows 6-10'),
-  ], { mode: 'grid_bento_four' }),
+  ], { 
+    mode: 'grid_bento_four',
+    smartBehavior: {
+      itemCount: {
+        3: 'grid_bento_three_v1',
+        4: 'grid_bento_four_v1'
+      }
+    }
+  }),
 
   grid_six_images_v1: layoutBase('grid_six_images_v1', 'grid', [
     gridImage(1, 'cols 1-4, rows 1-5'),
