@@ -447,32 +447,36 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
             <p className="videos-page-subtitle">{getVoiceSectionSubtitle(activeSection)}</p>
           </div>
           <div className="videos-actions">
-            <div className="view-toggle">
+            <div className="view-toggle" role="group" aria-label="View mode">
               <button
                 className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
                 onClick={() => setViewMode('grid')}
                 title="Grid view"
+                aria-label="Grid view"
+                aria-pressed={viewMode === 'grid'}
                 type="button"
               >
-                <MdGridView />
+                <MdGridView size={18} />
               </button>
               <button
                 className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
                 onClick={() => setViewMode('list')}
                 title="List view"
+                aria-label="List view"
+                aria-pressed={viewMode === 'list'}
                 type="button"
               >
-                <MdViewList />
+                <MdViewList size={18} />
               </button>
             </div>
             {activeSection === 'private' && onCreateVoice ? (
               <button
                 type="button"
-                className="btn-primary videos-create-btn"
+                className="videos-create-btn"
                 onClick={onCreateVoice}
               >
                 <MdAdd size={18} />
-                Create Voice
+                <span>Create Voice</span>
               </button>
             ) : null}
           </div>

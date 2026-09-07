@@ -491,7 +491,23 @@ function Library() {
       <div className="library-shell">
         <header className="library-page-header">
           <div className="library-page-header-row">
-            <h1 className="library-page-title">Library</h1>
+            <div className="library-page-header-title-group">
+              <h1 className="library-page-title">Library</h1>
+              {selectedWorkspace ? (
+                <p className="library-page-subtitle">
+                  {uploading
+                    ? 'Uploading…'
+                    : assetsLoading
+                      ? 'Loading workspace assets…'
+                      : `${assets.length} asset${assets.length === 1 ? '' : 's'} in ${selectedWorkspace.name || 'workspace'}`}
+                </p>
+              ) : !workspaceLoading ? (
+                <p className="library-page-subtitle library-page-subtitle--muted">
+                  Create a workspace to upload and manage assets.
+                </p>
+              ) : null}
+            </div>
+
             <div className="library-header-actions">
               {workspaces.length > 0 ? (
                 <div className="library-workspace-dropdown-container" ref={workspaceDropdownRef}>
@@ -570,19 +586,6 @@ function Library() {
               ) : null}
             </div>
           </div>
-          {selectedWorkspace ? (
-            <p className="library-page-subtitle">
-              {uploading
-                ? 'Uploading…'
-                : assetsLoading
-                  ? 'Loading workspace assets…'
-                  : `${assets.length} asset${assets.length === 1 ? '' : 's'} in ${selectedWorkspace.name || 'workspace'}`}
-            </p>
-          ) : !workspaceLoading ? (
-            <p className="library-page-subtitle library-page-subtitle--muted">
-              Create a workspace to upload and manage assets.
-            </p>
-          ) : null}
         </header>
 
         {assetsError ? (
@@ -594,86 +597,117 @@ function Library() {
           </div>
         ) : null}
 
-        <div className="library-category-row">
-          {CATEGORY_CARDS.map((cat) => {
-            const Icon = cat.Icon
-            const isSelected = selectedCategory === cat.id
-            return (
-              <button
-                key={cat.id}
-                type="button"
-                className={`library-category-card ${isSelected ? 'library-category-card--selected' : ''}`}
-                onClick={() => handleCategoryClick(cat)}
-                aria-pressed={isSelected}
-              >
-                <span className="library-category-card-shine" aria-hidden />
-                <Icon className="library-category-card-icon" size={20} strokeWidth={1.75} aria-hidden />
-                <span className="library-category-label">{cat.label}</span>
-              </button>
-            )
-          })}
-        </div>
-
-        {selectedCategory && !isUnsupportedCategory ? (
-          <div className="library-filters-bar">
-            <div className="filters-top-row">
-              <div className="asset-type-tabs">
-                {visibleTabs().map((tab) => (
+        <div className="library-toolbar">
+          <div className="library-toolbar-left">
+            <div className="library-category-pills" role="tablist" aria-label="Asset categories">
+              {CATEGORY_CARDS.map((cat) => {
+                const Icon = cat.Icon
+                const isSelected = selectedCategory === cat.id
+                return (
                   <button
-                    key={tab.id}
+                    key={cat.id}
                     type="button"
-                    className={`type-tab ${activeTab === tab.id ? 'active' : ''}`}
-                    onClick={() => setActiveTab(tab.id)}
+                    role="tab"
+                    aria-selected={isSelected}
+                    className={`library-category-pill ${isSelected ? 'is-selected' : ''}`}
+                    onClick={() => handleCategoryClick(cat)}
                   >
-                    {tab.label}
+                    <Icon className="library-category-pill-icon" size={16} strokeWidth={1.75} aria-hidden />
+                    <span>{cat.label}</span>
                   </button>
-                ))}
-              </div>
+                )
+              })}
+            </div>
 
-              <div className="filters-right-actions">
-                <div className="library-search" style={{ marginRight: 12, position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <MdSearch style={{ position: 'absolute', left: 12, color: '#9CA3AF' }} />
-                  <input
-                    ref={searchRef}
-                    type="text"
-                    className="library-search-input"
-                    placeholder="Search assets..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    aria-label="Search assets"
-                    style={{ padding: '8px 12px 8px 36px', borderRadius: 999, border: '1px solid #E5E7EB', width: 220 }}
-                  />
-                </div>
+            {selectedCategory === 'media' && (
+              <span className="library-toolbar-divider" aria-hidden />
+            )}
+
+            {selectedCategory === 'media' && (
+              <div className="library-subtabs" role="tablist" aria-label="Media types">
+                {mediaTabs.map((tab) => {
+                  const isActive = activeTab === tab.id
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={isActive}
+                      className={`library-subtab ${isActive ? 'is-active' : ''}`}
+                      onClick={() => setActiveTab(tab.id)}
+                    >
+                      {tab.label}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="library-toolbar-right">
+            {!isUnsupportedCategory && (
+              <div className="library-search">
+                <MdSearch className="library-search-icon" size={18} aria-hidden />
+                <input
+                  ref={searchRef}
+                  type="text"
+                  className="library-search-input"
+                  placeholder="Search assets..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="Search assets"
+                />
+                {searchQuery ? (
+                  <button
+                    type="button"
+                    className="library-search-clear"
+                    onClick={() => setSearchQuery('')}
+                    aria-label="Clear search"
+                  >
+                    <MdClose size={14} />
+                  </button>
+                ) : null}
+              </div>
+            )}
+
+            {!isUnsupportedCategory && (
+              <div className="view-toggle" role="group" aria-label="View mode">
                 <button
                   type="button"
-                  className="btn-upload-primary"
-                  onClick={() => setShowUploadModal(true)}
-                  disabled={!workspaceId || uploading || isUnsupportedCategory}
+                  className={`view-toggle-btn ${activeView === 'grid' ? 'active' : ''}`}
+                  onClick={() => setActiveView('grid')}
+                  aria-label="Grid view"
+                  aria-pressed={activeView === 'grid'}
+                  title="Grid View"
                 >
-                  <MdCloudUpload /> {uploading ? 'Uploading…' : 'Upload'}
+                  <MdGridView size={18} />
                 </button>
-                <div className="view-toggle">
-                  <button
-                    type="button"
-                    className={`view-toggle-btn ${activeView === 'grid' ? 'active' : ''}`}
-                    onClick={() => setActiveView('grid')}
-                    aria-label="Grid view"
-                  >
-                    <MdGridView />
-                  </button>
-                  <button
-                    type="button"
-                    className={`view-toggle-btn ${activeView === 'list' ? 'active' : ''}`}
-                    onClick={() => setActiveView('list')}
-                    aria-label="List view"
-                  >
-                    <MdViewList />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className={`view-toggle-btn ${activeView === 'list' ? 'active' : ''}`}
+                  onClick={() => setActiveView('list')}
+                  aria-label="List view"
+                  aria-pressed={activeView === 'list'}
+                  title="List View"
+                >
+                  <MdViewList size={18} />
+                </button>
               </div>
-            </div>
+            )}
+
+            {!isUnsupportedCategory && (
+              <button
+                type="button"
+                className="btn-upload-primary"
+                onClick={() => setShowUploadModal(true)}
+                disabled={!workspaceId || uploading}
+              >
+                <MdCloudUpload size={18} />
+                <span>{uploading ? 'Uploading…' : 'Upload'}</span>
+              </button>
+            )}
           </div>
-        ) : null}
+        </div>
 
         {selectedCategory && (
           <div className="library-browse">

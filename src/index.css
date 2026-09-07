@@ -231,21 +231,176 @@ body {
   background: transparent;
 }
 
-/* ── Global theme-aware View Toggle Button ──────────────────────────────────── */
+/* ── Global Scrollbar & Component Styling ───────────────────────────── */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--text-muted, #64748b) 30%, transparent) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-muted, #64748b) 30%, transparent);
+  border-radius: 99px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--primary, #6366f1) 55%, var(--text-muted, #64748b));
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ── Unified Global Page Headers & Header Controls ───────────────────────── */
+.page-header,
+.workspace-header-container,
+.videos-page-header,
+.library-page-header {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  margin-bottom: 24px !important;
+  padding: 0 !important;
+  width: 100% !important;
+  flex-shrink: 0 !important;
+}
+
+.page-header-title-section,
+.workspace-header-title,
+.videos-title-section,
+.library-page-header-title-group {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+  text-align: left !important;
+  align-items: flex-start !important;
+}
+
+.workspace-title-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  text-align: left !important;
+}
+
+.page-header-title,
+.workspace-header-title h1,
+.workspace-header-title h2,
+.videos-page-title,
+.library-page-title {
+  margin: 0 !important;
+  font-size: 1.75rem !important; /* 28px uniform across all headers */
+  font-weight: 700 !important;
+  letter-spacing: -0.025em !important;
+  color: var(--text-main) !important;
+  line-height: 1.25 !important;
+  text-align: left !important;
+  font-family: var(--font-family, inherit) !important;
+}
+
+.page-header-subtitle,
+.workspace-header-subtitle,
+.videos-page-subtitle,
+.library-page-subtitle {
+  margin: 0 !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  color: var(--text-muted) !important;
+  line-height: 1.4 !important;
+  text-align: left !important;
+}
+
+.page-header-actions,
+.workspace-header-actions,
+.videos-actions,
+.library-header-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  flex-wrap: wrap !important;
+  justify-content: flex-end !important;
+}
+
+/* All Header Controls, Dropdowns & Primary Buttons - Uniform 40px Height */
+.workspace-header-control,
+.workspace-header-control__trigger,
+.videos-toolbar__dropdown,
+.bk-workspace-select,
+.library-workspace-trigger,
+.videos-create-btn,
+.btn-upload-primary,
+.btn-primary.videos-create-btn {
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  box-sizing: border-box !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+/* Primary Action Buttons (+ Create, + Create Voice, + Create Brand Kit, + Upload) */
+.videos-create-btn,
+.btn-upload-primary,
+.btn-primary.videos-create-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  padding: 0 16px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  border-radius: 12px !important;
+  border: 1px solid color-mix(in srgb, var(--primary-contrast, #fff) 16%, var(--primary)) !important;
+  background: var(--primary) !important;
+  color: var(--primary-contrast, #ffffff) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 30%, transparent) !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+}
+
+.videos-create-btn:hover,
+.btn-upload-primary:hover,
+.btn-primary.videos-create-btn:hover {
+  background: var(--primary-hover, var(--primary)) !important;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--primary) 40%, transparent) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* ── Global Theme-Aware Fully Rounded View Toggle Bar ───────────────────── */
 .view-toggle {
   display: inline-flex !important;
   align-items: center !important;
   gap: 3px !important;
-  background: var(--bg-surface) !important;
-  border: 1.5px solid var(--border-color) !important;
-  border-radius: 999px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  box-sizing: border-box !important;
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 999px !important; /* Fully rounded pill container */
   padding: 3px !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
 }
 
 .view-toggle-btn {
-  width: 34px !important;
-  height: 34px !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
   border: none !important;
   background: transparent !important;
   color: var(--text-muted) !important;
@@ -253,8 +408,8 @@ body {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  border-radius: 50% !important;
-  transition: all 0.2s ease !important;
+  border-radius: 50% !important; /* Fully rounded circular button */
+  transition: all 0.15s ease !important;
   font-size: 18px !important;
 }
 
@@ -263,14 +418,14 @@ body {
 }
 
 .view-toggle-btn:hover:not(.active) {
-  background: color-mix(in srgb, var(--primary) 12%, var(--bg-card)) !important;
+  background: color-mix(in srgb, var(--primary) 10%, var(--bg-surface)) !important;
   color: var(--text-main) !important;
 }
 
 .view-toggle-btn.active {
   background: var(--primary) !important;
   color: #ffffff !important;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--primary) 35%, transparent) !important;
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--primary) 30%, transparent) !important;
 }
 
 .view-toggle-btn.active svg {

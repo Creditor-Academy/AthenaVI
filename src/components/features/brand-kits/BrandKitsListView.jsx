@@ -57,30 +57,32 @@ export default function BrandKitsListView({
                 </select>
               </label>
             )}
-            <div className="view-toggle">
-              <button
-                type="button"
-                className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-                onClick={() => setViewMode('list')}
-                title="List view"
-                aria-pressed={viewMode === 'list'}
-              >
-                <MdViewList size={18} />
-              </button>
+            <div className="view-toggle" role="group" aria-label="View mode">
               <button
                 type="button"
                 className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
                 onClick={() => setViewMode('grid')}
                 title="Grid view"
+                aria-label="Grid view"
                 aria-pressed={viewMode === 'grid'}
               >
                 <MdGridView size={18} />
               </button>
+              <button
+                type="button"
+                className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setViewMode('list')}
+                title="List view"
+                aria-label="List view"
+                aria-pressed={viewMode === 'list'}
+              >
+                <MdViewList size={18} />
+              </button>
             </div>
             {canWrite && (
-              <button type="button" className="btn-primary videos-create-btn" onClick={openCreate}>
+              <button type="button" className="videos-create-btn" onClick={openCreate}>
                 <MdAdd size={18} />
-                Create Brand Kit
+                <span>Create Brand Kit</span>
               </button>
             )}
           </div>

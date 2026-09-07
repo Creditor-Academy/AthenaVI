@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-    MdViewModule,
+    MdGridView,
     MdViewList,
     MdSort,
     MdKeyboardArrowDown,
@@ -48,20 +48,25 @@ const WorkspaceHeader = ({
     const currentSortLabel = sortOptions.find((opt) => opt.value === sortBy)?.label || 'Sort By';
 
     return (
-        <div className="workspace-header-container">
-            <div className="workspace-header-title">
-                {showBack && onBack && (
-                    <button
-                        type="button"
-                        className="workspace-back-btn"
-                        onClick={onBack}
-                        title={backLabel}
-                        aria-label={backLabel}
-                    >
-                        <MdArrowBack size={20} />
-                    </button>
-                )}
-                <h2>Workspaces</h2>
+        <header className="workspace-header-container page-header">
+            <div className="workspace-header-title page-header-title-section">
+                <div className="workspace-title-row">
+                    {showBack && onBack && (
+                        <button
+                            type="button"
+                            className="workspace-back-btn"
+                            onClick={onBack}
+                            title={backLabel}
+                            aria-label={backLabel}
+                        >
+                            <MdArrowBack size={20} />
+                        </button>
+                    )}
+                    <h1 className="page-header-title">Workspaces</h1>
+                </div>
+                <p className="page-header-subtitle">
+                    Manage workspaces, project folders, and team assets.
+                </p>
             </div>
 
             <div className="workspace-header-actions">
@@ -96,7 +101,7 @@ const WorkspaceHeader = ({
                         aria-label="Grid view"
                         aria-pressed={viewMode === 'tile'}
                     >
-                        <MdViewModule size={18} />
+                        <MdGridView size={18} />
                     </button>
                     <button
                         type="button"
@@ -178,20 +183,16 @@ const WorkspaceHeader = ({
 
                 <button
                     type="button"
-                    className="workspace-header-control workspace-header-control--primary workspace-header-control--interactive"
+                    className="videos-create-btn"
                     onClick={onCreateClick}
                     title="Create"
                     aria-label="Create new item"
                 >
-                    <span className="workspace-header-control__icon" aria-hidden>
-                        <MdAdd size={18} />
-                    </span>
-                    <span className="workspace-header-control__body">
-                        <span className="workspace-header-control__value">Create</span>
-                    </span>
+                    <MdAdd size={18} />
+                    <span>Create</span>
                 </button>
             </div>
-        </div>
+        </header>
     );
 };
 
