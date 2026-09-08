@@ -5,6 +5,9 @@ import { isChartTwoBarSplitLayout, layoutChartTwoBarSplit } from './chartTwoBarS
 import { isChartThreeBarLayout, layoutChartThreeBar } from './chartThreeBar.js'
 import { isChartTwoMetricsComparisonLayout, layoutChartTwoMetricsComparison } from './chartTwoMetricsComparison.js'
 import { isChartTwoCardsLayout, layoutChartTwoCards } from './chartTwoCards.js'
+import { isChartThreeCardsLayout, layoutChartThreeCards } from './chartThreeCards.js'
+import { isChartThreeContextLayout, layoutChartThreeContext } from './chartThreeContext.js'
+import { isChartThreeContextCardsLayout, layoutChartThreeContextCards } from './chartThreeContextCards.js'
 
 export function finalizeChartShapes(elements, schema, palette = {}, canvas = {}) {
   const layoutId = schema?.layout_id || schema?.id || schema?.layoutId
@@ -35,6 +38,18 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
   
   if (isChartTwoCardsLayout(layoutId)) {
     return layoutChartTwoCards(elements, schema, palette, canvas)
+  }
+  
+  if (isChartThreeCardsLayout(layoutId)) {
+    return layoutChartThreeCards(elements, schema, palette, canvas)
+  }
+  
+  if (isChartThreeContextLayout(layoutId)) {
+    return layoutChartThreeContext(elements, schema, palette, canvas)
+  }
+  
+  if (isChartThreeContextCardsLayout(layoutId)) {
+    return layoutChartThreeContextCards(elements, schema, palette, canvas)
   }
   
   return elements

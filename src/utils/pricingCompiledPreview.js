@@ -28,6 +28,9 @@ import { isChartTwoBarSplitLayout } from './chartTwoBarSplit.js'
 import { isChartThreeBarLayout } from './chartThreeBar.js'
 import { isChartTwoMetricsComparisonLayout } from './chartTwoMetricsComparison.js'
 import { isChartTwoCardsLayout } from './chartTwoCards.js'
+import { isChartThreeCardsLayout } from './chartThreeCards.js'
+import { isChartThreeContextLayout } from './chartThreeContext.js'
+import { isChartThreeContextCardsLayout } from './chartThreeContextCards.js'
 
 export function isCompiledPricingLayout(layoutId) {
   return isPricingThreePlansLayout(layoutId)
@@ -59,6 +62,8 @@ export function isCompiledPricingLayout(layoutId) {
     || isChartThreeBarLayout(layoutId)
     || isChartTwoMetricsComparisonLayout(layoutId)
     || isChartTwoCardsLayout(layoutId)
+    || isChartThreeCardsLayout(layoutId)
+    || isChartThreeContextLayout(layoutId)
 }
 
 export function compilePricingLayoutPreviewSlide(schema, aspectRatio = '16:9') {
