@@ -357,25 +357,6 @@ function Videos({ onEdit, onOpenImage }) {
           </div>
 
           <div className="videos-actions">
-            <div className="view-toggle" aria-label="View toggle">
-              <button
-                className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
-                onClick={() => setViewMode('grid')}
-                title="Grid view"
-                type="button"
-              >
-                <MdGridView size={18} />
-              </button>
-              <button
-                className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
-                onClick={() => setViewMode('list')}
-                title="List view"
-                type="button"
-              >
-                <MdViewList size={18} />
-              </button>
-            </div>
-
             <VideosToolbarDropdown
               label="Filter"
               icon={MdFilterList}
@@ -385,6 +366,29 @@ function Videos({ onEdit, onOpenImage }) {
               onChange={setFilterBy}
               menuLabel="Filter options"
             />
+
+            <div className="view-toggle" role="group" aria-label="View mode">
+              <button
+                className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                onClick={() => setViewMode('grid')}
+                title="Grid view"
+                aria-label="Grid view"
+                aria-pressed={viewMode === 'grid'}
+                type="button"
+              >
+                <MdGridView size={18} />
+              </button>
+              <button
+                className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setViewMode('list')}
+                title="List view"
+                aria-label="List view"
+                aria-pressed={viewMode === 'list'}
+                type="button"
+              >
+                <MdViewList size={18} />
+              </button>
+            </div>
 
             <VideosToolbarDropdown
               label="Sort"

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { Image, Music2, Type, LayoutGrid } from 'lucide-react'
+import { Image, Video, Music2, Type, LayoutGrid } from 'lucide-react'
 import {
   MdCloudUpload,
   MdImage,
@@ -34,15 +34,11 @@ import './Library.css'
 const MASONRY_SKELETON_HEIGHTS = [168, 224, 192, 256, 180, 240, 200, 272, 176, 208, 232, 188]
 
 const CATEGORY_CARDS = [
-  { id: 'media', label: 'Media', Icon: Image },
-  { id: 'music', label: 'Music', Icon: Music2 },
-  { id: 'fonts', label: 'Fonts', Icon: Type },
-  { id: 'templates', label: 'Templates', Icon: LayoutGrid },
-]
-
-const mediaTabs = [
-  { id: 'images', label: 'Photos' },
-  { id: 'videos', label: 'Videos' },
+  { id: 'photo', label: 'Photo', tab: 'images', Icon: Image },
+  { id: 'video', label: 'Video', tab: 'videos', Icon: Video },
+  { id: 'music', label: 'Music', tab: 'music', Icon: Music2 },
+  { id: 'fonts', label: 'Fonts', tab: 'fonts', Icon: Type },
+  { id: 'templates', label: 'Templates', tab: 'templates', Icon: LayoutGrid },
 ]
 
 function Library() {
@@ -56,7 +52,7 @@ function Library() {
   const searchRef = useRef(null)
   const previewBlobUrlsRef = useRef(new Set())
   const [uploadType, setUploadType] = useState('images')
-  const [selectedCategory, setSelectedCategory] = useState('media')
+  const [selectedCategory, setSelectedCategory] = useState('photo')
 
   useEffect(() => {
     const ctx = consumeDashboardSearchContext('library')
@@ -69,9 +65,15 @@ function Library() {
       } else if (ctx.libraryTab === 'fonts') {
         setSelectedCategory('fonts')
         setActiveTab('fonts')
+      } else if (ctx.libraryTab === 'videos') {
+        setSelectedCategory('video')
+        setActiveTab('videos')
+      } else if (ctx.libraryTab === 'templates') {
+        setSelectedCategory('templates')
+        setActiveTab('templates')
       } else {
-        setSelectedCategory('media')
-        setActiveTab(ctx.libraryTab === 'videos' ? 'videos' : 'images')
+        setSelectedCategory('photo')
+        setActiveTab('images')
       }
     }
   }, [])
@@ -181,19 +183,9 @@ function Library() {
 
   const handleCategoryClick = (cat) => {
     setSelectedCategory(cat.id)
-    if (cat.id === 'media') setActiveTab('images')
-    if (cat.id === 'music') setActiveTab('music')
-    if (cat.id === 'fonts') setActiveTab('fonts')
-    if (cat.id === 'templates') setActiveTab('templates')
-  }
-
-  const visibleTabs = () => {
-    if (!selectedCategory) return []
-    if (selectedCategory === 'media') return mediaTabs
-    if (selectedCategory === 'music') return [{ id: 'music', label: 'Music' }]
-    if (selectedCategory === 'fonts') return [{ id: 'fonts', label: 'Fonts' }]
-    if (selectedCategory === 'templates') return [{ id: 'templates', label: 'Templates' }]
-    return mediaTabs
+    if (cat.tab) {
+      setActiveTab(cat.tab)
+    }
   }
 
   const INITIAL_PAGE_SIZE = 24
@@ -202,6 +194,17 @@ function Library() {
   useEffect(() => {
     setVisibleCount(INITIAL_PAGE_SIZE)
   }, [activeTab, selectedCategory, searchQuery, workspaceId])
+
+  const categoryCounts = useMemo(() => {
+    const counts = { images: 0, videos: 0, music: 0, fonts: 0, templates: 0 }
+    for (const asset of assets) {
+      const tab = assetService.toLibraryTab(asset.mediaType)
+      if (tab in counts) {
+        counts[tab]++
+      }
+    }
+    return counts
+  }, [assets])
 
   const filteredAssets = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
@@ -314,6 +317,12 @@ function Library() {
         if (normalized.mediaType === 'audio') {
           setSelectedCategory('music')
           setActiveTab('music')
+        } else if (normalized.mediaType === 'video') {
+          setSelectedCategory('video')
+          setActiveTab('videos')
+        } else if (normalized.mediaType === 'image') {
+          setSelectedCategory('photo')
+          setActiveTab('images')
         }
       }
       dispatchStorageRefresh()
@@ -489,10 +498,25 @@ function Library() {
   return (
     <div className="library-page">
       <div className="library-shell">
-        <header className="library-page-header">
-          <div className="library-page-header-row">
-            <h1 className="library-page-title">Library</h1>
-            <div className="library-header-actions">
+        <header className="library-page-header page-header">
+          <div className="library-page-header-title-group page-header-title-section">
+              <h1 className="library-page-title page-header-title">Library</h1>
+              {selectedWorkspace ? (
+                <p className="library-page-subtitle page-header-subtitle">
+                  {uploading
+                    ? 'Uploading…'
+                    : assetsLoading
+                      ? 'Loading workspace assets…'
+                      : `${assets.length} asset${assets.length === 1 ? '' : 's'} in ${selectedWorkspace.name || 'workspace'}`}
+                </p>
+              ) : !workspaceLoading ? (
+                <p className="library-page-subtitle page-header-subtitle library-page-subtitle--muted">
+                  Create a workspace to upload and manage assets.
+                </p>
+              ) : null}
+            </div>
+
+            <div className="library-header-actions page-header-actions">
               {workspaces.length > 0 ? (
                 <div className="library-workspace-dropdown-container" ref={workspaceDropdownRef}>
                   <button
@@ -568,21 +592,69 @@ function Library() {
                   ) : null}
                 </div>
               ) : null}
+
+              {!isUnsupportedCategory && (
+                <div className="library-search">
+                  <MdSearch className="library-search-icon" size={18} aria-hidden />
+                  <input
+                    ref={searchRef}
+                    type="text"
+                    className="library-search-input"
+                    placeholder="Search assets..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    aria-label="Search assets"
+                  />
+                  {searchQuery ? (
+                    <button
+                      type="button"
+                      className="library-search-clear"
+                      onClick={() => setSearchQuery('')}
+                      aria-label="Clear search"
+                    >
+                      <MdClose size={14} />
+                    </button>
+                  ) : null}
+                </div>
+              )}
+
+              {!isUnsupportedCategory && (
+                <div className="view-toggle" role="group" aria-label="View mode">
+                  <button
+                    type="button"
+                    className={`view-toggle-btn ${activeView === 'grid' ? 'active' : ''}`}
+                    onClick={() => setActiveView('grid')}
+                    aria-label="Grid view"
+                    aria-pressed={activeView === 'grid'}
+                    title="Grid View"
+                  >
+                    <MdGridView size={18} />
+                  </button>
+                  <button
+                    type="button"
+                    className={`view-toggle-btn ${activeView === 'list' ? 'active' : ''}`}
+                    onClick={() => setActiveView('list')}
+                    aria-label="List view"
+                    aria-pressed={activeView === 'list'}
+                    title="List View"
+                  >
+                    <MdViewList size={18} />
+                  </button>
+                </div>
+              )}
+
+              {!isUnsupportedCategory && (
+                <button
+                  type="button"
+                  className="btn-upload-primary videos-create-btn"
+                  onClick={() => setShowUploadModal(true)}
+                  disabled={!workspaceId || uploading}
+                >
+                  <MdCloudUpload size={18} />
+                  <span>{uploading ? 'Uploading…' : 'Upload'}</span>
+                </button>
+              )}
             </div>
-          </div>
-          {selectedWorkspace ? (
-            <p className="library-page-subtitle">
-              {uploading
-                ? 'Uploading…'
-                : assetsLoading
-                  ? 'Loading workspace assets…'
-                  : `${assets.length} asset${assets.length === 1 ? '' : 's'} in ${selectedWorkspace.name || 'workspace'}`}
-            </p>
-          ) : !workspaceLoading ? (
-            <p className="library-page-subtitle library-page-subtitle--muted">
-              Create a workspace to upload and manage assets.
-            </p>
-          ) : null}
         </header>
 
         {assetsError ? (
@@ -594,86 +666,34 @@ function Library() {
           </div>
         ) : null}
 
-        <div className="library-category-row">
-          {CATEGORY_CARDS.map((cat) => {
-            const Icon = cat.Icon
-            const isSelected = selectedCategory === cat.id
-            return (
-              <button
-                key={cat.id}
-                type="button"
-                className={`library-category-card ${isSelected ? 'library-category-card--selected' : ''}`}
-                onClick={() => handleCategoryClick(cat)}
-                aria-pressed={isSelected}
-              >
-                <span className="library-category-card-shine" aria-hidden />
-                <Icon className="library-category-card-icon" size={20} strokeWidth={1.75} aria-hidden />
-                <span className="library-category-label">{cat.label}</span>
-              </button>
-            )
-          })}
-        </div>
-
-        {selectedCategory && !isUnsupportedCategory ? (
-          <div className="library-filters-bar">
-            <div className="filters-top-row">
-              <div className="asset-type-tabs">
-                {visibleTabs().map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    className={`type-tab ${activeTab === tab.id ? 'active' : ''}`}
-                    onClick={() => setActiveTab(tab.id)}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="filters-right-actions">
-                <div className="library-search" style={{ marginRight: 12, position: 'relative', display: 'flex', alignItems: 'center' }}>
-                  <MdSearch style={{ position: 'absolute', left: 12, color: '#9CA3AF' }} />
-                  <input
-                    ref={searchRef}
-                    type="text"
-                    className="library-search-input"
-                    placeholder="Search assets..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    aria-label="Search assets"
-                    style={{ padding: '8px 12px 8px 36px', borderRadius: 999, border: '1px solid #E5E7EB', width: 220 }}
-                  />
-                </div>
+        <div
+          className="workspace-root-tabs-wrapper work-root-tabs-wrapper"
+          role="tablist"
+          aria-label="Asset categories"
+        >
+          <div className="workspace-root-tabs">
+            {CATEGORY_CARDS.map((cat) => {
+              const Icon = cat.Icon
+              const isActive = selectedCategory === cat.id
+              const count = cat.tab ? categoryCounts[cat.tab] ?? 0 : 0
+              return (
                 <button
+                  key={cat.id}
                   type="button"
-                  className="btn-upload-primary"
-                  onClick={() => setShowUploadModal(true)}
-                  disabled={!workspaceId || uploading || isUnsupportedCategory}
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`workspace-root-tab ${isActive ? 'active' : ''}`}
+                  onClick={() => handleCategoryClick(cat)}
                 >
-                  <MdCloudUpload /> {uploading ? 'Uploading…' : 'Upload'}
+                  <Icon size={18} />
+                  <span>{cat.label}</span>
+                  <span className="tab-count-badge">{count}</span>
                 </button>
-                <div className="view-toggle">
-                  <button
-                    type="button"
-                    className={`view-toggle-btn ${activeView === 'grid' ? 'active' : ''}`}
-                    onClick={() => setActiveView('grid')}
-                    aria-label="Grid view"
-                  >
-                    <MdGridView />
-                  </button>
-                  <button
-                    type="button"
-                    className={`view-toggle-btn ${activeView === 'list' ? 'active' : ''}`}
-                    onClick={() => setActiveView('list')}
-                    aria-label="List view"
-                  >
-                    <MdViewList />
-                  </button>
-                </div>
-              </div>
-            </div>
+              )
+            })}
           </div>
-        ) : null}
+
+        </div>
 
         {selectedCategory && (
           <div className="library-browse">
@@ -683,7 +703,11 @@ function Library() {
               ref={fileInputRef}
               multiple
               accept={assetService.acceptForTab(
-                selectedCategory === 'music' ? 'music' : uploadType
+                selectedCategory === 'music'
+                  ? 'music'
+                  : selectedCategory === 'video'
+                  ? 'videos'
+                  : uploadType
               )}
               onChange={handleFileInputChange}
             />
@@ -818,42 +842,36 @@ function Library() {
             </div>
             <p className="upload-modal-hint">JPEG, PNG, WebP, MP4, or MP3 · max 50 MB</p>
             <div className="upload-options">
-              {selectedCategory !== 'music' && (
-                <>
-                  <button
-                    type="button"
-                    className="upload-option"
-                    onClick={() => openUploadPicker('images')}
-                  >
-                    <div className="option-icon image">
-                      <MdImage />
-                    </div>
-                    <span>{selectedCategory === 'media' ? 'Photos' : 'Images'}</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="upload-option"
-                    onClick={() => openUploadPicker('videos')}
-                  >
-                    <div className="option-icon video">
-                      <MdPlayCircleFilled />
-                    </div>
-                    <span>Videos</span>
-                  </button>
-                </>
-              )}
-              {selectedCategory !== 'media' && (
-                <button
-                  type="button"
-                  className="upload-option"
-                  onClick={() => openUploadPicker('music')}
-                >
-                  <div className="option-icon music">
-                    <MdMusicNote />
-                  </div>
-                  <span>Music</span>
-                </button>
-              )}
+              <button
+                type="button"
+                className="upload-option"
+                onClick={() => openUploadPicker('images')}
+              >
+                <div className="option-icon image">
+                  <MdImage />
+                </div>
+                <span>Photo</span>
+              </button>
+              <button
+                type="button"
+                className="upload-option"
+                onClick={() => openUploadPicker('videos')}
+              >
+                <div className="option-icon video">
+                  <MdPlayCircleFilled />
+                </div>
+                <span>Video</span>
+              </button>
+              <button
+                type="button"
+                className="upload-option"
+                onClick={() => openUploadPicker('music')}
+              >
+                <div className="option-icon music">
+                  <MdMusicNote />
+                </div>
+                <span>Music</span>
+              </button>
             </div>
           </div>
         </div>

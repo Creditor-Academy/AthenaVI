@@ -938,7 +938,18 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
         onViewChange={handleViewChange}
         sortBy={sortBy}
         onSortChange={handleSortChange}
-        onCreateClick={() => openCreateVideoModal()}
+        onCreateClick={() =>
+          openCreateVideoModal(
+            activeWorkspace
+              ? {
+                  initialWorkspaceId: activeWorkspace.id,
+                  initialFolderId: activeFolder?.id || null,
+                  workspaceId: activeWorkspace.id,
+                  folderId: activeFolder?.id || null,
+                }
+              : {}
+          )
+        }
         invitationCount={invitations.length}
         onInviteClick={() => setShowNotifications(true)}
         totalCredits={totalAvailableCredits}
@@ -978,7 +989,7 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
       )}
 
       {currentLevel.type === 'workspace' && activeWorkspace && (
-        <div className="workspace-breadcrumbs workspace-breadcrumbs--with-storage workspace-sticky-nav">
+        <div className="workspace-breadcrumbs workspace-sticky-nav">
           <div className="workspace-breadcrumbs__trail">
             <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>
               Workspaces
@@ -986,12 +997,11 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
             <ChevronRight size={14} className="breadcrumb-separator" />
             <span>{activeWorkspace.name}</span>
           </div>
-          <WorkspaceStorageBreadcrumb workspaceId={activeWorkspace.id} />
         </div>
       )}
 
       {currentLevel.type === 'folder' && activeWorkspace && activeFolder && (
-        <div className="workspace-breadcrumbs workspace-breadcrumbs--with-storage workspace-sticky-nav">
+        <div className="workspace-breadcrumbs workspace-sticky-nav">
           <div className="workspace-breadcrumbs__trail">
             <span className="breadcrumb-link" onClick={() => setCurrentLevel({ type: 'root', id: null })}>
               Workspaces
@@ -1008,7 +1018,6 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
             <ChevronRight size={14} className="breadcrumb-separator" />
             <span>{activeFolder.name}</span>
           </div>
-          <WorkspaceStorageBreadcrumb workspaceId={activeWorkspace.id} />
         </div>
       )}
 

@@ -2,10 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   MdAdd,
   MdClose,
+  MdFilterList,
   MdGraphicEq,
   MdGridView,
   MdLock,
   MdPublic,
+  MdSort,
   MdViewList,
 } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
@@ -15,7 +17,7 @@ import { consumeDashboardSearchContext } from '../../utils/dashboardSearchNaviga
 import ConfirmDialog from '../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 import VoicesSkeleton from '../page-skeleton/VoicesSkeleton';
-import VideosToolbar from '../Videos/VideosToolbar.jsx';
+import { VideosToolbarDropdown, LibrarySearchBar } from '../Videos/VideosToolbar.jsx';
 import '../Videos/Videos.css';
 import VoiceCreationCard from './VoiceCreationCard.jsx';
 import VoiceLibraryCard from './VoiceLibraryCard.jsx';
@@ -43,6 +45,10 @@ import {
 } from '../../utils/heygenVoices';
 import { showVoicePreviewUnavailableNotice } from '../../components/ui/VoicePreviewNotice/VoicePreviewNotice';
 import { extractVoiceImageFromRow, fetchVoiceAvatarImageMap, resolveVoiceImage } from './voiceAvatarImages';
+import HeroCarouselBanner from '../../components/ui/HeroCarouselBanner/HeroCarouselBanner';
+import heroVoicesSlide1 from '../../assets/hero_voices_slide1.jpg';
+import voiceBg from '../../assets/Voice.jpg';
+import aiIntegrationBg from '../../assets/AIIntegration.png';
 import './Voices.css';
 
 const TAB_ICONS = {
@@ -138,19 +144,30 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
     [voices, voiceImageMap]
   );
 
+  const [sectionCounts, setSectionCounts] = useState({});
+  const fetchRequestRef = useRef(0);
+
   const fetchVoices = useCallback(async () => {
+    const requestId = ++fetchRequestRef.current;
     setLoading(true);
     setError(null);
     try {
       const result = await heygenService.getVoices({ type: activeSection });
+      if (requestId !== fetchRequestRef.current) return;
+
       const voiceList = extractHeygenVoiceList(result);
-      setVoices(mapVoiceList(voiceList));
+      const mapped = mapVoiceList(voiceList);
+      setVoices(mapped);
+      setSectionCounts((prev) => ({ ...prev, [activeSection]: mapped.length }));
     } catch (err) {
+      if (requestId !== fetchRequestRef.current) return;
       console.error('Failed to fetch voices:', err);
       setVoices([]);
-      setError('Failed to load voices. Please try again.');
+      setError(getSanitizedErrorMessage(err, 'Failed to load voices. Please try again.'));
     } finally {
-      setLoading(false);
+      if (requestId === fetchRequestRef.current) {
+        setLoading(false);
+      }
     }
   }, [activeSection]);
 
@@ -219,6 +236,54 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
 
     return () => clearInterval(intervalId);
   }, [voices]);
+
+  const voiceHeroSlides = useMemo(
+    () => [
+      {
+        id: 'voices-expressive',
+        tag: '• Expressive Voice Engine',
+        title: '300+ Lifelike AI Voices Across 140+ Languages',
+        subtitle: 'Natural inflections, emotion control, and hyper-realistic accents designed for studio-grade video voiceovers.',
+        ctaText: 'Explore Voices',
+        onCtaClick: () => setActiveSection('public'),
+        stats: [
+          { value: '300+', label: 'Human Voices' },
+          { value: '140+', label: 'Global Locales' },
+        ],
+        bgImage: heroVoicesSlide1,
+        themeGlow: 'glow-cyan',
+      },
+      {
+        id: 'voices-cloning',
+        tag: '• Instant Voice Cloning',
+        title: 'Clone Your Own Voice in Seconds',
+        subtitle: 'Upload a short audio sample to train your digital voice clone with full tone fidelity and emotion accuracy.',
+        ctaText: 'Create Voice',
+        onCtaClick: () => (onCreateVoice ? onCreateVoice() : setActiveSection('private')),
+        stats: [
+          { value: '15 Sec', label: 'Audio Sample' },
+          { value: '100%', label: 'Persona Match' },
+        ],
+        bgImage: voiceBg,
+        themeGlow: 'glow-violet',
+      },
+      {
+        id: 'voices-synthesis',
+        tag: '• Multi-Speaker Synthesis',
+        title: 'Seamless Narration & Cross-Lingual Translation',
+        subtitle: 'Synthesize multi-character conversations and cross-dub narration into international languages instantly.',
+        ctaText: 'Speech Preview',
+        onCtaClick: () => setActiveSection('public'),
+        stats: [
+          { value: 'Multi-Speaker', label: 'Dialogue Support' },
+          { value: 'Zero', label: 'Studio Hardware' },
+        ],
+        bgImage: heroVoicesSlide1,
+        themeGlow: 'glow-amber',
+      },
+    ],
+    [onCreateVoice]
+  );
 
   const filteredVoices = useMemo(() => {
     const filtered = applyVoiceFilters(voicesWithImages, { searchQuery, filterBy });
@@ -446,77 +511,98 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
             <h1 className="videos-page-title">Voices</h1>
             <p className="videos-page-subtitle">{getVoiceSectionSubtitle(activeSection)}</p>
           </div>
-          <div className="videos-actions">
-            <div className="view-toggle">
+          <div className="videos-actions page-header-actions">
+            <LibrarySearchBar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              placeholder="Search voices by name or language…"
+              ariaLabel="Search voices"
+            />
+
+            <VideosToolbarDropdown
+              label="Filter"
+              icon={MdFilterList}
+              value={filterBy}
+              defaultValue="all"
+              options={VOICE_FILTER_OPTIONS}
+              onChange={setFilterBy}
+              menuLabel="Filter voices"
+            />
+
+            <div className="view-toggle" role="group" aria-label="View mode">
               <button
                 className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
                 onClick={() => setViewMode('grid')}
                 title="Grid view"
+                aria-label="Grid view"
+                aria-pressed={viewMode === 'grid'}
                 type="button"
               >
-                <MdGridView />
+                <MdGridView size={18} />
               </button>
               <button
                 className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
                 onClick={() => setViewMode('list')}
                 title="List view"
+                aria-label="List view"
+                aria-pressed={viewMode === 'list'}
                 type="button"
               >
-                <MdViewList />
+                <MdViewList size={18} />
               </button>
             </div>
+
+            <VideosToolbarDropdown
+              label="Sort"
+              icon={MdSort}
+              value={sortBy}
+              defaultValue="name_asc"
+              options={VOICE_SORT_OPTIONS}
+              onChange={setSortBy}
+              menuLabel="Sort voices"
+            />
+
             {activeSection === 'private' && onCreateVoice ? (
               <button
                 type="button"
-                className="btn-primary videos-create-btn"
+                className="videos-create-btn"
                 onClick={onCreateVoice}
               >
                 <MdAdd size={18} />
-                Create Voice
+                <span>Create Voice</span>
               </button>
             ) : null}
           </div>
         </header>
 
-        <div className="videos-tab-switch" role="tablist" aria-label="Voice sections">
-          {VOICE_SECTION_TABS.map((tab) => {
-            const Icon = TAB_ICONS[tab.id];
-            const isActive = activeSection === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                className={`videos-tab-btn ${isActive ? 'active' : ''}`}
-                onClick={() => setActiveSection(tab.id)}
-              >
-                <span className="videos-tab-icon" aria-hidden>
+        <div
+          className="workspace-root-tabs-wrapper work-root-tabs-wrapper"
+          role="tablist"
+          aria-label="Voice sections"
+        >
+          <div className="workspace-root-tabs">
+            {VOICE_SECTION_TABS.map((tab) => {
+              const Icon = TAB_ICONS[tab.id];
+              const isActive = activeSection === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`workspace-root-tab ${isActive ? 'active' : ''}`}
+                  onClick={() => setActiveSection(tab.id)}
+                >
                   <Icon size={18} />
-                </span>
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        <VideosToolbar
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          filterBy={filterBy}
-          onFilterChange={setFilterBy}
-          sortBy={sortBy}
-          onSortChange={setSortBy}
-          groupBy={groupBy}
-          onGroupChange={setGroupBy}
-          filterOptions={VOICE_FILTER_OPTIONS}
-          sortOptions={VOICE_SORT_OPTIONS}
-          groupOptions={VOICE_GROUP_OPTIONS}
-          searchPlaceholder="Search voices by name or language…"
-          searchAriaLabel="Search voices"
-        />
-
         <main className="videos-main">
+          <HeroCarouselBanner slides={voiceHeroSlides} />
           {statusBanner ? (
             <div className={`voices-status-banner voices-status-banner--${statusBanner.tone}`} role="status">
               {statusBanner.message}
