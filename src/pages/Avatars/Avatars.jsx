@@ -26,7 +26,7 @@ import { consumeDashboardSearchContext } from '../../utils/dashboardSearchNaviga
 import { getSanitizedErrorMessage } from '../../utils/userFacingMessage';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 import AvatarsSkeleton from '../page-skeleton/AvatarsSkeleton';
-import VideosToolbar, { VideosToolbarDropdown } from '../Videos/VideosToolbar.jsx';
+import { VideosToolbarDropdown, LibrarySearchBar } from '../Videos/VideosToolbar.jsx';
 import '../Videos/Videos.css';
 import AvatarCreationCard from './AvatarCreationCard.jsx';
 import AvatarLibraryCard from './AvatarLibraryCard.jsx';
@@ -44,6 +44,10 @@ import {
   groupAvatars,
   sortAvatars,
 } from './avatarsUtils';
+import HeroCarouselBanner from '../../components/ui/HeroCarouselBanner/HeroCarouselBanner';
+import heroAvatarSlide1 from '../../assets/hero_avatar_slide1.jpg';
+import heroAvatarSlide2 from '../../assets/hero_avatar_slide2.jpg';
+import customerExpBg from '../../assets/CustomerExpHero.png';
 import './Avatars.css';
 
 const TAB_ICONS = {
@@ -135,15 +139,20 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
     setConfirmDialog({ message, onConfirm, ...options });
   }, []);
 
+  const [error, setError] = useState(null);
+  const [sectionCounts, setSectionCounts] = useState({});
+
   const fetchAvatars = useCallback(async ({ ownership, token, append = false } = {}) => {
+    const targetOwnership = ownership || activeSection;
     const requestId = append ? fetchRequestRef.current : ++fetchRequestRef.current;
 
+    setError(null);
     if (append) setLoadingMore(true);
     else setLoading(true);
 
     try {
       const responseData = await heygenService.getAvatarGroups({
-        ownership,
+        ownership: targetOwnership,
         limit: PAGE_LIMIT,
         ...(token ? { token } : {}),
       });
@@ -152,7 +161,9 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
 
       const avatarList = extractAvatarList(responseData);
       const data = responseData?.data || responseData;
-      const mappedAvatars = mapAvatarList(avatarList, ownership);
+      const mappedAvatars = mapAvatarList(avatarList, targetOwnership);
+
+      setSectionCounts((prev) => ({ ...prev, [targetOwnership]: mappedAvatars.length }));
 
       setAvatars((prev) => {
         if (!append) return mappedAvatars;
@@ -172,18 +183,20 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
         responseData?.next_token ??
         null
       );
-    } catch (error) {
+    } catch (err) {
       if (requestId !== fetchRequestRef.current) return;
-      console.error('Failed to fetch avatars:', error);
+      console.error('Failed to fetch avatars:', err);
       if (!append) setAvatars([]);
       setHasMore(false);
       setNextToken(null);
+      setError(getSanitizedErrorMessage(err, 'Failed to load avatars. Please try again.'));
     } finally {
-      if (requestId !== fetchRequestRef.current) return;
-      setLoading(false);
-      setLoadingMore(false);
+      if (requestId === fetchRequestRef.current) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     }
-  }, []);
+  }, [activeSection]);
 
   useEffect(() => {
     saveAvatarsActiveSection(activeSection);
@@ -271,6 +284,54 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
       if (bannerTimeoutRef.current) clearTimeout(bannerTimeoutRef.current);
     },
     []
+  );
+
+  const avatarHeroSlides = useMemo(
+    () => [
+      {
+        id: 'avatars-public',
+        tag: '• 100+ Studio Presenters',
+        title: 'Explore 100+ Photorealistic AI Avatars & Outfits',
+        subtitle: 'Choose from diverse studio-grade AI presenters, custom poses, professional outfits, and expressive gestures for any video genre.',
+        ctaText: 'Explore Avatars',
+        onCtaClick: () => setActiveSection('public'),
+        stats: [
+          { value: '100+', label: 'Studio Presenters' },
+          { value: '4K', label: 'Ultra HD Quality' },
+        ],
+        bgImage: heroAvatarSlide1,
+        themeGlow: 'glow-amber',
+      },
+      {
+        id: 'avatars-custom',
+        tag: '• Custom Digital Twin',
+        title: 'Create Your Personal Avatar with Photo & Prompt',
+        subtitle: 'Generate hyper-realistic digital twins instantly. Upload your photo or describe your character to craft unique looks.',
+        ctaText: 'Create Avatar',
+        onCtaClick: () => (onCreateAvatar ? onCreateAvatar() : setActiveSection('private')),
+        stats: [
+          { value: 'Instant', label: 'Photo Cloning' },
+          { value: 'Infinite', label: 'Custom Outfits' },
+        ],
+        bgImage: heroAvatarSlide2,
+        themeGlow: 'glow-violet',
+      },
+      {
+        id: 'avatars-studio',
+        tag: '• Multi-Language Video Studio',
+        title: 'Produce High-Converting AI Videos in Minutes',
+        subtitle: 'Combine hyper-realistic presenters, natural voice synthesis, and auto-captions to scale video production effortlessly.',
+        ctaText: 'Create Video',
+        onCtaClick: () => (onCreate ? onCreate() : null),
+        stats: [
+          { value: '140+', label: 'Languages Supported' },
+          { value: '10x', label: 'Faster Output' },
+        ],
+        bgImage: customerExpBg,
+        themeGlow: 'glow-emerald',
+      },
+    ],
+    [onCreate, onCreateAvatar]
   );
 
   const filteredAvatars = useMemo(() => {
@@ -514,6 +575,13 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
             <p className="videos-page-subtitle page-header-subtitle">{getAvatarSectionSubtitle(activeSection)}</p>
           </div>
           <div className="videos-actions page-header-actions">
+            <LibrarySearchBar
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+              placeholder="Search avatars by name or role…"
+              ariaLabel="Search avatars"
+            />
+
             <VideosToolbarDropdown
               label="Filter"
               icon={MdFilterList}
@@ -611,23 +679,8 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
           </div>
         </div>
 
-        <VideosToolbar
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          filterBy={filterBy}
-          onFilterChange={setFilterBy}
-          sortBy={sortBy}
-          onSortChange={setSortBy}
-          groupBy={groupBy}
-          onGroupChange={setGroupBy}
-          filterOptions={AVATAR_FILTER_OPTIONS}
-          sortOptions={AVATAR_SORT_OPTIONS}
-          groupOptions={AVATAR_GROUP_OPTIONS}
-          searchPlaceholder="Search avatars by name or role…"
-          searchAriaLabel="Search avatars"
-        />
-
         <main className="videos-main">
+          <HeroCarouselBanner slides={avatarHeroSlides} />
           {consentBanner ? (
             <div className={`avatars-consent-banner avatars-consent-banner--${consentBannerTone}`} role="status">
               {consentBanner}
@@ -638,6 +691,24 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
               viewMode={viewMode}
               showCreateCard={showCreateCard}
             />
+          ) : error ? (
+            <div className="videos-empty-state">
+              <div className="videos-empty-state__card">
+                <span className="videos-empty-state__icon-wrap" aria-hidden>
+                  <MdFace size={28} />
+                </span>
+                <p className="videos-empty-state__eyebrow">Could not load</p>
+                <h3 className="videos-empty-state__title">Failed to load avatars</h3>
+                <p className="videos-empty-state__description">{error}</p>
+                <button
+                  type="button"
+                  className="videos-empty-state__cta"
+                  onClick={() => fetchAvatars({ ownership: activeSection })}
+                >
+                  Try again
+                </button>
+              </div>
+            </div>
           ) : filteredAvatars.length === 0 && !showCreateCard ? (
             <div className="videos-empty-state">
               <div className="videos-empty-state__card">

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { Image, Music2, Type, LayoutGrid } from 'lucide-react'
+import { Image, Video, Music2, Type, LayoutGrid } from 'lucide-react'
 import {
   MdCloudUpload,
   MdImage,
@@ -34,15 +34,11 @@ import './Library.css'
 const MASONRY_SKELETON_HEIGHTS = [168, 224, 192, 256, 180, 240, 200, 272, 176, 208, 232, 188]
 
 const CATEGORY_CARDS = [
-  { id: 'media', label: 'Media', Icon: Image },
-  { id: 'music', label: 'Music', Icon: Music2 },
-  { id: 'fonts', label: 'Fonts', Icon: Type },
-  { id: 'templates', label: 'Templates', Icon: LayoutGrid },
-]
-
-const mediaTabs = [
-  { id: 'images', label: 'Photos' },
-  { id: 'videos', label: 'Videos' },
+  { id: 'photo', label: 'Photo', tab: 'images', Icon: Image },
+  { id: 'video', label: 'Video', tab: 'videos', Icon: Video },
+  { id: 'music', label: 'Music', tab: 'music', Icon: Music2 },
+  { id: 'fonts', label: 'Fonts', tab: 'fonts', Icon: Type },
+  { id: 'templates', label: 'Templates', tab: 'templates', Icon: LayoutGrid },
 ]
 
 function Library() {
@@ -56,7 +52,7 @@ function Library() {
   const searchRef = useRef(null)
   const previewBlobUrlsRef = useRef(new Set())
   const [uploadType, setUploadType] = useState('images')
-  const [selectedCategory, setSelectedCategory] = useState('media')
+  const [selectedCategory, setSelectedCategory] = useState('photo')
 
   useEffect(() => {
     const ctx = consumeDashboardSearchContext('library')
@@ -69,9 +65,15 @@ function Library() {
       } else if (ctx.libraryTab === 'fonts') {
         setSelectedCategory('fonts')
         setActiveTab('fonts')
+      } else if (ctx.libraryTab === 'videos') {
+        setSelectedCategory('video')
+        setActiveTab('videos')
+      } else if (ctx.libraryTab === 'templates') {
+        setSelectedCategory('templates')
+        setActiveTab('templates')
       } else {
-        setSelectedCategory('media')
-        setActiveTab(ctx.libraryTab === 'videos' ? 'videos' : 'images')
+        setSelectedCategory('photo')
+        setActiveTab('images')
       }
     }
   }, [])
@@ -181,19 +183,9 @@ function Library() {
 
   const handleCategoryClick = (cat) => {
     setSelectedCategory(cat.id)
-    if (cat.id === 'media') setActiveTab('images')
-    if (cat.id === 'music') setActiveTab('music')
-    if (cat.id === 'fonts') setActiveTab('fonts')
-    if (cat.id === 'templates') setActiveTab('templates')
-  }
-
-  const visibleTabs = () => {
-    if (!selectedCategory) return []
-    if (selectedCategory === 'media') return mediaTabs
-    if (selectedCategory === 'music') return [{ id: 'music', label: 'Music' }]
-    if (selectedCategory === 'fonts') return [{ id: 'fonts', label: 'Fonts' }]
-    if (selectedCategory === 'templates') return [{ id: 'templates', label: 'Templates' }]
-    return mediaTabs
+    if (cat.tab) {
+      setActiveTab(cat.tab)
+    }
   }
 
   const INITIAL_PAGE_SIZE = 24
@@ -202,6 +194,17 @@ function Library() {
   useEffect(() => {
     setVisibleCount(INITIAL_PAGE_SIZE)
   }, [activeTab, selectedCategory, searchQuery, workspaceId])
+
+  const categoryCounts = useMemo(() => {
+    const counts = { images: 0, videos: 0, music: 0, fonts: 0, templates: 0 }
+    for (const asset of assets) {
+      const tab = assetService.toLibraryTab(asset.mediaType)
+      if (tab in counts) {
+        counts[tab]++
+      }
+    }
+    return counts
+  }, [assets])
 
   const filteredAssets = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
@@ -314,6 +317,12 @@ function Library() {
         if (normalized.mediaType === 'audio') {
           setSelectedCategory('music')
           setActiveTab('music')
+        } else if (normalized.mediaType === 'video') {
+          setSelectedCategory('video')
+          setActiveTab('videos')
+        } else if (normalized.mediaType === 'image') {
+          setSelectedCategory('photo')
+          setActiveTab('images')
         }
       }
       dispatchStorageRefresh()
@@ -666,6 +675,7 @@ function Library() {
             {CATEGORY_CARDS.map((cat) => {
               const Icon = cat.Icon
               const isActive = selectedCategory === cat.id
+              const count = cat.tab ? categoryCounts[cat.tab] ?? 0 : 0
               return (
                 <button
                   key={cat.id}
@@ -677,30 +687,12 @@ function Library() {
                 >
                   <Icon size={18} />
                   <span>{cat.label}</span>
+                  <span className="tab-count-badge">{count}</span>
                 </button>
               )
             })}
           </div>
 
-          {selectedCategory === 'media' && (
-            <div className="library-subtabs" role="tablist" aria-label="Media types" style={{ marginLeft: '24px' }}>
-              {mediaTabs.map((tab) => {
-                const isActive = activeTab === tab.id
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={isActive}
-                    className={`library-subtab ${isActive ? 'is-active' : ''}`}
-                    onClick={() => setActiveTab(tab.id)}
-                  >
-                    {tab.label}
-                  </button>
-                )
-              })}
-            </div>
-          )}
         </div>
 
         {selectedCategory && (
@@ -711,7 +703,11 @@ function Library() {
               ref={fileInputRef}
               multiple
               accept={assetService.acceptForTab(
-                selectedCategory === 'music' ? 'music' : uploadType
+                selectedCategory === 'music'
+                  ? 'music'
+                  : selectedCategory === 'video'
+                  ? 'videos'
+                  : uploadType
               )}
               onChange={handleFileInputChange}
             />
@@ -846,42 +842,36 @@ function Library() {
             </div>
             <p className="upload-modal-hint">JPEG, PNG, WebP, MP4, or MP3 · max 50 MB</p>
             <div className="upload-options">
-              {selectedCategory !== 'music' && (
-                <>
-                  <button
-                    type="button"
-                    className="upload-option"
-                    onClick={() => openUploadPicker('images')}
-                  >
-                    <div className="option-icon image">
-                      <MdImage />
-                    </div>
-                    <span>{selectedCategory === 'media' ? 'Photos' : 'Images'}</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="upload-option"
-                    onClick={() => openUploadPicker('videos')}
-                  >
-                    <div className="option-icon video">
-                      <MdPlayCircleFilled />
-                    </div>
-                    <span>Videos</span>
-                  </button>
-                </>
-              )}
-              {selectedCategory !== 'media' && (
-                <button
-                  type="button"
-                  className="upload-option"
-                  onClick={() => openUploadPicker('music')}
-                >
-                  <div className="option-icon music">
-                    <MdMusicNote />
-                  </div>
-                  <span>Music</span>
-                </button>
-              )}
+              <button
+                type="button"
+                className="upload-option"
+                onClick={() => openUploadPicker('images')}
+              >
+                <div className="option-icon image">
+                  <MdImage />
+                </div>
+                <span>Photo</span>
+              </button>
+              <button
+                type="button"
+                className="upload-option"
+                onClick={() => openUploadPicker('videos')}
+              >
+                <div className="option-icon video">
+                  <MdPlayCircleFilled />
+                </div>
+                <span>Video</span>
+              </button>
+              <button
+                type="button"
+                className="upload-option"
+                onClick={() => openUploadPicker('music')}
+              >
+                <div className="option-icon music">
+                  <MdMusicNote />
+                </div>
+                <span>Music</span>
+              </button>
             </div>
           </div>
         </div>

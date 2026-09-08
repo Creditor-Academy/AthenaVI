@@ -1690,4 +1690,65 @@
   color: var(--primary-hover);
 }
 
+/* Header Library-style Pill Search Input */
+.library-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.library-search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted, #94a3b8);
+  pointer-events: none;
+  transition: color 0.15s ease;
+}
+
+.library-search-input {
+  width: 220px;
+  height: 40px;
+  box-sizing: border-box;
+  padding: 0 32px 0 36px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-surface, #f8fafc);
+  color: var(--text-main, #0f172a);
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.library-search-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--bg-card, #ffffff);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent);
+}
+
+.library-search:focus-within .library-search-icon {
+  color: var(--primary);
+}
+
+.library-search-clear {
+  position: absolute;
+  right: 10px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: var(--border-color, #cbd5e1);
+  color: var(--text-muted, #64748b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.library-search-clear:hover {
+  background: var(--text-muted, #94a3b8);
+  color: #ffffff;
+}
+
+
 

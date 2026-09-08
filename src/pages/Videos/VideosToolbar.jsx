@@ -76,50 +76,50 @@ export function VideosToolbarDropdown({
   );
 }
 
-function VideosToolbar({
-  filterBy,
-  onFilterChange,
+export function LibrarySearchBar({
   searchQuery = '',
   onSearchChange,
-  sortBy,
-  onSortChange,
-  groupBy,
-  onGroupChange,
-  sortOptions = [],
-  groupOptions = [],
-  activeCategoryLabel = 'work',
-  onResetFilters,
+  placeholder = 'Search…',
+  ariaLabel = 'Search',
 }) {
-  const isFiltered = Boolean((searchQuery || '').trim()) || (filterBy && filterBy !== 'all');
-
   return (
-    <div className="videos-toolbar-wrapper">
-      <div className="videos-toolbar videos-toolbar--full-search">
-        {/* Full-width Glass Search Input */}
-        <div className="videos-search-bar">
-          <MdSearch size={20} className="videos-search-bar__icon" aria-hidden />
-          <input
-            type="search"
-            placeholder={`Search ${activeCategoryLabel}…`}
-            value={searchQuery}
-            onChange={(event) => onSearchChange(event.target.value)}
-            aria-label="Search work"
-          />
-          {searchQuery ? (
-            <button
-              type="button"
-              className="search-clear-btn"
-              onClick={() => onSearchChange('')}
-              title="Clear search"
-            >
-              <MdClose size={16} />
-            </button>
-          ) : (
-            <span className="search-kbd-badge">⌘K</span>
-          )}
-        </div>
-      </div>
+    <div className="library-search">
+      <MdSearch className="library-search-icon" size={18} aria-hidden />
+      <input
+        type="text"
+        className="library-search-input"
+        placeholder={placeholder}
+        value={searchQuery}
+        onChange={(e) => onSearchChange?.(e.target.value)}
+        aria-label={ariaLabel}
+      />
+      {searchQuery ? (
+        <button
+          type="button"
+          className="library-search-clear"
+          onClick={() => onSearchChange?.('')}
+          aria-label="Clear search"
+        >
+          <MdClose size={14} />
+        </button>
+      ) : null}
     </div>
+  );
+}
+
+function VideosToolbar({
+  searchQuery = '',
+  onSearchChange,
+  searchPlaceholder,
+  searchAriaLabel,
+}) {
+  return (
+    <LibrarySearchBar
+      searchQuery={searchQuery}
+      onSearchChange={onSearchChange}
+      placeholder={searchPlaceholder}
+      ariaLabel={searchAriaLabel}
+    />
   );
 }
 
