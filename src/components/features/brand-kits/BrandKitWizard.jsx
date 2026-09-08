@@ -10,6 +10,13 @@ import {
   MdAdd,
   MdInfoOutline,
   MdEdit,
+  MdBusiness,
+  MdFormatQuote,
+  MdRecordVoiceOver,
+  MdPalette,
+  MdCloudUpload,
+  MdLightMode,
+  MdDarkMode,
 } from 'react-icons/md'
 import { ChevronRight } from 'lucide-react'
 import {
@@ -22,6 +29,85 @@ import {
 } from './utils/brandKitUtils'
 import { FONT_WEIGHT_OPTIONS } from './utils/brandKitConstants'
 import FontPicker from '../../shared/fonts/FontPicker'
+import customFloat1 from '../../../assets/Template_Image/custom_float_1.png'
+import customFloat2 from '../../../assets/Template_Image/custom_float_2.png'
+import customFloat3 from '../../../assets/Template_Image/custom_float_3.png'
+import customFloat4 from '../../../assets/Template_Image/custom_float_4.png'
+import aiMascot from '../../../assets/slides_icons/ai_mascot.png'
+import pptBgMorning from '../../../assets/ppt-bg/morning.png'
+import pptBgAfternoon from '../../../assets/ppt-bg/afternoon.png'
+import pptBgEvening from '../../../assets/ppt-bg/evening.png'
+import pptBgNight from '../../../assets/ppt-bg/night.png'
+import { usePptDaypart } from '../../../utils/pptDaypart'
+import { useTheme } from '../../../contexts/ThemeContext'
+
+const PPT_DAY_BACKGROUNDS = {
+  morning: pptBgMorning,
+  afternoon: pptBgAfternoon,
+  evening: pptBgEvening,
+  night: pptBgNight,
+}
+
+const TONE_PRESETS = [
+  'Professional & Corporate',
+  'Executive & Confident',
+  'Bold & Visionary',
+  'Friendly & Approachable',
+  'Tech & Modern',
+]
+
+const COLOR_PRESETS = [
+  {
+    name: 'Executive Navy',
+    desc: 'Professional slate & vibrant royal with deep midnight dark mode',
+    colors: [
+      { id: 'c1', name: 'Primary Slate', hex: '#1E293B' },
+      { id: 'c2', name: 'Royal Accent', hex: '#2563EB' },
+      { id: 'c3', name: 'Dark Slate Surface', hex: '#0F172A' },
+      { id: 'c4', name: 'Deep Obsidian Void', hex: '#020617' },
+    ],
+  },
+  {
+    name: 'Emerald Tech',
+    desc: 'Vibrant mint & green with dark forest midnight dark mode',
+    colors: [
+      { id: 'c1', name: 'Emerald Primary', hex: '#059669' },
+      { id: 'c2', name: 'Vibrant Mint', hex: '#10B981' },
+      { id: 'c3', name: 'Dark Emerald Night', hex: '#064E3B' },
+      { id: 'c4', name: 'Deep Forest Void', hex: '#022C22' },
+    ],
+  },
+  {
+    name: 'Royal Amethyst',
+    desc: 'Electric purple & violet with midnight amethyst dark mode',
+    colors: [
+      { id: 'c1', name: 'Royal Violet', hex: '#7C3AED' },
+      { id: 'c2', name: 'Electric Purple', hex: '#8B5CF6' },
+      { id: 'c3', name: 'Midnight Amethyst', hex: '#2E1065' },
+      { id: 'c4', name: 'Deep Violet Void', hex: '#1E1035' },
+    ],
+  },
+  {
+    name: 'Sunset Flame',
+    desc: 'Warm coral & amber with dark mahogany midnight dark mode',
+    colors: [
+      { id: 'c1', name: 'Coral Flame', hex: '#EA580C' },
+      { id: 'c2', name: 'Warm Amber', hex: '#F59E0B' },
+      { id: 'c3', name: 'Dark Mahogany Surface', hex: '#451A03' },
+      { id: 'c4', name: 'Deep Espresso Night', hex: '#1C0A00' },
+    ],
+  },
+  {
+    name: 'Cyber Neon',
+    desc: 'Electric cyan & rose with obsidian dark mode',
+    colors: [
+      { id: 'c1', name: 'Electric Cyan', hex: '#0EA5E9' },
+      { id: 'c2', name: 'Neon Rose', hex: '#F43F5E' },
+      { id: 'c3', name: 'Dark Cyber Slate', hex: '#0F172A' },
+      { id: 'c4', name: 'Obsidian Void', hex: '#030712' },
+    ],
+  },
+]
 
 function contrastInk(hex) {
   const raw = String(hex || '#000000').replace('#', '')
@@ -101,6 +187,12 @@ export default function BrandKitWizard(props) {
   } = props
 
   const wizardScrollRef = useRef(null)
+  const promptDaypart = usePptDaypart()
+  const { mode } = useTheme()
+  const isDarkMode = mode === 'dark'
+  const dayBackground = isDarkMode
+    ? PPT_DAY_BACKGROUNDS.night
+    : (PPT_DAY_BACKGROUNDS[promptDaypart] || PPT_DAY_BACKGROUNDS.afternoon)
 
   useEffect(() => {
     const panel = wizardScrollRef.current
@@ -109,11 +201,29 @@ export default function BrandKitWizard(props) {
   }, [wizardStep])
 
   return (
-      <div className="videos-page brandkits-page brandkit-editor">
-        <div className="videos-shell">
+    <div
+      className={`videos-page brandkits-page brandkit-editor brandkit-wizard-wrapper brandkit-wizard-wrapper--${promptDaypart}${isDarkMode ? ' is-dark-mode' : ''}`}
+      style={{ backgroundImage: `url(${dayBackground})` }}
+    >
+      <div className="aig-bg-sky">
+        <div className="aig-bg-wave aig-bg-wave-1"></div>
+        <div className="aig-bg-wave aig-bg-wave-2"></div>
+        <div className="aig-bg-wave aig-bg-wave-3"></div>
+      </div>
+      <div className="aig-floating-bg">
+        <img src={customFloat1} className="aig-float-img img-1" alt="" aria-hidden="true" />
+        <img src={customFloat2} className="aig-float-img img-2" alt="" aria-hidden="true" />
+        <img src={customFloat4} className="aig-float-img img-3" alt="" aria-hidden="true" />
+        <img src={customFloat3} className="aig-float-img img-4" alt="" aria-hidden="true" />
+        <img src={customFloat2} className="aig-float-img img-5" alt="" aria-hidden="true" />
+        <img src={customFloat1} className="aig-float-img img-6" alt="" aria-hidden="true" />
+        <img src={customFloat3} className="aig-float-img img-7" alt="" aria-hidden="true" />
+      </div>
+
+      <div className="videos-shell" style={{ position: 'relative', zIndex: 10 }}>
           <header className="videos-page-header">
             <div className="videos-title-section">
-              <div className="workspace-header-title">
+              <div className="brandkit-header-title-row">
                 <button
                   type="button"
                   className="workspace-back-btn"
@@ -196,12 +306,15 @@ export default function BrandKitWizard(props) {
           {wizardStep === 1 && (
             <div className="bk-wizard-body">
               <h2 className="bk-wizard-title">Let&apos;s start with the basics</h2>
-              <p className="bk-wizard-desc">Enter your brand name, tagline, and upload your primary brand logo.</p>
+              <p className="bk-wizard-desc">Enter your brand identity details and primary brand logo to get started.</p>
 
               <div className="bk-wizard-grid-step1">
-                <div className="bk-wizard-fields-col">
-                  <div className="bk-field" style={{ marginBottom: 16 }}>
-                    <label>Brand Name *</label>
+                <div className="bk-wizard-fields-col" style={{ gap: 16 }}>
+                  <div className="bk-wizard-field-card">
+                    <label className="bk-field-lbl" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                      <MdBusiness size={16} color="var(--bk-accent)" />
+                      Brand Name *
+                    </label>
                     <input
                       type="text"
                       value={kitName}
@@ -211,8 +324,11 @@ export default function BrandKitWizard(props) {
                     />
                   </div>
 
-                  <div className="bk-field" style={{ marginBottom: 16 }}>
-                    <label>Slogan / Tagline</label>
+                  <div className="bk-wizard-field-card">
+                    <label className="bk-field-lbl" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                      <MdFormatQuote size={16} color="var(--bk-accent)" />
+                      Slogan / Tagline
+                    </label>
                     <input
                       type="text"
                       value={slogan}
@@ -222,8 +338,11 @@ export default function BrandKitWizard(props) {
                     />
                   </div>
 
-                  <div className="bk-field">
-                    <label>Tone of Voice</label>
+                  <div className="bk-wizard-field-card">
+                    <label className="bk-field-lbl" style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                      <MdRecordVoiceOver size={16} color="var(--bk-accent)" />
+                      Tone of Voice
+                    </label>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                       <input
                         type="text"
@@ -251,18 +370,39 @@ export default function BrandKitWizard(props) {
                         </button>
                       )}
                     </div>
+                    {/* Quick Tone Pill Presets */}
+                    <div className="bk-tone-pills-row">
+                      {TONE_PRESETS.map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          className={`bk-tone-pill ${kitData.voice?.tone === preset ? 'active' : ''}`}
+                          onClick={() =>
+                            setKitData((prev) => ({
+                              ...prev,
+                              voice: { ...prev.voice, tone: preset },
+                            }))
+                          }
+                        >
+                          {preset}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
                 <div className="bk-wizard-logo-col">
-                  <label className="bk-field-lbl">Brand Logo (Primary Mark)</label>
+                  <label className="bk-field-lbl" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <MdCloudUpload size={16} color="var(--bk-accent)" />
+                    Brand Logo (Primary Mark)
+                  </label>
                   {logoPreviewUrl ? (
                     <div className="bk-wizard-logo-preview-box">
                       <img src={logoPreviewUrl} alt="Uploaded Brand Logo" className="bk-wizard-logo-img" />
                       <button
                         type="button"
                         className="ghost-btn danger"
-                        style={{ marginTop: 12, padding: '4px 10px', fontSize: 12 }}
+                        style={{ marginTop: 12, padding: '4px 12px', fontSize: 12 }}
                         onClick={() => {
                           setLogoFile(null)
                           setLogoPreviewUrl(null)
@@ -277,9 +417,17 @@ export default function BrandKitWizard(props) {
                       className="bk-wizard-logo-dropzone"
                       onClick={() => wizardLogoInputRef.current?.click()}
                     >
-                      <MdImage size={38} color="var(--bk-accent)" />
+                      <div className="bk-dropzone-icon-glow">
+                        <MdImage size={38} color="var(--bk-accent)" />
+                      </div>
                       <span className="bk-dropzone-title">Upload Brand Logo</span>
-                      <span className="bk-dropzone-sub">SVG, PNG, JPG, or WebP</span>
+                      <span className="bk-dropzone-sub">Click to browse or drop file</span>
+                      <div className="bk-format-badges">
+                        <span>SVG</span>
+                        <span>PNG</span>
+                        <span>JPG</span>
+                        <span>WEBP</span>
+                      </div>
                     </button>
                   )}
                 </div>
@@ -301,141 +449,362 @@ export default function BrandKitWizard(props) {
             </div>
           )}
 
-          {/* STEP 2: BRAND COLORS (Cards with Generate from Logo option) */}
-          {wizardStep === 2 && (
-            <div className="bk-wizard-body">
-              <div className="bk-colors-wizard-header">
-                <div>
-                  <h2 className="bk-wizard-title">Brand Colors</h2>
-                  <p className="bk-wizard-desc">Customize Light & Dark mode color cards or click generate to extract 4 theme colors from your logo.</p>
+          {/* STEP 2: BRAND COLORS */}
+          {wizardStep === 2 && (() => {
+            const allColors = (kitData.colors || []).map((c, originalIndex) => ({
+              ...c,
+              originalIndex,
+              effectiveMode: c.mode || (originalIndex < 2 ? 'light' : 'dark'),
+            }))
+            const lightColors = allColors.filter((c) => c.effectiveMode === 'light')
+            const darkColors = allColors.filter((c) => c.effectiveMode === 'dark')
+
+            return (
+              <div className="bk-wizard-body">
+                <div className="bk-colors-wizard-header">
+                  <div>
+                    <h2 className="bk-wizard-title">Brand Colors</h2>
+                    <p className="bk-wizard-desc">
+                      Customize Light &amp; Dark mode palettes or select a curated preset palette below.
+                    </p>
+                  </div>
+                  {logoPreviewUrl && (
+                    <button
+                      type="button"
+                      className="bk-extract-btn"
+                      onClick={triggerGenerateFromLogo}
+                    >
+                      <MdAutoAwesome size={16} />
+                      Generate from Logo
+                    </button>
+                  )}
                 </div>
-                {logoPreviewUrl && (
-                  <button
-                    type="button"
-                    className="bk-extract-btn"
-                    onClick={triggerGenerateFromLogo}
-                  >
-                    <MdAutoAwesome size={16} />
-                    Generate from Logo
-                  </button>
-                )}
-              </div>
 
-              <div className="bk-primary-swatches-grid" style={{ marginBottom: 20 }}>
-                {(kitData.colors || []).map((color, index) => {
-                  const hex = color.hex || '#0F172A'
-                  const rgb = hexToRgb(hex)
-                  const [h, s, l] = hexToHsl(hex)
+                {/* Presets Cards Section */}
+                <div className="bk-presets-container">
+                  <div className="bk-presets-header">
+                    <MdPalette size={18} color="var(--bk-accent)" />
+                    <span className="bk-presets-title">Curated Preset Palettes</span>
+                    <span className="bk-presets-subtitle">
+                      Select a palette to automatically set balanced Light &amp; Dark mode shades
+                    </span>
+                  </div>
+                  <div className="bk-preset-cards-grid">
+                    {COLOR_PRESETS.map((preset) => {
+                      const isSelected =
+                        kitData.colors &&
+                        kitData.colors.length >= 4 &&
+                        preset.colors.every((c, idx) => kitData.colors[idx]?.hex?.toUpperCase() === c.hex.toUpperCase())
 
-                  return (
-                    <div className="bk-color-card" key={color.id || index}>
-                      <div className="bk-card-swatch-block" style={{ background: hex }}>
-                        {canWrite && (
-                          <button
-                            type="button"
-                            className="bk-edit-color-btn"
-                            onClick={(e) => {
-                              e.currentTarget
-                                .closest('.bk-color-card')
-                                ?.querySelector('input[type="color"]')
-                                ?.click()
-                            }}
-                          >
-                            <MdEdit size={14} />
-                            Edit
-                          </button>
-                        )}
-                        {canWrite && (kitData.colors || []).length > 2 && (
-                          <button
-                            type="button"
-                            className="bk-card-delete-btn"
-                            onClick={() => removeColor(index)}
-                            title="Remove color"
-                          >
-                            <MdClose size={16} />
-                          </button>
-                        )}
-                      </div>
-                      <div className="bk-card-body">
-                        <div className="bk-card-title-row">
-                          <div>
-                            <input
-                              type="text"
-                              className="bk-card-color-name"
-                              value={color.name}
-                              disabled={!canWrite}
-                              onChange={(e) => updateColor(index, { name: e.target.value })}
-                              placeholder="Color Name"
-                            />
-                            <span className="bk-card-role-tag">{index < 2 ? 'LIGHT MODE' : 'DARK MODE'}</span>
+                      return (
+                        <button
+                          key={preset.name}
+                          type="button"
+                          className={`bk-preset-card ${isSelected ? 'is-selected' : ''}`}
+                          onClick={() => setKitData((prev) => ({ ...prev, colors: preset.colors }))}
+                        >
+                          <div className="bk-preset-card-head">
+                            <span className="bk-preset-card-name">{preset.name}</span>
+                            {isSelected && <span className="bk-preset-selected-badge"><MdCheck size={12} /> Active</span>}
                           </div>
-                          <div className="bk-card-hex-box">
-                            <label
-                              className={`bk-hex-swatch-circle${!canWrite ? ' is-disabled' : ''}`}
-                              style={{ background: hex }}
-                              title={canWrite ? 'Edit color' : undefined}
-                            >
-                              <input
-                                type="color"
-                                value={/^#[0-9A-Fa-f]{6}$/.test(hex) ? hex : '#0F172A'}
-                                disabled={!canWrite}
-                                onChange={(e) => updateColor(index, { hex: e.target.value.toUpperCase() })}
-                                className="bk-picker-inline"
-                                aria-label={`Edit ${color.name || 'color'}`}
-                              />
-                            </label>
-                            <input
-                              type="text"
-                              value={color.hex}
-                              disabled={!canWrite}
-                              onChange={(e) => updateColor(index, { hex: e.target.value })}
-                              className="bk-card-hex-val"
-                              aria-label={`${color.name || 'Color'} hex`}
-                            />
-                            <button
-                              type="button"
-                              className={`bk-hex-copy-btn${copiedHex === hex ? ' is-copied' : ''}`}
-                              onClick={() => handleCopyHex(hex)}
-                              title={copiedHex === hex ? 'Copied' : 'Copy HEX'}
-                              aria-label={copiedHex === hex ? 'Copied' : 'Copy HEX'}
-                            >
-                              {copiedHex === hex ? <MdCheck size={14} /> : <MdContentCopy size={14} />}
-                            </button>
+                          <p className="bk-preset-card-desc">{preset.desc}</p>
+                          <div className="bk-preset-swatches-preview">
+                            <div className="bk-preset-swatch-group light" title="Light Mode Colors">
+                              <span className="bk-preset-swatch-dot" style={{ background: preset.colors[0].hex }} />
+                              <span className="bk-preset-swatch-dot" style={{ background: preset.colors[1].hex }} />
+                            </div>
+                            <div className="bk-preset-swatch-divider" />
+                            <div className="bk-preset-swatch-group dark" title="Dark Mode Colors (Deep Shades)">
+                              <span className="bk-preset-swatch-dot" style={{ background: preset.colors[2].hex }} />
+                              <span className="bk-preset-swatch-dot" style={{ background: preset.colors[3].hex }} />
+                            </div>
                           </div>
-                        </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
 
-                        <div className="bk-card-tech-grid">
-                          <div>
-                            <span className="bk-tech-lbl">RGB</span>
-                            <span className="bk-tech-val">{rgb}</span>
-                          </div>
-                          <div>
-                            <span className="bk-tech-lbl">HSL</span>
-                            <span className="bk-tech-val">{h}°, {s}%, {l}%</span>
-                          </div>
-                        </div>
-                      </div>
+                {/* Light Mode Colors Section */}
+                <div className="bk-color-section-group">
+                  <div className="bk-color-section-header light">
+                    <div className="bk-color-section-icon">
+                      <MdLightMode size={20} />
                     </div>
-                  )
-                })}
-              </div>
+                    <div>
+                      <h3 className="bk-color-section-title">Light Mode Colors</h3>
+                      <p className="bk-color-section-desc">Primary and accent brand shades used for clean light slides and documents</p>
+                    </div>
+                    {canWrite && (
+                      <button
+                        type="button"
+                        className="bk-add-mode-color-btn light"
+                        onClick={() => addColor('light')}
+                        title="Add a new color specifically for Light Mode"
+                      >
+                        <MdAdd size={15} /> Add Light Color
+                      </button>
+                    )}
+                  </div>
 
-              <div style={{ marginBottom: 20 }}>
-                <button type="button" className="ghost-btn" onClick={addColor}>
-                  <MdAdd size={16} /> Add Color
-                </button>
-              </div>
+                  <div className="bk-color-cards-grid">
+                    {lightColors.map((color, subIndex) => {
+                      const index = color.originalIndex
+                      const hex = color.hex || '#0F172A'
+                      const rgb = hexToRgb(hex)
+                      const [h, s, l] = hexToHsl(hex)
 
-              <div className="bk-wizard-actions">
-                <button type="button" className="ghost-btn" onClick={() => setWizardStep(1)}>
-                  <MdArrowBack size={16} /> Back
-                </button>
-                <button type="button" className="create-btn" onClick={() => setWizardStep(3)}>
-                  Next: Typography <MdArrowForward size={16} />
-                </button>
+                      return (
+                        <div className="bk-color-card" key={color.id || index}>
+                          <div className="bk-card-swatch-block" style={{ background: hex }}>
+                            {canWrite && (
+                              <button
+                                type="button"
+                                className="bk-edit-color-btn"
+                                onClick={(e) => {
+                                  e.currentTarget
+                                    .closest('.bk-color-card')
+                                    ?.querySelector('input[type="color"]')
+                                    ?.click()
+                                }}
+                              >
+                                <MdEdit size={14} /> Edit Color
+                              </button>
+                            )}
+                            {canWrite && (kitData.colors || []).length > 2 && (
+                              <button
+                                type="button"
+                                className="bk-card-delete-btn"
+                                onClick={() => removeColor(index)}
+                                title="Remove color"
+                              >
+                                <MdClose size={16} />
+                              </button>
+                            )}
+                          </div>
+                          <div className="bk-card-body">
+                            <div className="bk-card-title-row">
+                              <div className="bk-card-name-group">
+                                <input
+                                  type="text"
+                                  className="bk-card-color-name"
+                                  value={color.name}
+                                  disabled={!canWrite}
+                                  onChange={(e) => updateColor(index, { name: e.target.value })}
+                                  placeholder="Color Name"
+                                />
+                                <button
+                                  type="button"
+                                  className="bk-card-role-tag-btn light"
+                                  disabled={!canWrite}
+                                  onClick={() => updateColor(index, { mode: 'dark' })}
+                                  title="Click to toggle to Dark Mode"
+                                >
+                                  <MdLightMode size={12} /> LIGHT MODE {subIndex === 0 ? 'PRIMARY' : 'ACCENT'} ⇄
+                                </button>
+                              </div>
+                              <div className="bk-card-hex-box">
+                                <label
+                                  className={`bk-hex-swatch-circle${!canWrite ? ' is-disabled' : ''}`}
+                                  style={{ background: hex }}
+                                  title={canWrite ? 'Edit color' : undefined}
+                                >
+                                  <input
+                                    type="color"
+                                    value={/^#[0-9A-Fa-f]{6}$/.test(hex) ? hex : '#0F172A'}
+                                    disabled={!canWrite}
+                                    onChange={(e) => updateColor(index, { hex: e.target.value.toUpperCase() })}
+                                    className="bk-picker-inline"
+                                    aria-label={`Edit ${color.name || 'color'}`}
+                                  />
+                                </label>
+                                <input
+                                  type="text"
+                                  value={color.hex}
+                                  disabled={!canWrite}
+                                  onChange={(e) => updateColor(index, { hex: e.target.value })}
+                                  className="bk-card-hex-val"
+                                  aria-label={`${color.name || 'Color'} hex`}
+                                />
+                                <button
+                                  type="button"
+                                  className={`bk-hex-copy-btn${copiedHex === hex ? ' is-copied' : ''}`}
+                                  onClick={() => handleCopyHex(hex)}
+                                  title={copiedHex === hex ? 'Copied' : 'Copy HEX'}
+                                  aria-label={copiedHex === hex ? 'Copied' : 'Copy HEX'}
+                                >
+                                  {copiedHex === hex ? <MdCheck size={14} /> : <MdContentCopy size={14} />}
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="bk-card-tech-grid">
+                              <div>
+                                <span className="bk-tech-lbl">RGB</span>
+                                <span className="bk-tech-val">{rgb}</span>
+                              </div>
+                              <div>
+                                <span className="bk-tech-lbl">HSL</span>
+                                <span className="bk-tech-val">{h}°, {s}%, {l}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Dark Mode Colors Section */}
+                <div className="bk-color-section-group" style={{ marginTop: 24 }}>
+                  <div className="bk-color-section-header dark">
+                    <div className="bk-color-section-icon dark">
+                      <MdDarkMode size={20} />
+                    </div>
+                    <div>
+                      <h3 className="bk-color-section-title">Dark Mode Colors</h3>
+                      <p className="bk-color-section-desc">Deep dark shades and dark surfaces for immersive dark slides and themes</p>
+                    </div>
+                    {canWrite && (
+                      <button
+                        type="button"
+                        className="bk-add-mode-color-btn dark"
+                        onClick={() => addColor('dark')}
+                        title="Add a new color specifically for Dark Mode"
+                      >
+                        <MdAdd size={15} /> Add Dark Color
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="bk-color-cards-grid">
+                    {darkColors.map((color, subIndex) => {
+                      const index = color.originalIndex
+                      const hex = color.hex || '#0F172A'
+                      const rgb = hexToRgb(hex)
+                      const [h, s, l] = hexToHsl(hex)
+
+                      return (
+                        <div className="bk-color-card" key={color.id || index}>
+                          <div className="bk-card-swatch-block" style={{ background: hex }}>
+                            {canWrite && (
+                              <button
+                                type="button"
+                                className="bk-edit-color-btn"
+                                onClick={(e) => {
+                                  e.currentTarget
+                                    .closest('.bk-color-card')
+                                    ?.querySelector('input[type="color"]')
+                                    ?.click()
+                                }}
+                              >
+                                <MdEdit size={14} /> Edit Color
+                              </button>
+                            )}
+                            {canWrite && (kitData.colors || []).length > 2 && (
+                              <button
+                                type="button"
+                                className="bk-card-delete-btn"
+                                onClick={() => removeColor(index)}
+                                title="Remove color"
+                              >
+                                <MdClose size={16} />
+                              </button>
+                            )}
+                          </div>
+                          <div className="bk-card-body">
+                            <div className="bk-card-title-row">
+                              <div className="bk-card-name-group">
+                                <input
+                                  type="text"
+                                  className="bk-card-color-name"
+                                  value={color.name}
+                                  disabled={!canWrite}
+                                  onChange={(e) => updateColor(index, { name: e.target.value })}
+                                  placeholder="Color Name"
+                                />
+                                <button
+                                  type="button"
+                                  className="bk-card-role-tag-btn dark"
+                                  disabled={!canWrite}
+                                  onClick={() => updateColor(index, { mode: 'light' })}
+                                  title="Click to toggle to Light Mode"
+                                >
+                                  <MdDarkMode size={12} /> DARK MODE {subIndex === 0 ? 'SURFACE' : 'VOID'} ⇄
+                                </button>
+                              </div>
+                              <div className="bk-card-hex-box">
+                                <label
+                                  className={`bk-hex-swatch-circle${!canWrite ? ' is-disabled' : ''}`}
+                                  style={{ background: hex }}
+                                  title={canWrite ? 'Edit color' : undefined}
+                                >
+                                  <input
+                                    type="color"
+                                    value={/^#[0-9A-Fa-f]{6}$/.test(hex) ? hex : '#0F172A'}
+                                    disabled={!canWrite}
+                                    onChange={(e) => updateColor(index, { hex: e.target.value.toUpperCase() })}
+                                    className="bk-picker-inline"
+                                    aria-label={`Edit ${color.name || 'color'}`}
+                                  />
+                                </label>
+                                <input
+                                  type="text"
+                                  value={color.hex}
+                                  disabled={!canWrite}
+                                  onChange={(e) => updateColor(index, { hex: e.target.value })}
+                                  className="bk-card-hex-val"
+                                  aria-label={`${color.name || 'Color'} hex`}
+                                />
+                                <button
+                                  type="button"
+                                  className={`bk-hex-copy-btn${copiedHex === hex ? ' is-copied' : ''}`}
+                                  onClick={() => handleCopyHex(hex)}
+                                  title={copiedHex === hex ? 'Copied' : 'Copy HEX'}
+                                  aria-label={copiedHex === hex ? 'Copied' : 'Copy HEX'}
+                                >
+                                  {copiedHex === hex ? <MdCheck size={14} /> : <MdContentCopy size={14} />}
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="bk-card-tech-grid">
+                              <div>
+                                <span className="bk-tech-lbl">RGB</span>
+                                <span className="bk-tech-val">{rgb}</span>
+                              </div>
+                              <div>
+                                <span className="bk-tech-lbl">HSL</span>
+                                <span className="bk-tech-val">{h}°, {s}%, {l}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                <div className="bk-add-color-bottom-actions">
+                  <button type="button" className="ghost-btn" onClick={() => addColor('light')}>
+                    <MdAdd size={16} /> Add Light Mode Color
+                  </button>
+                  <button type="button" className="ghost-btn" onClick={() => addColor('dark')}>
+                    <MdAdd size={16} /> Add Dark Mode Color
+                  </button>
+                </div>
+
+                <div className="bk-wizard-actions">
+                  <button type="button" className="ghost-btn" onClick={() => setWizardStep(1)}>
+                    <MdArrowBack size={16} /> Back
+                  </button>
+                  <button type="button" className="create-btn" onClick={() => setWizardStep(3)}>
+                    Next: Typography <MdArrowForward size={16} />
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* STEP 3: TYPOGRAPHY — full controls, no preview panel */}
           {wizardStep === 3 && (

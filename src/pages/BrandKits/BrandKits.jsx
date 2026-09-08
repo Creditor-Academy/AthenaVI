@@ -692,14 +692,23 @@ function BrandKits() {
     }))
   }
 
-  const addColor = () => {
+  const addColor = (targetMode = 'light') => {
     setKitData((prev) => {
       const colors = prev.colors || []
       if (colors.length >= 32) return prev
       const id = newColorId(colors)
+      const isDark = targetMode === 'dark'
       return {
         ...prev,
-        colors: [...colors, { id, name: `Color ${colors.length + 1}`, hex: '#64748B' }],
+        colors: [
+          ...colors,
+          {
+            id,
+            name: `${isDark ? 'Dark' : 'Light'} Color ${colors.length + 1}`,
+            hex: isDark ? '#0F172A' : '#3B82F6',
+            mode: targetMode,
+          },
+        ],
       }
     })
   }
