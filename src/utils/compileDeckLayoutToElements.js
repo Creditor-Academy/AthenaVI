@@ -496,7 +496,19 @@ function resolveChartContent(slot, schema, palette, contentBySlotId, slideConten
   const layoutId = String(schema?.layout_id || '').toLowerCase()
   const slotId = String(slot?.id || '').toUpperCase()
   const mode = resolvePreviewMode(schema)
-  const barColor = palette?.primary || palette?.accent || LAYOUT_SURFACE.bar
+  
+  // Custom colors per chart for three-chart layouts
+  let barColor = palette?.primary || palette?.accent || LAYOUT_SURFACE.bar
+  if (layoutId === 'chart_three_cards_v1' || layoutId === 'chart_three_context_cards_v1') {
+    if (slotId === 'CHART_1') {
+      barColor = ['#60A5FA', '#3B82F6', '#1D4ED8', '#1E40AF'] // Blue shades
+    } else if (slotId === 'CHART_2') {
+      barColor = ['#C084FC', '#A855F7', '#9333EA', '#7E22CE'] // Purple shades
+    } else if (slotId === 'CHART_3') {
+      barColor = ['#34D399', '#10B981', '#059669', '#047857'] // Green/Teal shades
+    }
+  }
+  
   const saved = contentBySlotId?.[`${slot.id}__chart`]
   if (saved) {
     return normalizeChartContent(
@@ -505,7 +517,7 @@ function resolveChartContent(slot, schema, palette, contentBySlotId, slideConten
         labels: saved.labels || saved.data?.labels || [],
         series: saved.data?.series || saved.series || [{ name: 'Series', values: saved.values || [] }],
         values: saved.values,
-        colors: [barColor],
+        colors: Array.isArray(barColor) ? barColor : [barColor],
         premium: true,
         showGrid: true,
         showLabels: true,
@@ -579,7 +591,7 @@ function resolveChartContent(slot, schema, palette, contentBySlotId, slideConten
       labels: Array.isArray(labels) && labels.length ? labels : [],
       series: [{ name: saved?.data?.series?.[0]?.name || chart?.series?.[0]?.name || 'Series', values: (Array.isArray(values) ? values : []).map(Number).filter((v) => !Number.isNaN(v)) }],
       values,
-      colors: [barColor],
+      colors: Array.isArray(barColor) ? barColor : [barColor],
       premium: true,
       showGrid: true,
       showLabels: true,

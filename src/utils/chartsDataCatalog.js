@@ -141,16 +141,74 @@ const CATALOG = {
   ], { mode: 'chart_two_cards' }),
 
   chart_three_context_v1: layoutBase('chart_three_context_v1', 'chart', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'Quarterly breakdown', {
-      typography: typo('heading', { fontSize: 28 }),
+    slot('BADGE', 'cols 1-3, rows 1-2', 'caption', 'QUARTERLY OVERVIEW', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 10, fontWeight: 600, color: '#3B82F6', align: 'left', textTransform: 'uppercase' }),
     }),
-    chartSlot('CHART_1', 'cols 1-4, rows 3-7'),
-    body('CONTEXT_1', 'cols 1-4, rows 7-9', P.one, 2, { typography: typo('body', { fontSize: 14 }) }),
-    chartSlot('CHART_2', 'cols 5-8, rows 3-7'),
-    body('CONTEXT_2', 'cols 5-8, rows 7-9', P.two, 2, { typography: typo('body', { fontSize: 14 }) }),
-    chartSlot('CHART_3', 'cols 9-12, rows 3-7'),
-    body('CONTEXT_3', 'cols 9-12, rows 7-9', P.three, 2, { typography: typo('body', { fontSize: 14 }) }),
-  ], { mode: 'chart_triple_context' }),
+    heading('HEADING', 'cols 1-12, rows 1-2', 'Quarterly breakdown', {
+      typography: typo('heading', { fontSize: 42, align: 'left' }),
+    }),
+    body('SUBHEADING', 'cols 1-12, rows 2-3', 'Tracking progress, performance and key milestones across each quarter.', 1, {
+      typography: typo('subheading', { fontSize: 14, color: '#6B7280', align: 'left' }),
+    }),
+    
+    // Card 1
+    heading('CARD_1_QUARTER', 'cols 1-4, rows 3-4', 'Q1', {
+      typography: typo('heading', { fontSize: 24, color: '#3B82F6' }),
+    }),
+    slot('CARD_1_SUBTITLE', 'cols 1-4, rows 4-5', 'caption', 'FOUNDATION & FOCUS', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 11, fontWeight: 700, color: '#3B82F6', textTransform: 'uppercase' }),
+    }),
+    body('CARD_1_DESC', 'cols 1-4, rows 5-6', 'We help teams turn complex ideas into clear narratives that drive decisions.', 2, {
+      typography: typo('body', { fontSize: 13, color: '#6B7280' }),
+    }),
+    chartSlot('CHART_1', 'cols 1-4, rows 6-8'),
+    heading('CARD_1_INSIGHT_TITLE', 'cols 1-4, rows 8-9', 'Strong start', {
+      typography: typo('heading', { fontSize: 14, color: '#3B82F6' }),
+    }),
+    body('CARD_1_INSIGHT_DESC', 'cols 1-4, rows 9-10', 'Momentum built across all key areas.', 1, {
+      typography: typo('body', { fontSize: 11, color: '#6B7280' }),
+    }),
+    
+    // Card 2
+    heading('CARD_2_QUARTER', 'cols 5-8, rows 3-4', 'Q2', {
+      typography: typo('heading', { fontSize: 24, color: '#8B5CF6' }),
+    }),
+    slot('CARD_2_SUBTITLE', 'cols 5-8, rows 4-5', 'caption', 'GROWTH & EXPANSION', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 11, fontWeight: 700, color: '#8B5CF6', textTransform: 'uppercase' }),
+    }),
+    body('CARD_2_DESC', 'cols 5-8, rows 5-6', 'Our approach combines research, design, and storytelling so every slide earns attention.', 2, {
+      typography: typo('body', { fontSize: 13, color: '#6B7280' }),
+    }),
+    chartSlot('CHART_2', 'cols 5-8, rows 6-8'),
+    heading('CARD_2_INSIGHT_TITLE', 'cols 5-8, rows 8-9', 'Steady growth', {
+      typography: typo('heading', { fontSize: 14, color: '#8B5CF6' }),
+    }),
+    body('CARD_2_INSIGHT_DESC', 'cols 5-8, rows 9-10', 'Consistent improvement across all quarters.', 1, {
+      typography: typo('body', { fontSize: 11, color: '#6B7280' }),
+    }),
+    
+    // Card 3
+    heading('CARD_3_QUARTER', 'cols 9-12, rows 3-4', 'Q3', {
+      typography: typo('heading', { fontSize: 24, color: '#10B981' }),
+    }),
+    slot('CARD_3_SUBTITLE', 'cols 9-12, rows 4-5', 'caption', 'DELIVERY & IMPACT', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 11, fontWeight: 700, color: '#10B981', textTransform: 'uppercase' }),
+    }),
+    body('CARD_3_DESC', 'cols 9-12, rows 5-6', 'From first draft to final delivery, we keep copy concise, visual, and aligned.', 2, {
+      typography: typo('body', { fontSize: 13, color: '#6B7280' }),
+    }),
+    chartSlot('CHART_3', 'cols 9-12, rows 6-8'),
+    heading('CARD_3_INSIGHT_TITLE', 'cols 9-12, rows 8-9', 'High impact', {
+      typography: typo('heading', { fontSize: 14, color: '#10B981' }),
+    }),
+    body('CARD_3_INSIGHT_DESC', 'cols 9-12, rows 9-10', 'Delivered strong results and higher engagement.', 1, {
+      typography: typo('body', { fontSize: 11, color: '#6B7280' }),
+    }),
+  ], { mode: 'chart_three_context' }),
 
   chart_donut_context_v1: layoutBase('chart_donut_context_v1', 'chart', [
     heading('HEADING', 'cols 7-11, rows 2-3', 'Market share', {
