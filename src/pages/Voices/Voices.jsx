@@ -46,6 +46,7 @@ import {
 import { showVoicePreviewUnavailableNotice } from '../../components/ui/VoicePreviewNotice/VoicePreviewNotice';
 import { extractVoiceImageFromRow, fetchVoiceAvatarImageMap, resolveVoiceImage } from './voiceAvatarImages';
 import HeroCarouselBanner from '../../components/ui/HeroCarouselBanner/HeroCarouselBanner';
+import LoadMoreButton from '../../components/ui/LoadMoreButton/LoadMoreButton';
 import heroVoicesSlide1 from '../../assets/hero_voices_slide1.jpg';
 import voiceBg from '../../assets/Voice.jpg';
 import aiIntegrationBg from '../../assets/AIIntegration.png';
@@ -241,7 +242,7 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
     () => [
       {
         id: 'voices-expressive',
-        tag: '• Expressive Voice Engine',
+        tag: 'Expressive Voice Engine',
         title: '300+ Lifelike AI Voices Across 140+ Languages',
         subtitle: 'Natural inflections, emotion control, and hyper-realistic accents designed for studio-grade video voiceovers.',
         ctaText: 'Explore Voices',
@@ -255,7 +256,7 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
       },
       {
         id: 'voices-cloning',
-        tag: '• Instant Voice Cloning',
+        tag: 'Instant Voice Cloning',
         title: 'Clone Your Own Voice in Seconds',
         subtitle: 'Upload a short audio sample to train your digital voice clone with full tone fidelity and emotion accuracy.',
         ctaText: 'Create Voice',
@@ -269,7 +270,7 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
       },
       {
         id: 'voices-synthesis',
-        tag: '• Multi-Speaker Synthesis',
+        tag: 'Multi-Speaker Synthesis',
         title: 'Seamless Narration & Cross-Lingual Translation',
         subtitle: 'Synthesize multi-character conversations and cross-dub narration into international languages instantly.',
         ctaText: 'Speech Preview',
@@ -285,15 +286,28 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
     [onCreateVoice]
   );
 
+  const [visibleCount, setVisibleCount] = useState(24);
+
+  useEffect(() => {
+    setVisibleCount(24);
+  }, [activeSection, searchQuery, filterBy, sortBy, groupBy]);
+
   const filteredVoices = useMemo(() => {
     const filtered = applyVoiceFilters(voicesWithImages, { searchQuery, filterBy });
     return sortVoices(filtered, sortBy);
   }, [voicesWithImages, searchQuery, filterBy, sortBy]);
 
+  const visibleVoices = useMemo(() => {
+    return filteredVoices.slice(0, visibleCount);
+  }, [filteredVoices, visibleCount]);
+
   const voiceGroups = useMemo(
-    () => groupVoices(filteredVoices, groupBy),
-    [filteredVoices, groupBy]
+    () => groupVoices(visibleVoices, groupBy),
+    [visibleVoices, groupBy]
   );
+
+  const hasMoreVoices = visibleCount < filteredVoices.length;
+  const remainingVoiceCount = filteredVoices.length - visibleCount;
 
   const hasSearch = Boolean(searchQuery.trim()) || filterBy !== 'all';
   const showCreateCard = activeSection === 'private' && onCreateVoice && !hasSearch;
@@ -663,6 +677,14 @@ function Voices({ onCreateVoice, onVoiceClick, initialFilter = 'public' }) {
               ))}
             </div>
           )}
+
+          {hasMoreVoices && !loading ? (
+            <LoadMoreButton
+              onClick={() => setVisibleCount((prev) => prev + 24)}
+              label="Load more voices"
+              remainingCount={remainingVoiceCount}
+            />
+          ) : null}
         </main>
       </div>
 

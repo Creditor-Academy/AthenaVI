@@ -45,6 +45,7 @@ import {
   sortAvatars,
 } from './avatarsUtils';
 import HeroCarouselBanner from '../../components/ui/HeroCarouselBanner/HeroCarouselBanner';
+import LoadMoreButton from '../../components/ui/LoadMoreButton/LoadMoreButton';
 import heroAvatarSlide1 from '../../assets/hero_avatar_slide1.jpg';
 import heroAvatarSlide2 from '../../assets/hero_avatar_slide2.jpg';
 import customerExpBg from '../../assets/CustomerExpHero.png';
@@ -290,7 +291,7 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
     () => [
       {
         id: 'avatars-public',
-        tag: '• 100+ Studio Presenters',
+        tag: '100+ Studio Presenters',
         title: 'Explore 100+ Photorealistic AI Avatars & Outfits',
         subtitle: 'Choose from diverse studio-grade AI presenters, custom poses, professional outfits, and expressive gestures for any video genre.',
         ctaText: 'Explore Avatars',
@@ -304,7 +305,7 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
       },
       {
         id: 'avatars-custom',
-        tag: '• Custom Digital Twin',
+        tag: 'Custom Digital Twin',
         title: 'Create Your Personal Avatar with Photo & Prompt',
         subtitle: 'Generate hyper-realistic digital twins instantly. Upload your photo or describe your character to craft unique looks.',
         ctaText: 'Create Avatar',
@@ -318,7 +319,7 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
       },
       {
         id: 'avatars-studio',
-        tag: '• Multi-Language Video Studio',
+        tag: 'Multi-Language Video Studio',
         title: 'Produce High-Converting AI Videos in Minutes',
         subtitle: 'Combine hyper-realistic presenters, natural voice synthesis, and auto-captions to scale video production effortlessly.',
         ctaText: 'Create Video',
@@ -750,16 +751,13 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
           )}
 
           {hasMore && !loading ? (
-            <div className="videos-load-more">
-              <button
-                type="button"
-                className="btn-primary"
-                disabled={loadingMore}
-                onClick={loadMoreAvatars}
-              >
-                {loadingMore ? 'Loading…' : 'Load more'}
-              </button>
-            </div>
+            <LoadMoreButton
+              loading={loadingMore}
+              disabled={loadingMore}
+              onClick={loadMoreAvatars}
+              label="Load more avatars"
+              loadingLabel="Loading more avatars…"
+            />
           ) : null}
         </main>
       </div>

@@ -27,6 +27,7 @@ import { consumeDashboardSearchContext } from '../../utils/dashboardSearchNaviga
 import { createAudioBlobPreview, isAudioFile } from '../../utils/audioDuration'
 import AudioPreviewPlayer from '../../components/ui/AudioPreviewPlayer/AudioPreviewPlayer'
 import LibraryComingSoon from './LibraryComingSoon'
+import LoadMoreButton from '../../components/ui/LoadMoreButton/LoadMoreButton'
 import { SkeletonListRow } from '../page-skeleton/SkeletonPrimitives'
 import '../page-skeleton/skeleton.css'
 import './Library.css'
@@ -814,15 +815,11 @@ function Library() {
                   </div>
 
                   {hasMoreAssets && (
-                    <div className="library-load-more-container">
-                      <button
-                        type="button"
-                        className="library-load-more-btn"
-                        onClick={() => setVisibleCount((prev) => prev + INITIAL_PAGE_SIZE)}
-                      >
-                        Load more ({filteredAssets.length - visibleAssets.length} remaining)
-                      </button>
-                    </div>
+                    <LoadMoreButton
+                      onClick={() => setVisibleCount((prev) => prev + INITIAL_PAGE_SIZE)}
+                      label="Load more assets"
+                      remainingCount={filteredAssets.length - visibleAssets.length}
+                    />
                   )}
                 </>
               )}

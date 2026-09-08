@@ -3635,11 +3635,30 @@
 }
 
 /* Preview panel */
-.avatar-persona-preview-card {
+.avatar-persona-preview {
+  position: sticky;
+  top: 84px;
+  z-index: 10;
+}
+
+.avatar-persona-preview-card,
+.avatar-persona-page .avatar-persona-preview-card {
   display: flex;
   flex-direction: column;
   overflow: hidden;
   padding: 0;
+  transform: none !important;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.avatar-persona-preview-card:hover,
+.avatar-persona-preview-card:focus-within,
+.avatar-persona-page .avatar-persona-preview-card:hover,
+.avatar-persona-page .avatar-persona-preview-card:focus-within {
+  transform: none !important;
+  box-shadow:
+    0 4px 16px rgba(15, 23, 42, 0.06),
+    0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .avatar-persona-preview-card__header {

@@ -1,4 +1,16 @@
 /* Brand Kits — workspace branding surface */
+.brandkits-page,
+.videos-page.brandkits-page {
+  height: auto;
+  min-height: 100%;
+  overflow: visible !important;
+}
+
+.brandkits-page .videos-shell {
+  height: auto;
+  min-height: 100%;
+  overflow: visible !important;
+}
 
 .bk-workspace-select {
   display: inline-flex;

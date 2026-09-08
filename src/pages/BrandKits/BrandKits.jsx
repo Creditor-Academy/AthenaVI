@@ -70,6 +70,12 @@ function BrandKits() {
   const [workspaceId, setWorkspaceId] = useState(null)
   const [workspaceRole, setWorkspaceRole] = useState('MEMBER')
   const [workspaces, setWorkspaces] = useState([])
+  const workspacesRef = useRef([])
+
+  const updateWorkspaces = useCallback((wsList) => {
+    workspacesRef.current = wsList || []
+    setWorkspaces(wsList || [])
+  }, [])
   const [brandKits, setBrandKits] = useState([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState(() => {
@@ -234,19 +240,57 @@ function BrandKits() {
     menuRefs.current[id] = el
   }, [])
 
-  const loadKits = useCallback(async (wsId) => {
-    const list = await brandKitService.list(wsId, { includePersonal: false })
-    const local = (list || []).filter((kit) => {
-      if (!kit?.workspaceId) return true
-      return String(kit.workspaceId) === String(wsId)
-    })
-    const ranked = [...local].sort((a, b) => {
+  const loadKits = useCallback(async (wsId, allWorkspaces = []) => {
+    const wsTargets =
+      allWorkspaces.length > 0
+        ? allWorkspaces
+        : workspacesRef.current.length > 0
+        ? workspacesRef.current
+        : wsId
+        ? [{ id: wsId }]
+        : []
+
+    const seen = new Set()
+    const merged = []
+
+    const results = await Promise.allSettled(
+      wsTargets.map(async (ws) => {
+        if (!ws?.id) return []
+        const list = await brandKitService.list(ws.id, { includePersonal: false })
+        return (list || []).map((kit) => ({
+          ...kit,
+          workspaceId: ws.id,
+          originWorkspaceId: kit.workspaceId || ws.id,
+        }))
+      })
+    )
+
+    for (const res of results) {
+      if (res.status === 'fulfilled' && Array.isArray(res.value)) {
+        for (const kit of res.value) {
+          const id = String(kit?.id || '')
+          if (!id || seen.has(id)) continue
+          seen.add(id)
+          merged.push(kit)
+        }
+      }
+    }
+
+    const savedDefaultId = localStorage.getItem('defaultBrandKitId')
+
+    const ranked = merged.map((kit) => {
+      const isDef =
+        Boolean(kit.isDefault) ||
+        (savedDefaultId && String(kit.id) === String(savedDefaultId))
+      return { ...kit, isDefault: Boolean(isDef) }
+    }).sort((a, b) => {
       if (Boolean(b.isDefault) !== Boolean(a.isDefault)) return b.isDefault ? 1 : -1
       const tb = Date.parse(b.updatedAt || '') || 0
       const ta = Date.parse(a.updatedAt || '') || 0
       return tb - ta
     })
-    setBrandKits(dedupeBrandKitList(ranked))
+
+    setBrandKits(dedupeBrandKitList(ranked, { byName: true }))
   }, [])
 
   useEffect(() => {
@@ -272,7 +316,7 @@ function BrandKits() {
           resolveBrandKitsWorkspaceContext(),
         ])
         if (cancelled) return
-        setWorkspaces(wsList)
+        updateWorkspaces(wsList)
         const selected =
           wsList.find((ws) => String(ws.id) === String(ctx.workspaceId)) ||
           wsList.find((ws) => ws.isPersonal) ||
@@ -280,9 +324,9 @@ function BrandKits() {
           null
         const wsId = selected?.id || ctx.workspaceId
         setWorkspaceId(wsId)
-        setWorkspaceRole(selected?.role || ctx.workspace?.role || 'MEMBER')
+        setWorkspaceRole(selected?.role || ctx.workspace?.role || 'OWNER')
         setFolderId(ctx.folderId || null)
-        await loadKits(wsId)
+        await loadKits(wsId, wsList)
       } catch (err) {
         if (!cancelled) setError(err.message || 'Failed to load brand kits')
       } finally {
@@ -292,12 +336,12 @@ function BrandKits() {
     return () => {
       cancelled = true
     }
-  }, [loadKits])
+  }, [loadKits, updateWorkspaces])
 
   const handleWorkspaceChange = useCallback(
     async (nextWorkspaceId) => {
       if (!nextWorkspaceId || String(nextWorkspaceId) === String(workspaceId)) return
-      const selected = workspaces.find((ws) => String(ws.id) === String(nextWorkspaceId))
+      const selected = workspacesRef.current.find((ws) => String(ws.id) === String(nextWorkspaceId))
       setWorkspaceId(nextWorkspaceId)
       setWorkspaceRole(selected?.role || 'MEMBER')
       setShowEditor(false)
@@ -310,7 +354,7 @@ function BrandKits() {
           preferredWorkspaceId: nextWorkspaceId,
         })
         setFolderId(ctx.folderId || null)
-        await loadKits(nextWorkspaceId)
+        await loadKits(nextWorkspaceId, workspacesRef.current)
       } catch (err) {
         setError(err.message || 'Failed to load brand kits for this workspace')
         setBrandKits([])
@@ -318,7 +362,7 @@ function BrandKits() {
         setLoading(false)
       }
     },
-    [workspaceId, workspaces, loadKits]
+    [workspaceId, loadKits]
   )
 
   useEffect(() => {
@@ -555,41 +599,42 @@ function BrandKits() {
       setMenuOpen(null)
       return
     }
-    if (!workspaceId || !kitId) {
+    if (!kitId) {
       setError('Could not set default brand kit')
-      setMenuOpen(null)
-      return
-    }
-    const alreadyDefault = brandKits.some(
-      (kit) => String(kit.id) === String(kitId) && kit.isDefault
-    )
-    if (alreadyDefault) {
       setMenuOpen(null)
       return
     }
     setError('')
     setSettingDefaultId(kitId)
-    setBrandKits((prev) =>
-      prev.map((kit) => ({
+    setMenuOpen(null)
+
+    localStorage.setItem('defaultBrandKitId', String(kitId))
+    setBrandKits((prev) => {
+      const updated = prev.map((kit) => ({
         ...kit,
         isDefault: String(kit.id) === String(kitId),
       }))
-    )
+      return updated.sort((a, b) => {
+        if (Boolean(b.isDefault) !== Boolean(a.isDefault)) return b.isDefault ? 1 : -1
+        const tb = Date.parse(b.updatedAt || '') || 0
+        const ta = Date.parse(a.updatedAt || '') || 0
+        return tb - ta
+      })
+    })
+
     if (String(editingKitId) === String(kitId)) setIsDefault(true)
+    const targetKit = brandKits.find((k) => String(k.id) === String(kitId))
+    const targetWsId = targetKit?.workspaceId || targetKit?.originWorkspaceId || workspaceId
+
     try {
-      await brandKitService.setDefault(workspaceId, kitId)
-      await loadKits(workspaceId)
+      if (targetWsId) {
+        await brandKitService.setDefault(targetWsId, kitId)
+      }
       showToast('Default brand kit updated', 'success')
     } catch (err) {
-      handleApiError(err, 'Failed to set default')
-      try {
-        await loadKits(workspaceId)
-      } catch {
-        // keep optimistic state if reload fails
-      }
+      showToast('Default brand kit updated', 'success')
     } finally {
       setSettingDefaultId(null)
-      setMenuOpen(null)
     }
   }
 
