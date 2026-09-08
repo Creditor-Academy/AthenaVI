@@ -21,6 +21,13 @@ import { isTimelineMilestonesLayout } from './timelineMilestones.js'
 import { isTimelineMilestonesCardsLayout } from './timelineMilestonesCards.js'
 import { isTimelineMilestonesImageLayout } from './timelineMilestonesImage.js'
 import { isTimelineMilestonesImageRightLayout } from './timelineMilestonesImageRight.js'
+import { isChartSingleBarLayout } from './chartSingleBar.js'
+import { isChartSingleBarSplitLayout } from './chartSingleBarSplit.js'
+import { isChartTwoBarLayout } from './chartTwoBar.js'
+import { isChartTwoBarSplitLayout } from './chartTwoBarSplit.js'
+import { isChartThreeBarLayout } from './chartThreeBar.js'
+import { isChartTwoMetricsComparisonLayout } from './chartTwoMetricsComparison.js'
+import { isChartTwoCardsLayout } from './chartTwoCards.js'
 
 export function isCompiledPricingLayout(layoutId) {
   return isPricingThreePlansLayout(layoutId)
@@ -45,6 +52,13 @@ export function isCompiledPricingLayout(layoutId) {
     || isTimelineRoadmapHorizontalLayout(layoutId)
     || isTimelineProcessStepsHorizontalLayout(layoutId)
     || isTimelineProcessHorizontalLayout(layoutId)
+    || isChartSingleBarLayout(layoutId)
+    || isChartSingleBarSplitLayout(layoutId)
+    || isChartTwoBarLayout(layoutId)
+    || isChartTwoBarSplitLayout(layoutId)
+    || isChartThreeBarLayout(layoutId)
+    || isChartTwoMetricsComparisonLayout(layoutId)
+    || isChartTwoCardsLayout(layoutId)
 }
 
 export function compilePricingLayoutPreviewSlide(schema, aspectRatio = '16:9') {

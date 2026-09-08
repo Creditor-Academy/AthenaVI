@@ -23,7 +23,7 @@ function statLayout(id, contentType, statCount, previewMode, slots, preview = {}
 
 const CATALOG = {
   chart_single_v1: layoutBase('chart_single_v1', 'chart', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'Chart title', {
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Flat Bar Chart', {
       typography: typo('heading', { fontSize: 32 }),
     }),
     chartSlot('MAIN_CHART', 'cols 2-11, rows 3-10'),
@@ -46,42 +46,99 @@ const CATALOG = {
   ], { mode: 'chart_split' }),
 
   chart_two_v1: layoutBase('chart_two_v1', 'chart', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'Compare metrics', {
-      typography: typo('heading', { fontSize: 28 }),
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Revenue vs Forecast', {
+      typography: typo('heading', { fontSize: 32 }),
     }),
-    chartSlot('CHART_1', 'cols 1-6, rows 3-10'),
-    chartSlot('CHART_2', 'cols 7-12, rows 3-10'),
-  ], { mode: 'chart_dual' }),
+    slot('LEGEND_1', 'cols 2-3, rows 2-3', 'caption', 'Revenue', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 14, fontWeight: 600, color: '#6B7280' }),
+    }),
+    slot('LEGEND_2', 'cols 3-4, rows 2-3', 'caption', 'Forecast', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 14, fontWeight: 600, color: '#6B7280' }),
+    }),
+    chartSlot('CHART_1', 'cols 1-12, rows 3-10', { chartType: 'grouped_bar', series: 1 }),
+    chartSlot('CHART_2', 'cols 1-12, rows 3-10', { chartType: 'grouped_bar', series: 2 }),
+  ], { mode: 'chart_grouped_bar' }),
 
   chart_three_v1: layoutBase('chart_three_v1', 'chart', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'Three views', {
-      typography: typo('heading', { fontSize: 28 }),
+    heading('HEADING', 'cols 2-9, rows 1-2', 'Insert Your Text Here', {
+      typography: typo('heading', { fontSize: 32 }),
     }),
-    chartSlot('CHART_1', 'cols 1-4, rows 3-10'),
-    chartSlot('CHART_2', 'cols 5-8, rows 3-10'),
-    chartSlot('CHART_3', 'cols 9-12, rows 3-10'),
-  ], { mode: 'chart_triple' }),
+    slot('SUBHEADING', 'cols 2-9, rows 2-3', 'subheading', 'This is a sample text', {
+      layer: 10,
+      typography: typo('subheading', { fontSize: 14, color: '#9CA3AF' }),
+    }),
+    slot('LEGEND_1_TITLE', 'cols 10-11, rows 3-4', 'caption', 'Series 1', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 15, fontWeight: 600 }),
+    }),
+    body('LEGEND_1_DESC', 'cols 10-11, rows 4-5', SAMPLE_PARA.one, 2, {
+      typography: typo('caption', { fontSize: 11 }),
+    }),
+    slot('LEGEND_2_TITLE', 'cols 10-11, rows 5-6', 'caption', 'Series 2', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 15, fontWeight: 600 }),
+    }),
+    body('LEGEND_2_DESC', 'cols 10-11, rows 6-7', SAMPLE_PARA.two, 2, {
+      typography: typo('caption', { fontSize: 11 }),
+    }),
+    slot('LEGEND_3_TITLE', 'cols 10-11, rows 7-8', 'caption', 'Series 3', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 15, fontWeight: 600 }),
+    }),
+    body('LEGEND_3_DESC', 'cols 10-11, rows 8-9', SAMPLE_PARA.three, 2, {
+      typography: typo('caption', { fontSize: 11 }),
+    }),
+    chartSlot('CHART_1', 'cols 1-9, rows 3-10', { chartType: 'grouped_bar_3', series: 1 }),
+    chartSlot('CHART_2', 'cols 1-9, rows 3-10', { chartType: 'grouped_bar_3', series: 2 }),
+    chartSlot('CHART_3', 'cols 1-9, rows 3-10', { chartType: 'grouped_bar_3', series: 3 }),
+  ], { mode: 'chart_three_grouped' }),
 
   chart_two_cards_v1: layoutBase('chart_two_cards_v1', 'chart', [
-    cardShapeHint('cols 1-6, rows 2-10', 'CHART_CARD_1_BG', 10, 'CHART_1'),
-    heading('CHART_1_TITLE', 'cols 1-6, rows 2-3', 'Metric A', {
-      typography: typo('heading', { fontSize: 20 }),
+    slot('BADGE', 'cols 5-8, rows 1-2', 'caption', 'PERFORMANCE OVERVIEW', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 11, fontWeight: 600, color: '#3B82F6', align: 'center', textTransform: 'uppercase' }),
     }),
-    chartSlot('CHART_1', 'cols 1-6, rows 4-8'),
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Two metrics comparison', {
+      typography: typo('heading', { fontSize: 28, align: 'center' }),
+    }),
+    body('SUBHEADING', 'cols 2-11, rows 2-3', 'A side-by-side look at how the two metrics perform across four key periods.', 1, {
+      typography: typo('subheading', { fontSize: 15, color: '#6B7280', align: 'center' }),
+    }),
+    // Card 1
+    heading('CHART_1_TITLE', 'cols 1-6, rows 3-4', 'Metric A', {
+      typography: typo('heading', { fontSize: 18 }),
+    }),
+    body('CHART_1_DESC', 'cols 1-6, rows 4-5', 'This is a sample description for metric A.', 1, {
+      typography: typo('body', { fontSize: 12, color: '#6B7280' }),
+    }),
+    slot('CHART_1_GROWTH', 'cols 5-6, rows 3-4', 'stat', '+12%', {
+      layer: 12,
+      typography: typo('stat', { fontSize: 16, fontWeight: 600, color: '#10B981', align: 'right' }),
+    }),
+    chartSlot('CHART_1', 'cols 1-6, rows 5-8'),
     slot('CHART_1_CAPTION', 'cols 1-6, rows 8-9', 'caption', 'Caption one', {
       layer: 10,
-      typography: typo('caption', { align: 'center' }),
+      typography: typo('caption', { align: 'center', fontSize: 11, color: '#9CA3AF' }),
     }),
-    cardShapeHint('cols 7-12, rows 2-10', 'CHART_CARD_2_BG', 10, 'CHART_2'),
-    heading('CHART_2_TITLE', 'cols 7-12, rows 2-3', 'Metric B', {
-      typography: typo('heading', { fontSize: 20 }),
+    // Card 2
+    heading('CHART_2_TITLE', 'cols 7-12, rows 3-4', 'Metric B', {
+      typography: typo('heading', { fontSize: 18 }),
     }),
-    chartSlot('CHART_2', 'cols 7-12, rows 4-8'),
+    body('CHART_2_DESC', 'cols 7-12, rows 4-5', 'This is a sample description for metric B.', 1, {
+      typography: typo('body', { fontSize: 12, color: '#6B7280' }),
+    }),
+    slot('CHART_2_GROWTH', 'cols 11-12, rows 3-4', 'stat', '+8%', {
+      layer: 12,
+      typography: typo('stat', { fontSize: 16, fontWeight: 600, color: '#10B981', align: 'right' }),
+    }),
+    chartSlot('CHART_2', 'cols 7-12, rows 5-8'),
     slot('CHART_2_CAPTION', 'cols 7-12, rows 8-9', 'caption', 'Caption two', {
       layer: 10,
-      typography: typo('caption', { align: 'center' }),
+      typography: typo('caption', { align: 'center', fontSize: 11, color: '#9CA3AF' }),
     }),
-  ], { mode: 'chart_card_grid' }),
+  ], { mode: 'chart_two_cards' }),
 
   chart_three_context_v1: layoutBase('chart_three_context_v1', 'chart', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Quarterly breakdown', {
@@ -344,12 +401,108 @@ Object.assign(CATALOG, {
   chart_donut_context_right_v1: chartsDataFromSource('chart_donut_context_right_v1', 'chart_donut_context_v1', 'right'),
   chart_exponential_desc_side_v1: chartsDataFromSource('chart_exponential_desc_side_v1', 'chart_exponential_desc_v1', 'side'),
   chart_with_description_side_v1: chartsDataFromSource('chart_with_description_side_v1', 'chart_with_description_v1', 'side'),
-  chart_single_split_v1: chartsDataFromSource('chart_single_split_v1', 'chart_single_v1', 'split'),
+  chart_single_split_v1: layoutBase('chart_single_split_v1', 'chart', [
+    heading('HEADING', 'cols 2-6, rows 1-2', 'Flat Bar Chart', {
+      typography: typo('heading', { fontSize: 32 }),
+    }),
+    slot('PANEL_TITLE', 'cols 9-11, rows 4-5', 'heading', 'Sample Text', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 18, color: '#6B7280' }),
+      max_lines: 1,
+    }),
+    body('PANEL_BODY', 'cols 9-11, rows 5-7', 'This is a sample text. Insert your desired text here.', 3),
+    chartSlot('MAIN_CHART', 'cols 2-8, rows 3-10'),
+  ], { mode: 'chart_split' }),
   chart_three_context_cards_v1: chartsDataFromSource('chart_three_context_cards_v1', 'chart_three_context_v1', 'cards'),
   chart_three_donut_cards_v1: chartsDataFromSource('chart_three_donut_cards_v1', 'chart_three_donut_v1', 'cards'),
-  chart_three_cards_v1: chartsDataFromSource('chart_three_cards_v1', 'chart_three_v1', 'cards'),
-  chart_two_cards_split_v1: chartsDataFromSource('chart_two_cards_split_v1', 'chart_two_cards_v1', 'split'),
-  chart_two_split_v1: chartsDataFromSource('chart_two_split_v1', 'chart_two_v1', 'split'),
+  chart_three_cards_v1: layoutBase('chart_three_cards_v1', 'chart', [
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Three metrics comparison', {
+      typography: typo('heading', { fontSize: 28 }),
+    }),
+    // Card 1
+    cardShapeHint('cols 1-4, rows 3-10', 'CHART_CARD_1_BG', 10, 'CHART_1'),
+    heading('CHART_1_TITLE', 'cols 1-4, rows 3-4', 'Metric A', {
+      typography: typo('heading', { fontSize: 18 }),
+    }),
+    chartSlot('CHART_1', 'cols 1-4, rows 4-8'),
+    slot('CHART_1_CAPTION', 'cols 1-4, rows 8-10', 'caption', 'Caption one', {
+      layer: 10,
+      typography: typo('caption', { align: 'center', fontSize: 13 }),
+    }),
+    // Card 2
+    cardShapeHint('cols 5-8, rows 3-10', 'CHART_CARD_2_BG', 10, 'CHART_2'),
+    heading('CHART_2_TITLE', 'cols 5-8, rows 3-4', 'Metric B', {
+      typography: typo('heading', { fontSize: 18 }),
+    }),
+    chartSlot('CHART_2', 'cols 5-8, rows 4-8'),
+    slot('CHART_2_CAPTION', 'cols 5-8, rows 8-10', 'caption', 'Caption two', {
+      layer: 10,
+      typography: typo('caption', { align: 'center', fontSize: 13 }),
+    }),
+    // Card 3
+    cardShapeHint('cols 9-12, rows 3-10', 'CHART_CARD_3_BG', 10, 'CHART_3'),
+    heading('CHART_3_TITLE', 'cols 9-12, rows 3-4', 'Metric C', {
+      typography: typo('heading', { fontSize: 18 }),
+    }),
+    chartSlot('CHART_3', 'cols 9-12, rows 4-8'),
+    slot('CHART_3_CAPTION', 'cols 9-12, rows 8-10', 'caption', 'Caption three', {
+      layer: 10,
+      typography: typo('caption', { align: 'center', fontSize: 13 }),
+    }),
+  ], { mode: 'chart_card_grid_three' }),
+  chart_two_cards_split_v1: layoutBase('chart_two_cards_split_v1', 'chart', [
+    heading('HEADING', 'cols 1-8, rows 1-2', 'Two Metrics Comparison', {
+      typography: typo('heading', { fontSize: 36 }),
+    }),
+    slot('SUBHEADING', 'cols 1-12, rows 2-3', 'subheading', 'A side-by-side view of how Metric A and Metric B perform across four quarters.', {
+      layer: 10,
+      typography: typo('subheading', { fontSize: 14, color: '#9CA3AF' }),
+    }),
+    heading('METRIC_A_TITLE', 'cols 2-5, rows 3-4', 'Metric A', {
+      typography: typo('heading', { fontSize: 22, fontWeight: 700 }),
+    }),
+    body('METRIC_A_DESC', 'cols 2-5, rows 4-5', 'This is a sample description for metric A, giving a brief overview of what this metric represents.', 2, {
+      typography: typo('body', { fontSize: 11, color: '#6B7280' }),
+    }),
+    slot('METRIC_A_LABEL', 'cols 2-5, rows 5-6', 'caption', '● Performance Trend', {
+      layer: 12,
+      typography: typo('caption', { fontSize: 12, color: '#3B82F6', fontWeight: 600 }),
+    }),
+    chartSlot('CHART_1', 'cols 6-12, rows 3-6'),
+    
+    heading('METRIC_B_TITLE', 'cols 2-5, rows 7-8', 'Metric B', {
+      typography: typo('heading', { fontSize: 22, fontWeight: 700 }),
+    }),
+    body('METRIC_B_DESC', 'cols 2-5, rows 8-9', 'This is a sample description for metric B, giving a brief overview of what this metric represents.', 2, {
+      typography: typo('body', { fontSize: 11, color: '#6B7280' }),
+    }),
+    slot('METRIC_B_LABEL', 'cols 2-5, rows 9-10', 'caption', '● Performance Trend', {
+      layer: 12,
+      typography: typo('caption', { fontSize: 12, color: '#8B5CF6', fontWeight: 600 }),
+    }),
+    chartSlot('CHART_2', 'cols 6-12, rows 7-10'),
+  ], { mode: 'chart_metrics_comparison' }),
+  chart_two_split_v1: layoutBase('chart_two_split_v1', 'chart', [
+    heading('HEADING', 'cols 2-6, rows 1-2', 'Revenue vs Forecast', {
+      typography: typo('heading', { fontSize: 32 }),
+    }),
+    slot('LEGEND_1', 'cols 5-6, rows 2-3', 'caption', 'Revenue', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 14, fontWeight: 600, color: '#6B7280' }),
+    }),
+    slot('LEGEND_2', 'cols 6-7, rows 2-3', 'caption', 'Forecast', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 14, fontWeight: 600, color: '#6B7280' }),
+    }),
+    slot('PANEL_TITLE', 'cols 9-11, rows 4-5', 'heading', 'Sample Text', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 18, color: '#6B7280' }),
+      max_lines: 1,
+    }),
+    body('PANEL_BODY', 'cols 9-11, rows 5-7', 'This is a sample text. Insert your desired text here.', 3),
+    chartSlot('CHART_1', 'cols 1-8, rows 3-10', { chartType: 'grouped_bar', series: 1 }),
+    chartSlot('CHART_2', 'cols 1-8, rows 3-10', { chartType: 'grouped_bar', series: 2 }),
+  ], { mode: 'chart_grouped_bar_split' }),
   metric_five_cards_v1: chartsDataFromSource('metric_five_cards_v1', 'metric_five_v1', 'cards'),
   metric_four_cards_v1: chartsDataFromSource('metric_four_cards_v1', 'metric_four_v1', 'cards'),
   metric_three_cards_v1: chartsDataFromSource('metric_three_cards_v1', 'metric_three_v1', 'cards'),
