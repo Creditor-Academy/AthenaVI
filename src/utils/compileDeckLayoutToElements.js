@@ -14,6 +14,7 @@ import {
   validateLayoutGeometry,
 } from './compileLayoutGeometry'
 import { finalizeTimelineShapes } from './timelineShapeFinalize'
+import { finalizeChartShapes } from './chartShapeFinalize'
 import { isPricingFourPlansLayout } from './pricingFourPlans.js'
 import { isPricingFourPlansFeaturedLayout } from './pricingFourPlansFeatured.js'
 import { isPricingFourParaLayout } from './pricingFourPara.js'
@@ -1289,6 +1290,7 @@ export function compileDeckLayoutToElements(schema, options = {}) {
     themedPalette
   )
   result = finalizeTimelineShapes(result, schema, colorMap, { width: canvasW, height: canvasH })
+  result = finalizeChartShapes(result, schema, colorMap, { width: canvasW, height: canvasH })
   result = applyThemeSlideBackground(result, themedPalette, canvasW, canvasH)
   result = applyReadableTextContrastForPreview(result, colorRoleMapFromPalette(options.palette), schema)
   if (options.packColumnStacks === true) {
