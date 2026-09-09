@@ -6,6 +6,7 @@ import '../PptBuilder.css'
 import '../../AIPptGenerator.css'
 import presentationService from '../../../../services/presentationService'
 import brandKitService from '../../../../services/brandKitService'
+import { listBrandKitsUsableInWorkspace } from '../../../../utils/brandKitWorkspace'
 import { dedupeBrandKitList } from '../../../../utils/brandKitHelpers'
 import { resolvePresentationWorkspaceContext } from '../../../../utils/presentationContext'
 import {
@@ -215,7 +216,7 @@ export default function TemplateSelector({
         const [templatesPayload, packsPayload, kits] = await Promise.all([
           presentationService.listTemplates(ctx.workspaceId).catch(() => null),
           presentationService.listDeckPacks(ctx.workspaceId).catch(() => null),
-          brandKitService.list(ctx.workspaceId).catch(() => []),
+          listBrandKitsUsableInWorkspace(ctx.workspaceId).catch(() => []),
         ])
 
         if (cancelled) return

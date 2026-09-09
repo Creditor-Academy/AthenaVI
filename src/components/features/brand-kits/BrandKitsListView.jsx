@@ -40,23 +40,6 @@ export default function BrandKitsListView({
             </p>
           </div>
           <div className="videos-actions">
-            {workspaces.length > 0 && (
-              <label className="bk-workspace-select">
-                <span className="bk-workspace-select-label">Workspace</span>
-                <select
-                  value={workspaceId || ''}
-                  onChange={(e) => onWorkspaceChange?.(e.target.value)}
-                  aria-label="Brand kit workspace"
-                >
-                  {workspaces.map((ws) => (
-                    <option key={ws.id} value={ws.id}>
-                      {ws.name}
-                      {ws.isPersonal ? ' (Personal)' : ''}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            )}
             <div className="view-toggle" role="group" aria-label="View mode">
               <button
                 type="button"

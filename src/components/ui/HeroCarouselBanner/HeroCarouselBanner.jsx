@@ -58,7 +58,7 @@ export default function HeroCarouselBanner({ slides = [], autoPlayInterval = 600
                 {slide.tag && (
                   <div className="hero-carousel-tag">
                     <span className="hero-carousel-tag-dot" />
-                    <span>{slide.tag}</span>
+                    <span>{typeof slide.tag === 'string' ? slide.tag.replace(/^[\s•·]+/, '') : slide.tag}</span>
                   </div>
                 )}
 

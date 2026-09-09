@@ -60,47 +60,38 @@ function tagKits(kits, workspace, { inheritDefault = true } = {}) {
 }
 
 /**
- * Kits usable when creating a presentation in `workspaceId`.
- * Always includes kits in that workspace. For OWNER/ADMIN also includes
- * kits from their personal workspace so Brand Kits page kits appear in
- * team PPT flows (copied into the target workspace on generate if needed).
+ * Kits usable when creating or editing a presentation.
+ * Returns ALL brand kits accessible across all workspaces so any brand kit
+ * can be used anywhere in any workspace.
  */
-export async function listBrandKitsUsableInWorkspace(workspaceId) {
-  if (!workspaceId) return []
-
+export async function listBrandKitsUsableInWorkspace(workspaceId = null) {
   const workspaces = await listBrandKitWorkspaces()
-  const target =
-    workspaces.find((ws) => String(ws.id) === String(workspaceId)) ||
-    normalizeWorkspace({ id: workspaceId, name: 'Workspace' })
-
   const seen = new Set()
   const merged = []
 
-  const addFrom = async (ws, options) => {
-    if (!ws?.id) return
+  const targetWs = workspaceId
+    ? workspaces.find((ws) => String(ws.id) === String(workspaceId))
+    : null
+
+  const orderedWorkspaces = targetWs
+    ? [targetWs, ...workspaces.filter((ws) => String(ws.id) !== String(workspaceId))]
+    : workspaces
+
+  for (const ws of orderedWorkspaces) {
+    if (!ws?.id) continue
     try {
       const kits = await brandKitService.list(ws.id, { includePersonal: false })
-      for (const kit of tagKits(kits, ws, options)) {
+      for (const kit of tagKits(kits, ws)) {
         const id = String(kit?.id || '')
         if (!id || seen.has(id)) continue
         seen.add(id)
         merged.push(kit)
       }
     } catch {
-      // skip workspaces the user cannot read
+      // skip workspaces user cannot read
     }
   }
 
-  await addFrom(target)
-
-  if (canWriteBrandKits(target.role)) {
-    const personal = workspaces.find((ws) => ws.isPersonal)
-    if (personal && String(personal.id) !== String(target.id)) {
-      await addFrom(personal, { inheritDefault: false })
-    }
-  }
-
-  // Target workspace is added first, so same-name personal clones drop.
   const unique = dedupeBrandKitList(merged, { byName: true })
 
   unique.sort((a, b) => {
@@ -111,25 +102,24 @@ export async function listBrandKitsUsableInWorkspace(workspaceId) {
   return unique
 }
 
-/** @deprecated Prefer listBrandKitsUsableInWorkspace(presentationWorkspaceId) */
+/** @deprecated Prefer listBrandKitsUsableInWorkspace() */
 export async function listAllAccessibleBrandKits() {
-  const ctx = await resolveBrandKitsWorkspaceContext()
-  return listBrandKitsUsableInWorkspace(ctx.workspaceId)
+  return listBrandKitsUsableInWorkspace()
 }
 
 /**
- * Ensure `brandKitId` exists in `targetWorkspaceId`.
- * If the kit lives in another workspace, clone name+data into the target
- * (OWNER/ADMIN write). Media is not copied — colors/fonts/voice are.
+ * Ensure `brandKitId` exists across workspaces.
+ * Searches all accessible workspaces for the brand kit.
  */
 export async function ensureBrandKitInWorkspace(
   targetWorkspaceId,
   brandKitId,
   sourceWorkspaceId = null
 ) {
-  if (!targetWorkspaceId || !brandKitId) return null
+  if (!brandKitId) return null
 
   const tryGet = async (wsId) => {
+    if (!wsId) return null
     try {
       return await brandKitService.get(wsId, brandKitId)
     } catch {
@@ -137,49 +127,21 @@ export async function ensureBrandKitInWorkspace(
     }
   }
 
-  // Already in target workspace
-  const inTarget = await tryGet(targetWorkspaceId)
-  if (inTarget?.id) return String(inTarget.id)
-
-  const sourceId = sourceWorkspaceId || null
-  let detail = sourceId ? await tryGet(sourceId) : null
-
-  if (!detail) {
-    const workspaces = await listBrandKitWorkspaces()
-    for (const ws of workspaces) {
-      if (String(ws.id) === String(targetWorkspaceId)) continue
-      detail = await tryGet(ws.id)
-      if (detail?.id) break
-    }
+  if (targetWorkspaceId) {
+    const inTarget = await tryGet(targetWorkspaceId)
+    if (inTarget?.id) return String(inTarget.id)
   }
 
-  if (!detail?.id) {
-    throw new Error('Brand kit not found')
+  if (sourceWorkspaceId) {
+    const inSource = await tryGet(sourceWorkspaceId)
+    if (inSource?.id) return String(inSource.id)
   }
 
-  // Reuse a same-name kit already in the target instead of cloning again.
-  try {
-    const existing = await brandKitService.list(targetWorkspaceId)
-    const nameKey = String(detail.name || '').trim().toLowerCase()
-    const match = nameKey
-      ? (existing || []).find(
-          (kit) => String(kit.name || '').trim().toLowerCase() === nameKey
-        )
-      : null
-    if (match?.id) return String(match.id)
-  } catch {
-    // fall through to create
+  const workspaces = await listBrandKitWorkspaces()
+  for (const ws of workspaces) {
+    const found = await tryGet(ws.id)
+    if (found?.id) return String(found.id)
   }
 
-  const created = await brandKitService.create(targetWorkspaceId, {
-    name: detail.name || 'Brand Kit',
-    isDefault: false,
-    data: detail.data,
-  })
-
-  const newId = created?.id
-  if (!newId) {
-    throw new Error('Could not copy brand kit into this workspace')
-  }
-  return String(newId)
+  return String(brandKitId)
 }

@@ -72,7 +72,7 @@ export default function BrandKitEditor(props) {
       <div className="videos-shell">
         <header className="videos-page-header">
           <div className="videos-title-section">
-            <div className="workspace-header-title">
+            <div className="brandkit-header-title-row">
               <button
                 type="button"
                 className="workspace-back-btn"
@@ -82,7 +82,10 @@ export default function BrandKitEditor(props) {
               >
                 <MdArrowBack size={20} />
               </button>
-              <h1 className="videos-page-title">Brand Kits</h1>
+              <div>
+                <h1 className="videos-page-title">{kitName || 'Edit Brand Kit'}</h1>
+                <p className="videos-page-subtitle">Customize colors, fonts, voice, logos & guidelines</p>
+              </div>
             </div>
           </div>
           <div className="videos-actions">

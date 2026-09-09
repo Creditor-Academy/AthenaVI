@@ -58,6 +58,7 @@ import { savePresentationEditorSession } from '../../../utils/presentationEditor
 import PptPresenceAvatars from './PptPresenceAvatars'
 import usePptPresence from './usePptPresence'
 import brandKitService from '../../../services/brandKitService'
+import { listBrandKitsUsableInWorkspace } from '../../../utils/brandKitWorkspace'
 import { dedupeBrandKitList, primaryLogoUrlFromKit, brandKitInitials } from '../../../utils/brandKitHelpers'
 import assetService from '../../../services/assetService'
 import { isInsufficientCreditsError } from '../../../services/creditsService'
@@ -2460,7 +2461,7 @@ export default function AIPptEditor({
         }
         await reloadPresentation()
         const [kits, presetsPayload] = await Promise.all([
-          brandKitService.list(workspaceId).catch(() => []),
+          listBrandKitsUsableInWorkspace(workspaceId).catch(() => []),
           presentationService.listElementPresets(workspaceId).catch(() => null),
         ])
         if (cancelled) return
