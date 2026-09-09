@@ -8,6 +8,7 @@ import { isChartTwoCardsLayout, layoutChartTwoCards } from './chartTwoCards.js'
 import { isChartThreeCardsLayout, layoutChartThreeCards } from './chartThreeCards.js'
 import { isChartThreeContextLayout, layoutChartThreeContext } from './chartThreeContext.js'
 import { isChartThreeContextCardsLayout, layoutChartThreeContextCards } from './chartThreeContextCards.js'
+import { isChartDonutContextLayout, layoutChartDonutContext } from './chartDonutContext.js'
 
 export function finalizeChartShapes(elements, schema, palette = {}, canvas = {}) {
   const layoutId = schema?.layout_id || schema?.id || schema?.layoutId
@@ -50,6 +51,10 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
   
   if (isChartThreeContextCardsLayout(layoutId)) {
     return layoutChartThreeContextCards(elements, schema, palette, canvas)
+  }
+  
+  if (isChartDonutContextLayout(layoutId)) {
+    return layoutChartDonutContext(elements, schema, palette, canvas)
   }
   
   return elements
