@@ -13,6 +13,8 @@ import { isMetricThreeCardsLayout, layoutMetricThreeCards } from './metricThreeC
 import { isMetricSingleLayout, layoutMetricSingle } from './metricSingle.js'
 import { isMetricTwoLayout, layoutMetricTwo } from './metricTwo.js'
 import { isMetricSingleSplitLayout, layoutMetricSingleSplit } from './metricSingleSplit.js'
+import { isMetricThreeLayout, layoutMetricThree } from './metricThree.js'
+import { isMetricTwoSplitLayout, layoutMetricTwoSplit } from './metricTwoSplit.js'
 
 export function finalizeChartShapes(elements, schema, palette = {}, canvas = {}) {
   const layoutId = schema?.layout_id || schema?.id || schema?.layoutId
@@ -75,6 +77,14 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
   
   if (isMetricSingleSplitLayout(layoutId)) {
     return layoutMetricSingleSplit(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricThreeLayout(layoutId)) {
+    return layoutMetricThree(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricTwoSplitLayout(layoutId)) {
+    return layoutMetricTwoSplit(elements, schema, palette, canvas)
   }
   
   return elements
