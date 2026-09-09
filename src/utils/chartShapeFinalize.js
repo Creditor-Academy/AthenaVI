@@ -9,6 +9,10 @@ import { isChartThreeCardsLayout, layoutChartThreeCards } from './chartThreeCard
 import { isChartThreeContextLayout, layoutChartThreeContext } from './chartThreeContext.js'
 import { isChartThreeContextCardsLayout, layoutChartThreeContextCards } from './chartThreeContextCards.js'
 import { isChartDonutContextLayout, layoutChartDonutContext } from './chartDonutContext.js'
+import { isMetricThreeCardsLayout, layoutMetricThreeCards } from './metricThreeCards.js'
+import { isMetricSingleLayout, layoutMetricSingle } from './metricSingle.js'
+import { isMetricTwoLayout, layoutMetricTwo } from './metricTwo.js'
+import { isMetricSingleSplitLayout, layoutMetricSingleSplit } from './metricSingleSplit.js'
 
 export function finalizeChartShapes(elements, schema, palette = {}, canvas = {}) {
   const layoutId = schema?.layout_id || schema?.id || schema?.layoutId
@@ -55,6 +59,22 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
   
   if (isChartDonutContextLayout(layoutId)) {
     return layoutChartDonutContext(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricThreeCardsLayout(layoutId)) {
+    return layoutMetricThreeCards(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricSingleLayout(layoutId)) {
+    return layoutMetricSingle(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricTwoLayout(layoutId)) {
+    return layoutMetricTwo(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricSingleSplitLayout(layoutId)) {
+    return layoutMetricSingleSplit(elements, schema, palette, canvas)
   }
   
   return elements
