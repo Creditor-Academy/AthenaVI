@@ -23,6 +23,7 @@ import { isTableWithDescriptionLayout, tableWithDescriptionPreviewSvg } from '..
 import { isTableWithDescriptionSideLayout, tableSidePreviewSvg } from '../../utils/tableWithDescriptionSideLayout.js'
 import { isTableTwoDescLayout, tableTwoDescPreviewSvg } from '../../utils/tableTwoDescLayout.js'
 import { isTableTwoDescCardsLayout, tableTwoDescCardsPreviewSvg } from '../../utils/tableTwoDescCardsLayout.js'
+import { isProcessLinearBusinessLayout, processLinearBusinessPreviewSvg } from '../../utils/processLinearBusinessLayout.js'
 import { DEVICE_FRAMES_PREVIEW_MODES } from './layoutPolishedPreviewsDeviceFrames.jsx'
 import { DIAGRAM_PREVIEW_MODES } from './layoutPolishedPreviewsDiagrams.jsx'
 import { AGENDA_PREVIEW_MODES } from './layoutPolishedPreviewsAgenda.jsx'
@@ -2425,6 +2426,26 @@ export default function LayoutPolishedPreview({
             position: 'absolute', left: '61%', top: '62%', fontSize: large ? '0.2rem' : '0.08rem', fontWeight: 700, color: t.text,
           }}>Description 2</div>
         </div>
+      </div>
+    )
+  }
+
+  if (isProcessLinearBusinessLayout(previewHints.layout_id)) {
+    const svg = processLinearBusinessPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    const t = LAYOUT_POLISHED_THEME
+    const frameStyle = fill
+      ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+      : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
       </div>
     )
   }

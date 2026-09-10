@@ -30,6 +30,7 @@ import {
   pyramidModeFromSchema,
   PYRAMID_BADGE_CLIP,
 } from './diagramPyramid'
+import { isProcessLinearBusinessLayout } from './processLinearBusinessLayout'
 import {
   SWOT_N,
   SWOT_LETTERS,
@@ -218,7 +219,7 @@ function layoutHasExplicitCardBg(schema, groupKey) {
 
 export function applyDefaultCardShapes(elements, schema, palette = {}, canvas = {}) {
   if (!Array.isArray(elements) || !schema?.slots?.length) return elements
-  if (isProcessLinnerLayout(schema.layout_id)) return elements
+  if (isProcessLinnerLayout(schema.layout_id) || isProcessLinearBusinessLayout(schema.layout_id)) return elements
 
   const slots = schema.slots
   const next = [...elements]
@@ -304,6 +305,7 @@ function updateElementBySlotId(elements, slotId, patchFn) {
 export function applyProcessLinnerHortiShapes(elements, schema, palette = {}, canvas = {}) {
   if (!Array.isArray(elements) || !schema?.slots?.length) return elements
   const layoutId = String(schema.layout_id || '')
+  if (isProcessLinearBusinessLayout(layoutId)) return elements
   if (!isProcessLinnerHortiLayout(layoutId)) return elements
   if (elements.some((el) => String(el.slotId || '') === 'PROCESS_LINNER_SPINE')) return elements
 
@@ -651,6 +653,7 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
   if (isTimelineHorizontalLayout(layoutId)) return elements
   if (isProcessLinnerLayout(layoutId)) return elements
   if (isProcessLinnerHortiLayout(layoutId)) return elements
+  if (isProcessLinearBusinessLayout(layoutId)) return elements
   if (!isProcessFlowLayout(layoutId)) return elements
 
   if (
