@@ -27,6 +27,7 @@ import { isTableWithDescriptionLayout } from './tableWithDescriptionLayout.js'
 import { isTableWithDescriptionSideLayout } from './tableWithDescriptionSideLayout.js'
 import { isTableTwoDescLayout } from './tableTwoDescLayout.js'
 import { isTableTwoDescCardsLayout } from './tableTwoDescCardsLayout.js'
+import { isProcessLinearBusinessLayout } from './processLinearBusinessLayout.js'
 import { isTimelineHorizontalLayout } from './timelineHorizontal.js'
 import { isTimelineVerticalLayout } from './timelineVertical.js'
 import { isTimelineVerticalCardsLayout } from './timelineVerticalCards.js'
@@ -1121,6 +1122,7 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
       (isTableWithDescriptionSideLayout(schema?.layout_id) && (/^(COL|ROW|CELL)_\d+/i.test(String(el.slotId || '')) || /^(HEADING|SUBTITLE|SIDE_HEADING|BODY|DESCRIPTION)$/i.test(String(el.slotId || '')))) ||
       (isTableTwoDescLayout(schema?.layout_id) && (/^(T[12]_|DATASET_|TABLE_|TAG_|DESC_|HEADING|SUBTITLE)/i.test(String(el.slotId || '')))) ||
       (isTableTwoDescCardsLayout(schema?.layout_id) && (/^(T[12]_|DATASET_|TABLE_|TAG_|DESC_|SUB_|HEADING|SUBTITLE)/i.test(String(el.slotId || '')))) ||
+      (isProcessLinearBusinessLayout(schema?.layout_id) && (/^(STEP_\d+_(TITLE|BODY|SHAPE|CHEVRON|CARD|ICON)|HEADING|PROCESS_LINEAR_CHROME)$/i.test(String(el.slotId || '')))) ||
       (isTimelineHorizontalLayout(schema?.layout_id) && /^milestone_\d+_(label|num)$/i.test(String(el.slotId || ''))) ||
       (isTimelineHorizontalCardsLayout(schema?.layout_id) && /^milestone_\d+_(num|label|foot)$/i.test(String(el.slotId || ''))) ||
       (isTimelineMilestonesLayout(schema?.layout_id) && /^milestone_\d+_(label|num|title)$/i.test(String(el.slotId || ''))) ||

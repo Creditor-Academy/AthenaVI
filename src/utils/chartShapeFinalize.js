@@ -21,6 +21,7 @@ import { isTableWithDescriptionLayout, layoutTableWithDescription } from './tabl
 import { isTableWithDescriptionSideLayout, layoutTableWithDescriptionSide } from './tableWithDescriptionSideLayout.js'
 import { isTableTwoDescLayout, layoutTableTwoDesc } from './tableTwoDescLayout.js'
 import { isTableTwoDescCardsLayout, layoutTableTwoDescCards } from './tableTwoDescCardsLayout.js'
+import { isProcessLinearBusinessLayout, layoutProcessLinearBusiness } from './processLinearBusinessLayout.js'
 
 export function finalizeChartShapes(elements, schema, palette = {}, canvas = {}) {
   const layoutId = schema?.layout_id || schema?.id || schema?.layoutId
@@ -115,6 +116,10 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
   
   if (isTableTwoDescCardsLayout(layoutId)) {
     return layoutTableTwoDescCards(elements, schema, palette, canvas)
+  }
+  
+  if (isProcessLinearBusinessLayout(layoutId)) {
+    return layoutProcessLinearBusiness(elements, schema, palette, canvas)
   }
   
   return elements

@@ -429,6 +429,26 @@ const CATALOG = {
     }),
   ], { mode: 'process_linner_horti' }),
 
+  process_linear_business_v1: layoutBase('process_linear_business_v1', 'chart', [
+    heading('HEADING', 'cols 1-12, rows 1-2', 'Linear Business Process Diagram', {
+      typography: typo('heading', { fontSize: 26, fontWeight: 800, align: 'left' }),
+    }),
+    slot('STEP_1_TITLE', 'cols 1-2, rows 3-4', 'heading', 'Text goes here', { layer: 10, typography: typo('heading', { fontSize: 14, align: 'center', fontWeight: 800 }) }),
+    body('STEP_1_BODY', 'cols 1-2, rows 4-6', 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.', 4, { typography: typo('body', { fontSize: 11, align: 'center', colorRole: 'muted' }) }),
+    slot('STEP_2_TITLE', 'cols 3-4, rows 7-8', 'heading', 'Text goes here', { layer: 10, typography: typo('heading', { fontSize: 14, align: 'center', fontWeight: 800 }) }),
+    body('STEP_2_BODY', 'cols 3-4, rows 8-10', 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.', 4, { typography: typo('body', { fontSize: 11, align: 'center', colorRole: 'muted' }) }),
+    slot('STEP_3_TITLE', 'cols 5-6, rows 3-4', 'heading', 'Text goes here', { layer: 10, typography: typo('heading', { fontSize: 14, align: 'center', fontWeight: 800 }) }),
+    body('STEP_3_BODY', 'cols 5-6, rows 4-6', 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.', 4, { typography: typo('body', { fontSize: 11, align: 'center', colorRole: 'muted' }) }),
+    slot('STEP_4_TITLE', 'cols 6-7, rows 7-8', 'heading', 'Text goes here', { layer: 10, typography: typo('heading', { fontSize: 14, align: 'center', fontWeight: 800 }) }),
+    body('STEP_4_BODY', 'cols 6-7, rows 8-10', 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.', 4, { typography: typo('body', { fontSize: 11, align: 'center', colorRole: 'muted' }) }),
+    slot('STEP_5_TITLE', 'cols 8-9, rows 3-4', 'heading', 'Text goes here', { layer: 10, typography: typo('heading', { fontSize: 14, align: 'center', fontWeight: 800 }) }),
+    body('STEP_5_BODY', 'cols 8-9, rows 4-6', 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.', 4, { typography: typo('body', { fontSize: 11, align: 'center', colorRole: 'muted' }) }),
+    slot('STEP_6_TITLE', 'cols 10-11, rows 7-8', 'heading', 'Text goes here', { layer: 10, typography: typo('heading', { fontSize: 14, align: 'center', fontWeight: 800 }) }),
+    body('STEP_6_BODY', 'cols 10-11, rows 8-10', 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.', 4, { typography: typo('body', { fontSize: 11, align: 'center', colorRole: 'muted' }) }),
+    slot('STEP_7_TITLE', 'cols 11-12, rows 3-4', 'heading', 'Text goes here', { layer: 10, typography: typo('heading', { fontSize: 14, align: 'center', fontWeight: 800 }) }),
+    body('STEP_7_BODY', 'cols 11-12, rows 4-6', 'Lorem Ipsum is simply dummy text of the printing and typesetting industry.', 4, { typography: typo('body', { fontSize: 11, align: 'center', colorRole: 'muted' }) }),
+  ], { mode: 'process_linear_business' }),
+
   process_linner_horti_four_v1: layoutBase('process_linner_horti_four_v1', 'chart', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'How it works', {
       typography: typo('heading', { fontSize: 28 }),

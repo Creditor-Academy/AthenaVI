@@ -17,7 +17,7 @@ const REGISTRY = {
 
 /** Retired layout ids → current catalog entry (no persisted alias slides). */
 const LAYOUT_ID_ALIASES = {
-  process_linear_v1: 'process_linner_horti_v1',
+  process_linear_v1: 'process_linear_business_v1',
 }
 
 export function normalizeLayoutId(layoutId) {
@@ -267,6 +267,7 @@ const LAYOUT_PREVIEW_MODES = {
   table_two_desc_cards_v1: 'table_dual',
   table_two_same_header_v1: 'table_dual_shared_header',
   table_two_same_header_cards_v1: 'table_dual_shared_header',
+  process_linear_business_v1: 'process_linear_business',
   process_linner_horti_v1: 'process_linner_horti',
   process_linner_horti_four_v1: 'process_linner_horti',
   process_linner_numeric_v1: 'process_linner_numeric',
