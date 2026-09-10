@@ -33,7 +33,7 @@ import PptBuilder from '../Slides/PptBuilder/PptBuilder.jsx'
 import AIImageStudio from '../Slides/AIStudio/AIImageStudio.jsx'
 import AIPptEditor from '../Slides/AIPptComponents/AIPptEditor.jsx'
 import PptDeckOpenBoot from '../Slides/AIPptComponents/PptDeckOpenBoot.jsx'
-import SlidesComingSoon from '../Slides/SlidesComingSoon.jsx'
+import CanvasEditor from '../CanvasEditor/CanvasEditor.jsx'
 import { getAvatarTypeOption } from '../Avatars/avatarTypeOptions.js'
 import NotificationsQuickModal from '../../components/ui/NotificationsQuickModal/NotificationsQuickModal.jsx'
 import CreditsQuickModal from '../../components/ui/CreditsQuickModal/CreditsQuickModal.jsx'
@@ -799,13 +799,16 @@ function Dashboard({ onCreate, initialSection }) {
           )}
           {section === 'brandkits' && <BrandKits />}
           {section === 'image-editor' && (
-            <SlidesComingSoon
-              section={section}
-              onBackHome={() => goToSection('home')}
-              createContext={
-                createLocationContext?.optionId === 'image-editor' ? createLocationContext : null
-              }
-            />
+            createPortal(
+              <CanvasEditor
+                onBack={() => {
+                  const destination = persistWorkspaceFolderNavigation(createLocationContext)
+                  window.location.href = destination
+                }}
+                initialSize={createLocationContext?.canvasSize || null}
+              />,
+              document.body
+            )
           )}
           {section === 'credits' && <Settings onBack={() => goToSection('home')} initialTab="billing" />}
           {section === 'profile' && <Profile onBack={() => goToSection('home')} />}

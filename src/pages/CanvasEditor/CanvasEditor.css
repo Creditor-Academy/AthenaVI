@@ -1,0 +1,1061 @@
+/* ==========================================================================
+   CANVA-STYLE STUDIO EDITOR DESIGN SYSTEM
+   ========================================================================== */
+
+.canvas-editor-page {
+  --canva-bg: var(--bg-main, #f3f4f6);
+  --canva-surface: var(--bg-surface, #ffffff);
+  --canva-card: var(--bg-card, #ffffff);
+  --canva-border: var(--border-color, #e5e7eb);
+  --canva-text: var(--text-main, #111827);
+  --canva-muted: var(--text-muted, #6b7280);
+  --canva-accent: var(--primary, #2563eb);
+  --canva-accent-hover: var(--primary-hover, #1d4ed8);
+  --canva-accent-soft: color-mix(in srgb, var(--canva-accent) 12%, transparent);
+  --canva-dock-bg: #111827;
+  --canva-dock-text: #9ca3af;
+  --canva-dock-active: #ffffff;
+
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: var(--canva-bg);
+  color: var(--canva-text);
+  font-family: var(--font-family, Inter, system-ui, -apple-system, sans-serif);
+  user-select: none;
+}
+
+.canvas-editor-page button,
+.canvas-editor-page input,
+.canvas-editor-page select,
+.canvas-editor-page textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* ==========================================================================
+   1. CANVA HEADER TOP BAR
+   ========================================================================== */
+
+.canva-header {
+  position: relative;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 54px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--canva-border);
+  background: var(--canva-surface);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.canva-header-left,
+.canva-header-center,
+.canva-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.canva-header-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--canva-border);
+  border-radius: 8px;
+  background: var(--canva-surface);
+  color: var(--canva-text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.canva-header-back-btn:hover {
+  border-color: var(--canva-accent);
+  color: var(--canva-accent);
+  background: var(--canva-accent-soft);
+}
+
+.canva-header-divider {
+  width: 1px;
+  height: 22px;
+  background: var(--canva-border);
+}
+
+.canva-header-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.canva-header-title-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--canva-text);
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.canva-header-title-btn:hover {
+  border-color: var(--canva-border);
+  background: var(--canva-bg);
+}
+
+.canva-header-title-text {
+  max-width: 220px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.canva-header-title-icon {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.canva-header-title-input {
+  height: 32px;
+  padding: 0 10px;
+  border: 2px solid var(--canva-accent);
+  border-radius: 6px;
+  background: var(--canva-surface);
+  color: var(--canva-text);
+  font-size: 14px;
+  font-weight: 700;
+  outline: none;
+}
+
+.canva-header-save-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.canva-header-history-group {
+  display: flex;
+  align-items: center;
+  background: var(--canva-bg);
+  border: 1px solid var(--canva-border);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.canva-header-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--canva-text);
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.canva-header-icon-btn:hover:not(:disabled) {
+  background: var(--canva-accent-soft);
+  color: var(--canva-accent);
+}
+
+.canva-header-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.canva-header-size-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--canva-border);
+  border-radius: 8px;
+  background: var(--canva-surface);
+  color: var(--canva-muted);
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.canva-header-size-pill:hover {
+  border-color: var(--canva-accent);
+  color: var(--canva-text);
+}
+
+.canva-header-secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--canva-border);
+  border-radius: 8px;
+  background: var(--canva-surface);
+  color: var(--canva-text);
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.canva-header-secondary-btn:hover {
+  border-color: var(--canva-accent);
+  color: var(--canva-accent);
+}
+
+.canva-header-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 8px;
+  background: var(--canva-accent);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--canva-accent) 35%, transparent);
+  transition: all 160ms ease;
+}
+
+.canva-header-primary-btn:hover {
+  background: var(--canva-accent-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--canva-accent) 45%, transparent);
+}
+
+/* ==========================================================================
+   2. STUDIO 3-PANE LAYOUT BODY
+   ========================================================================== */
+
+.canvas-editor-studio-body {
+  display: flex;
+  flex: 1;
+  height: calc(100vh - 54px);
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   3. CANVA FAR LEFT DOCK (NARROW SIDEBAR)
+   ========================================================================== */
+
+.canva-dock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 68px;
+  height: 100%;
+  border-right: 1px solid var(--canva-border);
+  background: var(--canva-dock-bg);
+  color: var(--canva-dock-text);
+  padding: 12px 0;
+  z-index: 30;
+}
+
+.canva-dock-tabs {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.canva-dock-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 56px;
+  height: 54px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--canva-dock-text);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.canva-dock-tab-icon {
+  font-size: 20px;
+}
+
+.canva-dock-tab-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.canva-dock-tab:hover {
+  color: var(--canva-dock-active);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.canva-dock-tab.is-active {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.canva-dock-toggle-btn {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--canva-dock-text);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.canva-dock-toggle-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ==========================================================================
+   4. EXPANDABLE LEFT DRAWER PANEL
+   ========================================================================== */
+
+.canva-drawer {
+  width: 320px;
+  height: 100%;
+  border-right: 1px solid var(--canva-border);
+  background: var(--canva-surface);
+  display: flex;
+  flex-direction: column;
+  z-index: 20;
+  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.04);
+}
+
+.canva-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--canva-border);
+}
+
+.canva-drawer-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--canva-text);
+}
+
+.canva-drawer-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--canva-muted);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.canva-drawer-close-btn:hover {
+  background: var(--canva-bg);
+  color: var(--canva-text);
+}
+
+.canva-drawer-search {
+  position: relative;
+  margin: 16px 20px 0;
+}
+
+.canva-drawer-search input {
+  width: 100%;
+  height: 38px;
+  padding: 0 36px 0 36px;
+  border: 1px solid var(--canva-border);
+  border-radius: 8px;
+  background: var(--canva-bg);
+  color: var(--canva-text);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 150ms ease;
+}
+
+.canva-drawer-search input:focus {
+  border-color: var(--canva-accent);
+  background: var(--canva-surface);
+}
+
+.canva-drawer-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 11px;
+  color: var(--canva-muted);
+  font-size: 16px;
+}
+
+.canva-drawer-search-clear {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  border: none;
+  background: transparent;
+  color: var(--canva-muted);
+  cursor: pointer;
+}
+
+.canva-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.canva-drawer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.canva-drawer-label {
+  font-size: 12px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--canva-muted);
+}
+
+/* Text Presets Cards */
+
+.canva-text-preset-card {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid var(--canva-border);
+  border-radius: 10px;
+  background: var(--canva-bg);
+  color: var(--canva-text);
+  cursor: pointer;
+  transition: all 160ms ease;
+  text-align: left;
+}
+
+.canva-text-preset-card:hover {
+  border-color: var(--canva-accent);
+  background: var(--canva-surface);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.canva-text-preset-card.heading strong {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.canva-text-preset-card.subheading span {
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.canva-text-preset-card.body small {
+  font-size: 13px;
+  color: var(--canva-muted);
+}
+
+/* Shapes Grid */
+
+.canva-shapes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.canva-shape-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 8px;
+  border: 1px solid var(--canva-border);
+  border-radius: 8px;
+  background: var(--canva-bg);
+  color: var(--canva-text);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.canva-shape-card:hover {
+  border-color: var(--canva-accent);
+  background: var(--canva-surface);
+  color: var(--canva-accent);
+}
+
+.canva-shape-icon {
+  font-size: 24px;
+}
+
+.canva-shape-card span {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Uploads & Photos */
+
+.canva-upload-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 20px;
+  border: 2px dashed var(--canva-border);
+  border-radius: 10px;
+  background: var(--canva-bg);
+  cursor: pointer;
+  text-align: center;
+  transition: all 150ms ease;
+}
+
+.canva-upload-dropzone:hover {
+  border-color: var(--canva-accent);
+  background: var(--canva-accent-soft);
+}
+
+.canva-upload-icon {
+  font-size: 28px;
+  color: var(--canva-accent);
+}
+
+.canva-upload-dropzone strong {
+  font-size: 13px;
+  color: var(--canva-text);
+}
+
+.canva-upload-dropzone span {
+  font-size: 11px;
+  color: var(--canva-muted);
+}
+
+.canva-photos-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.canva-photo-card {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid var(--canva-border);
+}
+
+.canva-photo-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 200ms ease;
+}
+
+.canva-photo-card:hover img {
+  transform: scale(1.06);
+}
+
+/* Brand Kit Palettes */
+
+.canva-brand-palettes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.canva-brand-palette-row {
+  display: flex;
+  height: 36px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--canva-border);
+}
+
+.canva-brand-color-swatch {
+  flex: 1;
+  border: none;
+  cursor: pointer;
+  transition: opacity 140ms ease;
+}
+
+.canva-brand-color-swatch:hover {
+  opacity: 0.85;
+}
+
+/* Pages List Cards */
+
+.canva-pages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.canva-page-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--canva-border);
+  border-radius: 8px;
+  background: var(--canva-bg);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.canva-page-card:hover {
+  border-color: var(--canva-accent);
+}
+
+.canva-page-card.is-active {
+  border-color: var(--canva-accent);
+  box-shadow: 0 0 0 1px var(--canva-accent);
+}
+
+.canva-page-card-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 4px;
+  border: 1px solid var(--canva-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--canva-muted);
+}
+
+.canva-page-card-info {
+  flex: 1;
+}
+
+.canva-page-card-info strong {
+  display: block;
+  font-size: 12px;
+  color: var(--canva-text);
+}
+
+.canva-page-card-info small {
+  font-size: 10px;
+  color: var(--canva-muted);
+}
+
+.canva-page-card-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.canva-page-card-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--canva-muted);
+  cursor: pointer;
+}
+
+.canva-page-card-actions button:hover {
+  background: var(--canva-surface);
+  color: var(--canva-text);
+}
+
+.canva-add-page-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  margin-top: 10px;
+  border: 1px dashed var(--canva-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--canva-text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.canva-add-page-btn:hover {
+  border-color: var(--canva-accent);
+  color: var(--canva-accent);
+}
+
+/* ==========================================================================
+   5. CENTER VIEWPORT WORKSPACE STAGE
+   ========================================================================== */
+
+.canva-stage-viewport {
+  flex: 1;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--canva-bg);
+}
+
+.canva-stage-container {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px 80px;
+}
+
+.canva-page-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.canva-page-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--canva-muted);
+}
+
+.canva-page-meta-title strong {
+  color: var(--canva-text);
+  font-size: 13px;
+  margin-right: 8px;
+}
+
+.canva-page-meta-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.canva-page-meta-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--canva-border);
+  border-radius: 6px;
+  background: var(--canva-surface);
+  color: var(--canva-muted);
+  cursor: pointer;
+}
+
+.canva-page-meta-actions button:hover {
+  border-color: var(--canva-accent);
+  color: var(--canva-text);
+}
+
+.canva-surface-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.canva-surface {
+  position: relative;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: transform 120ms ease;
+}
+
+.canva-surface.has-grid-bg {
+  background-image: radial-gradient(rgba(156, 163, 175, 0.25) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.canva-element {
+  cursor: move;
+  box-sizing: border-box;
+}
+
+.canva-element.is-selected {
+  outline: 2px solid var(--canva-accent);
+}
+
+.canva-surface-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  text-align: center;
+  color: var(--canva-muted);
+  font-size: 14px;
+  pointer-events: none;
+  opacity: 0.65;
+}
+
+.canva-add-page-footer {
+  margin-top: 20px;
+}
+
+.canva-add-page-pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border: 1px solid var(--canva-border);
+  border-radius: 20px;
+  background: var(--canva-surface);
+  color: var(--canva-text);
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 150ms ease;
+}
+
+.canva-add-page-pill-btn:hover {
+  border-color: var(--canva-accent);
+  color: var(--canva-accent);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   6. CANVA BOTTOM CONTROL BAR
+   ========================================================================== */
+
+.canva-bottom-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 42px;
+  padding: 0 16px;
+  border-top: 1px solid var(--canva-border);
+  background: var(--canva-surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 30;
+}
+
+.canva-bottom-page-badge {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--canva-muted);
+}
+
+.canva-bottom-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--canva-border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--canva-muted);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.canva-bottom-icon-btn.is-active {
+  border-color: var(--canva-accent);
+  background: var(--canva-accent-soft);
+  color: var(--canva-accent);
+}
+
+.canva-bottom-zoom-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--canva-bg);
+  border: 1px solid var(--canva-border);
+  border-radius: 6px;
+  padding: 2px 4px;
+}
+
+.canva-bottom-zoom-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--canva-text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.canva-bottom-zoom-select {
+  height: 24px;
+  padding: 0 4px;
+  border: none;
+  background: transparent;
+  color: var(--canva-text);
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   7. RIGHT INSPECTOR SIDEBAR
+   ========================================================================== */
+
+.canva-inspector {
+  width: 280px;
+  height: 100%;
+  border-left: 1px solid var(--canva-border);
+  background: var(--canva-surface);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  z-index: 20;
+}
+
+.canva-inspector-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--canva-border);
+}
+
+.canva-inspector-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 750;
+  color: var(--canva-text);
+}
+
+.canva-inspector-body {
+  padding: 20px;
+}
+
+.canva-inspector-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.canva-inspector-group-title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--canva-muted);
+}
+
+.canva-inspector-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.canva-inspector-presets-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.canva-inspector-preset-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 8px 10px;
+  border: 1px solid var(--canva-border);
+  border-radius: 6px;
+  background: var(--canva-bg);
+  color: var(--canva-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.canva-inspector-preset-card:hover {
+  border-color: var(--canva-accent);
+}
+
+.canva-inspector-preset-card strong {
+  font-size: 11px;
+}
+
+.canva-inspector-preset-card small {
+  font-size: 10px;
+  color: var(--canva-muted);
+}
+
+/* Floating Quick Menu above selected element */
+.canva-floating-quick-menu {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: var(--canva-surface);
+  border: 1px solid var(--canva-border);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  z-index: 40;
+}
+
+.canva-floating-quick-menu button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--canva-text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.canva-floating-quick-menu button:hover {
+  background: var(--canva-accent-soft);
+  color: var(--canva-accent);
+}
+
