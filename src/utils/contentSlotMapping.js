@@ -355,6 +355,49 @@ export function buildContentBySlotIdFromSlideContent(rawContent = {}, schema = n
     out.RIGHT_BODY = String(right.body ?? right.text ?? '').trim()
   }
 
+  if (content.table && typeof content.table === 'object') {
+    const { headers = [], rows = [], total, totals } = content.table
+    const isCards = /table_single_cards_v1$/i.test(String(schema?.layout_id || ''))
+    headers.slice(0, 7).forEach((h, i) => {
+      const text = typeof h === 'string' ? h.trim() : String(h?.title || h?.name || '').trim()
+      if (text) {
+        if (isCards) {
+          out[`COL_${i}_HEADER`] = text
+        } else {
+          out[`COL_${i + 1}_HEADER`] = text
+        }
+      }
+    })
+    const isSide = /table_with_description_side_v1$/i.test(String(schema?.layout_id || ''))
+    rows.slice(0, 6).forEach((row, r) => {
+      if (isSide) {
+        const cells = Array.isArray(row) ? row : (Array.isArray(row?.values) ? row.values : (row?.cells || []))
+        cells.slice(0, 4).forEach((cell, c) => {
+          if (cell != null) out[`CELL_${r + 1}_${c + 1}`] = String(cell).trim()
+        })
+      } else if (Array.isArray(row)) {
+        if (row[0]) out[`ROW_${r + 1}_LABEL`] = String(row[0]).trim()
+        row.slice(1, 7).forEach((cell, c) => {
+          if (cell != null) out[`CELL_${r + 1}_${c + 1}`] = String(cell).trim()
+        })
+      } else if (row && typeof row === 'object') {
+        const label = row.label || row.title || row.name || row[0]
+        if (label) out[`ROW_${r + 1}_LABEL`] = String(label).trim()
+        const vals = Array.isArray(row.values) ? row.values : (row.cells || [])
+        vals.slice(0, 6).forEach((val, c) => {
+          if (val != null) out[`CELL_${r + 1}_${c + 1}`] = String(val).trim()
+        })
+      }
+    })
+    const tot = total || totals
+    if (Array.isArray(tot)) {
+      if (tot[0]) out.TOTAL_LABEL = String(tot[0]).trim()
+      tot.slice(1, 7).forEach((val, i) => {
+        if (val != null) out[`TOTAL_${i + 1}`] = String(val).trim()
+      })
+    }
+  }
+
   const slotImageUrls = content.slotImageUrls || {}
   for (const [slotId, url] of Object.entries(slotImageUrls)) {
     if (url) out[`${slotId}__url`] = url

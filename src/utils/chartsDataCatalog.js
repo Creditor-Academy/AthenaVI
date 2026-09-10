@@ -228,28 +228,166 @@ const CATALOG = {
   ], { mode: 'chart_donut_row' }),
 
   table_single_v1: layoutBase('table_single_v1', 'chart', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'Data table', {
-      typography: typo('heading', { fontSize: 28 }),
+    heading('HEADING', 'cols 1-12, rows 1-2', 'Annual Financial Summary Table', {
+      typography: typo('heading', { fontSize: 26, fontWeight: 800 }),
     }),
-    tableSlot('TABLE', 'cols 2-11, rows 3-10'),
+    body('SUBTITLE', 'cols 1-12, rows 2-3', 'Revenue, Cost of Goods, Operations, Gross Profit, EBITDA, Net Income', 1, {
+      typography: typo('body', { fontSize: 13, colorRole: 'muted' }),
+    }),
+    slot('COL_1_HEADER', 'cols 4-5, rows 3-4', 'heading', '20XX', { layer: 12, typography: typo('heading', { fontSize: 20, fontWeight: 800, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('COL_2_HEADER', 'cols 6-7, rows 3-4', 'heading', '20XX', { layer: 12, typography: typo('heading', { fontSize: 20, fontWeight: 800, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('COL_3_HEADER', 'cols 8-9, rows 3-4', 'heading', '20XX', { layer: 12, typography: typo('heading', { fontSize: 20, fontWeight: 800, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('COL_4_HEADER', 'cols 10-11, rows 3-4', 'heading', '20XX', { layer: 12, typography: typo('heading', { fontSize: 18, fontWeight: 800, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('COL_4_SUB', 'cols 10-11, rows 4-4', 'caption', 'plan', { layer: 12, typography: typo('caption', { fontSize: 11, fontWeight: 600, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('COL_5_HEADER', 'cols 11-12, rows 3-4', 'heading', '20XX', { layer: 12, typography: typo('heading', { fontSize: 18, fontWeight: 800, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('COL_5_SUB', 'cols 11-12, rows 4-4', 'caption', 'fact', { layer: 12, typography: typo('caption', { fontSize: 11, fontWeight: 600, align: 'center', colorRole: 'textOnImage' }) }),
+
+    slot('ROW_1_LABEL', 'cols 2-4, rows 4-5', 'body', 'Revenue', { layer: 12, typography: typo('body', { fontSize: 14, fontWeight: 600 }) }),
+    slot('ROW_2_LABEL', 'cols 2-4, rows 5-6', 'body', 'Cost of Goods Sold', { layer: 12, typography: typo('body', { fontSize: 14, fontWeight: 600 }) }),
+    slot('ROW_3_LABEL', 'cols 2-4, rows 6-7', 'body', 'Gross Profit', { layer: 12, typography: typo('body', { fontSize: 14, fontWeight: 600 }) }),
+    slot('ROW_4_LABEL', 'cols 2-4, rows 7-8', 'body', 'Costs of operations', { layer: 12, typography: typo('body', { fontSize: 14, fontWeight: 600 }) }),
+    slot('ROW_5_LABEL', 'cols 2-4, rows 8-9', 'body', 'EBITDA', { layer: 12, typography: typo('body', { fontSize: 14, fontWeight: 600 }) }),
+    slot('ROW_6_LABEL', 'cols 2-4, rows 9-10', 'body', 'Net Income', { layer: 12, typography: typo('body', { fontSize: 14, fontWeight: 800 }) }),
+
+    slot('CELL_1_1', 'cols 4-5, rows 4-5', 'stat', '150 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_1_2', 'cols 6-7, rows 4-5', 'stat', '200 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_1_3', 'cols 8-9, rows 4-5', 'stat', '210 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_1_4', 'cols 10-11, rows 4-5', 'stat', '350 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_1_5', 'cols 11-12, rows 4-5', 'stat', '340 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+
+    slot('CELL_2_1', 'cols 4-5, rows 5-6', 'stat', '30 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_2_2', 'cols 6-7, rows 5-6', 'stat', '60 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_2_3', 'cols 8-9, rows 5-6', 'stat', '60 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_2_4', 'cols 10-11, rows 5-6', 'stat', '75 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_2_5', 'cols 11-12, rows 5-6', 'stat', '80 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+
+    slot('CELL_3_1', 'cols 4-5, rows 6-7', 'stat', '120 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_3_2', 'cols 6-7, rows 6-7', 'stat', '140 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_3_3', 'cols 8-9, rows 6-7', 'stat', '150 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_3_4', 'cols 10-11, rows 6-7', 'stat', '190 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_3_5', 'cols 11-12, rows 6-7', 'stat', '200 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+
+    slot('CELL_4_1', 'cols 4-5, rows 7-8', 'stat', '30 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_4_2', 'cols 6-7, rows 7-8', 'stat', '20 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_4_3', 'cols 8-9, rows 7-8', 'stat', '10 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_4_4', 'cols 10-11, rows 7-8', 'stat', '25 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_4_5', 'cols 11-12, rows 7-8', 'stat', '30 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+
+    slot('CELL_5_1', 'cols 4-5, rows 8-9', 'stat', '90 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_5_2', 'cols 6-7, rows 8-9', 'stat', '120 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_5_3', 'cols 8-9, rows 8-9', 'stat', '140 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_5_4', 'cols 10-11, rows 8-9', 'stat', '190 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_5_5', 'cols 11-12, rows 8-9', 'stat', '190 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+
+    slot('CELL_6_1', 'cols 4-5, rows 9-10', 'stat', '70 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 800, align: 'center' }) }),
+    slot('CELL_6_2', 'cols 6-7, rows 9-10', 'stat', '100 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 800, align: 'center' }) }),
+    slot('CELL_6_3', 'cols 8-9, rows 9-10', 'stat', '110 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 800, align: 'center' }) }),
+    slot('CELL_6_4', 'cols 10-11, rows 9-10', 'stat', '200 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 800, align: 'center' }) }),
+    slot('CELL_6_5', 'cols 11-12, rows 9-10', 'stat', '210 000 000', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 800, align: 'center' }) }),
   ], { mode: 'table_preview' }),
 
   table_with_description_v1: layoutBase('table_with_description_v1', 'chart', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'Data table', {
-      typography: typo('heading', { fontSize: 28 }),
+    heading('HEADING', 'cols 1-5, rows 1-2', 'Table Template', {
+      typography: typo('heading', { fontSize: 32, fontWeight: 800, align: 'left' }),
     }),
-    body('BODY', 'cols 2-11, rows 2-3', P.short, 2),
-    tableSlot('TABLE', 'cols 2-11, rows 4-10'),
+    body('DESCRIPTION', 'cols 5-12, rows 1-2', 'This slide presents a set of customizable table templates designed for clear and structured data presentation. Each row is visually supported by intuitive icons, making it easy to categorize and compare information across different business functions or metrics.', 3, {
+      typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'left', colorRole: 'textMuted' }),
+    }),
+
+    slot('COL_1_HEADER', 'cols 4-6, rows 3-4', 'heading', 'Add Text Here', { layer: 12, typography: typo('heading', { fontSize: 14, fontWeight: 700, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('COL_2_HEADER', 'cols 6-8, rows 3-4', 'heading', 'Add Text Here', { layer: 12, typography: typo('heading', { fontSize: 14, fontWeight: 700, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('COL_3_HEADER', 'cols 8-10, rows 3-4', 'heading', 'Add Text Here', { layer: 12, typography: typo('heading', { fontSize: 14, fontWeight: 700, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('COL_4_HEADER', 'cols 10-12, rows 3-4', 'heading', 'Add Text Here', { layer: 12, typography: typo('heading', { fontSize: 14, fontWeight: 700, align: 'center', colorRole: 'textOnImage' }) }),
+
+    slot('ROW_1_LABEL', 'cols 1-4, rows 4-5', 'body', 'Add Text Here', { layer: 12, typography: typo('body', { fontSize: 14, fontWeight: 700, colorRole: 'textOnImage' }) }),
+    slot('ROW_2_LABEL', 'cols 1-4, rows 5-6', 'body', 'Add Text Here', { layer: 12, typography: typo('body', { fontSize: 14, fontWeight: 700, colorRole: 'textOnImage' }) }),
+    slot('ROW_3_LABEL', 'cols 1-4, rows 6-7', 'body', 'Add Text Here', { layer: 12, typography: typo('body', { fontSize: 14, fontWeight: 700, colorRole: 'textOnImage' }) }),
+    slot('ROW_4_LABEL', 'cols 1-4, rows 7-8', 'body', 'Add Text Here', { layer: 12, typography: typo('body', { fontSize: 14, fontWeight: 700, colorRole: 'textOnImage' }) }),
+    slot('ROW_5_LABEL', 'cols 1-4, rows 8-9', 'body', 'Add Text Here', { layer: 12, typography: typo('body', { fontSize: 14, fontWeight: 700, colorRole: 'textOnImage' }) }),
+    slot('ROW_6_LABEL', 'cols 1-4, rows 9-10', 'body', 'Add Text Here', { layer: 12, typography: typo('body', { fontSize: 14, fontWeight: 700, colorRole: 'textOnImage' }) }),
+
+    slot('CELL_1_1', 'cols 4-6, rows 4-5', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('CELL_1_2', 'cols 6-8, rows 4-5', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('CELL_1_3', 'cols 8-10, rows 4-5', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('CELL_1_4', 'cols 10-12, rows 4-5', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+
+    slot('CELL_2_1', 'cols 4-6, rows 5-6', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('CELL_2_2', 'cols 6-8, rows 5-6', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('CELL_2_3', 'cols 8-10, rows 5-6', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('CELL_2_4', 'cols 10-12, rows 5-6', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+
+    slot('CELL_3_1', 'cols 4-6, rows 6-7', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('CELL_3_2', 'cols 6-8, rows 6-7', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('CELL_3_3', 'cols 8-10, rows 6-7', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('CELL_3_4', 'cols 10-12, rows 6-7', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+
+    slot('CELL_4_1', 'cols 4-6, rows 7-8', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('CELL_4_2', 'cols 6-8, rows 7-8', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('CELL_4_3', 'cols 8-10, rows 7-8', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('CELL_4_4', 'cols 10-12, rows 7-8', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+
+    slot('CELL_5_1', 'cols 4-6, rows 8-9', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('CELL_5_2', 'cols 6-8, rows 8-9', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('CELL_5_3', 'cols 8-10, rows 8-9', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('CELL_5_4', 'cols 10-12, rows 8-9', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+
+    slot('CELL_6_1', 'cols 4-6, rows 9-10', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('CELL_6_2', 'cols 6-8, rows 9-10', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('CELL_6_3', 'cols 8-10, rows 9-10', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('CELL_6_4', 'cols 10-12, rows 9-10', 'body', 'Lorem ipsum dolor\nsit amet', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
   ], { mode: 'table_with_desc' }),
 
   table_two_desc_v1: layoutBase('table_two_desc_v1', 'chart', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'Compare datasets', {
-      typography: typo('heading', { fontSize: 28 }),
+    heading('HEADING', 'cols 1-12, rows 1-2', 'Compare Datasets', {
+      typography: typo('heading', { fontSize: 32, fontWeight: 800, align: 'left' }),
     }),
-    tableSlot('TABLE_1', 'cols 1-6, rows 3-8'),
-    body('DESC_1', 'cols 1-6, rows 8-9', P.one, 2, { typography: typo('body', { fontSize: 14 }) }),
-    tableSlot('TABLE_2', 'cols 7-12, rows 3-8'),
-    body('DESC_2', 'cols 7-12, rows 8-9', P.two, 2, { typography: typo('body', { fontSize: 14 }) }),
+    body('SUBTITLE', 'cols 1-12, rows 2-3', 'Explore the differences and similarities between the two datasets side by side for a clearer understanding.', 1, {
+      typography: typo('body', { fontSize: 14, fontWeight: 400, align: 'left', colorRole: 'textMuted' }),
+    }),
+
+    // Dataset 1
+    slot('DATASET_1_TITLE', 'cols 1-4, rows 3-4', 'heading', 'Dataset 1', { layer: 12, typography: typo('heading', { fontSize: 18, fontWeight: 700, align: 'left' }) }),
+    slot('DATASET_1_BADGE', 'cols 5-6, rows 3-4', 'badge', 'Source A', { layer: 12, typography: typo('badge', { fontSize: 11, fontWeight: 600, align: 'center', colorRole: 'primary' }) }),
+    slot('T1_COL_1_HEADER', 'cols 1-2, rows 4-5', 'heading', 'A', { layer: 12, typography: typo('heading', { fontSize: 13, fontWeight: 700, align: 'center' }) }),
+    slot('T1_COL_2_HEADER', 'cols 3-4, rows 4-5', 'heading', 'B', { layer: 12, typography: typo('heading', { fontSize: 13, fontWeight: 700, align: 'center' }) }),
+    slot('T1_COL_3_HEADER', 'cols 5-6, rows 4-5', 'heading', 'C', { layer: 12, typography: typo('heading', { fontSize: 13, fontWeight: 700, align: 'center' }) }),
+    slot('T1_ROW_1_LABEL', 'cols 1-2, rows 5-6', 'body', 'Row 1', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'left' }) }),
+    slot('T1_CELL_1_1', 'cols 3-4, rows 5-6', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T1_CELL_1_2', 'cols 5-6, rows 5-6', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T1_ROW_2_LABEL', 'cols 1-2, rows 6-7', 'body', 'Row 2', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'left' }) }),
+    slot('T1_CELL_2_1', 'cols 3-4, rows 6-7', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T1_CELL_2_2', 'cols 5-6, rows 6-7', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T1_ROW_3_LABEL', 'cols 1-2, rows 7-8', 'body', 'Row 3', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'left' }) }),
+    slot('T1_CELL_3_1', 'cols 3-4, rows 7-8', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T1_CELL_3_2', 'cols 5-6, rows 7-8', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+
+    // Description 1
+    slot('DESC_1_TITLE', 'cols 1-6, rows 8-9', 'heading', 'Description 1', { layer: 12, typography: typo('heading', { fontSize: 16, fontWeight: 700, align: 'left' }) }),
+    body('DESC_1', 'cols 1-6, rows 9-10', 'Add a short description about Dataset 1 here. You can mention key details, purpose, or any important insights.', 2, {
+      typography: typo('body', { fontSize: 12.5, fontWeight: 400, align: 'left', colorRole: 'textMuted' }),
+    }),
+
+    // Dataset 2
+    slot('DATASET_2_TITLE', 'cols 7-10, rows 3-4', 'heading', 'Dataset 2', { layer: 12, typography: typo('heading', { fontSize: 18, fontWeight: 700, align: 'left' }) }),
+    slot('DATASET_2_BADGE', 'cols 11-12, rows 3-4', 'badge', 'Source B', { layer: 12, typography: typo('badge', { fontSize: 11, fontWeight: 600, align: 'center', colorRole: 'secondary' }) }),
+    slot('T2_COL_1_HEADER', 'cols 7-8, rows 4-5', 'heading', 'A', { layer: 12, typography: typo('heading', { fontSize: 13, fontWeight: 700, align: 'center' }) }),
+    slot('T2_COL_2_HEADER', 'cols 9-10, rows 4-5', 'heading', 'B', { layer: 12, typography: typo('heading', { fontSize: 13, fontWeight: 700, align: 'center' }) }),
+    slot('T2_COL_3_HEADER', 'cols 11-12, rows 4-5', 'heading', 'C', { layer: 12, typography: typo('heading', { fontSize: 13, fontWeight: 700, align: 'center' }) }),
+    slot('T2_ROW_1_LABEL', 'cols 7-8, rows 5-6', 'body', 'Row 1', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'left' }) }),
+    slot('T2_CELL_1_1', 'cols 9-10, rows 5-6', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T2_CELL_1_2', 'cols 11-12, rows 5-6', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T2_ROW_2_LABEL', 'cols 7-8, rows 6-7', 'body', 'Row 2', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'left' }) }),
+    slot('T2_CELL_2_1', 'cols 9-10, rows 6-7', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T2_CELL_2_2', 'cols 11-12, rows 6-7', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T2_ROW_3_LABEL', 'cols 7-8, rows 7-8', 'body', 'Row 3', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'left' }) }),
+    slot('T2_CELL_3_1', 'cols 9-10, rows 7-8', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T2_CELL_3_2', 'cols 11-12, rows 7-8', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+
+    // Description 2
+    slot('DESC_2_TITLE', 'cols 7-12, rows 8-9', 'heading', 'Description 2', { layer: 12, typography: typo('heading', { fontSize: 16, fontWeight: 700, align: 'left' }) }),
+    body('DESC_2', 'cols 7-12, rows 9-10', 'Add a short description about Dataset 2 here. You can mention key details, purpose, or any important insights.', 2, {
+      typography: typo('body', { fontSize: 12.5, fontWeight: 400, align: 'left', colorRole: 'textMuted' }),
+    }),
   ], { mode: 'table_dual' }),
 
   table_two_same_header_v1: layoutBase('table_two_same_header_v1', 'chart', [
@@ -571,10 +709,161 @@ Object.assign(CATALOG, {
   process_linear_four_cards_v1: chartsDataFromSource('process_linear_four_cards_v1', 'process_linner_horti_four_v1', 'cards'),
   process_linear_horizontal_v2: chartsDataFromSource('process_linear_horizontal_v2', 'process_linner_horti_v1', 'horizontal'),
   process_linear_numeric_cards_v1: chartsDataFromSource('process_linear_numeric_cards_v1', 'process_linner_numeric_v1', 'cards'),
-  table_single_cards_v1: chartsDataFromSource('table_single_cards_v1', 'table_single_v1', 'cards'),
-  table_two_desc_cards_v1: chartsDataFromSource('table_two_desc_cards_v1', 'table_two_desc_v1', 'cards'),
+  table_single_cards_v1: layoutBase('table_single_cards_v1', 'chart', [
+    heading('HEADING', 'cols 1-12, rows 1-2', 'Investment Report', {
+      typography: typo('heading', { fontSize: 28, fontWeight: 800, align: 'center' }),
+    }),
+    body('SUBTITLE', 'cols 1-12, rows 2-3', 'This is the sample dummy text insert your desired text here because this is the dummy text.', 1, {
+      typography: typo('body', { fontSize: 13, colorRole: 'muted', align: 'center' }),
+    }),
+
+    slot('COL_0_HEADER', 'cols 1-2, rows 3-4', 'heading', 'COLUMN 0', { layer: 12, typography: typo('heading', { fontSize: 14, fontWeight: 800, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('COL_1_HEADER', 'cols 3-4, rows 3-4', 'heading', 'COLUMN 1', { layer: 12, typography: typo('heading', { fontSize: 14, fontWeight: 800, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('COL_2_HEADER', 'cols 5-5, rows 3-4', 'heading', 'COLUMN 2', { layer: 12, typography: typo('heading', { fontSize: 14, fontWeight: 800, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('COL_3_HEADER', 'cols 6-7, rows 3-4', 'heading', 'COLUMN 3', { layer: 12, typography: typo('heading', { fontSize: 14, fontWeight: 800, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('COL_4_HEADER', 'cols 8-9, rows 3-4', 'heading', 'COLUMN 4', { layer: 12, typography: typo('heading', { fontSize: 14, fontWeight: 800, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('COL_5_HEADER', 'cols 10-10, rows 3-4', 'heading', 'COLUMN 5', { layer: 12, typography: typo('heading', { fontSize: 14, fontWeight: 800, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('COL_6_HEADER', 'cols 11-12, rows 3-4', 'heading', 'COLUMN 6', { layer: 12, typography: typo('heading', { fontSize: 14, fontWeight: 800, align: 'center', colorRole: 'textOnImage' }) }),
+
+    slot('ROW_1_LABEL', 'cols 1-2, rows 4-5', 'body', 'This is the sample', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600 }) }),
+    slot('ROW_2_LABEL', 'cols 1-2, rows 5-6', 'body', 'dummy text insert your', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600 }) }),
+    slot('ROW_3_LABEL', 'cols 1-2, rows 6-7', 'body', 'desired text here because', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600 }) }),
+    slot('ROW_4_LABEL', 'cols 1-2, rows 7-8', 'body', 'this is the dummy text.', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600 }) }),
+
+    slot('CELL_1_1', 'cols 3-4, rows 4-5', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_1_2', 'cols 5-5, rows 4-5', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_1_3', 'cols 6-7, rows 4-5', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_1_4', 'cols 8-9, rows 4-5', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_1_5', 'cols 10-10, rows 4-5', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_1_6', 'cols 11-12, rows 4-5', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+
+    slot('CELL_2_1', 'cols 3-4, rows 5-6', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_2_2', 'cols 5-5, rows 5-6', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_2_3', 'cols 6-7, rows 5-6', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_2_4', 'cols 8-9, rows 5-6', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_2_5', 'cols 10-10, rows 5-6', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_2_6', 'cols 11-12, rows 5-6', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+
+    slot('CELL_3_1', 'cols 3-4, rows 6-7', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_3_2', 'cols 5-5, rows 6-7', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_3_3', 'cols 6-7, rows 6-7', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_3_4', 'cols 8-9, rows 6-7', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_3_5', 'cols 10-10, rows 6-7', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_3_6', 'cols 11-12, rows 6-7', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+
+    slot('CELL_4_1', 'cols 3-4, rows 7-8', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_4_2', 'cols 5-5, rows 7-8', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_4_3', 'cols 6-7, rows 7-8', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_4_4', 'cols 8-9, rows 7-8', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_4_5', 'cols 10-10, rows 7-8', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_4_6', 'cols 11-12, rows 7-8', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 14, fontWeight: 600, align: 'center' }) }),
+
+    slot('TOTAL_LABEL', 'cols 1-2, rows 8-9', 'heading', 'TOTAL', { layer: 12, typography: typo('heading', { fontSize: 15, fontWeight: 800, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('TOTAL_1', 'cols 3-4, rows 8-9', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 15, fontWeight: 800, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('TOTAL_2', 'cols 5-5, rows 8-9', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 15, fontWeight: 800, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('TOTAL_3', 'cols 6-7, rows 8-9', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 15, fontWeight: 800, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('TOTAL_4', 'cols 8-9, rows 8-9', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 15, fontWeight: 800, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('TOTAL_5', 'cols 10-10, rows 8-9', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 15, fontWeight: 800, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('TOTAL_6', 'cols 11-12, rows 8-9', 'stat', '$100.0', { layer: 12, typography: typo('stat', { fontSize: 15, fontWeight: 800, align: 'center', colorRole: 'textOnImage' }) }),
+  ], { mode: 'table_preview', dataVariant: 'cards' }),
+  table_two_desc_cards_v1: layoutBase('table_two_desc_cards_v1', 'chart', [
+    heading('HEADING', 'cols 1-12, rows 1-2', 'Compare Datasets', {
+      typography: typo('heading', { fontSize: 32, fontWeight: 800, align: 'left' }),
+    }),
+    body('SUBTITLE', 'cols 1-12, rows 2-3', 'Explore the differences and similarities between the two datasets side by side for a clearer understanding.', 1, {
+      typography: typo('body', { fontSize: 14, fontWeight: 400, align: 'left', colorRole: 'textMuted' }),
+    }),
+
+    // Dataset 1
+    slot('DATASET_1_TITLE', 'cols 1-4, rows 3-4', 'heading', 'Dataset 1', { layer: 12, typography: typo('heading', { fontSize: 18, fontWeight: 700, align: 'left' }) }),
+    slot('DATASET_1_SUB', 'cols 1-4, rows 4-4', 'caption', 'Key details and values', { layer: 12, typography: typo('caption', { fontSize: 12, fontWeight: 500, align: 'left', colorRole: 'textMuted' }) }),
+    slot('T1_COL_1_HEADER', 'cols 1-2, rows 4-5', 'heading', 'A', { layer: 12, typography: typo('heading', { fontSize: 13, fontWeight: 700, align: 'center' }) }),
+    slot('T1_COL_2_HEADER', 'cols 3-4, rows 4-5', 'heading', 'B', { layer: 12, typography: typo('heading', { fontSize: 13, fontWeight: 700, align: 'center' }) }),
+    slot('T1_COL_3_HEADER', 'cols 5-6, rows 4-5', 'heading', 'C', { layer: 12, typography: typo('heading', { fontSize: 13, fontWeight: 700, align: 'center' }) }),
+    slot('T1_ROW_1_LABEL', 'cols 1-2, rows 5-6', 'body', 'Row 1', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'left' }) }),
+    slot('T1_CELL_1_1', 'cols 3-4, rows 5-6', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T1_CELL_1_2', 'cols 5-6, rows 5-6', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T1_ROW_2_LABEL', 'cols 1-2, rows 6-7', 'body', 'Row 2', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'left' }) }),
+    slot('T1_CELL_2_1', 'cols 3-4, rows 6-7', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T1_CELL_2_2', 'cols 5-6, rows 6-7', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T1_ROW_3_LABEL', 'cols 1-2, rows 7-8', 'body', 'Row 3', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'left' }) }),
+    slot('T1_CELL_3_1', 'cols 3-4, rows 7-8', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T1_CELL_3_2', 'cols 5-6, rows 7-8', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+
+    // Description 1 inside Card 1
+    slot('DESC_1_TITLE', 'cols 1-6, rows 8-9', 'heading', 'Description 1', { layer: 12, typography: typo('heading', { fontSize: 15, fontWeight: 700, align: 'left' }) }),
+    body('DESC_1', 'cols 1-6, rows 9-10', 'Add a short description about Dataset 1 here. You can mention key details, purpose, or any important insights.', 2, {
+      typography: typo('body', { fontSize: 11.5, fontWeight: 400, align: 'left', colorRole: 'textMuted' }),
+    }),
+
+    // Dataset 2
+    slot('DATASET_2_TITLE', 'cols 7-10, rows 3-4', 'heading', 'Dataset 2', { layer: 12, typography: typo('heading', { fontSize: 18, fontWeight: 700, align: 'left' }) }),
+    slot('DATASET_2_SUB', 'cols 7-10, rows 4-4', 'caption', 'Key details and values', { layer: 12, typography: typo('caption', { fontSize: 12, fontWeight: 500, align: 'left', colorRole: 'textMuted' }) }),
+    slot('T2_COL_1_HEADER', 'cols 7-8, rows 4-5', 'heading', 'A', { layer: 12, typography: typo('heading', { fontSize: 13, fontWeight: 700, align: 'center' }) }),
+    slot('T2_COL_2_HEADER', 'cols 9-10, rows 4-5', 'heading', 'B', { layer: 12, typography: typo('heading', { fontSize: 13, fontWeight: 700, align: 'center' }) }),
+    slot('T2_COL_3_HEADER', 'cols 11-12, rows 4-5', 'heading', 'C', { layer: 12, typography: typo('heading', { fontSize: 13, fontWeight: 700, align: 'center' }) }),
+    slot('T2_ROW_1_LABEL', 'cols 7-8, rows 5-6', 'body', 'Row 1', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'left' }) }),
+    slot('T2_CELL_1_1', 'cols 9-10, rows 5-6', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T2_CELL_1_2', 'cols 11-12, rows 5-6', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T2_ROW_2_LABEL', 'cols 7-8, rows 6-7', 'body', 'Row 2', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'left' }) }),
+    slot('T2_CELL_2_1', 'cols 9-10, rows 6-7', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T2_CELL_2_2', 'cols 11-12, rows 6-7', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T2_ROW_3_LABEL', 'cols 7-8, rows 7-8', 'body', 'Row 3', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'left' }) }),
+    slot('T2_CELL_3_1', 'cols 9-10, rows 7-8', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+    slot('T2_CELL_3_2', 'cols 11-12, rows 7-8', 'body', '—', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 500, align: 'center' }) }),
+
+    // Description 2 inside Card 2
+    slot('DESC_2_TITLE', 'cols 7-12, rows 8-9', 'heading', 'Description 2', { layer: 12, typography: typo('heading', { fontSize: 15, fontWeight: 700, align: 'left' }) }),
+    body('DESC_2', 'cols 7-12, rows 9-10', 'Add a short description about Dataset 2 here. You can mention key details, purpose, or any important insights.', 2, {
+      typography: typo('body', { fontSize: 11.5, fontWeight: 400, align: 'left', colorRole: 'textMuted' }),
+    }),
+  ], { mode: 'table_dual', dataVariant: 'cards' }),
   table_two_same_header_cards_v1: chartsDataFromSource('table_two_same_header_cards_v1', 'table_two_same_header_v1', 'cards'),
-  table_with_description_side_v1: chartsDataFromSource('table_with_description_side_v1', 'table_with_description_v1', 'side'),
+  table_with_description_side_v1: layoutBase('table_with_description_side_v1', 'chart', [
+    heading('HEADING', 'cols 1-12, rows 1-2', 'Table Slide', {
+      typography: typo('heading', { fontSize: 32, fontWeight: 800, align: 'center' }),
+    }),
+    body('SUBTITLE', 'cols 1-12, rows 2-3', 'Make a big impact with our professional slides and charts', 1, {
+      typography: typo('body', { fontSize: 14, fontWeight: 500, align: 'center', colorRole: 'textMuted' }),
+    }),
+
+    slot('COL_1_HEADER', 'cols 1-2, rows 3-4', 'heading', 'Target', { layer: 12, typography: typo('heading', { fontSize: 14, fontWeight: 700, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('COL_2_HEADER', 'cols 3-4, rows 3-4', 'heading', 'Sales', { layer: 12, typography: typo('heading', { fontSize: 14, fontWeight: 700, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('COL_3_HEADER', 'cols 5-6, rows 3-4', 'heading', 'Execution', { layer: 12, typography: typo('heading', { fontSize: 14, fontWeight: 700, align: 'center', colorRole: 'textOnImage' }) }),
+    slot('COL_4_HEADER', 'cols 7-8, rows 3-4', 'heading', 'Control', { layer: 12, typography: typo('heading', { fontSize: 14, fontWeight: 700, align: 'center', colorRole: 'textOnImage' }) }),
+
+    slot('CELL_1_1', 'cols 1-2, rows 4-5', 'body', '10,000', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_1_2', 'cols 3-4, rows 4-5', 'body', '12,450', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_1_3', 'cols 5-6, rows 4-5', 'body', '98.5%', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_1_4', 'cols 7-8, rows 4-5', 'body', 'Approved', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+
+    slot('CELL_2_1', 'cols 1-2, rows 5-6', 'body', '15,000', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_2_2', 'cols 3-4, rows 5-6', 'body', '18,200', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_2_3', 'cols 5-6, rows 5-6', 'body', '94.2%', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_2_4', 'cols 7-8, rows 5-6', 'body', 'Pending', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+
+    slot('CELL_3_1', 'cols 1-2, rows 6-7', 'body', '20,000', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_3_2', 'cols 3-4, rows 6-7', 'body', '24,800', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_3_3', 'cols 5-6, rows 6-7', 'body', '99.1%', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_3_4', 'cols 7-8, rows 6-7', 'body', 'Complete', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+
+    slot('CELL_4_1', 'cols 1-2, rows 7-8', 'body', '25,000', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_4_2', 'cols 3-4, rows 7-8', 'body', '15,600', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_4_3', 'cols 5-6, rows 7-8', 'body', '96.4%', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_4_4', 'cols 7-8, rows 7-8', 'body', 'In Review', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+
+    slot('CELL_5_1', 'cols 1-2, rows 8-9', 'body', '30,000', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_5_2', 'cols 3-4, rows 8-9', 'body', '31,500', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_5_3', 'cols 5-6, rows 8-9', 'body', '97.8%', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+    slot('CELL_5_4', 'cols 7-8, rows 8-9', 'body', 'Verified', { layer: 12, typography: typo('body', { fontSize: 13, fontWeight: 600, align: 'center' }) }),
+
+    heading('SIDE_HEADING', 'cols 9-12, rows 4-5', 'Project Planning', {
+      typography: typo('heading', { fontSize: 22, fontWeight: 800, align: 'left' }),
+    }),
+    body('BODY', 'cols 9-12, rows 5-8', 'Make a big impact with professional slides, charts, infographics and more. Turn complex data into easy to understand infographics.', 4, {
+      typography: typo('body', { fontSize: 13.5, fontWeight: 400, align: 'left', colorRole: 'textMuted' }),
+    }),
+  ], { mode: 'table_with_desc', dataVariant: 'side' }),
 })
 
 export default CATALOG

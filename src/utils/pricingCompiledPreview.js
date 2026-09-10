@@ -31,6 +31,12 @@ import { isChartTwoCardsLayout } from './chartTwoCards.js'
 import { isChartThreeCardsLayout } from './chartThreeCards.js'
 import { isChartThreeContextLayout } from './chartThreeContext.js'
 import { isChartThreeContextCardsLayout } from './chartThreeContextCards.js'
+import { isTableSingleLayout } from './tableSingleLayout.js'
+import { isTableSingleCardsLayout } from './tableSingleCardsLayout.js'
+import { isTableWithDescriptionLayout } from './tableWithDescriptionLayout.js'
+import { isTableWithDescriptionSideLayout } from './tableWithDescriptionSideLayout.js'
+import { isTableTwoDescLayout } from './tableTwoDescLayout.js'
+import { isTableTwoDescCardsLayout } from './tableTwoDescCardsLayout.js'
 
 export function isCompiledPricingLayout(layoutId) {
   return isPricingThreePlansLayout(layoutId)
@@ -64,6 +70,12 @@ export function isCompiledPricingLayout(layoutId) {
     || isChartTwoCardsLayout(layoutId)
     || isChartThreeCardsLayout(layoutId)
     || isChartThreeContextLayout(layoutId)
+    || isTableSingleLayout(layoutId)
+    || isTableSingleCardsLayout(layoutId)
+    || isTableWithDescriptionLayout(layoutId)
+    || isTableWithDescriptionSideLayout(layoutId)
+    || isTableTwoDescLayout(layoutId)
+    || isTableTwoDescCardsLayout(layoutId)
 }
 
 export function compilePricingLayoutPreviewSlide(schema, aspectRatio = '16:9') {

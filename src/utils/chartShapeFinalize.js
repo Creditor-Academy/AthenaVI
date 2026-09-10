@@ -15,6 +15,12 @@ import { isMetricTwoLayout, layoutMetricTwo } from './metricTwo.js'
 import { isMetricSingleSplitLayout, layoutMetricSingleSplit } from './metricSingleSplit.js'
 import { isMetricThreeLayout, layoutMetricThree } from './metricThree.js'
 import { isMetricTwoSplitLayout, layoutMetricTwoSplit } from './metricTwoSplit.js'
+import { isTableSingleLayout, layoutTableSingle } from './tableSingleLayout.js'
+import { isTableSingleCardsLayout, layoutTableSingleCards } from './tableSingleCardsLayout.js'
+import { isTableWithDescriptionLayout, layoutTableWithDescription } from './tableWithDescriptionLayout.js'
+import { isTableWithDescriptionSideLayout, layoutTableWithDescriptionSide } from './tableWithDescriptionSideLayout.js'
+import { isTableTwoDescLayout, layoutTableTwoDesc } from './tableTwoDescLayout.js'
+import { isTableTwoDescCardsLayout, layoutTableTwoDescCards } from './tableTwoDescCardsLayout.js'
 
 export function finalizeChartShapes(elements, schema, palette = {}, canvas = {}) {
   const layoutId = schema?.layout_id || schema?.id || schema?.layoutId
@@ -85,6 +91,30 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
   
   if (isMetricTwoSplitLayout(layoutId)) {
     return layoutMetricTwoSplit(elements, schema, palette, canvas)
+  }
+  
+  if (isTableSingleLayout(layoutId)) {
+    return layoutTableSingle(elements, schema, palette, canvas)
+  }
+  
+  if (isTableSingleCardsLayout(layoutId)) {
+    return layoutTableSingleCards(elements, schema, palette, canvas)
+  }
+  
+  if (isTableWithDescriptionLayout(layoutId)) {
+    return layoutTableWithDescription(elements, schema, palette, canvas)
+  }
+  
+  if (isTableWithDescriptionSideLayout(layoutId)) {
+    return layoutTableWithDescriptionSide(elements, schema, palette, canvas)
+  }
+  
+  if (isTableTwoDescLayout(layoutId)) {
+    return layoutTableTwoDesc(elements, schema, palette, canvas)
+  }
+  
+  if (isTableTwoDescCardsLayout(layoutId)) {
+    return layoutTableTwoDescCards(elements, schema, palette, canvas)
   }
   
   return elements

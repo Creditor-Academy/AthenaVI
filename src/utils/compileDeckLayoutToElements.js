@@ -21,6 +21,12 @@ import { isPricingFourParaLayout } from './pricingFourPara.js'
 import { isPricingFourParaCardsLayout } from './pricingFourParaCards.js'
 import { isPricingComparisonTableLayout } from './pricingComparisonTable.js'
 import { isPricingComparisonCardsLayout } from './pricingComparisonCards.js'
+import { isTableSingleLayout } from './tableSingleLayout.js'
+import { isTableSingleCardsLayout } from './tableSingleCardsLayout.js'
+import { isTableWithDescriptionLayout } from './tableWithDescriptionLayout.js'
+import { isTableWithDescriptionSideLayout } from './tableWithDescriptionSideLayout.js'
+import { isTableTwoDescLayout } from './tableTwoDescLayout.js'
+import { isTableTwoDescCardsLayout } from './tableTwoDescCardsLayout.js'
 import { isTimelineHorizontalLayout } from './timelineHorizontal.js'
 import { isTimelineVerticalLayout } from './timelineVertical.js'
 import { isTimelineVerticalCardsLayout } from './timelineVerticalCards.js'
@@ -439,6 +445,9 @@ function resolveSlotText(slot, contentBySlotId, schema, options = {}) {
   const keepPricingComparisonTable = /pricing_comparison_table_v1$/i.test(String(schema?.layout_id || ''))
     && !/cards/i.test(String(schema?.layout_id || ''))
   const keepPricingComparisonCards = /pricing_comparison_cards_v1$/i.test(String(schema?.layout_id || ''))
+  const keepTableSingle = /table_single_v1$/i.test(String(schema?.layout_id || ''))
+    && !/cards/i.test(String(schema?.layout_id || ''))
+  const keepTableSingleCards = /table_single_cards_v1$/i.test(String(schema?.layout_id || ''))
   const keepTimelineHorizontal = /timeline_horizontal_v1$/i.test(String(schema?.layout_id || ''))
     && !/cards/i.test(String(schema?.layout_id || ''))
   const keepTimelineHorizontalCards = /timeline_horizontal_cards_v1$/i.test(String(schema?.layout_id || ''))
@@ -455,7 +464,7 @@ function resolveSlotText(slot, contentBySlotId, schema, options = {}) {
     && !/horizontal|lanes/i.test(String(schema?.layout_id || ''))
   if (
     placeholder &&
-    (!hasSlideContent || role === 'stat' || role === 'stat_label' || memberSlot || keepPricingThreePlans || keepPricingThreePlansFeatured || keepPricingThreeHighlight || keepPricingThreeHighlightSplit || keepPricingFourPlans || keepPricingFourPlansFeatured || keepPricingFourPara || keepPricingFourParaCards || keepPricingComparisonTable || keepPricingComparisonCards || keepTimelineHorizontal || keepTimelineHorizontalCards || keepTimelineMilestones || keepTimelineMilestonesCards || keepTimelineMilestonesImage || keepTimelineMilestonesImageRight || keepTimelineVertical || keepTimelineVerticalCards || keepTimelineRoadmap)
+    (!hasSlideContent || role === 'stat' || role === 'stat_label' || memberSlot || keepTableSingle || keepTableSingleCards || keepPricingThreePlans || keepPricingThreePlansFeatured || keepPricingThreeHighlight || keepPricingThreeHighlightSplit || keepPricingFourPlans || keepPricingFourPlansFeatured || keepPricingFourPara || keepPricingFourParaCards || keepPricingComparisonTable || keepPricingComparisonCards || keepTimelineHorizontal || keepTimelineHorizontalCards || keepTimelineMilestones || keepTimelineMilestonesCards || keepTimelineMilestonesImage || keepTimelineMilestonesImageRight || keepTimelineVertical || keepTimelineVerticalCards || keepTimelineRoadmap)
   ) {
     return placeholder
   }
@@ -1106,6 +1115,12 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
       (isPricingFourParaCardsLayout(schema?.layout_id) && (/^PLAN_\d+_/i.test(String(el.slotId || '')) || String(el.slotId || '').toUpperCase() === 'BODY')) ||
       (isPricingComparisonTableLayout(schema?.layout_id) && (/^PLAN_\d+_/i.test(String(el.slotId || '')) || /^FEATURE_\d+$/i.test(String(el.slotId || '')) || String(el.slotId || '').toUpperCase() === 'HEADING')) ||
       (isPricingComparisonCardsLayout(schema?.layout_id) && /^PLAN_\d+_/i.test(String(el.slotId || ''))) ||
+      (isTableSingleLayout(schema?.layout_id) && (/^(COL|ROW|CELL)_\d+/i.test(String(el.slotId || '')) || /^(HEADING|SUBTITLE)$/i.test(String(el.slotId || '')) && !/cards/i.test(String(schema?.layout_id || '')))) ||
+      (isTableSingleCardsLayout(schema?.layout_id) && (/^(COL|ROW|CELL|TOTAL)_\d+/i.test(String(el.slotId || '')) || /^(HEADING|SUBTITLE|TOTAL_LABEL)$/i.test(String(el.slotId || '')))) ||
+      (isTableWithDescriptionLayout(schema?.layout_id) && (/^(COL|ROW|CELL)_\d+/i.test(String(el.slotId || '')) || /^(HEADING|SUBTITLE|DESCRIPTION)$/i.test(String(el.slotId || '')))) ||
+      (isTableWithDescriptionSideLayout(schema?.layout_id) && (/^(COL|ROW|CELL)_\d+/i.test(String(el.slotId || '')) || /^(HEADING|SUBTITLE|SIDE_HEADING|BODY|DESCRIPTION)$/i.test(String(el.slotId || '')))) ||
+      (isTableTwoDescLayout(schema?.layout_id) && (/^(T[12]_|DATASET_|TABLE_|TAG_|DESC_|HEADING|SUBTITLE)/i.test(String(el.slotId || '')))) ||
+      (isTableTwoDescCardsLayout(schema?.layout_id) && (/^(T[12]_|DATASET_|TABLE_|TAG_|DESC_|SUB_|HEADING|SUBTITLE)/i.test(String(el.slotId || '')))) ||
       (isTimelineHorizontalLayout(schema?.layout_id) && /^milestone_\d+_(label|num)$/i.test(String(el.slotId || ''))) ||
       (isTimelineHorizontalCardsLayout(schema?.layout_id) && /^milestone_\d+_(num|label|foot)$/i.test(String(el.slotId || ''))) ||
       (isTimelineMilestonesLayout(schema?.layout_id) && /^milestone_\d+_(label|num|title)$/i.test(String(el.slotId || ''))) ||
