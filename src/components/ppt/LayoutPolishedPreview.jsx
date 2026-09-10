@@ -17,6 +17,12 @@ import { isPricingFourPlansLayout, pricingFourPlansPreviewSvg } from '../../util
 import { isPricingFourPlansFeaturedLayout, pricingFourPlansFeaturedPreviewSvg } from '../../utils/pricingFourPlansFeatured.js'
 import { isPricingFourParaLayout, pricingFourParaPreviewSvg } from '../../utils/pricingFourPara.js'
 import { isPricingFourParaCardsLayout, pricingFourParaCardsPreviewSvg } from '../../utils/pricingFourParaCards.js'
+import { isTableSingleLayout, tableSinglePreviewSvg } from '../../utils/tableSingleLayout.js'
+import { isTableSingleCardsLayout, tableSingleCardsPreviewSvg } from '../../utils/tableSingleCardsLayout.js'
+import { isTableWithDescriptionLayout, tableWithDescriptionPreviewSvg } from '../../utils/tableWithDescriptionLayout.js'
+import { isTableWithDescriptionSideLayout, tableSidePreviewSvg } from '../../utils/tableWithDescriptionSideLayout.js'
+import { isTableTwoDescLayout, tableTwoDescPreviewSvg } from '../../utils/tableTwoDescLayout.js'
+import { isTableTwoDescCardsLayout, tableTwoDescCardsPreviewSvg } from '../../utils/tableTwoDescCardsLayout.js'
 import { DEVICE_FRAMES_PREVIEW_MODES } from './layoutPolishedPreviewsDeviceFrames.jsx'
 import { DIAGRAM_PREVIEW_MODES } from './layoutPolishedPreviewsDiagrams.jsx'
 import { AGENDA_PREVIEW_MODES } from './layoutPolishedPreviewsAgenda.jsx'
@@ -2192,6 +2198,232 @@ export default function LayoutPolishedPreview({
           <div style={{
             position: 'absolute', left: '3.6%', top: '2.8%', fontSize: large ? '0.4rem' : '0.15rem', fontWeight: 800, color: t.text,
           }}>Choose a plan</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isTableSingleLayout(previewHints.layout_id)) {
+    const svg = tableSinglePreviewSvg()
+    const t = LAYOUT_POLISHED_THEME
+    const frameStyle = fill
+      ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+      : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+        <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+          <div style={{
+            position: 'absolute', left: '3.6%', top: '2.8%', fontSize: large ? '0.42rem' : '0.16rem', fontWeight: 800, color: t.text,
+          }}>Annual Financial Summary Table</div>
+          <div style={{
+            position: 'absolute', left: '3.6%', top: '9.2%', fontSize: large ? '0.22rem' : '0.09rem', fontWeight: 500, color: t.muted,
+          }}>Revenue, Cost of Goods, Operations, Gross Profit, EBITDA, Net Income</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isTableSingleCardsLayout(previewHints.layout_id)) {
+    const svg = tableSingleCardsPreviewSvg()
+    const t = LAYOUT_POLISHED_THEME
+    const frameStyle = fill
+      ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+      : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+        <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+          <div style={{
+            position: 'absolute', left: '4%', right: '4%', top: '2.8%', textAlign: 'center', fontSize: large ? '0.42rem' : '0.16rem', fontWeight: 800, color: t.text,
+          }}>Investment Report</div>
+          <div style={{
+            position: 'absolute', left: '4%', right: '4%', top: '9.2%', textAlign: 'center', fontSize: large ? '0.2rem' : '0.08rem', fontWeight: 500, color: t.muted,
+          }}>This is the sample dummy text insert your desired text here</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isTableWithDescriptionLayout(previewHints.layout_id)) {
+    const svg = tableWithDescriptionPreviewSvg()
+    const t = LAYOUT_POLISHED_THEME
+    const frameStyle = fill
+      ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+      : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+        <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+          <div style={{
+            position: 'absolute', left: '3.6%', top: '3.2%', fontSize: large ? '0.42rem' : '0.16rem', fontWeight: 800, color: t.text,
+          }}>Table Template</div>
+          <div style={{
+            position: 'absolute', left: '40%', right: '3.6%', top: '3.2%', fontSize: large ? '0.2rem' : '0.08rem', fontWeight: 500, color: t.muted, lineHeight: 1.25,
+          }}>This slide presents a set of customizable table templates designed for clear and structured data presentation...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isTableWithDescriptionSideLayout(previewHints.layout_id)) {
+    const svg = tableSidePreviewSvg()
+    const t = LAYOUT_POLISHED_THEME
+    const frameStyle = fill
+      ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+      : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+        <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+          <div style={{
+            position: 'absolute', left: '6%', right: '6%', top: '3.2%', textAlign: 'center', fontSize: large ? '0.42rem' : '0.16rem', fontWeight: 800, color: t.text,
+          }}>Table Slide</div>
+          <div style={{
+            position: 'absolute', left: '6%', right: '6%', top: '9.2%', textAlign: 'center', fontSize: large ? '0.2rem' : '0.08rem', fontWeight: 500, color: t.muted,
+          }}>Make a big impact with our professional slides and charts</div>
+          <div style={{
+            position: 'absolute', left: '66%', right: '4%', top: '35%', textAlign: 'left', fontSize: large ? '0.32rem' : '0.12rem', fontWeight: 800, color: t.text,
+          }}>Project Planning</div>
+          <div style={{
+            position: 'absolute', left: '66%', right: '4%', top: '44%', textAlign: 'left', fontSize: large ? '0.18rem' : '0.07rem', fontWeight: 400, color: t.muted, lineHeight: 1.3,
+          }}>Make a big impact with professional slides, charts, infographics and more.</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isTableTwoDescLayout(previewHints.layout_id)) {
+    const svg = tableTwoDescPreviewSvg()
+    const t = LAYOUT_POLISHED_THEME
+    const frameStyle = fill
+      ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+      : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+        <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+          <div style={{
+            position: 'absolute', left: '4.4%', right: '10%', top: '6.5%', textAlign: 'left', fontSize: large ? '0.38rem' : '0.15rem', fontWeight: 800, color: t.text,
+          }}>Compare Datasets</div>
+          <div style={{
+            position: 'absolute', left: '4.4%', right: '10%', top: '13%', textAlign: 'left', fontSize: large ? '0.18rem' : '0.075rem', fontWeight: 400, color: t.muted,
+          }}>Explore the differences and similarities between the two datasets side by side.</div>
+
+          {/* Dataset 1 Card Header */}
+          <div style={{
+            position: 'absolute', left: '10.5%', top: '23%', fontSize: large ? '0.24rem' : '0.09rem', fontWeight: 700, color: t.text,
+          }}>Dataset 1</div>
+          <div style={{
+            position: 'absolute', left: '38%', top: '24%', fontSize: large ? '0.14rem' : '0.06rem', fontWeight: 600, color: '#0284C7',
+          }}>Source A</div>
+
+          {/* Dataset 2 Card Header */}
+          <div style={{
+            position: 'absolute', left: '57.5%', top: '23%', fontSize: large ? '0.24rem' : '0.09rem', fontWeight: 700, color: t.text,
+          }}>Dataset 2</div>
+          <div style={{
+            position: 'absolute', left: '85%', top: '24%', fontSize: large ? '0.14rem' : '0.06rem', fontWeight: 600, color: '#9333EA',
+          }}>Source B</div>
+
+          {/* Description 1 */}
+          <div style={{
+            position: 'absolute', left: '10.5%', top: '72.5%', fontSize: large ? '0.22rem' : '0.085rem', fontWeight: 700, color: t.text,
+          }}>Description 1</div>
+
+          {/* Description 2 */}
+          <div style={{
+            position: 'absolute', left: '57.5%', top: '72.5%', fontSize: large ? '0.22rem' : '0.085rem', fontWeight: 700, color: t.text,
+          }}>Description 2</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isTableTwoDescCardsLayout(previewHints.layout_id)) {
+    const svg = tableTwoDescCardsPreviewSvg()
+    const t = LAYOUT_POLISHED_THEME
+    const frameStyle = fill
+      ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+      : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+        <div style={{ position: 'relative', zIndex: 1, width: '100%', height: '100%' }}>
+          <div style={{
+            position: 'absolute', left: '4.4%', right: '10%', top: '6.5%', textAlign: 'left', fontSize: large ? '0.38rem' : '0.15rem', fontWeight: 800, color: t.text,
+          }}>Compare Datasets</div>
+          <div style={{
+            position: 'absolute', left: '4.4%', right: '10%', top: '13%', textAlign: 'left', fontSize: large ? '0.18rem' : '0.075rem', fontWeight: 400, color: t.muted,
+          }}>Explore the differences and similarities between the two datasets side by side.</div>
+
+          {/* Dataset 1 Unified Card */}
+          <div style={{
+            position: 'absolute', left: '11.5%', top: '23%', fontSize: large ? '0.24rem' : '0.09rem', fontWeight: 700, color: t.text,
+          }}>Dataset 1</div>
+          <div style={{
+            position: 'absolute', left: '11.5%', top: '27.5%', fontSize: large ? '0.14rem' : '0.06rem', fontWeight: 500, color: t.muted,
+          }}>Key details and values</div>
+
+          {/* Dataset 2 Unified Card */}
+          <div style={{
+            position: 'absolute', left: '58.5%', top: '23%', fontSize: large ? '0.24rem' : '0.09rem', fontWeight: 700, color: t.text,
+          }}>Dataset 2</div>
+          <div style={{
+            position: 'absolute', left: '58.5%', top: '27.5%', fontSize: large ? '0.14rem' : '0.06rem', fontWeight: 500, color: t.muted,
+          }}>Key details and values</div>
+
+          {/* Description 1 inside Card 1 */}
+          <div style={{
+            position: 'absolute', left: '14%', top: '62%', fontSize: large ? '0.2rem' : '0.08rem', fontWeight: 700, color: t.text,
+          }}>Description 1</div>
+
+          {/* Description 2 inside Card 2 */}
+          <div style={{
+            position: 'absolute', left: '61%', top: '62%', fontSize: large ? '0.2rem' : '0.08rem', fontWeight: 700, color: t.text,
+          }}>Description 2</div>
         </div>
       </div>
     )
