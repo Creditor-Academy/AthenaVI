@@ -289,12 +289,15 @@ const LAYOUT_PREVIEW_MODES = {
   comparison_side_by_side_v1: 'comparison_columns',
   comparison_side_by_side_cards_v1: 'comparison_columns',
   comparison_side_by_side_centerline_v1: 'comparison_columns',
-  comparison_pros_cons_v1: 'comparison_columns',
-  comparison_table_v1: 'comparison_columns',
-  comparison_table_grid_v1: 'comparison_columns',
-  comparison_before_after_v1: 'comparison_columns',
-  bullet_list_cards_v1: 'two_image_columns',
-  bullet_list_grid_v1: 'two_image_columns',
+  comparison_pros_cons_v1: 'comparison_pros_cons',
+  comparison_table_v1: 'comparison_table_cards',
+  comparison_table_grid_v1: 'comparison_table_cards',
+  comparison_before_after_v1: 'comparison_before_after',
+  comparison_pros_cons_split_v1: 'comparison_pros_cons_split',
+  text_two_column_cards_v1: 'text_two_column_cards',
+  image_text_split_v1: 'image_text_split',
+  bullet_list_cards_v1: 'bullet_list_cards',
+  bullet_list_grid_v1: 'bullet_list_cards',
   section_divider_numbered_v1: 'section_divider',
   section_divider_numbered_circle_v1: 'section_divider',
   section_divider_band_v1: 'section_divider',
@@ -944,12 +947,20 @@ function fillPreviewDataFromSlots(schema) {
   if (mode === 'two_image_columns' && !Array.isArray(preview.columns)) {
     preview.columns = [
       {
-        title: slotPlaceholderText(slots, 'COL_1_TITLE') || 'Make your point',
-        body: slotPlaceholderText(slots, 'COL_1_BODY') || 'Expand on it here.',
+        title: slotPlaceholderText(slots, 'COL_1_TITLE') || slotPlaceholderText(slots, 'CARD_1_TITLE') || 'Make your point',
+        body: slotPlaceholderText(slots, 'COL_1_BODY') || slotPlaceholderText(slots, 'CARD_1_BODY') || 'Expand on it here.',
       },
       {
-        title: slotPlaceholderText(slots, 'COL_2_TITLE') || 'Make another point',
-        body: slotPlaceholderText(slots, 'COL_2_BODY') || 'You already know that it matters.',
+        title: slotPlaceholderText(slots, 'COL_2_TITLE') || slotPlaceholderText(slots, 'CARD_2_TITLE') || 'Make another point',
+        body: slotPlaceholderText(slots, 'COL_2_BODY') || slotPlaceholderText(slots, 'CARD_2_BODY') || 'You already know that it matters.',
+      },
+      {
+        title: slotPlaceholderText(slots, 'CARD_3_TITLE') || 'Third point',
+        body: slotPlaceholderText(slots, 'CARD_3_BODY') || 'Keep each card scannable.',
+      },
+      {
+        title: slotPlaceholderText(slots, 'CARD_4_TITLE') || 'Fourth point',
+        body: slotPlaceholderText(slots, 'CARD_4_BODY') || 'Finish strong with a takeaway.',
       },
     ]
   }

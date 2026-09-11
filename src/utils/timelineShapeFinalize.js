@@ -116,6 +116,13 @@ import {
 import { isDevicePhoneHighlightsLayout, layoutDevicePhoneHighlights } from './devicePhoneHighlightsLayout'
 import { isDevicePhoneTripleLayout, layoutDevicePhoneTriple } from './devicePhoneTripleLayout'
 import { isDeviceMultiClusterLayout, layoutDeviceMultiCluster } from './deviceMultiClusterLayout'
+import { isSectionDividerBandLayout, layoutSectionDividerBand } from './sectionDividerBandLayout'
+import { isBulletListCardsLayout, layoutBulletListCards } from './bulletListCardsLayout'
+import { isComparisonTableLayout, layoutComparisonTable } from './comparisonTableLayout'
+import { isComparisonProsConsLayout, layoutComparisonProsCons } from './comparisonProsConsLayout'
+import { isComparisonBeforeAfterLayout, layoutComparisonBeforeAfter } from './comparisonBeforeAfterLayout'
+import { isComparisonProsConsSplitLayout, layoutComparisonProsConsSplit } from './comparisonProsConsSplitLayout'
+import { isTextTwoColumnCardsLayout, layoutTextTwoColumnCards } from './textTwoColumnCardsLayout'
 import { isDeviceLaptopSplitLayout, layoutDeviceLaptopSplit } from './deviceLaptopSplitLayout'
 import { isDeviceTabletSplitLayout, layoutDeviceTabletSplit } from './deviceTabletSplitLayout'
 import { isDeviceTabletCenteredLayout, layoutDeviceTabletCentered } from './deviceTabletCenteredLayout'
@@ -5498,6 +5505,33 @@ export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = 
   if (isAgendaTwoColumnLayout(layoutId)) {
     return layoutAgendaTwoColumn(elements, schema, palette, canvas)
   }
+  if (isSectionDividerBandLayout(layoutId)) {
+    return layoutSectionDividerBand(elements, schema, palette, canvas)
+  }
+  if (isBulletListCardsLayout(layoutId)) {
+    return layoutBulletListCards(elements, schema, palette, canvas)
+  }
+
+  if (isComparisonTableLayout(layoutId)) {
+    return layoutComparisonTable(elements, schema, palette, canvas)
+  }
+
+  if (isComparisonProsConsLayout(layoutId)) {
+    return layoutComparisonProsCons(elements, schema, palette, canvas)
+  }
+
+  if (isComparisonBeforeAfterLayout(layoutId)) {
+    return layoutComparisonBeforeAfter(elements, schema, palette, canvas)
+  }
+
+  if (isComparisonProsConsSplitLayout(layoutId)) {
+    return layoutComparisonProsConsSplit(elements, schema, palette, canvas)
+  }
+
+  if (isTextTwoColumnCardsLayout(layoutId) || schema?.preview?.mode === 'text_two_column_cards') {
+    return layoutTextTwoColumnCards(elements, schema, palette, canvas)
+  }
+
   if (isQuoteGridLayout(layoutId)) {
     return layoutQuoteGrid(elements, schema, palette, canvas)
   }

@@ -1,6 +1,6 @@
 /** Three overlapping portrait phones with left/right copy. Plain gray band — no accent color. */
 
-import { deviceFrameChromeColors } from './deviceFrameCanvas'
+import { deviceFrameChromeColors } from './deviceFrameCanvas.js'
 
 export const TRIPLE_COPY = [
   { key: 'L', heading: 'Title 01', body: 'Description 01' },

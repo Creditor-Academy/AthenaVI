@@ -117,25 +117,31 @@ const CATALOG = {
 
   comparison_pros_cons_v1: layoutBase('comparison_pros_cons_v1', 'comparison', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Pros and cons', { max_lines: 2 }),
-    slot('PROS_TITLE', 'cols 1-6, rows 2-3', 'heading', 'Pros', {
+    slot('PROS_PROJECT_TITLE', 'cols 1-3, rows 3-4', 'heading', 'Project One', {
       layer: 10,
-      typography: typo('heading', { fontSize: 22, colorRole: 'primary' }),
+      typography: typo('heading', { fontSize: 24, align: 'center', colorRole: 'surface' }),
     }),
-    slot('CONS_TITLE', 'cols 7-12, rows 2-3', 'heading', 'Cons', {
+    slot('CONS_PROJECT_TITLE', 'cols 10-12, rows 3-4', 'heading', 'Project Two', {
       layer: 10,
-      typography: typo('heading', { fontSize: 22 }),
+      typography: typo('heading', { fontSize: 24, align: 'center', colorRole: 'surface' }),
     }),
-    slot('PROS', 'cols 1-6, rows 3-9', 'body', '• Advantage one\n• Advantage two', {
-      layer: 10,
-      typography: typo('body'),
-      max_lines: 6,
-    }),
-    slot('CONS', 'cols 7-12, rows 3-9', 'body', '• Risk one\n• Risk two', {
-      layer: 10,
-      typography: typo('body'),
-      max_lines: 6,
-    }),
-  ], { mode: 'comparison_columns' }),
+    ...[1, 2, 3, 4, 5].flatMap((r) => [
+      slot(`PROS_${r}_TITLE`, `cols 4-5, rows ${r+2}-${r+3}`, 'heading', 'Advantage', { layer: 10, typography: typo('heading', { fontSize: 16, align: 'right' }) }),
+      slot(`PROS_${r}_BODY`, `cols 4-5, rows ${r+3}-${r+4}`, 'body', 'Supporting details', { layer: 10, typography: typo('body', { fontSize: 12, align: 'right' }) }),
+      slot(`CONS_${r}_TITLE`, `cols 8-9, rows ${r+2}-${r+3}`, 'heading', 'Risk', { layer: 10, typography: typo('heading', { fontSize: 16, align: 'left' }) }),
+      slot(`CONS_${r}_BODY`, `cols 8-9, rows ${r+3}-${r+4}`, 'body', 'Supporting details', { layer: 10, typography: typo('body', { fontSize: 12, align: 'left' }) })
+    ])
+  ], { mode: 'comparison_pros_cons' }),
+
+  comparison_pros_cons_split_v1: layoutBase('comparison_pros_cons_split_v1', 'comparison', [
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Pros and Cons', { max_lines: 2 }),
+    ...[1, 2, 3].flatMap((r) => [
+      slot(`PROS_${r}_TITLE`, `cols ${r*3+1}-${r*3+3}, rows 3-4`, 'heading', 'Insert Headline', { layer: 10, typography: typo('heading', { fontSize: 16, align: 'left', colorRole: 'primary' }) }),
+      slot(`PROS_${r}_BODY`, `cols ${r*3+1}-${r*3+3}, rows 4-5`, 'body', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit', { layer: 10, typography: typo('body', { fontSize: 12, align: 'left' }) }),
+      slot(`CONS_${r}_TITLE`, `cols ${r*3+1}-${r*3+3}, rows 6-7`, 'heading', 'Insert Headline', { layer: 10, typography: typo('heading', { fontSize: 16, align: 'left', colorRole: 'secondary' }) }),
+      slot(`CONS_${r}_BODY`, `cols ${r*3+1}-${r*3+3}, rows 7-8`, 'body', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit', { layer: 10, typography: typo('body', { fontSize: 12, align: 'left' }) })
+    ])
+  ], { mode: 'comparison_pros_cons_split' }),
 
   timeline_horizontal_v1: layoutBase('timeline_horizontal_v1', 'timeline', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Timeline', { max_lines: 2 }),
@@ -277,45 +283,63 @@ const CATALOG = {
   ], { mode: 'timeline_process_steps', timelineVariant: 'default' }),
 
   comparison_table_v1: layoutBase('comparison_table_v1', 'comparison', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'Feature comparison', { max_lines: 2 }),
-    slot('TABLE', 'cols 1-12, rows 2-9', 'table', null, { layer: 10 }),
-  ], { mode: 'comparison_columns' }),
+    heading('HEADING', 'cols 1-12, rows 1-2', 'Feature comparison', { max_lines: 2, typography: typo('heading', { align: 'center' }) }),
+    slot('LEFT_HEADER', 'cols 1-5, rows 2-3', 'heading', 'Option A', { layer: 10, typography: typo('heading', { fontSize: 24, align: 'center', colorRole: 'surface' }) }),
+    slot('RIGHT_HEADER', 'cols 8-12, rows 2-3', 'heading', 'Option B', { layer: 10, typography: typo('heading', { fontSize: 24, align: 'center', colorRole: 'surface' }) }),
+    ...[1, 2, 3].flatMap((r) => [
+      slot(`ROW_${r}_LEFT_TITLE`, `cols 1-5, rows ${r+2}-${r+3}`, 'heading', 'Lorem Ipsum', { layer: 10, typography: typo('heading', { fontSize: 20, align: 'center' }) }),
+      slot(`ROW_${r}_LEFT_BODY`, `cols 1-5, rows ${r+3}-${r+4}`, 'body', P.short, { layer: 10, typography: typo('body', { fontSize: 14, align: 'center' }) }),
+      slot(`ROW_${r}_RIGHT_TITLE`, `cols 8-12, rows ${r+2}-${r+3}`, 'heading', 'Lorem Ipsum', { layer: 10, typography: typo('heading', { fontSize: 20, align: 'center' }) }),
+      slot(`ROW_${r}_RIGHT_BODY`, `cols 8-12, rows ${r+3}-${r+4}`, 'body', P.short, { layer: 10, typography: typo('body', { fontSize: 14, align: 'center' }) }),
+    ])
+  ], { mode: 'comparison_table_cards' }),
 
   comparison_before_after_v1: layoutBase('comparison_before_after_v1', 'comparison', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Before and after', { max_lines: 2 }),
-    slot('LEFT_TITLE', 'cols 1-6, rows 2-3', 'heading', 'Before', {
+    slot('LEFT_TITLE', 'cols 2-4, rows 2-3', 'heading', 'Before', {
       layer: 10,
-      typography: typo('heading', { fontSize: 24 }),
+      typography: typo('heading', { fontSize: 24, align: 'center' }),
     }),
-    slot('RIGHT_TITLE', 'cols 7-12, rows 2-3', 'heading', 'After', {
+    slot('RIGHT_TITLE', 'cols 9-11, rows 2-3', 'heading', 'After', {
       layer: 10,
-      typography: typo('heading', { fontSize: 24, colorRole: 'primary' }),
+      typography: typo('heading', { fontSize: 24, align: 'center' }),
     }),
-    body('LEFT_BODY', 'cols 1-6, rows 3-9', P.one, 5),
-    body('RIGHT_BODY', 'cols 7-12, rows 3-9', P.one, 5),
-  ], { mode: 'comparison_columns' }),
+    ...[1, 2, 3].flatMap((r) => [
+      slot(`ROW_${r}_LEFT_TITLE`, `cols 1-4, rows ${r*2}-${r*2+1}`, 'heading', 'Title Text Here', { layer: 10, typography: typo('heading', { fontSize: 18, align: 'right' }) }),
+      slot(`ROW_${r}_LEFT_BODY`, `cols 1-4, rows ${r*2+1}-${r*2+2}`, 'body', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.', { layer: 10, typography: typo('body', { fontSize: 12, align: 'right' }) }),
+      slot(`ROW_${r}_METRIC`, `cols 5-8, rows ${r*2}-${r*2+2}`, 'heading', '25% ➔ 50%', { layer: 10, typography: typo('heading', { fontSize: 28, align: 'center', colorRole: 'surface' }) }),
+      slot(`ROW_${r}_RIGHT_TITLE`, `cols 9-12, rows ${r*2}-${r*2+1}`, 'heading', 'Title Text Here', { layer: 10, typography: typo('heading', { fontSize: 18, align: 'left' }) }),
+      slot(`ROW_${r}_RIGHT_BODY`, `cols 9-12, rows ${r*2+1}-${r*2+2}`, 'body', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.', { layer: 10, typography: typo('body', { fontSize: 12, align: 'left' }) })
+    ])
+  ], { mode: 'comparison_before_after' }),
 
   bullet_list_cards_v1: layoutBase('bullet_list_cards_v1', 'bullet_list', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Key points', { max_lines: 2 }),
-    cardShapeHint('cols 1-4, rows 2-6', 'CARD_1_BG', 10, 'CARD_1_TITLE'),
-    slot('CARD_1_TITLE', 'cols 1-4, rows 2-3', 'heading', 'Point one', {
+    cardShapeHint('cols 1-3, rows 2-6', 'CARD_1_BG', 10, 'CARD_1_TITLE'),
+    slot('CARD_1_TITLE', 'cols 1-3, rows 2-3', 'heading', 'Point one', {
       layer: 10,
       typography: typo('heading', { fontSize: 20 }),
     }),
-    body('CARD_1_BODY', 'cols 1-4, rows 3-6', P.short, 3),
-    cardShapeHint('cols 5-8, rows 2-6', 'CARD_2_BG', 10, 'CARD_2_TITLE'),
-    slot('CARD_2_TITLE', 'cols 5-8, rows 2-3', 'heading', 'Point two', {
+    body('CARD_1_BODY', 'cols 1-3, rows 3-6', P.short, 3),
+    cardShapeHint('cols 4-6, rows 2-6', 'CARD_2_BG', 10, 'CARD_2_TITLE'),
+    slot('CARD_2_TITLE', 'cols 4-6, rows 2-3', 'heading', 'Point two', {
       layer: 10,
       typography: typo('heading', { fontSize: 20 }),
     }),
-    body('CARD_2_BODY', 'cols 5-8, rows 3-6', P.short, 3),
-    cardShapeHint('cols 9-12, rows 2-6', 'CARD_3_BG', 10, 'CARD_3_TITLE'),
-    slot('CARD_3_TITLE', 'cols 9-12, rows 2-3', 'heading', 'Point three', {
+    body('CARD_2_BODY', 'cols 4-6, rows 3-6', P.short, 3),
+    cardShapeHint('cols 7-9, rows 2-6', 'CARD_3_BG', 10, 'CARD_3_TITLE'),
+    slot('CARD_3_TITLE', 'cols 7-9, rows 2-3', 'heading', 'Point three', {
       layer: 10,
       typography: typo('heading', { fontSize: 20 }),
     }),
-    body('CARD_3_BODY', 'cols 9-12, rows 3-6', P.short, 3),
-  ], { mode: 'two_image_columns' }),
+    body('CARD_3_BODY', 'cols 7-9, rows 3-6', P.short, 3),
+    cardShapeHint('cols 10-12, rows 2-6', 'CARD_4_BG', 10, 'CARD_4_TITLE'),
+    slot('CARD_4_TITLE', 'cols 10-12, rows 2-3', 'heading', 'Point four', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 20 }),
+    }),
+    body('CARD_4_BODY', 'cols 10-12, rows 3-6', P.short, 3),
+  ], { mode: 'two_image_columns', slideVariant: 'cards' }),
 
   section_divider_numbered_v1: layoutBase('section_divider_numbered_v1', 'section_divider', [
     slot('SECTION_NUMBER', 'cols 5-8, rows 3-4', 'stat', '02', {

@@ -1211,15 +1211,18 @@ function PolishedTwoImageColumnsPreview({ previewHints, large, className, style,
   const variant = previewHints.slideVariant || 'default'
   const eyebrowMeta = previewHints.slots?.EYEBROW || previewHints.slots?.HEADING || {}
   const { display: eyebrowText } = formatPreviewText(eyebrowMeta.text || 'Describe this slide', { bold: false, uppercase: false })
+  const isFour = variant === 'grid' || variant === 'cards'
+  const count = isFour ? 4 : variant === 'icon_rows' ? 3 : 2
   const columns = Array.isArray(previewHints.columns) && previewHints.columns.length
-    ? previewHints.columns.slice(0, variant === 'grid' || variant === 'icon_rows' ? 3 : 2)
+    ? previewHints.columns.slice(0, count)
     : [
         { title: 'Make your point', body: 'Expand on it here. Why is it important? Why does it matter?' },
         { title: 'Make another point', body: "You already know that it's important. But what about your listeners?" },
         { title: 'Third point', body: 'Keep each card scannable and short.' },
+        { title: 'Fourth point', body: 'Finish strong with a clear takeaway.' },
       ]
   const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
-  const shown = variant === 'grid' || variant === 'icon_rows' ? columns.slice(0, 3) : columns.slice(0, 2)
+  const shown = columns.slice(0, count)
 
   if (variant === 'icon_rows') {
     return (
@@ -1254,7 +1257,7 @@ function PolishedTwoImageColumnsPreview({ previewHints, large, className, style,
       <div style={{
         flex: 1,
         display: 'grid',
-        gridTemplateColumns: variant === 'grid' ? 'repeat(3, 1fr)' : variant === 'top' || variant === 'bottom' ? '1fr' : '1fr 1fr',
+        gridTemplateColumns: isFour ? 'repeat(4, 1fr)' : variant === 'top' || variant === 'bottom' ? '1fr' : '1fr 1fr',
         gridTemplateRows: variant === 'top' || variant === 'bottom' ? 'auto 1fr' : undefined,
         gap: large ? 16 : 5,
         minHeight: 0,
@@ -1268,6 +1271,107 @@ function PolishedTwoImageColumnsPreview({ previewHints, large, className, style,
             <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : '0.28rem', color: t.muted, lineHeight: 1.35 }}>{col.body}</div>
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+
+function PolishedBulletListCardsPreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const variant = previewHints.slideVariant || 'default'
+  const isGrid = variant === 'grid' || /grid/i.test(previewHints.layout_id || '')
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+
+  const GRID_COLORS = ['#e0f2fe', '#dcfce7', '#f3e8ff', '#fce7f3']
+  const CARD_COLORS = ['#bae6fd', '#bbf7d0', '#e9d5ff', '#fbcfe8']
+  
+  const columns = [
+    { title: 'Point one', body: 'Expand on it here.' },
+    { title: 'Point two', body: 'Keep it brief.' },
+    { title: 'Point three', body: 'Another point.' },
+    { title: 'Point four', body: 'Finish strong.' },
+  ]
+  
+  if (isGrid) {
+    return (
+      <div className={className} style={{ position: 'relative', ...frameStyle, overflow: 'hidden', display: 'flex', ...style }}>
+        {columns.map((col, i) => {
+          const isDown = i % 2 === 0
+          return (
+            <div key={i} style={{ flex: 1, background: GRID_COLORS[i], padding: large ? '12% 5%' : '12% 5%', position: 'relative', paddingTop: isDown ? (large ? '40%' : '40%') : (large ? '10%' : '10%') }}>
+               <div style={{ fontSize: large ? '1.5rem' : '0.6rem', fontWeight: 300, color: i === 0 || i === 3 ? 'rgba(255,255,255,0.9)' : GRID_COLORS[0], marginBottom: large ? 16 : 4 }}>{i + 1}</div>
+               <div style={{ fontSize: large ? '0.6rem' : '0.25rem', fontWeight: 800, color: i === 0 || i === 3 ? '#fff' : '#1f2937' }}>{col.title}</div>
+               <div style={{ fontSize: large ? '0.35rem' : '0.15rem', color: i === 0 || i === 3 ? 'rgba(255,255,255,0.7)' : '#4b5563', marginTop: large ? 8 : 2 }}>{col.body}</div>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  return (
+    <div className={className} style={{ position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden', padding: large ? '10% 4%' : '10% 4%', display: 'flex', gap: large ? 16 : 4, ...style }}>
+      {columns.map((col, i) => (
+        <div key={i} style={{ flex: 1, position: 'relative', paddingTop: large ? 16 : 4 }}>
+          <div style={{ position: 'absolute', inset: 0, background: CARD_COLORS[i], borderRadius: large ? 12 : 4, transform: 'translate(4%, -4%)' }} />
+          <div style={{ position: 'relative', background: '#fff', height: '100%', borderRadius: large ? 12 : 4, padding: large ? '16px 8px' : '6px 4px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+            <div style={{ fontSize: large ? '0.55rem' : '0.22rem', fontWeight: 800, color: '#1f2937', marginTop: large ? 16 : 4 }}>{col.title}</div>
+            <div style={{ fontSize: large ? '0.3rem' : '0.12rem', color: '#6b7280', marginTop: large ? 8 : 2 }}>{col.body}</div>
+            <div style={{ position: 'absolute', bottom: large ? -12 : -4, left: '50%', transform: 'translateX(-50%)', background: CARD_COLORS[i], color: '#fff', borderRadius: '50%', width: large ? 24 : 8, height: large ? 24 : 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: large ? '0.3rem' : '0.1rem', fontWeight: 800 }}>0{i + 1}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function PolishedComparisonTablePreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const variant = previewHints.slideVariant || 'default'
+  const isGrid = variant === 'grid' || /grid/i.test(previewHints.layout_id || '')
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+
+  const LEFT_HEADER = '#7dd3fc'
+  const LEFT_ROWS = ['#f0f9ff', '#e0f2fe', '#bae6fd']
+  const RIGHT_HEADER = '#fdba74'
+  const RIGHT_ROWS = ['#fff7ed', '#ffedd5', '#fed7aa']
+  
+  const contentStyle = { display: 'flex', flexDirection: 'column', padding: large ? '12% 8%' : '12% 8%', height: '100%', boxSizing: 'border-box', position: 'relative' }
+  const radius = isGrid ? 0 : (large ? 12 : 4)
+
+  return (
+    <div className={className} style={{ position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden', ...style }}>
+      <div style={{ ...contentStyle }}>
+        <div style={{ fontSize: large ? '1.2rem' : '0.4rem', fontWeight: 800, textAlign: 'center', marginBottom: large ? 24 : 8, color: '#1f2937' }}>Feature comparison</div>
+        
+        <div style={{ display: 'flex', flex: 1, gap: isGrid ? 0 : (large ? 24 : 8), position: 'relative' }}>
+          {/* Center Pillar */}
+          <div style={{ position: 'absolute', top: large ? -16 : -4, bottom: large ? -16 : -4, left: '50%', transform: 'translateX(-50%)', width: large ? 64 : 20, background: '#fff', borderRadius: large ? 32 : 8, zIndex: 10, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-evenly', padding: large ? '16px 0' : '4px 0' }}>
+            <div style={{ fontSize: large ? '1rem' : '0.3rem', fontWeight: 800, color: '#a0aec0' }}>Vs</div>
+            <div style={{ width: large ? 16 : 6, height: large ? 16 : 6, background: '#4b5563', borderRadius: 2 }} />
+            <div style={{ width: large ? 16 : 6, height: large ? 16 : 6, background: '#4b5563', borderRadius: '50%' }} />
+            <div style={{ width: large ? 16 : 6, height: large ? 16 : 6, background: '#4b5563', borderRadius: 2 }} />
+          </div>
+
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: isGrid ? 0 : (large ? 8 : 2) }}>
+            <div style={{ background: LEFT_HEADER, padding: large ? 12 : 4, borderRadius: radius, textAlign: 'center', color: '#fff', fontWeight: 800, fontSize: large ? '0.7rem' : '0.2rem' }}>OPTION A</div>
+            {LEFT_ROWS.map((bg, i) => (
+              <div key={i} style={{ flex: 1, background: bg, borderRadius: radius, padding: large ? 16 : 4, textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div style={{ fontSize: large ? '0.6rem' : '0.18rem', fontWeight: 800, color: '#1f2937' }}>Lorem Ipsum</div>
+                <div style={{ fontSize: large ? '0.35rem' : '0.12rem', color: '#4b5563', marginTop: large ? 4 : 1 }}>Short description text</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: isGrid ? 0 : (large ? 8 : 2) }}>
+            <div style={{ background: RIGHT_HEADER, padding: large ? 12 : 4, borderRadius: radius, textAlign: 'center', color: '#fff', fontWeight: 800, fontSize: large ? '0.7rem' : '0.2rem' }}>OPTION B</div>
+            {RIGHT_ROWS.map((bg, i) => (
+              <div key={i} style={{ flex: 1, background: bg, borderRadius: radius, padding: large ? 16 : 4, textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div style={{ fontSize: large ? '0.6rem' : '0.18rem', fontWeight: 800, color: '#1f2937' }}>Lorem Ipsum</div>
+                <div style={{ fontSize: large ? '0.35rem' : '0.12rem', color: '#4b5563', marginTop: large ? 4 : 1 }}>Short description text</div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -1880,6 +1984,167 @@ function PolishedBulletListPreview({ previewHints, large, className, style, fill
   )
 }
 
+function PolishedComparisonProsConsPreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+
+  const PROS_COLOR = '#c084fc'
+  const CONS_COLOR = '#fbbf24'
+  
+  const contentStyle = { display: 'flex', flexDirection: 'column', padding: large ? '12% 8%' : '12% 8%', height: '100%', boxSizing: 'border-box', position: 'relative' }
+
+  return (
+    <div className={className} style={{ position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden', ...style }}>
+      <div style={{ ...contentStyle }}>
+        <div style={{ fontSize: large ? '1.2rem' : '0.4rem', fontWeight: 800, textAlign: 'center', marginBottom: large ? 32 : 12, color: '#1f2937' }}>Pros and cons</div>
+        
+        <div style={{ display: 'flex', flex: 1, position: 'relative' }}>
+          {/* Left Block */}
+          <div style={{ flex: 1, background: PROS_COLOR, borderTopRightRadius: large ? 24 : 8, borderBottomRightRadius: large ? 24 : 8, position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <div style={{ padding: large ? 24 : 8, color: '#fff', fontSize: large ? '0.8rem' : '0.25rem', fontWeight: 800 }}>Project One</div>
+          </div>
+          
+          {/* Middle Spacer */}
+          <div style={{ width: large ? '30%' : '30%', position: 'relative' }}>
+            <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', transform: 'translateX(-50%)', width: 2, background: '#e2e8f0' }} />
+            <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', background: '#fff', border: '2px solid #e2e8f0', borderRadius: large ? 16 : 4, padding: large ? '4px 12px' : '1px 4px', fontSize: large ? '0.4rem' : '0.12rem', fontWeight: 800, color: '#94a3b8' }}>VS</div>
+            
+            {/* Rows */}
+            <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-evenly', padding: large ? '24px 0' : '8px 0' }}>
+              {[1, 2, 3].map(i => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                  <div style={{ flex: 1, borderBottom: `2px dashed ${PROS_COLOR}`, opacity: 0.6 }} />
+                  <div style={{ width: large ? 16 : 6, height: large ? 16 : 6, background: PROS_COLOR, borderRadius: '50%' }} />
+                  <div style={{ flex: 1 }} />
+                  <div style={{ width: large ? 16 : 6, height: large ? 16 : 6, background: CONS_COLOR, borderRadius: '50%' }} />
+                  <div style={{ flex: 1, borderBottom: `2px dashed ${CONS_COLOR}`, opacity: 0.6 }} />
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Right Block */}
+          <div style={{ flex: 1, background: CONS_COLOR, borderTopLeftRadius: large ? 24 : 8, borderBottomLeftRadius: large ? 24 : 8, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+            <div style={{ padding: large ? 24 : 8, color: '#fff', fontSize: large ? '0.8rem' : '0.25rem', fontWeight: 800 }}>Project Two</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PolishedComparisonBeforeAfterPreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+
+  const COLORS = ['#7dd3fc', '#86efac', '#a78bfa']
+  
+  const contentStyle = { display: 'flex', flexDirection: 'column', padding: large ? '12% 8%' : '12% 8%', height: '100%', boxSizing: 'border-box', position: 'relative' }
+
+  return (
+    <div className={className} style={{ position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden', ...style }}>
+      <div style={{ ...contentStyle }}>
+        <div style={{ fontSize: large ? '1.2rem' : '0.4rem', fontWeight: 800, textAlign: 'center', marginBottom: large ? 24 : 8, color: '#1f2937' }}>Before and after</div>
+        
+        <div style={{ display: 'flex', padding: large ? '0 16px' : '0 4px', marginBottom: large ? 16 : 4 }}>
+          <div style={{ flex: 1, fontSize: large ? '0.8rem' : '0.25rem', fontWeight: 800, color: '#1f2937', textAlign: 'center' }}>Before</div>
+          <div style={{ width: large ? '20%' : '20%' }} />
+          <div style={{ flex: 1, fontSize: large ? '0.8rem' : '0.25rem', fontWeight: 800, color: '#1f2937', textAlign: 'center' }}>After</div>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, gap: large ? 16 : 4 }}>
+          {[1, 2, 3].map((_, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', flex: 1, position: 'relative' }}>
+              <div style={{ flex: 1, textAlign: 'right', paddingRight: large ? 16 : 4 }}>
+                <div style={{ fontSize: large ? '0.5rem' : '0.15rem', fontWeight: 800, color: '#1f2937' }}>Title Text</div>
+                <div style={{ fontSize: large ? '0.3rem' : '0.1rem', color: '#6b7280' }}>Description...</div>
+              </div>
+              <div style={{ width: large ? '30%' : '30%', height: '100%', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ position: 'absolute', inset: 0, background: COLORS[i], borderRadius: large ? 8 : 2, opacity: 0.9, boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }} />
+                <div style={{ position: 'relative', color: '#fff', fontSize: large ? '0.8rem' : '0.25rem', fontWeight: 800 }}>{i*25}% ➔ {(i+1)*25}%</div>
+              </div>
+              <div style={{ flex: 1, textAlign: 'left', paddingLeft: large ? 16 : 4 }}>
+                <div style={{ fontSize: large ? '0.5rem' : '0.15rem', fontWeight: 800, color: '#1f2937' }}>Title Text</div>
+                <div style={{ fontSize: large ? '0.3rem' : '0.1rem', color: '#6b7280' }}>Description...</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PolishedComparisonProsConsSplitPreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+
+  const TOP_COLOR = '#06b6d4'
+  const BOTTOM_COLOR = '#f97316'
+
+  return (
+    <div className={className} style={{ position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden', ...style }}>
+      {/* Background Split */}
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50%', background: TOP_COLOR, opacity: 0.1 }} />
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '50%', background: BOTTOM_COLOR, opacity: 0.1 }} />
+      
+      <div style={{ position: 'absolute', top: large ? '10%' : '10%', left: 0, right: 0, textAlign: 'center', fontSize: large ? '1rem' : '0.35rem', fontWeight: 800, color: '#1f2937' }}>Pros and Cons</div>
+
+      {/* Content Area */}
+      <div style={{ position: 'absolute', top: '25%', bottom: '10%', left: '10%', right: '10%', display: 'flex', flexDirection: 'column' }}>
+        {/* PROS (Top Half) */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: large ? 24 : 8 }}>
+          <div style={{ width: '30%', height: '70%', background: TOP_COLOR, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: large ? '0.8rem' : '0.25rem', fontWeight: 800, borderRadius: 4 }}>PROS</div>
+          <div style={{ flex: 1, display: 'flex', gap: large ? 16 : 4 }}>
+            {[1, 2, 3].map(i => (
+              <div key={i} style={{ flex: 1 }}>
+                <div style={{ width: large ? 16 : 6, height: large ? 16 : 6, background: TOP_COLOR, borderRadius: '50%', marginBottom: large ? 8 : 2 }} />
+                <div style={{ fontSize: large ? '0.4rem' : '0.12rem', fontWeight: 800, color: TOP_COLOR }}>Headline</div>
+                <div style={{ fontSize: large ? '0.25rem' : '0.08rem', color: '#6b7280', marginTop: large ? 4 : 1 }}>Lorem ipsum...</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* CONS (Bottom Half) */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: large ? 24 : 8 }}>
+          <div style={{ width: '30%', height: '70%', background: BOTTOM_COLOR, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: large ? '0.8rem' : '0.25rem', fontWeight: 800, borderRadius: 4 }}>CONS</div>
+          <div style={{ flex: 1, display: 'flex', gap: large ? 16 : 4 }}>
+            {[1, 2, 3].map(i => (
+              <div key={i} style={{ flex: 1 }}>
+                <div style={{ width: large ? 16 : 6, height: large ? 16 : 6, background: BOTTOM_COLOR, borderRadius: '50%', marginBottom: large ? 8 : 2 }} />
+                <div style={{ fontSize: large ? '0.4rem' : '0.12rem', fontWeight: 800, color: BOTTOM_COLOR }}>Headline</div>
+                <div style={{ fontSize: large ? '0.25rem' : '0.08rem', color: '#6b7280', marginTop: large ? 4 : 1 }}>Lorem ipsum...</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PolishedTextTwoColumnCardsPreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+
+  return (
+    <div className={className} style={{ position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden', ...style }}>
+      <div style={{ position: 'absolute', top: '15%', left: 0, right: 0, textAlign: 'center', fontSize: large ? '1rem' : '0.35rem', fontWeight: 800, color: '#1f2937' }}>Two columns</div>
+      <div style={{ position: 'absolute', top: '30%', bottom: '15%', left: '10%', right: '10%', display: 'flex', gap: large ? 32 : 12 }}>
+        <div style={{ flex: 1, background: 'rgba(59, 130, 246, 0.15)', borderRadius: large ? 16 : 6, borderTop: `${large ? 6 : 2}px solid #3b82f6`, padding: large ? 24 : 8 }}>
+          <div style={{ fontSize: large ? '0.6rem' : '0.2rem', fontWeight: 800, color: '#3b82f6', marginBottom: large ? 12 : 4 }}>Column A</div>
+          {[1,2,3,4].map(i => <div key={i} style={{ height: large ? 8 : 2, background: '#cbd5e1', marginBottom: large ? 8 : 2, width: i % 2 === 0 ? '80%' : '100%', borderRadius: 2 }} />)}
+        </div>
+        <div style={{ flex: 1, background: 'rgba(168, 85, 247, 0.15)', borderRadius: large ? 16 : 6, borderTop: `${large ? 6 : 2}px solid #a855f7`, padding: large ? 24 : 8 }}>
+          <div style={{ fontSize: large ? '0.6rem' : '0.2rem', fontWeight: 800, color: '#a855f7', marginBottom: large ? 12 : 4 }}>Column B</div>
+          {[1,2,3,4].map(i => <div key={i} style={{ height: large ? 8 : 2, background: '#cbd5e1', marginBottom: large ? 8 : 2, width: i % 2 === 0 ? '80%' : '100%', borderRadius: 2 }} />)}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PolishedClosingCtaPreview({ previewHints, large, className, style, fill, aspectRatio }) {
   const t = LAYOUT_POLISHED_THEME
   const headingMeta = previewHints.slots?.HEADING || {}
@@ -2130,6 +2395,9 @@ export default function LayoutPolishedPreview({
   }
   if (previewMode === 'stat_cards_image') {
     return <PolishedStatCardsImagePreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
+  }
+  if (previewMode === 'bullet_list_cards') {
+    return <PolishedBulletListCardsPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
   }
   if (previewMode === 'two_image_columns') {
     return <PolishedTwoImageColumnsPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
@@ -2448,6 +2716,26 @@ export default function LayoutPolishedPreview({
         />
       </div>
     )
+  }
+
+  if (previewMode === 'comparison_table_cards') {
+    return <PolishedComparisonTablePreview previewHints={previewHints} large={large} className={className} style={style} fill={fill} aspectRatio={aspectRatio} />
+  }
+
+  if (previewMode === 'comparison_pros_cons') {
+    return <PolishedComparisonProsConsPreview previewHints={previewHints} large={large} className={className} style={style} fill={fill} aspectRatio={aspectRatio} />
+  }
+
+  if (previewMode === 'comparison_before_after') {
+    return <PolishedComparisonBeforeAfterPreview previewHints={previewHints} large={large} className={className} style={style} fill={fill} aspectRatio={aspectRatio} />
+  }
+
+  if (previewMode === 'comparison_pros_cons_split') {
+    return <PolishedComparisonProsConsSplitPreview previewHints={previewHints} large={large} className={className} style={style} fill={fill} aspectRatio={aspectRatio} />
+  }
+
+  if (previewMode === 'text_two_column_cards') {
+    return <PolishedTextTwoColumnCardsPreview previewHints={previewHints} large={large} className={className} style={style} fill={fill} aspectRatio={aspectRatio} />
   }
 
   const ExtendedPreview = EXTENDED_PREVIEW_MODES[previewMode]

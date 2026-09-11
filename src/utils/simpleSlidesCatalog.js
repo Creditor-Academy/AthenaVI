@@ -513,7 +513,6 @@ const CATALOG = {
   section_divider_band_v1: layoutBase('section_divider_band_v1', 'section_divider', [
     slot('BAND', 'cols 1-12, rows 4-6', 'decoration', null, {
       layer: 1,
-      shape: { fillColorRole: 'primary' },
     }),
     heading('HEADING', 'cols 2-11, rows 4-6', 'Section break', {
       typography: centeredTypo('heading', { colorRole: 'textOnImage' }),
@@ -568,7 +567,7 @@ const CATALOG = {
       typography: typo('heading', { fontSize: 22 }),
     }),
     body('RIGHT_BODY', 'cols 7-12, rows 3-9', P.short, 5),
-  ]),
+  ], { mode: 'text_two_column_cards' }),
 }
 
 function simpleSlidesFromSource(layoutId, sourceId, variant, extraPreview = {}) {
