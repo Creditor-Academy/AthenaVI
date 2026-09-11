@@ -22,6 +22,24 @@ import { isTableWithDescriptionSideLayout, layoutTableWithDescriptionSide } from
 import { isTableTwoDescLayout, layoutTableTwoDesc } from './tableTwoDescLayout.js'
 import { isTableTwoDescCardsLayout, layoutTableTwoDescCards } from './tableTwoDescCardsLayout.js'
 import { isProcessLinearBusinessLayout, layoutProcessLinearBusiness } from './processLinearBusinessLayout.js'
+import {
+  isTableTwoSameHeaderLayout,
+  layoutTableTwoSameHeader,
+  isTableTwoSameHeaderCardsLayout,
+  layoutTableTwoSameHeaderCards,
+} from './tableTwoSameHeaderLayout.js'
+import {
+  isEightShortTextsImageLayout,
+  layoutEightShortTextsImage,
+} from './eightShortTextsImageLayout.js'
+import {
+  isIntroThreeParaIconsLayout,
+  layoutIntroThreeParaIcons,
+} from './introThreeParaIconsLayout.js'
+import {
+  isGridBentoThreeLayout,
+  layoutGridBentoThree,
+} from './gridBentoThreeLayout.js'
 
 export function finalizeChartShapes(elements, schema, palette = {}, canvas = {}) {
   const layoutId = schema?.layout_id || schema?.id || schema?.layoutId
@@ -120,6 +138,26 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
   
   if (isProcessLinearBusinessLayout(layoutId)) {
     return layoutProcessLinearBusiness(elements, schema, palette, canvas)
+  }
+  
+  if (isTableTwoSameHeaderCardsLayout(layoutId)) {
+    return layoutTableTwoSameHeaderCards(elements, schema, palette, canvas)
+  }
+
+  if (isTableTwoSameHeaderLayout(layoutId)) {
+    return layoutTableTwoSameHeader(elements, schema, palette, canvas)
+  }
+  
+  if (isEightShortTextsImageLayout(layoutId)) {
+    return layoutEightShortTextsImage(elements, schema, palette, canvas)
+  }
+  
+  if (isIntroThreeParaIconsLayout(layoutId)) {
+    return layoutIntroThreeParaIcons(elements, schema, palette, canvas)
+  }
+  
+  if (isGridBentoThreeLayout(layoutId)) {
+    return layoutGridBentoThree(elements, schema, palette, canvas)
   }
   
   return elements

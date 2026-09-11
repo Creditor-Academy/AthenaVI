@@ -4,6 +4,8 @@
 
 import { aspectRatioToCss } from '../../utils/deckPackTheme'
 import { previewImageFrameStyle, PreviewImageIcon, PreviewImage } from './layoutPreviewImageShared.jsx'
+import { tableTwoSameHeaderPreviewSvg, tableTwoSameHeaderCardsPreviewSvg } from '../../utils/tableTwoSameHeaderLayout.js'
+import { gridBentoThreePreviewSvg } from '../../utils/gridBentoThreeLayout.js'
 
 const PREVIEW_TITLE_FS = { large: '1.75rem', small: '0.92rem' }
 const PREVIEW_BODY_FS = { large: '0.88rem', small: '0.4rem' }
@@ -124,31 +126,15 @@ function pad(large) {
 
 export function PolishedGridBentoThreePreview({ previewHints, ...props }) {
   const { large } = props
-  const variant = previewHints?.gridVariant || 'default'
   const fp = frameProps(props)
-  if (variant === 'staggered') {
-    return (
-      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1.2fr 0.8fr 1fr', gap: large ? 10 : 3 }}>
-        <div style={{ gridColumn: '1', gridRow: '1 / 3' }}><ImagePh large={large} /></div>
-        <div style={{ gridColumn: '2', gridRow: '1 / 2' }}><ImagePh large={large} /></div>
-        <div style={{ gridColumn: '2', gridRow: '2 / 4' }}><ImagePh large={large} /></div>
-      </div>
-    )
-  }
-  if (variant === 'asymmetric') {
-    return (
-      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '0.7fr 1.3fr', gridTemplateRows: '1.4fr 0.6fr', gap: large ? 10 : 3 }}>
-        <div style={{ gridRow: '1 / 3' }}><ImagePh large={large} /></div>
-        <div><ImagePh large={large} /></div>
-        <div><ImagePh large={large} /></div>
-      </div>
-    )
-  }
+  const svg = gridBentoThreePreviewSvg()
   return (
-    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gridTemplateRows: '1fr 1fr', gap: large ? 10 : 3 }}>
-      <div style={{ gridRow: '1 / 2' }}><ImagePh large={large} /></div>
-      <div style={{ gridRow: '2 / 3' }}><ImagePh large={large} /></div>
-      <div style={{ gridColumn: '2', gridRow: '1 / 3' }}><ImagePh large={large} /></div>
+    <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden', background: '#F8FAFC', borderRadius: large ? 12 : 6 }}>
+      <div
+        aria-hidden
+        style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+        dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+      />
     </div>
   )
 }
@@ -157,32 +143,90 @@ export function PolishedGridBentoFourPreview({ previewHints, ...props }) {
   const { large } = props
   const variant = previewHints?.gridVariant || 'default'
   const fp = frameProps(props)
+
   if (variant === 'mosaic') {
     return (
-      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: '1.2fr 0.8fr', gap: large ? 8 : 3 }}>
-        <div style={{ gridColumn: '1 / 3' }}><ImagePh large={large} /></div>
-        <div><ImagePh large={large} /></div>
-        <div><ImagePh large={large} /></div>
-        <div style={{ gridColumn: '2 / 4' }}><ImagePh large={large} /></div>
+      <div
+        {...fp}
+        style={{
+          ...fp.style,
+          padding: pad(large),
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gridTemplateRows: '1.35fr 0.85fr 1.35fr',
+          gap: large ? 10 : 3,
+        }}
+      >
+        <div style={{ gridColumn: '1', gridRow: '1 / 3', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+        <div style={{ gridColumn: '1', gridRow: '3 / 4', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+        <div style={{ gridColumn: '2', gridRow: '1 / 2', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+        <div style={{ gridColumn: '2', gridRow: '2 / 4', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
       </div>
     )
   }
+
   if (variant === 'asymmetric') {
     return (
-      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1.6fr 0.8fr 0.8fr', gridTemplateRows: '1fr 1fr', gap: large ? 10 : 3 }}>
-        <div style={{ gridRow: '1 / 3' }}><ImagePh large={large} /></div>
-        <div><ImagePh large={large} /></div>
-        <div><ImagePh large={large} /></div>
-        <div style={{ gridColumn: '2 / 4' }}><ImagePh large={large} /></div>
+      <div
+        {...fp}
+        style={{
+          ...fp.style,
+          padding: pad(large),
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr 1.25fr',
+          gridTemplateRows: '1fr 1fr',
+          gap: large ? 10 : 3,
+        }}
+      >
+        <div style={{ gridColumn: '1 / 3', gridRow: '1', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+        <div style={{ gridColumn: '1', gridRow: '2', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+        <div style={{ gridColumn: '2', gridRow: '2', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+        <div style={{ gridColumn: '3', gridRow: '1 / 3', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} hero />
+        </div>
       </div>
     )
   }
+
+  // Default: Grid Bento Four (Iconic Hero Left + Wide Top Right + 2 Balanced Squares Bottom Right)
   return (
-    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '2fr 1fr', gridTemplateRows: '1fr 1fr', gap: large ? 10 : 3 }}>
-      <div><ImagePh large={large} /></div>
-      <div><ImagePh large={large} /></div>
-      <div><ImagePh large={large} /></div>
-      <div><ImagePh large={large} /></div>
+    <div
+      {...fp}
+      style={{
+        ...fp.style,
+        padding: pad(large),
+        display: 'grid',
+        gridTemplateColumns: '1.25fr 1fr 1fr',
+        gridTemplateRows: '1fr 1fr',
+        gap: large ? 10 : 3,
+      }}
+    >
+      <div style={{ gridColumn: '1', gridRow: '1 / 3', width: '100%', height: '100%', minHeight: 0 }}>
+        <ImagePh large={large} hero />
+      </div>
+      <div style={{ gridColumn: '2 / 4', gridRow: '1', width: '100%', height: '100%', minHeight: 0 }}>
+        <ImagePh large={large} />
+      </div>
+      <div style={{ gridColumn: '2', gridRow: '2', width: '100%', height: '100%', minHeight: 0 }}>
+        <ImagePh large={large} />
+      </div>
+      <div style={{ gridColumn: '3', gridRow: '2', width: '100%', height: '100%', minHeight: 0 }}>
+        <ImagePh large={large} />
+      </div>
     </div>
   )
 }
@@ -811,20 +855,16 @@ export function PolishedTableDualPreview({ previewHints, ...props }) {
 }
 
 export function PolishedTableDualSharedHeaderPreview({ previewHints, ...props }) {
-  const { large } = props
-  const variant = previewHints.dataVariant || 'default'
   const fp = frameProps(props)
-  const isSplit = variant === 'split'
-  const useCards = variant === 'cards'
+  const isCards = String(previewHints?.layout_id || '').toLowerCase().includes('cards')
+  const svg = isCards ? tableTwoSameHeaderCardsPreviewSvg() : tableTwoSameHeaderPreviewSvg()
   return (
-    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 8 : 3 }}>
-      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>{previewHints.slots?.HEADING?.text || 'Side by side'}</div>
-      <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : '0.32rem', fontWeight: 700, color: theme.text, textAlign: 'center' }}>{previewHints.slots?.TABLE_HEADER?.text || 'Shared column headers'}</div>
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: isSplit ? '1fr' : '1fr 1fr', gridTemplateRows: isSplit ? '1fr 1fr' : undefined, gap: large ? 10 : 3 }}>
-        {[1, 2].map((n) => (
-          <div key={n} style={{ background: theme.card, borderRadius: large ? 8 : 3, padding: large ? 8 : 3, border: useCards ? `1px solid ${theme.accentBorder}` : 'none' }}><TableMini large={large} rows={4} /></div>
-        ))}
-      </div>
+    <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+      <div
+        aria-hidden
+        style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+        dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+      />
     </div>
   )
 }

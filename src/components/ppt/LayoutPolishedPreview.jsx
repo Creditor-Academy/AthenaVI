@@ -24,6 +24,24 @@ import { isTableWithDescriptionSideLayout, tableSidePreviewSvg } from '../../uti
 import { isTableTwoDescLayout, tableTwoDescPreviewSvg } from '../../utils/tableTwoDescLayout.js'
 import { isTableTwoDescCardsLayout, tableTwoDescCardsPreviewSvg } from '../../utils/tableTwoDescCardsLayout.js'
 import { isProcessLinearBusinessLayout, processLinearBusinessPreviewSvg } from '../../utils/processLinearBusinessLayout.js'
+import {
+  isTableTwoSameHeaderLayout,
+  tableTwoSameHeaderPreviewSvg,
+  isTableTwoSameHeaderCardsLayout,
+  tableTwoSameHeaderCardsPreviewSvg,
+} from '../../utils/tableTwoSameHeaderLayout.js'
+import {
+  isEightShortTextsImageLayout,
+  eightShortTextsImagePreviewSvg,
+} from '../../utils/eightShortTextsImageLayout.js'
+import {
+  isIntroThreeParaIconsLayout,
+  introThreeParaIconsPreviewSvg,
+} from '../../utils/introThreeParaIconsLayout.js'
+import {
+  isGridBentoThreeLayout,
+  gridBentoThreePreviewSvg,
+} from '../../utils/gridBentoThreeLayout.js'
 import { DEVICE_FRAMES_PREVIEW_MODES } from './layoutPolishedPreviewsDeviceFrames.jsx'
 import { DIAGRAM_PREVIEW_MODES } from './layoutPolishedPreviewsDiagrams.jsx'
 import { AGENDA_PREVIEW_MODES } from './layoutPolishedPreviewsAgenda.jsx'
@@ -1378,94 +1396,11 @@ function PolishedComparisonTablePreview({ previewHints, large, className, style,
 }
 
 function PolishedIntroThreeParaIconsPreview({ previewHints, large, className, style, fill, aspectRatio }) {
-  const t = LAYOUT_POLISHED_THEME
-  const variant = previewHints.gridVariant || 'default'
-  const introMeta = previewHints.slots?.INTRO || {}
-  const { display: introText } = formatPreviewText(introMeta.text || 'Three pillars', {
-    bold: introMeta.bold ?? true,
-    uppercase: introMeta.uppercase ?? false,
-  })
-  const columns =
-    Array.isArray(previewHints.columns) && previewHints.columns.length
-      ? previewHints.columns.slice(0, 3)
-      : [1, 2, 3].map((n) => ({
-          title: previewHints.slots?.[`ROW_${n}_TITLE`]?.text || `Pillar ${n}`,
-          body:
-            previewHints.slots?.[`ROW_${n}_BODY`]?.text ||
-            'Short supporting copy for this pillar.',
-        }))
+  const isHorizontal = String(previewHints?.layout_id || '').toLowerCase().includes('horizontal') || previewHints?.gridVariant === 'horizontal'
+  const svg = introThreeParaIconsPreviewSvg({ isHorizontal })
   const frameStyle = fill
     ? { width: '100%', height: '100%', aspectRatio: 'unset' }
     : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
-
-  if (variant === 'radial') {
-    return (
-      <div
-        className={className}
-        style={{
-          position: 'relative',
-          ...frameStyle,
-          background: t.bg,
-          overflow: 'hidden',
-          fontFamily: 'system-ui, sans-serif',
-          borderRadius: large ? 12 : 6,
-          boxSizing: 'border-box',
-          padding: large ? '8% 7%' : '10% 6%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: large ? 14 : 5,
-          ...style,
-        }}
-      >
-        <div style={{ fontSize: large ? PREVIEW_SUBTITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 700, color: t.muted }}>{introText}</div>
-        <div style={{ flex: 1, width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: large ? 12 : 4, alignItems: 'center' }}>
-          {columns.map((col, i) => (
-            <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: large ? 6 : 2, textAlign: 'center' }}>
-              <PolishedIconCircle size={large ? 32 : 12} />
-              <div style={{ fontSize: large ? '0.85rem' : '0.3rem', fontWeight: 800, color: t.text }}>{col.title}</div>
-              <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: t.muted, lineHeight: 1.3 }}>{col.body}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
-  if (variant === 'horizontal') {
-    return (
-      <div
-        className={className}
-        style={{
-          position: 'relative',
-          ...frameStyle,
-          background: t.bg,
-          overflow: 'hidden',
-          fontFamily: 'system-ui, sans-serif',
-          borderRadius: large ? 12 : 6,
-          boxSizing: 'border-box',
-          padding: large ? '8% 7%' : '10% 6%',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: large ? 14 : 5,
-          ...style,
-        }}
-      >
-        <div style={{ fontSize: large ? PREVIEW_SUBTITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 700, color: t.muted }}>{introText}</div>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: large ? 12 : 4, justifyContent: 'center' }}>
-          {columns.map((col, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: large ? 12 : 4 }}>
-              <PolishedIconCircle size={large ? 28 : 10} />
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontSize: large ? '0.95rem' : '0.34rem', fontWeight: 800, color: t.text }}>{col.title}</div>
-                <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : '0.28rem', color: t.muted, lineHeight: 1.35 }}>{col.body}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div
@@ -1473,192 +1408,30 @@ function PolishedIntroThreeParaIconsPreview({ previewHints, large, className, st
       style={{
         position: 'relative',
         ...frameStyle,
-        background: t.bg,
+        background: '#FFFFFF',
         overflow: 'hidden',
         fontFamily: 'system-ui, sans-serif',
         borderRadius: large ? 12 : 6,
         boxSizing: 'border-box',
-        padding: large ? '8% 7%' : '10% 6%',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: large ? 18 : 6,
         ...style,
       }}
     >
       <div
-        style={{
-          fontSize: large ? PREVIEW_SUBTITLE_FS.large : PREVIEW_SUBTITLE_FS.small,
-          fontWeight: 700,
-          color: t.muted,
-        }}
-      >
-        {introText}
-      </div>
-      <div
-        style={{
-          flex: 1,
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr 1fr',
-          gap: large ? 18 : 6,
-          minHeight: 0,
-          alignContent: 'start',
-        }}
-      >
-        {columns.map((col, i) => (
-          <div
-            key={i}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: large ? 8 : 3,
-              minWidth: 0,
-            }}
-          >
-            <PolishedIconCircle size={large ? 28 : 10} />
-            <div
-              style={{
-                fontSize: large ? '0.95rem' : '0.34rem',
-                fontWeight: 800,
-                color: t.text,
-                lineHeight: 1.2,
-              }}
-            >
-              {col.title}
-            </div>
-            <div
-              style={{
-                fontSize: large ? PREVIEW_BODY_FS.large : '0.28rem',
-                color: t.muted,
-                lineHeight: 1.4,
-              }}
-            >
-              {col.body}
-            </div>
-          </div>
-        ))}
-      </div>
+        aria-hidden
+        style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+        dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+      />
     </div>
   )
 }
 
 function PolishedEightShortTextsPreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const isRight = String(previewHints?.layout_id || '').toLowerCase().includes('right') || previewHints?.gridVariant === 'right'
+  const svg = eightShortTextsImagePreviewSvg({ isRight })
   const t = LAYOUT_POLISHED_THEME
-  const variant = previewHints.gridVariant || 'default'
-  const headingMeta = previewHints.slots?.HEADING || {}
-  const { display: headingText } = formatPreviewText(
-    headingMeta.text || 'Describe this slide',
-    { bold: headingMeta.bold ?? true, uppercase: headingMeta.uppercase ?? false }
-  )
-  const points = Array.isArray(previewHints.points) && previewHints.points.length
-    ? previewHints.points.slice(0, 8)
-    : Array.from({ length: 8 }, (_, i) => ({
-        label: i === 0 ? 'First point' : i === 7 ? 'Last point' : `Point ${i + 1}`,
-        desc: 'A short description',
-      }))
-  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
-  const isCenter = variant === 'center'
-  const isRight = variant === 'right' || variant === 'default'
-
-  const pointsBlock = (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 12 : 4, minWidth: 0, minHeight: 0, ...(isCenter ? { width: '100%' } : {}) }}>
-      <div
-        style={{
-          fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_SUBTITLE_FS.small,
-          fontWeight: 800,
-          color: t.text,
-          lineHeight: 1.15,
-          textTransform: headingMeta.uppercase ? 'uppercase' : 'none',
-          textAlign: isCenter ? 'center' : 'left',
-        }}
-      >
-        {headingText}
-      </div>
-      <div
-        style={{
-          flex: 1,
-          display: 'grid',
-          gridTemplateColumns: isCenter ? 'repeat(4, 1fr)' : '1fr 1fr',
-          gap: large ? '10px 14px' : '3px 5px',
-          alignContent: 'start',
-          minHeight: 0,
-        }}
-      >
-        {points.map((point, i) => (
-          <div
-            key={i}
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: large ? 8 : 3,
-              minWidth: 0,
-              flexDirection: isCenter ? 'column' : 'row',
-              textAlign: isCenter ? 'center' : 'left',
-            }}
-          >
-            <PolishedIconCircle size={large ? 22 : 10} />
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div
-                style={{
-                  fontSize: large ? '0.72rem' : '0.28rem',
-                  fontWeight: 700,
-                  color: t.text,
-                  lineHeight: 1.2,
-                  marginBottom: large ? 2 : 1,
-                }}
-              >
-                {point.label}
-              </div>
-              <div
-                style={{
-                  fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem',
-                  color: t.muted,
-                  lineHeight: 1.3,
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                }}
-              >
-                {point.desc}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-
-  const imageBlock = (
-    <div style={{ minHeight: isCenter ? (large ? 80 : 28) : 0, borderRadius: large ? 10 : 4, overflow: 'hidden', ...(isCenter ? { width: '60%', alignSelf: 'center' } : {}) }}>
-      <PolishedImagePlaceholder large={large} src={resolvePreviewImageSrc(previewHints)} />
-    </div>
-  )
-
-  if (isCenter) {
-    return (
-      <div
-        className={className}
-        style={{
-          position: 'relative',
-          ...frameStyle,
-          background: t.bg,
-          overflow: 'hidden',
-          fontFamily: 'system-ui, sans-serif',
-          borderRadius: large ? 12 : 6,
-          boxSizing: 'border-box',
-          padding: large ? '7% 6%' : '10% 5%',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: large ? 14 : 5,
-          alignItems: 'stretch',
-          ...style,
-        }}
-      >
-        {imageBlock}
-        {pointsBlock}
-      </div>
-    )
-  }
+  const frameStyle = fill
+    ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+    : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
 
   return (
     <div
@@ -1671,15 +1444,14 @@ function PolishedEightShortTextsPreview({ previewHints, large, className, style,
         fontFamily: 'system-ui, sans-serif',
         borderRadius: large ? 12 : 6,
         boxSizing: 'border-box',
-        padding: large ? '7% 6%' : '10% 5%',
-        display: 'grid',
-        gridTemplateColumns: isRight ? '1.05fr 0.95fr' : '0.95fr 1.05fr',
-        gap: large ? 16 : 5,
-        alignItems: 'stretch',
         ...style,
       }}
     >
-      {isRight ? (<>{pointsBlock}{imageBlock}</>) : (<>{imageBlock}{pointsBlock}</>)}
+      <div
+        aria-hidden
+        style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+        dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+      />
     </div>
   )
 }
@@ -2707,6 +2479,106 @@ export default function LayoutPolishedPreview({
     return (
       <div className={className} style={{
         position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isTableTwoSameHeaderCardsLayout(previewHints.layout_id)) {
+    const svg = tableTwoSameHeaderCardsPreviewSvg()
+    const t = LAYOUT_POLISHED_THEME
+    const frameStyle = fill
+      ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+      : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isTableTwoSameHeaderLayout(previewHints.layout_id)) {
+    const svg = tableTwoSameHeaderPreviewSvg()
+    const t = LAYOUT_POLISHED_THEME
+    const frameStyle = fill
+      ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+      : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isEightShortTextsImageLayout(previewHints.layout_id)) {
+    const isRight = String(previewHints?.layout_id || '').toLowerCase().includes('right') || previewHints?.gridVariant === 'right'
+    const svg = eightShortTextsImagePreviewSvg({ isRight })
+    const t = LAYOUT_POLISHED_THEME
+    const frameStyle = fill
+      ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+      : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isIntroThreeParaIconsLayout(previewHints.layout_id)) {
+    const isHorizontal = String(previewHints?.layout_id || '').toLowerCase().includes('horizontal') || previewHints?.gridVariant === 'horizontal'
+    const svg = introThreeParaIconsPreviewSvg({ isHorizontal })
+    const frameStyle = fill
+      ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+      : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isGridBentoThreeLayout(previewHints.layout_id)) {
+    const svg = gridBentoThreePreviewSvg()
+    const frameStyle = fill
+      ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+      : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#F8FAFC', overflow: 'hidden',
         fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
       }}>
         <div

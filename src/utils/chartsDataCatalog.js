@@ -391,12 +391,36 @@ const CATALOG = {
   ], { mode: 'table_dual' }),
 
   table_two_same_header_v1: layoutBase('table_two_same_header_v1', 'chart', [
+    slot('TAG_BADGE', 'cols 2-5, rows 1-1', 'caption', 'DUAL DATASET COMPARISON', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 11, fontWeight: 700, colorRole: 'primary' }),
+    }),
     heading('HEADING', 'cols 2-11, rows 1-2', 'Side by side', {
       typography: typo('heading', { fontSize: 28 }),
     }),
-    slot('TABLE_HEADER', 'cols 1-12, rows 2-3', 'subheading', 'Shared column headers', {
+    slot('SUBTITLE', 'cols 2-11, rows 2-3', 'subheading', 'Shared column headers across both operational datasets', {
       layer: 10,
-      typography: typo('subheading', { fontWeight: 700, align: 'center' }),
+      typography: typo('subheading', { fontSize: 14, fontWeight: 500, colorRole: 'muted' }),
+    }),
+    slot('COL_A_HEADER', 'cols 1-3, rows 3-4', 'caption', 'Performance Metric', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 12, fontWeight: 700 }),
+    }),
+    slot('COL_B_HEADER', 'cols 3-5, rows 3-4', 'caption', 'Standard Tier', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 12, fontWeight: 700, align: 'center' }),
+    }),
+    slot('COL_C_HEADER', 'cols 5-6, rows 3-4', 'caption', 'Enterprise Tier', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 12, fontWeight: 700, align: 'center' }),
+    }),
+    slot('T1_TITLE', 'cols 1-6, rows 3-4', 'heading', 'Dataset A — Standard', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 17, fontWeight: 700 }),
+    }),
+    slot('T2_TITLE', 'cols 7-12, rows 3-4', 'heading', 'Dataset B — Accelerated', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 17, fontWeight: 700 }),
     }),
     tableSlot('TABLE_1', 'cols 1-6, rows 4-10'),
     tableSlot('TABLE_2', 'cols 7-12, rows 4-10'),

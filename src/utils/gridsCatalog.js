@@ -21,16 +21,38 @@ const P = SAMPLE_PARA
 
 const CATALOG = {
   grid_bento_three_v1: layoutBase('grid_bento_three_v1', 'grid', [
-    gridImage(1, 'cols 1-6, rows 1-5'),
-    gridImage(2, 'cols 1-6, rows 6-10'),
-    gridImage(3, 'cols 7-12, rows 1-10'),
+    heading('HEADING', 'cols 1-12, rows 1-2', 'Three-part bento overview', {
+      typography: typo('heading', { fontSize: 32 }),
+    }),
+    body('SUBTITLE', 'cols 1-12, rows 2-3', 'Flagship product experiences, botanical purity, and sensory wellness highlights.', 1),
+    slot('CARD_1_TAG', 'cols 1-7, rows 3-4', 'eyebrow', 'FOOD & CULINARY'),
+    heading('CARD_1_TITLE', 'cols 1-7, rows 4-5', 'Wake Up and Smell the Coffee', {
+      typography: typo('heading', { fontSize: 22 }),
+    }),
+    body('CARD_1_BODY', 'cols 1-7, rows 5-6', 'Artisan morning rituals crafted with sustainably harvested beans and rich aromatic depth.', 2),
+    slot('CARD_1_CTA', 'cols 1-3, rows 6-7', 'button', 'Learn more →'),
+    gridImage(1, 'cols 8-12, rows 3-6'),
+    slot('CARD_2_TAG', 'cols 1-6, rows 7-8', 'eyebrow', 'ECO & SUSTAINABILITY'),
+    heading('CARD_2_TITLE', 'cols 1-6, rows 8-9', 'Purify the air in your home', {
+      typography: typo('heading', { fontSize: 18 }),
+    }),
+    body('CARD_2_BODY', 'cols 1-6, rows 9-10', 'Clean living botanicals designed to cultivate restorative atmospheres and indoor vitality.', 2),
+    slot('CARD_2_CTA', 'cols 1-3, rows 10-11', 'button', 'Learn more →'),
+    gridImage(2, 'cols 4-6, rows 7-10'),
+    slot('CARD_3_TAG', 'cols 7-12, rows 7-8', 'eyebrow', 'HEALTH & WELLNESS'),
+    heading('CARD_3_TITLE', 'cols 7-12, rows 8-9', 'Experience the fluidity of the gel', {
+      typography: typo('heading', { fontSize: 18 }),
+    }),
+    body('CARD_3_BODY', 'cols 7-12, rows 9-10', 'Lightweight, ultra-hydrating formulations engineered for daily cellular renewal.', 2),
+    slot('CARD_3_CTA', 'cols 7-9, rows 10-11', 'button', 'Learn more →'),
+    gridImage(3, 'cols 10-12, rows 7-10'),
   ], { mode: 'grid_bento_three' }),
 
   grid_bento_four_v1: layoutBase('grid_bento_four_v1', 'grid', [
-    gridImage(1, 'cols 1-8, rows 1-5'),
-    gridImage(2, 'cols 9-12, rows 1-5'),
-    gridImage(3, 'cols 1-4, rows 6-10'),
-    gridImage(4, 'cols 5-12, rows 6-10'),
+    gridImage(1, 'cols 1-5, rows 1-10'),
+    gridImage(2, 'cols 6-12, rows 1-5'),
+    gridImage(3, 'cols 6-9, rows 6-10'),
+    gridImage(4, 'cols 10-12, rows 6-10'),
   ], { 
     mode: 'grid_bento_four',
     smartBehavior: {
@@ -237,7 +259,12 @@ function gridsFromSource(layoutId, sourceId, gridVariant, extraPreview = {}) {
 }
 
 Object.assign(CATALOG, {
-  grid_four_mosaic_v1: gridsFromSource('grid_four_mosaic_v1', 'grid_bento_four_v1', 'mosaic'),
+  grid_four_mosaic_v1: layoutBase('grid_four_mosaic_v1', 'grid', [
+    gridImage(1, 'cols 1-6, rows 1-6'),
+    gridImage(2, 'cols 1-6, rows 7-10'),
+    gridImage(3, 'cols 7-12, rows 1-4'),
+    gridImage(4, 'cols 7-12, rows 5-10'),
+  ], { mode: 'grid_bento_four', gridVariant: 'mosaic' }),
   grid_three_asymmetric_v1: gridsFromSource('grid_three_asymmetric_v1', 'grid_bento_three_v1', 'asymmetric'),
   grid_device_mockups_feature_v1: gridsFromSource('grid_device_mockups_feature_v1', 'grid_device_mockups_v1', 'feature'),
   grid_images_text_mosaic_v1: gridsFromSource('grid_images_text_mosaic_v1', 'grid_images_text_cards_v1', 'mosaic'),
