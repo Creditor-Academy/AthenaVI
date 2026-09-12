@@ -475,7 +475,7 @@
 
 .ppt-canvas-el-body--device-frame,
 .ppt-canvas-el-body--no-clip {
-  overflow: visible;
+  overflow: visible !important;
 }
 
 .is-editing-text,

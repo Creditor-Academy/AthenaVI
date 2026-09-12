@@ -49,10 +49,14 @@ const CATALOG = {
   ], { mode: 'grid_bento_three' }),
 
   grid_bento_four_v1: layoutBase('grid_bento_four_v1', 'grid', [
-    gridImage(1, 'cols 1-5, rows 1-10'),
-    gridImage(2, 'cols 6-12, rows 1-5'),
-    gridImage(3, 'cols 6-9, rows 6-10'),
-    gridImage(4, 'cols 10-12, rows 6-10'),
+    heading('HEADING', 'cols 1-12, rows 1-2', 'Executive visual showcase', {
+      typography: typo('heading', { fontSize: 32 }),
+    }),
+    body('SUBTITLE', 'cols 1-12, rows 2-3', 'A structured visual collection across creative focus areas.', 1),
+    gridImage(1, 'cols 1-5, rows 3-10'),
+    gridImage(2, 'cols 6-12, rows 3-6'),
+    gridImage(3, 'cols 6-9, rows 7-10'),
+    gridImage(4, 'cols 9-12, rows 7-10'),
   ], { 
     mode: 'grid_bento_four',
     smartBehavior: {
@@ -64,27 +68,32 @@ const CATALOG = {
   }),
 
   grid_six_images_v1: layoutBase('grid_six_images_v1', 'grid', [
-    gridImage(1, 'cols 1-4, rows 1-5'),
-    gridImage(2, 'cols 5-8, rows 1-5'),
-    gridImage(3, 'cols 9-12, rows 1-5'),
-    gridImage(4, 'cols 1-4, rows 6-10'),
-    gridImage(5, 'cols 5-8, rows 6-10'),
-    gridImage(6, 'cols 9-12, rows 6-10'),
+    heading('HEADING', 'cols 1-12, rows 1-2', 'Comprehensive visual gallery', {
+      typography: typo('heading', { fontSize: 32 }),
+    }),
+    body('SUBTITLE', 'cols 1-12, rows 2-3', 'A curated showcase across six key visual highlights.', 1),
+    gridImage(1, 'cols 1-4, rows 3-6'),
+    gridImage(2, 'cols 5-8, rows 3-6'),
+    gridImage(3, 'cols 9-12, rows 3-6'),
+    gridImage(4, 'cols 1-4, rows 7-10'),
+    gridImage(5, 'cols 5-8, rows 7-10'),
+    gridImage(6, 'cols 9-12, rows 7-10'),
   ], { mode: 'grid_six_images' }),
 
   grid_text_image_cards_v1: layoutBase('grid_text_image_cards_v1', 'grid', [
-    heading('FEATURE_TITLE', 'cols 1-8, rows 1-3', 'Describe this feature', {
-      typography: typo('heading', { fontSize: 32 }),
+    heading('FEATURE_TITLE', 'cols 1-8, rows 1-2', 'Describe this feature', {
+      typography: typo('heading', { fontSize: 26 }),
     }),
-    body('FEATURE_BODY', 'cols 1-8, rows 3-5', P.short, 3),
-    heading('POINT_TITLE', 'cols 9-12, rows 1-2', 'Describe this point', {
-      typography: typo('heading', { fontSize: 20 }),
+    body('FEATURE_BODY', 'cols 1-8, rows 2-4', P.short, 2),
+    slot('POINT_CARD_BG', 'cols 9-12, rows 1-4', 'shape', null, { layer: 1 }),
+    heading('POINT_TITLE', 'cols 10-12, rows 1-2', 'Key takeaway', {
+      typography: typo('heading', { fontSize: 16 }),
     }),
-    body('POINT_BODY', 'cols 9-12, rows 2-4', P.short, 2, { typography: typo('body', { fontSize: 14 }) }),
-    slot('POINT_IMAGE', 'cols 9-12, rows 5-6', 'image', null, { layer: 2, fit: 'cover' }),
-    gridImage(1, 'cols 1-4, rows 6-10'),
-    gridImage(2, 'cols 5-8, rows 6-10'),
-    gridImage(3, 'cols 9-12, rows 7-10'),
+    body('POINT_BODY', 'cols 10-12, rows 2-4', 'Essential highlights summarizing this core capability.', 2, { typography: typo('body', { fontSize: 12 }) }),
+    slot('POINT_IMAGE', 'cols 9-10, rows 1-3', 'image', null, { layer: 2, fit: 'cover' }),
+    gridImage(1, 'cols 1-4, rows 5-10'),
+    gridImage(2, 'cols 5-8, rows 5-10'),
+    gridImage(3, 'cols 9-12, rows 5-10'),
   ], { mode: 'grid_text_image_cards' }),
 
   grid_three_images_text_v1: layoutBase('grid_three_images_text_v1', 'grid', [
@@ -260,18 +269,32 @@ function gridsFromSource(layoutId, sourceId, gridVariant, extraPreview = {}) {
 
 Object.assign(CATALOG, {
   grid_four_mosaic_v1: layoutBase('grid_four_mosaic_v1', 'grid', [
-    gridImage(1, 'cols 1-6, rows 1-6'),
-    gridImage(2, 'cols 1-6, rows 7-10'),
-    gridImage(3, 'cols 7-12, rows 1-4'),
-    gridImage(4, 'cols 7-12, rows 5-10'),
-  ], { mode: 'grid_bento_four', gridVariant: 'mosaic' }),
+    heading('HEADING', 'cols 1-12, rows 1-2', 'Curated visual mosaic', {
+      typography: typo('heading', { fontSize: 32 }),
+    }),
+    body('SUBTITLE', 'cols 1-12, rows 2-3', 'An interlocking visual showcase across creative focus areas.', 1),
+    gridImage(1, 'cols 1-6, rows 3-7'),
+    gridImage(2, 'cols 1-6, rows 8-10'),
+    gridImage(3, 'cols 7-12, rows 3-5'),
+    gridImage(4, 'cols 7-12, rows 6-10'),
+  ], { mode: 'grid_four_mosaic', gridVariant: 'mosaic' }),
   grid_three_asymmetric_v1: gridsFromSource('grid_three_asymmetric_v1', 'grid_bento_three_v1', 'asymmetric'),
   grid_device_mockups_feature_v1: gridsFromSource('grid_device_mockups_feature_v1', 'grid_device_mockups_v1', 'feature'),
   grid_images_text_mosaic_v1: gridsFromSource('grid_images_text_mosaic_v1', 'grid_images_text_cards_v1', 'mosaic'),
   grid_insights_chart_split_v1: gridsFromSource('grid_insights_chart_split_v1', 'grid_insights_chart_v1', 'split'),
   grid_metrics_asymmetric_v1: gridsFromSource('grid_metrics_asymmetric_v1', 'grid_metrics_masonry_v1', 'asymmetric'),
-  grid_metrics_devices_v1: gridsFromSource('grid_metrics_devices_v1', 'grid_metrics_mobile_v1', 'devices'),
-  grid_six_images_mosaic_v1: gridsFromSource('grid_six_images_mosaic_v1', 'grid_six_images_v1', 'mosaic'),
+  grid_six_images_mosaic_v1: layoutBase('grid_six_images_mosaic_v1', 'grid', [
+    heading('HEADING', 'cols 1-12, rows 1-2', 'Dynamic visual mosaic', {
+      typography: typo('heading', { fontSize: 32 }),
+    }),
+    body('SUBTITLE', 'cols 1-12, rows 2-3', 'An interlocking six-part visual showcase across focus areas.', 1),
+    gridImage(1, 'cols 1-4, rows 3-7'),
+    gridImage(2, 'cols 5-8, rows 3-5'),
+    gridImage(3, 'cols 9-12, rows 3-7'),
+    gridImage(4, 'cols 1-4, rows 8-10'),
+    gridImage(5, 'cols 5-8, rows 6-10'),
+    gridImage(6, 'cols 9-12, rows 8-10'),
+  ], { mode: 'grid_six_images', gridVariant: 'mosaic' }),
   grid_text_image_mosaic_v1: gridsFromSource('grid_text_image_mosaic_v1', 'grid_text_image_cards_v1', 'mosaic'),
   grid_three_images_text_asymmetric_v1: gridsFromSource('grid_three_images_text_asymmetric_v1', 'grid_three_images_text_v1', 'asymmetric'),
   logo_partner_grid_v1: gridsFromSource('logo_partner_grid_v1', 'logo_partner_strip_v1', 'grid'),

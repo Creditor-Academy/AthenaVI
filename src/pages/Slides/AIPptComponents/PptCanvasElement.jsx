@@ -90,6 +90,7 @@ function readEditableText(node, listType, fallback = '') {
 }
 
 function EditableText({
+  el,
   content,
   palette,
   editable,
@@ -212,7 +213,12 @@ function EditableText({
   const boxPaint =
     !usesRuns && isGradientFill(c.fill) ? textPaintStyle(c.fill, palette, color) : { color }
 
-  const clipToSlot = c.clipToSlot !== false
+  const isHeading =
+    el?.role === 'heading' ||
+    el?.role === 'title' ||
+    String(el?.slotId || '').toUpperCase().includes('HEADING') ||
+    String(el?.slotId || '').toUpperCase().includes('TITLE')
+  const clipToSlot = c.clipToSlot !== false && !isHeading
   const textStyle = {
     ...style,
     ...boxPaint,
@@ -444,6 +450,7 @@ export default function PptCanvasElement({
   if (el.type === 'text' || el.type === 'textbox') {
     return (
       <EditableText
+        el={el}
         content={el.content}
         palette={palette}
         editable={editable}

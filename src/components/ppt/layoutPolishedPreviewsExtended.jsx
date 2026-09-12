@@ -6,6 +6,7 @@ import { aspectRatioToCss } from '../../utils/deckPackTheme'
 import { previewImageFrameStyle, PreviewImageIcon, PreviewImage } from './layoutPreviewImageShared.jsx'
 import { tableTwoSameHeaderPreviewSvg, tableTwoSameHeaderCardsPreviewSvg } from '../../utils/tableTwoSameHeaderLayout.js'
 import { gridBentoThreePreviewSvg } from '../../utils/gridBentoThreeLayout.js'
+import { gridBentoFourPreviewSvg } from '../../utils/gridBentoFourLayout.js'
 
 const PREVIEW_TITLE_FS = { large: '1.75rem', small: '0.92rem' }
 const PREVIEW_BODY_FS = { large: '0.88rem', small: '0.4rem' }
@@ -203,29 +204,63 @@ export function PolishedGridBentoFourPreview({ previewHints, ...props }) {
   }
 
   // Default: Grid Bento Four (Iconic Hero Left + Wide Top Right + 2 Balanced Squares Bottom Right)
+  const svg = gridBentoFourPreviewSvg()
+  return (
+    <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden', background: '#F8FAFC', borderRadius: large ? 12 : 6 }}>
+      <div
+        aria-hidden
+        style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+        dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+      />
+    </div>
+  )
+}
+
+export function PolishedGridFourMosaicPreview({ previewHints, ...props }) {
+  const { large } = props
+  const fp = frameProps(props)
+
   return (
     <div
       {...fp}
       style={{
         ...fp.style,
         padding: pad(large),
-        display: 'grid',
-        gridTemplateColumns: '1.25fr 1fr 1fr',
-        gridTemplateRows: '1fr 1fr',
-        gap: large ? 10 : 3,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: large ? 8 : 2.5,
       }}
     >
-      <div style={{ gridColumn: '1', gridRow: '1 / 3', width: '100%', height: '100%', minHeight: 0 }}>
-        <ImagePh large={large} hero />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 3 : 1 }}>
+        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>
+          {previewHints?.slots?.HEADING?.text || 'Curated visual mosaic'}
+        </div>
+        <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>
+          {previewHints?.slots?.SUBTITLE?.text || 'An interlocking visual showcase'}
+        </div>
       </div>
-      <div style={{ gridColumn: '2 / 4', gridRow: '1', width: '100%', height: '100%', minHeight: 0 }}>
-        <ImagePh large={large} />
-      </div>
-      <div style={{ gridColumn: '2', gridRow: '2', width: '100%', height: '100%', minHeight: 0 }}>
-        <ImagePh large={large} />
-      </div>
-      <div style={{ gridColumn: '3', gridRow: '2', width: '100%', height: '100%', minHeight: 0 }}>
-        <ImagePh large={large} />
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gridTemplateRows: '1.3fr 0.9fr 1.3fr',
+          gap: large ? 8 : 2.5,
+        }}
+      >
+        <div style={{ gridColumn: '1', gridRow: '1 / 3', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+        <div style={{ gridColumn: '1', gridRow: '3 / 4', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+        <div style={{ gridColumn: '2', gridRow: '1 / 2', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+        <div style={{ gridColumn: '2', gridRow: '2 / 4', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
       </div>
     </div>
   )
@@ -237,13 +272,61 @@ export function PolishedGridSixImagesPreview({ previewHints, ...props }) {
   const fp = frameProps(props)
   if (variant === 'mosaic' || variant === 'masonry') {
     return (
-      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr', gridTemplateRows: '1.2fr 0.8fr 1fr', gap: large ? 8 : 3 }}>
-        <div style={{ gridRow: '1 / 3' }}><ImagePh large={large} /></div>
-        <div><ImagePh large={large} /></div>
-        <div><ImagePh large={large} /></div>
-        <div><ImagePh large={large} /></div>
-        <div style={{ gridColumn: '2 / 4' }}><ImagePh large={large} /></div>
-        <div style={{ gridColumn: '1 / 3' }}><ImagePh large={large} /></div>
+      <div
+        {...fp}
+        style={{
+          ...fp.style,
+          padding: pad(large),
+          display: 'flex',
+          flexDirection: 'column',
+          gap: large ? 8 : 2.5,
+        }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 3 : 1 }}>
+          <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>
+            {previewHints?.slots?.HEADING?.text || 'Dynamic visual mosaic'}
+          </div>
+          <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>
+            {previewHints?.slots?.SUBTITLE?.text || 'An interlocking six-part visual showcase across focus areas.'}
+          </div>
+        </div>
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: large ? 8 : 3,
+          }}
+        >
+          {/* Column 1: Tall (Image 1) / Short (Image 4) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3, height: '100%', minHeight: 0 }}>
+            <div style={{ flex: 1.48, minHeight: 0, width: '100%' }}>
+              <ImagePh large={large} />
+            </div>
+            <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
+              <ImagePh large={large} />
+            </div>
+          </div>
+          {/* Column 2: Short (Image 2) / Tall (Image 5) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3, height: '100%', minHeight: 0 }}>
+            <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
+              <ImagePh large={large} />
+            </div>
+            <div style={{ flex: 1.48, minHeight: 0, width: '100%' }}>
+              <ImagePh large={large} />
+            </div>
+          </div>
+          {/* Column 3: Tall (Image 3) / Short (Image 6) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3, height: '100%', minHeight: 0 }}>
+            <div style={{ flex: 1.48, minHeight: 0, width: '100%' }}>
+              <ImagePh large={large} />
+            </div>
+            <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
+              <ImagePh large={large} />
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
@@ -269,8 +352,40 @@ export function PolishedGridSixImagesPreview({ previewHints, ...props }) {
     )
   }
   return (
-    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: '1fr 1fr', gap: large ? 10 : 3 }}>
-      {[1, 2, 3, 4, 5, 6].map((n) => <div key={n}><ImagePh large={large} /></div>)}
+    <div
+      {...fp}
+      style={{
+        ...fp.style,
+        padding: pad(large),
+        display: 'flex',
+        flexDirection: 'column',
+        gap: large ? 8 : 2.5,
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 3 : 1 }}>
+        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>
+          {previewHints?.slots?.HEADING?.text || 'Comprehensive visual gallery'}
+        </div>
+        <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>
+          {previewHints?.slots?.SUBTITLE?.text || 'A curated showcase across six key visual highlights.'}
+        </div>
+      </div>
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateRows: '1fr 1fr',
+          gap: large ? 8 : 2.5,
+        }}
+      >
+        {[1, 2, 3, 4, 5, 6].map((n) => (
+          <div key={n} style={{ width: '100%', height: '100%', minHeight: 0 }}>
+            <ImagePh large={large} />
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -333,18 +448,54 @@ export function PolishedGridTextImageCardsPreview({ previewHints, ...props }) {
     )
   }
   return (
-    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '2fr 1fr', gridTemplateRows: 'auto 1fr', gap: large ? 10 : 3 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 6 : 2 }}>
-        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>{previewHints.featureTitle || 'Describe this feature'}</div>
-        <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>{previewHints.featureBody || 'Explain what this section is about.'}</div>
+    <div
+      {...fp}
+      style={{
+        ...fp.style,
+        padding: pad(large),
+        display: 'grid',
+        gridTemplateColumns: '1.6fr 1fr',
+        gridTemplateRows: 'auto 1fr',
+        gap: large ? 10 : 3,
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 4 : 1, justifyContent: 'center' }}>
+        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>
+          {previewHints.featureTitle || 'Describe this feature'}
+        </div>
+        <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>
+          {previewHints.featureBody || 'Supporting paragraph explaining key capabilities.'}
+        </div>
       </div>
-      <div style={{ background: theme.card, borderRadius: large ? 8 : 3, padding: large ? 8 : 3, display: 'flex', flexDirection: 'column', gap: large ? 6 : 2 }}>
-        <div style={{ fontSize: large ? '0.72rem' : '0.28rem', fontWeight: 700, color: theme.text }}>{previewHints.pointTitle || 'Describe this point'}</div>
-        <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted }}>{previewHints.pointBody || 'Explain what this section is about.'}</div>
-        <div style={{ flex: 1, minHeight: large ? 40 : 14, borderRadius: '50%', overflow: 'hidden', maxHeight: large ? 56 : 20, alignSelf: 'center', width: large ? 56 : 20 }}><ImagePh large={large} /></div>
+      <div
+        style={{
+          background: theme.card,
+          borderRadius: large ? 8 : 3,
+          padding: large ? '6px 8px' : '2px 3px',
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: large ? 6 : 2,
+        }}
+      >
+        <div style={{ width: large ? 32 : 12, height: large ? 32 : 12, borderRadius: large ? 6 : 2, overflow: 'hidden', flexShrink: 0 }}>
+          <ImagePh large={large} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 2 : 0.5, flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: large ? '0.68rem' : '0.28rem', fontWeight: 700, color: theme.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {previewHints.pointTitle || 'Key takeaway'}
+          </div>
+          <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+            {previewHints.pointBody || 'Essential highlights summarizing this core capability.'}
+          </div>
+        </div>
       </div>
-      <div style={{ gridColumn: '1 / 3', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 10 : 3 }}>
-        {[1, 2, 3].map((n) => <div key={n} style={{ minHeight: large ? 60 : 20 }}><ImagePh large={large} /></div>)}
+      <div style={{ gridColumn: '1 / 3', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 8 : 3, flex: 1, minHeight: 0 }}>
+        {[1, 2, 3].map((n) => (
+          <div key={n} style={{ width: '100%', height: '100%', minHeight: 0 }}>
+            <ImagePh large={large} />
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -943,6 +1094,7 @@ export function PolishedStatVerticalPreview({ previewHints, ...props }) {
 export const EXTENDED_PREVIEW_MODES = {
   grid_bento_three: PolishedGridBentoThreePreview,
   grid_bento_four: PolishedGridBentoFourPreview,
+  grid_four_mosaic: PolishedGridFourMosaicPreview,
   grid_six_images: PolishedGridSixImagesPreview,
   grid_three_images: PolishedGridThreeImagesPreview,
   grid_text_image_cards: PolishedGridTextImageCardsPreview,

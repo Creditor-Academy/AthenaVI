@@ -40,6 +40,26 @@ import {
   isGridBentoThreeLayout,
   layoutGridBentoThree,
 } from './gridBentoThreeLayout.js'
+import {
+  isGridBentoFourLayout,
+  layoutGridBentoFour,
+} from './gridBentoFourLayout.js'
+import {
+  isGridFourMosaicLayout,
+  layoutGridFourMosaic,
+} from './gridFourMosaicLayout.js'
+import {
+  isGridSixImagesLayout,
+  layoutGridSixImages,
+} from './gridSixImagesLayout.js'
+import {
+  isGridSixImagesMosaicLayout,
+  layoutGridSixImagesMosaic,
+} from './gridSixImagesMosaicLayout.js'
+import {
+  isGridTextImageCardsLayout,
+  layoutGridTextImageCards,
+} from './gridTextImageCardsLayout.js'
 
 export function finalizeChartShapes(elements, schema, palette = {}, canvas = {}) {
   const layoutId = schema?.layout_id || schema?.id || schema?.layoutId
@@ -158,6 +178,26 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
   
   if (isGridBentoThreeLayout(layoutId)) {
     return layoutGridBentoThree(elements, schema, palette, canvas)
+  }
+  
+  if (isGridBentoFourLayout(layoutId)) {
+    return layoutGridBentoFour(elements, schema, palette, canvas)
+  }
+  
+  if (isGridFourMosaicLayout(layoutId)) {
+    return layoutGridFourMosaic(elements, schema, palette, canvas)
+  }
+  
+  if (isGridSixImagesLayout(layoutId)) {
+    return layoutGridSixImages(elements, schema, palette, canvas)
+  }
+  
+  if (isGridSixImagesMosaicLayout(layoutId)) {
+    return layoutGridSixImagesMosaic(elements, schema, palette, canvas)
+  }
+  
+  if (isGridTextImageCardsLayout(layoutId)) {
+    return layoutGridTextImageCards(elements, schema, palette, canvas)
   }
   
   return elements
