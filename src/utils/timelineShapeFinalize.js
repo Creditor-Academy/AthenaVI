@@ -119,10 +119,11 @@ import { isDeviceMultiClusterLayout, layoutDeviceMultiCluster } from './deviceMu
 import { isSectionDividerBandLayout, layoutSectionDividerBand } from './sectionDividerBandLayout'
 import { isBulletListCardsLayout, layoutBulletListCards } from './bulletListCardsLayout'
 import { isComparisonTableLayout, layoutComparisonTable } from './comparisonTableLayout'
+import { isComparisonSideBySideLayout, layoutComparisonSideBySide } from './comparisonSideBySideLayout'
 import { isComparisonProsConsLayout, layoutComparisonProsCons } from './comparisonProsConsLayout'
 import { isComparisonBeforeAfterLayout, layoutComparisonBeforeAfter } from './comparisonBeforeAfterLayout'
 import { isComparisonProsConsSplitLayout, layoutComparisonProsConsSplit } from './comparisonProsConsSplitLayout'
-import { isTextTwoColumnCardsLayout, layoutTextTwoColumnCards } from './textTwoColumnCardsLayout'
+import { isTextTwoColumnLayout, layoutTextTwoColumnCards } from './textTwoColumnCardsLayout'
 import { isDeviceLaptopSplitLayout, layoutDeviceLaptopSplit } from './deviceLaptopSplitLayout'
 import { isDeviceTabletSplitLayout, layoutDeviceTabletSplit } from './deviceTabletSplitLayout'
 import { isDeviceTabletCenteredLayout, layoutDeviceTabletCentered } from './deviceTabletCenteredLayout'
@@ -5528,7 +5529,7 @@ export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = 
     return layoutComparisonProsConsSplit(elements, schema, palette, canvas)
   }
 
-  if (isTextTwoColumnCardsLayout(layoutId) || schema?.preview?.mode === 'text_two_column_cards') {
+  if (isTextTwoColumnLayout(layoutId) || /^text_two_column/i.test(schema?.preview?.mode)) {
     return layoutTextTwoColumnCards(elements, schema, palette, canvas)
   }
 

@@ -1896,6 +1896,53 @@ function PolishedComparisonProsConsSplitPreview({ previewHints, large, className
   )
 }
 
+function PolishedTextTwoColumnPreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+
+  return (
+    <div className={className} style={{ position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden', ...style }}>
+      <div style={{ position: 'absolute', top: '15%', left: 0, right: 0, textAlign: 'center', fontSize: large ? '1rem' : '0.35rem', fontWeight: 800, color: '#1f2937' }}>Two columns</div>
+      <div style={{ position: 'absolute', top: '30%', bottom: '15%', left: '10%', right: '10%', display: 'flex', gap: large ? 32 : 12 }}>
+        <div style={{ flex: 1, padding: large ? 24 : 8 }}>
+          <div style={{ width: large ? 32 : 12, height: large ? 4 : 2, background: '#3b82f6', marginBottom: large ? 16 : 6 }} />
+          <div style={{ fontSize: large ? '0.6rem' : '0.2rem', fontWeight: 800, color: '#1f2937', marginBottom: large ? 12 : 4 }}>Left Perspective</div>
+          {[1,2,3,4].map(i => <div key={i} style={{ height: large ? 6 : 2, background: '#cbd5e1', marginBottom: large ? 8 : 2, width: i % 2 === 0 ? '80%' : '100%', borderRadius: 2 }} />)}
+        </div>
+        <div style={{ flex: 1, padding: large ? 24 : 8 }}>
+          <div style={{ width: large ? 32 : 12, height: large ? 4 : 2, background: '#a855f7', marginBottom: large ? 16 : 6 }} />
+          <div style={{ fontSize: large ? '0.6rem' : '0.2rem', fontWeight: 800, color: '#1f2937', marginBottom: large ? 12 : 4 }}>Right Perspective</div>
+          {[1,2,3,4].map(i => <div key={i} style={{ height: large ? 6 : 2, background: '#cbd5e1', marginBottom: large ? 8 : 2, width: i % 2 === 0 ? '80%' : '100%', borderRadius: 2 }} />)}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function PolishedTextTwoColumnSplitPreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+
+  return (
+    <div className={className} style={{ position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden', ...style }}>
+      <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: '50%', background: 'rgba(59, 130, 246, 0.1)' }} />
+      <div style={{ position: 'absolute', top: 0, bottom: 0, right: 0, width: '50%', background: 'rgba(168, 85, 247, 0.1)' }} />
+      
+      <div style={{ position: 'absolute', top: '15%', left: 0, right: 0, textAlign: 'center', fontSize: large ? '1rem' : '0.35rem', fontWeight: 800, color: '#1f2937', zIndex: 10 }}>Two columns split</div>
+      <div style={{ position: 'absolute', top: '30%', bottom: '15%', left: '10%', right: '10%', display: 'flex', gap: large ? 32 : 12, zIndex: 10 }}>
+        <div style={{ flex: 1, padding: large ? 24 : 8 }}>
+          <div style={{ fontSize: large ? '0.6rem' : '0.2rem', fontWeight: 800, color: '#1f2937', marginBottom: large ? 12 : 4 }}>Left Perspective</div>
+          {[1,2,3,4].map(i => <div key={i} style={{ height: large ? 6 : 2, background: '#cbd5e1', marginBottom: large ? 8 : 2, width: i % 2 === 0 ? '80%' : '100%', borderRadius: 2 }} />)}
+        </div>
+        <div style={{ flex: 1, padding: large ? 24 : 8 }}>
+          <div style={{ fontSize: large ? '0.6rem' : '0.2rem', fontWeight: 800, color: '#1f2937', marginBottom: large ? 12 : 4 }}>Right Perspective</div>
+          {[1,2,3,4].map(i => <div key={i} style={{ height: large ? 6 : 2, background: '#cbd5e1', marginBottom: large ? 8 : 2, width: i % 2 === 0 ? '80%' : '100%', borderRadius: 2 }} />)}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function PolishedTextTwoColumnCardsPreview({ previewHints, large, className, style, fill, aspectRatio }) {
   const t = LAYOUT_POLISHED_THEME
   const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
@@ -1912,6 +1959,90 @@ function PolishedTextTwoColumnCardsPreview({ previewHints, large, className, sty
           <div style={{ fontSize: large ? '0.6rem' : '0.2rem', fontWeight: 800, color: '#a855f7', marginBottom: large ? 12 : 4 }}>Column B</div>
           {[1,2,3,4].map(i => <div key={i} style={{ height: large ? 8 : 2, background: '#cbd5e1', marginBottom: large ? 8 : 2, width: i % 2 === 0 ? '80%' : '100%', borderRadius: 2 }} />)}
         </div>
+      </div>
+    </div>
+  )
+}
+
+function PolishedComparisonSideBySidePreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+
+  return (
+    <div className={className} style={{ position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden', ...style }}>
+      <div style={{ position: 'absolute', top: '15%', left: 0, right: 0, textAlign: 'center', fontSize: large ? '1rem' : '0.35rem', fontWeight: 800, color: '#1f2937' }}>Compare options</div>
+      <div style={{ position: 'absolute', top: '35%', bottom: '15%', left: '15%', right: '15%', display: 'flex', gap: large ? 32 : 12 }}>
+        
+        {/* Left Column */}
+        <div style={{ flex: 1 }}>
+          <div style={{ width: large ? 32 : 12, height: large ? 4 : 2, background: '#3b82f6', marginBottom: large ? 8 : 2 }} />
+          <div style={{ fontSize: large ? '0.6rem' : '0.2rem', fontWeight: 800, color: '#1f2937', marginBottom: large ? 12 : 4 }}>Option A</div>
+          {[1,2,3,4].map(i => <div key={i} style={{ height: large ? 6 : 2, background: '#cbd5e1', marginBottom: large ? 8 : 2, width: i % 2 === 0 ? '80%' : '100%', borderRadius: 2 }} />)}
+        </div>
+
+        {/* Right Column */}
+        <div style={{ flex: 1 }}>
+          <div style={{ width: large ? 32 : 12, height: large ? 4 : 2, background: '#a855f7', marginBottom: large ? 8 : 2 }} />
+          <div style={{ fontSize: large ? '0.6rem' : '0.2rem', fontWeight: 800, color: '#1f2937', marginBottom: large ? 12 : 4 }}>Option B</div>
+          {[1,2,3,4].map(i => <div key={i} style={{ height: large ? 6 : 2, background: '#cbd5e1', marginBottom: large ? 8 : 2, width: i % 2 === 0 ? '80%' : '100%', borderRadius: 2 }} />)}
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
+function PolishedComparisonSideBySideCardsPreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+
+  return (
+    <div className={className} style={{ position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden', ...style }}>
+      <div style={{ position: 'absolute', top: '15%', left: 0, right: 0, textAlign: 'center', fontSize: large ? '1rem' : '0.35rem', fontWeight: 800, color: '#1f2937' }}>Compare options</div>
+      <div style={{ position: 'absolute', top: '35%', bottom: '15%', left: '15%', right: '15%', display: 'flex', gap: large ? 32 : 12 }}>
+        
+        {/* Left Card */}
+        <div style={{ flex: 1, background: 'rgba(59, 130, 246, 0.15)', borderRadius: large ? 16 : 6, borderTop: `${large ? 6 : 2}px solid #3b82f6`, padding: large ? 24 : 8, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+          <div style={{ fontSize: large ? '0.6rem' : '0.2rem', fontWeight: 800, color: '#3b82f6', marginBottom: large ? 12 : 4, textAlign: 'center' }}>Option A</div>
+          {[1,2,3,4].map(i => <div key={i} style={{ height: large ? 6 : 2, background: '#94a3b8', marginBottom: large ? 8 : 2, width: i % 2 === 0 ? '80%' : '100%', borderRadius: 2 }} />)}
+        </div>
+
+        {/* Right Card */}
+        <div style={{ flex: 1, background: 'rgba(168, 85, 247, 0.15)', borderRadius: large ? 16 : 6, borderTop: `${large ? 6 : 2}px solid #a855f7`, padding: large ? 24 : 8, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+          <div style={{ fontSize: large ? '0.6rem' : '0.2rem', fontWeight: 800, color: '#a855f7', marginBottom: large ? 12 : 4, textAlign: 'center' }}>Option B</div>
+          {[1,2,3,4].map(i => <div key={i} style={{ height: large ? 6 : 2, background: '#94a3b8', marginBottom: large ? 8 : 2, width: i % 2 === 0 ? '80%' : '100%', borderRadius: 2 }} />)}
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
+function PolishedComparisonSideBySideCenterlinePreview({ previewHints, large, className, style, fill, aspectRatio }) {
+  const t = LAYOUT_POLISHED_THEME
+  const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+
+  return (
+    <div className={className} style={{ position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden', ...style }}>
+      <div style={{ position: 'absolute', top: '15%', left: 0, right: 0, textAlign: 'center', fontSize: large ? '1rem' : '0.35rem', fontWeight: 800, color: '#1f2937' }}>Compare options</div>
+      
+      {/* Centerline */}
+      <div style={{ position: 'absolute', top: '35%', bottom: '15%', left: '50%', width: large ? 2 : 1, background: '#9ca3af', transform: 'translateX(-50%)' }} />
+
+      <div style={{ position: 'absolute', top: '35%', bottom: '15%', left: '15%', right: '15%', display: 'flex', gap: large ? 32 : 12 }}>
+        
+        {/* Left Column */}
+        <div style={{ flex: 1, paddingRight: large ? 16 : 6 }}>
+          <div style={{ fontSize: large ? '0.6rem' : '0.2rem', fontWeight: 800, color: '#1f2937', marginBottom: large ? 12 : 4 }}>Option A</div>
+          {[1,2,3,4].map(i => <div key={i} style={{ height: large ? 6 : 2, background: '#cbd5e1', marginBottom: large ? 8 : 2, width: i % 2 === 0 ? '80%' : '100%', borderRadius: 2 }} />)}
+        </div>
+
+        {/* Right Column */}
+        <div style={{ flex: 1, paddingLeft: large ? 16 : 6 }}>
+          <div style={{ fontSize: large ? '0.6rem' : '0.2rem', fontWeight: 800, color: '#1f2937', marginBottom: large ? 12 : 4 }}>Option B</div>
+          {[1,2,3,4].map(i => <div key={i} style={{ height: large ? 6 : 2, background: '#cbd5e1', marginBottom: large ? 8 : 2, width: i % 2 === 0 ? '80%' : '100%', borderRadius: 2 }} />)}
+        </div>
+
       </div>
     </div>
   )
@@ -2594,6 +2725,18 @@ export default function LayoutPolishedPreview({
     return <PolishedComparisonTablePreview previewHints={previewHints} large={large} className={className} style={style} fill={fill} aspectRatio={aspectRatio} />
   }
 
+  if (previewMode === 'comparison_side_by_side') {
+    return <PolishedComparisonSideBySidePreview previewHints={previewHints} large={large} className={className} style={style} fill={fill} aspectRatio={aspectRatio} />
+  }
+
+  if (previewMode === 'comparison_side_by_side_cards') {
+    return <PolishedComparisonSideBySideCardsPreview previewHints={previewHints} large={large} className={className} style={style} fill={fill} aspectRatio={aspectRatio} />
+  }
+
+  if (previewMode === 'comparison_side_by_side_centerline') {
+    return <PolishedComparisonSideBySideCenterlinePreview previewHints={previewHints} large={large} className={className} style={style} fill={fill} aspectRatio={aspectRatio} />
+  }
+
   if (previewMode === 'comparison_pros_cons') {
     return <PolishedComparisonProsConsPreview previewHints={previewHints} large={large} className={className} style={style} fill={fill} aspectRatio={aspectRatio} />
   }
@@ -2604,6 +2747,14 @@ export default function LayoutPolishedPreview({
 
   if (previewMode === 'comparison_pros_cons_split') {
     return <PolishedComparisonProsConsSplitPreview previewHints={previewHints} large={large} className={className} style={style} fill={fill} aspectRatio={aspectRatio} />
+  }
+
+  if (previewMode === 'text_two_column') {
+    return <PolishedTextTwoColumnPreview previewHints={previewHints} large={large} className={className} style={style} fill={fill} aspectRatio={aspectRatio} />
+  }
+
+  if (previewMode === 'text_two_column_split') {
+    return <PolishedTextTwoColumnSplitPreview previewHints={previewHints} large={large} className={className} style={style} fill={fill} aspectRatio={aspectRatio} />
   }
 
   if (previewMode === 'text_two_column_cards') {
