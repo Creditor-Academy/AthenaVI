@@ -60,6 +60,18 @@ import {
   isGridTextImageCardsLayout,
   layoutGridTextImageCards,
 } from './gridTextImageCardsLayout.js'
+import {
+  isLogoPartnerGridLayout,
+  layoutLogoPartnerGrid,
+  isLogoPartnerStripLayout,
+  layoutLogoPartnerStrip,
+  isLogoWallLayout,
+  layoutLogoWall,
+} from './logoPartnerLayouts.js'
+import {
+  isLogoWallMasonryLayout,
+  layoutLogoWallMasonry,
+} from './logoWallMasonryLayout.js'
 
 export function finalizeChartShapes(elements, schema, palette = {}, canvas = {}) {
   const layoutId = schema?.layout_id || schema?.id || schema?.layoutId
@@ -198,6 +210,22 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
   
   if (isGridTextImageCardsLayout(layoutId)) {
     return layoutGridTextImageCards(elements, schema, palette, canvas)
+  }
+  
+  if (isLogoPartnerGridLayout(layoutId)) {
+    return layoutLogoPartnerGrid(elements, schema, palette, canvas)
+  }
+  
+  if (isLogoPartnerStripLayout(layoutId)) {
+    return layoutLogoPartnerStrip(elements, schema, palette, canvas)
+  }
+  
+  if (isLogoWallLayout(layoutId)) {
+    return layoutLogoWall(elements, schema, palette, canvas)
+  }
+  
+  if (isLogoWallMasonryLayout(layoutId)) {
+    return layoutLogoWallMasonry(elements, schema, palette, canvas)
   }
   
   return elements

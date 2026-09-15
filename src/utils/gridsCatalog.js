@@ -21,31 +21,16 @@ const P = SAMPLE_PARA
 
 const CATALOG = {
   grid_bento_three_v1: layoutBase('grid_bento_three_v1', 'grid', [
+    slot('BADGE', 'cols 1-3, rows 1', 'eyebrow', 'CURATED SHOWCASE', {
+      typography: typo('caption', { fontSize: 11, uppercase: true }),
+    }),
     heading('HEADING', 'cols 1-12, rows 1-2', 'Three-part bento overview', {
       typography: typo('heading', { fontSize: 32 }),
     }),
     body('SUBTITLE', 'cols 1-12, rows 2-3', 'Flagship product experiences, botanical purity, and sensory wellness highlights.', 1),
-    slot('CARD_1_TAG', 'cols 1-7, rows 3-4', 'eyebrow', 'FOOD & CULINARY'),
-    heading('CARD_1_TITLE', 'cols 1-7, rows 4-5', 'Wake Up and Smell the Coffee', {
-      typography: typo('heading', { fontSize: 22 }),
-    }),
-    body('CARD_1_BODY', 'cols 1-7, rows 5-6', 'Artisan morning rituals crafted with sustainably harvested beans and rich aromatic depth.', 2),
-    slot('CARD_1_CTA', 'cols 1-3, rows 6-7', 'button', 'Learn more →'),
-    gridImage(1, 'cols 8-12, rows 3-6'),
-    slot('CARD_2_TAG', 'cols 1-6, rows 7-8', 'eyebrow', 'ECO & SUSTAINABILITY'),
-    heading('CARD_2_TITLE', 'cols 1-6, rows 8-9', 'Purify the air in your home', {
-      typography: typo('heading', { fontSize: 18 }),
-    }),
-    body('CARD_2_BODY', 'cols 1-6, rows 9-10', 'Clean living botanicals designed to cultivate restorative atmospheres and indoor vitality.', 2),
-    slot('CARD_2_CTA', 'cols 1-3, rows 10-11', 'button', 'Learn more →'),
-    gridImage(2, 'cols 4-6, rows 7-10'),
-    slot('CARD_3_TAG', 'cols 7-12, rows 7-8', 'eyebrow', 'HEALTH & WELLNESS'),
-    heading('CARD_3_TITLE', 'cols 7-12, rows 8-9', 'Experience the fluidity of the gel', {
-      typography: typo('heading', { fontSize: 18 }),
-    }),
-    body('CARD_3_BODY', 'cols 7-12, rows 9-10', 'Lightweight, ultra-hydrating formulations engineered for daily cellular renewal.', 2),
-    slot('CARD_3_CTA', 'cols 7-9, rows 10-11', 'button', 'Learn more →'),
-    gridImage(3, 'cols 10-12, rows 7-10'),
+    gridImage(1, 'cols 1-12, rows 3-6'),
+    gridImage(2, 'cols 1-6, rows 7-10'),
+    gridImage(3, 'cols 7-12, rows 7-10'),
   ], { mode: 'grid_bento_three' }),
 
   grid_bento_four_v1: layoutBase('grid_bento_four_v1', 'grid', [
@@ -82,14 +67,19 @@ const CATALOG = {
 
   grid_text_image_cards_v1: layoutBase('grid_text_image_cards_v1', 'grid', [
     heading('FEATURE_TITLE', 'cols 1-8, rows 1-2', 'Describe this feature', {
-      typography: typo('heading', { fontSize: 26 }),
+      typography: typo('heading', { fontSize: 17 }),
+      max_lines: 1,
     }),
-    body('FEATURE_BODY', 'cols 1-8, rows 2-4', P.short, 2),
+    body('FEATURE_BODY', 'cols 1-8, rows 2-4', P.short, 2, {
+      typography: typo('body', { fontSize: 11 }),
+    }),
     slot('POINT_CARD_BG', 'cols 9-12, rows 1-4', 'shape', null, { layer: 1 }),
-    heading('POINT_TITLE', 'cols 10-12, rows 1-2', 'Key takeaway', {
-      typography: typo('heading', { fontSize: 16 }),
+    heading('POINT_TITLE', 'cols 10-12, rows 1-2', 'KEY TAKEAWAY', {
+      typography: typo('heading', { fontSize: 10 }),
     }),
-    body('POINT_BODY', 'cols 10-12, rows 2-4', 'Essential highlights summarizing this core capability.', 2, { typography: typo('body', { fontSize: 12 }) }),
+    body('POINT_BODY', 'cols 10-12, rows 2-4', 'Essential highlights summarizing this core capability.', 2, {
+      typography: typo('body', { fontSize: 11 }),
+    }),
     slot('POINT_IMAGE', 'cols 9-10, rows 1-3', 'image', null, { layer: 2, fit: 'cover' }),
     gridImage(1, 'cols 1-4, rows 5-10'),
     gridImage(2, 'cols 5-8, rows 5-10'),
@@ -100,9 +90,27 @@ const CATALOG = {
     gridImage(1, 'cols 1-4, rows 1-5'),
     gridImage(2, 'cols 5-8, rows 1-5'),
     gridImage(3, 'cols 9-12, rows 1-5'),
-    body('BODY_1', 'cols 1-4, rows 6-8', P.one, 3),
-    body('BODY_2', 'cols 5-8, rows 6-8', P.two, 3),
-    body('BODY_3', 'cols 9-12, rows 6-8', P.three, 3),
+    heading('HEADING_1', 'cols 1-4, rows 6', 'Feature One', {
+      typography: typo('heading', { fontSize: 18 }),
+      max_lines: 1,
+    }),
+    heading('HEADING_2', 'cols 5-8, rows 6', 'Feature Two', {
+      typography: typo('heading', { fontSize: 18 }),
+      max_lines: 1,
+    }),
+    heading('HEADING_3', 'cols 9-12, rows 6', 'Feature Three', {
+      typography: typo('heading', { fontSize: 18 }),
+      max_lines: 1,
+    }),
+    body('BODY_1', 'cols 1-4, rows 7-9', P.one, 3, {
+      typography: typo('body', { fontSize: 13 }),
+    }),
+    body('BODY_2', 'cols 5-8, rows 7-9', P.two, 3, {
+      typography: typo('body', { fontSize: 13 }),
+    }),
+    body('BODY_3', 'cols 9-12, rows 7-9', P.three, 3, {
+      typography: typo('body', { fontSize: 13 }),
+    }),
   ], { mode: 'grid_three_images_text' }),
 
   grid_images_text_cards_v1: layoutBase('grid_images_text_cards_v1', 'grid', [
@@ -231,6 +239,9 @@ const CATALOG = {
   ], { mode: 'grid_device_mockups' }),
 
   logo_wall_v1: layoutBase('logo_wall_v1', 'grid', [
+    slot('CATEGORY', 'cols 4-9, rows 1', 'caption', 'OUR PARTNERS', {
+      typography: typo('caption', { fontSize: 11, align: 'center', uppercase: true }),
+    }),
     heading('HEADING', 'cols 2-11, rows 1-2', 'Trusted by leading teams', {
       typography: typo('heading', { fontSize: 28, align: 'center' }),
     }),
@@ -238,18 +249,24 @@ const CATALOG = {
     slot('IMAGE_2', 'cols 4-6, rows 3-5', 'image', null, { layer: 2, fit: 'contain' }),
     slot('IMAGE_3', 'cols 7-9, rows 3-5', 'image', null, { layer: 2, fit: 'contain' }),
     slot('IMAGE_4', 'cols 10-12, rows 3-5', 'image', null, { layer: 2, fit: 'contain' }),
-    slot('IMAGE_5', 'cols 2-4, rows 5-7', 'image', null, { layer: 2, fit: 'contain' }),
-    slot('IMAGE_6', 'cols 5-7, rows 5-7', 'image', null, { layer: 2, fit: 'contain' }),
-    slot('IMAGE_7', 'cols 8-10, rows 5-7', 'image', null, { layer: 2, fit: 'contain' }),
-  ], { mode: 'grid_six_images' }),
+    slot('IMAGE_5', 'cols 1-3, rows 6-8', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_6', 'cols 4-6, rows 6-8', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_7', 'cols 7-9, rows 6-8', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_8', 'cols 10-12, rows 6-8', 'image', null, { layer: 2, fit: 'contain' }),
+  ], { mode: 'logo_wall' }),
 
   logo_partner_strip_v1: layoutBase('logo_partner_strip_v1', 'grid', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Partners', {
-      typography: typo('heading', { fontSize: 24, align: 'center' }),
+      typography: typo('heading', { fontSize: 26, align: 'center' }),
     }),
-    slot('IMAGE_1', 'cols 2-4, rows 4-6', 'image', null, { layer: 2, fit: 'contain' }),
-    slot('IMAGE_2', 'cols 5-7, rows 4-6', 'image', null, { layer: 2, fit: 'contain' }),
-    slot('IMAGE_3', 'cols 8-10, rows 4-6', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('BANNER_BG', 'cols 1-12, rows 3-7', 'shape', null, { layer: 1 }),
+    slot('IMAGE_1', 'cols 2-4, rows 3-6', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_2', 'cols 5-6, rows 3-6', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_3', 'cols 7-8, rows 3-6', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_4', 'cols 9-11, rows 3-6', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('TRUST_LABEL', 'cols 2-11, rows 8-9', 'caption', 'Over 10,000+ organizations build and scale with our ecosystem', {
+      typography: typo('caption', { fontSize: 12, align: 'center' }),
+    }),
   ], { mode: 'grid_three_images' }),
 }
 
@@ -297,8 +314,39 @@ Object.assign(CATALOG, {
   ], { mode: 'grid_six_images', gridVariant: 'mosaic' }),
   grid_text_image_mosaic_v1: gridsFromSource('grid_text_image_mosaic_v1', 'grid_text_image_cards_v1', 'mosaic'),
   grid_three_images_text_asymmetric_v1: gridsFromSource('grid_three_images_text_asymmetric_v1', 'grid_three_images_text_v1', 'asymmetric'),
-  logo_partner_grid_v1: gridsFromSource('logo_partner_grid_v1', 'logo_partner_strip_v1', 'grid'),
-  logo_wall_masonry_v1: gridsFromSource('logo_wall_masonry_v1', 'logo_wall_v1', 'masonry'),
+  logo_partner_grid_v1: layoutBase('logo_partner_grid_v1', 'grid', [
+    slot('CATEGORY', 'cols 4-9, rows 1', 'caption', 'OUR PARTNERS', {
+      typography: typo('caption', { fontSize: 11, align: 'center', uppercase: true }),
+    }),
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Trusted by Industry Leaders', {
+      typography: typo('heading', { fontSize: 28, align: 'center' }),
+    }),
+    slot('IMAGE_1', 'cols 1-4, rows 3-6', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_2', 'cols 5-8, rows 3-6', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_3', 'cols 9-12, rows 3-6', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_4', 'cols 1-4, rows 7-10', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_5', 'cols 5-8, rows 7-10', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_6', 'cols 9-12, rows 7-10', 'image', null, { layer: 2, fit: 'contain' }),
+  ], { mode: 'grid_three_images', gridVariant: 'grid' }),
+  logo_wall_masonry_v1: layoutBase('logo_wall_masonry_v1', 'grid', [
+    slot('CATEGORY', 'cols 4-9, rows 1', 'caption', 'OUR TEAM', {
+      typography: typo('caption', { fontSize: 11, align: 'center', uppercase: true }),
+    }),
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Trusted by leading teams', {
+      typography: typo('heading', { fontSize: 28, align: 'center' }),
+    }),
+    body('SUBTITLE', 'cols 2-11, rows 2-3', 'We work with innovative teams around the world to build better solutions, together.', 1, {
+      typography: typo('body', { fontSize: 12, align: 'center' }),
+    }),
+    slot('IMAGE_1', 'cols 1-3, rows 3-5', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_2', 'cols 1-3, rows 6-10', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_3', 'cols 4-5, rows 3-7', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_4', 'cols 6-9, rows 3-5', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_5', 'cols 6-9, rows 5-7', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_6', 'cols 10-12, rows 3-7', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_7', 'cols 4-8, rows 8-10', 'image', null, { layer: 2, fit: 'contain' }),
+    slot('IMAGE_8', 'cols 9-12, rows 8-10', 'image', null, { layer: 2, fit: 'contain' }),
+  ], { mode: 'logo_wall_masonry', gridVariant: 'masonry' }),
 })
 
 export default CATALOG

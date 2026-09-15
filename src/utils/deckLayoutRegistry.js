@@ -236,8 +236,8 @@ const LAYOUT_PREVIEW_MODES = {
   grid_metrics_asymmetric_v1: 'grid_metrics_masonry',
   grid_device_mockups_v1: 'grid_device_mockups',
   grid_device_mockups_feature_v1: 'grid_device_mockups',
-  logo_wall_v1: 'grid_six_images',
-  logo_wall_masonry_v1: 'grid_six_images',
+  logo_wall_v1: 'logo_wall',
+  logo_wall_masonry_v1: 'logo_wall_masonry',
   logo_partner_strip_v1: 'grid_three_images',
   logo_partner_grid_v1: 'grid_three_images',
   // Charts & data
@@ -584,6 +584,7 @@ function fillPreviewDataFromSlots(schema) {
   }
   if (mode === 'grid_three_images_text' && !Array.isArray(preview.columns)) {
     preview.columns = [1, 2, 3].map((n) => ({
+      title: slotPlaceholderText(slots, `HEADING_${n}`) || `Feature ${n}`,
       body: slotPlaceholderText(slots, `BODY_${n}`) || `Supporting text ${n}`,
     }))
   }

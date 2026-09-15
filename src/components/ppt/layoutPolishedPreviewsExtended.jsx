@@ -7,6 +7,7 @@ import { previewImageFrameStyle, PreviewImageIcon, PreviewImage } from './layout
 import { tableTwoSameHeaderPreviewSvg, tableTwoSameHeaderCardsPreviewSvg } from '../../utils/tableTwoSameHeaderLayout.js'
 import { gridBentoThreePreviewSvg } from '../../utils/gridBentoThreeLayout.js'
 import { gridBentoFourPreviewSvg } from '../../utils/gridBentoFourLayout.js'
+import { gridTextImageCardsPreviewSvg } from '../../utils/gridTextImageCardsLayout.js'
 
 const PREVIEW_TITLE_FS = { large: '1.75rem', small: '0.92rem' }
 const PREVIEW_BODY_FS = { large: '0.88rem', small: '0.4rem' }
@@ -394,22 +395,395 @@ export function PolishedGridThreeImagesPreview({ previewHints, ...props }) {
   const { large } = props
   const variant = previewHints?.gridVariant || 'default'
   const fp = frameProps(props)
-  const heading = previewHints?.slots?.HEADING?.text || 'Partners'
+  const heading = previewHints?.slots?.HEADING?.text || (variant === 'grid' ? 'Trusted by Industry Leaders' : 'Partners')
+  const subtitle = previewHints?.slots?.SUBTITLE?.text || (variant === 'grid' ? 'Collaborating with visionary teams to deliver results' : 'Powering high-growth companies worldwide')
+
   if (variant === 'grid' || variant === 'wall') {
     return (
-      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 3, alignItems: 'center' }}>
-        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>{heading}</div>
-        <div style={{ flex: 1, width: '100%', display: 'grid', gridTemplateColumns: variant === 'wall' ? 'repeat(3, 1fr)' : '1fr 1fr', gridTemplateRows: variant === 'wall' ? '1fr' : '1fr 1fr', gap: large ? 10 : 3 }}>
-          {[1, 2, 3].map((n) => <div key={n} style={{ background: theme.card, borderRadius: large ? 8 : 3, minHeight: large ? 40 : 14 }}><ImagePh large={large} /></div>)}
+      <div
+        {...fp}
+        style={{
+          ...fp.style,
+          padding: pad(large),
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'relative',
+          overflow: 'hidden',
+          background: '#FFFFFF',
+          boxSizing: 'border-box',
+        }}
+      >
+        {/* Ambient corner accents */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: large ? 70 : 24,
+            height: large ? 50 : 18,
+            background: 'radial-gradient(ellipse at 0% 0%, #EEF2FF 0%, #E0E7FF 40%, transparent 80%)',
+            pointerEvents: 'none',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            right: 0,
+            width: large ? 70 : 24,
+            height: large ? 50 : 18,
+            background: 'radial-gradient(ellipse at 100% 100%, #EEF2FF 0%, #E0E7FF 40%, transparent 80%)',
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* Header with Eyebrow rule */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: large ? 1.5 : 0.5, textAlign: 'center', width: '100%', zIndex: 1, marginBottom: large ? 3 : 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: large ? 4 : 1.5, justifyContent: 'center' }}>
+            <div style={{ width: large ? 16 : 6, height: 1.2, background: '#6366F1' }} />
+            <div style={{ fontSize: large ? '0.28rem' : '0.15rem', fontWeight: 700, color: '#4F46E5', letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+              {previewHints?.slots?.CATEGORY?.text || 'OUR PARTNERS'}
+            </div>
+            <div style={{ width: large ? 16 : 6, height: 1.2, background: '#6366F1' }} />
+          </div>
+          <div style={{ fontSize: large ? '0.54rem' : '0.28rem', fontWeight: 800, color: '#0B192C', lineHeight: 1.15, whiteSpace: 'nowrap' }}>
+            {heading}
+          </div>
+        </div>
+
+        {/* 6 Logo Cards */}
+        <div
+          style={{
+            flex: 1,
+            width: '100%',
+            minHeight: 0,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateRows: 'repeat(2, 1fr)',
+            gap: large ? 8 : 2.5,
+            marginTop: large ? 4 : 1,
+            zIndex: 1,
+          }}
+        >
+          {[1, 2, 3, 4, 5, 6].map((n) => (
+            <div
+              key={n}
+              style={{
+                background: '#F8FAFF',
+                border: '1px solid #E2E8F0',
+                borderRadius: large ? 8 : 3,
+                width: '100%',
+                height: '100%',
+                minHeight: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: large ? 6 : 2,
+                boxSizing: 'border-box',
+              }}
+            >
+              <ImagePh large={large} />
+            </div>
+          ))}
         </div>
       </div>
     )
   }
+
+  // Logo Partner Strip
   return (
-    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 3, alignItems: 'center' }}>
-      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>{heading}</div>
-      <div style={{ flex: 1, width: '100%', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 14 : 4, alignItems: 'center' }}>
-        {[1, 2, 3].map((n) => <div key={n} style={{ minHeight: large ? 50 : 16 }}><ImagePh large={large} /></div>)}
+    <div
+      {...fp}
+      style={{
+        ...fp.style,
+        padding: pad(large),
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        boxSizing: 'border-box',
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%' }}>
+        <div style={{ fontSize: large ? '0.62rem' : '0.34rem', fontWeight: 800, color: theme.text, lineHeight: 1.15 }}>
+          {heading}
+        </div>
+      </div>
+      <div
+        style={{
+          width: '100%',
+          height: large ? 74 : 24,
+          minHeight: 0,
+          background: theme.card,
+          borderRadius: large ? 10 : 4,
+          padding: large ? 6 : 2,
+          boxSizing: 'border-box',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: large ? 8 : 3,
+          alignItems: 'center',
+          marginTop: large ? 6 : 2,
+          marginBottom: large ? 6 : 2,
+        }}
+      >
+        {[1, 2, 3, 4].map((n) => (
+          <div
+            key={n}
+            style={{
+              background: '#FFFFFF',
+              borderRadius: large ? 6 : 2.5,
+              height: '84%',
+              width: '100%',
+              minHeight: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: large ? 4 : 1.5,
+              boxSizing: 'border-box',
+            }}
+          >
+            <ImagePh large={large} />
+          </div>
+        ))}
+      </div>
+      <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted, fontWeight: 500, textAlign: 'center' }}>
+        {previewHints?.slots?.TRUST_LABEL?.text || 'Over 10,000+ teams build with our platform'}
+      </div>
+    </div>
+  )
+}
+
+export function PolishedLogoWallPreview({ previewHints, ...props }) {
+  const { large } = props
+  const fp = frameProps(props)
+  const heading = previewHints?.slots?.HEADING?.text || 'Trusted by leading teams'
+  const category = previewHints?.slots?.CATEGORY?.text || 'OUR PARTNERS'
+
+  return (
+    <div
+      {...fp}
+      style={{
+        ...fp.style,
+        padding: large ? '12px 14px 12px' : '4px 6px 4px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        background: '#FAFBFE',
+        position: 'relative',
+        overflow: 'hidden',
+        boxSizing: 'border-box',
+      }}
+    >
+      {/* Top-Left Ambient Organic Wave */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: large ? 68 : 22,
+          height: large ? 48 : 16,
+          background: 'radial-gradient(ellipse at 0% 0%, #EEF2FF 0%, #E0E7FF 45%, transparent 80%)',
+          pointerEvents: 'none',
+        }}
+      />
+      {/* Bottom-Right Ambient Organic Wave */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          right: 0,
+          width: large ? 68 : 22,
+          height: large ? 48 : 16,
+          background: 'radial-gradient(ellipse at 100% 100%, #EEF2FF 0%, #E0E7FF 45%, transparent 80%)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Header with Eyebrow rule */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: large ? 1.5 : 0.5, textAlign: 'center', width: '100%', zIndex: 1, marginBottom: large ? 4 : 1.5 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: large ? 4 : 1.5, justifyContent: 'center' }}>
+          <div style={{ width: large ? 16 : 6, height: 1.2, background: '#6366F1' }} />
+          <div style={{ fontSize: large ? '0.28rem' : '0.15rem', fontWeight: 700, color: '#4F46E5', letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+            {category}
+          </div>
+          <div style={{ width: large ? 16 : 6, height: 1.2, background: '#6366F1' }} />
+        </div>
+        <div style={{ fontSize: large ? '0.54rem' : '0.28rem', fontWeight: 800, color: '#0B192C', lineHeight: 1.15, whiteSpace: 'nowrap' }}>
+          {heading}
+        </div>
+      </div>
+
+      {/* 8 Logo Cards across 4 cols x 2 rows */}
+      <div
+        style={{
+          flex: 1,
+          width: '100%',
+          minHeight: 0,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gridTemplateRows: 'repeat(2, 1fr)',
+          gap: large ? 6 : 2.5,
+          zIndex: 1,
+        }}
+      >
+        {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+          <div
+            key={n}
+            style={{
+              background: '#F8FAFF',
+              border: '1px solid #E2E8F0',
+              borderRadius: large ? 6 : 2.5,
+              width: '100%',
+              height: '100%',
+              minHeight: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: large ? 4 : 1.5,
+              boxSizing: 'border-box',
+            }}
+          >
+            <ImagePh large={large} />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function PolishedLogoWallMasonryPreview({ previewHints, ...props }) {
+  const { large } = props
+  const fp = frameProps(props)
+  const heading = previewHints?.slots?.HEADING?.text || 'Trusted by leading teams'
+  const subtitle = previewHints?.slots?.SUBTITLE?.text || 'We work with innovative teams around the world to build better solutions, together.'
+  const category = previewHints?.slots?.CATEGORY?.text || 'OUR TEAM'
+
+  const cardStyle = {
+    background: '#F0F4FD',
+    border: '1px solid #E2E8F0',
+    borderRadius: large ? 6 : 2.5,
+    width: '100%',
+    height: '100%',
+    minHeight: 0,
+    minWidth: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    boxSizing: 'border-box',
+    padding: large ? 4 : 1.5,
+  }
+
+  return (
+    <div
+      {...fp}
+      style={{
+        ...fp.style,
+        padding: large ? '12px 14px 10px' : '4px 5px 3px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        background: '#FAFBFE',
+        position: 'relative',
+        overflow: 'hidden',
+        boxSizing: 'border-box',
+      }}
+    >
+      {/* Top-Left Ambient Organic Wave */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: large ? 68 : 22,
+          height: large ? 48 : 16,
+          background: 'radial-gradient(ellipse at 0% 0%, #EEF2FF 0%, #E0E7FF 45%, transparent 80%)',
+          pointerEvents: 'none',
+        }}
+      />
+      {/* Bottom-Right Ambient Organic Wave */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          right: 0,
+          width: large ? 68 : 22,
+          height: large ? 48 : 16,
+          background: 'radial-gradient(ellipse at 100% 100%, #EEF2FF 0%, #E0E7FF 45%, transparent 80%)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Header with Eyebrow rule */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: large ? 1.5 : 0.5, textAlign: 'center', width: '100%', zIndex: 1, marginBottom: large ? 2 : 0.5 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: large ? 4 : 1.5, justifyContent: 'center' }}>
+          <div style={{ width: large ? 16 : 6, height: 1.2, background: '#6366F1' }} />
+          <div style={{ fontSize: large ? '0.28rem' : '0.15rem', fontWeight: 700, color: '#4F46E5', letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+            {category}
+          </div>
+          <div style={{ width: large ? 16 : 6, height: 1.2, background: '#6366F1' }} />
+        </div>
+        <div style={{ fontSize: large ? '0.52rem' : '0.28rem', fontWeight: 800, color: '#0B192C', lineHeight: 1.15, whiteSpace: 'nowrap' }}>
+          {heading}
+        </div>
+        <div style={{ fontSize: large ? '0.26rem' : '0.14rem', color: '#64748B', lineHeight: 1.3, maxWidth: '92%' }}>
+          {subtitle}
+        </div>
+      </div>
+
+      {/* 8-Card Interlocking Masonry Grid (4 cols x 3 rows) */}
+      <div
+        style={{
+          flex: 1,
+          width: '100%',
+          minHeight: 0,
+          display: 'grid',
+          gridTemplateColumns: '227fr 179fr 290fr 172fr',
+          gridTemplateRows: '130fr 120fr 130fr',
+          gap: large ? 5 : 2,
+          zIndex: 1,
+        }}
+      >
+        {/* Card 1: Col 1, Row 1 (Landscape) */}
+        <div style={{ ...cardStyle, gridColumn: '1', gridRow: '1' }}>
+          <ImagePh large={large} />
+        </div>
+        {/* Card 2: Col 1, Row 2-3 (Tall Portrait) */}
+        <div style={{ ...cardStyle, gridColumn: '1', gridRow: '2 / 4' }}>
+          <ImagePh large={large} />
+        </div>
+        {/* Card 3: Col 2, Row 1-2 (Tall Portrait) */}
+        <div style={{ ...cardStyle, gridColumn: '2', gridRow: '1 / 3' }}>
+          <ImagePh large={large} />
+        </div>
+        {/* Card 4: Col 3, Row 1 (Landscape) */}
+        <div style={{ ...cardStyle, gridColumn: '3', gridRow: '1' }}>
+          <ImagePh large={large} />
+        </div>
+        {/* Card 5: Col 3, Row 2 (Landscape) */}
+        <div style={{ ...cardStyle, gridColumn: '3', gridRow: '2' }}>
+          <ImagePh large={large} />
+        </div>
+        {/* Card 6: Col 4, Row 1-2 (Tall Portrait) */}
+        <div style={{ ...cardStyle, gridColumn: '4', gridRow: '1 / 3' }}>
+          <ImagePh large={large} />
+        </div>
+        {/* Card 7: Col 2-3, Row 3 (Wide Landscape) */}
+        <div style={{ ...cardStyle, gridColumn: '2 / 4', gridRow: '3' }}>
+          <ImagePh large={large} />
+        </div>
+        {/* Card 8: Col 4, Row 3 (Landscape) */}
+        <div style={{ ...cardStyle, gridColumn: '4', gridRow: '3' }}>
+          <ImagePh large={large} />
+        </div>
       </div>
     </div>
   )
@@ -433,70 +807,16 @@ export function PolishedGridTextImageCardsPreview({ previewHints, ...props }) {
       </div>
     )
   }
-  if (variant === 'mosaic') {
-    return (
-      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr', gridTemplateRows: 'auto 1fr', gap: large ? 8 : 3 }}>
-        <div style={{ gridColumn: '1 / 3', display: 'flex', flexDirection: 'column', gap: large ? 4 : 2 }}>
-          <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>{previewHints.featureTitle || 'Describe this feature'}</div>
-          <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>{previewHints.featureBody || 'Explain what this section is about.'}</div>
-        </div>
-        <div style={{ background: theme.card, borderRadius: large ? 8 : 3, padding: large ? 6 : 2 }}><ImagePh large={large} /></div>
-        <div style={{ gridColumn: '1 / 4', display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: large ? 8 : 3 }}>
-          {[1, 2, 3].map((n) => <div key={n} style={{ minHeight: large ? 50 : 16 }}><ImagePh large={large} /></div>)}
-        </div>
-      </div>
-    )
-  }
+
+  // Exact reference layout: Accent bar + Feature Title + Key Takeaway card + 3 equal gallery cards
+  const svg = gridTextImageCardsPreviewSvg()
   return (
-    <div
-      {...fp}
-      style={{
-        ...fp.style,
-        padding: pad(large),
-        display: 'grid',
-        gridTemplateColumns: '1.6fr 1fr',
-        gridTemplateRows: 'auto 1fr',
-        gap: large ? 10 : 3,
-      }}
-    >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 4 : 1, justifyContent: 'center' }}>
-        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>
-          {previewHints.featureTitle || 'Describe this feature'}
-        </div>
-        <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>
-          {previewHints.featureBody || 'Supporting paragraph explaining key capabilities.'}
-        </div>
-      </div>
+    <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden', background: '#FFFFFF', borderRadius: large ? 12 : 6 }}>
       <div
-        style={{
-          background: theme.card,
-          borderRadius: large ? 8 : 3,
-          padding: large ? '6px 8px' : '2px 3px',
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: large ? 6 : 2,
-        }}
-      >
-        <div style={{ width: large ? 32 : 12, height: large ? 32 : 12, borderRadius: large ? 6 : 2, overflow: 'hidden', flexShrink: 0 }}>
-          <ImagePh large={large} />
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 2 : 0.5, flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: large ? '0.68rem' : '0.28rem', fontWeight: 700, color: theme.text, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {previewHints.pointTitle || 'Key takeaway'}
-          </div>
-          <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-            {previewHints.pointBody || 'Essential highlights summarizing this core capability.'}
-          </div>
-        </div>
-      </div>
-      <div style={{ gridColumn: '1 / 3', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 8 : 3, flex: 1, minHeight: 0 }}>
-        {[1, 2, 3].map((n) => (
-          <div key={n} style={{ width: '100%', height: '100%', minHeight: 0 }}>
-            <ImagePh large={large} />
-          </div>
-        ))}
-      </div>
+        aria-hidden
+        style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+        dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+      />
     </div>
   )
 }
@@ -504,7 +824,11 @@ export function PolishedGridTextImageCardsPreview({ previewHints, ...props }) {
 export function PolishedGridThreeImagesTextPreview({ previewHints, ...props }) {
   const { large } = props
   const variant = previewHints?.gridVariant || 'default'
-  const cols = previewHints.columns || [{ body: 'Text one' }, { body: 'Text two' }, { body: 'Text three' }]
+  const cols = previewHints.columns || [
+    { title: 'Feature One', body: 'Text one' },
+    { title: 'Feature Two', body: 'Text two' },
+    { title: 'Feature Three', body: 'Text three' },
+  ]
   const fp = frameProps(props)
   if (variant === 'horizontal') {
     return (
@@ -512,7 +836,10 @@ export function PolishedGridThreeImagesTextPreview({ previewHints, ...props }) {
         {[0, 1, 2].map((i) => (
           <div key={i} style={{ display: 'flex', flexDirection: 'row', gap: large ? 6 : 2, alignItems: 'center' }}>
             <div style={{ width: large ? 48 : 16, height: large ? 48 : 16, flexShrink: 0 }}><ImagePh large={large} /></div>
-            <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted }}>{cols[i]?.body}</div>
+            <div>
+              {cols[i]?.title && <div style={{ fontSize: large ? '0.68rem' : '0.24rem', fontWeight: 700, color: theme.text, marginBottom: large ? 2 : 0 }}>{cols[i].title}</div>}
+              <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted }}>{cols[i]?.body}</div>
+            </div>
           </div>
         ))}
       </div>
@@ -522,22 +849,38 @@ export function PolishedGridThreeImagesTextPreview({ previewHints, ...props }) {
     return (
       <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.8fr', gap: large ? 10 : 3 }}>
         {[0, 1, 2].map((i) => (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: large ? 6 : 2 }}>
-            <div style={{ flex: 1, minHeight: large ? (i === 0 ? 90 : 60) : 20 }}><ImagePh large={large} /></div>
+          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: large ? 4 : 1 }}>
+            <div style={{ flex: 1, minHeight: large ? (i === 0 ? 70 : 50) : 16 }}><ImagePh large={large} /></div>
+            {cols[i]?.title && <div style={{ fontSize: large ? '0.68rem' : '0.24rem', fontWeight: 700, color: theme.text }}>{cols[i].title}</div>}
             <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted }}>{cols[i]?.body}</div>
           </div>
         ))}
       </div>
     )
   }
+  // Default: balanced 3-column grid with images (50%), headings, body text
   return (
-    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 3 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 10 : 3, flex: 1 }}>
-        {[0, 1, 2].map((i) => <div key={i} style={{ minHeight: large ? 70 : 22 }}><ImagePh large={large} /></div>)}
+    <div
+      {...fp}
+      style={{
+        ...fp.style,
+        padding: pad(large),
+        display: 'flex',
+        flexDirection: 'column',
+        gap: large ? 8 : 2,
+      }}
+    >
+      {/* Image row — constrained to ~50% height */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 10 : 3, flex: '0 0 auto', height: large ? '45%' : '42%', minHeight: large ? 54 : 16, maxHeight: large ? 130 : 38 }}>
+        {[0, 1, 2].map((i) => <div key={i}><ImagePh large={large} /></div>)}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 10 : 3 }}>
+      {/* Headings + body text per column */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 10 : 3, flex: 1, alignContent: 'start' }}>
         {cols.slice(0, 3).map((c, i) => (
-          <div key={i} style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted, lineHeight: 1.3 }}>{c.body}</div>
+          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: large ? 3 : 1 }}>
+            <div style={{ fontSize: large ? '0.78rem' : '0.28rem', fontWeight: 700, color: theme.text, lineHeight: 1.2 }}>{c.title || `Feature ${i + 1}`}</div>
+            <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted, lineHeight: 1.3 }}>{c.body}</div>
+          </div>
         ))}
       </div>
     </div>
@@ -1097,6 +1440,10 @@ export const EXTENDED_PREVIEW_MODES = {
   grid_four_mosaic: PolishedGridFourMosaicPreview,
   grid_six_images: PolishedGridSixImagesPreview,
   grid_three_images: PolishedGridThreeImagesPreview,
+  logo_partner_grid: PolishedGridThreeImagesPreview,
+  logo_partner_strip: PolishedGridThreeImagesPreview,
+  logo_wall: PolishedLogoWallPreview,
+  logo_wall_masonry: PolishedLogoWallMasonryPreview,
   grid_text_image_cards: PolishedGridTextImageCardsPreview,
   grid_three_images_text: PolishedGridThreeImagesTextPreview,
   grid_images_text_cards: PolishedGridImagesTextCardsPreview,
