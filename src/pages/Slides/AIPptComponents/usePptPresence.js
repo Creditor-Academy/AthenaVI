@@ -10,6 +10,12 @@ import {
 
 const DEFAULT_INTERVAL_MS = 12000
 
+function newerPresenter(current, incoming) {
+  if (!incoming) return current || null
+  if (!current) return incoming
+  return incoming.seq >= current.seq ? incoming : current
+}
+
 function mergePresence(current, incoming) {
   if (!incoming) return current
   const rawCount =
@@ -27,6 +33,7 @@ function mergePresence(current, incoming) {
     commentsUpdatedAt: incoming.commentsUpdatedAt || current?.commentsUpdatedAt || null,
     token: incoming.token || current?.token || '',
     url: incoming.url || current?.url || '',
+    presenter: newerPresenter(current?.presenter, incoming.presenter),
   }
 }
 
@@ -42,6 +49,7 @@ export default function usePptPresence({
   const [viewerCount, setViewerCount] = useState(0)
   const [contentUpdatedAt, setContentUpdatedAt] = useState(null)
   const [commentsUpdatedAt, setCommentsUpdatedAt] = useState(null)
+  const [presenter, setPresenter] = useState(null)
   const slideIndexRef = useRef(slideIndex)
   const renderedVersion = useRef(null)
   const commentsVersion = useRef(null)
@@ -68,6 +76,7 @@ export default function usePptPresence({
         commentsUpdatedAt: null,
         token: '',
         url: '',
+        presenter: null,
       }
       const index = Number.isFinite(Number(slideIndexRef.current)) ? Number(slideIndexRef.current) : 0
 
@@ -120,6 +129,7 @@ export default function usePptPresence({
           commentsVersion.current = next.commentsUpdatedAt
           setCommentsUpdatedAt(next.commentsUpdatedAt)
         }
+        setPresenter(next.presenter || null)
         delay = delay === DEFAULT_INTERVAL_MS ? DEFAULT_INTERVAL_MS : delay
       }
 
@@ -147,5 +157,5 @@ export default function usePptPresence({
     }
   }, [token, workspaceId, presentationId, enabled])
 
-  return { viewers, viewerCount, contentUpdatedAt, commentsUpdatedAt }
+  return { viewers, viewerCount, contentUpdatedAt, commentsUpdatedAt, presenter }
 }

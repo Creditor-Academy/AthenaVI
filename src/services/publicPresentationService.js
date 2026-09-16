@@ -124,6 +124,18 @@ class PublicPresentationService {
     const query = viewerSessionId
       ? `?viewerSessionId=${encodeURIComponent(viewerSessionId)}`
       : ''
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        navigator.sendBeacon(
+          buildUrl(`${API_CONFIG.ENDPOINTS.PRESENTATIONS.PUBLIC_PRESENCE_LEAVE(token)}${query}`)
+        )
+      }
+    } catch {
+      /* ignore */
+    }
+
+    // Old DELETE route still works — keep it as a backup for older backends.
     return this.request(
       `${API_CONFIG.ENDPOINTS.PRESENTATIONS.PUBLIC_PRESENCE(token)}${query}`,
       { method: 'DELETE', keepalive: true }

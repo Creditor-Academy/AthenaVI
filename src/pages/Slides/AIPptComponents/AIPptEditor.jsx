@@ -57,6 +57,7 @@ import { extractShareToken, getOrCreateViewerSessionId } from '../../../utils/pp
 import { savePresentationEditorSession } from '../../../utils/presentationEditorSession'
 import PptPresenceAvatars from './PptPresenceAvatars'
 import usePptPresence from './usePptPresence'
+import usePresentationPresenter from './usePresentationPresenter'
 import brandKitService from '../../../services/brandKitService'
 import { listBrandKitsUsableInWorkspace } from '../../../utils/brandKitWorkspace'
 import { dedupeBrandKitList, primaryLogoUrlFromKit, brandKitInitials } from '../../../utils/brandKitHelpers'
@@ -1409,16 +1410,42 @@ export default function AIPptEditor({
     canComment || shareSession?.canComment || shareSession?.linkRole === 'reviewer'
   )
   const previewCanResolve = Boolean(canResolveComments || shareSession?.canResolveComments)
-  const { viewers, viewerCount, contentUpdatedAt, commentsUpdatedAt } = usePptPresence({
-    token: shareToken,
-    workspaceId: viewOnly ? undefined : workspaceId,
-    presentationId: viewOnly ? undefined : presentationId,
-    slideIndex: selectedSlideIndex,
-    enabled: viewOnly
-      ? Boolean(shareToken) && !loading
-      : Boolean(workspaceId && presentationId) && !loading,
-    onShareToken: setShareToken,
+  const { viewers, viewerCount, contentUpdatedAt, commentsUpdatedAt, presenter: guestPresenter } =
+    usePptPresence({
+      token: shareToken,
+      workspaceId: viewOnly ? undefined : workspaceId,
+      presentationId: viewOnly ? undefined : presentationId,
+      slideIndex: selectedSlideIndex,
+      enabled: viewOnly
+        ? Boolean(shareToken) && !loading
+        // Paused while Present is live for members — the dedicated presenter
+        // hook below owns the same PUT presence route in that window.
+        : Boolean(workspaceId && presentationId) && !loading && !presentOpen,
+      onShareToken: setShareToken,
+    })
+
+  const presentIndexRef = useRef(0)
+  const memberPresenter = usePresentationPresenter({
+    workspaceId,
+    presentationId,
+    enabled: presentOpen && !viewOnly && Boolean(workspaceId && presentationId),
+    getSlideIndex: () => presentIndexRef.current,
   })
+  const presentPresence = viewOnly
+    ? {
+        presenter: guestPresenter,
+        isPresenting: false,
+        conflict: null,
+        canPresent: false,
+      }
+    : {
+        presenter: memberPresenter.presenter,
+        isPresenting: memberPresenter.isPresenting,
+        conflict: memberPresenter.conflict,
+        canPresent: true,
+        onStartPresenting: memberPresenter.startPresenting,
+        onStopPresenting: memberPresenter.stopPresenting,
+      }
   const selfViewer = !viewOnly && user
     ? {
         id: user.id || user._id || user.userId || 'owner',
@@ -4665,6 +4692,11 @@ export default function AIPptEditor({
             localSlides.findIndex((s) => s.id === selectedSlideId)
           )}
           onClose={() => setPresentOpen(false)}
+          chrome={viewOnly ? 'audience' : 'presenter'}
+          presence={presentPresence}
+          onIndexChange={(i) => {
+            presentIndexRef.current = i
+          }}
         />
       )}
 

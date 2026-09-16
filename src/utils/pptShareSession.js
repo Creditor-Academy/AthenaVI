@@ -129,6 +129,19 @@ export function mergePresenceViewers(...lists) {
   return merged
 }
 
+/** Normalize the live-presenter cursor: { slideIndex, displayName, seq, updatedAt } | null. */
+export function normalizePresenceCursor(raw) {
+  if (!raw || typeof raw !== 'object') return null
+  const slideIndex = Number(raw.slideIndex)
+  return {
+    slideIndex: Number.isFinite(slideIndex) ? slideIndex : 0,
+    displayName: raw.displayName || raw.name || raw.presentingUserName || 'Someone',
+    presentingUserId: raw.presentingUserId || raw.userId || null,
+    seq: Number(raw.seq) || 0,
+    updatedAt: raw.updatedAt || null,
+  }
+}
+
 export function extractPresencePayload(payload) {
   if (!payload) {
     return {
@@ -138,6 +151,7 @@ export function extractPresencePayload(payload) {
       commentsUpdatedAt: null,
       token: '',
       url: '',
+      presenter: null,
     }
   }
   const root = payload.data && typeof payload.data === 'object' ? { ...payload, ...payload.data } : payload
@@ -159,6 +173,7 @@ export function extractPresencePayload(payload) {
     commentsUpdatedAt: root.commentsUpdatedAt || share.commentsUpdatedAt || null,
     token: root.token || share.token || '',
     url: root.url || share.url || share.publicUrl || '',
+    presenter: normalizePresenceCursor(root.presenter || share.presenter || root.presence?.presenter || null),
   }
 }
 
