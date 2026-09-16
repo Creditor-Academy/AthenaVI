@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react'
-import { FiChevronLeft, FiChevronRight, FiMaximize2, FiX } from 'react-icons/fi'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { FiChevronLeft, FiChevronRight, FiMaximize2, FiRadio, FiX } from 'react-icons/fi'
 import PptChartRenderer, { getEmbedIframeUrl } from './PptChartRenderer'
 import ExternalLinkHoverLayer from './ExternalLinkHoverLayer'
 import {
@@ -28,26 +28,43 @@ import {
 import { PPT_SLIDE_TRANSITIONS } from '../../../constants/pptSlideEditorOptions'
 import './PresentMode.css'
 
-function PresentElement({ el, palette, canvasW, canvasH, focused }) {
+function PresentElement({ el, palette, canvasW, canvasH, focused, dimmed, selectable, onSelect }) {
+  // Only wired once focus mode is already active (a block is focused) — lets
+  // the presenter jump straight to a different block instead of cycling with F.
+  const canSelect = selectable && el.type !== 'embed' && el.type !== 'link'
+  const interactive = canSelect
+    ? {
+        className: 'ppt-present-el-hit',
+        onClick: (e) => {
+          e.stopPropagation()
+          onSelect?.(el.id)
+        },
+      }
+    : {}
+
   const p = el.placement || {}
   const rotation = Number(p.rotation) || 0
   const transformParts = [
     rotation ? `rotate(${rotation}deg)` : '',
-    focused ? 'scale(1.08)' : '',
+    focused ? 'scale(1.06)' : '',
   ].filter(Boolean)
+  const baseOpacity = p.opacity != null ? p.opacity : 1
   const style = {
     position: 'absolute',
     left: `${((p.x || 0) / canvasW) * 100}%`,
     top: `${((p.y || 0) / canvasH) * 100}%`,
     width: `${((p.width || 100) / canvasW) * 100}%`,
     height: `${((p.height || 40) / canvasH) * 100}%`,
-    opacity: p.opacity != null ? p.opacity : 1,
-    zIndex: el.layer || 0,
+    opacity: dimmed ? baseOpacity * 0.18 : baseOpacity,
+    zIndex: focused ? 500 : el.layer || 0,
     transform: transformParts.length ? transformParts.join(' ') : undefined,
     transformOrigin: 'center center',
-    transition: 'transform 0.3s ease, opacity 0.3s ease',
-    outline: focused ? '3px solid #3B82F6' : undefined,
-    outlineOffset: focused ? 4 : undefined,
+    transition: 'transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease, filter 0.3s ease',
+    filter: dimmed ? 'saturate(0.7) blur(0.3px)' : undefined,
+    outline: focused ? '2px solid #60a5fa' : undefined,
+    outlineOffset: focused ? 6 : undefined,
+    boxShadow: focused ? '0 12px 40px rgba(0,0,0,0.35)' : undefined,
+    borderRadius: focused ? 6 : undefined,
   }
 
   if (el.type === 'text' || el.type === 'textbox') {
@@ -64,6 +81,7 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
     }
     return (
       <div
+        {...interactive}
         style={{
           ...style,
           ...boxPaint,
@@ -103,7 +121,7 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
 
   if (el.type === 'graphic') {
     return (
-      <div style={style}>
+      <div {...interactive} style={style}>
         <GraphicCanvasVisual content={el.content || {}} palette={palette} />
       </div>
     )
@@ -115,6 +133,7 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
     if (!url) return null
     return (
       <img
+        {...interactive}
         src={url}
         alt={c.alt || ''}
         style={{
@@ -131,7 +150,7 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
 
   if (el.type === 'chart') {
     return (
-      <div style={style}>
+      <div {...interactive} style={style}>
         <PptChartRenderer content={el.content || {}} palette={palette} style={{ width: '100%', height: '100%' }} />
       </div>
     )
@@ -178,7 +197,7 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
       const screenSrc = c.screenUrl || c.url || c.src || c.thumbnailUrl || c.previewUrl
       const frameColor = resolveDeviceFrameColor(c, palette)
       return (
-        <div style={style}>
+        <div {...interactive} style={style}>
           <DeviceFrameVisual
             kind={deviceKind}
             src={c.layoutSurface ? undefined : screenSrc}
@@ -189,12 +208,15 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
       )
     }
     if (shapeElementUsesNativeStyle(el)) {
-      return <div style={{ ...style, ...buildNativeShapeBoxStyle(el.nativeStyle) }} />
+      return (
+        <div {...interactive} style={{ ...style, ...buildNativeShapeBoxStyle(el.nativeStyle) }} />
+      )
     }
     const rendered = buildCanvasShapeStyle(c, palette)
     if (rendered.kind === 'line') {
       return (
         <div
+          {...interactive}
           style={{
             ...style,
             display: 'flex',
@@ -212,7 +234,7 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
         : rendered.fill || rendered.style?.background || '#475569'
       if (parsePolygonClipPath(rendered.clipPath)) {
         return (
-          <div style={{ ...style, position: 'relative' }}>
+          <div {...interactive} style={{ ...style, position: 'relative' }}>
             <ClipShapeSvg
               clipPath={rendered.clipPath}
               fill={typeof svgFill === 'string' ? svgFill : '#475569'}
@@ -229,14 +251,14 @@ function PresentElement({ el, palette, canvasW, canvasH, focused }) {
         )
       }
     }
-    return <div style={{ ...style, ...rendered.style }} />
+    return <div {...interactive} style={{ ...style, ...rendered.style }} />
   }
 
   if (el.type === 'table') {
     const c = el.content || {}
     const cells = c.cells || c.rows || []
     return (
-      <div style={{ ...style, overflow: 'auto' }}>
+      <div {...interactive} style={{ ...style, overflow: 'auto' }}>
         <table className="ppt-present-table">
           <tbody>
             {cells.map((row, ri) => (
@@ -261,10 +283,48 @@ export default function PresentMode({
   aspectRatio = '16:9',
   initialSlideIndex = 0,
   onClose,
+  // 'presenter' (member, sees speaker notes + can broadcast) | 'audience' (guest, follow-only)
+  chrome = 'presenter',
+  // { presenter, isPresenting, conflict, canPresent, onStartPresenting, onStopPresenting } | null
+  presence = null,
+  onIndexChange,
 }) {
   const [index, setIndex] = useState(initialSlideIndex)
   const [focusElementId, setFocusElementId] = useState(null)
   const [transitioning, setTransitioning] = useState(false)
+  // Guests always follow the live presenter by default; a member only follows
+  // once someone else already holds the lock (never steal the cursor).
+  const [following, setFollowing] = useState(chrome === 'audience')
+  const lastAppliedSeqRef = useRef(-Infinity)
+
+  const presenter = presence?.presenter || null
+  const isPresenting = Boolean(presence?.isPresenting)
+  const conflict = presence?.conflict || null
+  const canPresent = Boolean(presence?.canPresent)
+
+  // Someone else already has the lock — follow them, don't fight for it.
+  useEffect(() => {
+    if (conflict) setFollowing(true)
+  }, [conflict])
+
+  // I'm presenting — my own navigation drives the deck, stop following others.
+  useEffect(() => {
+    if (isPresenting) setFollowing(false)
+  }, [isPresenting])
+
+  useEffect(() => {
+    if (!following || !presenter) return
+    if (presenter.seq <= lastAppliedSeqRef.current) return
+    lastAppliedSeqRef.current = presenter.seq
+    setIndex((prev) => {
+      const next = Math.max(0, Math.min(slides.length - 1, presenter.slideIndex))
+      return next === prev ? prev : next
+    })
+  }, [following, presenter, slides.length])
+
+  useEffect(() => {
+    onIndexChange?.(index)
+  }, [index, onIndexChange])
 
   const slide = slides[index]
   const canvas = resolveCanvasSize(slide, aspectRatio)
@@ -286,6 +346,7 @@ export default function PresentMode({
 
   const go = useCallback(
     (delta) => {
+      setFollowing(false)
       setTransitioning(true)
       setFocusElementId(null)
       setTimeout(() => {
@@ -296,56 +357,125 @@ export default function PresentMode({
     [slides.length, transition]
   )
 
+  const jumpToPresenter = useCallback(() => {
+    if (!presenter) return
+    lastAppliedSeqRef.current = presenter.seq
+    setIndex(Math.max(0, Math.min(slides.length - 1, presenter.slideIndex)))
+    setFollowing(true)
+  }, [presenter, slides.length])
+
+  const focusableIds = elements.map((el) => el.id).filter(Boolean)
+  const focusIndex = focusElementId ? focusableIds.indexOf(focusElementId) : -1
+
+  // Once focus mode is on, clicking a different block jumps straight to it
+  // instead of stepping through with the Focus button / F. Clicking the same
+  // block again, or the empty slide background, exits focus mode.
+  const selectFocusTarget = useCallback((id) => {
+    setFocusElementId((prev) => (prev === id ? null : id))
+  }, [])
+
+  // Steps through blocks one at a time, then releases back to the full slide.
+  const cycleFocus = useCallback(() => {
+    if (!focusableIds.length) return
+    setFocusElementId((prev) => {
+      if (!prev) return focusableIds[0]
+      const idx = focusableIds.indexOf(prev)
+      if (idx === -1 || idx === focusableIds.length - 1) return null
+      return focusableIds[idx + 1]
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusableIds.join('|')])
+
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === 'Escape') onClose?.()
+      if (e.key === 'Escape') {
+        if (focusElementId) setFocusElementId(null)
+        else onClose?.()
+      }
       if (e.key === 'ArrowRight' || e.key === ' ') {
         e.preventDefault()
         go(1)
       }
       if (e.key === 'ArrowLeft') go(-1)
-      if (e.key === 'f' || e.key === 'F') {
-        const ids = elements.map((el) => el.id).filter(Boolean)
-        if (!ids.length) return
-        setFocusElementId((prev) => {
-          if (!prev) return ids[0]
-          const idx = ids.indexOf(prev)
-          return ids[(idx + 1) % ids.length]
-        })
-      }
+      if (e.key === 'f' || e.key === 'F') cycleFocus()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose, go, elements])
+  }, [onClose, go, cycleFocus, focusElementId])
 
   const transitionClass = transitioning
     ? `ppt-present-stage--${transition}`
     : ''
 
+  const transitionLabel = PPT_SLIDE_TRANSITIONS.find((t) => t.id === transition)?.label
+
   return (
     <div className="ppt-present-overlay" role="dialog" aria-label="Present mode">
       <header className="ppt-present-header">
-        <span>
-          Slide {index + 1} / {slides.length}
-          {PPT_SLIDE_TRANSITIONS.find((t) => t.id === transition)?.label &&
-            ` · ${PPT_SLIDE_TRANSITIONS.find((t) => t.id === transition).label}`}
-        </span>
+        <div className="ppt-present-header-left">
+          <span className="ppt-present-counter">
+            {index + 1} <em>/</em> {slides.length}
+          </span>
+          {transitionLabel && <span className="ppt-present-transition-tag">{transitionLabel}</span>}
+        </div>
+
         <div className="ppt-present-header-actions">
-          <button type="button" onClick={() => setFocusElementId(null)} title="Clear focus (F cycles blocks)">
-            <FiMaximize2 size={16} /> Focus
+          {canPresent && (
+            <button
+              type="button"
+              className={isPresenting ? 'ppt-present-live-btn is-live' : 'ppt-present-live-btn'}
+              onClick={() => (isPresenting ? presence.onStopPresenting?.() : presence.onStartPresenting?.())}
+              title={isPresenting ? 'Stop presenting to viewers' : 'Present this deck to viewers'}
+            >
+              <FiRadio size={14} />
+              <span>{isPresenting ? 'Presenting' : 'Present to viewers'}</span>
+            </button>
+          )}
+          <button
+            type="button"
+            className={focusElementId ? 'ppt-present-focus-btn is-active' : 'ppt-present-focus-btn'}
+            onClick={cycleFocus}
+            disabled={!focusableIds.length}
+            title={
+              !focusableIds.length
+                ? 'No blocks to focus on this slide'
+                : focusElementId
+                  ? 'Click any block to jump to it, or press F to step to the next one'
+                  : 'Zoom into this slide block by block (F)'
+            }
+          >
+            <FiMaximize2 size={16} />
+            <span>{focusElementId ? `Focus ${focusIndex + 1}/${focusableIds.length}` : 'Focus'}</span>
           </button>
-          <button type="button" onClick={onClose} aria-label="Exit present mode">
+          <button type="button" className="ppt-present-close-btn" onClick={onClose} aria-label="Exit present mode" title="Exit (Esc)">
             <FiX size={18} />
           </button>
         </div>
       </header>
 
-      <div className={`ppt-present-stage ${transitionClass}`}>
+      {presenter && !isPresenting && (
+        <div className="ppt-present-banner">
+          <span className="ppt-present-banner-dot" aria-hidden />
+          <span>
+            {conflict ? `${conflict.displayName} is presenting` : `Following ${presenter.displayName}`}
+          </span>
+          {!following && (
+            <button type="button" onClick={jumpToPresenter}>
+              Jump to presenter
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className={`ppt-present-stage ${transitionClass} ${focusElementId ? 'is-focused' : ''}`}>
         <div
           className="ppt-present-slide"
           style={{
             ...slideBgStyle,
             aspectRatio: `${canvas.width} / ${canvas.height}`,
+          }}
+          onClick={() => {
+            if (focusElementId) setFocusElementId(null)
           }}
         >
           {hasElements ? (
@@ -357,6 +487,9 @@ export default function PresentMode({
                 canvasW={canvas.width}
                 canvasH={canvas.height}
                 focused={focusElementId === el.id}
+                dimmed={Boolean(focusElementId) && focusElementId !== el.id}
+                selectable={Boolean(focusElementId)}
+                onSelect={selectFocusTarget}
               />
             ))
           ) : (
@@ -368,18 +501,52 @@ export default function PresentMode({
         </div>
       </div>
 
-      {slide?.speakerNotes && (
-        <footer className="ppt-present-notes">{slide.speakerNotes}</footer>
+      {chrome === 'presenter' && slide?.speakerNotes && (
+        <footer className="ppt-present-notes">
+          <strong>Speaker notes</strong>
+          <p>{slide.speakerNotes}</p>
+        </footer>
       )}
 
       <nav className="ppt-present-nav">
-        <button type="button" disabled={index <= 0} onClick={() => go(-1)}>
+        <button type="button" disabled={index <= 0} onClick={() => go(-1)} aria-label="Previous slide">
           <FiChevronLeft size={20} />
         </button>
-        <button type="button" disabled={index >= slides.length - 1} onClick={() => go(1)}>
+        <div className="ppt-present-dots" aria-hidden>
+          {slides.length <= 24 &&
+            slides.map((s, i) => (
+              <span key={s.id} className={i === index ? 'ppt-present-dot is-active' : 'ppt-present-dot'} />
+            ))}
+        </div>
+        <button
+          type="button"
+          disabled={index >= slides.length - 1}
+          onClick={() => go(1)}
+          aria-label="Next slide"
+        >
           <FiChevronRight size={20} />
         </button>
       </nav>
+
+      <div className="ppt-present-hints">
+        {focusElementId ? (
+          <>
+            <span>Click a block to jump to it</span>
+            <span>·</span>
+            <span>F for next</span>
+            <span>·</span>
+            <span>Esc to zoom out</span>
+          </>
+        ) : (
+          <>
+            <span>← → to navigate</span>
+            <span>·</span>
+            <span>F to focus</span>
+            <span>·</span>
+            <span>Esc to exit</span>
+          </>
+        )}
+      </div>
     </div>
   )
 }

@@ -697,6 +697,54 @@ class PresentationService {
     return this.request(endpoint, { method: 'POST' })
   }
 
+  // ── Present (member presenter lock / follow) ───────────────────────
+
+  /**
+   * PUT presence with { slideIndex, presenting }. Always send presenting explicitly —
+   * omitting it defaults to false server-side and releases the lock.
+   * Throws PresentationConflictError (409) when another member already holds the lock;
+   * err.data.errors[0] carries { presentingUserId, displayName }.
+   */
+  heartbeatPresence(workspaceId, presentationId, { slideIndex = 0, presenting = false } = {}) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.PRESENCE(workspaceId, presentationId), {
+      method: 'PUT',
+      body: JSON.stringify({ slideIndex, presenting: presenting === true }),
+      quiet: true,
+    })
+  }
+
+  /**
+   * Release the presenter lock on tab close / navigation. Fires both a beacon
+   * (survives unload, can't carry Authorization) and a keepalive fetch with the
+   * bearer token, per the backend's documented "use both" guidance.
+   */
+  leavePresence(workspaceId, presentationId, leaveToken) {
+    if (!workspaceId || !presentationId) return
+    const query = leaveToken ? `?leaveToken=${encodeURIComponent(leaveToken)}` : ''
+    const url = buildUrl(
+      `${API_CONFIG.ENDPOINTS.PRESENTATIONS.PRESENCE_LEAVE(workspaceId, presentationId)}${query}`
+    )
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        navigator.sendBeacon(url)
+      }
+    } catch {
+      /* ignore */
+    }
+
+    try {
+      fetch(url, {
+        method: 'POST',
+        keepalive: true,
+        headers: { ...getAuthHeaders() },
+        body: JSON.stringify(leaveToken ? { leaveToken } : {}),
+      }).catch(() => {})
+    } catch {
+      /* ignore */
+    }
+  }
+
   async pollSharePresence(workspaceId, presentationId, { viewerSessionId, slideIndex } = {}) {
     const key = `${workspaceId}:${presentationId}`
     const remembered = sharePresenceRoute.get(key)

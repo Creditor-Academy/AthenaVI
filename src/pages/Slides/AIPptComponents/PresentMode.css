@@ -2,25 +2,63 @@
   position: fixed;
   inset: 0;
   z-index: 10000;
-  background: #0f172a;
+  background:
+    radial-gradient(1200px 700px at 50% 8%, rgba(59, 130, 246, 0.10), transparent 60%),
+    linear-gradient(180deg, #0b1120 0%, #05070d 100%);
   display: flex;
   flex-direction: column;
+  animation: pptPresentOverlayIn 0.22s ease;
+}
+
+@keyframes pptPresentOverlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .ppt-present-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 12px 20px;
+  gap: 12px;
+  padding: 14px 22px;
   color: #e2e8f0;
   font-size: 14px;
   min-width: 0;
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.55) 0%, rgba(2, 6, 23, 0) 100%);
 }
 
-.ppt-present-header > span,
-.ppt-present-header > p {
+.ppt-present-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
+}
+
+.ppt-present-counter {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #f1f5f9;
+  flex-shrink: 0;
+}
+
+.ppt-present-counter em {
+  font-style: normal;
+  color: #64748b;
+  font-weight: 400;
+  margin: 0 1px;
+}
+
+.ppt-present-transition-tag {
+  color: #94a3b8;
+  font-size: 12px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -28,6 +66,7 @@
 
 .ppt-present-header-actions {
   display: flex;
+  align-items: center;
   gap: 8px;
   flex-shrink: 0;
 }
@@ -36,12 +75,98 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
+  padding: 7px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #f1f5f9;
   cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.ppt-present-header-actions button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.13);
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.ppt-present-header-actions button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.ppt-present-header-actions button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.ppt-present-focus-btn.is-active {
+  background: rgba(96, 165, 250, 0.2);
+  border-color: rgba(96, 165, 250, 0.5);
+  color: #dbeafe;
+}
+
+.ppt-present-close-btn {
+  padding: 8px !important;
+  border-radius: 50% !important;
+}
+
+.ppt-present-live-btn.is-live {
+  background: #dc2626;
+  border-color: #ef4444;
+}
+
+.ppt-present-live-btn.is-live:hover {
+  background: #e23434 !important;
+}
+
+.ppt-present-live-btn.is-live svg {
+  animation: pptPresentLivePulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pptPresentLivePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.ppt-present-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 20px;
+  background: rgba(37, 99, 235, 0.16);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: #dbeafe;
+  font-size: 13px;
+  text-align: center;
+  backdrop-filter: blur(6px);
+}
+
+.ppt-present-banner-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #60a5fa;
+  flex-shrink: 0;
+  animation: pptPresentLivePulse 1.6s ease-in-out infinite;
+}
+
+.ppt-present-banner button {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.ppt-present-banner button:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .ppt-present-stage {
@@ -112,34 +237,141 @@
   position: relative;
   width: min(92vw, 1200px);
   max-width: 100%;
-  max-height: 80vh;
-  border-radius: 8px;
+  max-height: 76vh;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  transition: box-shadow 0.3s ease;
+}
+
+.ppt-present-stage.is-focused .ppt-present-slide {
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  cursor: default;
+}
+
+.ppt-present-el-hit {
+  cursor: pointer;
+}
+
+.ppt-present-el-hit:hover {
+  outline: 1.5px dashed rgba(255, 255, 255, 0.45);
+  outline-offset: 4px;
+}
+
+.ppt-present-fallback {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 32px;
+}
+
+.ppt-present-fallback h1 {
+  margin: 0;
+  font-size: clamp(20px, 3vw, 34px);
+}
+
+.ppt-present-fallback img {
+  max-width: 100%;
+  max-height: 60%;
+  border-radius: 8px;
+  object-fit: contain;
 }
 
 .ppt-present-notes {
-  padding: 12px 24px;
-  background: rgba(0, 0, 0, 0.35);
+  padding: 12px 24px 14px;
+  background: rgba(0, 0, 0, 0.4);
   color: #cbd5e1;
   font-size: 13px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ppt-present-notes strong {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.ppt-present-notes p {
+  margin: 0;
+  line-height: 1.5;
+  max-height: 4.5em;
+  overflow-y: auto;
 }
 
 .ppt-present-nav {
   display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 16px;
+  gap: 18px;
+  padding: 12px 16px 8px;
 }
 
 .ppt-present-nav button {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  border: none;
-  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   color: #fff;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+  flex-shrink: 0;
+}
+
+.ppt-present-nav button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.ppt-present-nav button:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.ppt-present-nav button:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.ppt-present-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 40vw;
+  overflow: hidden;
+}
+
+.ppt-present-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  flex-shrink: 0;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.ppt-present-dot.is-active {
+  background: #60a5fa;
+  transform: scale(1.4);
+}
+
+.ppt-present-hints {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px 14px;
+  color: #475569;
+  font-size: 11px;
+  letter-spacing: 0.01em;
 }
 
 @media (max-width: 800px) {
@@ -153,13 +385,27 @@
     padding: 6px 8px;
   }
 
+  .ppt-present-live-btn span,
+  .ppt-present-focus-btn span {
+    display: none;
+  }
+
+  .ppt-present-transition-tag {
+    display: none;
+  }
+
+  .ppt-present-banner {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
   .ppt-present-stage {
     padding: 8px;
   }
 
   .ppt-present-slide {
     width: 100%;
-    max-height: 68dvh;
+    max-height: 64dvh;
     border-radius: 4px;
   }
 
@@ -169,12 +415,20 @@
   }
 
   .ppt-present-nav {
-    padding: 10px 12px 16px;
+    padding: 8px 12px 4px;
     gap: 8px;
   }
 
   .ppt-present-nav button {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
+  }
+
+  .ppt-present-dots {
+    display: none;
+  }
+
+  .ppt-present-hints {
+    display: none;
   }
 }
