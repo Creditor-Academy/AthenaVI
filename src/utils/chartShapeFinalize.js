@@ -72,6 +72,42 @@ import {
   isLogoWallMasonryLayout,
   layoutLogoWallMasonry,
 } from './logoWallMasonryLayout.js'
+import {
+  isGridThreeImagesTextLayout,
+  layoutGridThreeImagesText,
+} from './gridThreeImagesText.js'
+import {
+  isGridThreeImagesTextAsymmetricLayout,
+  layoutGridThreeImagesTextAsymmetric,
+} from './gridThreeImagesTextAsymmetric.js'
+import {
+  isGridImagesTextCardsLayout,
+  layoutGridImagesTextCards,
+} from './gridImagesTextCards.js'
+import {
+  isGridImagesTextMosaicLayout,
+  layoutGridImagesTextMosaic,
+} from './gridImagesTextMosaic.js'
+import {
+  isGridInsightsChartLayout,
+  layoutGridInsightsChart,
+} from './gridInsightsChart.js'
+import {
+  isGridInsightsChartSplitLayout,
+  layoutGridInsightsChartSplit,
+} from './gridInsightsChartSplit.js'
+import {
+  isGridMetricsMobileLayout,
+  layoutGridMetricsMobile,
+} from './gridMetricsMobile.js'
+import {
+  isGridMetricsMasonryLayout,
+  layoutGridMetricsMasonry,
+} from './gridMetricsMasonry.js'
+import {
+  isGridMetricsAsymmetricLayout,
+  layoutGridMetricsAsymmetric,
+} from './gridMetricsAsymmetric.js'
 
 export function finalizeChartShapes(elements, schema, palette = {}, canvas = {}) {
   const layoutId = schema?.layout_id || schema?.id || schema?.layoutId
@@ -226,6 +262,42 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
   
   if (isLogoWallMasonryLayout(layoutId)) {
     return layoutLogoWallMasonry(elements, schema, palette, canvas)
+  }
+  
+  if (isGridThreeImagesTextLayout(layoutId)) {
+    return layoutGridThreeImagesText(elements, schema, palette, canvas)
+  }
+  
+  if (isGridThreeImagesTextAsymmetricLayout(layoutId)) {
+    return layoutGridThreeImagesTextAsymmetric(elements, schema, palette, canvas)
+  }
+  
+  if (isGridImagesTextCardsLayout(layoutId)) {
+    return layoutGridImagesTextCards(elements, schema, palette, canvas)
+  }
+  
+  if (isGridImagesTextMosaicLayout(layoutId)) {
+    return layoutGridImagesTextMosaic(elements, schema, palette, canvas)
+  }
+  
+  if (isGridInsightsChartLayout(layoutId)) {
+    return layoutGridInsightsChart(elements, schema, palette, canvas)
+  }
+  
+  if (isGridInsightsChartSplitLayout(layoutId)) {
+    return layoutGridInsightsChartSplit(elements, schema, palette, canvas)
+  }
+  
+  if (isGridMetricsMobileLayout(layoutId)) {
+    return layoutGridMetricsMobile(elements, schema, palette, canvas)
+  }
+  
+  if (isGridMetricsMasonryLayout(layoutId)) {
+    return layoutGridMetricsMasonry(elements, schema, palette, canvas)
+  }
+  
+  if (isGridMetricsAsymmetricLayout(layoutId)) {
+    return layoutGridMetricsAsymmetric(elements, schema, palette, canvas)
   }
   
   return elements
