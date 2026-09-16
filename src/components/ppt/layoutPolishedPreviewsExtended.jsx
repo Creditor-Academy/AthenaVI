@@ -65,11 +65,72 @@ function BarChart({ large, values = [45, 62, 78, 91] }) {
 
 function DonutChart({ large }) {
   const size = large ? 80 : 28
+  // Mini 4-segment donut in preview colors
+  const segs = [
+    { pct: 32, color: '#3B82F6', lightColor: '#60A5FA', darkColor: '#1D4ED8' },
+    { pct: 24, color: '#8B5CF6', lightColor: '#A78BFA', darkColor: '#6D28D9' },
+    { pct: 18, color: '#10B981', lightColor: '#34D399', darkColor: '#047857' },
+    { pct: 26, color: '#64748B', lightColor: '#94A3B8', darkColor: '#334155' },
+  ]
+  const cx = 18, cy = 18, r = 13, ir = 8
+  const gap = 3.5
+  let angle = 0
+  const paths = segs.map((s, i) => {
+    const sweep = (s.pct / 100) * 360
+    const sA = angle + gap / 2
+    const eA = angle + sweep - gap / 2
+    angle += sweep
+    const toRad = (d) => ((d - 90) * Math.PI) / 180
+    const x1 = (cx + r * Math.cos(toRad(sA))).toFixed(2)
+    const y1 = (cy + r * Math.sin(toRad(sA))).toFixed(2)
+    const x2 = (cx + r * Math.cos(toRad(eA))).toFixed(2)
+    const y2 = (cy + r * Math.sin(toRad(eA))).toFixed(2)
+    const ix1 = (cx + ir * Math.cos(toRad(sA))).toFixed(2)
+    const iy1 = (cy + ir * Math.sin(toRad(sA))).toFixed(2)
+    const ix2 = (cx + ir * Math.cos(toRad(eA))).toFixed(2)
+    const iy2 = (cy + ir * Math.sin(toRad(eA))).toFixed(2)
+    const large = sweep > 180 ? 1 : 0
+    const d = `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} L ${ix2} ${iy2} A ${ir} ${ir} 0 ${large} 0 ${ix1} ${iy1} Z`
+    return { d, s, i }
+  })
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <svg width={size} height={size} viewBox="0 0 36 36">
-        <circle cx="18" cy="18" r="14" fill="none" stroke={theme.card} strokeWidth="6" />
-        <circle cx="18" cy="18" r="14" fill="none" stroke={theme.accent} strokeWidth="6" strokeDasharray="55 100" transform="rotate(-90 18 18)" />
+      <svg width={size} height={size} viewBox="0 0 36 36" style={{ overflow: 'visible' }}>
+        <defs>
+          {paths.map(({ s, i }) => (
+            <linearGradient key={i} id={`dprev_${i}`} x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor={s.lightColor} />
+              <stop offset="100%" stopColor={s.color} />
+            </linearGradient>
+          ))}
+        </defs>
+        {/* 3D base */}
+        {paths.map(({ d, s, i }) => {
+          const toRad = (deg) => ((deg - 90) * Math.PI) / 180
+          let a = 0
+          const segsLocal = segs.slice(0, i)
+          segsLocal.forEach((seg) => { a += (seg.pct / 100) * 360 })
+          const sweep = (s.pct / 100) * 360
+          const sA = a + gap / 2
+          const eA = a + sweep - gap / 2
+          const x1b = (cx + r * Math.cos(toRad(sA))).toFixed(2)
+          const y1b = (cy + 2 + r * Math.sin(toRad(sA))).toFixed(2)
+          const x2b = (cx + r * Math.cos(toRad(eA))).toFixed(2)
+          const y2b = (cy + 2 + r * Math.sin(toRad(eA))).toFixed(2)
+          const ix1b = (cx + ir * Math.cos(toRad(sA))).toFixed(2)
+          const iy1b = (cy + 2 + ir * Math.sin(toRad(sA))).toFixed(2)
+          const ix2b = (cx + ir * Math.cos(toRad(eA))).toFixed(2)
+          const iy2b = (cy + 2 + ir * Math.sin(toRad(eA))).toFixed(2)
+          const lg = sweep > 180 ? 1 : 0
+          const db = `M ${x1b} ${y1b} A ${r} ${r} 0 ${lg} 1 ${x2b} ${y2b} L ${ix2b} ${iy2b} A ${ir} ${ir} 0 ${lg} 0 ${ix1b} ${iy1b} Z`
+          return <path key={i} d={db} fill={s.darkColor} opacity="0.85" />
+        })}
+        {/* Top faces */}
+        {paths.map(({ d, s, i }) => (
+          <path key={i} d={d} fill={`url(#dprev_${i})`} stroke="#fff" strokeWidth="0.5" strokeLinejoin="round" />
+        ))}
+        {/* Center plate */}
+        <circle cx={cx} cy={cy} r={ir - 0.5} fill="#fff" stroke="#e2e8f0" strokeWidth="0.5" />
       </svg>
     </div>
   )
@@ -94,29 +155,140 @@ function TableMini({ large, headers = ['A', 'B', 'C'], rows = 3 }) {
   )
 }
 
-function DeviceFrame({ kind, large, children }) {
+function DeviceFrame({ kind, large, children, style = {} }) {
   const isPhone = kind === 'phone'
-  const border = large ? 6 : 3
-  return (
-    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: large ? 8 : 3 }}>
+  const isLaptop = kind === 'laptop'
+  const border = large ? (isPhone ? 6 : 4) : (isPhone ? 2.5 : 2)
+
+  if (isLaptop) {
+    return (
       <div style={{
-        width: isPhone ? '55%' : '90%',
-        height: isPhone ? '95%' : '75%',
-        borderRadius: isPhone ? (large ? 18 : 8) : (large ? 10 : 4),
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: large ? '2px 4px' : '1px 2px',
+        boxSizing: 'border-box',
+        ...style,
+      }}>
+        <div style={{
+          width: '92%',
+          aspectRatio: '16 / 10',
+          maxHeight: '84%',
+          borderRadius: large ? 9 : 4,
+          border: `${border}px solid #0f172a`,
+          outline: `${large ? 1.5 : 1}px solid #334155`,
+          outlineOffset: -1,
+          background: '#f8fafc',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 8px 24px rgba(15,23,42,0.18)',
+          position: 'relative',
+        }}>
+          {/* Top camera bar */}
+          <div style={{
+            height: large ? 8 : 3.5,
+            background: '#1e293b',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <div style={{
+              width: large ? 3 : 1.5,
+              height: large ? 3 : 1.5,
+              borderRadius: '50%',
+              background: '#475569',
+            }} />
+          </div>
+          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+            {children || <ImagePh large={large} />}
+          </div>
+        </div>
+        {/* Laptop keyboard base deck */}
+        <div style={{
+          width: '98%',
+          height: large ? 6 : 2.5,
+          marginTop: -1,
+          borderRadius: `0 0 ${large ? 5 : 2}px ${large ? 5 : 2}px`,
+          background: 'linear-gradient(180deg, #475569 0%, #334155 100%)',
+          border: '1px solid #0f172a',
+          position: 'relative',
+          flexShrink: 0,
+          boxShadow: '0 4px 10px rgba(15,23,42,0.15)',
+        }}>
+          {/* Notch center indent */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: large ? 20 : 8,
+            height: large ? 2 : 1,
+            background: '#1e293b',
+            borderRadius: `0 0 ${large ? 3 : 1}px ${large ? 3 : 1}px`,
+          }} />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: large ? 4 : 2,
+      boxSizing: 'border-box',
+      ...style,
+    }}>
+      <div style={{
+        height: '92%',
+        aspectRatio: '9 / 19.5',
+        maxHeight: '94%',
+        borderRadius: large ? 20 : 8,
         border: `${border}px solid #0f172a`,
-        outline: `${large ? 3 : 1.5}px solid #334155`,
-        outlineOffset: large ? -2 : -1,
+        outline: `${large ? 1.5 : 1}px solid #334155`,
+        outlineOffset: -1,
         background: '#f8fafc',
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: '0 8px 24px rgba(15,23,42,0.18)',
+        boxShadow: '0 12px 28px rgba(15,23,42,0.2), 0 2px 6px rgba(15,23,42,0.1)',
+        position: 'relative',
       }}>
-        {!isPhone && <div style={{ height: large ? 10 : 4, background: '#334155', flexShrink: 0 }} />}
-        <div style={{ flex: 1, minHeight: 0 }}>{children || <ImagePh large={large} />}</div>
-        {isPhone && (
-          <div style={{ height: large ? 8 : 3, background: '#cbd5e1', flexShrink: 0, margin: '0 auto 4px', width: '30%', borderRadius: 99 }} />
-        )}
+        {/* Dynamic Island pill */}
+        <div style={{
+          position: 'absolute',
+          top: large ? 6 : 2.5,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '32%',
+          height: large ? 5.5 : 2.5,
+          borderRadius: 99,
+          background: '#020617',
+          zIndex: 3,
+        }} />
+        <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          {children || <ImagePh large={large} />}
+        </div>
+        {/* Home indicator bar */}
+        <div style={{
+          position: 'absolute',
+          bottom: large ? 5 : 2,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '34%',
+          height: large ? 3 : 1.5,
+          borderRadius: 99,
+          background: 'rgba(15, 23, 42, 0.35)',
+          zIndex: 3,
+        }} />
       </div>
     </div>
   )
@@ -1114,44 +1286,75 @@ export function PolishedGridDeviceMockupsPreview({ previewHints, ...props }) {
   const { large } = props
   const variant = previewHints?.gridVariant || 'default'
   const fp = frameProps(props)
+
+  const feature1Title = previewHints?.slots?.FEATURE_1_TITLE?.text || 'Describe this feature'
+  const feature1Body = previewHints?.slots?.FEATURE_1_BODY?.text || 'Full-featured desktop workspace'
+  const feature2Title = previewHints?.slots?.FEATURE_2_TITLE?.text || 'Describe this feature'
+  const feature2Body = previewHints?.slots?.FEATURE_2_BODY?.text || 'Seamless mobile companion'
+
+  const cardStyle = {
+    background: '#f8fafc',
+    borderRadius: large ? 10 : 5,
+    border: '1px solid #e2e8f0',
+    padding: large ? '10px 12px' : '4px 5px',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    boxShadow: '0 1px 3px rgba(15,23,42,0.04)',
+    height: '100%',
+    boxSizing: 'border-box',
+  }
+
   if (variant === 'feature') {
     return (
-      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '0.9fr 1.1fr', gap: large ? 12 : 4 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3, justifyContent: 'center' }}>
-          <div style={{ fontSize: large ? '0.85rem' : '0.3rem', fontWeight: 800, color: theme.text }}>Describe this feature</div>
-          <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>Highlight the product story.</div>
-          <div style={{ flex: 1, minHeight: large ? 60 : 20 }}><DeviceFrame kind="laptop" large={large}><ImagePh large={large} /></DeviceFrame></div>
+      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1.25fr 0.85fr', gap: large ? 12 : 4, alignItems: 'stretch' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 6 : 2, height: '100%', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: large ? '0.88rem' : '0.34rem', fontWeight: 800, color: theme.text, lineHeight: 1.2 }}>{feature1Title}</div>
+            <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted, lineHeight: 1.4, marginTop: large ? 4 : 1 }}>{feature1Body}</div>
+          </div>
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <DeviceFrame kind="laptop" large={large}><ImagePh large={large} /></DeviceFrame>
+          </div>
         </div>
-        <DeviceFrame kind="phone" large={large}><ImagePh large={large} /></DeviceFrame>
-      </div>
-    )
-  }
-  if (variant === 'staggered') {
-    return (
-      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1fr 1fr', gap: large ? 10 : 3 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3, marginTop: large ? 18 : 6 }}>
-          <div style={{ fontSize: large ? '0.68rem' : '0.26rem', fontWeight: 700, color: theme.text }}>Describe this feature</div>
-          <div style={{ flex: 1, minHeight: large ? 50 : 16 }}><DeviceFrame kind="laptop" large={large}><ImagePh large={large} /></DeviceFrame></div>
-          <div style={{ fontSize: large ? '0.68rem' : '0.26rem', fontWeight: 700, color: theme.text }}>Describe this feature</div>
-          <div style={{ flex: 1, minHeight: large ? 50 : 16 }}><DeviceFrame kind="laptop" large={large}><ImagePh large={large} /></DeviceFrame></div>
-        </div>
-        <div style={{ marginTop: large ? 0 : 0, alignSelf: 'center' }}>
+        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <DeviceFrame kind="phone" large={large}><ImagePh large={large} /></DeviceFrame>
         </div>
       </div>
     )
   }
+
   return (
-    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1fr 1fr', gap: large ? 10 : 3 }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3 }}>
-        {[1, 2].map((n) => (
-          <div key={n} style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: large ? 4 : 2 }}>
-            <div style={{ fontSize: large ? '0.68rem' : '0.26rem', fontWeight: 700, color: theme.text }}>Describe this feature</div>
-            <div style={{ flex: 1, minHeight: large ? 50 : 16 }}><DeviceFrame kind="laptop" large={large}><ImagePh large={large} /></DeviceFrame></div>
+    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1.25fr 0.85fr', gap: large ? 10 : 3.5, alignItems: 'stretch' }}>
+      {/* Left Card: Desktop / Laptop */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 2 : 1, marginBottom: large ? 4 : 1.5 }}>
+          <div style={{ fontSize: large ? '0.78rem' : '0.3rem', fontWeight: 800, color: theme.text, lineHeight: 1.2 }}>
+            {feature1Title}
           </div>
-        ))}
+          <div style={{ fontSize: large ? '0.52rem' : '0.2rem', color: theme.muted, lineHeight: 1.35, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {feature1Body}
+          </div>
+        </div>
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <DeviceFrame kind="laptop" large={large}><ImagePh large={large} /></DeviceFrame>
+        </div>
       </div>
-      <DeviceFrame kind="phone" large={large}><ImagePh large={large} /></DeviceFrame>
+
+      {/* Right Card: Mobile / Phone */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 2 : 1, marginBottom: large ? 4 : 1.5 }}>
+          <div style={{ fontSize: large ? '0.78rem' : '0.3rem', fontWeight: 800, color: theme.text, lineHeight: 1.2 }}>
+            {feature2Title}
+          </div>
+          <div style={{ fontSize: large ? '0.52rem' : '0.2rem', color: theme.muted, lineHeight: 1.35, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {feature2Body}
+          </div>
+        </div>
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <DeviceFrame kind="phone" large={large}><ImagePh large={large} /></DeviceFrame>
+        </div>
+      </div>
     </div>
   )
 }
@@ -1263,12 +1466,35 @@ export function PolishedChartDonutRowPreview({ previewHints, ...props }) {
   const variant = previewHints.dataVariant || 'default'
   const fp = frameProps(props)
   const useCards = variant === 'cards'
+  const donutLabels = ['Category A', 'Category B', 'Category C']
+  const donutVals = ['32%', '58%', '74%']
   return (
-    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 3 }}>
+    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 8 : 2 }}>
       <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>{previewHints.slots?.HEADING?.text || 'Segment mix'}</div>
-      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: variant === 'horizontal' ? 'repeat(3, 1fr)' : 'repeat(3, 1fr)', gap: large ? 10 : 3 }}>
-        {[1, 2, 3].map((n) => (
-          <div key={n} style={{ background: useCards ? theme.card : theme.card, border: useCards ? `1px solid ${theme.accentBorder}` : 'none', borderRadius: large ? 8 : 3, minHeight: large ? 70 : 24, padding: useCards ? (large ? 6 : 2) : 0 }}><DonutChart large={large} /></div>
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 8 : 2 }}>
+        {[0, 1, 2].map((n) => (
+          <div
+            key={n}
+            style={{
+              background: theme.card,
+              border: useCards ? `1px solid ${theme.accentBorder}` : `1px solid ${theme.accentBorder}20`,
+              borderRadius: large ? 10 : 3,
+              minHeight: large ? 70 : 24,
+              padding: large ? 6 : 2,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: large ? 4 : 1,
+            }}
+          >
+            <div style={{ flex: 1, width: '100%' }}><DonutChart large={large} /></div>
+            {large && (
+              <>
+                <div style={{ fontSize: '0.5rem', fontWeight: 800, color: theme.text }}>{donutVals[n]}</div>
+                <div style={{ fontSize: '0.38rem', color: theme.muted }}>{donutLabels[n]}</div>
+              </>
+            )}
+          </div>
         ))}
       </div>
     </div>

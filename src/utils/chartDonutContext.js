@@ -9,53 +9,53 @@ export const CDC_GEOM = {
   
   // Badge at top left
   badgeX: 50,
-  badgeY: 40,
-  badgeW: 140,
-  badgeH: 22,
+  badgeY: 48,
+  badgeW: 156,
+  badgeH: 28,
   badgeIconSize: 14,
   
   // Donut chart area (left side)
-  donutCenterX: 230,
+  donutCenterX: 215,
   donutCenterY: 310,
   donutOuterRadius: 150,
   donutInnerRadius: 95,
   
-  // Center text in donut
-  centerTextY: 305,
-  centerLabelY: 330,
+  // Center text in donut (well balanced)
+  centerTextY: 288,
+  centerLabelY: 342,
   
-  // Right side - Context panel (wider and taller)
-  panelX: 500,
-  panelY: 75,
-  panelW: 460,
-  panelH: 465,
+  // Right side - Context panel (extra wide: 520px, spacious)
+  panelX: 440,
+  panelY: 48,
+  panelW: 520,
+  panelH: 488,
   
-  // Inside panel - better spacing
-  panelHeadingX: 35,
-  panelHeadingY: 35,
-  panelSubheadingX: 35,
-  panelSubheadingY: 80,
-  panelSubheadingW: 390,
+  // Inside panel - spacious & airy
+  panelHeadingX: 36,
+  panelHeadingY: 36,
+  panelSubheadingX: 36,
+  panelSubheadingY: 84,
+  panelSubheadingW: 448,
   panelSubheadingH: 65,
   
-  // Metric breakdowns in panel (4 metrics) - improved spacing
-  metricStartY: 170,
-  metricGap: 73,
-  metricDotX: 35,
+  // Metric breakdowns in panel (4 metrics) - wide & airy
+  metricStartY: 172,
+  metricGap: 72,
+  metricDotX: 36,
   metricDotSize: 12,
-  metricLabelX: 55,
-  metricDescX: 55,
+  metricLabelX: 58,
+  metricDescX: 58,
   metricDescY: 22,
-  metricValueX: 410,
+  metricValueX: 468,
   metricDescH: 42,
 }
 
 // Donut segments data (4 segments)
 export const CDC_SEGMENTS = [
-  { id: 'A', value: 32, startAngle: 0, endAngle: 115.2, color: '#3B82F6', label: 'Metric A' },
-  { id: 'B', value: 24, startAngle: 115.2, endAngle: 201.6, color: '#8B5CF6', label: 'Metric B' },
-  { id: 'C', value: 18, startAngle: 201.6, endAngle: 266.4, color: '#10B981', label: 'Metric C' },
-  { id: 'D', value: 26, startAngle: 266.4, endAngle: 360, color: '#64748B', label: 'Metric D' },
+  { id: 'A', value: 32, startAngle: 0, endAngle: 115.2, color: '#3B82F6', lightColor: '#60A5FA', darkColor: '#1D4ED8', label: 'Metric A' },
+  { id: 'B', value: 24, startAngle: 115.2, endAngle: 201.6, color: '#8B5CF6', lightColor: '#A78BFA', darkColor: '#6D28D9', label: 'Metric B' },
+  { id: 'C', value: 18, startAngle: 201.6, endAngle: 266.4, color: '#10B981', lightColor: '#34D399', darkColor: '#047857', label: 'Metric C' },
+  { id: 'D', value: 26, startAngle: 266.4, endAngle: 360, color: '#64748B', lightColor: '#94A3B8', darkColor: '#334155', label: 'Metric D' },
 ]
 
 export const CDC_COLORS = {
@@ -68,7 +68,7 @@ export const CDC_COLORS = {
 export const CDC_DEFAULTS = {
   BADGE: 'MARKET SHARE',
   CENTER_VALUE: '100%',
-  CENTER_LABEL: 'Total',
+  CENTER_LABEL: 'TOTAL',
   PANEL_HEADING: 'Market share',
   PANEL_SUBHEADING: 'Supporting paragraph with three to four lines of scannable copy that explains the key idea without overwhelming the slide.',
   METRIC_A_LABEL: 'Metric A',
@@ -117,22 +117,42 @@ export const isChartDonutContextTextSlot = (slotId) => {
 const panelBgSvg = () => {
   const g = CDC_GEOM
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${g.panelW} ${g.panelH}" width="100%" height="100%" preserveAspectRatio="none">
-    <rect x="0" y="0" width="${g.panelW}" height="${g.panelH}" fill="#F0F9FF" stroke="#BFDBFE" stroke-width="2" rx="16"/>
+    <defs>
+      <filter id="cdcPanelShadow" x="-10%" y="-5%" width="120%" height="115%" filterUnits="userSpaceOnUse">
+        <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="rgba(15, 23, 42, 0.08)"/>
+        <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="rgba(15, 23, 42, 0.04)"/>
+      </filter>
+    </defs>
+    <rect x="0" y="0" width="${g.panelW}" height="${g.panelH}" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.2" rx="20" filter="url(#cdcPanelShadow)"/>
   </svg>`
 }
 
 const badgeSvg = () => {
   const g = CDC_GEOM
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${g.badgeW} ${g.badgeH}" width="100%" height="100%" preserveAspectRatio="none">
-    <rect x="0" y="0" width="${g.badgeW}" height="${g.badgeH}" fill="#DBEAFE" rx="6"/>
+    <rect x="0" y="0" width="${g.badgeW}" height="${g.badgeH}" fill="rgba(59, 130, 246, 0.1)" stroke="rgba(59, 130, 246, 0.25)" stroke-width="1" rx="8"/>
   </svg>`
 }
 
 const badgeIconSvg = () => {
   const size = CDC_GEOM.badgeIconSize
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
-    <rect x="2" y="2" width="${size - 4}" height="${size - 4}" rx="2" fill="none" stroke="#3B82F6" stroke-width="1.5"/>
-    <path d="M4 8 L7 11 L12 4" stroke="#3B82F6" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 1}" fill="rgba(59, 130, 246, 0.2)"/>
+    <circle cx="${size / 2}" cy="${size / 2}" r="3" fill="#2563EB"/>
+  </svg>`
+}
+
+const centerPlateSvg = (size) => {
+  const r = size / 2
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="100%" height="100%">
+    <defs>
+      <filter id="cdcCenterPlateShadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="rgba(15, 23, 42, 0.08)"/>
+        <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="rgba(15, 23, 42, 0.04)"/>
+      </filter>
+    </defs>
+    <circle cx="${r}" cy="${r}" r="${r - 2}" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5" filter="url(#cdcCenterPlateShadow)"/>
+    <circle cx="${r}" cy="${r}" r="${r - 12}" fill="none" stroke="#F1F5F9" stroke-width="2"/>
   </svg>`
 }
 
@@ -149,18 +169,54 @@ const donutSegmentPath = (centerX, centerY, innerR, outerR, startAngle, endAngle
   
   const largeArc = endAngle - startAngle > 180 ? 1 : 0
   
-  return `M ${x1} ${y1} A ${outerR} ${outerR} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerR} ${innerR} 0 ${largeArc} 0 ${x4} ${y4} Z`
+  return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${outerR} ${outerR} 0 ${largeArc} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} L ${x3.toFixed(2)} ${y3.toFixed(2)} A ${innerR} ${innerR} 0 ${largeArc} 0 ${x4.toFixed(2)} ${y4.toFixed(2)} Z`
 }
 
 const donutSegmentSvg = (segment, width, height) => {
   const g = CDC_GEOM
-  // Adjust coordinates to be relative to the cropped viewBox
   const centerX = g.donutOuterRadius
   const centerY = g.donutOuterRadius
-  const path = donutSegmentPath(centerX, centerY, g.donutInnerRadius, g.donutOuterRadius, segment.startAngle, segment.endAngle)
   const viewBoxSize = g.donutOuterRadius * 2
+  const innerR = g.donutInnerRadius
+  const outerR = g.donutOuterRadius
+  const midR = (innerR + outerR) / 2
+  const toRad = (deg) => (deg - 90) * Math.PI / 180
+
+  const gapDeg = 2.4
+  const span = segment.endAngle - segment.startAngle
+  const actualGap = span > 10 ? gapDeg : Math.max(0.5, span * 0.1)
+  const sAngle = segment.startAngle + actualGap / 2
+  const eAngle = segment.endAngle - actualGap / 2
+  const midAngle = (segment.startAngle + segment.endAngle) / 2
+
+  const labelX = centerX + midR * Math.cos(toRad(midAngle))
+  const labelY = centerY + midR * Math.sin(toRad(midAngle))
+
+  const light = segment.lightColor || '#60A5FA'
+  const base = segment.color || '#3B82F6'
+  const dark = segment.darkColor || '#1D4ED8'
+
+  // 3D base depth (shifted down 5px)
+  const basePath = donutSegmentPath(centerX, centerY + 5, innerR, outerR, sAngle, eAngle)
+  // Top face
+  const topPath = donutSegmentPath(centerX, centerY, innerR, outerR, sAngle, eAngle)
+
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${viewBoxSize} ${viewBoxSize}" width="100%" height="100%" preserveAspectRatio="none">
-    <path d="${path}" fill="currentColor"/>
+    <defs>
+      <linearGradient id="cdc_grad_${segment.id}" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="${light}"/>
+        <stop offset="100%" stop-color="${base}"/>
+      </linearGradient>
+      <filter id="cdc_text_shadow_${segment.id}" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="rgba(0, 0, 0, 0.45)"/>
+      </filter>
+    </defs>
+    <!-- 3D bottom base extrusion -->
+    <path d="${basePath}" fill="${dark}" opacity="0.95"/>
+    <!-- Top Face with rich gradient & crisp rim stroke -->
+    <path d="${topPath}" fill="url(#cdc_grad_${segment.id})" stroke="#FFFFFF" stroke-width="1.4" stroke-linejoin="round"/>
+    <!-- Bold percentage label right on the slice face -->
+    <text x="${labelX.toFixed(1)}" y="${labelY.toFixed(1)}" fill="#FFFFFF" font-size="15.5" font-weight="800" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" text-anchor="middle" dominant-baseline="central" filter="url(#cdc_text_shadow_${segment.id})">${segment.value}%</text>
   </svg>`
 }
 
@@ -187,7 +243,7 @@ const headingInk = (palette = {}) => {
   return hexLum(bg) < 0.45 ? '#F3F4F6' : '#111827'
 }
 
-export const chartDonutContextChromeSpecs = () => {
+export const chartDonutContextChromeSpecs = (segments = CDC_SEGMENTS) => {
   const g = CDC_GEOM
   const specs = []
   
@@ -228,7 +284,7 @@ export const chartDonutContextChromeSpecs = () => {
   })
   
   // Donut segments (4 segments) - constrained to donut area only
-  CDC_SEGMENTS.forEach((segment, i) => {
+  segments.forEach((segment) => {
     const donutLeft = g.donutCenterX - g.donutOuterRadius
     const donutTop = g.donutCenterY - g.donutOuterRadius
     const donutSize = g.donutOuterRadius * 2
@@ -245,9 +301,22 @@ export const chartDonutContextChromeSpecs = () => {
       segmentData: segment,
     })
   })
+
+  // Center gauge plate disc inside the donut hole
+  const plateRadius = g.donutInnerRadius - 6
+  specs.push({
+    slotId: 'CDC_CENTER_PLATE',
+    x: g.donutCenterX - plateRadius,
+    y: g.donutCenterY - plateRadius,
+    w: plateRadius * 2,
+    h: plateRadius * 2,
+    color: '#FFFFFF',
+    layer: 6,
+    kind: 'centerPlate',
+  })
   
   // Metric dots in panel (4 metrics)
-  CDC_SEGMENTS.forEach((segment, i) => {
+  segments.forEach((segment, i) => {
     specs.push({
       slotId: `CDC_METRIC_DOT_${segment.id}`,
       x: g.panelX + g.metricDotX,
@@ -264,9 +333,11 @@ export const chartDonutContextChromeSpecs = () => {
 }
 
 // Mirrored version for right-side donut
-export const chartDonutContextRightChromeSpecs = () => {
-  const specs = chartDonutContextChromeSpecs()
+export const chartDonutContextRightChromeSpecs = (segments = CDC_SEGMENTS) => {
+  const specs = chartDonutContextChromeSpecs(segments)
   const g = CDC_GEOM
+  const donutNewCenterX = 770 // Right side
+  const plateRadius = g.donutInnerRadius - 6
   
   // Mirror positions horizontally
   return specs.map(spec => {
@@ -284,9 +355,13 @@ export const chartDonutContextRightChromeSpecs = () => {
     
     // Mirror donut
     if (spec.slotId.startsWith('CDC_SEGMENT_')) {
-      const donutNewCenterX = 770 // Right side
       const donutLeft = donutNewCenterX - g.donutOuterRadius
       mirrored.x = donutLeft
+    }
+
+    // Mirror center plate
+    if (spec.slotId === 'CDC_CENTER_PLATE') {
+      mirrored.x = donutNewCenterX - plateRadius
     }
     
     // Mirror metric dots
@@ -312,21 +387,21 @@ export const chartDonutContextOverlay = (gx, gy, gw, gh) => {
   const overlays = {
     badge: box(g.badgeX + g.badgeIconSize + 14, g.badgeY, g.badgeW - g.badgeIconSize - 20, g.badgeH),
     
-    // Center text in donut
-    centerValue: box(g.donutCenterX - 60, g.centerTextY - 20, 120, 40),
-    centerLabel: box(g.donutCenterX - 60, g.centerLabelY - 10, 120, 24),
+    // Center text in donut (well centered on the plate with ample width to never wrap)
+    centerValue: box(g.donutCenterX - 85, g.donutCenterY - 26, 170, 36),
+    centerLabel: box(g.donutCenterX - 85, g.donutCenterY + 12, 170, 20),
     
     // Context panel
-    panelHeading: box(g.panelX + g.panelHeadingX, g.panelY + g.panelHeadingY, 340, 36),
+    panelHeading: box(g.panelX + g.panelHeadingX, g.panelY + g.panelHeadingY, 420, 38),
     panelSubheading: box(g.panelX + g.panelSubheadingX, g.panelY + g.panelSubheadingY, g.panelSubheadingW, g.panelSubheadingH),
   }
   
   // Metric breakdowns in panel (4 metrics)
   CDC_SEGMENTS.forEach((segment, i) => {
     const y = g.panelY + g.metricStartY + (i * g.metricGap)
-    overlays[`metric${segment.id}Label`] = box(g.panelX + g.metricLabelX, y, 240, 20)
-    overlays[`metric${segment.id}Value`] = box(g.panelX + g.metricValueX, y, 40, 20)
-    overlays[`metric${segment.id}Desc`] = box(g.panelX + g.metricDescX, y + g.metricDescY, 360, g.metricDescH || 42)
+    overlays[`metric${segment.id}Label`] = box(g.panelX + g.metricLabelX, y, 320, 22)
+    overlays[`metric${segment.id}Value`] = box(g.panelX + g.metricValueX - 40, y, 50, 24)
+    overlays[`metric${segment.id}Desc`] = box(g.panelX + g.metricDescX, y + g.metricDescY, 410, g.metricDescH || 42)
   })
   
   return overlays
@@ -351,20 +426,20 @@ export const chartDonutContextRightOverlay = (gx, gy, gw, gh) => {
     badge: box(g.viewW - g.badgeX - g.badgeW + g.badgeIconSize + 14, g.badgeY, g.badgeW - g.badgeIconSize - 20, g.badgeH),
     
     // Center text in donut (right side)
-    centerValue: box(donutNewCenterX - 60, g.centerTextY - 20, 120, 40),
-    centerLabel: box(donutNewCenterX - 60, g.centerLabelY - 10, 120, 24),
+    centerValue: box(donutNewCenterX - 85, g.donutCenterY - 26, 170, 36),
+    centerLabel: box(donutNewCenterX - 85, g.donutCenterY + 12, 170, 20),
     
     // Context panel (left side)
-    panelHeading: box(panelNewX + g.panelHeadingX, g.panelY + g.panelHeadingY, 340, 36),
+    panelHeading: box(panelNewX + g.panelHeadingX, g.panelY + g.panelHeadingY, 420, 38),
     panelSubheading: box(panelNewX + g.panelSubheadingX, g.panelY + g.panelSubheadingY, g.panelSubheadingW, g.panelSubheadingH),
   }
   
   // Metric breakdowns in panel (left side)
   CDC_SEGMENTS.forEach((segment, i) => {
     const y = g.panelY + g.metricStartY + (i * g.metricGap)
-    overlays[`metric${segment.id}Label`] = box(panelNewX + g.metricLabelX, y, 240, 20)
-    overlays[`metric${segment.id}Value`] = box(panelNewX + g.metricValueX, y, 40, 20)
-    overlays[`metric${segment.id}Desc`] = box(panelNewX + g.metricDescX, y + g.metricDescY, 360, g.metricDescH || 42)
+    overlays[`metric${segment.id}Label`] = box(panelNewX + g.metricLabelX, y, 320, 22)
+    overlays[`metric${segment.id}Value`] = box(panelNewX + g.metricValueX - 40, y, 50, 24)
+    overlays[`metric${segment.id}Desc`] = box(panelNewX + g.metricDescX, y + g.metricDescY, 410, g.metricDescH || 42)
   })
   
   return overlays
@@ -374,9 +449,10 @@ export const specToChartDonutContextContent = (spec) => {
   if (spec.kind === 'badge') return { svg: badgeSvg(), colorMode: 'fixed', fill: spec.color }
   if (spec.kind === 'badgeIcon') return { svg: badgeIconSvg(), colorMode: 'fixed', fill: spec.color }
   if (spec.kind === 'panelBg') return { svg: panelBgSvg(), colorMode: 'fixed', fill: spec.color }
+  if (spec.kind === 'centerPlate') return { svg: centerPlateSvg(spec.w), colorMode: 'fixed', fill: spec.color }
   if (spec.kind === 'metricDot') return { svg: metricDotSvg(spec.color), colorMode: 'recolor', fill: spec.color }
   if (spec.kind === 'donutSegment' && spec.segmentData) {
-    return { svg: donutSegmentSvg(spec.segmentData, spec.w, spec.h), colorMode: 'recolor', fill: spec.color }
+    return { svg: donutSegmentSvg(spec.segmentData, spec.w, spec.h), colorMode: 'fixed', fill: spec.color }
   }
   return null
 }
@@ -451,44 +527,77 @@ export const layoutChartDonutContext = (elements, schema, palette = {}, canvas =
     }
   }
 
+  // Extract metric values to compute dynamic segment angles and labels
+  const getMetricVal = (id, fallback) => {
+    const prev = bySlot.get(`METRIC_${id}_VALUE`)
+    const txt = plainTextFromContent(prev?.content)
+    if (txt && txt.trim()) {
+      const parsed = parseFloat(txt.replace(/[^\d.]/g, ''))
+      if (!isNaN(parsed) && parsed > 0) return parsed
+    }
+    return fallback
+  }
+
+  const valA = getMetricVal('A', 32)
+  const valB = getMetricVal('B', 24)
+  const valC = getMetricVal('C', 18)
+  const valD = getMetricVal('D', 26)
+  const totalVal = valA + valB + valC + valD || 100
+
+  const spanA = (valA / totalVal) * 360
+  const spanB = (valB / totalVal) * 360
+  const spanC = (valC / totalVal) * 360
+  const spanD = 360 - (spanA + spanB + spanC)
+
+  const dynamicSegments = [
+    { id: 'A', value: Math.round((valA / totalVal) * 100), startAngle: 0, endAngle: spanA, color: '#3B82F6', lightColor: '#60A5FA', darkColor: '#1D4ED8', label: 'Metric A' },
+    { id: 'B', value: Math.round((valB / totalVal) * 100), startAngle: spanA, endAngle: spanA + spanB, color: '#8B5CF6', lightColor: '#A78BFA', darkColor: '#6D28D9', label: 'Metric B' },
+    { id: 'C', value: Math.round((valC / totalVal) * 100), startAngle: spanA + spanB, endAngle: spanA + spanB + spanC, color: '#10B981', lightColor: '#34D399', darkColor: '#047857', label: 'Metric C' },
+    { id: 'D', value: Math.round((valD / totalVal) * 100), startAngle: spanA + spanB + spanC, endAngle: 360, color: '#64748B', lightColor: '#94A3B8', darkColor: '#334155', label: 'Metric D' },
+  ]
+
   const next = [
     placeText('BADGE', overlay.badge, {
-      align: 'center', verticalAlign: 'center', fontSize: 9, fontWeight: 700, color: '#2563EB', clipToSlot: true, lineHeight: 1, letterSpacing: '1px',
+      align: 'left', verticalAlign: 'center', fontSize: 10.5, fontWeight: 800, color: '#2563EB', clipToSlot: true, lineHeight: 1, letterSpacing: '0.08em', textTransform: 'uppercase',
     }, 'caption'),
     
-    // Center text in donut
+    // Center text in donut (clean single line value + uppercase letterspaced label)
     placeText('CENTER_VALUE', overlay.centerValue, {
-      align: 'center', verticalAlign: 'center', fontSize: 48, fontWeight: 900, color: headingInk(palette), clipToSlot: true, lineHeight: 1,
+      align: 'center', verticalAlign: 'center', fontSize: 34, fontWeight: 900, color: headingInk(palette), clipToSlot: false, lineHeight: 1.0, wrap: 'nowrap',
     }, 'heading'),
     placeText('CENTER_LABEL', overlay.centerLabel, {
-      align: 'center', verticalAlign: 'center', fontSize: 15, fontWeight: 500, color: '#64748B', clipToSlot: true, lineHeight: 1,
+      align: 'center', verticalAlign: 'center', fontSize: 11.5, fontWeight: 700, color: '#64748B', clipToSlot: false, lineHeight: 1.0, letterSpacing: '0.12em', textTransform: 'uppercase', wrap: 'nowrap',
     }, 'caption'),
     
     // Context panel
     placeText('PANEL_HEADING', overlay.panelHeading, {
-      align: 'left', verticalAlign: 'top', fontSize: 36, fontWeight: 800, color: headingInk(palette), clipToSlot: true, lineHeight: 1.1,
+      align: 'left', verticalAlign: 'top', fontSize: 34, fontWeight: 800, color: headingInk(palette), clipToSlot: true, lineHeight: 1.15,
     }, 'heading'),
     placeText('PANEL_SUBHEADING', overlay.panelSubheading, {
-      align: 'left', verticalAlign: 'top', fontSize: 13, fontWeight: 400, color: '#64748B', clipToSlot: true, lineHeight: 1.5, wrap: 'wrap',
+      align: 'left', verticalAlign: 'top', fontSize: 14, fontWeight: 400, color: '#64748B', clipToSlot: true, lineHeight: 1.55, wrap: 'wrap',
     }, 'body'),
   ]
   
   // Metric breakdowns in panel (4 metrics)
-  CDC_SEGMENTS.forEach((segment) => {
+  dynamicSegments.forEach((segment) => {
     next.push(
       placeText(`METRIC_${segment.id}_LABEL`, overlay[`metric${segment.id}Label`], {
-        align: 'left', verticalAlign: 'center', fontSize: 15, fontWeight: 700, color: '#0F172A', clipToSlot: true, lineHeight: 1,
+        align: 'left', verticalAlign: 'center', fontSize: 16, fontWeight: 700, color: headingInk(palette), clipToSlot: true, lineHeight: 1.2,
       }, 'caption'),
       placeText(`METRIC_${segment.id}_VALUE`, overlay[`metric${segment.id}Value`], {
-        align: 'right', verticalAlign: 'center', fontSize: 22, fontWeight: 800, color: '#0F172A', clipToSlot: true, lineHeight: 1,
+        align: 'right', verticalAlign: 'center', fontSize: 24, fontWeight: 900, color: headingInk(palette), clipToSlot: true, lineHeight: 1,
       }, 'caption'),
       placeText(`METRIC_${segment.id}_DESC`, overlay[`metric${segment.id}Desc`], {
-        align: 'left', verticalAlign: 'top', fontSize: 12, fontWeight: 400, color: '#64748B', clipToSlot: true, lineHeight: 1.4, wrap: 'wrap',
+        align: 'left', verticalAlign: 'top', fontSize: 12.5, fontWeight: 400, color: '#64748B', clipToSlot: true, lineHeight: 1.45, wrap: 'wrap',
       }, 'body')
     )
   })
 
-  const chrome = (isRightLayout ? chartDonutContextRightChromeSpecs() : chartDonutContextChromeSpecs()).map((spec) => {
+  const chromeSpecs = isRightLayout 
+    ? chartDonutContextRightChromeSpecs(dynamicSegments) 
+    : chartDonutContextChromeSpecs(dynamicSegments)
+
+  const chrome = chromeSpecs.map((spec) => {
     const prev = prevBySlot.get(spec.slotId.toUpperCase())
     const graphic = specToChartDonutContextContent(spec)
     if (!graphic) return null

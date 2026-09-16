@@ -18,6 +18,41 @@ export function isLayoutBoundImageSlot(el) {
   return el?.type === 'image' && Boolean(el.slotId)
 }
 
+/** Clean device screen placeholder with subtle gradient and center photo icon matching mockup reference. */
+export function DeviceScreenPlaceholder({ className = '', style, borderRadius = 8 }) {
+  return (
+    <div
+      className={['ppt-empty-image-placeholder', 'ppt-device-screen-placeholder', className].filter(Boolean).join(' ')}
+      style={{
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        borderRadius: borderRadius != null ? borderRadius : undefined,
+        background: 'linear-gradient(145deg, #F8FAFC 0%, #E2E8F0 52%, #CBD5E1 100%)',
+        border: '1px solid rgba(148, 163, 184, 0.45)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxSizing: 'border-box',
+        ...style,
+      }}
+      aria-hidden
+    >
+      <svg
+        width="48"
+        height="48"
+        viewBox="0 0 24 24"
+        fill="none"
+        style={{ opacity: 0.45 }}
+        aria-hidden
+      >
+        <rect x="3" y="5" width="18" height="14" rx="2" stroke="#64748B" strokeWidth="1.5" />
+        <path d="M7 15l3.5-3.5 2.5 2.5L17 10l4 5" stroke="#64748B" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    </div>
+  )
+}
+
 /** Soft landscape graphic used for empty PPT image slots. */
 export default function EmptyImagePlaceholder({ className = '', style, borderRadius }) {
   const uid = useId().replace(/:/g, '')

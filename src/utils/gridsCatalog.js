@@ -222,20 +222,26 @@ const CATALOG = {
   ], { mode: 'grid_metrics_masonry' }),
 
   grid_device_mockups_v1: layoutBase('grid_device_mockups_v1', 'grid', [
-    heading('FEATURE_1_TITLE', 'cols 1-6, rows 1-2', 'Describe this feature', {
-      typography: typo('heading', { fontSize: 20 }),
+    heading('FEATURE_1_TITLE', 'cols 1-7, rows 1-2', 'Describe this feature', {
+      typography: typo('heading', { fontSize: 24, fontWeight: 800, lineHeight: 1.15 }),
+      max_lines: 1,
     }),
-    body('FEATURE_1_BODY', 'cols 1-6, rows 2-3', P.short, 2, { typography: typo('body', { fontSize: 14 }) }),
-    deviceFrameHint('cols 1-6, rows 3-6', 'laptop', 'LAPTOP_FRAME_1', 'DEVICE_L_1'),
-    slot('DEVICE_L_1', 'cols 1-6, rows 3-6', 'image', null, { layer: 2, fit: 'cover' }),
-    heading('FEATURE_2_TITLE', 'cols 1-6, rows 6-7', 'Describe this feature', {
-      typography: typo('heading', { fontSize: 20 }),
+    body('FEATURE_1_BODY', 'cols 1-7, rows 2-3', P.short, 2, {
+      typography: typo('body', { fontSize: 14, colorRole: 'muted', lineHeight: 1.4 }),
+      max_lines: 2,
     }),
-    body('FEATURE_2_BODY', 'cols 1-6, rows 7-8', P.short, 2, { typography: typo('body', { fontSize: 14 }) }),
-    deviceFrameHint('cols 1-6, rows 8-10', 'laptop', 'LAPTOP_FRAME_2', 'DEVICE_L_2'),
-    slot('DEVICE_L_2', 'cols 1-6, rows 8-10', 'image', null, { layer: 2, fit: 'cover' }),
-    deviceFrameHint('cols 7-12, rows 1-10', 'phone', 'PHONE_FRAME', 'DEVICE_R'),
-    slot('DEVICE_R', 'cols 7-12, rows 2-9', 'image', null, { layer: 2, fit: 'cover' }),
+    deviceFrameHint('cols 1-7, rows 3-10', 'laptop', 'LAPTOP_FRAME_1', 'DEVICE_L_1'),
+    slot('DEVICE_L_1', 'cols 1-7, rows 3-10', 'image', null, { layer: 2, fit: 'cover' }),
+    heading('FEATURE_2_TITLE', 'cols 8-12, rows 1-2', 'Describe this feature', {
+      typography: typo('heading', { fontSize: 24, fontWeight: 800, lineHeight: 1.15 }),
+      max_lines: 1,
+    }),
+    body('FEATURE_2_BODY', 'cols 8-12, rows 2-3', P.short, 2, {
+      typography: typo('body', { fontSize: 14, colorRole: 'muted', lineHeight: 1.4 }),
+      max_lines: 2,
+    }),
+    deviceFrameHint('cols 8-12, rows 3-10', 'phone', 'PHONE_FRAME', 'DEVICE_R'),
+    slot('DEVICE_R', 'cols 8-12, rows 3-10', 'image', null, { layer: 2, fit: 'cover' }),
   ], { mode: 'grid_device_mockups' }),
 
   logo_wall_v1: layoutBase('logo_wall_v1', 'grid', [
@@ -296,7 +302,20 @@ Object.assign(CATALOG, {
     gridImage(4, 'cols 7-12, rows 6-10'),
   ], { mode: 'grid_four_mosaic', gridVariant: 'mosaic' }),
   grid_three_asymmetric_v1: gridsFromSource('grid_three_asymmetric_v1', 'grid_bento_three_v1', 'asymmetric'),
-  grid_device_mockups_feature_v1: gridsFromSource('grid_device_mockups_feature_v1', 'grid_device_mockups_v1', 'feature'),
+  grid_device_mockups_feature_v1: layoutBase('grid_device_mockups_feature_v1', 'grid', [
+    heading('FEATURE_1_TITLE', 'cols 1-7, rows 1-2', 'Describe this feature', {
+      typography: typo('heading', { fontSize: 32, fontWeight: 800, lineHeight: 1.2 }),
+      max_lines: 1,
+    }),
+    body('FEATURE_1_BODY', 'cols 1-7, rows 2-4', P.short, 3, {
+      typography: typo('body', { fontSize: 16, colorRole: 'muted', lineHeight: 1.55 }),
+      max_lines: 3,
+    }),
+    deviceFrameHint('cols 1-7, rows 5-10', 'laptop', 'LAPTOP_FRAME_1', 'DEVICE_L_1'),
+    slot('DEVICE_L_1', 'cols 1-7, rows 5-10', 'image', null, { layer: 2, fit: 'cover' }),
+    deviceFrameHint('cols 8-12, rows 1-10', 'phone', 'PHONE_FRAME', 'DEVICE_R'),
+    slot('DEVICE_R', 'cols 8-12, rows 1-10', 'image', null, { layer: 2, fit: 'cover' }),
+  ], { mode: 'grid_device_mockups', gridVariant: 'feature' }),
   grid_images_text_mosaic_v1: gridsFromSource('grid_images_text_mosaic_v1', 'grid_images_text_cards_v1', 'mosaic'),
   grid_insights_chart_split_v1: gridsFromSource('grid_insights_chart_split_v1', 'grid_insights_chart_v1', 'split'),
   grid_metrics_asymmetric_v1: gridsFromSource('grid_metrics_asymmetric_v1', 'grid_metrics_masonry_v1', 'asymmetric'),

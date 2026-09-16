@@ -108,6 +108,18 @@ import {
   isGridMetricsAsymmetricLayout,
   layoutGridMetricsAsymmetric,
 } from './gridMetricsAsymmetric.js'
+import {
+  isGridDeviceMockupsLayout,
+  layoutGridDeviceMockups,
+} from './gridDeviceMockupsLayout.js'
+import {
+  isChartExponentialDescLayout,
+  layoutChartExponentialDesc,
+} from './chartExponentialDescLayout.js'
+import {
+  isChartWithDescriptionLayout,
+  layoutChartWithDescription,
+} from './chartWithDescriptionLayout.js'
 
 export function finalizeChartShapes(elements, schema, palette = {}, canvas = {}) {
   const layoutId = schema?.layout_id || schema?.id || schema?.layoutId
@@ -298,6 +310,18 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
   
   if (isGridMetricsAsymmetricLayout(layoutId)) {
     return layoutGridMetricsAsymmetric(elements, schema, palette, canvas)
+  }
+  
+  if (isGridDeviceMockupsLayout(layoutId)) {
+    return layoutGridDeviceMockups(elements, schema, palette, canvas)
+  }
+  
+  if (isChartExponentialDescLayout(layoutId)) {
+    return layoutChartExponentialDesc(elements, schema, palette, canvas)
+  }
+  
+  if (isChartWithDescriptionLayout(layoutId)) {
+    return layoutChartWithDescription(elements, schema, palette, canvas)
   }
   
   return elements

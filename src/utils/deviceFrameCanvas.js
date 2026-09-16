@@ -99,6 +99,26 @@ export function fitDeviceFramePlacement(placement, kind) {
       height: Math.round(rh),
     }
   }
+  if (kind === 'laptop') {
+    aspect = 16 / 10.5
+    const mx = w * 0.015
+    const my = h * 0.015
+    const innerW = Math.max(1, w - mx * 2)
+    const innerH = Math.max(1, h - my * 2)
+    let rw = innerW
+    let rh = rw / aspect
+    if (rh > innerH) {
+      rh = innerH
+      rw = rh * aspect
+    }
+    return {
+      ...p,
+      x: Math.round(x + (w - rw) / 2),
+      y: Math.round(y + (h - rh) / 2),
+      width: Math.round(rw),
+      height: Math.round(rh),
+    }
+  }
   if (!aspect) return { ...p, x, y, width: w, height: h }
   let rw = w
   let rh = rw / aspect
@@ -123,9 +143,9 @@ function insetScreenRect(placement, kind) {
   const h = p.height ?? 300
 
   if (kind === 'laptop') {
-    const padX = w * 0.05
-    const padTop = h * 0.06
-    const padBottom = h * 0.16
+    const padX = Math.max(6, Math.round(w * 0.016))
+    const padTop = Math.max(12, Math.round(h * 0.055))
+    const padBottom = Math.max(12, Math.round(h * 0.055))
     return {
       x: Math.round(x + padX),
       y: Math.round(y + padTop),
@@ -227,9 +247,9 @@ export function buildDeviceFrameCanvasElements({
 
   const imageInset = {
     x: screen.x + nest,
-    y: screen.y + (kind === 'laptop' ? Math.max(8, Math.round(screen.height * 0.07)) : nest),
+    y: screen.y + nest,
     width: Math.max(20, screen.width - nest * 2),
-    height: Math.max(20, screen.height - (kind === 'laptop' ? Math.max(8, Math.round(screen.height * 0.07)) + nest : nest * 2)),
+    height: Math.max(20, screen.height - nest * 2),
   }
 
   const { shadow: _shadow, boxShadow: _boxShadow, ...screenImageContent } = imageContent || {}

@@ -1,20 +1,20 @@
-import { resolvePreviewMode } from './deckLayoutRegistry'
-import { resolveImagePresentation } from './deckLayoutV2Helpers'
-import { parseRegion, regionToBox, getGridDims } from './layoutPreviewUtils'
+import { resolvePreviewMode } from './deckLayoutRegistry.js'
+import { resolveImagePresentation } from './deckLayoutV2Helpers.js'
+import { parseRegion, regionToBox, getGridDims } from './layoutPreviewUtils.js'
 import {
   buildDeviceFrameCanvasElements,
   findDeviceFrameSlot,
-} from './deviceFrameCanvas'
-import { buildContentBySlotIdFromSlideContent, mergeContentBySlotId } from './contentSlotMapping'
-import { fontSizeForTextSlot, resolveTypeScaleFontSize, fitTextToSlot } from './canvasTypography'
+} from './deviceFrameCanvas.js'
+import { buildContentBySlotIdFromSlideContent, mergeContentBySlotId } from './contentSlotMapping.js'
+import { fontSizeForTextSlot, resolveTypeScaleFontSize, fitTextToSlot } from './canvasTypography.js'
 import {
   compileLayoutGeometry,
   getSlotPlacement,
   geometrySnapshot,
   validateLayoutGeometry,
-} from './compileLayoutGeometry'
-import { finalizeTimelineShapes } from './timelineShapeFinalize'
-import { finalizeChartShapes } from './chartShapeFinalize'
+} from './compileLayoutGeometry.js'
+import { finalizeTimelineShapes } from './timelineShapeFinalize.js'
+import { finalizeChartShapes } from './chartShapeFinalize.js'
 import { isPricingFourPlansLayout } from './pricingFourPlans.js'
 import { isPricingFourPlansFeaturedLayout } from './pricingFourPlansFeatured.js'
 import { isPricingFourParaLayout } from './pricingFourPara.js'
@@ -38,8 +38,8 @@ import { isTimelineMilestonesLayout } from './timelineMilestones.js'
 import { isTimelineMilestonesCardsLayout } from './timelineMilestonesCards.js'
 import { isTimelineMilestonesImageLayout } from './timelineMilestonesImage.js'
 import { isTimelineMilestonesImageRightLayout } from './timelineMilestonesImageRight.js'
-import { isCatalogPlaceholderText } from './catalogPlaceholder'
-import { normalizeChartContent } from './chartContentNormalize'
+import { isCatalogPlaceholderText } from './catalogPlaceholder.js'
+import { normalizeChartContent } from './chartContentNormalize.js'
 
 /**
  * Merge theme tokens into compile options so editor preview matches AI output.

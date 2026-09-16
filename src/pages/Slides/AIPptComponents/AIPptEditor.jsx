@@ -85,6 +85,7 @@ import {
   buildWizardThemeTokens,
 } from '../../../utils/presentationHelpers'
 import { compileDeckLayoutToElements, buildThemeCompileOptions } from '../../../utils/compileDeckLayoutToElements'
+import { finalizeChartShapes } from '../../../utils/chartShapeFinalize'
 import { resolveLayoutSchemaById } from '../../../utils/deckLayoutRegistry'
 import {
   layoutSchemaHasCanvasElements,
@@ -875,14 +876,35 @@ function SlideStage({
       : selectedElementId
         ? [selectedElementId]
         : []
-  const elements = (slide?.elements?.elements || []).filter(
+  const rawElements = (slide?.elements?.elements || []).filter(
     (el) =>
       !isSlideBackgroundElement(el, slide) &&
       shouldPaintElement(el, slide, canvas.width, canvas.height)
   )
+  const layoutKey = String(slide?.layoutId || slide?.layout_id || '').toLowerCase()
+  const isCustomChart =
+    layoutKey.includes('chart_exponential_desc') ||
+    layoutKey.includes('chart_with_description') ||
+    layoutKey.includes('chart_donut_context') ||
+    rawElements.some(
+      (e) =>
+        e.slotId === 'EXPO_CARD_BG' ||
+        e.slotId === 'CHART_CARD_BG' ||
+        e.slotId === 'LINE_CHART' ||
+        e.slotId === 'EXPO_STAT' ||
+        String(e.slotId || '').startsWith('CDC_')
+    )
+  const palette = themeVisual?.palette || null
+  const elements = isCustomChart
+    ? finalizeChartShapes(
+        rawElements,
+        { layout_id: slide?.layoutId || slide?.layout_id || (layoutKey.includes('with_description') ? 'chart_with_description_v1' : layoutKey.includes('donut_context') ? 'chart_donut_context_v1' : 'chart_exponential_desc_v1') },
+        palette,
+        canvas
+      )
+    : rawElements
   const hasElements = elements.length > 0
   const fallbackImage = hasElements ? null : getSlideImage(slide).url
-  const palette = themeVisual?.palette || null
   const slideBgStyle = resolveSlideStageBackground(
     slide,
     themeVisual?.palette?.bg || themeVisual?.background || DEFAULT_SLIDE_BG,

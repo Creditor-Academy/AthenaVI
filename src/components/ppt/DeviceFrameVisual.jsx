@@ -133,8 +133,8 @@ function PhoneFrame({ landscape = false, src, compact = false, theme, chromeOnly
     )
   }
 
-  const border = compact ? 3 : 8
-  const radius = compact ? 16 : 28
+  const border = compact ? 3 : 10
+  const radius = compact ? 16 : 34
 
   return (
     <div
@@ -147,7 +147,7 @@ function PhoneFrame({ landscape = false, src, compact = false, theme, chromeOnly
         overflow: 'hidden',
         boxShadow: compact
           ? '0 4px 14px rgba(15,23,42,0.16)'
-          : 'inset 0 0 0 1px rgba(226,232,240,0.28), 0 28px 64px rgba(15,23,42,0.18), 0 8px 18px rgba(15,23,42,0.08)',
+          : '0 16px 36px rgba(15,23,42,0.18), 0 2px 6px rgba(15,23,42,0.08)',
         boxSizing: 'border-box',
         position: 'relative',
       }}
@@ -155,11 +155,11 @@ function PhoneFrame({ landscape = false, src, compact = false, theme, chromeOnly
       <div
         style={{
           position: 'absolute',
-          top: compact ? 6 : 10,
+          top: compact ? 6 : 12,
           left: '50%',
           transform: 'translateX(-50%)',
           width: compact ? '26%' : '30%',
-          height: compact ? 4 : 7,
+          height: compact ? 4 : 8,
           borderRadius: 99,
           background: theme.camera,
           zIndex: 3,
@@ -179,10 +179,10 @@ function PhoneFrame({ landscape = false, src, compact = false, theme, chromeOnly
       <div
         style={{
           position: 'absolute',
-          bottom: compact ? 5 : 8,
+          bottom: compact ? 5 : 10,
           left: '50%',
           transform: 'translateX(-50%)',
-          width: compact ? '28%' : '30%',
+          width: compact ? '28%' : '32%',
           height: compact ? 3 : 5,
           borderRadius: 99,
           background: 'rgba(255,255,255,0.35)',
@@ -206,7 +206,7 @@ function TabletFrame({ landscape = false, src, compact = false, theme, chromeOnl
         height: '100%',
         borderRadius: radius,
         border: `${border}px solid ${theme.frameOuter}`,
-        outline: `${compact ? 1 : 2}px solid ${theme.frame}`,
+        outline: `${compact ? 1.5 : 2}px solid ${theme.frame}`,
         outlineOffset: compact ? -1 : -2,
         background: theme.bezel,
         overflow: 'hidden',
@@ -248,7 +248,7 @@ function TabletFrame({ landscape = false, src, compact = false, theme, chromeOnl
 }
 
 function LaptopFrame({ src, compact = false, theme, chromeOnly = false }) {
-  const border = compact ? 3 : 6
+  const border = compact ? 3 : 8
   return (
     <div
       style={{
@@ -265,9 +265,9 @@ function LaptopFrame({ src, compact = false, theme, chromeOnly = false }) {
           width: '100%',
           flex: 1,
           minHeight: 0,
-          borderRadius: compact ? 6 : 12,
+          borderRadius: compact ? 6 : 14,
           border: `${border}px solid ${theme.frameOuter}`,
-          outline: `${compact ? 1.5 : 3}px solid ${theme.frame}`,
+          outline: `${compact ? 1.5 : 2}px solid ${theme.frame}`,
           outlineOffset: compact ? -1 : -2,
           background: theme.bezel,
           overflow: 'hidden',
@@ -277,22 +277,55 @@ function LaptopFrame({ src, compact = false, theme, chromeOnly = false }) {
           boxSizing: 'border-box',
         }}
       >
-        <div style={{ height: compact ? 5 : 10, background: theme.bar, flexShrink: 0 }} />
+        <div
+          style={{
+            height: compact ? 5 : 14,
+            background: theme.bar,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          <div
+            style={{
+              width: compact ? 2 : 5,
+              height: compact ? 2 : 5,
+              borderRadius: '50%',
+              background: '#475569',
+            }}
+          />
+        </div>
         <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
           <ScreenPlaceholder src={src} chromeOnly={chromeOnly} />
         </div>
       </div>
       <div
         style={{
-          width: '100%',
-          height: compact ? 5 : 10,
-          marginTop: compact ? -1 : -2,
-          borderRadius: compact ? 3 : 5,
-          background: theme.base,
-          border: `${compact ? 1 : 2}px solid ${theme.frameOuter}`,
+          width: '102.5%',
+          height: compact ? 5 : 15,
+          marginTop: -1,
+          borderRadius: `0 0 ${compact ? 3 : 6}px ${compact ? 3 : 6}px`,
+          background: 'linear-gradient(180deg, #475569 0%, #334155 100%)',
+          border: `${compact ? 1 : 1.5}px solid ${theme.frameOuter}`,
+          position: 'relative',
           flexShrink: 0,
+          boxShadow: '0 4px 10px rgba(15,23,42,0.15)',
         }}
-      />
+      >
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: compact ? 10 : 36,
+            height: compact ? 1.5 : 3.5,
+            background: theme.bar,
+            borderRadius: `0 0 ${compact ? 2 : 3}px ${compact ? 2 : 3}px`,
+          }}
+        />
+      </div>
     </div>
   )
 }

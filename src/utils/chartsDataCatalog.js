@@ -30,20 +30,59 @@ const CATALOG = {
   ], { mode: 'chart_full_width' }),
 
   chart_exponential_desc_v1: layoutBase('chart_exponential_desc_v1', 'chart', [
-    heading('HEADING', 'cols 2-6, rows 2-3', 'Growth trajectory', {
-      typography: typo('heading', { fontSize: 28 }),
+    slot('EXPO_EYEBROW', 'cols 2-6, rows 2-3', 'caption', 'Performance Metrics', {
+      typography: typo('caption', { fontSize: 13, fontWeight: 800, textTransform: 'uppercase' }),
     }),
-    body('BODY', 'cols 2-6, rows 3-8', P.short, 4),
-    chartSlot('LINE_CHART', 'cols 7-11, rows 2-10', { chartType: 'area' }),
-  ], { mode: 'chart_split', chartStyle: 'line' }),
+    heading('HEADING', 'cols 2-6, rows 3-5', 'Growth trajectory', {
+      typography: typo('heading', { fontSize: 42, fontWeight: 800 }),
+    }),
+    body('BODY', 'cols 2-6, rows 5-8', P.short, 4, {
+      typography: typo('body', { fontSize: 17.5, lineHeight: 1.65 }),
+    }),
+    slot('EXPO_STAT', 'cols 2-6, rows 8-10', 'stat', '16.6x', {
+      label: 'Run-rate velocity multiplier',
+      typography: typo('stat', { fontSize: 38, fontWeight: 900 }),
+    }),
+    chartSlot('LINE_CHART', 'cols 7-11, rows 2-10', {
+      chartType: 'area',
+      curve: 'smooth',
+      values: [300, 800, 2500, 5000],
+      labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+    }),
+  ], {
+    mode: 'chart_split',
+    chartStyle: 'line',
+    chartValues: [300, 800, 2500, 5000],
+    chartLabels: ['Q1', 'Q2', 'Q3', 'Q4'],
+    chartCaption: 'Compound quarterly trajectory across core cohorts',
+  }),
 
   chart_with_description_v1: layoutBase('chart_with_description_v1', 'chart', [
-    heading('HEADING', 'cols 2-6, rows 2-3', 'Chart title', {
-      typography: typo('heading', { fontSize: 28 }),
+    slot('CHART_EYEBROW', 'cols 2-6, rows 2-3', 'caption', 'Data & Analytics', {
+      typography: typo('caption', { fontSize: 13, fontWeight: 800, textTransform: 'uppercase' }),
     }),
-    body('BODY', 'cols 2-6, rows 3-8', P.short, 4),
-    chartSlot('MAIN_CHART', 'cols 7-11, rows 2-10'),
-  ], { mode: 'chart_split' }),
+    heading('HEADING', 'cols 2-6, rows 3-5', 'Quarterly performance', {
+      typography: typo('heading', { fontSize: 42, fontWeight: 800 }),
+    }),
+    body('BODY', 'cols 2-6, rows 5-8', P.short, 4, {
+      typography: typo('body', { fontSize: 18, lineHeight: 1.65 }),
+    }),
+    slot('CHART_DESC_HIGHLIGHT', 'cols 2-6, rows 8-9', 'caption', 'Predictable quarterly growth rate', {
+      layer: 10,
+      typography: typo('caption', { fontSize: 14, fontWeight: 700 }),
+    }),
+    chartSlot('MAIN_CHART', 'cols 7-11, rows 2-10', {
+      chartType: 'column',
+      values: [42, 68, 54, 86],
+      labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+    }),
+  ], {
+    mode: 'chart_split',
+    chartStyle: 'bar',
+    chartValues: [42, 68, 54, 86],
+    chartLabels: ['Q1', 'Q2', 'Q3', 'Q4'],
+    chartCaption: 'Benchmark distribution across operational quarters',
+  }),
 
   chart_two_v1: layoutBase('chart_two_v1', 'chart', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Revenue vs Forecast', {
@@ -654,7 +693,19 @@ Object.assign(CATALOG, {
     chartSlot('MAIN_CHART', 'cols 2-8, rows 3-10'),
   ], { mode: 'chart_split' }),
   chart_three_context_cards_v1: chartsDataFromSource('chart_three_context_cards_v1', 'chart_three_context_v1', 'cards'),
-  chart_three_donut_cards_v1: chartsDataFromSource('chart_three_donut_cards_v1', 'chart_three_donut_v1', 'cards'),
+  chart_three_donut_cards_v1: layoutBase('chart_three_donut_cards_v1', 'chart', [
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Segment mix', {
+      typography: typo('heading', { fontSize: 28 }),
+    }),
+    // Card backgrounds behind each donut
+    cardShapeHint('cols 1-4, rows 2-10', 'DONUT_CARD_1_BG', 12, 'DONUT_1'),
+    cardShapeHint('cols 5-8, rows 2-10', 'DONUT_CARD_2_BG', 12, 'DONUT_2'),
+    cardShapeHint('cols 9-12, rows 2-10', 'DONUT_CARD_3_BG', 12, 'DONUT_3'),
+    // Donut charts
+    chartSlot('DONUT_1', 'cols 1-4, rows 3-10', { chartType: 'donut' }),
+    chartSlot('DONUT_2', 'cols 5-8, rows 3-10', { chartType: 'donut' }),
+    chartSlot('DONUT_3', 'cols 9-12, rows 3-10', { chartType: 'donut' }),
+  ], { mode: 'chart_donut_row', dataVariant: 'cards' }),
   chart_three_cards_v1: layoutBase('chart_three_cards_v1', 'chart', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Three metrics comparison', {
       typography: typo('heading', { fontSize: 28 }),

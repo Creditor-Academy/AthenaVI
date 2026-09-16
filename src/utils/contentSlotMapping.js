@@ -1,6 +1,6 @@
 /** Map slide content objects to per-slot text for canvas compile. */
-import { normalizeChartContent } from './chartContentNormalize'
-import { normalizeContentForLayout } from './contentContract'
+import { normalizeChartContent } from './chartContentNormalize.js'
+import { normalizeContentForLayout } from './contentContract.js'
 
 function columnAt(content, index) {
   const cols = content?.columns

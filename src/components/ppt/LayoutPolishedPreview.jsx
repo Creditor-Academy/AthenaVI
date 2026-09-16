@@ -837,30 +837,87 @@ function PolishedQuoteGridPreview({ previewHints, large, className, style, fill,
 function PolishedLineChartMini({ large, values = [300, 800, 2500, 5000], labels = ['Q1', 'Q2', 'Q3', 'Q4'] }) {
   const t = LAYOUT_POLISHED_THEME
   const max = Math.max(...values, 1)
+  const min = 0
+  const range = max - min || 1
   const w = 100
-  const h = 60
-  const pts = values.map((v, i) => {
-    const x = 8 + (i / Math.max(values.length - 1, 1)) * 84
-    const y = h - 8 - (v / max) * (h - 16)
-    return `${x},${y}`
-  }).join(' ')
+  const h = 58
+  const pts = values.map((v, i) => ({
+    x: 8 + (i / Math.max(values.length - 1, 1)) * 84,
+    y: h - 8 - ((v - min) / range) * (h - 16),
+  }))
+
+  let linePath = `M ${pts[0].x} ${pts[0].y}`
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i === 0 ? i : i - 1]
+    const p1 = pts[i]
+    const p2 = pts[i + 1]
+    const p3 = pts[i + 2 < pts.length ? i + 2 : i + 1]
+    const cp1x = p1.x + (p2.x - p0.x) / 6
+    const cp1y = p1.y + (p2.y - p0.y) / 6
+    const cp2x = p2.x - (p3.x - p1.x) / 6
+    const cp2y = p2.y - (p3.y - p1.y) / 6
+    linePath += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`
+  }
+  const areaPath = `${linePath} L ${pts[pts.length - 1].x} ${h} L ${pts[0].x} ${h} Z`
+  const gradId = `miniAreaGrad-${large ? 'lg' : 'sm'}-${Math.random().toString(36).slice(2, 6)}`
 
   return (
     <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', gap: large ? 6 : 2 }}>
       <svg viewBox={`0 0 ${w} ${h + 12}`} style={{ width: '100%', flex: 1, minHeight: 0 }}>
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={t.accent} stopOpacity="0.35" />
+            <stop offset="70%" stopColor={t.accent} stopOpacity="0.08" />
+            <stop offset="100%" stopColor={t.accent} stopOpacity="0.0" />
+          </linearGradient>
+        </defs>
         {[0.25, 0.5, 0.75].map((p, i) => (
-          <line key={i} x1="8" x2="92" y1={h - 8 - p * (h - 16)} y2={h - 8 - p * (h - 16)} stroke={t.muted} strokeWidth="0.4" strokeDasharray="2 2" opacity="0.35" />
+          <line
+            key={i}
+            x1="8"
+            x2="92"
+            y1={h - 8 - p * (h - 16)}
+            y2={h - 8 - p * (h - 16)}
+            stroke={t.muted}
+            strokeWidth="0.4"
+            strokeDasharray="2 2"
+            opacity="0.3"
+          />
         ))}
-        <polyline fill="none" stroke={t.accent} strokeWidth={large ? 2.2 : 1.2} points={pts} />
-        {values.map((v, i) => {
-          const x = 8 + (i / Math.max(values.length - 1, 1)) * 84
-          const y = h - 8 - (v / max) * (h - 16)
-          return <circle key={i} cx={x} cy={y} r={large ? 2.2 : 1.4} fill={t.accent} />
+        {/* Luminous gradient area fill */}
+        <path d={areaPath} fill={`url(#${gradId})`} />
+        {/* Smooth exponential curve */}
+        <path
+          d={linePath}
+          fill="none"
+          stroke={t.accent}
+          strokeWidth={large ? 2.6 : 1.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        {/* Data points with white center and halo on peak */}
+        {pts.map((p, i) => {
+          const isPeak = i === pts.length - 1
+          return (
+            <g key={i}>
+              {isPeak && (
+                <circle cx={p.x} cy={p.y} r={large ? 6 : 3.5} fill={t.accent} opacity="0.22" />
+              )}
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r={large ? 2.4 : 1.5}
+                fill="#ffffff"
+                stroke={t.accent}
+                strokeWidth={large ? 1.6 : 1}
+              />
+            </g>
+          )
         })}
       </svg>
       <div style={{ display: 'flex', justifyContent: 'space-between', padding: `0 ${large ? 4 : 1}%` }}>
         {labels.map((l) => (
-          <span key={l} style={{ fontSize: large ? '0.58rem' : '0.22rem', color: t.muted }}>{l}</span>
+          <span key={l} style={{ fontSize: large ? '0.58rem' : '0.22rem', color: t.muted, fontWeight: 600 }}>{l}</span>
         ))}
       </div>
     </div>
@@ -1178,10 +1235,10 @@ function PolishedChartSplitPreview({ previewHints, large, className, style, fill
   const variant = previewHints.dataVariant || 'default'
   const headingMeta = previewHints.slots?.HEADING || {}
   const { display: headingText } = formatPreviewText(
-    headingMeta.text || 'A chart is easier to understand with a meaningful title',
+    headingMeta.text || 'Growth trajectory',
     { bold: true, uppercase: false }
   )
-  const body = previewHints.bodyText || 'Sometimes a chart needs more explanation. Add some text here to give your data additional context.'
+  const body = previewHints.bodyText || previewHints.slots?.BODY?.text || 'Supporting paragraph with three to four lines of scannable copy that explains the key idea without overwhelming the slide.'
   const values = previewHints.chartValues || [300, 800, 2500, 5000]
   const labels = previewHints.chartLabels || ['Q1', 'Q2', 'Q3', 'Q4']
   const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
@@ -1192,23 +1249,103 @@ function PolishedChartSplitPreview({ previewHints, large, className, style, fill
     ? { display: 'flex', flexDirection: 'column', gap: large ? 16 : 5 }
     : {
         display: 'grid',
-        gridTemplateColumns: isSide ? '1fr 1fr' : '1fr 1fr',
+        gridTemplateColumns: isSide ? '1.15fr 0.85fr' : '0.85fr 1.15fr',
         gridTemplateAreas: isSide ? '"chart text"' : undefined,
-        gap: large ? 20 : 6,
+        gap: large ? 24 : 8,
         alignItems: 'center',
       }
 
   const textBlock = (
-    <div style={isSide ? { gridArea: 'text' } : undefined}>
-      <div style={{ fontSize: large ? '1.15rem' : '0.38rem', fontWeight: 800, color: t.text, lineHeight: 1.2, marginBottom: large ? 10 : 3 }}>{headingText}</div>
-      <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: t.muted, lineHeight: 1.4 }}>{body}</div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 2.5, ...(isSide ? { gridArea: 'text' } : {}) }}>
+      {/* Category Eyebrow */}
+      <div style={{
+        fontSize: large ? '0.66rem' : '0.24rem',
+        fontWeight: 800,
+        color: t.accent,
+        textTransform: 'uppercase',
+        letterSpacing: '0.08em',
+      }}>
+        Performance Metrics
+      </div>
+      {/* Heading */}
+      <div style={{ fontSize: large ? '1.2rem' : '0.4rem', fontWeight: 800, color: t.text, lineHeight: 1.2 }}>
+        {headingText}
+      </div>
+      {/* Body */}
+      <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: t.muted, lineHeight: 1.45 }}>
+        {body}
+      </div>
+      {/* Stat Callout Pill */}
+      <div style={{
+        marginTop: large ? 6 : 2,
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: large ? 8 : 3,
+        padding: large ? '5px 10px' : '2px 4px',
+        background: 'rgba(99, 102, 241, 0.06)',
+        border: '1px solid rgba(99, 102, 241, 0.2)',
+        borderRadius: large ? 8 : 4,
+        alignSelf: 'flex-start',
+      }}>
+        <span style={{ fontSize: large ? '0.95rem' : '0.34rem', fontWeight: 900, color: t.accent }}>16.6x</span>
+        <span style={{ fontSize: large ? '0.54rem' : '0.19rem', color: t.muted, lineHeight: 1.2 }}>Run-rate velocity</span>
+      </div>
     </div>
   )
+
   const chartBlock = (
-    <div style={{ minHeight: 0, height: isBottom ? (large ? 100 : 36) : '100%', ...(isSide ? { gridArea: 'chart' } : {}) }}>
-      <PolishedLineChartMini large={large} values={values} labels={labels} />
-      <div style={{ textAlign: 'center', fontSize: large ? '0.58rem' : '0.22rem', color: t.muted, marginTop: large ? 4 : 1 }}>
-        {previewHints.chartCaption || 'This chart has a subtitle'}
+    <div style={{
+      minHeight: 0,
+      height: isBottom ? (large ? 120 : 42) : '100%',
+      ...(isSide ? { gridArea: 'chart' } : {}),
+      background: '#ffffff',
+      borderRadius: large ? 12 : 6,
+      border: '1px solid #E2E8F0',
+      boxShadow: '0 6px 20px rgba(15, 23, 42, 0.05)',
+      padding: large ? '12px 14px' : '4px 5px',
+      display: 'flex',
+      flexDirection: 'column',
+      boxSizing: 'border-box',
+    }}>
+      {/* Card Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: large ? 8 : 2 }}>
+        <div style={{ fontSize: large ? '0.66rem' : '0.23rem', fontWeight: 700, color: t.text, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Trajectory & Scale
+        </div>
+        <div style={{
+          fontSize: large ? '0.56rem' : '0.2rem',
+          fontWeight: 800,
+          color: '#059669',
+          background: 'rgba(16, 185, 129, 0.1)',
+          padding: large ? '2px 7px' : '1px 3px',
+          borderRadius: 99,
+        }}>
+          ↑ +240%
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div style={{ flex: 1, minHeight: 0 }}>
+        {previewHints.chartStyle === 'bar' ? (
+          <PolishedBarChart large={large} values={values} />
+        ) : (
+          <PolishedLineChartMini large={large} values={values} labels={labels} />
+        )}
+      </div>
+
+      {/* Card Footer */}
+      <div style={{
+        fontSize: large ? '0.56rem' : '0.2rem',
+        color: t.muted,
+        marginTop: large ? 6 : 2,
+        paddingTop: large ? 5 : 1.5,
+        borderTop: '1px solid #F1F5F9',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        <span>{previewHints.chartCaption || 'Compound quarterly growth velocity'}</span>
+        <span style={{ fontWeight: 600, color: t.text }}>Q1 — Q4</span>
       </div>
     </div>
   )
@@ -1217,7 +1354,7 @@ function PolishedChartSplitPreview({ previewHints, large, className, style, fill
     <div className={className} style={{
       position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
       fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box',
-      padding: large ? '8% 7%' : '10% 6%', ...gridStyle, ...style,
+      padding: large ? '6% 6%' : '8% 5%', ...gridStyle, ...style,
     }}>
       {isSide ? (<>{chartBlock}{textBlock}</>) : isBottom ? (<>{textBlock}{chartBlock}</>) : (<>{textBlock}{chartBlock}</>)}
     </div>
