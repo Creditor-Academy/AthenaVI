@@ -5,7 +5,7 @@
 
 .sa-drawer {
   border-top: none;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
   background: color-mix(in srgb, var(--primary) 3%, var(--bg-card));
 }
 
@@ -15,7 +15,7 @@
   justify-content: space-between;
   gap: 16px;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 35%, transparent);
   background: color-mix(in srgb, var(--bg-card) 60%, transparent);
 }
 

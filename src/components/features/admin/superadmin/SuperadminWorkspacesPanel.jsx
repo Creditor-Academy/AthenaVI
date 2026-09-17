@@ -550,53 +550,59 @@ function SuperadminWorkspacesPanel() {
 
       {/* ── KPI Stats Cards Row (AstryAi Style) ── */}
       <div className="sa-kpi-grid">
-        <div className="sa-kpi-card">
+        <div className="sa-kpi-card sa-kpi-card--blue">
+          <div className="sa-kpi-card-grain" aria-hidden="true" />
           <div className="sa-kpi-header">
             <span className="sa-kpi-label">Workspaces</span>
-            <div className="sa-kpi-icon"><Building2 size={16} /></div>
           </div>
           <div className="sa-kpi-body">
             <span className="sa-kpi-value">{totalWsCount}</span>
-            <span className="sa-kpi-detail sa-kpi-detail--info">Active teams</span>
+            <span className="sa-kpi-detail">Active teams</span>
+          </div>
+          <div className="sa-kpi-corner-icon" aria-hidden="true">
+            <Building2 size={70} strokeWidth={1.5} />
           </div>
         </div>
 
-        <div className="sa-kpi-card">
+        <div className="sa-kpi-card sa-kpi-card--sky">
+          <div className="sa-kpi-card-grain" aria-hidden="true" />
           <div className="sa-kpi-header">
             <span className="sa-kpi-label">Team Members</span>
-            <div className="sa-kpi-icon" style={{ background: 'rgba(59, 130, 246, 0.14)', color: '#3b82f6' }}>
-              <Users size={16} />
-            </div>
           </div>
           <div className="sa-kpi-body">
             <span className="sa-kpi-value">{totalMembersCount}</span>
-            <span className="sa-kpi-detail sa-kpi-detail--info">Collaborators enrolled</span>
+            <span className="sa-kpi-detail">Collaborators enrolled</span>
+          </div>
+          <div className="sa-kpi-corner-icon" aria-hidden="true">
+            <Users size={70} strokeWidth={1.5} />
           </div>
         </div>
 
-        <div className="sa-kpi-card">
+        <div className="sa-kpi-card sa-kpi-card--emerald">
+          <div className="sa-kpi-card-grain" aria-hidden="true" />
           <div className="sa-kpi-header">
             <span className="sa-kpi-label">Total Pool Credits</span>
-            <div className="sa-kpi-icon" style={{ background: 'rgba(16, 185, 129, 0.14)', color: '#10b981' }}>
-              <Coins size={16} />
-            </div>
           </div>
           <div className="sa-kpi-body">
             <span className="sa-kpi-value">{formatAc(totalCreditsPool)}</span>
-            <span className="sa-kpi-detail sa-kpi-detail--success">Across all teams</span>
+            <span className="sa-kpi-detail">Across all teams</span>
+          </div>
+          <div className="sa-kpi-corner-icon" aria-hidden="true">
+            <Coins size={70} strokeWidth={1.5} />
           </div>
         </div>
 
-        <div className="sa-kpi-card">
+        <div className="sa-kpi-card sa-kpi-card--purple">
+          <div className="sa-kpi-card-grain" aria-hidden="true" />
           <div className="sa-kpi-header">
             <span className="sa-kpi-label">Funded Teams</span>
-            <div className="sa-kpi-icon" style={{ background: 'rgba(147, 51, 234, 0.14)', color: '#a855f7' }}>
-              <Sparkles size={16} />
-            </div>
           </div>
           <div className="sa-kpi-body">
-            <span className="sa-kpi-value">{fundedWsCount} <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text-muted)' }}>/ {workspaces.length}</span></span>
-            <span className="sa-kpi-detail sa-kpi-detail--info">Active credit pools</span>
+            <span className="sa-kpi-value">{fundedWsCount} <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'rgba(255, 255, 255, 0.75)' }}>/ {workspaces.length}</span></span>
+            <span className="sa-kpi-detail">Active credit pools</span>
+          </div>
+          <div className="sa-kpi-corner-icon" aria-hidden="true">
+            <Sparkles size={70} strokeWidth={1.5} />
           </div>
         </div>
       </div>

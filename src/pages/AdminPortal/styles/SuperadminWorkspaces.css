@@ -13,15 +13,15 @@
 .sa-metric-card {
   padding: 18px 20px;
   border-radius: 14px;
-  border: 1px solid var(--border-color);
+  border: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
   background: linear-gradient(135deg, var(--bg-card) 0%, color-mix(in srgb, var(--primary) 6%, var(--bg-card)) 100%);
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
 }
 
 .sa-metric-card:hover {
-  border-color: color-mix(in srgb, var(--primary) 40%, var(--border-color));
-  box-shadow: 0 8px 24px rgba(var(--primary-rgb), 0.14);
+  border-color: color-mix(in srgb, var(--primary) 28%, transparent);
+  box-shadow: 0 8px 24px rgba(var(--primary-rgb), 0.12);
   transform: translateY(-2px);
 }
 
@@ -58,13 +58,13 @@
 .sa-meta-item {
   padding: 12px 14px;
   border-radius: 12px;
-  border: 1px solid var(--border-color);
+  border: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
   background: linear-gradient(135deg, color-mix(in srgb, var(--bg-card) 95%, transparent) 0%, color-mix(in srgb, var(--primary) 5%, var(--bg-card)) 100%);
   transition: all 0.18s ease;
 }
 
 .sa-meta-item:hover {
-  border-color: color-mix(in srgb, var(--primary) 30%, var(--border-color));
+  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
   transform: translateY(-1px);
 }
 

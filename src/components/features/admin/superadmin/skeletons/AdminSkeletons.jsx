@@ -20,17 +20,19 @@ export function SaSkeletonBlock({ width = '100%', height = 16, borderRadius = 8,
 
 /** 4-Column KPI Stats Grid Skeleton (AstryAi style) */
 export function AdminKpiGridSkeleton({ count = 4 }) {
+  const themeClasses = ['sa-kpi-card--blue', 'sa-kpi-card--amber', 'sa-kpi-card--emerald', 'sa-kpi-card--purple']
+
   return (
     <div className="sa-kpi-grid" aria-hidden="true">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="sa-kpi-card" style={{ pointerEvents: 'none' }}>
+        <div key={i} className={`sa-kpi-card ${themeClasses[i % themeClasses.length]}`} style={{ pointerEvents: 'none' }}>
           <div className="sa-kpi-header">
             <SaSkeletonBlock width="45%" height={12} borderRadius={4} />
-            <SaSkeletonBlock width={28} height={28} borderRadius={8} />
+            <SaSkeletonBlock width={34} height={34} borderRadius={10} />
           </div>
           <div className="sa-kpi-body" style={{ marginTop: 8 }}>
             <SaSkeletonBlock width="65%" height={26} borderRadius={6} />
-            <SaSkeletonBlock width="38%" height={11} borderRadius={4} style={{ marginTop: 6 }} />
+            <SaSkeletonBlock width="38%" height={11} borderRadius={999} style={{ marginTop: 6 }} />
           </div>
         </div>
       ))}

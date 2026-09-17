@@ -390,53 +390,59 @@ function SuperadminEarlyAccessPanel() {
 
       {/* ── KPI Stats Cards Row (AstryAi Style) ── */}
       <div className="sa-kpi-grid">
-        <div className="sa-kpi-card">
+        <div className="sa-kpi-card sa-kpi-card--blue">
+          <div className="sa-kpi-card-grain" aria-hidden="true" />
           <div className="sa-kpi-header">
             <span className="sa-kpi-label">Submissions</span>
-            <div className="sa-kpi-icon"><UserCheck size={16} /></div>
           </div>
           <div className="sa-kpi-body">
             <span className="sa-kpi-value">{totalSubmissionsCount}</span>
-            <span className="sa-kpi-detail sa-kpi-detail--info">Total applicants</span>
+            <span className="sa-kpi-detail">Total applicants</span>
+          </div>
+          <div className="sa-kpi-corner-icon" aria-hidden="true">
+            <UserCheck size={70} strokeWidth={1.5} />
           </div>
         </div>
 
-        <div className="sa-kpi-card">
+        <div className="sa-kpi-card sa-kpi-card--amber">
+          <div className="sa-kpi-card-grain" aria-hidden="true" />
           <div className="sa-kpi-header">
             <span className="sa-kpi-label">Pending Review</span>
-            <div className="sa-kpi-icon" style={{ background: 'rgba(245, 158, 11, 0.14)', color: '#f59e0b' }}>
-              <Clock size={16} />
-            </div>
           </div>
           <div className="sa-kpi-body">
             <span className="sa-kpi-value">{pendingReviewCount}</span>
-            <span className="sa-kpi-detail sa-kpi-detail--warning">New applications</span>
+            <span className="sa-kpi-detail">New applications</span>
+          </div>
+          <div className="sa-kpi-corner-icon" aria-hidden="true">
+            <Clock size={70} strokeWidth={1.5} />
           </div>
         </div>
 
-        <div className="sa-kpi-card">
+        <div className="sa-kpi-card sa-kpi-card--sky">
+          <div className="sa-kpi-card-grain" aria-hidden="true" />
           <div className="sa-kpi-header">
             <span className="sa-kpi-label">In Discussion</span>
-            <div className="sa-kpi-icon" style={{ background: 'rgba(56, 189, 248, 0.14)', color: '#0284c7' }}>
-              <MessageSquare size={16} />
-            </div>
           </div>
           <div className="sa-kpi-body">
             <span className="sa-kpi-value">{inPipelineCount}</span>
-            <span className="sa-kpi-detail sa-kpi-detail--info">Under evaluation</span>
+            <span className="sa-kpi-detail">Under evaluation</span>
+          </div>
+          <div className="sa-kpi-corner-icon" aria-hidden="true">
+            <MessageSquare size={70} strokeWidth={1.5} />
           </div>
         </div>
 
-        <div className="sa-kpi-card">
+        <div className="sa-kpi-card sa-kpi-card--emerald">
+          <div className="sa-kpi-card-grain" aria-hidden="true" />
           <div className="sa-kpi-header">
             <span className="sa-kpi-label">Approved Access</span>
-            <div className="sa-kpi-icon" style={{ background: 'rgba(16, 185, 129, 0.14)', color: '#10b981' }}>
-              <CheckCircle size={16} />
-            </div>
           </div>
           <div className="sa-kpi-body">
             <span className="sa-kpi-value">{approvedAccessCount}</span>
-            <span className="sa-kpi-detail sa-kpi-detail--success">Access granted</span>
+            <span className="sa-kpi-detail">Access granted</span>
+          </div>
+          <div className="sa-kpi-corner-icon" aria-hidden="true">
+            <CheckCircle size={70} strokeWidth={1.5} />
           </div>
         </div>
       </div>

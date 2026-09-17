@@ -189,16 +189,15 @@
   overflow: hidden;
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--bg-card) 62%, transparent) 0%,
-    color-mix(in srgb, var(--bg-card) 88%, transparent) 100%
+    color-mix(in srgb, var(--bg-card) 90%, transparent) 0%,
+    var(--bg-card) 100%
   );
   backdrop-filter: blur(20px) saturate(165%);
   -webkit-backdrop-filter: blur(20px) saturate(165%);
-  border: 1px solid color-mix(in srgb, white 32%, var(--border-color));
+  border: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 45%, transparent),
-    0 6px 22px -10px rgba(var(--primary-rgb), 0.22),
-    0 2px 8px rgba(15, 23, 42, 0.04);
+    0 4px 20px -2px rgba(0, 0, 0, 0.05),
+    0 1px 3px rgba(0, 0, 0, 0.03);
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
 }
 
@@ -212,7 +211,7 @@
   width: 200px;
   height: 200px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(var(--primary-rgb), 0.18) 0%, transparent 72%);
+  background: radial-gradient(circle, rgba(var(--primary-rgb), 0.12) 0%, transparent 72%);
   pointer-events: none;
 }
 
@@ -220,11 +219,10 @@
 .admin-dashboard-container .admin-card-section:hover {
   transform: translateY(-3px);
   z-index: 2;
-  border-color: color-mix(in srgb, var(--primary) 40%, var(--border-color));
+  border-color: color-mix(in srgb, var(--primary) 28%, transparent);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, white 55%, transparent),
-    0 10px 28px -10px rgba(var(--primary-rgb), 0.3),
-    0 4px 14px rgba(15, 23, 42, 0.06);
+    0 10px 28px -6px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
 /* Icon bubbles get a livelier gradient + glow to match the frosted cards */
@@ -794,13 +792,84 @@
   margin-top: 2px;
 }
 
-/* ── Radial fan gauge ── */
+/* ── Usage Growth Balloon Card (Accent Brand Color Themed) ── */
+.admin-dashboard-container .dash-gauge-card,
 .dash-gauge-card {
+  position: relative;
+  isolation: isolate;
   align-items: center;
+  border-radius: 20px;
+  background: linear-gradient(
+    140deg,
+    var(--primary) 0%,
+    color-mix(in srgb, var(--primary) 82%, #1e1b4b) 50%,
+    color-mix(in srgb, var(--primary) 68%, #0f172a) 100%
+  ) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+  transform: translateY(-4px);
+  box-shadow:
+    0 16px 36px -6px rgba(var(--primary-rgb), 0.44),
+    0 6px 16px -2px rgba(var(--primary-rgb), 0.24),
+    inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease !important;
+}
+
+.admin-dashboard-container .dash-gauge-card::before,
+.dash-gauge-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0.22;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
+  z-index: 0;
+}
+
+.admin-dashboard-container .dash-gauge-card:hover,
+.dash-gauge-card:hover {
+  transform: translateY(-8px) scale(1.015) !important;
+  border-color: rgba(255, 255, 255, 0.38) !important;
+  box-shadow:
+    0 24px 48px -6px rgba(var(--primary-rgb), 0.55),
+    0 10px 22px -2px rgba(var(--primary-rgb), 0.32),
+    inset 0 1px 2px rgba(255, 255, 255, 0.48) !important;
+}
+
+.dash-gauge-card .dash-card-header {
+  width: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+.dash-gauge-card .dash-card-header h2 {
+  color: #ffffff !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.dash-gauge-card .dash-card-header h2 svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.dash-gauge-card .dash-loading-text,
+.dash-gauge-card .dash-empty-inline {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.dash-gauge-card .dash-empty-inline svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
 }
 
 .dash-gauge {
   position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -820,13 +889,15 @@
   margin-left: -2px;
   margin-top: -5px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--text-muted) 22%, var(--border-color));
+  background: rgba(255, 255, 255, 0.25) !important;
   transform-origin: center;
 }
 
 .dash-gauge-tick--filled {
   height: 12px;
   margin-top: -6px;
+  background: #ffffff !important;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.75);
 }
 
 .dash-gauge-center {
@@ -841,19 +912,23 @@
 }
 
 .dash-gauge-value {
-  font-size: 1.625rem;
-  font-weight: 750;
-  color: var(--text-main);
-  letter-spacing: -0.02em;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #ffffff !important;
+  letter-spacing: -0.03em;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .dash-gauge-sublabel {
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.88) !important;
   font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .dash-gauge-footer {
+  position: relative;
+  z-index: 1;
   display: flex;
   gap: 28px;
   margin-top: 18px;
@@ -869,15 +944,17 @@
 }
 
 .dash-gauge-footer-value {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-main);
+  font-size: 1.0625rem;
+  font-weight: 750;
+  color: #ffffff !important;
   letter-spacing: -0.01em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .dash-gauge-footer-label {
-  font-size: 0.6875rem;
-  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.82) !important;
 }
 
 /* ── Ranked horizontal bar list (categorical identity per row) ── */

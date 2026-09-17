@@ -35,10 +35,10 @@ function ActionRow({ tx }) {
     <div className="sa-tx-row">
       <div className="sa-tx-body">
         <div className="sa-tx-top">
-          <span className="sa-tx-type" style={{ color: isGrant ? 'var(--success-green)' : 'var(--delete-red)' }}>
+          <span className="sa-tx-ref" style={{ color: 'var(--text-main)', fontWeight: 600 }}>{target}</span>
+          <span className="sa-tx-type" style={{ color: isGrant ? 'var(--success-green)' : 'var(--delete-red)', fontSize: '0.75rem', fontWeight: 700 }}>
             {isGrant ? 'Grant' : 'Revoke'}
           </span>
-          <span className="sa-tx-ref">{target}</span>
         </div>
         <div className="sa-tx-bottom">
           <span className="sa-tx-date">{formatDate(tx.createdAt)}</span>

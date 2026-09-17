@@ -761,53 +761,59 @@ function SuperadminUsersPanel() {
 
       {/* ── KPI Stats Cards Row (AstryAi Style) ── */}
       <div className="sa-kpi-grid">
-        <div className="sa-kpi-card">
+        <div className="sa-kpi-card sa-kpi-card--blue">
+          <div className="sa-kpi-card-grain" aria-hidden="true" />
           <div className="sa-kpi-header">
             <span className="sa-kpi-label">Total Users</span>
-            <div className="sa-kpi-icon"><Users size={16} /></div>
           </div>
           <div className="sa-kpi-body">
             <span className="sa-kpi-value">{totalUserCount}</span>
-            <span className="sa-kpi-detail sa-kpi-detail--info">Registered accounts</span>
+            <span className="sa-kpi-detail">Registered accounts</span>
+          </div>
+          <div className="sa-kpi-corner-icon" aria-hidden="true">
+            <Users size={70} strokeWidth={1.5} />
           </div>
         </div>
 
-        <div className="sa-kpi-card">
+        <div className="sa-kpi-card sa-kpi-card--amber">
+          <div className="sa-kpi-card-grain" aria-hidden="true" />
           <div className="sa-kpi-header">
             <span className="sa-kpi-label">Platform Admins</span>
-            <div className="sa-kpi-icon" style={{ background: 'rgba(245, 158, 11, 0.14)', color: '#f59e0b' }}>
-              <Shield size={16} />
-            </div>
           </div>
           <div className="sa-kpi-body">
             <span className="sa-kpi-value">{adminCount}</span>
-            <span className="sa-kpi-detail sa-kpi-detail--warning">Superadmin privileges</span>
+            <span className="sa-kpi-detail">Superadmin privileges</span>
+          </div>
+          <div className="sa-kpi-corner-icon" aria-hidden="true">
+            <Shield size={70} strokeWidth={1.5} />
           </div>
         </div>
 
-        <div className="sa-kpi-card">
+        <div className="sa-kpi-card sa-kpi-card--emerald">
+          <div className="sa-kpi-card-grain" aria-hidden="true" />
           <div className="sa-kpi-header">
             <span className="sa-kpi-label">Total User Balance</span>
-            <div className="sa-kpi-icon" style={{ background: 'rgba(16, 185, 129, 0.14)', color: '#10b981' }}>
-              <Coins size={16} />
-            </div>
           </div>
           <div className="sa-kpi-body">
             <span className="sa-kpi-value">{formatAc(totalCreditsLoaded)}</span>
-            <span className="sa-kpi-detail sa-kpi-detail--success">Allocated credits</span>
+            <span className="sa-kpi-detail">Allocated credits</span>
+          </div>
+          <div className="sa-kpi-corner-icon" aria-hidden="true">
+            <Coins size={70} strokeWidth={1.5} />
           </div>
         </div>
 
-        <div className="sa-kpi-card">
+        <div className="sa-kpi-card sa-kpi-card--purple">
+          <div className="sa-kpi-card-grain" aria-hidden="true" />
           <div className="sa-kpi-header">
             <span className="sa-kpi-label">Funded Wallets</span>
-            <div className="sa-kpi-icon" style={{ background: 'rgba(147, 51, 234, 0.14)', color: '#a855f7' }}>
-              <Sparkles size={16} />
-            </div>
           </div>
           <div className="sa-kpi-body">
-            <span className="sa-kpi-value">{fundedUsersCount} <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text-muted)' }}>/ {users.length}</span></span>
-            <span className="sa-kpi-detail sa-kpi-detail--info">Positive AC balance</span>
+            <span className="sa-kpi-value">{fundedUsersCount} <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'rgba(255, 255, 255, 0.75)' }}>/ {users.length}</span></span>
+            <span className="sa-kpi-detail">Positive AC balance</span>
+          </div>
+          <div className="sa-kpi-corner-icon" aria-hidden="true">
+            <Sparkles size={70} strokeWidth={1.5} />
           </div>
         </div>
       </div>

@@ -261,53 +261,59 @@ function SuperadminStorageRequestsPanel() {
 
       {/* ── KPI Stats Cards Row (AstryAi Style) ── */}
       <div className="sa-kpi-grid">
-        <div className="sa-kpi-card">
+        <div className="sa-kpi-card sa-kpi-card--blue">
+          <div className="sa-kpi-card-grain" aria-hidden="true" />
           <div className="sa-kpi-header">
             <span className="sa-kpi-label">Total Requests</span>
-            <div className="sa-kpi-icon"><Database size={16} /></div>
           </div>
           <div className="sa-kpi-body">
             <span className="sa-kpi-value">{totalRequestsCount}</span>
-            <span className="sa-kpi-detail sa-kpi-detail--info">All submissions</span>
+            <span className="sa-kpi-detail">All submissions</span>
+          </div>
+          <div className="sa-kpi-corner-icon" aria-hidden="true">
+            <Database size={70} strokeWidth={1.5} />
           </div>
         </div>
 
-        <div className="sa-kpi-card">
+        <div className="sa-kpi-card sa-kpi-card--amber">
+          <div className="sa-kpi-card-grain" aria-hidden="true" />
           <div className="sa-kpi-header">
             <span className="sa-kpi-label">Pending Review</span>
-            <div className="sa-kpi-icon" style={{ background: 'rgba(245, 158, 11, 0.14)', color: '#f59e0b' }}>
-              <Clock size={16} />
-            </div>
           </div>
           <div className="sa-kpi-body">
             <span className="sa-kpi-value">{pendingRequestsCount}</span>
-            <span className="sa-kpi-detail sa-kpi-detail--warning">Awaiting approval</span>
+            <span className="sa-kpi-detail">Awaiting approval</span>
+          </div>
+          <div className="sa-kpi-corner-icon" aria-hidden="true">
+            <Clock size={70} strokeWidth={1.5} />
           </div>
         </div>
 
-        <div className="sa-kpi-card">
+        <div className="sa-kpi-card sa-kpi-card--emerald">
+          <div className="sa-kpi-card-grain" aria-hidden="true" />
           <div className="sa-kpi-header">
             <span className="sa-kpi-label">Approved Upgrades</span>
-            <div className="sa-kpi-icon" style={{ background: 'rgba(16, 185, 129, 0.14)', color: '#10b981' }}>
-              <CheckCircle2 size={16} />
-            </div>
           </div>
           <div className="sa-kpi-body">
             <span className="sa-kpi-value">{approvedRequestsCount}</span>
-            <span className="sa-kpi-detail sa-kpi-detail--success">Storage expanded</span>
+            <span className="sa-kpi-detail">Storage expanded</span>
+          </div>
+          <div className="sa-kpi-corner-icon" aria-hidden="true">
+            <CheckCircle2 size={70} strokeWidth={1.5} />
           </div>
         </div>
 
-        <div className="sa-kpi-card">
+        <div className="sa-kpi-card sa-kpi-card--purple">
+          <div className="sa-kpi-card-grain" aria-hidden="true" />
           <div className="sa-kpi-header">
             <span className="sa-kpi-label">Volume Requested</span>
-            <div className="sa-kpi-icon" style={{ background: 'rgba(147, 51, 234, 0.14)', color: '#a855f7' }}>
-              <Sparkles size={16} />
-            </div>
           </div>
           <div className="sa-kpi-body">
             <span className="sa-kpi-value">{formatBytes(totalBytesRequested)}</span>
-            <span className="sa-kpi-detail sa-kpi-detail--info">Total requested storage</span>
+            <span className="sa-kpi-detail">Total requested storage</span>
+          </div>
+          <div className="sa-kpi-corner-icon" aria-hidden="true">
+            <HardDrive size={70} strokeWidth={1.5} />
           </div>
         </div>
       </div>
