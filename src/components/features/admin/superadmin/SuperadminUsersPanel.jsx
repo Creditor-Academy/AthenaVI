@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Search, ChevronLeft, ChevronRight, X, Shield } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, X, Shield, Users, Coins, Sparkles, UserCheck, ArrowUpRight, Filter } from 'lucide-react'
 import superadminService, { SuperadminApiError } from '../../../../services/superadminService'
 import { formatAc, formatDate, formatShortDate, txTypeLabel, formatBytes, storageTxTypeLabel } from './superadminUtils'
 import { useAuth } from '../../../../contexts/AuthContext'
@@ -739,138 +739,270 @@ function SuperadminUsersPanel() {
     setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, isPlatformSuperadmin } : u)))
   }
 
+  // Derived metrics for KPI cards
+  const totalUserCount = pagination.total ?? users.length
+  const adminCount = users.filter(u => u.isPlatformSuperadmin).length
+  const standardCount = users.filter(u => !u.isPlatformSuperadmin).length
+  const totalCreditsLoaded = users.reduce((acc, u) => acc + (Number(u.credits) || 0), 0)
+  const fundedUsersCount = users.filter(u => Number(u.credits) > 0).length
+
   return (
-    <div className="sa-panel">
+    <div className="sa-panel sa-panel--flow">
+      {/* ── Page Header ── */}
       <div className="sa-panel-header">
-        <h2 className="sa-panel-title">Users &amp; credits</h2>
+        <div>
+          <h2 className="sa-panel-title">Users &amp; Credit Management</h2>
+          <p className="sa-panel-desc">Manage platform user accounts, grant and revoke personal credits, and assign platform administrator privileges.</p>
+        </div>
       </div>
 
       {listError && <div className="sa-alert sa-alert--error">{listError}</div>}
 
-      <div className="sa-card sa-card--flush" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+      {/* ── KPI Stats Cards Row (AstryAi Style) ── */}
+      <div className="sa-kpi-grid">
+        <div className="sa-kpi-card">
+          <div className="sa-kpi-header">
+            <span className="sa-kpi-label">Total Users</span>
+            <div className="sa-kpi-icon"><Users size={16} /></div>
+          </div>
+          <div className="sa-kpi-body">
+            <span className="sa-kpi-value">{totalUserCount}</span>
+            <span className="sa-kpi-detail sa-kpi-detail--info">Registered accounts</span>
+          </div>
+        </div>
 
-        {/* Header + search + filter */}
-        <div className="sa-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0, flexWrap: 'wrap' }}>
-          <h3>All users <span className="sa-card-header-count">{pagination.total ?? 0}</span></h3>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <select 
-              className="sa-select" 
-              value={adminFilter}
-              onChange={e => { setAdminFilter(e.target.value); setPage(1) }}
-              style={{ height: 32, fontSize: '0.8rem', padding: '0 10px' }}
-              aria-label="Filter by admin status"
+        <div className="sa-kpi-card">
+          <div className="sa-kpi-header">
+            <span className="sa-kpi-label">Platform Admins</span>
+            <div className="sa-kpi-icon" style={{ background: 'rgba(245, 158, 11, 0.14)', color: '#f59e0b' }}>
+              <Shield size={16} />
+            </div>
+          </div>
+          <div className="sa-kpi-body">
+            <span className="sa-kpi-value">{adminCount}</span>
+            <span className="sa-kpi-detail sa-kpi-detail--warning">Superadmin privileges</span>
+          </div>
+        </div>
+
+        <div className="sa-kpi-card">
+          <div className="sa-kpi-header">
+            <span className="sa-kpi-label">Total User Balance</span>
+            <div className="sa-kpi-icon" style={{ background: 'rgba(16, 185, 129, 0.14)', color: '#10b981' }}>
+              <Coins size={16} />
+            </div>
+          </div>
+          <div className="sa-kpi-body">
+            <span className="sa-kpi-value">{formatAc(totalCreditsLoaded)}</span>
+            <span className="sa-kpi-detail sa-kpi-detail--success">Allocated credits</span>
+          </div>
+        </div>
+
+        <div className="sa-kpi-card">
+          <div className="sa-kpi-header">
+            <span className="sa-kpi-label">Funded Wallets</span>
+            <div className="sa-kpi-icon" style={{ background: 'rgba(147, 51, 234, 0.14)', color: '#a855f7' }}>
+              <Sparkles size={16} />
+            </div>
+          </div>
+          <div className="sa-kpi-body">
+            <span className="sa-kpi-value">{fundedUsersCount} <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text-muted)' }}>/ {users.length}</span></span>
+            <span className="sa-kpi-detail sa-kpi-detail--info">Positive AC balance</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main Data Table Card Container ── */}
+      <div className="sa-table-card">
+        {/* Toolbar with Filter Tabs and Search */}
+        <div className="sa-table-toolbar">
+          <div className="sa-filter-tabs" role="tablist" aria-label="Filter users by role">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={adminFilter === 'all'}
+              className={`sa-filter-tab ${adminFilter === 'all' ? 'active' : ''}`}
+              onClick={() => { setAdminFilter('all'); setPage(1) }}
             >
-              <option value="all">All users</option>
-              <option value="admin">Admins only</option>
-              <option value="non-admin">Non-admins</option>
-            </select>
-            <div className="sa-list-search" style={{ maxWidth: 240, flex: '0 0 auto' }}>
-              <Search className="sa-search-field-icon" size={13} strokeWidth={2} aria-hidden />
-              <input className="sa-input sa-input--list-search" type="search" placeholder="Search by email…"
-                value={searchInput} onChange={e => setSearchInput(e.target.value)} aria-label="Search users" />
+              All Users
+              <span className="sa-filter-count">{totalUserCount}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={adminFilter === 'admin'}
+              className={`sa-filter-tab ${adminFilter === 'admin' ? 'active' : ''}`}
+              onClick={() => { setAdminFilter('admin'); setPage(1) }}
+            >
+              Admins
+              <span className="sa-filter-count">{adminCount}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={adminFilter === 'non-admin'}
+              className={`sa-filter-tab ${adminFilter === 'non-admin' ? 'active' : ''}`}
+              onClick={() => { setAdminFilter('non-admin'); setPage(1) }}
+            >
+              Standard Users
+              <span className="sa-filter-count">{standardCount}</span>
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: '1 1 auto', justifyContent: 'flex-end' }}>
+            <div className="sa-search-field" style={{ width: 'min(280px, 100%)' }}>
+              <Search className="sa-search-field-icon" size={14} aria-hidden />
+              <input
+                className="sa-input"
+                type="search"
+                placeholder="Search by name or email…"
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
+                aria-label="Search users"
+              />
             </div>
           </div>
         </div>
 
-        {/* Column headings */}
-        <div style={{
-          display: 'grid', gridTemplateColumns: '1fr 1.4fr 130px',
-          gap: 16, padding: '8px 20px',
-          borderBottom: '1px solid var(--border-color)',
-          fontSize: '0.7rem', fontWeight: 700,
-          color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em',
-          flexShrink: 0,
-        }}>
-          <span>Name</span><span>Email</span><span style={{ textAlign: 'right' }}>Balance</span>
+        {/* Table Content (Scrollable data rows, sticky headers) */}
+        <div className="sa-table-scroll sa-scroll">
+          <table className="sa-table-modern">
+            <thead>
+              <tr>
+                <th style={{ width: '35%' }}>User</th>
+                <th style={{ width: '30%' }}>Email</th>
+                <th style={{ width: '15%' }}>Role</th>
+                <th style={{ width: '12%', textAlign: 'right' }}>Credits</th>
+                <th style={{ width: '8%', textAlign: 'right' }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {listLoading ? (
+                <tr>
+                  <td colSpan={5} style={{ padding: 0 }}>
+                    <TableSkeleton />
+                  </td>
+                </tr>
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan={5}>
+                    <div className="sa-empty">No users found matching your search.</div>
+                  </td>
+                </tr>
+              ) : (
+                users.map(user => {
+                  const isSelected = selectedId === user.id && drawerOpen
+                  const firstLetter = (user.name || user.email || '?')[0].toUpperCase()
+
+                  return (
+                    <tr
+                      key={user.id}
+                      className={isSelected ? 'selected' : ''}
+                      onClick={() => openDrawer(user.id)}
+                    >
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div style={{
+                            width: 38,
+                            height: 38,
+                            borderRadius: '50%',
+                            flexShrink: 0,
+                            background: isSelected
+                              ? 'linear-gradient(135deg, var(--primary) 0%, #2563eb 100%)'
+                              : 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 18%, var(--bg-card)) 0%, color-mix(in srgb, var(--primary) 28%, var(--bg-card)) 100%)',
+                            color: isSelected ? '#fff' : 'var(--primary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.8125rem',
+                            fontWeight: 700,
+                            border: isSelected
+                              ? '2px solid var(--primary)'
+                              : '1px solid color-mix(in srgb, var(--primary) 30%, var(--border-color))',
+                            boxShadow: isSelected
+                              ? '0 4px 14px rgba(var(--primary-rgb), 0.3)'
+                              : 'none',
+                          }}>
+                            {firstLetter}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 650, fontSize: '0.875rem', color: 'var(--text-main)' }}>
+                              {user.name || 'Anonymous User'}
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                              ID: {user.id.slice(0, 8)}…
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                          {user.email}
+                        </span>
+                      </td>
+                      <td>
+                        {user.isPlatformSuperadmin ? (
+                          <span className="sa-badge sa-badge--admin">Admin</span>
+                        ) : (
+                          <span className="sa-badge sa-badge--type">Member</span>
+                        )}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <span style={{
+                          fontWeight: 700,
+                          fontSize: '0.875rem',
+                          color: 'var(--primary)',
+                          fontVariantNumeric: 'tabular-nums',
+                        }}>
+                          {formatAc(user.credits)}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <button
+                          type="button"
+                          className="sa-btn sa-btn--sm sa-btn--ghost"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openDrawer(user.id)
+                          }}
+                          style={{ padding: '0 8px' }}
+                          title="Inspect user"
+                        >
+                          Manage
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
         </div>
 
-        {/* Scrollable rows */}
-        <div className="sa-scroll" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-          {listLoading ? <TableSkeleton /> : users.length === 0 ? (
-            <div className="sa-empty" style={{ padding: '40px 20px' }}>No users found.</div>
-          ) : users.map(user => (
-            <button key={user.id} type="button"
-              onClick={() => openDrawer(user.id)}
-              style={{
-                width: '100%',
-                display: 'block',
-                padding: 0,
-                background: selectedId === user.id && drawerOpen 
-                  ? 'linear-gradient(90deg, color-mix(in srgb, var(--primary) 12%, transparent) 0%, transparent 100%)' 
-                  : 'transparent',
-                border: 'none', outline: 'none',
-                borderBottom: '1px solid var(--border-color)',
-                borderLeft: selectedId === user.id && drawerOpen ? '3px solid var(--primary,#3b82f6)' : '3px solid transparent',
-                cursor: 'pointer', textAlign: 'left',
-                color: 'var(--text-main)',
-                transition: 'all 0.2s ease',
-                userSelect: 'none',
-              }}
-              onMouseEnter={e => { 
-                if (selectedId !== user.id || !drawerOpen) {
-                  e.currentTarget.style.background = 'linear-gradient(90deg, color-mix(in srgb, var(--primary) 6%, transparent) 0%, transparent 100%)'
-                  e.currentTarget.style.borderLeft = '3px solid color-mix(in srgb, var(--primary) 50%, var(--border-color))'
-                }
-              }}
-              onMouseLeave={e => { 
-                if (selectedId !== user.id || !drawerOpen) {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.borderLeft = '3px solid transparent'
-                }
-              }}
-            >
-              <div style={{
-                display: 'grid', gridTemplateColumns: '1fr 1.4fr 130px',
-                gap: 16, padding: '14px 20px',
-                alignItems: 'center',
-                pointerEvents: 'none',
-              }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{
-                  width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                  background: selectedId === user.id && drawerOpen 
-                    ? 'linear-gradient(135deg, var(--primary,#3b82f6) 0%, color-mix(in srgb, var(--primary) 85%, #2563eb) 100%)' 
-                    : 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, var(--bg-card)) 0%, color-mix(in srgb, var(--primary) 25%, var(--bg-card)) 100%)',
-                  color: selectedId === user.id && drawerOpen ? '#fff' : 'var(--primary,#3b82f6)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '0.75rem', fontWeight: 700,
-                  border: selectedId === user.id && drawerOpen ? '2px solid var(--primary,#3b82f6)' : '1px solid color-mix(in srgb, var(--primary) 30%, var(--border-color))',
-                  boxShadow: selectedId === user.id && drawerOpen ? '0 4px 12px color-mix(in srgb, var(--primary) 25%, transparent)' : 'none',
-                }}>
-                  {(user.name || '?')[0].toUpperCase()}
-                </span>
-                <span>
-                  <span style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)' }}>
-                    {user.name || 'No name'}
-                  </span>
-                  {user.isPlatformSuperadmin && (
-                    <span className="sa-badge sa-badge--admin" style={{ fontSize: '0.62rem', marginTop: 2 }}>Admin</span>
-                  )}
-                </span>
-              </span>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {user.email}
-              </span>
-              <span style={{ 
-                fontSize: '0.85rem', 
-                fontWeight: 600, 
-                color: 'var(--primary,#3b82f6)', 
-                textAlign: 'right',
-              }}>
-                {formatAc(user.credits)}
-              </span>
-              </div>
-            </button>
-          ))}
-        </div>
-
-        {/* Pagination pinned to bottom */}
+        {/* Pinned Pagination Footer */}
         {!listLoading && users.length > 0 && (
-          <div className="sa-pagination" style={{ borderTop: '1px solid var(--border-color)', flexShrink: 0 }}>
-            <span>Page {pagination.page} of {pagination.totalPages || 1}</span>
+          <div className="sa-pagination">
+            <span>
+              Showing Page <strong>{pagination.page}</strong> of <strong>{pagination.totalPages || 1}</strong> ({pagination.total || users.length} users)
+            </span>
             <div className="sa-toolbar">
-              <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" disabled={page <= 1} onClick={() => setPage(p => p - 1)}><ChevronLeft size={14} /></button>
-              <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" disabled={page >= (pagination.totalPages || 1)} onClick={() => setPage(p => p + 1)}><ChevronRight size={14} /></button>
+              <button
+                type="button"
+                className="sa-btn sa-btn--sm sa-btn--ghost"
+                disabled={page <= 1}
+                onClick={() => setPage(p => p - 1)}
+                aria-label="Previous page"
+              >
+                <ChevronLeft size={14} /> Previous
+              </button>
+              <button
+                type="button"
+                className="sa-btn sa-btn--sm sa-btn--ghost"
+                disabled={page >= (pagination.totalPages || 1)}
+                onClick={() => setPage(p => p + 1)}
+                aria-label="Next page"
+              >
+                Next <ChevronRight size={14} />
+              </button>
             </div>
           </div>
         )}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Search, ChevronLeft, ChevronRight, X, Clock, CheckCircle, XCircle, MessageSquare, Eye, AlertTriangle } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, X, Clock, CheckCircle, XCircle, MessageSquare, Eye, AlertTriangle, UserCheck, Users, Sparkles, Building2, Layers } from 'lucide-react'
 import superadminService from '../../../../services/superadminService'
 import { formatDate } from './superadminUtils'
 import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
@@ -369,106 +369,267 @@ function SuperadminEarlyAccessPanel() {
 
   const handleTabChange = (status) => { setStatusFilter(status); setPage(1) }
 
+  // Derived metrics for KPI cards
+  const totalSubmissionsCount = pagination.total ?? requests.length
+  const pendingReviewCount = tabCounts.pending ?? requests.filter(r => r.status === 'pending').length
+  const inPipelineCount = (tabCounts.under_review ?? 0) + (tabCounts.in_discussion ?? 0)
+  const approvedAccessCount = tabCounts.approved ?? requests.filter(r => r.status === 'approved').length
+
   return (
     <div className="sa-panel">
+      {/* ── Page Header ── */}
       <div className="sa-panel-header">
         <div>
-          <h2 className="sa-panel-title">Early access requests</h2>
-          <p className="sa-panel-desc">Review and manage early access applications. Status emails are sent automatically on every update.</p>
+          <h2 className="sa-panel-title">Early Access Requests</h2>
+          <p className="sa-panel-desc">Review and manage early access applications. Status email updates are sent automatically upon pipeline transitions.</p>
         </div>
       </div>
 
       {listError && <div className="sa-alert sa-alert--error">{listError}</div>}
 
-      <div className="sa-card sa-card--flush" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-        {/* Status tab bar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 2, padding: '10px 16px', borderBottom: '1px solid var(--border-color)', flexShrink: 0, flexWrap: 'wrap' }}>
-          {STATUS_TABS.map(tab => {
-            const count = tab.id ? tabCounts[tab.id] : undefined
-            return (
-              <button key={tab.id} type="button" className={`sa-tab${statusFilter === tab.id ? ' sa-tab--active' : ''}`} onClick={() => handleTabChange(tab.id)}>
-                {tab.label}
-                {count != null && count > 0 && (
-                  <span className="sa-card-header-count" style={{ marginLeft: 4 }}>{count}</span>
-                )}
-              </button>
-            )
-          })}
-          <div style={{ marginLeft: 'auto' }}>
-            <div className="sa-list-search" style={{ maxWidth: 240, flex: '0 0 auto', padding: 0 }}>
-              <Search className="sa-search-field-icon" size={13} strokeWidth={2} style={{ left: 10 }} aria-hidden />
-              <input className="sa-input sa-input--list-search" style={{ paddingLeft: 30 }} type="search" placeholder="Search name, email…" value={searchInput} onChange={e => setSearchInput(e.target.value)} aria-label="Search requests" />
+      {/* ── KPI Stats Cards Row (AstryAi Style) ── */}
+      <div className="sa-kpi-grid">
+        <div className="sa-kpi-card">
+          <div className="sa-kpi-header">
+            <span className="sa-kpi-label">Submissions</span>
+            <div className="sa-kpi-icon"><UserCheck size={16} /></div>
+          </div>
+          <div className="sa-kpi-body">
+            <span className="sa-kpi-value">{totalSubmissionsCount}</span>
+            <span className="sa-kpi-detail sa-kpi-detail--info">Total applicants</span>
+          </div>
+        </div>
+
+        <div className="sa-kpi-card">
+          <div className="sa-kpi-header">
+            <span className="sa-kpi-label">Pending Review</span>
+            <div className="sa-kpi-icon" style={{ background: 'rgba(245, 158, 11, 0.14)', color: '#f59e0b' }}>
+              <Clock size={16} />
+            </div>
+          </div>
+          <div className="sa-kpi-body">
+            <span className="sa-kpi-value">{pendingReviewCount}</span>
+            <span className="sa-kpi-detail sa-kpi-detail--warning">New applications</span>
+          </div>
+        </div>
+
+        <div className="sa-kpi-card">
+          <div className="sa-kpi-header">
+            <span className="sa-kpi-label">In Discussion</span>
+            <div className="sa-kpi-icon" style={{ background: 'rgba(56, 189, 248, 0.14)', color: '#0284c7' }}>
+              <MessageSquare size={16} />
+            </div>
+          </div>
+          <div className="sa-kpi-body">
+            <span className="sa-kpi-value">{inPipelineCount}</span>
+            <span className="sa-kpi-detail sa-kpi-detail--info">Under evaluation</span>
+          </div>
+        </div>
+
+        <div className="sa-kpi-card">
+          <div className="sa-kpi-header">
+            <span className="sa-kpi-label">Approved Access</span>
+            <div className="sa-kpi-icon" style={{ background: 'rgba(16, 185, 129, 0.14)', color: '#10b981' }}>
+              <CheckCircle size={16} />
+            </div>
+          </div>
+          <div className="sa-kpi-body">
+            <span className="sa-kpi-value">{approvedAccessCount}</span>
+            <span className="sa-kpi-detail sa-kpi-detail--success">Access granted</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main Data Table Card Container ── */}
+      <div className="sa-table-card">
+        {/* Toolbar with Filter Tabs and Search */}
+        <div className="sa-table-toolbar">
+          <div className="sa-filter-tabs" role="tablist" aria-label="Filter early access requests">
+            {STATUS_TABS.map(tab => {
+              const count = tab.id ? tabCounts[tab.id] : totalSubmissionsCount
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={statusFilter === tab.id}
+                  className={`sa-filter-tab ${statusFilter === tab.id ? 'active' : ''}`}
+                  onClick={() => handleTabChange(tab.id)}
+                >
+                  {tab.label}
+                  {count != null && (
+                    <span className="sa-filter-count">{count}</span>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: '1 1 auto', justifyContent: 'flex-end' }}>
+            <div className="sa-search-field" style={{ width: 'min(280px, 100%)' }}>
+              <Search className="sa-search-field-icon" size={14} aria-hidden />
+              <input
+                className="sa-input"
+                type="search"
+                placeholder="Search name, email, company…"
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
+                aria-label="Search early access requests"
+              />
             </div>
           </div>
         </div>
 
-        {/* Column headers */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr 120px 130px', gap: 12, padding: '8px 20px', borderBottom: '1px solid var(--border-color)', fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', flexShrink: 0 }}>
-          <span>Applicant</span>
-          <span>Company / role</span>
-          <span>Use case</span>
-          <span style={{ textAlign: 'right' }}>Status</span>
+        {/* Table Content (Scrollable data rows, sticky headers) */}
+        <div className="sa-table-scroll sa-scroll">
+          <table className="sa-table-modern">
+            <thead>
+              <tr>
+                <th style={{ width: '28%' }}>Applicant</th>
+                <th style={{ width: '22%' }}>Company &amp; Role</th>
+                <th style={{ width: '24%' }}>Use Case</th>
+                <th style={{ width: '12%' }}>Status</th>
+                <th style={{ width: '8%' }}>Submitted</th>
+                <th style={{ width: '6%', textAlign: 'right' }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {listLoading ? (
+                <tr>
+                  <td colSpan={6} style={{ padding: 0 }}>
+                    <TableSkeleton />
+                  </td>
+                </tr>
+              ) : requests.length === 0 ? (
+                <tr>
+                  <td colSpan={6}>
+                    <div className="sa-empty">
+                      {search ? `No results for "${search}"` : statusFilter ? `No ${STATUS_META[statusFilter]?.label?.toLowerCase() || statusFilter} requests` : 'No early access requests yet'}
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                requests.map(req => {
+                  const isSelected = selectedRequest?.requestId === req.requestId && drawerOpen
+                  const firstLetter = (req.name || req.email || '?')[0].toUpperCase()
+
+                  return (
+                    <tr
+                      key={req.requestId}
+                      className={isSelected ? 'selected' : ''}
+                      onClick={() => openDrawer(req)}
+                    >
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: '50%',
+                            flexShrink: 0,
+                            background: isSelected
+                              ? 'linear-gradient(135deg, var(--primary) 0%, #2563eb 100%)'
+                              : 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, var(--bg-card)) 0%, color-mix(in srgb, var(--primary) 25%, var(--bg-card)) 100%)',
+                            color: isSelected ? '#fff' : 'var(--primary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                            border: isSelected
+                              ? '2px solid var(--primary)'
+                              : '1px solid color-mix(in srgb, var(--primary) 30%, var(--border-color))',
+                          }}>
+                            {firstLetter}
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 650, fontSize: '0.875rem', color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {req.name || 'Anonymous Applicant'}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {req.email}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ minWidth: 0 }}>
+                          <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {req.company || '—'}
+                          </div>
+                          {req.role && (
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {req.role}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{
+                          fontSize: '0.78rem',
+                          color: 'var(--text-muted)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          maxWidth: 260,
+                        }}>
+                          {req.useCase || '—'}
+                        </div>
+                      </td>
+                      <td>
+                        <StatusBadge status={req.status} />
+                      </td>
+                      <td>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          {req.createdAt ? formatDate(req.createdAt).split(',')[0] : '—'}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <button
+                          type="button"
+                          className="sa-btn sa-btn--sm sa-btn--ghost"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openDrawer(req)
+                          }}
+                          style={{ padding: '0 8px' }}
+                          title="Inspect application"
+                        >
+                          Review
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
         </div>
 
-        {/* Rows */}
-        <div className="sa-scroll" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-          {listLoading ? <TableSkeleton /> : requests.length === 0 ? (
-            <div className="sa-empty">
-              {search ? `No results for "${search}"` : statusFilter ? `No ${STATUS_META[statusFilter]?.label?.toLowerCase() || statusFilter} requests` : 'No requests yet'}
-            </div>
-          ) : requests.map(req => {
-            const isSelected = selectedRequest?.requestId === req.requestId && drawerOpen
-            return (
-              <button key={req.requestId} type="button"
-                onClick={() => openDrawer(req)}
-                style={{
-                  width: '100%', display: 'block', padding: 0,
-                  background: isSelected ? 'linear-gradient(90deg, color-mix(in srgb, var(--primary) 12%, transparent) 0%, transparent 100%)' : 'transparent',
-                  border: 'none', outline: 'none', borderBottom: '1px solid var(--border-color)',
-                  borderLeft: isSelected ? '3px solid var(--primary,#3b82f6)' : '3px solid transparent',
-                  cursor: 'pointer', textAlign: 'left', color: 'var(--text-main)', transition: 'all 0.15s ease',
-                }}
-                onMouseEnter={e => { if (!isSelected) { e.currentTarget.style.background = 'linear-gradient(90deg, color-mix(in srgb, var(--primary) 6%, transparent) 0%, transparent 100%)'; e.currentTarget.style.borderLeft = '3px solid color-mix(in srgb, var(--primary) 50%, var(--border-color))' } }}
-                onMouseLeave={e => { if (!isSelected) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderLeft = '3px solid transparent' } }}
-              >
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr 120px 130px', gap: 12, padding: '13px 20px', alignItems: 'center', pointerEvents: 'none' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                    <div style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0, background: isSelected ? 'linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 85%, #2563eb) 100%)' : 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, var(--bg-card)) 0%, color-mix(in srgb, var(--primary) 25%, var(--bg-card)) 100%)', color: isSelected ? '#fff' : 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, border: isSelected ? '2px solid var(--primary)' : '1px solid color-mix(in srgb, var(--primary) 30%, var(--border-color))' }}>
-                      {(req.name || '?')[0].toUpperCase()}
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.name || '—'}</div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.email}</div>
-                    </div>
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: '0.82rem', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.company || '—'}</div>
-                    {req.role && <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.role}</div>}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {req.useCase || '—'}
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <StatusBadge status={req.status} />
-                  </div>
-                </div>
-                <div style={{ padding: '0 20px 10px', pointerEvents: 'none' }}>
-                  <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                    <Clock size={11} /> {formatDate(req.createdAt)}
-                  </span>
-                </div>
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Pagination */}
-        {!listLoading && pagination.totalPages > 1 && (
-          <div className="sa-pagination" style={{ borderTop: '1px solid var(--border-color)', flexShrink: 0 }}>
-            <span>Page {pagination.page} of {pagination.totalPages} · {pagination.total} total</span>
+        {/* Pinned Pagination Footer */}
+        {!listLoading && (
+          <div className="sa-pagination">
+            <span>
+              Showing Page <strong>{pagination.page}</strong> of <strong>{pagination.totalPages || 1}</strong> ({pagination.total || requests.length} total)
+            </span>
             <div className="sa-toolbar">
-              <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" disabled={page <= 1} onClick={() => setPage(p => p - 1)}><ChevronLeft size={14} /></button>
-              <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" disabled={page >= pagination.totalPages} onClick={() => setPage(p => p + 1)}><ChevronRight size={14} /></button>
+              <button
+                type="button"
+                className="sa-btn sa-btn--sm sa-btn--ghost"
+                disabled={page <= 1}
+                onClick={() => setPage(p => p - 1)}
+                aria-label="Previous page"
+              >
+                <ChevronLeft size={14} /> Previous
+              </button>
+              <button
+                type="button"
+                className="sa-btn sa-btn--sm sa-btn--ghost"
+                disabled={page >= (pagination.totalPages || 1)}
+                onClick={() => setPage(p => p + 1)}
+                aria-label="Next page"
+              >
+                Next <ChevronRight size={14} />
+              </button>
             </div>
           </div>
         )}

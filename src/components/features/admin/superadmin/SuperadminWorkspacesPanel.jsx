@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Search, ChevronLeft, ChevronRight, X, Building2 } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, X, Building2, Users, Coins, Sparkles, TrendingUp, Layers, CheckCircle2 } from 'lucide-react'
 import superadminService, { SuperadminApiError } from '../../../../services/superadminService'
 import { formatAc, formatDate, txTypeLabel } from './superadminUtils'
 import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
@@ -519,107 +519,271 @@ function SuperadminWorkspacesPanel() {
     }
   }
 
+  const [workspaceFilter, setWorkspaceFilter] = useState('all') // all, funded, zero
+
+  // Derived metrics for KPI cards
+  const totalWsCount = pagination.total ?? workspaces.length
+  const totalMembersCount = workspaces.reduce((acc, ws) => acc + (Number(ws.memberCount) || 0), 0)
+  const totalCreditsPool = workspaces.reduce((acc, ws) => acc + (Number(ws.workspaceCredits) || 0), 0)
+  const fundedWsCount = workspaces.filter(ws => Number(ws.workspaceCredits) > 0).length
+  const zeroWsCount = workspaces.filter(ws => (Number(ws.workspaceCredits) || 0) === 0).length
+
+  // Filtered workspaces for display
+  const displayedWorkspaces = workspaces.filter(ws => {
+    if (workspaceFilter === 'funded') return Number(ws.workspaceCredits) > 0
+    if (workspaceFilter === 'zero') return (Number(ws.workspaceCredits) || 0) === 0
+    return true
+  })
+
   return (
     <div className="sa-panel">
+      {/* ── Page Header ── */}
       <div className="sa-panel-header">
         <div>
-          <h2 className="sa-panel-title">TEAM workspaces</h2>
-          <p className="sa-panel-desc">Browse TEAM workspace credit pools, top up or revoke, and review usage by member.</p>
+          <h2 className="sa-panel-title">TEAM Workspaces</h2>
+          <p className="sa-panel-desc">Browse TEAM workspace credit pools, top up or revoke credits, and monitor collaboration across organizations.</p>
         </div>
       </div>
 
       {listError && <div className="sa-alert sa-alert--error">{listError}</div>}
 
-      <div className="sa-card sa-card--flush" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-        <div className="sa-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
-          <h3>All workspaces <span className="sa-card-header-count">{pagination.total ?? 0}</span></h3>
-          <div className="sa-list-search" style={{ maxWidth: 280 }}>
-            <Search className="sa-search-field-icon" size={13} aria-hidden />
-            <input className="sa-input sa-input--list-search" type="search" placeholder="Search name or owner…"
-              value={searchInput} onChange={(e) => setSearchInput(e.target.value)} aria-label="Search workspaces" />
+      {/* ── KPI Stats Cards Row (AstryAi Style) ── */}
+      <div className="sa-kpi-grid">
+        <div className="sa-kpi-card">
+          <div className="sa-kpi-header">
+            <span className="sa-kpi-label">Workspaces</span>
+            <div className="sa-kpi-icon"><Building2 size={16} /></div>
+          </div>
+          <div className="sa-kpi-body">
+            <span className="sa-kpi-value">{totalWsCount}</span>
+            <span className="sa-kpi-detail sa-kpi-detail--info">Active teams</span>
           </div>
         </div>
 
-        <div style={{
-          display: 'grid', gridTemplateColumns: '1.2fr 1fr 100px 100px',
-          gap: 12, padding: '8px 20px', borderBottom: '1px solid var(--border-color)',
-          fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', flexShrink: 0,
-        }}>
-          <span>Name</span><span>Owner</span><span>Members</span><span style={{ textAlign: 'right' }}>Pool</span>
+        <div className="sa-kpi-card">
+          <div className="sa-kpi-header">
+            <span className="sa-kpi-label">Team Members</span>
+            <div className="sa-kpi-icon" style={{ background: 'rgba(59, 130, 246, 0.14)', color: '#3b82f6' }}>
+              <Users size={16} />
+            </div>
+          </div>
+          <div className="sa-kpi-body">
+            <span className="sa-kpi-value">{totalMembersCount}</span>
+            <span className="sa-kpi-detail sa-kpi-detail--info">Collaborators enrolled</span>
+          </div>
         </div>
 
-        <div className="sa-scroll" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-          {listLoading ? (
-            <div className="sa-loading" style={{ padding: 40 }}><span className="sa-spinner" /> Loading…</div>
-          ) : workspaces.length === 0 ? (
-            <div className="sa-empty" style={{ padding: 40 }}>No TEAM workspaces found.</div>
-          ) : workspaces.map((ws) => (
-            <button key={ws.workspaceId} type="button" onClick={() => openDrawer(ws.workspaceId)}
-              style={{
-                width: '100%', display: 'grid', gridTemplateColumns: '1.2fr 1fr 100px 100px',
-                gap: 12, padding: '14px 20px', 
-                color: 'var(--text-main)',
-                background: selectedId === ws.workspaceId && drawerOpen 
-                  ? 'linear-gradient(90deg, color-mix(in srgb, var(--primary) 12%, transparent) 0%, transparent 100%)' 
-                  : 'transparent',
-                border: 'none', borderBottom: '1px solid var(--border-color)', 
-                borderLeft: selectedId === ws.workspaceId && drawerOpen ? '3px solid var(--primary,#3b82f6)' : '3px solid transparent',
-                alignItems: 'center', cursor: 'pointer', textAlign: 'left',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={e => { 
-                if (selectedId !== ws.workspaceId || !drawerOpen) {
-                  e.currentTarget.style.background = 'linear-gradient(90deg, color-mix(in srgb, var(--primary) 6%, transparent) 0%, transparent 100%)'
-                  e.currentTarget.style.borderLeft = '3px solid color-mix(in srgb, var(--primary) 50%, var(--border-color))'
-                }
-              }}
-              onMouseLeave={e => { 
-                if (selectedId !== ws.workspaceId || !drawerOpen) {
-                  e.currentTarget.style.background = 'transparent'
-                  e.currentTarget.style.borderLeft = '3px solid transparent'
-                }
-              }}
+        <div className="sa-kpi-card">
+          <div className="sa-kpi-header">
+            <span className="sa-kpi-label">Total Pool Credits</span>
+            <div className="sa-kpi-icon" style={{ background: 'rgba(16, 185, 129, 0.14)', color: '#10b981' }}>
+              <Coins size={16} />
+            </div>
+          </div>
+          <div className="sa-kpi-body">
+            <span className="sa-kpi-value">{formatAc(totalCreditsPool)}</span>
+            <span className="sa-kpi-detail sa-kpi-detail--success">Across all teams</span>
+          </div>
+        </div>
+
+        <div className="sa-kpi-card">
+          <div className="sa-kpi-header">
+            <span className="sa-kpi-label">Funded Teams</span>
+            <div className="sa-kpi-icon" style={{ background: 'rgba(147, 51, 234, 0.14)', color: '#a855f7' }}>
+              <Sparkles size={16} />
+            </div>
+          </div>
+          <div className="sa-kpi-body">
+            <span className="sa-kpi-value">{fundedWsCount} <span style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--text-muted)' }}>/ {workspaces.length}</span></span>
+            <span className="sa-kpi-detail sa-kpi-detail--info">Active credit pools</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main Data Table Card Container ── */}
+      <div className="sa-table-card">
+        {/* Toolbar with Filter Tabs and Search */}
+        <div className="sa-table-toolbar">
+          <div className="sa-filter-tabs" role="tablist" aria-label="Filter workspaces">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={workspaceFilter === 'all'}
+              className={`sa-filter-tab ${workspaceFilter === 'all' ? 'active' : ''}`}
+              onClick={() => setWorkspaceFilter('all')}
             >
-              <span style={{ 
-                fontWeight: 600, 
-                fontSize: '0.85rem',
-                color: 'var(--text-primary)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-              }}>
-                <span style={{
-                  width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-                  background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, var(--bg-card)) 0%, color-mix(in srgb, var(--primary) 25%, var(--bg-card)) 100%)',
-                  border: '1px solid color-mix(in srgb, var(--primary) 30%, var(--border-color))',
-                  color: 'var(--primary)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '0.7rem', fontWeight: 700,
-                }}>
-                  <Building2 size={14} />
-                </span>
-                {ws.name}
-              </span>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {ws.owner?.email || '—'}
-              </span>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{ws.memberCount ?? '—'}</span>
-              <span style={{ 
-                fontSize: '0.85rem', 
-                fontWeight: 600, 
-                color: 'var(--primary,#3b82f6)', 
-                textAlign: 'right',
-              }}>{formatAc(ws.workspaceCredits)}</span>
+              All Teams
+              <span className="sa-filter-count">{totalWsCount}</span>
             </button>
-          ))}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={workspaceFilter === 'funded'}
+              className={`sa-filter-tab ${workspaceFilter === 'funded' ? 'active' : ''}`}
+              onClick={() => setWorkspaceFilter('funded')}
+            >
+              Funded Pools
+              <span className="sa-filter-count">{fundedWsCount}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={workspaceFilter === 'zero'}
+              className={`sa-filter-tab ${workspaceFilter === 'zero' ? 'active' : ''}`}
+              onClick={() => setWorkspaceFilter('zero')}
+            >
+              Zero Balance
+              <span className="sa-filter-count">{zeroWsCount}</span>
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: '1 1 auto', justifyContent: 'flex-end' }}>
+            <div className="sa-search-field" style={{ width: 'min(300px, 100%)' }}>
+              <Search className="sa-search-field-icon" size={14} aria-hidden />
+              <input
+                className="sa-input"
+                type="search"
+                placeholder="Search workspace name or owner…"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                aria-label="Search workspaces"
+              />
+            </div>
+          </div>
         </div>
 
+        {/* Table Content (Scrollable data rows, sticky headers) */}
+        <div className="sa-table-scroll sa-scroll">
+          <table className="sa-table-modern">
+            <thead>
+              <tr>
+                <th style={{ width: '35%' }}>Workspace</th>
+                <th style={{ width: '30%' }}>Owner</th>
+                <th style={{ width: '15%' }}>Members</th>
+                <th style={{ width: '12%', textAlign: 'right' }}>Credit Pool</th>
+                <th style={{ width: '8%', textAlign: 'right' }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {listLoading ? (
+                <tr>
+                  <td colSpan={5}>
+                    <div className="sa-loading" style={{ padding: 40 }}><span className="sa-spinner" /> Loading workspaces…</div>
+                  </td>
+                </tr>
+              ) : displayedWorkspaces.length === 0 ? (
+                <tr>
+                  <td colSpan={5}>
+                    <div className="sa-empty">No TEAM workspaces found.</div>
+                  </td>
+                </tr>
+              ) : (
+                displayedWorkspaces.map((ws) => {
+                  const isSelected = selectedId === ws.workspaceId && drawerOpen
+
+                  return (
+                    <tr
+                      key={ws.workspaceId}
+                      className={isSelected ? 'selected' : ''}
+                      onClick={() => openDrawer(ws.workspaceId)}
+                    >
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 10,
+                            flexShrink: 0,
+                            background: isSelected
+                              ? 'linear-gradient(135deg, var(--primary) 0%, #2563eb 100%)'
+                              : 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, var(--bg-card)) 0%, color-mix(in srgb, var(--primary) 25%, var(--bg-card)) 100%)',
+                            border: isSelected
+                              ? '2px solid var(--primary)'
+                              : '1px solid color-mix(in srgb, var(--primary) 30%, var(--border-color))',
+                            color: isSelected ? '#fff' : 'var(--primary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}>
+                            <Building2 size={16} />
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 650, fontSize: '0.875rem', color: 'var(--text-main)' }}>
+                              {ws.name}
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+                              {ws.workspaceId.slice(0, 12)}…
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                          {ws.owner?.email || '—'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className="sa-badge sa-badge--type" style={{ gap: 4 }}>
+                          <Users size={11} /> {ws.memberCount ?? 1} {ws.memberCount === 1 ? 'member' : 'members'}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <span style={{
+                          fontWeight: 700,
+                          fontSize: '0.875rem',
+                          color: 'var(--primary)',
+                          fontVariantNumeric: 'tabular-nums',
+                        }}>
+                          {formatAc(ws.workspaceCredits)}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <button
+                          type="button"
+                          className="sa-btn sa-btn--sm sa-btn--ghost"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openDrawer(ws.workspaceId)
+                          }}
+                          style={{ padding: '0 8px' }}
+                          title="Inspect workspace"
+                        >
+                          Manage
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pinned Pagination Footer */}
         {!listLoading && workspaces.length > 0 && (
-          <div className="sa-pagination" style={{ borderTop: '1px solid var(--border-color)', flexShrink: 0 }}>
-            <span>Page {pagination.page} of {pagination.totalPages || 1}</span>
+          <div className="sa-pagination">
+            <span>
+              Showing Page <strong>{pagination.page}</strong> of <strong>{pagination.totalPages || 1}</strong> ({pagination.total || workspaces.length} workspaces)
+            </span>
             <div className="sa-toolbar">
-              <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}><ChevronLeft size={14} /></button>
-              <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" disabled={page >= (pagination.totalPages || 1)} onClick={() => setPage((p) => p + 1)}><ChevronRight size={14} /></button>
+              <button
+                type="button"
+                className="sa-btn sa-btn--sm sa-btn--ghost"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+                aria-label="Previous page"
+              >
+                <ChevronLeft size={14} /> Previous
+              </button>
+              <button
+                type="button"
+                className="sa-btn sa-btn--sm sa-btn--ghost"
+                disabled={page >= (pagination.totalPages || 1)}
+                onClick={() => setPage((p) => p + 1)}
+                aria-label="Next page"
+              >
+                Next <ChevronRight size={14} />
+              </button>
             </div>
           </div>
         )}

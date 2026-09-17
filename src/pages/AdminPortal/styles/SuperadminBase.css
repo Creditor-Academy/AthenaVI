@@ -676,3 +676,272 @@
     width: 100%;
   }
 }
+
+/* ==========================================================================
+   AstryAi / Management Dashboard KPI Cards & Table Shell Styles
+   ========================================================================== */
+
+/* ── KPI Stats Grid ── */
+.sa-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 1200px) {
+  .sa-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .sa-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── KPI Stat Card ── */
+.sa-kpi-card {
+  background: linear-gradient(135deg, var(--bg-card) 0%, color-mix(in srgb, var(--primary) 6%, var(--bg-card)) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  min-height: 106px;
+}
+
+.sa-kpi-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border-color));
+  box-shadow: 0 8px 24px rgba(var(--primary-rgb), 0.12);
+  transform: translateY(-2px);
+}
+
+.sa-kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sa-kpi-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.sa-kpi-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(var(--primary-rgb), 0.12);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sa-kpi-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sa-kpi-value {
+  font-size: 1.625rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--text-main);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.sa-kpi-detail {
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sa-kpi-detail--success {
+  color: #10b981;
+}
+
+.sa-kpi-detail--warning {
+  color: #f59e0b;
+}
+
+.sa-kpi-detail--info {
+  color: var(--primary);
+}
+
+.sa-kpi-detail--danger {
+  color: #ef4444;
+}
+
+.sa-kpi-detail--muted {
+  color: var(--text-muted);
+}
+
+/* ── Modern Table Container Card Shell ── */
+.sa-table-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  flex: 1 1 0;
+  min-height: 0;
+  position: relative;
+}
+
+.sa-table-toolbar {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--bg-card) 90%, transparent);
+}
+
+/* ── Scrollable Table Viewport (Fixed Header + Scrolling Body) ── */
+.sa-table-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: auto;
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Filter Tabs ── */
+.sa-filter-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: color-mix(in srgb, var(--text-muted) 8%, transparent);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.sa-filter-tab {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.16s ease;
+  white-space: nowrap;
+}
+
+.sa-filter-tab:hover {
+  color: var(--text-main);
+  background: color-mix(in srgb, var(--text-muted) 10%, transparent);
+}
+
+.sa-filter-tab.active {
+  color: var(--primary);
+  background: var(--bg-card);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.sa-filter-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--text-muted) 16%, transparent);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.sa-filter-tab.active .sa-filter-count {
+  background: rgba(var(--primary-rgb), 0.15);
+  color: var(--primary);
+}
+
+/* ── Modern Table Inner Elements ── */
+.sa-table-modern {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sa-table-modern thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.sa-table-modern th {
+  text-align: left;
+  padding: 12px 18px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 1px 0 var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.sa-table-modern td {
+  padding: 13px 18px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
+  font-size: 0.875rem;
+  color: var(--text-main);
+  vertical-align: middle;
+  transition: background 0.12s ease;
+}
+
+.sa-table-modern tr:last-child td {
+  border-bottom: none;
+}
+
+.sa-table-modern tbody tr {
+  transition: background 0.12s ease, transform 0.12s ease;
+  cursor: pointer;
+}
+
+.sa-table-modern tbody tr:hover td {
+  background: rgba(var(--primary-rgb), 0.05);
+}
+
+.sa-table-modern tbody tr.selected td {
+  background: rgba(var(--primary-rgb), 0.12);
+  border-left-color: var(--primary);
+}
+
+

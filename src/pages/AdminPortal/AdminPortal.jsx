@@ -29,7 +29,7 @@ const AdminPortal = ({
   }
 
   return (
-    <div className="sa-portal">
+    <div className={`sa-portal${activeTab === 'overview' ? ' sa-portal--flow' : ''}`}>
       {activeTab === 'overview' && <DashboardOverview />}
       {activeTab === 'users' && <SuperadminUsersPanel />}
       {activeTab === 'workspaces' && <SuperadminWorkspacesPanel />}

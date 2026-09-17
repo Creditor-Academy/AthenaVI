@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { HardDrive, ChevronLeft, ChevronRight, X, Check } from 'lucide-react'
+import { HardDrive, ChevronLeft, ChevronRight, X, Check, Database, Clock, CheckCircle2, XCircle, Sparkles, Search, Filter } from 'lucide-react'
 import superadminService from '../../../../services/superadminService'
 import { formatBytes, formatDate, storageStatusLabel } from './superadminUtils'
 import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
@@ -222,13 +222,35 @@ function SuperadminStorageRequestsPanel() {
     setPage(1)
   }, [status])
 
+  const [search, setSearch] = useState('')
+
+  // Derived metrics for KPI cards
+  const totalRequestsCount = pagination.total ?? requests.length
+  const pendingRequestsCount = requests.filter(r => (r.status || '').toLowerCase() === 'pending').length
+  const approvedRequestsCount = requests.filter(r => (r.status || '').toLowerCase() === 'approved').length
+  const rejectedRequestsCount = requests.filter(r => (r.status || '').toLowerCase() === 'rejected').length
+  const totalBytesRequested = requests.reduce((acc, r) => acc + (Number(r.requestedAdditionalBytes) || 0), 0)
+
+  // Filtered requests by search
+  const displayedRequests = requests.filter(r => {
+    if (!search.trim()) return true
+    const q = search.toLowerCase()
+    return (
+      (r.user?.name || '').toLowerCase().includes(q) ||
+      (r.user?.email || '').toLowerCase().includes(q) ||
+      (r.workspaceName || '').toLowerCase().includes(q) ||
+      (r.tierLabel || '').toLowerCase().includes(q)
+    )
+  })
+
   return (
     <div className="sa-panel">
+      {/* ── Page Header ── */}
       <div className="sa-panel-header">
         <div>
-          <h2 className="sa-panel-title">Storage upgrade queue</h2>
+          <h2 className="sa-panel-title">Storage Upgrade Queue</h2>
           <p className="sa-panel-desc">
-            Review user storage upgrade requests. Grant or reject requests directly from here.
+            Review user and workspace storage upgrade requests. Grant additional storage tiers or reject requests directly with custom user notifications.
           </p>
         </div>
       </div>
@@ -236,187 +258,295 @@ function SuperadminStorageRequestsPanel() {
       {actionMessage && <div className="sa-alert sa-alert--success">{actionMessage}</div>}
       {error && <div className="sa-alert sa-alert--error">{error}</div>}
 
-      <div className="sa-card sa-card--flush" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-        <div className="sa-card-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexShrink: 0 }}>
-          <h3>
-            Requests{' '}
-            <span className="sa-card-header-count">{pagination.total ?? 0}</span>
-          </h3>
-          <select
-            className="sa-select"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            aria-label="Filter by status"
-          >
-            {STATUS_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+      {/* ── KPI Stats Cards Row (AstryAi Style) ── */}
+      <div className="sa-kpi-grid">
+        <div className="sa-kpi-card">
+          <div className="sa-kpi-header">
+            <span className="sa-kpi-label">Total Requests</span>
+            <div className="sa-kpi-icon"><Database size={16} /></div>
+          </div>
+          <div className="sa-kpi-body">
+            <span className="sa-kpi-value">{totalRequestsCount}</span>
+            <span className="sa-kpi-detail sa-kpi-detail--info">All submissions</span>
+          </div>
         </div>
 
-        {/* Column headers — only show when there are rows */}
-        {!loading && requests.length > 0 && (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1.2fr 1fr 120px 100px 160px',
-          gap: 12,
-          padding: '8px 20px',
-          borderBottom: '1px solid var(--border-color)',
-          fontSize: '0.7rem',
-          fontWeight: 700,
-          color: 'var(--text-muted)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.06em',
-          flexShrink: 0,
-        }}>
-          <span>User</span>
-          <span>Request</span>
-          <span>Status</span>
-          <span>Submitted</span>
-          <span style={{ textAlign: 'right' }}>Action</span>
-        </div>
-        )}
-
-        <div className="sa-scroll" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-          {loading ? (
-            <div className="sa-loading" style={{ padding: 40 }}>
-              <span className="sa-spinner" /> Loading requests…
+        <div className="sa-kpi-card">
+          <div className="sa-kpi-header">
+            <span className="sa-kpi-label">Pending Review</span>
+            <div className="sa-kpi-icon" style={{ background: 'rgba(245, 158, 11, 0.14)', color: '#f59e0b' }}>
+              <Clock size={16} />
             </div>
-          ) : requests.length === 0 ? (
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              minHeight: 200,
-              gap: 12,
-              color: 'var(--text-muted)',
-            }}>
-              <div style={{
-                width: 56,
-                height: 56,
-                borderRadius: 16,
-                background: 'color-mix(in srgb, var(--text-muted) 10%, transparent)',
-                border: '1px solid color-mix(in srgb, var(--text-muted) 20%, var(--border-color))',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <HardDrive size={24} strokeWidth={1.5} />
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-main)', marginBottom: 4 }}>
-                  No {status ? status : ''} requests
-                </div>
-                <div style={{ fontSize: '0.8125rem' }}>
-                  {status === 'pending'
-                    ? 'All caught up — no storage upgrade requests waiting for review.'
-                    : status === ''
-                    ? 'No storage upgrade requests found.'
-                    : `No ${status} storage requests to show.`}
-                </div>
-              </div>
-            </div>
-          ) : (
-            requests.map((req) => {
-              const statusKey = String(req.status || '').toLowerCase()
-              const statusColors = {
-                pending: '#f59e0b',
-                approved: '#22c55e',
-                rejected: '#ef4444',
-              }
-              const color = statusColors[statusKey] || 'var(--text-muted)'
-              return (
-                <div
-                  key={req.requestId}
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1.2fr 1fr 120px 100px 160px',
-                    gap: 12,
-                    padding: '14px 20px',
-                    borderBottom: '1px solid var(--border-color)',
-                    alignItems: 'center',
-                    fontSize: '0.8125rem',
-                  }}
-                >
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                      {req.user?.name || 'No name'}
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {req.user?.email || '—'}
-                    </div>
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 600 }}>+{formatBytes(req.requestedAdditionalBytes)}</div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {req.tierLabel || req.reason || '—'}
-                    </div>
-                    {req.workspaceName && (
-                      <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                        Workspace: {req.workspaceName}
-                      </div>
-                    )}
-                  </div>
-                  <span
-                    className="sa-badge"
-                    style={{
-                      background: `color-mix(in srgb, ${color} 15%, transparent)`,
-                      color,
-                      width: 'fit-content',
-                    }}
-                  >
-                    {storageStatusLabel(req.status)}
-                  </span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    {req.submittedAt ? formatDate(req.submittedAt).split(',')[0] : '—'}
-                  </span>
-                  <div style={{ textAlign: 'right' }}>
-                    {statusKey === 'pending' ? (
-                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                        <button
-                          type="button"
-                          className="sa-btn sa-btn--sm"
-                          style={{ background: '#22c55e', borderColor: '#22c55e', color: '#fff' }}
-                          onClick={() => setGrantTarget(req)}
-                        >
-                          <Check size={13} style={{ marginRight: 3 }} />
-                          Grant
-                        </button>
-                        <button
-                          type="button"
-                          className="sa-btn sa-btn--sm sa-btn--danger"
-                          onClick={() => setRejectTarget(req)}
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    ) : req.reviewNote ? (
-                      <span title={req.reviewNote} style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                        Note
-                      </span>
-                    ) : (
-                      <span style={{ color: 'var(--text-muted)' }}>—</span>
-                    )}
-                  </div>
-                </div>
-              )
-            })
-          )}
+          </div>
+          <div className="sa-kpi-body">
+            <span className="sa-kpi-value">{pendingRequestsCount}</span>
+            <span className="sa-kpi-detail sa-kpi-detail--warning">Awaiting approval</span>
+          </div>
         </div>
 
+        <div className="sa-kpi-card">
+          <div className="sa-kpi-header">
+            <span className="sa-kpi-label">Approved Upgrades</span>
+            <div className="sa-kpi-icon" style={{ background: 'rgba(16, 185, 129, 0.14)', color: '#10b981' }}>
+              <CheckCircle2 size={16} />
+            </div>
+          </div>
+          <div className="sa-kpi-body">
+            <span className="sa-kpi-value">{approvedRequestsCount}</span>
+            <span className="sa-kpi-detail sa-kpi-detail--success">Storage expanded</span>
+          </div>
+        </div>
+
+        <div className="sa-kpi-card">
+          <div className="sa-kpi-header">
+            <span className="sa-kpi-label">Volume Requested</span>
+            <div className="sa-kpi-icon" style={{ background: 'rgba(147, 51, 234, 0.14)', color: '#a855f7' }}>
+              <Sparkles size={16} />
+            </div>
+          </div>
+          <div className="sa-kpi-body">
+            <span className="sa-kpi-value">{formatBytes(totalBytesRequested)}</span>
+            <span className="sa-kpi-detail sa-kpi-detail--info">Total requested storage</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main Data Table Card Container ── */}
+      <div className="sa-table-card">
+        {/* Toolbar with Filter Tabs and Search */}
+        <div className="sa-table-toolbar">
+          <div className="sa-filter-tabs" role="tablist" aria-label="Filter storage requests by status">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={status === ''}
+              className={`sa-filter-tab ${status === '' ? 'active' : ''}`}
+              onClick={() => setStatus('')}
+            >
+              All Requests
+              <span className="sa-filter-count">{totalRequestsCount}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={status === 'pending'}
+              className={`sa-filter-tab ${status === 'pending' ? 'active' : ''}`}
+              onClick={() => setStatus('pending')}
+            >
+              Pending
+              <span className="sa-filter-count">{pendingRequestsCount}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={status === 'approved'}
+              className={`sa-filter-tab ${status === 'approved' ? 'active' : ''}`}
+              onClick={() => setStatus('approved')}
+            >
+              Approved
+              <span className="sa-filter-count">{approvedRequestsCount}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={status === 'rejected'}
+              className={`sa-filter-tab ${status === 'rejected' ? 'active' : ''}`}
+              onClick={() => setStatus('rejected')}
+            >
+              Rejected
+              <span className="sa-filter-count">{rejectedRequestsCount}</span>
+            </button>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: '1 1 auto', justifyContent: 'flex-end' }}>
+            <div className="sa-search-field" style={{ width: 'min(280px, 100%)' }}>
+              <Search className="sa-search-field-icon" size={14} aria-hidden />
+              <input
+                className="sa-input"
+                type="search"
+                placeholder="Search user or workspace…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                aria-label="Search storage requests"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Table Content (Scrollable data rows, sticky headers) */}
+        <div className="sa-table-scroll sa-scroll">
+          <table className="sa-table-modern">
+            <thead>
+              <tr>
+                <th style={{ width: '28%' }}>Requester</th>
+                <th style={{ width: '22%' }}>Details &amp; Workspace</th>
+                <th style={{ width: '16%' }}>Storage</th>
+                <th style={{ width: '14%' }}>Status</th>
+                <th style={{ width: '10%' }}>Submitted</th>
+                <th style={{ width: '10%', textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={6}>
+                    <div className="sa-loading" style={{ padding: 40 }}>
+                      <span className="sa-spinner" /> Loading storage requests…
+                    </div>
+                  </td>
+                </tr>
+              ) : displayedRequests.length === 0 ? (
+                <tr>
+                  <td colSpan={6}>
+                    <div className="sa-empty">
+                      No {status ? status : ''} storage upgrade requests found.
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                displayedRequests.map((req) => {
+                  const statusKey = String(req.status || '').toLowerCase()
+                  const statusColors = {
+                    pending: '#f59e0b',
+                    approved: '#22c55e',
+                    rejected: '#ef4444',
+                  }
+                  const color = statusColors[statusKey] || 'var(--text-muted)'
+                  const firstLetter = (req.user?.name || req.user?.email || '?')[0].toUpperCase()
+
+                  return (
+                    <tr key={req.requestId}>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <div style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: '50%',
+                            flexShrink: 0,
+                            background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 15%, var(--bg-card)) 0%, color-mix(in srgb, var(--primary) 25%, var(--bg-card)) 100%)',
+                            border: '1px solid color-mix(in srgb, var(--primary) 30%, var(--border-color))',
+                            color: 'var(--primary)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.8rem',
+                            fontWeight: 700,
+                          }}>
+                            {firstLetter}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 650, fontSize: '0.875rem', color: 'var(--text-main)' }}>
+                              {req.user?.name || 'Anonymous User'}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                              {req.user?.email || '—'}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div>
+                          <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                            {req.tierLabel || req.reason || 'Additional quota'}
+                          </div>
+                          {req.workspaceName && (
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                              Workspace: {req.workspaceName}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <span style={{
+                          fontWeight: 750,
+                          fontSize: '0.875rem',
+                          color: 'var(--primary)',
+                          fontVariantNumeric: 'tabular-nums',
+                        }}>
+                          +{formatBytes(req.requestedAdditionalBytes)}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          className="sa-badge"
+                          style={{
+                            background: `color-mix(in srgb, ${color} 15%, transparent)`,
+                            color,
+                            border: `1px solid color-mix(in srgb, ${color} 30%, var(--border-color))`,
+                            gap: 4,
+                          }}
+                        >
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: color }} />
+                          {storageStatusLabel(req.status)}
+                        </span>
+                      </td>
+                      <td>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          {req.submittedAt ? formatDate(req.submittedAt).split(',')[0] : '—'}
+                        </span>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        {statusKey === 'pending' ? (
+                          <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                            <button
+                              type="button"
+                              className="sa-btn sa-btn--sm"
+                              style={{ background: '#22c55e', borderColor: '#22c55e', color: '#fff' }}
+                              onClick={() => setGrantTarget(req)}
+                              title="Grant requested storage"
+                            >
+                              <Check size={13} style={{ marginRight: 3 }} />
+                              Grant
+                            </button>
+                            <button
+                              type="button"
+                              className="sa-btn sa-btn--sm sa-btn--danger"
+                              onClick={() => setRejectTarget(req)}
+                              title="Reject request"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        ) : req.reviewNote ? (
+                          <span title={req.reviewNote} style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {req.reviewNote.slice(0, 16)}…
+                          </span>
+                        ) : (
+                          <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Completed</span>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pinned Pagination Footer */}
         {!loading && requests.length > 0 && (
-          <div className="sa-pagination" style={{ borderTop: '1px solid var(--border-color)', flexShrink: 0 }}>
-            <span>Page {pagination.page} of {pagination.totalPages || 1}</span>
+          <div className="sa-pagination">
+            <span>
+              Showing Page <strong>{pagination.page}</strong> of <strong>{pagination.totalPages || 1}</strong> ({pagination.total || requests.length} requests)
+            </span>
             <div className="sa-toolbar">
-              <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-                <ChevronLeft size={14} />
+              <button
+                type="button"
+                className="sa-btn sa-btn--sm sa-btn--ghost"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+                aria-label="Previous page"
+              >
+                <ChevronLeft size={14} /> Previous
               </button>
-              <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" disabled={page >= (pagination.totalPages || 1)} onClick={() => setPage((p) => p + 1)}>
-                <ChevronRight size={14} />
+              <button
+                type="button"
+                className="sa-btn sa-btn--sm sa-btn--ghost"
+                disabled={page >= (pagination.totalPages || 1)}
+                onClick={() => setPage((p) => p + 1)}
+                aria-label="Next page"
+              >
+                Next <ChevronRight size={14} />
               </button>
             </div>
           </div>
