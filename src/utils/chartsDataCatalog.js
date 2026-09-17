@@ -601,7 +601,7 @@ const CATALOG = {
     }),
   ], { mode: 'process_linner_numeric' }),
 
-  metric_single_v1: statLayout('metric_single_v1', 'stat', 1, 'stat_hero', [
+  metric_single_v1: statLayout('metric_single_v1', 'stat', 1, 'metric_single_v1', [
     slot('STAT_VALUE', 'cols 3-10, rows 3-6', 'stat', '98%', {
       layer: 10,
       typography: typo('stat', { fontSize: 96, align: 'center' }),
@@ -612,9 +612,9 @@ const CATALOG = {
       typography: typo('subheading', { align: 'center' }),
       max_lines: 2,
     }),
-  ]),
+  ], { mode: 'metric_single_v1' }),
 
-  metric_two_v1: statLayout('metric_two_v1', 'stat', 2, 'stat_row', [
+  metric_two_v1: statLayout('metric_two_v1', 'stat', 2, 'metric_two_v1', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Key metrics', {
       typography: typo('heading', { fontSize: 28 }),
     }),
@@ -807,10 +807,10 @@ Object.assign(CATALOG, {
   metric_five_cards_v1: chartsDataFromSource('metric_five_cards_v1', 'metric_five_v1', 'cards'),
   metric_four_cards_v1: chartsDataFromSource('metric_four_cards_v1', 'metric_four_v1', 'cards'),
   metric_three_cards_v1: chartsDataFromSource('metric_three_cards_v1', 'metric_three_v1', 'cards'),
-  metric_single_split_v1: chartsDataFromSource('metric_single_split_v1', 'metric_single_v1', 'split'),
+  metric_single_split_v1: chartsDataFromSource('metric_single_split_v1', 'metric_single_v1', 'split', { mode: 'metric_single_split_v1' }),
   metric_six_cards_v1: chartsDataFromSource('metric_six_cards_v1', 'metric_six_para_v1', 'cards'),
   metric_three_vertical_cards_v1: chartsDataFromSource('metric_three_vertical_cards_v1', 'metric_three_vertical_v1', 'cards'),
-  metric_two_split_v1: chartsDataFromSource('metric_two_split_v1', 'metric_two_v1', 'split'),
+  metric_two_split_v1: chartsDataFromSource('metric_two_split_v1', 'metric_two_v1', 'split', { mode: 'metric_two_split_v1' }),
   process_linear_four_cards_v1: layoutBase('process_linear_four_cards_v1', 'chart', [
     heading('HEADING', 'cols 1-12, rows 1-2', 'Linear Four Stage Cards – Slide Template', {
       typography: typo('heading', { fontSize: 26, align: 'left', fontWeight: 800 }),
