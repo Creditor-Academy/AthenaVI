@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   Users, Building2, Coins, HardDrive, AlertTriangle, Bell, Wallet, X,
-  TrendingUp, TrendingDown, Activity, BarChart3, Gauge, Sparkles,
+  TrendingUp, TrendingDown, Activity, BarChart3, Gauge, Sparkles, ShieldCheck,
 } from 'lucide-react'
 import superadminService from '../../../services/superadminService'
 import { defaultReportRange, formatAc, formatDate } from './superadmin/superadminUtils'
@@ -228,41 +228,74 @@ const DashboardOverview = () => {
 
   return (
     <div className="sa-panel sa-panel--flow">
-      <div className="admin-page-header dash-page-header">
-        <div>
-          <h2 className="admin-page-title">Platform dashboard</h2>
-          <p className="admin-page-subtitle">
-            Live platform health — alerts, credit usage, and admin activity from the superadmin API.
-          </p>
-        </div>
+      {/* ── Welcome Hero Banner (Matching User Dashboard Home Hero Style) ── */}
+      <div className="admin-welcome-banner hero-redesign">
+        <div className="hero-content">
+          <div className="hero-text">
+            <h1>Platform Dashboard</h1>
+            <p>Live platform health — alerts, credit usage, and admin activity from the superadmin API.</p>
+            <div className="hero-chips">
+              <span className="hero-chip">
+                <Activity size={15} /> Real-time Telemetry
+              </span>
+              <span className="hero-chip">
+                <ShieldCheck size={15} /> Superadmin Mode Active
+              </span>
+            </div>
+          </div>
 
-        {alerts && (alerts.unreadPlatformCount > 0 || alerts.heygenWallet) && (
-          <div className="dash-header-right">
-            {alerts.unreadPlatformCount > 0 && (
-              <div className="dash-mini-card">
-                <span className="dash-mini-icon"><Bell size={16} /></span>
-                <div className="dash-mini-content">
-                  <span className="dash-mini-label">Alerts</span>
-                  <span className="dash-mini-value">
+          {/* Right-side quick alert & wallet status glass cards */}
+          <div className="admin-hero-cards">
+            {alerts && alerts.unreadPlatformCount > 0 && (
+              <div className="admin-hero-glass-card">
+                <div className="admin-hero-glass-icon admin-hero-glass-icon--alert">
+                  <Bell size={18} />
+                </div>
+                <div className="admin-hero-glass-info">
+                  <span className="admin-hero-glass-label">Alerts</span>
+                  <strong className="admin-hero-glass-val">
                     {alerts.unreadPlatformCount} unread platform alert{alerts.unreadPlatformCount === 1 ? '' : 's'}
+                  </strong>
+                </div>
+              </div>
+            )}
+
+            {alerts && alerts.heygenWallet && (
+              <div className={`admin-hero-glass-card${alerts.heygenWallet.isLow ? ' admin-hero-glass-card--warn' : ''}`}>
+                <div className="admin-hero-glass-icon admin-hero-glass-icon--wallet">
+                  {alerts.heygenWallet.isLow ? <AlertTriangle size={18} /> : <Wallet size={18} />}
+                </div>
+                <div className="admin-hero-glass-info">
+                  <span className="admin-hero-glass-label">HeyGen Wallet</span>
+                  <strong className="admin-hero-glass-val">
+                    {usdFormat(alerts.heygenWallet.remainingBalanceUsd)}
+                  </strong>
+                  <span className="admin-hero-glass-sub">
+                    threshold {usdFormat(alerts.heygenWallet.thresholdUsd)}
                   </span>
                 </div>
               </div>
             )}
-            {alerts.heygenWallet && (
-              <div className={`dash-mini-card${alerts.heygenWallet.isLow ? ' dash-mini-card--warn' : ''}`}>
-                <span className="dash-mini-icon">
-                  {alerts.heygenWallet.isLow ? <AlertTriangle size={16} /> : <Wallet size={16} />}
-                </span>
-                <div className="dash-mini-content">
-                  <span className="dash-mini-label">HeyGen wallet</span>
-                  <span className="dash-mini-value">{usdFormat(alerts.heygenWallet.remainingBalanceUsd)}</span>
-                  <span className="dash-mini-sub">threshold {usdFormat(alerts.heygenWallet.thresholdUsd)}</span>
+
+            {(!alerts || (alerts.unreadPlatformCount === 0 && !alerts.heygenWallet)) && (
+              <div className="admin-hero-glass-card">
+                <div className="admin-hero-glass-icon" style={{ background: 'rgba(16, 185, 129, 0.25)', color: '#34d399' }}>
+                  <ShieldCheck size={18} />
+                </div>
+                <div className="admin-hero-glass-info">
+                  <span className="admin-hero-glass-label">System Health</span>
+                  <strong className="admin-hero-glass-val">All Systems Nominal</strong>
+                  <span className="admin-hero-glass-sub">Zero critical incidents</span>
                 </div>
               </div>
             )}
           </div>
-        )}
+        </div>
+
+        {/* Floating Glowing Circular Decorative Overlays */}
+        <div className="hero-decoration hero-circle-1" aria-hidden="true" />
+        <div className="hero-decoration hero-circle-2" aria-hidden="true" />
+        <div className="hero-decoration hero-circle-3" aria-hidden="true" />
       </div>
 
       {error && (

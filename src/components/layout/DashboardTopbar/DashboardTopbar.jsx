@@ -151,25 +151,30 @@ function DashboardTopbar({
                     <div className="topbar-icon-group topbar-icon-group--desktop">
                         <button 
                             type="button" 
-                            className="topbar-icon-btn" 
-                            aria-label="Notifications"
+                            className={`topbar-icon-btn ${isAdminPortal ? 'topbar-icon-btn--admin' : ''}`} 
+                            aria-label={isAdminPortal ? 'Platform Alerts' : 'Notifications'}
+                            title={isAdminPortal ? 'Platform Alerts' : 'Notifications'}
                             onClick={onNotificationClick}
                         >
                             <span className="topbar-icon-badge-wrap">
                                 <Bell size={18} strokeWidth={1.75} aria-hidden />
                                 {notificationCount > 0 && (
-                                    <span className="topbar-badge">{notificationCount > 9 ? '9+' : notificationCount}</span>
+                                    <span className={`topbar-badge ${isAdminPortal ? 'topbar-badge--admin' : ''}`}>
+                                        {notificationCount > 9 ? '9+' : notificationCount}
+                                    </span>
                                 )}
                             </span>
                         </button>
-                        <button 
-                            type="button" 
-                            className="topbar-icon-btn" 
-                            aria-label={`Cart, ${cartCount} items`}
-                            onClick={onCartClick}
-                        >
-                            <ShoppingBag size={18} strokeWidth={1.75} aria-hidden />
-                        </button>
+                        {!isAdminPortal && (
+                            <button 
+                                type="button" 
+                                className="topbar-icon-btn" 
+                                aria-label={`Cart, ${cartCount} items`}
+                                onClick={onCartClick}
+                            >
+                                <ShoppingBag size={18} strokeWidth={1.75} aria-hidden />
+                            </button>
+                        )}
                     </div>
                     <ProfileDropdown
                         compact
@@ -213,25 +218,30 @@ function DashboardTopbar({
                     <div className="topbar-mobile-icons">
                         <button 
                             type="button" 
-                            className="topbar-icon-btn" 
-                            aria-label="Notifications"
+                            className={`topbar-icon-btn ${isAdminPortal ? 'topbar-icon-btn--admin' : ''}`} 
+                            aria-label={isAdminPortal ? 'Platform Alerts' : 'Notifications'}
+                            title={isAdminPortal ? 'Platform Alerts' : 'Notifications'}
                             onClick={onNotificationClick}
                         >
                             <span className="topbar-icon-badge-wrap">
                                 <Bell size={18} strokeWidth={1.75} aria-hidden />
                                 {notificationCount > 0 && (
-                                    <span className="topbar-badge">{notificationCount > 9 ? '9+' : notificationCount}</span>
+                                    <span className={`topbar-badge ${isAdminPortal ? 'topbar-badge--admin' : ''}`}>
+                                        {notificationCount > 9 ? '9+' : notificationCount}
+                                    </span>
                                 )}
                             </span>
                         </button>
-                        <button 
-                            type="button" 
-                            className="topbar-icon-btn" 
-                            aria-label={`Cart, ${cartCount} items`}
-                            onClick={onCartClick}
-                        >
-                            <ShoppingBag size={18} strokeWidth={1.75} aria-hidden />
-                        </button>
+                        {!isAdminPortal && (
+                            <button 
+                                type="button" 
+                                className="topbar-icon-btn" 
+                                aria-label={`Cart, ${cartCount} items`}
+                                onClick={onCartClick}
+                            >
+                                <ShoppingBag size={18} strokeWidth={1.75} aria-hidden />
+                            </button>
+                        )}
                     </div>
                 </div>
             )}

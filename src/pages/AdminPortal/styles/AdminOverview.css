@@ -246,6 +246,210 @@
   row-gap: 14px;
 }
 
+/* ==========================================================================
+   Admin Welcome Hero Banner (Matching User Dashboard Home Page Style)
+   ========================================================================== */
+
+.admin-welcome-banner.hero-redesign {
+  background: linear-gradient(135deg, var(--primary) 0%, #6366f1 100%);
+  border: none;
+  border-radius: 24px;
+  padding: 36px 44px;
+  margin-bottom: 20px;
+  box-shadow: 0 20px 40px rgba(99, 102, 241, 0.22);
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+[data-mode='dark'] .admin-welcome-banner.hero-redesign {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 85%, #1e1b4b) 0%, #4338ca 100%);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+}
+
+.admin-welcome-banner .hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.admin-welcome-banner .hero-text {
+  flex: 1 1 360px;
+  max-width: 620px;
+}
+
+.admin-welcome-banner .hero-text h1 {
+  font-size: 2.25rem;
+  font-weight: 800;
+  margin: 0 0 10px;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: #ffffff;
+}
+
+.admin-welcome-banner .hero-text p {
+  font-size: 1.05rem;
+  color: rgba(255, 255, 255, 0.92);
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.admin-welcome-banner .hero-chips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-welcome-banner .hero-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #ffffff;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ── Hero Glass Cards on Right (Alerts & HeyGen Wallet) ── */
+.admin-hero-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
+  min-width: 260px;
+}
+
+.admin-hero-glass-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  color: #ffffff;
+  transition: all 0.22s ease;
+}
+
+.admin-hero-glass-card:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+
+.admin-hero-glass-card--warn {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.45);
+}
+
+.admin-hero-glass-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.admin-hero-glass-icon--alert {
+  background: rgba(245, 158, 11, 0.3);
+  color: #fef08a;
+}
+
+.admin-hero-glass-card--warn .admin-hero-glass-icon--wallet {
+  background: rgba(239, 68, 68, 0.4);
+  color: #ffffff;
+}
+
+.admin-hero-glass-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-hero-glass-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.admin-hero-glass-val {
+  font-size: 1rem;
+  font-weight: 800;
+  line-height: 1.2;
+  color: #ffffff;
+}
+
+.admin-hero-glass-sub {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ── Hero Glowing Circles ── */
+.admin-welcome-banner .hero-decoration {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.admin-welcome-banner .hero-circle-1 {
+  width: 320px;
+  height: 320px;
+  top: -120px;
+  right: -60px;
+}
+
+.admin-welcome-banner .hero-circle-2 {
+  width: 220px;
+  height: 220px;
+  bottom: -70px;
+  left: 25%;
+}
+
+.admin-welcome-banner .hero-circle-3 {
+  width: 160px;
+  height: 160px;
+  top: 40%;
+  right: 30%;
+}
+
+@media (max-width: 900px) {
+  .admin-welcome-banner.hero-redesign {
+    padding: 28px 24px;
+  }
+  .admin-welcome-banner .hero-text h1 {
+    font-size: 1.85rem;
+  }
+  .admin-hero-cards {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .admin-hero-glass-card {
+    flex: 1 1 220px;
+  }
+}
+
 .dash-header-right {
   display: flex;
   flex-wrap: wrap;

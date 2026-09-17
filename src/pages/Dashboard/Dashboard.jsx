@@ -36,9 +36,11 @@ import PptDeckOpenBoot from '../Slides/AIPptComponents/PptDeckOpenBoot.jsx'
 import CanvasEditor from '../CanvasEditor/CanvasEditor.jsx'
 import { getAvatarTypeOption } from '../Avatars/avatarTypeOptions.js'
 import NotificationsQuickModal from '../../components/ui/NotificationsQuickModal/NotificationsQuickModal.jsx'
+import AdminAlertsQuickModal from '../../components/ui/AdminAlertsQuickModal/AdminAlertsQuickModal.jsx'
 import CreditsQuickModal from '../../components/ui/CreditsQuickModal/CreditsQuickModal.jsx'
 import { useInboxUnreadCount } from '../../hooks/useInboxUnreadCount.js'
 import userService from '../../services/userService.js'
+import superadminService from '../../services/superadminService.js'
 import { useAuth } from '../../contexts/AuthContext'
 import { bundleToDetailsTemplate } from '../../utils/fetchTemplateBundles.js'
 import {
@@ -116,10 +118,33 @@ function Dashboard({ onCreate, initialSection }) {
     return valid.includes(saved) ? saved : 'overview'
   })
   const [settingsInitialTab, setSettingsInitialTab] = useState(() => resolveSettingsTabFromSearch())
+  const [showAdminAlertsModal, setShowAdminAlertsModal] = useState(false)
+  const [adminAlertsCount, setAdminAlertsCount] = useState(0)
 
   const cartCount = 2
   const { unreadCount: notificationCount, refresh: refreshInboxUnread, setUnreadCount: setInboxUnreadCount } =
     useInboxUnreadCount()
+
+  const refreshAdminAlerts = useCallback(() => {
+    if (!canAccessSuperadminPortal) return
+    superadminService.getAlertsSummary()
+      .then((data) => {
+        if (!data) return
+        const unread = Number(data.unreadPlatformCount ?? 0)
+        const lowHeygen = data.heygenWallet?.isLow ? 1 : 0
+        const pendingStorage = Number(data.pendingStorageCount ?? data.pendingStorageRequestsCount ?? 0)
+        const pendingEarly = Number(data.pendingEarlyAccessCount ?? 0)
+        const total = unread + lowHeygen + pendingStorage + pendingEarly
+        setAdminAlertsCount(total)
+      })
+      .catch(() => {})
+  }, [canAccessSuperadminPortal])
+
+  useEffect(() => {
+    if (canAccessSuperadminPortal) {
+      refreshAdminAlerts()
+    }
+  }, [canAccessSuperadminPortal, refreshAdminAlerts, section])
 
   const dashboardSearch = useDashboardSearch()
 
@@ -570,10 +595,16 @@ function Dashboard({ onCreate, initialSection }) {
           setCreateMenuContext(null)
           setShowCreateMenu(true)
         }}
-        notificationCount={notificationCount}
+        notificationCount={isAdminPortal ? adminAlertsCount : notificationCount}
         cartCount={cartCount}
         goToSection={handleNavigationWithModal}
-        onNotificationClick={() => setShowNotificationsModal(true)}
+        onNotificationClick={() => {
+          if (isAdminPortal) {
+            setShowAdminAlertsModal(true)
+          } else {
+            setShowNotificationsModal(true)
+          }
+        }}
         onCartClick={() => setShowCreditsModal(true)}
         isAdminPortal={isAdminPortal}
         searchQuery={dashboardSearch.query}
@@ -962,6 +993,20 @@ function Dashboard({ onCreate, initialSection }) {
             goToSection('settings')
           }}
           onNavigate={notificationNavigateHandlers}
+        />
+      )}
+
+      {/* Admin Platform Alerts Modal Overlay */}
+      {showAdminAlertsModal && (
+        <AdminAlertsQuickModal
+          onClose={() => {
+            setShowAdminAlertsModal(false)
+            refreshAdminAlerts()
+          }}
+          onNavigateTab={(tabId) => {
+            handleAdminTabChange(tabId)
+            setShowAdminAlertsModal(false)
+          }}
         />
       )}
 
