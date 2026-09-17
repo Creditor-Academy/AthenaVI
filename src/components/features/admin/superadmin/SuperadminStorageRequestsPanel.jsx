@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { HardDrive, ChevronLeft, ChevronRight, X, Check } from 'lucide-react'
 import superadminService from '../../../../services/superadminService'
 import { formatBytes, formatDate, storageStatusLabel } from './superadminUtils'
-import '../../../../pages/AdminPortal/SuperadminPortal.css'
+import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
 
 const PAGE_SIZE = 20
 const STATUS_OPTIONS = [

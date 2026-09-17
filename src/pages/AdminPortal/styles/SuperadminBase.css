@@ -1,0 +1,678 @@
+/* ==========================================================================
+   Superadmin Portal Base Styles
+   Shared foundation for all .sa-* panels: cards, split layouts, lists,
+   inputs, buttons, tabs, tables, alerts, badges, loading spinners, and pagination.
+   ========================================================================== */
+
+/* ── Themed thin scrollbars for all superadmin scroll areas ── */
+.sa-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--text-muted) 35%, transparent) transparent;
+}
+
+.sa-scroll::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.sa-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sa-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-muted) 30%, var(--border-color));
+  border-radius: 99px;
+}
+
+.sa-scroll::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--primary) 50%, var(--text-muted));
+}
+
+/* ── Superadmin Root Portal & Panels ── */
+.sa-portal {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--text-main);
+  font-family: var(--font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+}
+
+.sa-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Content that should flow naturally and let the single outer app-shell
+   scrollbar handle scrolling (matches Home/dashboard pages), instead of
+   opening a second, nested scroll region inside an already-scrolling shell. */
+.sa-portal--flow {
+  height: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.sa-panel--flow {
+  flex: none;
+  overflow: visible;
+}
+
+.sa-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--primary) 6%, transparent) 0%, transparent 100%);
+  padding: 16px 20px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--primary) 12%, var(--border-color));
+  margin-bottom: 4px;
+}
+
+.sa-panel-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+}
+
+.sa-panel-desc {
+  margin: 4px 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  max-width: 54ch;
+}
+
+.sa-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── Form Inputs & Selects ── */
+.sa-input,
+.sa-select {
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font: inherit;
+  font-size: 0.875rem;
+  min-width: 0;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.sa-input:hover:not(:focus):not(:disabled),
+.sa-select:hover:not(:focus):not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border-color));
+}
+
+.sa-input:focus,
+.sa-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.14);
+}
+
+.sa-input:disabled,
+.sa-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sa-input--search {
+  width: min(280px, 100%);
+}
+
+.sa-search-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: min(260px, 100%);
+}
+
+.sa-search-field-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  flex-shrink: 0;
+  font-size: 15px;
+}
+
+.sa-search-field .sa-input {
+  width: 100%;
+  padding-left: 36px;
+}
+
+.sa-search-field--wide {
+  flex: 1;
+  width: auto;
+  max-width: 400px;
+}
+
+.sa-lookup-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.sa-input--wide {
+  width: min(360px, 100%);
+}
+
+/* ── Superadmin Buttons ── */
+.sa-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.sa-btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border-color));
+  color: var(--text-main);
+  transform: translateY(-1px);
+}
+
+.sa-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sa-btn--primary {
+  background: linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 85%, #2563eb) 100%);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(var(--primary-rgb), 0.22);
+}
+
+.sa-btn--primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 90%, #2563eb) 0%, var(--primary) 100%);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(var(--primary-rgb), 0.35);
+  transform: translateY(-1px);
+}
+
+.sa-btn--danger {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.sa-btn--danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+}
+
+.sa-btn--ghost {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--primary) 25%, var(--border-color));
+  color: var(--primary);
+}
+
+.sa-btn--ghost:hover:not(:disabled) {
+  background: rgba(var(--primary-rgb), 0.12);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.sa-btn--sm {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 0.75rem;
+  border-radius: 8px;
+}
+
+/* ── Master-Detail Split Layout ── */
+.sa-split {
+  display: grid;
+  grid-template-columns: minmax(0, 240px) minmax(0, 1fr);
+  gap: 14px;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Superadmin Cards ── */
+.sa-card {
+  background: linear-gradient(135deg, var(--bg-card) 0%, color-mix(in srgb, var(--primary) 3%, var(--bg-card)) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  overflow: hidden;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+.sa-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border-color));
+}
+
+.sa-card--flush {
+  padding: 0;
+}
+
+.sa-card-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--bg-card) 70%, transparent);
+}
+
+.sa-card-header h3 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.sa-card-body {
+  padding: 16px;
+  overflow: auto;
+  min-height: 0;
+  flex: 1;
+}
+
+.sa-card--list {
+  min-height: 0;
+}
+
+.sa-card--detail {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sa-list-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ── Card Header Count Badge ── */
+.sa-card-header-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* ── List Styles ── */
+.sa-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sa-list-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 10px 12px;
+  border: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition: background 0.15s ease;
+  min-width: 0;
+}
+
+.sa-list-item:hover {
+  background: linear-gradient(90deg, rgba(var(--primary-rgb), 0.08) 0%, transparent 100%);
+}
+
+.sa-list-item--active {
+  background: linear-gradient(90deg, rgba(var(--primary-rgb), 0.14) 0%, transparent 100%);
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+
+.sa-list-item-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.sa-list-item-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  color: var(--text-main);
+}
+
+.sa-list-item-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.sa-list-item-email {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.sa-list-item-credits {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.sa-list-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.sa-list-search .sa-search-field-icon {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.sa-input--list-search {
+  width: 100%;
+  height: 32px;
+  padding: 0 10px 0 28px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+/* ── Tab Bar in Panels ── */
+.sa-tab-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--bg-card) 80%, transparent);
+}
+
+.sa-tab {
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.sa-tab:hover:not(.sa-tab--active) {
+  background: color-mix(in srgb, var(--text-muted) 10%, transparent);
+  color: var(--text-main);
+}
+
+.sa-tab--active {
+  background: rgba(var(--primary-rgb), 0.12);
+  color: var(--primary);
+  border-color: rgba(var(--primary-rgb), 0.25);
+}
+
+.sa-tab-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sa-tab-pane {
+  padding: 16px;
+}
+
+/* ── Badges ── */
+.sa-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.sa-badge--admin {
+  background: rgba(var(--primary-rgb), 0.14);
+  color: var(--primary);
+  border: 1px solid rgba(var(--primary-rgb), 0.25);
+}
+
+.sa-badge--type {
+  background: color-mix(in srgb, var(--text-muted) 12%, transparent);
+  color: var(--text-muted);
+}
+
+/* ── Empty & Loading States ── */
+.sa-empty {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.sa-empty-icon {
+  margin: 0 auto 12px;
+  opacity: 0.45;
+}
+
+.sa-empty--fill {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.sa-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.sa-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: sa-spin 0.7s linear infinite;
+}
+
+@keyframes sa-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Tables ── */
+.sa-table-wrap {
+  overflow: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.sa-tab-pane .sa-table-wrap {
+  overflow: visible;
+  max-height: none;
+  margin-top: 12px;
+}
+
+.sa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.sa-table th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--bg-card) 70%, transparent);
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.sa-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
+  vertical-align: top;
+  color: var(--text-main);
+}
+
+.sa-table tr:last-child td {
+  border-bottom: none;
+}
+
+.sa-table tbody tr:hover {
+  background: rgba(var(--primary-rgb), 0.04);
+}
+
+.sa-amount--positive {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.sa-amount--negative {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* ── Pagination ── */
+.sa-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--border-color);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ── Alerts ── */
+.sa-alert {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  margin-bottom: 12px;
+}
+
+.sa-alert--error {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #ef4444;
+}
+
+.sa-alert--success {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  color: #10b981;
+}
+
+/* ── Responsive Rules ── */
+@media (max-width: 960px) {
+  .sa-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .sa-panel-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .sa-search-field {
+    width: 100%;
+  }
+}

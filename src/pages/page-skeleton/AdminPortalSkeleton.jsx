@@ -1,4 +1,4 @@
-import '../AdminPortal/SuperadminPortal.css'
+import '../AdminPortal/styles/SuperadminBase.css'
 import './skeleton.css'
 
 const AdminPortalSkeleton = () => {

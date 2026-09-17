@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { BarChart3, Users, Building2, Calendar, Zap, TrendingUp, Activity } from 'lucide-react'
 import superadminService from '../../../../services/superadminService'
 import { defaultReportRange, formatAc, isValidUuid } from './superadminUtils'
-import '../../../../pages/AdminPortal/SuperadminPortal.css'
+import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
+import '../../../../pages/AdminPortal/styles/AdminReports.css'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
