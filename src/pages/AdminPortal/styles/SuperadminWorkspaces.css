@@ -1,0 +1,97 @@
+/* ==========================================================================
+   Superadmin Workspaces Panel Styles
+   Workspace metric cards, metadata grids, and statistics overview.
+   ========================================================================== */
+
+/* ── Workspace Metric Cards ── */
+.sa-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.sa-metric-card {
+  padding: 18px 20px;
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: linear-gradient(135deg, var(--bg-card) 0%, color-mix(in srgb, var(--primary) 6%, var(--bg-card)) 100%);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+.sa-metric-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border-color));
+  box-shadow: 0 8px 24px rgba(var(--primary-rgb), 0.14);
+  transform: translateY(-2px);
+}
+
+.sa-metric-card-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sa-metric-card-value {
+  font-size: 1.5rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+}
+
+.sa-metric-card-note {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* ── Workspace Metadata Grid ── */
+.sa-workspace-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.sa-meta-item {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--bg-card) 95%, transparent) 0%, color-mix(in srgb, var(--primary) 5%, var(--bg-card)) 100%);
+  transition: all 0.18s ease;
+}
+
+.sa-meta-item:hover {
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border-color));
+  transform: translateY(-1px);
+}
+
+.sa-meta-item--inline {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.sa-meta-item span {
+  display: block;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.sa-meta-item strong {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+@media (max-width: 960px) {
+  .sa-metrics {
+    grid-template-columns: 1fr;
+  }
+}

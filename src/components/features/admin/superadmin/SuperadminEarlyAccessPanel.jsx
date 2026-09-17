@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Search, ChevronLeft, ChevronRight, X, Clock, CheckCircle, XCircle, MessageSquare, Eye, AlertTriangle } from 'lucide-react'
 import superadminService from '../../../../services/superadminService'
 import { formatDate } from './superadminUtils'
-import '../../../../pages/AdminPortal/SuperadminPortal.css'
+import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
 
 /* ── constants ──────────────────────────────────────────── */
 

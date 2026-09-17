@@ -1,0 +1,495 @@
+/* ==========================================================================
+   Superadmin Users Panel Styles
+   Profile identity cards, stat pills, transaction feed, credit actions,
+   and user detail management.
+   ========================================================================== */
+
+/* ── Detail Hero Header ── */
+.sa-detail-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.sa-detail-hero-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sa-detail-name {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+}
+
+.sa-detail-email {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
+.sa-detail-joined {
+  margin: 6px 0 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  opacity: 0.75;
+}
+
+/* ── Section Dividers & Labels ── */
+.sa-section-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 18px 0;
+  opacity: 0.7;
+}
+
+.sa-section-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+/* ── Stat Pill ── */
+.sa-stat-pill {
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, var(--bg-card)) 0%, color-mix(in srgb, var(--primary) 15%, var(--bg-card)) 100%);
+  border: 1px solid color-mix(in srgb, var(--primary) 24%, var(--border-color));
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.sa-stat-pill:hover {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border-color));
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.15);
+}
+
+.sa-stat-pill-label {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.sa-stat-pill-value {
+  font-size: 1.25rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: var(--primary);
+}
+
+/* ── Profile Identity in Profile Tab ── */
+.sa-profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 4px 0 20px;
+}
+
+.sa-profile-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 20%, var(--bg-card)) 0%, color-mix(in srgb, var(--primary) 30%, var(--bg-card)) 100%);
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border-color));
+  color: var(--primary);
+  font-size: 1.25rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: -0.01em;
+  box-shadow: 0 2px 10px rgba(var(--primary-rgb), 0.18);
+}
+
+.sa-profile-identity-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sa-profile-display-name {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-main);
+}
+
+.sa-profile-display-email {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
+/* ── Profile Stats Row ── */
+.sa-profile-stats {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  background: var(--bg-card);
+}
+
+.sa-profile-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+}
+
+.sa-profile-stat span {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.sa-profile-stat strong {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.sa-profile-stat-divider {
+  width: 1px;
+  background: var(--border-color);
+  flex-shrink: 0;
+}
+
+/* ── Profile Detail Grid Rows ── */
+.sa-profile-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-card);
+}
+
+.sa-profile-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 14px;
+  background: color-mix(in srgb, var(--bg-card) 95%, transparent);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sa-profile-item:last-child {
+  border-bottom: none;
+}
+
+.sa-profile-item span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  flex-shrink: 0;
+  min-width: 100px;
+}
+
+.sa-profile-item strong {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: right;
+  color: var(--text-main);
+}
+
+/* ── Credit Action Grant/Revoke Cards ── */
+.sa-action-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.sa-action-card {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-card);
+}
+
+.sa-action-card--grant {
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.sa-action-card--revoke {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.sa-action-card-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  background: color-mix(in srgb, var(--bg-card) 80%, transparent);
+}
+
+.sa-action-card-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sa-action-card-dot--grant {
+  background: #22c55e;
+}
+
+.sa-action-card-dot--revoke {
+  background: #ef4444;
+}
+
+.sa-action-form {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sa-field--inline {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.sa-input--amount {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+  padding: 0 10px;
+  font-size: 0.8125rem;
+}
+
+.sa-reason-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-align: left;
+  opacity: 0.8;
+  transition: opacity 0.12s;
+  width: fit-content;
+}
+
+.sa-reason-toggle:hover:not(:disabled) {
+  opacity: 1;
+  color: var(--text-main);
+}
+
+.sa-reason-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.sa-reason-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font: inherit;
+  font-size: 0.8125rem;
+  resize: vertical;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.sa-reason-input:hover:not(:focus):not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border-color));
+}
+
+.sa-reason-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.14);
+}
+
+.sa-field label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.sa-field textarea {
+  width: 100%;
+  min-height: 56px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font: inherit;
+  font-size: 0.8125rem;
+  resize: vertical;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.sa-field textarea:hover:not(:focus):not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border-color));
+}
+
+.sa-field textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.14);
+}
+
+/* ── Transaction Feed ── */
+.sa-tx-feed {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 12px;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--bg-card);
+}
+
+.sa-tx-feed::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sa-tx-feed::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sa-tx-feed::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-muted) 30%, var(--border-color));
+  border-radius: 99px;
+}
+
+.sa-tx-feed::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--primary) 50%, var(--text-muted));
+}
+
+.sa-tx-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
+  transition: background 0.12s ease;
+}
+
+.sa-tx-row:last-child {
+  border-bottom: none;
+}
+
+.sa-tx-row:hover {
+  background: rgba(var(--primary-rgb), 0.05);
+}
+
+.sa-tx-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sa-tx-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sa-tx-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.sa-tx-type {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  flex-shrink: 0;
+  color: var(--text-main);
+}
+
+.sa-tx-ref {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sa-tx-date {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  opacity: 0.75;
+}
+
+.sa-tx-amount {
+  font-size: 0.875rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: -0.01em;
+}
+
+.sa-history-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg-card);
+  padding: 12px 16px;
+  margin: -16px -16px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+@media (max-width: 960px) {
+  .sa-action-row {
+    grid-template-columns: 1fr;
+  }
+}

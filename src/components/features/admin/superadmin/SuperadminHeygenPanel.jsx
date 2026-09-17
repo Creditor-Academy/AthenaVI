@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import { RefreshCw, AlertTriangle, CheckCircle, Wallet, CreditCard, Zap, Video, Mail, Clock, DollarSign, Coins, Ban, Sparkles } from 'lucide-react'
 import superadminService from '../../../../services/superadminService'
 import { formatDate } from './superadminUtils'
-import '../../../../pages/AdminPortal/SuperadminPortal.css'
+import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
+import '../../../../pages/AdminPortal/styles/SuperadminHeyGen.css'
 import '../../../../pages/page-skeleton/skeleton.css'
 
 /* ─── skeleton ────────────────────────────────────────────── */

@@ -1,0 +1,433 @@
+/* ==========================================================================
+   Admin Portal Base Styles
+   Shared foundation styles: layout, headers, tabs, buttons, tables, badges,
+   scrollbars, and responsive queries.
+   ========================================================================== */
+
+.admin-page {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  background: transparent;
+  color: var(--text-main);
+  box-sizing: border-box;
+  font-family: var(--font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+}
+
+.admin-shell {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.admin-page-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+}
+
+.admin-page-subtitle {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+/* ── Primary Tab Switch ── */
+.admin-tab-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 16px;
+}
+
+.admin-tab-btn {
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  border-radius: 12px;
+  padding: 8px 16px;
+  min-height: 40px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.admin-tab-btn:hover {
+  color: var(--text-main);
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border-color));
+  background: color-mix(in srgb, var(--primary) 6%, var(--bg-card));
+  transform: translateY(-1px);
+}
+
+.admin-tab-btn.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 85%, #2563eb) 100%);
+  border-color: var(--primary);
+  box-shadow: 0 4px 14px rgba(var(--primary-rgb), 0.25);
+}
+
+.admin-tab-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+/* ── Sub-tabs navigation ── */
+.admin-sub-tab-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-main);
+  padding-top: 20px;
+}
+
+.admin-sub-tab-btn {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 8px;
+  padding: 6px 12px;
+  min-height: 32px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  transition: all 0.18s ease;
+}
+
+.admin-sub-tab-btn:hover {
+  color: var(--text-main);
+  background: color-mix(in srgb, var(--text-muted) 10%, transparent);
+}
+
+.admin-sub-tab-btn.active {
+  color: var(--primary);
+  background: rgba(var(--primary-rgb), 0.12);
+  border-color: rgba(var(--primary-rgb), 0.25);
+  font-weight: 600;
+}
+
+.admin-sub-tab-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.admin-sub-tab-content {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Admin Scrollable Main ── */
+.admin-main {
+  flex: 1;
+  padding: 0;
+  overflow-y: auto;
+  background: transparent;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.admin-main::-webkit-scrollbar {
+  display: none;
+}
+
+.admin-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ── Standard Admin Buttons ── */
+.btn-admin-action {
+  padding: 9px 18px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+}
+
+.btn-admin-action:hover {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border-color));
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  padding: 9px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: color-mix(in srgb, var(--text-muted) 10%, var(--bg-surface));
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border-color));
+  transform: translateY(-1px);
+}
+
+.btn-export {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+}
+
+.btn-alert {
+  background: #ef4444;
+  color: white;
+  border: none;
+}
+
+.btn-alert:hover {
+  background: #dc2626;
+}
+
+/* ── Generic Card Section ── */
+.admin-card-section {
+  background: linear-gradient(135deg, var(--bg-card) 0%, color-mix(in srgb, var(--primary) 4%, var(--bg-card)) 100%);
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  transition: all 0.25s ease;
+}
+
+.admin-card-section:hover {
+  border-color: color-mix(in srgb, var(--primary) 28%, var(--border-color));
+  box-shadow: 0 8px 28px rgba(var(--primary-rgb), 0.08);
+}
+
+.admin-card-section h2 {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-main);
+}
+
+/* ── Admin Table Styles ── */
+.admin-table-container {
+  overflow-x: auto;
+  border-radius: 12px;
+}
+
+table.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 0.75rem;
+  font-weight: 650;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--bg-card) 60%, transparent);
+}
+
+.admin-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
+  font-size: 0.875rem;
+  color: var(--text-main);
+  transition: background 0.15s ease;
+}
+
+.admin-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--primary) 4%, transparent);
+}
+
+/* ── Status & Plan Badges ── */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.status-active {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-suspended {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.status-queued {
+  background: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.status-processing {
+  background: rgba(234, 179, 8, 0.12);
+  color: #eab308;
+  border: 1px solid rgba(234, 179, 8, 0.2);
+}
+
+.status-done {
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-failed {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.plan-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.plan-tag.plan-private {
+  background: rgba(107, 114, 128, 0.12);
+  color: #9ca3af;
+  border: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+.plan-tag.plan-team {
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--primary);
+  border: 1px solid rgba(var(--primary-rgb), 0.2);
+}
+
+/* ── Custom Scrollbars ── */
+.logs-feed::-webkit-scrollbar,
+.admin-table-container::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.logs-feed::-webkit-scrollbar-track,
+.admin-table-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.logs-feed::-webkit-scrollbar-thumb,
+.admin-table-container::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--text-muted) 30%, var(--border-color));
+  border-radius: 999px;
+  transition: background 0.2s ease;
+}
+
+.logs-feed::-webkit-scrollbar-thumb:hover,
+.admin-table-container::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--primary) 50%, var(--text-muted));
+}
+
+.logs-feed,
+.admin-table-container {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--text-muted) 30%, var(--border-color)) transparent;
+}
+
+/* ── Responsive Breakpoints ── */
+@media (max-width: 1024px) {
+  .admin-page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .admin-toolbar-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-tab-switch {
+    gap: 6px;
+    padding-bottom: 10px;
+  }
+
+  .admin-tab-btn {
+    padding: 7px 12px;
+    min-height: 36px;
+    font-size: 0.75rem;
+  }
+
+  .admin-main {
+    padding-top: 14px;
+  }
+}

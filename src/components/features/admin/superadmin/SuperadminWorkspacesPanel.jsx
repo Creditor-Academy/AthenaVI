@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState } from 'react'
 import { Search, ChevronLeft, ChevronRight, X, Building2 } from 'lucide-react'
 import superadminService, { SuperadminApiError } from '../../../../services/superadminService'
 import { formatAc, formatDate, txTypeLabel } from './superadminUtils'
-import '../../../../pages/AdminPortal/SuperadminPortal.css'
+import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
+import '../../../../pages/AdminPortal/styles/SuperadminWorkspaces.css'
+import '../../../../pages/AdminPortal/styles/SuperadminUsers.css'
+import '../../../../pages/AdminPortal/styles/SuperadminDrawer.css'
 import '../../../../pages/page-skeleton/skeleton.css'
 
 const PAGE_SIZE = 20

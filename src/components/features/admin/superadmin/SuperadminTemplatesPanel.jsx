@@ -15,7 +15,7 @@ import {
 } from '../../../../utils/deckLayoutSchema'
 import { aspectRatioToCss, DECK_PACK_THEMES, resolveDeckPackTheme } from '../../../../utils/deckPackTheme'
 import { parseRegion, regionToBox, SLOT_COLORS } from '../../../../utils/layoutPreviewUtils'
-import '../../../../pages/AdminPortal/SuperadminPortal.css'
+import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
 
 // ─── constants ────────────────────────────────────────────────────────────────
 

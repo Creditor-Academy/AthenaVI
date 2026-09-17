@@ -6,7 +6,8 @@ import {
 } from 'lucide-react'
 import superadminService from '../../../../services/superadminService'
 import { defaultReportRange, formatAc, formatDate } from './superadminUtils'
-import '../../../../pages/AdminPortal/SuperadminPortal.css'
+import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
+import '../../../../pages/AdminPortal/styles/AdminPlatform.css'
 
 // ── Small helpers ─────────────────────────────────────────────────────────────
 

@@ -3,7 +3,9 @@ import { Search, ChevronLeft, ChevronRight, X, Shield } from 'lucide-react'
 import superadminService, { SuperadminApiError } from '../../../../services/superadminService'
 import { formatAc, formatDate, formatShortDate, txTypeLabel, formatBytes, storageTxTypeLabel } from './superadminUtils'
 import { useAuth } from '../../../../contexts/AuthContext'
-import '../../../../pages/AdminPortal/SuperadminPortal.css'
+import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
+import '../../../../pages/AdminPortal/styles/SuperadminUsers.css'
+import '../../../../pages/AdminPortal/styles/SuperadminDrawer.css'
 import '../../../../pages/page-skeleton/skeleton.css'
 
 /* Simple inline skeleton component */

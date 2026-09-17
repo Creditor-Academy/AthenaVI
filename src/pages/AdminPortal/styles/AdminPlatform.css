@@ -1,0 +1,438 @@
+/* ==========================================================================
+   Admin Platform Panel Styles
+   Platform controls, toggles, worker pool grid, kanban board, moderation, and logs.
+   ========================================================================== */
+
+/* ── Worker Pool Grid ── */
+.worker-pool-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.worker-pool-card {
+  background: linear-gradient(135deg, var(--bg-card) 0%, color-mix(in srgb, var(--primary) 3%, var(--bg-card)) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 18px;
+  transition: all 0.22s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+.worker-pool-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(var(--primary-rgb), 0.12);
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border-color));
+}
+
+.worker-pool-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.worker-pool-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.worker-pool-status {
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.worker-pool-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.worker-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+/* ── Kanban Board ── */
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(260px, 1fr));
+  gap: 16px;
+  overflow-x: auto;
+}
+
+.kanban-column {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 16px;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+.kanban-column-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.kanban-column-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.kanban-column-count {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--text-muted) 12%, transparent);
+  color: var(--text-muted);
+}
+
+.kanban-column-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kanban-job-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 14px;
+  transition: all 0.2s ease;
+}
+
+.kanban-job-card:hover {
+  background: var(--bg-card);
+  transform: translateY(-2px);
+  border-color: var(--primary);
+  box-shadow: 0 4px 14px rgba(var(--primary-rgb), 0.12);
+}
+
+.kanban-job-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.kanban-job-id {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.kanban-job-type {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.kanban-job-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.kanban-job-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.kanban-job-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 32px;
+}
+
+.kanban-job-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  background: rgba(239, 68, 68, 0.12);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  color: #ef4444;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.kanban-requeue-btn {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+  background: rgba(234, 179, 8, 0.12);
+  color: #b45309;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  transition: all 0.18s ease;
+}
+
+.kanban-requeue-btn:hover {
+  background: rgba(234, 179, 8, 0.2);
+  transform: translateY(-1px);
+}
+
+.kanban-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 36px 16px;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* ── Control Panel Items & Toggles ── */
+.controls-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.control-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  transition: border-color 0.2s ease;
+}
+
+.control-item:hover {
+  border-color: color-mix(in srgb, var(--primary) 25%, var(--border-color));
+}
+
+.control-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.control-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.control-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.toggle-switch {
+  width: 42px;
+  height: 22px;
+  background: var(--bg-main);
+  border-radius: 999px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.toggle-switch.on {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.toggle-knob {
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toggle-switch.on .toggle-knob {
+  left: calc(100% - 18px);
+}
+
+/* ── Moderation Queue ── */
+.mod-queue-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
+}
+
+.mod-thumb {
+  width: 56px;
+  height: 38px;
+  border-radius: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+}
+
+.mod-info {
+  flex: 1;
+}
+
+.mod-user {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: var(--text-main);
+}
+
+.mod-time {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.mod-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-mod-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  transition: all 0.18s ease;
+}
+
+.btn-mod-icon:hover {
+  background: color-mix(in srgb, var(--primary) 12%, var(--bg-card));
+  border-color: var(--primary);
+}
+
+/* ── System Logs Feed ── */
+.log-item {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+  font-size: 0.8125rem;
+}
+
+.log-type {
+  width: 4px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.log-type.error { background: #ef4444; }
+.log-type.success { background: #10b981; }
+
+.log-content {
+  flex: 1;
+}
+
+.log-msg {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.log-time {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  margin-top: 2px;
+}
+
+.log-filter-chip {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  transition: all 0.18s ease;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+}
+
+.log-filter-chip:hover {
+  color: var(--text-main);
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border-color));
+}
+
+.log-filter-chip.active {
+  color: var(--primary);
+  background: rgba(var(--primary-rgb), 0.12);
+  border-color: var(--primary);
+}
+
+@media (max-width: 1200px) {
+  .kanban-board {
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .kanban-board {
+    grid-template-columns: 1fr;
+  }
+
+  .worker-pool-grid {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
+}

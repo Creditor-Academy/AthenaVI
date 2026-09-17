@@ -4,7 +4,7 @@ import { Mail, Send, Users, Eye, X, ChevronRight, RefreshCw, AlertTriangle, Chec
 import superadminService from '../../../../services/superadminService'
 import { formatDate } from './superadminUtils'
 import { EMAIL_TEMPLATES } from './broadcastTemplates'
-import '../../../../pages/AdminPortal/SuperadminPortal.css'
+import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
