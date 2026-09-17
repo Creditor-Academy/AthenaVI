@@ -16,6 +16,7 @@ import {
   milestonesImageSplitInlineSvg,
   milestonesPathInlineSvg,
 } from '../../utils/timelineProcessSvg'
+import { processLinearHortiPreviewSvg } from '../../utils/processLinearHortiLayout.js'
 
 const PREVIEW_TITLE_FS = { large: '1.75rem', small: '0.36rem' }
 const PREVIEW_SUBTITLE_FS = { large: '1rem', small: '0.48rem' }
@@ -313,30 +314,15 @@ export function PolishedTimelineProcessStepsPreview({ previewHints, large, ...pr
 }
 
 export function PolishedProcessLinnerHortiPreview({ previewHints, large, ...props }) {
-  const variant = previewHints.dataVariant || previewHints.timelineVariant || 'default'
-  if (variant === 'path' || variant === 'cards') {
-    return <PolishedProcessFlowPreview previewHints={{ ...previewHints, timelineVariant: variant }} large={large} {...props} />
-  }
   const fp = frameProps({ ...props, large })
-  const heading = slotText(previewHints, 'HEADING', 'How it works')
-  const steps = resolveSteps(previewHints, [
-    { title: 'Phase 1', body: 'Research and define.' },
-    { title: 'Phase 2', body: 'Design and iterate.' },
-    { title: 'Phase 3', body: 'Ship and improve.' },
-  ])
-  const count = Math.min(steps.length, 4)
-
+  const svg = processLinearHortiPreviewSvg(previewHints, theme)
   return (
-    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 12 : 4 }}>
-      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 800, color: theme.text, flexShrink: 0 }}>
-        {heading}
-      </div>
-      <SvgChrome
-        html={processLinnerHortiInlineSvg(count, { accent: theme.accent, phase: '#e8b4a0', spine: theme.text })}
-        large={large}
-        style={{ height: large ? 130 : 48 }}
+    <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden', padding: 0 }}>
+      <div
+        aria-hidden
+        style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+        dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
       />
-      <StepLabels steps={steps} large={large} count={count} />
     </div>
   )
 }

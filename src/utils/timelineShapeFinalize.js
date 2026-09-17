@@ -31,6 +31,10 @@ import {
   PYRAMID_BADGE_CLIP,
 } from './diagramPyramid'
 import { isProcessLinearBusinessLayout } from './processLinearBusinessLayout'
+import { isProcessLinearHortiLayout } from './processLinearHortiLayout'
+import { isProcessLinearHorizontalLayout } from './processLinearHorizontalLayout'
+import { isProcessLinearHortiFourLayout } from './processLinearHortiFourLayout'
+import { isProcessLinearFourCardsLayout } from './processLinearFourCardsLayout'
 import {
   SWOT_N,
   SWOT_LETTERS,
@@ -227,7 +231,7 @@ function layoutHasExplicitCardBg(schema, groupKey) {
 
 export function applyDefaultCardShapes(elements, schema, palette = {}, canvas = {}) {
   if (!Array.isArray(elements) || !schema?.slots?.length) return elements
-  if (isProcessLinnerLayout(schema.layout_id) || isProcessLinearBusinessLayout(schema.layout_id)) return elements
+  if (isProcessLinnerLayout(schema.layout_id) || isProcessLinearBusinessLayout(schema.layout_id) || isProcessLinearHorizontalLayout(schema.layout_id) || isProcessLinearHortiFourLayout(schema.layout_id) || isProcessLinearFourCardsLayout(schema.layout_id) || /process_linear_numeric_cards/i.test(String(schema?.layout_id || ''))) return elements
 
   const slots = schema.slots
   const next = [...elements]
@@ -313,7 +317,7 @@ function updateElementBySlotId(elements, slotId, patchFn) {
 export function applyProcessLinnerHortiShapes(elements, schema, palette = {}, canvas = {}) {
   if (!Array.isArray(elements) || !schema?.slots?.length) return elements
   const layoutId = String(schema.layout_id || '')
-  if (isProcessLinearBusinessLayout(layoutId)) return elements
+  if (isProcessLinearBusinessLayout(layoutId) || isProcessLinearHortiLayout(layoutId) || isProcessLinearHorizontalLayout(layoutId) || isProcessLinearHortiFourLayout(layoutId) || isProcessLinearFourCardsLayout(layoutId)) return elements
   if (!isProcessLinnerHortiLayout(layoutId)) return elements
   if (elements.some((el) => String(el.slotId || '') === 'PROCESS_LINNER_SPINE')) return elements
 
@@ -518,102 +522,17 @@ export function applyProcessLinnerHortiShapes(elements, schema, palette = {}, ca
 }
 
 export function applyProcessLinnerNumericShapes(elements, schema, palette = {}, canvas = {}) {
-  if (!Array.isArray(elements) || !schema?.slots?.length) return elements
-  const layoutId = String(schema.layout_id || '')
-  if (!isProcessLinnerNumericLayout(layoutId)) return elements
-
-  let next = [...elements]
-  const lineColor = paletteColor(palette, 'text', '#0F172A')
-  const shadowColor = 'rgba(15, 23, 42, 0.12)'
-
-  const numberEls = next
-    .filter((el) => el.type === 'text' && /^STEP_\d+_NUMBER$/i.test(String(el.slotId || '')))
-    .sort((a, b) => (a.placement?.x ?? 0) - (b.placement?.x ?? 0))
-
-  numberEls.forEach((numEl) => {
-    const m = String(numEl.slotId || '').match(/^STEP_(\d+)_NUMBER$/i)
-    if (!m) return
-    const n = m[1]
-    const p = numEl.placement || {}
-    const slotLineY = (p.y ?? 0) + (p.height ?? 0) - 8
-    const lineWidth = Math.max(60, (p.width ?? 0) * 0.85)
-    const lineX = (p.x ?? 0) + ((p.width ?? 0) - lineWidth) / 2
-
-    if (!next.some((el) => el.slotId === `STEP_${n}_NUMBER_SLOT`)) {
-      next.unshift({
-        id: `shp-plinner-slot-${Math.random().toString(36).slice(2, 9)}`,
-        type: 'shape',
-        layer: 1,
-        placement: {
-          x: Math.round(lineX),
-          y: Math.round(slotLineY),
-          width: Math.round(lineWidth),
-          height: 3,
-          rotation: 0,
-          opacity: 1,
-        },
-        content: { shape: 'rect', fill: lineColor, layoutSurface: true },
-        role: 'decoration',
-        slotId: `STEP_${n}_NUMBER_SLOT`,
-      })
-
-      next.unshift({
-        id: `shp-plinner-shadow-${Math.random().toString(36).slice(2, 9)}`,
-        type: 'shape',
-        layer: 0,
-        placement: {
-          x: Math.round((p.x ?? 0) + 4),
-          y: Math.round(slotLineY + 2),
-          width: Math.round(lineWidth - 8),
-          height: 6,
-          rotation: 0,
-          opacity: 0.35,
-        },
-        content: { shape: 'rect', fill: shadowColor, borderRadius: 3, layoutSurface: true },
-        role: 'decoration',
-        slotId: `STEP_${n}_NUMBER_SHADOW`,
-      })
-    }
-
-    const iconSlotId = `STEP_${n}_ICON`
-    const iconEl = next.find((el) => el.slotId === iconSlotId)
-    if (iconEl && iconEl.type === 'text') {
-      const ip = iconEl.placement || {}
-      const size = Math.min(ip.width ?? 48, ip.height ?? 48, 48)
-      const cx = (ip.x ?? 0) + (ip.width ?? size) / 2
-      const cy = (ip.y ?? 0) + (ip.height ?? size) / 2
-      next = next.filter((el) => el.slotId !== iconSlotId)
-      next.push({
-        id: `shp-plinner-icon-${Math.random().toString(36).slice(2, 9)}`,
-        type: 'shape',
-        slotId: iconSlotId,
-        layer: iconEl.layer ?? 8,
-        placement: {
-          x: Math.round(cx - size / 2),
-          y: Math.round(cy - size / 2),
-          width: size,
-          height: size,
-          rotation: 0,
-          opacity: 1,
-        },
-        content: {
-          shape: 'circle',
-          fill: paletteColor(palette, 'iconFill', 'color-mix(in srgb, #64748b 18%, transparent)'),
-          stroke: paletteColor(palette, 'iconRing', 'color-mix(in srgb, #6366f1 32%, transparent)'),
-          strokeWidth: 1.5,
-          layoutSurface: true,
-        },
-        role: 'decoration',
-      })
-    }
-  })
-
-  return next
+  // Bypassed: process_linner_numeric is fully handled by layoutProcessLinearNumeric in chartShapeFinalize.
+  return elements
 }
 
 function isProcessFlowLayout(layoutId) {
   const id = String(layoutId || '').toLowerCase()
   if (/^process_linner_horti/.test(id)) return false
+  if (/^process_linner_numeric/.test(id) || /process_linear_numeric/.test(id)) return false
+  if (isProcessLinearHorizontalLayout(id)) return false
+  if (isProcessLinearHortiFourLayout(id)) return false
+  if (isProcessLinearFourCardsLayout(id)) return false
   return (
     /timeline/.test(id) ||
     /process_linear/.test(id) ||
@@ -662,6 +581,9 @@ export function applyTimelineConnectorShapes(elements, schema, palette = {}, can
   if (isProcessLinnerLayout(layoutId)) return elements
   if (isProcessLinnerHortiLayout(layoutId)) return elements
   if (isProcessLinearBusinessLayout(layoutId)) return elements
+  if (isProcessLinearHorizontalLayout(layoutId)) return elements
+  if (isProcessLinearHortiFourLayout(layoutId)) return elements
+  if (isProcessLinearFourCardsLayout(layoutId)) return elements
   if (!isProcessFlowLayout(layoutId)) return elements
 
   if (

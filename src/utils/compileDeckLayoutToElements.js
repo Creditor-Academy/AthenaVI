@@ -28,6 +28,12 @@ import { isTableWithDescriptionSideLayout } from './tableWithDescriptionSideLayo
 import { isTableTwoDescLayout } from './tableTwoDescLayout.js'
 import { isTableTwoDescCardsLayout } from './tableTwoDescCardsLayout.js'
 import { isProcessLinearBusinessLayout } from './processLinearBusinessLayout.js'
+import { isProcessLinearHortiLayout } from './processLinearHortiLayout.js'
+import { isProcessLinearHorizontalLayout } from './processLinearHorizontalLayout.js'
+import { isProcessLinearHortiFourLayout } from './processLinearHortiFourLayout.js'
+import { isProcessLinearFourCardsLayout } from './processLinearFourCardsLayout.js'
+import { isProcessLinearNumericLayout } from './processLinearNumericLayout.js'
+import { isProcessLinearNumericCardsLayout } from './processLinearNumericCardsLayout.js'
 import { isTableTwoSameHeaderLayout, isTableTwoSameHeaderCardsLayout } from './tableTwoSameHeaderLayout.js'
 import { isTimelineHorizontalLayout } from './timelineHorizontal.js'
 import { isTimelineVerticalLayout } from './timelineVertical.js'
@@ -464,9 +470,11 @@ function resolveSlotText(slot, contentBySlotId, schema, options = {}) {
   const keepTimelineVerticalCards = /timeline_vertical_cards_v1$/i.test(String(schema?.layout_id || ''))
   const keepTimelineRoadmap = /timeline_roadmap_v1$/i.test(String(schema?.layout_id || ''))
     && !/horizontal|lanes/i.test(String(schema?.layout_id || ''))
+  const keepProcessLinearNumeric = /process_linner_numeric|process_linear_numeric$/i.test(String(schema?.layout_id || ''))
+  const keepProcessLinearNumericCards = /process_linear_numeric_cards/i.test(String(schema?.layout_id || ''))
   if (
     placeholder &&
-    (!hasSlideContent || role === 'stat' || role === 'stat_label' || memberSlot || keepTableSingle || keepTableSingleCards || keepPricingThreePlans || keepPricingThreePlansFeatured || keepPricingThreeHighlight || keepPricingThreeHighlightSplit || keepPricingFourPlans || keepPricingFourPlansFeatured || keepPricingFourPara || keepPricingFourParaCards || keepPricingComparisonTable || keepPricingComparisonCards || keepTimelineHorizontal || keepTimelineHorizontalCards || keepTimelineMilestones || keepTimelineMilestonesCards || keepTimelineMilestonesImage || keepTimelineMilestonesImageRight || keepTimelineVertical || keepTimelineVerticalCards || keepTimelineRoadmap)
+    (!hasSlideContent || role === 'stat' || role === 'stat_label' || memberSlot || keepTableSingle || keepTableSingleCards || keepPricingThreePlans || keepPricingThreePlansFeatured || keepPricingThreeHighlight || keepPricingThreeHighlightSplit || keepPricingFourPlans || keepPricingFourPlansFeatured || keepPricingFourPara || keepPricingFourParaCards || keepPricingComparisonTable || keepPricingComparisonCards || keepTimelineHorizontal || keepTimelineHorizontalCards || keepTimelineMilestones || keepTimelineMilestonesCards || keepTimelineMilestonesImage || keepTimelineMilestonesImageRight || keepTimelineVertical || keepTimelineVerticalCards || keepTimelineRoadmap || keepProcessLinearNumeric || keepProcessLinearNumericCards)
   ) {
     return placeholder
   }
@@ -1124,6 +1132,12 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
       (isTableTwoDescLayout(schema?.layout_id) && (/^(T[12]_|DATASET_|TABLE_|TAG_|DESC_|HEADING|SUBTITLE)/i.test(String(el.slotId || '')))) ||
       (isTableTwoDescCardsLayout(schema?.layout_id) && (/^(T[12]_|DATASET_|TABLE_|TAG_|DESC_|SUB_|HEADING|SUBTITLE)/i.test(String(el.slotId || '')))) ||
       (isProcessLinearBusinessLayout(schema?.layout_id) && (/^(STEP_\d+_(TITLE|BODY|SHAPE|CHEVRON|CARD|ICON)|HEADING|PROCESS_LINEAR_CHROME)$/i.test(String(el.slotId || '')))) ||
+      (isProcessLinearHortiLayout(schema?.layout_id) && (/^(STEP_\d+_(TITLE|BODY|SHAPE|RING|ARC|DOT|ICON|BADGE)|HEADING|SUBTITLE|PROCESS_LINEAR_HORTI_CHROME)$/i.test(String(el.slotId || '')))) ||
+      (isProcessLinearHortiFourLayout(schema?.layout_id) && (/^(STEP_\d+_(TITLE|BODY|SHAPE|RING|ARC|DOT|ICON|BADGE)|HEADING|SUBTITLE|PROCESS_LINEAR_HORTI_CHROME)$/i.test(String(el.slotId || '')))) ||
+      (isProcessLinearHorizontalLayout(schema?.layout_id) && (/^(STEP_\d+_(TITLE|BODY|CARD|ICON)|HEADING|PROCESS_TRACK)$/i.test(String(el.slotId || '')))) ||
+      (isProcessLinearFourCardsLayout(schema?.layout_id) && (/^(STEP_\d+_(TITLE|BODY|CARD|ICON)|HEADING)$/i.test(String(el.slotId || '')))) ||
+      (isProcessLinearNumericLayout(schema?.layout_id) && (/^(STEP_\d+_(TITLE|BODY|SHAPE|NUMBER|PIN|SPINE)|HEADING|PROCESS_NUMERIC_SPINE)$/i.test(String(el.slotId || '')))) ||
+      (isProcessLinearNumericCardsLayout(schema?.layout_id) && (/^(STEP_\d+_(TITLE|BODY|CARD|SHAPE)|HEADING|BRIDGE_\d+_\d+)$/i.test(String(el.slotId || '')))) ||
       ((isTableTwoSameHeaderLayout(schema?.layout_id) || isTableTwoSameHeaderCardsLayout(schema?.layout_id)) && (/^(T[12]_|COL_[A-C]_HEADER|TAG_BADGE|HEADING|SUBTITLE|TABLE_HEADER)/i.test(String(el.slotId || '')))) ||
       (isTimelineHorizontalLayout(schema?.layout_id) && /^milestone_\d+_(label|num)$/i.test(String(el.slotId || ''))) ||
       (isTimelineHorizontalCardsLayout(schema?.layout_id) && /^milestone_\d+_(num|label|foot)$/i.test(String(el.slotId || ''))) ||

@@ -24,6 +24,12 @@ import { isTableWithDescriptionSideLayout, tableSidePreviewSvg } from '../../uti
 import { isTableTwoDescLayout, tableTwoDescPreviewSvg } from '../../utils/tableTwoDescLayout.js'
 import { isTableTwoDescCardsLayout, tableTwoDescCardsPreviewSvg } from '../../utils/tableTwoDescCardsLayout.js'
 import { isProcessLinearBusinessLayout, processLinearBusinessPreviewSvg } from '../../utils/processLinearBusinessLayout.js'
+import { isProcessLinearHortiLayout, processLinearHortiPreviewSvg } from '../../utils/processLinearHortiLayout.js'
+import { isProcessLinearHorizontalLayout, processLinearHorizontalPreviewSvg } from '../../utils/processLinearHorizontalLayout.js'
+import { isProcessLinearHortiFourLayout, processLinearHortiFourPreviewSvg } from '../../utils/processLinearHortiFourLayout.js'
+import { isProcessLinearFourCardsLayout, processLinearFourCardsPreviewSvg } from '../../utils/processLinearFourCardsLayout.js'
+import { isProcessLinearNumericLayout, processLinearNumericPreviewSvg } from '../../utils/processLinearNumericLayout.js'
+import { isProcessLinearNumericCardsLayout, processLinearNumericCardsPreviewSvg } from '../../utils/processLinearNumericCardsLayout.js'
 import {
   isTableTwoSameHeaderLayout,
   tableTwoSameHeaderPreviewSvg,
@@ -2278,6 +2284,106 @@ export default function LayoutPolishedPreview({
     )
   }
 
+  if (isProcessLinearHortiLayout(previewHints.layout_id)) {
+    const svg = processLinearHortiPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    const t = LAYOUT_POLISHED_THEME
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isProcessLinearHortiFourLayout(previewHints.layout_id) || previewMode === 'process_linner_horti_four') {
+    const svg = processLinearHortiFourPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    const t = LAYOUT_POLISHED_THEME
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isProcessLinearNumericLayout(previewHints.layout_id) || previewMode === 'process_linner_numeric') {
+    const svg = processLinearNumericPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isProcessLinearNumericCardsLayout(previewHints.layout_id) || previewMode === 'process_linear_numeric_cards') {
+    const svg = processLinearNumericCardsPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isProcessLinearFourCardsLayout(previewHints.layout_id) || previewMode === 'process_linear_four_cards') {
+    const svg = processLinearFourCardsPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    const t = LAYOUT_POLISHED_THEME
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isProcessLinearHorizontalLayout(previewHints.layout_id) || previewMode === 'process_linear_horizontal') {
+    const svg = processLinearHorizontalPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    const t = LAYOUT_POLISHED_THEME
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
   if (previewMode === 'stat_row') {
     return (
       <PolishedStatRowPreview
@@ -2734,6 +2840,66 @@ export default function LayoutPolishedPreview({
             position: 'absolute', left: '61%', top: '62%', fontSize: large ? '0.2rem' : '0.08rem', fontWeight: 700, color: t.text,
           }}>Description 2</div>
         </div>
+      </div>
+    )
+  }
+
+  if (isProcessLinearFourCardsLayout(previewHints.layout_id)) {
+    const svg = processLinearFourCardsPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    const t = LAYOUT_POLISHED_THEME
+    const frameStyle = fill
+      ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+      : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isProcessLinearHortiFourLayout(previewHints.layout_id)) {
+    const svg = processLinearHortiFourPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    const t = LAYOUT_POLISHED_THEME
+    const frameStyle = fill
+      ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+      : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isProcessLinearHortiLayout(previewHints.layout_id)) {
+    const svg = processLinearHortiPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    const t = LAYOUT_POLISHED_THEME
+    const frameStyle = fill
+      ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+      : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
       </div>
     )
   }
