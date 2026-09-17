@@ -3,6 +3,7 @@ import { Search, ChevronLeft, ChevronRight, X, Clock, CheckCircle, XCircle, Mess
 import superadminService from '../../../../services/superadminService'
 import { formatDate } from './superadminUtils'
 import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
+import { AdminTableRowsSkeleton } from './skeletons/AdminSkeletons'
 
 /* ── constants ──────────────────────────────────────────── */
 
@@ -379,7 +380,7 @@ function SuperadminEarlyAccessPanel() {
     <div className="sa-panel">
       {/* ── Page Header ── */}
       <div className="sa-panel-header">
-        <div>
+        <div className="sa-panel-header-title-group">
           <h2 className="sa-panel-title">Early Access Requests</h2>
           <p className="sa-panel-desc">Review and manage early access applications. Status email updates are sent automatically upon pipeline transitions.</p>
         </div>
@@ -495,11 +496,7 @@ function SuperadminEarlyAccessPanel() {
             </thead>
             <tbody>
               {listLoading ? (
-                <tr>
-                  <td colSpan={6} style={{ padding: 0 }}>
-                    <TableSkeleton />
-                  </td>
-                </tr>
+                <AdminTableRowsSkeleton rows={6} variant="early-access" />
               ) : requests.length === 0 ? (
                 <tr>
                   <td colSpan={6}>

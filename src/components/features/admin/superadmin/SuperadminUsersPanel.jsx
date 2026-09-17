@@ -7,6 +7,7 @@ import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
 import '../../../../pages/AdminPortal/styles/SuperadminUsers.css'
 import '../../../../pages/AdminPortal/styles/SuperadminDrawer.css'
 import '../../../../pages/page-skeleton/skeleton.css'
+import { AdminTableRowsSkeleton } from './skeletons/AdminSkeletons'
 
 /* Simple inline skeleton component */
 function Sk({ w = '100%', h = 16, radius = 4 }) {
@@ -747,10 +748,10 @@ function SuperadminUsersPanel() {
   const fundedUsersCount = users.filter(u => Number(u.credits) > 0).length
 
   return (
-    <div className="sa-panel sa-panel--flow">
+    <div className="sa-panel">
       {/* ── Page Header ── */}
       <div className="sa-panel-header">
-        <div>
+        <div className="sa-panel-header-title-group">
           <h2 className="sa-panel-title">Users &amp; Credit Management</h2>
           <p className="sa-panel-desc">Manage platform user accounts, grant and revoke personal credits, and assign platform administrator privileges.</p>
         </div>
@@ -877,11 +878,7 @@ function SuperadminUsersPanel() {
             </thead>
             <tbody>
               {listLoading ? (
-                <tr>
-                  <td colSpan={5} style={{ padding: 0 }}>
-                    <TableSkeleton />
-                  </td>
-                </tr>
+                <AdminTableRowsSkeleton rows={8} variant="users" />
               ) : users.length === 0 ? (
                 <tr>
                   <td colSpan={5}>

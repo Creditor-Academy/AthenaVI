@@ -24,10 +24,6 @@ const AdminPortal = ({
 }) => {
   const activeTab = normalizeTab(controlledActiveTab)
 
-  if (activeTab === 'graphics') {
-    return <SuperadminGraphicsPanel />
-  }
-
   return (
     <div className={`sa-portal${activeTab === 'overview' ? ' sa-portal--flow' : ''}`}>
       {activeTab === 'overview' && <DashboardOverview />}
@@ -40,6 +36,7 @@ const AdminPortal = ({
       {activeTab === 'broadcast' && <SuperadminBroadcastPanel />}
       {activeTab === 'early-access' && <SuperadminEarlyAccessPanel />}
       {activeTab === 'templates' && <SuperadminTemplatesPanel />}
+      {activeTab === 'graphics' && <SuperadminGraphicsPanel />}
     </div>
   )
 }

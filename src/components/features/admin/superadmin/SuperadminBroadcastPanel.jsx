@@ -1157,7 +1157,15 @@ function SuperadminBroadcastPanel() {
   const [historyKey, setHistoryKey] = useState(0)
 
   return (
-    <div className="sa-panel" style={{ display: 'flex', flexDirection: 'column', minHeight: 0, gap: 0 }}>
+    <div className="sa-panel">
+      {/* ── Page Header ── */}
+      <div className="sa-panel-header">
+        <div className="sa-panel-header-title-group">
+          <h2 className="sa-panel-title">Email Broadcast</h2>
+          <p className="sa-panel-desc">Compose and dispatch product announcements, release notes, and updates to active users.</p>
+        </div>
+      </div>
+
       <div className="sa-card" style={{
         flex: 1, minHeight: 0, overflow: 'hidden',
         display: 'grid',

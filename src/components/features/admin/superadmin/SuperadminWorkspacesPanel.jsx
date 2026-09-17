@@ -7,6 +7,7 @@ import '../../../../pages/AdminPortal/styles/SuperadminWorkspaces.css'
 import '../../../../pages/AdminPortal/styles/SuperadminUsers.css'
 import '../../../../pages/AdminPortal/styles/SuperadminDrawer.css'
 import '../../../../pages/page-skeleton/skeleton.css'
+import { AdminTableRowsSkeleton } from './skeletons/AdminSkeletons'
 
 const PAGE_SIZE = 20
 
@@ -539,9 +540,9 @@ function SuperadminWorkspacesPanel() {
     <div className="sa-panel">
       {/* ── Page Header ── */}
       <div className="sa-panel-header">
-        <div>
-          <h2 className="sa-panel-title">TEAM Workspaces</h2>
-          <p className="sa-panel-desc">Browse TEAM workspace credit pools, top up or revoke credits, and monitor collaboration across organizations.</p>
+        <div className="sa-panel-header-title-group">
+          <h2 className="sa-panel-title">Team Workspaces</h2>
+          <p className="sa-panel-desc">Browse team workspace credit pools, top up or revoke credits, and monitor collaboration across organizations.</p>
         </div>
       </div>
 
@@ -666,11 +667,7 @@ function SuperadminWorkspacesPanel() {
             </thead>
             <tbody>
               {listLoading ? (
-                <tr>
-                  <td colSpan={5}>
-                    <div className="sa-loading" style={{ padding: 40 }}><span className="sa-spinner" /> Loading workspaces…</div>
-                  </td>
-                </tr>
+                <AdminTableRowsSkeleton rows={6} variant="workspaces" />
               ) : displayedWorkspaces.length === 0 ? (
                 <tr>
                   <td colSpan={5}>

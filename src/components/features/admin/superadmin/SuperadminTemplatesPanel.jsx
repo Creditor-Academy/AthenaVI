@@ -4020,14 +4020,14 @@ export default function SuperadminTemplatesPanel() {
     <div className="sa-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
       <style>{`.template-card:hover .card-hover-actions { opacity: 1 !important; pointer-events: auto !important; } .card-hover-actions { pointer-events: none; } .template-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06) !important; transform: translateY(-1px); } .template-card:active { transform: translateY(0); }`}</style>
 
-      {/* ── topbar ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '24px 24px 0', gap: 16, flexShrink: 0 }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700, letterSpacing: '-0.02em' }}>Templates</h2>
-          <p style={{ margin: '4px 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>Manage deck layouts, packs, and video scenes for workspace pickers</p>
+      {/* ── Page Header ── */}
+      <div className="sa-panel-header" style={{ padding: '24px 24px 0', marginBottom: 0 }}>
+        <div className="sa-panel-header-title-group">
+          <h2 className="sa-panel-title">Templates</h2>
+          <p className="sa-panel-desc">Manage deck layouts, packs, and video scenes for workspace pickers.</p>
         </div>
-        <button className="sa-btn sa-btn--primary" onClick={() => setShowCreate(true)} style={{ flexShrink: 0, height: 36, paddingLeft: 14, paddingRight: 14 }}>
-          <Plus size={14} strokeWidth={2.5} /> New template
+        <button className="sa-btn sa-btn--primary" onClick={() => setShowCreate(true)}>
+          <Plus size={16} strokeWidth={2.5} /> New Template
         </button>
       </div>
 

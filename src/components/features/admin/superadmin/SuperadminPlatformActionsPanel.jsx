@@ -8,6 +8,7 @@ import superadminService from '../../../../services/superadminService'
 import { defaultReportRange, formatAc, formatDate } from './superadminUtils'
 import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
 import '../../../../pages/AdminPortal/styles/AdminPlatform.css'
+import { SaSkeletonBlock } from './skeletons/AdminSkeletons'
 
 // ── Small helpers ─────────────────────────────────────────────────────────────
 
@@ -244,9 +245,9 @@ function SuperadminPlatformActionsPanel() {
     <div className="sa-panel" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 
       {/* ── Header ── */}
-      <div className="sa-panel-header" style={{ flexShrink: 0 }}>
-        <div>
-          <h2 className="sa-panel-title">Platform actions</h2>
+      <div className="sa-panel-header">
+        <div className="sa-panel-header-title-group">
+          <h2 className="sa-panel-title">Platform Actions</h2>
           <p className="sa-panel-desc">Audit trail of platform credit grants and revokes.</p>
         </div>
       </div>
@@ -336,9 +337,26 @@ function SuperadminPlatformActionsPanel() {
           </div>
         )}
 
+        {/* Audit Log Loading Skeleton */}
         {auditLoading && (
-          <div className="sa-loading" style={{ marginTop: 32 }}>
-            <span className="sa-spinner" /> Loading…
+          <div className="sa-card" style={{ marginTop: 16 }}>
+            <div className="sa-card-header">
+              <SaSkeletonBlock width={160} height={16} borderRadius={4} />
+            </div>
+            <div style={{ padding: '0 16px' }}>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '13px 0', borderBottom: '1px solid var(--border-color)' }}>
+                  <SaSkeletonBlock width={64} height={22} borderRadius={6} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1 }}>
+                    <SaSkeletonBlock width={30} height={30} borderRadius={8} />
+                    <SaSkeletonBlock width="40%" height={13} borderRadius={4} />
+                  </div>
+                  <SaSkeletonBlock width={80} height={14} borderRadius={4} />
+                  <SaSkeletonBlock width={90} height={12} borderRadius={4} />
+                  <SaSkeletonBlock width={70} height={12} borderRadius={4} />
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

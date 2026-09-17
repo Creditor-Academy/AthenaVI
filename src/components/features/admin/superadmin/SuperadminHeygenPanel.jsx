@@ -5,8 +5,7 @@ import { formatDate } from './superadminUtils'
 import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
 import '../../../../pages/AdminPortal/styles/SuperadminHeyGen.css'
 import '../../../../pages/page-skeleton/skeleton.css'
-
-/* ─── skeleton ────────────────────────────────────────────── */
+import { AdminHeygenSkeleton } from './skeletons/AdminSkeletons'
 
 function HeygenAccountSkeleton() {
   return (
@@ -255,21 +254,11 @@ function SuperadminHeygenPanel() {
 
   return (
     <div className="sa-panel">
+      {/* ── Page Header ── */}
       <div className="sa-panel-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{
-            width: 40, height: 40, borderRadius: 11, flexShrink: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 22%, var(--bg-card)), color-mix(in srgb, var(--primary) 38%, var(--bg-card)))',
-            border: '1px solid color-mix(in srgb, var(--primary) 35%, var(--border-color))',
-            color: 'var(--primary)',
-          }}>
-            <Video size={18} />
-          </span>
-          <div>
-            <h2 className="sa-panel-title">HeyGen account</h2>
-            <p className="sa-panel-desc">Platform API billing — funds all avatar video generation.</p>
-          </div>
+        <div className="sa-panel-header-title-group">
+          <h2 className="sa-panel-title">HeyGen Integration</h2>
+          <p className="sa-panel-desc">Platform API billing &amp; generation quota — funds avatar video generation.</p>
         </div>
         <button
           type="button"
@@ -290,7 +279,7 @@ function SuperadminHeygenPanel() {
         </div>
       )}
 
-      {loading && !account && <HeygenAccountSkeleton />}
+      {loading && !account && <AdminHeygenSkeleton />}
 
       {account && (
         <div className="sa-card">

@@ -458,21 +458,18 @@ export default function SuperadminGraphicsPanel() {
   return (
     <div className="sg-portal">
       <div className="sg-top">
-        <div className="sg-top-row">
-          <div>
-            <p className="sg-kicker">
-              <Sparkles size={12} aria-hidden /> Platform catalog
-            </p>
-            <h1 className="sg-title">Graphics Library</h1>
-            <p className="sg-subtitle">
+        <div className="sa-panel-header" style={{ marginBottom: 16 }}>
+          <div className="sa-panel-header-title-group">
+            <h2 className="sa-panel-title">Graphics Library</h2>
+            <p className="sa-panel-desc">
               {viewMode === 'library'
                 ? 'Upload and publish SVG decorations for the PPT editor and AI slides. Only published graphics appear in Insert → Graphics.'
                 : 'Browse free GetIllustrations assets by category (illustrations) or pack (icons). Free-tier clean assets only.'}
             </p>
           </div>
           {viewMode === 'library' ? (
-            <button type="button" className="sg-primary-cta" onClick={openCreate}>
-              <Plus size={18} strokeWidth={2.5} /> Add Graphic
+            <button type="button" className="sa-btn sa-btn--primary" onClick={openCreate}>
+              <Plus size={16} strokeWidth={2.5} /> Add Graphic
             </button>
           ) : null}
         </div>
@@ -753,7 +750,19 @@ export default function SuperadminGraphicsPanel() {
             </div>
           </div>
         ) : loading ? (
-          <p className="sg-loading">Loading graphics…</p>
+          <div className="sg-grid" style={{ padding: '8px 0' }}>
+            {Array.from({ length: 12 }).map((_, i) => (
+              <article key={i} className="sg-card" style={{ pointerEvents: 'none' }}>
+                <div className="sg-card-preview">
+                  <div className="ps-block" style={{ width: '100%', height: 140, borderRadius: 10 }} />
+                </div>
+                <div className="sg-card-body" style={{ gap: 6 }}>
+                  <div className="ps-block" style={{ width: '70%', height: 14, borderRadius: 4 }} />
+                  <div className="ps-block" style={{ width: '45%', height: 10, borderRadius: 3 }} />
+                </div>
+              </article>
+            ))}
+          </div>
         ) : showEmpty ? (
           <div
             className={`sg-hero-empty ${pageDragOver ? 'is-over' : ''}`}

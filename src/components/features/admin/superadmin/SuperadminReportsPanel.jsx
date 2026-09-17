@@ -4,6 +4,7 @@ import superadminService from '../../../../services/superadminService'
 import { defaultReportRange, formatAc, isValidUuid } from './superadminUtils'
 import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
 import '../../../../pages/AdminPortal/styles/AdminReports.css'
+import { SaSkeletonBlock } from './skeletons/AdminSkeletons'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -381,9 +382,9 @@ function SuperadminReportsPanel() {
     <div className="sa-panel" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 
       {/* Header */}
-      <div className="sa-panel-header" style={{ flexShrink: 0 }}>
-        <div>
-          <h2 className="sa-panel-title">Usage reports</h2>
+      <div className="sa-panel-header">
+        <div className="sa-panel-header-title-group">
+          <h2 className="sa-panel-title">Usage Reports</h2>
           <p className="sa-panel-desc">Credit usage analytics across features, users, and workspaces.</p>
         </div>
       </div>
@@ -453,10 +454,35 @@ function SuperadminReportsPanel() {
           </div>
         )}
 
-        {/* Loading */}
+        {/* Loading Skeleton */}
         {usageLoading && (
-          <div className="sa-loading" style={{ marginTop: 24 }}>
-            <span className="sa-spinner" /> Generating report…
+          <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 14 }}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="sa-metric-card" style={{ padding: 18 }}>
+                  <SaSkeletonBlock width="45%" height={12} borderRadius={4} style={{ marginBottom: 10 }} />
+                  <SaSkeletonBlock width="65%" height={22} borderRadius={6} />
+                </div>
+              ))}
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 14 }}>
+              <div className="sa-card" style={{ padding: 18 }}>
+                <SaSkeletonBlock width={140} height={16} borderRadius={4} style={{ marginBottom: 16 }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <SaSkeletonBlock key={i} width="100%" height={26} borderRadius={6} />
+                  ))}
+                </div>
+              </div>
+              <div className="sa-card" style={{ padding: 18 }}>
+                <SaSkeletonBlock width={140} height={16} borderRadius={4} style={{ marginBottom: 16 }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <SaSkeletonBlock key={i} width="100%" height={26} borderRadius={6} />
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

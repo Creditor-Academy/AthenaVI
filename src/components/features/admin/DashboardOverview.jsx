@@ -8,6 +8,7 @@ import { defaultReportRange, formatAc, formatDate } from './superadmin/superadmi
 import AreaTrendChart from './charts/AreaTrendChart'
 import RadialFanGauge from './charts/RadialFanGauge'
 import RankedBarList from './charts/RankedBarList'
+import { AdminOverviewSkeleton } from './superadmin/skeletons/AdminSkeletons'
 import '../../../pages/AdminPortal/styles/AdminBase.css'
 import '../../../pages/AdminPortal/styles/AdminOverview.css'
 import '../../../pages/AdminPortal/styles/SuperadminBase.css'
@@ -225,6 +226,10 @@ const DashboardOverview = () => {
       icon: <HardDrive size={20} />,
     },
   ]
+
+  if (loading && !usageReport) {
+    return <AdminOverviewSkeleton />
+  }
 
   return (
     <div className="sa-panel sa-panel--flow">

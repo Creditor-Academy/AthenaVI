@@ -3,6 +3,7 @@ import { HardDrive, ChevronLeft, ChevronRight, X, Check, Database, Clock, CheckC
 import superadminService from '../../../../services/superadminService'
 import { formatBytes, formatDate, storageStatusLabel } from './superadminUtils'
 import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
+import { AdminTableRowsSkeleton } from './skeletons/AdminSkeletons'
 
 const PAGE_SIZE = 20
 const STATUS_OPTIONS = [
@@ -247,7 +248,7 @@ function SuperadminStorageRequestsPanel() {
     <div className="sa-panel">
       {/* ── Page Header ── */}
       <div className="sa-panel-header">
-        <div>
+        <div className="sa-panel-header-title-group">
           <h2 className="sa-panel-title">Storage Upgrade Queue</h2>
           <p className="sa-panel-desc">
             Review user and workspace storage upgrade requests. Grant additional storage tiers or reject requests directly with custom user notifications.
@@ -388,13 +389,7 @@ function SuperadminStorageRequestsPanel() {
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={6}>
-                    <div className="sa-loading" style={{ padding: 40 }}>
-                      <span className="sa-spinner" /> Loading storage requests…
-                    </div>
-                  </td>
-                </tr>
+                <AdminTableRowsSkeleton rows={6} variant="storage" />
               ) : displayedRequests.length === 0 ? (
                 <tr>
                   <td colSpan={6}>

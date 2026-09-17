@@ -4,13 +4,13 @@
    ============================================================================= */
 
 .sg-portal {
-  --sg-ink: #0f172a;
-  --sg-muted: #64748b;
-  --sg-line: #e2e8f0;
-  --sg-soft: #f8fafc;
-  --sg-card: #ffffff;
-  --sg-accent: #4f46e5;
-  --sg-accent-2: #6366f1;
+  --sg-ink: var(--text-main);
+  --sg-muted: var(--text-muted);
+  --sg-line: var(--border-color);
+  --sg-soft: var(--bg-surface);
+  --sg-card: var(--bg-card);
+  --sg-accent: var(--primary);
+  --sg-accent-2: color-mix(in srgb, var(--primary) 80%, #3b82f6);
   --sg-ok: #15803d;
   --sg-warn: #b45309;
   --sg-danger: #dc2626;
@@ -19,12 +19,9 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: calc(100vh - 56px);
-  background:
-    radial-gradient(900px 320px at 12% -8%, rgba(99, 102, 241, 0.12), transparent 60%),
-    radial-gradient(700px 280px at 92% 0%, rgba(14, 165, 233, 0.08), transparent 55%),
-    var(--sg-soft);
-  color: var(--sg-ink);
+  min-height: 0;
+  background: transparent;
+  color: var(--text-main);
   overflow: hidden;
 }
 
@@ -38,7 +35,7 @@
 
 .sg-top {
   flex-shrink: 0;
-  padding: 22px 28px 0;
+  padding: 0;
 }
 
 .sg-top-row {
