@@ -22,6 +22,12 @@ import { isTableWithDescriptionSideLayout, layoutTableWithDescriptionSide } from
 import { isTableTwoDescLayout, layoutTableTwoDesc } from './tableTwoDescLayout.js'
 import { isTableTwoDescCardsLayout, layoutTableTwoDescCards } from './tableTwoDescCardsLayout.js'
 import { isProcessLinearBusinessLayout, layoutProcessLinearBusiness } from './processLinearBusinessLayout.js'
+import { isProcessLinearHortiLayout, layoutProcessLinearHorti } from './processLinearHortiLayout.js'
+import { isProcessLinearHorizontalLayout, layoutProcessLinearHorizontal } from './processLinearHorizontalLayout.js'
+import { isProcessLinearHortiFourLayout, layoutProcessLinearHortiFour } from './processLinearHortiFourLayout.js'
+import { isProcessLinearFourCardsLayout, layoutProcessLinearFourCards } from './processLinearFourCardsLayout.js'
+import { isProcessLinearNumericLayout, layoutProcessLinearNumeric } from './processLinearNumericLayout.js'
+import { isProcessLinearNumericCardsLayout, layoutProcessLinearNumericCards } from './processLinearNumericCardsLayout.js'
 import {
   isTableTwoSameHeaderLayout,
   layoutTableTwoSameHeader,
@@ -216,6 +222,30 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
     return layoutTableTwoDescCards(elements, schema, palette, canvas)
   }
   
+  if (isProcessLinearHortiLayout(layoutId)) {
+    return layoutProcessLinearHorti(elements, schema, palette, canvas)
+  }
+
+  if (isProcessLinearHortiFourLayout(layoutId)) {
+    return layoutProcessLinearHortiFour(elements, schema, palette, canvas)
+  }
+
+  if (isProcessLinearFourCardsLayout(layoutId)) {
+    return layoutProcessLinearFourCards(elements, schema, palette, canvas)
+  }
+
+  if (isProcessLinearNumericLayout(layoutId)) {
+    return layoutProcessLinearNumeric(elements, schema, palette, canvas)
+  }
+
+  if (isProcessLinearNumericCardsLayout(layoutId)) {
+    return layoutProcessLinearNumericCards(elements, schema, palette, canvas)
+  }
+
+  if (isProcessLinearHorizontalLayout(layoutId)) {
+    return layoutProcessLinearHorizontal(elements, schema, palette, canvas)
+  }
+
   if (isProcessLinearBusinessLayout(layoutId)) {
     return layoutProcessLinearBusiness(elements, schema, palette, canvas)
   }

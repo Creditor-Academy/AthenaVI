@@ -269,11 +269,11 @@ const LAYOUT_PREVIEW_MODES = {
   table_two_same_header_cards_v1: 'table_dual_shared_header',
   process_linear_business_v1: 'process_linear_business',
   process_linner_horti_v1: 'process_linner_horti',
-  process_linner_horti_four_v1: 'process_linner_horti',
+  process_linner_horti_four_v1: 'process_linner_horti_four',
   process_linner_numeric_v1: 'process_linner_numeric',
-  process_linear_four_cards_v1: 'process_linner_horti',
-  process_linear_horizontal_v2: 'process_linner_horti',
-  process_linear_numeric_cards_v1: 'process_linner_numeric',
+  process_linear_four_cards_v1: 'process_linear_four_cards',
+  process_linear_horizontal_v2: 'process_linear_horizontal',
+  process_linear_numeric_cards_v1: 'process_linear_numeric_cards',
   timeline_horizontal_v1: 'timeline_horizontal',
   timeline_horizontal_cards_v1: 'timeline_horizontal',
   timeline_milestones_v1: 'timeline_horizontal',
@@ -692,10 +692,10 @@ function fillPreviewDataFromSlots(schema) {
   }
   if (mode === 'process_linner_numeric' && !Array.isArray(preview.steps)) {
     const stepNums = slots
-      .map((s) => String(s.id || '').match(/^STEP_(\d+)_NUMBER$/i)?.[1])
+      .map((s) => String(s.id || '').match(/^STEP_(\d+)_(?:NUMBER|TITLE)$/i)?.[1])
       .filter(Boolean)
     const unique = [...new Set(stepNums)].sort((a, b) => Number(a) - Number(b))
-    const nums = unique.length ? unique : ['1', '2', '3']
+    const nums = unique.length ? unique : ['1', '2', '3', '4', '5']
     preview.steps = nums.map((n) => ({
       number:
         preview.slots?.[`STEP_${n}_NUMBER`]?.text ||
@@ -704,11 +704,29 @@ function fillPreviewDataFromSlots(schema) {
       title:
         preview.slots?.[`STEP_${n}_TITLE`]?.text ||
         slotPlaceholderText(slots, `STEP_${n}_TITLE`) ||
-        'SHAPE TITLE',
+        `STEP ${n}`,
       body:
         preview.slots?.[`STEP_${n}_BODY`]?.text ||
         slotPlaceholderText(slots, `STEP_${n}_BODY`) ||
-        'Short step description',
+        'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+    }))
+  }
+  if (mode === 'process_linear_numeric_cards' && !Array.isArray(preview.steps)) {
+    const stepNums = slots
+      .map((s) => String(s.id || '').match(/^STEP_(\d+)_(?:NUMBER|TITLE)$/i)?.[1])
+      .filter(Boolean)
+    const unique = [...new Set(stepNums)].sort((a, b) => Number(a) - Number(b))
+    const nums = unique.length ? unique : ['1', '2', '3', '4']
+    preview.steps = nums.map((n) => ({
+      number: String(n).padStart(2, '0'),
+      title:
+        preview.slots?.[`STEP_${n}_TITLE`]?.text ||
+        slotPlaceholderText(slots, `STEP_${n}_TITLE`) ||
+        'Lorem Ipsum',
+      body:
+        preview.slots?.[`STEP_${n}_BODY`]?.text ||
+        slotPlaceholderText(slots, `STEP_${n}_BODY`) ||
+        'Lorem ipsum dolor sit amet, nibh est. A magna maecenas, quam magna nec quis, lorem nunc.',
     }))
   }
   if (mode === 'diagram_process_steps' && !Array.isArray(preview.steps)) {

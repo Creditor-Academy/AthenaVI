@@ -466,29 +466,43 @@ const CATALOG = {
   ], { mode: 'table_dual_shared_header' }),
 
   process_linner_horti_v1: layoutBase('process_linner_horti_v1', 'chart', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'How it works', {
-      typography: typo('heading', { fontSize: 28 }),
+    heading('HEADING', 'cols 2-11, rows 1-2', 'PROCESS FLOW INFOGRAPHICS', {
+      typography: typo('heading', { fontSize: 28, align: 'center' }),
     }),
-    slot('STEP_1_TITLE', 'cols 2-3, rows 4-5', 'heading', 'Phase 1', {
+    slot('STEP_1_TITLE', 'cols 1-2, rows 4-5', 'heading', 'Discovery', {
       layer: 10,
-      typography: typo('heading', { fontSize: 18, align: 'center', colorRole: 'primary' }),
+      typography: typo('heading', { fontSize: 14, align: 'center', colorRole: 'primary' }),
     }),
-    body('STEP_1_BODY', 'cols 2-3, rows 8-10', 'Research and define the problem space.', 3, {
-      typography: typo('body', { fontSize: 14, align: 'center' }),
+    body('STEP_1_BODY', 'cols 1-2, rows 6-8', 'Identify core goals, understand stakeholder needs, and align the scope.', 3, {
+      typography: typo('body', { fontSize: 12, align: 'center' }),
     }),
-    slot('STEP_2_TITLE', 'cols 5-6, rows 4-5', 'heading', 'Phase 2', {
+    slot('STEP_2_TITLE', 'cols 3-4, rows 4-5', 'heading', 'Strategy', {
       layer: 10,
-      typography: typo('heading', { fontSize: 18, align: 'center', colorRole: 'primary' }),
+      typography: typo('heading', { fontSize: 14, align: 'center', colorRole: 'primary' }),
     }),
-    body('STEP_2_BODY', 'cols 5-6, rows 8-10', 'Design and iterate on the solution.', 3, {
-      typography: typo('body', { fontSize: 14, align: 'center' }),
+    body('STEP_2_BODY', 'cols 3-4, rows 6-8', 'Formulate strategic roadmaps, allocate resources, and set milestones.', 3, {
+      typography: typo('body', { fontSize: 12, align: 'center' }),
     }),
-    slot('STEP_3_TITLE', 'cols 8-9, rows 4-5', 'heading', 'Phase 3', {
+    slot('STEP_3_TITLE', 'cols 5-6, rows 4-5', 'heading', 'Concept & Design', {
       layer: 10,
-      typography: typo('heading', { fontSize: 18, align: 'center', colorRole: 'primary' }),
+      typography: typo('heading', { fontSize: 14, align: 'center', colorRole: 'primary' }),
     }),
-    body('STEP_3_BODY', 'cols 8-9, rows 8-10', 'Ship, measure, and improve.', 3, {
-      typography: typo('body', { fontSize: 14, align: 'center' }),
+    body('STEP_3_BODY', 'cols 5-6, rows 6-8', 'Explore creative ideas, build rapid prototypes, and refine architectures.', 3, {
+      typography: typo('body', { fontSize: 12, align: 'center' }),
+    }),
+    slot('STEP_4_TITLE', 'cols 7-8, rows 4-5', 'heading', 'Execution', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 14, align: 'center', colorRole: 'primary' }),
+    }),
+    body('STEP_4_BODY', 'cols 7-8, rows 6-8', 'Build robust features iteratively, test quality, and ensure excellence.', 3, {
+      typography: typo('body', { fontSize: 12, align: 'center' }),
+    }),
+    slot('STEP_5_TITLE', 'cols 9-10, rows 4-5', 'heading', 'Launch & Success', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 14, align: 'center', colorRole: 'primary' }),
+    }),
+    body('STEP_5_BODY', 'cols 9-10, rows 6-8', 'Deploy with confidence, track key metrics, and celebrate success.', 3, {
+      typography: typo('body', { fontSize: 12, align: 'center' }),
     }),
   ], { mode: 'process_linner_horti' }),
 
@@ -513,82 +527,78 @@ const CATALOG = {
   ], { mode: 'process_linear_business' }),
 
   process_linner_horti_four_v1: layoutBase('process_linner_horti_four_v1', 'chart', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'How it works', {
-      typography: typo('heading', { fontSize: 28 }),
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Business Process', {
+      typography: typo('heading', { fontSize: 28, align: 'center', fontWeight: 800 }),
     }),
-    slot('STEP_1_TITLE', 'cols 1-3, rows 4-5', 'heading', 'Phase 1', {
+    slot('STEP_1_TITLE', 'cols 1-3, rows 4-5', 'heading', 'OPTION 01', {
       layer: 10,
-      typography: typo('heading', { fontSize: 18, align: 'center', colorRole: 'primary' }),
+      typography: typo('heading', { fontSize: 16, align: 'center', fontWeight: 800 }),
     }),
-    body('STEP_1_BODY', 'cols 1-3, rows 8-10', 'Research and define.', 3, {
-      typography: typo('body', { fontSize: 14, align: 'center' }),
+    body('STEP_1_BODY', 'cols 1-3, rows 8-10', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit', 3, {
+      typography: typo('body', { fontSize: 13, align: 'center', colorRole: 'muted' }),
     }),
-    slot('STEP_2_TITLE', 'cols 4-6, rows 4-5', 'heading', 'Phase 2', {
+    slot('STEP_2_TITLE', 'cols 4-6, rows 4-5', 'heading', 'OPTION 02', {
       layer: 10,
-      typography: typo('heading', { fontSize: 18, align: 'center', colorRole: 'primary' }),
+      typography: typo('heading', { fontSize: 16, align: 'center', fontWeight: 800 }),
     }),
-    body('STEP_2_BODY', 'cols 4-6, rows 8-10', 'Design and iterate.', 3, {
-      typography: typo('body', { fontSize: 14, align: 'center' }),
+    body('STEP_2_BODY', 'cols 4-6, rows 8-10', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit', 3, {
+      typography: typo('body', { fontSize: 13, align: 'center', colorRole: 'muted' }),
     }),
-    slot('STEP_3_TITLE', 'cols 7-9, rows 4-5', 'heading', 'Phase 3', {
+    slot('STEP_3_TITLE', 'cols 7-9, rows 4-5', 'heading', 'OPTION 03', {
       layer: 10,
-      typography: typo('heading', { fontSize: 18, align: 'center', colorRole: 'primary' }),
+      typography: typo('heading', { fontSize: 16, align: 'center', fontWeight: 800 }),
     }),
-    body('STEP_3_BODY', 'cols 7-9, rows 8-10', 'Build and validate.', 3, {
-      typography: typo('body', { fontSize: 14, align: 'center' }),
+    body('STEP_3_BODY', 'cols 7-9, rows 8-10', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit', 3, {
+      typography: typo('body', { fontSize: 13, align: 'center', colorRole: 'muted' }),
     }),
-    slot('STEP_4_TITLE', 'cols 10-12, rows 4-5', 'heading', 'Phase 4', {
+    slot('STEP_4_TITLE', 'cols 10-12, rows 4-5', 'heading', 'OPTION 04', {
       layer: 10,
-      typography: typo('heading', { fontSize: 18, align: 'center', colorRole: 'primary' }),
+      typography: typo('heading', { fontSize: 16, align: 'center', fontWeight: 800 }),
     }),
-    body('STEP_4_BODY', 'cols 10-12, rows 8-10', 'Launch and scale.', 3, {
-      typography: typo('body', { fontSize: 14, align: 'center' }),
+    body('STEP_4_BODY', 'cols 10-12, rows 8-10', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit', 3, {
+      typography: typo('body', { fontSize: 13, align: 'center', colorRole: 'muted' }),
     }),
-  ], { mode: 'process_linner_horti' }),
+  ], { mode: 'process_linner_horti_four' }),
 
   process_linner_numeric_v1: layoutBase('process_linner_numeric_v1', 'chart', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'Process overview', {
-      typography: typo('heading', { fontSize: 28 }),
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Linear Process Diagram', {
+      typography: typo('heading', { fontSize: 28, align: 'center', fontWeight: 800 }),
     }),
-    slot('STEP_1_NUMBER', 'cols 2-4, rows 3-5', 'stat', '01', {
-      layer: 10,
-      typography: typo('stat', { fontSize: 72, align: 'center', colorRole: 'accent' }),
-      max_lines: 1,
-    }),
-    slot('STEP_1_TITLE', 'cols 2-4, rows 5-6', 'heading', 'SHAPE TITLE', {
+    slot('STEP_1_TITLE', 'cols 1-3, rows 7-8', 'heading', 'STEP 1', {
       layer: 10,
       typography: typo('heading', { fontSize: 15, align: 'center', fontWeight: 800 }),
     }),
-    body('STEP_1_BODY', 'cols 2-4, rows 6-8', P.one, 3, {
-      typography: typo('body', { fontSize: 13, align: 'center' }),
+    body('STEP_1_BODY', 'cols 1-3, rows 8-10', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.', 3, {
+      typography: typo('body', { fontSize: 12, align: 'center', colorRole: 'muted' }),
     }),
-    slot('STEP_1_ICON', 'cols 2-4, rows 8-9', 'decoration', null, { layer: 8 }),
-    slot('STEP_2_NUMBER', 'cols 5-7, rows 3-5', 'stat', '02', {
-      layer: 10,
-      typography: typo('stat', { fontSize: 72, align: 'center', colorRole: 'primary' }),
-      max_lines: 1,
-    }),
-    slot('STEP_2_TITLE', 'cols 5-7, rows 5-6', 'heading', 'SHAPE TITLE', {
+    slot('STEP_2_TITLE', 'cols 3-5, rows 7-8', 'heading', 'STEP 2', {
       layer: 10,
       typography: typo('heading', { fontSize: 15, align: 'center', fontWeight: 800 }),
     }),
-    body('STEP_2_BODY', 'cols 5-7, rows 6-8', P.two, 3, {
-      typography: typo('body', { fontSize: 13, align: 'center' }),
+    body('STEP_2_BODY', 'cols 3-5, rows 8-10', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.', 3, {
+      typography: typo('body', { fontSize: 12, align: 'center', colorRole: 'muted' }),
     }),
-    slot('STEP_2_ICON', 'cols 5-7, rows 8-9', 'decoration', null, { layer: 8 }),
-    slot('STEP_3_NUMBER', 'cols 8-10, rows 3-5', 'stat', '03', {
-      layer: 10,
-      typography: typo('stat', { fontSize: 72, align: 'center', colorRole: 'accent' }),
-      max_lines: 1,
-    }),
-    slot('STEP_3_TITLE', 'cols 8-10, rows 5-6', 'heading', 'SHAPE TITLE', {
+    slot('STEP_3_TITLE', 'cols 5-7, rows 7-8', 'heading', 'STEP 3', {
       layer: 10,
       typography: typo('heading', { fontSize: 15, align: 'center', fontWeight: 800 }),
     }),
-    body('STEP_3_BODY', 'cols 8-10, rows 6-8', P.three, 3, {
-      typography: typo('body', { fontSize: 13, align: 'center' }),
+    body('STEP_3_BODY', 'cols 5-7, rows 8-10', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.', 3, {
+      typography: typo('body', { fontSize: 12, align: 'center', colorRole: 'muted' }),
     }),
-    slot('STEP_3_ICON', 'cols 8-10, rows 8-9', 'decoration', null, { layer: 8 }),
+    slot('STEP_4_TITLE', 'cols 7-9, rows 7-8', 'heading', 'STEP 4', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 15, align: 'center', fontWeight: 800 }),
+    }),
+    body('STEP_4_BODY', 'cols 7-9, rows 8-10', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.', 3, {
+      typography: typo('body', { fontSize: 12, align: 'center', colorRole: 'muted' }),
+    }),
+    slot('STEP_5_TITLE', 'cols 9-11, rows 7-8', 'heading', 'STEP 5', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 15, align: 'center', fontWeight: 800 }),
+    }),
+    body('STEP_5_BODY', 'cols 9-11, rows 8-10', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.', 3, {
+      typography: typo('body', { fontSize: 12, align: 'center', colorRole: 'muted' }),
+    }),
   ], { mode: 'process_linner_numeric' }),
 
   metric_single_v1: statLayout('metric_single_v1', 'stat', 1, 'stat_hero', [
@@ -801,9 +811,112 @@ Object.assign(CATALOG, {
   metric_six_cards_v1: chartsDataFromSource('metric_six_cards_v1', 'metric_six_para_v1', 'cards'),
   metric_three_vertical_cards_v1: chartsDataFromSource('metric_three_vertical_cards_v1', 'metric_three_vertical_v1', 'cards'),
   metric_two_split_v1: chartsDataFromSource('metric_two_split_v1', 'metric_two_v1', 'split'),
-  process_linear_four_cards_v1: chartsDataFromSource('process_linear_four_cards_v1', 'process_linner_horti_four_v1', 'cards'),
-  process_linear_horizontal_v2: chartsDataFromSource('process_linear_horizontal_v2', 'process_linner_horti_v1', 'horizontal'),
-  process_linear_numeric_cards_v1: chartsDataFromSource('process_linear_numeric_cards_v1', 'process_linner_numeric_v1', 'cards'),
+  process_linear_four_cards_v1: layoutBase('process_linear_four_cards_v1', 'chart', [
+    heading('HEADING', 'cols 1-12, rows 1-2', 'Linear Four Stage Cards – Slide Template', {
+      typography: typo('heading', { fontSize: 26, align: 'left', fontWeight: 800 }),
+    }),
+    slot('STEP_1_TITLE', 'cols 1-3, rows 3-4', 'heading', 'Lorem Ipsum', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 16, align: 'left', fontWeight: 800, colorRole: 'white' }),
+    }),
+    body('STEP_1_BODY', 'cols 1-3, rows 5-8', '• Lorem ipsum dolor sit amet, nibh est. A magna Maecenas.\n• Quam magna nec quis, lorem.\n• Suspendisse viverra sodales mauris, cras pharetra proin egestas arcu erat dolor, at amet.', 5, {
+      typography: typo('body', { fontSize: 11.5, align: 'left', colorRole: 'muted' }),
+    }),
+    slot('STEP_2_TITLE', 'cols 4-6, rows 3-4', 'heading', 'Lorem Ipsum', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 16, align: 'left', fontWeight: 800, colorRole: 'white' }),
+    }),
+    body('STEP_2_BODY', 'cols 4-6, rows 5-8', '• Lorem ipsum dolor sit amet, nibh est. A magna Maecenas.\n• Quam magna nec quis, lorem.\n• Suspendisse viverra sodales mauris, cras pharetra proin egestas arcu erat dolor, at amet.', 5, {
+      typography: typo('body', { fontSize: 11.5, align: 'left', colorRole: 'muted' }),
+    }),
+    slot('STEP_3_TITLE', 'cols 7-9, rows 3-4', 'heading', 'Lorem Ipsum', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 16, align: 'left', fontWeight: 800, colorRole: 'white' }),
+    }),
+    body('STEP_3_BODY', 'cols 7-9, rows 5-8', '• Lorem ipsum dolor sit amet, nibh est. A magna Maecenas.\n• Quam magna nec quis, lorem.\n• Suspendisse viverra sodales mauris, cras pharetra proin egestas arcu erat dolor, at amet.', 5, {
+      typography: typo('body', { fontSize: 11.5, align: 'left', colorRole: 'muted' }),
+    }),
+    slot('STEP_4_TITLE', 'cols 10-12, rows 3-4', 'heading', 'Lorem Ipsum', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 16, align: 'left', fontWeight: 800, colorRole: 'white' }),
+    }),
+    body('STEP_4_BODY', 'cols 10-12, rows 5-8', '• Lorem ipsum dolor sit amet, nibh est. A magna Maecenas.\n• Quam magna nec quis, lorem.\n• Suspendisse viverra sodales mauris, cras pharetra proin egestas arcu erat dolor, at amet.', 5, {
+      typography: typo('body', { fontSize: 11.5, align: 'left', colorRole: 'muted' }),
+    }),
+  ], { mode: 'process_linear_four_cards' }),
+  process_linear_horizontal_v2: layoutBase('process_linear_horizontal_v2', 'chart', [
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Linear Process Template', {
+      typography: typo('heading', { fontSize: 28, align: 'center' }),
+    }),
+    slot('STEP_1_TITLE', 'cols 1-2, rows 6-7', 'heading', 'Discovery', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 14, align: 'center', colorRole: 'primary' }),
+    }),
+    body('STEP_1_BODY', 'cols 1-2, rows 8-10', 'Identify core goals, understand stakeholder needs, and align the scope.', 3, {
+      typography: typo('body', { fontSize: 12, align: 'center' }),
+    }),
+    slot('STEP_2_TITLE', 'cols 3-4, rows 6-7', 'heading', 'Strategy', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 14, align: 'center', colorRole: 'primary' }),
+    }),
+    body('STEP_2_BODY', 'cols 3-4, rows 8-10', 'Formulate strategic roadmaps, allocate resources, and set milestones.', 3, {
+      typography: typo('body', { fontSize: 12, align: 'center' }),
+    }),
+    slot('STEP_3_TITLE', 'cols 5-6, rows 6-7', 'heading', 'Ideation', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 14, align: 'center', colorRole: 'primary' }),
+    }),
+    body('STEP_3_BODY', 'cols 5-6, rows 8-10', 'Explore creative ideas, build rapid prototypes, and refine concepts.', 3, {
+      typography: typo('body', { fontSize: 12, align: 'center' }),
+    }),
+    slot('STEP_4_TITLE', 'cols 7-8, rows 6-7', 'heading', 'Execution', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 14, align: 'center', colorRole: 'primary' }),
+    }),
+    body('STEP_4_BODY', 'cols 7-8, rows 8-10', 'Build robust features iteratively, test quality, and ensure excellence.', 3, {
+      typography: typo('body', { fontSize: 12, align: 'center' }),
+    }),
+    slot('STEP_5_TITLE', 'cols 9-10, rows 6-7', 'heading', 'Launch', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 14, align: 'center', colorRole: 'primary' }),
+    }),
+    body('STEP_5_BODY', 'cols 9-10, rows 8-10', 'Deploy with confidence, track key metrics, and celebrate success.', 3, {
+      typography: typo('body', { fontSize: 12, align: 'center' }),
+    }),
+  ], { mode: 'process_linear_horizontal' }),
+  process_linear_numeric_cards_v1: layoutBase('process_linear_numeric_cards_v1', 'chart', [
+    heading('HEADING', 'cols 2-11, rows 1-2', 'Linear Process Cards', {
+      typography: typo('heading', { fontSize: 28, align: 'center', fontWeight: 800 }),
+    }),
+    slot('STEP_1_TITLE', 'cols 1-3, rows 5-6', 'heading', 'Lorem Ipsum', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 16, align: 'center', fontWeight: 800 }),
+    }),
+    body('STEP_1_BODY', 'cols 1-3, rows 6-10', 'Lorem ipsum dolor sit amet, nibh est. A magna maecenas, quam magna nec quis, lorem nunc. Suspendisse viverra sodales mauris, cras pharetra proin egestas arcu erat dolor, at.', 5, {
+      typography: typo('body', { fontSize: 12, align: 'center', colorRole: 'muted' }),
+    }),
+    slot('STEP_2_TITLE', 'cols 4-6, rows 5-6', 'heading', 'Lorem Ipsum', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 16, align: 'center', fontWeight: 800 }),
+    }),
+    body('STEP_2_BODY', 'cols 4-6, rows 6-10', 'Lorem ipsum dolor sit amet, nibh est. A magna maecenas, quam magna nec quis, lorem nunc. Suspendisse viverra sodales mauris, cras pharetra proin egestas arcu erat dolor, at.', 5, {
+      typography: typo('body', { fontSize: 12, align: 'center', colorRole: 'muted' }),
+    }),
+    slot('STEP_3_TITLE', 'cols 7-9, rows 5-6', 'heading', 'Lorem Ipsum', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 16, align: 'center', fontWeight: 800 }),
+    }),
+    body('STEP_3_BODY', 'cols 7-9, rows 6-10', 'Lorem ipsum dolor sit amet, nibh est. A magna maecenas, quam magna nec quis, lorem nunc. Suspendisse viverra sodales mauris, cras pharetra proin egestas arcu erat dolor, at.', 5, {
+      typography: typo('body', { fontSize: 12, align: 'center', colorRole: 'muted' }),
+    }),
+    slot('STEP_4_TITLE', 'cols 10-12, rows 5-6', 'heading', 'Lorem Ipsum', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 16, align: 'center', fontWeight: 800 }),
+    }),
+    body('STEP_4_BODY', 'cols 10-12, rows 6-10', 'Lorem ipsum dolor sit amet, nibh est. A magna maecenas, quam magna nec quis, lorem nunc. Suspendisse viverra sodales mauris, cras pharetra proin egestas arcu erat dolor, at.', 5, {
+      typography: typo('body', { fontSize: 12, align: 'center', colorRole: 'muted' }),
+    }),
+  ], { mode: 'process_linear_numeric_cards' }),
   table_single_cards_v1: layoutBase('table_single_cards_v1', 'chart', [
     heading('HEADING', 'cols 1-12, rows 1-2', 'Investment Report', {
       typography: typo('heading', { fontSize: 28, fontWeight: 800, align: 'center' }),
