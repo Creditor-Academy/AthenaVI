@@ -30,6 +30,10 @@ import { isProcessLinearHortiFourLayout, processLinearHortiFourPreviewSvg } from
 import { isProcessLinearFourCardsLayout, processLinearFourCardsPreviewSvg } from '../../utils/processLinearFourCardsLayout.js'
 import { isProcessLinearNumericLayout, processLinearNumericPreviewSvg } from '../../utils/processLinearNumericLayout.js'
 import { isProcessLinearNumericCardsLayout, processLinearNumericCardsPreviewSvg } from '../../utils/processLinearNumericCardsLayout.js'
+import { isMetricSingleLayout, metricSinglePreviewSvg } from '../../utils/metricSingle.js'
+import { isMetricSingleSplitLayout, metricSingleSplitPreviewSvg } from '../../utils/metricSingleSplit.js'
+import { isMetricTwoLayout, metricTwoPreviewSvg } from '../../utils/metricTwo.js'
+import { isMetricTwoSplitLayout, metricTwoSplitPreviewSvg } from '../../utils/metricTwoSplit.js'
 import {
   isTableTwoSameHeaderLayout,
   tableTwoSameHeaderPreviewSvg,
@@ -243,6 +247,38 @@ function PolishedStatRowPreview({ previewHints, large, className, style, fill, a
   const frameStyle = fill
     ? { width: '100%', height: '100%', aspectRatio: 'unset' }
     : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+
+  if (isMetricTwoLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_two_v1') {
+    const svg = metricTwoPreviewSvg(previewHints, t)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isMetricTwoSplitLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_two_split_v1') {
+    const svg = metricTwoSplitPreviewSvg(previewHints, t)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
 
   return (
     <div
@@ -2336,6 +2372,70 @@ export default function LayoutPolishedPreview({
 
   if (isProcessLinearNumericCardsLayout(previewHints.layout_id) || previewMode === 'process_linear_numeric_cards') {
     const svg = processLinearNumericCardsPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isMetricSingleLayout(previewHints.layout_id) || previewMode === 'metric_single_v1') {
+    const svg = metricSinglePreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isMetricSingleSplitLayout(previewHints.layout_id) || previewMode === 'metric_single_split_v1') {
+    const svg = metricSingleSplitPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isMetricTwoLayout(previewHints.layout_id) || previewMode === 'metric_two_v1') {
+    const svg = metricTwoPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isMetricTwoSplitLayout(previewHints.layout_id) || previewMode === 'metric_two_split_v1') {
+    const svg = metricTwoSplitPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
     return (
       <div className={className} style={{
         position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',

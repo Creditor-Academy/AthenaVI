@@ -8,6 +8,12 @@ import { tableTwoSameHeaderPreviewSvg, tableTwoSameHeaderCardsPreviewSvg } from 
 import { gridBentoThreePreviewSvg } from '../../utils/gridBentoThreeLayout.js'
 import { gridBentoFourPreviewSvg } from '../../utils/gridBentoFourLayout.js'
 import { gridTextImageCardsPreviewSvg } from '../../utils/gridTextImageCardsLayout.js'
+import { isMetricSingleLayout, metricSinglePreviewSvg } from '../../utils/metricSingle.js'
+import { isMetricSingleSplitLayout, metricSingleSplitPreviewSvg } from '../../utils/metricSingleSplit.js'
+import { isMetricTwoLayout, metricTwoPreviewSvg } from '../../utils/metricTwo.js'
+import { isMetricTwoSplitLayout, metricTwoSplitPreviewSvg } from '../../utils/metricTwoSplit.js'
+import { isMetricThreeLayout, metricThreePreviewSvg } from '../../utils/metricThree.js'
+import { isMetricThreeCardsLayout, metricThreeCardsPreviewSvg } from '../../utils/metricThreeCards.js'
 
 const PREVIEW_TITLE_FS = { large: '1.75rem', small: '0.92rem' }
 const PREVIEW_BODY_FS = { large: '0.88rem', small: '0.4rem' }
@@ -1589,8 +1595,86 @@ export function PolishedTableDualSharedHeaderPreview({ previewHints, ...props })
   )
 }
 
-export function PolishedStatHeroPreview({ previewHints, ...props }) {
+export function PolishedStatHeroPreview({ previewHints = {}, ...props }) {
   const { large } = props
+  if (isMetricSingleLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_single_v1') {
+    const svg = metricSinglePreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (isMetricSingleSplitLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_single_split_v1') {
+    const svg = metricSingleSplitPreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (isMetricTwoLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_two_v1') {
+    const svg = metricTwoPreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (isMetricTwoSplitLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_two_split_v1') {
+    const svg = metricTwoSplitPreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (isMetricThreeLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_three_v1') {
+    const svg = metricThreePreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (isMetricThreeCardsLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_three_cards_v1') {
+    const svg = metricThreeCardsPreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
   const variant = previewHints.dataVariant || 'default'
   const stat = (previewHints.stats || [{ value: '98%', label: 'Customer satisfaction' }])[0]
   const fp = frameProps(props)
@@ -1687,6 +1771,10 @@ export const EXTENDED_PREVIEW_MODES = {
   table_dual: PolishedTableDualPreview,
   table_dual_shared_header: PolishedTableDualSharedHeaderPreview,
   stat_hero: PolishedStatHeroPreview,
+  metric_two_v1: PolishedStatHeroPreview,
+  metric_two_split_v1: PolishedStatHeroPreview,
+  metric_three_v1: PolishedStatHeroPreview,
+  metric_three_cards_v1: PolishedStatHeroPreview,
   stat_six_para: PolishedStatSixParaPreview,
   stat_vertical: PolishedStatVerticalPreview,
 }

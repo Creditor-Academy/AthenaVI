@@ -431,3 +431,97 @@ export const layoutMetricThree = (elements, schema, palette = {}, canvas = {}) =
   
   return [...chrome, ...next]
 }
+
+/**
+ * Polished SVG Preview for Metric Three thumbnail in slide picker.
+ * Exact 1000x560 slide canvas matching the rendered slide layout.
+ */
+export function metricThreePreviewSvg(previewHints = {}, theme = {}) {
+  const slots = previewHints?.slots || {}
+  const stats = previewHints?.stats || []
+
+  const headingText = slots.HEADING?.text || previewHints?.heading || MTH_DEFAULTS.HEADING
+  const m1v = slots.METRIC1_VALUE?.text || slots.STAT_1_VALUE?.text || (stats[0]?.value) || MTH_DEFAULTS.METRIC1_VALUE
+  const m1l = slots.METRIC1_LABEL?.text || slots.STAT_1_LABEL?.text || (stats[0]?.label) || MTH_DEFAULTS.METRIC1_LABEL
+  const m2v = slots.METRIC2_VALUE?.text || slots.STAT_2_VALUE?.text || (stats[1]?.value) || MTH_DEFAULTS.METRIC2_VALUE
+  const m2l = slots.METRIC2_LABEL?.text || slots.STAT_2_LABEL?.text || (stats[1]?.label) || MTH_DEFAULTS.METRIC2_LABEL
+  const m3v = slots.METRIC3_VALUE?.text || slots.STAT_3_VALUE?.text || (stats[2]?.value) || MTH_DEFAULTS.METRIC3_VALUE
+  const m3l = slots.METRIC3_LABEL?.text || slots.STAT_3_LABEL?.text || (stats[2]?.label) || MTH_DEFAULTS.METRIC3_LABEL
+
+  const c1 = MTH_COLORS.metric1
+  const c2 = MTH_COLORS.metric2
+  const c3 = MTH_COLORS.metric3
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <linearGradient id="mthU1" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="${c1}" stop-opacity="0.25"/>
+        <stop offset="50%" stop-color="${c1}" stop-opacity="1"/>
+        <stop offset="100%" stop-color="${c1}" stop-opacity="0.25"/>
+      </linearGradient>
+      <linearGradient id="mthU2" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="${c2}" stop-opacity="0.25"/>
+        <stop offset="50%" stop-color="${c2}" stop-opacity="1"/>
+        <stop offset="100%" stop-color="${c2}" stop-opacity="0.25"/>
+      </linearGradient>
+      <linearGradient id="mthU3" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="${c3}" stop-opacity="0.25"/>
+        <stop offset="50%" stop-color="${c3}" stop-opacity="1"/>
+        <stop offset="100%" stop-color="${c3}" stop-opacity="0.25"/>
+      </linearGradient>
+    </defs>
+
+    <!-- Slide Canvas Background -->
+    <rect width="1000" height="560" fill="#FFFFFF" rx="12"/>
+
+    <!-- Decorative Circles (Bottom Left) -->
+    <circle cx="30" cy="500" r="80" fill="${MTH_COLORS.decoCircles}" opacity="0.25"/>
+    <circle cx="80" cy="530" r="60" fill="${MTH_COLORS.decoCircles}" opacity="0.4"/>
+
+    <!-- Top Left Accent Pill -->
+    <rect x="${MTH_GEOM.decoX}" y="${MTH_GEOM.decoY}" width="${MTH_GEOM.decoW}" height="${MTH_GEOM.decoH}" rx="3" fill="${MTH_COLORS.deco}"/>
+
+    <!-- Heading -->
+    <text x="${MTH_GEOM.headingX}" y="124" fill="#0F172A" font-size="52" font-weight="800" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${headingText}</text>
+
+    <!-- Vertical Dividers Between Columns -->
+    <rect x="${MTH_GEOM.divider1X}" y="${MTH_GEOM.dividerY}" width="1" height="${MTH_GEOM.dividerH}" fill="${MTH_COLORS.divider}"/>
+    <rect x="${MTH_GEOM.divider2X}" y="${MTH_GEOM.dividerY}" width="1" height="${MTH_GEOM.dividerH}" fill="${MTH_COLORS.divider}"/>
+
+    <!-- Column 1: Customer satisfaction -->
+    <circle cx="200" cy="210" r="30" fill="${c1}" fill-opacity="0.15"/>
+    <g transform="translate(180, 190)">
+      <circle cx="13" cy="12" r="6" fill="none" stroke="${c1}" stroke-width="2.5"/>
+      <circle cx="27" cy="12" r="6" fill="none" stroke="${c1}" stroke-width="2.5"/>
+      <path d="M7 27 Q10 24 13 24 Q16 24 20 24 Q24 24 27 24 Q30 24 33 27 L33 34 L7 34 Z" fill="none" stroke="${c1}" stroke-width="2.5" stroke-linejoin="round"/>
+    </g>
+    <text x="200" y="325" text-anchor="middle" fill="#1E293B" font-size="68" font-weight="900" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${m1v}</text>
+    <text x="200" y="377" text-anchor="middle" fill="#64748B" font-size="17" font-weight="600" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${m1l}</text>
+    <rect x="150" y="400" width="100" height="5" rx="2.5" fill="url(#mthU1)"/>
+
+    <!-- Column 2: Average ROI -->
+    <circle cx="500" cy="210" r="30" fill="${c2}" fill-opacity="0.15"/>
+    <g transform="translate(480, 190)">
+      <path d="M7 28 L14 14 L21 21 L33 9" fill="none" stroke="${c2}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="26,9 33,9 33,16" fill="none" stroke="${c2}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+    <text x="500" y="325" text-anchor="middle" fill="#1E293B" font-size="68" font-weight="900" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${m2v}</text>
+    <text x="500" y="377" text-anchor="middle" fill="#64748B" font-size="17" font-weight="600" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${m2l}</text>
+    <rect x="450" y="400" width="100" height="5" rx="2.5" fill="url(#mthU2)"/>
+
+    <!-- Column 3: Active teams -->
+    <circle cx="800" cy="210" r="30" fill="${c3}" fill-opacity="0.15"/>
+    <g transform="translate(780, 190)">
+      <circle cx="10" cy="10" r="5" fill="none" stroke="${c3}" stroke-width="2"/>
+      <circle cx="24" cy="10" r="5" fill="none" stroke="${c3}" stroke-width="2"/>
+      <circle cx="30" cy="24" r="5" fill="none" stroke="${c3}" stroke-width="2"/>
+      <circle cx="17" cy="27" r="5" fill="none" stroke="${c3}" stroke-width="2"/>
+      <path d="M13 13 L15 22" stroke="${c3}" stroke-width="2"/>
+      <path d="M21 13 L19 22" stroke="${c3}" stroke-width="2"/>
+      <path d="M25 19 L22 23" stroke="${c3}" stroke-width="2"/>
+    </g>
+    <text x="800" y="325" text-anchor="middle" fill="#1E293B" font-size="68" font-weight="900" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${m3v}</text>
+    <text x="800" y="377" text-anchor="middle" fill="#64748B" font-size="17" font-weight="600" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${m3l}</text>
+    <rect x="750" y="400" width="100" height="5" rx="2.5" fill="url(#mthU3)"/>
+  </svg>`
+}

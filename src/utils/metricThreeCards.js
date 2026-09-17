@@ -445,3 +445,129 @@ export const layoutMetricThreeCards = (elements, schema, palette = {}, canvas = 
   
   return [...chrome, ...next]
 }
+
+/**
+ * Polished SVG Preview for Metric Three Cards thumbnail in slide picker.
+ * Exact 1000x560 slide canvas matching rendered slide layout.
+ */
+export function metricThreeCardsPreviewSvg(previewHints = {}, theme = {}) {
+  const slots = previewHints?.slots || {}
+  const stats = previewHints?.stats || []
+
+  const badgeText = slots.BADGE?.text || previewHints?.badge || MTC_DEFAULTS.BADGE
+  const headingText = slots.HEADING?.text || previewHints?.heading || MTC_DEFAULTS.HEADING
+  const subheadingText = slots.SUBHEADING?.text || previewHints?.subheading || MTC_DEFAULTS.SUBHEADING
+
+  const v1 = slots.CARD1_VALUE?.text || slots.STAT_1_VALUE?.text || (stats[0]?.value) || MTC_DEFAULTS.CARD1_VALUE
+  const l1 = slots.CARD1_LABEL?.text || slots.STAT_1_LABEL?.text || (stats[0]?.label) || MTC_DEFAULTS.CARD1_LABEL
+  const t1 = slots.CARD1_TREND?.text || MTC_DEFAULTS.CARD1_TREND
+  const d1 = slots.CARD1_DESC?.text || MTC_DEFAULTS.CARD1_DESC
+
+  const v2 = slots.CARD2_VALUE?.text || slots.STAT_2_VALUE?.text || (stats[1]?.value) || MTC_DEFAULTS.CARD2_VALUE
+  const l2 = slots.CARD2_LABEL?.text || slots.STAT_2_LABEL?.text || (stats[1]?.label) || MTC_DEFAULTS.CARD2_LABEL
+  const t2 = slots.CARD2_TREND?.text || MTC_DEFAULTS.CARD2_TREND
+  const d2 = slots.CARD2_DESC?.text || MTC_DEFAULTS.CARD2_DESC
+
+  const v3 = slots.CARD3_VALUE?.text || slots.STAT_3_VALUE?.text || (stats[2]?.value) || MTC_DEFAULTS.CARD3_VALUE
+  const l3 = slots.CARD3_LABEL?.text || slots.STAT_3_LABEL?.text || (stats[2]?.label) || MTC_DEFAULTS.CARD3_LABEL
+  const t3 = slots.CARD3_TREND?.text || MTC_DEFAULTS.CARD3_TREND
+  const d3 = slots.CARD3_DESC?.text || MTC_DEFAULTS.CARD3_DESC
+
+  const c1 = MTC_COLORS.card1
+  const c2 = MTC_COLORS.card2
+  const c3 = MTC_COLORS.card3
+
+  const splitDesc = (desc, fallback1, fallback2) => {
+    if (!desc) return [fallback1, fallback2]
+    const words = String(desc).split(' ')
+    if (words.length <= 5) return [desc, '']
+    const mid = Math.ceil(words.length / 2)
+    return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')]
+  }
+
+  const [d1a, d1b] = splitDesc(d1, 'More customers are happy with', 'our service and support.')
+  const [d2a, d2b] = splitDesc(d2, 'Our solutions continue to deliver', 'strong returns.')
+  const [d3a, d3b] = splitDesc(d3, 'More teams are joining and', 'growing with us.')
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+    <defs>
+      <linearGradient id="mtcGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="${c1}" stop-opacity="0.08"/>
+        <stop offset="100%" stop-color="${c1}" stop-opacity="0.15"/>
+      </linearGradient>
+      <linearGradient id="mtcGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="${c2}" stop-opacity="0.08"/>
+        <stop offset="100%" stop-color="${c2}" stop-opacity="0.15"/>
+      </linearGradient>
+      <linearGradient id="mtcGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="${c3}" stop-opacity="0.08"/>
+        <stop offset="100%" stop-color="${c3}" stop-opacity="0.15"/>
+      </linearGradient>
+    </defs>
+
+    <!-- Slide Canvas Background -->
+    <rect width="1000" height="560" fill="#FFFFFF" rx="12"/>
+
+    <!-- Badge (Top Left) -->
+    <rect x="${MTC_GEOM.badgeX}" y="${MTC_GEOM.badgeY}" width="${MTC_GEOM.badgeW}" height="${MTC_GEOM.badgeH}" rx="6" fill="#DBEAFE"/>
+    <g transform="translate(${MTC_GEOM.badgeX + 12}, ${MTC_GEOM.badgeY + 4})">
+      <rect x="1" y="4" width="3" height="8" rx="1" fill="#3B82F6"/>
+      <rect x="5.5" y="2" width="3" height="10" rx="1" fill="#3B82F6"/>
+      <rect x="10" y="6" width="3" height="6" rx="1" fill="#3B82F6"/>
+    </g>
+    <text x="${MTC_GEOM.badgeX + 32}" y="${MTC_GEOM.badgeY + 15}" fill="#2563EB" font-size="10" font-weight="700" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" letter-spacing="0.5px">${badgeText}</text>
+
+    <!-- Heading -->
+    <text x="${MTC_GEOM.headingX}" y="118" fill="#0F172A" font-size="44" font-weight="800" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${headingText}</text>
+
+    <!-- Subheading -->
+    <text x="${MTC_GEOM.subheadingX}" y="149" fill="#475569" font-size="15" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${subheadingText}</text>
+
+    <!-- CARD 1 (Blue) -->
+    <rect x="${MTC_GEOM.card1X}" y="${MTC_GEOM.cardY}" width="${MTC_GEOM.cardW}" height="${MTC_GEOM.cardH}" rx="16" fill="url(#mtcGrad1)" stroke="${c1}" stroke-width="1.5" stroke-opacity="0.2"/>
+    <rect x="${MTC_GEOM.card1X + 25}" y="${MTC_GEOM.cardY + 25}" width="56" height="56" rx="12" fill="${c1}" fill-opacity="0.15"/>
+    <g transform="translate(${MTC_GEOM.card1X + 34}, ${MTC_GEOM.cardY + 34})">
+      <circle cx="19" cy="14" r="8" fill="none" stroke="${c1}" stroke-width="2.5"/>
+      <path d="M11 27 Q19 23 27 27 L27 34 L11 34 Z" fill="none" stroke="${c1}" stroke-width="2.5" stroke-linejoin="round"/>
+    </g>
+    <text x="${MTC_GEOM.card1X + 25}" y="${MTC_GEOM.cardY + 148}" fill="#0F172A" font-size="52" font-weight="900" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${v1}</text>
+    <text x="${MTC_GEOM.card1X + 25}" y="${MTC_GEOM.cardY + 178}" fill="#1E293B" font-size="18" font-weight="700" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${l1}</text>
+    <path d="M${MTC_GEOM.card1X + 26} ${MTC_GEOM.cardY + 203} L${MTC_GEOM.card1X + 31} ${MTC_GEOM.cardY + 197} L${MTC_GEOM.card1X + 36} ${MTC_GEOM.cardY + 203}" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="${MTC_GEOM.card1X + 42}" y="${MTC_GEOM.cardY + 204}" fill="#10B981" font-size="13" font-weight="600" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${t1}</text>
+    <text x="${MTC_GEOM.card1X + 25}" y="${MTC_GEOM.cardY + 242}" fill="#64748B" font-size="14" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${d1a}</text>
+    <text x="${MTC_GEOM.card1X + 25}" y="${MTC_GEOM.cardY + 262}" fill="#64748B" font-size="14" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${d1b}</text>
+
+    <!-- CARD 2 (Purple) -->
+    <rect x="${MTC_GEOM.card2X}" y="${MTC_GEOM.cardY}" width="${MTC_GEOM.cardW}" height="${MTC_GEOM.cardH}" rx="16" fill="url(#mtcGrad2)" stroke="${c2}" stroke-width="1.5" stroke-opacity="0.2"/>
+    <rect x="${MTC_GEOM.card2X + 25}" y="${MTC_GEOM.cardY + 25}" width="56" height="56" rx="12" fill="${c2}" fill-opacity="0.15"/>
+    <g transform="translate(${MTC_GEOM.card2X + 34}, ${MTC_GEOM.cardY + 34})">
+      <rect x="6" y="6" width="26" height="26" rx="3" fill="none" stroke="${c2}" stroke-width="2.5"/>
+      <rect x="10" y="15" width="5" height="12" fill="${c2}" rx="1"/>
+      <rect x="16.5" y="11" width="5" height="16" fill="${c2}" rx="1"/>
+      <rect x="23" y="19" width="5" height="8" fill="${c2}" rx="1"/>
+    </g>
+    <text x="${MTC_GEOM.card2X + 25}" y="${MTC_GEOM.cardY + 148}" fill="#0F172A" font-size="52" font-weight="900" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${v2}</text>
+    <text x="${MTC_GEOM.card2X + 25}" y="${MTC_GEOM.cardY + 178}" fill="#1E293B" font-size="18" font-weight="700" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${l2}</text>
+    <path d="M${MTC_GEOM.card2X + 26} ${MTC_GEOM.cardY + 203} L${MTC_GEOM.card2X + 31} ${MTC_GEOM.cardY + 197} L${MTC_GEOM.card2X + 36} ${MTC_GEOM.cardY + 203}" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="${MTC_GEOM.card2X + 42}" y="${MTC_GEOM.cardY + 204}" fill="#10B981" font-size="13" font-weight="600" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${t2}</text>
+    <text x="${MTC_GEOM.card2X + 25}" y="${MTC_GEOM.cardY + 242}" fill="#64748B" font-size="14" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${d2a}</text>
+    <text x="${MTC_GEOM.card2X + 25}" y="${MTC_GEOM.cardY + 262}" fill="#64748B" font-size="14" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${d2b}</text>
+
+    <!-- CARD 3 (Green) -->
+    <rect x="${MTC_GEOM.card3X}" y="${MTC_GEOM.cardY}" width="${MTC_GEOM.cardW}" height="${MTC_GEOM.cardH}" rx="16" fill="url(#mtcGrad3)" stroke="${c3}" stroke-width="1.5" stroke-opacity="0.2"/>
+    <rect x="${MTC_GEOM.card3X + 25}" y="${MTC_GEOM.cardY + 25}" width="56" height="56" rx="12" fill="${c3}" fill-opacity="0.15"/>
+    <g transform="translate(${MTC_GEOM.card3X + 34}, ${MTC_GEOM.cardY + 34})">
+      <circle cx="12" cy="12" r="5.5" fill="none" stroke="${c3}" stroke-width="2"/>
+      <circle cx="26" cy="12" r="5.5" fill="none" stroke="${c3}" stroke-width="2"/>
+      <circle cx="19" cy="26" r="5.5" fill="none" stroke="${c3}" stroke-width="2"/>
+      <path d="M15 15 L17.5 21" stroke="${c3}" stroke-width="2"/>
+      <path d="M23 15 L20.5 21" stroke="${c3}" stroke-width="2"/>
+    </g>
+    <text x="${MTC_GEOM.card3X + 25}" y="${MTC_GEOM.cardY + 148}" fill="#0F172A" font-size="52" font-weight="900" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${v3}</text>
+    <text x="${MTC_GEOM.card3X + 25}" y="${MTC_GEOM.cardY + 178}" fill="#1E293B" font-size="18" font-weight="700" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${l3}</text>
+    <path d="M${MTC_GEOM.card3X + 26} ${MTC_GEOM.cardY + 203} L${MTC_GEOM.card3X + 31} ${MTC_GEOM.cardY + 197} L${MTC_GEOM.card3X + 36} ${MTC_GEOM.cardY + 203}" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="${MTC_GEOM.card3X + 42}" y="${MTC_GEOM.cardY + 204}" fill="#10B981" font-size="13" font-weight="600" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${t3}</text>
+    <text x="${MTC_GEOM.card3X + 25}" y="${MTC_GEOM.cardY + 242}" fill="#64748B" font-size="14" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${d3a}</text>
+    <text x="${MTC_GEOM.card3X + 25}" y="${MTC_GEOM.cardY + 262}" fill="#64748B" font-size="14" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">${d3b}</text>
+  </svg>`
+}
