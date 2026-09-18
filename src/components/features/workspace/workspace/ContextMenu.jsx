@@ -13,6 +13,7 @@ import {
   MdChevronLeft,
   MdOutlineBolt,
   MdSwapHoriz,
+  MdAssignmentInd,
 } from 'react-icons/md';
 
 const ContextMenu = ({
@@ -25,6 +26,7 @@ const ContextMenu = ({
   onMembers,
   onMove,
   onDetails,
+  onAssign,
   onCreditsTransfer,
   onCreditsUsage,
   showCreditsTransfer = false,
@@ -138,6 +140,11 @@ const ContextMenu = ({
           {onMove && (
             <button className="menu-item" onClick={(e) => handleAction(e, onMove)}>
               <MdFolder size={16} /> Move to Folder
+            </button>
+          )}
+          {type === 'video' && onAssign && (
+            <button className="menu-item" onClick={(e) => handleAction(e, onAssign)}>
+              <MdAssignmentInd size={16} /> Assign to...
             </button>
           )}
           {type === 'workspace' && onAddMembers && (

@@ -14,7 +14,11 @@ import {
   normalizeLibraryItem,
   normalizeLibraryCategoryId,
 } from '../../../../utils/workspaceLibrary.js'
-import { extractUserId, workspaceCanEdit } from '../../../../pages/TeamWorkspace/workspaceUtils.js'
+import {
+  extractUserId,
+  workspaceCanEdit,
+  workspaceCanManageContributors,
+} from '../../../../pages/TeamWorkspace/workspaceUtils.js'
 import WorkspaceSection from './WorkspaceSection.jsx'
 import {
   VideoCard,
@@ -69,11 +73,13 @@ export default function WorkspaceLibrary({
   onRename,
   onMove,
   onDelete,
+  onAssign,
   refreshKey = 0,
   className = '',
 }) {
   const workspaceId = workspace?.id
   const folderId = folder?.id || null
+  const canAssign = workspaceCanManageContributors(workspace)
   const canEdit = workspaceCanEdit(workspace)
   const { user: authUser } = useAuth()
   const currentUserId = extractUserId(authUser)
@@ -190,6 +196,7 @@ export default function WorkspaceLibrary({
             onRename: canEdit && onRename ? () => onRename(item) : null,
             onMove: canEdit && onMove ? () => onMove(item) : null,
             onDelete: canEdit && onDelete ? () => onDelete(item) : null,
+            onAssign: canAssign && onAssign && kind !== 'image' ? () => onAssign(item) : null,
           }}
         />
       )

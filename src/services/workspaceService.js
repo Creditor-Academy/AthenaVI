@@ -784,6 +784,56 @@ class WorkspaceService {
     }
   }
 
+  /**
+   * Assign / reassign / unassign a whole project (video or presentation).
+   * OWNER/ADMIN only — MEMBER gets 403; PRIVATE workspaces get 400. `assigneeId: null` unassigns.
+   */
+  async updateProjectAssignee(workspaceId, projectId, assigneeId) {
+    try {
+      const response = await fetch(
+        buildUrl(API_CONFIG.ENDPOINTS.PROJECTS.ASSIGNEE(workspaceId, projectId)),
+        {
+          method: 'PATCH',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ assigneeId }),
+        }
+      );
+      if (!response.ok) {
+        throw new Error(await this.readErrorMessage(response, `Failed to update assignee: ${response.status}`));
+      }
+      const data = await response.json();
+      return this.normalizeId(data.data?.project || data.project);
+    } catch (error) {
+      console.error('Error in updateProjectAssignee:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Assign / reassign / unassign one scene (video project's per-scene sibling of
+   * updateProjectAssignee). OWNER/ADMIN only. `assigneeId: null` unassigns.
+   */
+  async updateSceneAssignee(workspaceId, projectId, sceneId, assigneeId) {
+    try {
+      const response = await fetch(
+        buildUrl(API_CONFIG.ENDPOINTS.PROJECTS.SCENE_ASSIGNEE(workspaceId, projectId, sceneId)),
+        {
+          method: 'PATCH',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ assigneeId }),
+        }
+      );
+      if (!response.ok) {
+        throw new Error(await this.readErrorMessage(response, `Failed to update scene assignee: ${response.status}`));
+      }
+      const data = await response.json();
+      return this.normalizeId(data.data?.scene || data.scene);
+    } catch (error) {
+      console.error('Error in updateSceneAssignee:', error);
+      throw error;
+    }
+  }
+
   async saveProjectState(workspaceId, projectId, stateData) {
     try {
       // Allow passing just the data object, or an object with { data: ... }

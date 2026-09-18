@@ -22,6 +22,7 @@ import CreateFolderModal from '../../components/features/workspace/workspace/Cre
 import RenameModal from '../../components/features/workspace/workspace/RenameModal.jsx';
 import ItemDetailsModal from '../../components/features/workspace/workspace/ItemDetailsModal.jsx';
 import MoveProjectModal from '../../components/features/workspace/workspace/MoveProjectModal.jsx';
+import AssignProjectModal from '../../components/features/workspace/workspace/AssignProjectModal.jsx';
 import AllocateCreditsModal from '../../components/features/workspace/workspace/AllocateCreditsModal.jsx';
 import WorkspaceCreditsUsageModal from '../../components/features/workspace/workspace/WorkspaceCreditsUsageModal.jsx';
 import WorkspaceStorageBreadcrumb from '../../components/features/workspace/workspace/WorkspaceStorageBreadcrumb.jsx';
@@ -91,6 +92,8 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
   const [activeMemberMenuId, setActiveMemberMenuId] = useState(null);
   const [moveTargetVideo, setMoveTargetVideo] = useState(null);
   const [moveTargetWorkspace, setMoveTargetWorkspace] = useState(null);
+  const [assignTargetItem, setAssignTargetItem] = useState(null);
+  const [assignTargetWorkspace, setAssignTargetWorkspace] = useState(null);
   const [allocateCreditsWorkspace, setAllocateCreditsWorkspace] = useState(null);
   const [creditsUsageWorkspace, setCreditsUsageWorkspace] = useState(null);
   const [personalCredits, setPersonalCredits] = useState(null);
@@ -557,6 +560,10 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
           }
           deleteItem('video', item.id, workspace);
         }}
+        onAssign={(item) => {
+          setAssignTargetItem(item);
+          setAssignTargetWorkspace(workspace);
+        }}
         refreshKey={libraryEpoch}
       />
     );
@@ -691,7 +698,10 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
           onMove: canEdit
             ? () => { setMoveTargetVideo(video); setMoveTargetWorkspace(workspace); }
             : null,
-          onDelete: canEdit ? () => deleteItem('video', video.id, workspace) : null
+          onDelete: canEdit ? () => deleteItem('video', video.id, workspace) : null,
+          onAssign: workspaceCanManageContributors(workspace)
+            ? () => { setAssignTargetItem(video); setAssignTargetWorkspace(workspace); }
+            : null
         }}
       />
     ));
@@ -731,7 +741,10 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
           onMove: workspaceCanEdit(workspace)
             ? () => { setMoveTargetVideo(video); setMoveTargetWorkspace(workspace); }
             : null,
-          onDelete: workspaceCanEdit(workspace) ? () => deleteItem('video', video.id, workspace) : null
+          onDelete: workspaceCanEdit(workspace) ? () => deleteItem('video', video.id, workspace) : null,
+          onAssign: workspaceCanManageContributors(workspace)
+            ? () => { setAssignTargetItem(video); setAssignTargetWorkspace(workspace); }
+            : null
         }}
       />
     ));
@@ -1070,6 +1083,14 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
           null
         }
         videoTitle={moveTargetVideo?.name || moveTargetVideo?.title || ''}
+      />
+
+      <AssignProjectModal
+        isOpen={!!assignTargetItem}
+        onClose={() => { setAssignTargetItem(null); setAssignTargetWorkspace(null); }}
+        onAssigned={() => setLibraryEpoch((n) => n + 1)}
+        workspaceId={assignTargetWorkspace?.id}
+        project={assignTargetItem}
       />
 
       <AllocateCreditsModal

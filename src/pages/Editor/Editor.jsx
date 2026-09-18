@@ -27,6 +27,8 @@ import { extractCreditsUsed } from '../../utils/creditTransactions.js'
 import avatar1 from '../../assets/Avatarr1.png'
 import projectTemplate from '../../constants/projectTemplate.json'
 import workspaceService from '../../services/workspaceService'
+import { useAuth } from '../../contexts/AuthContext'
+import { normalizeWorkspace, extractUserId, workspaceCanManageContributors } from '../TeamWorkspace/workspaceUtils'
 import {
   applyPresenterSeedToScene,
   buildHeygenAvatarContent,
@@ -339,6 +341,14 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
   const [timelineScope, setTimelineScope] = useState('all')
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
+
+  // Per-scene assignee — TEAM workspaces only, OWNER/ADMIN can set (mirrors the
+  // PPT editor's per-slide assignee).
+  const { user: authUser } = useAuth()
+  const [sceneWorkspaceInfo, setSceneWorkspaceInfo] = useState(null)
+  const [sceneWorkspaceMembers, setSceneWorkspaceMembers] = useState([])
+  const [sceneMembersLoading, setSceneMembersLoading] = useState(false)
+  const [sceneAssigneeBusy, setSceneAssigneeBusy] = useState(false)
 
   const pausePlayback = useCallback(() => {
     if (!isPlaying) return
@@ -1821,6 +1831,64 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
     uxUpdateScene(id, updates, { history: true })
   }
 
+  const sceneAssigneeWorkspaceId = project.workspaceId || project.createConfig?.workspaceId
+
+  useEffect(() => {
+    if (!sceneAssigneeWorkspaceId) {
+      setSceneWorkspaceInfo(null)
+      return undefined
+    }
+    let cancelled = false
+    workspaceService
+      .getWorkspace(sceneAssigneeWorkspaceId)
+      .then((raw) => {
+        if (cancelled || !raw) return
+        setSceneWorkspaceInfo(normalizeWorkspace(raw, extractUserId(authUser), authUser))
+      })
+      .catch(() => {
+        if (!cancelled) setSceneWorkspaceInfo(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [sceneAssigneeWorkspaceId, authUser])
+
+  const isTeamWorkspace = sceneWorkspaceInfo?.type === 'workspace'
+  const canManageSceneAssignee = workspaceCanManageContributors(sceneWorkspaceInfo)
+
+  const loadSceneAssigneeMembers = () => {
+    if (!canManageSceneAssignee || sceneWorkspaceMembers.length || sceneMembersLoading) return
+    setSceneMembersLoading(true)
+    workspaceService
+      .listWorkspaceMembers(sceneAssigneeWorkspaceId)
+      .then((list) => setSceneWorkspaceMembers(list || []))
+      .catch(() => setSceneWorkspaceMembers([]))
+      .finally(() => setSceneMembersLoading(false))
+  }
+
+  const handleAssignScene = async (sceneId, userId) => {
+    const projectId = project.id || project.createConfig?.videoId
+    if (!sceneAssigneeWorkspaceId || !projectId || !sceneId || sceneAssigneeBusy) return
+    setSceneAssigneeBusy(true)
+    try {
+      const updatedScene = await workspaceService.updateSceneAssignee(
+        sceneAssigneeWorkspaceId,
+        projectId,
+        sceneId,
+        userId
+      )
+      updateScene(sceneId, {
+        assignee: updatedScene?.assignee ?? null,
+        assignedBy: updatedScene?.assignedBy ?? null,
+        assignedAt: updatedScene?.assignedAt ?? null,
+      })
+    } catch (err) {
+      showToast(err.message || 'Failed to update scene assignee', 'error')
+    } finally {
+      setSceneAssigneeBusy(false)
+    }
+  }
+
   const exportVideo = () => {
     const workspaceId = project.workspaceId || project.createConfig?.workspaceId
     const projectId = project.id || project.createConfig?.videoId
@@ -2973,6 +3041,13 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
                 showToast('Scene duplicated', 'success')
               }
             }}
+            isTeamWorkspace={isTeamWorkspace}
+            canManageAssignee={canManageSceneAssignee}
+            workspaceMembers={sceneWorkspaceMembers}
+            membersLoading={sceneMembersLoading}
+            assigneeBusy={sceneAssigneeBusy}
+            onLoadAssigneeMembers={loadSceneAssigneeMembers}
+            onAssignScene={handleAssignScene}
           />
         </div>
 

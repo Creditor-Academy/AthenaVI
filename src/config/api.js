@@ -131,6 +131,8 @@ const API_CONFIG = {
     PROJECTS: {
       ASSIGNEE: (workspaceId, projectId) =>
         `/api/workspaces/${workspaceId}/projects/${projectId}/assignee`,
+      SCENE_ASSIGNEE: (workspaceId, projectId, sceneId) =>
+        `/api/workspaces/${workspaceId}/projects/${projectId}/scenes/${sceneId}/assignee`,
     },
 
     // Project comments
