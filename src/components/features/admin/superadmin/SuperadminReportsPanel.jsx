@@ -1,165 +1,309 @@
-import { useState, useEffect } from 'react'
-import { BarChart3, Users, Building2, Calendar, Zap, TrendingUp, Activity } from 'lucide-react'
+import { useState, useEffect, useMemo, useId } from 'react'
+import {
+  BarChart3, Users, Building2, Zap, TrendingUp, TrendingDown,
+  Activity, Filter, RefreshCw, ChevronDown, ChevronUp, DollarSign, Layers,
+} from 'lucide-react'
 import superadminService from '../../../../services/superadminService'
 import { defaultReportRange, formatAc, isValidUuid } from './superadminUtils'
 import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
 import '../../../../pages/AdminPortal/styles/AdminReports.css'
 import { SaSkeletonBlock } from './skeletons/AdminSkeletons'
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function pct(value, max) {
-  if (!max || max === 0) return 0
-  return Math.min(100, Math.round((Number(value) / Number(max)) * 100))
-}
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function shortDate(iso) {
   if (!iso) return '—'
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
-function initials(label) {
-  return String(label)
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0].toUpperCase())
-    .join('') || '?'
-}
+// ─── Animated SVG area sparkline chart ───────────────────────────────────────
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+function AnimatedAreaChart({ data, formatValue, formatLabel, height = 210 }) {
+  const id = useId()
+  const gradId = `ag-${id}`
+  const VW = 1000, VH = 300
+  const PAD = { t: 20, r: 16, b: 32, l: 10 }
 
-function SummaryCard({ icon: Icon, label, value, sub }) {
+  const points = useMemo(() => {
+    if (!data?.length) return []
+    const vals = data.map(d => Number(d.value) || 0)
+    const max = Math.max(...vals, 1)
+    const min = 0
+    const cW = VW - PAD.l - PAD.r
+    const cH = VH - PAD.t - PAD.b
+    return data.map((d, i) => ({
+      x: PAD.l + (data.length === 1 ? cW / 2 : (i / (data.length - 1)) * cW),
+      y: PAD.t + cH - ((Number(d.value) || 0) / (max - min)) * cH,
+      label: d.label,
+      value: d.value,
+      meta: d.meta,
+    }))
+  }, [data])
+
+  const [hoverIdx, setHoverIdx] = useState(null)
+
+  if (!points.length) return <p className="sa-empty-text" style={{ padding: '24px 0', textAlign: 'center' }}>No daily data in range.</p>
+
+  // Build smooth catmull-rom path
+  function smooth(pts) {
+    if (pts.length < 2) return `M ${pts[0]?.x} ${pts[0]?.y}`
+    let d = `M ${pts[0].x} ${pts[0].y}`
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i - 1] || pts[i]
+      const p1 = pts[i]
+      const p2 = pts[i + 1]
+      const p3 = pts[i + 2] || p2
+      const c1x = p1.x + (p2.x - p0.x) / 6
+      const c1y = p1.y + (p2.y - p0.y) / 6
+      const c2x = p2.x - (p3.x - p1.x) / 6
+      const c2y = p2.y - (p3.y - p1.y) / 6
+      d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${p2.x} ${p2.y}`
+    }
+    return d
+  }
+
+  const baseline = VH - PAD.b
+  const linePath = smooth(points)
+  const areaPath = `${linePath} L ${points[points.length - 1].x} ${baseline} L ${points[0].x} ${baseline} Z`
+  const hover = hoverIdx != null ? points[hoverIdx] : null
+  const leftPct = hover ? (hover.x / VW) * 100 : 0
+
+  const handleMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const relX = ((e.clientX - rect.left) / rect.width) * VW
+    let best = 0, bestDist = Infinity
+    points.forEach((p, i) => { const d = Math.abs(p.x - relX); if (d < bestDist) { bestDist = d; best = i } })
+    setHoverIdx(best)
+  }
+
   return (
-    <div className="sa-metric-card" style={{ position: 'relative', overflow: 'hidden' }}>
-      <div style={{
-        position: 'absolute', top: 12, right: 12,
-        width: 34, height: 34, borderRadius: 9,
-        background: 'color-mix(in srgb, var(--primary) 10%, var(--bg-card))',
-        border: '1px solid color-mix(in srgb, var(--primary) 20%, var(--border-color))',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: 'var(--primary)',
-      }}>
-        <Icon size={15} />
+    <div className="rpt-chart-wrap" style={{ height }} onMouseMove={handleMove} onMouseLeave={() => setHoverIdx(null)}>
+      <svg viewBox={`0 0 ${VW} ${VH}`} preserveAspectRatio="none" className="rpt-chart-svg" aria-label="Daily usage trend">
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.38" />
+            <stop offset="100%" stopColor="var(--primary)" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {[0.25, 0.5, 0.75].map((f, i) => (
+          <line key={i} x1={PAD.l} x2={VW - PAD.r} y1={PAD.t + (VH - PAD.t - PAD.b) * (1 - f)} y2={PAD.t + (VH - PAD.t - PAD.b) * (1 - f)} stroke="var(--border-color)" strokeWidth="1" opacity="0.6" vectorEffect="non-scaling-stroke" />
+        ))}
+        <path d={areaPath} fill={`url(#${gradId})`} className="rpt-area-path" />
+        <path d={linePath} fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" className="rpt-line-path" />
+        {hover && <line x1={hover.x} x2={hover.x} y1={PAD.t} y2={baseline} stroke="var(--text-muted)" strokeWidth="1" strokeDasharray="4 4" opacity="0.6" vectorEffect="non-scaling-stroke" />}
+        {hover && <circle cx={hover.x} cy={hover.y} r="10" fill="var(--bg-card)" />}
+        {hover && <circle cx={hover.x} cy={hover.y} r="5" fill="var(--primary)" />}
+      </svg>
+
+      {hover && (
+        <div className={`rpt-tooltip rpt-tooltip--${leftPct > 70 ? 'left' : leftPct < 15 ? 'right' : 'center'}`}
+          style={{ left: `${leftPct}%`, top: `${(hover.y / VH) * 100}%` }}>
+          <span className="rpt-tooltip-date">{formatLabel ? formatLabel(hover.label) : hover.label}</span>
+          <span className="rpt-tooltip-val">{formatValue ? formatValue(hover.value) : hover.value}</span>
+          {hover.meta != null && <span className="rpt-tooltip-meta">{new Intl.NumberFormat().format(hover.meta)} events</span>}
+        </div>
+      )}
+
+      <div className="rpt-axis">
+        <span>{formatLabel ? formatLabel(data[0].label) : data[0].label}</span>
+        {data.length > 2 && <span>{formatLabel ? formatLabel(data[Math.floor((data.length - 1) / 2)].label) : ''}</span>}
+        <span>{formatLabel ? formatLabel(data[data.length - 1].label) : data[data.length - 1].label}</span>
       </div>
-      <div className="sa-metric-card-label" style={{ paddingRight: 48 }}>{label}</div>
-      <div className="sa-metric-card-value" style={{ color: 'var(--text-main)' }}>{value}</div>
-      {sub && <div className="sa-metric-card-note">{sub}</div>}
     </div>
   )
 }
 
-// ── Layout 1: Feature chart — horizontal bar chart ──
-function FeatureBarChart({ rows, maxValue }) {
+// ─── Animated donut/ring chart for feature distribution ──────────────────────
+
+const RING_COLORS = ['#2563eb', '#ea580c', '#0d9488', '#8b5cf6', '#ec4899', '#0284c7']
+
+function AnimatedDonutChart({ rows }) {
+  if (!rows?.length) return null
+  const total = rows.reduce((s, r) => s + (Number(r.value) || 0), 0) || 1
+  const R = 44, CX = 60, CY = 60, CIRC = 2 * Math.PI * R
+  let offset = 0
+
+  const slices = rows.map((r, i) => {
+    const share = (Number(r.value) || 0) / total
+    const dash = share * CIRC
+    const seg = { dash, gap: CIRC - dash, offset, color: RING_COLORS[i % RING_COLORS.length], label: r.label, value: r.value, share }
+    offset += dash
+    return seg
+  })
+
+  return (
+    <div className="rpt-donut-wrap">
+      <svg viewBox="0 0 120 120" className="rpt-donut-svg" aria-label="Feature usage distribution">
+        {slices.map((s, i) => (
+          <circle key={i} cx={CX} cy={CY} r={R}
+            fill="none"
+            stroke={s.color}
+            strokeWidth="14"
+            strokeDasharray={`${s.dash} ${s.gap}`}
+            strokeDashoffset={-s.offset + CIRC / 4}
+            className="rpt-donut-seg"
+            style={{ animationDelay: `${i * 0.08}s` }}
+          >
+            <title>{s.label}: {formatAc(s.value)} ({Math.round(s.share * 100)}%)</title>
+          </circle>
+        ))}
+        <circle cx={CX} cy={CY} r="30" fill="var(--bg-card)" />
+        <text x={CX} y={CY - 4} textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--text-main)">{rows.length}</text>
+        <text x={CX} y={CY + 9} textAnchor="middle" fontSize="7" fill="var(--text-muted)">features</text>
+      </svg>
+
+      <ul className="rpt-donut-legend">
+        {rows.map((r, i) => (
+          <li key={r.key || r.label} className="rpt-legend-item">
+            <span className="rpt-legend-dot" style={{ background: RING_COLORS[i % RING_COLORS.length] }} />
+            <span className="rpt-legend-name" title={r.label}>{r.label}</span>
+            <span className="rpt-legend-val">{formatAc(r.value)}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+// ─── Animated horizontal bar chart for users / workspaces ────────────────────
+
+function AnimatedBarList({ rows, maxValue, showShare, totalAc, colors }) {
   if (!rows?.length) return null
   return (
-    <div style={{ padding: '8px 0' }}>
-      {rows.map((row, i) => {
-        const w = pct(row.totalUsageAc, maxValue)
-        const opacity = Math.max(0.4, 1 - i * 0.06)
+    <ul className="rpt-barlist">
+      {rows.map((r, i) => {
+        const pct = Math.max(2, Math.round((Number(r.value || r.totalUsageAc) / (maxValue || 1)) * 100))
+        const color = (colors || RING_COLORS)[i % (colors || RING_COLORS).length]
+        const share = showShare && totalAc ? Math.round((Number(r.value || r.totalUsageAc) / totalAc) * 100) : null
         return (
-          <div key={row.feature} style={{ padding: '7px 16px', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{
-              width: 110, flexShrink: 0,
-              fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)',
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}>
-              {row.label || row.feature}
-            </span>
-            <div style={{
-              flex: 1, height: 18, borderRadius: 4,
-              background: 'color-mix(in srgb, var(--primary) 6%, var(--border-color))',
-              overflow: 'hidden', position: 'relative',
-            }}>
-              <div style={{
-                position: 'absolute', left: 0, top: 0, bottom: 0,
-                width: `${w}%`,
-                borderRadius: 4,
-                background: 'var(--primary)',
-                opacity,
-                transition: 'width 0.5s cubic-bezier(.4,0,.2,1)',
-              }} />
-              {w > 18 && (
-                <span style={{
-                  position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)',
-                  fontSize: '0.625rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)',
-                  pointerEvents: 'none',
-                }}>
-                  {new Intl.NumberFormat().format(row.transactionCount)} ev
-                </span>
-              )}
+          <li key={r.key || r.userId || r.workspaceId || i} className="rpt-barlist-row">
+            <span className="rpt-barlist-rank" style={i < 3 ? { background: color, color: '#fff', borderColor: 'transparent' } : {}}>{i + 1}</span>
+            <div className="rpt-barlist-main">
+              <div className="rpt-barlist-nameline">
+                <span className="rpt-barlist-name" title={r.label || r.name || r.email}>{r.label || r.name || r.email || '—'}</span>
+                {share != null && <span className="rpt-share-chip">{share}%</span>}
+              </div>
+              <div className="rpt-barlist-track">
+                <div className="rpt-barlist-fill" style={{ width: `${pct}%`, background: color, animationDelay: `${i * 0.06}s` }} />
+              </div>
             </div>
-            <span style={{
-              width: 80, flexShrink: 0, textAlign: 'right',
-              fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-main)',
-              letterSpacing: '-0.02em',
-            }}>
-              {formatAc(row.totalUsageAc)}
-            </span>
-          </div>
+            <div className="rpt-barlist-right">
+              <span className="rpt-barlist-credits">{formatAc(r.value || r.totalUsageAc)}</span>
+              <span className="rpt-barlist-events">{new Intl.NumberFormat().format(r.meta || r.transactionCount)} ev</span>
+            </div>
+          </li>
         )
       })}
+    </ul>
+  )
+}
+
+// ─── Filter bar ───────────────────────────────────────────────────────────────
+
+function FilterBar({ from, to, setFrom, setTo, userId, setUserId,
+  workspaceId, setWorkspaceId, topLimit, setTopLimit, onSubmit, loading }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="rpt-filter-bar">
+      <form onSubmit={onSubmit}>
+
+        {/* ── Header row: label left, buttons right ── */}
+        <div className="rpt-filter-header">
+          <div className="rpt-filter-header-text">
+            <span className="rpt-filter-heading"><BarChart3 size={14} /> Report Parameters</span>
+            <span className="rpt-filter-subtext">Select a date range and run the usage report</span>
+          </div>
+          <div className="rpt-filter-actions">
+            <button type="submit" className="sa-btn sa-btn--primary rpt-run-btn" disabled={loading}>
+              {loading
+                ? <><RefreshCw size={14} className="rpt-spin" /> Running…</>
+                : <><BarChart3 size={14} /> Run Report</>}
+            </button>
+            <button type="button"
+              className={`sa-btn ${open ? 'sa-btn--ghost rpt-filters-btn--active' : 'sa-btn--ghost'} rpt-filters-btn`}
+              onClick={() => setOpen(p => !p)}>
+              <Filter size={13} />
+              {open ? 'Hide filters' : 'Filters'}
+              {open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
+          </div>
+        </div>
+
+        {/* ── Date range inputs ── */}
+        <div className="rpt-date-row">
+          <div className="rpt-date-group">
+            <label htmlFor="rpt-from" className="rpt-field-label">From</label>
+            <input id="rpt-from" className="sa-input rpt-date-input" type="date"
+              value={from} onChange={e => setFrom(e.target.value)} />
+          </div>
+
+          <div className="rpt-date-sep" aria-hidden="true">→</div>
+
+          <div className="rpt-date-group">
+            <label htmlFor="rpt-to" className="rpt-field-label">To</label>
+            <input id="rpt-to" className="sa-input rpt-date-input" type="date"
+              value={to} onChange={e => setTo(e.target.value)} />
+          </div>
+        </div>
+
+        {/* ── Advanced filters (collapsed) ── */}
+        {open && (
+          <div className="rpt-advanced-row">
+            <div className="rpt-adv-field">
+              <label htmlFor="rpt-top" className="rpt-field-label">Top N</label>
+              <input id="rpt-top" className="sa-input" type="number"
+                min="1" max="25" value={topLimit}
+                onChange={e => setTopLimit(Number(e.target.value) || 10)}
+                style={{ width: 80 }} />
+            </div>
+            <div className="rpt-adv-field rpt-adv-field--flex">
+              <label htmlFor="rpt-user" className="rpt-field-label">User ID (UUID)</label>
+              <input id="rpt-user" className="sa-input" type="text"
+                placeholder="Optional — filter to a single user"
+                value={userId} onChange={e => setUserId(e.target.value)} />
+            </div>
+            <div className="rpt-adv-field rpt-adv-field--flex">
+              <label htmlFor="rpt-ws" className="rpt-field-label">Workspace ID (UUID)</label>
+              <input id="rpt-ws" className="sa-input" type="text"
+                placeholder="Optional — filter to a single workspace"
+                value={workspaceId} onChange={e => setWorkspaceId(e.target.value)} />
+            </div>
+          </div>
+        )}
+      </form>
     </div>
   )
 }
 
-// ── Layout 2: Daily usage — sparkbar + striped table ──
-function DailyChart({ days }) {
-  if (!days?.length) return null
-  const maxVal = Math.max(...days.map((d) => d.totalUsageAc), 1)
+// ─── Loading skeleton ─────────────────────────────────────────────────────────
 
+function ReportsSkeleton() {
   return (
-    <div>
-      <div style={{ padding: '14px 16px 0' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 68 }}>
-          {days.map((day) => {
-            const h = Math.max(4, pct(day.totalUsageAc, maxVal))
-            return (
-              <div
-                key={day.date}
-                title={`${shortDate(day.date)}: ${formatAc(day.totalUsageAc)} · ${day.transactionCount} events`}
-                style={{
-                  flex: 1, height: `${h}%`, minWidth: 0,
-                  borderRadius: '3px 3px 0 0',
-                  background: 'var(--primary)',
-                  opacity: 0.55,
-                  cursor: 'default',
-                  transition: 'opacity 0.15s',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9' }}
-                onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.55' }}
-              />
-            )
-          })}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div className="sa-kpi-grid">
+        {[0,1,2,3].map(i => (
+          <div key={i} style={{ borderRadius: 16, padding: 18, background: 'color-mix(in srgb, var(--border-color) 50%, var(--bg-card))', minHeight: 108 }}>
+            <SaSkeletonBlock width="55%" height={12} borderRadius={4} style={{ marginBottom: 14 }} />
+            <SaSkeletonBlock width="70%" height={28} borderRadius={6} />
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 16 }}>
+        <div className="sa-card" style={{ padding: 18, minHeight: 240 }}>
+          <SaSkeletonBlock width={140} height={14} borderRadius={4} style={{ marginBottom: 18 }} />
+          <SaSkeletonBlock width="100%" height={180} borderRadius={10} />
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, paddingBottom: 10, borderBottom: '1px solid var(--border-color)' }}>
-          <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>{shortDate(days[0]?.date)}</span>
-          <span style={{ fontSize: '0.625rem', color: 'var(--text-muted)' }}>{shortDate(days[days.length - 1]?.date)}</span>
+        <div className="sa-card" style={{ padding: 18, minHeight: 240 }}>
+          <SaSkeletonBlock width={110} height={14} borderRadius={4} style={{ marginBottom: 18 }} />
+          <SaSkeletonBlock width={120} height={120} borderRadius={999} style={{ margin: '0 auto 16px' }} />
+          {[0,1,2,3].map(i => <SaSkeletonBlock key={i} width="100%" height={12} borderRadius={4} style={{ marginBottom: 8 }} />)}
         </div>
       </div>
-
-      <div style={{ maxHeight: 220, overflowY: 'auto' }}>
-        {[...days].reverse().map((day, i) => (
-          <div key={day.date} style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr auto auto',
-            alignItems: 'center',
-            gap: 12,
-            padding: '7px 16px',
-            background: i % 2 === 0 ? 'transparent' : 'color-mix(in srgb, var(--text-muted) 3%, transparent)',
-            fontSize: '0.8125rem',
-          }}>
-            <span style={{ color: 'var(--text-main)', fontWeight: 500 }}>{shortDate(day.date)}</span>
-            <span style={{
-              fontSize: '0.6875rem', color: 'var(--text-muted)',
-              background: 'color-mix(in srgb, var(--text-muted) 10%, transparent)',
-              borderRadius: 4, padding: '2px 6px',
-            }}>
-              {new Intl.NumberFormat().format(day.transactionCount)} ev
-            </span>
-            <span style={{ color: 'var(--text-main)', fontWeight: 600, minWidth: 72, textAlign: 'right' }}>
-              {formatAc(day.totalUsageAc)}
-            </span>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        {[0,1].map(i => (
+          <div key={i} className="sa-card" style={{ padding: 18 }}>
+            <SaSkeletonBlock width={100} height={14} borderRadius={4} style={{ marginBottom: 16 }} />
+            {[0,1,2,3,4].map(j => <SaSkeletonBlock key={j} width="100%" height={36} borderRadius={8} style={{ marginBottom: 8 }} />)}
           </div>
         ))}
       </div>
@@ -167,172 +311,7 @@ function DailyChart({ days }) {
   )
 }
 
-// ── Layout 3: Top users — compact ranked list ──
-function UserGrid({ users, maxValue }) {
-  if (!users?.length) return null
-  return (
-    <div>
-      {users.map((u, i) => {
-        const label = u.name || u.email || u.userId
-        const ini = initials(label)
-        const w = pct(u.totalUsageAc, maxValue)
-
-        return (
-          <div
-            key={u.userId}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 11,
-              padding: '9px 16px',
-              borderBottom: '1px solid var(--border-color)',
-              transition: 'background 0.1s',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'color-mix(in srgb, var(--primary) 5%, transparent)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-          >
-            {/* Rank number */}
-            <span style={{
-              width: 22, height: 22, borderRadius: 6, flexShrink: 0,
-              background: 'color-mix(in srgb, var(--text-muted) 10%, var(--bg-card))',
-              border: '1px solid var(--border-color)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '0.6875rem', fontWeight: 700, color: 'var(--text-muted)',
-            }}>
-              {i + 1}
-            </span>
-
-            {/* Avatar */}
-            <div style={{
-              width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-              background: 'color-mix(in srgb, var(--primary) 12%, var(--bg-card))',
-              border: '1px solid color-mix(in srgb, var(--primary) 20%, var(--border-color))',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)',
-            }}>
-              {ini}
-            </div>
-
-            {/* Name + bar */}
-            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{
-                fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-main)',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              }}>
-                {label}
-              </span>
-              <div style={{
-                height: 3, borderRadius: 99,
-                background: 'color-mix(in srgb, var(--primary) 10%, var(--border-color))',
-                overflow: 'hidden',
-              }}>
-                <div style={{
-                  height: '100%', width: `${w}%`, borderRadius: 99,
-                  background: 'var(--primary)',
-                  opacity: 0.7,
-                  transition: 'width 0.5s cubic-bezier(.4,0,.2,1)',
-                }} />
-              </div>
-            </div>
-
-            {/* Credits + events */}
-            <div style={{ flexShrink: 0, textAlign: 'right' }}>
-              <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
-                {formatAc(u.totalUsageAc)}
-              </div>
-              <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)', marginTop: 1 }}>
-                {new Intl.NumberFormat().format(u.transactionCount)} events
-              </div>
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-// ── Layout 4: Top workspaces — compact numbered list ──
-function WorkspaceList({ workspaces, maxValue, total }) {
-  if (!workspaces?.length) return null
-  const totalAc = total || workspaces.reduce((s, w) => s + Number(w.totalUsageAc), 0) || 1
-
-  return (
-    <div>
-      {workspaces.map((w, i) => {
-        const share = Math.round((Number(w.totalUsageAc) / totalAc) * 100)
-        const barW = pct(w.totalUsageAc, maxValue)
-
-        return (
-          <div
-            key={w.workspaceId}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 11,
-              padding: '9px 16px',
-              borderBottom: '1px solid var(--border-color)',
-              transition: 'background 0.1s',
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.background = 'color-mix(in srgb, var(--primary) 5%, transparent)' }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
-          >
-            {/* Rank number */}
-            <span style={{
-              width: 22, height: 22, borderRadius: 6, flexShrink: 0,
-              background: 'color-mix(in srgb, var(--text-muted) 10%, var(--bg-card))',
-              border: '1px solid var(--border-color)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '0.6875rem', fontWeight: 700, color: 'var(--text-muted)',
-            }}>
-              {i + 1}
-            </span>
-
-            {/* Name + bar */}
-            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{
-                fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-main)',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              }}>
-                {w.name || w.workspaceId}
-              </span>
-              <div style={{
-                height: 3, borderRadius: 99,
-                background: 'color-mix(in srgb, var(--primary) 10%, var(--border-color))',
-                overflow: 'hidden',
-              }}>
-                <div style={{
-                  height: '100%', width: `${barW}%`, borderRadius: 99,
-                  background: 'var(--primary)',
-                  opacity: 0.7,
-                  transition: 'width 0.5s cubic-bezier(.4,0,.2,1)',
-                }} />
-              </div>
-            </div>
-
-            {/* Share % + credits + events */}
-            <div style={{ flexShrink: 0, textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }}>
-                <span style={{
-                  fontSize: '0.6875rem', fontWeight: 600,
-                  color: 'var(--text-muted)',
-                  background: 'color-mix(in srgb, var(--text-muted) 10%, var(--bg-card))',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: 5, padding: '1px 6px',
-                }}>
-                  {share}%
-                </span>
-                <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
-                  {formatAc(w.totalUsageAc)}
-                </span>
-              </div>
-              <div style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-                {new Intl.NumberFormat().format(w.transactionCount)} events
-              </div>
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-// ── Main panel ────────────────────────────────────────────────────────────────
+// ─── Main panel ───────────────────────────────────────────────────────────────
 
 function SuperadminReportsPanel() {
   const initial = defaultReportRange()
@@ -341,7 +320,6 @@ function SuperadminReportsPanel() {
   const [userId, setUserId] = useState('')
   const [workspaceId, setWorkspaceId] = useState('')
   const [topLimit, setTopLimit] = useState(10)
-  const [showAdvanced, setShowAdvanced] = useState(false)
   const [report, setReport] = useState(null)
   const [usageLoading, setUsageLoading] = useState(false)
   const [usageError, setUsageError] = useState('')
@@ -354,8 +332,7 @@ function SuperadminReportsPanel() {
       if (userId.trim() && !isValidUuid(userId.trim())) throw new Error('User ID must be a valid UUID.')
       if (workspaceId.trim() && !isValidUuid(workspaceId.trim())) throw new Error('Workspace ID must be a valid UUID.')
       const data = await superadminService.getUsageReport({
-        from: from || undefined,
-        to: to || undefined,
+        from: from || undefined, to: to || undefined,
         userId: userId.trim() || undefined,
         workspaceId: workspaceId.trim() || undefined,
         topLimit,
@@ -369,209 +346,196 @@ function SuperadminReportsPanel() {
     }
   }
 
-  useEffect(() => {
-    runUsageReport()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  useEffect(() => { runUsageReport() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const maxFeatureAc = report?.byFeature?.[0]?.totalUsageAc ?? 1
+  // Derived
+  const trend = useMemo(() => {
+    const days = report?.byDay
+    if (!days?.length) return null
+    const mid = Math.floor(days.length / 2)
+    const fSum = days.slice(0, mid || 1).reduce((s, d) => s + (Number(d.totalUsageAc) || 0), 0)
+    const sSum = days.slice(mid || 1).reduce((s, d) => s + (Number(d.totalUsageAc) || 0), 0)
+    let growthPct = null
+    if (fSum > 0) growthPct = ((sSum - fSum) / fSum) * 100
+    else if (sSum > 0) growthPct = 100
+    return {
+      areaData: days.map(d => ({ label: d.date, value: Number(d.totalUsageAc) || 0, meta: d.transactionCount })),
+      growthPct, avgDaily: Number(report.totalUsageAc) / days.length, spanDays: days.length,
+    }
+  }, [report])
+
+  const rankedFeatures = useMemo(() => {
+    const rows = report?.byFeature
+    if (!rows?.length) return []
+    const top = rows.slice(0, 6).map(r => ({ key: r.feature, label: r.label || r.feature, value: Number(r.totalUsageAc) || 0, meta: r.transactionCount }))
+    if (rows.length > 6) {
+      const rest = rows.slice(6)
+      const ov = rest.reduce((s, r) => s + (Number(r.totalUsageAc) || 0), 0)
+      const oc = rest.reduce((s, r) => s + (Number(r.transactionCount) || 0), 0)
+      if (ov > 0) top.push({ key: 'other', label: 'Other', value: ov, meta: oc })
+    }
+    return top
+  }, [report])
+
   const maxUserAc = report?.topUsers?.[0]?.totalUsageAc ?? 1
   const maxWsAc = report?.topWorkspaces?.[0]?.totalUsageAc ?? 1
+  const totalAc = Number(report?.totalUsageAc) || 1
 
   return (
-    <div className="sa-panel" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+    <div className="sa-panel">
 
-      {/* Header */}
+      {/* ── Standard management-page header ── */}
       <div className="sa-panel-header">
         <div className="sa-panel-header-title-group">
           <h2 className="sa-panel-title">Usage Reports</h2>
-          <p className="sa-panel-desc">Credit usage analytics across features, users, and workspaces.</p>
+          <p className="sa-panel-desc">Credit usage analytics across features, users, and workspaces — with interactive charts and trend data.</p>
         </div>
       </div>
 
-      <div className="sa-scroll" style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+      {usageError && <div className="sa-alert sa-alert--error">{usageError}</div>}
 
-        {/* Filter form */}
-        <form className="sa-card" onSubmit={runUsageReport} style={{ flexShrink: 0 }}>
-          <div className="sa-card-body">
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
-              <div className="sa-field">
-                <label htmlFor="report-from">From</label>
-                <input id="report-from" className="sa-input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-              </div>
-              <div className="sa-field">
-                <label htmlFor="report-to">To</label>
-                <input id="report-to" className="sa-input" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-              </div>
-              <button type="submit" className="sa-btn sa-btn--primary" disabled={usageLoading} style={{ alignSelf: 'flex-end' }}>
-                {usageLoading ? 'Loading…' : 'Run report'}
-              </button>
-              <button
-                type="button"
-                className="sa-btn sa-btn--ghost"
-                onClick={() => setShowAdvanced(!showAdvanced)}
-                style={{ alignSelf: 'flex-end', fontSize: '0.8rem' }}
-              >
-                {showAdvanced ? 'Hide filters' : 'More filters'}
-              </button>
-            </div>
+      {/* ── Filter strip ── */}
+      <FilterBar from={from} to={to} setFrom={setFrom} setTo={setTo}
+        userId={userId} setUserId={setUserId}
+        workspaceId={workspaceId} setWorkspaceId={setWorkspaceId}
+        topLimit={topLimit} setTopLimit={setTopLimit}
+        onSubmit={runUsageReport} loading={usageLoading} />
 
-            {showAdvanced && (
-              <div style={{
-                display: 'flex', gap: 12, flexWrap: 'wrap',
-                marginTop: 14, paddingTop: 14,
-                borderTop: '1px solid var(--border-color)',
-              }}>
-                <div className="sa-field">
-                  <label htmlFor="report-top">Top N</label>
-                  <input
-                    id="report-top" className="sa-input" type="number"
-                    min="1" max="25" value={topLimit}
-                    onChange={(e) => setTopLimit(Number(e.target.value) || 10)}
-                    style={{ width: 80 }}
-                  />
-                </div>
-                <div className="sa-field">
-                  <label htmlFor="report-user">User ID</label>
-                  <input id="report-user" className="sa-input sa-input--wide" type="text" placeholder="UUID (optional)" value={userId} onChange={(e) => setUserId(e.target.value)} />
-                </div>
-                <div className="sa-field">
-                  <label htmlFor="report-ws">Workspace ID</label>
-                  <input id="report-ws" className="sa-input sa-input--wide" type="text" placeholder="UUID (optional)" value={workspaceId} onChange={(e) => setWorkspaceId(e.target.value)} />
-                </div>
-              </div>
-            )}
+      {/* ── Scrollable body ── */}
+      <div className="sa-scroll rpt-body-scroll" style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingBottom: 24 }}>
 
-            {usageError && <div className="sa-alert sa-alert--error" style={{ marginTop: 12, marginBottom: 0 }}>{usageError}</div>}
-          </div>
-        </form>
+        {usageLoading && <ReportsSkeleton />}
 
-        {/* Empty state */}
         {!report && !usageLoading && !usageError && (
-          <div className="sa-empty" style={{ marginTop: 24 }}>
-            <BarChart3 className="sa-empty-icon" size={40} />
-            <p style={{ marginTop: 8 }}>Set a date range and run a report to see usage metrics.</p>
+          <div className="sa-empty" style={{ marginTop: 48 }}>
+            <BarChart3 className="sa-empty-icon" size={48} />
+            <p style={{ marginTop: 12 }}>Set a date range and run a report to see usage metrics.</p>
           </div>
         )}
 
-        {/* Loading Skeleton */}
-        {usageLoading && (
-          <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 14 }}>
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="sa-metric-card" style={{ padding: 18 }}>
-                  <SaSkeletonBlock width="45%" height={12} borderRadius={4} style={{ marginBottom: 10 }} />
-                  <SaSkeletonBlock width="65%" height={22} borderRadius={6} />
-                </div>
-              ))}
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 14 }}>
-              <div className="sa-card" style={{ padding: 18 }}>
-                <SaSkeletonBlock width={140} height={16} borderRadius={4} style={{ marginBottom: 16 }} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <SaSkeletonBlock key={i} width="100%" height={26} borderRadius={6} />
-                  ))}
-                </div>
-              </div>
-              <div className="sa-card" style={{ padding: 18 }}>
-                <SaSkeletonBlock width={140} height={16} borderRadius={4} style={{ marginBottom: 16 }} />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <SaSkeletonBlock key={i} width="100%" height={26} borderRadius={6} />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Report results */}
         {report && !usageLoading && (
-          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-            {/* Summary row */}
-            <div className="sa-metrics">
-              <SummaryCard icon={Activity} label="Total transactions" value={new Intl.NumberFormat().format(report.transactionCount ?? 0)} sub="credit events in range" />
-              <SummaryCard icon={Zap} label="Total credits used" value={formatAc(report.totalUsageAc ?? 0)} sub="across all features" />
-              <SummaryCard icon={TrendingUp} label="Est. HeyGen cost" value={`$${Number(report.estimatedHeygenUsd ?? 0).toFixed(2)}`} sub="PAYG / Enterprise rate" />
+            {/* ── KPI Cards (management-page style) ── */}
+            <div className="sa-kpi-grid">
+              <div className="sa-kpi-card sa-kpi-card--blue">
+                <div className="sa-kpi-card-grain" />
+                <div className="sa-kpi-header"><span className="sa-kpi-label">Transactions</span></div>
+                <div className="sa-kpi-body">
+                  <span className="sa-kpi-value">{new Intl.NumberFormat().format(report.transactionCount ?? 0)}</span>
+                  <span className="sa-kpi-detail">credit events in range</span>
+                </div>
+                <div className="sa-kpi-corner-icon"><Activity size={70} strokeWidth={1.5} /></div>
+              </div>
+
+              <div className="sa-kpi-card sa-kpi-card--emerald">
+                <div className="sa-kpi-card-grain" />
+                <div className="sa-kpi-header">
+                  <span className="sa-kpi-label">Credits Used</span>
+                  {trend?.growthPct != null && (
+                    <span className="sa-kpi-detail" style={{ fontSize: '0.7rem' }}>
+                      {trend.growthPct >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                      {trend.growthPct >= 0 ? '+' : ''}{Math.round(trend.growthPct)}%
+                    </span>
+                  )}
+                </div>
+                <div className="sa-kpi-body">
+                  <span className="sa-kpi-value">{formatAc(report.totalUsageAc ?? 0)}</span>
+                  <span className="sa-kpi-detail">{trend ? `avg ${formatAc(Math.round(trend.avgDaily))} / day` : 'across all features'}</span>
+                </div>
+                <div className="sa-kpi-corner-icon"><Zap size={70} strokeWidth={1.5} /></div>
+              </div>
+
+              <div className="sa-kpi-card sa-kpi-card--amber">
+                <div className="sa-kpi-card-grain" />
+                <div className="sa-kpi-header"><span className="sa-kpi-label">Est. HeyGen Cost</span></div>
+                <div className="sa-kpi-body">
+                  <span className="sa-kpi-value">${Number(report.estimatedHeygenUsd ?? 0).toFixed(2)}</span>
+                  <span className="sa-kpi-detail">PAYG / Enterprise rate</span>
+                </div>
+                <div className="sa-kpi-corner-icon"><DollarSign size={70} strokeWidth={1.5} /></div>
+              </div>
+
+              <div className="sa-kpi-card sa-kpi-card--purple">
+                <div className="sa-kpi-card-grain" />
+                <div className="sa-kpi-header"><span className="sa-kpi-label">Features Used</span></div>
+                <div className="sa-kpi-body">
+                  <span className="sa-kpi-value">{report.byFeature?.length ?? '—'}</span>
+                  <span className="sa-kpi-detail">distinct categories</span>
+                </div>
+                <div className="sa-kpi-corner-icon"><Layers size={70} strokeWidth={1.5} /></div>
+              </div>
             </div>
 
-            {/* Feature + daily side by side */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            {/* ── Row 2: Area chart + Donut ── */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1.65fr 1fr', gap: 16 }}>
 
-              {report.byFeature?.length > 0 && (
-                <div className="sa-card" style={{ minHeight: 0 }}>
-                  <div className="sa-card-header">
-                    <h3 style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                      <Zap size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />
-                      Usage by feature
-                    </h3>
-                    <span className="sa-card-header-count">{report.byFeature.length}</span>
-                  </div>
-                  <div style={{ maxHeight: 340, overflowY: 'auto' }}>
-                    <FeatureBarChart rows={report.byFeature} maxValue={maxFeatureAc} />
-                  </div>
+              {/* Daily usage trend — area chart */}
+              <div className="sa-card">
+                <div className="sa-card-header">
+                  <h3 style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <Activity size={14} style={{ color: 'var(--primary)' }} /> Daily usage trend
+                  </h3>
+                  {trend && <span className="sa-card-header-count">{trend.spanDays} days</span>}
                 </div>
-              )}
+                <div className="sa-card-body" style={{ padding: '12px 16px 16px' }}>
+                  {trend?.areaData?.length
+                    ? <AnimatedAreaChart data={trend.areaData} formatValue={v => formatAc(v)} formatLabel={l => shortDate(l)} height={210} />
+                    : <p className="sa-empty-text">No daily data in range.</p>}
+                </div>
+              </div>
 
-              {report.byDay?.length > 0 && (
-                <div className="sa-card" style={{ minHeight: 0 }}>
-                  <div className="sa-card-header">
-                    <h3 style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                      <Calendar size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />
-                      Daily usage
-                    </h3>
-                    <span className="sa-card-header-count">{report.byDay.length} days</span>
-                  </div>
-                  <DailyChart days={report.byDay} />
+              {/* Feature distribution — donut */}
+              <div className="sa-card">
+                <div className="sa-card-header">
+                  <h3 style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <Zap size={14} style={{ color: 'var(--primary)' }} /> Usage by feature
+                  </h3>
+                  {report.byFeature?.length > 0 && <span className="sa-card-header-count">{report.byFeature.length}</span>}
                 </div>
-              )}
+                <div className="sa-card-body" style={{ padding: '12px 16px 16px' }}>
+                  {rankedFeatures.length
+                    ? <AnimatedDonutChart rows={rankedFeatures} />
+                    : <p className="sa-empty-text">No feature data.</p>}
+                </div>
+              </div>
             </div>
 
-            {/* Top users + top workspaces */}
+            {/* ── Row 3: Top users + Top workspaces — horizontal bar lists ── */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
 
               {report.topUsers?.length > 0 && (
-                <div className="sa-card" style={{ minHeight: 0 }}>
+                <div className="sa-card">
                   <div className="sa-card-header">
                     <h3 style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                      <span style={{
-                        width: 24, height: 24, borderRadius: 7,
-                        background: 'color-mix(in srgb, var(--primary) 10%, var(--bg-card))',
-                        border: '1px solid color-mix(in srgb, var(--primary) 20%, var(--border-color))',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                      }}>
-                        <Users size={12} style={{ color: 'var(--primary)' }} />
-                      </span>
-                      Top users
+                      <Users size={14} style={{ color: 'var(--primary)' }} /> Top users
                     </h3>
-                    <span className="sa-card-header-count">{report.topUsers.length}</span>
+                    <span className="sa-card-header-count">{report.topUsers.length} ranked</span>
                   </div>
-                  <div style={{ maxHeight: 400, overflowY: 'auto' }}>
-                    <UserGrid users={report.topUsers} maxValue={maxUserAc} />
+                  <div className="sa-card-body" style={{ padding: '8px 0', overflowY: 'auto', maxHeight: 420 }}>
+                    <AnimatedBarList
+                      rows={report.topUsers.map((u, i) => ({ key: u.userId, label: u.name || u.email || u.userId, value: Number(u.totalUsageAc), meta: u.transactionCount }))}
+                      maxValue={maxUserAc}
+                    />
                   </div>
                 </div>
               )}
 
               {report.topWorkspaces?.length > 0 && (
-                <div className="sa-card" style={{ minHeight: 0 }}>
+                <div className="sa-card">
                   <div className="sa-card-header">
                     <h3 style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                      <span style={{
-                        width: 24, height: 24, borderRadius: 7,
-                        background: 'color-mix(in srgb, var(--primary) 10%, var(--bg-card))',
-                        border: '1px solid color-mix(in srgb, var(--primary) 20%, var(--border-color))',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                      }}>
-                        <Building2 size={12} style={{ color: 'var(--primary)' }} />
-                      </span>
-                      Top workspaces
+                      <Building2 size={14} style={{ color: 'var(--primary)' }} /> Top workspaces
                     </h3>
-                    <span className="sa-card-header-count">{report.topWorkspaces.length}</span>
+                    <span className="sa-card-header-count">{report.topWorkspaces.length} ranked</span>
                   </div>
-                  <div style={{ maxHeight: 400, overflowY: 'auto' }}>
-                    <WorkspaceList workspaces={report.topWorkspaces} maxValue={maxWsAc} total={report.totalUsageAc} />
+                  <div className="sa-card-body" style={{ padding: '8px 0', overflowY: 'auto', maxHeight: 420 }}>
+                    <AnimatedBarList
+                      rows={report.topWorkspaces.map((w, i) => ({ key: w.workspaceId, label: w.name || w.workspaceId, value: Number(w.totalUsageAc), meta: w.transactionCount }))}
+                      maxValue={maxWsAc}
+                      showShare
+                      totalAc={totalAc}
+                    />
                   </div>
                 </div>
               )}
