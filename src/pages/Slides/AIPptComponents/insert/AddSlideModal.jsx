@@ -227,8 +227,8 @@ function ScaledPreview({ children, baseWidth = PREVIEW_BASE_W, baseHeight = PREV
   )
 }
 
-function GalleryPreview({ schema, previewUrl, fallbackName, themeId, aspectRatio = '16:9' }) {
-  const compiledPricing = isCompiledPricingLayout(schema?.layout_id || schema?.layoutId)
+function GalleryPreview({ schema, previewUrl, fallbackName, themeId, themeVisual, aspectRatio = '16:9' }) {
+  const compiledPricing = isCompiledPricingLayout(schema?.layout_id || schema?.layoutId, schema)
   if (previewUrl && !compiledPricing) {
     return <img src={previewUrl} alt="" className="ppt-add-slide-card-image" />
   }
@@ -240,6 +240,7 @@ function GalleryPreview({ schema, previewUrl, fallbackName, themeId, aspectRatio
           large
           fill
           aspectRatio={aspectRatio}
+          themeVisual={themeVisual}
           style={{ width: PREVIEW_BASE_W, height: PREVIEW_BASE_H }}
         />
       </ScaledPreview>
@@ -289,6 +290,8 @@ export default function AddSlideModal({
   disabled = false,
   onPick,
   slideCount = 0,
+  aspectRatio = '16:9',
+  themeVisual = null,
 }) {
   const [tab, setTab] = useState('templates')
   const [query, setQuery] = useState('')
@@ -790,8 +793,14 @@ export default function AddSlideModal({
                       role="group"
                     >
                       {group.map((layout) => {
-                        const previewSchema = layout.schema
-                          ? enrichLayoutSchemaForPreview(layout.schema)
+                        const baseSchema =
+                          layout.schema ||
+                          (layout.layoutId ? getDeckLayoutSchema(layout.layoutId) : null)
+                        const previewSchema = baseSchema
+                          ? enrichLayoutSchemaForPreview({
+                              ...baseSchema,
+                              name: layout.name || baseSchema.name,
+                            })
                           : null
                         const cardKey =
                           layout.schema?.layout_id || layout.layoutId || layout.id
@@ -808,6 +817,8 @@ export default function AddSlideModal({
                                 schema={previewSchema}
                                 previewUrl={layout.previewUrl}
                                 fallbackName={layout.name}
+                                aspectRatio={aspectRatio}
+                                themeVisual={themeVisual}
                               />
                             </div>
                             <div className="ppt-add-slide-card-name" title={layout.name}>

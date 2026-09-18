@@ -131,7 +131,7 @@ export const EIGHT_SHORT_TEXTS_IMAGE_DEFAULTS = {
   POINT_8_TITLE: 'Global Reliability',
   POINT_8_DESC: '99.99% multi-region uptime with disaster recovery failover.',
 
-  DEFAULT_IMAGE: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80',
+  DEFAULT_IMAGE: null,
 }
 
 /** Check if layout ID is Eight Short Texts Image */
@@ -390,7 +390,7 @@ export function layoutEightShortTextsImage(elements = [], schema = {}, palette =
   const imageUrl =
     prevImage?.content?.url ||
     prevImage?.url ||
-    EIGHT_SHORT_TEXTS_IMAGE_DEFAULTS.DEFAULT_IMAGE
+    null
 
   pushElement({
     id: prevImage?.id || newId('est-hero-img'),
