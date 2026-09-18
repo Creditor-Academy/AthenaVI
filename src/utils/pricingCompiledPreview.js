@@ -37,9 +37,60 @@ import { isTableWithDescriptionLayout } from './tableWithDescriptionLayout.js'
 import { isTableWithDescriptionSideLayout } from './tableWithDescriptionSideLayout.js'
 import { isTableTwoDescLayout } from './tableTwoDescLayout.js'
 import { isTableTwoDescCardsLayout } from './tableTwoDescCardsLayout.js'
+import { isEightShortTextsImageLayout } from './eightShortTextsImageLayout.js'
+import { isIntroThreeParaIconsLayout } from './introThreeParaIconsLayout.js'
+import { isGridBentoThreeLayout } from './gridBentoThreeLayout.js'
+import { isGridBentoFourLayout } from './gridBentoFourLayout.js'
+import { isGridFourMosaicLayout } from './gridFourMosaicLayout.js'
+import { isGridSixImagesLayout } from './gridSixImagesLayout.js'
+import { isGridSixImagesMosaicLayout } from './gridSixImagesMosaicLayout.js'
+import { isGridTextImageCardsLayout } from './gridTextImageCardsLayout.js'
+import { isGridThreeImagesTextLayout } from './gridThreeImagesText.js'
+import { isGridThreeImagesTextAsymmetricLayout } from './gridThreeImagesTextAsymmetric.js'
+import { isGridImagesTextCardsLayout } from './gridImagesTextCards.js'
+import { isGridImagesTextMosaicLayout } from './gridImagesTextMosaic.js'
+import { isGridInsightsChartLayout } from './gridInsightsChart.js'
+import {
+  isLogoPartnerGridLayout,
+  isLogoPartnerStripLayout,
+  isLogoWallLayout,
+} from './logoPartnerLayouts.js'
+import { isLogoWallMasonryLayout } from './logoWallMasonryLayout.js'
 
-export function isCompiledPricingLayout(layoutId) {
-  return isPricingThreePlansLayout(layoutId)
+export function isCompiledGridLayout(layoutId, schema = null) {
+  const id = String(layoutId || schema?.layout_id || schema?.layoutId || '').toLowerCase().trim()
+  if (!id) return false
+  const ct = String(schema?.content_type || schema?.contentType || '').toLowerCase().trim()
+  if (ct === 'grid') return true
+
+  return (
+    id.startsWith('grid_') ||
+    id.startsWith('logo_') ||
+    id.startsWith('eight_short_texts') ||
+    id.startsWith('intro_three_para_icons') ||
+    isEightShortTextsImageLayout(id) ||
+    isIntroThreeParaIconsLayout(id) ||
+    isGridBentoThreeLayout(id) ||
+    isGridBentoFourLayout(id) ||
+    isGridFourMosaicLayout(id) ||
+    isGridSixImagesLayout(id) ||
+    isGridSixImagesMosaicLayout(id) ||
+    isGridTextImageCardsLayout(id) ||
+    isGridThreeImagesTextLayout(id) ||
+    isGridThreeImagesTextAsymmetricLayout(id) ||
+    isGridImagesTextCardsLayout(id) ||
+    isGridImagesTextMosaicLayout(id) ||
+    isGridInsightsChartLayout(id) ||
+    isLogoPartnerGridLayout(id) ||
+    isLogoPartnerStripLayout(id) ||
+    isLogoWallLayout(id) ||
+    isLogoWallMasonryLayout(id)
+  )
+}
+
+export function isCompiledPricingLayout(layoutId, schema = null) {
+  return isCompiledGridLayout(layoutId, schema)
+    || isPricingThreePlansLayout(layoutId)
     || isPricingThreePlansFeaturedLayout(layoutId)
     || isPricingThreeHighlightLayout(layoutId)
     || isPricingThreeHighlightSplitLayout(layoutId)
@@ -78,17 +129,32 @@ export function isCompiledPricingLayout(layoutId) {
     || isTableTwoDescCardsLayout(layoutId)
 }
 
-export function compilePricingLayoutPreviewSlide(schema, aspectRatio = '16:9') {
-  if (!schema?.slots?.length || !isCompiledPricingLayout(schema.layout_id || schema.layoutId)) {
+export function compilePricingLayoutPreviewSlide(schema, aspectRatio = '16:9', options = {}) {
+  if (!schema?.slots?.length || !isCompiledPricingLayout(schema.layout_id || schema.layoutId, schema)) {
     return null
   }
   const canvas = aspectRatio === '4:3'
     ? { width: 1600, height: 1200 }
     : { width: 1920, height: 1080 }
-  const elements = compileDeckLayoutToElements(schema, { canvas })
+  const slotImageUrls = {}
+  if (schema?.preview?.slots && typeof schema.preview.slots === 'object') {
+    for (const [k, v] of Object.entries(schema.preview.slots)) {
+      if (v?.imageUrl) slotImageUrls[k] = v.imageUrl
+    }
+  }
+  const elements = compileDeckLayoutToElements(schema, {
+    canvas,
+    slideTitle: schema?.title || schema?.name || '',
+    themeVisual: options.themeVisual || null,
+    palette: options.themeVisual?.palette || null,
+    content: {
+      imageUrl: schema?.preview?.imageUrl || undefined,
+      slotImageUrls: Object.keys(slotImageUrls).length ? slotImageUrls : undefined,
+    },
+  })
   if (!elements.length) return null
   return {
     elements: { version: 1, canvas, elements },
-    backgroundColor: '#ffffff',
+    backgroundColor: schema?.preview?.backgroundColor || schema?.backgroundColor || '#ffffff',
   }
 }

@@ -4802,6 +4802,8 @@ export default function AIPptEditor({
         slideCount={localSlides.length}
         disabled={busy || isGenerating || atDeckCap}
         onPick={handlePickAddSlide}
+        aspectRatio={aspectRatio}
+        themeVisual={themeVisual}
       />
 
       {presentOpen && (

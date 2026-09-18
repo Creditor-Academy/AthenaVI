@@ -2282,6 +2282,7 @@ export default function LayoutPolishedPreview({
   className,
   style,
   aspectRatio = '16:9',
+  themeVisual = null,
 }) {
   const resolvedSlots = filterPreviewSlots(slots.length ? slots : schema?.slots ?? [])
   const hasSlots = resolvedSlots.length > 0
@@ -2292,8 +2293,8 @@ export default function LayoutPolishedPreview({
   const previewMode = resolvePreviewMode(schema) || previewHints.mode
   const cssAspect = aspectRatioToCss(aspectRatio)
   const compiledPricingSlide = useMemo(
-    () => compilePricingLayoutPreviewSlide(schema, aspectRatio),
-    [schema, aspectRatio],
+    () => compilePricingLayoutPreviewSlide(schema, aspectRatio, { themeVisual }),
+    [schema, aspectRatio, themeVisual],
   )
 
   const frameStyle = fill
@@ -2304,6 +2305,7 @@ export default function LayoutPolishedPreview({
     return (
       <CanvasElementsPreview
         slide={compiledPricingSlide}
+        themeVisual={themeVisual}
         aspectRatio={aspectRatio}
         fill={fill}
         className={className}
