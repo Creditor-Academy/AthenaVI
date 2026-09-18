@@ -14,6 +14,18 @@ import { isMetricTwoLayout, metricTwoPreviewSvg } from '../../utils/metricTwo.js
 import { isMetricTwoSplitLayout, metricTwoSplitPreviewSvg } from '../../utils/metricTwoSplit.js'
 import { isMetricThreeLayout, metricThreePreviewSvg } from '../../utils/metricThree.js'
 import { isMetricThreeCardsLayout, metricThreeCardsPreviewSvg } from '../../utils/metricThreeCards.js'
+import { isMetricFourLayout, metricFourPreviewSvg } from '../../utils/metricFour.js'
+import { isMetricFourCardsLayout, metricFourCardsPreviewSvg } from '../../utils/metricFourCards.js'
+import { isMetricFiveLayout, metricFivePreviewSvg } from '../../utils/metricFive.js'
+import { isMetricFiveCardsLayout, metricFiveCardsPreviewSvg } from '../../utils/metricFiveCards.js'
+import { isMetricSixCardsLayout, metricSixCardsPreviewSvg } from '../../utils/metricSixCards.js'
+import { isMetricSixParaLayout, metricSixParaPreviewSvg } from '../../utils/metricSixPara.js'
+import {
+  isMetricThreeVerticalLayout,
+  isMetricThreeVerticalCardsLayout,
+  metricThreeVerticalPreviewSvg,
+  metricThreeVerticalCardsPreviewSvg,
+} from '../../utils/metricThreeVertical.js'
 
 const PREVIEW_TITLE_FS = { large: '1.75rem', small: '0.92rem' }
 const PREVIEW_BODY_FS = { large: '0.88rem', small: '0.4rem' }
@@ -1675,6 +1687,92 @@ export function PolishedStatHeroPreview({ previewHints = {}, ...props }) {
       </div>
     )
   }
+  if (isMetricFourLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_four_v1') {
+    const svg = metricFourPreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (isMetricFourCardsLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_four_cards_v1') {
+    const svg = metricFourCardsPreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (isMetricFiveLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_five_v1') {
+    const svg = metricFivePreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (isMetricFiveCardsLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_five_cards_v1') {
+    const svg = metricFiveCardsPreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  const isCards = isMetricSixCardsLayout(previewHints?.layout_id, previewHints) ||
+                  previewHints?.layout_id === 'metric_six_cards_v1' ||
+                  previewHints?.dataVariant === 'cards' ||
+                  previewHints?.mode === 'metric_six_cards_v1'
+  if (isCards) {
+    const svg = metricSixCardsPreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  const isPara = isMetricSixParaLayout(previewHints?.layout_id, previewHints) ||
+                 previewHints?.layout_id === 'metric_six_para_v1' ||
+                 previewHints?.mode === 'stat_six_para' ||
+                 previewHints?.mode === 'metric_six_para_v1'
+  if (isPara) {
+    const svg = metricSixParaPreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
   const variant = previewHints.dataVariant || 'default'
   const stat = (previewHints.stats || [{ value: '98%', label: 'Customer satisfaction' }])[0]
   const fp = frameProps(props)
@@ -1697,49 +1795,54 @@ export function PolishedStatHeroPreview({ previewHints = {}, ...props }) {
   )
 }
 
-export function PolishedStatSixParaPreview({ previewHints, ...props }) {
-  const { large } = props
-  const variant = previewHints.dataVariant || 'default'
-  const stats = previewHints.stats || []
+export function PolishedStatSixCardsPreview({ previewHints, ...props }) {
+  const svg = metricSixCardsPreviewSvg(previewHints, theme)
   const fp = frameProps(props)
-  const useCards = variant === 'cards'
-  const useGrid = variant === 'grid'
   return (
-    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 3 }}>
-      <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>{previewHints.bodyText || 'Overview paragraph.'}</div>
-      <div style={{ display: 'grid', gridTemplateColumns: useGrid ? 'repeat(3, 1fr)' : 'repeat(6, 1fr)', gap: large ? 6 : 2 }}>
-        {stats.slice(0, 6).map((s, i) => (
-          <div key={i} style={{ textAlign: 'center', background: useCards ? theme.card : 'transparent', borderRadius: useCards ? (large ? 6 : 2) : 0, padding: useCards ? (large ? 6 : 2) : 0 }}>
-            <div style={{ fontSize: large ? '0.9rem' : '0.32rem', fontWeight: 800, color: theme.accent }}>{s.value}</div>
-            <div style={{ fontSize: large ? '0.5rem' : '0.18rem', color: theme.muted }}>{s.label}</div>
-          </div>
-        ))}
-      </div>
+    <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+      <div
+        aria-hidden
+        style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+        dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+      />
+    </div>
+  )
+}
+
+export function PolishedStatSixParaPreview({ previewHints, ...props }) {
+  const isCards = isMetricSixCardsLayout(previewHints?.layout_id, previewHints) ||
+                  previewHints?.layout_id === 'metric_six_cards_v1' ||
+                  previewHints?.dataVariant === 'cards' ||
+                  previewHints?.mode === 'metric_six_cards_v1'
+  const svg = isCards ? metricSixCardsPreviewSvg(previewHints, theme) : metricSixParaPreviewSvg(previewHints, theme)
+  const fp = frameProps(props)
+  return (
+    <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+      <div
+        aria-hidden
+        style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+        dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+      />
     </div>
   )
 }
 
 export function PolishedStatVerticalPreview({ previewHints, ...props }) {
-  const { large } = props
-  const variant = previewHints.dataVariant || 'default'
-  const stats = previewHints.stats || [{ value: '98%', label: 'Sat.' }, { value: '3.2x', label: 'ROI' }, { value: '500+', label: 'Teams' }]
+  const isCards = isMetricThreeVerticalCardsLayout(previewHints?.layout_id, previewHints) ||
+                  previewHints?.layout_id === 'metric_three_vertical_cards_v1' ||
+                  previewHints?.dataVariant === 'cards' ||
+                  previewHints?.mode === 'metric_three_vertical_cards_v1'
+  const svg = isCards
+    ? metricThreeVerticalCardsPreviewSvg(previewHints, theme)
+    : metricThreeVerticalPreviewSvg(previewHints, theme)
   const fp = frameProps(props)
-  const useCards = variant === 'cards'
-  const useNodes = variant === 'nodes'
   return (
-    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 12 : 4 }}>
-      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>{previewHints.slots?.HEADING?.text || 'Key metrics'}</div>
-      {stats.slice(0, 3).map((s, i) => (
-        <div key={i} style={{ display: 'flex', flexDirection: useNodes ? 'row' : 'column', alignItems: 'center', gap: large ? 8 : 3, padding: large ? '8px 0' : '2px 0', borderBottom: i < 2 && !useCards ? `1px solid ${theme.card}` : 'none', background: useCards ? theme.card : 'transparent', borderRadius: useCards ? (large ? 8 : 3) : 0 }}>
-          {useNodes && (
-            <div style={{ width: large ? 12 : 5, height: large ? 12 : 5, borderRadius: '50%', background: theme.accent, flexShrink: 0 }} />
-          )}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: large ? 4 : 1, flex: 1 }}>
-            <div style={{ fontSize: large ? '1.8rem' : '0.55rem', fontWeight: 800, color: theme.accent }}>{s.value}</div>
-            <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>{s.label}</div>
-          </div>
-        </div>
-      ))}
+    <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+      <div
+        aria-hidden
+        style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+        dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+      />
     </div>
   )
 }
@@ -1775,6 +1878,14 @@ export const EXTENDED_PREVIEW_MODES = {
   metric_two_split_v1: PolishedStatHeroPreview,
   metric_three_v1: PolishedStatHeroPreview,
   metric_three_cards_v1: PolishedStatHeroPreview,
+  metric_four_v1: PolishedStatHeroPreview,
+  metric_four_cards_v1: PolishedStatHeroPreview,
+  metric_five_v1: PolishedStatHeroPreview,
+  metric_five_cards_v1: PolishedStatHeroPreview,
   stat_six_para: PolishedStatSixParaPreview,
+  metric_six_para_v1: PolishedStatSixParaPreview,
+  metric_six_cards_v1: PolishedStatSixCardsPreview,
   stat_vertical: PolishedStatVerticalPreview,
+  metric_three_vertical_v1: PolishedStatVerticalPreview,
+  metric_three_vertical_cards_v1: PolishedStatVerticalPreview,
 }

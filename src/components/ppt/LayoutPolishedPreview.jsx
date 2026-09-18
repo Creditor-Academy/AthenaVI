@@ -34,6 +34,14 @@ import { isMetricSingleLayout, metricSinglePreviewSvg } from '../../utils/metric
 import { isMetricSingleSplitLayout, metricSingleSplitPreviewSvg } from '../../utils/metricSingleSplit.js'
 import { isMetricTwoLayout, metricTwoPreviewSvg } from '../../utils/metricTwo.js'
 import { isMetricTwoSplitLayout, metricTwoSplitPreviewSvg } from '../../utils/metricTwoSplit.js'
+import { isMetricSixCardsLayout, metricSixCardsPreviewSvg } from '../../utils/metricSixCards.js'
+import { isMetricSixParaLayout, metricSixParaPreviewSvg } from '../../utils/metricSixPara.js'
+import {
+  isMetricThreeVerticalLayout,
+  isMetricThreeVerticalCardsLayout,
+  metricThreeVerticalPreviewSvg,
+  metricThreeVerticalCardsPreviewSvg,
+} from '../../utils/metricThreeVertical.js'
 import {
   isTableTwoSameHeaderLayout,
   tableTwoSameHeaderPreviewSvg,
@@ -2436,6 +2444,70 @@ export default function LayoutPolishedPreview({
 
   if (isMetricTwoSplitLayout(previewHints.layout_id) || previewMode === 'metric_two_split_v1') {
     const svg = metricTwoSplitPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isMetricSixCardsLayout(previewHints.layout_id, schema) || previewMode === 'metric_six_cards_v1') {
+    const svg = metricSixCardsPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isMetricSixParaLayout(previewHints.layout_id, schema) || previewMode === 'metric_six_para_v1' || previewMode === 'stat_six_para') {
+    const svg = metricSixParaPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isMetricThreeVerticalCardsLayout(previewHints.layout_id, schema) || previewMode === 'metric_three_vertical_cards_v1') {
+    const svg = metricThreeVerticalCardsPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isMetricThreeVerticalLayout(previewHints.layout_id, schema) || previewMode === 'metric_three_vertical_v1' || previewMode === 'stat_vertical') {
+    const svg = metricThreeVerticalPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
     return (
       <div className={className} style={{
         position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',

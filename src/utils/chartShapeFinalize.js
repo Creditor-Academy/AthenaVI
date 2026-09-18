@@ -10,10 +10,22 @@ import { isChartThreeContextLayout, layoutChartThreeContext } from './chartThree
 import { isChartThreeContextCardsLayout, layoutChartThreeContextCards } from './chartThreeContextCards.js'
 import { isChartDonutContextLayout, layoutChartDonutContext } from './chartDonutContext.js'
 import { isMetricThreeCardsLayout, layoutMetricThreeCards } from './metricThreeCards.js'
+import { isMetricFourCardsLayout, layoutMetricFourCards } from './metricFourCards.js'
 import { isMetricSingleLayout, layoutMetricSingle } from './metricSingle.js'
 import { isMetricTwoLayout, layoutMetricTwo } from './metricTwo.js'
 import { isMetricSingleSplitLayout, layoutMetricSingleSplit } from './metricSingleSplit.js'
 import { isMetricThreeLayout, layoutMetricThree } from './metricThree.js'
+import { isMetricFourLayout, layoutMetricFour } from './metricFour.js'
+import { isMetricFiveLayout, layoutMetricFive } from './metricFive.js'
+import { isMetricFiveCardsLayout, layoutMetricFiveCards } from './metricFiveCards.js'
+import { isMetricSixCardsLayout, layoutMetricSixCards } from './metricSixCards.js'
+import { isMetricSixParaLayout, layoutMetricSixPara } from './metricSixPara.js'
+import {
+  isMetricThreeVerticalLayout,
+  isMetricThreeVerticalCardsLayout,
+  layoutMetricThreeVertical,
+  layoutMetricThreeVerticalCards,
+} from './metricThreeVertical.js'
 import { isMetricTwoSplitLayout, layoutMetricTwoSplit } from './metricTwoSplit.js'
 import { isTableSingleLayout, layoutTableSingle } from './tableSingleLayout.js'
 import { isTableSingleCardsLayout, layoutTableSingleCards } from './tableSingleCardsLayout.js'
@@ -192,6 +204,38 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
   
   if (isMetricThreeLayout(layoutId)) {
     return layoutMetricThree(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricFourLayout(layoutId)) {
+    return layoutMetricFour(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricFourCardsLayout(layoutId)) {
+    return layoutMetricFourCards(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricFiveLayout(layoutId)) {
+    return layoutMetricFive(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricFiveCardsLayout(layoutId)) {
+    return layoutMetricFiveCards(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricSixCardsLayout(layoutId, schema)) {
+    return layoutMetricSixCards(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricSixParaLayout(layoutId, schema)) {
+    return layoutMetricSixPara(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricThreeVerticalCardsLayout(layoutId, schema)) {
+    return layoutMetricThreeVerticalCards(elements, schema, palette, canvas)
+  }
+
+  if (isMetricThreeVerticalLayout(layoutId, schema)) {
+    return layoutMetricThreeVertical(elements, schema, palette, canvas)
   }
   
   if (isMetricTwoSplitLayout(layoutId)) {

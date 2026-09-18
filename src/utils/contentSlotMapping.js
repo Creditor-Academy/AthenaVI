@@ -139,7 +139,7 @@ export function buildContentBySlotIdFromSlideContent(rawContent = {}, schema = n
     }
 
     // Match stats
-    const statMatch = id.match(/^STAT_(\d+)_(VALUE|LABEL)$/i)
+    const statMatch = id.match(/^STAT_(\d+)_(VALUE|LABEL|DESC|TREND|STATUS)$/i)
     if (statMatch && Array.isArray(content.stats)) {
       const idx = parseInt(statMatch[1], 10) - 1
       const field = statMatch[2].toUpperCase()
@@ -147,7 +147,18 @@ export function buildContentBySlotIdFromSlideContent(rawContent = {}, schema = n
       if (stat) {
         if (field === 'VALUE' && stat.value) out[slot.id] = stat.value
         if (field === 'LABEL' && stat.label) out[slot.id] = stat.label
+        if (field === 'DESC' && (stat.desc || stat.description)) out[slot.id] = stat.desc || stat.description
+        if (field === 'TREND' && stat.trend) out[slot.id] = stat.trend
+        if (field === 'STATUS' && stat.status) out[slot.id] = stat.status
       }
+    }
+
+    // Match card trend (alternative format CARD{X}_TREND)
+    const cardTrendMatch = id.match(/^CARD(\d+)_TREND$/i)
+    if (cardTrendMatch && Array.isArray(content.stats)) {
+      const idx = parseInt(cardTrendMatch[1], 10) - 1
+      const stat = content.stats[idx]
+      if (stat && stat.trend) out[slot.id] = stat.trend
     }
 
     // Match members
