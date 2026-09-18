@@ -631,7 +631,7 @@ const CATALOG = {
     ...statPair(3, 'cols 9-12, rows 4-5', 'cols 9-12, rows 5-7', '500+', 'Active teams'),
   ]),
 
-  metric_four_v1: statLayout('metric_four_v1', 'stat', 4, 'stat_row', [
+  metric_four_v1: statLayout('metric_four_v1', 'stat', 4, 'metric_four_v1', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Key metrics', {
       typography: typo('heading', { fontSize: 28 }),
     }),
@@ -641,7 +641,7 @@ const CATALOG = {
     ...statPair(4, 'cols 10-12, rows 4-5', 'cols 10-12, rows 5-7', '24h', 'Response'),
   ]),
 
-  metric_five_v1: statLayout('metric_five_v1', 'stat', 5, 'stat_row', [
+  metric_five_v1: statLayout('metric_five_v1', 'stat', 5, 'metric_five_v1', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Key metrics', {
       typography: typo('heading', { fontSize: 28 }),
     }),
@@ -662,7 +662,7 @@ const CATALOG = {
     ...statPair(6, 'cols 11-12, rows 3-4', 'cols 11-12, rows 4-5', '4.9', 'Rating'),
   ]),
 
-  metric_three_vertical_v1: statLayout('metric_three_vertical_v1', 'stat', 3, 'stat_vertical', [
+  metric_three_vertical_v1: statLayout('metric_three_vertical_v1', 'stat', 3, 'metric_three_vertical_v1', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Key metrics', {
       typography: typo('heading', { fontSize: 28 }),
     }),
@@ -804,12 +804,12 @@ Object.assign(CATALOG, {
     chartSlot('CHART_1', 'cols 1-8, rows 3-10', { chartType: 'grouped_bar', series: 1 }),
     chartSlot('CHART_2', 'cols 1-8, rows 3-10', { chartType: 'grouped_bar', series: 2 }),
   ], { mode: 'chart_grouped_bar_split' }),
-  metric_five_cards_v1: chartsDataFromSource('metric_five_cards_v1', 'metric_five_v1', 'cards'),
-  metric_four_cards_v1: chartsDataFromSource('metric_four_cards_v1', 'metric_four_v1', 'cards'),
-  metric_three_cards_v1: chartsDataFromSource('metric_three_cards_v1', 'metric_three_v1', 'cards'),
+  metric_five_cards_v1: chartsDataFromSource('metric_five_cards_v1', 'metric_five_v1', 'cards', { mode: 'metric_five_cards_v1' }),
+  metric_four_cards_v1: chartsDataFromSource('metric_four_cards_v1', 'metric_four_v1', 'cards', { mode: 'metric_four_cards_v1' }),
+  metric_three_cards_v1: chartsDataFromSource('metric_three_cards_v1', 'metric_three_v1', 'cards', { mode: 'metric_three_cards_v1' }),
   metric_single_split_v1: chartsDataFromSource('metric_single_split_v1', 'metric_single_v1', 'split', { mode: 'metric_single_split_v1' }),
-  metric_six_cards_v1: chartsDataFromSource('metric_six_cards_v1', 'metric_six_para_v1', 'cards'),
-  metric_three_vertical_cards_v1: chartsDataFromSource('metric_three_vertical_cards_v1', 'metric_three_vertical_v1', 'cards'),
+  metric_six_cards_v1: chartsDataFromSource('metric_six_cards_v1', 'metric_six_para_v1', 'cards', { mode: 'metric_six_cards_v1' }),
+  metric_three_vertical_cards_v1: chartsDataFromSource('metric_three_vertical_cards_v1', 'metric_three_vertical_v1', 'cards', { mode: 'metric_three_vertical_cards_v1' }),
   metric_two_split_v1: chartsDataFromSource('metric_two_split_v1', 'metric_two_v1', 'split', { mode: 'metric_two_split_v1' }),
   process_linear_four_cards_v1: layoutBase('process_linear_four_cards_v1', 'chart', [
     heading('HEADING', 'cols 1-12, rows 1-2', 'Linear Four Stage Cards – Slide Template', {
