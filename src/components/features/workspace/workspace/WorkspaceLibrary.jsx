@@ -7,13 +7,14 @@ import {
   MdVideoLibrary,
 } from 'react-icons/md'
 import workspaceService from '../../../../services/workspaceService.js'
+import { useAuth } from '../../../../contexts/AuthContext'
 import {
   IMAGE_MODE_FILTERS,
   normalizeLibraryCategories,
   normalizeLibraryItem,
   normalizeLibraryCategoryId,
 } from '../../../../utils/workspaceLibrary.js'
-import { workspaceCanEdit } from '../../../../pages/TeamWorkspace/workspaceUtils.js'
+import { extractUserId, workspaceCanEdit } from '../../../../pages/TeamWorkspace/workspaceUtils.js'
 import WorkspaceSection from './WorkspaceSection.jsx'
 import {
   VideoCard,
@@ -74,6 +75,8 @@ export default function WorkspaceLibrary({
   const workspaceId = workspace?.id
   const folderId = folder?.id || null
   const canEdit = workspaceCanEdit(workspace)
+  const { user: authUser } = useAuth()
+  const currentUserId = extractUserId(authUser)
 
   const [categories, setCategories] = useState(FALLBACK_CATEGORIES)
   const [activeCategory, setActiveCategory] = useState('video')
@@ -123,7 +126,7 @@ export default function WorkspaceLibrary({
 
       const data = await workspaceService.getLibrary(workspaceId, params)
       const normalized = (data.items || []).map((item) =>
-        normalizeLibraryItem(item, { workspaceId })
+        normalizeLibraryItem(item, { workspaceId, currentUserId, authUser })
       )
       setItems(normalized)
 
@@ -143,7 +146,7 @@ export default function WorkspaceLibrary({
     } finally {
       setLoadingItems(false)
     }
-  }, [workspaceId, activeCategory, folderId, imageMode, refreshKey])
+  }, [workspaceId, activeCategory, folderId, imageMode, refreshKey, currentUserId, authUser])
 
   useEffect(() => {
     loadCategories()

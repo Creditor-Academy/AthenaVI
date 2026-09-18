@@ -1,3 +1,5 @@
+import { getAuthDisplayName } from './workspaceUsers.js'
+
 /** Normalize library category ids from the workspace library API. */
 export function normalizeLibraryCategoryId(value) {
   const raw = String(value || '')
@@ -182,13 +184,40 @@ function toDisplayName(value) {
   return ''
 }
 
-function resolveLibraryOwnerName(item, kind) {
-  const fromPeople = toDisplayName(
-    item.createdBy ?? item.owner ?? item.creator ?? item.triggeredBy ?? item.lastModifiedBy
-  )
-  if (fromPeople) return fromPeople
+/** First raw id found across the creator-ish fields (used only for the current-user check below). */
+function extractRawOwnerId(item) {
+  const candidates = [item.createdBy, item.owner, item.creator, item.triggeredBy, item.lastModifiedBy]
+  for (const candidate of candidates) {
+    if (candidate == null || candidate === '') continue
+    if (typeof candidate === 'string' && !candidate.includes('@')) return candidate
+    if (typeof candidate === 'object') {
+      const id = candidate.id || candidate._id || candidate.userId || candidate.user_id
+      if (id) return String(id)
+    }
+  }
+  return ''
+}
 
-  // AI-generated rows often only carry a system/user id — show product name instead.
+function resolveLibraryOwnerName(item, kind, { currentUserId, authUser } = {}) {
+  // Try every creator-ish field independently — a bare id in `createdBy` must not hide a
+  // hydrated `{ name, email }` object sitting in `owner` (the two used to be chained with
+  // `??`, which stops at the first non-nullish value even when it fails to resolve to a name).
+  const candidates = [item.createdBy, item.owner, item.creator, item.triggeredBy, item.lastModifiedBy]
+  for (const candidate of candidates) {
+    const name = toDisplayName(candidate)
+    if (name) return name
+  }
+
+  // Every candidate was missing or a bare id — this is exactly what a fresh AI generation
+  // looks like before the creator gets hydrated into a { name, email } object. If that id is
+  // the signed-in user, it's THEIR content: show them, never the "Athena AI" placeholder.
+  const rawId = extractRawOwnerId(item)
+  if (rawId && currentUserId && rawId === String(currentUserId)) {
+    return getAuthDisplayName(authUser) || 'You'
+  }
+
+  // Only genuinely unattributable rows (no id at all, or an id for someone we can't name)
+  // fall back to the product label — this must never override the actual creator.
   if (kind === 'image' || kind === 'presentation') return ATHENA_AI_OWNER
   if (
     item.generatedByAi ||
@@ -205,7 +234,7 @@ function resolveLibraryOwnerName(item, kind) {
  * Normalize a library list item for cards / routing.
  * Ensures `kind`, `category`, display name, and type fields are consistent.
  */
-export function normalizeLibraryItem(item, { workspaceId } = {}) {
+export function normalizeLibraryItem(item, { workspaceId, currentUserId, authUser } = {}) {
   if (!item || typeof item !== 'object') return item
 
   const kind = resolveLibraryKind(item)
@@ -225,7 +254,7 @@ export function normalizeLibraryItem(item, { workspaceId } = {}) {
   const lastModifiedAt =
     item.lastModifiedAt || item.updatedAt || item.modifiedAt || item.updated_at || createdAt || null
 
-  const createdBy = resolveLibraryOwnerName(item, kind)
+  const createdBy = resolveLibraryOwnerName(item, kind, { currentUserId, authUser })
   const lastModifiedBy =
     toDisplayName(item.lastModifiedBy ?? item.updater ?? item.updatedBy) || createdBy
 

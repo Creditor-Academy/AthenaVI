@@ -126,6 +126,13 @@ const API_CONFIG = {
       }
     },
 
+    // Generic project actions shared by videos & presentations
+    // (a presentation's project id is its presentationId).
+    PROJECTS: {
+      ASSIGNEE: (workspaceId, projectId) =>
+        `/api/workspaces/${workspaceId}/projects/${projectId}/assignee`,
+    },
+
     // Project comments
     PROJECT_COMMENTS: {
       BASE: (workspaceId, projectId) =>
@@ -251,6 +258,10 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}`,
       SLIDE_DUPLICATE: (workspaceId, presentationId, slideId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/duplicate`,
+      // Per-slide assignee — dedicated route so OWNER/ADMIN gating & assign notifications
+      // stay separate from the generic SLIDE PATCH (same reasoning as the project-level route).
+      SLIDE_ASSIGNEE: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/assignee`,
       SLIDES_REORDER: (workspaceId, presentationId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/reorder`,
       APPLY_LAYOUT: (workspaceId, presentationId, slideId) =>

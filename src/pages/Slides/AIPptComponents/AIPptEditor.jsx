@@ -53,6 +53,8 @@ import { useAuth } from '../../../contexts/AuthContext'
 import presentationService, {
   PresentationConflictError,
 } from '../../../services/presentationService'
+import workspaceService from '../../../services/workspaceService'
+import { normalizeWorkspace, extractUserId, workspaceCanManageContributors } from '../../TeamWorkspace/workspaceUtils'
 import { extractShareToken, getOrCreateViewerSessionId } from '../../../utils/pptShareSession'
 import { savePresentationEditorSession } from '../../../utils/presentationEditorSession'
 import PptPresenceAvatars from './PptPresenceAvatars'
@@ -1143,6 +1145,10 @@ export default function AIPptEditor({
   )
   const [deckTitle, setDeckTitle] = useState(config.title || 'Untitled Presentation')
   const [deckPackId, setDeckPackId] = useState(config.packId || null)
+  const [workspaceInfo, setWorkspaceInfo] = useState(null)
+  const [assigneeBusy, setAssigneeBusy] = useState(false)
+  const [workspaceMembers, setWorkspaceMembers] = useState([])
+  const [membersLoading, setMembersLoading] = useState(false)
   const [generationPrompt, setGenerationPrompt] = useState(
     () => extractGenerationPrompt(initialDeck, config)
   )
@@ -1221,6 +1227,28 @@ export default function AIPptEditor({
   useEffect(() => {
     if (config.title) setDeckTitle(config.title)
   }, [config.title])
+
+  // Assignee picker is TEAM-only and gated to OWNER/ADMIN — the editor otherwise
+  // has no reason to know the caller's workspace role, so fetch it just for this.
+  useEffect(() => {
+    if (viewOnly || !workspaceId) {
+      setWorkspaceInfo(null)
+      return undefined
+    }
+    let cancelled = false
+    workspaceService
+      .getWorkspace(workspaceId)
+      .then((raw) => {
+        if (cancelled || !raw) return
+        setWorkspaceInfo(normalizeWorkspace(raw, extractUserId(user), user))
+      })
+      .catch(() => {
+        if (!cancelled) setWorkspaceInfo(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [viewOnly, workspaceId, user])
 
   useEffect(() => {
     if (viewOnly || !workspaceId) {
@@ -2688,6 +2716,65 @@ export default function AIPptEditor({
       }
     } finally {
       setApplyingBrandKit(false)
+    }
+  }
+
+  // Assign/unassign is workflow-only (never gates who can open/edit) and only
+  // exists on TEAM workspaces; OWNER/ADMIN can act, everyone else sees the avatar.
+  const isTeamWorkspace = workspaceInfo?.type === 'workspace'
+  const canManageAssignee = workspaceCanManageContributors(workspaceInfo)
+
+  const loadWorkspaceMembers = () => {
+    if (!canManageAssignee || workspaceMembers.length || membersLoading) return
+    setMembersLoading(true)
+    workspaceService
+      .listWorkspaceMembers(workspaceId)
+      .then((list) => setWorkspaceMembers(list || []))
+      .catch(() => setWorkspaceMembers([]))
+      .finally(() => setMembersLoading(false))
+  }
+
+  // Assignee is per-slide (a slide-level workflow tag), not per-deck — mirrors how
+  // progressStatus/handleChangeSlideStatus above works, right down to the optimistic
+  // update + rollback, but assignment gets its own dedicated endpoint (see spec: never
+  // piggyback assigneeId onto the generic slide/project PATCH routes).
+  const handleAssignSlideTo = async (userId) => {
+    const slideId = selectedSlide?.id
+    if (!workspaceId || !presentationId || !slideId || assigneeBusy) return
+    setAssigneeBusy(true)
+    setError('')
+    const previousAssignee = selectedSlide?.assignee ?? null
+    const optimisticUser = userId
+      ? workspaceMembers.find((m) => (m.user?.id || m.id) === userId)?.user || null
+      : null
+
+    setLocalSlides((prev) =>
+      prev.map((s) =>
+        s.id === slideId ? { ...s, assignee: userId ? optimisticUser || previousAssignee : null } : s
+      )
+    )
+
+    try {
+      const result = await presentationService.updateSlideAssignee(workspaceId, presentationId, slideId, userId)
+      const updatedSlide = extractSlideFromMutation(result)
+      if (updatedSlide) {
+        applySlideUpdate(updatedSlide)
+      } else {
+        setLocalSlides((prev) =>
+          prev.map((s) =>
+            s.id === slideId
+              ? { ...s, assignee: userId ? optimisticUser : null, assignedBy: null, assignedAt: null }
+              : s
+          )
+        )
+      }
+    } catch (err) {
+      setLocalSlides((prev) =>
+        prev.map((s) => (s.id === slideId ? { ...s, assignee: previousAssignee } : s))
+      )
+      setError(err.message || 'Failed to update slide assignee')
+    } finally {
+      setAssigneeBusy(false)
     }
   }
 
@@ -4460,6 +4547,19 @@ export default function AIPptEditor({
           onBackgroundGradientChange={handleBackgroundGradientChange}
           onBackgroundColorChange={handleBackgroundColorChange}
           usedFontFamilies={usedFontFamilies}
+          isTeamWorkspace={isTeamWorkspace}
+          canManageAssignee={canManageAssignee}
+          assignee={selectedSlide?.assignee ?? null}
+          assignedBy={selectedSlide?.assignedBy ?? null}
+          assignedAt={selectedSlide?.assignedAt ?? null}
+          assigneeSlideLabel={
+            selectedSlide ? `Slide ${localSlides.findIndex((s) => s.id === selectedSlide.id) + 1}` : ''
+          }
+          assigneeBusy={assigneeBusy}
+          workspaceMembers={workspaceMembers}
+          membersLoading={membersLoading}
+          onLoadAssigneeMembers={loadWorkspaceMembers}
+          onAssignTo={handleAssignSlideTo}
         />
 
         <aside

@@ -50,8 +50,8 @@ const CATEGORY_TAB_ICONS = {
   image: MdImage,
 }
 
-function toWorkCardItem(item, workspace) {
-  const normalized = normalizeLibraryItem(item, { workspaceId: workspace?.id })
+function toWorkCardItem(item, workspace, currentUserId, authUser) {
+  const normalized = normalizeLibraryItem(item, { workspaceId: workspace?.id, currentUserId, authUser })
   const kind = normalizeLibraryCategoryId(normalized.kind) || 'video'
   return {
     ...normalized,
@@ -135,7 +135,7 @@ function Videos({ onEdit, onOpenImage }) {
           const items = lists.flatMap((list, index) => {
             const kind = catsToLoad[index]
             return (list.items || []).map((item) =>
-              toWorkCardItem({ ...item, kind: item.kind || kind }, ws)
+              toWorkCardItem({ ...item, kind: item.kind || kind }, ws, currentUserId, authUser)
             )
           })
 
@@ -157,7 +157,7 @@ function Videos({ onEdit, onOpenImage }) {
 
     const items = results.flatMap((r) => r.items)
     return { counts, items }
-  }, [])
+  }, [currentUserId, authUser])
 
   const fetchWorkItems = useCallback(async () => {
     setLoading(true)

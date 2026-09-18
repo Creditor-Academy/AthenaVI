@@ -888,6 +888,27 @@ export function extractGenerationPrompt(presentation, fallbackConfig = {}) {
   )
 }
 
+/** Assignee/owner fields appear flat, or nested under .presentation / .project. */
+export function extractAssignee(payload) {
+  return payload?.assignee ?? payload?.presentation?.assignee ?? payload?.project?.assignee ?? null
+}
+
+export function extractOwner(payload) {
+  return payload?.owner ?? payload?.presentation?.owner ?? payload?.project?.owner ?? null
+}
+
+export function extractAssignedBy(payload) {
+  return (
+    payload?.assignedBy ?? payload?.presentation?.assignedBy ?? payload?.project?.assignedBy ?? null
+  )
+}
+
+export function extractAssignedAt(payload) {
+  return (
+    payload?.assignedAt ?? payload?.presentation?.assignedAt ?? payload?.project?.assignedAt ?? null
+  )
+}
+
 export function extractPresentationId(payload) {
   return (
     payload?.id ||
@@ -1053,6 +1074,10 @@ export function normalizeSlideForEditor(slide, index = 0, aspectRatio = '16:9') 
     contributorStatus:
       slide?.contributorStatus || elementsDoc?.contributorStatus || 'none',
     speakerNotes: slide?.speakerNotes || elementsDoc?.speakerNotes || '',
+    // Per-slide assignee — workflow-only, TEAM workspaces, OWNER/ADMIN can set.
+    assignee: slide?.assignee ?? null,
+    assignedBy: slide?.assignedBy ?? null,
+    assignedAt: slide?.assignedAt ?? null,
   }
 }
 

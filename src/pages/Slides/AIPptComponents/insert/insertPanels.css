@@ -2619,6 +2619,26 @@ body.ppt-layers-dragging * {
   background: #e2e8f0;
 }
 
+.ppt-assignee-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: color-mix(in srgb, var(--primary) 16%, #fff);
+  color: var(--primary-dark, var(--primary));
+}
+
+.ppt-assignee-avatar--empty {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
 .ppt-status-dot {
   width: 18px;
   height: 18px;

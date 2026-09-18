@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   FiMessageCircle,
-  FiUser,
+  FiUserPlus,
   FiX,
   FiTrash2,
   FiFileText,
@@ -50,6 +50,13 @@ const RAIL_TOOLS = [
   { id: 'notes', label: 'Speaker notes', Icon: FiFileText },
   { id: 'layers', label: 'Layers', Icon: FiLayers },
 ]
+
+function personInitials(name) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean)
+  if (!parts.length) return '?'
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+}
 
 function layerTypeIcon(type) {
   switch (type) {
@@ -390,6 +397,17 @@ export default function EditorRightRail({
   onViewOnlyAttempt,
   onOpenChange,
   usedFontFamilies = [],
+  isTeamWorkspace = false,
+  canManageAssignee = false,
+  assignee = null,
+  assignedBy = null,
+  assignedAt = null,
+  assigneeSlideLabel = '',
+  assigneeBusy = false,
+  workspaceMembers = [],
+  membersLoading = false,
+  onLoadAssigneeMembers,
+  onAssignTo,
 }) {
   const [active, setActive] = useState(null)
   const [aiOpen, setAiOpen] = useState(false)
@@ -472,6 +490,10 @@ export default function EditorRightRail({
     if (match) setSelectedLayoutId(templateRecordId(match))
   }, [slide?.id, slide?.layoutId, slide?.layout_id, layoutTemplates])
 
+  useEffect(() => {
+    if (active === 'assignee' && canManageAssignee) onLoadAssigneeMembers?.()
+  }, [active, canManageAssignee, onLoadAssigneeMembers])
+
   const toggle = (id) => {
     if (id === 'comments' && viewOnly && canComment) {
       setAiOpen(false)
@@ -495,7 +517,11 @@ export default function EditorRightRail({
   const panelTitle =
     active === 'design'
       ? DESIGN_PANEL_TITLES[designFocus] || 'Design'
-      : RAIL_TOOLS.find((t) => t.id === active)?.label || ''
+      : active === 'assignee'
+        ? assigneeSlideLabel
+          ? `Assignee — ${assigneeSlideLabel}`
+          : 'Assignee'
+        : RAIL_TOOLS.find((t) => t.id === active)?.label || ''
 
   return (
     <aside
@@ -644,6 +670,101 @@ export default function EditorRightRail({
               </div>
             </div>
           )}
+
+          {active === 'assignee' && (
+            <div className="ppt-slide-panel ppt-status-panel" role="region" aria-label="Assignee">
+              {canManageAssignee ? (
+                <>
+                  <p className="ppt-status-panel-lead">
+                    Assign {assigneeSlideLabel ? `this ${assigneeSlideLabel.toLowerCase()}` : 'this slide'} to a
+                    workspace member so the team knows who owns it. This doesn’t change who can open or edit it.
+                  </p>
+                  <div className="ppt-status-options" role="listbox" aria-label="Choose assignee">
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={!assignee}
+                      className={`ppt-status-option ${!assignee ? 'is-active' : ''}`}
+                      disabled={assigneeBusy}
+                      onClick={() => onAssignTo?.(null)}
+                    >
+                      <span className="ppt-assignee-avatar ppt-assignee-avatar--empty" aria-hidden>
+                        <FiUserPlus size={14} />
+                      </span>
+                      <span className="ppt-status-option-copy">
+                        <span className="ppt-status-option-label">Unassigned</span>
+                      </span>
+                      {!assignee ? (
+                        <span className="ppt-status-option-check" aria-hidden>✓</span>
+                      ) : null}
+                    </button>
+
+                    {membersLoading && (
+                      <p className="ppt-status-panel-lead">Loading members…</p>
+                    )}
+                    {!membersLoading && !workspaceMembers.length && (
+                      <p className="ppt-status-panel-lead">No members in this workspace.</p>
+                    )}
+                    {!membersLoading &&
+                      workspaceMembers.map((member) => {
+                        const memberUser = member.user || {}
+                        const memberId = memberUser.id || member.id
+                        const selected = assignee?.id === memberId
+                        const label = memberUser.name || memberUser.email || 'Member'
+                        return (
+                          <button
+                            key={memberId}
+                            type="button"
+                            role="option"
+                            aria-selected={selected}
+                            className={`ppt-status-option ${selected ? 'is-active' : ''}`}
+                            disabled={assigneeBusy}
+                            onClick={() => onAssignTo?.(memberId)}
+                          >
+                            <span className="ppt-assignee-avatar" aria-hidden>
+                              {personInitials(label)}
+                            </span>
+                            <span className="ppt-status-option-copy">
+                              <span className="ppt-status-option-label">{label}</span>
+                              {memberUser.name && memberUser.email ? (
+                                <span className="ppt-status-option-hint">{memberUser.email}</span>
+                              ) : null}
+                            </span>
+                            {selected ? (
+                              <span className="ppt-status-option-check" aria-hidden>✓</span>
+                            ) : null}
+                          </button>
+                        )
+                      })}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="ppt-status-panel-lead">
+                    Assignee is a workflow tag — it doesn’t affect who can open or edit this slide.
+                  </p>
+                  <div className="ppt-status-options">
+                    <div className="ppt-status-option" aria-disabled>
+                      <span className={`ppt-assignee-avatar ${assignee ? '' : 'ppt-assignee-avatar--empty'}`} aria-hidden>
+                        {assignee ? personInitials(assignee.name || assignee.email) : <FiUserPlus size={14} />}
+                      </span>
+                      <span className="ppt-status-option-copy">
+                        <span className="ppt-status-option-label">
+                          {assignee ? assignee.name || assignee.email : 'Unassigned'}
+                        </span>
+                        {assignee && assignedBy ? (
+                          <span className="ppt-status-option-hint">
+                            Assigned by {assignedBy.name || assignedBy.email}
+                            {assignedAt ? ` · ${new Date(assignedAt).toLocaleDateString()}` : ''}
+                          </span>
+                        ) : null}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -670,9 +791,35 @@ export default function EditorRightRail({
         </div>
 
         <div className="ppt-editor-sidebar-rail-footer">
-          <button type="button" className="ppt-editor-sidebar-btn" title="Assignee" disabled>
-            <FiUser size={18} />
-          </button>
+          {isTeamWorkspace && (
+            <button
+              type="button"
+              className={`ppt-editor-sidebar-btn ${active === 'assignee' ? 'is-active' : ''}`}
+              title={
+                assignee
+                  ? `${assigneeSlideLabel || 'Slide'} assigned to ${assignee.name || assignee.email}`
+                  : `Assign ${assigneeSlideLabel ? assigneeSlideLabel.toLowerCase() : 'slide'}`
+              }
+              aria-label="Assignee"
+              aria-expanded={active === 'assignee'}
+              onClick={() => {
+                if (viewOnly) {
+                  onViewOnlyAttempt?.()
+                  return
+                }
+                setAiOpen(false)
+                setActive((prev) => (prev === 'assignee' ? null : 'assignee'))
+              }}
+            >
+              {assignee ? (
+                <span className="ppt-assignee-avatar" aria-hidden>
+                  {personInitials(assignee.name || assignee.email)}
+                </span>
+              ) : (
+                <FiUserPlus size={18} />
+              )}
+            </button>
+          )}
           <div className="ppt-editor-sidebar-zoom">{Math.round(zoom)}%</div>
           <button
             type="button"

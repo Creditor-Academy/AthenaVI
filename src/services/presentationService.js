@@ -170,6 +170,18 @@ class PresentationService {
     )
   }
 
+  /**
+   * Assign / reassign / unassign this presentation (project id = presentationId).
+   * OWNER/ADMIN only — MEMBER gets 403; PRIVATE workspaces or an assignee outside
+   * the workspace get 400. Pass `assigneeId: null` to unassign.
+   */
+  updateAssignee(workspaceId, presentationId, assigneeId) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PROJECTS.ASSIGNEE(workspaceId, presentationId),
+      { method: 'PATCH', body: JSON.stringify({ assigneeId }) }
+    )
+  }
+
   // ── Presentation CRUD ──────────────────────────────────────────────
 
   listPresentations(workspaceId, params = {}) {
@@ -442,6 +454,17 @@ class PresentationService {
     return this.request(
       API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE(workspaceId, presentationId, slideId),
       { method: 'PATCH', body: JSON.stringify(body) }
+    )
+  }
+
+  /**
+   * Assign / reassign / unassign one slide (project-level assignee's per-slide sibling).
+   * OWNER/ADMIN only — MEMBER gets 403; PRIVATE workspaces get 400. `assigneeId: null` unassigns.
+   */
+  updateSlideAssignee(workspaceId, presentationId, slideId, assigneeId) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE_ASSIGNEE(workspaceId, presentationId, slideId),
+      { method: 'PATCH', body: JSON.stringify({ assigneeId }) }
     )
   }
 
