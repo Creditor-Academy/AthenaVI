@@ -404,7 +404,7 @@ Object.assign(CATALOG, {
         slot(`step_${n}_title`, `cols ${col}, rows 8-9`, 'heading', 'Add Your Text Here', {
           layer: 10,
           typography: typo('heading', { fontSize: 16, align: 'center', fontWeight: 700 }),
-          max_lines: 1,
+          max_lines: 2,
         }),
         slot(`step_${n}_desc`, `cols ${col}, rows 9-10`, 'body', 'Lorem ipsum dolor sit amet.', {
           layer: 10,
