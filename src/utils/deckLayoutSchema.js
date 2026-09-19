@@ -100,8 +100,12 @@ export const DECK_LAYOUT_STARTERS = {
       content_type: 'title',
       grid: '12-col',
       slots: [
-        slot('MAIN_TITLE', 'cols 2-11, rows 4-6', 'heading', 'Presentation title'),
-        slot('SUBTITLE', 'cols 3-10, rows 6-8', 'subheading', 'Tagline or company name'),
+        slot('MAIN_TITLE', 'cols 2-11, rows 4-5', 'heading', 'Presentation title', {
+          typography: { fontSize: 72, fontWeight: 800, colorRole: 'text', align: 'center', lineHeight: 1.15, verticalAlign: 'center' },
+        }),
+        slot('SUBTITLE', 'cols 3-10, rows 6-7', 'subheading', 'Tagline or company name', {
+          typography: { fontSize: 28, fontWeight: 400, colorRole: 'muted', align: 'center', lineHeight: 1.4, verticalAlign: 'flex-start' },
+        }),
       ],
     },
   },

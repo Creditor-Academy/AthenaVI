@@ -46,6 +46,14 @@ import { isTimelineMilestonesImageLayout } from './timelineMilestonesImage.js'
 import { isTimelineMilestonesImageRightLayout } from './timelineMilestonesImageRight.js'
 import { isCatalogPlaceholderText } from './catalogPlaceholder.js'
 import { normalizeChartContent } from './chartContentNormalize.js'
+import {
+  isTitleHeroLeftBlobLayout,
+  buildTitleHeroLeftBlobCanvasElements,
+  isTitleHeroLeftFadeLayout,
+  buildTitleHeroLeftFadeCanvasElements,
+  isTitleHeroRightOvalLayout,
+  buildTitleHeroRightOvalCanvasElements,
+} from './titleCentered.js'
 
 /**
  * Merge theme tokens into compile options so editor preview matches AI output.
@@ -472,9 +480,13 @@ function resolveSlotText(slot, contentBySlotId, schema, options = {}) {
     && !/horizontal|lanes/i.test(String(schema?.layout_id || ''))
   const keepProcessLinearNumeric = /process_linner_numeric|process_linear_numeric$/i.test(String(schema?.layout_id || ''))
   const keepProcessLinearNumericCards = /process_linear_numeric_cards/i.test(String(schema?.layout_id || ''))
+  const keepTitleCentered = /title_centered/i.test(String(schema?.layout_id || ''))
+  const keepTitleMinimal = /title_minimal/i.test(String(schema?.layout_id || ''))
+  const keepTitleImageLogo = /title_image_logo/i.test(String(schema?.layout_id || ''))
+  const keepTitleHero = /title_hero/i.test(String(schema?.layout_id || ''))
   if (
     placeholder &&
-    (!hasSlideContent || role === 'stat' || role === 'stat_label' || memberSlot || keepTableSingle || keepTableSingleCards || keepPricingThreePlans || keepPricingThreePlansFeatured || keepPricingThreeHighlight || keepPricingThreeHighlightSplit || keepPricingFourPlans || keepPricingFourPlansFeatured || keepPricingFourPara || keepPricingFourParaCards || keepPricingComparisonTable || keepPricingComparisonCards || keepTimelineHorizontal || keepTimelineHorizontalCards || keepTimelineMilestones || keepTimelineMilestonesCards || keepTimelineMilestonesImage || keepTimelineMilestonesImageRight || keepTimelineVertical || keepTimelineVerticalCards || keepTimelineRoadmap || keepProcessLinearNumeric || keepProcessLinearNumericCards)
+    (!hasSlideContent || role === 'stat' || role === 'stat_label' || memberSlot || keepTitleCentered || keepTitleMinimal || keepTitleImageLogo || keepTitleHero || keepTableSingle || keepTableSingleCards || keepPricingThreePlans || keepPricingThreePlansFeatured || keepPricingThreeHighlight || keepPricingThreeHighlightSplit || keepPricingFourPlans || keepPricingFourPlansFeatured || keepPricingFourPara || keepPricingFourParaCards || keepPricingComparisonTable || keepPricingComparisonCards || keepTimelineHorizontal || keepTimelineHorizontalCards || keepTimelineMilestones || keepTimelineMilestonesCards || keepTimelineMilestonesImage || keepTimelineMilestonesImageRight || keepTimelineVertical || keepTimelineVerticalCards || keepTimelineRoadmap || keepProcessLinearNumeric || keepProcessLinearNumericCards)
   ) {
     return placeholder
   }
@@ -651,7 +663,10 @@ function buildTextElement(slot, placement, options) {
   })
   text = fitted.text
   const fontSize = fitted.fontSize
-  const verticalAlign = role === 'stat' || role === 'stat_label' ? 'center' : 'flex-start'
+  const verticalAlign =
+    ty.verticalAlign ||
+    slot.verticalAlign ||
+    (role === 'stat' || role === 'stat_label' ? 'center' : 'flex-start')
   const colorMap = colorRoleMapFromPalette(options.palette)
   let colorRole = ty.colorRole || null
   if (!colorRole) {
@@ -1206,6 +1221,16 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
  * Compile DECK_LAYOUT schema slots into canvas elements (1920×1080 space).
  */
 export function compileDeckLayoutToElements(schema, options = {}) {
+  if (isTitleHeroLeftBlobLayout(schema?.layout_id, schema)) {
+    return buildTitleHeroLeftBlobCanvasElements({ schema, options })
+  }
+  if (isTitleHeroLeftFadeLayout(schema?.layout_id, schema)) {
+    return buildTitleHeroLeftFadeCanvasElements({ schema, options })
+  }
+  if (isTitleHeroRightOvalLayout(schema?.layout_id, schema)) {
+    return buildTitleHeroRightOvalCanvasElements({ schema, options })
+  }
+
   const slots = Array.isArray(schema?.slots) ? schema.slots : []
   if (!slots.length) return []
 

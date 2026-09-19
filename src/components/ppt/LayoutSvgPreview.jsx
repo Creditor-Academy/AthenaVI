@@ -264,13 +264,17 @@ function SvgSlotContent({ slot, geo, large, previewHints, grid }) {
   let textTransform = meta.uppercase ? 'uppercase' : 'none'
 
   if (variant === 'title' || kind === 'heading') {
-    fontSize = fs.title
-    fontWeight = meta.bold !== false ? 700 : 400
+    fontSize = slot?.typography?.fontSize
+      ? (large ? slot.typography.fontSize : Math.max(16, Math.round(slot.typography.fontSize * 0.45)))
+      : fs.title
+    fontWeight = slot?.typography?.fontWeight || (meta.bold !== false ? 700 : 400)
     color = THEME.text
     lineClamp = large ? 4 : 3
   } else if (variant === 'subheading' || kind === 'subheading') {
-    fontSize = fs.subtitle
-    color = THEME.muted
+    fontSize = slot?.typography?.fontSize
+      ? (large ? slot.typography.fontSize : Math.max(10, Math.round(slot.typography.fontSize * 0.45)))
+      : fs.subtitle
+    color = '#64748b'
     lineClamp = large ? 3 : 2
   } else if (variant === 'caption' || kind === 'caption' || kind === 'eyebrow') {
     fontSize = fs.caption

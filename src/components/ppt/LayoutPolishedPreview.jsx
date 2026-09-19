@@ -68,6 +68,20 @@ import { resolvePreviewMode } from '../../utils/deckLayoutRegistry'
 import { QUOTE_PREVIEW_MODES } from './layoutPolishedPreviewsQuotes.jsx'
 import LayoutSvgPreview from './LayoutSvgPreview'
 import { compilePricingLayoutPreviewSlide } from '../../utils/pricingCompiledPreview.js'
+import {
+  isTitleCenteredLayout,
+  titleCenteredPreviewSvg,
+  isTitleMinimalLayout,
+  titleMinimalPreviewSvg,
+  isTitleImageLogoLayout,
+  titleImageLogoPreviewSvg,
+  isTitleHeroLeftBlobLayout,
+  titleHeroLeftBlobPreviewSvg,
+  isTitleHeroLeftFadeLayout,
+  titleHeroLeftFadePreviewSvg,
+  isTitleHeroRightOvalLayout,
+  titleHeroRightOvalPreviewSvg,
+} from '../../utils/titleCentered.js'
 
 const LAYOUT_POLISHED_THEME = {
   bg: 'var(--preview-bg, var(--bg-card, #ffffff))',
@@ -1799,7 +1813,7 @@ function PolishedTitleCenteredPreview({ previewHints, large, className, style, f
         )}
         <div style={{ fontSize: large ? (isLarge ? '2.4rem' : '1.8rem') : (isLarge ? '0.8rem' : '0.62rem'), fontWeight: 800, color: t.text, lineHeight: 1.1 }}>{headingText}</div>
         {bodyText && <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : '0.28rem', color: t.muted, lineHeight: 1.4 }}>{bodyText}</div>}
-        {(variant === 'centered' || variant === 'default') && (
+        {variant === 'centered' && (
           <div style={{ width: large ? 40 : 14, height: large ? 3 : 1, background: t.accent, borderRadius: 99, marginTop: large ? 4 : 1 }} />
         )}
       </div>
@@ -2583,6 +2597,103 @@ export default function LayoutPolishedPreview({
       />
     )
   }
+
+  if (isTitleCenteredLayout(previewHints.layout_id, schema) || previewHints.layout_id === 'title_centered_v1') {
+    const svg = titleCenteredPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isTitleMinimalLayout(previewHints.layout_id, schema) || previewHints.layout_id === 'title_minimal_v1' || previewMode === 'title_minimal') {
+    const svg = titleMinimalPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isTitleImageLogoLayout(previewHints.layout_id, schema) || previewHints.layout_id === 'title_image_logo_v1' || previewMode === 'title_image_logo') {
+    const svg = titleImageLogoPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isTitleHeroLeftBlobLayout(previewHints.layout_id, schema) || previewHints.layout_id === 'title_hero_left_blob_v1' || previewMode === 'title_hero_left_blob') {
+    const svg = titleHeroLeftBlobPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isTitleHeroLeftFadeLayout(previewHints.layout_id, schema) || previewHints.layout_id === 'title_hero_left_fade_v1' || previewMode === 'title_hero_left_fade') {
+    const svg = titleHeroLeftFadePreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isTitleHeroRightOvalLayout(previewHints.layout_id, schema) || previewHints.layout_id === 'title_hero_right_oval_v1' || previewMode === 'title_hero_right_oval') {
+    const svg = titleHeroRightOvalPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
   if (previewMode === 'title_centered') {
     return (
       <PolishedTitleCenteredPreview

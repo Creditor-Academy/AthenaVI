@@ -18,6 +18,7 @@ import { parseRegion } from './layoutPreviewUtils'
 import { buildCanvasDoc, resolveCanvasSize } from './presentationHelpers'
 import { layoutSchemaHasCanvasElements, resolveLayoutCanvasElementsDoc } from './videoTemplateToCanvasElements'
 import { resolveSmartLayoutState } from './smartLayoutState'
+import { isTitleCenteredLayout, isTitleMinimalLayout, isTitleImageLogoLayout, isTitleHeroLeftBlobLayout } from './titleCentered'
 
 function unwrapTemplateList(payload) {
   if (Array.isArray(payload)) return payload
@@ -268,13 +269,17 @@ export function needsLayoutCanvasRepair(slide, elements = [], schema = null, opt
   if (slide?.manuallyEdited) return false
 
   const list = Array.isArray(elements) ? elements : []
+  const layoutId = slide?.layoutId || slide?.layout_id || schema?.layout_id
   if (opts?.deckPackId) {
+    if (isTitleCenteredLayout(layoutId, schema) || isTitleMinimalLayout(layoutId, schema) || isTitleImageLogoLayout(layoutId, schema)) return false
     return hasOverlappingTextPlacements(list)
   }
   const slots = Array.isArray(schema?.slots) ? schema.slots : []
 
   if (slots.length && !list.length) return true
   if (!list.length) return false
+
+  if (isTitleCenteredLayout(layoutId, schema) || isTitleMinimalLayout(layoutId, schema) || isTitleImageLogoLayout(layoutId, schema)) return false
 
   if (hasOverlappingTextPlacements(list) && !list.some((el) => /^TEAM_(FOUR|FIVE|SIX)_(CARD|PHOTO_BG)_|^TEAM_DEPT_(BAR|PILL|RING)_|^TEAM_LEAD_(BAND|CURVE|PANEL|RING|DOT)_|^TEAM_ORG_(HALO|RING|LINE)_/i.test(String(el.slotId || '')))) return true
   if (needsLegacyBrokenLayout(list, slide?.title)) return true

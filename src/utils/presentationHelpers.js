@@ -655,16 +655,19 @@ export function buildWizardThemeTokens(colorThemeId, colorThemes = []) {
   }
 }
 
-/** CSS mask for split-layout hero images — background bleeds into photo edge. */
+/** CSS mask for split-layout hero images — background bleeds smoothly into photo edge. */
 export function buildImageEdgeFadeMask(edgeFade) {
   if (!edgeFade || typeof edgeFade !== 'object') return null
-  const width = Math.min(0.45, Math.max(0.12, Number(edgeFade.width) || 0.28))
+  const width = Math.min(0.55, Math.max(0.12, Number(edgeFade.width) || 0.35))
   const pct = Math.round(width * 100)
+  const p1 = Math.round(pct * 0.18)
+  const p2 = Math.round(pct * 0.50)
+  const p3 = Math.round(pct * 0.82)
   const side = String(edgeFade.side || 'left').toLowerCase()
   if (side === 'right') {
-    return `linear-gradient(to left, transparent 0%, black ${pct}%, black 100%)`
+    return `linear-gradient(to left, transparent 0%, rgba(0,0,0,0.06) ${p1}%, rgba(0,0,0,0.45) ${p2}%, rgba(0,0,0,0.88) ${p3}%, black ${pct}%, black 100%)`
   }
-  return `linear-gradient(to right, transparent 0%, black ${pct}%, black 100%)`
+  return `linear-gradient(to right, transparent 0%, rgba(0,0,0,0.06) ${p1}%, rgba(0,0,0,0.45) ${p2}%, rgba(0,0,0,0.88) ${p3}%, black ${pct}%, black 100%)`
 }
 
 /** Clip-path masks for shaped hero images on title slides. */
@@ -680,9 +683,9 @@ export function buildImageClipPath(imageMask) {
 
   if (type === 'blob') {
     if (side === 'left') {
-      return 'polygon(0% 0%, 70% 0%, 86% 14%, 94% 50%, 86% 86%, 70% 100%, 0% 100%)'
+      return 'polygon(95% 54%, 95% 59%, 94% 64%, 92% 69%, 90% 73%, 87% 78%, 84% 81%, 80% 85%, 76% 87%, 71% 90%, 66% 92%, 61% 93%, 56% 94%, 51% 95%, 46% 95%, 40% 95%, 35% 94%, 30% 93%, 25% 92%, 20% 90%, 16% 88%, 13% 86%, 11% 83%, 9% 81%, 7% 77%, 5% 74%, 4% 70%, 3% 66%, 2% 61%, 2% 57%, 2% 52%, 2% 47%, 3% 42%, 4% 37%, 5% 32%, 7% 28%, 9% 23%, 12% 20%, 15% 17%, 18% 14%, 22% 12%, 27% 10%, 32% 9%, 37% 9%, 41% 9%, 46% 10%, 51% 12%, 55% 13%, 60% 15%, 64% 18%, 68% 20%, 72% 22%, 76% 25%, 80% 28%, 84% 31%, 87% 34%, 90% 37%, 92% 41%, 94% 45%, 95% 49%)'
     }
-    return 'polygon(30% 0%, 100% 0%, 100% 100%, 30% 100%, 14% 86%, 6% 50%, 14% 14%)'
+    return 'polygon(5% 54%, 5% 59%, 6% 64%, 8% 69%, 10% 73%, 13% 78%, 16% 81%, 20% 85%, 24% 87%, 29% 90%, 34% 92%, 39% 93%, 44% 94%, 49% 95%, 54% 95%, 60% 95%, 65% 94%, 70% 93%, 75% 92%, 80% 90%, 84% 88%, 87% 86%, 89% 83%, 91% 81%, 93% 77%, 95% 74%, 96% 70%, 97% 66%, 98% 61%, 98% 57%, 98% 52%, 98% 47%, 97% 42%, 96% 37%, 95% 32%, 93% 28%, 91% 23%, 88% 20%, 85% 17%, 82% 14%, 78% 12%, 73% 10%, 68% 9%, 63% 9%, 59% 9%, 54% 10%, 49% 12%, 45% 13%, 40% 15%, 36% 18%, 32% 20%, 28% 22%, 24% 25%, 20% 28%, 16% 31%, 13% 34%, 10% 37%, 8% 41%, 6% 45%, 5% 49%)'
   }
 
   if (type === 'arch') {

@@ -506,14 +506,25 @@ export default function PptCanvasElement({
       }
       if (el.type === 'image') {
         const clipPath = c.clipPath || buildImageClipPath(c.imageMask)
+        const edgeFadeMask = buildImageEdgeFadeMask(c.edgeFade)
         const round = circular || radius === 999 || radius === '50%'
         return (
           <EmptyImagePlaceholder
             className="ppt-image-skeleton ppt-image-skeleton--empty"
-            borderRadius={clipPath ? 0 : (round ? 999 : radius)}
+            borderRadius={clipPath || edgeFadeMask ? 0 : (round ? 999 : radius)}
             style={{
               ...fillStyle,
               ...(clipPath ? { clipPath, WebkitClipPath: clipPath } : {}),
+              ...(edgeFadeMask
+                ? {
+                    WebkitMaskImage: edgeFadeMask,
+                    maskImage: edgeFadeMask,
+                    WebkitMaskSize: '100% 100%',
+                    maskSize: '100% 100%',
+                    WebkitMaskRepeat: 'no-repeat',
+                    maskRepeat: 'no-repeat',
+                  }
+                : {}),
               ...(round && !clipPath ? { borderRadius: 999, overflow: 'hidden' } : {}),
             }}
           />
@@ -544,6 +555,7 @@ export default function PptCanvasElement({
           ...fillStyle,
           overflow: 'hidden',
           borderRadius: clipPath || edgeFadeMask || isFullBleedMedia ? 0 : c.borderRadius != null ? c.borderRadius : undefined,
+          ...(clipPath ? { clipPath, WebkitClipPath: clipPath } : {}),
         }}
       >
         <img

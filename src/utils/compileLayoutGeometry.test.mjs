@@ -46,7 +46,7 @@ function testTitleCentered() {
   const title = geo.get('MAIN_TITLE')
   assert.ok(title)
   const grid = getGridDims(schema.slots)
-  const reg = parseRegion('cols 2-11, rows 4-6')
+  const reg = parseRegion('cols 2-11, rows 4-5')
   const expected = gridRegionToPlacement(reg, grid, CANVAS)
   assert.equal(title.compiled.x, expected.x)
   assert.equal(title.compiled.y, expected.y)
