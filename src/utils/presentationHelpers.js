@@ -677,7 +677,8 @@ export function buildImageClipPath(imageMask) {
   const side = String(imageMask.side || 'right').toLowerCase()
 
   if (type === 'oval') {
-    return 'ellipse(50% 50% at 50% 50%)'
+    if (side === 'left') return 'ellipse(88% 96% at 0% 50%)'
+    return 'ellipse(88% 96% at 100% 50%)'
   }
 
   if (type === 'blob') {

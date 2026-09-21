@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MdClose, MdAdd, MdGroupWork } from 'react-icons/md';
+import {
+  getTeamWorkspaceNames,
+  hasConflictingName,
+} from '../../../../pages/TeamWorkspace/workspaceUtils.js';
 import './PremiumModal.css';
 
 const CreateWorkspaceModal = ({ isOpen, onClose, onCreate, workspaces = [] }) => {
@@ -8,28 +12,69 @@ const CreateWorkspaceModal = ({ isOpen, onClose, onCreate, workspaces = [] }) =>
     const [invites, setInvites] = useState([]);
     const [emailInput, setEmailInput] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState('');
 
-    const isDuplicate = workspaces.some(w => w.name.toLowerCase() === name.trim().toLowerCase());
+    const teamWorkspaceNames = useMemo(
+        () => getTeamWorkspaceNames(workspaces),
+        [workspaces]
+    );
+
+    const trimmedName = name.trim();
+    const isDuplicate =
+        !isSubmitting &&
+        Boolean(trimmedName) &&
+        hasConflictingName(trimmedName, teamWorkspaceNames);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        setName('');
+        setInvites([]);
+        setEmailInput('');
+        setError('');
+        setIsSubmitting(false);
+    }, [isOpen]);
+
+    const addEmailToInvites = (rawEmail) => {
+        const email = String(rawEmail || '').trim().toLowerCase();
+        if (!email) return false;
+        if (invites.some((invite) => invite.toLowerCase() === email)) return false;
+        setInvites((prev) => [...prev, email]);
+        setEmailInput('');
+        return true;
+    };
 
     const handleAddEmail = (e) => {
         e.preventDefault();
-        if (emailInput && !invites.includes(emailInput)) {
-            setInvites([...invites, emailInput]);
-            setEmailInput('');
-        }
+        addEmailToInvites(emailInput);
+    };
+
+    const handleEmailKeyDown = (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        addEmailToInvites(emailInput);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!name || isDuplicate) return;
+        if (!trimmedName || isDuplicate || isSubmitting) return;
+
+        const pendingEmail = emailInput.trim().toLowerCase();
+        const allInvites = [...invites];
+        if (pendingEmail && !allInvites.some((invite) => invite.toLowerCase() === pendingEmail)) {
+            allInvites.push(pendingEmail);
+        }
+
         setIsSubmitting(true);
+        setError('');
         try {
-            await onCreate({ name, invites });
+            await onCreate({ name: trimmedName, invites: allInvites });
             setName('');
             setInvites([]);
+            setEmailInput('');
             onClose();
         } catch (err) {
             console.error('Failed to create workspace:', err);
+            setError(err.message || 'Failed to create workspace');
         } finally {
             setIsSubmitting(false);
         }
@@ -77,14 +122,24 @@ const CreateWorkspaceModal = ({ isOpen, onClose, onCreate, workspaces = [] }) =>
                                     type="text"
                                     autoFocus
                                     value={name}
-                                    onChange={e => setName(e.target.value)}
+                                    onChange={(e) => {
+                                        setName(e.target.value);
+                                        if (error) setError('');
+                                    }}
                                     placeholder="e.g. Marketing Team"
                                     required
-                                    className={`astryd-input ${isDuplicate ? 'astryd-input-error' : ''}`}
+                                    className={`astryd-input ${isDuplicate || error ? 'astryd-input-error' : ''}`}
                                     disabled={isSubmitting}
                                 />
-                                {isDuplicate && <span className="astryd-error">This workspace name already exists</span>}
-                                {!isDuplicate && <span className="astryd-hint">Choose a clear name that describes your team or project</span>}
+                                {isDuplicate && (
+                                    <span className="astryd-error">This workspace name already exists</span>
+                                )}
+                                {error && !isDuplicate && (
+                                    <span className="astryd-error">{error}</span>
+                                )}
+                                {!isDuplicate && !error && (
+                                    <span className="astryd-hint">Choose a clear name that describes your team or project</span>
+                                )}
                             </div>
 
                             <div className="astryd-form-group">
@@ -93,7 +148,8 @@ const CreateWorkspaceModal = ({ isOpen, onClose, onCreate, workspaces = [] }) =>
                                     <input
                                         type="email"
                                         value={emailInput}
-                                        onChange={e => setEmailInput(e.target.value)}
+                                        onChange={(e) => setEmailInput(e.target.value)}
+                                        onKeyDown={handleEmailKeyDown}
                                         placeholder="colleague@example.com"
                                         className="astryd-input"
                                         disabled={isSubmitting}
@@ -128,7 +184,7 @@ const CreateWorkspaceModal = ({ isOpen, onClose, onCreate, workspaces = [] }) =>
                                 <button
                                     type="submit"
                                     className="astryd-btn-primary"
-                                    disabled={!name || isDuplicate || isSubmitting}
+                                    disabled={!trimmedName || isDuplicate || isSubmitting}
                                 >
                                     {isSubmitting ? 'Creating...' : 'Create Workspace'}
                                 </button>

@@ -3,10 +3,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MdClose, MdEdit } from 'react-icons/md';
 import './PremiumModal.css';
 
-const RenameModal = ({ isOpen, onClose, onRename, currentName, itemType }) => {
+const RenameModal = ({ isOpen, onClose, onRename, currentName, itemType, existingNames = [] }) => {
     const [name, setName] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
+
+    const trimmedName = name.trim();
+    const isUnchanged = trimmedName.toLowerCase() === String(currentName || '').trim().toLowerCase();
+    const isDuplicate = trimmedName
+      ? existingNames.some(
+          (existing) =>
+            String(existing || '').trim().toLowerCase() === trimmedName.toLowerCase()
+        )
+      : false;
 
     useEffect(() => {
         if (isOpen) {
@@ -18,7 +27,7 @@ const RenameModal = ({ isOpen, onClose, onRename, currentName, itemType }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!name.trim() || name.trim() === currentName) return;
+        if (!trimmedName || isUnchanged || isDuplicate) return;
 
         setIsSubmitting(true);
         setError('');
@@ -34,6 +43,12 @@ const RenameModal = ({ isOpen, onClose, onRename, currentName, itemType }) => {
     };
 
     const label = itemType === 'workspace' ? 'Workspace' : itemType === 'folder' ? 'Folder' : 'Video';
+    const duplicateMessage =
+      itemType === 'workspace'
+        ? 'This workspace name already exists'
+        : itemType === 'folder'
+          ? 'This folder name already exists in this workspace'
+          : 'A project with this name already exists in this folder';
 
     return (
         <AnimatePresence>
@@ -82,10 +97,11 @@ const RenameModal = ({ isOpen, onClose, onRename, currentName, itemType }) => {
                                         if (error) setError('');
                                     }}
                                     placeholder={`Enter new ${label.toLowerCase()} name`}
-                                    className={`astryd-input ${error ? 'astryd-input-error' : ''}`}
+                                    className={`astryd-input ${error || isDuplicate ? 'astryd-input-error' : ''}`}
                                     disabled={isSubmitting}
                                     required
                                 />
+                                {isDuplicate && <span className="astryd-error">{duplicateMessage}</span>}
                                 {error && <span className="astryd-error">{error}</span>}
                             </div>
 
@@ -101,7 +117,7 @@ const RenameModal = ({ isOpen, onClose, onRename, currentName, itemType }) => {
                                 <button
                                     type="submit"
                                     className="astryd-btn-primary"
-                                    disabled={!name.trim() || name.trim() === currentName || isSubmitting}
+                                    disabled={!trimmedName || isUnchanged || isDuplicate || isSubmitting}
                                 >
                                     {isSubmitting ? 'Renaming...' : 'Rename'}
                                 </button>
