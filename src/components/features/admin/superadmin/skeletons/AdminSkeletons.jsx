@@ -18,6 +18,20 @@ export function SaSkeletonBlock({ width = '100%', height = 16, borderRadius = 8,
   )
 }
 
+/** Flat KPI stat-strip skeleton (Usage Reports style) — shared by Usage Reports, Platform Actions, HeyGen Account */
+export function AdminStatStripSkeleton({ count = 4 }) {
+  return (
+    <div className="sa-kpi-grid" aria-hidden="true">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} style={{ borderRadius: 16, padding: 18, background: 'color-mix(in srgb, var(--border-color) 50%, var(--bg-card))', minHeight: 108, pointerEvents: 'none' }}>
+          <SaSkeletonBlock width="55%" height={12} borderRadius={4} style={{ marginBottom: 14 }} />
+          <SaSkeletonBlock width="70%" height={28} borderRadius={6} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 /** 4-Column KPI Stats Grid Skeleton (AstryAi style) */
 export function AdminKpiGridSkeleton({ count = 4 }) {
   const themeClasses = ['sa-kpi-card--blue', 'sa-kpi-card--amber', 'sa-kpi-card--emerald', 'sa-kpi-card--purple']
@@ -342,7 +356,7 @@ export function AdminPlatformActionsSkeleton() {
   )
 }
 
-/** HeyGen Account Skeleton */
+/** HeyGen Account Skeleton — mirrors the live page: header → KPI strip → Account details card → Billing & quota card */
 export function AdminHeygenSkeleton() {
   return (
     <div className="sa-panel" style={{ pointerEvents: 'none' }} aria-hidden="true">
@@ -354,25 +368,50 @@ export function AdminHeygenSkeleton() {
         <SaSkeletonBlock width={90} height={34} borderRadius={8} />
       </div>
 
-      {/* Main Account Card */}
+      {/* KPI strip */}
+      <AdminStatStripSkeleton count={3} />
+
+      {/* Account details card */}
       <div className="sa-card">
         <div className="sa-card-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <SaSkeletonBlock width={34} height={34} borderRadius={9} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <SaSkeletonBlock width={140} height={14} borderRadius={4} />
-              <SaSkeletonBlock width={180} height={11} borderRadius={3} />
-            </div>
+          <SaSkeletonBlock width={140} height={14} borderRadius={4} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <SaSkeletonBlock width={110} height={22} borderRadius={999} />
+            <SaSkeletonBlock width={90} height={12} borderRadius={4} />
           </div>
-          <SaSkeletonBlock width={110} height={22} borderRadius={999} />
         </div>
 
-        <div className="sa-card-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <SaSkeletonBlock width="100%" height={90} borderRadius={12} />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12 }}>
-            <SaSkeletonBlock width="100%" height={70} borderRadius={10} />
-            <SaSkeletonBlock width="100%" height={70} borderRadius={10} />
-            <SaSkeletonBlock width="100%" height={70} borderRadius={10} />
+        <div className="sa-card-body" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {/* Identity row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, paddingBottom: 18, borderBottom: '1px solid var(--border-color)' }}>
+            <SaSkeletonBlock width={52} height={52} borderRadius={14} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <SaSkeletonBlock width={160} height={16} borderRadius={4} />
+              <SaSkeletonBlock width={200} height={12} borderRadius={3} />
+            </div>
+          </div>
+          {/* Info grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} style={{ padding: '10px 14px', borderRadius: 10, background: 'color-mix(in srgb, var(--text-muted) 4%, var(--bg-card))', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <SaSkeletonBlock width="45%" height={9} borderRadius={3} />
+                <SaSkeletonBlock width="70%" height={13} borderRadius={4} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Billing & quota card */}
+      <div className="sa-card">
+        <div className="sa-card-header">
+          <SaSkeletonBlock width={130} height={14} borderRadius={4} />
+        </div>
+        <div className="sa-card-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <SaSkeletonBlock width="100%" height={78} borderRadius={14} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12 }}>
+            <SaSkeletonBlock width="100%" height={72} borderRadius={12} />
+            <SaSkeletonBlock width="100%" height={72} borderRadius={12} />
           </div>
         </div>
       </div>

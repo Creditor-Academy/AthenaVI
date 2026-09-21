@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo, useId } from 'react'
 import {
   BarChart3, Users, Building2, Zap, TrendingUp, TrendingDown,
-  Activity, Filter, RefreshCw, ChevronDown, ChevronUp, DollarSign, Layers,
+  Activity, RefreshCw, RotateCcw, Search, DollarSign, Layers,
 } from 'lucide-react'
 import superadminService from '../../../../services/superadminService'
 import { defaultReportRange, formatAc, isValidUuid } from './superadminUtils'
 import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
 import '../../../../pages/AdminPortal/styles/AdminReports.css'
-import { SaSkeletonBlock } from './skeletons/AdminSkeletons'
+import { SaSkeletonBlock, AdminStatStripSkeleton } from './skeletons/AdminSkeletons'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -201,35 +201,30 @@ function AnimatedBarList({ rows, maxValue, showShare, totalAc, colors }) {
 // ─── Filter bar ───────────────────────────────────────────────────────────────
 
 function FilterBar({ from, to, setFrom, setTo, userId, setUserId,
-  workspaceId, setWorkspaceId, topLimit, setTopLimit, onSubmit, loading }) {
-  const [open, setOpen] = useState(false)
+  workspaceId, setWorkspaceId, topLimit, setTopLimit, onSubmit, onReset, loading }) {
   return (
     <div className="rpt-filter-bar">
       <form onSubmit={onSubmit}>
 
-        {/* ── Header row: label left, buttons right ── */}
+        {/* ── Header row: label left, buttons right — matches .pa-filter-header ── */}
         <div className="rpt-filter-header">
           <div className="rpt-filter-header-text">
             <span className="rpt-filter-heading"><BarChart3 size={14} /> Report Parameters</span>
             <span className="rpt-filter-subtext">Select a date range and run the usage report</span>
           </div>
           <div className="rpt-filter-actions">
+            <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" onClick={onReset}>
+              <RotateCcw size={12} /> Reset
+            </button>
             <button type="submit" className="sa-btn sa-btn--primary rpt-run-btn" disabled={loading}>
               {loading
                 ? <><RefreshCw size={14} className="rpt-spin" /> Running…</>
-                : <><BarChart3 size={14} /> Run Report</>}
-            </button>
-            <button type="button"
-              className={`sa-btn ${open ? 'sa-btn--ghost rpt-filters-btn--active' : 'sa-btn--ghost'} rpt-filters-btn`}
-              onClick={() => setOpen(p => !p)}>
-              <Filter size={13} />
-              {open ? 'Hide filters' : 'Filters'}
-              {open ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                : <><Search size={14} /> Run Report</>}
             </button>
           </div>
         </div>
 
-        {/* ── Date range inputs ── */}
+        {/* ── All filter fields in one row — matches .pa-filter-body ── */}
         <div className="rpt-date-row">
           <div className="rpt-date-group">
             <label htmlFor="rpt-from" className="rpt-field-label">From</label>
@@ -244,32 +239,29 @@ function FilterBar({ from, to, setFrom, setTo, userId, setUserId,
             <input id="rpt-to" className="sa-input rpt-date-input" type="date"
               value={to} onChange={e => setTo(e.target.value)} />
           </div>
-        </div>
 
-        {/* ── Advanced filters (collapsed) ── */}
-        {open && (
-          <div className="rpt-advanced-row">
-            <div className="rpt-adv-field">
-              <label htmlFor="rpt-top" className="rpt-field-label">Top N</label>
-              <input id="rpt-top" className="sa-input" type="number"
-                min="1" max="25" value={topLimit}
-                onChange={e => setTopLimit(Number(e.target.value) || 10)}
-                style={{ width: 80 }} />
-            </div>
-            <div className="rpt-adv-field rpt-adv-field--flex">
-              <label htmlFor="rpt-user" className="rpt-field-label">User ID (UUID)</label>
-              <input id="rpt-user" className="sa-input" type="text"
-                placeholder="Optional — filter to a single user"
-                value={userId} onChange={e => setUserId(e.target.value)} />
-            </div>
-            <div className="rpt-adv-field rpt-adv-field--flex">
-              <label htmlFor="rpt-ws" className="rpt-field-label">Workspace ID (UUID)</label>
-              <input id="rpt-ws" className="sa-input" type="text"
-                placeholder="Optional — filter to a single workspace"
-                value={workspaceId} onChange={e => setWorkspaceId(e.target.value)} />
-            </div>
+          <div className="rpt-filter-divider" aria-hidden="true" />
+
+          <div className="rpt-adv-field">
+            <label htmlFor="rpt-top" className="rpt-field-label">Top N</label>
+            <input id="rpt-top" className="sa-input" type="number"
+              min="1" max="25" value={topLimit}
+              onChange={e => setTopLimit(Number(e.target.value) || 10)}
+              style={{ width: 80 }} />
           </div>
-        )}
+          <div className="rpt-adv-field rpt-adv-field--flex">
+            <label htmlFor="rpt-user" className="rpt-field-label">User ID</label>
+            <input id="rpt-user" className="sa-input" type="text"
+              placeholder="Optional — UUID"
+              value={userId} onChange={e => setUserId(e.target.value)} />
+          </div>
+          <div className="rpt-adv-field rpt-adv-field--flex">
+            <label htmlFor="rpt-ws" className="rpt-field-label">Workspace ID</label>
+            <input id="rpt-ws" className="sa-input" type="text"
+              placeholder="Optional — UUID"
+              value={workspaceId} onChange={e => setWorkspaceId(e.target.value)} />
+          </div>
+        </div>
       </form>
     </div>
   )
@@ -280,14 +272,6 @@ function FilterBar({ from, to, setFrom, setTo, userId, setUserId,
 function ReportsSkeleton() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div className="sa-kpi-grid">
-        {[0,1,2,3].map(i => (
-          <div key={i} style={{ borderRadius: 16, padding: 18, background: 'color-mix(in srgb, var(--border-color) 50%, var(--bg-card))', minHeight: 108 }}>
-            <SaSkeletonBlock width="55%" height={12} borderRadius={4} style={{ marginBottom: 14 }} />
-            <SaSkeletonBlock width="70%" height={28} borderRadius={6} />
-          </div>
-        ))}
-      </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 16 }}>
         <div className="sa-card" style={{ padding: 18, minHeight: 240 }}>
           <SaSkeletonBlock width={140} height={14} borderRadius={4} style={{ marginBottom: 18 }} />
@@ -346,6 +330,12 @@ function SuperadminReportsPanel() {
     }
   }
 
+  const resetFilters = () => {
+    const r = defaultReportRange()
+    setFrom(r.from); setTo(r.to)
+    setUserId(''); setWorkspaceId(''); setTopLimit(10)
+  }
+
   useEffect(() => { runUsageReport() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Derived
@@ -394,12 +384,67 @@ function SuperadminReportsPanel() {
 
       {usageError && <div className="sa-alert sa-alert--error">{usageError}</div>}
 
+      {usageLoading && <AdminStatStripSkeleton count={4} />}
+
+      {/* ── KPI strip (shown once data is loaded) — matches Platform Actions' layout ── */}
+      {report && !usageLoading && (
+        <div className="sa-kpi-grid">
+          <div className="sa-kpi-card sa-kpi-card--blue">
+            <div className="sa-kpi-card-grain" />
+            <div className="sa-kpi-header"><span className="sa-kpi-label">Transactions</span></div>
+            <div className="sa-kpi-body">
+              <span className="sa-kpi-value">{new Intl.NumberFormat().format(report.transactionCount ?? 0)}</span>
+              <span className="sa-kpi-detail">credit events in range</span>
+            </div>
+            <div className="sa-kpi-corner-icon"><Activity size={70} strokeWidth={1.5} /></div>
+          </div>
+
+          <div className="sa-kpi-card sa-kpi-card--emerald">
+            <div className="sa-kpi-card-grain" />
+            <div className="sa-kpi-header">
+              <span className="sa-kpi-label">Credits Used</span>
+              {trend?.growthPct != null && (
+                <span className="sa-kpi-detail" style={{ fontSize: '0.7rem' }}>
+                  {trend.growthPct >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                  {trend.growthPct >= 0 ? '+' : ''}{Math.round(trend.growthPct)}%
+                </span>
+              )}
+            </div>
+            <div className="sa-kpi-body">
+              <span className="sa-kpi-value">{formatAc(report.totalUsageAc ?? 0)}</span>
+              <span className="sa-kpi-detail">{trend ? `avg ${formatAc(Math.round(trend.avgDaily))} / day` : 'across all features'}</span>
+            </div>
+            <div className="sa-kpi-corner-icon"><Zap size={70} strokeWidth={1.5} /></div>
+          </div>
+
+          <div className="sa-kpi-card sa-kpi-card--amber">
+            <div className="sa-kpi-card-grain" />
+            <div className="sa-kpi-header"><span className="sa-kpi-label">Est. HeyGen Cost</span></div>
+            <div className="sa-kpi-body">
+              <span className="sa-kpi-value">${Number(report.estimatedHeygenUsd ?? 0).toFixed(2)}</span>
+              <span className="sa-kpi-detail">PAYG / Enterprise rate</span>
+            </div>
+            <div className="sa-kpi-corner-icon"><DollarSign size={70} strokeWidth={1.5} /></div>
+          </div>
+
+          <div className="sa-kpi-card sa-kpi-card--purple">
+            <div className="sa-kpi-card-grain" />
+            <div className="sa-kpi-header"><span className="sa-kpi-label">Features Used</span></div>
+            <div className="sa-kpi-body">
+              <span className="sa-kpi-value">{report.byFeature?.length ?? '—'}</span>
+              <span className="sa-kpi-detail">distinct categories</span>
+            </div>
+            <div className="sa-kpi-corner-icon"><Layers size={70} strokeWidth={1.5} /></div>
+          </div>
+        </div>
+      )}
+
       {/* ── Filter strip ── */}
       <FilterBar from={from} to={to} setFrom={setFrom} setTo={setTo}
         userId={userId} setUserId={setUserId}
         workspaceId={workspaceId} setWorkspaceId={setWorkspaceId}
         topLimit={topLimit} setTopLimit={setTopLimit}
-        onSubmit={runUsageReport} loading={usageLoading} />
+        onSubmit={runUsageReport} onReset={resetFilters} loading={usageLoading} />
 
       {/* ── Scrollable body ── */}
       <div className="sa-scroll rpt-body-scroll" style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingBottom: 24 }}>
@@ -415,57 +460,6 @@ function SuperadminReportsPanel() {
 
         {report && !usageLoading && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-            {/* ── KPI Cards (management-page style) ── */}
-            <div className="sa-kpi-grid">
-              <div className="sa-kpi-card sa-kpi-card--blue">
-                <div className="sa-kpi-card-grain" />
-                <div className="sa-kpi-header"><span className="sa-kpi-label">Transactions</span></div>
-                <div className="sa-kpi-body">
-                  <span className="sa-kpi-value">{new Intl.NumberFormat().format(report.transactionCount ?? 0)}</span>
-                  <span className="sa-kpi-detail">credit events in range</span>
-                </div>
-                <div className="sa-kpi-corner-icon"><Activity size={70} strokeWidth={1.5} /></div>
-              </div>
-
-              <div className="sa-kpi-card sa-kpi-card--emerald">
-                <div className="sa-kpi-card-grain" />
-                <div className="sa-kpi-header">
-                  <span className="sa-kpi-label">Credits Used</span>
-                  {trend?.growthPct != null && (
-                    <span className="sa-kpi-detail" style={{ fontSize: '0.7rem' }}>
-                      {trend.growthPct >= 0 ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-                      {trend.growthPct >= 0 ? '+' : ''}{Math.round(trend.growthPct)}%
-                    </span>
-                  )}
-                </div>
-                <div className="sa-kpi-body">
-                  <span className="sa-kpi-value">{formatAc(report.totalUsageAc ?? 0)}</span>
-                  <span className="sa-kpi-detail">{trend ? `avg ${formatAc(Math.round(trend.avgDaily))} / day` : 'across all features'}</span>
-                </div>
-                <div className="sa-kpi-corner-icon"><Zap size={70} strokeWidth={1.5} /></div>
-              </div>
-
-              <div className="sa-kpi-card sa-kpi-card--amber">
-                <div className="sa-kpi-card-grain" />
-                <div className="sa-kpi-header"><span className="sa-kpi-label">Est. HeyGen Cost</span></div>
-                <div className="sa-kpi-body">
-                  <span className="sa-kpi-value">${Number(report.estimatedHeygenUsd ?? 0).toFixed(2)}</span>
-                  <span className="sa-kpi-detail">PAYG / Enterprise rate</span>
-                </div>
-                <div className="sa-kpi-corner-icon"><DollarSign size={70} strokeWidth={1.5} /></div>
-              </div>
-
-              <div className="sa-kpi-card sa-kpi-card--purple">
-                <div className="sa-kpi-card-grain" />
-                <div className="sa-kpi-header"><span className="sa-kpi-label">Features Used</span></div>
-                <div className="sa-kpi-body">
-                  <span className="sa-kpi-value">{report.byFeature?.length ?? '—'}</span>
-                  <span className="sa-kpi-detail">distinct categories</span>
-                </div>
-                <div className="sa-kpi-corner-icon"><Layers size={70} strokeWidth={1.5} /></div>
-              </div>
-            </div>
 
             {/* ── Row 2: Area chart + Donut ── */}
             <div style={{ display: 'grid', gridTemplateColumns: '1.65fr 1fr', gap: 16 }}>

@@ -24,8 +24,10 @@ const AdminPortal = ({
 }) => {
   const activeTab = normalizeTab(controlledActiveTab)
 
+  const flowTabs = activeTab === 'overview'
+
   return (
-    <div className={`sa-portal${activeTab === 'overview' ? ' sa-portal--flow' : ''}`}>
+    <div className={`sa-portal${flowTabs ? ' sa-portal--flow' : ''}`}>
       {activeTab === 'overview' && <DashboardOverview />}
       {activeTab === 'users' && <SuperadminUsersPanel />}
       {activeTab === 'workspaces' && <SuperadminWorkspacesPanel />}
