@@ -298,6 +298,7 @@ const LAYOUT_PREVIEW_MODES = {
   comparison_pros_cons_split_v1: 'comparison_pros_cons_split',
   text_two_column_cards_v1: 'text_two_column_cards',
   image_text_split_v1: 'image_text_split',
+  section_with_image_v1: 'section_with_image',
   bullet_list_cards_v1: 'bullet_list_cards',
   bullet_list_grid_v1: 'bullet_list_cards',
   section_divider_numbered_v1: 'section_divider',
