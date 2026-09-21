@@ -14,8 +14,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Save,
+  Clock,
+  Layers,
+  Image,
+  FolderOpen,
 } from 'lucide-react'
 import superadminService, { SuperadminApiError } from '../../../../services/superadminService'
+import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
 import '../../../../pages/AdminPortal/SuperadminGraphicsPortal.css'
 
 const TYPES = [
@@ -444,6 +449,13 @@ export default function SuperadminGraphicsPanel() {
     return counts
   }, [items])
 
+  const totalCount = total || items.length
+  const publishedCount = statusCounts.published || 0
+  const draftCount = statusCounts.draft || 0
+  const archivedCount = statusCounts.archived || 0
+  const iconCount = items.filter(isIconGraphic).length
+  const decorCount = Math.max(0, items.length - iconCount)
+
   const editingRow = editingId ? items.find((i) => i.id === editingId) : null
   const previewSrc = filePreview || editingRow?.previewUrl || editingRow?.fileUrl || ''
   const modalIsIcon = isIconGraphic({
@@ -456,407 +468,447 @@ export default function SuperadminGraphicsPanel() {
   const showGiEmpty = !giLoading && giItems.length === 0
 
   return (
-    <div className="sg-portal">
-      <div className="sg-top">
-        <div className="sa-panel-header" style={{ marginBottom: 16 }}>
-          <div className="sa-panel-header-title-group">
-            <h2 className="sa-panel-title">Graphics Library</h2>
-            <p className="sa-panel-desc">
-              {viewMode === 'library'
-                ? 'Upload and publish SVG decorations for the PPT editor and AI slides. Only published graphics appear in Insert → Graphics.'
-                : 'Browse free GetIllustrations assets by category (illustrations) or pack (icons). Free-tier clean assets only.'}
-            </p>
-          </div>
-          {viewMode === 'library' ? (
-            <button type="button" className="sa-btn sa-btn--primary" onClick={openCreate}>
-              <Plus size={16} strokeWidth={2.5} /> Add Graphic
-            </button>
-          ) : null}
+    <div className="sa-panel">
+      {/* ── Page Header ── */}
+      <div className="sa-panel-header">
+        <div className="sa-panel-header-title-group">
+          <h2 className="sa-panel-title">Graphics Library</h2>
+          <p className="sa-panel-desc">
+            {viewMode === 'library'
+              ? 'Upload, curate, and publish vector illustrations, icons, and decorative assets for presentation slides and AI generation.'
+              : 'Browse and import free curated assets from GetIllustrations into your platform graphics library.'}
+          </p>
         </div>
+        {viewMode === 'library' && (
+          <button type="button" className="sa-btn sa-btn--primary" onClick={openCreate}>
+            <Plus size={15} strokeWidth={2.5} /> Add Graphic
+          </button>
+        )}
+      </div>
 
-        <div className="sg-mode-tabs" role="tablist" aria-label="Graphics source">
-          {VIEW_MODES.map((m) => (
+      {error && <div className="sa-alert sa-alert--error">{error}</div>}
+      {giError && <div className="sa-alert sa-alert--error">{giError}</div>}
+      {giSaveMessage && <div className="sa-alert sa-alert--success">{giSaveMessage}</div>}
+      {viewMode === 'getillustrations' && !giConfigured && (
+        <div className="sa-alert sa-alert--warning">
+          Set <code>GETILLUSTRATIONS_API_KEY</code> on the backend to browse free assets.
+        </div>
+      )}
+
+      {/* ── Main Data Card Container ── */}
+      <div className="sa-table-card">
+        {/* Toolbar with Filter Tabs, Mode Switcher, and Search */}
+        <div className="sa-table-toolbar">
+          <div className="sa-filter-tabs" role="tablist" aria-label="Graphics source & status filter">
             <button
-              key={m.id}
               type="button"
               role="tab"
-              aria-selected={viewMode === m.id}
-              className={`sg-mode-tab ${viewMode === m.id ? 'is-active' : ''}`}
-              onClick={() => setViewMode(m.id)}
+              aria-selected={viewMode === 'library' && filters.status === ''}
+              className={`sa-filter-tab ${viewMode === 'library' && filters.status === '' ? 'active' : ''}`}
+              onClick={() => {
+                setViewMode('library')
+                setFilters((prev) => ({ ...prev, status: '' }))
+              }}
             >
-              {m.label}
+              All Assets
+              <span className="sa-filter-count">{totalCount}</span>
             </button>
-          ))}
-        </div>
-
-        {viewMode === 'library' ? (
-          <div className="sg-controls">
-            <label className="sg-search">
-              <Search size={16} aria-hidden />
-              <input
-                type="search"
-                placeholder="Search name, tags, description…"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-              />
-            </label>
-
-            <div className="sg-status-pills" role="tablist" aria-label="Status filter">
-              {STATUS_PILLS.map((s) => (
-                <button
-                  key={s.id || 'all'}
-                  type="button"
-                  role="tab"
-                  aria-selected={filters.status === s.id}
-                  className={`sg-pill ${filters.status === s.id ? 'is-active' : ''}`}
-                  onClick={() => setFilters((prev) => ({ ...prev, status: s.id }))}
-                >
-                  {s.label}
-                  {s.id && statusCounts[s.id] > 0 ? ` · ${statusCounts[s.id]}` : ''}
-                </button>
-              ))}
-            </div>
-
-            <select
-              className="sg-select"
-              value={filters.category}
-              onChange={(e) => setFilters((prev) => ({ ...prev, category: e.target.value }))}
-              aria-label="Category"
+            <button
+              type="button"
+              role="tab"
+              aria-selected={viewMode === 'library' && filters.status === 'published'}
+              className={`sa-filter-tab ${viewMode === 'library' && filters.status === 'published' ? 'active' : ''}`}
+              onClick={() => {
+                setViewMode('library')
+                setFilters((prev) => ({ ...prev, status: 'published' }))
+              }}
             >
-              <option value="">All categories</option>
-              {CATEGORY_OPTIONS.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-
-            <select
-              className="sg-select"
-              value={filters.type}
-              onChange={(e) => setFilters((prev) => ({ ...prev, type: e.target.value }))}
-              aria-label="Type"
+              Published
+              <span className="sa-filter-count">{publishedCount}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={viewMode === 'library' && filters.status === 'draft'}
+              className={`sa-filter-tab ${viewMode === 'library' && filters.status === 'draft' ? 'active' : ''}`}
+              onClick={() => {
+                setViewMode('library')
+                setFilters((prev) => ({ ...prev, status: 'draft' }))
+              }}
             >
-              <option value="">All types</option>
-              {TYPES.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-
-            <select
-              className="sg-select"
-              value={filters.colorMode}
-              onChange={(e) => setFilters((prev) => ({ ...prev, colorMode: e.target.value }))}
-              aria-label="Color mode"
+              Drafts
+              <span className="sa-filter-count">{draftCount}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={viewMode === 'library' && filters.status === 'archived'}
+              className={`sa-filter-tab ${viewMode === 'library' && filters.status === 'archived' ? 'active' : ''}`}
+              onClick={() => {
+                setViewMode('library')
+                setFilters((prev) => ({ ...prev, status: 'archived' }))
+              }}
             >
-              <option value="">Any color</option>
-              <option value="recolorable">Recolorable</option>
-              <option value="fixed">Fixed colors</option>
-            </select>
-
-            <span className="sg-count">{total} graphic{total === 1 ? '' : 's'}</span>
+              Archived
+              <span className="sa-filter-count">{archivedCount}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={viewMode === 'getillustrations'}
+              className={`sa-filter-tab ${viewMode === 'getillustrations' ? 'active' : ''}`}
+              onClick={() => setViewMode('getillustrations')}
+            >
+              GetIllustrations Free
+              {giTotal > 0 && <span className="sa-filter-count">{giTotal}</span>}
+            </button>
           </div>
-        ) : (
-          <div className="sg-controls sg-controls--gi">
-            <div className="sg-status-pills" role="tablist" aria-label="Asset kind">
-              {GI_KINDS.map((k) => (
-                <button
-                  key={k.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={giKind === k.id}
-                  className={`sg-pill ${giKind === k.id ? 'is-active' : ''}`}
-                  onClick={() => {
-                    setGiKind(k.id)
-                    setGiPage(1)
-                    setGiCategoryId('')
-                    setGiPackId('')
-                  }}
-                >
-                  {k.label}
-                </button>
-              ))}
+
+          {viewMode === 'library' ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: '1 1 auto', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <div className="sa-search-field" style={{ width: 'min(220px, 100%)' }}>
+                <Search className="sa-search-field-icon" size={14} aria-hidden />
+                <input
+                  className="sa-input"
+                  type="search"
+                  placeholder="Search name, tags…"
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  aria-label="Search graphics"
+                />
+              </div>
+
+              <select
+                className="sa-select"
+                value={filters.category}
+                onChange={(e) => setFilters((prev) => ({ ...prev, category: e.target.value }))}
+                aria-label="Category filter"
+              >
+                <option value="">All Categories</option>
+                {CATEGORY_OPTIONS.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                className="sa-select"
+                value={filters.type}
+                onChange={(e) => setFilters((prev) => ({ ...prev, type: e.target.value }))}
+                aria-label="Type filter"
+              >
+                <option value="">All Types</option>
+                {TYPES.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                className="sa-select"
+                value={filters.colorMode}
+                onChange={(e) => setFilters((prev) => ({ ...prev, colorMode: e.target.value }))}
+                aria-label="Color mode filter"
+              >
+                <option value="">Any Color</option>
+                <option value="recolorable">Recolorable</option>
+                <option value="fixed">Fixed colors</option>
+              </select>
             </div>
-
-            <label className="sg-search">
-              <Search size={16} aria-hidden />
-              <input
-                type="search"
-                placeholder={
-                  giKind === 'icon' ? 'Filter icons in pack…' : 'Search free illustrations…'
-                }
-                value={giQ}
-                onChange={(e) => {
-                  setGiQ(e.target.value)
-                  setGiPage(1)
-                }}
-              />
-            </label>
-
-            <span className="sg-count">
-              {giTotal} free {giKind === 'icon' ? 'icon' : 'illustration'}
-              {giTotal === 1 ? '' : 's'}
-            </span>
-            {giRateLimit?.remaining != null ? (
-              <span className="sg-count sg-count--muted" title="Monthly API remaining">
-                API {giRateLimit.remaining}/{giRateLimit.limit ?? '—'}
-              </span>
-            ) : null}
-          </div>
-        )}
-
-        {viewMode === 'library' && error ? <p className="sg-alert">{error}</p> : null}
-        {viewMode === 'getillustrations' && giError ? <p className="sg-alert">{giError}</p> : null}
-        {viewMode === 'getillustrations' && giSaveMessage ? (
-          <p className="sg-alert sg-alert--ok">{giSaveMessage}</p>
-        ) : null}
-        {viewMode === 'getillustrations' && !giConfigured ? (
-          <p className="sg-alert">
-            Set <code>GETILLUSTRATIONS_API_KEY</code> on the backend to browse free assets.
-          </p>
-        ) : null}
-      </div>
-
-      <div className="sg-body">
-        {viewMode === 'getillustrations' ? (
-          <div className="sg-gi-layout">
-            <aside className="sg-gi-cats" aria-label="Categories">
-              <p className="sg-gi-cats-title">
-                {giKind === 'icon' ? 'Free icon packs' : 'Categories'}
-              </p>
-              {giKind === 'illustration' ? (
-                <button
-                  type="button"
-                  className={`sg-gi-cat ${!giCategoryId ? 'is-active' : ''}`}
-                  onClick={() => {
-                    setGiPage(1)
-                    setGiCategoryId('')
-                  }}
-                >
-                  All free
-                </button>
-              ) : null}
-              {giCategories.map((c) => (
-                <div key={c.id} className={`sg-gi-cat-row ${giActiveCategoryId === c.id ? 'is-active' : ''}`}>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: '1 1 auto', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <div className="sa-filter-tabs" role="tablist" aria-label="Asset kind">
+                {GI_KINDS.map((k) => (
                   <button
+                    key={k.id}
                     type="button"
-                    className={`sg-gi-cat ${giActiveCategoryId === c.id ? 'is-active' : ''}`}
+                    role="tab"
+                    aria-selected={giKind === k.id}
+                    className={`sa-filter-tab ${giKind === k.id ? 'active' : ''}`}
                     onClick={() => {
+                      setGiKind(k.id)
                       setGiPage(1)
-                      if (giKind === 'illustration') setGiCategoryId(c.id)
-                      else setGiPackId(c.id)
+                      setGiCategoryId('')
+                      setGiPackId('')
                     }}
                   >
-                    <span>{c.name}</span>
-                    {c.count != null ? <em>{c.count}</em> : null}
+                    {k.label}
                   </button>
-                  {giKind === 'icon' ? (
-                    <button
-                      type="button"
-                      className="sg-btn sg-btn--sm sg-gi-cat-save"
-                      title={`Save all icons from ${c.name} into the graphics library`}
-                      disabled={Boolean(giSavingPackId) || !giConfigured}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        saveGiIconPack(c.id, c.name)
-                      }}
-                    >
-                      <Save size={13} />
-                      {giSavingPackId === c.id ? 'Saving…' : 'Save'}
-                    </button>
-                  ) : null}
-                </div>
-              ))}
-            </aside>
+                ))}
+              </div>
 
-            <div className="sg-gi-main">
-              {giLoading ? (
-                <p className="sg-loading">Loading free GetIllustrations catalog…</p>
-              ) : showGiEmpty ? (
-                <div className="sg-hero-empty">
-                  <div className="sg-hero-art" aria-hidden>
-                    <ExternalLink size={34} strokeWidth={1.75} />
-                  </div>
-                  <h3>No free assets in this filter</h3>
-                  <p>Try another category or pack, or clear the search.</p>
-                </div>
-              ) : (
-                <>
-                  <div className="sg-grid">
-                    {giItems.map((row) => {
-                      const iconish = row.kind === 'icon'
-                      return (
-                        <article
-                          key={`${row.kind}-${row.packId}-${row.id}`}
-                          className={`sg-card ${iconish ? 'sg-card--icon' : ''}`}
-                        >
-                          <div className={`sg-card-preview ${iconish ? 'sg-card-preview--icon' : ''}`}>
-                            <span className="sg-card-badge sg-card-badge--published">free</span>
-                            <GraphicPreview
-                              src={row.thumbnailUrl || row.imageUrl}
-                              variant={iconish ? 'icon' : 'default'}
-                            />
-                          </div>
-                          <div className="sg-card-body">
-                            <strong title={row.name}>{row.name}</strong>
-                            <span className="sg-card-meta">
-                              {row.categoryName || row.packName || row.kind}
-                              {row.svgAvailable ? ' · SVG' : ''}
-                            </span>
-                          </div>
-                          <div className="sg-card-actions">
-                            {row.imageUrl ? (
-                              <a
-                                className="sg-btn sg-btn--sm"
-                                href={row.imageUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                              >
-                                <ExternalLink size={13} /> Open
-                              </a>
-                            ) : null}
-                          </div>
-                        </article>
-                      )
-                    })}
-                  </div>
-                  {giTotalPages > 1 ? (
-                    <div className="sg-gi-pager">
-                      <button
-                        type="button"
-                        className="sg-btn sg-btn--sm"
-                        disabled={giPage <= 1 || giLoading}
-                        onClick={() => setGiPage((p) => Math.max(1, p - 1))}
-                      >
-                        <ChevronLeft size={14} /> Prev
-                      </button>
-                      <span>
-                        Page {giPage} / {giTotalPages}
-                      </span>
-                      <button
-                        type="button"
-                        className="sg-btn sg-btn--sm"
-                        disabled={giPage >= giTotalPages || giLoading}
-                        onClick={() => setGiPage((p) => p + 1)}
-                      >
-                        Next <ChevronRight size={14} />
-                      </button>
-                    </div>
-                  ) : null}
-                </>
+              <div className="sa-search-field" style={{ width: 'min(220px, 100%)' }}>
+                <Search className="sa-search-field-icon" size={14} aria-hidden />
+                <input
+                  className="sa-input"
+                  type="search"
+                  placeholder={giKind === 'icon' ? 'Filter icons in pack…' : 'Search illustrations…'}
+                  value={giQ}
+                  onChange={(e) => {
+                    setGiQ(e.target.value)
+                    setGiPage(1)
+                  }}
+                  aria-label="Search free assets"
+                />
+              </div>
+
+              {giRateLimit?.remaining != null && (
+                <span className="sa-filter-count" title="Monthly API remaining" style={{ fontSize: '0.75rem', padding: '4px 8px' }}>
+                  API: {giRateLimit.remaining} / {giRateLimit.limit ?? '—'}
+                </span>
               )}
             </div>
-          </div>
-        ) : loading ? (
-          <div className="sg-grid" style={{ padding: '8px 0' }}>
-            {Array.from({ length: 12 }).map((_, i) => (
-              <article key={i} className="sg-card" style={{ pointerEvents: 'none' }}>
-                <div className="sg-card-preview">
-                  <div className="ps-block" style={{ width: '100%', height: 140, borderRadius: 10 }} />
-                </div>
-                <div className="sg-card-body" style={{ gap: 6 }}>
-                  <div className="ps-block" style={{ width: '70%', height: 14, borderRadius: 4 }} />
-                  <div className="ps-block" style={{ width: '45%', height: 10, borderRadius: 3 }} />
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : showEmpty ? (
-          <div
-            className={`sg-hero-empty ${pageDragOver ? 'is-over' : ''}`}
-            onDragOver={(e) => {
-              e.preventDefault()
-              setPageDragOver(true)
-            }}
-            onDragLeave={() => setPageDragOver(false)}
-            onDrop={(e) => {
-              e.preventDefault()
-              setPageDragOver(false)
-              acceptFile(e.dataTransfer.files?.[0])
-            }}
-          >
-            <div className="sg-hero-art" aria-hidden>
-              <Upload size={34} strokeWidth={1.75} />
-            </div>
-            <h3>No graphics in the library yet</h3>
-            <p>
-              Drop an SVG here or open the upload window to add decorations for covers, content
-              slides, and CTAs.
-            </p>
-            <div className="sg-hero-actions">
-              <button type="button" className="sg-btn sg-btn--primary" onClick={openCreate}>
-                <Plus size={16} /> Add Graphic
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="sg-grid">
-            {items.map((row) => {
-              const iconish = isIconGraphic(row)
-              return (
-                <article key={row.id} className={`sg-card ${iconish ? 'sg-card--icon' : ''}`}>
-                  <div className={`sg-card-preview ${iconish ? 'sg-card-preview--icon' : ''}`}>
-                    <span className={`sg-card-badge sg-card-badge--${row.status}`}>{row.status}</span>
-                    <GraphicPreview src={row.previewUrl || row.fileUrl} variant={iconish ? 'icon' : 'default'} />
-                  </div>
-                  <div className="sg-card-body">
-                    <strong title={row.name}>{row.name}</strong>
-                    <span className="sg-card-meta">
-                      {row.category} · {row.colorMode}
-                    </span>
-                  </div>
-                  <div className="sg-card-actions">
-                    <button type="button" className="sg-btn sg-btn--sm" onClick={() => openEdit(row)}>
-                      <Pencil size={13} /> Edit
-                    </button>
-                    {row.status !== 'published' ? (
-                      <button
-                        type="button"
-                        className="sg-btn sg-btn--sm sg-btn--primary"
-                        disabled={busyId === row.id}
-                        onClick={() => runAction(row.id, () => superadminService.publishGraphic(row.id))}
-                      >
-                        <CheckCircle2 size={13} /> Publish
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="sg-btn sg-btn--sm"
-                        disabled={busyId === row.id}
-                        onClick={() => runAction(row.id, () => superadminService.unpublishGraphic(row.id))}
-                      >
-                        Unpublish
-                      </button>
-                    )}
+          )}
+        </div>
+
+        {/* Content Body (Scrollable card gallery or GetIllustrations browser) */}
+        <div className="sa-table-scroll sa-scroll" style={{ padding: '18px 20px 24px', flex: 1, minHeight: 0 }}>
+          {viewMode === 'getillustrations' ? (
+            <div className="sg-gi-layout">
+              <aside className="sg-gi-cats" aria-label="Categories">
+                <p className="sg-gi-cats-title">
+                  {giKind === 'icon' ? 'Free Icon Packs' : 'Categories'}
+                </p>
+                {giKind === 'illustration' ? (
+                  <button
+                    type="button"
+                    className={`sg-gi-cat ${!giCategoryId ? 'is-active' : ''}`}
+                    onClick={() => {
+                      setGiPage(1)
+                      setGiCategoryId('')
+                    }}
+                  >
+                    All free
+                  </button>
+                ) : null}
+                {giCategories.map((c) => (
+                  <div key={c.id} className={`sg-gi-cat-row ${giActiveCategoryId === c.id ? 'is-active' : ''}`}>
                     <button
                       type="button"
-                      className="sg-btn sg-btn--sm"
-                      disabled={busyId === row.id}
-                      onClick={() => runAction(row.id, () => superadminService.archiveGraphic(row.id))}
-                    >
-                      <Archive size={13} />
-                    </button>
-                    <button
-                      type="button"
-                      className="sg-btn sg-btn--sm sg-btn--danger"
-                      disabled={busyId === row.id}
+                      className={`sg-gi-cat ${giActiveCategoryId === c.id ? 'is-active' : ''}`}
                       onClick={() => {
-                        if (!window.confirm(`Delete “${row.name}”?`)) return
-                        runAction(row.id, () => superadminService.deleteGraphic(row.id))
+                        setGiPage(1)
+                        if (giKind === 'illustration') setGiCategoryId(c.id)
+                        else setGiPackId(c.id)
                       }}
                     >
-                      <Trash2 size={13} />
+                      <span>{c.name}</span>
+                      {c.count != null ? <em>{c.count}</em> : null}
                     </button>
+                    {giKind === 'icon' ? (
+                      <button
+                        type="button"
+                        className="sa-btn sa-btn--sm sg-gi-cat-save"
+                        title={`Save all icons from ${c.name} into the graphics library`}
+                        disabled={Boolean(giSavingPackId) || !giConfigured}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          saveGiIconPack(c.id, c.name)
+                        }}
+                      >
+                        <Save size={12} />
+                        {giSavingPackId === c.id ? 'Saving…' : 'Save'}
+                      </button>
+                    ) : null}
+                  </div>
+                ))}
+              </aside>
+
+              <div className="sg-gi-main">
+                {giLoading ? (
+                  <div className="sa-loading" style={{ minHeight: 300 }}>
+                    <div className="sa-spinner" />
+                    <span>Loading GetIllustrations free assets…</span>
+                  </div>
+                ) : showGiEmpty ? (
+                  <div className="sg-hero-empty">
+                    <div className="sg-hero-art" aria-hidden>
+                      <ExternalLink size={30} strokeWidth={1.75} />
+                    </div>
+                    <h3>No free assets in this filter</h3>
+                    <p>Try selecting another category or pack, or refine the search query.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="sg-grid">
+                      {giItems.map((row) => {
+                        const iconish = row.kind === 'icon'
+                        return (
+                          <article
+                            key={`${row.kind}-${row.packId}-${row.id}`}
+                            className={`sg-card ${iconish ? 'sg-card--icon' : ''}`}
+                          >
+                            <div className={`sg-card-preview ${iconish ? 'sg-card-preview--icon' : ''}`}>
+                              <span className="sg-card-badge sg-card-badge--published">free</span>
+                              <GraphicPreview
+                                src={row.thumbnailUrl || row.imageUrl}
+                                variant={iconish ? 'icon' : 'default'}
+                              />
+                            </div>
+                            <div className="sg-card-body">
+                              <strong title={row.name}>{row.name}</strong>
+                              <span className="sg-card-meta">
+                                {row.categoryName || row.packName || row.kind}
+                                {row.svgAvailable ? ' · SVG' : ''}
+                              </span>
+                            </div>
+                            <div className="sg-card-actions">
+                              {row.imageUrl ? (
+                                <a
+                                  className="sa-btn sa-btn--sm sa-btn--ghost"
+                                  href={row.imageUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  <ExternalLink size={12} /> Open
+                                </a>
+                              ) : null}
+                            </div>
+                          </article>
+                        )
+                      })}
+                    </div>
+                    {giTotalPages > 1 ? (
+                      <div className="sg-gi-pager">
+                        <button
+                          type="button"
+                          className="sa-btn sa-btn--sm sa-btn--ghost"
+                          disabled={giPage <= 1 || giLoading}
+                          onClick={() => setGiPage((p) => Math.max(1, p - 1))}
+                        >
+                          <ChevronLeft size={14} /> Previous
+                        </button>
+                        <span>
+                          Page <strong>{giPage}</strong> of <strong>{giTotalPages}</strong>
+                        </span>
+                        <button
+                          type="button"
+                          className="sa-btn sa-btn--sm sa-btn--ghost"
+                          disabled={giPage >= giTotalPages || giLoading}
+                          onClick={() => setGiPage((p) => p + 1)}
+                        >
+                          Next <ChevronRight size={14} />
+                        </button>
+                      </div>
+                    ) : null}
+                  </>
+                )}
+              </div>
+            </div>
+          ) : loading ? (
+            <div className="sg-grid" style={{ padding: '8px 0' }}>
+              {Array.from({ length: 12 }).map((_, i) => (
+                <article key={i} className="sg-card" style={{ pointerEvents: 'none' }}>
+                  <div className="sg-card-preview">
+                    <div className="ps-block" style={{ width: '100%', height: 120, borderRadius: 10 }} />
+                  </div>
+                  <div className="sg-card-body" style={{ gap: 6 }}>
+                    <div className="ps-block" style={{ width: '70%', height: 14, borderRadius: 4 }} />
+                    <div className="ps-block" style={{ width: '45%', height: 10, borderRadius: 3 }} />
                   </div>
                 </article>
-              )
-            })}
-          </div>
-        )}
+              ))}
+            </div>
+          ) : showEmpty ? (
+            <div
+              className={`sg-hero-empty ${pageDragOver ? 'is-over' : ''}`}
+              onDragOver={(e) => {
+                e.preventDefault()
+                setPageDragOver(true)
+              }}
+              onDragLeave={() => setPageDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault()
+                setPageDragOver(false)
+                acceptFile(e.dataTransfer.files?.[0])
+              }}
+            >
+              <div className="sg-hero-art" aria-hidden>
+                <Upload size={32} strokeWidth={1.75} />
+              </div>
+              <h3>No graphics in the library yet</h3>
+              <p>
+                Drop an SVG here or click Add Graphic to upload decorations for slide covers, content
+                layouts, and CTAs.
+              </p>
+              <div className="sg-hero-actions">
+                <button type="button" className="sa-btn sa-btn--primary" onClick={openCreate}>
+                  <Plus size={15} /> Add Graphic
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="sg-grid">
+              {items.map((row) => {
+                const iconish = isIconGraphic(row)
+                return (
+                  <article key={row.id} className={`sg-card ${iconish ? 'sg-card--icon' : ''}`}>
+                    <div className={`sg-card-preview ${iconish ? 'sg-card-preview--icon' : ''}`}>
+                      <span className={`sg-card-badge sg-card-badge--${row.status}`}>{row.status}</span>
+                      <GraphicPreview src={row.previewUrl || row.fileUrl} variant={iconish ? 'icon' : 'default'} />
+                    </div>
+                    <div className="sg-card-body">
+                      <strong title={row.name}>{row.name}</strong>
+                      <span className="sg-card-meta">
+                        {row.category} · {row.colorMode}
+                      </span>
+                    </div>
+                    <div className="sg-card-actions">
+                      <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost" onClick={() => openEdit(row)}>
+                        <Pencil size={12} /> Edit
+                      </button>
+                      {row.status !== 'published' ? (
+                        <button
+                          type="button"
+                          className="sa-btn sa-btn--sm sa-btn--primary"
+                          disabled={busyId === row.id}
+                          onClick={() => runAction(row.id, () => superadminService.publishGraphic(row.id))}
+                        >
+                          <CheckCircle2 size={12} /> Publish
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="sa-btn sa-btn--sm sa-btn--ghost"
+                          disabled={busyId === row.id}
+                          onClick={() => runAction(row.id, () => superadminService.unpublishGraphic(row.id))}
+                        >
+                          Unpublish
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="sa-btn sa-btn--sm sa-btn--ghost"
+                        disabled={busyId === row.id}
+                        onClick={() => runAction(row.id, () => superadminService.archiveGraphic(row.id))}
+                        title="Archive graphic"
+                      >
+                        <Archive size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        className="sa-btn sa-btn--sm sa-btn--danger"
+                        disabled={busyId === row.id}
+                        onClick={() => {
+                          if (!window.confirm(`Delete “${row.name}”?`)) return
+                          runAction(row.id, () => superadminService.deleteGraphic(row.id))
+                        }}
+                        title="Delete graphic"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
+      {/* ── Add / Edit Graphic Modal ── */}
       {modalOpen && (
         <div className="sg-modal-backdrop" onClick={closeModal} role="presentation">
           <div
@@ -891,14 +943,14 @@ export default function SuperadminGraphicsPanel() {
                         <div className="sg-upload-preview-actions">
                           <button
                             type="button"
-                            className="sg-btn sg-btn--sm"
+                            className="sa-btn sa-btn--sm"
                             onClick={() => modalFileRef.current?.click()}
                           >
                             Replace SVG
                           </button>
                           <button
                             type="button"
-                            className="sg-btn sg-btn--sm sg-btn--ghost"
+                            className="sa-btn sa-btn--sm sa-btn--ghost"
                             onClick={() => {
                               setFile(null)
                               if (filePreview) URL.revokeObjectURL(filePreview)
@@ -1129,15 +1181,15 @@ export default function SuperadminGraphicsPanel() {
             </div>
 
             <footer className="sg-modal-footer">
-              <button type="button" className="sg-btn sg-btn--ghost" onClick={closeModal} disabled={saving}>
+              <button type="button" className="sa-btn sa-btn--ghost" onClick={closeModal} disabled={saving}>
                 Cancel
               </button>
-              <button type="button" className="sg-btn" onClick={() => save()} disabled={saving}>
+              <button type="button" className="sa-btn" onClick={() => save()} disabled={saving}>
                 Save as Draft
               </button>
               <button
                 type="button"
-                className="sg-btn sg-btn--primary"
+                className="sa-btn sa-btn--primary"
                 onClick={() => save({ publishAfter: true })}
                 disabled={saving}
               >
@@ -1150,3 +1202,4 @@ export default function SuperadminGraphicsPanel() {
     </div>
   )
 }
+

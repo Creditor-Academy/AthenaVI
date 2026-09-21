@@ -655,7 +655,7 @@ function Dashboard({ onCreate, initialSection }) {
 
         <div className="dashboard-page-card">
           <main
-            className={`dashboard-main-content content ${!noPaddingSections.includes(section) ? 'with-padding' : ''} ${section === 'home' ? 'content--home' : ''} ${workspaceConsistentSections.includes(section) ? 'content--workspace-consistent' : ''} ${isAdminPortal ? 'content--superadmin' : ''} ${isAdminPortal && adminTab === 'graphics' ? 'content--graphics-library' : ''}`}
+            className={`dashboard-main-content content ${!noPaddingSections.includes(section) ? 'with-padding' : ''} ${section === 'home' ? 'content--home' : ''} ${workspaceConsistentSections.includes(section) ? 'content--workspace-consistent' : ''} ${isAdminPortal ? 'content--superadmin' : ''}`}
           >
           {section === 'home' && (
             <Home
