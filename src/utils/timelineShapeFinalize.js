@@ -122,6 +122,7 @@ import { isDevicePhoneTripleLayout, layoutDevicePhoneTriple } from './devicePhon
 import { isDeviceMultiClusterLayout, layoutDeviceMultiCluster } from './deviceMultiClusterLayout'
 import { isSectionDividerNumberedCircleLayout, layoutSectionDividerNumberedCircle } from './sectionDividerNumberedCircleLayout'
 import { isSectionDividerCenteredLayout, layoutSectionDividerCentered } from './sectionDividerCenteredLayout'
+import { isSectionWithImageLayout, layoutSectionWithImage } from './sectionWithImageLayout'
 import { isSectionDividerBandLayout, layoutSectionDividerBand } from './sectionDividerBandLayout'
 import { isBulletListCardsLayout, layoutBulletListCards } from './bulletListCardsLayout'
 import { isComparisonTableLayout, layoutComparisonTable } from './comparisonTableLayout'
@@ -5435,6 +5436,9 @@ export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = 
   }
   if (isSectionDividerCenteredLayout(layoutId)) {
     return layoutSectionDividerCentered(elements, schema, palette, canvas)
+  }
+  if (isSectionWithImageLayout(layoutId)) {
+    return layoutSectionWithImage(elements, schema, palette, canvas)
   }
   if (isSectionDividerBandLayout(layoutId)) {
     return layoutSectionDividerBand(elements, schema, palette, canvas)

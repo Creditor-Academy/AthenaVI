@@ -90,6 +90,10 @@ import {
   isTitleWithLogoLayout,
   titleWithLogoPreviewSvg,
 } from '../../utils/titleCentered.js'
+import {
+  isSectionWithImageLayout,
+  sectionWithImagePreviewSvg,
+} from '../../utils/sectionWithImageLayout.js'
 
 const LAYOUT_POLISHED_THEME = {
   bg: 'var(--preview-bg, var(--bg-card, #ffffff))',
@@ -2792,6 +2796,26 @@ export default function LayoutPolishedPreview({
 
   if (isTitleHeroRightFadeLayout(previewHints.layout_id, schema) || previewHints.layout_id === 'title_hero_right_fade_v1' || previewMode === 'title_hero_right_fade') {
     const svg = titleHeroRightFadePreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (
+    isSectionWithImageLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'section_with_image_v1' ||
+    previewMode === 'section_with_image'
+  ) {
+    const svg = sectionWithImagePreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
     return (
       <div className={className} style={{
         position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',

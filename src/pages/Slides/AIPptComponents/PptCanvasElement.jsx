@@ -29,7 +29,7 @@ import {
   textPaintStyle,
 } from '../../../utils/pptTextContent'
 import DeviceFrameVisual, { resolveDeviceFrameColor } from '../../../components/ppt/DeviceFrameVisual'
-import EmptyImagePlaceholder from '../../../components/ppt/EmptyImagePlaceholder'
+import EmptyImagePlaceholder, { DeviceScreenPlaceholder } from '../../../components/ppt/EmptyImagePlaceholder'
 import ClipShapeSvg from '../../../components/ppt/ClipShapeSvg'
 import GraphicCanvasVisual from '../../../components/ppt/GraphicCanvasVisual'
 import { parsePolygonClipPath } from '../../../utils/shapeClipSvg'
@@ -573,6 +573,29 @@ export default function PptCanvasElement({
         const clipPath = c.clipPath || buildImageClipPath(c.imageMask)
         const edgeFadeMask = buildImageEdgeFadeMask(c.edgeFade)
         const round = circular || radius === 999 || radius === '50%'
+        const useClean = c.placeholderKind === 'clean' || c.cleanPlaceholder || c.placeholderType === 'neutral'
+        if (useClean) {
+          return (
+            <DeviceScreenPlaceholder
+              borderRadius={clipPath || edgeFadeMask ? 0 : (round ? 999 : radius)}
+              style={{
+                ...fillStyle,
+                ...(clipPath ? { clipPath, WebkitClipPath: clipPath } : {}),
+                ...(edgeFadeMask
+                  ? {
+                      WebkitMaskImage: edgeFadeMask,
+                      maskImage: edgeFadeMask,
+                      WebkitMaskSize: '100% 100%',
+                      maskSize: '100% 100%',
+                      WebkitMaskRepeat: 'no-repeat',
+                      maskRepeat: 'no-repeat',
+                    }
+                  : {}),
+                ...(round && !clipPath ? { borderRadius: 999, overflow: 'hidden' } : {}),
+              }}
+            />
+          )
+        }
         return (
           <EmptyImagePlaceholder
             className="ppt-image-skeleton ppt-image-skeleton--empty"
