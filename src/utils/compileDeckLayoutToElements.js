@@ -47,6 +47,7 @@ import { isTimelineMilestonesImageRightLayout } from './timelineMilestonesImageR
 import { isSectionDividerNumberedCircleLayout } from './sectionDividerNumberedCircleLayout.js'
 import { isSectionDividerCenteredLayout } from './sectionDividerCenteredLayout.js'
 import { isSectionWithImageLayout } from './sectionWithImageLayout.js'
+import { isParaLandscapeImageBottomLayout } from './paraLandscapeImageBottom.js'
 import { isCatalogPlaceholderText } from './catalogPlaceholder.js'
 import { normalizeChartContent } from './chartContentNormalize.js'
 import {
@@ -1177,7 +1178,8 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
       (isTimelineRoadmapLayout(schema?.layout_id) && /^milestone_\d+_label$/i.test(String(el.slotId || ''))) ||
       (isSectionDividerNumberedCircleLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'SECTION_NUMBER') ||
       (isSectionDividerCenteredLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'SECTION_NUMBER') ||
-      (isSectionWithImageLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW')
+      (isSectionWithImageLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
+      (isParaLandscapeImageBottomLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW')
     ) return el
     const colorRole = String(el.content?.colorRole || '').toLowerCase()
     const rawColor = el.content?.color

@@ -94,6 +94,10 @@ import {
   isSectionWithImageLayout,
   sectionWithImagePreviewSvg,
 } from '../../utils/sectionWithImageLayout.js'
+import {
+  isParaLandscapeImageBottomLayout,
+  paraLandscapeImageBottomPreviewSvg,
+} from '../../utils/paraLandscapeImageBottom.js'
 
 const LAYOUT_POLISHED_THEME = {
   bg: 'var(--preview-bg, var(--bg-card, #ffffff))',
@@ -2816,6 +2820,26 @@ export default function LayoutPolishedPreview({
     previewMode === 'section_with_image'
   ) {
     const svg = sectionWithImagePreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (
+    isParaLandscapeImageBottomLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'para_landscape_image_bottom' ||
+    previewMode === 'para_landscape_image_bottom'
+  ) {
+    const svg = paraLandscapeImageBottomPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
     return (
       <div className={className} style={{
         position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',

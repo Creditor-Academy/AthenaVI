@@ -123,6 +123,7 @@ import { isDeviceMultiClusterLayout, layoutDeviceMultiCluster } from './deviceMu
 import { isSectionDividerNumberedCircleLayout, layoutSectionDividerNumberedCircle } from './sectionDividerNumberedCircleLayout'
 import { isSectionDividerCenteredLayout, layoutSectionDividerCentered } from './sectionDividerCenteredLayout'
 import { isSectionWithImageLayout, layoutSectionWithImage } from './sectionWithImageLayout'
+import { isParaLandscapeImageBottomLayout, layoutParaLandscapeImageBottom } from './paraLandscapeImageBottom'
 import { isSectionDividerBandLayout, layoutSectionDividerBand } from './sectionDividerBandLayout'
 import { isBulletListCardsLayout, layoutBulletListCards } from './bulletListCardsLayout'
 import { isComparisonTableLayout, layoutComparisonTable } from './comparisonTableLayout'
@@ -5439,6 +5440,9 @@ export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = 
   }
   if (isSectionWithImageLayout(layoutId)) {
     return layoutSectionWithImage(elements, schema, palette, canvas)
+  }
+  if (isParaLandscapeImageBottomLayout(layoutId)) {
+    return layoutParaLandscapeImageBottom(elements, schema, palette, canvas)
   }
   if (isSectionDividerBandLayout(layoutId)) {
     return layoutSectionDividerBand(elements, schema, palette, canvas)
