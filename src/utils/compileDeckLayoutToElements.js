@@ -44,6 +44,8 @@ import { isTimelineMilestonesLayout } from './timelineMilestones.js'
 import { isTimelineMilestonesCardsLayout } from './timelineMilestonesCards.js'
 import { isTimelineMilestonesImageLayout } from './timelineMilestonesImage.js'
 import { isTimelineMilestonesImageRightLayout } from './timelineMilestonesImageRight.js'
+import { isSectionDividerNumberedCircleLayout } from './sectionDividerNumberedCircleLayout.js'
+import { isSectionDividerCenteredLayout } from './sectionDividerCenteredLayout.js'
 import { isCatalogPlaceholderText } from './catalogPlaceholder.js'
 import { normalizeChartContent } from './chartContentNormalize.js'
 import {
@@ -53,6 +55,14 @@ import {
   buildTitleHeroLeftFadeCanvasElements,
   isTitleHeroRightOvalLayout,
   buildTitleHeroRightOvalCanvasElements,
+  isTitleHeroRightFadeLayout,
+  buildTitleHeroRightFadeCanvasElements,
+  isTitleFullbleedLayout,
+  buildTitleFullbleedCanvasElements,
+  isTitleFullbleedOverlayLayout,
+  buildTitleFullbleedOverlayCanvasElements,
+  isTitleWithLogoLayout,
+  buildTitleWithLogoCanvasElements,
 } from './titleCentered.js'
 
 /**
@@ -484,9 +494,10 @@ function resolveSlotText(slot, contentBySlotId, schema, options = {}) {
   const keepTitleMinimal = /title_minimal/i.test(String(schema?.layout_id || ''))
   const keepTitleImageLogo = /title_image_logo/i.test(String(schema?.layout_id || ''))
   const keepTitleHero = /title_hero/i.test(String(schema?.layout_id || ''))
+  const keepTitleFullbleed = /title_fullbleed/i.test(String(schema?.layout_id || ''))
   if (
     placeholder &&
-    (!hasSlideContent || role === 'stat' || role === 'stat_label' || memberSlot || keepTitleCentered || keepTitleMinimal || keepTitleImageLogo || keepTitleHero || keepTableSingle || keepTableSingleCards || keepPricingThreePlans || keepPricingThreePlansFeatured || keepPricingThreeHighlight || keepPricingThreeHighlightSplit || keepPricingFourPlans || keepPricingFourPlansFeatured || keepPricingFourPara || keepPricingFourParaCards || keepPricingComparisonTable || keepPricingComparisonCards || keepTimelineHorizontal || keepTimelineHorizontalCards || keepTimelineMilestones || keepTimelineMilestonesCards || keepTimelineMilestonesImage || keepTimelineMilestonesImageRight || keepTimelineVertical || keepTimelineVerticalCards || keepTimelineRoadmap || keepProcessLinearNumeric || keepProcessLinearNumericCards)
+    (!hasSlideContent || role === 'stat' || role === 'stat_label' || memberSlot || keepTitleCentered || keepTitleMinimal || keepTitleImageLogo || keepTitleHero || keepTitleFullbleed || keepTableSingle || keepTableSingleCards || keepPricingThreePlans || keepPricingThreePlansFeatured || keepPricingThreeHighlight || keepPricingThreeHighlightSplit || keepPricingFourPlans || keepPricingFourPlansFeatured || keepPricingFourPara || keepPricingFourParaCards || keepPricingComparisonTable || keepPricingComparisonCards || keepTimelineHorizontal || keepTimelineHorizontalCards || keepTimelineMilestones || keepTimelineMilestonesCards || keepTimelineMilestonesImage || keepTimelineMilestonesImageRight || keepTimelineVertical || keepTimelineVerticalCards || keepTimelineRoadmap || keepProcessLinearNumeric || keepProcessLinearNumericCards)
   ) {
     return placeholder
   }
@@ -1162,7 +1173,9 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
       (isTimelineMilestonesImageRightLayout(schema?.layout_id) && /^milestone_\d+_(label|num)$/i.test(String(el.slotId || ''))) ||
       (isTimelineVerticalLayout(schema?.layout_id) && /^milestone_\d+_num$/i.test(String(el.slotId || ''))) ||
       (isTimelineVerticalCardsLayout(schema?.layout_id) && /^milestone_\d+_(label|num)$/i.test(String(el.slotId || ''))) ||
-      (isTimelineRoadmapLayout(schema?.layout_id) && /^milestone_\d+_label$/i.test(String(el.slotId || '')))
+      (isTimelineRoadmapLayout(schema?.layout_id) && /^milestone_\d+_label$/i.test(String(el.slotId || ''))) ||
+      (isSectionDividerNumberedCircleLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'SECTION_NUMBER') ||
+      (isSectionDividerCenteredLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'SECTION_NUMBER')
     ) return el
     const colorRole = String(el.content?.colorRole || '').toLowerCase()
     const rawColor = el.content?.color
@@ -1229,6 +1242,18 @@ export function compileDeckLayoutToElements(schema, options = {}) {
   }
   if (isTitleHeroRightOvalLayout(schema?.layout_id, schema)) {
     return buildTitleHeroRightOvalCanvasElements({ schema, options })
+  }
+  if (isTitleHeroRightFadeLayout(schema?.layout_id, schema)) {
+    return buildTitleHeroRightFadeCanvasElements({ schema, options })
+  }
+  if (isTitleFullbleedLayout(schema?.layout_id, schema)) {
+    return buildTitleFullbleedCanvasElements({ schema, options })
+  }
+  if (isTitleFullbleedOverlayLayout(schema?.layout_id, schema)) {
+    return buildTitleFullbleedOverlayCanvasElements({ schema, options })
+  }
+  if (isTitleWithLogoLayout(schema?.layout_id, schema)) {
+    return buildTitleWithLogoCanvasElements({ schema, options })
   }
 
   const slots = Array.isArray(schema?.slots) ? schema.slots : []

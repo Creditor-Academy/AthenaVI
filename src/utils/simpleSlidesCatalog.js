@@ -134,34 +134,141 @@ const CATALOG = {
     { mode: 'title_hero_left_fade' }
   ),
 
-  title_hero_right_fade_v1: layoutBase('title_hero_right_fade_v1', 'title', [
-    slot('MAIN_TITLE', 'cols 2-6, rows 3-5', 'heading', 'Presentation title', {
-      layer: 10,
-      typography: typo('heading', { fontSize: 48 }),
-      max_lines: 2,
-    }),
-    slot('SUBTITLE', 'cols 2-6, rows 5-7', 'subheading', 'Tagline or company name', {
-      layer: 10,
-      typography: typo('subheading', { fontSize: 22 }),
-      max_lines: 2,
-    }),
-    imageRight('cols 6-12, rows 1-10', 'HERO_IMAGE', 'hero'),
-  ]),
+  title_hero_right_fade_v1: layoutBase(
+    'title_hero_right_fade_v1',
+    'title',
+    [
+      slot('HERO_IMAGE', 'cols 1-7, rows 1-10', 'image', null, {
+        layer: 2,
+        fit: 'cover',
+        imageStyle: 'hero',
+        edgeFade: { side: 'right', width: 0.38 },
+        imageMask: { type: 'fade', side: 'right' },
+      }),
+      slot('MAIN_TITLE', 'cols 8-12, rows 3-5', 'heading', 'Presentation\nTitle', {
+        layer: 10,
+        typography: typo('heading', { fontSize: 56, fontWeight: 800, lineHeight: 1.15, verticalAlign: 'flex-start', align: 'left' }),
+        max_lines: 2,
+      }),
+      slot('SUBTITLE', 'cols 8-12, rows 6-7', 'subheading', 'Tagline or company name', {
+        layer: 10,
+        typography: typo('subheading', { fontSize: 26, fontWeight: 400, lineHeight: 1.45, verticalAlign: 'flex-start', align: 'left' }),
+        max_lines: 2,
+      }),
+    ],
+    { mode: 'title_hero_right_fade' }
+  ),
 
-  title_fullbleed_v1: layoutBase('title_fullbleed_v1', 'title', [
-    slot('BACKGROUND_IMAGE', 'cols 1-12, rows 1-10', 'background', null, { layer: 0, fit: 'cover' }),
-    overlayScrim(),
-    slot('MAIN_TITLE', 'cols 2-10, rows 3-5', 'heading', 'Presentation title', {
-      layer: 10,
-      typography: { ...typo('heading', { fontSize: 52 }), colorRole: 'textOnImage' },
-      max_lines: 2,
-    }),
-    slot('SUBTITLE', 'cols 2-10, rows 5-7', 'subheading', 'Tagline or company name', {
-      layer: 10,
-      typography: { ...typo('subheading', { fontSize: 24 }), colorRole: 'textOnImageMuted' },
-      max_lines: 2,
-    }),
-  ]),
+  title_with_logo_v1: layoutBase(
+    'title_with_logo_v1',
+    'title',
+    [
+      slot('LOGO', 'cols 2-4, rows 2-3', 'image', null, {
+        layer: 5,
+        fit: 'contain',
+        role: 'logo',
+      }),
+      slot('MAIN_TITLE', 'cols 2-11, rows 3-5', 'heading', 'Add your presentation title', {
+        layer: 10,
+        typography: typo('heading', { fontSize: 60, fontWeight: 800, lineHeight: 1.15, verticalAlign: 'flex-start', align: 'left' }),
+        max_lines: 2,
+      }),
+      slot('SUBTITLE', 'cols 2-11, rows 6-7', 'subheading', 'A comprehensive overview and strategic quarterly roadmap', {
+        layer: 10,
+        typography: typo('subheading', { fontSize: 26, fontWeight: 400, lineHeight: 1.45, verticalAlign: 'flex-start', align: 'left' }),
+        max_lines: 2,
+      }),
+    ],
+    { mode: 'title_with_logo' }
+  ),
+
+  title_with_logo_corner_v1: layoutBase(
+    'title_with_logo_corner_v1',
+    'title',
+    [
+      slot('LOGO', 'cols 2-4, rows 2-3', 'image', null, {
+        layer: 5,
+        fit: 'contain',
+        role: 'logo',
+      }),
+      slot('MAIN_TITLE', 'cols 2-11, rows 3-5', 'heading', 'Add your presentation title', {
+        layer: 10,
+        typography: typo('heading', { fontSize: 60, fontWeight: 800, lineHeight: 1.15, verticalAlign: 'flex-start', align: 'left' }),
+        max_lines: 2,
+      }),
+      slot('SUBTITLE', 'cols 2-11, rows 6-7', 'subheading', 'A comprehensive overview and strategic quarterly roadmap', {
+        layer: 10,
+        typography: typo('subheading', { fontSize: 26, fontWeight: 400, lineHeight: 1.45, verticalAlign: 'flex-start', align: 'left' }),
+        max_lines: 2,
+      }),
+    ],
+    { mode: 'title_with_logo', variant: 'corner' }
+  ),
+
+  title_with_logo_centered_v1: layoutBase(
+    'title_with_logo_centered_v1',
+    'title',
+    [
+      slot('LOGO', 'cols 5-8, rows 2-3', 'image', null, {
+        layer: 5,
+        fit: 'contain',
+        role: 'logo',
+      }),
+      slot('MAIN_TITLE', 'cols 2-11, rows 3-5', 'heading', 'Add your presentation title', {
+        layer: 10,
+        typography: centeredTypo('heading', { fontSize: 60, fontWeight: 800, lineHeight: 1.15, verticalAlign: 'flex-start' }),
+        max_lines: 2,
+      }),
+      slot('SUBTITLE', 'cols 2-11, rows 6-7', 'subheading', 'A comprehensive overview and strategic quarterly roadmap', {
+        layer: 10,
+        typography: centeredTypo('subheading', { fontSize: 26, fontWeight: 400, lineHeight: 1.45, verticalAlign: 'flex-start' }),
+        max_lines: 2,
+      }),
+    ],
+    { mode: 'title_with_logo', variant: 'centered' }
+  ),
+
+  title_fullbleed_v1: layoutBase(
+    'title_fullbleed_v1',
+    'title',
+    [
+      slot('BACKGROUND_IMAGE', 'cols 1-12, rows 1-10', 'background', null, { layer: 0, fit: 'cover' }),
+      slot('MAIN_TITLE', 'cols 2-11, rows 3-5', 'heading', 'Presentation title', {
+        layer: 10,
+        typography: { ...centeredTypo('heading', { fontSize: 68, fontWeight: 800, lineHeight: 1.16 }), colorRole: 'textOnImage' },
+        max_lines: 2,
+      }),
+      slot('SUBTITLE', 'cols 2-11, rows 6-7', 'subheading', 'Tagline or company name', {
+        layer: 10,
+        typography: { ...centeredTypo('subheading', { fontSize: 28, fontWeight: 400, lineHeight: 1.4 }), colorRole: 'textOnImageMuted' },
+        max_lines: 2,
+      }),
+    ],
+    { mode: 'title_fullbleed' }
+  ),
+
+  title_fullbleed_overlay_v1: layoutBase(
+    'title_fullbleed_overlay_v1',
+    'title',
+    [
+      slot('BACKGROUND_IMAGE', 'cols 1-12, rows 1-10', 'background', null, { layer: 0, fit: 'cover' }),
+      slot('OVERLAY_CARD', 'cols 3-10, rows 3-8', 'decoration', null, {
+        layer: 2,
+        aiOnly: true,
+      }),
+      slot('MAIN_TITLE', 'cols 3-10, rows 4-5', 'heading', 'Title Fullbleed\nOverlay', {
+        layer: 10,
+        typography: { ...centeredTypo('heading', { fontSize: 56, fontWeight: 800, lineHeight: 1.15, verticalAlign: 'flex-start' }), colorRole: 'textOnImage' },
+        max_lines: 2,
+      }),
+      slot('SUBTITLE', 'cols 3-10, rows 6-7', 'subheading', 'Tagline or company name', {
+        layer: 10,
+        typography: { ...centeredTypo('subheading', { fontSize: 24, fontWeight: 400, lineHeight: 1.45, verticalAlign: 'flex-start' }), colorRole: 'textOnImageMuted' },
+        max_lines: 2,
+      }),
+    ],
+    { mode: 'title_fullbleed_overlay' }
+  ),
 
   title_with_logo_v1: layoutBase('title_with_logo_v1', 'title', [
     slot('LOGO', 'cols 2-4, rows 2-3', 'decoration', 'logo', {
@@ -698,7 +805,6 @@ Object.assign(CATALOG, {
   ),
   text_two_column_split_v1: simpleSlidesFromSource('text_two_column_split_v1', 'text_two_column_v1', 'split'),
   title_statement_split_v1: simpleSlidesFromSource('title_statement_split_v1', 'title_statement_v1', 'split'),
-  title_fullbleed_overlay_v1: simpleSlidesFromSource('title_fullbleed_overlay_v1', 'title_fullbleed_v1', 'overlay'),
   title_with_logo_corner_v1: simpleSlidesFromSource('title_with_logo_corner_v1', 'title_with_logo_v1', 'corner'),
   title_with_logo_centered_v1: simpleSlidesFromSource('title_with_logo_centered_v1', 'title_with_logo_v1', 'centered'),
   two_para_right_image_bottom_v1: simpleSlidesFromSource(

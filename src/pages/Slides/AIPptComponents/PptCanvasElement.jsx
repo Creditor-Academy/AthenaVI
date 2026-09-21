@@ -262,9 +262,9 @@ function EditableText({
     display: 'flex',
     flexDirection: 'column',
     justifyContent:
-      c.verticalAlign === 'center'
+      c.verticalAlign === 'center' || c.verticalAlign === 'middle'
         ? 'center'
-        : c.verticalAlign === 'flex-end'
+        : c.verticalAlign === 'flex-end' || c.verticalAlign === 'bottom'
           ? 'flex-end'
           : 'flex-start',
     overflow: clipToSlot ? 'hidden' : undefined,
@@ -489,6 +489,7 @@ export default function PptCanvasElement({
     if (!url) {
       const radius = c.borderRadius != null ? c.borderRadius : 0
       const avatarSlot = /^(AVATAR|AVATAR_\d+)$/i.test(String(el.slotId || ''))
+      const logoSlot = /^(LOGO|LOGO_\d+)$/i.test(String(el.slotId || '')) || el.role === 'logo'
       const circular = c.borderRadius === 999 || c.borderRadius === '50%'
       if (el.type === 'image' && avatarSlot) {
         return (
@@ -502,6 +503,70 @@ export default function PptCanvasElement({
             }}
             aria-hidden
           />
+        )
+      }
+      if (el.type === 'image' && logoSlot) {
+        return (
+          <div
+            style={{
+              ...fillStyle,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              boxSizing: 'border-box',
+            }}
+            aria-hidden
+          >
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '0 14px',
+                background: '#FFFFFF',
+                border: '1.5px solid #E2E8F0',
+                borderRadius: 12,
+                boxShadow: '0 2px 8px rgba(15, 23, 42, 0.05)',
+                width: '100%',
+                height: '100%',
+                minWidth: 0,
+                boxSizing: 'border-box',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 8,
+                  background: 'linear-gradient(135deg, #4F46E5 0%, #6366F1 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  boxShadow: '0 2px 6px rgba(79, 70, 229, 0.25)',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 3L19 12L12 21L5 12Z" fill="white" opacity="0.95" />
+                  <circle cx="12" cy="12" r="2.5" fill="#C7D2FE" />
+                </svg>
+              </div>
+              <span
+                style={{
+                  fontSize: 14,
+                  fontWeight: 800,
+                  color: '#1E293B',
+                  letterSpacing: '0.12em',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  userSelect: 'none',
+                }}
+              >
+                LOGO
+              </span>
+            </div>
+          </div>
         )
       }
       if (el.type === 'image') {

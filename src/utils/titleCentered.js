@@ -33,6 +33,22 @@ export function isTitleHeroRightOvalLayout(layoutId, schema) {
   return id === 'title_hero_right_oval_v1' || id === 'title_hero_right_oval'
 }
 
+export function isTitleHeroRightFadeLayout(layoutId, schema) {
+  const id = String(layoutId || schema?.layout_id || schema?.variant || '').toLowerCase()
+  return id === 'title_hero_right_fade_v1' || id === 'title_hero_right_fade'
+}
+
+export function isTitleFullbleedLayout(layoutId, schema) {
+  const id = String(layoutId || schema?.layout_id || schema?.variant || '').toLowerCase()
+  return id === 'title_fullbleed_v1' || id === 'title_fullbleed'
+}
+
+export function isTitleFullbleedOverlayLayout(layoutId, schema) {
+  const id = String(layoutId || schema?.layout_id || schema?.variant || '').toLowerCase()
+  return id === 'title_fullbleed_overlay_v1' || id === 'title_fullbleed_overlay'
+}
+
+
 function escapeXml(unsafe = '') {
   return String(unsafe || '')
     .replace(/&/g, '&amp;')
@@ -977,5 +993,980 @@ export function buildTitleHeroRightOvalCanvasElements({ schema, options = {} }) 
     },
   ]
 }
+
+export function titleHeroRightFadePreviewSvg(previewHints = {}, theme = {}) {
+  const slots = previewHints?.slots || {}
+  const rawHeading = slots.MAIN_TITLE?.text || slots.HEADING?.text || previewHints?.heading || 'Presentation\nTitle'
+  const rawSubtitle = slots.SUBTITLE?.text || slots.SUBHEADING?.text || previewHints?.subheading || 'Tagline or company name'
+
+  const heading = escapeXml(rawHeading)
+  const subtitle = escapeXml(rawSubtitle)
+
+  const titleLines = heading.split(/\r?\n/).filter(Boolean)
+  const isMultiLine = titleLines.length > 1 || heading.length > 15
+
+  const titleStartY = isMultiLine ? 290 : 350
+  const subtitleY = isMultiLine ? 570 : 530
+
+  const titleTspans = titleLines
+    .map((line, idx) => `<tspan x="1140" dy="${idx === 0 ? 0 : '1.18em'}">${line}</tspan>`)
+    .join('')
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%">
+    <defs>
+      <linearGradient id="rightFadeMaskGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#FFFFFF" stop-opacity="1" />
+        <stop offset="52%" stop-color="#FFFFFF" stop-opacity="1" />
+        <stop offset="68%" stop-color="#FFFFFF" stop-opacity="0.75" />
+        <stop offset="80%" stop-color="#FFFFFF" stop-opacity="0.25" />
+        <stop offset="92%" stop-color="#FFFFFF" stop-opacity="0.04" />
+        <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+      </linearGradient>
+      <mask id="heroRightFadeMask">
+        <rect x="0" y="0" width="1080" height="1080" fill="url(#rightFadeMaskGrad)" />
+      </mask>
+      <linearGradient id="fadeSkyGradRight" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#B7D4E8" />
+        <stop offset="55%" stop-color="#C5DCEB" />
+        <stop offset="100%" stop-color="#D0E3EF" />
+      </linearGradient>
+      <linearGradient id="fadeHillBackGradRight" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#8FBF8E" />
+        <stop offset="100%" stop-color="#79AD78" />
+      </linearGradient>
+      <linearGradient id="fadeHillFrontGradRight" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="#6FA56E" />
+        <stop offset="100%" stop-color="#5E945D" />
+      </linearGradient>
+    </defs>
+
+    <!-- Clean canvas background -->
+    <rect width="1920" height="1080" fill="#FFFFFF"/>
+
+    <!-- Hero Image with right edge fade on the left half (mirror of left fade) -->
+    <g mask="url(#heroRightFadeMask)">
+      <!-- Sky background -->
+      <rect x="0" y="0" width="1080" height="1080" fill="url(#fadeSkyGradRight)" />
+
+      <!-- Clouds matching reference image, mirrored -->
+      <g fill="#FFFFFF" opacity="0.95">
+        <!-- Left clouds -->
+        <ellipse cx="240" cy="330" rx="160" ry="70" />
+        <ellipse cx="340" cy="330" rx="120" ry="55" />
+        <ellipse cx="140" cy="340" rx="90" ry="48" />
+
+        <!-- Right clouds -->
+        <ellipse cx="660" cy="380" rx="130" ry="55" />
+        <ellipse cx="730" cy="380" rx="90" ry="45" />
+        <ellipse cx="590" cy="390" rx="70" ry="38" />
+      </g>
+
+      <!-- Rolling green hills matching reference image, mirrored -->
+      <path d="M 0 600 C 60 610, 160 580, 320 620 C 580 680, 840 600, 1080 700 L 1080 1080 L 0 1080 Z" fill="url(#fadeHillBackGradRight)" />
+      <path d="M 0 700 C 60 720, 180 680, 360 720 C 620 780, 860 710, 1080 800 L 1080 1080 L 0 1080 Z" fill="url(#fadeHillFrontGradRight)" />
+    </g>
+
+    <!-- Main Title (shifted right to clean white area) -->
+    <text
+      x="1140"
+      y="${titleStartY}"
+      text-anchor="start"
+      fill="#0F172A"
+      font-size="58"
+      font-weight="800"
+      font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+      letter-spacing="-0.025em"
+    >${isMultiLine ? titleTspans : heading}</text>
+
+    <!-- Subtitle / Tagline (shifted right to clean white area) -->
+    ${
+      subtitle
+        ? `<text
+      x="1140"
+      y="${subtitleY}"
+      text-anchor="start"
+      fill="#64748B"
+      font-size="26"
+      font-weight="400"
+      font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+      letter-spacing="-0.005em"
+    >${subtitle}</text>`
+        : ''
+    }
+  </svg>`
+}
+
+export function buildTitleHeroRightFadeCanvasElements({ schema, options = {} }) {
+  const canvasW = options.canvas?.width || 1920
+  const canvasH = options.canvas?.height || 1080
+  const sx = canvasW / 1920
+  const sy = canvasH / 1080
+  const scale = Math.min(sx, sy)
+
+  const content = options.content || {}
+  const contentBySlotId = options.contentBySlotId || {}
+
+  const rawTitle = contentBySlotId.MAIN_TITLE || content.title || options.slideTitle || 'Presentation\nTitle'
+  const rawSubtitle = contentBySlotId.SUBTITLE || content.subtitle || content.subheading || 'Tagline or company name'
+  const imageUrl =
+    contentBySlotId.HERO_IMAGE__url ||
+    contentBySlotId.HERO_IMAGE_url ||
+    content.imageUrl ||
+    content.imageRef?.url ||
+    null
+
+  const titleText = String(rawTitle).trim() || 'Presentation\nTitle'
+  const subtitleText = String(rawSubtitle).trim() || 'Tagline or company name'
+
+  const titleLines = titleText.split(/\r?\n/).filter(Boolean)
+  const isMultiLine = titleLines.length > 1 || titleText.length > 14
+
+  // Safe vertical positioning so multi-line titles never overlap with the subtitle
+  const titleY = isMultiLine ? Math.round(280 * sy) : Math.round(340 * sy)
+  const titleH = isMultiLine ? Math.round(210 * sy) : Math.round(110 * sy)
+  const subtitleY = isMultiLine ? Math.round(570 * sy) : Math.round(540 * sy)
+  const subtitleH = Math.round(90 * sy)
+
+  return [
+    // 1. Hero Image bleeding full height on the left with smooth right edge fade
+    {
+      id: 'slot-HERO_IMAGE',
+      slotId: 'HERO_IMAGE',
+      type: 'image',
+      role: 'image',
+      layer: 2,
+      placement: {
+        x: 0,
+        y: 0,
+        width: Math.round(1080 * sx),
+        height: canvasH,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        ...(imageUrl ? { url: imageUrl, src: imageUrl } : {}),
+        fit: 'cover',
+        alt: '',
+        edgeFade: { side: 'right', width: 0.38 },
+      },
+    },
+    // 2. Main Title on the right (shifted to clean white area)
+    {
+      id: 'slot-MAIN_TITLE',
+      slotId: 'MAIN_TITLE',
+      type: 'text',
+      role: 'heading',
+      layer: 10,
+      placement: {
+        x: Math.round(1140 * sx),
+        y: titleY,
+        width: Math.round(660 * sx),
+        height: titleH,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        text: titleText,
+        fontSize: Math.round(56 * scale),
+        fontWeight: 800,
+        color: '#0F172A',
+        align: 'left',
+        verticalAlign: 'flex-start',
+        lineHeight: 1.15,
+        wrap: 'pre-wrap',
+      },
+    },
+    // 3. Subtitle on the right (shifted to clean white area, clear margin below title)
+    {
+      id: 'slot-SUBTITLE',
+      slotId: 'SUBTITLE',
+      type: 'text',
+      role: 'subheading',
+      layer: 10,
+      placement: {
+        x: Math.round(1140 * sx),
+        y: subtitleY,
+        width: Math.round(660 * sx),
+        height: subtitleH,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        text: subtitleText,
+        fontSize: Math.round(26 * scale),
+        fontWeight: 400,
+        color: '#64748B',
+        align: 'left',
+        verticalAlign: 'flex-start',
+        lineHeight: 1.45,
+        wrap: 'pre-wrap',
+      },
+    },
+  ]
+}
+
+export function titleFullbleedPreviewSvg(previewHints = {}, theme = {}) {
+  const slots = previewHints?.slots || {}
+  const rawHeading = slots.MAIN_TITLE?.text || slots.HEADING?.text || previewHints?.heading || 'Presentation title'
+  const rawSubtitle = slots.SUBTITLE?.text || slots.SUBHEADING?.text || previewHints?.subheading || 'Tagline or company name'
+
+  const heading = escapeXml(rawHeading)
+  const subtitle = escapeXml(rawSubtitle)
+
+  const titleLines = heading.split(/\r?\n/).filter(Boolean)
+  const isMultiLine = titleLines.length > 1 || heading.length > 18
+
+  // Anti-collision: generous vertical clearance between title and subtitle
+  const titleStartY = isMultiLine ? 400 : 450
+  const subtitleY = isMultiLine ? 610 : 570
+
+  const titleTspans = titleLines
+    .map((line, idx) => `<tspan x="960" dy="${idx === 0 ? 0 : '1.18em'}">${line}</tspan>`)
+    .join('')
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%">
+    <defs>
+      <linearGradient id="fullbleedEmptySky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#B7D4E8" />
+        <stop offset="55%" stop-color="#C5DCEB" />
+        <stop offset="100%" stop-color="#D0E3EF" />
+      </linearGradient>
+      <linearGradient id="fullbleedEmptyHillBack" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#8FBF8E" />
+        <stop offset="100%" stop-color="#79AD78" />
+      </linearGradient>
+      <linearGradient id="fullbleedEmptyHillFront" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#6FA56E" />
+        <stop offset="100%" stop-color="#5E945D" />
+      </linearGradient>
+      <!-- Crisp high-contrast drop shadow for open fullbleed text -->
+      <filter id="fullbleedTextDropShadow" x="-30%" y="-30%" width="160%" height="160%">
+        <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.65" />
+      </filter>
+    </defs>
+
+    <!-- 1. Background Image Placeholder: Exact EmptyImagePlaceholder matching canvas slide -->
+    <svg x="0" y="0" width="1920" height="1080" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice">
+      <rect width="320" height="200" fill="url(#fullbleedEmptySky)" />
+
+      <g fill="#FFFFFF" opacity="0.92">
+        <ellipse cx="78" cy="48" rx="28" ry="14" />
+        <ellipse cx="98" cy="48" rx="22" ry="12" />
+        <ellipse cx="58" cy="50" rx="16" ry="10" />
+
+        <ellipse cx="210" cy="36" rx="34" ry="16" />
+        <ellipse cx="236" cy="36" rx="24" ry="13" />
+        <ellipse cx="186" cy="38" rx="18" ry="11" />
+
+        <ellipse cx="280" cy="62" rx="18" ry="9" />
+        <ellipse cx="294" cy="62" rx="12" ry="7" />
+      </g>
+
+      <path
+        d="M0 128 C40 108 78 118 112 126 C148 116 178 102 220 112 C252 120 280 128 320 118 L320 200 L0 200 Z"
+        fill="url(#fullbleedEmptyHillBack)"
+      />
+      <path
+        d="M0 152 C36 136 70 148 108 156 C150 144 190 130 236 142 C268 150 296 158 320 150 L320 200 L0 200 Z"
+        fill="url(#fullbleedEmptyHillFront)"
+      />
+
+      <g fill="#FFFFFF">
+        <ellipse cx="52" cy="138" rx="5.5" ry="4" />
+        <circle cx="47.5" cy="136.5" r="2.2" />
+        <rect x="46.2" y="138.2" width="1.2" height="3.2" rx="0.5" />
+        <rect x="49.6" y="138.6" width="1.2" height="3" rx="0.5" />
+        <rect x="53" y="138.6" width="1.2" height="3" rx="0.5" />
+        <rect x="55.8" y="138.2" width="1.2" height="3.2" rx="0.5" />
+      </g>
+    </svg>
+
+    <!-- 2. Centered Crisp White Presentation Title -->
+    <text
+      x="960"
+      y="${titleStartY}"
+      text-anchor="middle"
+      fill="#FFFFFF"
+      font-size="68"
+      font-weight="800"
+      font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+      letter-spacing="-0.025em"
+      filter="url(#fullbleedTextDropShadow)"
+    >${isMultiLine ? titleTspans : heading}</text>
+
+    <!-- 3. Centered High-Contrast Subtitle -->
+    ${
+      subtitle
+        ? `<text
+      x="960"
+      y="${subtitleY}"
+      text-anchor="middle"
+      fill="#F8FAFC"
+      font-size="28"
+      font-weight="400"
+      font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+      letter-spacing="-0.005em"
+      filter="url(#fullbleedTextDropShadow)"
+    >${subtitle}</text>`
+        : ''
+    }
+  </svg>`
+}
+
+export function titleFullbleedOverlayPreviewSvg(previewHints = {}, theme = {}) {
+  const slots = previewHints?.slots || {}
+  const rawHeading = slots.MAIN_TITLE?.text || slots.HEADING?.text || previewHints?.heading || 'Title Fullbleed\nOverlay'
+  const rawSubtitle = slots.SUBTITLE?.text || slots.SUBHEADING?.text || previewHints?.subheading || 'Tagline or company name'
+
+  const heading = escapeXml(rawHeading)
+  const subtitle = escapeXml(rawSubtitle)
+
+  const titleLines = heading.split(/\r?\n/).filter(Boolean)
+  const isMultiLine = titleLines.length > 1 || heading.length > 18
+
+  // Anti-collision vertical coordinates: generous vertical clearance
+  const titleStartY = isMultiLine ? 390 : 440
+  const subtitleY = isMultiLine ? 580 : 540
+
+  const titleTspans = titleLines
+    .map((line, idx) => `<tspan x="960" dy="${idx === 0 ? 0 : '1.18em'}">${line}</tspan>`)
+    .join('')
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%">
+    <defs>
+      <linearGradient id="overlayEmptySky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#B7D4E8" />
+        <stop offset="55%" stop-color="#C5DCEB" />
+        <stop offset="100%" stop-color="#D0E3EF" />
+      </linearGradient>
+      <linearGradient id="overlayEmptyHillBack" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#8FBF8E" />
+        <stop offset="100%" stop-color="#79AD78" />
+      </linearGradient>
+      <linearGradient id="overlayEmptyHillFront" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#6FA56E" />
+        <stop offset="100%" stop-color="#5E945D" />
+      </linearGradient>
+      <!-- Card Drop Shadow matching canvas slot-OVERLAY_CARD -->
+      <filter id="overlayGlassShadow" x="-25%" y="-25%" width="150%" height="150%">
+        <feDropShadow dx="0" dy="24" stdDeviation="30" flood-color="#020617" flood-opacity="0.55" />
+      </filter>
+    </defs>
+
+    <!-- 1. Background Image Placeholder: Exact EmptyImagePlaceholder matching canvas slide -->
+    <svg x="0" y="0" width="1920" height="1080" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice">
+      <rect width="320" height="200" fill="url(#overlayEmptySky)" />
+
+      <g fill="#FFFFFF" opacity="0.92">
+        <ellipse cx="78" cy="48" rx="28" ry="14" />
+        <ellipse cx="98" cy="48" rx="22" ry="12" />
+        <ellipse cx="58" cy="50" rx="16" ry="10" />
+
+        <ellipse cx="210" cy="36" rx="34" ry="16" />
+        <ellipse cx="236" cy="36" rx="24" ry="13" />
+        <ellipse cx="186" cy="38" rx="18" ry="11" />
+
+        <ellipse cx="280" cy="62" rx="18" ry="9" />
+        <ellipse cx="294" cy="62" rx="12" ry="7" />
+      </g>
+
+      <path
+        d="M0 128 C40 108 78 118 112 126 C148 116 178 102 220 112 C252 120 280 128 320 118 L320 200 L0 200 Z"
+        fill="url(#overlayEmptyHillBack)"
+      />
+      <path
+        d="M0 152 C36 136 70 148 108 156 C150 144 190 130 236 142 C268 150 296 158 320 150 L320 200 L0 200 Z"
+        fill="url(#overlayEmptyHillFront)"
+      />
+
+      <g fill="#FFFFFF">
+        <ellipse cx="52" cy="138" rx="5.5" ry="4" />
+        <circle cx="47.5" cy="136.5" r="2.2" />
+        <rect x="46.2" y="138.2" width="1.2" height="3.2" rx="0.5" />
+        <rect x="49.6" y="138.6" width="1.2" height="3" rx="0.5" />
+        <rect x="53" y="138.6" width="1.2" height="3" rx="0.5" />
+        <rect x="55.8" y="138.2" width="1.2" height="3.2" rx="0.5" />
+      </g>
+    </svg>
+
+    <!-- 2. Distinct Frosted Glassmorphic Dark Overlay Container Card matching slot-OVERLAY_CARD -->
+    <g filter="url(#overlayGlassShadow)">
+      <rect
+        x="330"
+        y="260"
+        width="1260"
+        height="560"
+        rx="28"
+        fill="rgba(15, 23, 42, 0.78)"
+        stroke="rgba(255, 255, 255, 0.22)"
+        stroke-width="1.5"
+      />
+    </g>
+
+    <!-- 3. Main Title (Centered inside card) -->
+    <text
+      x="960"
+      y="${titleStartY}"
+      text-anchor="middle"
+      fill="#FFFFFF"
+      font-size="56"
+      font-weight="800"
+      font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+      letter-spacing="-0.025em"
+    >${isMultiLine ? titleTspans : heading}</text>
+
+    <!-- 4. Subtitle (Centered inside card) -->
+    ${
+      subtitle
+        ? `<text
+      x="960"
+      y="${subtitleY}"
+      text-anchor="middle"
+      fill="#E2E8F0"
+      font-size="24"
+      font-weight="400"
+      font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+      letter-spacing="0.005em"
+    >${subtitle}</text>`
+        : ''
+    }
+  </svg>`
+}
+
+export function buildTitleFullbleedCanvasElements({ schema, options = {} }) {
+  const canvasW = options.canvas?.width || 1920
+  const canvasH = options.canvas?.height || 1080
+  const sx = canvasW / 1920
+  const sy = canvasH / 1080
+  const scale = Math.min(sx, sy)
+
+  const content = options.content || {}
+  const contentBySlotId = options.contentBySlotId || {}
+
+  const rawTitle = contentBySlotId.MAIN_TITLE || content.title || options.slideTitle || 'Presentation title'
+  const rawSubtitle = contentBySlotId.SUBTITLE || content.subtitle || content.subheading || 'Tagline or company name'
+  const imageUrl =
+    contentBySlotId.BACKGROUND_IMAGE__url ||
+    contentBySlotId.BACKGROUND_IMAGE_url ||
+    content.imageUrl ||
+    content.imageRef?.url ||
+    null
+
+  const titleText = String(rawTitle).trim() || 'Presentation title'
+  const subtitleText = String(rawSubtitle).trim() || 'Tagline or company name'
+
+  const titleLines = titleText.split(/\r?\n/).filter(Boolean)
+  const isMultiLine = titleLines.length > 1 || titleText.length > 18
+
+  // Anti-collision: generous vertical clearance between title and subtitle
+  const titleY = isMultiLine ? Math.round(390 * sy) : Math.round(440 * sy)
+  const titleH = isMultiLine ? Math.round(180 * sy) : Math.round(95 * sy)
+  const subtitleY = isMultiLine ? Math.round(610 * sy) : Math.round(570 * sy)
+  const subtitleH = Math.round(90 * sy)
+
+  return [
+    // 1. Pure Fullbleed Background Image
+    {
+      id: 'slot-BACKGROUND_IMAGE',
+      slotId: 'BACKGROUND_IMAGE',
+      type: 'image',
+      role: 'background',
+      layer: 0,
+      placement: {
+        x: 0,
+        y: 0,
+        width: canvasW,
+        height: canvasH,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        ...(imageUrl ? { url: imageUrl, src: imageUrl } : {}),
+        fit: 'cover',
+        alt: '',
+      },
+    },
+    // 2. Main Title (Centered, bold white text with legibility drop shadow)
+    {
+      id: 'slot-MAIN_TITLE',
+      slotId: 'MAIN_TITLE',
+      type: 'text',
+      role: 'heading',
+      layer: 10,
+      placement: {
+        x: Math.round(160 * sx),
+        y: titleY,
+        width: Math.round(1600 * sx),
+        height: titleH,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        text: titleText,
+        fontSize: Math.round(68 * scale),
+        fontWeight: 800,
+        color: '#FFFFFF',
+        textShadow: '0 4px 16px rgba(0,0,0,0.65)',
+        align: 'center',
+        verticalAlign: 'center',
+        lineHeight: 1.16,
+        wrap: 'pre-wrap',
+      },
+    },
+    // 3. Subtitle (Centered, crisp light text with shadow)
+    {
+      id: 'slot-SUBTITLE',
+      slotId: 'SUBTITLE',
+      type: 'text',
+      role: 'subheading',
+      layer: 10,
+      placement: {
+        x: Math.round(200 * sx),
+        y: subtitleY,
+        width: Math.round(1520 * sx),
+        height: subtitleH,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        text: subtitleText,
+        fontSize: Math.round(28 * scale),
+        fontWeight: 400,
+        color: '#F8FAFC',
+        textShadow: '0 2px 10px rgba(0,0,0,0.65)',
+        align: 'center',
+        verticalAlign: 'flex-start',
+        lineHeight: 1.4,
+        wrap: 'pre-wrap',
+      },
+    },
+  ]
+}
+
+export function buildTitleFullbleedOverlayCanvasElements({ schema, options = {} }) {
+  const canvasW = options.canvas?.width || 1920
+  const canvasH = options.canvas?.height || 1080
+  const sx = canvasW / 1920
+  const sy = canvasH / 1080
+  const scale = Math.min(sx, sy)
+
+  const content = options.content || {}
+  const contentBySlotId = options.contentBySlotId || {}
+
+  const rawTitle = contentBySlotId.MAIN_TITLE || content.title || options.slideTitle || 'Title Fullbleed\nOverlay'
+  const rawSubtitle = contentBySlotId.SUBTITLE || content.subtitle || content.subheading || 'Tagline or company name'
+  const imageUrl =
+    contentBySlotId.BACKGROUND_IMAGE__url ||
+    contentBySlotId.BACKGROUND_IMAGE_url ||
+    content.imageUrl ||
+    content.imageRef?.url ||
+    null
+
+  const titleText = String(rawTitle).trim() || 'Title Fullbleed\nOverlay'
+  const subtitleText = String(rawSubtitle).trim() || 'Tagline or company name'
+
+  const titleLines = titleText.split(/\r?\n/).filter(Boolean)
+  const isMultiLine = titleLines.length > 1 || titleText.length > 18
+
+  // Card dimensions: generous 1260 x 560 centered at x: 330, y: 260
+  const cardW = Math.round(1260 * sx)
+  const cardH = Math.round(560 * sy)
+  const cardX = Math.round((canvasW - cardW) / 2)
+  const cardY = Math.round(260 * sy)
+
+  // Safe vertical positioning so multi-line titles never overlap with the subtitle
+  const titleY = isMultiLine ? Math.round(345 * sy) : Math.round(390 * sy)
+  const titleH = isMultiLine ? Math.round(155 * sy) : Math.round(85 * sy)
+  const subtitleY = isMultiLine ? Math.round(575 * sy) : Math.round(525 * sy)
+  const subtitleH = Math.round(80 * sy)
+
+  return [
+    // 1. Fullbleed Background Image
+    {
+      id: 'slot-BACKGROUND_IMAGE',
+      slotId: 'BACKGROUND_IMAGE',
+      type: 'image',
+      role: 'background',
+      layer: 0,
+      placement: {
+        x: 0,
+        y: 0,
+        width: canvasW,
+        height: canvasH,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        ...(imageUrl ? { url: imageUrl, src: imageUrl } : {}),
+        fit: 'cover',
+        alt: '',
+      },
+    },
+    // 2. Translucent Glassmorphic Dark Overlay Card
+    {
+      id: 'slot-OVERLAY_CARD',
+      slotId: 'OVERLAY_CARD',
+      type: 'shape',
+      role: 'decoration',
+      layer: 2,
+      placement: {
+        x: cardX,
+        y: cardY,
+        width: cardW,
+        height: cardH,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        shape: 'rect',
+        fill: 'rgba(15, 23, 42, 0.78)',
+        stroke: 'rgba(255, 255, 255, 0.22)',
+        strokeWidth: 1.5,
+        borderStyle: 'solid',
+        borderRadius: Math.round(28 * scale),
+        shadow: '0 30px 70px -15px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 1px 0 rgba(255, 255, 255, 0.25)',
+      },
+    },
+    // 3. Main Title (Centered inside card, top-anchored for predictable spacing)
+    {
+      id: 'slot-MAIN_TITLE',
+      slotId: 'MAIN_TITLE',
+      type: 'text',
+      role: 'heading',
+      layer: 10,
+      placement: {
+        x: Math.round(cardX + 40 * sx),
+        y: titleY,
+        width: Math.round(cardW - 80 * sx),
+        height: titleH,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        text: titleText,
+        fontSize: Math.round(56 * scale),
+        fontWeight: 800,
+        color: '#FFFFFF',
+        align: 'center',
+        verticalAlign: 'flex-start',
+        lineHeight: 1.15,
+        wrap: 'pre-wrap',
+      },
+    },
+    // 4. Subtitle (Centered inside card with guaranteed vertical separation)
+    {
+      id: 'slot-SUBTITLE',
+      slotId: 'SUBTITLE',
+      type: 'text',
+      role: 'subheading',
+      layer: 10,
+      placement: {
+        x: Math.round(cardX + 40 * sx),
+        y: subtitleY,
+        width: Math.round(cardW - 80 * sx),
+        height: subtitleH,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        text: subtitleText,
+        fontSize: Math.round(24 * scale),
+        fontWeight: 400,
+        color: '#E2E8F0',
+        align: 'center',
+        verticalAlign: 'flex-start',
+        lineHeight: 1.45,
+        wrap: 'pre-wrap',
+      },
+    },
+  ]
+}
+
+export function isTitleWithLogoLayout(layoutId, schema = null) {
+  const id = String(layoutId || schema?.layout_id || '').trim().toLowerCase()
+  if (id === 'title_with_logo_v1' || id === 'title_with_logo_corner_v1' || id === 'title_with_logo_centered_v1') return true
+  const previewMode = String(schema?.preview?.mode || '').toLowerCase()
+  if (previewMode === 'title_with_logo') return true
+  return false
+}
+
+export function titleWithLogoPreviewSvg(previewHints = {}, theme = {}) {
+  const slots = previewHints?.slots || {}
+  const rawHeading = slots.MAIN_TITLE?.text || slots.HEADING?.text || previewHints?.heading || 'Add your presentation title'
+  const rawSubtitle =
+    slots.SUBTITLE?.text ||
+    slots.FOOTNOTE?.text ||
+    slots.SUBHEADING?.text ||
+    previewHints?.subheading ||
+    'A comprehensive overview and strategic quarterly roadmap'
+  const variant = String(previewHints?.slideVariant || previewHints?.variant || '').toLowerCase()
+  const isCentered = variant === 'centered' || String(previewHints?.layout_id || '').includes('centered')
+
+  const heading = escapeXml(rawHeading)
+  const subtitle = escapeXml(rawSubtitle)
+
+  const titleLines = heading.split(/\r?\n/).filter(Boolean)
+  const isMultiLine = titleLines.length > 1 || heading.length > 20
+
+  const titleStartY = isCentered ? (isMultiLine ? 350 : 410) : (isMultiLine ? 310 : 370)
+  const subtitleY = isCentered ? (isMultiLine ? 650 : 610) : (isMultiLine ? 630 : 590)
+
+  const titleTspans = titleLines
+    .map((line, idx) => `<tspan x="${isCentered ? 960 : 160}" dy="${idx === 0 ? 0 : '1.18em'}">${line}</tspan>`)
+    .join('')
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%">
+    <defs>
+      <!-- Subtle top-right ambient background glow -->
+      <radialGradient id="titleLogoAmbient" cx="85%" cy="15%" r="65%">
+        <stop offset="0%" stop-color="#EEF2FF" stop-opacity="0.8" />
+        <stop offset="50%" stop-color="#F8FAFC" stop-opacity="0.4" />
+        <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+      </radialGradient>
+      <!-- Logo badge shadow -->
+      <filter id="logoBadgeShadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.06" />
+      </filter>
+    </defs>
+
+    <!-- Clean white canvas with ambient glow -->
+    <rect width="1920" height="1080" fill="#FFFFFF"/>
+    <rect width="1920" height="1080" fill="url(#titleLogoAmbient)"/>
+
+    <!-- Top Header: Logo Badge & Category Label -->
+    ${
+      isCentered
+        ? `<!-- Centered Logo Badge -->
+    <g transform="translate(850, 160)" filter="url(#logoBadgeShadow)">
+      <rect x="0" y="0" width="220" height="60" rx="14" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+      <rect x="14" y="12" width="36" height="36" rx="9" fill="#4F46E5" />
+      <path d="M 32 18 L 38 30 L 32 42 L 26 30 Z" fill="#FFFFFF" opacity="0.95" />
+      <circle cx="32" cy="30" r="3" fill="#C7D2FE" />
+      <text x="64" y="36" fill="#1E293B" font-size="18" font-weight="800" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" letter-spacing="0.12em">LOGO</text>
+    </g>`
+        : `<!-- Left-aligned Logo Badge -->
+    <g transform="translate(160, 120)" filter="url(#logoBadgeShadow)">
+      <rect x="0" y="0" width="220" height="60" rx="14" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5"/>
+      <rect x="14" y="12" width="36" height="36" rx="9" fill="#4F46E5" />
+      <path d="M 32 18 L 38 30 L 32 42 L 26 30 Z" fill="#FFFFFF" opacity="0.95" />
+      <circle cx="32" cy="30" r="3" fill="#C7D2FE" />
+      <text x="64" y="36" fill="#1E293B" font-size="18" font-weight="800" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" letter-spacing="0.12em">LOGO</text>
+    </g>
+
+    <!-- Top-Right Category Pill -->
+    <g transform="translate(1560, 130)">
+      <rect x="0" y="0" width="200" height="40" rx="20" fill="#F1F5F9" />
+      <circle cx="20" cy="20" r="4" fill="#6366F1" />
+      <text x="34" y="25" fill="#64748B" font-size="14" font-weight="700" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" letter-spacing="0.06em">PRESENTATION</text>
+    </g>`
+    }
+
+    <!-- Main Title -->
+    <text
+      x="${isCentered ? 960 : 160}"
+      y="${titleStartY}"
+      text-anchor="${isCentered ? 'middle' : 'start'}"
+      fill="#0F172A"
+      font-size="60"
+      font-weight="800"
+      font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+      letter-spacing="-0.025em"
+    >${isMultiLine ? titleTspans : heading}</text>
+
+    <!-- Subtitle / Tagline -->
+    ${
+      subtitle
+        ? `<text
+      x="${isCentered ? 960 : 160}"
+      y="${subtitleY}"
+      text-anchor="${isCentered ? 'middle' : 'start'}"
+      fill="#64748B"
+      font-size="26"
+      font-weight="400"
+      font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+      letter-spacing="-0.005em"
+    >${subtitle}</text>`
+        : ''
+    }
+
+    <!-- Bottom Executive Hairline Divider & Metadata -->
+    <line x1="160" y1="920" x2="1760" y2="920" stroke="#E2E8F0" stroke-width="1.5"/>
+    <text x="160" y="965" fill="#94A3B8" font-size="16" font-weight="500" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">Executive Presentation</text>
+    <text x="1760" y="965" text-anchor="end" fill="#94A3B8" font-size="16" font-weight="500" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">Confidential · 2025</text>
+  </svg>`
+}
+
+export function buildTitleWithLogoCanvasElements({ schema, options = {} }) {
+  const canvasW = options.canvas?.width || 1920
+  const canvasH = options.canvas?.height || 1080
+  const sx = canvasW / 1920
+  const sy = canvasH / 1080
+  const scale = Math.min(sx, sy)
+
+  const content = options.content || {}
+  const contentBySlotId = options.contentBySlotId || {}
+  const variant = String(schema?.variant || options.slideVariant || '').toLowerCase()
+  const isCentered = variant === 'centered' || String(schema?.layout_id || '').includes('centered')
+
+  const rawTitle = contentBySlotId.MAIN_TITLE || content.title || options.slideTitle || 'Add your presentation title'
+  const rawSubtitle =
+    contentBySlotId.SUBTITLE ||
+    contentBySlotId.FOOTNOTE ||
+    content.subtitle ||
+    content.subheading ||
+    'A comprehensive overview and strategic quarterly roadmap'
+  const logoUrl =
+    contentBySlotId.LOGO__url ||
+    contentBySlotId.LOGO_url ||
+    content.logoUrl ||
+    content.imageUrl ||
+    null
+
+  const titleText = String(rawTitle).trim() || 'Add your presentation title'
+  const subtitleText = String(rawSubtitle).trim() || 'A comprehensive overview and strategic quarterly roadmap'
+
+  const titleLines = titleText.split(/\r?\n/).filter(Boolean)
+  const isMultiLine = titleLines.length > 1 || titleText.length > 20
+
+  const titleY = isCentered
+    ? (isMultiLine ? Math.round(290 * sy) : Math.round(350 * sy))
+    : (isMultiLine ? Math.round(260 * sy) : Math.round(320 * sy))
+  const titleH = isMultiLine ? Math.round(200 * sy) : Math.round(110 * sy)
+
+  const subtitleY = isCentered
+    ? (isMultiLine ? Math.round(590 * sy) : Math.round(560 * sy))
+    : (isMultiLine ? Math.round(570 * sy) : Math.round(540 * sy))
+  const subtitleH = Math.round(90 * sy)
+
+  const logoW = Math.round(240 * sx)
+  const logoH = Math.round(62 * sy)
+  const logoX = isCentered ? Math.round((canvasW - logoW) / 2) : Math.round(160 * sx)
+  const logoY = isCentered ? Math.round(150 * sy) : Math.round(120 * sy)
+
+  return [
+    // 1. Logo Badge / Image Slot
+    {
+      id: 'slot-LOGO',
+      slotId: 'LOGO',
+      type: 'image',
+      role: 'logo',
+      layer: 5,
+      placement: {
+        x: logoX,
+        y: logoY,
+        width: logoW,
+        height: logoH,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        ...(logoUrl ? { url: logoUrl, src: logoUrl } : {}),
+        fit: 'contain',
+        alt: 'Company Logo',
+      },
+    },
+    // 2. Main Title
+    {
+      id: 'slot-MAIN_TITLE',
+      slotId: 'MAIN_TITLE',
+      type: 'text',
+      role: 'heading',
+      layer: 10,
+      placement: {
+        x: isCentered ? Math.round(160 * sx) : Math.round(160 * sx),
+        y: titleY,
+        width: isCentered ? Math.round(1600 * sx) : Math.round(1400 * sx),
+        height: titleH,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        text: titleText,
+        fontSize: Math.round(60 * scale),
+        fontWeight: 800,
+        color: '#0F172A',
+        align: isCentered ? 'center' : 'left',
+        verticalAlign: 'flex-start',
+        lineHeight: 1.14,
+        wrap: 'pre-wrap',
+      },
+    },
+    // 3. Subtitle / Footnote (Generous vertical separation so multi-line title never collides)
+    {
+      id: 'slot-SUBTITLE',
+      slotId: 'SUBTITLE',
+      type: 'text',
+      role: 'subheading',
+      layer: 10,
+      placement: {
+        x: isCentered ? Math.round(240 * sx) : Math.round(160 * sx),
+        y: subtitleY,
+        width: isCentered ? Math.round(1440 * sx) : Math.round(1200 * sx),
+        height: subtitleH,
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        text: subtitleText,
+        fontSize: Math.round(26 * scale),
+        fontWeight: 400,
+        color: '#64748B',
+        align: isCentered ? 'center' : 'left',
+        verticalAlign: 'flex-start',
+        lineHeight: 1.45,
+        wrap: 'pre-wrap',
+      },
+    },
+    // 4. Subtle Executive Divider Line at the bottom
+    {
+      id: 'slot-DIVIDER',
+      slotId: 'DIVIDER',
+      type: 'shape',
+      role: 'divider',
+      layer: 2,
+      placement: {
+        x: Math.round(160 * sx),
+        y: Math.round(920 * sy),
+        width: Math.round(1600 * sx),
+        height: Math.max(1, Math.round(2 * sy)),
+        rotation: 0,
+        opacity: 0.75,
+      },
+      content: {
+        shape: 'rect',
+        fill: '#E2E8F0',
+      },
+    },
+    // 5. Metadata Footer
+    {
+      id: 'slot-FOOTNOTE',
+      slotId: 'FOOTNOTE',
+      type: 'text',
+      role: 'caption',
+      layer: 10,
+      placement: {
+        x: Math.round(160 * sx),
+        y: Math.round(945 * sy),
+        width: Math.round(1600 * sx),
+        height: Math.round(40 * sy),
+        rotation: 0,
+        opacity: 1,
+      },
+      content: {
+        text: 'Executive Presentation · Confidential',
+        fontSize: Math.round(16 * scale),
+        fontWeight: 500,
+        color: '#94A3B8',
+        align: isCentered ? 'center' : 'left',
+        verticalAlign: 'flex-start',
+        lineHeight: 1.4,
+      },
+    },
+  ]
+}
+
+
+
+
 
 

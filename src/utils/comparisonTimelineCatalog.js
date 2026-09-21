@@ -419,7 +419,19 @@ Object.assign(CATALOG, {
   comparison_side_by_side_cards_v1: comparisonFromSource('comparison_side_by_side_cards_v1', 'comparison_side_by_side_v1', 'cards'),
   comparison_side_by_side_centerline_v1: comparisonFromSource('comparison_side_by_side_centerline_v1', 'comparison_side_by_side_v1', 'centerline'),
   comparison_table_grid_v1: comparisonFromSource('comparison_table_grid_v1', 'comparison_table_v1', 'grid'),
-  section_divider_numbered_circle_v1: comparisonFromSource('section_divider_numbered_circle_v1', 'section_divider_numbered_v1', 'circle'),
+  section_divider_numbered_circle_v1: layoutBase('section_divider_numbered_circle_v1', 'section_divider', [
+    slot('SECTION_NUMBER', 'cols 5-8, rows 3-4', 'stat', '02', {
+      layer: 10,
+      typography: centeredTypo('stat', { fontSize: 56, colorRole: 'textOnImage' }),
+    }),
+    heading('HEADING', 'cols 2-11, rows 4-6', 'Next chapter', {
+      typography: centeredTypo('heading'),
+    }),
+    slot('SUBTITLE', 'cols 3-10, rows 6-7', 'subheading', 'What we cover in this section', {
+      layer: 10,
+      typography: centeredTypo('subheading'),
+    }),
+  ], { mode: 'section_divider', slideVariant: 'circle' }),
 })
 
 const TLH_BODY = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.'

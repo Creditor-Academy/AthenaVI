@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 /** Export deckLayoutCatalogs → backend seed-layouts.json */
-import { writeFileSync } from 'fs'
+import { writeFileSync, existsSync } from 'fs'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 import ALL_LAYOUT_CATALOGS from '../src/utils/deckLayoutCatalogs.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const outPath = join(__dirname, '../../AthenaVI_backend/src/modules/presentation/templates/seed-layouts.json')
+const candidates = [
+  join(__dirname, '../../AthenaVI_backend/src/modules/presentation/templates/seed-layouts.json'),
+  join(__dirname, '../../../Music/AthenaVI_backend/src/modules/presentation/templates/seed-layouts.json'),
+  'c:/Users/COBUY/Music/AthenaVI_backend/src/modules/presentation/templates/seed-layouts.json'
+]
+const outPath = candidates.find((p) => existsSync(dirname(p))) || candidates[0]
 
 function humanName(layoutId) {
   return String(layoutId)

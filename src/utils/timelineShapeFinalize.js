@@ -120,6 +120,8 @@ import {
 import { isDevicePhoneHighlightsLayout, layoutDevicePhoneHighlights } from './devicePhoneHighlightsLayout'
 import { isDevicePhoneTripleLayout, layoutDevicePhoneTriple } from './devicePhoneTripleLayout'
 import { isDeviceMultiClusterLayout, layoutDeviceMultiCluster } from './deviceMultiClusterLayout'
+import { isSectionDividerNumberedCircleLayout, layoutSectionDividerNumberedCircle } from './sectionDividerNumberedCircleLayout'
+import { isSectionDividerCenteredLayout, layoutSectionDividerCentered } from './sectionDividerCenteredLayout'
 import { isSectionDividerBandLayout, layoutSectionDividerBand } from './sectionDividerBandLayout'
 import { isBulletListCardsLayout, layoutBulletListCards } from './bulletListCardsLayout'
 import { isComparisonTableLayout, layoutComparisonTable } from './comparisonTableLayout'
@@ -5427,6 +5429,12 @@ export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = 
   }
   if (isAgendaTwoColumnLayout(layoutId)) {
     return layoutAgendaTwoColumn(elements, schema, palette, canvas)
+  }
+  if (isSectionDividerNumberedCircleLayout(layoutId)) {
+    return layoutSectionDividerNumberedCircle(elements, schema, palette, canvas)
+  }
+  if (isSectionDividerCenteredLayout(layoutId)) {
+    return layoutSectionDividerCentered(elements, schema, palette, canvas)
   }
   if (isSectionDividerBandLayout(layoutId)) {
     return layoutSectionDividerBand(elements, schema, palette, canvas)

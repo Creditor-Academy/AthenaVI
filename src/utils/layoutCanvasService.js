@@ -17,8 +17,31 @@ import {
 import { parseRegion } from './layoutPreviewUtils'
 import { buildCanvasDoc, resolveCanvasSize } from './presentationHelpers'
 import { layoutSchemaHasCanvasElements, resolveLayoutCanvasElementsDoc } from './videoTemplateToCanvasElements'
-import { resolveSmartLayoutState } from './smartLayoutState'
-import { isTitleCenteredLayout, isTitleMinimalLayout, isTitleImageLogoLayout, isTitleHeroLeftBlobLayout } from './titleCentered'
+import {
+  isTitleCenteredLayout,
+  isTitleMinimalLayout,
+  isTitleImageLogoLayout,
+  isTitleHeroLeftBlobLayout,
+  isTitleHeroLeftFadeLayout,
+  isTitleHeroRightOvalLayout,
+  isTitleHeroRightFadeLayout,
+  isTitleFullbleedLayout,
+  isTitleFullbleedOverlayLayout,
+} from './titleCentered'
+
+function isTitleCustomLayout(layoutId, schema) {
+  return (
+    isTitleCenteredLayout(layoutId, schema) ||
+    isTitleMinimalLayout(layoutId, schema) ||
+    isTitleImageLogoLayout(layoutId, schema) ||
+    isTitleHeroLeftBlobLayout(layoutId, schema) ||
+    isTitleHeroLeftFadeLayout(layoutId, schema) ||
+    isTitleHeroRightOvalLayout(layoutId, schema) ||
+    isTitleHeroRightFadeLayout(layoutId, schema) ||
+    isTitleFullbleedLayout(layoutId, schema) ||
+    isTitleFullbleedOverlayLayout(layoutId, schema)
+  )
+}
 
 function unwrapTemplateList(payload) {
   if (Array.isArray(payload)) return payload
@@ -271,7 +294,7 @@ export function needsLayoutCanvasRepair(slide, elements = [], schema = null, opt
   const list = Array.isArray(elements) ? elements : []
   const layoutId = slide?.layoutId || slide?.layout_id || schema?.layout_id
   if (opts?.deckPackId) {
-    if (isTitleCenteredLayout(layoutId, schema) || isTitleMinimalLayout(layoutId, schema) || isTitleImageLogoLayout(layoutId, schema)) return false
+    if (isTitleCustomLayout(layoutId, schema)) return false
     return hasOverlappingTextPlacements(list)
   }
   const slots = Array.isArray(schema?.slots) ? schema.slots : []
@@ -279,7 +302,7 @@ export function needsLayoutCanvasRepair(slide, elements = [], schema = null, opt
   if (slots.length && !list.length) return true
   if (!list.length) return false
 
-  if (isTitleCenteredLayout(layoutId, schema) || isTitleMinimalLayout(layoutId, schema) || isTitleImageLogoLayout(layoutId, schema)) return false
+  if (isTitleCustomLayout(layoutId, schema)) return false
 
   if (hasOverlappingTextPlacements(list) && !list.some((el) => /^TEAM_(FOUR|FIVE|SIX)_(CARD|PHOTO_BG)_|^TEAM_DEPT_(BAR|PILL|RING)_|^TEAM_LEAD_(BAND|CURVE|PANEL|RING|DOT)_|^TEAM_ORG_(HALO|RING|LINE)_/i.test(String(el.slotId || '')))) return true
   if (needsLegacyBrokenLayout(list, slide?.title)) return true

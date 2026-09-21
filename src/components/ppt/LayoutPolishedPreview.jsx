@@ -81,6 +81,14 @@ import {
   titleHeroLeftFadePreviewSvg,
   isTitleHeroRightOvalLayout,
   titleHeroRightOvalPreviewSvg,
+  isTitleHeroRightFadeLayout,
+  titleHeroRightFadePreviewSvg,
+  isTitleFullbleedLayout,
+  titleFullbleedPreviewSvg,
+  isTitleFullbleedOverlayLayout,
+  titleFullbleedOverlayPreviewSvg,
+  isTitleWithLogoLayout,
+  titleWithLogoPreviewSvg,
 } from '../../utils/titleCentered.js'
 
 const LAYOUT_POLISHED_THEME = {
@@ -1829,9 +1837,12 @@ function PolishedSectionDividerPreview({ previewHints, large, className, style, 
   const numberMeta = previewHints.slots?.SECTION_NUMBER || {}
   const { display: headingText } = formatPreviewText(headingMeta.text || 'Section title', { bold: true, uppercase: false })
   const { display: subtitleText } = formatPreviewText(subtitleMeta.text || '', { bold: false, uppercase: false })
-  const { display: numberText } = formatPreviewText(numberMeta.text || '02', { bold: true, uppercase: false })
+  const { display: numberText } = formatPreviewText(numberMeta.text || '01', { bold: true, uppercase: false })
   const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
   const isBand = variant === 'full' || variant === 'center' || previewHints.mode === 'section_divider'
+  const isCentered = variant === 'default' || variant === 'centered'
+  const isCircle = variant === 'circle'
+
   return (
     <div className={className} style={{
       position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden',
@@ -1844,6 +1855,21 @@ function PolishedSectionDividerPreview({ previewHints, large, className, style, 
       gap: large ? 10 : 3,
       ...style,
     }}>
+      {/* Soft radial aura for centered variant */}
+      {isCentered && (
+        <div style={{
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: large ? 260 : 88,
+          height: large ? 160 : 54,
+          borderRadius: '50%',
+          background: `radial-gradient(ellipse, ${t.accentSoft} 0%, transparent 70%)`,
+          opacity: 0.85,
+          pointerEvents: 'none',
+        }} />
+      )}
       {(variant === 'full' || variant === 'center') && (
         <div style={{
           position: 'absolute',
@@ -1873,23 +1899,93 @@ function PolishedSectionDividerPreview({ previewHints, large, className, style, 
         border: variant === 'frame' ? `1.5px solid ${t.accentBorder}` : 'none',
         borderRadius: variant === 'frame' ? (large ? 10 : 4) : 0,
       }}>
-        {(numberText || variant === 'circle') && (
-          <div style={{
-            fontSize: large ? (variant === 'large' ? '3rem' : '2.2rem') : '0.7rem',
-            fontWeight: 900,
-            color: t.accent,
-            width: variant === 'circle' ? (large ? 64 : 22) : 'auto',
-            height: variant === 'circle' ? (large ? 64 : 22) : 'auto',
-            borderRadius: variant === 'circle' ? '50%' : 0,
-            border: variant === 'circle' ? `2px solid ${t.accentBorder}` : 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>{numberText}</div>
+        {/* Number row with side accent bars for centered / filled badge for circle */}
+        {(numberText || isCircle) && (
+          isCircle ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: large ? 10 : 4, justifyContent: 'center' }}>
+              {/* Left rule */}
+              <div style={{ width: large ? 28 : 10, height: large ? 2 : 1, borderRadius: 99, background: t.accent, opacity: 0.4, flexShrink: 0 }} />
+              {/* Filled circle badge with dashed outer ring */}
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                {/* Dashed outer ring */}
+                <div style={{
+                  position: 'absolute',
+                  inset: large ? -6 : -3,
+                  borderRadius: '50%',
+                  border: `${large ? 1.5 : 0.8}px dashed ${t.accent}`,
+                  opacity: 0.4,
+                }} />
+                {/* Filled accent badge */}
+                <div style={{
+                  width: large ? 60 : 22,
+                  height: large ? 60 : 22,
+                  borderRadius: '50%',
+                  background: t.accent,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: large ? '1.6rem' : '0.6rem',
+                  fontWeight: 900,
+                  color: '#ffffff',
+                  letterSpacing: large ? 1 : 0,
+                }}>{numberText}</div>
+              </div>
+              {/* Right rule */}
+              <div style={{ width: large ? 28 : 10, height: large ? 2 : 1, borderRadius: 99, background: t.accent, opacity: 0.4, flexShrink: 0 }} />
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: large ? 10 : 3, justifyContent: 'center' }}>
+              {isCentered && (
+                <div style={{
+                  width: large ? 36 : 12,
+                  height: large ? 2 : 1,
+                  borderRadius: 99,
+                  background: t.accent,
+                  opacity: 0.6,
+                  flexShrink: 0,
+                }} />
+              )}
+              <div style={{
+                fontSize: large ? (variant === 'large' ? '3rem' : '2.2rem') : '0.7rem',
+                fontWeight: 900,
+                color: t.accent,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                letterSpacing: isCentered ? (large ? 3 : 1) : 0,
+              }}>{numberText}</div>
+              {isCentered && (
+                <div style={{
+                  width: large ? 36 : 12,
+                  height: large ? 2 : 1,
+                  borderRadius: 99,
+                  background: t.accent,
+                  opacity: 0.6,
+                  flexShrink: 0,
+                }} />
+              )}
+            </div>
+          )
         )}
-        <div style={{ fontSize: large ? (variant === 'large' ? '2rem' : '1.5rem') : '0.55rem', fontWeight: 800, color: t.text }}>{headingText}</div>
+        <div style={{
+          fontSize: large ? (variant === 'large' ? '2rem' : '1.5rem') : '0.55rem',
+          fontWeight: 800,
+          color: t.text,
+          letterSpacing: isCentered ? (large ? -0.5 : 0) : 0,
+        }}>{headingText}</div>
         {subtitleText && <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : '0.26rem', color: t.muted }}>{subtitleText}</div>}
-        {isBand && variant === 'default' && <div style={{ width: large ? 64 : 20, height: large ? 4 : 1.5, background: t.accent, borderRadius: 99 }} />}
+        {/* Accent pill underline for centered + circle variants */}
+        {(isCentered || isCircle) && (
+          <div style={{
+            width: large ? 36 : 12,
+            height: large ? 3 : 1,
+            background: t.accent,
+            borderRadius: 99,
+            marginTop: large ? 4 : 1,
+            opacity: 0.9,
+          }} />
+        )}
+        {isBand && !isCentered && !isCircle && <div style={{ width: large ? 64 : 20, height: large ? 4 : 1.5, background: t.accent, borderRadius: 99 }} />}
       </div>
     </div>
   )
@@ -2680,6 +2776,84 @@ export default function LayoutPolishedPreview({
 
   if (isTitleHeroRightOvalLayout(previewHints.layout_id, schema) || previewHints.layout_id === 'title_hero_right_oval_v1' || previewMode === 'title_hero_right_oval') {
     const svg = titleHeroRightOvalPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (isTitleHeroRightFadeLayout(previewHints.layout_id, schema) || previewHints.layout_id === 'title_hero_right_fade_v1' || previewMode === 'title_hero_right_fade') {
+    const svg = titleHeroRightFadePreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (
+    isTitleFullbleedLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'title_fullbleed_v1' ||
+    previewMode === 'title_fullbleed'
+  ) {
+    const svg = titleFullbleedPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (
+    isTitleFullbleedOverlayLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'title_fullbleed_overlay_v1' ||
+    previewMode === 'title_fullbleed_overlay'
+  ) {
+    const svg = titleFullbleedOverlayPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#0F172A', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (
+    isTitleWithLogoLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'title_with_logo_v1' ||
+    previewHints.layout_id === 'title_with_logo_corner_v1' ||
+    previewHints.layout_id === 'title_with_logo_centered_v1' ||
+    previewMode === 'title_with_logo'
+  ) {
+    const svg = titleWithLogoPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
     return (
       <div className={className} style={{
         position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
