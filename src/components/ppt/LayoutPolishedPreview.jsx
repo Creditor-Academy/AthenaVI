@@ -98,6 +98,10 @@ import {
   isParaLandscapeImageBottomLayout,
   paraLandscapeImageBottomPreviewSvg,
 } from '../../utils/paraLandscapeImageBottom.js'
+import {
+  isParaLandscapeImageTopLayout,
+  paraLandscapeImageTopPreviewSvg,
+} from '../../utils/paraLandscapeImageTop.js'
 
 const LAYOUT_POLISHED_THEME = {
   bg: 'var(--preview-bg, var(--bg-card, #ffffff))',
@@ -1681,10 +1685,12 @@ function PolishedClosingImageSplitPreview({ previewHints, large, className, styl
   const ctaMeta = previewHints.slots?.CTA || {}
   const { display: headingText } = formatPreviewText(headingMeta.text || '', { bold: true, uppercase: false })
   const { display: bodyText } = formatPreviewText(bodyMeta.text || 'Closing message with a clear call to action.', { bold: false, uppercase: false })
-  const { display: ctaText } = formatPreviewText(ctaMeta.text || 'Book a demo', { bold: true, uppercase: false })
+  // Only show CTA if it's actually defined in the schema slots
+  const { display: ctaText } = ctaMeta.text ? formatPreviewText(ctaMeta.text, { bold: true, uppercase: false }) : { display: '' }
   const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
   const isBottom = variant === 'bottom'
-  const isFramed = variant === 'framed' || variant === 'fullheight'
+  const isFramed = variant === 'framed'
+  const isFullHeight = variant === 'fullheight'
   const isOverlay = variant === 'overlay'
   const textCol = (
     <div style={{ padding: large ? '10% 8%' : '12% 8%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: large ? 10 : 4 }}>
@@ -1716,7 +1722,7 @@ function PolishedClosingImageSplitPreview({ previewHints, large, className, styl
     )
   }
   return (
-    <div className={className} style={{ position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden', display: 'grid', gridTemplateColumns: variant === 'fullheight' ? (imageSide === 'left' ? '1.15fr 0.85fr' : '0.85fr 1.15fr') : '1fr 1fr', ...style }}>
+    <div className={className} style={{ position: 'relative', ...frameStyle, background: t.bg, overflow: 'hidden', display: 'grid', gridTemplateColumns: isFullHeight ? (imageSide === 'left' ? '1.15fr 0.85fr' : '0.85fr 1.15fr') : '1fr 1fr', ...style }}>
       {imageSide === 'left' ? (<>{imageCol}{textCol}</>) : (<>{textCol}{imageCol}</>)}
     </div>
   )
@@ -2840,6 +2846,26 @@ export default function LayoutPolishedPreview({
     previewMode === 'para_landscape_image_bottom'
   ) {
     const svg = paraLandscapeImageBottomPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (
+    isParaLandscapeImageTopLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'para_landscape_image_top' ||
+    previewMode === 'para_landscape_image_top'
+  ) {
+    const svg = paraLandscapeImageTopPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
     return (
       <div className={className} style={{
         position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
