@@ -48,6 +48,7 @@ import { isSectionDividerNumberedCircleLayout } from './sectionDividerNumberedCi
 import { isSectionDividerCenteredLayout } from './sectionDividerCenteredLayout.js'
 import { isSectionWithImageLayout } from './sectionWithImageLayout.js'
 import { isParaLandscapeImageBottomLayout } from './paraLandscapeImageBottom.js'
+import { isParaLandscapeImageTopLayout } from './paraLandscapeImageTop.js'
 import { isCatalogPlaceholderText } from './catalogPlaceholder.js'
 import { normalizeChartContent } from './chartContentNormalize.js'
 import {
@@ -1179,7 +1180,8 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
       (isSectionDividerNumberedCircleLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'SECTION_NUMBER') ||
       (isSectionDividerCenteredLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'SECTION_NUMBER') ||
       (isSectionWithImageLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
-      (isParaLandscapeImageBottomLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW')
+      (isParaLandscapeImageBottomLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
+      (isParaLandscapeImageTopLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW')
     ) return el
     const colorRole = String(el.content?.colorRole || '').toLowerCase()
     const rawColor = el.content?.color

@@ -310,11 +310,11 @@ const CATALOG = {
   section_right_image_v1: layoutBase('section_right_image_v1', 'image+text', [
     heading('HEADING', 'cols 2-6, rows 2-4', 'Section title'),
     body('BODY', 'cols 2-6, rows 4-8', P.one, 4),
-    imageRight(),
+    imageRight('cols 7-11, rows 2-9', 'HERO_IMAGE'),
   ]),
 
   section_left_image_v1: layoutBase('section_left_image_v1', 'image+text', [
-    imageLeft(),
+    imageLeft('cols 2-6, rows 2-9', 'HERO_IMAGE'),
     heading('HEADING', 'cols 7-11, rows 2-4', 'Section title'),
     body('BODY', 'cols 7-11, rows 4-8', P.one, 4),
   ]),
@@ -793,16 +793,16 @@ Object.assign(CATALOG, {
     'section_divider_split_v1',
     'image'
   ),
-  section_left_image_fullheight_v1: simpleSlidesFromSource(
-    'section_left_image_fullheight_v1',
-    'section_left_image_v1',
-    'fullheight'
-  ),
-  section_right_image_fullheight_v1: simpleSlidesFromSource(
-    'section_right_image_fullheight_v1',
-    'section_right_image_v1',
-    'fullheight'
-  ),
+  section_left_image_fullheight_v1: layoutBase('section_left_image_fullheight_v1', 'image+text', [
+    slot('HERO_IMAGE', 'cols 1-6, rows 1-10', 'image', null, { layer: 2, fit: 'cover', imageStyle: 'featured', borderRadius: 0 }),
+    heading('HEADING', 'cols 7-11, rows 2-4', 'Section title'),
+    body('BODY', 'cols 7-11, rows 4-8', P.one, 4),
+  ], { slideVariant: 'fullheight' }),
+  section_right_image_fullheight_v1: layoutBase('section_right_image_fullheight_v1', 'image+text', [
+    heading('HEADING', 'cols 2-6, rows 2-4', 'Section title'),
+    body('BODY', 'cols 2-6, rows 4-8', P.one, 4),
+    slot('HERO_IMAGE', 'cols 7-12, rows 1-10', 'image', null, { layer: 2, fit: 'cover', imageStyle: 'featured', borderRadius: 0 }),
+  ], { slideVariant: 'fullheight' }),
   text_two_column_split_v1: simpleSlidesFromSource('text_two_column_split_v1', 'text_two_column_v1', 'split'),
   title_statement_split_v1: simpleSlidesFromSource('title_statement_split_v1', 'title_statement_v1', 'split'),
   title_with_logo_corner_v1: simpleSlidesFromSource('title_with_logo_corner_v1', 'title_with_logo_v1', 'corner'),
