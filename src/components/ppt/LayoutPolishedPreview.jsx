@@ -1680,22 +1680,28 @@ function PolishedEightShortTextsPreview({ previewHints, large, className, style,
 function PolishedClosingImageSplitPreview({ previewHints, large, className, style, fill, aspectRatio, imageSide = 'right' }) {
   const t = LAYOUT_POLISHED_THEME
   const variant = previewHints.slideVariant || 'default'
-  const headingMeta = previewHints.slots?.HEADING || previewHints.slots?.MAIN_TITLE || {}
-  const bodyMeta = previewHints.slots?.BODY || {}
+  const headingMeta = previewHints.slots?.HEADING || previewHints.slots?.MAIN_TITLE || previewHints.slots?.SUBHEADLINE || {}
+  const bodyMeta = previewHints.slots?.BODY || previewHints.slots?.STATEMENT || {}
   const ctaMeta = previewHints.slots?.CTA || {}
   const { display: headingText } = formatPreviewText(headingMeta.text || '', { bold: true, uppercase: false })
   const { display: bodyText } = formatPreviewText(bodyMeta.text || 'Closing message with a clear call to action.', { bold: false, uppercase: false })
   // Only show CTA if it's actually defined in the schema slots
   const { display: ctaText } = ctaMeta.text ? formatPreviewText(ctaMeta.text, { bold: true, uppercase: false }) : { display: '' }
   const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
-  const isBottom = variant === 'bottom'
+  const isBottom = variant === 'bottom' || imageSide === 'bottom'
   const isFramed = variant === 'framed'
   const isFullHeight = variant === 'fullheight'
   const isOverlay = variant === 'overlay'
+  
+  // For statement_image_bottom layout, use dark text colors
+  const isStatementLayout = imageSide === 'bottom'
+  const headingColor = isStatementLayout ? t.accent : t.text
+  const bodyColor = isStatementLayout ? t.text : t.muted
+  
   const textCol = (
     <div style={{ padding: large ? '10% 8%' : '12% 8%', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: large ? 10 : 4 }}>
-      {headingText && <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : PREVIEW_SUBTITLE_FS.small, fontWeight: 800, color: t.text }}>{headingText}</div>}
-      <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : '0.28rem', color: t.muted, lineHeight: 1.45 }}>{bodyText}</div>
+      {headingText && <div style={{ fontSize: large ? (isStatementLayout ? '0.7rem' : PREVIEW_TITLE_FS.large) : (isStatementLayout ? '0.32rem' : PREVIEW_SUBTITLE_FS.small), fontWeight: isStatementLayout ? 600 : 800, color: headingColor }}>{headingText}</div>}
+      <div style={{ fontSize: large ? (isStatementLayout ? '1.6rem' : PREVIEW_BODY_FS.large) : (isStatementLayout ? '0.62rem' : '0.28rem'), fontWeight: isStatementLayout ? 800 : 400, color: bodyColor, lineHeight: isStatementLayout ? 1.2 : 1.45 }}>{bodyText}</div>
       {ctaText && <div style={{ fontSize: large ? '0.9rem' : '0.32rem', fontWeight: 700, color: t.accent }}>{ctaText}</div>}
     </div>
   )
@@ -3089,6 +3095,9 @@ export default function LayoutPolishedPreview({
   }
   if (previewMode === 'closing_cta') {
     return <PolishedClosingCtaPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
+  }
+  if (previewMode === 'statement_image_bottom') {
+    return <PolishedClosingImageSplitPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} imageSide="bottom" />
   }
   if (previewMode === 'closing_image_right') {
     return <PolishedClosingImageSplitPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} imageSide="right" />

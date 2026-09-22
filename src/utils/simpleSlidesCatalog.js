@@ -320,30 +320,47 @@ const CATALOG = {
   ]),
 
   wide_image_statement_top_v1: layoutBase('wide_image_statement_top_v1', 'image+text', [
-    slot('HERO_IMAGE', 'cols 1-12, rows 1-5', 'image', null, { layer: 2, fit: 'cover' }),
-    slot('SUBHEADLINE', 'cols 2-10, rows 6-7', 'subheading', 'Subheadline', {
+    slot('SUBHEADLINE', 'cols 2-10, rows 1-2', 'subheading', 'Subheadline', {
       layer: 10,
-      typography: typo('subheading', { fontWeight: 700 }),
+      typography: typo('subheading', { fontSize: 16, fontWeight: 600, colorRole: 'accent' }),
     }),
-    slot('STATEMENT', 'cols 2-10, rows 7-10', 'quote', P.short, {
+    slot('STATEMENT', 'cols 2-10, rows 2-5', 'quote', P.short, {
       layer: 10,
-      typography: typo('quote'),
+      typography: typo('quote', { fontSize: 36, fontWeight: 800, lineHeight: 1.2, colorRole: 'text', color: '#1E293B' }),
       max_lines: 3,
     }),
+    slot('HERO_IMAGE', 'cols 1-12, rows 6-10', 'image', null, { layer: 2, fit: 'cover', borderRadius: 0 }),
   ]),
 
   wide_image_statement_bottom_v1: layoutBase('wide_image_statement_bottom_v1', 'image+text', [
-    slot('SUBHEADLINE', 'cols 2-10, rows 2-3', 'subheading', 'Subheadline', {
+    slot('SUBHEADLINE', 'cols 2-10, rows 1-2', 'subheading', 'Subheadline', {
       layer: 10,
-      typography: typo('subheading', { fontWeight: 700 }),
+      typography: typo('subheading', { fontSize: 16, fontWeight: 600, colorRole: 'accent' }),
     }),
-    slot('STATEMENT', 'cols 2-10, rows 3-6', 'quote', P.short, {
+    slot('STATEMENT', 'cols 2-10, rows 2-6', 'quote', P.short, {
       layer: 10,
-      typography: typo('quote'),
+      typography: typo('quote', { fontSize: 40, fontWeight: 800, lineHeight: 1.2, colorRole: 'text', color: '#1E293B' }),
       max_lines: 3,
     }),
-    slot('HERO_IMAGE', 'cols 1-12, rows 6-10', 'image', null, { layer: 2, fit: 'cover' }),
+    slot('HERO_IMAGE', 'cols 1-12, rows 7-10', 'image', null, { layer: 2, fit: 'cover', borderRadius: 0 }),
   ]),
+
+  wide_image_statement_overlay_v1: layoutBase('wide_image_statement_overlay_v1', 'image+text', [
+    slot('BACKGROUND_IMAGE', 'cols 1-12, rows 1-10', 'background', null, { layer: 0, fit: 'cover' }),
+    slot('OVERLAY_SCRIM', 'cols 1-12, rows 1-10', 'background', null, {
+      layer: 1,
+      shape: { type: 'rect', fill: { type: 'solid', color: 'rgba(0,0,0,0.5)' } },
+    }),
+    slot('SUBHEADLINE', 'cols 3-10, rows 4-5', 'subheading', 'Subheadline', {
+      layer: 10,
+      typography: typo('subheading', { fontSize: 20, fontWeight: 600, colorRole: 'textOnImage', color: '#FFFFFF', align: 'center' }),
+    }),
+    slot('STATEMENT', 'cols 2-11, rows 5-8', 'quote', P.short, {
+      layer: 10,
+      typography: typo('quote', { fontSize: 48, fontWeight: 800, lineHeight: 1.2, colorRole: 'textOnImage', color: '#FFFFFF', align: 'center' }),
+      max_lines: 3,
+    }),
+  ], { slideVariant: 'center' }),
 
   statement_left_v1: layoutBase('statement_left_v1', 'quote', [
     slot(
@@ -811,11 +828,6 @@ Object.assign(CATALOG, {
     'two_para_right_image_bottom_v1',
     'two_para_right_image_v1',
     'bottom'
-  ),
-  wide_image_statement_overlay_v1: simpleSlidesFromSource(
-    'wide_image_statement_overlay_v1',
-    'wide_image_statement_bottom_v1',
-    'overlay'
   ),
 })
 

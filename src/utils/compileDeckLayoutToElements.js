@@ -703,7 +703,8 @@ function buildTextElement(slot, placement, options) {
     colorRole =
       role === 'body' || role === 'caption' || role === 'subheading' ? 'textOnImageMuted' : 'textOnImage'
   }
-  const color = colorMap[colorRole] || colorMap.text
+  // Prioritize explicit color from typography, otherwise use colorRole mapping
+  const color = ty.color || colorMap[colorRole] || colorMap.text
   const align = ty.align || textAlignForRole(role)
 
   // Strip raw markdown so editor preview matches backend rich-run rendering.
