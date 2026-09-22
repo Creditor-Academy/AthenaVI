@@ -1,23 +1,25 @@
 import {
-  FiGrid,
   FiType,
   FiUpload,
   FiSquare,
-  FiBookmark,
   FiLayers,
-  FiSettings,
+  FiBarChart2,
+  FiGrid,
+  FiCode,
+  FiFile,
   FiChevronLeft,
   FiChevronRight,
 } from 'react-icons/fi'
 
 const DOCK_TABS = [
-  { id: 'elements', label: 'Elements', icon: FiGrid },
   { id: 'text', label: 'Text', icon: FiType },
-  { id: 'uploads', label: 'Uploads', icon: FiUpload },
+  { id: 'uploads', label: 'Media', icon: FiUpload },
   { id: 'shapes', label: 'Shapes', icon: FiSquare },
-  { id: 'brand', label: 'Brand Kit', icon: FiBookmark },
-  { id: 'canvases', label: 'Pages', icon: FiLayers },
-  { id: 'settings', label: 'Settings', icon: FiSettings },
+  { id: 'graphics', label: 'Graphics', icon: FiLayers },
+  { id: 'charts', label: 'Charts', icon: FiBarChart2 },
+  { id: 'tables', label: 'Tables', icon: FiGrid },
+  { id: 'embeds', label: 'Embed', icon: FiCode },
+  { id: 'canvases', label: 'Pages', icon: FiFile },
 ]
 
 export default function CanvasLeftDock({

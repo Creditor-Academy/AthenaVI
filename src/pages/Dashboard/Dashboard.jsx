@@ -33,7 +33,7 @@ import PptBuilder from '../Slides/PptBuilder/PptBuilder.jsx'
 import AIImageStudio from '../Slides/AIStudio/AIImageStudio.jsx'
 import AIPptEditor from '../Slides/AIPptComponents/AIPptEditor.jsx'
 import PptDeckOpenBoot from '../Slides/AIPptComponents/PptDeckOpenBoot.jsx'
-import CanvasEditor from '../CanvasEditor/CanvasEditor.jsx'
+import CanvasBuilder from '../CanvasEditor/CanvasBuilder.jsx'
 import { getAvatarTypeOption } from '../Avatars/avatarTypeOptions.js'
 import NotificationsQuickModal from '../../components/ui/NotificationsQuickModal/NotificationsQuickModal.jsx'
 import AdminAlertsQuickModal from '../../components/ui/AdminAlertsQuickModal/AdminAlertsQuickModal.jsx'
@@ -528,6 +528,52 @@ function Dashboard({ onCreate, initialSection }) {
   }
 
   if (section === 'editor') {
+    if (editorData?.config?.editorKind === 'canvas') {
+      return (
+        <CanvasEditor
+          initialSize={{
+            width: editorData?.config?.canvasWidth || 1080,
+            height: editorData?.config?.canvasHeight || 1080,
+          }}
+          title={editorData?.config?.title || editorData?.title || 'Untitled Design'}
+          workspaceId={editorData?.workspaceId || editorData?.config?.workspaceId || null}
+          folderId={editorData?.folderId || editorData?.config?.folderId || null}
+          onBack={() => {
+            setPresentationCreateContext(null)
+            const session = loadPresentationEditorSession()
+            persistWorkspaceFolderNavigation({
+              workspaceId:
+                editorData?.workspaceId ||
+                session?.workspaceId ||
+                editorData?.config?.workspaceId,
+              folderId:
+                editorData?.folderId ||
+                session?.folderId ||
+                editorData?.config?.folderId ||
+                null,
+              workspace:
+                editorData?.workspaceName ||
+                editorData?.config?.workspace ||
+                editorData?.config?.workspaceName ||
+                '',
+              folder:
+                editorData?.folderName ||
+                editorData?.config?.folder ||
+                editorData?.config?.folderName ||
+                '',
+            })
+            try {
+              sessionStorage.setItem('workspaceActiveRootTab', 'workspace')
+            } catch {
+              /* ignore */
+            }
+            clearPresentationEditorSession()
+            goToSection('workspace')
+          }}
+        />
+      )
+    }
+
     if (!editorData?.workspaceId || !editorData?.presentationId) {
       return <PptDeckOpenBoot title={editorData?.config?.title || editorData?.title || ''} />
     }
@@ -782,6 +828,16 @@ function Dashboard({ onCreate, initialSection }) {
                   return
                 }
 
+                if (preferred === 'image-editor' && workspaceId) {
+                  setCreateLocationContext({
+                    optionId: 'image-editor',
+                    workspaceId,
+                    folderId,
+                  })
+                  goToSection('image-editor')
+                  return
+                }
+
                 if ((preferred === 'ppt-ai' || preferred === 'ppt-builder') && workspaceId) {
                   setPresentationCreateContext({
                     ...context,
@@ -831,12 +887,19 @@ function Dashboard({ onCreate, initialSection }) {
           {section === 'brandkits' && <BrandKits />}
           {section === 'image-editor' && (
             createPortal(
-              <CanvasEditor
-                onBack={() => {
-                  const destination = persistWorkspaceFolderNavigation(createLocationContext)
-                  window.location.href = destination
-                }}
+              <CanvasBuilder
+                initialWorkspaceId={createLocationContext?.workspaceId}
+                initialFolderId={createLocationContext?.folderId}
+                createContext={
+                  createLocationContext?.optionId === 'image-editor'
+                    ? createLocationContext
+                    : null
+                }
                 initialSize={createLocationContext?.canvasSize || null}
+                onBack={() => {
+                  persistWorkspaceFolderNavigation(createLocationContext)
+                  goToSection('workspace')
+                }}
               />,
               document.body
             )

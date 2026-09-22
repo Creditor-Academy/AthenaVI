@@ -1495,7 +1495,7 @@
 
 .ppt-el-ctx-menu {
   position: fixed;
-  z-index: 9800;
+  z-index: 120000;
   min-width: 220px;
   padding: 6px 0;
   background: #fff;
@@ -1570,7 +1570,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
-  z-index: 1;
+  z-index: 120010;
 }
 
 .ppt-el-ctx-sub:hover:not(.is-disabled) .ppt-el-ctx-sub-panel,
