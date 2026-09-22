@@ -40,8 +40,8 @@ const OPTION_VISUALS = {
     image: canvasToolsImage,
     accent: 'orange',
     eyebrow: 'Canvas Editor',
-    subtitle: 'Choose where this canvas project should be saved. You’ll name it on the next screen.',
-    caption: 'Edited assets stay easy to find for you and your team.',
+    subtitle: 'Choose where this canvas project should be saved. Next you’ll pick the canvas size.',
+    caption: 'Edited designs stay easy to find for you and your team.',
   },
 }
 

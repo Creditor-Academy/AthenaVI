@@ -34,6 +34,6 @@ export const CREATE_OPTIONS = [
     icon: ImagePlus,
     accent: 'orange',
     title: 'Canvas Editor',
-    description: 'Edit, crop, and polish your visual assets',
+    description: 'Design on a custom-size canvas, with the same tools as the presentation editor',
   },
 ]
