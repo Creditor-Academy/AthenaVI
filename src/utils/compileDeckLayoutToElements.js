@@ -33,6 +33,14 @@ import { isProcessLinearHorizontalLayout } from './processLinearHorizontalLayout
 import { isProcessLinearHortiFourLayout } from './processLinearHortiFourLayout.js'
 import { isProcessLinearFourCardsLayout } from './processLinearFourCardsLayout.js'
 import { isProcessLinearNumericLayout } from './processLinearNumericLayout.js'
+import { isBulletListDenseLayout } from './bulletListDenseLayout.js'
+import { isBulletListNumberedLayout } from './bulletListNumberedLayout.js'
+import { isBulletListTwoColumnLayout } from './bulletListTwoColumnLayout.js'
+import { isBulletListSplitLayout } from './bulletListSplitLayout.js'
+import { isTextOnlyCenteredLayout } from './textOnlyCenteredLayout.js'
+import { isSectionDividerSplitDiagonalLayout } from './sectionDividerSplitDiagonalLayout.js'
+import { isSectionDividerSplitLayout } from './sectionDividerSplitLayout.js'
+import { isBulletListNumberedVerticalLayout } from './bulletListNumberedVerticalLayout.js'
 import { isProcessLinearNumericCardsLayout } from './processLinearNumericCardsLayout.js'
 import { isTableTwoSameHeaderLayout, isTableTwoSameHeaderCardsLayout } from './tableTwoSameHeaderLayout.js'
 import { isTimelineHorizontalLayout } from './timelineHorizontal.js'
@@ -703,7 +711,8 @@ function buildTextElement(slot, placement, options) {
     colorRole =
       role === 'body' || role === 'caption' || role === 'subheading' ? 'textOnImageMuted' : 'textOnImage'
   }
-  const color = colorMap[colorRole] || colorMap.text
+  // Prioritize explicit color from typography, otherwise use colorRole mapping
+  const color = ty.color || colorMap[colorRole] || colorMap.text
   const align = ty.align || textAlignForRole(role)
 
   // Strip raw markdown so editor preview matches backend rich-run rendering.
@@ -1181,7 +1190,15 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
       (isSectionDividerCenteredLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'SECTION_NUMBER') ||
       (isSectionWithImageLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
       (isParaLandscapeImageBottomLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
-      (isParaLandscapeImageTopLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW')
+      (isParaLandscapeImageTopLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
+      (isBulletListDenseLayout(schema?.layout_id) && (/^(HEADING|ITEM_\d+|NUMBER_\d+|BAR_\d+|SLIDE_BG)$/i.test(String(el.slotId || '')))) ||
+      (isBulletListNumberedLayout(schema?.layout_id) && (/^(HEADING|TITLE_\d+|ITEM_\d+|HEX_\d+|SLIDE_BG)$/i.test(String(el.slotId || '')))) ||
+      (isBulletListNumberedVerticalLayout(schema?.layout_id) && (/^(HEADING|TITLE_\d+|ITEM_\d+|ROW_\d+|SLIDE_BG)$/i.test(String(el.slotId || '')))) ||
+      (isBulletListTwoColumnLayout(schema?.layout_id) && (/^(HEADING|LEFT_\d+|RIGHT_\d+|CHROME|SLIDE_BG)$/i.test(String(el.slotId || '')))) ||
+      (isBulletListSplitLayout(schema?.layout_id) && (/^(HEADING|LEFT_TITLE|RIGHT_TITLE|LEFT_\d+|RIGHT_\d+|CARD_LEFT|CARD_RIGHT|SLIDE_BG)$/i.test(String(el.slotId || '')))) ||
+      (isTextOnlyCenteredLayout(schema?.layout_id) && (/^(HEADING|BODY|BADGE|CHROME)$/i.test(String(el.slotId || '')))) ||
+      (isSectionDividerSplitDiagonalLayout(schema?.layout_id) && (/^(HEADING|BODY|EYEBROW|LABEL|SECTION_NUMBER|CHROME)$/i.test(String(el.slotId || '')))) ||
+      (isSectionDividerSplitLayout(schema?.layout_id) && (/^(HEADING|BODY|CHROME)$/i.test(String(el.slotId || ''))))
     ) return el
     const colorRole = String(el.content?.colorRole || '').toLowerCase()
     const rawColor = el.content?.color

@@ -51,6 +51,38 @@ import {
   layoutEightShortTextsImage,
 } from './eightShortTextsImageLayout.js'
 import {
+  isBulletListDenseLayout,
+  layoutBulletListDense,
+} from './bulletListDenseLayout.js'
+import {
+  isBulletListNumberedLayout,
+  layoutBulletListNumbered,
+} from './bulletListNumberedLayout.js'
+import {
+  isBulletListTwoColumnLayout,
+  layoutBulletListTwoColumn,
+} from './bulletListTwoColumnLayout.js'
+import {
+  isTextOnlyCenteredLayout,
+  layoutTextOnlyCentered,
+} from './textOnlyCenteredLayout.js'
+import {
+  isSectionDividerSplitDiagonalLayout,
+  layoutSectionDividerSplitDiagonal,
+} from './sectionDividerSplitDiagonalLayout.js'
+import {
+  isSectionDividerSplitLayout,
+  layoutSectionDividerSplit,
+} from './sectionDividerSplitLayout.js'
+import {
+  isBulletListSplitLayout,
+  layoutBulletListSplit,
+} from './bulletListSplitLayout.js'
+import {
+  isBulletListNumberedVerticalLayout,
+  layoutBulletListNumberedVertical,
+} from './bulletListNumberedVerticalLayout.js'
+import {
   isIntroThreeParaIconsLayout,
   layoutIntroThreeParaIcons,
 } from './introThreeParaIconsLayout.js'
@@ -304,6 +336,38 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
   
   if (isEightShortTextsImageLayout(layoutId)) {
     return layoutEightShortTextsImage(elements, schema, palette, canvas)
+  }
+
+  if (isBulletListDenseLayout(layoutId)) {
+    return layoutBulletListDense(elements, schema, palette, canvas)
+  }
+
+  if (isBulletListNumberedVerticalLayout(layoutId)) {
+    return layoutBulletListNumberedVertical(elements, schema, palette, canvas)
+  }
+
+  if (isBulletListNumberedLayout(layoutId)) {
+    return layoutBulletListNumbered(elements, schema, palette, canvas)
+  }
+
+  if (isBulletListSplitLayout(layoutId)) {
+    return layoutBulletListSplit(elements, schema, palette, canvas)
+  }
+
+  if (isBulletListTwoColumnLayout(layoutId)) {
+    return layoutBulletListTwoColumn(elements, schema, palette, canvas)
+  }
+
+  if (isTextOnlyCenteredLayout(layoutId)) {
+    return layoutTextOnlyCentered(elements, schema, palette, canvas)
+  }
+
+  if (isSectionDividerSplitDiagonalLayout(layoutId)) {
+    return layoutSectionDividerSplitDiagonal(elements, schema, palette, canvas)
+  }
+
+  if (isSectionDividerSplitLayout(layoutId)) {
+    return layoutSectionDividerSplit(elements, schema, palette, canvas)
   }
   
   if (isIntroThreeParaIconsLayout(layoutId)) {

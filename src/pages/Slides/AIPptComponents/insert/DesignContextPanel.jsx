@@ -528,6 +528,10 @@ function ShapeDesignSection({
                     patchContent({ stroke: color, frameColor: color, fill: color })
                     return
                   }
+                  if (element?.type === 'graphic') {
+                    patchContent({ fill: color, stroke: color })
+                    return
+                  }
                   patchContent({ fill })
                 }}
               />
@@ -1085,7 +1089,7 @@ export default function DesignContextPanel({
         />
       )}
 
-      {(focus === 'shape' || focus === 'embed') && element && (
+      {(focus === 'shape' || focus === 'embed' || focus === 'graphic') && element && (
         <ShapeDesignSection
           element={element}
           palette={palette}

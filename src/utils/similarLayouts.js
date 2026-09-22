@@ -244,6 +244,7 @@ export const LAYOUT_SIMILAR_OVERRIDES = {
   bullet_list_numbered_vertical_v1: ['bullet_list_numbered_v1'],
   bullet_list_two_column_v1: ['bullet_list_split_v1'],
   bullet_list_split_v1: ['bullet_list_two_column_v1'],
+  text_only_centered_v1: ['text_two_column_v1'],
   comparison_side_by_side_v1: ['comparison_side_by_side_cards_v1', 'comparison_side_by_side_centerline_v1'],
   comparison_side_by_side_cards_v1: ['comparison_side_by_side_v1', 'comparison_side_by_side_centerline_v1'],
   comparison_side_by_side_centerline_v1: ['comparison_side_by_side_v1', 'comparison_side_by_side_cards_v1'],
