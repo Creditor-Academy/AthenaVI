@@ -8,7 +8,7 @@ import superadminService from '../../../../services/superadminService'
 import { defaultReportRange, formatAc, formatDate } from './superadminUtils'
 import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
 import '../../../../pages/AdminPortal/styles/AdminPlatform.css'
-import { SaSkeletonBlock } from './skeletons/AdminSkeletons'
+import { SaSkeletonBlock, AdminStatStripSkeleton } from './skeletons/AdminSkeletons'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -163,6 +163,8 @@ function SuperadminPlatformActionsPanel() {
       </div>
 
       {error && <div className="sa-alert sa-alert--error">{error}</div>}
+
+      {loading && <AdminStatStripSkeleton count={4} />}
 
       {/* ── KPI strip (shown once data is loaded) ── */}
       {audit && !loading && (

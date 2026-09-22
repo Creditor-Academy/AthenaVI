@@ -3,6 +3,15 @@
    Modern, cohesive card styling aligned with Superadmin management pages.
    ========================================================================== */
 
+/* ── Hide scrollbar on body scroll area, keep scroll working ── */
+.hg-body-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hg-body-scroll::-webkit-scrollbar {
+  display: none;
+}
+
 /* ── Identity card header / block ── */
 .hg-identity {
   display: flex;

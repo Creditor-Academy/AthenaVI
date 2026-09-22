@@ -62,6 +62,7 @@
 .sa-panel--flow {
   flex: none;
   overflow: visible;
+  padding-bottom: 24px;
 }
 
 .sa-panel-header {

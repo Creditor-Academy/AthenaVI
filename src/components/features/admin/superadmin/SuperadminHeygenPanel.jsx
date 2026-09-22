@@ -201,6 +201,13 @@ function SuperadminHeygenPanel() {
     ? `${account.firstName} ${account.lastName}`
     : account?.firstName || account?.lastName || null
 
+  // This page only ever shows 2–3 KPI cards (never the shared grid's default 4),
+  // so size the grid to the actual count instead of leaving an empty column.
+  const kpiCardCount = 1 // Billing model
+    + (billingType === 'wallet' ? 1 : 0) // Wallet balance
+    + (billingType === 'subscription' && account?.subscription?.credits?.premiumCredits ? 1 : 0) // Premium credits
+    + 1 // Last synced
+
   return (
     <div className="sa-panel">
 
@@ -225,10 +232,9 @@ function SuperadminHeygenPanel() {
       {loading && !account && <AdminHeygenSkeleton />}
 
       {account && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-          {/* ── KPI strip ── */}
-          <div className="sa-kpi-grid">
+        <>
+          {/* ── KPI strip (fixed, does not scroll) ── */}
+          <div className="sa-kpi-grid" style={{ gridTemplateColumns: `repeat(${kpiCardCount}, minmax(0, 1fr))` }}>
             <div className={`sa-kpi-card ${billingType === 'wallet' ? 'sa-kpi-card--emerald' : billingType === 'subscription' ? 'sa-kpi-card--purple' : 'sa-kpi-card--sky'}`}>
               <div className="sa-kpi-card-grain" />
               <div className="sa-kpi-header"><span className="sa-kpi-label">Billing model</span></div>
@@ -278,64 +284,70 @@ function SuperadminHeygenPanel() {
             </div>
           </div>
 
-          {/* ── Account identity card ── */}
-          <div className="sa-card">
-            <div className="sa-card-header">
-              <h3 style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                <Mail size={13} style={{ color: 'var(--primary)' }} /> Account details
-              </h3>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                {billingType && <BillingBadge billingType={billingType} />}
-                {lastFetched && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
-                    <Clock size={11} /> {formatDate(account.fetchedAt || lastFetched)}
-                  </span>
-                )}
-              </div>
-            </div>
+          {/* ── Scrollable body ── */}
+          <div className="sa-scroll hg-body-scroll" style={{ flex: 1, overflowY: 'auto', minHeight: 0, paddingBottom: 24 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-            <div className="sa-card-body">
-              {/* Identity block */}
-              <div className="hg-identity">
-                <div className="hg-identity-avatar">
-                  {(displayName || account.email || 'H')[0].toUpperCase()}
+              {/* ── Account identity card ── */}
+              <div className="sa-card">
+                <div className="sa-card-header">
+                  <h3 style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <Mail size={13} style={{ color: 'var(--primary)' }} /> Account details
+                  </h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    {billingType && <BillingBadge billingType={billingType} />}
+                    {lastFetched && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.6875rem', color: 'var(--text-muted)' }}>
+                        <Clock size={11} /> {formatDate(account.fetchedAt || lastFetched)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <div className="hg-identity-info">
-                  <span className="hg-identity-name">{displayName || account.email || 'HeyGen account'}</span>
-                  {account.email && displayName && <span className="hg-identity-email">{account.email}</span>}
+
+                <div className="sa-card-body">
+                  {/* Identity block */}
+                  <div className="hg-identity">
+                    <div className="hg-identity-avatar">
+                      {(displayName || account.email || 'H')[0].toUpperCase()}
+                    </div>
+                    <div className="hg-identity-info">
+                      <span className="hg-identity-name">{displayName || account.email || 'HeyGen account'}</span>
+                      {account.email && displayName && <span className="hg-identity-email">{account.email}</span>}
+                    </div>
+                  </div>
+
+                  {/* Info grid */}
+                  <div className="hg-info-grid">
+                    <InfoRow label="Email" value={account.email} />
+                    <InfoRow label="First name" value={account.firstName} />
+                    <InfoRow label="Last name" value={account.lastName} />
+                    <InfoRow label="Account ID" value={account.id || account.accountId} />
+                    <InfoRow label="Billing type" value={billingType} />
+                  </div>
                 </div>
               </div>
 
-              {/* Info grid */}
-              <div className="hg-info-grid">
-                <InfoRow label="Email" value={account.email} />
-                <InfoRow label="First name" value={account.firstName} />
-                <InfoRow label="Last name" value={account.lastName} />
-                <InfoRow label="Account ID" value={account.id || account.accountId} />
-                <InfoRow label="Billing type" value={billingType} />
+              {/* ── Billing detail card ── */}
+              <div className="sa-card">
+                <div className="sa-card-header">
+                  <h3 style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    {billingType === 'wallet' ? <Wallet size={13} style={{ color: 'var(--primary)' }} /> :
+                     billingType === 'subscription' ? <CreditCard size={13} style={{ color: 'var(--primary)' }} /> :
+                     <Zap size={13} style={{ color: 'var(--primary)' }} />}
+                    Billing & quota
+                  </h3>
+                </div>
+                <div className="sa-card-body">
+                  {billingType === 'wallet'       && <WalletSection       wallet={account.wallet} />}
+                  {billingType === 'subscription' && <SubscriptionSection subscription={account.subscription} />}
+                  {billingType === 'usage_based'  && <UsageBasedSection   usageBased={account.usageBased} />}
+                  {!billingType && <div className="sa-empty">No billing details available for this account.</div>}
+                </div>
               </div>
+
             </div>
           </div>
-
-          {/* ── Billing detail card ── */}
-          <div className="sa-card">
-            <div className="sa-card-header">
-              <h3 style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                {billingType === 'wallet' ? <Wallet size={13} style={{ color: 'var(--primary)' }} /> :
-                 billingType === 'subscription' ? <CreditCard size={13} style={{ color: 'var(--primary)' }} /> :
-                 <Zap size={13} style={{ color: 'var(--primary)' }} />}
-                Billing & quota
-              </h3>
-            </div>
-            <div className="sa-card-body">
-              {billingType === 'wallet'       && <WalletSection       wallet={account.wallet} />}
-              {billingType === 'subscription' && <SubscriptionSection subscription={account.subscription} />}
-              {billingType === 'usage_based'  && <UsageBasedSection   usageBased={account.usageBased} />}
-              {!billingType && <div className="sa-empty">No billing details available for this account.</div>}
-            </div>
-          </div>
-
-        </div>
+        </>
       )}
     </div>
   )
