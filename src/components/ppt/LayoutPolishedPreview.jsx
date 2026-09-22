@@ -53,6 +53,38 @@ import {
   eightShortTextsImagePreviewSvg,
 } from '../../utils/eightShortTextsImageLayout.js'
 import {
+  isBulletListDenseLayout,
+  bulletListDensePreviewSvg,
+} from '../../utils/bulletListDenseLayout.js'
+import {
+  isBulletListNumberedLayout,
+  bulletListNumberedPreviewSvg,
+} from '../../utils/bulletListNumberedLayout.js'
+import {
+  isBulletListNumberedVerticalLayout,
+  bulletListNumberedVerticalPreviewSvg,
+} from '../../utils/bulletListNumberedVerticalLayout.js'
+import {
+  isBulletListTwoColumnLayout,
+  bulletListTwoColumnPreviewSvg,
+} from '../../utils/bulletListTwoColumnLayout.js'
+import {
+  isBulletListSplitLayout,
+  bulletListSplitPreviewSvg,
+} from '../../utils/bulletListSplitLayout.js'
+import {
+  isTextOnlyCenteredLayout,
+  textOnlyCenteredPreviewSvg,
+} from '../../utils/textOnlyCenteredLayout.js'
+import {
+  isSectionDividerSplitDiagonalLayout,
+  sectionDividerSplitDiagonalPreviewSvg,
+} from '../../utils/sectionDividerSplitDiagonalLayout.js'
+import {
+  isSectionDividerSplitLayout,
+  sectionDividerSplitPreviewSvg,
+} from '../../utils/sectionDividerSplitLayout.js'
+import {
   isIntroThreeParaIconsLayout,
   introThreeParaIconsPreviewSvg,
 } from '../../utils/introThreeParaIconsLayout.js'
@@ -2960,6 +2992,38 @@ export default function LayoutPolishedPreview({
       />
     )
   }
+  if (previewMode === 'section_divider_split' || isSectionDividerSplitLayout(previewHints.layout_id) || isSectionDividerSplitLayout(schema?.layout_id)) {
+    const svg = sectionDividerSplitPreviewSvg()
+    const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FBFBFA', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (previewMode === 'section_divider_split_diagonal' || isSectionDividerSplitDiagonalLayout(previewHints.layout_id) || isSectionDividerSplitDiagonalLayout(schema?.layout_id)) {
+    const svg = sectionDividerSplitDiagonalPreviewSvg()
+    const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#F6F4F0', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
   if (previewMode === 'section_divider') {
     return (
       <PolishedSectionDividerPreview
@@ -2970,6 +3034,102 @@ export default function LayoutPolishedPreview({
         style={style}
         aspectRatio={aspectRatio}
       />
+    )
+  }
+  if (previewMode === 'text_only_centered' || isTextOnlyCenteredLayout(previewHints.layout_id) || isTextOnlyCenteredLayout(schema?.layout_id)) {
+    const svg = textOnlyCenteredPreviewSvg()
+    const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FBFBFA', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (previewMode === 'bullet_list_split' || isBulletListSplitLayout(previewHints.layout_id) || isBulletListSplitLayout(schema?.layout_id)) {
+    const svg = bulletListSplitPreviewSvg()
+    const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (previewMode === 'bullet_list_two_column' || isBulletListTwoColumnLayout(previewHints.layout_id) || isBulletListTwoColumnLayout(schema?.layout_id)) {
+    const svg = bulletListTwoColumnPreviewSvg()
+    const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (previewMode === 'bullet_list_numbered_vertical' || isBulletListNumberedVerticalLayout(previewHints.layout_id) || isBulletListNumberedVerticalLayout(schema?.layout_id)) {
+    const svg = bulletListNumberedVerticalPreviewSvg()
+    const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#F4F5F7', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (previewMode === 'bullet_list_numbered' || isBulletListNumberedLayout(previewHints.layout_id) || isBulletListNumberedLayout(schema?.layout_id)) {
+    const svg = bulletListNumberedPreviewSvg()
+    const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (previewMode === 'bullet_list_dense' || isBulletListDenseLayout(previewHints.layout_id) || isBulletListDenseLayout(schema?.layout_id)) {
+    const svg = bulletListDensePreviewSvg()
+    const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
     )
   }
   if (previewMode === 'bullet_list') {

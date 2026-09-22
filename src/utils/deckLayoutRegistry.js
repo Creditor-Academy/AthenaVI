@@ -305,16 +305,16 @@ const LAYOUT_PREVIEW_MODES = {
   section_divider_numbered_circle_v1: 'section_divider',
   section_divider_band_v1: 'section_divider',
   section_divider_band_full_v1: 'section_divider',
-  section_divider_split_v1: 'section_divider',
-  section_divider_split_diagonal_v1: 'section_divider',
+  section_divider_split_v1: 'section_divider_split',
+  section_divider_split_diagonal_v1: 'section_divider_split_diagonal',
   section_divider_split_image_v1: 'section_divider',
   section_divider_centered_v1: 'section_divider',
-  bullet_list_dense_v1: 'bullet_list',
-  bullet_list_numbered_v1: 'bullet_list',
-  bullet_list_numbered_vertical_v1: 'bullet_list',
-  bullet_list_two_column_v1: 'comparison_columns',
-  bullet_list_split_v1: 'comparison_columns',
-  text_only_centered_v1: 'bullet_list',
+  bullet_list_dense_v1: 'bullet_list_dense',
+  bullet_list_numbered_v1: 'bullet_list_numbered',
+  bullet_list_numbered_vertical_v1: 'bullet_list_numbered_vertical',
+  bullet_list_two_column_v1: 'bullet_list_two_column',
+  bullet_list_split_v1: 'bullet_list_split',
+  text_only_centered_v1: 'text_only_centered',
   text_two_column_v1: 'text_two_column',
   text_two_column_split_v1: 'text_two_column_split',
   title_image_logo_v1: 'title_image_logo',
@@ -995,6 +995,57 @@ function fillPreviewDataFromSlots(schema) {
       body:
         slotPlaceholderText(slots, `ROW_${n}_BODY`) ||
         'Short supporting copy for this pillar.',
+    }))
+  }
+  if (mode === 'text_only_centered') {
+    preview.badge = preview.badge ?? slotPlaceholderText(slots, 'BADGE') ?? 'A NOTE'
+    preview.heading = preview.heading ?? slotPlaceholderText(slots, 'HEADING') ?? 'A clear idea, well said.'
+    preview.bodyText = preview.bodyText ?? slotPlaceholderText(slots, 'BODY')
+  }
+  if (mode === 'section_divider_split') {
+    preview.heading = preview.heading ?? slotPlaceholderText(slots, 'HEADING') ?? 'Next section'
+    preview.bodyText = preview.bodyText ?? slotPlaceholderText(slots, 'BODY')
+  }
+  if (mode === 'section_divider_split_diagonal') {
+    preview.sectionNumber = preview.sectionNumber ?? slotPlaceholderText(slots, 'SECTION_NUMBER') ?? '02'
+    preview.eyebrow = preview.eyebrow ?? slotPlaceholderText(slots, 'EYEBROW') ?? 'SECTION'
+    preview.heading = preview.heading ?? slotPlaceholderText(slots, 'HEADING') ?? 'Next chapter'
+    preview.label = preview.label ?? slotPlaceholderText(slots, 'LABEL') ?? 'IN THIS SECTION'
+    preview.bodyText = preview.bodyText ?? slotPlaceholderText(slots, 'BODY')
+  }
+  if (mode === 'bullet_list_split' && !Array.isArray(preview.leftItems)) {
+    preview.leftTitle = slotPlaceholderText(slots, 'LEFT_TITLE') || 'Column A'
+    preview.rightTitle = slotPlaceholderText(slots, 'RIGHT_TITLE') || 'Column B'
+    preview.leftItems = [1, 2, 3, 4, 5, 6].map((n) => slotPlaceholderText(slots, `LEFT_${n}`) || 'Put your text here')
+    preview.rightItems = [1, 2, 3, 4, 5, 6].map((n) => slotPlaceholderText(slots, `RIGHT_${n}`) || 'Add an item description')
+  }
+  if (mode === 'bullet_list_two_column' && !Array.isArray(preview.leftItems)) {
+    preview.leftItems = [1, 2, 3, 4, 5, 6, 7].map((n) => slotPlaceholderText(slots, `LEFT_${n}`) || 'Put your text here')
+    preview.rightItems = [1, 2, 3, 4, 5, 6, 7].map((n) => slotPlaceholderText(slots, `RIGHT_${n}`) || 'Add an item description')
+  }
+  if (mode === 'bullet_list_numbered_vertical' && !Array.isArray(preview.points)) {
+    preview.points = [1, 2, 3, 4, 5, 6].map((n) => ({
+      title: slotPlaceholderText(slots, `TITLE_${n}`) || 'Lorem Ipsum',
+      label:
+        slotPlaceholderText(slots, `ITEM_${n}`) ||
+        'Lorem ipsum dolor sit amet, nibh est. A magna maecenas, quam magna nec quis.',
+    }))
+  }
+  if (mode === 'bullet_list_numbered' && !Array.isArray(preview.points)) {
+    preview.points = [1, 2, 3, 4, 5].map((n) => ({
+      title: slotPlaceholderText(slots, `TITLE_${n}`) || 'Caption',
+      label:
+        slotPlaceholderText(slots, `ITEM_${n}`) ||
+        slotPlaceholderText(slots, `BODY_${n}`) ||
+        'This slide is an editable slide with all your needs.',
+    }))
+  }
+  if (mode === 'bullet_list_dense' && !Array.isArray(preview.points)) {
+    preview.points = [1, 2, 3, 4, 5].map((n) => ({
+      label:
+        slotPlaceholderText(slots, `ITEM_${n}`) ||
+        slotPlaceholderText(slots, `POINT_${n}`) ||
+        `Point ${n}`,
     }))
   }
   if (mode === 'eight_short_texts' && !Array.isArray(preview.points)) {

@@ -682,36 +682,99 @@ const CATALOG = {
       typography: typo('heading', { fontSize: 36 }),
     }),
     body('BODY', 'cols 7-11, rows 3-7', P.short, 4),
-  ]),
+  ], { mode: 'section_divider_split' }),
 
   bullet_list_dense_v1: layoutBase('bullet_list_dense_v1', 'bullet_list', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'Key takeaways', { max_lines: 2 }),
-    body('BULLETS', 'cols 2-10, rows 2-9', '• Point one\n• Point two\n• Point three\n• Point four\n• Point five\n• Point six', 8),
-  ]),
+    heading('HEADING', 'cols 1-12, rows 1-2', '5 BULLET POINTS', {
+      typography: typo('caption', { fontSize: 20, uppercase: true, color: '#E67E22' }),
+      max_lines: 1,
+    }),
+    body('ITEM_1', 'cols 1-12, rows 2-3', 'You can easily replace this text with your own text. You can easily replace this text with your own text.', 2, {
+      typography: typo('body', { fontSize: 13, color: '#FFFFFF' }),
+    }),
+    body('ITEM_2', 'cols 1-12, rows 3-4', 'You can easily replace this text with your own text. You can easily replace this text with your own text.', 2, {
+      typography: typo('body', { fontSize: 13, color: '#FFFFFF' }),
+    }),
+    body('ITEM_3', 'cols 1-12, rows 4-5', 'You can easily replace this text with your own text. You can easily replace this text with your own text.', 2, {
+      typography: typo('body', { fontSize: 13, color: '#FFFFFF' }),
+    }),
+    body('ITEM_4', 'cols 1-12, rows 5-6', 'You can easily replace this text with your own text. You can easily replace this text with your own text.', 2, {
+      typography: typo('body', { fontSize: 13, color: '#FFFFFF' }),
+    }),
+    body('ITEM_5', 'cols 1-12, rows 6-8', 'You can easily replace this text with your own text. You can easily replace this text with your own text.', 2, {
+      typography: typo('body', { fontSize: 13, color: '#FFFFFF' }),
+    }),
+  ], { mode: 'bullet_list_dense' }),
 
   bullet_list_numbered_v1: layoutBase('bullet_list_numbered_v1', 'bullet_list', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'Numbered list', { max_lines: 2 }),
-    body('ITEM_1', 'cols 2-10, rows 2-3', '1. First priority', 1),
-    body('ITEM_2', 'cols 2-10, rows 3-4', '2. Second priority', 1),
-    body('ITEM_3', 'cols 2-10, rows 4-5', '3. Third priority', 1),
-    body('ITEM_4', 'cols 2-10, rows 5-6', '4. Fourth priority', 1),
-    body('ITEM_5', 'cols 2-10, rows 6-7', '5. Fifth priority', 1),
-  ]),
+    heading('HEADING', 'cols 2-11, rows 1', 'Five Numbers List', {
+      typography: centeredTypo('heading', { fontSize: 26 }),
+      max_lines: 1,
+    }),
+    slot('TITLE_1', 'cols 1-4, rows 3', 'heading', 'Caption', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 14 }),
+    }),
+    body('ITEM_1', 'cols 1-4, rows 4-5', 'This slide is an editable slide with all your needs.', 3, {
+      typography: typo('body', { fontSize: 12 }),
+    }),
+    slot('TITLE_2', 'cols 5-8, rows 3', 'heading', 'Caption', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 14 }),
+    }),
+    body('ITEM_2', 'cols 5-8, rows 4-5', 'This slide is an editable slide with all your needs.', 3, {
+      typography: typo('body', { fontSize: 12 }),
+    }),
+    slot('TITLE_3', 'cols 9-12, rows 3', 'heading', 'Caption', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 14 }),
+    }),
+    body('ITEM_3', 'cols 9-12, rows 4-5', 'This slide is an editable slide with all your needs.', 3, {
+      typography: typo('body', { fontSize: 12 }),
+    }),
+    slot('TITLE_4', 'cols 3-6, rows 7', 'heading', 'Caption', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 14 }),
+    }),
+    body('ITEM_4', 'cols 3-6, rows 8-9', 'This slide is an editable slide with all your needs.', 3, {
+      typography: typo('body', { fontSize: 12 }),
+    }),
+    slot('TITLE_5', 'cols 7-10, rows 7', 'heading', 'Caption', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 14 }),
+    }),
+    body('ITEM_5', 'cols 7-10, rows 8-9', 'This slide is an editable slide with all your needs.', 3, {
+      typography: typo('body', { fontSize: 12 }),
+    }),
+  ], { mode: 'bullet_list_numbered' }),
 
   bullet_list_two_column_v1: layoutBase('bullet_list_two_column_v1', 'bullet_list', [
-    heading('HEADING', 'cols 2-11, rows 1-2', 'Two-column points', { max_lines: 2 }),
-    body('LEFT_BODY', 'cols 1-6, rows 2-9', '• Left column point\n• Another left point\n• Third left point', 6),
-    body('RIGHT_BODY', 'cols 7-12, rows 2-9', '• Right column point\n• Another right point\n• Third right point', 6),
-  ]),
+    heading('HEADING', 'cols 1-12, rows 1-2', 'Long Agenda List with Two Column Bullet Points', {
+      typography: typo('heading', { fontSize: 26 }),
+      max_lines: 2,
+    }),
+    ...[1, 2, 3, 4, 5, 6, 7].flatMap((n) => [
+      body(`LEFT_${n}`, `cols 1-6, rows ${n + 2}`, n % 2 === 1 ? 'Put your text here' : 'Add an item description', 1, {
+        typography: typo('body', { fontSize: 15 }),
+      }),
+      body(`RIGHT_${n}`, `cols 7-12, rows ${n + 2}`, n % 2 === 1 ? 'Add an item description' : 'Put your text here', 1, {
+        typography: typo('body', { fontSize: 15 }),
+      }),
+    ]),
+  ], { mode: 'bullet_list_two_column' }),
 
   text_only_centered_v1: layoutBase('text_only_centered_v1', 'bullet_list', [
-    heading('HEADING', 'cols 2-11, rows 2-4', 'Centered message', {
-      typography: centeredTypo('heading'),
+    slot('BADGE', 'cols 4-9, rows 2', 'eyebrow', 'A NOTE', {
+      typography: centeredTypo('caption', { fontSize: 12, uppercase: true }),
     }),
-    body('BODY', 'cols 3-10, rows 4-7', P.short, 4, {
-      typography: centeredTypo('body'),
+    heading('HEADING', 'cols 2-11, rows 3-5', 'A clear idea, well said.', {
+      typography: centeredTypo('heading', { fontSize: 40 }),
+      max_lines: 2,
     }),
-  ]),
+    body('BODY', 'cols 3-10, rows 6-8', P.short, 4, {
+      typography: centeredTypo('body', { fontSize: 16 }),
+    }),
+  ], { mode: 'text_only_centered' }),
 
   text_two_column_v1: layoutBase('text_two_column_v1', 'bullet_list', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Two perspectives', { max_lines: 2 }),
@@ -755,12 +818,43 @@ Object.assign(CATALOG, {
     'intro_three_para_icons_v1',
     'horizontal'
   ),
-  bullet_list_numbered_vertical_v1: simpleSlidesFromSource(
-    'bullet_list_numbered_vertical_v1',
-    'bullet_list_numbered_v1',
-    'vertical'
-  ),
-  bullet_list_split_v1: simpleSlidesFromSource('bullet_list_split_v1', 'bullet_list_two_column_v1', 'split'),
+  bullet_list_numbered_vertical_v1: layoutBase('bullet_list_numbered_vertical_v1', 'bullet_list', [
+    heading('HEADING', 'cols 1-12, rows 1', '6-Step Curved Block List', {
+      typography: typo('heading', { fontSize: 24 }),
+      max_lines: 1,
+    }),
+    ...[1, 2, 3, 4, 5, 6].flatMap((n) => [
+      slot(`TITLE_${n}`, `cols 4-9, rows ${n + 1}`, 'heading', 'Lorem Ipsum', {
+        layer: 10,
+        typography: typo('heading', { fontSize: 13 }),
+      }),
+      body(`ITEM_${n}`, `cols 4-10, rows ${n + 1}`, 'Lorem ipsum dolor sit amet, nibh est. A magna maecenas, quam magna nec quis.', 2, {
+        typography: typo('body', { fontSize: 11 }),
+      }),
+    ]),
+  ], { mode: 'bullet_list_numbered_vertical', slideVariant: 'vertical' }),
+  bullet_list_split_v1: layoutBase('bullet_list_split_v1', 'bullet_list', [
+    heading('HEADING', 'cols 1-12, rows 1', 'Two-column agenda', {
+      typography: typo('heading', { fontSize: 26 }),
+      max_lines: 1,
+    }),
+    slot('LEFT_TITLE', 'cols 1-6, rows 2', 'heading', 'Column A', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 18 }),
+    }),
+    slot('RIGHT_TITLE', 'cols 7-12, rows 2', 'heading', 'Column B', {
+      layer: 10,
+      typography: typo('heading', { fontSize: 18 }),
+    }),
+    ...[1, 2, 3, 4, 5, 6].flatMap((n) => [
+      body(`LEFT_${n}`, `cols 1-6, rows ${n + 2}`, n % 2 === 1 ? 'Put your text here' : 'Add an item description', 1, {
+        typography: typo('body', { fontSize: 14 }),
+      }),
+      body(`RIGHT_${n}`, `cols 7-12, rows ${n + 2}`, n % 2 === 1 ? 'Add an item description' : 'Put your text here', 1, {
+        typography: typo('body', { fontSize: 14 }),
+      }),
+    ]),
+  ], { mode: 'bullet_list_split', slideVariant: 'split' }),
   four_images_text_mosaic_v1: simpleSlidesFromSource('four_images_text_mosaic_v1', 'four_images_text_v1', 'mosaic'),
   four_para_image_grid_v1: simpleSlidesFromSource('four_para_image_grid_v1', 'four_para_image_v1', 'grid'),
   full_bg_image_overlay_bottom_v1: simpleSlidesFromSource(
@@ -800,15 +894,29 @@ Object.assign(CATALOG, {
     'overlay'
   ),
   section_divider_band_full_v1: simpleSlidesFromSource('section_divider_band_full_v1', 'section_divider_band_v1', 'full'),
-  section_divider_split_diagonal_v1: simpleSlidesFromSource(
-    'section_divider_split_diagonal_v1',
-    'section_divider_split_v1',
-    'diagonal'
-  ),
+  section_divider_split_diagonal_v1: layoutBase('section_divider_split_diagonal_v1', 'section_divider', [
+    slot('SECTION_NUMBER', 'cols 1-5, rows 2-4', 'stat', '02', {
+      typography: typo('stat', { fontSize: 120, color: '#FFFFFF' }),
+    }),
+    slot('EYEBROW', 'cols 1-5, rows 5', 'caption', 'SECTION', {
+      typography: typo('caption', { fontSize: 12, uppercase: true, color: '#FFFFFF' }),
+    }),
+    heading('HEADING', 'cols 1-5, rows 6-8', 'Next chapter', {
+      typography: typo('heading', { fontSize: 36, color: '#FFFFFF' }),
+      max_lines: 2,
+    }),
+    slot('LABEL', 'cols 8-12, rows 4', 'caption', 'IN THIS SECTION', {
+      typography: typo('caption', { fontSize: 12, uppercase: true }),
+    }),
+    body('BODY', 'cols 8-12, rows 5-8', P.short, 5, {
+      typography: typo('body', { fontSize: 16 }),
+    }),
+  ], { mode: 'section_divider_split_diagonal', slideVariant: 'diagonal' }),
   section_divider_split_image_v1: simpleSlidesFromSource(
     'section_divider_split_image_v1',
     'section_divider_split_v1',
-    'image'
+    'image',
+    { mode: 'section_divider' }
   ),
   section_left_image_fullheight_v1: layoutBase('section_left_image_fullheight_v1', 'image+text', [
     slot('HERO_IMAGE', 'cols 1-6, rows 1-10', 'image', null, { layer: 2, fit: 'cover', imageStyle: 'featured', borderRadius: 0 }),
