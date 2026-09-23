@@ -91,6 +91,38 @@ import {
   layoutWideImageStatementOverlay,
 } from './wideImageStatementOverlayLayout.js'
 import {
+  isParaTitleLeftImageBoxedLayout,
+  layoutParaTitleLeftImageBoxed,
+} from './paraTitleLeftImageBoxedLayout.js'
+import {
+  isParaTitleRightImageBoxedLayout,
+  layoutParaTitleRightImageBoxed,
+} from './paraTitleRightImageBoxedLayout.js'
+import {
+  isParaTitleLeftImageOverlayLayout,
+  layoutParaTitleLeftImageOverlay,
+} from './paraTitleLeftImageOverlayLayout.js'
+import {
+  isParaTitleRightImageOverlayLayout,
+  layoutParaTitleRightImageOverlay,
+} from './paraTitleRightImageOverlayLayout.js'
+import {
+  isParaLandscapeImageLayout,
+  layoutParaLandscapeImage,
+} from './paraLandscapeImageLayout.js'
+import {
+  isParaSplit5050Layout,
+  layoutParaSplit5050,
+} from './paraSplit5050Layout.js'
+import {
+  isTwoParaRightImageLayout,
+  layoutTwoParaRightImage,
+} from './twoParaRightImageLayout.js'
+import {
+  isTwoParaRightImageBottomLayout,
+  layoutTwoParaRightImageBottom,
+} from './twoParaRightImageBottomLayout.js'
+import {
   isGridBentoThreeLayout,
   layoutGridBentoThree,
 } from './gridBentoThreeLayout.js'
@@ -380,6 +412,38 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
 
   if (isWideImageStatementOverlayLayout(layoutId, schema)) {
     return layoutWideImageStatementOverlay(elements, schema, palette, canvas)
+  }
+
+  if (isParaTitleLeftImageBoxedLayout(layoutId, schema)) {
+    return layoutParaTitleLeftImageBoxed(elements, schema, palette, canvas)
+  }
+
+  if (isParaTitleRightImageBoxedLayout(layoutId, schema)) {
+    return layoutParaTitleRightImageBoxed(elements, schema, palette, canvas)
+  }
+
+  if (isParaTitleLeftImageOverlayLayout(layoutId, schema)) {
+    return layoutParaTitleLeftImageOverlay(elements, schema, palette, canvas)
+  }
+
+  if (isParaTitleRightImageOverlayLayout(layoutId, schema)) {
+    return layoutParaTitleRightImageOverlay(elements, schema, palette, canvas)
+  }
+
+  if (isParaLandscapeImageLayout(layoutId, schema)) {
+    return layoutParaLandscapeImage(elements, schema, palette, canvas)
+  }
+
+  if (isParaSplit5050Layout(layoutId, schema)) {
+    return layoutParaSplit5050(elements, schema, palette, canvas)
+  }
+
+  if (isTwoParaRightImageLayout(layoutId, schema)) {
+    return layoutTwoParaRightImage(elements, schema, palette, canvas)
+  }
+
+  if (isTwoParaRightImageBottomLayout(layoutId, schema)) {
+    return layoutTwoParaRightImageBottom(elements, schema, palette, canvas)
   }
   
   if (isGridBentoThreeLayout(layoutId)) {

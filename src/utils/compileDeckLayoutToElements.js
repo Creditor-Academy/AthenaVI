@@ -62,6 +62,38 @@ import {
   isWideImageStatementOverlayLayout,
   buildWideImageStatementOverlayCanvasElements,
 } from './wideImageStatementOverlayLayout.js'
+import {
+  isParaTitleLeftImageBoxedLayout,
+  buildParaTitleLeftImageBoxedCanvasElements,
+} from './paraTitleLeftImageBoxedLayout.js'
+import {
+  isParaTitleRightImageBoxedLayout,
+  buildParaTitleRightImageBoxedCanvasElements,
+} from './paraTitleRightImageBoxedLayout.js'
+import {
+  isParaTitleLeftImageOverlayLayout,
+  buildParaTitleLeftImageOverlayCanvasElements,
+} from './paraTitleLeftImageOverlayLayout.js'
+import {
+  isParaTitleRightImageOverlayLayout,
+  buildParaTitleRightImageOverlayCanvasElements,
+} from './paraTitleRightImageOverlayLayout.js'
+import {
+  isParaLandscapeImageLayout,
+  buildParaLandscapeImageCanvasElements,
+} from './paraLandscapeImageLayout.js'
+import {
+  isParaSplit5050Layout,
+  buildParaSplit5050CanvasElements,
+} from './paraSplit5050Layout.js'
+import {
+  isTwoParaRightImageLayout,
+  buildTwoParaRightImageCanvasElements,
+} from './twoParaRightImageLayout.js'
+import {
+  isTwoParaRightImageBottomLayout,
+  buildTwoParaRightImageBottomCanvasElements,
+} from './twoParaRightImageBottomLayout.js'
 import { isCatalogPlaceholderText } from './catalogPlaceholder.js'
 import { normalizeChartContent } from './chartContentNormalize.js'
 import {
@@ -198,6 +230,8 @@ function isOverlayLayout(schema) {
   if (isTitleFullbleedOverlayLayout(schema?.layout_id, schema)) return false
   if (isTitleFullbleedLayout(schema?.layout_id, schema)) return false
   if (isWideImageStatementOverlayLayout(schema?.layout_id, schema)) return false
+  if (isParaTitleLeftImageOverlayLayout(schema?.layout_id, schema)) return false
+  if (isParaTitleRightImageOverlayLayout(schema?.layout_id, schema)) return false
   const layoutId = String(schema?.layout_id || '')
   const slots = Array.isArray(schema?.slots) ? schema.slots : []
   if (slots.some((s) => s.id === 'BACKGROUND_IMAGE' || /OVERLAY_SCRIM/i.test(String(s.id || '')))) return true
@@ -1198,6 +1232,14 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
       (isSectionDividerCenteredLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'SECTION_NUMBER') ||
       (isTitleFullbleedOverlayLayout(schema?.layout_id, schema) && (/^(MAIN_TITLE|SUBTITLE|OVERLAY_CARD)$/i.test(String(el.slotId || '')))) ||
       (isWideImageStatementOverlayLayout(schema?.layout_id, schema) && (/^(STATEMENT|SUBHEADLINE|OVERLAY_SCRIM|BACKGROUND_IMAGE)$/i.test(String(el.slotId || '')))) ||
+      (isParaTitleLeftImageBoxedLayout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaTitleRightImageBoxedLayout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaTitleLeftImageOverlayLayout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaTitleRightImageOverlayLayout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaLandscapeImageLayout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaSplit5050Layout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG|TEXT_HALF_BG)$/i.test(String(el.slotId || '')))) ||
+      (isTwoParaRightImageLayout(schema?.layout_id, schema) && (/^(BODY_1|BODY_2|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isTwoParaRightImageBottomLayout(schema?.layout_id, schema) && (/^(BODY_1|BODY_2|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
       (isEightShortTextsImageLayout(schema?.layout_id) && (/^(HEADING|SUBTITLE|TAG_BADGE|POINT_\d+_(TITLE|DESC|CARD|NUM)|HERO_IMAGE)$/i.test(String(el.slotId || '')))) ||
       (isParaLandscapeImageBottomLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
       (isParaLandscapeImageTopLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
@@ -1287,6 +1329,30 @@ export function compileDeckLayoutToElements(schema, options = {}) {
   }
   if (isWideImageStatementOverlayLayout(schema?.layout_id, schema)) {
     return buildWideImageStatementOverlayCanvasElements({ schema, options })
+  }
+  if (isParaTitleLeftImageBoxedLayout(schema?.layout_id, schema)) {
+    return buildParaTitleLeftImageBoxedCanvasElements({ schema, options })
+  }
+  if (isParaTitleRightImageBoxedLayout(schema?.layout_id, schema)) {
+    return buildParaTitleRightImageBoxedCanvasElements({ schema, options })
+  }
+  if (isParaTitleLeftImageOverlayLayout(schema?.layout_id, schema)) {
+    return buildParaTitleLeftImageOverlayCanvasElements({ schema, options })
+  }
+  if (isParaTitleRightImageOverlayLayout(schema?.layout_id, schema)) {
+    return buildParaTitleRightImageOverlayCanvasElements({ schema, options })
+  }
+  if (isParaLandscapeImageLayout(schema?.layout_id, schema)) {
+    return buildParaLandscapeImageCanvasElements({ schema, options })
+  }
+  if (isParaSplit5050Layout(schema?.layout_id, schema)) {
+    return buildParaSplit5050CanvasElements({ schema, options })
+  }
+  if (isTwoParaRightImageLayout(schema?.layout_id, schema)) {
+    return buildTwoParaRightImageCanvasElements({ schema, options })
+  }
+  if (isTwoParaRightImageBottomLayout(schema?.layout_id, schema)) {
+    return buildTwoParaRightImageBottomCanvasElements({ schema, options })
   }
   if (isTitleWithLogoLayout(schema?.layout_id, schema)) {
     return buildTitleWithLogoCanvasElements({ schema, options })

@@ -1,7 +1,7 @@
 import useGraphicSvg, { resolveGraphicThemeColor } from '../../hooks/useGraphicSvg'
 
 /** Hit-test painted strokes/fills only so empty SVG boxes don't steal clicks. */
-function svgWithPaintHits(markup) {
+function svgWithPaintHits(markup, { hitThrough = false } = {}) {
   if (typeof markup !== 'string' || !markup.includes('<svg')) return markup
   let next = markup.replace(/<svg\b([^>]*)>/i, (_, attrs = '') => {
     let a = attrs
@@ -9,6 +9,7 @@ function svgWithPaintHits(markup) {
     if (!/style=/i.test(a)) a += ' style="width:100%;height:100%;display:block"'
     return `<svg${a}>`
   })
+  if (hitThrough) return next
   next = next.replace(/<(path|circle|polygon|rect|ellipse|line|polyline)\b(?![^>]*pointer-events=)/gi, '<$1 pointer-events="visiblePainted"')
   return next
 }
@@ -20,7 +21,7 @@ function svgWithPaintHits(markup) {
  * - recolorable: only tint when the SVG uses currentColor (inline);
  *   otherwise show the original multi-color artwork (never CSS mask silhouettes)
  */
-export default function GraphicCanvasVisual({ content = {}, palette = {}, style = {} }) {
+export default function GraphicCanvasVisual({ content = {}, palette = {}, style = {}, hitThrough = false }) {
   const rawSrc = content.src || content.url || content.previewUrl
   const inlineMarkup = typeof content.svg === 'string' && content.svg.includes('<svg') ? content.svg : null
   const colorMode = content.colorMode || 'fixed'
@@ -49,7 +50,7 @@ export default function GraphicCanvasVisual({ content = {}, palette = {}, style 
         role="img"
         aria-label={content.alt || 'Graphic'}
         dangerouslySetInnerHTML={{
-          __html: svgWithPaintHits(inlineMarkup),
+          __html: svgWithPaintHits(inlineMarkup, { hitThrough }),
         }}
       />
     )
@@ -68,10 +69,11 @@ export default function GraphicCanvasVisual({ content = {}, palette = {}, style 
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          pointerEvents: 'none',
         }}
         role="img"
         aria-label={content.alt || 'Graphic'}
-        dangerouslySetInnerHTML={{ __html: svgWithPaintHits(inlineSvg) }}
+        dangerouslySetInnerHTML={{ __html: svgWithPaintHits(inlineSvg, { hitThrough }) }}
       />
     )
   }

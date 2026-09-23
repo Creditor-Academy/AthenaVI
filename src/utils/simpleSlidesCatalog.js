@@ -423,33 +423,33 @@ const CATALOG = {
     imageBoxed('cols 2-5, rows 3-8'),
     heading('HEADING', 'cols 6-10, rows 3-4', 'Describe this slide'),
     body('BODY', 'cols 6-10, rows 4-8', P.one, 4),
-  ]),
+  ], { mode: 'para_title_left_image_boxed' }),
 
   para_title_right_image_boxed_v1: layoutBase('para_title_right_image_boxed_v1', 'image+text', [
     heading('HEADING', 'cols 2-6, rows 3-4', 'Describe this slide'),
     body('BODY', 'cols 2-6, rows 4-8', P.one, 4),
     cardShape('cols 8-11, rows 3-8', 'IMAGE_CARD_BG', 10, 'HERO_IMAGE'),
     imageBoxed('cols 8-11, rows 3-8'),
-  ]),
+  ], { mode: 'para_title_right_image_boxed' }),
 
   para_landscape_image_v1: layoutBase('para_landscape_image_v1', 'image+text', [
     heading('HEADING', 'cols 2-10, rows 2-3', 'Describe this slide'),
     body('BODY', 'cols 2-10, rows 3-5', P.one, 3),
     slot('HERO_IMAGE', 'cols 2-11, rows 6-10', 'image', null, { layer: 2, fit: 'cover' }),
-  ]),
+  ], { mode: 'para_landscape_image' }),
 
   para_split_50_50_v1: layoutBase('para_split_50_50_v1', 'image+text', [
     imageLeft('cols 1-6, rows 1-10'),
     surfaceHalf('cols 7-12, rows 1-10'),
     heading('HEADING', 'cols 7-11, rows 2-3', 'Describe this slide'),
     body('BODY', 'cols 7-11, rows 4-9', P.one, 4),
-  ]),
+  ], { mode: 'para_split_50_50' }),
 
   two_para_right_image_v1: layoutBase('two_para_right_image_v1', 'image+text', [
     body('BODY_1', 'cols 2-6, rows 2-5', P.one, 4),
     body('BODY_2', 'cols 2-6, rows 5-8', P.two, 4),
     imageRight(),
-  ]),
+  ], { mode: 'two_para_right_image' }),
 
   three_para_image_v1: layoutBase('three_para_image_v1', 'image+text', [
     body('BODY_1', 'cols 2-6, rows 2-4', P.one, 3),
@@ -884,12 +884,14 @@ Object.assign(CATALOG, {
   para_title_left_image_overlay_v1: simpleSlidesFromSource(
     'para_title_left_image_overlay_v1',
     'para_title_left_image_boxed_v1',
-    'overlay'
+    'overlay',
+    { mode: 'para_title_left_image_overlay' }
   ),
   para_title_right_image_overlay_v1: simpleSlidesFromSource(
     'para_title_right_image_overlay_v1',
     'para_title_right_image_boxed_v1',
-    'overlay'
+    'overlay',
+    { mode: 'para_title_right_image_overlay' }
   ),
   section_divider_band_full_v1: simpleSlidesFromSource('section_divider_band_full_v1', 'section_divider_band_v1', 'full'),
   section_divider_split_diagonal_v1: layoutBase('section_divider_split_diagonal_v1', 'section_divider', [
@@ -933,7 +935,8 @@ Object.assign(CATALOG, {
   two_para_right_image_bottom_v1: simpleSlidesFromSource(
     'two_para_right_image_bottom_v1',
     'two_para_right_image_v1',
-    'bottom'
+    'bottom',
+    { mode: 'two_para_right_image_bottom' }
   ),
 })
 

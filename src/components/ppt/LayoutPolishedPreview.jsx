@@ -127,9 +127,41 @@ import {
   wideImageStatementOverlayPreviewSvg,
 } from '../../utils/wideImageStatementOverlayLayout.js'
 import {
+  isParaTitleLeftImageBoxedLayout,
+  paraTitleLeftImageBoxedPreviewSvg,
+} from '../../utils/paraTitleLeftImageBoxedLayout.js'
+import {
+  isParaTitleRightImageBoxedLayout,
+  paraTitleRightImageBoxedPreviewSvg,
+} from '../../utils/paraTitleRightImageBoxedLayout.js'
+import {
+  isParaTitleLeftImageOverlayLayout,
+  paraTitleLeftImageOverlayPreviewSvg,
+} from '../../utils/paraTitleLeftImageOverlayLayout.js'
+import {
+  isParaTitleRightImageOverlayLayout,
+  paraTitleRightImageOverlayPreviewSvg,
+} from '../../utils/paraTitleRightImageOverlayLayout.js'
+import {
   isSectionWithImageLayout,
   sectionWithImagePreviewSvg,
 } from '../../utils/sectionWithImageLayout.js'
+import {
+  isParaLandscapeImageLayout,
+  paraLandscapeImagePreviewSvg,
+} from '../../utils/paraLandscapeImageLayout.js'
+import {
+  isParaSplit5050Layout,
+  paraSplit5050PreviewSvg,
+} from '../../utils/paraSplit5050Layout.js'
+import {
+  isTwoParaRightImageLayout,
+  twoParaRightImagePreviewSvg,
+} from '../../utils/twoParaRightImageLayout.js'
+import {
+  isTwoParaRightImageBottomLayout,
+  twoParaRightImageBottomPreviewSvg,
+} from '../../utils/twoParaRightImageBottomLayout.js'
 import {
   isParaLandscapeImageBottomLayout,
   paraLandscapeImageBottomPreviewSvg,
@@ -3271,12 +3303,168 @@ export default function LayoutPolishedPreview({
   if (previewMode === 'two_image_columns') {
     return <PolishedTwoImageColumnsPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
   }
+  if (
+    isTwoParaRightImageBottomLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'two_para_right_image_bottom_v1' ||
+    previewMode === 'two_para_right_image_bottom'
+  ) {
+    const svg = twoParaRightImageBottomPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isTwoParaRightImageLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'two_para_right_image_v1' ||
+    previewMode === 'two_para_right_image'
+  ) {
+    const svg = twoParaRightImagePreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isParaSplit5050Layout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'para_split_50_50_v1' ||
+    previewMode === 'para_split_50_50'
+  ) {
+    const svg = paraSplit5050PreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isParaLandscapeImageLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'para_landscape_image_v1' ||
+    previewMode === 'para_landscape_image'
+  ) {
+    const svg = paraLandscapeImagePreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
   if (previewMode === 'intro_three_para_icons') {
     return <PolishedIntroThreeParaIconsPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
   }
   if (previewMode === 'eight_short_texts') {
     return <PolishedEightShortTextsPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
   }
+  if (
+    isParaTitleLeftImageOverlayLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'para_title_left_image_overlay_v1' ||
+    previewMode === 'para_title_left_image_overlay'
+  ) {
+    const svg = paraTitleLeftImageOverlayPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#B7D4E8', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (
+    isParaTitleRightImageOverlayLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'para_title_right_image_overlay_v1' ||
+    previewMode === 'para_title_right_image_overlay'
+  ) {
+    const svg = paraTitleRightImageOverlayPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#B7D4E8', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (
+    isParaTitleLeftImageBoxedLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'para_title_left_image_boxed_v1' ||
+    previewMode === 'para_title_left_image_boxed'
+  ) {
+    const svg = paraTitleLeftImageBoxedPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (
+    isParaTitleRightImageBoxedLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'para_title_right_image_boxed_v1' ||
+    previewMode === 'para_title_right_image_boxed'
+  ) {
+    const svg = paraTitleRightImageBoxedPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
   if (previewMode === 'closing_cta') {
     return <PolishedClosingCtaPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
   }
