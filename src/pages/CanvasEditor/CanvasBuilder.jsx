@@ -8,6 +8,7 @@ export default function CanvasBuilder({
   onBack,
   initialWorkspaceId,
   initialFolderId,
+  initialCanvasId = null,
   createContext = null,
   initialSize = null,
 }) {
@@ -36,6 +37,7 @@ export default function CanvasBuilder({
         initialWorkspaceId || createContext?.workspaceId || createContext?.initialWorkspaceId || null
       }
       folderId={initialFolderId || createContext?.folderId || createContext?.initialFolderId || null}
+      canvasId={initialCanvasId || createContext?.canvasId || null}
     />
   )
 }

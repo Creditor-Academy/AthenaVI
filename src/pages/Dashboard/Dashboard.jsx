@@ -34,6 +34,7 @@ import AIImageStudio from '../Slides/AIStudio/AIImageStudio.jsx'
 import AIPptEditor from '../Slides/AIPptComponents/AIPptEditor.jsx'
 import PptDeckOpenBoot from '../Slides/AIPptComponents/PptDeckOpenBoot.jsx'
 import CanvasBuilder from '../CanvasEditor/CanvasBuilder.jsx'
+import CanvasEditor from '../CanvasEditor/CanvasEditor.jsx'
 import { getAvatarTypeOption } from '../Avatars/avatarTypeOptions.js'
 import NotificationsQuickModal from '../../components/ui/NotificationsQuickModal/NotificationsQuickModal.jsx'
 import AdminAlertsQuickModal from '../../components/ui/AdminAlertsQuickModal/AdminAlertsQuickModal.jsx'
@@ -538,6 +539,7 @@ function Dashboard({ onCreate, initialSection }) {
           title={editorData?.config?.title || editorData?.title || 'Untitled Design'}
           workspaceId={editorData?.workspaceId || editorData?.config?.workspaceId || null}
           folderId={editorData?.folderId || editorData?.config?.folderId || null}
+          canvasId={editorData?.canvasId || editorData?.config?.canvasId || null}
           onBack={() => {
             setPresentationCreateContext(null)
             const session = loadPresentationEditorSession()

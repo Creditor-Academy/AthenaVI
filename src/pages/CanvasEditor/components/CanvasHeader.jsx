@@ -8,7 +8,16 @@ import {
   FiEdit3,
   FiLayout,
   FiShare2,
+  FiAlertCircle,
+  FiLoader,
 } from 'react-icons/fi'
+
+const SAVE_BADGE_BY_STATE = {
+  saving: { icon: FiLoader, label: 'Saving…', className: 'canva-header-save-badge--saving' },
+  loading: { icon: FiLoader, label: 'Loading…', className: 'canva-header-save-badge--saving' },
+  saved: { icon: FiCheck, label: 'Saved', className: '' },
+  error: { icon: FiAlertCircle, label: 'Save failed', className: 'canva-header-save-badge--error' },
+}
 
 export default function CanvasHeader({
   docTitle,
@@ -21,8 +30,11 @@ export default function CanvasHeader({
   onOpenSizeModal,
   onOpenExportModal,
   activeCanvas,
+  saveState = null,
 }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
+  const badge = (saveState && SAVE_BADGE_BY_STATE[saveState]) || SAVE_BADGE_BY_STATE.saved
+  const BadgeIcon = badge.icon
 
   return (
     <header className="canva-header">
@@ -58,9 +70,9 @@ export default function CanvasHeader({
             </button>
           )}
 
-          <div className="canva-header-save-badge">
-            <FiCheck className="canva-header-check-icon" />
-            <span>Saved</span>
+          <div className={`canva-header-save-badge ${badge.className}`.trim()}>
+            <BadgeIcon className="canva-header-check-icon" />
+            <span>{badge.label}</span>
           </div>
         </div>
       </div>

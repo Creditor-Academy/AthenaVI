@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import canvasService from '../../services/canvasService'
 import CanvasHeader from './components/CanvasHeader'
 import CanvasLeftDock from './components/CanvasLeftDock'
 import CanvasLeftDrawer from './components/CanvasLeftDrawer'
@@ -115,6 +116,8 @@ export default function CanvasEditor({
   title = null,
   initialTitle = 'Untitled Design',
   workspaceId = null,
+  folderId = null,
+  canvasId: initialCanvasId = null,
 }) {
   const startingSize = initialSize || DEFAULT_SIZE
   const [docTitle, setDocTitle] = useState(title || initialTitle)
@@ -150,6 +153,17 @@ export default function CanvasEditor({
   // Clipboard
   const clipboardRef = useRef([])
 
+  // ── Backend persistence (save within the workspace folder the canvas was created in) ──
+  const [canvasId, setCanvasId] = useState(initialCanvasId)
+  const [saveState, setSaveState] = useState('idle') // idle | loading | saving | saved | error
+  const canPersist = Boolean(workspaceId)
+  const canvasIdRef = useRef(canvasId)
+  useEffect(() => { canvasIdRef.current = canvasId }, [canvasId])
+  const hydratedRef = useRef(false)
+  const saveTimerRef = useRef(null)
+  const savingRef = useRef(false)
+  const pendingSaveRef = useRef(false)
+
   // Keep refs in sync for keyboard handler closure
   const multiSelectIdsRef = useRef([])
   useEffect(() => { multiSelectIdsRef.current = multiSelectIds }, [multiSelectIds])
@@ -167,6 +181,124 @@ export default function CanvasEditor({
   useEffect(() => { editingRef.current = editing }, [editing])
 
   const activeCanvas = canvases[activeCanvasIndex] || canvases[0]
+
+  const docTitleRef = useRef(docTitle)
+  useEffect(() => { docTitleRef.current = docTitle }, [docTitle])
+  const sizeRef = useRef(size)
+  useEffect(() => { sizeRef.current = size }, [size])
+  const lastSyncedTitleRef = useRef(docTitle)
+
+  const persistCanvasData = useCallback(async () => {
+    if (!canPersist || !canvasIdRef.current) return
+    if (savingRef.current) {
+      pendingSaveRef.current = true
+      return
+    }
+    savingRef.current = true
+    setSaveState('saving')
+    try {
+      await canvasService.saveCanvasData(workspaceId, canvasIdRef.current, {
+        version: 1,
+        docTitle: docTitleRef.current,
+        size: sizeRef.current,
+        canvases: canvasesRef.current,
+      })
+      if (docTitleRef.current !== lastSyncedTitleRef.current) {
+        const nextTitle = docTitleRef.current
+        lastSyncedTitleRef.current = nextTitle
+        canvasService
+          .updateCanvasMeta(workspaceId, canvasIdRef.current, { name: nextTitle || 'Untitled Design' })
+          .catch((error) => console.error('Failed to rename canvas:', error))
+      }
+      setSaveState('saved')
+    } catch (error) {
+      console.error('Failed to save canvas:', error)
+      setSaveState('error')
+    } finally {
+      savingRef.current = false
+      if (pendingSaveRef.current) {
+        pendingSaveRef.current = false
+        persistCanvasData()
+      }
+    }
+  }, [workspaceId, canPersist])
+
+  // Load an existing canvas (reopen), or create the backend record for a brand-new one
+  // in the folder it was launched from, so it's saved where the user created it.
+  useEffect(() => {
+    if (!canPersist) {
+      hydratedRef.current = true
+      return undefined
+    }
+
+    let cancelled = false
+
+    async function hydrate() {
+      setSaveState('loading')
+      try {
+        if (initialCanvasId) {
+          const doc = await canvasService.getCanvas(workspaceId, initialCanvasId)
+          if (cancelled) return
+          const data = doc?.data || {}
+          const loadedCanvases =
+            Array.isArray(data.canvases) && data.canvases.length > 0
+              ? data.canvases
+              : [createCanvas(startingSize)]
+          const loadedTitle = doc?.name || data.docTitle || initialTitle
+          setDocTitle(loadedTitle)
+          lastSyncedTitleRef.current = loadedTitle
+          setSize(data.size || startingSize)
+          setCanvases(loadedCanvases)
+          setHistory([loadedCanvases])
+          setHistoryIndex(0)
+          setCanvasId(doc.id)
+          setSaveState('saved')
+        } else if (folderId) {
+          const created = await canvasService.createCanvas(workspaceId, {
+            name: docTitleRef.current || initialTitle,
+            folderId,
+            data: {
+              version: 1,
+              docTitle: docTitleRef.current || initialTitle,
+              size: sizeRef.current,
+              canvases: canvasesRef.current,
+            },
+          })
+          if (cancelled) return
+          setCanvasId(created.id)
+          setSaveState('saved')
+        } else {
+          setSaveState('idle')
+        }
+      } catch (error) {
+        console.error('Failed to load/create canvas:', error)
+        if (!cancelled) setSaveState('error')
+      } finally {
+        if (!cancelled) hydratedRef.current = true
+      }
+    }
+
+    hydrate()
+    return () => {
+      cancelled = true
+    }
+    // Runs once on mount — the effect below handles ongoing autosave.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Debounced autosave whenever the document changes, once it's hydrated/created.
+  useEffect(() => {
+    if (!canPersist || !hydratedRef.current || !canvasIdRef.current) return undefined
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(() => {
+      persistCanvasData()
+    }, 1000)
+
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    }
+  }, [canvases, docTitle, size, canPersist, persistCanvasData])
 
   // Derived: effective selection ids (multi-select or single)
   const canvasSelectionIds = multiSelectIds.length
@@ -1136,6 +1268,7 @@ export default function CanvasEditor({
         onOpenSizeModal={() => setShowSizeModal(true)}
         onOpenExportModal={() => setShowExportModal(true)}
         activeCanvas={activeCanvas}
+        saveState={canPersist ? saveState : null}
       />
 
       {/* 2. Studio Layout Body */}
