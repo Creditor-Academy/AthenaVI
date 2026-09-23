@@ -885,45 +885,26 @@ function ComposePane({ onSent }) {
       )}
 
       {/* Composer header + actions */}
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
-        padding: '16px 18px 14px', flexShrink: 0,
-        background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 10%, var(--bg-card)) 0%, var(--bg-card) 70%)',
-        borderBottom: '1px solid color-mix(in srgb, var(--primary) 18%, var(--border-color))',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
-          <span style={{
-            width: 40, height: 40, borderRadius: 11, flexShrink: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'linear-gradient(135deg, color-mix(in srgb, var(--primary) 22%, var(--bg-card)), color-mix(in srgb, var(--primary) 38%, var(--bg-card)))',
-            border: '1px solid color-mix(in srgb, var(--primary) 35%, var(--border-color))',
-            color: 'var(--primary)',
-          }}>
-            <Mail size={18} />
-          </span>
-          <div style={{ minWidth: 0 }}>
-            <h2 className="sa-panel-title" style={{ fontSize: '1.05rem' }}>Email broadcast</h2>
-            <span style={{
-              marginTop: 5, display: 'inline-flex', alignItems: 'center', gap: 5,
-              fontSize: '0.7rem', fontWeight: 600, color: 'var(--primary)',
-              background: 'color-mix(in srgb, var(--primary) 12%, transparent)',
-              border: '1px solid color-mix(in srgb, var(--primary) 22%, transparent)',
-              borderRadius: 999, padding: '2px 8px',
-            }}>
-              <Users size={11} />
-              All active users
-            </span>
+      <div className="sa-table-toolbar">
+        <div className="sa-filter-tabs" role="tablist" aria-label="Target Audience">
+          <div className="sa-filter-tab active" style={{ cursor: 'default', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <Users size={13} style={{ color: 'var(--primary)' }} />
+            <span>All active users</span>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-          <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost"
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <button
+            type="button"
+            className="sa-btn sa-btn--sm sa-btn--ghost"
             onClick={() => setTemplateOpen(true)}
             style={{ gap: 5 }}
           >
             <LayoutTemplate size={13} />
             Templates
           </button>
-          <button type="button" className="sa-btn sa-btn--sm sa-btn--ghost"
+          <button
+            type="button"
+            className="sa-btn sa-btn--sm sa-btn--ghost"
             onClick={() => setPreviewOpen(true)}
             style={{ gap: 5 }}
           >
@@ -931,134 +912,127 @@ function ComposePane({ onSent }) {
             Preview
           </button>
           <button
-            type="button" className="sa-btn sa-btn--sm sa-btn--primary"
+            type="button"
+            className="sa-btn sa-btn--sm sa-btn--primary"
             disabled={!canSend}
             onClick={() => setShowConfirm(true)}
             style={{ gap: 5 }}
           >
             <Send size={13} />
-            Send
+            Send Broadcast
           </button>
         </div>
       </div>
 
-      <div style={{ padding: '12px 18px 0', flexShrink: 0 }}>
-        <label htmlFor="broadcast-subject" style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase',
-          color: 'var(--primary)', marginBottom: 8,
-        }}>
-          <Type size={12} />
-          Subject
-        </label>
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          border: '1px solid color-mix(in srgb, var(--primary) 22%, var(--border-color))',
-          borderRadius: 10,
-          background: 'color-mix(in srgb, var(--primary) 5%, var(--bg-card))',
-          padding: '0 12px',
-        }}>
-          <Hash size={14} style={{ color: 'var(--primary)', flexShrink: 0, opacity: 0.85 }} />
-          <input
-            id="broadcast-subject"
-            type="text"
-            aria-label="Subject"
-            placeholder="What is this email about?"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            maxLength={200}
-            style={{
-              flex: 1, minWidth: 0, boxSizing: 'border-box',
-              border: 'none', outline: 'none',
-              background: 'transparent',
-              color: 'var(--text-main)', font: 'inherit', fontSize: '0.95rem', fontWeight: 600,
-              padding: '11px 0', letterSpacing: '-0.01em',
-              caretColor: 'var(--primary)',
-            }}
-          />
+      <div className="sa-table-scroll sa-scroll" style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', padding: '18px 20px', gap: 14 }}>
+        <div>
+          <label htmlFor="broadcast-subject" style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
+            color: 'var(--text-muted)', marginBottom: 8,
+          }}>
+            <Type size={12} />
+            Subject
+          </label>
+          <div className="sa-search-field" style={{ width: '100%' }}>
+            <Hash className="sa-search-field-icon" size={14} style={{ color: 'var(--primary)', opacity: 0.85 }} aria-hidden />
+            <input
+              id="broadcast-subject"
+              className="sa-input"
+              type="text"
+              aria-label="Subject"
+              placeholder="What is this email about?"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              maxLength={200}
+              style={{
+                width: '100%',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+              }}
+            />
+          </div>
         </div>
-      </div>
 
-      {err && (
-        <div className="sa-alert sa-alert--error" style={{ margin: '10px 18px 0', flexShrink: 0 }}>
-          <AlertTriangle size={13} style={{ display: 'inline', marginRight: 6 }} />{err}
-        </div>
-      )}
+        {err && (
+          <div className="sa-alert sa-alert--error" style={{ margin: 0 }}>
+            <AlertTriangle size={13} style={{ display: 'inline', marginRight: 6 }} />{err}
+          </div>
+        )}
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', padding: '12px 18px 0' }}>
-        <label htmlFor="broadcast-html" style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase',
-          color: 'var(--primary)', marginBottom: 8, flexShrink: 0,
-        }}>
-          <Code2 size={12} />
-          HTML body
-        </label>
-        <textarea
-          id="broadcast-html"
-          aria-label="HTML body"
-          placeholder="Write your HTML email body here…"
-          value={html}
-          onChange={(e) => setHtml(e.target.value)}
-          style={{
-            flex: 1, width: '100%', boxSizing: 'border-box',
-            border: '1px solid color-mix(in srgb, var(--primary) 18%, var(--border-color))',
-            borderRadius: 10, outline: 'none', resize: 'none',
-            background: 'color-mix(in srgb, var(--primary) 4%, var(--bg-card))',
-            color: 'var(--text-main)',
-            fontSize: '0.8125rem', lineHeight: 1.7,
-            padding: '12px 14px', fontFamily: '"Fira Code", "Consolas", monospace',
-            caretColor: 'var(--primary)', minHeight: 0,
-          }}
-        />
-      </div>
-
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 18px 12px', flexShrink: 0,
-      }}>
-        <button
-          type="button"
-          onClick={() => setShowText(!showText)}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            background: 'color-mix(in srgb, var(--primary) 8%, transparent)',
-            border: '1px solid color-mix(in srgb, var(--primary) 18%, var(--border-color))',
-            borderRadius: 8, cursor: 'pointer', font: 'inherit',
-            fontSize: '0.72rem', fontWeight: 600, color: 'var(--primary)', padding: '5px 10px',
-          }}
-        >
-          <FileText size={13} />
-          {showText ? 'Hide plain text' : 'Add plain-text fallback'}
-        </button>
-        <span style={{
-          display: 'inline-flex', alignItems: 'center', gap: 5,
-          fontSize: '0.7rem', fontWeight: 600,
-          color: html.length > 10000 ? '#f87171' : 'var(--text-muted)',
-        }}>
-          <Code2 size={12} />
-          {html.length.toLocaleString()} chars
-        </span>
-      </div>
-
-      {/* Plain text fallback */}
-      {showText && (
-        <div style={{ borderTop: '1px solid var(--border-color)', flexShrink: 0 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <label htmlFor="broadcast-html" style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase',
+            color: 'var(--text-muted)', marginBottom: 8, flexShrink: 0,
+          }}>
+            <Code2 size={12} />
+            HTML body
+          </label>
           <textarea
-            placeholder="Plain-text fallback (optional)…"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
+            id="broadcast-html"
+            aria-label="HTML body"
+            placeholder="Write your HTML email body here…"
+            value={html}
+            onChange={(e) => setHtml(e.target.value)}
             style={{
-              width: '100%', border: 'none', outline: 'none', resize: 'none',
-              background: 'color-mix(in srgb, var(--text-muted) 4%, transparent)',
-              color: 'var(--text-main)', font: 'inherit',
-              fontSize: '0.8125rem', lineHeight: 1.6,
-              padding: 16, minHeight: 100, boxSizing: 'border-box',
-              caretColor: 'var(--primary)',
+              flex: 1, width: '100%', boxSizing: 'border-box',
+              border: '1px solid var(--border-color)',
+              borderRadius: 10, outline: 'none', resize: 'none',
+              background: 'var(--bg-main)',
+              color: 'var(--text-main)',
+              fontSize: '0.8125rem', lineHeight: 1.7,
+              padding: '12px 14px', fontFamily: '"Fira Code", "Consolas", monospace',
+              caretColor: 'var(--primary)', minHeight: 180,
             }}
           />
         </div>
-      )}
+
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          paddingTop: 4, flexShrink: 0,
+        }}>
+          <button
+            type="button"
+            onClick={() => setShowText(!showText)}
+            className="sa-btn sa-btn--sm sa-btn--ghost"
+            style={{ fontSize: '0.75rem', padding: '4px 10px' }}
+          >
+            <FileText size={13} />
+            {showText ? 'Hide plain text' : 'Add plain-text fallback'}
+          </button>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            fontSize: '0.72rem', fontWeight: 600,
+            color: html.length > 10000 ? '#f87171' : 'var(--text-muted)',
+          }}>
+            <Code2 size={12} />
+            {html.length.toLocaleString()} chars
+          </span>
+        </div>
+
+        {/* Plain text fallback */}
+        {showText && (
+          <div style={{ flexShrink: 0 }}>
+            <textarea
+              placeholder="Plain-text fallback (optional)…"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              style={{
+                width: '100%',
+                border: '1px solid var(--border-color)',
+                borderRadius: 10,
+                outline: 'none', resize: 'none',
+                background: 'var(--bg-main)',
+                color: 'var(--text-main)', font: 'inherit',
+                fontSize: '0.8125rem', lineHeight: 1.6,
+                padding: '12px 14px', minHeight: 90, boxSizing: 'border-box',
+                caretColor: 'var(--primary)',
+              }}
+            />
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -1097,13 +1071,10 @@ function HistoryPane({ refreshKey }) {
         <BroadcastDetailModal broadcastId={selectedId} onClose={() => setSelectedId(null)} />
       )}
 
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '14px 14px 10px', flexShrink: 0,
-      }}>
-        <h3 style={{ margin: 0, fontSize: '0.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 7, color: 'var(--text-main)' }}>
+      <div className="sa-table-toolbar" style={{ padding: '14px 16px', justifyContent: 'space-between' }}>
+        <h3 style={{ margin: 0, fontSize: '0.8125rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 7, color: 'var(--text-main)' }}>
           <Inbox size={14} style={{ color: 'var(--primary)' }} />
-          Sent
+          Sent History
         </h3>
         <button
           type="button"
@@ -1112,14 +1083,14 @@ function HistoryPane({ refreshKey }) {
           disabled={loading}
           aria-label="Refresh broadcasts"
           title="Refresh"
-          style={{ gap: 0, padding: '4px 7px' }}
+          style={{ gap: 0, padding: '4px 7px', width: 28, height: 28 }}
         >
           <RefreshCw size={12} style={loading ? { animation: 'sa-spin 0.7s linear infinite' } : undefined} />
         </button>
       </div>
 
       {/* Always-visible list */}
-      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+      <div className="sa-table-scroll sa-scroll" style={{ flex: 1, minHeight: 0 }}>
         {err && <div className="sa-alert sa-alert--error" style={{ margin: 12 }}><AlertTriangle size={13} style={{ marginRight: 6 }} />{err}</div>}
         {loading && broadcasts.length === 0 && (
           <div className="sa-loading"><span className="sa-spinner" /> Loading…</div>
@@ -1166,10 +1137,10 @@ function SuperadminBroadcastPanel() {
         </div>
       </div>
 
-      <div className="sa-card" style={{
+      <div className="sa-table-card" style={{
         flex: 1, minHeight: 0, overflow: 'hidden',
         display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1fr) 280px',
+        gridTemplateColumns: 'minmax(0, 1fr) 290px',
         transition: 'none',
       }}>
         <div style={{ minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>

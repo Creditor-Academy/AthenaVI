@@ -1,27 +1,33 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { FiCheck, FiArrowRight } from 'react-icons/fi'
+import {
+  CANVAS_SIZE_PRESETS,
+  DEFAULT_CANVAS_SIZE,
+  matchCanvasSizePreset,
+  normalizeCanvasSize,
+} from '../../constants/canvasSizePresets'
+import './CanvasEditor.css'
 
-const SIZE_PRESETS = [
-  { id: 'instagram-post', label: 'Instagram Post', group: 'Social', width: 1080, height: 1080, aspect: '1 / 1', desc: '1080 × 1080 px' },
-  { id: 'instagram-reel', label: 'Story / Reel', group: 'Social', width: 1080, height: 1920, aspect: '9 / 16', desc: '1080 × 1920 px' },
-  { id: 'youtube-banner', label: 'YouTube Banner', group: 'Social', width: 2560, height: 1440, aspect: '16 / 9', desc: '2560 × 1440 px' },
-  { id: 'linkedin-post', label: 'LinkedIn Post', group: 'Social', width: 1200, height: 627, aspect: '1200 / 627', desc: '1200 × 627 px' },
-  { id: 'flyer', label: 'Flyer', group: 'Print', width: 1275, height: 1650, aspect: '1275 / 1650', desc: '1275 × 1650 px' },
-  { id: 'a4', label: 'A4 Document', group: 'Print', width: 794, height: 1123, aspect: '794 / 1123', desc: '794 × 1123 px' },
-  { id: 'presentation', label: 'Presentation 16:9', group: 'Global', width: 1920, height: 1080, aspect: '16 / 9', desc: '1920 × 1080 px' },
-  { id: 'desktop', label: 'Desktop Canvas', group: 'Global', width: 1440, height: 900, aspect: '16 / 10', desc: '1440 × 900 px' },
-  { id: 'square', label: 'Square Canvas', group: 'Global', width: 1200, height: 1200, aspect: '1 / 1', desc: '1200 × 1200 px' },
-]
-
-const DEFAULT_SIZE = { width: 1200, height: 800 }
-
-export default function CanvasSizeModal({ onCancel, onCreate }) {
-  const [selectedPreset, setSelectedPreset] = useState(SIZE_PRESETS[0].id)
+export default function CanvasSizeModal({
+  onCancel,
+  onCreate,
+  currentSize = null,
+  confirmLabel = 'Create Canvas',
+  title = 'Choose Canvas Dimensions',
+  subtitle = 'Select a layout format or enter custom design specs. You can change this later in the editor.',
+  eyebrow = 'Canvas Studio',
+}) {
+  const initial = normalizeCanvasSize(currentSize || DEFAULT_CANVAS_SIZE)
+  const matched = matchCanvasSizePreset(initial)
+  const [selectedPreset, setSelectedPreset] = useState(matched?.id || null)
   const [unit, setUnit] = useState('px')
-  const [customSize, setCustomSize] = useState(DEFAULT_SIZE)
+  const [customSize, setCustomSize] = useState(initial)
   const [activeGroup, setActiveGroup] = useState('All')
 
-  const selected = SIZE_PRESETS.find((preset) => preset.id === selectedPreset)
+  const selected = useMemo(
+    () => CANVAS_SIZE_PRESETS.find((preset) => preset.id === selectedPreset) || null,
+    [selectedPreset]
+  )
 
   const updateCustom = (key, value) => {
     const numeric = Math.max(1, Number(value) || 1)
@@ -33,18 +39,33 @@ export default function CanvasSizeModal({ onCancel, onCreate }) {
   }
 
   const groups = ['All', 'Social', 'Print', 'Global']
-  const filteredPresets = activeGroup === 'All' ? SIZE_PRESETS : SIZE_PRESETS.filter((p) => p.group === activeGroup)
+  const filteredPresets =
+    activeGroup === 'All'
+      ? CANVAS_SIZE_PRESETS
+      : CANVAS_SIZE_PRESETS.filter((preset) => preset.group === activeGroup)
+
+  const handleCreate = () => {
+    onCreate(normalizeCanvasSize(selected || customSize))
+  }
 
   return (
     <div className="canvas-size-modal-backdrop" onClick={onCancel}>
-      <section className="canvas-size-modal" role="dialog" aria-modal="true" aria-labelledby="canvas-size-title" onClick={(e) => e.stopPropagation()}>
+      <section
+        className="canvas-size-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="canvas-size-title"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="canvas-size-modal-heading">
           <div>
-            <span className="canvas-size-modal-eyebrow">Canvas Studio</span>
-            <h2 id="canvas-size-title">Choose Canvas Dimensions</h2>
-            <p className="canvas-size-modal-subtitle">Select a popular layout format or enter your custom design specs.</p>
+            <span className="canvas-size-modal-eyebrow">{eyebrow}</span>
+            <h2 id="canvas-size-title">{title}</h2>
+            <p className="canvas-size-modal-subtitle">{subtitle}</p>
           </div>
-          <button type="button" className="canvas-size-close" onClick={onCancel} aria-label="Close">×</button>
+          <button type="button" className="canvas-size-close" onClick={onCancel} aria-label="Close">
+            ×
+          </button>
         </div>
 
         <div className="canvas-size-tabs">
@@ -67,13 +88,13 @@ export default function CanvasSizeModal({ onCancel, onCreate }) {
                 type="button"
                 key={preset.id}
                 className={`canvas-size-preset ${selectedPreset === preset.id ? 'is-selected' : ''}`}
-                onClick={() => setSelectedPreset(preset.id)}
+                onClick={() => {
+                  setSelectedPreset(preset.id)
+                  setCustomSize({ width: preset.width, height: preset.height })
+                }}
               >
                 <div className="canvas-size-preview-container">
-                  <div
-                    className="canvas-size-preview-box"
-                    style={{ aspectRatio: preset.aspect }}
-                  />
+                  <div className="canvas-size-preview-box" style={{ aspectRatio: preset.aspect }} />
                 </div>
                 <div className="canvas-size-preset-meta">
                   <strong>{preset.label}</strong>
@@ -122,13 +143,11 @@ export default function CanvasSizeModal({ onCancel, onCreate }) {
         </div>
 
         <div className="canvas-size-modal-actions">
-          <button type="button" className="canvas-size-cancel" onClick={onCancel}>Cancel</button>
-          <button
-            type="button"
-            className="canvas-size-create"
-            onClick={() => onCreate(selected || customSize)}
-          >
-            Create Canvas <FiArrowRight aria-hidden="true" />
+          <button type="button" className="canvas-size-cancel" onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="button" className="canvas-size-create" onClick={handleCreate}>
+            {confirmLabel} <FiArrowRight aria-hidden="true" />
           </button>
         </div>
       </section>

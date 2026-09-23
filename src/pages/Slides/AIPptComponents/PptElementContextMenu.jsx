@@ -1,17 +1,25 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { MdChevronRight } from 'react-icons/md'
+import {
+  MdChevronRight,
+  MdAlignHorizontalLeft,
+  MdAlignHorizontalCenter,
+  MdAlignHorizontalRight,
+  MdAlignVerticalTop,
+  MdAlignVerticalCenter,
+  MdAlignVerticalBottom,
+} from 'react-icons/md'
 
 const ALIGN_ITEMS = [
-  { id: 'left', label: 'Left' },
-  { id: 'right', label: 'Right' },
-  { id: 'top', label: 'Top' },
-  { id: 'bottom', label: 'Bottom' },
-  { id: 'middle', label: 'Middle' },
-  { id: 'center', label: 'Center' },
+  { id: 'left', label: 'Left', icon: MdAlignHorizontalLeft },
+  { id: 'center', label: 'Center', icon: MdAlignHorizontalCenter },
+  { id: 'right', label: 'Right', icon: MdAlignHorizontalRight },
+  { id: 'top', label: 'Top', icon: MdAlignVerticalTop },
+  { id: 'middle', label: 'Middle', icon: MdAlignVerticalCenter },
+  { id: 'bottom', label: 'Bottom', icon: MdAlignVerticalBottom },
 ]
 
-function MenuItem({ label, shortcut, disabled, danger, onClick }) {
+function MenuItem({ label, icon: Icon, shortcut, disabled, danger, onClick }) {
   return (
     <button
       type="button"
@@ -27,7 +35,10 @@ function MenuItem({ label, shortcut, disabled, danger, onClick }) {
         if (!disabled) onClick?.()
       }}
     >
-      <span>{label}</span>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+        {Icon ? <Icon size={14} style={{ opacity: 0.85 }} /> : null}
+        {label}
+      </span>
       {shortcut ? <kbd>{shortcut}</kbd> : null}
     </button>
   )
@@ -58,9 +69,38 @@ function AlignSubmenu({ disabled, onAlign }) {
             <MenuItem
               key={item.id}
               label={item.label}
+              icon={item.icon}
               onClick={() => onAlign?.(item.id)}
             />
           ))}
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+function LayerOrderSubmenu({ disabled, onBringForward, onSendBackward, onBringToFront, onSendToBack }) {
+  if (!onBringForward && !onSendBackward && !onBringToFront && !onSendToBack) return null
+  return (
+    <div className={`ppt-el-ctx-sub${disabled ? ' is-disabled' : ''}`}>
+      <button
+        type="button"
+        className="ppt-el-ctx-item ppt-el-ctx-sub-trigger"
+        disabled={disabled}
+        onMouseDown={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+        }}
+      >
+        <span>Layer Order</span>
+        <MdChevronRight size={16} />
+      </button>
+      {!disabled ? (
+        <div className="ppt-el-ctx-sub-panel" role="menu">
+          {onBringForward ? <MenuItem label="Bring Forward" shortcut="Ctrl+]" onClick={onBringForward} /> : null}
+          {onSendBackward ? <MenuItem label="Send Backward" shortcut="Ctrl+[" onClick={onSendBackward} /> : null}
+          {onBringToFront ? <MenuItem label="Bring to Front" shortcut="Ctrl+Shift+]" onClick={onBringToFront} /> : null}
+          {onSendToBack ? <MenuItem label="Send to Back" shortcut="Ctrl+Shift+[" onClick={onSendToBack} /> : null}
         </div>
       ) : null}
     </div>
@@ -85,6 +125,10 @@ export default function PptElementContextMenu({
   onUngroup,
   onToggleLock,
   onAlign,
+  onBringForward,
+  onSendBackward,
+  onBringToFront,
+  onSendToBack,
 }) {
   const ref = useRef(null)
 
@@ -157,6 +201,13 @@ export default function PptElementContextMenu({
         shortcut="Ctrl+L"
         disabled={!hasSelection}
         onClick={onToggleLock}
+      />
+      <LayerOrderSubmenu
+        disabled={!hasSelection}
+        onBringForward={onBringForward}
+        onSendBackward={onSendBackward}
+        onBringToFront={onBringToFront}
+        onSendToBack={onSendToBack}
       />
       <AlignSubmenu disabled={!hasSelection} onAlign={onAlign} />
     </div>,

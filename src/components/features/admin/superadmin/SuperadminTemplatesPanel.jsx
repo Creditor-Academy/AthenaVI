@@ -114,13 +114,7 @@ function LayoutCategorySelect({ value, onChange, items, counts = {} }) {
       value={value}
       onChange={(e) => onChange(e.target.value)}
       style={{
-        height: 32,
-        fontSize: '0.8rem',
-        borderRadius: 8,
-        minWidth: 168,
-        maxWidth: 220,
-        padding: '0 28px 0 10px',
-        boxSizing: 'border-box',
+        minWidth: 170,
       }}
     >
       {items.map((category) => {
@@ -4017,286 +4011,295 @@ export default function SuperadminTemplatesPanel() {
   }
 
   return (
-    <div className="sa-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+    <div className="sa-panel">
       <style>{`.template-card:hover .card-hover-actions { opacity: 1 !important; pointer-events: auto !important; } .card-hover-actions { pointer-events: none; } .template-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.10), 0 1px 4px rgba(0,0,0,0.06) !important; transform: translateY(-1px); } .template-card:active { transform: translateY(0); }`}</style>
 
       {/* ── Page Header ── */}
-      <div className="sa-panel-header" style={{ padding: '24px 24px 0', marginBottom: 0 }}>
+      <div className="sa-panel-header">
         <div className="sa-panel-header-title-group">
           <h2 className="sa-panel-title">Templates</h2>
           <p className="sa-panel-desc">Manage deck layouts, packs, and video scenes for workspace pickers.</p>
         </div>
-        <button className="sa-btn sa-btn--primary" onClick={() => setShowCreate(true)}>
+        <button type="button" className="sa-btn sa-btn--primary" onClick={() => setShowCreate(true)}>
           <Plus size={16} strokeWidth={2.5} /> New Template
         </button>
       </div>
 
-      {/* ── toolbar: type tabs + search + filters ── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', marginTop: 16, borderBottom: '1px solid var(--border-color)', flexShrink: 0, gap: 12 }}>
-        {/* type tabs */}
-        <div style={{ display: 'flex', gap: 0 }}>
-          {TEMPLATE_TYPES.map(t => (
-            <button key={t.id} type="button" onClick={() => setActiveType(t.id)} style={{
-              padding: '10px 16px', border: 'none', background: 'none', cursor: 'pointer',
-              fontSize: '0.85rem', fontWeight: 600, marginBottom: -1, whiteSpace: 'nowrap',
-              color: activeType === t.id ? 'var(--primary)' : 'var(--text-muted)',
-              borderBottom: activeType === t.id ? '2px solid var(--primary)' : '2px solid transparent',
-              transition: 'color 0.12s',
-            }}>
-              {t.label}
-              {activeType === t.id && filtered.length > 0 && (
-                <span style={{ marginLeft: 6, fontSize: '0.68rem', fontWeight: 700, padding: '1px 6px', borderRadius: 99, background: 'color-mix(in srgb, var(--primary) 15%, transparent)', color: 'var(--primary)' }}>{filtered.length}</span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* search + category + status */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-          <div style={{ position: 'relative' }}>
-            <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
-            <input className="sa-input" placeholder="Search templates…" value={searchInput} onChange={handleSearchInput}
-              style={{ width: 200, boxSizing: 'border-box', height: 32, paddingLeft: 30, fontSize: '0.8rem', borderRadius: 8 }} />
-          </div>
-          {activeType === 'DECK_LAYOUT' && (
-            <LayoutCategorySelect
-              value={layoutCategory}
-              onChange={setLayoutCategory}
-              items={LAYOUT_CATEGORIES}
-              counts={layoutCategoryCounts}
-            />
-          )}
-          <select
-            className="sa-select"
-            aria-label="Status"
-            value={filterActive}
-            onChange={(e) => setFilterActive(e.target.value)}
-            style={{ height: 32, fontSize: '0.8rem', borderRadius: 8, minWidth: 128, padding: '0 28px 0 10px', boxSizing: 'border-box' }}
-          >
-            <option value="all">All statuses</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-        </div>
-      </div>
-
-      {/* ── card grid ── */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px 24px 24px' }}>
-        {listError && <div className="sa-alert sa-alert--error" style={{ marginBottom: 16 }}>{listError}</div>}
-
-        {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} style={{ borderRadius: 12, border: '1px solid var(--border-color)', overflow: 'hidden', background: 'var(--bg-card)' }}>
-                <div style={{ aspectRatio: '16/9', background: 'color-mix(in srgb, var(--border-color) 50%, transparent)', opacity: 0.4 }} />
-                <div style={{ padding: '12px' }}>
-                  <div style={{ height: 12, borderRadius: 4, background: 'var(--border-color)', opacity: 0.5, marginBottom: 6, width: '65%' }} />
-                  <div style={{ height: 9, borderRadius: 4, background: 'var(--border-color)', opacity: 0.3, width: '40%' }} />
-                </div>
-              </div>
+      {/* ── Main Data Card Container ── */}
+      <div className="sa-table-card">
+        {/* Toolbar with Filter Tabs and Search */}
+        <div className="sa-table-toolbar">
+          <div className="sa-filter-tabs" role="tablist" aria-label="Template Types">
+            {TEMPLATE_TYPES.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={activeType === t.id}
+                className={`sa-filter-tab ${activeType === t.id ? 'active' : ''}`}
+                onClick={() => setActiveType(t.id)}
+              >
+                {t.label}
+                {activeType === t.id && filtered.length > 0 && (
+                  <span className="sa-filter-count">{filtered.length}</span>
+                )}
+              </button>
             ))}
           </div>
-        ) : filtered.length === 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
-            <LayoutTemplate size={40} style={{ margin: '0 auto 12px', display: 'block', opacity: 0.2 }} />
-            <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>
-              {search
-                ? `No results for "${search}"`
-                : activeType === 'DECK_LAYOUT' && layoutCategory !== 'all'
-                  ? `No layouts in "${LAYOUT_CATEGORIES.find((c) => c.id === layoutCategory)?.label || layoutCategory}"`
-                  : 'No templates yet'}
-            </p>
-            <p style={{ margin: '6px 0 16px', fontSize: '0.8rem', opacity: 0.7 }}>{TEMPLATE_TYPES.find(t => t.id === activeType)?.description}</p>
-            {!search && (
-              <button className="sa-btn sa-btn--primary" onClick={() => setShowCreate(true)}>
-                <Plus size={14} /> Create first template
-              </button>
-            )}
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
-            {filtered.map(t => {
-              const previewUrl = getTemplatePreviewUrl(t)
-              const fallbackColor = t.schema?.preview?.color
-              const tc = t.schema?.themeId ? resolveDeckPackTheme(t.schema.themeId) : null
-              const isSelected = selected?.id === t.id
-              return (
-                <div
-                  key={t.id}
-                  role="button"
-                  tabIndex={0}
-                  className="template-card"
-                  onClick={() => setSelected(t)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      setSelected(t)
-                    }
-                  }}
-                  style={{
-                    textAlign: 'left',
-                    border: `1.5px solid ${isSelected ? 'var(--primary)' : 'var(--border-color)'}`,
-                    borderRadius: 14, overflow: 'hidden', background: 'var(--bg-card)',
-                    cursor: 'pointer', padding: 0, transition: 'all 0.18s',
-                    boxShadow: isSelected
-                      ? `0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent), 0 4px 16px rgba(0,0,0,0.08)`
-                      : '0 1px 3px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.04)',
-                  }}
-                >
-                  {/* thumbnail */}
-                  <div style={{ aspectRatio: aspectRatioToCss(t.schema?.aspectRatio ?? '16:9'), position: 'relative', overflow: 'hidden', background: 'var(--bg-card)' }}>
-                    {t.type === 'DECK_LAYOUT' ? (
-                      <LayoutPolishedPreview
-                        schema={enrichLayoutSchemaForPreview(t.schema)}
-                        slots={t.schema?.slots ?? []}
-                        fill
-                      />
-                    ) : (
-                      // ── Pack / Video Scene: themed gradient ──
-                      <>
-                        <div style={{
-                          position: 'absolute', inset: 0,
-                          background: tc
-                            ? `linear-gradient(140deg, ${tc.bg} 0%, ${tc.surface ?? tc.bg} 55%, ${tc.accent}30 100%)`
-                            : fallbackColor
-                              ? `linear-gradient(140deg, ${fallbackColor}dd 0%, ${fallbackColor}44 100%)`
-                              : t.type === 'VIDEO_PACK'
-                                ? 'linear-gradient(140deg, #0f172a, #1e293b)'
-                                : t.type === 'VIDEO_SCENE'
-                                  ? 'linear-gradient(140deg, #0f0f1a, #1a1a2e)'
-                                  : 'linear-gradient(140deg, color-mix(in srgb, var(--primary) 5%, var(--bg-card)), color-mix(in srgb, var(--primary) 12%, var(--bg-card)))',
-                        }} />
-                        {/* accent bottom stripe */}
-                        {tc && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: tc.accent, opacity: 0.9 }} />}
-                        {/* content: palette + label */}
-                        {tc && (
-                          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', padding: '12px 12px 16px' }}>
-                            {/* palette row top */}
-                            <div style={{ display: 'flex', gap: 5 }}>
-                              {[tc.accent, tc.text, tc.surface ?? tc.bg].map((c, i) => (
-                                <div key={i} style={{
-                                  width: i === 0 ? 12 : 8, height: i === 0 ? 12 : 8,
-                                  borderRadius: '50%', background: c,
-                                  border: '1.5px solid rgba(255,255,255,0.2)',
-                                  boxShadow: i === 0 ? `0 0 8px ${c}99` : 'none',
-                                }} />
-                              ))}
-                            </div>
-                            {/* theme name bottom */}
-                            {t.schema?.themeId && (
-                              <span style={{ fontSize: '0.53rem', fontWeight: 600, color: tc.text, opacity: 0.4, letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'monospace' }}>
-                                {t.schema.themeId.replace(/_/g, ' ')}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </>
-                    )}
-                    {/* slide count badge for packs */}
-                    {t.type === 'DECK_PACK' && t.schema?.slides?.length > 0 && (
-                      <div style={{ position: 'absolute', bottom: 10, left: 10, padding: '2px 7px', borderRadius: 5, fontSize: '0.62rem', fontWeight: 700, background: 'rgba(0,0,0,0.45)', color: '#fff', backdropFilter: 'blur(4px)', letterSpacing: '0.02em' }}>
-                        {t.schema.slides.length} slides
-                      </div>
-                    )}
-                    {t.type === 'VIDEO_PACK' && Array.isArray(t.schema?.scenes) && t.schema.scenes.length > 0 && (
-                      <div style={{ position: 'absolute', bottom: 10, left: 10, padding: '2px 7px', borderRadius: 5, fontSize: '0.62rem', fontWeight: 700, background: 'rgba(0,0,0,0.45)', color: '#fff', backdropFilter: 'blur(4px)', letterSpacing: '0.02em' }}>
-                        {t.schema.scenes.length} scenes
-                      </div>
-                    )}
-                    {t.type === 'VIDEO_SCENE' && t.schema?.scene?.durationInFrames && (
-                      <div style={{ position: 'absolute', bottom: 10, left: 10, padding: '2px 7px', borderRadius: 5, fontSize: '0.62rem', fontWeight: 700, background: 'rgba(0,0,0,0.45)', color: '#fff', backdropFilter: 'blur(4px)' }}>
-                        {t.schema.scene.durationInFrames}f
-                      </div>
-                    )}
-                    {/* media count */}
-                    {t.type !== 'VIDEO_SCENE' && Array.isArray(t.media) && t.media.length > 0 && (
-                      <div style={{ position: 'absolute', bottom: 10, right: 10, padding: '2px 7px', borderRadius: 5, fontSize: '0.62rem', fontWeight: 700, background: 'rgba(0,0,0,0.45)', color: '#fff', backdropFilter: 'blur(4px)' }}>
-                        {t.media.length} media
-                      </div>
-                    )}
-                    {/* hover overlay with action icons */}
-                    <div className="card-hover-actions" style={{
-                      position: 'absolute', inset: 0,
-                      background: 'rgba(0,0,0,0.45)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                      opacity: 0, transition: 'opacity 0.18s',
-                    }}>
-                      <button type="button"
-                        title="Preview"
-                        onClick={e => { e.stopPropagation(); openPreview(t) }}
-                        style={{ width: 38, height: 38, borderRadius: 10, border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', cursor: 'pointer', color: '#fff', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)' }}
-                      >▶</button>
-                      <button type="button"
-                        title="Edit"
-                        onClick={e => { e.stopPropagation(); setSelected(t) }}
-                        style={{ width: 38, height: 38, borderRadius: 10, border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', cursor: 'pointer', color: '#fff', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)' }}
-                      >✎</button>
-                    </div>
-                  </div>
 
-                  {/* card footer — clean, no buttons */}
-                  <div style={{
-                    padding: '10px 12px 11px',
-                    borderTop: tc ? `2px solid ${tc.accent}30` : '1px solid var(--border-color)',
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.name}</div>
-                      {/* tiny active dot toggle */}
-                      <button type="button" title={t.isActive ? 'Deactivate' : 'Activate'}
-                        onClick={e => handleQuickToggle(e, t)}
-                        style={{
-                          flexShrink: 0, width: 8, height: 8, borderRadius: '50%', border: 'none',
-                          background: t.isActive ? '#4ade80' : 'color-mix(in srgb, var(--text-muted) 40%, transparent)',
-                          cursor: 'pointer', transition: 'all 0.15s', padding: 0,
-                          boxShadow: t.isActive ? '0 0 0 2px color-mix(in srgb, #22c55e 20%, transparent)' : 'none',
-                        }}
-                      />
-                    </div>
-                    <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {t.schema?.pack_id || t.schema?.layout_id || t.variant || t.contentType || formatDate(t.createdAt)}
-                    </div>
+          {/* search + category + status */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: '1 1 auto', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+            <div className="sa-search-field" style={{ width: 'min(220px, 100%)' }}>
+              <Search className="sa-search-field-icon" size={14} aria-hidden />
+              <input
+                className="sa-input"
+                type="search"
+                placeholder="Search templates…"
+                value={searchInput}
+                onChange={handleSearchInput}
+                aria-label="Search templates"
+              />
+            </div>
+            {activeType === 'DECK_LAYOUT' && (
+              <LayoutCategorySelect
+                value={layoutCategory}
+                onChange={setLayoutCategory}
+                items={LAYOUT_CATEGORIES}
+                counts={layoutCategoryCounts}
+              />
+            )}
+            <select
+              className="sa-select"
+              aria-label="Status filter"
+              value={filterActive}
+              onChange={(e) => setFilterActive(e.target.value)}
+              style={{ minWidth: 128 }}
+            >
+              <option value="all">All statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+
+        {/* ── card grid inside scrollable card body ── */}
+        <div className="sa-table-scroll sa-scroll" style={{ padding: '20px', flex: 1, minHeight: 0 }}>
+          {listError && <div className="sa-alert sa-alert--error" style={{ marginBottom: 16 }}>{listError}</div>}
+
+          {loading ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} style={{ borderRadius: 12, border: '1px solid var(--border-color)', overflow: 'hidden', background: 'var(--bg-card)' }}>
+                  <div style={{ aspectRatio: '16/9', background: 'color-mix(in srgb, var(--border-color) 50%, transparent)', opacity: 0.4 }} />
+                  <div style={{ padding: '12px' }}>
+                    <div style={{ height: 12, borderRadius: 4, background: 'var(--border-color)', opacity: 0.5, marginBottom: 6, width: '65%' }} />
+                    <div style={{ height: 9, borderRadius: 4, background: 'var(--border-color)', opacity: 0.3, width: '40%' }} />
                   </div>
                 </div>
-              )
-            })}
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 20px', color: 'var(--text-muted)' }}>
+              <LayoutTemplate size={40} style={{ margin: '0 auto 12px', display: 'block', opacity: 0.2 }} />
+              <p style={{ margin: 0, fontSize: '0.9rem', fontWeight: 600 }}>
+                {search
+                  ? `No results for "${search}"`
+                  : activeType === 'DECK_LAYOUT' && layoutCategory !== 'all'
+                    ? `No layouts in "${LAYOUT_CATEGORIES.find((c) => c.id === layoutCategory)?.label || layoutCategory}"`
+                    : 'No templates yet'}
+              </p>
+              <p style={{ margin: '6px 0 16px', fontSize: '0.8rem', opacity: 0.7 }}>{TEMPLATE_TYPES.find(t => t.id === activeType)?.description}</p>
+              {!search && (
+                <button type="button" className="sa-btn sa-btn--primary" onClick={() => setShowCreate(true)}>
+                  <Plus size={14} /> Create first template
+                </button>
+              )}
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
+              {filtered.map(t => {
+                const previewUrl = getTemplatePreviewUrl(t)
+                const fallbackColor = t.schema?.preview?.color
+                const tc = t.schema?.themeId ? resolveDeckPackTheme(t.schema.themeId) : null
+                const isSelected = selected?.id === t.id
+                return (
+                  <div
+                    key={t.id}
+                    role="button"
+                    tabIndex={0}
+                    className="template-card"
+                    onClick={() => setSelected(t)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        setSelected(t)
+                      }
+                    }}
+                    style={{
+                      textAlign: 'left',
+                      border: `1.5px solid ${isSelected ? 'var(--primary)' : 'var(--border-color)'}`,
+                      borderRadius: 14, overflow: 'hidden', background: 'var(--bg-card)',
+                      cursor: 'pointer', padding: 0, transition: 'all 0.18s',
+                      boxShadow: isSelected
+                        ? `0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent), 0 4px 16px rgba(0,0,0,0.08)`
+                        : '0 1px 3px rgba(0,0,0,0.05), 0 2px 8px rgba(0,0,0,0.04)',
+                    }}
+                  >
+                    {/* thumbnail */}
+                    <div style={{ aspectRatio: aspectRatioToCss(t.schema?.aspectRatio ?? '16:9'), position: 'relative', overflow: 'hidden', background: 'var(--bg-card)' }}>
+                      {t.type === 'DECK_LAYOUT' ? (
+                        <LayoutPolishedPreview
+                          schema={enrichLayoutSchemaForPreview(t.schema)}
+                          slots={t.schema?.slots ?? []}
+                          fill
+                        />
+                      ) : (
+                        // ── Pack / Video Scene: themed gradient ──
+                        <>
+                          <div style={{
+                            position: 'absolute', inset: 0,
+                            background: tc
+                              ? `linear-gradient(140deg, ${tc.bg} 0%, ${tc.surface ?? tc.bg} 55%, ${tc.accent}30 100%)`
+                              : fallbackColor
+                                ? `linear-gradient(140deg, ${fallbackColor}dd 0%, ${fallbackColor}44 100%)`
+                                : t.type === 'VIDEO_PACK'
+                                  ? 'linear-gradient(140deg, #0f172a, #1e293b)'
+                                  : t.type === 'VIDEO_SCENE'
+                                    ? 'linear-gradient(140deg, #0f0f1a, #1a1a2e)'
+                                    : 'linear-gradient(140deg, color-mix(in srgb, var(--primary) 5%, var(--bg-card)), color-mix(in srgb, var(--primary) 12%, var(--bg-card)))',
+                          }} />
+                          {/* accent bottom stripe */}
+                          {tc && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: tc.accent, opacity: 0.9 }} />}
+                          {/* content: palette + label */}
+                          {tc && (
+                            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', padding: '12px 12px 16px' }}>
+                              {/* palette row top */}
+                              <div style={{ display: 'flex', gap: 5 }}>
+                                {[tc.accent, tc.text, tc.surface ?? tc.bg].map((c, i) => (
+                                  <div key={i} style={{
+                                    width: i === 0 ? 12 : 8, height: i === 0 ? 12 : 8,
+                                    borderRadius: '50%', background: c,
+                                    border: '1.5px solid rgba(255,255,255,0.2)',
+                                    boxShadow: i === 0 ? `0 0 8px ${c}99` : 'none',
+                                  }} />
+                                ))}
+                              </div>
+                              {/* theme name bottom */}
+                              {t.schema?.themeId && (
+                                <span style={{ fontSize: '0.53rem', fontWeight: 600, color: tc.text, opacity: 0.4, letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'monospace' }}>
+                                  {t.schema.themeId.replace(/_/g, ' ')}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </>
+                      )}
+                      {/* slide count badge for packs */}
+                      {t.type === 'DECK_PACK' && t.schema?.slides?.length > 0 && (
+                        <div style={{ position: 'absolute', bottom: 10, left: 10, padding: '2px 7px', borderRadius: 5, fontSize: '0.62rem', fontWeight: 700, background: 'rgba(0,0,0,0.45)', color: '#fff', backdropFilter: 'blur(4px)', letterSpacing: '0.02em' }}>
+                          {t.schema.slides.length} slides
+                        </div>
+                      )}
+                      {t.type === 'VIDEO_PACK' && Array.isArray(t.schema?.scenes) && t.schema.scenes.length > 0 && (
+                        <div style={{ position: 'absolute', bottom: 10, left: 10, padding: '2px 7px', borderRadius: 5, fontSize: '0.62rem', fontWeight: 700, background: 'rgba(0,0,0,0.45)', color: '#fff', backdropFilter: 'blur(4px)', letterSpacing: '0.02em' }}>
+                          {t.schema.scenes.length} scenes
+                        </div>
+                      )}
+                      {t.type === 'VIDEO_SCENE' && t.schema?.scene?.durationInFrames && (
+                        <div style={{ position: 'absolute', bottom: 10, left: 10, padding: '2px 7px', borderRadius: 5, fontSize: '0.62rem', fontWeight: 700, background: 'rgba(0,0,0,0.45)', color: '#fff', backdropFilter: 'blur(4px)' }}>
+                          {t.schema.scene.durationInFrames}f
+                        </div>
+                      )}
+                      {/* media count */}
+                      {t.type !== 'VIDEO_SCENE' && Array.isArray(t.media) && t.media.length > 0 && (
+                        <div style={{ position: 'absolute', bottom: 10, right: 10, padding: '2px 7px', borderRadius: 5, fontSize: '0.62rem', fontWeight: 700, background: 'rgba(0,0,0,0.45)', color: '#fff', backdropFilter: 'blur(4px)' }}>
+                          {t.media.length} media
+                        </div>
+                      )}
+                      {/* hover overlay with action icons */}
+                      <div className="card-hover-actions" style={{
+                        position: 'absolute', inset: 0,
+                        background: 'rgba(0,0,0,0.45)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                        opacity: 0, transition: 'opacity 0.18s',
+                      }}>
+                        <button type="button"
+                          title="Preview"
+                          onClick={e => { e.stopPropagation(); openPreview(t) }}
+                          style={{ width: 38, height: 38, borderRadius: 10, border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', cursor: 'pointer', color: '#fff', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)' }}
+                        >▶</button>
+                        <button type="button"
+                          title="Edit"
+                          onClick={e => { e.stopPropagation(); setSelected(t) }}
+                          style={{ width: 38, height: 38, borderRadius: 10, border: '1px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(8px)', cursor: 'pointer', color: '#fff', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.15s' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)' }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)' }}
+                        >✎</button>
+                      </div>
+                    </div>
+
+                    {/* card footer — clean, no buttons */}
+                    <div style={{
+                      padding: '10px 12px 11px',
+                      borderTop: tc ? `2px solid ${tc.accent}30` : '1px solid var(--border-color)',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-main)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.name}</div>
+                        {/* tiny active dot toggle */}
+                        <button type="button" title={t.isActive ? 'Deactivate' : 'Activate'}
+                          onClick={e => handleQuickToggle(e, t)}
+                          style={{
+                            flexShrink: 0, width: 8, height: 8, borderRadius: '50%', border: 'none',
+                            background: t.isActive ? '#4ade80' : 'color-mix(in srgb, var(--text-muted) 40%, transparent)',
+                            cursor: 'pointer', transition: 'all 0.15s', padding: 0,
+                            boxShadow: t.isActive ? '0 0 0 2px color-mix(in srgb, #22c55e 20%, transparent)' : 'none',
+                          }}
+                        />
+                      </div>
+                      <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {t.schema?.pack_id || t.schema?.layout_id || t.variant || t.contentType || formatDate(t.createdAt)}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* ── detail drawer (slides up from bottom / overlays inside card) ── */}
+        {selected && (
+          <div style={{
+            position: 'absolute', inset: 0, zIndex: 100,
+            background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)',
+            display: 'flex', alignItems: 'flex-end',
+          }} onClick={e => { if (e.target === e.currentTarget) setSelected(null) }}>
+            <div style={{
+              width: '100%', height: '82vh',
+              background: 'var(--bg-card)', borderRadius: '16px 16px 0 0',
+              border: '1px solid var(--border-color)', borderBottom: 'none',
+              display: 'flex', flexDirection: 'column',
+              boxShadow: '0 -12px 48px rgba(0,0,0,0.3)',
+            }}>
+              {/* drag handle */}
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px', flexShrink: 0 }}>
+                <div style={{ width: 36, height: 4, borderRadius: 99, background: 'var(--border-color)' }} />
+              </div>
+              <TemplateDetail
+                key={selected.id}
+                template={selected}
+                layoutSchemaMap={layoutSchemaMap}
+                layoutCatalog={layoutCatalog}
+                onUpdated={handleUpdated}
+                onClose={() => setSelected(null)}
+                onDuplicate={t => { setDuplicatePrefill(t); setShowCreate(true) }}
+              />
+            </div>
           </div>
         )}
       </div>
-
-      {/* ── detail drawer (slides up from bottom / overlays as full-width panel) ── */}
-      {selected && (
-        <div style={{
-          position: 'absolute', inset: 0, zIndex: 100,
-          background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(2px)',
-          display: 'flex', alignItems: 'flex-end',
-        }} onClick={e => { if (e.target === e.currentTarget) setSelected(null) }}>
-          <div style={{
-            width: '100%', height: '82vh',
-            background: 'var(--bg-card)', borderRadius: '16px 16px 0 0',
-            border: '1px solid var(--border-color)', borderBottom: 'none',
-            display: 'flex', flexDirection: 'column',
-            boxShadow: '0 -12px 48px rgba(0,0,0,0.3)',
-          }}>
-            {/* drag handle */}
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px', flexShrink: 0 }}>
-              <div style={{ width: 36, height: 4, borderRadius: 99, background: 'var(--border-color)' }} />
-            </div>
-            <TemplateDetail
-              key={selected.id}
-              template={selected}
-              layoutSchemaMap={layoutSchemaMap}
-              layoutCatalog={layoutCatalog}
-              onUpdated={handleUpdated}
-              onClose={() => setSelected(null)}
-              onDuplicate={t => { setDuplicatePrefill(t); setShowCreate(true) }}
-            />
-          </div>
-        </div>
-      )}
 
       {(showCreate || duplicatePrefill) && (
         <CreateModal
