@@ -123,6 +123,46 @@ import {
   layoutTwoParaRightImageBottom,
 } from './twoParaRightImageBottomLayout.js'
 import {
+  isThreeParaImageLayout,
+  layoutThreeParaImage,
+} from './threeParaImageLayout.js'
+import {
+  isFourParaImageLayout,
+  layoutFourParaImage,
+} from './fourParaImageLayout.js'
+import {
+  isFourParaImageGridLayout,
+  layoutFourParaImageGrid,
+} from './fourParaImageGridLayout.js'
+import {
+  isParaTwoImagesLayout,
+  layoutParaTwoImages,
+} from './paraTwoImagesLayout.js'
+import {
+  isParaThreeImagesLayout,
+  layoutParaThreeImages,
+} from './paraThreeImagesLayout.js'
+import {
+  isParaThreeImagesHorizontalLayout,
+  layoutParaThreeImagesHorizontal,
+} from './paraThreeImagesHorizontalLayout.js'
+import {
+  isParaThreeImagesStaggeredLayout,
+  layoutParaThreeImagesStaggered,
+} from './paraThreeImagesStaggeredLayout.js'
+import {
+  isThreeCardsImageTextLayout,
+  layoutThreeCardsImageText,
+} from './threeCardsImageTextLayout.js'
+import {
+  isTwoCardsImageTextLayout,
+  layoutTwoCardsImageText,
+} from './twoCardsImageTextLayout.js'
+import {
+  isTwoLargeImageCardsLayout,
+  layoutTwoLargeImageCards,
+} from './twoLargeImageCardsLayout.js'
+import {
   isGridBentoThreeLayout,
   layoutGridBentoThree,
 } from './gridBentoThreeLayout.js'
@@ -444,6 +484,46 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
 
   if (isTwoParaRightImageBottomLayout(layoutId, schema)) {
     return layoutTwoParaRightImageBottom(elements, schema, palette, canvas)
+  }
+
+  if (isThreeParaImageLayout(layoutId, schema)) {
+    return layoutThreeParaImage(elements, schema, palette, canvas)
+  }
+
+  if (isFourParaImageLayout(layoutId, schema)) {
+    return layoutFourParaImage(elements, schema, palette, canvas)
+  }
+
+  if (isFourParaImageGridLayout(layoutId, schema)) {
+    return layoutFourParaImageGrid(elements, schema, palette, canvas)
+  }
+
+  if (isParaTwoImagesLayout(layoutId, schema)) {
+    return layoutParaTwoImages(elements, schema, palette, canvas)
+  }
+
+  if (isParaThreeImagesLayout(layoutId, schema)) {
+    return layoutParaThreeImages(elements, schema, palette, canvas)
+  }
+
+  if (isParaThreeImagesHorizontalLayout(layoutId, schema)) {
+    return layoutParaThreeImagesHorizontal(elements, schema, palette, canvas)
+  }
+
+  if (isParaThreeImagesStaggeredLayout(layoutId, schema)) {
+    return layoutParaThreeImagesStaggered(elements, schema, palette, canvas)
+  }
+
+  if (isThreeCardsImageTextLayout(layoutId, schema)) {
+    return layoutThreeCardsImageText(elements, schema, palette, canvas)
+  }
+
+  if (isTwoCardsImageTextLayout(layoutId, schema)) {
+    return layoutTwoCardsImageText(elements, schema, palette, canvas)
+  }
+
+  if (isTwoLargeImageCardsLayout(layoutId, schema)) {
+    return layoutTwoLargeImageCards(elements, schema, palette, canvas)
   }
   
   if (isGridBentoThreeLayout(layoutId)) {

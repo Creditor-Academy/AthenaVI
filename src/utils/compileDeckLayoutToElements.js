@@ -94,6 +94,46 @@ import {
   isTwoParaRightImageBottomLayout,
   buildTwoParaRightImageBottomCanvasElements,
 } from './twoParaRightImageBottomLayout.js'
+import {
+  isThreeParaImageLayout,
+  buildThreeParaImageCanvasElements,
+} from './threeParaImageLayout.js'
+import {
+  isFourParaImageLayout,
+  buildFourParaImageCanvasElements,
+} from './fourParaImageLayout.js'
+import {
+  isFourParaImageGridLayout,
+  buildFourParaImageGridCanvasElements,
+} from './fourParaImageGridLayout.js'
+import {
+  isParaTwoImagesLayout,
+  buildParaTwoImagesCanvasElements,
+} from './paraTwoImagesLayout.js'
+import {
+  isParaThreeImagesLayout,
+  buildParaThreeImagesCanvasElements,
+} from './paraThreeImagesLayout.js'
+import {
+  isParaThreeImagesHorizontalLayout,
+  buildParaThreeImagesHorizontalCanvasElements,
+} from './paraThreeImagesHorizontalLayout.js'
+import {
+  isParaThreeImagesStaggeredLayout,
+  buildParaThreeImagesStaggeredCanvasElements,
+} from './paraThreeImagesStaggeredLayout.js'
+import {
+  isThreeCardsImageTextLayout,
+  buildThreeCardsImageTextCanvasElements,
+} from './threeCardsImageTextLayout.js'
+import {
+  isTwoCardsImageTextLayout,
+  buildTwoCardsImageTextCanvasElements,
+} from './twoCardsImageTextLayout.js'
+import {
+  isTwoLargeImageCardsLayout,
+  buildTwoLargeImageCardsCanvasElements,
+} from './twoLargeImageCardsLayout.js'
 import { isCatalogPlaceholderText } from './catalogPlaceholder.js'
 import { normalizeChartContent } from './chartContentNormalize.js'
 import {
@@ -1240,6 +1280,16 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
       (isParaSplit5050Layout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG|TEXT_HALF_BG)$/i.test(String(el.slotId || '')))) ||
       (isTwoParaRightImageLayout(schema?.layout_id, schema) && (/^(BODY_1|BODY_2|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
       (isTwoParaRightImageBottomLayout(schema?.layout_id, schema) && (/^(BODY_1|BODY_2|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isThreeParaImageLayout(schema?.layout_id, schema) && (/^(BODY_[123]|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isFourParaImageLayout(schema?.layout_id, schema) && (/^(HEADING|BULLET_[1-4]|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isFourParaImageGridLayout(schema?.layout_id, schema) && (/^(HEADING|BULLET_[1-4]|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaTwoImagesLayout(schema?.layout_id, schema) && (/^(BODY_[12]|IMAGE_[12]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaThreeImagesLayout(schema?.layout_id, schema) && (/^(BODY|IMAGE_[123]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaThreeImagesHorizontalLayout(schema?.layout_id, schema) && (/^(BODY|IMAGE_[123]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaThreeImagesStaggeredLayout(schema?.layout_id, schema) && (/^(BODY|IMAGE_[123]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isThreeCardsImageTextLayout(schema?.layout_id, schema) && (/^(HEADING|CARD_[123]_(TITLE|BODY)|IMAGE_[123]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isTwoCardsImageTextLayout(schema?.layout_id, schema) && (/^(EYEBROW|COL_[12]_(IMAGE|TITLE|BODY)|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isTwoLargeImageCardsLayout(schema?.layout_id, schema) && (/^(CARD_[12]_(TITLE|BODY)|IMAGE_[12]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
       (isEightShortTextsImageLayout(schema?.layout_id) && (/^(HEADING|SUBTITLE|TAG_BADGE|POINT_\d+_(TITLE|DESC|CARD|NUM)|HERO_IMAGE)$/i.test(String(el.slotId || '')))) ||
       (isParaLandscapeImageBottomLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
       (isParaLandscapeImageTopLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
@@ -1353,6 +1403,36 @@ export function compileDeckLayoutToElements(schema, options = {}) {
   }
   if (isTwoParaRightImageBottomLayout(schema?.layout_id, schema)) {
     return buildTwoParaRightImageBottomCanvasElements({ schema, options })
+  }
+  if (isThreeParaImageLayout(schema?.layout_id, schema)) {
+    return buildThreeParaImageCanvasElements({ schema, options })
+  }
+  if (isFourParaImageLayout(schema?.layout_id, schema)) {
+    return buildFourParaImageCanvasElements({ schema, options })
+  }
+  if (isFourParaImageGridLayout(schema?.layout_id, schema)) {
+    return buildFourParaImageGridCanvasElements({ schema, options })
+  }
+  if (isParaTwoImagesLayout(schema?.layout_id, schema)) {
+    return buildParaTwoImagesCanvasElements({ schema, options })
+  }
+  if (isParaThreeImagesLayout(schema?.layout_id, schema)) {
+    return buildParaThreeImagesCanvasElements({ schema, options })
+  }
+  if (isParaThreeImagesHorizontalLayout(schema?.layout_id, schema)) {
+    return buildParaThreeImagesHorizontalCanvasElements({ schema, options })
+  }
+  if (isParaThreeImagesStaggeredLayout(schema?.layout_id, schema)) {
+    return buildParaThreeImagesStaggeredCanvasElements({ schema, options })
+  }
+  if (isThreeCardsImageTextLayout(schema?.layout_id, schema)) {
+    return buildThreeCardsImageTextCanvasElements({ schema, options })
+  }
+  if (isTwoCardsImageTextLayout(schema?.layout_id, schema)) {
+    return buildTwoCardsImageTextCanvasElements({ schema, options })
+  }
+  if (isTwoLargeImageCardsLayout(schema?.layout_id, schema)) {
+    return buildTwoLargeImageCardsCanvasElements({ schema, options })
   }
   if (isTitleWithLogoLayout(schema?.layout_id, schema)) {
     return buildTitleWithLogoCanvasElements({ schema, options })

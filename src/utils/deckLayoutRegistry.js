@@ -212,7 +212,8 @@ const LAYOUT_PREVIEW_MODES = {
   statement_large_v1: 'statement_large',
   eight_short_texts_image_v1: 'eight_short_texts',
   eight_short_texts_image_right_v1: 'eight_short_texts',
-  two_cards_image_text_v1: 'two_image_columns',
+  two_cards_image_text_v1: 'two_cards_image_text',
+  two_large_image_cards_v1: 'two_large_image_cards',
   centered_text_cta_v1: 'closing_cta',
   para_image_cta_v1: 'closing_image_right',
   intro_three_para_icons_v1: 'intro_three_para_icons',
@@ -333,18 +334,21 @@ const LAYOUT_PREVIEW_MODES = {
   headline_centered_v1: 'title_centered',
   four_images_text_v1: 'image_gallery_three',
   four_images_text_mosaic_v1: 'image_gallery_three',
-  four_para_image_v1: 'bullet_list',
-  four_para_image_grid_v1: 'bullet_list',
+  four_para_image_v1: 'four_para_image',
+  four_para_image_grid_v1: 'four_para_image_grid',
   full_bg_image_overlay_v1: 'closing_overlay',
   full_bg_image_overlay_bottom_v1: 'closing_overlay',
   full_bg_image_overlay_side_v1: 'closing_overlay',
   para_landscape_image_v1: 'para_landscape_image',
   para_split_50_50_v1: 'para_split_50_50',
+  three_para_image_v1: 'three_para_image',
   para_landscape_image_top_v1: 'two_image_columns',
   para_landscape_image_bottom_v1: 'two_image_columns',
-  para_three_images_v1: 'image_gallery_three',
-  para_three_images_horizontal_v1: 'image_gallery_three',
-  para_three_images_staggered_v1: 'image_gallery_three',
+  para_two_images_v1: 'para_two_images',
+  para_three_images_v1: 'para_three_images',
+  para_three_images_horizontal_v1: 'para_three_images_horizontal',
+  para_three_images_staggered_v1: 'para_three_images_staggered',
+  three_cards_image_text_v1: 'three_cards_image_text',
   para_title_left_image_boxed_v1: 'para_title_left_image_boxed',
   para_title_left_image_overlay_v1: 'para_title_left_image_overlay',
   para_title_right_image_boxed_v1: 'para_title_right_image_boxed',
@@ -459,6 +463,13 @@ export function resolvePreviewMode(schema) {
   if (layoutId && LAYOUT_PREVIEW_MODES[layoutId]) return LAYOUT_PREVIEW_MODES[layoutId]
   if (schema?.preview?.mode) return schema.preview.mode
   return inferPreviewMode(schema)
+}
+
+/** Prefer live LayoutPolishedPreview over a stale DB thumbnail. */
+export function hasEngineLayoutPreview(schema) {
+  const id = String(schema?.layout_id || schema?.layoutId || '').trim()
+  if (id && LAYOUT_PREVIEW_MODES[id]) return true
+  return Boolean(schema?.preview?.mode)
 }
 
 /** Infer polished preview mode from content_type + slot roles when preview.mode is absent. */
@@ -1224,7 +1235,7 @@ export function mergeCatalogLayoutTemplates(dbLayouts = []) {
         name: db?.name || humanLayoutName(layoutId),
         rawContentType: schema.content_type,
         schema,
-        previewUrl: db?.previewUrl || null,
+        previewUrl: hasEngineLayoutPreview(schema) ? null : (db?.previewUrl || null),
       }
     })
     .filter(Boolean)

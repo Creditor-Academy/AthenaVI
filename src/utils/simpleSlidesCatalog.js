@@ -456,7 +456,7 @@ const CATALOG = {
     body('BODY_2', 'cols 2-6, rows 4-6', P.two, 3),
     body('BODY_3', 'cols 2-6, rows 6-8', P.three, 3),
     imageRight(),
-  ]),
+  ], { mode: 'three_para_image' }),
 
   four_para_image_v1: layoutBase('four_para_image_v1', 'bullet_list', [
     heading('HEADING', 'cols 2-7, rows 2-3', 'Key points', { typography: typo('heading', { fontSize: 32 }) }),
@@ -465,21 +465,21 @@ const CATALOG = {
     body('BULLET_3', 'cols 5-7, rows 4-5', P.three, 3),
     body('BULLET_4', 'cols 5-7, rows 6-7', P.four, 3),
     imageRight('cols 8-12, rows 1-10'),
-  ]),
+  ], { mode: 'four_para_image' }),
 
   para_two_images_v1: layoutBase('para_two_images_v1', 'image+text', [
     body('BODY_1', 'cols 2-5, rows 2-4', P.one, 3),
     body('BODY_2', 'cols 7-10, rows 2-4', P.two, 3),
     slot('IMAGE_1', 'cols 2-5, rows 4-10', 'image', null, { layer: 2, fit: 'cover' }),
     slot('IMAGE_2', 'cols 7-10, rows 4-10', 'image', null, { layer: 2, fit: 'cover' }),
-  ]),
+  ], { mode: 'para_two_images' }),
 
   para_three_images_v1: layoutBase('para_three_images_v1', 'image+text', [
     body('BODY', 'cols 2-11, rows 2-3', P.short, 2),
     slot('IMAGE_1', 'cols 1-4, rows 4-10', 'image', null, { layer: 2, fit: 'cover' }),
     slot('IMAGE_2', 'cols 5-8, rows 4-10', 'image', null, { layer: 2, fit: 'cover' }),
     slot('IMAGE_3', 'cols 9-12, rows 4-10', 'image', null, { layer: 2, fit: 'cover' }),
-  ]),
+  ], { mode: 'para_three_images' }),
 
   three_cards_image_text_v1: layoutBase('three_cards_image_text_v1', 'image+text', [
     heading('HEADING', 'cols 2-11, rows 2-3', 'Product highlights', { typography: typo('heading', { fontSize: 32 }) }),
@@ -501,7 +501,7 @@ const CATALOG = {
       typography: typo('heading', { fontSize: 18 }),
     }),
     body('CARD_3_BODY', 'cols 9-12, rows 8-10', P.short, 3, { typography: typo('body', { fontSize: 14 }) }),
-  ]),
+  ], { mode: 'three_cards_image_text' }),
 
   two_cards_image_text_v1: layoutBase('two_cards_image_text_v1', 'image+text', [
     slot('EYEBROW', 'cols 2-10, rows 2-3', 'eyebrow', 'Describe this slide', {
@@ -520,7 +520,7 @@ const CATALOG = {
       typography: typo('heading', { fontSize: 22 }),
     }),
     body('COL_2_BODY', 'cols 7-11, rows 7-9', P.two, 3, { typography: typo('body', { fontSize: 16 }) }),
-  ], { mode: 'two_image_columns' }),
+  ], { mode: 'two_cards_image_text' }),
 
   two_large_image_cards_v1: layoutBase('two_large_image_cards_v1', 'image+text', [
     slot('IMAGE_1', 'cols 2-6, rows 2-5', 'image', null, { layer: 2, fit: 'cover' }),
@@ -535,7 +535,7 @@ const CATALOG = {
       typography: typo('heading', { fontSize: 22 }),
     }),
     body('CARD_2_BODY', 'cols 7-11, rows 6-7', P.short, 3, { typography: typo('body', { fontSize: 15 }) }),
-  ]),
+  ], { mode: 'two_large_image_cards' }),
 
   four_images_text_v1: layoutBase('four_images_text_v1', 'image+text', [
     heading('HEADING', 'cols 1-12, rows 1-2', 'Gallery', { typography: typo('heading', { fontSize: 32 }) }),
@@ -854,7 +854,7 @@ Object.assign(CATALOG, {
     ]),
   ], { mode: 'bullet_list_split', slideVariant: 'split' }),
   four_images_text_mosaic_v1: simpleSlidesFromSource('four_images_text_mosaic_v1', 'four_images_text_v1', 'mosaic'),
-  four_para_image_grid_v1: simpleSlidesFromSource('four_para_image_grid_v1', 'four_para_image_v1', 'grid'),
+  four_para_image_grid_v1: simpleSlidesFromSource('four_para_image_grid_v1', 'four_para_image_v1', 'grid', { mode: 'four_para_image_grid' }),
   full_bg_image_overlay_bottom_v1: simpleSlidesFromSource(
     'full_bg_image_overlay_bottom_v1',
     'full_bg_image_overlay_v1',
@@ -874,12 +874,14 @@ Object.assign(CATALOG, {
   para_three_images_horizontal_v1: simpleSlidesFromSource(
     'para_three_images_horizontal_v1',
     'para_three_images_v1',
-    'horizontal'
+    'horizontal',
+    { mode: 'para_three_images_horizontal' }
   ),
   para_three_images_staggered_v1: simpleSlidesFromSource(
     'para_three_images_staggered_v1',
     'para_three_images_v1',
-    'staggered'
+    'staggered',
+    { mode: 'para_three_images_staggered' }
   ),
   para_title_left_image_overlay_v1: simpleSlidesFromSource(
     'para_title_left_image_overlay_v1',
