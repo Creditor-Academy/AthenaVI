@@ -43,6 +43,7 @@ import {
   collectPptMoveIds,
   isPptGroup,
 } from '../../../utils/pptGroupUtils'
+import { isPptHitThroughElement } from '../../../utils/pptHitThrough'
 import { exceedsDragThreshold } from '../../../utils/pointerDrag'
 import {
   normalizeAngle,
@@ -660,6 +661,7 @@ function InteractiveElementShell({
 
   const paintHitGraphic =
     el.type === 'graphic' && typeof el.content?.svg === 'string' && el.content.svg.includes('<svg')
+  const hitThrough = isPptHitThroughElement(el)
 
   const frameStyle = {
     ...placementFrameStyle(p, canvasW, canvasH, {
@@ -683,7 +685,7 @@ function InteractiveElementShell({
     touchAction: 'none',
     overflow: 'visible',
     outline: 'none',
-    ...(paintHitGraphic ? { pointerEvents: 'none' } : null),
+    ...(paintHitGraphic || hitThrough ? { pointerEvents: 'none' } : null),
     ...(el.type === 'group' ? { pointerEvents: 'none', background: 'transparent' } : null),
     ...((p.opacity ?? 1) === 0 || ((p.width || 0) <= 2 && (p.height || 0) <= 2)
       ? { pointerEvents: 'none' }

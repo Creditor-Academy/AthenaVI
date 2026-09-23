@@ -32,6 +32,7 @@ import DeviceFrameVisual, { resolveDeviceFrameColor } from '../../../components/
 import EmptyImagePlaceholder, { DeviceScreenPlaceholder } from '../../../components/ppt/EmptyImagePlaceholder'
 import ClipShapeSvg from '../../../components/ppt/ClipShapeSvg'
 import GraphicCanvasVisual from '../../../components/ppt/GraphicCanvasVisual'
+import { isPptHitThroughElement } from '../../../utils/pptHitThrough'
 import { parsePolygonClipPath } from '../../../utils/shapeClipSvg'
 
 function TextListDisplay({ text, listType }) {
@@ -468,17 +469,18 @@ export default function PptCanvasElement({
 
   if (el.type === 'graphic') {
     const inlineSvg = typeof el.content?.svg === 'string' && el.content.svg.includes('<svg')
+    const hitThrough = isPptHitThroughElement(el)
     return (
       <div
         className="ppt-media-flip"
         style={{
           ...fillStyle,
-          pointerEvents: inlineSvg ? 'none' : undefined,
+          pointerEvents: inlineSvg || hitThrough ? 'none' : undefined,
           transform: mediaFlipTransform(el.content),
           transformOrigin: 'center center',
         }}
       >
-        <GraphicCanvasVisual content={el.content || {}} palette={palette} />
+        <GraphicCanvasVisual content={el.content || {}} palette={palette} hitThrough={hitThrough} />
       </div>
     )
   }

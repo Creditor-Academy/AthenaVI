@@ -1205,228 +1205,178 @@ export function buildTitleHeroRightFadeCanvasElements({ schema, options = {} }) 
   ]
 }
 
+export function buildTitleFullbleedScrimSvg() {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%" preserveAspectRatio="none">
+    <defs>
+      <radialGradient id="tfbVignette" cx="50%" cy="48%" r="72%">
+        <stop offset="0%" stop-color="#020617" stop-opacity="0.18" />
+        <stop offset="55%" stop-color="#020617" stop-opacity="0.34" />
+        <stop offset="100%" stop-color="#020617" stop-opacity="0.62" />
+      </radialGradient>
+    </defs>
+    <rect width="1920" height="1080" fill="url(#tfbVignette)" />
+    <rect x="908" y="612" width="104" height="3" rx="1.5" fill="#FFFFFF" fill-opacity="0.92" />
+  </svg>`
+}
+
 export function titleFullbleedPreviewSvg(previewHints = {}, theme = {}) {
   const slots = previewHints?.slots || {}
   const rawHeading = slots.MAIN_TITLE?.text || slots.HEADING?.text || previewHints?.heading || 'Presentation title'
   const rawSubtitle = slots.SUBTITLE?.text || slots.SUBHEADING?.text || previewHints?.subheading || 'Tagline or company name'
 
-  const heading = escapeXml(rawHeading)
+  const heading = escapeXml(String(rawHeading || '').replace(/\s+/g, ' ').trim())
   const subtitle = escapeXml(rawSubtitle)
-
-  const titleLines = heading.split(/\r?\n/).filter(Boolean)
-  const isMultiLine = titleLines.length > 1 || heading.length > 18
-
-  // Anti-collision: generous vertical clearance between title and subtitle
-  const titleStartY = isMultiLine ? 400 : 450
-  const subtitleY = isMultiLine ? 610 : 570
-
+  const titleLines = heading.length > 24
+    ? [heading.slice(0, heading.lastIndexOf(' ', 24) || 24).trim(), heading.slice(heading.lastIndexOf(' ', 24) || 24).trim()].filter(Boolean)
+    : [heading]
   const titleTspans = titleLines
-    .map((line, idx) => `<tspan x="960" dy="${idx === 0 ? 0 : '1.18em'}">${line}</tspan>`)
+    .slice(0, 2)
+    .map((line, idx) => `<tspan x="960" dy="${idx === 0 ? 0 : '1.12em'}">${line}</tspan>`)
     .join('')
+  const isMulti = titleLines.length > 1
+  const titleY = isMulti ? 470 : 520
+  const subtitleY = isMulti ? 680 : 660
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%">
     <defs>
-      <linearGradient id="fullbleedEmptySky" x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id="tfbEmptySky" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="#B7D4E8" />
         <stop offset="55%" stop-color="#C5DCEB" />
         <stop offset="100%" stop-color="#D0E3EF" />
       </linearGradient>
-      <linearGradient id="fullbleedEmptyHillBack" x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id="tfbEmptyHillBack" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="#8FBF8E" />
         <stop offset="100%" stop-color="#79AD78" />
       </linearGradient>
-      <linearGradient id="fullbleedEmptyHillFront" x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id="tfbEmptyHillFront" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="#6FA56E" />
         <stop offset="100%" stop-color="#5E945D" />
       </linearGradient>
-      <!-- Crisp high-contrast drop shadow for open fullbleed text -->
-      <filter id="fullbleedTextDropShadow" x="-30%" y="-30%" width="160%" height="160%">
-        <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.65" />
-      </filter>
     </defs>
 
-    <!-- 1. Background Image Placeholder: Exact EmptyImagePlaceholder matching canvas slide -->
     <svg x="0" y="0" width="1920" height="1080" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice">
-      <rect width="320" height="200" fill="url(#fullbleedEmptySky)" />
-
+      <rect width="320" height="200" fill="url(#tfbEmptySky)" />
       <g fill="#FFFFFF" opacity="0.92">
         <ellipse cx="78" cy="48" rx="28" ry="14" />
         <ellipse cx="98" cy="48" rx="22" ry="12" />
         <ellipse cx="58" cy="50" rx="16" ry="10" />
-
         <ellipse cx="210" cy="36" rx="34" ry="16" />
         <ellipse cx="236" cy="36" rx="24" ry="13" />
         <ellipse cx="186" cy="38" rx="18" ry="11" />
-
-        <ellipse cx="280" cy="62" rx="18" ry="9" />
-        <ellipse cx="294" cy="62" rx="12" ry="7" />
       </g>
-
-      <path
-        d="M0 128 C40 108 78 118 112 126 C148 116 178 102 220 112 C252 120 280 128 320 118 L320 200 L0 200 Z"
-        fill="url(#fullbleedEmptyHillBack)"
-      />
-      <path
-        d="M0 152 C36 136 70 148 108 156 C150 144 190 130 236 142 C268 150 296 158 320 150 L320 200 L0 200 Z"
-        fill="url(#fullbleedEmptyHillFront)"
-      />
-
-      <g fill="#FFFFFF">
-        <ellipse cx="52" cy="138" rx="5.5" ry="4" />
-        <circle cx="47.5" cy="136.5" r="2.2" />
-        <rect x="46.2" y="138.2" width="1.2" height="3.2" rx="0.5" />
-        <rect x="49.6" y="138.6" width="1.2" height="3" rx="0.5" />
-        <rect x="53" y="138.6" width="1.2" height="3" rx="0.5" />
-        <rect x="55.8" y="138.2" width="1.2" height="3.2" rx="0.5" />
-      </g>
+      <path d="M0 128 C40 108 78 118 112 126 C148 116 178 102 220 112 C252 120 280 128 320 118 L320 200 L0 200 Z" fill="url(#tfbEmptyHillBack)" />
+      <path d="M0 152 C36 136 70 148 108 156 C150 144 190 130 236 142 C268 150 296 158 320 150 L320 200 L0 200 Z" fill="url(#tfbEmptyHillFront)" />
     </svg>
 
-    <!-- 2. Centered Crisp White Presentation Title -->
+    ${buildTitleFullbleedScrimSvg().replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '')}
+
     <text
       x="960"
-      y="${titleStartY}"
+      y="${titleY}"
       text-anchor="middle"
       fill="#FFFFFF"
-      font-size="68"
+      font-size="64"
       font-weight="800"
       font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-      letter-spacing="-0.025em"
-      filter="url(#fullbleedTextDropShadow)"
-    >${isMultiLine ? titleTspans : heading}</text>
-
-    <!-- 3. Centered High-Contrast Subtitle -->
+      letter-spacing="-0.03em"
+    >${isMulti ? titleTspans : heading}</text>
     ${
       subtitle
         ? `<text
       x="960"
       y="${subtitleY}"
       text-anchor="middle"
-      fill="#F8FAFC"
-      font-size="28"
+      fill="#F1F5F9"
+      font-size="24"
       font-weight="400"
       font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-      letter-spacing="-0.005em"
-      filter="url(#fullbleedTextDropShadow)"
     >${subtitle}</text>`
         : ''
     }
   </svg>`
 }
 
+export function buildTitleFullbleedOverlaySvg() {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="tfoScrim" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#020617" stop-opacity="0" />
+        <stop offset="42%" stop-color="#020617" stop-opacity="0.08" />
+        <stop offset="72%" stop-color="#020617" stop-opacity="0.55" />
+        <stop offset="100%" stop-color="#020617" stop-opacity="0.86" />
+      </linearGradient>
+    </defs>
+    <rect width="1920" height="1080" fill="url(#tfoScrim)" />
+    <rect x="120" y="688" width="56" height="4" rx="2" fill="#FFFFFF" fill-opacity="0.92" />
+  </svg>`
+}
+
 export function titleFullbleedOverlayPreviewSvg(previewHints = {}, theme = {}) {
   const slots = previewHints?.slots || {}
-  const rawHeading = slots.MAIN_TITLE?.text || slots.HEADING?.text || previewHints?.heading || 'Title Fullbleed\nOverlay'
+  const rawHeading = slots.MAIN_TITLE?.text || slots.HEADING?.text || previewHints?.heading || 'Title Fullbleed Overlay'
   const rawSubtitle = slots.SUBTITLE?.text || slots.SUBHEADING?.text || previewHints?.subheading || 'Tagline or company name'
 
-  const heading = escapeXml(rawHeading)
+  const heading = escapeXml(String(rawHeading || '').replace(/\s+/g, ' ').trim())
   const subtitle = escapeXml(rawSubtitle)
-
-  const titleLines = heading.split(/\r?\n/).filter(Boolean)
-  const isMultiLine = titleLines.length > 1 || heading.length > 18
-
-  // Anti-collision vertical coordinates: generous vertical clearance
-  const titleStartY = isMultiLine ? 390 : 440
-  const subtitleY = isMultiLine ? 580 : 540
-
+  const titleLines = heading.length > 26 ? [heading.slice(0, heading.lastIndexOf(' ', 26) || 26).trim(), heading.slice(heading.lastIndexOf(' ', 26) || 26).trim()].filter(Boolean) : [heading]
   const titleTspans = titleLines
-    .map((line, idx) => `<tspan x="960" dy="${idx === 0 ? 0 : '1.18em'}">${line}</tspan>`)
+    .slice(0, 2)
+    .map((line, idx) => `<tspan x="120" dy="${idx === 0 ? 0 : '1.12em'}">${line}</tspan>`)
     .join('')
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%">
     <defs>
-      <linearGradient id="overlayEmptySky" x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id="tfoEmptySky" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="#B7D4E8" />
         <stop offset="55%" stop-color="#C5DCEB" />
         <stop offset="100%" stop-color="#D0E3EF" />
       </linearGradient>
-      <linearGradient id="overlayEmptyHillBack" x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id="tfoEmptyHillBack" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="#8FBF8E" />
         <stop offset="100%" stop-color="#79AD78" />
       </linearGradient>
-      <linearGradient id="overlayEmptyHillFront" x1="0" y1="0" x2="0" y2="1">
+      <linearGradient id="tfoEmptyHillFront" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="#6FA56E" />
         <stop offset="100%" stop-color="#5E945D" />
       </linearGradient>
-      <!-- Card Drop Shadow matching canvas slot-OVERLAY_CARD -->
-      <filter id="overlayGlassShadow" x="-25%" y="-25%" width="150%" height="150%">
-        <feDropShadow dx="0" dy="24" stdDeviation="30" flood-color="#020617" flood-opacity="0.55" />
-      </filter>
     </defs>
 
-    <!-- 1. Background Image Placeholder: Exact EmptyImagePlaceholder matching canvas slide -->
     <svg x="0" y="0" width="1920" height="1080" viewBox="0 0 320 200" preserveAspectRatio="xMidYMid slice">
-      <rect width="320" height="200" fill="url(#overlayEmptySky)" />
-
+      <rect width="320" height="200" fill="url(#tfoEmptySky)" />
       <g fill="#FFFFFF" opacity="0.92">
         <ellipse cx="78" cy="48" rx="28" ry="14" />
         <ellipse cx="98" cy="48" rx="22" ry="12" />
         <ellipse cx="58" cy="50" rx="16" ry="10" />
-
         <ellipse cx="210" cy="36" rx="34" ry="16" />
         <ellipse cx="236" cy="36" rx="24" ry="13" />
         <ellipse cx="186" cy="38" rx="18" ry="11" />
-
-        <ellipse cx="280" cy="62" rx="18" ry="9" />
-        <ellipse cx="294" cy="62" rx="12" ry="7" />
       </g>
-
-      <path
-        d="M0 128 C40 108 78 118 112 126 C148 116 178 102 220 112 C252 120 280 128 320 118 L320 200 L0 200 Z"
-        fill="url(#overlayEmptyHillBack)"
-      />
-      <path
-        d="M0 152 C36 136 70 148 108 156 C150 144 190 130 236 142 C268 150 296 158 320 150 L320 200 L0 200 Z"
-        fill="url(#overlayEmptyHillFront)"
-      />
-
-      <g fill="#FFFFFF">
-        <ellipse cx="52" cy="138" rx="5.5" ry="4" />
-        <circle cx="47.5" cy="136.5" r="2.2" />
-        <rect x="46.2" y="138.2" width="1.2" height="3.2" rx="0.5" />
-        <rect x="49.6" y="138.6" width="1.2" height="3" rx="0.5" />
-        <rect x="53" y="138.6" width="1.2" height="3" rx="0.5" />
-        <rect x="55.8" y="138.2" width="1.2" height="3.2" rx="0.5" />
-      </g>
+      <path d="M0 128 C40 108 78 118 112 126 C148 116 178 102 220 112 C252 120 280 128 320 118 L320 200 L0 200 Z" fill="url(#tfoEmptyHillBack)" />
+      <path d="M0 152 C36 136 70 148 108 156 C150 144 190 130 236 142 C268 150 296 158 320 150 L320 200 L0 200 Z" fill="url(#tfoEmptyHillFront)" />
     </svg>
 
-    <!-- 2. Distinct Frosted Glassmorphic Dark Overlay Container Card matching slot-OVERLAY_CARD -->
-    <g filter="url(#overlayGlassShadow)">
-      <rect
-        x="330"
-        y="260"
-        width="1260"
-        height="560"
-        rx="28"
-        fill="rgba(15, 23, 42, 0.78)"
-        stroke="rgba(255, 255, 255, 0.22)"
-        stroke-width="1.5"
-      />
-    </g>
+    ${buildTitleFullbleedOverlaySvg().replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '')}
 
-    <!-- 3. Main Title (Centered inside card) -->
     <text
-      x="960"
-      y="${titleStartY}"
-      text-anchor="middle"
+      x="120"
+      y="780"
+      text-anchor="start"
       fill="#FFFFFF"
       font-size="56"
       font-weight="800"
       font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-      letter-spacing="-0.025em"
-    >${isMultiLine ? titleTspans : heading}</text>
-
-    <!-- 4. Subtitle (Centered inside card) -->
+      letter-spacing="-0.03em"
+    >${titleLines.length > 1 ? titleTspans : heading}</text>
     ${
       subtitle
         ? `<text
-      x="960"
-      y="${subtitleY}"
-      text-anchor="middle"
+      x="120"
+      y="920"
+      text-anchor="start"
       fill="#E2E8F0"
       font-size="24"
       font-weight="400"
       font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-      letter-spacing="0.005em"
     >${subtitle}</text>`
         : ''
     }
@@ -1456,37 +1406,38 @@ export function buildTitleFullbleedCanvasElements({ schema, options = {} }) {
   const subtitleText = String(rawSubtitle).trim() || 'Tagline or company name'
 
   const titleLines = titleText.split(/\r?\n/).filter(Boolean)
-  const isMultiLine = titleLines.length > 1 || titleText.length > 18
-
-  // Anti-collision: generous vertical clearance between title and subtitle
-  const titleY = isMultiLine ? Math.round(390 * sy) : Math.round(440 * sy)
-  const titleH = isMultiLine ? Math.round(180 * sy) : Math.round(95 * sy)
-  const subtitleY = isMultiLine ? Math.round(610 * sy) : Math.round(570 * sy)
-  const subtitleH = Math.round(90 * sy)
+  const isMultiLine = titleLines.length > 1 || titleText.length > 22
+  const titleY = isMultiLine ? Math.round(400 * sy) : Math.round(448 * sy)
+  const titleH = isMultiLine ? Math.round(170 * sy) : Math.round(96 * sy)
+  const subtitleY = isMultiLine ? Math.round(640 * sy) : Math.round(628 * sy)
 
   return [
-    // 1. Pure Fullbleed Background Image
     {
       id: 'slot-BACKGROUND_IMAGE',
       slotId: 'BACKGROUND_IMAGE',
       type: 'image',
       role: 'background',
       layer: 0,
-      placement: {
-        x: 0,
-        y: 0,
-        width: canvasW,
-        height: canvasH,
-        rotation: 0,
-        opacity: 1,
-      },
+      placement: { x: 0, y: 0, width: canvasW, height: canvasH, rotation: 0, opacity: 1 },
       content: {
         ...(imageUrl ? { url: imageUrl, src: imageUrl } : {}),
         fit: 'cover',
         alt: '',
       },
     },
-    // 2. Main Title (Centered, bold white text with legibility drop shadow)
+    {
+      id: 'slot-OVERLAY_SCRIM',
+      slotId: 'OVERLAY_SCRIM',
+      type: 'graphic',
+      role: 'decoration',
+      layer: 2,
+      placement: { x: 0, y: 0, width: canvasW, height: canvasH, rotation: 0, opacity: 1 },
+      content: {
+        svg: buildTitleFullbleedScrimSvg(),
+        preserveAspectRatio: 'none',
+        colorMode: 'preserve',
+      },
+    },
     {
       id: 'slot-MAIN_TITLE',
       slotId: 'MAIN_TITLE',
@@ -1494,26 +1445,26 @@ export function buildTitleFullbleedCanvasElements({ schema, options = {} }) {
       role: 'heading',
       layer: 10,
       placement: {
-        x: Math.round(160 * sx),
+        x: Math.round(180 * sx),
         y: titleY,
-        width: Math.round(1600 * sx),
+        width: Math.round(1560 * sx),
         height: titleH,
         rotation: 0,
         opacity: 1,
       },
       content: {
         text: titleText,
-        fontSize: Math.round(68 * scale),
+        fontSize: Math.round(64 * scale),
         fontWeight: 800,
         color: '#FFFFFF',
-        textShadow: '0 4px 16px rgba(0,0,0,0.65)',
         align: 'center',
-        verticalAlign: 'center',
-        lineHeight: 1.16,
+        verticalAlign: 'flex-start',
+        lineHeight: 1.12,
         wrap: 'pre-wrap',
+        clipToSlot: true,
+        maxLines: 2,
       },
     },
-    // 3. Subtitle (Centered, crisp light text with shadow)
     {
       id: 'slot-SUBTITLE',
       slotId: 'SUBTITLE',
@@ -1521,23 +1472,24 @@ export function buildTitleFullbleedCanvasElements({ schema, options = {} }) {
       role: 'subheading',
       layer: 10,
       placement: {
-        x: Math.round(200 * sx),
+        x: Math.round(280 * sx),
         y: subtitleY,
-        width: Math.round(1520 * sx),
-        height: subtitleH,
+        width: Math.round(1360 * sx),
+        height: Math.round(80 * sy),
         rotation: 0,
         opacity: 1,
       },
       content: {
         text: subtitleText,
-        fontSize: Math.round(28 * scale),
+        fontSize: Math.round(24 * scale),
         fontWeight: 400,
-        color: '#F8FAFC',
-        textShadow: '0 2px 10px rgba(0,0,0,0.65)',
+        color: '#F1F5F9',
         align: 'center',
         verticalAlign: 'flex-start',
         lineHeight: 1.4,
         wrap: 'pre-wrap',
+        clipToSlot: true,
+        maxLines: 2,
       },
     },
   ]
@@ -1562,72 +1514,42 @@ export function buildTitleFullbleedOverlayCanvasElements({ schema, options = {} 
     content.imageRef?.url ||
     null
 
-  const titleText = String(rawTitle).trim() || 'Title Fullbleed\nOverlay'
+  const titleText = String(rawTitle).trim() || 'Title Fullbleed Overlay'
   const subtitleText = String(rawSubtitle).trim() || 'Tagline or company name'
 
   const titleLines = titleText.split(/\r?\n/).filter(Boolean)
-  const isMultiLine = titleLines.length > 1 || titleText.length > 18
-
-  // Card dimensions: generous 1260 x 560 centered at x: 330, y: 260
-  const cardW = Math.round(1260 * sx)
-  const cardH = Math.round(560 * sy)
-  const cardX = Math.round((canvasW - cardW) / 2)
-  const cardY = Math.round(260 * sy)
-
-  // Safe vertical positioning so multi-line titles never overlap with the subtitle
-  const titleY = isMultiLine ? Math.round(345 * sy) : Math.round(390 * sy)
-  const titleH = isMultiLine ? Math.round(155 * sy) : Math.round(85 * sy)
-  const subtitleY = isMultiLine ? Math.round(575 * sy) : Math.round(525 * sy)
-  const subtitleH = Math.round(80 * sy)
+  const isMultiLine = titleLines.length > 1 || titleText.length > 28
+  const titleY = isMultiLine ? Math.round(680 * sy) : Math.round(720 * sy)
+  const titleH = isMultiLine ? Math.round(150 * sy) : Math.round(90 * sy)
+  const subtitleY = isMultiLine ? Math.round(860 * sy) : Math.round(840 * sy)
 
   return [
-    // 1. Fullbleed Background Image
     {
       id: 'slot-BACKGROUND_IMAGE',
       slotId: 'BACKGROUND_IMAGE',
       type: 'image',
       role: 'background',
       layer: 0,
-      placement: {
-        x: 0,
-        y: 0,
-        width: canvasW,
-        height: canvasH,
-        rotation: 0,
-        opacity: 1,
-      },
+      placement: { x: 0, y: 0, width: canvasW, height: canvasH, rotation: 0, opacity: 1 },
       content: {
         ...(imageUrl ? { url: imageUrl, src: imageUrl } : {}),
         fit: 'cover',
         alt: '',
       },
     },
-    // 2. Translucent Glassmorphic Dark Overlay Card
     {
       id: 'slot-OVERLAY_CARD',
       slotId: 'OVERLAY_CARD',
-      type: 'shape',
+      type: 'graphic',
       role: 'decoration',
       layer: 2,
-      placement: {
-        x: cardX,
-        y: cardY,
-        width: cardW,
-        height: cardH,
-        rotation: 0,
-        opacity: 1,
-      },
+      placement: { x: 0, y: 0, width: canvasW, height: canvasH, rotation: 0, opacity: 1 },
       content: {
-        shape: 'rect',
-        fill: 'rgba(15, 23, 42, 0.78)',
-        stroke: 'rgba(255, 255, 255, 0.22)',
-        strokeWidth: 1.5,
-        borderStyle: 'solid',
-        borderRadius: Math.round(28 * scale),
-        shadow: '0 30px 70px -15px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 1px 1px 0 rgba(255, 255, 255, 0.25)',
+        svg: buildTitleFullbleedOverlaySvg(),
+        preserveAspectRatio: 'none',
+        colorMode: 'preserve',
       },
     },
-    // 3. Main Title (Centered inside card, top-anchored for predictable spacing)
     {
       id: 'slot-MAIN_TITLE',
       slotId: 'MAIN_TITLE',
@@ -1635,9 +1557,9 @@ export function buildTitleFullbleedOverlayCanvasElements({ schema, options = {} 
       role: 'heading',
       layer: 10,
       placement: {
-        x: Math.round(cardX + 40 * sx),
+        x: Math.round(120 * sx),
         y: titleY,
-        width: Math.round(cardW - 80 * sx),
+        width: Math.round(1480 * sx),
         height: titleH,
         rotation: 0,
         opacity: 1,
@@ -1647,13 +1569,14 @@ export function buildTitleFullbleedOverlayCanvasElements({ schema, options = {} 
         fontSize: Math.round(56 * scale),
         fontWeight: 800,
         color: '#FFFFFF',
-        align: 'center',
+        align: 'left',
         verticalAlign: 'flex-start',
-        lineHeight: 1.15,
+        lineHeight: 1.12,
         wrap: 'pre-wrap',
+        clipToSlot: true,
+        maxLines: 2,
       },
     },
-    // 4. Subtitle (Centered inside card with guaranteed vertical separation)
     {
       id: 'slot-SUBTITLE',
       slotId: 'SUBTITLE',
@@ -1661,10 +1584,10 @@ export function buildTitleFullbleedOverlayCanvasElements({ schema, options = {} 
       role: 'subheading',
       layer: 10,
       placement: {
-        x: Math.round(cardX + 40 * sx),
+        x: Math.round(120 * sx),
         y: subtitleY,
-        width: Math.round(cardW - 80 * sx),
-        height: subtitleH,
+        width: Math.round(1280 * sx),
+        height: Math.round(80 * sy),
         rotation: 0,
         opacity: 1,
       },
@@ -1673,10 +1596,12 @@ export function buildTitleFullbleedOverlayCanvasElements({ schema, options = {} 
         fontSize: Math.round(24 * scale),
         fontWeight: 400,
         color: '#E2E8F0',
-        align: 'center',
+        align: 'left',
         verticalAlign: 'flex-start',
-        lineHeight: 1.45,
+        lineHeight: 1.4,
         wrap: 'pre-wrap',
+        clipToSlot: true,
+        maxLines: 2,
       },
     },
   ]

@@ -233,14 +233,15 @@ const CATALOG = {
     'title',
     [
       slot('BACKGROUND_IMAGE', 'cols 1-12, rows 1-10', 'background', null, { layer: 0, fit: 'cover' }),
-      slot('MAIN_TITLE', 'cols 2-11, rows 3-5', 'heading', 'Presentation title', {
+      slot('OVERLAY_SCRIM', 'cols 1-12, rows 1-10', 'decoration', null, { layer: 2, aiOnly: true }),
+      slot('MAIN_TITLE', 'cols 2-11, rows 4-6', 'heading', 'Presentation title', {
         layer: 10,
-        typography: { ...centeredTypo('heading', { fontSize: 68, fontWeight: 800, lineHeight: 1.16 }), colorRole: 'textOnImage' },
+        typography: { ...centeredTypo('heading', { fontSize: 64, fontWeight: 800, lineHeight: 1.12 }), colorRole: 'textOnImage' },
         max_lines: 2,
       }),
-      slot('SUBTITLE', 'cols 2-11, rows 6-7', 'subheading', 'Tagline or company name', {
+      slot('SUBTITLE', 'cols 3-10, rows 7', 'subheading', 'Tagline or company name', {
         layer: 10,
-        typography: { ...centeredTypo('subheading', { fontSize: 28, fontWeight: 400, lineHeight: 1.4 }), colorRole: 'textOnImageMuted' },
+        typography: { ...centeredTypo('subheading', { fontSize: 24, fontWeight: 400, lineHeight: 1.4 }), colorRole: 'textOnImageMuted' },
         max_lines: 2,
       }),
     ],
@@ -252,18 +253,18 @@ const CATALOG = {
     'title',
     [
       slot('BACKGROUND_IMAGE', 'cols 1-12, rows 1-10', 'background', null, { layer: 0, fit: 'cover' }),
-      slot('OVERLAY_CARD', 'cols 3-10, rows 3-8', 'decoration', null, {
+      slot('OVERLAY_CARD', 'cols 1-12, rows 1-10', 'decoration', null, {
         layer: 2,
         aiOnly: true,
       }),
-      slot('MAIN_TITLE', 'cols 3-10, rows 4-5', 'heading', 'Title Fullbleed\nOverlay', {
+      slot('MAIN_TITLE', 'cols 1-10, rows 7-8', 'heading', 'Title Fullbleed Overlay', {
         layer: 10,
-        typography: { ...centeredTypo('heading', { fontSize: 56, fontWeight: 800, lineHeight: 1.15, verticalAlign: 'flex-start' }), colorRole: 'textOnImage' },
+        typography: { ...typo('heading', { fontSize: 56, fontWeight: 800, lineHeight: 1.12, verticalAlign: 'flex-start', align: 'left' }), colorRole: 'textOnImage' },
         max_lines: 2,
       }),
-      slot('SUBTITLE', 'cols 3-10, rows 6-7', 'subheading', 'Tagline or company name', {
+      slot('SUBTITLE', 'cols 1-9, rows 9', 'subheading', 'Tagline or company name', {
         layer: 10,
-        typography: { ...centeredTypo('subheading', { fontSize: 24, fontWeight: 400, lineHeight: 1.45, verticalAlign: 'flex-start' }), colorRole: 'textOnImageMuted' },
+        typography: { ...typo('subheading', { fontSize: 24, fontWeight: 400, lineHeight: 1.4, verticalAlign: 'flex-start', align: 'left' }), colorRole: 'textOnImageMuted' },
         max_lines: 2,
       }),
     ],
@@ -347,20 +348,17 @@ const CATALOG = {
 
   wide_image_statement_overlay_v1: layoutBase('wide_image_statement_overlay_v1', 'image+text', [
     slot('BACKGROUND_IMAGE', 'cols 1-12, rows 1-10', 'background', null, { layer: 0, fit: 'cover' }),
-    slot('OVERLAY_SCRIM', 'cols 1-12, rows 1-10', 'background', null, {
-      layer: 1,
-      shape: { type: 'rect', fill: { type: 'solid', color: 'rgba(0,0,0,0.5)' } },
-    }),
+    slot('OVERLAY_SCRIM', 'cols 1-12, rows 1-10', 'graphic', null, { layer: 2 }),
     slot('SUBHEADLINE', 'cols 3-10, rows 4-5', 'subheading', 'Subheadline', {
       layer: 10,
-      typography: typo('subheading', { fontSize: 20, fontWeight: 600, colorRole: 'textOnImage', color: '#FFFFFF', align: 'center' }),
+      typography: typo('subheading', { fontSize: 16, fontWeight: 700, colorRole: 'textOnImage', color: '#FFFFFF', align: 'center' }),
     }),
     slot('STATEMENT', 'cols 2-11, rows 5-8', 'quote', P.short, {
       layer: 10,
-      typography: typo('quote', { fontSize: 48, fontWeight: 800, lineHeight: 1.2, colorRole: 'textOnImage', color: '#FFFFFF', align: 'center' }),
+      typography: typo('quote', { fontSize: 52, fontWeight: 800, lineHeight: 1.18, colorRole: 'textOnImage', color: '#FFFFFF', align: 'center' }),
       max_lines: 3,
     }),
-  ], { slideVariant: 'center' }),
+  ], { mode: 'wide_image_statement_overlay', slideVariant: 'center' }),
 
   statement_left_v1: layoutBase('statement_left_v1', 'quote', [
     slot(
@@ -425,40 +423,40 @@ const CATALOG = {
     imageBoxed('cols 2-5, rows 3-8'),
     heading('HEADING', 'cols 6-10, rows 3-4', 'Describe this slide'),
     body('BODY', 'cols 6-10, rows 4-8', P.one, 4),
-  ]),
+  ], { mode: 'para_title_left_image_boxed' }),
 
   para_title_right_image_boxed_v1: layoutBase('para_title_right_image_boxed_v1', 'image+text', [
     heading('HEADING', 'cols 2-6, rows 3-4', 'Describe this slide'),
     body('BODY', 'cols 2-6, rows 4-8', P.one, 4),
     cardShape('cols 8-11, rows 3-8', 'IMAGE_CARD_BG', 10, 'HERO_IMAGE'),
     imageBoxed('cols 8-11, rows 3-8'),
-  ]),
+  ], { mode: 'para_title_right_image_boxed' }),
 
   para_landscape_image_v1: layoutBase('para_landscape_image_v1', 'image+text', [
     heading('HEADING', 'cols 2-10, rows 2-3', 'Describe this slide'),
     body('BODY', 'cols 2-10, rows 3-5', P.one, 3),
     slot('HERO_IMAGE', 'cols 2-11, rows 6-10', 'image', null, { layer: 2, fit: 'cover' }),
-  ]),
+  ], { mode: 'para_landscape_image' }),
 
   para_split_50_50_v1: layoutBase('para_split_50_50_v1', 'image+text', [
     imageLeft('cols 1-6, rows 1-10'),
     surfaceHalf('cols 7-12, rows 1-10'),
     heading('HEADING', 'cols 7-11, rows 2-3', 'Describe this slide'),
     body('BODY', 'cols 7-11, rows 4-9', P.one, 4),
-  ]),
+  ], { mode: 'para_split_50_50' }),
 
   two_para_right_image_v1: layoutBase('two_para_right_image_v1', 'image+text', [
     body('BODY_1', 'cols 2-6, rows 2-5', P.one, 4),
     body('BODY_2', 'cols 2-6, rows 5-8', P.two, 4),
     imageRight(),
-  ]),
+  ], { mode: 'two_para_right_image' }),
 
   three_para_image_v1: layoutBase('three_para_image_v1', 'image+text', [
     body('BODY_1', 'cols 2-6, rows 2-4', P.one, 3),
     body('BODY_2', 'cols 2-6, rows 4-6', P.two, 3),
     body('BODY_3', 'cols 2-6, rows 6-8', P.three, 3),
     imageRight(),
-  ]),
+  ], { mode: 'three_para_image' }),
 
   four_para_image_v1: layoutBase('four_para_image_v1', 'bullet_list', [
     heading('HEADING', 'cols 2-7, rows 2-3', 'Key points', { typography: typo('heading', { fontSize: 32 }) }),
@@ -467,21 +465,21 @@ const CATALOG = {
     body('BULLET_3', 'cols 5-7, rows 4-5', P.three, 3),
     body('BULLET_4', 'cols 5-7, rows 6-7', P.four, 3),
     imageRight('cols 8-12, rows 1-10'),
-  ]),
+  ], { mode: 'four_para_image' }),
 
   para_two_images_v1: layoutBase('para_two_images_v1', 'image+text', [
     body('BODY_1', 'cols 2-5, rows 2-4', P.one, 3),
     body('BODY_2', 'cols 7-10, rows 2-4', P.two, 3),
     slot('IMAGE_1', 'cols 2-5, rows 4-10', 'image', null, { layer: 2, fit: 'cover' }),
     slot('IMAGE_2', 'cols 7-10, rows 4-10', 'image', null, { layer: 2, fit: 'cover' }),
-  ]),
+  ], { mode: 'para_two_images' }),
 
   para_three_images_v1: layoutBase('para_three_images_v1', 'image+text', [
     body('BODY', 'cols 2-11, rows 2-3', P.short, 2),
     slot('IMAGE_1', 'cols 1-4, rows 4-10', 'image', null, { layer: 2, fit: 'cover' }),
     slot('IMAGE_2', 'cols 5-8, rows 4-10', 'image', null, { layer: 2, fit: 'cover' }),
     slot('IMAGE_3', 'cols 9-12, rows 4-10', 'image', null, { layer: 2, fit: 'cover' }),
-  ]),
+  ], { mode: 'para_three_images' }),
 
   three_cards_image_text_v1: layoutBase('three_cards_image_text_v1', 'image+text', [
     heading('HEADING', 'cols 2-11, rows 2-3', 'Product highlights', { typography: typo('heading', { fontSize: 32 }) }),
@@ -503,7 +501,7 @@ const CATALOG = {
       typography: typo('heading', { fontSize: 18 }),
     }),
     body('CARD_3_BODY', 'cols 9-12, rows 8-10', P.short, 3, { typography: typo('body', { fontSize: 14 }) }),
-  ]),
+  ], { mode: 'three_cards_image_text' }),
 
   two_cards_image_text_v1: layoutBase('two_cards_image_text_v1', 'image+text', [
     slot('EYEBROW', 'cols 2-10, rows 2-3', 'eyebrow', 'Describe this slide', {
@@ -522,7 +520,7 @@ const CATALOG = {
       typography: typo('heading', { fontSize: 22 }),
     }),
     body('COL_2_BODY', 'cols 7-11, rows 7-9', P.two, 3, { typography: typo('body', { fontSize: 16 }) }),
-  ], { mode: 'two_image_columns' }),
+  ], { mode: 'two_cards_image_text' }),
 
   two_large_image_cards_v1: layoutBase('two_large_image_cards_v1', 'image+text', [
     slot('IMAGE_1', 'cols 2-6, rows 2-5', 'image', null, { layer: 2, fit: 'cover' }),
@@ -537,7 +535,7 @@ const CATALOG = {
       typography: typo('heading', { fontSize: 22 }),
     }),
     body('CARD_2_BODY', 'cols 7-11, rows 6-7', P.short, 3, { typography: typo('body', { fontSize: 15 }) }),
-  ]),
+  ], { mode: 'two_large_image_cards' }),
 
   four_images_text_v1: layoutBase('four_images_text_v1', 'image+text', [
     heading('HEADING', 'cols 1-12, rows 1-2', 'Gallery', { typography: typo('heading', { fontSize: 32 }) }),
@@ -856,7 +854,7 @@ Object.assign(CATALOG, {
     ]),
   ], { mode: 'bullet_list_split', slideVariant: 'split' }),
   four_images_text_mosaic_v1: simpleSlidesFromSource('four_images_text_mosaic_v1', 'four_images_text_v1', 'mosaic'),
-  four_para_image_grid_v1: simpleSlidesFromSource('four_para_image_grid_v1', 'four_para_image_v1', 'grid'),
+  four_para_image_grid_v1: simpleSlidesFromSource('four_para_image_grid_v1', 'four_para_image_v1', 'grid', { mode: 'four_para_image_grid' }),
   full_bg_image_overlay_bottom_v1: simpleSlidesFromSource(
     'full_bg_image_overlay_bottom_v1',
     'full_bg_image_overlay_v1',
@@ -876,22 +874,26 @@ Object.assign(CATALOG, {
   para_three_images_horizontal_v1: simpleSlidesFromSource(
     'para_three_images_horizontal_v1',
     'para_three_images_v1',
-    'horizontal'
+    'horizontal',
+    { mode: 'para_three_images_horizontal' }
   ),
   para_three_images_staggered_v1: simpleSlidesFromSource(
     'para_three_images_staggered_v1',
     'para_three_images_v1',
-    'staggered'
+    'staggered',
+    { mode: 'para_three_images_staggered' }
   ),
   para_title_left_image_overlay_v1: simpleSlidesFromSource(
     'para_title_left_image_overlay_v1',
     'para_title_left_image_boxed_v1',
-    'overlay'
+    'overlay',
+    { mode: 'para_title_left_image_overlay' }
   ),
   para_title_right_image_overlay_v1: simpleSlidesFromSource(
     'para_title_right_image_overlay_v1',
     'para_title_right_image_boxed_v1',
-    'overlay'
+    'overlay',
+    { mode: 'para_title_right_image_overlay' }
   ),
   section_divider_band_full_v1: simpleSlidesFromSource('section_divider_band_full_v1', 'section_divider_band_v1', 'full'),
   section_divider_split_diagonal_v1: layoutBase('section_divider_split_diagonal_v1', 'section_divider', [
@@ -935,7 +937,8 @@ Object.assign(CATALOG, {
   two_para_right_image_bottom_v1: simpleSlidesFromSource(
     'two_para_right_image_bottom_v1',
     'two_para_right_image_v1',
-    'bottom'
+    'bottom',
+    { mode: 'two_para_right_image_bottom' }
   ),
 })
 

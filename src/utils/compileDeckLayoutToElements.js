@@ -54,9 +54,86 @@ import { isTimelineMilestonesImageLayout } from './timelineMilestonesImage.js'
 import { isTimelineMilestonesImageRightLayout } from './timelineMilestonesImageRight.js'
 import { isSectionDividerNumberedCircleLayout } from './sectionDividerNumberedCircleLayout.js'
 import { isSectionDividerCenteredLayout } from './sectionDividerCenteredLayout.js'
+import { isEightShortTextsImageLayout } from './eightShortTextsImageLayout.js'
 import { isSectionWithImageLayout } from './sectionWithImageLayout.js'
 import { isParaLandscapeImageBottomLayout } from './paraLandscapeImageBottom.js'
 import { isParaLandscapeImageTopLayout } from './paraLandscapeImageTop.js'
+import {
+  isWideImageStatementOverlayLayout,
+  buildWideImageStatementOverlayCanvasElements,
+} from './wideImageStatementOverlayLayout.js'
+import {
+  isParaTitleLeftImageBoxedLayout,
+  buildParaTitleLeftImageBoxedCanvasElements,
+} from './paraTitleLeftImageBoxedLayout.js'
+import {
+  isParaTitleRightImageBoxedLayout,
+  buildParaTitleRightImageBoxedCanvasElements,
+} from './paraTitleRightImageBoxedLayout.js'
+import {
+  isParaTitleLeftImageOverlayLayout,
+  buildParaTitleLeftImageOverlayCanvasElements,
+} from './paraTitleLeftImageOverlayLayout.js'
+import {
+  isParaTitleRightImageOverlayLayout,
+  buildParaTitleRightImageOverlayCanvasElements,
+} from './paraTitleRightImageOverlayLayout.js'
+import {
+  isParaLandscapeImageLayout,
+  buildParaLandscapeImageCanvasElements,
+} from './paraLandscapeImageLayout.js'
+import {
+  isParaSplit5050Layout,
+  buildParaSplit5050CanvasElements,
+} from './paraSplit5050Layout.js'
+import {
+  isTwoParaRightImageLayout,
+  buildTwoParaRightImageCanvasElements,
+} from './twoParaRightImageLayout.js'
+import {
+  isTwoParaRightImageBottomLayout,
+  buildTwoParaRightImageBottomCanvasElements,
+} from './twoParaRightImageBottomLayout.js'
+import {
+  isThreeParaImageLayout,
+  buildThreeParaImageCanvasElements,
+} from './threeParaImageLayout.js'
+import {
+  isFourParaImageLayout,
+  buildFourParaImageCanvasElements,
+} from './fourParaImageLayout.js'
+import {
+  isFourParaImageGridLayout,
+  buildFourParaImageGridCanvasElements,
+} from './fourParaImageGridLayout.js'
+import {
+  isParaTwoImagesLayout,
+  buildParaTwoImagesCanvasElements,
+} from './paraTwoImagesLayout.js'
+import {
+  isParaThreeImagesLayout,
+  buildParaThreeImagesCanvasElements,
+} from './paraThreeImagesLayout.js'
+import {
+  isParaThreeImagesHorizontalLayout,
+  buildParaThreeImagesHorizontalCanvasElements,
+} from './paraThreeImagesHorizontalLayout.js'
+import {
+  isParaThreeImagesStaggeredLayout,
+  buildParaThreeImagesStaggeredCanvasElements,
+} from './paraThreeImagesStaggeredLayout.js'
+import {
+  isThreeCardsImageTextLayout,
+  buildThreeCardsImageTextCanvasElements,
+} from './threeCardsImageTextLayout.js'
+import {
+  isTwoCardsImageTextLayout,
+  buildTwoCardsImageTextCanvasElements,
+} from './twoCardsImageTextLayout.js'
+import {
+  isTwoLargeImageCardsLayout,
+  buildTwoLargeImageCardsCanvasElements,
+} from './twoLargeImageCardsLayout.js'
 import { isCatalogPlaceholderText } from './catalogPlaceholder.js'
 import { normalizeChartContent } from './chartContentNormalize.js'
 import {
@@ -190,6 +267,11 @@ function resolveShapeFill(shapeSpec, palette = null) {
 }
 
 function isOverlayLayout(schema) {
+  if (isTitleFullbleedOverlayLayout(schema?.layout_id, schema)) return false
+  if (isTitleFullbleedLayout(schema?.layout_id, schema)) return false
+  if (isWideImageStatementOverlayLayout(schema?.layout_id, schema)) return false
+  if (isParaTitleLeftImageOverlayLayout(schema?.layout_id, schema)) return false
+  if (isParaTitleRightImageOverlayLayout(schema?.layout_id, schema)) return false
   const layoutId = String(schema?.layout_id || '')
   const slots = Array.isArray(schema?.slots) ? schema.slots : []
   if (slots.some((s) => s.id === 'BACKGROUND_IMAGE' || /OVERLAY_SCRIM/i.test(String(s.id || '')))) return true
@@ -1188,7 +1270,27 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
       (isTimelineRoadmapLayout(schema?.layout_id) && /^milestone_\d+_label$/i.test(String(el.slotId || ''))) ||
       (isSectionDividerNumberedCircleLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'SECTION_NUMBER') ||
       (isSectionDividerCenteredLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'SECTION_NUMBER') ||
-      (isSectionWithImageLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
+      (isTitleFullbleedOverlayLayout(schema?.layout_id, schema) && (/^(MAIN_TITLE|SUBTITLE|OVERLAY_CARD)$/i.test(String(el.slotId || '')))) ||
+      (isWideImageStatementOverlayLayout(schema?.layout_id, schema) && (/^(STATEMENT|SUBHEADLINE|OVERLAY_SCRIM|BACKGROUND_IMAGE)$/i.test(String(el.slotId || '')))) ||
+      (isParaTitleLeftImageBoxedLayout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaTitleRightImageBoxedLayout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaTitleLeftImageOverlayLayout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaTitleRightImageOverlayLayout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaLandscapeImageLayout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaSplit5050Layout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG|TEXT_HALF_BG)$/i.test(String(el.slotId || '')))) ||
+      (isTwoParaRightImageLayout(schema?.layout_id, schema) && (/^(BODY_1|BODY_2|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isTwoParaRightImageBottomLayout(schema?.layout_id, schema) && (/^(BODY_1|BODY_2|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isThreeParaImageLayout(schema?.layout_id, schema) && (/^(BODY_[123]|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isFourParaImageLayout(schema?.layout_id, schema) && (/^(HEADING|BULLET_[1-4]|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isFourParaImageGridLayout(schema?.layout_id, schema) && (/^(HEADING|BULLET_[1-4]|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaTwoImagesLayout(schema?.layout_id, schema) && (/^(BODY_[12]|IMAGE_[12]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaThreeImagesLayout(schema?.layout_id, schema) && (/^(BODY|IMAGE_[123]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaThreeImagesHorizontalLayout(schema?.layout_id, schema) && (/^(BODY|IMAGE_[123]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaThreeImagesStaggeredLayout(schema?.layout_id, schema) && (/^(BODY|IMAGE_[123]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isThreeCardsImageTextLayout(schema?.layout_id, schema) && (/^(HEADING|CARD_[123]_(TITLE|BODY)|IMAGE_[123]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isTwoCardsImageTextLayout(schema?.layout_id, schema) && (/^(EYEBROW|COL_[12]_(IMAGE|TITLE|BODY)|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isTwoLargeImageCardsLayout(schema?.layout_id, schema) && (/^(CARD_[12]_(TITLE|BODY)|IMAGE_[12]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isEightShortTextsImageLayout(schema?.layout_id) && (/^(HEADING|SUBTITLE|TAG_BADGE|POINT_\d+_(TITLE|DESC|CARD|NUM)|HERO_IMAGE)$/i.test(String(el.slotId || '')))) ||
       (isParaLandscapeImageBottomLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
       (isParaLandscapeImageTopLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
       (isBulletListDenseLayout(schema?.layout_id) && (/^(HEADING|ITEM_\d+|NUMBER_\d+|BAR_\d+|SLIDE_BG)$/i.test(String(el.slotId || '')))) ||
@@ -1274,6 +1376,63 @@ export function compileDeckLayoutToElements(schema, options = {}) {
   }
   if (isTitleFullbleedOverlayLayout(schema?.layout_id, schema)) {
     return buildTitleFullbleedOverlayCanvasElements({ schema, options })
+  }
+  if (isWideImageStatementOverlayLayout(schema?.layout_id, schema)) {
+    return buildWideImageStatementOverlayCanvasElements({ schema, options })
+  }
+  if (isParaTitleLeftImageBoxedLayout(schema?.layout_id, schema)) {
+    return buildParaTitleLeftImageBoxedCanvasElements({ schema, options })
+  }
+  if (isParaTitleRightImageBoxedLayout(schema?.layout_id, schema)) {
+    return buildParaTitleRightImageBoxedCanvasElements({ schema, options })
+  }
+  if (isParaTitleLeftImageOverlayLayout(schema?.layout_id, schema)) {
+    return buildParaTitleLeftImageOverlayCanvasElements({ schema, options })
+  }
+  if (isParaTitleRightImageOverlayLayout(schema?.layout_id, schema)) {
+    return buildParaTitleRightImageOverlayCanvasElements({ schema, options })
+  }
+  if (isParaLandscapeImageLayout(schema?.layout_id, schema)) {
+    return buildParaLandscapeImageCanvasElements({ schema, options })
+  }
+  if (isParaSplit5050Layout(schema?.layout_id, schema)) {
+    return buildParaSplit5050CanvasElements({ schema, options })
+  }
+  if (isTwoParaRightImageLayout(schema?.layout_id, schema)) {
+    return buildTwoParaRightImageCanvasElements({ schema, options })
+  }
+  if (isTwoParaRightImageBottomLayout(schema?.layout_id, schema)) {
+    return buildTwoParaRightImageBottomCanvasElements({ schema, options })
+  }
+  if (isThreeParaImageLayout(schema?.layout_id, schema)) {
+    return buildThreeParaImageCanvasElements({ schema, options })
+  }
+  if (isFourParaImageLayout(schema?.layout_id, schema)) {
+    return buildFourParaImageCanvasElements({ schema, options })
+  }
+  if (isFourParaImageGridLayout(schema?.layout_id, schema)) {
+    return buildFourParaImageGridCanvasElements({ schema, options })
+  }
+  if (isParaTwoImagesLayout(schema?.layout_id, schema)) {
+    return buildParaTwoImagesCanvasElements({ schema, options })
+  }
+  if (isParaThreeImagesLayout(schema?.layout_id, schema)) {
+    return buildParaThreeImagesCanvasElements({ schema, options })
+  }
+  if (isParaThreeImagesHorizontalLayout(schema?.layout_id, schema)) {
+    return buildParaThreeImagesHorizontalCanvasElements({ schema, options })
+  }
+  if (isParaThreeImagesStaggeredLayout(schema?.layout_id, schema)) {
+    return buildParaThreeImagesStaggeredCanvasElements({ schema, options })
+  }
+  if (isThreeCardsImageTextLayout(schema?.layout_id, schema)) {
+    return buildThreeCardsImageTextCanvasElements({ schema, options })
+  }
+  if (isTwoCardsImageTextLayout(schema?.layout_id, schema)) {
+    return buildTwoCardsImageTextCanvasElements({ schema, options })
+  }
+  if (isTwoLargeImageCardsLayout(schema?.layout_id, schema)) {
+    return buildTwoLargeImageCardsCanvasElements({ schema, options })
   }
   if (isTitleWithLogoLayout(schema?.layout_id, schema)) {
     return buildTitleWithLogoCanvasElements({ schema, options })

@@ -87,6 +87,82 @@ import {
   layoutIntroThreeParaIcons,
 } from './introThreeParaIconsLayout.js'
 import {
+  isWideImageStatementOverlayLayout,
+  layoutWideImageStatementOverlay,
+} from './wideImageStatementOverlayLayout.js'
+import {
+  isParaTitleLeftImageBoxedLayout,
+  layoutParaTitleLeftImageBoxed,
+} from './paraTitleLeftImageBoxedLayout.js'
+import {
+  isParaTitleRightImageBoxedLayout,
+  layoutParaTitleRightImageBoxed,
+} from './paraTitleRightImageBoxedLayout.js'
+import {
+  isParaTitleLeftImageOverlayLayout,
+  layoutParaTitleLeftImageOverlay,
+} from './paraTitleLeftImageOverlayLayout.js'
+import {
+  isParaTitleRightImageOverlayLayout,
+  layoutParaTitleRightImageOverlay,
+} from './paraTitleRightImageOverlayLayout.js'
+import {
+  isParaLandscapeImageLayout,
+  layoutParaLandscapeImage,
+} from './paraLandscapeImageLayout.js'
+import {
+  isParaSplit5050Layout,
+  layoutParaSplit5050,
+} from './paraSplit5050Layout.js'
+import {
+  isTwoParaRightImageLayout,
+  layoutTwoParaRightImage,
+} from './twoParaRightImageLayout.js'
+import {
+  isTwoParaRightImageBottomLayout,
+  layoutTwoParaRightImageBottom,
+} from './twoParaRightImageBottomLayout.js'
+import {
+  isThreeParaImageLayout,
+  layoutThreeParaImage,
+} from './threeParaImageLayout.js'
+import {
+  isFourParaImageLayout,
+  layoutFourParaImage,
+} from './fourParaImageLayout.js'
+import {
+  isFourParaImageGridLayout,
+  layoutFourParaImageGrid,
+} from './fourParaImageGridLayout.js'
+import {
+  isParaTwoImagesLayout,
+  layoutParaTwoImages,
+} from './paraTwoImagesLayout.js'
+import {
+  isParaThreeImagesLayout,
+  layoutParaThreeImages,
+} from './paraThreeImagesLayout.js'
+import {
+  isParaThreeImagesHorizontalLayout,
+  layoutParaThreeImagesHorizontal,
+} from './paraThreeImagesHorizontalLayout.js'
+import {
+  isParaThreeImagesStaggeredLayout,
+  layoutParaThreeImagesStaggered,
+} from './paraThreeImagesStaggeredLayout.js'
+import {
+  isThreeCardsImageTextLayout,
+  layoutThreeCardsImageText,
+} from './threeCardsImageTextLayout.js'
+import {
+  isTwoCardsImageTextLayout,
+  layoutTwoCardsImageText,
+} from './twoCardsImageTextLayout.js'
+import {
+  isTwoLargeImageCardsLayout,
+  layoutTwoLargeImageCards,
+} from './twoLargeImageCardsLayout.js'
+import {
   isGridBentoThreeLayout,
   layoutGridBentoThree,
 } from './gridBentoThreeLayout.js'
@@ -372,6 +448,82 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
   
   if (isIntroThreeParaIconsLayout(layoutId)) {
     return layoutIntroThreeParaIcons(elements, schema, palette, canvas)
+  }
+
+  if (isWideImageStatementOverlayLayout(layoutId, schema)) {
+    return layoutWideImageStatementOverlay(elements, schema, palette, canvas)
+  }
+
+  if (isParaTitleLeftImageBoxedLayout(layoutId, schema)) {
+    return layoutParaTitleLeftImageBoxed(elements, schema, palette, canvas)
+  }
+
+  if (isParaTitleRightImageBoxedLayout(layoutId, schema)) {
+    return layoutParaTitleRightImageBoxed(elements, schema, palette, canvas)
+  }
+
+  if (isParaTitleLeftImageOverlayLayout(layoutId, schema)) {
+    return layoutParaTitleLeftImageOverlay(elements, schema, palette, canvas)
+  }
+
+  if (isParaTitleRightImageOverlayLayout(layoutId, schema)) {
+    return layoutParaTitleRightImageOverlay(elements, schema, palette, canvas)
+  }
+
+  if (isParaLandscapeImageLayout(layoutId, schema)) {
+    return layoutParaLandscapeImage(elements, schema, palette, canvas)
+  }
+
+  if (isParaSplit5050Layout(layoutId, schema)) {
+    return layoutParaSplit5050(elements, schema, palette, canvas)
+  }
+
+  if (isTwoParaRightImageLayout(layoutId, schema)) {
+    return layoutTwoParaRightImage(elements, schema, palette, canvas)
+  }
+
+  if (isTwoParaRightImageBottomLayout(layoutId, schema)) {
+    return layoutTwoParaRightImageBottom(elements, schema, palette, canvas)
+  }
+
+  if (isThreeParaImageLayout(layoutId, schema)) {
+    return layoutThreeParaImage(elements, schema, palette, canvas)
+  }
+
+  if (isFourParaImageLayout(layoutId, schema)) {
+    return layoutFourParaImage(elements, schema, palette, canvas)
+  }
+
+  if (isFourParaImageGridLayout(layoutId, schema)) {
+    return layoutFourParaImageGrid(elements, schema, palette, canvas)
+  }
+
+  if (isParaTwoImagesLayout(layoutId, schema)) {
+    return layoutParaTwoImages(elements, schema, palette, canvas)
+  }
+
+  if (isParaThreeImagesLayout(layoutId, schema)) {
+    return layoutParaThreeImages(elements, schema, palette, canvas)
+  }
+
+  if (isParaThreeImagesHorizontalLayout(layoutId, schema)) {
+    return layoutParaThreeImagesHorizontal(elements, schema, palette, canvas)
+  }
+
+  if (isParaThreeImagesStaggeredLayout(layoutId, schema)) {
+    return layoutParaThreeImagesStaggered(elements, schema, palette, canvas)
+  }
+
+  if (isThreeCardsImageTextLayout(layoutId, schema)) {
+    return layoutThreeCardsImageText(elements, schema, palette, canvas)
+  }
+
+  if (isTwoCardsImageTextLayout(layoutId, schema)) {
+    return layoutTwoCardsImageText(elements, schema, palette, canvas)
+  }
+
+  if (isTwoLargeImageCardsLayout(layoutId, schema)) {
+    return layoutTwoLargeImageCards(elements, schema, palette, canvas)
   }
   
   if (isGridBentoThreeLayout(layoutId)) {
