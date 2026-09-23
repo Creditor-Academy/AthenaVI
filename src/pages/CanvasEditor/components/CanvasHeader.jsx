@@ -40,9 +40,14 @@ export default function CanvasHeader({
     <header className="canva-header">
       {/* Left: Back, File Menu & Title */}
       <div className="canva-header-left">
-        <button type="button" className="canva-header-back-btn" onClick={onBack} title="Back to workspace">
+        <button
+          type="button"
+          className="canva-header-back-btn"
+          onClick={onBack}
+          title="Back"
+          aria-label="Back"
+        >
           <FiArrowLeft />
-          <span>Workspace</span>
         </button>
 
         <div className="canva-header-divider" />
