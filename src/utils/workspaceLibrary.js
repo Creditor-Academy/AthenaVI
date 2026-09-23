@@ -7,6 +7,7 @@ export function normalizeLibraryCategoryId(value) {
     .toLowerCase()
   if (raw === 'video' || raw === 'videos' || raw === 'avatar_video') return 'video'
   if (raw === 'presentation' || raw === 'presentations' || raw === 'ppt') return 'presentation'
+  if (raw === 'canvas' || raw === 'canvases' || raw === 'design' || raw === 'designs') return 'canvas'
   if (raw === 'image' || raw === 'images') return 'image'
   return raw || null
 }
@@ -14,19 +15,35 @@ export function normalizeLibraryCategoryId(value) {
 /** Resolve item kind from library fields or project type. */
 export function resolveLibraryKind(item) {
   if (!item || typeof item !== 'object') return 'video'
+  // Project type is authoritative — a CANVAS row must never be routed as a video.
+  const type = String(item.type || item.projectType || '').toUpperCase()
+  if (type === 'CANVAS') return 'canvas'
   const fromKind = normalizeLibraryCategoryId(item.kind || item.category)
-  if (fromKind === 'video' || fromKind === 'presentation' || fromKind === 'image') {
+  if (
+    fromKind === 'video' ||
+    fromKind === 'presentation' ||
+    fromKind === 'canvas' ||
+    fromKind === 'image'
+  ) {
     return fromKind
   }
-  const type = String(item.type || item.projectType || '').toUpperCase()
   if (type === 'PRESENTATION') return 'presentation'
   if (type === 'IMAGE' || type === 'IMAGE_GEN') return 'image'
   return 'video'
 }
 
+/** Project type (VIDEO / PRESENTATION / CANVAS) for a library kind. */
+export function projectTypeForKind(kind, fallback) {
+  if (kind === 'presentation') return 'PRESENTATION'
+  if (kind === 'canvas') return 'CANVAS'
+  if (kind === 'video') return 'VIDEO'
+  return fallback
+}
+
 const DEFAULT_CATEGORIES = [
   { id: 'video', label: 'Videos', projectType: 'VIDEO', count: 0 },
   { id: 'presentation', label: 'Presentations', projectType: 'PRESENTATION', count: 0 },
+  { id: 'canvas', label: 'Canvases', projectType: 'CANVAS', count: 0 },
   { id: 'image', label: 'Images', count: 0 },
 ]
 
@@ -137,9 +154,7 @@ export function normalizeLibraryCategories(categories) {
     byId.set(id, {
       id,
       label: cat.label || DEFAULT_CATEGORIES.find((d) => d.id === id)?.label || id,
-      projectType:
-        cat.projectType ||
-        (id === 'video' ? 'VIDEO' : id === 'presentation' ? 'PRESENTATION' : undefined),
+      projectType: cat.projectType || projectTypeForKind(id, undefined),
       count: Number(cat.count) || 0,
     })
   })
@@ -245,9 +260,11 @@ export function normalizeLibraryItem(item, { workspaceId, currentUserId, authUse
     (kind === 'image' ? truncatePrompt(item.prompt || item.revisedPrompt) : null) ||
     (kind === 'presentation'
       ? 'Untitled Presentation'
-      : kind === 'image'
-        ? 'Untitled Image'
-        : 'Untitled Video')
+      : kind === 'canvas'
+        ? 'Untitled Design'
+        : kind === 'image'
+          ? 'Untitled Image'
+          : 'Untitled Video')
 
   const createdAt =
     item.createdAt || item.created_at || item.dateCreated || item.created || null
@@ -269,14 +286,8 @@ export function normalizeLibraryItem(item, { workspaceId, currentUserId, authUse
     category: kind,
     name: String(name || 'Untitled'),
     title: String(item.title || name || 'Untitled'),
-    type:
-      item.type ||
-      item.projectType ||
-      (kind === 'presentation' ? 'PRESENTATION' : kind === 'video' ? 'VIDEO' : item.type),
-    projectType:
-      item.projectType ||
-      item.type ||
-      (kind === 'presentation' ? 'PRESENTATION' : kind === 'video' ? 'VIDEO' : item.projectType),
+    type: item.type || item.projectType || projectTypeForKind(kind, item.type),
+    projectType: item.projectType || item.type || projectTypeForKind(kind, item.projectType),
     thumbnail: item.thumbnail || item.thumbnailUrl || item.url || null,
     thumbnailUrl: item.thumbnailUrl || item.thumbnail || item.url || null,
     createdAt,
@@ -302,6 +313,11 @@ export function normalizeLibraryItem(item, { workspaceId, currentUserId, authUse
       partial: Boolean(item.partial),
       status: item.status || null,
     }
+  }
+
+  if (kind === 'canvas') {
+    const thumb = firstNonEmptyUrl(item.thumbnailUrl, item.thumbnail)
+    return { ...base, thumbnail: thumb, thumbnailUrl: thumb, status: item.status || 'draft' }
   }
 
   if (kind === 'image') {
@@ -357,5 +373,6 @@ export const IMAGE_MODE_FILTERS = [
 export const LIBRARY_CATEGORY_ICONS = {
   video: 'video',
   presentation: 'presentation',
+  canvas: 'canvas',
   image: 'image',
 }

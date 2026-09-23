@@ -87,6 +87,7 @@ const PATH_TO_VIEW_MAP = {
   '/dashboard/editor': 'dashboard',
   '/dashboard/image-ai': 'dashboard',
   '/dashboard/image-editor': 'dashboard',
+  '/dashboard/canvas-editor': 'dashboard',
   '/profile': 'dashboard',
   '/slides': 'dashboard',
   '/slides/home': 'dashboard',

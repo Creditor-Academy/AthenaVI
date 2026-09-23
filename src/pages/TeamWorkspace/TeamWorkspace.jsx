@@ -29,7 +29,7 @@ import WorkspaceStorageBreadcrumb from '../../components/features/workspace/work
 import TeamWorkspaceSkeleton from '../page-skeleton/TeamWorkspaceSkeleton';
 
 import { extractUserId, normalizeWorkspace, normalizeFolder, normalizeVideo, workspaceCanEdit, workspaceCanManageContributors } from './workspaceUtils.js';
-import { resolveLibraryKind } from '../../utils/workspaceLibrary.js';
+import { projectTypeForKind, resolveLibraryKind } from '../../utils/workspaceLibrary.js';
 import { useWorkspaceData } from './useWorkspaceData.js';
 import { useWorkspaceActions } from './useWorkspaceActions.js';
 import InvitationsPanel from './InvitationsPanel.jsx';
@@ -477,10 +477,7 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
         workspace: workspace.name,
         folderId: item.folderId || folder?.id || null,
         folder: folder?.name || item.folderName || item.folder?.name || '',
-        type:
-          item.type ||
-          item.projectType ||
-          (kind === 'presentation' ? 'PRESENTATION' : kind === 'video' ? 'VIDEO' : item.type),
+        type: item.type || item.projectType || projectTypeForKind(kind, item.type),
         kind,
         category: kind,
       };
@@ -520,6 +517,15 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
                 openCreateVideoModal({
                   ...createCtx,
                   preferredCreateOption: 'ppt-ai',
+                })
+            : null
+        }
+        onCreateCanvas={
+          canEdit
+            ? () =>
+                openCreateVideoModal({
+                  ...createCtx,
+                  preferredCreateOption: 'image-editor',
                 })
             : null
         }

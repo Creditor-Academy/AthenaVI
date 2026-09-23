@@ -3265,6 +3265,10 @@ button.workspace-flow-card__tool--credits:hover {
   background: rgba(13, 148, 136, 0.82);
 }
 
+.wsc-kind-badge--canvas {
+  background: rgba(219, 39, 119, 0.82);
+}
+
 .wsc-library-thumb-img {
   width: 100%;
   height: 100%;

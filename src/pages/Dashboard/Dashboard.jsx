@@ -63,11 +63,25 @@ import {
   loadPresentationEditorSession,
   savePresentationEditorSession,
 } from '../../utils/presentationEditorSession.js'
+import {
+  clearCanvasEditorSession,
+  loadCanvasEditorSession,
+  saveCanvasEditorSession,
+} from '../../utils/canvasEditorSession.js'
 import useDashboardSearch from '../../hooks/useDashboardSearch.js'
 import { applySearchResult } from '../../utils/dashboardSearchNavigate.js'
 import './Dashboard.css'
 
 const AVATAR_FLOW_SECTIONS = new Set(['avatars', 'create-avatar-look', 'create-avatar'])
+const CANVAS_FLOW_SECTIONS = new Set(['canvas-editor', 'image-editor'])
+
+/** /dashboard/canvas-editor without a canvas to open — send the user back to the workspace. */
+function CanvasEditorMissing({ onBack }) {
+  useEffect(() => {
+    onBack()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  return null
+}
 
 
 function Dashboard({ onCreate, initialSection }) {
@@ -93,6 +107,9 @@ function Dashboard({ onCreate, initialSection }) {
   const [createMenuContext, setCreateMenuContext] = useState(null)
   const [presentationCreateContext, setPresentationCreateContext] = useState(null)
   const [editorData, setEditorData] = useState(() => loadPresentationEditorSession())
+  const [canvasEditorContext, setCanvasEditorContext] = useState(() =>
+    resolveDashboardSectionFromPath() === 'canvas-editor' ? loadCanvasEditorSession() : null
+  )
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try {
       return window.localStorage.getItem('athena.dashboard.sidebarCollapsed') === '1'
@@ -172,6 +189,11 @@ function Dashboard({ onCreate, initialSection }) {
   const goToSection = useCallback((id) => {
     if (id === 'admin-portal' && !canAccessSuperadminPortal) {
       id = 'home'
+    }
+    // Outside the canvas flows, drop the canvas session so a later "create" never inherits it.
+    if (!CANVAS_FLOW_SECTIONS.has(id)) {
+      clearCanvasEditorSession()
+      setCanvasEditorContext(null)
     }
     setTopbarMobileOpen(false)
     setSidebarMobileOpen(false)
@@ -288,10 +310,34 @@ function Dashboard({ onCreate, initialSection }) {
     [goToSection]
   )
 
+  const openCanvasEditor = useCallback(
+    (ctx) => {
+      setCanvasEditorContext(ctx)
+      saveCanvasEditorSession(ctx)
+      goToSection('canvas-editor')
+    },
+    [goToSection]
+  )
+
   const handleEditVideo = useCallback(
     (video) => {
       const kind = String(video?.kind || video?.category || '').toLowerCase()
       const projectType = String(video?.type || video?.projectType || '').toUpperCase()
+      const folderId =
+        video?.folderId || (video?.folder && (video.folder.id || video.folder._id)) || null
+
+      // Design canvases have their own editor — never the video editor at /create.
+      if (kind === 'canvas' || projectType === 'CANVAS') {
+        openCanvasEditor({
+          workspaceId: video.workspaceId,
+          canvasId: video.id || video._id,
+          folderId,
+          workspaceName: video.workspaceName || (typeof video.workspace === 'string' ? video.workspace : ''),
+          folderName: typeof video.folder === 'string' ? video.folder : video.folder?.name || video.folderName || '',
+        })
+        return
+      }
+
       if (kind === 'presentation' || projectType === 'PRESENTATION') {
         openPresentationEditor({
           outline: [],
@@ -321,7 +367,7 @@ function Dashboard({ onCreate, initialSection }) {
         })
       }
     },
-    [onCreate, openPresentationEditor]
+    [onCreate, openPresentationEditor, openCanvasEditor]
   )
 
   const notificationNavigateHandlers = useMemo(() => ({
@@ -402,11 +448,17 @@ function Dashboard({ onCreate, initialSection }) {
       }
       return
     }
+    const canvasIsSaved =
+      section === 'image-editor' && canvasEditorContext?.canvasId
+    if (section === 'canvas-editor' || canvasIsSaved) {
+      if (canvasEditorContext) saveCanvasEditorSession(canvasEditorContext)
+      return
+    }
     const newPath = dashboardPathForSection(section)
     if (window.location.pathname !== newPath) {
       window.history.pushState({ section }, '', newPath)
     }
-  }, [section, editorData])
+  }, [section, editorData, canvasEditorContext])
 
   // Handle browser back/forward for dashboard sections
   useEffect(() => {
@@ -420,6 +472,12 @@ function Dashboard({ onCreate, initialSection }) {
         if (sectionFromUrl === 'editor') {
           const restored = loadPresentationEditorSession()
           if (restored) setEditorData(restored)
+        }
+        if (sectionFromUrl === 'canvas-editor') {
+          setCanvasEditorContext(loadCanvasEditorSession())
+        } else if (!CANVAS_FLOW_SECTIONS.has(sectionFromUrl)) {
+          clearCanvasEditorSession()
+          setCanvasEditorContext(null)
         }
       }
     }
@@ -528,54 +586,40 @@ function Dashboard({ onCreate, initialSection }) {
     )
   }
 
-  if (section === 'editor') {
-    if (editorData?.config?.editorKind === 'canvas') {
-      return (
-        <CanvasEditor
-          initialSize={{
-            width: editorData?.config?.canvasWidth || 1080,
-            height: editorData?.config?.canvasHeight || 1080,
-          }}
-          title={editorData?.config?.title || editorData?.title || 'Untitled Design'}
-          workspaceId={editorData?.workspaceId || editorData?.config?.workspaceId || null}
-          folderId={editorData?.folderId || editorData?.config?.folderId || null}
-          canvasId={editorData?.canvasId || editorData?.config?.canvasId || null}
-          onBack={() => {
-            setPresentationCreateContext(null)
-            const session = loadPresentationEditorSession()
-            persistWorkspaceFolderNavigation({
-              workspaceId:
-                editorData?.workspaceId ||
-                session?.workspaceId ||
-                editorData?.config?.workspaceId,
-              folderId:
-                editorData?.folderId ||
-                session?.folderId ||
-                editorData?.config?.folderId ||
-                null,
-              workspace:
-                editorData?.workspaceName ||
-                editorData?.config?.workspace ||
-                editorData?.config?.workspaceName ||
-                '',
-              folder:
-                editorData?.folderName ||
-                editorData?.config?.folder ||
-                editorData?.config?.folderName ||
-                '',
-            })
-            try {
-              sessionStorage.setItem('workspaceActiveRootTab', 'workspace')
-            } catch {
-              /* ignore */
-            }
-            clearPresentationEditorSession()
-            goToSection('workspace')
-          }}
-        />
-      )
+  if (section === 'canvas-editor') {
+    const exitCanvasEditor = () => {
+      persistWorkspaceFolderNavigation({
+        workspaceId: canvasEditorContext?.workspaceId,
+        folderId: canvasEditorContext?.folderId || null,
+        workspace: canvasEditorContext?.workspaceName || '',
+        folder: canvasEditorContext?.folderName || '',
+      })
+      try {
+        sessionStorage.setItem('workspaceActiveRootTab', 'workspace')
+      } catch {
+        /* ignore */
+      }
+      clearCanvasEditorSession()
+      setCanvasEditorContext(null)
+      goToSection('workspace')
     }
 
+    if (!canvasEditorContext?.workspaceId || !canvasEditorContext?.canvasId) {
+      return <CanvasEditorMissing onBack={exitCanvasEditor} />
+    }
+
+    return (
+      <CanvasEditor
+        key={canvasEditorContext.canvasId}
+        workspaceId={canvasEditorContext.workspaceId}
+        folderId={canvasEditorContext.folderId}
+        canvasId={canvasEditorContext.canvasId}
+        onBack={exitCanvasEditor}
+      />
+    )
+  }
+
+  if (section === 'editor') {
     if (!editorData?.workspaceId || !editorData?.presentationId) {
       return <PptDeckOpenBoot title={editorData?.config?.title || editorData?.title || ''} />
     }
@@ -831,6 +875,11 @@ function Dashboard({ onCreate, initialSection }) {
                 }
 
                 if (preferred === 'image-editor' && workspaceId) {
+                  // Canvases are saved into a folder — ask for one when created from the workspace root.
+                  if (!folderId) {
+                    handleOpenCreateLocationModal('image-editor', { workspaceId })
+                    return
+                  }
                   setCreateLocationContext({
                     optionId: 'image-editor',
                     workspaceId,
@@ -898,8 +947,22 @@ function Dashboard({ onCreate, initialSection }) {
                     : null
                 }
                 initialSize={createLocationContext?.canvasSize || null}
+                onCanvasCreated={(canvas) => {
+                  // Point the URL at the saved canvas so a refresh reopens it
+                  // in the canvas editor instead of creating another one.
+                  const ctx = {
+                    workspaceId: createLocationContext?.workspaceId,
+                    folderId: createLocationContext?.folderId || canvas?.folderId || null,
+                    canvasId: canvas?.id,
+                    folderName: canvas?.folder?.name || '',
+                  }
+                  setCanvasEditorContext(ctx)
+                  saveCanvasEditorSession(ctx)
+                }}
                 onBack={() => {
                   persistWorkspaceFolderNavigation(createLocationContext)
+                  clearCanvasEditorSession()
+                  setCanvasEditorContext(null)
                   goToSection('workspace')
                 }}
               />,

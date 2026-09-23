@@ -118,6 +118,7 @@ export default function CanvasEditor({
   workspaceId = null,
   folderId = null,
   canvasId: initialCanvasId = null,
+  onCanvasCreated = null,
 }) {
   const startingSize = initialSize || DEFAULT_SIZE
   const [docTitle, setDocTitle] = useState(title || initialTitle)
@@ -187,6 +188,7 @@ export default function CanvasEditor({
   const sizeRef = useRef(size)
   useEffect(() => { sizeRef.current = size }, [size])
   const lastSyncedTitleRef = useRef(docTitle)
+  const loadedCanvasesRef = useRef(null)
 
   const persistCanvasData = useCallback(async () => {
     if (!canPersist || !canvasIdRef.current) return
@@ -248,25 +250,35 @@ export default function CanvasEditor({
           setDocTitle(loadedTitle)
           lastSyncedTitleRef.current = loadedTitle
           setSize(data.size || startingSize)
+          loadedCanvasesRef.current = loadedCanvases
           setCanvases(loadedCanvases)
           setHistory([loadedCanvases])
           setHistoryIndex(0)
           setCanvasId(doc.id)
           setSaveState('saved')
         } else if (folderId) {
+          const sentCanvases = canvasesRef.current
+          const sentTitle = docTitleRef.current || initialTitle
+          const sentSize = sizeRef.current
           const created = await canvasService.createCanvas(workspaceId, {
-            name: docTitleRef.current || initialTitle,
+            name: sentTitle,
             folderId,
-            data: {
-              version: 1,
-              docTitle: docTitleRef.current || initialTitle,
-              size: sizeRef.current,
-              canvases: canvasesRef.current,
-            },
+            data: { version: 1, docTitle: sentTitle, size: sentSize, canvases: sentCanvases },
           })
           if (cancelled) return
+          lastSyncedTitleRef.current = sentTitle
+          canvasIdRef.current = created.id
           setCanvasId(created.id)
           setSaveState('saved')
+          onCanvasCreated?.(created)
+          // Edits made while the create request was in flight haven't been saved yet.
+          if (
+            canvasesRef.current !== sentCanvases ||
+            docTitleRef.current !== sentTitle ||
+            sizeRef.current !== sentSize
+          ) {
+            persistCanvasData()
+          }
         } else {
           setSaveState('idle')
         }
@@ -289,6 +301,9 @@ export default function CanvasEditor({
   // Debounced autosave whenever the document changes, once it's hydrated/created.
   useEffect(() => {
     if (!canPersist || !hydratedRef.current || !canvasIdRef.current) return undefined
+    // Don't re-save a document we just loaded from the server.
+    if (loadedCanvasesRef.current && canvases === loadedCanvasesRef.current) return undefined
+    loadedCanvasesRef.current = null
 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     saveTimerRef.current = setTimeout(() => {

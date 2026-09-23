@@ -14,6 +14,7 @@ import {
     MdMovieCreation,
     MdSlideshow,
     MdImage,
+    MdBrush,
 } from 'react-icons/md';
 import ContextMenu from './ContextMenu.jsx';
 import UserIdentity from './UserIdentity.jsx';
@@ -312,6 +313,13 @@ function KindBadge({ kind }) {
             </span>
         );
     }
+    if (kind === 'canvas') {
+        return (
+            <span className="wsc-kind-badge wsc-kind-badge--canvas">
+                <MdBrush size={11} /> Design
+            </span>
+        );
+    }
     return (
         <span className="wsc-kind-badge wsc-kind-badge--video">
             <MdMovieCreation size={11} /> Video
@@ -346,6 +354,9 @@ function LibraryThumb({ item, kind }) {
         <img src={src} alt={title} className="wsc-library-thumb-img" loading="lazy" decoding="async" draggable={false} />
       );
     }
+    if (kind === 'canvas') {
+      return <DefaultProjectThumbnail title={title} category="canvas" showLabel={false} />;
+    }
     return <ProjectSceneThumbnail video={item} />;
 }
 
@@ -366,7 +377,9 @@ export const VideoCard = ({ video, onClick, contextProps }) => {
             ? 'Open Presentation'
             : kind === 'image'
                 ? 'Open chat'
-                : 'Open Project';
+                : kind === 'canvas'
+                    ? 'Open Design'
+                    : 'Open Project';
     const creatorName = (() => {
         const candidates = [
             typeof video.createdBy === 'string' ? video.createdBy : video.createdBy?.name,
@@ -390,7 +403,7 @@ export const VideoCard = ({ video, onClick, contextProps }) => {
 
                 <div className="wsc-card__hover-overlay">
                     <div className="wsc-video-card__play-btn">
-                        {kind === 'image' ? <MdImage size={20} /> : kind === 'presentation' ? <MdSlideshow size={20} /> : <MdPlayArrow size={22} />}
+                        {kind === 'image' ? <MdImage size={20} /> : kind === 'presentation' ? <MdSlideshow size={20} /> : kind === 'canvas' ? <MdBrush size={20} /> : <MdPlayArrow size={22} />}
                     </div>
                     <span>{openLabel}</span>
                 </div>
