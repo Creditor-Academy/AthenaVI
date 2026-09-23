@@ -233,14 +233,15 @@ const CATALOG = {
     'title',
     [
       slot('BACKGROUND_IMAGE', 'cols 1-12, rows 1-10', 'background', null, { layer: 0, fit: 'cover' }),
-      slot('MAIN_TITLE', 'cols 2-11, rows 3-5', 'heading', 'Presentation title', {
+      slot('OVERLAY_SCRIM', 'cols 1-12, rows 1-10', 'decoration', null, { layer: 2, aiOnly: true }),
+      slot('MAIN_TITLE', 'cols 2-11, rows 4-6', 'heading', 'Presentation title', {
         layer: 10,
-        typography: { ...centeredTypo('heading', { fontSize: 68, fontWeight: 800, lineHeight: 1.16 }), colorRole: 'textOnImage' },
+        typography: { ...centeredTypo('heading', { fontSize: 64, fontWeight: 800, lineHeight: 1.12 }), colorRole: 'textOnImage' },
         max_lines: 2,
       }),
-      slot('SUBTITLE', 'cols 2-11, rows 6-7', 'subheading', 'Tagline or company name', {
+      slot('SUBTITLE', 'cols 3-10, rows 7', 'subheading', 'Tagline or company name', {
         layer: 10,
-        typography: { ...centeredTypo('subheading', { fontSize: 28, fontWeight: 400, lineHeight: 1.4 }), colorRole: 'textOnImageMuted' },
+        typography: { ...centeredTypo('subheading', { fontSize: 24, fontWeight: 400, lineHeight: 1.4 }), colorRole: 'textOnImageMuted' },
         max_lines: 2,
       }),
     ],
@@ -252,18 +253,18 @@ const CATALOG = {
     'title',
     [
       slot('BACKGROUND_IMAGE', 'cols 1-12, rows 1-10', 'background', null, { layer: 0, fit: 'cover' }),
-      slot('OVERLAY_CARD', 'cols 3-10, rows 3-8', 'decoration', null, {
+      slot('OVERLAY_CARD', 'cols 1-12, rows 1-10', 'decoration', null, {
         layer: 2,
         aiOnly: true,
       }),
-      slot('MAIN_TITLE', 'cols 3-10, rows 4-5', 'heading', 'Title Fullbleed\nOverlay', {
+      slot('MAIN_TITLE', 'cols 1-10, rows 7-8', 'heading', 'Title Fullbleed Overlay', {
         layer: 10,
-        typography: { ...centeredTypo('heading', { fontSize: 56, fontWeight: 800, lineHeight: 1.15, verticalAlign: 'flex-start' }), colorRole: 'textOnImage' },
+        typography: { ...typo('heading', { fontSize: 56, fontWeight: 800, lineHeight: 1.12, verticalAlign: 'flex-start', align: 'left' }), colorRole: 'textOnImage' },
         max_lines: 2,
       }),
-      slot('SUBTITLE', 'cols 3-10, rows 6-7', 'subheading', 'Tagline or company name', {
+      slot('SUBTITLE', 'cols 1-9, rows 9', 'subheading', 'Tagline or company name', {
         layer: 10,
-        typography: { ...centeredTypo('subheading', { fontSize: 24, fontWeight: 400, lineHeight: 1.45, verticalAlign: 'flex-start' }), colorRole: 'textOnImageMuted' },
+        typography: { ...typo('subheading', { fontSize: 24, fontWeight: 400, lineHeight: 1.4, verticalAlign: 'flex-start', align: 'left' }), colorRole: 'textOnImageMuted' },
         max_lines: 2,
       }),
     ],
@@ -347,20 +348,17 @@ const CATALOG = {
 
   wide_image_statement_overlay_v1: layoutBase('wide_image_statement_overlay_v1', 'image+text', [
     slot('BACKGROUND_IMAGE', 'cols 1-12, rows 1-10', 'background', null, { layer: 0, fit: 'cover' }),
-    slot('OVERLAY_SCRIM', 'cols 1-12, rows 1-10', 'background', null, {
-      layer: 1,
-      shape: { type: 'rect', fill: { type: 'solid', color: 'rgba(0,0,0,0.5)' } },
-    }),
+    slot('OVERLAY_SCRIM', 'cols 1-12, rows 1-10', 'graphic', null, { layer: 2 }),
     slot('SUBHEADLINE', 'cols 3-10, rows 4-5', 'subheading', 'Subheadline', {
       layer: 10,
-      typography: typo('subheading', { fontSize: 20, fontWeight: 600, colorRole: 'textOnImage', color: '#FFFFFF', align: 'center' }),
+      typography: typo('subheading', { fontSize: 16, fontWeight: 700, colorRole: 'textOnImage', color: '#FFFFFF', align: 'center' }),
     }),
     slot('STATEMENT', 'cols 2-11, rows 5-8', 'quote', P.short, {
       layer: 10,
-      typography: typo('quote', { fontSize: 48, fontWeight: 800, lineHeight: 1.2, colorRole: 'textOnImage', color: '#FFFFFF', align: 'center' }),
+      typography: typo('quote', { fontSize: 52, fontWeight: 800, lineHeight: 1.18, colorRole: 'textOnImage', color: '#FFFFFF', align: 'center' }),
       max_lines: 3,
     }),
-  ], { slideVariant: 'center' }),
+  ], { mode: 'wide_image_statement_overlay', slideVariant: 'center' }),
 
   statement_left_v1: layoutBase('statement_left_v1', 'quote', [
     slot(

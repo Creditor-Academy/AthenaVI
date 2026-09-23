@@ -54,9 +54,14 @@ import { isTimelineMilestonesImageLayout } from './timelineMilestonesImage.js'
 import { isTimelineMilestonesImageRightLayout } from './timelineMilestonesImageRight.js'
 import { isSectionDividerNumberedCircleLayout } from './sectionDividerNumberedCircleLayout.js'
 import { isSectionDividerCenteredLayout } from './sectionDividerCenteredLayout.js'
+import { isEightShortTextsImageLayout } from './eightShortTextsImageLayout.js'
 import { isSectionWithImageLayout } from './sectionWithImageLayout.js'
 import { isParaLandscapeImageBottomLayout } from './paraLandscapeImageBottom.js'
 import { isParaLandscapeImageTopLayout } from './paraLandscapeImageTop.js'
+import {
+  isWideImageStatementOverlayLayout,
+  buildWideImageStatementOverlayCanvasElements,
+} from './wideImageStatementOverlayLayout.js'
 import { isCatalogPlaceholderText } from './catalogPlaceholder.js'
 import { normalizeChartContent } from './chartContentNormalize.js'
 import {
@@ -190,6 +195,9 @@ function resolveShapeFill(shapeSpec, palette = null) {
 }
 
 function isOverlayLayout(schema) {
+  if (isTitleFullbleedOverlayLayout(schema?.layout_id, schema)) return false
+  if (isTitleFullbleedLayout(schema?.layout_id, schema)) return false
+  if (isWideImageStatementOverlayLayout(schema?.layout_id, schema)) return false
   const layoutId = String(schema?.layout_id || '')
   const slots = Array.isArray(schema?.slots) ? schema.slots : []
   if (slots.some((s) => s.id === 'BACKGROUND_IMAGE' || /OVERLAY_SCRIM/i.test(String(s.id || '')))) return true
@@ -1188,7 +1196,9 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
       (isTimelineRoadmapLayout(schema?.layout_id) && /^milestone_\d+_label$/i.test(String(el.slotId || ''))) ||
       (isSectionDividerNumberedCircleLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'SECTION_NUMBER') ||
       (isSectionDividerCenteredLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'SECTION_NUMBER') ||
-      (isSectionWithImageLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
+      (isTitleFullbleedOverlayLayout(schema?.layout_id, schema) && (/^(MAIN_TITLE|SUBTITLE|OVERLAY_CARD)$/i.test(String(el.slotId || '')))) ||
+      (isWideImageStatementOverlayLayout(schema?.layout_id, schema) && (/^(STATEMENT|SUBHEADLINE|OVERLAY_SCRIM|BACKGROUND_IMAGE)$/i.test(String(el.slotId || '')))) ||
+      (isEightShortTextsImageLayout(schema?.layout_id) && (/^(HEADING|SUBTITLE|TAG_BADGE|POINT_\d+_(TITLE|DESC|CARD|NUM)|HERO_IMAGE)$/i.test(String(el.slotId || '')))) ||
       (isParaLandscapeImageBottomLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
       (isParaLandscapeImageTopLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
       (isBulletListDenseLayout(schema?.layout_id) && (/^(HEADING|ITEM_\d+|NUMBER_\d+|BAR_\d+|SLIDE_BG)$/i.test(String(el.slotId || '')))) ||
@@ -1274,6 +1284,9 @@ export function compileDeckLayoutToElements(schema, options = {}) {
   }
   if (isTitleFullbleedOverlayLayout(schema?.layout_id, schema)) {
     return buildTitleFullbleedOverlayCanvasElements({ schema, options })
+  }
+  if (isWideImageStatementOverlayLayout(schema?.layout_id, schema)) {
+    return buildWideImageStatementOverlayCanvasElements({ schema, options })
   }
   if (isTitleWithLogoLayout(schema?.layout_id, schema)) {
     return buildTitleWithLogoCanvasElements({ schema, options })

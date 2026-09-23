@@ -87,6 +87,10 @@ import {
   layoutIntroThreeParaIcons,
 } from './introThreeParaIconsLayout.js'
 import {
+  isWideImageStatementOverlayLayout,
+  layoutWideImageStatementOverlay,
+} from './wideImageStatementOverlayLayout.js'
+import {
   isGridBentoThreeLayout,
   layoutGridBentoThree,
 } from './gridBentoThreeLayout.js'
@@ -372,6 +376,10 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
   
   if (isIntroThreeParaIconsLayout(layoutId)) {
     return layoutIntroThreeParaIcons(elements, schema, palette, canvas)
+  }
+
+  if (isWideImageStatementOverlayLayout(layoutId, schema)) {
+    return layoutWideImageStatementOverlay(elements, schema, palette, canvas)
   }
   
   if (isGridBentoThreeLayout(layoutId)) {

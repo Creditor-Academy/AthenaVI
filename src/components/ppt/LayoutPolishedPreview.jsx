@@ -123,6 +123,10 @@ import {
   titleWithLogoPreviewSvg,
 } from '../../utils/titleCentered.js'
 import {
+  isWideImageStatementOverlayLayout,
+  wideImageStatementOverlayPreviewSvg,
+} from '../../utils/wideImageStatementOverlayLayout.js'
+import {
   isSectionWithImageLayout,
   sectionWithImagePreviewSvg,
 } from '../../utils/sectionWithImageLayout.js'
@@ -2926,7 +2930,7 @@ export default function LayoutPolishedPreview({
     const svg = titleFullbleedPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
     return (
       <div className={className} style={{
-        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        position: 'relative', ...frameStyle, background: '#B7D4E8', overflow: 'hidden',
         fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
       }}>
         <div
@@ -2946,7 +2950,27 @@ export default function LayoutPolishedPreview({
     const svg = titleFullbleedOverlayPreviewSvg(previewHints, LAYOUT_POLISHED_THEME)
     return (
       <div className={className} style={{
-        position: 'relative', ...frameStyle, background: '#0F172A', overflow: 'hidden',
+        position: 'relative', ...frameStyle, background: '#B7D4E8', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
+  if (
+    isWideImageStatementOverlayLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'wide_image_statement_overlay_v1' ||
+    previewMode === 'wide_image_statement_overlay'
+  ) {
+    const svg = wideImageStatementOverlayPreviewSvg(previewHints)
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#B7D4E8', overflow: 'hidden',
         fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
       }}>
         <div

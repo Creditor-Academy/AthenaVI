@@ -1,88 +1,49 @@
 /**
- * Eight Short Texts Image Layout
+ * Eight Short Texts Image
  * Layout IDs: eight_short_texts_image_v1, eight_short_texts_image_right_v1
  *
- * Features:
- *  - Top Header:
- *    - Category pill badge ("CORE CAPABILITIES")
- *    - Bold Heading ("Eight key points")
- *    - Subtitle ("Strategic operational framework and execution architecture")
- *  - Left Grid (8 Points in 2 Columns × 4 Rows):
- *    - Numbered pill cards (01 to 08) with primary accent colors
- *    - Bold title + descriptive body text
- *    - Sleek card container with rounded corners and subtle border
- *  - Right Side:
- *    - Large featured showcase hero image (HERO_IMAGE) with rounded corners and shadow
- *  - Total Elements: 28 elements (strictly <= 50) with complete placement coordinates.
+ * Tall photo + 8 numbered points in two columns. Recolorable row chrome.
  */
 
 export const EIGHT_SHORT_TEXTS_IMAGE_GEOM = {
   viewW: 1000,
   viewH: 560,
-
-  // Header Area
-  badgeX: 408,
-  badgeY: 20,
-  badgeW: 180,
-  badgeH: 22,
-
-  headingX: 408,
-  headingY: 46,
-  headingW: 548,
-  headingH: 34,
-
-  subtitleX: 408,
-  subtitleY: 82,
-  subtitleW: 548,
-  subtitleH: 22,
-
-  // Grid (Default: on Right for eight_short_texts_image_v1)
-  gridStartX: 408,
-  gridStartY: 118,
-  cardW: 266,
-  cardH: 94,
+  badgeX: 404,
+  badgeY: 22,
+  badgeW: 220,
+  badgeH: 18,
+  headingX: 404,
+  headingY: 44,
+  headingW: 560,
+  headingH: 32,
+  subtitleX: 404,
+  subtitleY: 78,
+  subtitleW: 560,
+  subtitleH: 20,
+  gridStartX: 404,
+  gridStartY: 108,
+  cardW: 272,
+  cardH: 100,
   colGap: 16,
-  rowGap: 12,
-
-  // Image (Default: on Left for eight_short_texts_image_v1)
-  imageX: 44,
-  imageY: 118,
-  imageW: 342,
-  imageH: 412,
-  imageRadius: 16,
+  rowGap: 8,
+  imageX: 28,
+  imageY: 28,
+  imageW: 352,
+  imageH: 504,
+  imageRadius: 18,
 }
 
 export function resolveEightShortTextsGeom(isRight = false) {
   if (isRight) {
     return {
-      viewW: 1000,
-      viewH: 560,
-      badgeX: 44,
-      badgeY: 20,
-      badgeW: 180,
-      badgeH: 22,
-      headingX: 44,
-      headingY: 46,
-      headingW: 552,
-      headingH: 34,
-      subtitleX: 44,
-      subtitleY: 82,
-      subtitleW: 552,
-      subtitleH: 22,
-      gridStartX: 44,
-      gridStartY: 118,
-      cardW: 266,
-      cardH: 94,
-      colGap: 16,
-      rowGap: 12,
-      imageX: 614,
-      imageY: 118,
-      imageW: 342,
-      imageH: 412,
-      imageRadius: 16,
+      ...EIGHT_SHORT_TEXTS_IMAGE_GEOM,
+      badgeX: 28,
+      headingX: 28,
+      subtitleX: 28,
+      gridStartX: 28,
+      imageX: 620,
     }
   }
-
   return EIGHT_SHORT_TEXTS_IMAGE_GEOM
 }
 
@@ -93,48 +54,34 @@ export function isEightShortTextsRightVariant(layoutId, schema = {}) {
 }
 
 export const EIGHT_SHORT_TEXTS_IMAGE_PALETTE = {
-  primary: '#2563EB',
-  accent: '#7C3AED',
-  cardBg: '#FFFFFF',
-  cardBorder: '#E2E8F0',
-  textDark: '#0F172A',
-  textMuted: '#64748B',
-  badgeBg: '#EFF6FF',
+  primary: '#148A80',
+  accent: '#148A80',
+  textDark: '#111827',
+  textMuted: '#6B7280',
 }
 
 export const EIGHT_SHORT_TEXTS_IMAGE_DEFAULTS = {
   BADGE: 'CORE CAPABILITIES',
   HEADING: 'Eight key points',
   SUBTITLE: 'Strategic operational framework and execution architecture',
-
   POINT_1_TITLE: 'Strategic Vision',
   POINT_1_DESC: 'Clear milestones aligned with long-term company objectives.',
-
   POINT_2_TITLE: 'Scalable Engine',
   POINT_2_DESC: 'High-concurrency infrastructure engineered for rapid growth.',
-
   POINT_3_TITLE: 'Automated Pipelines',
   POINT_3_DESC: 'Continuous integration driving frictionless deployment.',
-
   POINT_4_TITLE: 'Data Intelligence',
   POINT_4_DESC: 'Actionable real-time telemetry across distributed nodes.',
-
   POINT_5_TITLE: 'Enterprise Security',
   POINT_5_DESC: 'End-to-end encryption with granular compliance protocols.',
-
   POINT_6_TITLE: 'Customer Centricity',
   POINT_6_DESC: 'Intuitive user journeys backed by proactive feedback loops.',
-
   POINT_7_TITLE: 'Operational Agility',
   POINT_7_DESC: 'Rapid iteration cycles with resilient cross-functional teams.',
-
   POINT_8_TITLE: 'Global Reliability',
   POINT_8_DESC: '99.99% multi-region uptime with disaster recovery failover.',
-
-  DEFAULT_IMAGE: null,
 }
 
-/** Check if layout ID is Eight Short Texts Image */
 export function isEightShortTextsImageLayout(layoutId) {
   const id = String(layoutId || '').toLowerCase()
   return (
@@ -144,284 +91,280 @@ export function isEightShortTextsImageLayout(layoutId) {
   )
 }
 
-/** Build Card Frame Graphic SVG with Numbered Badge */
-export function buildPointCardSvg(w, h, numStr, color = '#2563EB') {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="100%" height="100%" fill="none">
-    <!-- Card Frame -->
-    <rect x="0.5" y="0.5" width="${w - 1}" height="${h - 1}" rx="12" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5" />
-    
-    <!-- Left Indicator Strip -->
-    <rect x="1" y="16" width="3.5" height="${h - 32}" rx="1.75" fill="${color}" />
+function escapeXml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
 
-    <!-- Number Badge Pill -->
-    <rect x="14" y="16" width="34" height="34" rx="8" fill="${color}" fill-opacity="0.1" />
-    <text x="31" y="38" text-anchor="middle" fill="${color}" font-size="13" font-weight="800" font-family="Inter, sans-serif">${numStr}</text>
+function wrapLines(text, maxChars, maxLines) {
+  const words = String(text || '').split(/\s+/).filter(Boolean)
+  const lines = []
+  let current = ''
+  words.forEach((word) => {
+    const next = current ? `${current} ${word}` : word
+    if (next.length > maxChars && current) {
+      lines.push(current)
+      current = word
+    } else {
+      current = next
+    }
+  })
+  if (current) lines.push(current)
+  return lines.slice(0, maxLines)
+}
+
+export function buildPointCardSvg(w, h) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="100%" height="100%">
+    <rect width="${w}" height="${h}" fill="#FBFBFA" pointer-events="all" />
+    <rect x="0" y="${h - 1}" width="${w}" height="1" fill="currentColor" fill-opacity="0.16" />
   </svg>`
 }
 
-/** Main Layout Compiler for Eight Short Texts Image */
-export function layoutEightShortTextsImage(elements = [], schema = {}, palette = {}, canvas = {}) {
+function resolveStoredColor(el, fallback) {
+  const fill = el?.content?.fill
+  if (typeof fill === 'string' && fill && fill !== 'none' && fill !== 'transparent') return fill
+  if (fill && typeof fill === 'object' && fill.color) return fill.color
+  return fallback
+}
+
+export function layoutEightShortTextsImage(docOrElements, schema = {}, palette = {}, canvas = {}) {
+  const elements = Array.isArray(docOrElements) ? docOrElements : (docOrElements?.elements || [])
   const isRight = isEightShortTextsRightVariant(schema?.layout_id || schema?.id || schema?.layoutId, schema)
   const g = resolveEightShortTextsGeom(isRight)
-  const canvasW = canvas?.width || 1000
-  const canvasH = canvas?.height || 560
+  const canvasW = canvas?.width || docOrElements?.canvas?.width || 1000
+  const canvasH = canvas?.height || docOrElements?.canvas?.height || 560
   const scaleX = canvasW / g.viewW
   const scaleY = canvasH / g.viewH
+  const pal = palette?.primary ? palette : (palette?.palette || palette || {})
+  const accent = pal.primary || pal.accent || EIGHT_SHORT_TEXTS_IMAGE_PALETTE.primary
 
-  const safeElements = Array.isArray(elements) ? elements : []
   const prevBySlot = new Map()
-  safeElements.forEach((el) => {
-    const sid = String(el.slotId || el.id || '').toUpperCase()
+  elements.forEach((el) => {
+    const sid = String(el.slotId || '').toUpperCase()
     if (sid) prevBySlot.set(sid, el)
   })
 
-  const slots = Array.isArray(schema?.slots) ? schema.slots : []
-
   const getPrevText = (slotId, fallback) => {
     const prev = prevBySlot.get(slotId)
-    if (prev?.content?.text !== undefined && prev?.content?.text !== null) return prev.content.text
-    if (prev?.content?.html) return prev.content.html.replace(/<[^>]*>/g, '')
-    const fromSlot = slots.find((s) => String(s.id).toUpperCase() === slotId)
-    if (fromSlot?.placeholder_text) return fromSlot.placeholder_text
+    const txt = prev?.content?.text || prev?.text
+    if (txt && String(txt).trim()) return String(txt).trim()
     return fallback
   }
 
-  const newId = (prefix) => `${prefix}-${Math.random().toString(36).slice(2, 9)}`
   const newElements = []
-
-  const pushElement = (el) => {
-    const rawRect = el.rect || el.placement || {}
-    const x = Math.round(rawRect.x || 0)
-    const y = Math.round(rawRect.y || 0)
-    const width = Math.max(1, Math.round(rawRect.width || 10))
-    const height = Math.max(1, Math.round(rawRect.height || 10))
-
+  const pushText = (config) => {
+    const placement = {
+      x: Math.round(config.x),
+      y: Math.round(config.y),
+      width: Math.max(1, Math.round(config.width)),
+      height: Math.max(1, Math.round(config.height)),
+      rotation: 0,
+      opacity: 1,
+    }
     newElements.push({
-      ...el,
-      placement: {
-        x,
-        y,
-        width,
-        height,
-        rotation: 0,
-        opacity: 1,
+      id: config.id,
+      type: 'text',
+      slotId: config.slotId,
+      role: config.role || 'body',
+      layer: 10,
+      placement,
+      rect: { ...placement },
+      content: {
+        text: config.text,
+        fontSize: config.fontSize,
+        fontWeight: config.fontWeight || 500,
+        color: config.color,
+        align: 'left',
+        lineHeight: config.lineHeight || 1.2,
+        letterSpacing: config.letterSpacing || 'normal',
+        clipToSlot: true,
+        maxLines: config.maxLines || 2,
       },
-      rect: {
-        x,
-        y,
-        width,
-        height,
+    })
+  }
+  const pushGraphic = (config) => {
+    const placement = {
+      x: Math.round(config.x),
+      y: Math.round(config.y),
+      width: Math.max(1, Math.round(config.width)),
+      height: Math.max(1, Math.round(config.height)),
+      rotation: 0,
+      opacity: 1,
+    }
+    newElements.push({
+      id: config.id,
+      type: 'graphic',
+      slotId: config.slotId,
+      role: 'decoration',
+      layer: config.layer || 2,
+      placement,
+      rect: { ...placement },
+      content: {
+        svg: config.svg,
+        preserveAspectRatio: 'none',
+        colorMode: 'recolorable',
+        fill: config.fill,
+        stroke: config.fill,
       },
     })
   }
 
-  const primaryColor = palette?.primary || EIGHT_SHORT_TEXTS_IMAGE_PALETTE.primary
-  const accentColor = palette?.accent || EIGHT_SHORT_TEXTS_IMAGE_PALETTE.accent
-  const textColor = palette?.text || EIGHT_SHORT_TEXTS_IMAGE_PALETTE.textDark
-  const mutedColor = palette?.muted || EIGHT_SHORT_TEXTS_IMAGE_PALETTE.textMuted
-
-  // 1. Top Category Pill Badge
-  pushElement({
-    id: prevBySlot.get('TAG_BADGE')?.id || newId('est-badge'),
-    type: 'text',
+  pushText({
+    id: prevBySlot.get('TAG_BADGE')?.id || 'est_badge',
     slotId: 'TAG_BADGE',
-    layer: 10,
-    rect: {
-      x: g.badgeX * scaleX,
-      y: g.badgeY * scaleY,
-      width: g.badgeW * scaleX,
-      height: g.badgeH * scaleY,
-    },
-    content: {
-      text: getPrevText('TAG_BADGE', EIGHT_SHORT_TEXTS_IMAGE_DEFAULTS.BADGE),
-      fontSize: 11,
-      fontWeight: 700,
-      color: primaryColor,
-      textTransform: 'uppercase',
-      letterSpacing: '0.08em',
-      clipToSlot: false,
-    },
+    role: 'caption',
+    text: String(getPrevText('TAG_BADGE', EIGHT_SHORT_TEXTS_IMAGE_DEFAULTS.BADGE)).toUpperCase(),
+    x: g.badgeX * scaleX,
+    y: g.badgeY * scaleY,
+    width: g.badgeW * scaleX,
+    height: g.badgeH * scaleY,
+    fontSize: 11,
+    fontWeight: 700,
+    color: accent,
+    letterSpacing: '0.16em',
+    maxLines: 1,
   })
 
-  // 2. Heading
-  const headingText =
-    getPrevText('HEADING', '') ||
-    getPrevText('TITLE', '') ||
-    EIGHT_SHORT_TEXTS_IMAGE_DEFAULTS.HEADING
-
-  pushElement({
-    id: prevBySlot.get('HEADING')?.id || newId('est-heading'),
-    type: 'text',
+  pushText({
+    id: prevBySlot.get('HEADING')?.id || 'est_heading',
     slotId: 'HEADING',
-    layer: 10,
-    rect: {
-      x: g.headingX * scaleX,
-      y: g.headingY * scaleY,
-      width: g.headingW * scaleX,
-      height: g.headingH * scaleY,
-    },
-    content: {
-      text: headingText,
-      fontSize: 28,
-      fontWeight: 800,
-      color: textColor,
-      clipToSlot: false,
-    },
+    role: 'heading',
+    text: getPrevText('HEADING', '') || getPrevText('TITLE', '') || EIGHT_SHORT_TEXTS_IMAGE_DEFAULTS.HEADING,
+    x: g.headingX * scaleX,
+    y: g.headingY * scaleY,
+    width: g.headingW * scaleX,
+    height: g.headingH * scaleY,
+    fontSize: 24,
+    fontWeight: 700,
+    color: '#111827',
+    maxLines: 1,
   })
 
-  // 3. Subtitle
-  const subtitleText =
-    getPrevText('SUBTITLE', '') ||
-    EIGHT_SHORT_TEXTS_IMAGE_DEFAULTS.SUBTITLE
-
-  pushElement({
-    id: prevBySlot.get('SUBTITLE')?.id || newId('est-sub'),
-    type: 'text',
+  pushText({
+    id: prevBySlot.get('SUBTITLE')?.id || 'est_sub',
     slotId: 'SUBTITLE',
-    layer: 10,
-    rect: {
-      x: g.subtitleX * scaleX,
-      y: g.subtitleY * scaleY,
-      width: g.subtitleW * scaleX,
-      height: g.subtitleH * scaleY,
-    },
-    content: {
-      text: subtitleText,
-      fontSize: 14,
-      fontWeight: 500,
-      color: mutedColor,
-      clipToSlot: false,
-    },
+    role: 'subheading',
+    text: getPrevText('SUBTITLE', EIGHT_SHORT_TEXTS_IMAGE_DEFAULTS.SUBTITLE),
+    x: g.subtitleX * scaleX,
+    y: g.subtitleY * scaleY,
+    width: g.subtitleW * scaleX,
+    height: g.subtitleH * scaleY,
+    fontSize: 13,
+    fontWeight: 400,
+    color: '#6B7280',
+    maxLines: 1,
   })
 
-  // 4. 8 Numbered Feature Cards (2 columns x 4 rows)
   for (let i = 1; i <= 8; i += 1) {
     const colIdx = (i - 1) % 2
     const rowIdx = Math.floor((i - 1) / 2)
-
     const cardX = g.gridStartX + colIdx * (g.cardW + g.colGap)
     const cardY = g.gridStartY + rowIdx * (g.cardH + g.rowGap)
-
     const numStr = String(i).padStart(2, '0')
-    const itemColor = i % 2 === 1 ? primaryColor : accentColor
-
     const cardSlotId = `POINT_${i}_CARD`
     const titleSlotId = `POINT_${i}_TITLE`
-    const legacyLabelSlotId = `POINT_${i}_LABEL`
     const descSlotId = `POINT_${i}_DESC`
-
-    // Card Surface Graphic
     const prevCard = prevBySlot.get(cardSlotId)
-    const activeColor = prevCard?.content?.fill || itemColor
+    const rowColor = resolveStoredColor(prevCard, accent)
 
-    pushElement({
-      id: prevCard?.id || newId(`est-c${i}-bg`),
-      type: 'graphic',
+    pushGraphic({
+      id: prevCard?.id || `est_c${i}`,
       slotId: cardSlotId,
       layer: 2,
-      rect: {
-        x: cardX * scaleX,
-        y: cardY * scaleY,
-        width: g.cardW * scaleX,
-        height: g.cardH * scaleY,
-      },
-      content: {
-        svg: buildPointCardSvg(g.cardW, g.cardH, numStr, activeColor),
-        colorMode: 'recolorable',
-        fill: activeColor,
-      },
+      x: cardX * scaleX,
+      y: cardY * scaleY,
+      width: g.cardW * scaleX,
+      height: g.cardH * scaleY,
+      fill: rowColor,
+      svg: buildPointCardSvg(g.cardW, g.cardH),
     })
 
-    // Point Title
-    const titleText =
-      getPrevText(titleSlotId, '') ||
-      getPrevText(legacyLabelSlotId, '') ||
-      EIGHT_SHORT_TEXTS_IMAGE_DEFAULTS[`POINT_${i}_TITLE`]
+    pushText({
+      id: prevBySlot.get(`POINT_${i}_NUM`)?.id || `est_n${i}`,
+      slotId: `POINT_${i}_NUM`,
+      role: 'caption',
+      text: numStr,
+      x: (cardX + 4) * scaleX,
+      y: (cardY + 14) * scaleY,
+      width: 36 * scaleX,
+      height: 22 * scaleY,
+      fontSize: 13,
+      fontWeight: 700,
+      color: rowColor,
+      maxLines: 1,
+    })
 
-    pushElement({
-      id: prevBySlot.get(titleSlotId)?.id || prevBySlot.get(legacyLabelSlotId)?.id || newId(`est-c${i}-title`),
-      type: 'text',
+    pushText({
+      id: prevBySlot.get(titleSlotId)?.id || prevBySlot.get(`POINT_${i}_LABEL`)?.id || `est_t${i}`,
       slotId: titleSlotId,
-      layer: 10,
-      rect: {
-        x: (cardX + 56) * scaleX,
-        y: (cardY + 14) * scaleY,
-        width: (g.cardW - 68) * scaleX,
-        height: 22 * scaleY,
-      },
-      content: {
-        text: titleText,
-        fontSize: 14,
-        fontWeight: 700,
-        color: textColor,
-        clipToSlot: false,
-      },
+      role: 'heading',
+      text:
+        getPrevText(titleSlotId, '') ||
+        getPrevText(`POINT_${i}_LABEL`, '') ||
+        EIGHT_SHORT_TEXTS_IMAGE_DEFAULTS[`POINT_${i}_TITLE`],
+      x: (cardX + 42) * scaleX,
+      y: (cardY + 12) * scaleY,
+      width: (g.cardW - 50) * scaleX,
+      height: 22 * scaleY,
+      fontSize: 14,
+      fontWeight: 700,
+      color: '#111827',
+      maxLines: 1,
     })
 
-    // Point Description
-    const descText =
-      getPrevText(descSlotId, '') ||
-      EIGHT_SHORT_TEXTS_IMAGE_DEFAULTS[`POINT_${i}_DESC`]
-
-    pushElement({
-      id: prevBySlot.get(descSlotId)?.id || newId(`est-c${i}-desc`),
-      type: 'text',
+    pushText({
+      id: prevBySlot.get(descSlotId)?.id || `est_d${i}`,
       slotId: descSlotId,
-      layer: 10,
-      rect: {
-        x: (cardX + 56) * scaleX,
-        y: (cardY + 38) * scaleY,
-        width: (g.cardW - 68) * scaleX,
-        height: 44 * scaleY,
-      },
-      content: {
-        text: descText,
-        fontSize: 11.5,
-        fontWeight: 400,
-        color: mutedColor,
-        lineHeight: 1.35,
-        clipToSlot: false,
-      },
+      role: 'body',
+      text: getPrevText(descSlotId, EIGHT_SHORT_TEXTS_IMAGE_DEFAULTS[`POINT_${i}_DESC`]),
+      x: (cardX + 42) * scaleX,
+      y: (cardY + 36) * scaleY,
+      width: (g.cardW - 50) * scaleX,
+      height: 52 * scaleY,
+      fontSize: 12,
+      fontWeight: 400,
+      color: '#6B7280',
+      lineHeight: 1.35,
+      maxLines: 2,
     })
   }
 
-  // 5. Right Featured Hero Image (HERO_IMAGE)
   const prevImage = prevBySlot.get('HERO_IMAGE') || prevBySlot.get('IMAGE_1')
-  const imageUrl =
-    prevImage?.content?.url ||
-    prevImage?.url ||
-    null
-
-  pushElement({
-    id: prevImage?.id || newId('est-hero-img'),
+  const imageUrl = prevImage?.content?.url || prevImage?.content?.src || prevImage?.url || null
+  const imgPlace = {
+    x: Math.round(g.imageX * scaleX),
+    y: Math.round(g.imageY * scaleY),
+    width: Math.max(1, Math.round(g.imageW * scaleX)),
+    height: Math.max(1, Math.round(g.imageH * scaleY)),
+    rotation: 0,
+    opacity: 1,
+  }
+  newElements.push({
+    id: prevImage?.id || 'est_hero',
     type: 'image',
     slotId: 'HERO_IMAGE',
+    role: 'image',
     layer: 4,
-    rect: {
-      x: g.imageX * scaleX,
-      y: g.imageY * scaleY,
-      width: g.imageW * scaleX,
-      height: g.imageH * scaleY,
-    },
+    placement: imgPlace,
+    rect: { ...imgPlace },
     content: {
-      url: imageUrl,
+      ...(imageUrl ? { url: imageUrl, src: imageUrl } : {}),
       fit: 'cover',
-      borderRadius: g.imageRadius,
+      borderRadius: Math.round(g.imageRadius * Math.min(scaleX, scaleY)),
     },
   })
 
-  return newElements
+  if (Array.isArray(docOrElements)) return newElements
+  return { ...docOrElements, elements: newElements }
 }
 
-/** Vector SVG Preview for Modal Thumbnail */
 export function eightShortTextsImagePreviewSvg(options = {}) {
   const isRight = typeof options === 'boolean' ? options : (options?.isRight === true || options?.imagePosition === 'right')
   const g = resolveEightShortTextsGeom(isRight)
-  const { width = 1000, height = 560 } = typeof options === 'object' ? options : {}
-
-  const p1 = '#2563EB'
-  const p2 = '#7C3AED'
-
+  const accent = EIGHT_SHORT_TEXTS_IMAGE_PALETTE.primary
   let cardsSvg = ''
   for (let i = 1; i <= 8; i += 1) {
     const colIdx = (i - 1) % 2
@@ -429,50 +372,33 @@ export function eightShortTextsImagePreviewSvg(options = {}) {
     const x = g.gridStartX + colIdx * (g.cardW + g.colGap)
     const y = g.gridStartY + rowIdx * (g.cardH + g.rowGap)
     const num = String(i).padStart(2, '0')
-    const c = i % 2 === 1 ? p1 : p2
-
+    const title = wrapLines(EIGHT_SHORT_TEXTS_IMAGE_DEFAULTS[`POINT_${i}_TITLE`], 18, 1)[0]
+    const desc = wrapLines(EIGHT_SHORT_TEXTS_IMAGE_DEFAULTS[`POINT_${i}_DESC`], 28, 2)
     cardsSvg += `
-      <g transform="translate(${x}, ${y})">
-        <rect width="${g.cardW}" height="${g.cardH}" rx="12" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1.5" />
-        <rect x="1" y="16" width="3" height="${g.cardH - 32}" rx="1.5" fill="${c}" />
-        <rect x="14" y="16" width="34" height="34" rx="8" fill="${c}" fill-opacity="0.12" />
-        <text x="31" y="38" text-anchor="middle" fill="${c}" font-size="13" font-weight="800" font-family="Inter, sans-serif">${num}</text>
-        <rect x="56" y="18" width="120" height="12" rx="3" fill="#0F172A" />
-        <rect x="56" y="38" width="180" height="8" rx="2" fill="#94A3B8" />
-        <rect x="56" y="50" width="140" height="8" rx="2" fill="#CBD5E1" />
-      </g>
-    `
+      <g transform="translate(${x}, ${y})" color="${accent}">
+        <line x1="0" y1="${g.cardH - 1}" x2="${g.cardW}" y2="${g.cardH - 1}" stroke="currentColor" stroke-opacity="0.16" />
+        <text x="4" y="28" fill="${accent}" font-size="13" font-weight="700" font-family="Inter, Arial, sans-serif">${num}</text>
+        <text x="42" y="26" fill="#111827" font-size="13" font-weight="700" font-family="Inter, Arial, sans-serif">${escapeXml(title)}</text>
+        ${desc
+          .map(
+            (line, li) =>
+              `<text x="42" y="${46 + li * 14}" fill="#6B7280" font-size="11" font-weight="400" font-family="Inter, Arial, sans-serif">${escapeXml(line)}</text>`
+          )
+          .join('')}
+      </g>`
   }
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="${width}" height="${height}">
-    <rect width="1000" height="560" fill="#F8FAFC" />
-
-    <!-- Top Badge -->
-    <rect x="${g.badgeX}" y="${g.badgeY}" width="160" height="22" rx="11" fill="#2563EB" fill-opacity="0.12" />
-    <text x="${g.badgeX + 10}" y="${g.badgeY + 15}" fill="#2563EB" font-size="10" font-weight="700" font-family="Inter, sans-serif" letter-spacing="0.08em">CORE CAPABILITIES</text>
-
-    <!-- Heading & Subtitle -->
-    <text x="${g.headingX}" y="${g.headingY + 24}" fill="#0F172A" font-size="28" font-weight="800" font-family="Inter, sans-serif">Eight key points</text>
-    <text x="${g.subtitleX}" y="${g.subtitleY + 15}" fill="#64748B" font-size="14" font-weight="500" font-family="Inter, sans-serif">Strategic operational framework and execution architecture</text>
-
-    <!-- 8 Cards Grid -->
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="100%" height="100%">
+    <rect width="1000" height="560" fill="#FBFBFA" />
+    <text x="${g.badgeX}" y="${g.badgeY + 14}" fill="${accent}" font-size="11" font-weight="700" font-family="Inter, Arial, sans-serif" letter-spacing="0.16em">${EIGHT_SHORT_TEXTS_IMAGE_DEFAULTS.BADGE}</text>
+    <text x="${g.headingX}" y="${g.headingY + 24}" fill="#111827" font-size="24" font-weight="700" font-family="Inter, Arial, sans-serif">${EIGHT_SHORT_TEXTS_IMAGE_DEFAULTS.HEADING}</text>
+    <text x="${g.subtitleX}" y="${g.subtitleY + 14}" fill="#6B7280" font-size="12" font-weight="400" font-family="Inter, Arial, sans-serif">${EIGHT_SHORT_TEXTS_IMAGE_DEFAULTS.SUBTITLE}</text>
     ${cardsSvg}
-
-    <!-- Right Hero Image Frame -->
     <g transform="translate(${g.imageX}, ${g.imageY})">
-      <rect width="${g.imageW}" height="${g.imageH}" rx="${g.imageRadius}" fill="#E2E8F0" />
-      <!-- Image Graphic Overlay -->
-      <path d="M 0 40 L ${g.imageW} 0 L ${g.imageW} ${g.imageH} L 0 ${g.imageH} Z" fill="#3B82F6" fill-opacity="0.15" />
-      <circle cx="${g.imageW / 2}" cy="${g.imageH / 2 - 20}" r="36" fill="#FFFFFF" fill-opacity="0.9" />
-      <!-- Landscape Icon -->
-      <g transform="translate(${g.imageW / 2 - 16}, ${g.imageH / 2 - 36})" color="#2563EB">
-        <rect x="0" y="0" width="32" height="32" rx="6" fill="none" stroke="currentColor" stroke-width="2" />
-        <circle cx="9" cy="9" r="3" fill="currentColor" />
-        <path d="M4 26l8-10 6 7 6-8 4 11H4z" fill="currentColor" fill-opacity="0.7" />
-      </g>
-      <!-- Bottom Badge -->
-      <rect x="24" y="${g.imageH - 52}" width="${g.imageW - 48}" height="32" rx="8" fill="#FFFFFF" fill-opacity="0.95" />
-      <text x="${g.imageW / 2}" y="${g.imageH - 32}" text-anchor="middle" fill="#1E293B" font-size="12" font-weight="700" font-family="Inter, sans-serif">Featured Architecture</text>
+      <rect width="${g.imageW}" height="${g.imageH}" rx="${g.imageRadius}" fill="#D7E3EA" />
+      <path d="M0 220 C80 180 160 250 240 200 C300 170 340 210 ${g.imageW} 190 L${g.imageW} ${g.imageH} L0 ${g.imageH} Z" fill="#8FBF8E" />
+      <ellipse cx="90" cy="90" rx="36" ry="16" fill="#FFFFFF" fill-opacity="0.9" />
+      <ellipse cx="250" cy="70" rx="44" ry="18" fill="#FFFFFF" fill-opacity="0.85" />
     </g>
   </svg>`
 }

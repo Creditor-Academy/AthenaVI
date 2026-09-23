@@ -356,7 +356,7 @@ const LAYOUT_PREVIEW_MODES = {
   two_para_right_image_bottom_v1: 'closing_image_right',
   wide_image_statement_top_v1: 'statement_image_bottom',
   wide_image_statement_bottom_v1: 'statement_image_bottom',
-  wide_image_statement_overlay_v1: 'closing_overlay',
+  wide_image_statement_overlay_v1: 'wide_image_statement_overlay',
   closing_thank_you_v1: 'closing_cta',
   closing_contact_cta_v1: 'closing_cta',
   minimal_text_cta_v1: 'closing_cta',
