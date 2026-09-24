@@ -539,7 +539,9 @@ function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigat
                                                     <MdPlayArrow size={18} />{' '}
                                                     {String(project.type || '').toUpperCase() === 'PRESENTATION'
                                                       ? 'Open Presentation'
-                                                      : 'Resume Editor'}
+                                                      : String(project.type || '').toUpperCase() === 'CANVAS'
+                                                        ? 'Open Design'
+                                                        : 'Resume Editor'}
                                                 </button>
                                             </div>
                                         </div>
@@ -550,7 +552,9 @@ function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigat
                                                     <MdAccessTime size={13} /> {formatDate(project.updatedAt || project.createdAt)}
                                                     {String(project.type || '').toUpperCase() === 'PRESENTATION'
                                                       ? ' • Presentation'
-                                                      : project.data?.scenes?.length > 0
+                                                      : String(project.type || '').toUpperCase() === 'CANVAS'
+                                                        ? ' • Design'
+                                                        : project.data?.scenes?.length > 0
                                                         ? ` • ${project.data.scenes.length} scene${project.data.scenes.length !== 1 ? 's' : ''}`
                                                         : ''}
                                                 </div>

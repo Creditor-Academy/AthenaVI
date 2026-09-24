@@ -1,5 +1,5 @@
 import React from 'react';
-import { MdFolder, MdVideoLibrary, MdPerson, MdPeople, MdSlideshow, MdImage } from 'react-icons/md';
+import { MdFolder, MdVideoLibrary, MdPerson, MdPeople, MdSlideshow, MdImage, MdBrush } from 'react-icons/md';
 import ContextMenu from './ContextMenu.jsx';
 import UserIdentity from './UserIdentity.jsx';
 import WorkspaceCreditsBadge from './WorkspaceCreditsBadge.jsx';
@@ -124,10 +124,18 @@ export const VideoRow = ({ video, onClick, contextProps }) => {
         pickName(video.lastModifiedBy, video.lastEditedBy) || createdBy
     const modifiedAt = video.lastModifiedAt || video.lastEditedAt;
     const RowIcon =
-        kind === 'presentation' ? MdSlideshow : kind === 'image' ? MdImage : MdVideoLibrary;
+        kind === 'presentation'
+          ? MdSlideshow
+          : kind === 'image'
+            ? MdImage
+            : kind === 'canvas'
+              ? MdBrush
+              : MdVideoLibrary;
     const kindLabel =
         kind === 'presentation'
           ? 'Presentation'
+          : kind === 'canvas'
+            ? 'Design'
           : kind === 'image'
             ? video.mode === 'infographic'
               ? video.archetype

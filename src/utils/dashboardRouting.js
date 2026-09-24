@@ -18,6 +18,7 @@ export const DASHBOARD_SECTIONS = new Set([
   'editor',
   'image-ai',
   'image-editor',
+  'canvas-editor',
   'credits',
   'profile',
   'settings',

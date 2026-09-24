@@ -690,10 +690,23 @@ export default function CanvasStage({
   onDuplicateCanvas,
   onDeleteCanvas,
 }) {
-  const surfaceRef = useRef(null)
+  // One surface ref per page — element drag/resize maths is relative to its own page.
+  const [surfaceRefs] = useState(() => new Map())
+  const pageBlockRefsRef = useRef(new Map())
   const [smartGuides, setSmartGuides] = useState([])
 
+  const getSurfaceRef = (canvasId) => {
+    if (!surfaceRefs.has(canvasId)) surfaceRefs.set(canvasId, { current: null })
+    return surfaceRefs.get(canvasId)
+  }
+
   const activeCanvas = canvases[activeCanvasIndex] || canvases[0]
+
+  // Bring the active page into view when a page is added, duplicated or picked elsewhere.
+  useEffect(() => {
+    const block = pageBlockRefsRef.current.get(activeCanvas?.id)
+    block?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' })
+  }, [activeCanvas?.id, canvases.length])
 
   const selectedIds = multiSelectIds.length
     ? multiSelectIds
@@ -701,16 +714,22 @@ export default function CanvasStage({
       ? [selectedId]
       : []
 
-  const selectedElement = activeCanvas.elements.find((el) => el.id === selectedId)
-
   return (
     <div className="canva-stage-container">
       {canvases.map((canvas, index) => {
-        const isCurrent = index === activeCanvasIndex
-        if (!isCurrent && canvases.length > 1) return null
+        const isCurrent = canvas.id === activeCanvas.id
+        const surfaceRef = getSurfaceRef(canvas.id)
+        const pageSelectedIds = isCurrent ? selectedIds : []
 
         return (
-          <div key={canvas.id} className="canva-page-block">
+          <div
+            key={canvas.id}
+            ref={(node) => {
+              if (node) pageBlockRefsRef.current.set(canvas.id, node)
+              else pageBlockRefsRef.current.delete(canvas.id)
+            }}
+            className={`canva-page-block ${isCurrent ? 'is-active' : 'is-inactive'}`}
+          >
             {/* Page Header Meta */}
             <div className="canva-page-meta">
               <div className="canva-page-meta-title">
@@ -744,6 +763,7 @@ export default function CanvasStage({
                 className={`canva-surface ${showGrid ? 'has-grid-bg' : ''}`}
                 style={canvasSurfaceStyle(canvas, zoom)}
                 onClick={(e) => {
+                  if (!isCurrent) return
                   if (
                     e.target.closest?.(
                       '[data-element-id], .ppt-canvas-el-chrome, .ppt-canvas-el-handles, .ppt-canvas-el-resize, .ppt-canvas-el-rotate, .ppt-text-drag'
@@ -754,6 +774,7 @@ export default function CanvasStage({
                   onSelect(null)
                 }}
                 onContextMenu={(e) => {
+                  if (!isCurrent) return
                   if (e.target.closest?.('[data-element-id]')) return
                   e.preventDefault()
                   e.stopPropagation()
@@ -762,9 +783,9 @@ export default function CanvasStage({
               >
                 {canvas.elements.map((element, elIdx) => {
                   const isSelected =
-                    selectedIds.includes(element.id) ||
-                    Boolean(element.groupId && selectedIds.includes(element.groupId))
-                  const isPrimary = selectedId === element.id
+                    pageSelectedIds.includes(element.id) ||
+                    Boolean(element.groupId && pageSelectedIds.includes(element.groupId))
+                  const isPrimary = isCurrent && selectedId === element.id
 
                   return (
                     <InteractiveCanvasElementShell
@@ -774,10 +795,10 @@ export default function CanvasStage({
                       canvasH={canvas.height}
                       selected={isSelected}
                       isPrimary={isPrimary}
-                      selectedIds={selectedIds}
-                      editable={true}
-                      locked={isCanvasElementLocked(element)}
-                      editing={editingId === element.id}
+                      selectedIds={pageSelectedIds}
+                      editable={isCurrent}
+                      locked={!isCurrent || isCanvasElementLocked(element)}
+                      editing={isCurrent && editingId === element.id}
                       stageRef={surfaceRef}
                       allElements={canvas.elements}
                       onSelect={onSelect}
@@ -796,12 +817,13 @@ export default function CanvasStage({
                         showEmptyTextHint
                         selected={isSelected}
                         editable={
-                          element.type === 'text' ||
-                          element.type === 'textbox' ||
-                          element.type === 'table' ||
-                          isSelected
+                          isCurrent &&
+                          (element.type === 'text' ||
+                            element.type === 'textbox' ||
+                            element.type === 'table' ||
+                            isSelected)
                         }
-                        editingText={editingId === element.id}
+                        editingText={isCurrent && editingId === element.id}
                         onStartTextEdit={() => {
                           onSelect?.(element.id)
                           onEdit?.(element.id)
@@ -847,29 +869,43 @@ export default function CanvasStage({
                   )
                 })}
 
-                <PptCanvasGuidesOverlay
-                  guides={smartGuides}
-                  canvasW={canvas.width}
-                  canvasH={canvas.height}
-                />
+                {isCurrent && (
+                  <PptCanvasGuidesOverlay
+                    guides={smartGuides}
+                    canvasW={canvas.width}
+                    canvasH={canvas.height}
+                  />
+                )}
 
                 {!canvas.elements.length && (
                   <div className="canva-surface-empty">
                     <p>Select text, shapes, or images from the left panel to build your design</p>
                   </div>
                 )}
-              </div>
-            </div>
 
-            {/* Bottom Add Page Button */}
-            <div className="canva-add-page-footer">
-              <button type="button" className="canva-add-page-pill-btn" onClick={onAddCanvas}>
-                <FiPlus /> Add Page
-              </button>
+                {!isCurrent && (
+                  <button
+                    type="button"
+                    className="canva-page-activate-overlay"
+                    aria-label={`Edit page ${index + 1}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setActiveCanvasIndex(index)
+                    }}
+                  />
+                )}
+              </div>
             </div>
           </div>
         )
       })}
+
+      {/* New pages always go below the last page */}
+      <div className="canva-add-page-footer">
+        <button type="button" className="canva-add-page-pill-btn" onClick={onAddCanvas}>
+          <FiPlus /> Add Page
+        </button>
+      </div>
     </div>
   )
 }

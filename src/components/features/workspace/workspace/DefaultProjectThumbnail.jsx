@@ -1,5 +1,5 @@
 import React from 'react';
-import { MdSlideshow, MdImage } from 'react-icons/md';
+import { MdSlideshow, MdImage, MdBrush } from 'react-icons/md';
 import { Clapperboard } from 'lucide-react';
 import './DefaultProjectThumbnail.css';
 
@@ -28,6 +28,8 @@ const DefaultProjectThumbnail = ({ title = '', category = 'video', showLabel = t
             <MdSlideshow size={30} />
           ) : category === 'image' ? (
             <MdImage size={30} />
+          ) : category === 'canvas' ? (
+            <MdBrush size={30} />
           ) : (
             <Clapperboard size={28} />
           )}
@@ -38,7 +40,13 @@ const DefaultProjectThumbnail = ({ title = '', category = 'video', showLabel = t
         <div className="dpt-footer">
           <span className="dpt-indicator-dot" />
           <span className="dpt-footer-text">
-            {category === 'ppt' ? 'Presentation' : category === 'image' ? 'Image' : 'Virtual Studio Video'}
+            {category === 'ppt'
+              ? 'Presentation'
+              : category === 'image'
+                ? 'Image'
+                : category === 'canvas'
+                  ? 'Design'
+                  : 'Virtual Studio Video'}
           </span>
         </div>
       ) : null}

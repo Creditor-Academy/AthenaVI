@@ -5,7 +5,12 @@ import {
   pickUserRef,
   resolveUserDisplayName
 } from '../../utils/workspaceUsers.js';
-import { resolveLibraryKind, resolvePresentationThumbnailUrl, resolveVideoThumbnailUrl } from '../../utils/workspaceLibrary.js';
+import {
+  projectTypeForKind,
+  resolveLibraryKind,
+  resolvePresentationThumbnailUrl,
+  resolveVideoThumbnailUrl,
+} from '../../utils/workspaceLibrary.js';
 import workspaceService from '../../services/workspaceService.js';
 
 // ---------------------------------------------------------------------------
@@ -173,14 +178,16 @@ export function normalizeVideo(video, currentUserId, authUser, userLookup) {
   const defaultName =
     kind === 'presentation'
       ? 'Untitled Presentation'
-      : kind === 'image'
-        ? 'Untitled Image'
-        : 'Untitled Video';
+      : kind === 'canvas'
+        ? 'Untitled Design'
+        : kind === 'image'
+          ? 'Untitled Image'
+          : 'Untitled Video';
 
   const thumb =
     kind === 'presentation'
       ? resolvePresentationThumbnailUrl(video)
-      : kind === 'image'
+      : kind === 'image' || kind === 'canvas'
         ? video.thumbnail || video.thumbnailUrl || video.url || null
         : resolveVideoThumbnailUrl(video)
 
@@ -189,7 +196,7 @@ export function normalizeVideo(video, currentUserId, authUser, userLookup) {
     id: video.id || video._id,
     name: video.name || video.title || defaultName,
     title: video.title || video.name || defaultName,
-    type: video.type || video.projectType || (kind === 'presentation' ? 'PRESENTATION' : kind === 'video' ? 'VIDEO' : video.type),
+    type: video.type || video.projectType || projectTypeForKind(kind, video.type),
     kind,
     category: kind,
     createdBy,

@@ -1,35 +1,35 @@
 import React from 'react';
 import { FiCheckCircle } from 'react-icons/fi';
-import CustomizeAi from '../../assets/CustomizeAi.jpg';
-import AIvideo from '../../assets/AIvideo.jpg';
-import Voice from '../../assets/Voice.jpg';
+import SceneEditorImg from '../../assets/scene_editor_mockup.jpg';
+import AiPptImg from '../../assets/ai_ppt_mockup.jpg';
+import AiImageGenImg from '../../assets/ai_image_gen_mockup.jpg';
 import { LANDING_FONT, LANDING_LIGHT, LANDING_TYPE } from '../../styles/landingTypography';
 
 /* ── Feature cards ── */
 const featureCards = [
   {
-    image: CustomizeAi,
-    alt: 'AI-Powered Creation',
-    title: 'AI-Powered Creation with NextGen Tools',
-    description: 'Generate professional videos in minutes with our advanced AI technology.',
-    category: 'AI Engine',
-    features: ['Real-time Gen', 'HD 4K Support']
+    image: SceneEditorImg,
+    alt: 'Advanced Scene Editor',
+    title: 'Advanced Scene Editor',
+    description: 'Take full control of your storytelling. Our intuitive, timeline-based scene editor lets you drag, drop, and perfectly time avatars, text, and media for a flawless final production.',
+    category: 'Video Creation',
+    features: ['Timeline Control', 'Rich Assets']
   },
   {
-    image: AIvideo,
-    alt: 'Easy Customization',
-    title: 'Customize Every Frame with Ease',
-    description: 'Personalize every aspect of your videos with intuitive editing tools.',
-    category: 'Toolkit',
-    features: ['Infinite Edit', 'Layer Control']
+    image: AiPptImg,
+    alt: 'AI Presentations',
+    title: 'AI Presentation Generator',
+    description: 'Instantly transform a prompt, idea, or document into a beautifully formatted, multi-slide presentation. Let our AI handle the design, layout, and structure in seconds.',
+    category: 'AI Presentations',
+    features: ['Auto-Formatting', 'Smart Canvas']
   },
   {
-    image: Voice,
-    alt: 'Voice-Based Interaction',
-    title: 'Voice-Based Interaction',
-    description: 'Enable users to ask questions using voice and receive intelligent spoken responses.',
-    category: 'Vocal AI',
-    features: ['Smart NLP', 'Instant Voice']
+    image: AiImageGenImg,
+    alt: 'AI Image Generation',
+    title: 'AI Image Generation',
+    description: 'Bring your imagination to life. Generate stunning, high-resolution visuals in any artistic style simply by describing what you want to see. Perfect for any campaign.',
+    category: 'Visual AI',
+    features: ['Infinite Styles', 'High Resolution']
   },
 ];
 
@@ -350,11 +350,11 @@ const UnifiedVideoSection = () => {
           <div className="vs-header">
             <div className="vs-badge">
               <span className="vs-badge-line" />
-              AI-Powered Tools
+              Version 2 Features
             </div>
-            <h2 className="vs-title">Create <span>Stunning Videos</span></h2>
+            <h2 className="vs-title">Your All-in-One <span>AI Studio</span></h2>
             <p className="vs-subtitle">
-              Transform your ideas into engaging video content with our powerful AI tools
+              Transform your ideas into engaging videos, presentations, and imagery with our powerful AI tools
             </p>
           </div>
 

@@ -223,6 +223,15 @@ const API_CONFIG = {
         `/api/image-gen/workspaces/${workspaceId}/threads/${threadId}/move-folder`,
     },
 
+    // Design canvas (Canva-style multi-page canvas editor)
+    CANVASES: {
+      LIST: (workspaceId) => `/api/workspaces/${workspaceId}/canvases`,
+      ONE: (workspaceId, canvasId) => `/api/workspaces/${workspaceId}/canvases/${canvasId}`,
+      DATA: (workspaceId, canvasId) => `/api/workspaces/${workspaceId}/canvases/${canvasId}/data`,
+      MOVE_FOLDER: (workspaceId, canvasId) =>
+        `/api/workspaces/${workspaceId}/canvases/${canvasId}/move-folder`,
+    },
+
     // Presentations (AI PPT / Canvas)
     PRESENTATIONS: {
       LIST: (workspaceId) => `/api/workspaces/${workspaceId}/presentations`,

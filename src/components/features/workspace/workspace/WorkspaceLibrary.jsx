@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, Fragment } from 'react'
 import {
+  MdBrush,
   MdImage,
   MdMovieCreation,
   MdPresentToAll,
@@ -29,32 +30,43 @@ import { VideoRow } from './ViewRows.jsx'
 const CATEGORY_ICONS = {
   video: MdVideoLibrary,
   presentation: MdSlideshow,
+  canvas: MdBrush,
   image: MdImage,
 }
 
-const FALLBACK_CATEGORIES = normalizeLibraryCategories([])
-
-function emptyCopy(categoryId) {
-  if (categoryId === 'presentation') {
-    return {
-      message: 'No presentations yet',
-      actionLabel: 'Create presentation',
-      icon: MdSlideshow,
-    }
-  }
-  if (categoryId === 'image') {
-    return {
-      message: 'No generated images yet',
-      actionLabel: 'Open Image Gen',
-      icon: MdImage,
-    }
-  }
-  return {
-    message: 'No videos yet',
-    actionLabel: 'Create video',
-    icon: MdVideoLibrary,
-  }
+/** Per-tab create button + empty-state copy. */
+const CATEGORY_CREATE = {
+  video: {
+    label: 'New Video',
+    icon: MdMovieCreation,
+    emptyMessage: 'No videos yet',
+    emptyActionLabel: 'Create video',
+    emptyIcon: MdVideoLibrary,
+  },
+  presentation: {
+    label: 'New Presentation',
+    icon: MdPresentToAll,
+    emptyMessage: 'No presentations yet',
+    emptyActionLabel: 'Create presentation',
+    emptyIcon: MdSlideshow,
+  },
+  canvas: {
+    label: 'New Design',
+    icon: MdBrush,
+    emptyMessage: 'No designs yet',
+    emptyActionLabel: 'Create design',
+    emptyIcon: MdBrush,
+  },
+  image: {
+    label: 'Generate Image',
+    icon: MdImage,
+    emptyMessage: 'No generated images yet',
+    emptyActionLabel: 'Open Image Gen',
+    emptyIcon: MdImage,
+  },
 }
+
+const FALLBACK_CATEGORIES = normalizeLibraryCategories([])
 
 /**
  * Workspace content tabs driven by GET /api/workspaces/:id/library
@@ -68,6 +80,7 @@ export default function WorkspaceLibrary({
   onOpenItem,
   onCreateVideo,
   onCreatePresentation,
+  onCreateCanvas,
   onCreateImage,
   onDetails,
   onRename,
@@ -138,7 +151,7 @@ export default function WorkspaceLibrary({
 
       // Keep folder-scoped video/PPT badge counts aligned with the filtered list.
       // Image counts stay from categories (paginated list length is not total).
-      if (activeCategory === 'video' || activeCategory === 'presentation') {
+      if (activeCategory !== 'image') {
         setCategories((prev) =>
           prev.map((cat) =>
             cat.id === activeCategory ? { ...cat, count: normalized.length } : cat
@@ -174,10 +187,11 @@ export default function WorkspaceLibrary({
 
   const sortedItems = useMemo(() => sortItems(items), [items, sortItems])
 
-  const empty = emptyCopy(activeCategory)
+  const createMeta = CATEGORY_CREATE[activeCategory] || CATEGORY_CREATE.video
 
   const handleCreate = () => {
     if (activeCategory === 'presentation') onCreatePresentation?.()
+    else if (activeCategory === 'canvas') onCreateCanvas?.()
     else if (activeCategory === 'image') onCreateImage?.()
     else onCreateVideo?.()
   }
@@ -203,27 +217,14 @@ export default function WorkspaceLibrary({
     })
 
     if (viewMode === 'tile' && canEdit) {
-      const createLabel =
-        activeCategory === 'presentation'
-          ? 'New Presentation'
-          : activeCategory === 'image'
-            ? 'Generate Image'
-            : 'New Video'
-      const CreateIcon =
-        activeCategory === 'presentation'
-          ? MdPresentToAll
-          : activeCategory === 'image'
-            ? MdImage
-            : MdMovieCreation
-
       return (
         <Fragment>
           <CreateVideoCard
             key="create-library-tile"
             onClick={handleCreate}
-            label={createLabel}
-            badgeLabel={createLabel}
-            icon={CreateIcon}
+            label={createMeta.label}
+            badgeLabel={createMeta.label}
+            icon={createMeta.icon}
           />
           {itemElements}
         </Fragment>
@@ -294,33 +295,15 @@ export default function WorkspaceLibrary({
         count={activeMeta.count ?? sortedItems.length}
         viewMode={viewMode}
         listClassName="project-list-view"
-        emptyMessage={loadingItems ? 'Loading…' : empty.message}
-        emptyIcon={empty.icon}
-        emptyActionLabel={canEdit ? empty.actionLabel : null}
-        emptyActionIcon={
-          activeCategory === 'presentation'
-            ? MdPresentToAll
-            : activeCategory === 'image'
-              ? MdImage
-              : MdMovieCreation
-        }
+        emptyMessage={loadingItems ? 'Loading…' : createMeta.emptyMessage}
+        emptyIcon={createMeta.emptyIcon}
+        emptyActionLabel={canEdit ? createMeta.emptyActionLabel : null}
+        emptyActionIcon={createMeta.icon}
         emptyActionClass="workspace-create-action-btn"
         onEmptyAction={canEdit && !loadingItems ? handleCreate : null}
         showCreateButton={canEdit && viewMode === 'list' && !loadingItems}
-        createButtonLabel={
-          activeCategory === 'presentation'
-            ? 'New Presentation'
-            : activeCategory === 'image'
-              ? 'Generate Image'
-              : 'New Video'
-        }
-        createButtonIcon={
-          activeCategory === 'presentation'
-            ? MdPresentToAll
-            : activeCategory === 'image'
-              ? MdImage
-              : MdMovieCreation
-        }
+        createButtonLabel={createMeta.label}
+        createButtonIcon={createMeta.icon}
         createButtonClass="workspace-create-action-btn"
         onCreateClick={handleCreate}
         showHeader={viewMode === 'list'}

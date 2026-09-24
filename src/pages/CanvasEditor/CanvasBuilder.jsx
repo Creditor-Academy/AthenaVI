@@ -8,12 +8,16 @@ export default function CanvasBuilder({
   onBack,
   initialWorkspaceId,
   initialFolderId,
+  initialCanvasId = null,
   createContext = null,
   initialSize = null,
+  onCanvasCreated = null,
 }) {
+  const canvasId = initialCanvasId || createContext?.canvasId || null
   const [size, setSize] = useState(() => (initialSize ? normalizeCanvasSize(initialSize) : null))
 
-  if (!size) {
+  // Reopening a saved canvas: its size comes from the stored document, not the picker.
+  if (!size && !canvasId) {
     return (
       <div className="canvas-editor-page canvas-editor-page--create">
         <CanvasSizeModal
@@ -36,6 +40,8 @@ export default function CanvasBuilder({
         initialWorkspaceId || createContext?.workspaceId || createContext?.initialWorkspaceId || null
       }
       folderId={initialFolderId || createContext?.folderId || createContext?.initialFolderId || null}
+      canvasId={canvasId}
+      onCanvasCreated={onCanvasCreated}
     />
   )
 }
