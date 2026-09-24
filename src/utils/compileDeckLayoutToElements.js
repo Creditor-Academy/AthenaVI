@@ -134,6 +134,42 @@ import {
   isTwoLargeImageCardsLayout,
   buildTwoLargeImageCardsCanvasElements,
 } from './twoLargeImageCardsLayout.js'
+import {
+  isFourImagesTextLayout,
+  buildFourImagesTextCanvasElements,
+} from './fourImagesTextLayout.js'
+import {
+  isFourImagesTextMosaicLayout,
+  buildFourImagesTextMosaicCanvasElements,
+} from './fourImagesTextMosaicLayout.js'
+import {
+  isHeadlineCenteredLayout,
+  buildHeadlineCenteredCanvasElements,
+} from './headlineCenteredLayout.js'
+import {
+  isTitleStatementSplitLayout,
+  buildTitleStatementSplitCanvasElements,
+} from './titleStatementSplitLayout.js'
+import {
+  isTitleStatementLayout,
+  buildTitleStatementCanvasElements,
+} from './titleStatementLayout.js'
+import {
+  isIntroFourParaLayout,
+  buildIntroFourParaCanvasElements,
+} from './introFourParaLayout.js'
+import {
+  isHeadlineRightTextLayout,
+  buildHeadlineRightTextCanvasElements,
+} from './headlineRightTextLayout.js'
+import {
+  isSectionDividerSplitImageLayout,
+  buildSectionDividerSplitImageCanvasElements,
+} from './sectionDividerSplitImageLayout.js'
+import {
+  isLargeImageLayout,
+  buildLargeImageCanvasElements,
+} from './largeImageLayout.js'
 import { isCatalogPlaceholderText } from './catalogPlaceholder.js'
 import { normalizeChartContent } from './chartContentNormalize.js'
 import {
@@ -1290,6 +1326,15 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
       (isThreeCardsImageTextLayout(schema?.layout_id, schema) && (/^(HEADING|CARD_[123]_(TITLE|BODY)|IMAGE_[123]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
       (isTwoCardsImageTextLayout(schema?.layout_id, schema) && (/^(EYEBROW|COL_[12]_(IMAGE|TITLE|BODY)|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
       (isTwoLargeImageCardsLayout(schema?.layout_id, schema) && (/^(CARD_[12]_(TITLE|BODY)|IMAGE_[12]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isFourImagesTextLayout(schema?.layout_id, schema) && (/^(HEADING|IMAGE_[1234](_LABEL)?|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isFourImagesTextMosaicLayout(schema?.layout_id, schema) && (/^(HEADING|IMAGE_[1234](_LABEL)?|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isHeadlineCenteredLayout(schema?.layout_id, schema) && (/^(HEADLINE|BODY|IMAGE_CARD_BG|DIVIDER)$/i.test(String(el.slotId || '')))) ||
+      (isTitleStatementSplitLayout(schema?.layout_id, schema) && (/^(HEADLINE|BODY|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isTitleStatementLayout(schema?.layout_id, schema) && (/^(HEADLINE|BODY|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isIntroFourParaLayout(schema?.layout_id, schema) && (/^(INTRO|ITEM_[1-4]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isHeadlineRightTextLayout(schema?.layout_id, schema) && (/^(HEADLINE|BODY|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isSectionDividerSplitImageLayout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isLargeImageLayout(schema?.layout_id, schema) && (/^(HERO_IMAGE|CAPTION|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
       (isEightShortTextsImageLayout(schema?.layout_id) && (/^(HEADING|SUBTITLE|TAG_BADGE|POINT_\d+_(TITLE|DESC|CARD|NUM)|HERO_IMAGE)$/i.test(String(el.slotId || '')))) ||
       (isParaLandscapeImageBottomLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
       (isParaLandscapeImageTopLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
@@ -1433,6 +1478,33 @@ export function compileDeckLayoutToElements(schema, options = {}) {
   }
   if (isTwoLargeImageCardsLayout(schema?.layout_id, schema)) {
     return buildTwoLargeImageCardsCanvasElements({ schema, options })
+  }
+  if (isFourImagesTextLayout(schema?.layout_id, schema)) {
+    return buildFourImagesTextCanvasElements({ schema, options })
+  }
+  if (isFourImagesTextMosaicLayout(schema?.layout_id, schema)) {
+    return buildFourImagesTextMosaicCanvasElements({ schema, options })
+  }
+  if (isHeadlineCenteredLayout(schema?.layout_id, schema)) {
+    return buildHeadlineCenteredCanvasElements({ schema, options })
+  }
+  if (isTitleStatementSplitLayout(schema?.layout_id, schema)) {
+    return buildTitleStatementSplitCanvasElements({ schema, options })
+  }
+  if (isTitleStatementLayout(schema?.layout_id, schema)) {
+    return buildTitleStatementCanvasElements({ schema, options })
+  }
+  if (isIntroFourParaLayout(schema?.layout_id, schema)) {
+    return buildIntroFourParaCanvasElements({ schema, options })
+  }
+  if (isHeadlineRightTextLayout(schema?.layout_id, schema)) {
+    return buildHeadlineRightTextCanvasElements({ schema, options })
+  }
+  if (isSectionDividerSplitImageLayout(schema?.layout_id, schema)) {
+    return buildSectionDividerSplitImageCanvasElements({ schema, options })
+  }
+  if (isLargeImageLayout(schema?.layout_id, schema)) {
+    return buildLargeImageCanvasElements({ schema, options })
   }
   if (isTitleWithLogoLayout(schema?.layout_id, schema)) {
     return buildTitleWithLogoCanvasElements({ schema, options })

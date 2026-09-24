@@ -547,7 +547,7 @@ const CATALOG = {
     slot('IMAGE_3_LABEL', 'cols 7-9, rows 6-7', 'caption', 'Label 3', { layer: 10, typography: typo('caption') }),
     slot('IMAGE_4', 'cols 10-12, rows 3-6', 'image', null, { layer: 2, fit: 'cover' }),
     slot('IMAGE_4_LABEL', 'cols 10-12, rows 6-7', 'caption', 'Label 4', { layer: 10, typography: typo('caption') }),
-  ]),
+  ], { mode: 'four_images_text' }),
 
   eight_short_texts_image_v1: layoutBase('eight_short_texts_image_v1', 'grid', [
     slot('TAG_BADGE', 'cols 1-3, rows 1-2', 'badge', 'CORE CAPABILITIES', { typography: typo('badge', { fontSize: 13, fontWeight: 700 }) }),
@@ -587,18 +587,18 @@ const CATALOG = {
       aiOnly: true,
       shapeHint: { aiOnly: true, kind: 'accentBar', suggestedBehind: 'none' },
     }),
-  ]),
+  ], { mode: 'headline_centered' }),
 
   intro_four_para_v1: layoutBase('intro_four_para_v1', 'bullet_list', [
     slot('INTRO', 'cols 2-10, rows 2-3', 'subheading', 'What we will cover', {
       layer: 10,
       typography: typo('subheading', { fontWeight: 700 }),
     }),
-    body('ITEM_1', 'cols 2-10, rows 3-4', '01 · Introduction', 1, { typography: typo('body', { fontWeight: 700 }) }),
-    body('ITEM_2', 'cols 2-10, rows 4-5', '02 · Problem & opportunity', 1, { typography: typo('body', { fontWeight: 700 }) }),
-    body('ITEM_3', 'cols 2-10, rows 5-6', '03 · Solution & proof', 1, { typography: typo('body', { fontWeight: 700 }) }),
-    body('ITEM_4', 'cols 2-10, rows 6-7', '04 · Next steps', 1, { typography: typo('body', { fontWeight: 700 }) }),
-  ]),
+    body('ITEM_1', 'cols 2-10, rows 3-4', 'Introduction — context, audience, and the outcome this story is here to drive.', 4),
+    body('ITEM_2', 'cols 2-10, rows 4-5', 'Problem and opportunity — where the current path breaks, and the opening it creates.', 4),
+    body('ITEM_3', 'cols 2-10, rows 5-6', 'Solution and proof — the approach, evidence, and why it holds up under scrutiny.', 4),
+    body('ITEM_4', 'cols 2-10, rows 6-7', 'Next steps — owners, timing, and the first decisions that move the work forward.', 4),
+  ], { mode: 'intro_four_para' }),
 
   intro_three_para_icons_v1: layoutBase('intro_three_para_icons_v1', 'grid', [
     slot('TAG_BADGE', 'cols 1-3, rows 1-2', 'badge', 'STRATEGIC FOUNDATION', { typography: typo('badge', { fontSize: 13, fontWeight: 700 }) }),
@@ -618,7 +618,7 @@ const CATALOG = {
   headline_right_text_v1: layoutBase('headline_right_text_v1', 'image+text', [
     heading('HEADLINE', 'cols 2-6, rows 2-4', 'Section headline'),
     body('BODY', 'cols 7-11, rows 2-8', P.one, 4),
-  ]),
+  ], { mode: 'headline_right_text' }),
 
   large_image_v1: layoutBase('large_image_v1', 'image+text', [
     slot('HERO_IMAGE', 'cols 2-11, rows 2-9', 'image', null, { layer: 2, fit: 'cover' }),
@@ -626,7 +626,7 @@ const CATALOG = {
       layer: 10,
       typography: typo('caption'),
     }),
-  ]),
+  ], { mode: 'large_image' }),
 
   full_bg_image_overlay_v1: layoutBase('full_bg_image_overlay_v1', 'image+text', [
     slot('BACKGROUND_IMAGE', 'cols 1-12, rows 1-10', 'background', null, { layer: 0, fit: 'cover' }),
@@ -664,7 +664,7 @@ const CATALOG = {
       max_lines: 3,
     }),
     body('BODY', 'cols 2-8, rows 6-8', P.short, 3),
-  ]),
+  ], { mode: 'title_statement' }),
 
   section_divider_band_v1: layoutBase('section_divider_band_v1', 'section_divider', [
     slot('BAND', 'cols 1-12, rows 4-6', 'decoration', null, {
@@ -853,7 +853,7 @@ Object.assign(CATALOG, {
       }),
     ]),
   ], { mode: 'bullet_list_split', slideVariant: 'split' }),
-  four_images_text_mosaic_v1: simpleSlidesFromSource('four_images_text_mosaic_v1', 'four_images_text_v1', 'mosaic'),
+  four_images_text_mosaic_v1: simpleSlidesFromSource('four_images_text_mosaic_v1', 'four_images_text_v1', 'mosaic', { mode: 'four_images_text_mosaic' }),
   four_para_image_grid_v1: simpleSlidesFromSource('four_para_image_grid_v1', 'four_para_image_v1', 'grid', { mode: 'four_para_image_grid' }),
   full_bg_image_overlay_bottom_v1: simpleSlidesFromSource(
     'full_bg_image_overlay_bottom_v1',
@@ -914,12 +914,13 @@ Object.assign(CATALOG, {
       typography: typo('body', { fontSize: 16 }),
     }),
   ], { mode: 'section_divider_split_diagonal', slideVariant: 'diagonal' }),
-  section_divider_split_image_v1: simpleSlidesFromSource(
-    'section_divider_split_image_v1',
-    'section_divider_split_v1',
-    'image',
-    { mode: 'section_divider' }
-  ),
+  section_divider_split_image_v1: layoutBase('section_divider_split_image_v1', 'section_divider', [
+    heading('HEADING', 'cols 1-6, rows 3-5', 'Next section', {
+      typography: typo('heading', { fontSize: 36 }),
+    }),
+    body('BODY', 'cols 1-6, rows 5-8', P.short, 4),
+    imageRight('cols 7-12, rows 1-10'),
+  ], { mode: 'section_divider_split_image', variant: 'image' }),
   section_left_image_fullheight_v1: layoutBase('section_left_image_fullheight_v1', 'image+text', [
     slot('HERO_IMAGE', 'cols 1-6, rows 1-10', 'image', null, { layer: 2, fit: 'cover', imageStyle: 'featured', borderRadius: 0 }),
     heading('HEADING', 'cols 7-11, rows 2-4', 'Section title'),
@@ -931,7 +932,7 @@ Object.assign(CATALOG, {
     slot('HERO_IMAGE', 'cols 7-12, rows 1-10', 'image', null, { layer: 2, fit: 'cover', imageStyle: 'featured', borderRadius: 0 }),
   ], { slideVariant: 'fullheight' }),
   text_two_column_split_v1: simpleSlidesFromSource('text_two_column_split_v1', 'text_two_column_v1', 'split'),
-  title_statement_split_v1: simpleSlidesFromSource('title_statement_split_v1', 'title_statement_v1', 'split'),
+  title_statement_split_v1: simpleSlidesFromSource('title_statement_split_v1', 'title_statement_v1', 'split', { mode: 'title_statement_split' }),
   title_with_logo_corner_v1: simpleSlidesFromSource('title_with_logo_corner_v1', 'title_with_logo_v1', 'corner'),
   title_with_logo_centered_v1: simpleSlidesFromSource('title_with_logo_centered_v1', 'title_with_logo_v1', 'centered'),
   two_para_right_image_bottom_v1: simpleSlidesFromSource(

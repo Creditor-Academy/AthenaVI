@@ -163,6 +163,42 @@ import {
   layoutTwoLargeImageCards,
 } from './twoLargeImageCardsLayout.js'
 import {
+  isFourImagesTextLayout,
+  layoutFourImagesText,
+} from './fourImagesTextLayout.js'
+import {
+  isFourImagesTextMosaicLayout,
+  layoutFourImagesTextMosaic,
+} from './fourImagesTextMosaicLayout.js'
+import {
+  isHeadlineCenteredLayout,
+  layoutHeadlineCentered,
+} from './headlineCenteredLayout.js'
+import {
+  isTitleStatementSplitLayout,
+  layoutTitleStatementSplit,
+} from './titleStatementSplitLayout.js'
+import {
+  isTitleStatementLayout,
+  layoutTitleStatement,
+} from './titleStatementLayout.js'
+import {
+  isIntroFourParaLayout,
+  layoutIntroFourPara,
+} from './introFourParaLayout.js'
+import {
+  isHeadlineRightTextLayout,
+  layoutHeadlineRightText,
+} from './headlineRightTextLayout.js'
+import {
+  isSectionDividerSplitImageLayout,
+  layoutSectionDividerSplitImage,
+} from './sectionDividerSplitImageLayout.js'
+import {
+  isLargeImageLayout,
+  layoutLargeImage,
+} from './largeImageLayout.js'
+import {
   isGridBentoThreeLayout,
   layoutGridBentoThree,
 } from './gridBentoThreeLayout.js'
@@ -524,6 +560,42 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
 
   if (isTwoLargeImageCardsLayout(layoutId, schema)) {
     return layoutTwoLargeImageCards(elements, schema, palette, canvas)
+  }
+
+  if (isFourImagesTextLayout(layoutId, schema)) {
+    return layoutFourImagesText(elements, schema, palette, canvas)
+  }
+
+  if (isFourImagesTextMosaicLayout(layoutId, schema)) {
+    return layoutFourImagesTextMosaic(elements, schema, palette, canvas)
+  }
+
+  if (isHeadlineCenteredLayout(layoutId, schema)) {
+    return layoutHeadlineCentered(elements, schema, palette, canvas)
+  }
+
+  if (isTitleStatementSplitLayout(layoutId, schema)) {
+    return layoutTitleStatementSplit(elements, schema, palette, canvas)
+  }
+
+  if (isTitleStatementLayout(layoutId, schema)) {
+    return layoutTitleStatement(elements, schema, palette, canvas)
+  }
+
+  if (isIntroFourParaLayout(layoutId, schema)) {
+    return layoutIntroFourPara(elements, schema, palette, canvas)
+  }
+
+  if (isHeadlineRightTextLayout(layoutId, schema)) {
+    return layoutHeadlineRightText(elements, schema, palette, canvas)
+  }
+
+  if (isSectionDividerSplitImageLayout(layoutId, schema)) {
+    return layoutSectionDividerSplitImage(elements, schema, palette, canvas)
+  }
+
+  if (isLargeImageLayout(layoutId, schema)) {
+    return layoutLargeImage(elements, schema, palette, canvas)
   }
   
   if (isGridBentoThreeLayout(layoutId)) {

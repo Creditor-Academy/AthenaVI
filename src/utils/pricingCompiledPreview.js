@@ -88,7 +88,28 @@ export function isCompiledGridLayout(layoutId, schema = null) {
   )
 }
 
+const SIMPLE_SLIDE_COMPILED_PREVIEW_IDS = new Set([
+  'title_image_logo_v1',
+  'section_with_image_v1',
+  'para_landscape_image_bottom_v1',
+  'para_landscape_image_top_v1',
+  'section_right_image_v1',
+  'section_right_image_fullheight_v1',
+  'section_left_image_v1',
+  'section_left_image_fullheight_v1',
+  'wide_image_statement_top_v1',
+  'wide_image_statement_bottom_v1',
+  'title_statement_split_v1',
+  'title_statement_v1',
+  'intro_four_para_v1',
+  'headline_right_text_v1',
+  'section_divider_split_image_v1',
+  'large_image_v1',
+])
+
 export function isCompiledPricingLayout(layoutId, schema = null) {
+  const id = String(layoutId || schema?.layout_id || schema?.layoutId || '').toLowerCase().trim()
+  if (SIMPLE_SLIDE_COMPILED_PREVIEW_IDS.has(id)) return true
   return isCompiledGridLayout(layoutId, schema)
     || isPricingThreePlansLayout(layoutId)
     || isPricingThreePlansFeaturedLayout(layoutId)

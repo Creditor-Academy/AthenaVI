@@ -203,6 +203,42 @@ import {
   twoLargeImageCardsPreviewSvg,
 } from '../../utils/twoLargeImageCardsLayout.js'
 import {
+  isFourImagesTextLayout,
+  fourImagesTextPreviewSvg,
+} from '../../utils/fourImagesTextLayout.js'
+import {
+  isFourImagesTextMosaicLayout,
+  fourImagesTextMosaicPreviewSvg,
+} from '../../utils/fourImagesTextMosaicLayout.js'
+import {
+  isHeadlineCenteredLayout,
+  headlineCenteredPreviewSvg,
+} from '../../utils/headlineCenteredLayout.js'
+import {
+  isTitleStatementSplitLayout,
+  titleStatementSplitPreviewSvg,
+} from '../../utils/titleStatementSplitLayout.js'
+import {
+  isTitleStatementLayout,
+  titleStatementPreviewSvg,
+} from '../../utils/titleStatementLayout.js'
+import {
+  isIntroFourParaLayout,
+  introFourParaPreviewSvg,
+} from '../../utils/introFourParaLayout.js'
+import {
+  isHeadlineRightTextLayout,
+  headlineRightTextPreviewSvg,
+} from '../../utils/headlineRightTextLayout.js'
+import {
+  isSectionDividerSplitImageLayout,
+  sectionDividerSplitImagePreviewSvg,
+} from '../../utils/sectionDividerSplitImageLayout.js'
+import {
+  isLargeImageLayout,
+  largeImagePreviewSvg,
+} from '../../utils/largeImageLayout.js'
+import {
   isParaLandscapeImageBottomLayout,
   paraLandscapeImageBottomPreviewSvg,
 } from '../../utils/paraLandscapeImageBottom.js'
@@ -1899,7 +1935,7 @@ function PolishedTitleCenteredPreview({ previewHints, large, className, style, f
   const frameStyle = fill ? { width: '100%', height: '100%', aspectRatio: 'unset' } : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
   const isOffset = variant === 'offset' || variant === 'corner'
   const isLarge = variant === 'large' || variant === 'statement'
-  const isSplit = variant === 'split'
+  const isSplit = variant === 'split' || /title_statement_split/i.test(String(previewHints.layout_id || ''))
   const hasFrame = variant === 'frame' || variant === 'framed'
   const hasGlow = variant === 'glow' || variant === 'gradient' || variant === 'orbit' || variant === 'shape'
   return (
@@ -2568,6 +2604,177 @@ export default function LayoutPolishedPreview({
     )
   }
 
+  if (
+    isLargeImageLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'large_image_v1' ||
+    previewMode === 'large_image'
+  ) {
+    const svg = largeImagePreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isSectionDividerSplitImageLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'section_divider_split_image_v1' ||
+    previewMode === 'section_divider_split_image'
+  ) {
+    const svg = sectionDividerSplitImagePreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isHeadlineRightTextLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'headline_right_text_v1' ||
+    previewMode === 'headline_right_text'
+  ) {
+    const svg = headlineRightTextPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isIntroFourParaLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'intro_four_para_v1' ||
+    previewMode === 'intro_four_para'
+  ) {
+    const svg = introFourParaPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isTitleStatementLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'title_statement_v1' ||
+    previewMode === 'title_statement'
+  ) {
+    const svg = titleStatementPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isTitleStatementSplitLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'title_statement_split_v1' ||
+    previewMode === 'title_statement_split'
+  ) {
+    const svg = titleStatementSplitPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isHeadlineCenteredLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'headline_centered_v1' ||
+    previewMode === 'headline_centered'
+  ) {
+    const svg = headlineCenteredPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isFourImagesTextMosaicLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'four_images_text_mosaic_v1' ||
+    previewMode === 'four_images_text_mosaic'
+  ) {
+    const svg = fourImagesTextMosaicPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isFourImagesTextLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'four_images_text_v1' ||
+    previewMode === 'four_images_text'
+  ) {
+    const svg = fourImagesTextPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
   if (
     isTwoLargeImageCardsLayout(previewHints.layout_id, schema) ||
     previewHints.layout_id === 'two_large_image_cards_v1' ||
