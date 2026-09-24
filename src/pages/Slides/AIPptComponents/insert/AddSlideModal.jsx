@@ -25,6 +25,26 @@ import {
   templateLayoutId,
 } from '../../../../utils/similarLayouts'
 import { isCompiledPricingLayout } from '../../../../utils/pricingCompiledPreview'
+import {
+  isFullBgImageOverlayLayout,
+  fullBgImageOverlayPreviewSvg,
+} from '../../../../utils/fullBgImageOverlayLayout.js'
+import {
+  isFullBgImageOverlayBottomLayout,
+  fullBgImageOverlayBottomPreviewSvg,
+} from '../../../../utils/fullBgImageOverlayBottomLayout.js'
+import {
+  isFullBgImageOverlaySideLayout,
+  fullBgImageOverlaySidePreviewSvg,
+} from '../../../../utils/fullBgImageOverlaySideLayout.js'
+import {
+  isSectionDividerBandLayout,
+  sectionDividerBandPreviewSvg,
+} from '../../../../utils/sectionDividerBandLayout.js'
+import {
+  isSectionDividerBandFullLayout,
+  sectionDividerBandFullPreviewSvg,
+} from '../../../../utils/sectionDividerBandFullLayout.js'
 import './AddSlideModal.css'
 
 /** Internal render size — scaled down to card; large previews keep text readable. */
@@ -228,16 +248,103 @@ function ScaledPreview({ children, baseWidth = PREVIEW_BASE_W, baseHeight = PREV
   )
 }
 
-function GalleryPreview({ schema, previewUrl, fallbackName, themeId, themeVisual, aspectRatio = '16:9' }) {
-  const compiledPricing = isCompiledPricingLayout(schema?.layout_id || schema?.layoutId, schema)
-  if (previewUrl && !compiledPricing && !hasEngineLayoutPreview(schema)) {
+function GalleryPreview({ schema, previewUrl, fallbackName, layoutId: layoutIdProp, themeId, themeVisual, aspectRatio = '16:9' }) {
+  const layoutId = layoutIdProp || schema?.layout_id || schema?.layoutId
+  const schemaWithId = schema ? { ...schema, layout_id: schema.layout_id || layoutId } : schema
+  if (isSectionDividerBandFullLayout(layoutId, schemaWithId)) {
+    const svg = sectionDividerBandFullPreviewSvg()
+    return (
+      <ScaledPreview>
+        <div
+          style={{
+            width: PREVIEW_BASE_W,
+            height: PREVIEW_BASE_H,
+            background: '#FFFFFF',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </ScaledPreview>
+    )
+  }
+  if (isSectionDividerBandLayout(layoutId, schemaWithId)) {
+    const svg = sectionDividerBandPreviewSvg()
+    return (
+      <ScaledPreview>
+        <div
+          style={{
+            width: PREVIEW_BASE_W,
+            height: PREVIEW_BASE_H,
+            background: '#FFFFFF',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </ScaledPreview>
+    )
+  }
+  if (isFullBgImageOverlaySideLayout(layoutId, schemaWithId)) {
+    const svg = fullBgImageOverlaySidePreviewSvg()
+    return (
+      <ScaledPreview>
+        <div
+          style={{
+            width: PREVIEW_BASE_W,
+            height: PREVIEW_BASE_H,
+            background: '#020617',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </ScaledPreview>
+    )
+  }
+  if (isFullBgImageOverlayBottomLayout(layoutId, schemaWithId)) {
+    const svg = fullBgImageOverlayBottomPreviewSvg()
+    return (
+      <ScaledPreview>
+        <div
+          style={{
+            width: PREVIEW_BASE_W,
+            height: PREVIEW_BASE_H,
+            background: '#020617',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </ScaledPreview>
+    )
+  }
+  if (isFullBgImageOverlayLayout(layoutId, schemaWithId)) {
+    const svg = fullBgImageOverlayPreviewSvg()
+    return (
+      <ScaledPreview>
+        <div
+          style={{
+            width: PREVIEW_BASE_W,
+            height: PREVIEW_BASE_H,
+            background: '#020617',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </ScaledPreview>
+    )
+  }
+  const compiledPricing = isCompiledPricingLayout(layoutId, schemaWithId)
+  if (previewUrl && !compiledPricing && !hasEngineLayoutPreview(schemaWithId)) {
     return <img src={previewUrl} alt="" className="ppt-add-slide-card-image" />
   }
-  if (schema?.slots?.length || layoutSchemaHasCanvasElements(schema) || schema?.preview?.mode === 'canvas_elements') {
+  if (schemaWithId?.slots?.length || layoutSchemaHasCanvasElements(schemaWithId) || schemaWithId?.preview?.mode === 'canvas_elements') {
     return (
       <ScaledPreview>
         <LayoutPolishedPreview
-          schema={schema}
+          schema={schemaWithId}
           large
           fill
           aspectRatio={aspectRatio}
@@ -800,6 +907,7 @@ export default function AddSlideModal({
                         const previewSchema = baseSchema
                           ? enrichLayoutSchemaForPreview({
                               ...baseSchema,
+                              layout_id: baseSchema.layout_id || layout.layoutId || layout.schema?.layout_id,
                               name: layout.name || baseSchema.name,
                             })
                           : null
@@ -816,6 +924,7 @@ export default function AddSlideModal({
                             <div className="ppt-add-slide-card-thumb ppt-add-slide-card-thumb--layout">
                               <GalleryPreview
                                 schema={previewSchema}
+                                layoutId={layout.layoutId || layout.schema?.layout_id}
                                 previewUrl={layout.previewUrl}
                                 fallbackName={layout.name}
                                 aspectRatio={aspectRatio}

@@ -38,6 +38,11 @@ import { isTableWithDescriptionSideLayout } from './tableWithDescriptionSideLayo
 import { isTableTwoDescLayout } from './tableTwoDescLayout.js'
 import { isTableTwoDescCardsLayout } from './tableTwoDescCardsLayout.js'
 import { isEightShortTextsImageLayout } from './eightShortTextsImageLayout.js'
+import { isFullBgImageOverlayLayout } from './fullBgImageOverlayLayout.js'
+import { isFullBgImageOverlayBottomLayout } from './fullBgImageOverlayBottomLayout.js'
+import { isFullBgImageOverlaySideLayout } from './fullBgImageOverlaySideLayout.js'
+import { isSectionDividerBandLayout } from './sectionDividerBandLayout.js'
+import { isSectionDividerBandFullLayout } from './sectionDividerBandFullLayout.js'
 import { isIntroThreeParaIconsLayout } from './introThreeParaIconsLayout.js'
 import { isGridBentoThreeLayout } from './gridBentoThreeLayout.js'
 import { isGridBentoFourLayout } from './gridBentoFourLayout.js'
@@ -105,11 +110,21 @@ const SIMPLE_SLIDE_COMPILED_PREVIEW_IDS = new Set([
   'headline_right_text_v1',
   'section_divider_split_image_v1',
   'large_image_v1',
+  'full_bg_image_overlay_v1',
+  'full_bg_image_overlay_bottom_v1',
+  'full_bg_image_overlay_side_v1',
+  'section_divider_band_v1',
+  'section_divider_band_full_v1',
 ])
 
 export function isCompiledPricingLayout(layoutId, schema = null) {
   const id = String(layoutId || schema?.layout_id || schema?.layoutId || '').toLowerCase().trim()
   if (SIMPLE_SLIDE_COMPILED_PREVIEW_IDS.has(id)) return true
+  if (isFullBgImageOverlayLayout(id, schema)) return true
+  if (isFullBgImageOverlayBottomLayout(id, schema)) return true
+  if (isFullBgImageOverlaySideLayout(id, schema)) return true
+  if (isSectionDividerBandLayout(id, schema)) return true
+  if (isSectionDividerBandFullLayout(id, schema)) return true
   return isCompiledGridLayout(layoutId, schema)
     || isPricingThreePlansLayout(layoutId)
     || isPricingThreePlansFeaturedLayout(layoutId)

@@ -126,6 +126,7 @@ import { isSectionWithImageLayout, layoutSectionWithImage } from './sectionWithI
 import { isParaLandscapeImageBottomLayout, layoutParaLandscapeImageBottom } from './paraLandscapeImageBottom'
 import { isParaLandscapeImageTopLayout, layoutParaLandscapeImageTop } from './paraLandscapeImageTop'
 import { isSectionDividerBandLayout, layoutSectionDividerBand } from './sectionDividerBandLayout'
+import { isSectionDividerBandFullLayout, layoutSectionDividerBandFull } from './sectionDividerBandFullLayout'
 import { isBulletListCardsLayout, layoutBulletListCards } from './bulletListCardsLayout'
 import { isComparisonTableLayout, layoutComparisonTable } from './comparisonTableLayout'
 import { isComparisonSideBySideLayout, layoutComparisonSideBySide } from './comparisonSideBySideLayout'
@@ -5450,6 +5451,9 @@ export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = 
   }
   if (isSectionDividerBandLayout(layoutId)) {
     return layoutSectionDividerBand(elements, schema, palette, canvas)
+  }
+  if (isSectionDividerBandFullLayout(layoutId)) {
+    return layoutSectionDividerBandFull(elements, schema, palette, canvas)
   }
   if (isBulletListCardsLayout(layoutId)) {
     return layoutBulletListCards(elements, schema, palette, canvas)

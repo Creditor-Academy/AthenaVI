@@ -239,6 +239,26 @@ import {
   largeImagePreviewSvg,
 } from '../../utils/largeImageLayout.js'
 import {
+  isFullBgImageOverlayLayout,
+  fullBgImageOverlayPreviewSvg,
+} from '../../utils/fullBgImageOverlayLayout.js'
+import {
+  isFullBgImageOverlayBottomLayout,
+  fullBgImageOverlayBottomPreviewSvg,
+} from '../../utils/fullBgImageOverlayBottomLayout.js'
+import {
+  isFullBgImageOverlaySideLayout,
+  fullBgImageOverlaySidePreviewSvg,
+} from '../../utils/fullBgImageOverlaySideLayout.js'
+import {
+  isSectionDividerBandLayout,
+  sectionDividerBandPreviewSvg,
+} from '../../utils/sectionDividerBandLayout.js'
+import {
+  isSectionDividerBandFullLayout,
+  sectionDividerBandFullPreviewSvg,
+} from '../../utils/sectionDividerBandFullLayout.js'
+import {
   isParaLandscapeImageBottomLayout,
   paraLandscapeImageBottomPreviewSvg,
 } from '../../utils/paraLandscapeImageBottom.js'
@@ -2575,6 +2595,102 @@ export default function LayoutPolishedPreview({
     ? { width: '100%', height: '100%', aspectRatio: 'unset', minHeight: 0 }
     : { width: '100%', aspectRatio: cssAspect }
 
+  if (
+    isSectionDividerBandFullLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'section_divider_band_full_v1' ||
+    previewMode === 'section_divider_band_full'
+  ) {
+    const svg = sectionDividerBandFullPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isSectionDividerBandLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'section_divider_band_v1' ||
+    previewMode === 'section_divider_band'
+  ) {
+    const svg = sectionDividerBandPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isFullBgImageOverlaySideLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'full_bg_image_overlay_side_v1' ||
+    previewMode === 'full_bg_image_overlay_side'
+  ) {
+    const svg = fullBgImageOverlaySidePreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#020617', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isFullBgImageOverlayBottomLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'full_bg_image_overlay_bottom_v1' ||
+    previewMode === 'full_bg_image_overlay_bottom'
+  ) {
+    const svg = fullBgImageOverlayBottomPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#020617', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isFullBgImageOverlayLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'full_bg_image_overlay_v1' ||
+    previewMode === 'full_bg_image_overlay'
+  ) {
+    const svg = fullBgImageOverlayPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#020617', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+
   if (compiledPricingSlide) {
     return (
       <CanvasElementsPreview
@@ -3347,7 +3463,13 @@ export default function LayoutPolishedPreview({
       </div>
     )
   }
-  if (previewMode === 'section_divider') {
+  if (
+    previewMode === 'section_divider' &&
+    !isSectionDividerBandLayout(previewHints.layout_id, schema) &&
+    !isSectionDividerBandFullLayout(previewHints.layout_id, schema) &&
+    previewHints.layout_id !== 'section_divider_band_v1' &&
+    previewHints.layout_id !== 'section_divider_band_full_v1'
+  ) {
     return (
       <PolishedSectionDividerPreview
         previewHints={previewHints}
@@ -3915,7 +4037,15 @@ export default function LayoutPolishedPreview({
   if (previewMode === 'closing_image_left') {
     return <PolishedClosingImageSplitPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} imageSide="left" />
   }
-  if (previewMode === 'closing_overlay') {
+  if (
+    previewMode === 'closing_overlay' &&
+    !isFullBgImageOverlayLayout(previewHints.layout_id, schema) &&
+    previewHints.layout_id !== 'full_bg_image_overlay_v1' &&
+    previewHints.layout_id !== 'full_bg_image_overlay_bottom_v1' &&
+    previewHints.layout_id !== 'full_bg_image_overlay_side_v1' &&
+    !isFullBgImageOverlayBottomLayout(previewHints.layout_id, schema) &&
+    !isFullBgImageOverlaySideLayout(previewHints.layout_id, schema)
+  ) {
     return <PolishedClosingOverlayPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
   }
 

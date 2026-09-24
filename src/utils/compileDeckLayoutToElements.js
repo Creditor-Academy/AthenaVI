@@ -170,6 +170,26 @@ import {
   isLargeImageLayout,
   buildLargeImageCanvasElements,
 } from './largeImageLayout.js'
+import {
+  isFullBgImageOverlayLayout,
+  buildFullBgImageOverlayCanvasElements,
+} from './fullBgImageOverlayLayout.js'
+import {
+  isFullBgImageOverlayBottomLayout,
+  buildFullBgImageOverlayBottomCanvasElements,
+} from './fullBgImageOverlayBottomLayout.js'
+import {
+  isFullBgImageOverlaySideLayout,
+  buildFullBgImageOverlaySideCanvasElements,
+} from './fullBgImageOverlaySideLayout.js'
+import {
+  isSectionDividerBandLayout,
+  buildSectionDividerBandCanvasElements,
+} from './sectionDividerBandLayout.js'
+import {
+  isSectionDividerBandFullLayout,
+  buildSectionDividerBandFullCanvasElements,
+} from './sectionDividerBandFullLayout.js'
 import { isCatalogPlaceholderText } from './catalogPlaceholder.js'
 import { normalizeChartContent } from './chartContentNormalize.js'
 import {
@@ -1335,6 +1355,11 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
       (isHeadlineRightTextLayout(schema?.layout_id, schema) && (/^(HEADLINE|BODY|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
       (isSectionDividerSplitImageLayout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
       (isLargeImageLayout(schema?.layout_id, schema) && (/^(HERO_IMAGE|CAPTION|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isFullBgImageOverlayLayout(schema?.layout_id, schema) && (/^(BACKGROUND_IMAGE|OVERLAY_SCRIM|MAIN_TITLE|SUBTITLE|BODY)$/i.test(String(el.slotId || '')))) ||
+      (isFullBgImageOverlayBottomLayout(schema?.layout_id, schema) && (/^(BACKGROUND_IMAGE|OVERLAY_SCRIM|MAIN_TITLE|SUBTITLE|BODY)$/i.test(String(el.slotId || '')))) ||
+      (isFullBgImageOverlaySideLayout(schema?.layout_id, schema) && (/^(BACKGROUND_IMAGE|OVERLAY_SCRIM|MAIN_TITLE|SUBTITLE|BODY)$/i.test(String(el.slotId || '')))) ||
+      (isSectionDividerBandLayout(schema?.layout_id, schema) && (/^(HEADING|BAND)$/i.test(String(el.slotId || '')))) ||
+      (isSectionDividerBandFullLayout(schema?.layout_id, schema) && (/^(HEADING|BAND)$/i.test(String(el.slotId || '')))) ||
       (isEightShortTextsImageLayout(schema?.layout_id) && (/^(HEADING|SUBTITLE|TAG_BADGE|POINT_\d+_(TITLE|DESC|CARD|NUM)|HERO_IMAGE)$/i.test(String(el.slotId || '')))) ||
       (isParaLandscapeImageBottomLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
       (isParaLandscapeImageTopLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
@@ -1505,6 +1530,21 @@ export function compileDeckLayoutToElements(schema, options = {}) {
   }
   if (isLargeImageLayout(schema?.layout_id, schema)) {
     return buildLargeImageCanvasElements({ schema, options })
+  }
+  if (isFullBgImageOverlayLayout(schema?.layout_id, schema)) {
+    return buildFullBgImageOverlayCanvasElements({ schema, options })
+  }
+  if (isFullBgImageOverlayBottomLayout(schema?.layout_id, schema)) {
+    return buildFullBgImageOverlayBottomCanvasElements({ schema, options })
+  }
+  if (isFullBgImageOverlaySideLayout(schema?.layout_id, schema)) {
+    return buildFullBgImageOverlaySideCanvasElements({ schema, options })
+  }
+  if (isSectionDividerBandLayout(schema?.layout_id, schema)) {
+    return buildSectionDividerBandCanvasElements({ schema, options })
+  }
+  if (isSectionDividerBandFullLayout(schema?.layout_id, schema)) {
+    return buildSectionDividerBandFullCanvasElements({ schema, options })
   }
   if (isTitleWithLogoLayout(schema?.layout_id, schema)) {
     return buildTitleWithLogoCanvasElements({ schema, options })

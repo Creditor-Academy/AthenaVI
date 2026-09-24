@@ -307,8 +307,8 @@ const LAYOUT_PREVIEW_MODES = {
   bullet_list_grid_v1: 'bullet_list_cards',
   section_divider_numbered_v1: 'section_divider',
   section_divider_numbered_circle_v1: 'section_divider',
-  section_divider_band_v1: 'section_divider',
-  section_divider_band_full_v1: 'section_divider',
+  section_divider_band_v1: 'section_divider_band',
+  section_divider_band_full_v1: 'section_divider_band_full',
   section_divider_split_v1: 'section_divider_split',
   section_divider_split_diagonal_v1: 'section_divider_split_diagonal',
   section_divider_split_image_v1: 'section_divider_split_image',
@@ -339,9 +339,9 @@ const LAYOUT_PREVIEW_MODES = {
   four_images_text_mosaic_v1: 'four_images_text_mosaic',
   four_para_image_v1: 'four_para_image',
   four_para_image_grid_v1: 'four_para_image_grid',
-  full_bg_image_overlay_v1: 'closing_overlay',
-  full_bg_image_overlay_bottom_v1: 'closing_overlay',
-  full_bg_image_overlay_side_v1: 'closing_overlay',
+  full_bg_image_overlay_v1: 'full_bg_image_overlay',
+  full_bg_image_overlay_bottom_v1: 'full_bg_image_overlay_bottom',
+  full_bg_image_overlay_side_v1: 'full_bg_image_overlay_side',
   para_landscape_image_v1: 'para_landscape_image',
   para_split_50_50_v1: 'para_split_50_50',
   three_para_image_v1: 'three_para_image',
@@ -462,7 +462,7 @@ const LAYOUT_PREVIEW_MODES = {
 }
 
 export function resolvePreviewMode(schema) {
-  const layoutId = schema?.layout_id
+  const layoutId = schema?.layout_id || schema?.layoutId
   if (layoutId && LAYOUT_PREVIEW_MODES[layoutId]) return LAYOUT_PREVIEW_MODES[layoutId]
   if (schema?.preview?.mode) return schema.preview.mode
   return inferPreviewMode(schema)
@@ -1238,7 +1238,15 @@ export function mergeCatalogLayoutTemplates(dbLayouts = []) {
         name: db?.name || humanLayoutName(layoutId),
         rawContentType: schema.content_type,
         schema,
-        previewUrl: hasEngineLayoutPreview(schema) ? null : (db?.previewUrl || null),
+        previewUrl:
+          layoutId === 'full_bg_image_overlay_v1' ||
+          layoutId === 'full_bg_image_overlay_bottom_v1' ||
+          layoutId === 'full_bg_image_overlay_side_v1' ||
+          layoutId === 'section_divider_band_v1' ||
+          layoutId === 'section_divider_band_full_v1' ||
+          hasEngineLayoutPreview(schema)
+            ? null
+            : (db?.previewUrl || null),
       }
     })
     .filter(Boolean)

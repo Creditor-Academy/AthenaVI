@@ -643,7 +643,7 @@ const CATALOG = {
     body('BODY', 'cols 2-10, rows 6-8', P.short, 3, {
       typography: { ...typo('body'), colorRole: 'textOnImageMuted' },
     }),
-  ]),
+  ], { mode: 'full_bg_image_overlay' }),
 
   title_minimal_v1: layoutBase('title_minimal_v1', 'title', [
     slot('MAIN_TITLE', 'cols 2-11, rows 4-5', 'heading', 'Minimal title slide', {
@@ -673,7 +673,7 @@ const CATALOG = {
     heading('HEADING', 'cols 2-11, rows 4-6', 'Section break', {
       typography: centeredTypo('heading', { colorRole: 'textOnImage' }),
     }),
-  ]),
+  ], { mode: 'section_divider_band' }),
 
   section_divider_split_v1: layoutBase('section_divider_split_v1', 'section_divider', [
     heading('HEADING', 'cols 1-6, rows 3-6', 'Next section', {
@@ -858,12 +858,14 @@ Object.assign(CATALOG, {
   full_bg_image_overlay_bottom_v1: simpleSlidesFromSource(
     'full_bg_image_overlay_bottom_v1',
     'full_bg_image_overlay_v1',
-    'bottom'
+    'bottom',
+    { mode: 'full_bg_image_overlay_bottom' }
   ),
   full_bg_image_overlay_side_v1: simpleSlidesFromSource(
     'full_bg_image_overlay_side_v1',
     'full_bg_image_overlay_v1',
-    'side'
+    'side',
+    { mode: 'full_bg_image_overlay_side' }
   ),
   para_landscape_image_top_v1: simpleSlidesFromSource('para_landscape_image_top_v1', 'para_landscape_image_v1', 'top'),
   para_landscape_image_bottom_v1: simpleSlidesFromSource(
@@ -895,7 +897,7 @@ Object.assign(CATALOG, {
     'overlay',
     { mode: 'para_title_right_image_overlay' }
   ),
-  section_divider_band_full_v1: simpleSlidesFromSource('section_divider_band_full_v1', 'section_divider_band_v1', 'full'),
+  section_divider_band_full_v1: simpleSlidesFromSource('section_divider_band_full_v1', 'section_divider_band_v1', 'full', { mode: 'section_divider_band_full' }),
   section_divider_split_diagonal_v1: layoutBase('section_divider_split_diagonal_v1', 'section_divider', [
     slot('SECTION_NUMBER', 'cols 1-5, rows 2-4', 'stat', '02', {
       typography: typo('stat', { fontSize: 120, color: '#FFFFFF' }),

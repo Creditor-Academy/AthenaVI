@@ -199,6 +199,26 @@ import {
   layoutLargeImage,
 } from './largeImageLayout.js'
 import {
+  isFullBgImageOverlayLayout,
+  layoutFullBgImageOverlay,
+} from './fullBgImageOverlayLayout.js'
+import {
+  isFullBgImageOverlayBottomLayout,
+  layoutFullBgImageOverlayBottom,
+} from './fullBgImageOverlayBottomLayout.js'
+import {
+  isFullBgImageOverlaySideLayout,
+  layoutFullBgImageOverlaySide,
+} from './fullBgImageOverlaySideLayout.js'
+import {
+  isSectionDividerBandLayout,
+  layoutSectionDividerBand,
+} from './sectionDividerBandLayout.js'
+import {
+  isSectionDividerBandFullLayout,
+  layoutSectionDividerBandFull,
+} from './sectionDividerBandFullLayout.js'
+import {
   isGridBentoThreeLayout,
   layoutGridBentoThree,
 } from './gridBentoThreeLayout.js'
@@ -596,6 +616,26 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
 
   if (isLargeImageLayout(layoutId, schema)) {
     return layoutLargeImage(elements, schema, palette, canvas)
+  }
+
+  if (isFullBgImageOverlayLayout(layoutId, schema)) {
+    return layoutFullBgImageOverlay(elements, schema, palette, canvas)
+  }
+
+  if (isFullBgImageOverlayBottomLayout(layoutId, schema)) {
+    return layoutFullBgImageOverlayBottom(elements, schema, palette, canvas)
+  }
+
+  if (isFullBgImageOverlaySideLayout(layoutId, schema)) {
+    return layoutFullBgImageOverlaySide(elements, schema, palette, canvas)
+  }
+
+  if (isSectionDividerBandLayout(layoutId, schema)) {
+    return layoutSectionDividerBand(elements, schema, palette, canvas)
+  }
+
+  if (isSectionDividerBandFullLayout(layoutId, schema)) {
+    return layoutSectionDividerBandFull(elements, schema, palette, canvas)
   }
   
   if (isGridBentoThreeLayout(layoutId)) {
