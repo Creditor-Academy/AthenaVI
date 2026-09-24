@@ -11,7 +11,7 @@
 /* --- SIDEBAR --- */
 .ai-gen-sidebar {
   width: 240px;
-  background: color-mix(in srgb, var(--bg-surface, #ffffff) 80%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary, #2563eb) 6%, var(--bg-surface, #ffffff)), color-mix(in srgb, var(--bg-surface, #ffffff) 80%, transparent));
   backdrop-filter: blur(20px);
   border: 1px solid color-mix(in srgb, var(--border-color, #e5e7eb) 60%, transparent);
   border-radius: 20px;
@@ -47,9 +47,9 @@
 }
 .mode-toggle span:hover { color: var(--text-main, #111827); }
 .mode-toggle span.active {
-  background: var(--bg-main, #ffffff);
-  color: var(--text-main, #111827);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  background: var(--primary, #2563eb);
+  color: #ffffff;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary, #2563eb) 30%, transparent);
   font-weight: 600;
 }
 
@@ -62,16 +62,22 @@
 .new-chat-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
-  background: transparent;
+  background: var(--primary, #2563eb);
+  color: #ffffff;
   border: none;
-  color: var(--text-main, #e3e3e3);
-  padding: 10px 24px;
+  padding: 12px 24px;
+  border-radius: 100px;
+  margin: 0 16px;
+  width: calc(100% - 32px);
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary, #2563eb) 30%, transparent);
 }
-.new-chat-btn:hover { background: var(--bg-card, #333537); }
+.new-chat-btn:hover { background: color-mix(in srgb, var(--primary, #2563eb) 85%, black); }
 
 .search-bar {
   display: flex;
@@ -105,12 +111,13 @@
   font-size: 14px;
   font-weight: 500;
 }
-.sidebar-nav a:hover { background: var(--bg-card, #333537); }
+.sidebar-nav a:hover { background: color-mix(in srgb, var(--primary, #2563eb) 5%, transparent); }
 .sidebar-nav a.active {
-  background: var(--bg-card, #333537);
-  color: var(--text-main, #fff);
+  background: color-mix(in srgb, var(--primary, #2563eb) 12%, transparent);
+  color: var(--primary, #2563eb);
   border-radius: 0 24px 24px 0;
   margin-right: 16px;
+  border-left: 3px solid var(--primary, #2563eb);
 }
 
 .sidebar-recent {

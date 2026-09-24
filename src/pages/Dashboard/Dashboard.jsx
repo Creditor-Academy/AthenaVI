@@ -99,7 +99,14 @@ function Dashboard({ onCreate, initialSection }) {
   const [showCreateMenu, setShowCreateMenu] = useState(false)
   const [showCreateLocationModal, setShowCreateLocationModal] = useState(false)
   const [pendingCreateOptionId, setPendingCreateOptionId] = useState(null)
-  const [createLocationContext, setCreateLocationContext] = useState(null)
+  const [createLocationContext, setCreateLocationContext] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem('athena.createLocationContext')
+      return stored ? JSON.parse(stored) : null
+    } catch {
+      return null
+    }
+  })
   const [createLocationInitial, setCreateLocationInitial] = useState({
     workspaceId: '',
     folderId: '',
@@ -126,6 +133,14 @@ function Dashboard({ onCreate, initialSection }) {
   const [pendingSection, setPendingSection] = useState(null)
   const [selectedTemplateForDetails, setSelectedTemplateForDetails] = useState(null)
   const [topbarMobileOpen, setTopbarMobileOpen] = useState(false)
+
+  useEffect(() => {
+    if (createLocationContext) {
+      sessionStorage.setItem('athena.createLocationContext', JSON.stringify(createLocationContext))
+    } else {
+      sessionStorage.removeItem('athena.createLocationContext')
+    }
+  }, [createLocationContext])
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false)
   const [lastVoiceCreated, setLastVoiceCreated] = useState(false)
   const [avatarLookContext, setAvatarLookContext] = useState(() => loadAvatarLookContext())
@@ -989,6 +1004,7 @@ function Dashboard({ onCreate, initialSection }) {
           <AIImageStudio
             onBack={() => goToSection('home')}
             onOpenBilling={() => goToSection('credits')}
+            onNavigateLibrary={() => goToSection('library')}
             createContext={
               createLocationContext?.optionId === 'image-ai' ? createLocationContext : null
             }
