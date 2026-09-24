@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { Gift, Bell, Sparkles } from 'lucide-react';
+import { Bell, Sparkles } from 'lucide-react';
 import './Referrals.css';
-
 import referralIllustration from '../../assets/referral_illustration.jpg';
+
 export default function Referrals() {
   const [notified, setNotified] = useState(false);
 
   return (
-    <div className="referrals-page referrals-coming-soon">
-      <div className="referrals-coming-soon-card">
-        <div className="referrals-coming-soon-content">
+    <div className="referrals-page referrals-split-view">
+      <div className="referrals-split-left">
+        <div className="referrals-content-inner">
           <div className="referrals-badge">
             <Sparkles size={14} /> Coming Soon
           </div>
@@ -43,8 +43,10 @@ export default function Referrals() {
             )}
           </button>
         </div>
+      </div>
 
-        <div className="referrals-illustration-container">
+      <div className="referrals-split-right">
+        <div className="referrals-illustration-wrapper">
           <img src={referralIllustration} alt="Referrals Illustration" className="referrals-illustration" />
         </div>
       </div>
