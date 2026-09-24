@@ -98,5 +98,11 @@ export function resolveViewFromLocation(pathToViewMap) {
     return window.localStorage.getItem('athenavi:view') || 'landing';
   }
 
+  if (currentPath.startsWith('/share/')) {
+    return 'share';
+  }
+
+  return window.localStorage.getItem('athenavi:view') || 'landing';
+
   return 'not-found';
 }

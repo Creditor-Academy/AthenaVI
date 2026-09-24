@@ -30,7 +30,7 @@ import CreateMenuModal from '../../components/ui/CreateMenuModal/CreateMenuModal
 import CreateLocationModal from '../../components/ui/CreateLocationModal/CreateLocationModal.jsx'
 import AIPptGenerator from '../Slides/AIPptGenerator.jsx'
 import PptBuilder from '../Slides/PptBuilder/PptBuilder.jsx'
-import AIImageStudio from '../Slides/AIStudio/AIImageStudio.jsx'
+import AIImageStudio from '../Slides/AIStudio/AIImageGenerationUpdate.jsx'
 import AIPptEditor from '../Slides/AIPptComponents/AIPptEditor.jsx'
 import PptDeckOpenBoot from '../Slides/AIPptComponents/PptDeckOpenBoot.jsx'
 import CanvasBuilder from '../CanvasEditor/CanvasBuilder.jsx'

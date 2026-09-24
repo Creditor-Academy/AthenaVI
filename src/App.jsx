@@ -17,6 +17,7 @@ import {
 import { parseProjectCommentsDeepLink } from './utils/inboxNotifications.js'
 import SessionExpiredModal from './components/ui/SessionExpiredModal/SessionExpiredModal.jsx'
 import PptDeckOpenBoot from './pages/Slides/AIPptComponents/PptDeckOpenBoot.jsx'
+import SharedGeneration from './pages/SharedGeneration/SharedGeneration.jsx'
 
 function isPptEditorBootPath() {
   const path = readClientPath()
@@ -334,6 +335,7 @@ function App() {
       currentPath.includes('/invite/accept') ||
       currentPath.includes('/reset-password') ||
       currentPath.startsWith('/p/') ||
+      currentPath.startsWith('/share/') ||
       isOAuthCallbackPath(currentPath)
     const isDashboardSubPath = isDashboardClientPath()
     const targetUrl =
@@ -534,6 +536,8 @@ function App() {
       {isInviteAcceptancePath && <InviteAcceptance />}
 
       {view === 'public-presentation' && <PublicPresentation />}
+      
+      {view === 'share' && <SharedGeneration />}
 
       {/* Protected Routes */}
       {view === 'create' && (
@@ -996,7 +1000,7 @@ function App() {
         <NotFound setView={setView} />
       )}
 
-      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'login', 'early-access', 'google-callback', 'not-found', 'public-presentation'].includes(view) && (
+      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'login', 'early-access', 'google-callback', 'not-found', 'public-presentation', 'share'].includes(view) && (
         <>
           <Landing 
             onLoginClick={handleLoginClick}
