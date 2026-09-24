@@ -22,6 +22,7 @@ export const DASHBOARD_SECTIONS = new Set([
   'credits',
   'profile',
   'settings',
+  'referrals',
   'help',
 ]);
 

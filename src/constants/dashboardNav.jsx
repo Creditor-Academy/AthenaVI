@@ -8,7 +8,8 @@ import {
   User,
   Volume2,
   Palette,
-  Settings
+  Settings,
+  Gift
 } from 'lucide-react'
 
 /**
@@ -37,7 +38,8 @@ export const mainDashboardSidebarGroups = [
   {
     label: 'Account',
     items: [
-      { id: 'settings', label: 'Settings', Icon: Settings }
+      { id: 'settings', label: 'Settings', Icon: Settings },
+      { id: 'referrals', label: 'Refer & Earn', Icon: Gift }
     ]
   }
 ]

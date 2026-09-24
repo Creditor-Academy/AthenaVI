@@ -442,6 +442,10 @@
   transform: translateY(-1px);
 }
 
+.conv-action-icon-btn.active {
+  color: var(--primary, #2563eb);
+}
+
 /* Conversational Follow-up */
 .conv-followup-text {
   font-size: 15px;
