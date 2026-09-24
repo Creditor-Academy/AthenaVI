@@ -304,7 +304,7 @@ const LAYOUT_PREVIEW_MODES = {
   image_text_split_v1: 'image_text_split',
   section_with_image_v1: 'section_with_image',
   bullet_list_cards_v1: 'bullet_list_cards',
-  bullet_list_grid_v1: 'bullet_list_cards',
+  bullet_list_grid_v1: 'bullet_list_grid',
   section_divider_numbered_v1: 'section_divider',
   section_divider_numbered_circle_v1: 'section_divider',
   section_divider_band_v1: 'section_divider_band',
@@ -1247,6 +1247,8 @@ export function mergeCatalogLayoutTemplates(dbLayouts = []) {
           layoutId === 'comparison_side_by_side_v1' ||
           layoutId === 'comparison_side_by_side_cards_v1' ||
           layoutId === 'comparison_side_by_side_centerline_v1' ||
+          layoutId === 'bullet_list_cards_v1' ||
+          layoutId === 'bullet_list_grid_v1' ||
           hasEngineLayoutPreview(schema)
             ? null
             : (db?.previewUrl || null),

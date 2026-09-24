@@ -231,6 +231,14 @@ import {
   layoutComparisonSideBySideCenterline,
 } from './comparisonSideBySideCenterlineLayout.js'
 import {
+  isBulletListCardsLayout,
+  layoutBulletListCards,
+} from './bulletListCardsLayout.js'
+import {
+  isBulletListGridLayout,
+  layoutBulletListGrid,
+} from './bulletListGridLayout.js'
+import {
   isGridBentoThreeLayout,
   layoutGridBentoThree,
 } from './gridBentoThreeLayout.js'
@@ -660,6 +668,14 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
 
   if (isComparisonSideBySideCenterlineLayout(layoutId, schema)) {
     return layoutComparisonSideBySideCenterline(elements, schema, palette, canvas)
+  }
+
+  if (isBulletListCardsLayout(layoutId, schema)) {
+    return layoutBulletListCards(elements, schema, palette, canvas)
+  }
+
+  if (isBulletListGridLayout(layoutId, schema)) {
+    return layoutBulletListGrid(elements, schema, palette, canvas)
   }
   
   if (isGridBentoThreeLayout(layoutId)) {

@@ -339,7 +339,7 @@ const CATALOG = {
       typography: typo('heading', { fontSize: 20 }),
     }),
     body('CARD_4_BODY', 'cols 10-12, rows 3-6', P.short, 3),
-  ], { mode: 'two_image_columns', slideVariant: 'cards' }),
+  ], { mode: 'bullet_list_cards', slideVariant: 'cards' }),
 
   section_divider_numbered_v1: layoutBase('section_divider_numbered_v1', 'section_divider', [
     slot('SECTION_NUMBER', 'cols 5-8, rows 3-4', 'stat', '02', {
@@ -415,7 +415,7 @@ Object.assign(CATALOG, {
     }),
   ], { mode: 'timeline_process_horizontal', timelineVariant: 'horizontal' }),
   timeline_vertical_cards_v1: timelineFromSource('timeline_vertical_cards_v1', 'timeline_vertical_v1', 'cards'),
-  bullet_list_grid_v1: comparisonFromSource('bullet_list_grid_v1', 'bullet_list_cards_v1', 'grid'),
+  bullet_list_grid_v1: comparisonFromSource('bullet_list_grid_v1', 'bullet_list_cards_v1', 'grid', { mode: 'bullet_list_grid' }),
   comparison_side_by_side_cards_v1: comparisonFromSource('comparison_side_by_side_cards_v1', 'comparison_side_by_side_v1', 'cards', { mode: 'comparison_side_by_side_cards' }),
   comparison_side_by_side_centerline_v1: comparisonFromSource('comparison_side_by_side_centerline_v1', 'comparison_side_by_side_v1', 'centerline', { mode: 'comparison_side_by_side_centerline' }),
   comparison_table_grid_v1: comparisonFromSource('comparison_table_grid_v1', 'comparison_table_v1', 'grid'),

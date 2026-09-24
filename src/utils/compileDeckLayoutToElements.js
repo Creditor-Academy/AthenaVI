@@ -202,6 +202,14 @@ import {
   isComparisonSideBySideCenterlineLayout,
   buildComparisonSideBySideCenterlineCanvasElements,
 } from './comparisonSideBySideCenterlineLayout.js'
+import {
+  isBulletListCardsLayout,
+  buildBulletListCardsCanvasElements,
+} from './bulletListCardsLayout.js'
+import {
+  isBulletListGridLayout,
+  buildBulletListGridCanvasElements,
+} from './bulletListGridLayout.js'
 import { isCatalogPlaceholderText } from './catalogPlaceholder.js'
 import { normalizeChartContent } from './chartContentNormalize.js'
 import {
@@ -1375,6 +1383,8 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
       (isComparisonSideBySideLayout(schema?.layout_id, schema) && (/^(HEADING|LEFT_TITLE|LEFT_BODY|RIGHT_TITLE|RIGHT_BODY|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
       (isComparisonSideBySideCardsLayout(schema?.layout_id, schema) && (/^(HEADING|LEFT_TITLE|LEFT_BODY|RIGHT_TITLE|RIGHT_BODY|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
       (isComparisonSideBySideCenterlineLayout(schema?.layout_id, schema) && (/^(HEADING|LEFT_TITLE|LEFT_BODY|RIGHT_TITLE|RIGHT_BODY|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isBulletListCardsLayout(schema?.layout_id, schema) && (/^(HEADING|CARD_[1-4]_(TITLE|BODY|BG)|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isBulletListGridLayout(schema?.layout_id, schema) && (/^(HEADING|CARD_[1-4]_(TITLE|BODY|BG)|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
       (isEightShortTextsImageLayout(schema?.layout_id) && (/^(HEADING|SUBTITLE|TAG_BADGE|POINT_\d+_(TITLE|DESC|CARD|NUM)|HERO_IMAGE)$/i.test(String(el.slotId || '')))) ||
       (isParaLandscapeImageBottomLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
       (isParaLandscapeImageTopLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
@@ -1569,6 +1579,12 @@ export function compileDeckLayoutToElements(schema, options = {}) {
   }
   if (isComparisonSideBySideCenterlineLayout(schema?.layout_id, schema)) {
     return buildComparisonSideBySideCenterlineCanvasElements({ schema, options })
+  }
+  if (isBulletListCardsLayout(schema?.layout_id, schema)) {
+    return buildBulletListCardsCanvasElements({ schema, options })
+  }
+  if (isBulletListGridLayout(schema?.layout_id, schema)) {
+    return buildBulletListGridCanvasElements({ schema, options })
   }
   if (isTitleWithLogoLayout(schema?.layout_id, schema)) {
     return buildTitleWithLogoCanvasElements({ schema, options })

@@ -271,6 +271,14 @@ import {
   comparisonSideBySideCenterlinePreviewSvg,
 } from '../../utils/comparisonSideBySideCenterlineLayout.js'
 import {
+  isBulletListCardsLayout,
+  bulletListCardsPreviewSvg,
+} from '../../utils/bulletListCardsLayout.js'
+import {
+  isBulletListGridLayout,
+  bulletListGridPreviewSvg,
+} from '../../utils/bulletListGridLayout.js'
+import {
   isParaLandscapeImageBottomLayout,
   paraLandscapeImageBottomPreviewSvg,
 } from '../../utils/paraLandscapeImageBottom.js'
@@ -2608,6 +2616,44 @@ export default function LayoutPolishedPreview({
     : { width: '100%', aspectRatio: cssAspect }
 
   if (
+    isBulletListGridLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'bullet_list_grid_v1' ||
+    previewMode === 'bullet_list_grid'
+  ) {
+    const svg = bulletListGridPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isBulletListCardsLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'bullet_list_cards_v1' ||
+    previewMode === 'bullet_list_cards'
+  ) {
+    const svg = bulletListCardsPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
     isComparisonSideBySideCenterlineLayout(previewHints.layout_id, schema) ||
     previewHints.layout_id === 'comparison_side_by_side_centerline_v1' ||
     previewMode === 'comparison_side_by_side_centerline'
@@ -3754,9 +3800,6 @@ export default function LayoutPolishedPreview({
   }
   if (previewMode === 'stat_cards_image') {
     return <PolishedStatCardsImagePreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
-  }
-  if (previewMode === 'bullet_list_cards') {
-    return <PolishedBulletListCardsPreview previewHints={previewHints} large={large} fill={fill} className={className} style={style} aspectRatio={aspectRatio} />
   }
   if (
     isTwoCardsImageTextLayout(previewHints.layout_id, schema) ||

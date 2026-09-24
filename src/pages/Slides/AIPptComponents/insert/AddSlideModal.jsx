@@ -57,6 +57,14 @@ import {
   isComparisonSideBySideCenterlineLayout,
   comparisonSideBySideCenterlinePreviewSvg,
 } from '../../../../utils/comparisonSideBySideCenterlineLayout.js'
+import {
+  isBulletListCardsLayout,
+  bulletListCardsPreviewSvg,
+} from '../../../../utils/bulletListCardsLayout.js'
+import {
+  isBulletListGridLayout,
+  bulletListGridPreviewSvg,
+} from '../../../../utils/bulletListGridLayout.js'
 import './AddSlideModal.css'
 
 /** Internal render size — scaled down to card; large previews keep text readable. */
@@ -263,6 +271,40 @@ function ScaledPreview({ children, baseWidth = PREVIEW_BASE_W, baseHeight = PREV
 function GalleryPreview({ schema, previewUrl, fallbackName, layoutId: layoutIdProp, themeId, themeVisual, aspectRatio = '16:9' }) {
   const layoutId = layoutIdProp || schema?.layout_id || schema?.layoutId
   const schemaWithId = schema ? { ...schema, layout_id: schema.layout_id || layoutId } : schema
+  if (isBulletListGridLayout(layoutId, schemaWithId)) {
+    const svg = bulletListGridPreviewSvg()
+    return (
+      <ScaledPreview>
+        <div
+          style={{
+            width: PREVIEW_BASE_W,
+            height: PREVIEW_BASE_H,
+            background: '#FFFFFF',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </ScaledPreview>
+    )
+  }
+  if (isBulletListCardsLayout(layoutId, schemaWithId)) {
+    const svg = bulletListCardsPreviewSvg()
+    return (
+      <ScaledPreview>
+        <div
+          style={{
+            width: PREVIEW_BASE_W,
+            height: PREVIEW_BASE_H,
+            background: '#FFFFFF',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </ScaledPreview>
+    )
+  }
   if (isComparisonSideBySideCenterlineLayout(layoutId, schemaWithId)) {
     const svg = comparisonSideBySideCenterlinePreviewSvg()
     return (
