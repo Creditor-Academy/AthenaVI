@@ -113,7 +113,7 @@ const CATALOG = {
     }),
     body('LEFT_BODY', 'cols 1-6, rows 3-9', P.one, 5),
     body('RIGHT_BODY', 'cols 7-12, rows 3-9', P.one, 5),
-  ], { mode: 'comparison_columns' }),
+  ], { mode: 'comparison_side_by_side' }),
 
   comparison_pros_cons_v1: layoutBase('comparison_pros_cons_v1', 'comparison', [
     heading('HEADING', 'cols 2-11, rows 1-2', 'Pros and cons', { max_lines: 2 }),
@@ -416,8 +416,8 @@ Object.assign(CATALOG, {
   ], { mode: 'timeline_process_horizontal', timelineVariant: 'horizontal' }),
   timeline_vertical_cards_v1: timelineFromSource('timeline_vertical_cards_v1', 'timeline_vertical_v1', 'cards'),
   bullet_list_grid_v1: comparisonFromSource('bullet_list_grid_v1', 'bullet_list_cards_v1', 'grid'),
-  comparison_side_by_side_cards_v1: comparisonFromSource('comparison_side_by_side_cards_v1', 'comparison_side_by_side_v1', 'cards'),
-  comparison_side_by_side_centerline_v1: comparisonFromSource('comparison_side_by_side_centerline_v1', 'comparison_side_by_side_v1', 'centerline'),
+  comparison_side_by_side_cards_v1: comparisonFromSource('comparison_side_by_side_cards_v1', 'comparison_side_by_side_v1', 'cards', { mode: 'comparison_side_by_side_cards' }),
+  comparison_side_by_side_centerline_v1: comparisonFromSource('comparison_side_by_side_centerline_v1', 'comparison_side_by_side_v1', 'centerline', { mode: 'comparison_side_by_side_centerline' }),
   comparison_table_grid_v1: comparisonFromSource('comparison_table_grid_v1', 'comparison_table_v1', 'grid'),
   section_divider_numbered_circle_v1: layoutBase('section_divider_numbered_circle_v1', 'section_divider', [
     slot('SECTION_NUMBER', 'cols 5-8, rows 3-4', 'stat', '02', {

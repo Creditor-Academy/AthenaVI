@@ -259,6 +259,18 @@ import {
   sectionDividerBandFullPreviewSvg,
 } from '../../utils/sectionDividerBandFullLayout.js'
 import {
+  isComparisonSideBySideLayout,
+  comparisonSideBySidePreviewSvg,
+} from '../../utils/comparisonSideBySideLayout.js'
+import {
+  isComparisonSideBySideCardsLayout,
+  comparisonSideBySideCardsPreviewSvg,
+} from '../../utils/comparisonSideBySideCardsLayout.js'
+import {
+  isComparisonSideBySideCenterlineLayout,
+  comparisonSideBySideCenterlinePreviewSvg,
+} from '../../utils/comparisonSideBySideCenterlineLayout.js'
+import {
   isParaLandscapeImageBottomLayout,
   paraLandscapeImageBottomPreviewSvg,
 } from '../../utils/paraLandscapeImageBottom.js'
@@ -2596,6 +2608,63 @@ export default function LayoutPolishedPreview({
     : { width: '100%', aspectRatio: cssAspect }
 
   if (
+    isComparisonSideBySideCenterlineLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'comparison_side_by_side_centerline_v1' ||
+    previewMode === 'comparison_side_by_side_centerline'
+  ) {
+    const svg = comparisonSideBySideCenterlinePreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isComparisonSideBySideCardsLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'comparison_side_by_side_cards_v1' ||
+    previewMode === 'comparison_side_by_side_cards'
+  ) {
+    const svg = comparisonSideBySideCardsPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#F8FAFC', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isComparisonSideBySideLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'comparison_side_by_side_v1' ||
+    previewMode === 'comparison_side_by_side'
+  ) {
+    const svg = comparisonSideBySidePreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
     isSectionDividerBandFullLayout(previewHints.layout_id, schema) ||
     previewHints.layout_id === 'section_divider_band_full_v1' ||
     previewMode === 'section_divider_band_full'
@@ -4508,18 +4577,6 @@ export default function LayoutPolishedPreview({
 
   if (previewMode === 'comparison_table_cards') {
     return <PolishedComparisonTablePreview previewHints={previewHints} large={large} className={className} style={style} fill={fill} aspectRatio={aspectRatio} />
-  }
-
-  if (previewMode === 'comparison_side_by_side') {
-    return <PolishedComparisonSideBySidePreview previewHints={previewHints} large={large} className={className} style={style} fill={fill} aspectRatio={aspectRatio} />
-  }
-
-  if (previewMode === 'comparison_side_by_side_cards') {
-    return <PolishedComparisonSideBySideCardsPreview previewHints={previewHints} large={large} className={className} style={style} fill={fill} aspectRatio={aspectRatio} />
-  }
-
-  if (previewMode === 'comparison_side_by_side_centerline') {
-    return <PolishedComparisonSideBySideCenterlinePreview previewHints={previewHints} large={large} className={className} style={style} fill={fill} aspectRatio={aspectRatio} />
   }
 
   if (previewMode === 'comparison_pros_cons') {

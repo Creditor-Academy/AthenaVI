@@ -219,6 +219,18 @@ import {
   layoutSectionDividerBandFull,
 } from './sectionDividerBandFullLayout.js'
 import {
+  isComparisonSideBySideLayout,
+  layoutComparisonSideBySide,
+} from './comparisonSideBySideLayout.js'
+import {
+  isComparisonSideBySideCardsLayout,
+  layoutComparisonSideBySideCards,
+} from './comparisonSideBySideCardsLayout.js'
+import {
+  isComparisonSideBySideCenterlineLayout,
+  layoutComparisonSideBySideCenterline,
+} from './comparisonSideBySideCenterlineLayout.js'
+import {
   isGridBentoThreeLayout,
   layoutGridBentoThree,
 } from './gridBentoThreeLayout.js'
@@ -636,6 +648,18 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
 
   if (isSectionDividerBandFullLayout(layoutId, schema)) {
     return layoutSectionDividerBandFull(elements, schema, palette, canvas)
+  }
+
+  if (isComparisonSideBySideLayout(layoutId, schema)) {
+    return layoutComparisonSideBySide(elements, schema, palette, canvas)
+  }
+
+  if (isComparisonSideBySideCardsLayout(layoutId, schema)) {
+    return layoutComparisonSideBySideCards(elements, schema, palette, canvas)
+  }
+
+  if (isComparisonSideBySideCenterlineLayout(layoutId, schema)) {
+    return layoutComparisonSideBySideCenterline(elements, schema, palette, canvas)
   }
   
   if (isGridBentoThreeLayout(layoutId)) {

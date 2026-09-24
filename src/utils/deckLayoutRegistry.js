@@ -1244,6 +1244,9 @@ export function mergeCatalogLayoutTemplates(dbLayouts = []) {
           layoutId === 'full_bg_image_overlay_side_v1' ||
           layoutId === 'section_divider_band_v1' ||
           layoutId === 'section_divider_band_full_v1' ||
+          layoutId === 'comparison_side_by_side_v1' ||
+          layoutId === 'comparison_side_by_side_cards_v1' ||
+          layoutId === 'comparison_side_by_side_centerline_v1' ||
           hasEngineLayoutPreview(schema)
             ? null
             : (db?.previewUrl || null),

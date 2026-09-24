@@ -45,6 +45,18 @@ import {
   isSectionDividerBandFullLayout,
   sectionDividerBandFullPreviewSvg,
 } from '../../../../utils/sectionDividerBandFullLayout.js'
+import {
+  isComparisonSideBySideLayout,
+  comparisonSideBySidePreviewSvg,
+} from '../../../../utils/comparisonSideBySideLayout.js'
+import {
+  isComparisonSideBySideCardsLayout,
+  comparisonSideBySideCardsPreviewSvg,
+} from '../../../../utils/comparisonSideBySideCardsLayout.js'
+import {
+  isComparisonSideBySideCenterlineLayout,
+  comparisonSideBySideCenterlinePreviewSvg,
+} from '../../../../utils/comparisonSideBySideCenterlineLayout.js'
 import './AddSlideModal.css'
 
 /** Internal render size — scaled down to card; large previews keep text readable. */
@@ -251,6 +263,57 @@ function ScaledPreview({ children, baseWidth = PREVIEW_BASE_W, baseHeight = PREV
 function GalleryPreview({ schema, previewUrl, fallbackName, layoutId: layoutIdProp, themeId, themeVisual, aspectRatio = '16:9' }) {
   const layoutId = layoutIdProp || schema?.layout_id || schema?.layoutId
   const schemaWithId = schema ? { ...schema, layout_id: schema.layout_id || layoutId } : schema
+  if (isComparisonSideBySideCenterlineLayout(layoutId, schemaWithId)) {
+    const svg = comparisonSideBySideCenterlinePreviewSvg()
+    return (
+      <ScaledPreview>
+        <div
+          style={{
+            width: PREVIEW_BASE_W,
+            height: PREVIEW_BASE_H,
+            background: '#FFFFFF',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </ScaledPreview>
+    )
+  }
+  if (isComparisonSideBySideCardsLayout(layoutId, schemaWithId)) {
+    const svg = comparisonSideBySideCardsPreviewSvg()
+    return (
+      <ScaledPreview>
+        <div
+          style={{
+            width: PREVIEW_BASE_W,
+            height: PREVIEW_BASE_H,
+            background: '#F8FAFC',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </ScaledPreview>
+    )
+  }
+  if (isComparisonSideBySideLayout(layoutId, schemaWithId)) {
+    const svg = comparisonSideBySidePreviewSvg()
+    return (
+      <ScaledPreview>
+        <div
+          style={{
+            width: PREVIEW_BASE_W,
+            height: PREVIEW_BASE_H,
+            background: '#FFFFFF',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </ScaledPreview>
+    )
+  }
   if (isSectionDividerBandFullLayout(layoutId, schemaWithId)) {
     const svg = sectionDividerBandFullPreviewSvg()
     return (

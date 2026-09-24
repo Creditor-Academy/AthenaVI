@@ -130,6 +130,8 @@ import { isSectionDividerBandFullLayout, layoutSectionDividerBandFull } from './
 import { isBulletListCardsLayout, layoutBulletListCards } from './bulletListCardsLayout'
 import { isComparisonTableLayout, layoutComparisonTable } from './comparisonTableLayout'
 import { isComparisonSideBySideLayout, layoutComparisonSideBySide } from './comparisonSideBySideLayout'
+import { isComparisonSideBySideCardsLayout, layoutComparisonSideBySideCards } from './comparisonSideBySideCardsLayout'
+import { isComparisonSideBySideCenterlineLayout, layoutComparisonSideBySideCenterline } from './comparisonSideBySideCenterlineLayout'
 import { isComparisonProsConsLayout, layoutComparisonProsCons } from './comparisonProsConsLayout'
 import { isComparisonBeforeAfterLayout, layoutComparisonBeforeAfter } from './comparisonBeforeAfterLayout'
 import { isComparisonProsConsSplitLayout, layoutComparisonProsConsSplit } from './comparisonProsConsSplitLayout'
@@ -5461,6 +5463,18 @@ export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = 
 
   if (isComparisonTableLayout(layoutId)) {
     return layoutComparisonTable(elements, schema, palette, canvas)
+  }
+
+  if (isComparisonSideBySideLayout(layoutId, schema)) {
+    return layoutComparisonSideBySide(elements, schema, palette, canvas)
+  }
+
+  if (isComparisonSideBySideCardsLayout(layoutId, schema)) {
+    return layoutComparisonSideBySideCards(elements, schema, palette, canvas)
+  }
+
+  if (isComparisonSideBySideCenterlineLayout(layoutId, schema)) {
+    return layoutComparisonSideBySideCenterline(elements, schema, palette, canvas)
   }
 
   if (isComparisonProsConsLayout(layoutId)) {

@@ -43,6 +43,9 @@ import { isFullBgImageOverlayBottomLayout } from './fullBgImageOverlayBottomLayo
 import { isFullBgImageOverlaySideLayout } from './fullBgImageOverlaySideLayout.js'
 import { isSectionDividerBandLayout } from './sectionDividerBandLayout.js'
 import { isSectionDividerBandFullLayout } from './sectionDividerBandFullLayout.js'
+import { isComparisonSideBySideLayout } from './comparisonSideBySideLayout.js'
+import { isComparisonSideBySideCardsLayout } from './comparisonSideBySideCardsLayout.js'
+import { isComparisonSideBySideCenterlineLayout } from './comparisonSideBySideCenterlineLayout.js'
 import { isIntroThreeParaIconsLayout } from './introThreeParaIconsLayout.js'
 import { isGridBentoThreeLayout } from './gridBentoThreeLayout.js'
 import { isGridBentoFourLayout } from './gridBentoFourLayout.js'
@@ -115,6 +118,9 @@ const SIMPLE_SLIDE_COMPILED_PREVIEW_IDS = new Set([
   'full_bg_image_overlay_side_v1',
   'section_divider_band_v1',
   'section_divider_band_full_v1',
+  'comparison_side_by_side_v1',
+  'comparison_side_by_side_cards_v1',
+  'comparison_side_by_side_centerline_v1',
 ])
 
 export function isCompiledPricingLayout(layoutId, schema = null) {
@@ -125,6 +131,9 @@ export function isCompiledPricingLayout(layoutId, schema = null) {
   if (isFullBgImageOverlaySideLayout(id, schema)) return true
   if (isSectionDividerBandLayout(id, schema)) return true
   if (isSectionDividerBandFullLayout(id, schema)) return true
+  if (isComparisonSideBySideLayout(id, schema)) return true
+  if (isComparisonSideBySideCardsLayout(id, schema)) return true
+  if (isComparisonSideBySideCenterlineLayout(id, schema)) return true
   return isCompiledGridLayout(layoutId, schema)
     || isPricingThreePlansLayout(layoutId)
     || isPricingThreePlansFeaturedLayout(layoutId)
