@@ -16,6 +16,7 @@ import Help from '../UserHelp/Help.jsx'
 import BrandKits from '../BrandKits/BrandKits.jsx'
 import TeamWorkspace from '../TeamWorkspace/TeamWorkspace.jsx'
 import AdminPortal from '../AdminPortal/AdminPortal.jsx'
+import Referrals from '../Referrals/Referrals.jsx'
 import DashboardTopbar from '../../components/layout/DashboardTopbar/DashboardTopbar.jsx'
 import DashboardSidebar from '../../components/layout/DashboardSidebar/DashboardSidebar.jsx'
 import AdminPortalSidebar from '../../components/layout/AdminPortalSidebar/AdminPortalSidebar.jsx'
@@ -985,6 +986,7 @@ function Dashboard({ onCreate, initialSection }) {
             )
           )}
           {section === 'credits' && <Settings onBack={() => goToSection('home')} initialTab="billing" />}
+          {section === 'referrals' && <Referrals />}
           {section === 'profile' && <Profile onBack={() => goToSection('home')} />}
           {section === 'settings' && (
             <Settings
