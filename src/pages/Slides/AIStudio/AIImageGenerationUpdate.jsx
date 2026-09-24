@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Plus, Search, Image as ImageIcon,
   ChevronDown, Mic, Sparkles, X, Lightbulb,
-  ListOrdered, Clock, Columns2, BarChart3, Network, List, RefreshCw, Hexagon
+  ListOrdered, Clock, Columns2, BarChart3, Network, List, RefreshCw, Hexagon, Library
 } from 'lucide-react';
 import imageGenService from '../../../services/imageGenService.js';
 import creditsService from '../../../services/creditsService.js';
@@ -12,6 +12,7 @@ import chatgptLogo from '../../../assets/chatgpt_logo.svg';
 
 import OriginalAIImageStudio from './AIImageStudio.jsx';
 import AIConversationalStudio from './AIConversationalStudio.jsx';
+import WorkspaceImageLibrary from './WorkspaceImageLibrary.jsx';
 
 import style3dImg from '../../../assets/slides_icons/style_3d.jpg';
 import styleBauhausImg from '../../../assets/slides_icons/style_bauhaus.jpg';
@@ -81,7 +82,7 @@ const TOPICS = [
 ];
 
 const INFOGRAPHIC_TOPICS = ['Presentations', 'Reports', 'Dashboards', 'Timelines', 'Workflows', 'Mind Maps'];
-export default function AIImageGenerationUpdate({ onBack, onOpenBilling, createContext }) {
+export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavigateLibrary, createContext }) {
   const [catalogs, setCatalogs] = useState({ models: [], formats: [], styles: [], archetypes: [] });
   const [activeMode, setActiveMode] = useState('image'); // 'image' or 'infographic'
   const [prompt, setPrompt] = useState('');
@@ -349,7 +350,6 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, createC
         </div>
 
         <div className="sidebar-actions">
-           <button className="new-chat-btn"><Plus size={16}/> New chat</button>
            <div className="search-bar">
              <Search size={16}/> 
              <input type="text" placeholder="Search chats" />
@@ -357,10 +357,10 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, createC
         </div>
 
         <nav className="sidebar-nav">
-           <a href="#" className="active"><ImageIcon size={18}/> Images</a>
+           <a href="#" className={activeMode === 'library' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveMode('library'); }}><Library size={18}/> Library</a>
         </nav>
 
-        <div className="sidebar-recent">
+        <div className="sidebar-recent" style={{ flex: 1 }}>
            <h3>Recent</h3>
            <ul>
              {recentChats.map((chat, idx) => (
@@ -371,10 +371,26 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, createC
              {recentChats.length === 0 && <li style={{color: 'var(--text-secondary, #6b7280)', cursor: 'default'}}>No recent chats</li>}
            </ul>
         </div>
+
+        <div style={{ marginTop: 'auto', paddingBottom: '16px' }}>
+           <button className="new-chat-btn" onClick={() => { setActiveThreadId(null); setLaunchStudio(false); }}><Plus size={16}/> New chat</button>
+        </div>
       </aside>
 
       {/* Main Content */}
       <main className="ai-gen-main" style={{ position: 'relative' }}>
+        {activeMode === 'library' ? (
+          <WorkspaceImageLibrary 
+            workspaceId={createContext?.workspaceId || createContext?.config?.workspaceId}
+            onImageClick={(threadId) => {
+              if (threadId) {
+                setActiveThreadId(threadId);
+                setActiveMode('image');
+              }
+            }}
+          />
+        ) : (
+          <>
         {activeMode === 'infographic' && (
           <div className="infographic-bg-wrapper">
             <InfographicAnimatedBackground theme="blue" mode="light" />
@@ -615,6 +631,8 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, createC
              </div>
           </div>
         </section>
+          </>
+        )}
       </main>
     </div>
   )
