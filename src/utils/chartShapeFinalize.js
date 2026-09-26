@@ -119,6 +119,66 @@ import {
   layoutTwoParaRightImage,
 } from './twoParaRightImageLayout.js'
 import {
+  isContactLeftImageLayout,
+  layoutContactLeftImage,
+} from './contactLeftImageLayout.js'
+import {
+  isContactRightImageLayout,
+  layoutContactRightImage,
+} from './contactRightImageLayout.js'
+import {
+  isContactImageBottomLayout,
+  layoutContactImageBottom,
+} from './contactImageBottomLayout.js'
+import {
+  isTeamSpeakerBioLayout,
+  layoutTeamSpeakerBio,
+} from './teamSpeakerBioLayout.js'
+import {
+  isSpeakerBioImageRightLayout,
+  layoutSpeakerBioImageRight,
+} from './speakerBioImageRightLayout.js'
+import {
+  isSpeakerBioCenteredLayout,
+  layoutSpeakerBioCentered,
+} from './speakerBioCenteredLayout.js'
+import {
+  isCenteredTextCtaLayout,
+  layoutCenteredTextCta,
+} from './centeredTextCtaLayout.js'
+import {
+  isClosingThankYouLayout,
+  layoutClosingThankYou,
+} from './closingThankYouLayout.js'
+import {
+  isMinimalTextCtaLayout,
+  layoutMinimalTextCta,
+} from './minimalTextCtaLayout.js'
+import {
+  isClosingContactCtaLayout,
+  layoutClosingContactCta,
+} from './closingContactCtaLayout.js'
+import {
+  isContactCardCtaLayout,
+  layoutContactCardCta,
+} from './contactCardCtaLayout.js'
+import {
+  isContactSplitCtaLayout,
+  layoutContactSplitCta,
+} from './contactSplitCtaLayout.js'
+import {
+  isParaImageCtaLayout,
+  layoutParaImageCta,
+} from './paraImageCtaLayout.js'
+import {
+  isImageParaCtaLayout,
+  layoutImageParaCta,
+} from './imageParaCtaLayout.js'
+import {
+  isOverlayImageCtaLayout,
+  layoutOverlayImageCta,
+} from './overlayImageCtaLayout.js'
+import {
   isTwoParaRightImageBottomLayout,
   layoutTwoParaRightImageBottom,
 } from './twoParaRightImageBottomLayout.js'
@@ -556,6 +616,66 @@ export function finalizeChartShapes(elements, schema, palette = {}, canvas = {})
 
   if (isTwoParaRightImageLayout(layoutId, schema)) {
     return layoutTwoParaRightImage(elements, schema, palette, canvas)
+  }
+
+  if (isContactLeftImageLayout(layoutId, schema)) {
+    return layoutContactLeftImage(elements, schema, palette, canvas)
+  }
+
+  if (isContactRightImageLayout(layoutId, schema)) {
+    return layoutContactRightImage(elements, schema, palette, canvas)
+  }
+
+  if (isContactImageBottomLayout(layoutId, schema)) {
+    return layoutContactImageBottom(elements, schema, palette, canvas)
+  }
+
+  if (isTeamSpeakerBioLayout(layoutId, schema)) {
+    return layoutTeamSpeakerBio(elements, schema, palette, canvas)
+  }
+
+  if (isSpeakerBioImageRightLayout(layoutId, schema)) {
+    return layoutSpeakerBioImageRight(elements, schema, palette, canvas)
+  }
+
+  if (isSpeakerBioCenteredLayout(layoutId, schema)) {
+    return layoutSpeakerBioCentered(elements, schema, palette, canvas)
+  }
+
+  if (isCenteredTextCtaLayout(layoutId, schema)) {
+    return layoutCenteredTextCta(elements, schema, palette, canvas)
+  }
+
+  if (isClosingThankYouLayout(layoutId, schema)) {
+    return layoutClosingThankYou(elements, schema, palette, canvas)
+  }
+
+  if (isMinimalTextCtaLayout(layoutId, schema)) {
+    return layoutMinimalTextCta(elements, schema, palette, canvas)
+  }
+
+  if (isClosingContactCtaLayout(layoutId, schema)) {
+    return layoutClosingContactCta(elements, schema, palette, canvas)
+  }
+
+  if (isContactCardCtaLayout(layoutId, schema)) {
+    return layoutContactCardCta(elements, schema, palette, canvas)
+  }
+
+  if (isContactSplitCtaLayout(layoutId, schema)) {
+    return layoutContactSplitCta(elements, schema, palette, canvas)
+  }
+
+  if (isParaImageCtaLayout(layoutId, schema)) {
+    return layoutParaImageCta(elements, schema, palette, canvas)
+  }
+
+  if (isImageParaCtaLayout(layoutId, schema)) {
+    return layoutImageParaCta(elements, schema, palette, canvas)
+  }
+
+  if (isOverlayImageCtaLayout(layoutId, schema)) {
+    return layoutOverlayImageCta(elements, schema, palette, canvas)
   }
 
   if (isTwoParaRightImageBottomLayout(layoutId, schema)) {
