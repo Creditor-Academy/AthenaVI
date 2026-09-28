@@ -5,11 +5,14 @@ import {
   Link2, Facebook, Twitter, MessageCircle, Linkedin
 } from 'lucide-react';
 import imageGenService from '../../../services/imageGenService.js';
-import creditsService from '../../../services/creditsService.js';
+import creditsService, { isInsufficientCreditsError } from '../../../services/creditsService.js';
 import { resolvePresentationWorkspaceContext } from '../../../utils/presentationContext.js';
 import LogoImg from '../../../assets/herologo.png';
 import InfographicAnimatedBackground from './InfographicAnimatedBackground.jsx';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
+import ImageGenSaveLocation from '../../../components/features/image-generation/ImageGenSaveLocation.jsx';
+import ImageGenCreditsGate from '../../../components/features/image-generation/ImageGenCreditsGate.jsx';
+import { checkImageGenCredits } from '../../../utils/imageGenCreditsCheck.js';
 import './AIConversationalStudio.css';
 
 const GENERATION_STEPS = [
@@ -35,7 +38,8 @@ export default function AIConversationalStudio({
   selectedModel = 'gpt-image-1',
   selectedFormat = 'square',
   selectedStyle = null,
-  activeThreadId: propThreadId = null
+  activeThreadId: propThreadId = null,
+  onLocationChange = null,
 }) {
   const [workspaceId, setWorkspaceId] = useState(createContext?.workspaceId || null);
   const [folderId, setFolderId] = useState(createContext?.folderId || null);
@@ -75,6 +79,31 @@ export default function AIConversationalStudio({
   // UI Modals
   const [fullscreenUrl, setFullscreenUrl] = useState(null);
   const [pendingPrompt, setPendingPrompt] = useState('');
+  const [creditsGate, setCreditsGate] = useState(null);
+  const creditsRetryRef = useRef(null);
+
+  const showCreditsGate = async (retryFn, wsId = workspaceId) => {
+    creditsRetryRef.current = retryFn;
+    if (!wsId) return;
+    try {
+      const check = await checkImageGenCredits(wsId, { modelId, mode });
+      setCreditsGate({
+        workspaceId: wsId,
+        needed: check.needed,
+        pool: check.pool,
+        personal: check.personal,
+        isTeam: check.isTeam,
+      });
+    } catch {
+      setCreditsGate({
+        workspaceId: wsId,
+        needed: 1,
+        pool: 0,
+        personal: 0,
+        isTeam: true,
+      });
+    }
+  };
 
   // Refs
   const composerInputRef = useRef(null);
@@ -126,6 +155,7 @@ export default function AIConversationalStudio({
         const fldId = ctx.folderId;
         setWorkspaceId(wsId);
         setFolderId(fldId);
+        onLocationChange?.({ workspaceId: wsId, folderId: fldId });
 
         // Fetch workspace credits now that we have the workspaceId
         creditsService.getWorkspaceBalance(wsId)
@@ -246,6 +276,19 @@ export default function AIConversationalStudio({
       setErrorMsg("Workspace connection failed. Please refresh the page or log in again.");
       return;
     }
+
+    try {
+      const check = await checkImageGenCredits(activeWs, {
+        modelId: modelId || 'gpt-image-1',
+        mode: mode || 'image',
+      });
+      if (!check.ok) {
+        await showCreditsGate(() => executeGenerate(promptText, wsId, fldId), activeWs);
+        return;
+      }
+    } catch {
+      /* let generate report a real 402 */
+    }
     
     setIsGenerating(true);
     setPendingPrompt(promptText);
@@ -301,8 +344,12 @@ export default function AIConversationalStudio({
 
     } catch (err) {
       console.error("Generation failed:", err);
-      const msg = err?.data?.message || err.message || "Image generation failed. Please try again.";
-      setErrorMsg(msg);
+      if (isInsufficientCreditsError(err)) {
+        await showCreditsGate(() => executeGenerate(promptText, wsId, fldId), activeWs);
+      } else {
+        const msg = err?.data?.message || err.message || "Image generation failed. Please try again.";
+        setErrorMsg(msg);
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -312,6 +359,17 @@ export default function AIConversationalStudio({
   const handleSendPrompt = async () => {
     const text = chatInput.trim();
     if (!text || isGenerating || !workspaceId) return;
+
+    try {
+      const check = await checkImageGenCredits(workspaceId, { modelId, mode });
+      if (!check.ok) {
+        setChatInput(text);
+        await showCreditsGate(() => handleSendPrompt());
+        return;
+      }
+    } catch {
+      /* continue */
+    }
 
     setChatInput('');
     setIsGenerating(true);
@@ -385,8 +443,13 @@ export default function AIConversationalStudio({
 
     } catch (err) {
       console.error("Re-prompt failed:", err);
-      const msg = err?.data?.message || err.message || "Failed to refine image. Please try again.";
-      setErrorMsg(msg);
+      if (isInsufficientCreditsError(err)) {
+        setChatInput(text);
+        await showCreditsGate(() => handleSendPrompt());
+      } else {
+        const msg = err?.data?.message || err.message || "Failed to refine image. Please try again.";
+        setErrorMsg(msg);
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -447,7 +510,11 @@ export default function AIConversationalStudio({
 
     } catch (err) {
       console.error("Regenerate error:", err);
-      setErrorMsg(err.message || "Regeneration failed.");
+      if (isInsufficientCreditsError(err)) {
+        await showCreditsGate(() => handleRegenerate(targetGen));
+      } else {
+        setErrorMsg(err.message || "Regeneration failed.");
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -537,6 +604,29 @@ export default function AIConversationalStudio({
         </div>
 
         <div className="conv-studio-header-right">
+          <ImageGenSaveLocation
+            workspaceId={workspaceId}
+            folderId={folderId}
+            disabled={isGenerating}
+            onChange={({ workspaceId: nextWs, folderId: nextFld }) => {
+              const wsChanged = String(nextWs || '') !== String(workspaceId || '');
+              setWorkspaceId(nextWs || null);
+              setFolderId(nextFld || null);
+              onLocationChange?.({ workspaceId: nextWs, folderId: nextFld });
+              if (wsChanged && threadId) {
+                setThreadId(null);
+                setGenerations([]);
+                setConversation([]);
+              }
+              if (nextWs) {
+                creditsService.getWorkspaceBalance(nextWs)
+                  .then((balance) => {
+                    setCredits(balance.workspaceCredits || balance.personalCredits || balance.credits || 0);
+                  })
+                  .catch(() => {});
+              }
+            }}
+          />
           <div className="conv-credits-tag">
             <Sparkles size={14} />
             <span>{credits} credits</span>
@@ -844,6 +934,23 @@ export default function AIConversationalStudio({
           <img src={fullscreenUrl} alt="Fullscreen preview" className="conv-fullscreen-img" />
         </div>
       )}
+
+      <ImageGenCreditsGate
+        open={Boolean(creditsGate)}
+        workspaceId={creditsGate?.workspaceId}
+        needed={creditsGate?.needed}
+        pool={creditsGate?.pool}
+        personal={creditsGate?.personal}
+        isTeam={creditsGate?.isTeam}
+        onClose={() => setCreditsGate(null)}
+        onBuy={onOpenBilling}
+        onReady={async () => {
+          setCreditsGate(null);
+          const retry = creditsRetryRef.current;
+          creditsRetryRef.current = null;
+          if (typeof retry === 'function') await retry();
+        }}
+      />
     </div>
   );
 }
