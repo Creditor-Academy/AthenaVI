@@ -2,7 +2,7 @@
 
 **Owner:** Frontend (AthenaVI PPT editor)  
 **Consumer:** Presentation / canvas backend  
-**Related:** [ppt-generation-flow-payload.md](./ppt-generation-flow-payload.md) (AI wizard generate payload)  
+**Related:** [ppt-generation-flow-payload.md](./ppt-generation-flow-payload.md) (AI wizard generate payload) · [content-contract-spec.md](./content-contract-spec.md) (shared slot text contract & pre-paint validation)  
 **Canvas coordinate system:** virtual **1920 × 1080** (origin top-left). Aspect ratios `16:9` | `4:3` | `9:16` should still map element placements into this virtual frame (or return `elements.canvas.width/height` and keep placements in that space).
 
 This document is the **full list of data the canvas needs** — create, load, edit, brand, export — so backend can implement and validate end-to-end.

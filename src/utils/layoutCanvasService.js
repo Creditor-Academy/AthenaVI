@@ -484,6 +484,7 @@ export async function applyCompiledLayoutToSlide({
   slideContent = null,
   mergeFromElements = [],
   skipSave = false,
+  skipContentValidation = false,
 }) {
   if (!workspaceId || !presentationId || !slideId) return null
 
@@ -524,6 +525,11 @@ export async function applyCompiledLayoutToSlide({
   if (!content.title && slideTitle) content.title = slideTitle
 
   const smartSchema = resolveSmartLayoutState(resolvedSchema, content)
+
+  if (skipContentValidation !== true) {
+    const { validateContentForLayout } = await import('./contentContract.js')
+    validateContentForLayout(content, smartSchema)
+  }
 
   const extracted = extractContentBySlotFromElements(mergeFromElements, smartSchema)
   const contentBySlotId = mergeContentBySlotId(
