@@ -83,7 +83,28 @@ Applied on backend (`layoutSlotsToElements`) and frontend (`buildContentBySlotId
 3. Slice arrays (columns, stats, members, timeline, bullets, items, quotes, diagram cells) to **groups.*** counts.
 4. Per-field word/char caps on nested objects (column titles, stat values, etc.).
 
-**repairContentForLayout** is an alias for normalize (AI repair flows). It does **not** bypass validation.
+**repairContentForLayout** runs normalize → **clampRepeatingGroups** (pad/slice to exact slot counts) → per-slot clamp; returns `{ content, warnings, repairs }` via `repairContentForLayoutDetailed`. **validateContentForLayoutSoft** returns errors without throwing (generation pipeline).
+
+### Backend pre-compile pipeline
+
+Before `layoutSlotsToElements`, deck generation uses:
+
+1. **contentPreShape** — layout-specific shaping (gallery, device mockups, charts, timelines, diagrams).
+2. **contentRepair.service** — `prepareContentForCompile`: contract repair loop + **layoutQa** + Joi (`contentContract.schema.js`).
+3. **slideCompiler.service** — `compileSlide`: repair → compile → `finalizeElementsDoc` (optional blueprint seed fallback).
+
+Disable with `PPT_CONTENT_REPAIR_PIPELINE=false`. LLM repair (`repairSlideContentFromQa`) still runs after heuristics when QA issues remain.
+
+**Audit (no extra Prisma table):** `PPT_CONTENT_REPAIR_AUDIT` controls where repair diffs go:
+
+| Value | Behavior |
+|--------|----------|
+| `log` (default) | Structured `presentation_content_repair_audit` entries in `combined.log` when status is REPAIRED/WARN |
+| `job` | Same payload in existing `slide_generation_jobs` rows (`jobType`: `CONTENT_REPAIR`, JSON in `usage`) |
+| `both` | Log + job |
+| `off` | No persistence (audit still returned from `compileSlide`) |
+
+Set `PPT_CONTENT_REPAIR_LOG=verbose` to log OK passes too.
 
 ---
 
@@ -127,9 +148,12 @@ From repo root:
 
 ```bash
 cd AthenaVI_backend && npm run test:content-contract-parity
+cd AthenaVI_backend && npm run test:content-repair-benchmarks
 ```
 
 25 content fixtures × 25 catalog layouts; compares canonical resolver output to frontend `buildContentBySlotIdFromSlideContent` per schema slot ID.
+
+Repair benchmarks run bad LLM fixtures through `prepareContentForCompile` + compile for 10 high-risk layouts (gallery, device grids, 3-card metrics, etc.).
 
 ---
 
@@ -137,7 +161,8 @@ cd AthenaVI_backend && npm run test:content-contract-parity
 
 | Module | Exports |
 |--------|---------|
-| `contentContract.js` | `deriveContentContract`, `normalizeContentForLayout`, `validateContentForLayout`, `repairContentForLayout` |
+| `contentContract.js` | `deriveContentContract`, `normalizeContentForLayout`, `validateContentForLayout`, `validateContentForLayoutSoft`, `repairContentForLayout`, `repairContentForLayoutDetailed`, `clampRepeatingGroups` |
+| `contentRepair.js` | Low-level pad/clamp repair helpers |
 | `slotText.js` | `textForSlot`, `coerceSlotText`, chart helpers |
 | `textNormalize.js` | `clampSlotText`, truncation helpers |
 | `errors.js` | `ContentContractValidationError` |
