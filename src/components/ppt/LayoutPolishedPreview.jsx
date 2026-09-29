@@ -279,6 +279,74 @@ import {
   bulletListGridPreviewSvg,
 } from '../../utils/bulletListGridLayout.js'
 import {
+  isAgendaThreeColumnsDefaultLayout,
+  agendaThreeColumnPreviewSvg,
+} from '../../utils/agendaThreeColumn.js'
+import {
+  isAgendaSplitPanelLayout,
+  agendaSplitPanelPreviewSvg,
+} from '../../utils/agendaSplitPanel.js'
+import {
+  isContactLeftImageLayout,
+  contactLeftImagePreviewSvg,
+} from '../../utils/contactLeftImageLayout.js'
+import {
+  isContactRightImageLayout,
+  contactRightImagePreviewSvg,
+} from '../../utils/contactRightImageLayout.js'
+import {
+  isContactImageBottomLayout,
+  contactImageBottomPreviewSvg,
+} from '../../utils/contactImageBottomLayout.js'
+import {
+  isTeamSpeakerBioLayout,
+  teamSpeakerBioPreviewSvg,
+} from '../../utils/teamSpeakerBioLayout.js'
+import {
+  isSpeakerBioImageRightLayout,
+  speakerBioImageRightPreviewSvg,
+} from '../../utils/speakerBioImageRightLayout.js'
+import {
+  isSpeakerBioCenteredLayout,
+  speakerBioCenteredPreviewSvg,
+} from '../../utils/speakerBioCenteredLayout.js'
+import {
+  isCenteredTextCtaLayout,
+  centeredTextCtaPreviewSvg,
+} from '../../utils/centeredTextCtaLayout.js'
+import {
+  isClosingThankYouLayout,
+  closingThankYouPreviewSvg,
+} from '../../utils/closingThankYouLayout.js'
+import {
+  isMinimalTextCtaLayout,
+  minimalTextCtaPreviewSvg,
+} from '../../utils/minimalTextCtaLayout.js'
+import {
+  isClosingContactCtaLayout,
+  closingContactCtaPreviewSvg,
+} from '../../utils/closingContactCtaLayout.js'
+import {
+  isContactCardCtaLayout,
+  contactCardCtaPreviewSvg,
+} from '../../utils/contactCardCtaLayout.js'
+import {
+  isContactSplitCtaLayout,
+  contactSplitCtaPreviewSvg,
+} from '../../utils/contactSplitCtaLayout.js'
+import {
+  isParaImageCtaLayout,
+  paraImageCtaPreviewSvg,
+} from '../../utils/paraImageCtaLayout.js'
+import {
+  isImageParaCtaLayout,
+  imageParaCtaPreviewSvg,
+} from '../../utils/imageParaCtaLayout.js'
+import {
+  isOverlayImageCtaLayout,
+  overlayImageCtaPreviewSvg,
+} from '../../utils/overlayImageCtaLayout.js'
+import {
   isParaLandscapeImageBottomLayout,
   paraLandscapeImageBottomPreviewSvg,
 } from '../../utils/paraLandscapeImageBottom.js'
@@ -2616,6 +2684,327 @@ export default function LayoutPolishedPreview({
     : { width: '100%', aspectRatio: cssAspect }
 
   if (
+    isOverlayImageCtaLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'overlay_image_cta_v1' ||
+    previewMode === 'overlay_image_cta'
+  ) {
+    const svg = overlayImageCtaPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#0F172A', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isImageParaCtaLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'image_para_cta_v1' ||
+    previewMode === 'image_para_cta'
+  ) {
+    const svg = imageParaCtaPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#F8FAFC', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isParaImageCtaLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'para_image_cta_v1' ||
+    previewMode === 'para_image_cta'
+  ) {
+    const svg = paraImageCtaPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#F8FAFC', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isContactSplitCtaLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'contact_split_cta_v1' ||
+    previewMode === 'contact_split_cta'
+  ) {
+    const svg = contactSplitCtaPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#F8FAFC', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isContactCardCtaLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'contact_card_cta_v1' ||
+    previewMode === 'contact_card_cta'
+  ) {
+    const svg = contactCardCtaPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#F8FAFC', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isClosingContactCtaLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'closing_contact_cta_v1' ||
+    previewMode === 'closing_contact_cta'
+  ) {
+    const svg = closingContactCtaPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#F8FAFC', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isMinimalTextCtaLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'minimal_text_cta_v1' ||
+    previewMode === 'minimal_text_cta'
+  ) {
+    const svg = minimalTextCtaPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#F8FAFC', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isClosingThankYouLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'closing_thank_you_v1' ||
+    previewMode === 'closing_thank_you'
+  ) {
+    const svg = closingThankYouPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#F8FAFC', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isCenteredTextCtaLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'centered_text_cta_v1' ||
+    previewMode === 'centered_text_cta'
+  ) {
+    const svg = centeredTextCtaPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#F8FAFC', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isSpeakerBioCenteredLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'speaker_bio_centered_v1' ||
+    previewMode === 'speaker_bio_centered'
+  ) {
+    const svg = speakerBioCenteredPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#F8FAFC', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isSpeakerBioImageRightLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'speaker_bio_image_right_v1' ||
+    previewMode === 'speaker_bio_image_right'
+  ) {
+    const svg = speakerBioImageRightPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#F8FAFC', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isTeamSpeakerBioLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'team_speaker_bio_v1' ||
+    previewMode === 'team_speaker_bio'
+  ) {
+    const svg = teamSpeakerBioPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#F8FAFC', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isContactImageBottomLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'contact_image_bottom_v1' ||
+    previewMode === 'contact_image_bottom'
+  ) {
+    const svg = contactImageBottomPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#F8FAFC', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isContactRightImageLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'contact_right_image_v1' ||
+    previewMode === 'contact_right_image'
+  ) {
+    const svg = contactRightImagePreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#F8FAFC', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isContactLeftImageLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'contact_left_image_v1' ||
+    previewMode === 'contact_left_image'
+  ) {
+    const svg = contactLeftImagePreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#F8FAFC', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isAgendaSplitPanelLayout(previewHints.layout_id) ||
+    previewHints.layout_id === 'agenda_split_panel_v1'
+  ) {
+    const svg = agendaSplitPanelPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;color:#2E89E6;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
+    isAgendaThreeColumnsDefaultLayout(previewHints.layout_id, schema) ||
+    previewHints.layout_id === 'agenda_three_columns_v1'
+  ) {
+    const svg = agendaThreeColumnPreviewSvg()
+    return (
+      <div className={className} style={{
+        position: 'relative', ...frameStyle, background: '#FFFFFF', overflow: 'hidden',
+        fontFamily: 'system-ui, sans-serif', borderRadius: large ? 12 : 6, boxSizing: 'border-box', ...style,
+      }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (
     isBulletListGridLayout(previewHints.layout_id, schema) ||
     previewHints.layout_id === 'bullet_list_grid_v1' ||
     previewMode === 'bullet_list_grid'
@@ -4151,6 +4540,8 @@ export default function LayoutPolishedPreview({
   }
   if (
     previewMode === 'closing_overlay' &&
+    !isOverlayImageCtaLayout(previewHints.layout_id, schema) &&
+    previewHints.layout_id !== 'overlay_image_cta_v1' &&
     !isFullBgImageOverlayLayout(previewHints.layout_id, schema) &&
     previewHints.layout_id !== 'full_bg_image_overlay_v1' &&
     previewHints.layout_id !== 'full_bg_image_overlay_bottom_v1' &&

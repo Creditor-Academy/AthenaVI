@@ -168,10 +168,17 @@
   display: block;
 }
 
+.ai-gen-save-corner {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  z-index: 70;
+}
+
 .main-header {
   text-align: center;
-  margin-top: 80px; /* Give more breathing room from top */
-  margin-bottom: 48px; /* Space above the styles grid */
+  margin-top: 80px;
+  margin-bottom: 48px;
   flex-shrink: 0;
 }
 .main-header h1 {
@@ -842,4 +849,4 @@
   border-color: var(--primary, #2563eb);
   background: color-mix(in srgb, var(--primary, #2563eb) 8%, transparent);
 }
-
+

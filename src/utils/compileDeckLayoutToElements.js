@@ -6,6 +6,7 @@ import {
   findDeviceFrameSlot,
 } from './deviceFrameCanvas.js'
 import { buildContentBySlotIdFromSlideContent, mergeContentBySlotId } from './contentSlotMapping.js'
+import { validateContentForLayout } from './contentContract.js'
 import { fontSizeForTextSlot, resolveTypeScaleFontSize, fitTextToSlot } from './canvasTypography.js'
 import {
   compileLayoutGeometry,
@@ -90,6 +91,66 @@ import {
   isTwoParaRightImageLayout,
   buildTwoParaRightImageCanvasElements,
 } from './twoParaRightImageLayout.js'
+import {
+  isContactLeftImageLayout,
+  buildContactLeftImageCanvasElements,
+} from './contactLeftImageLayout.js'
+import {
+  isContactRightImageLayout,
+  buildContactRightImageCanvasElements,
+} from './contactRightImageLayout.js'
+import {
+  isContactImageBottomLayout,
+  buildContactImageBottomCanvasElements,
+} from './contactImageBottomLayout.js'
+import {
+  isTeamSpeakerBioLayout,
+  buildTeamSpeakerBioCanvasElements,
+} from './teamSpeakerBioLayout.js'
+import {
+  isSpeakerBioImageRightLayout,
+  buildSpeakerBioImageRightCanvasElements,
+} from './speakerBioImageRightLayout.js'
+import {
+  isSpeakerBioCenteredLayout,
+  buildSpeakerBioCenteredCanvasElements,
+} from './speakerBioCenteredLayout.js'
+import {
+  isCenteredTextCtaLayout,
+  buildCenteredTextCtaCanvasElements,
+} from './centeredTextCtaLayout.js'
+import {
+  isClosingThankYouLayout,
+  buildClosingThankYouCanvasElements,
+} from './closingThankYouLayout.js'
+import {
+  isMinimalTextCtaLayout,
+  buildMinimalTextCtaCanvasElements,
+} from './minimalTextCtaLayout.js'
+import {
+  isClosingContactCtaLayout,
+  buildClosingContactCtaCanvasElements,
+} from './closingContactCtaLayout.js'
+import {
+  isContactCardCtaLayout,
+  buildContactCardCtaCanvasElements,
+} from './contactCardCtaLayout.js'
+import {
+  isContactSplitCtaLayout,
+  buildContactSplitCtaCanvasElements,
+} from './contactSplitCtaLayout.js'
+import {
+  isParaImageCtaLayout,
+  buildParaImageCtaCanvasElements,
+} from './paraImageCtaLayout.js'
+import {
+  isImageParaCtaLayout,
+  buildImageParaCtaCanvasElements,
+} from './imageParaCtaLayout.js'
+import {
+  isOverlayImageCtaLayout,
+  buildOverlayImageCtaCanvasElements,
+} from './overlayImageCtaLayout.js'
 import {
   isTwoParaRightImageBottomLayout,
   buildTwoParaRightImageBottomCanvasElements,
@@ -1355,6 +1416,21 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
       (isParaLandscapeImageLayout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
       (isParaSplit5050Layout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG|TEXT_HALF_BG)$/i.test(String(el.slotId || '')))) ||
       (isTwoParaRightImageLayout(schema?.layout_id, schema) && (/^(BODY_1|BODY_2|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isContactLeftImageLayout(schema?.layout_id, schema) && (/^(HEADING|CONTACT_IMAGE|IMAGE_CARD_BG|CONTACT_(ADDRESS|PHONE|EMAIL)(_LABEL)?)$/i.test(String(el.slotId || '')))) ||
+      (isContactRightImageLayout(schema?.layout_id, schema) && (/^(HEADING|CONTACT_IMAGE|IMAGE_CARD_BG|CONTACT_(ADDRESS|PHONE|EMAIL)(_LABEL)?)$/i.test(String(el.slotId || '')))) ||
+      (isContactImageBottomLayout(schema?.layout_id, schema) && (/^(HEADING|CONTACT_IMAGE|IMAGE_CARD_BG|CONTACT_(ADDRESS|PHONE|EMAIL))$/i.test(String(el.slotId || '')))) ||
+      (isTeamSpeakerBioLayout(schema?.layout_id, schema) && (/^(MEMBER_1_(IMAGE|NAME|ROLE|BIO)|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isSpeakerBioImageRightLayout(schema?.layout_id, schema) && (/^(MEMBER_1_(IMAGE|NAME|ROLE|BIO)|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isSpeakerBioCenteredLayout(schema?.layout_id, schema) && (/^(MEMBER_1_(IMAGE|NAME|ROLE|BIO)|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isCenteredTextCtaLayout(schema?.layout_id, schema) && (/^(HEADING|SUBTITLE|CTA|CTA_BG|CONTACT|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isClosingThankYouLayout(schema?.layout_id, schema) && (/^(HEADING|SUBTITLE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isMinimalTextCtaLayout(schema?.layout_id, schema) && (/^(HEADING|CTA|CTA_BG|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isClosingContactCtaLayout(schema?.layout_id, schema) && (/^(HEADING|CONTACT|CTA|CTA_BG|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isContactCardCtaLayout(schema?.layout_id, schema) && (/^(HEADING|CONTACT_(ADDRESS|PHONE|EMAIL)|CTA|CTA_BG|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isContactSplitCtaLayout(schema?.layout_id, schema) && (/^(HEADING|CTA_HEADING|CONTACT_(ADDRESS|PHONE|EMAIL)|CTA|CTA_BG|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaImageCtaLayout(schema?.layout_id, schema) && (/^(BODY|CTA|CTA_BG|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isImageParaCtaLayout(schema?.layout_id, schema) && (/^(BODY|CTA|CTA_BG|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isOverlayImageCtaLayout(schema?.layout_id, schema) && (/^(BACKGROUND_IMAGE|OVERLAY_SCRIM|HEADING|BODY|CTA|CTA_BG)$/i.test(String(el.slotId || '')))) ||
       (isTwoParaRightImageBottomLayout(schema?.layout_id, schema) && (/^(BODY_1|BODY_2|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
       (isThreeParaImageLayout(schema?.layout_id, schema) && (/^(BODY_[123]|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
       (isFourParaImageLayout(schema?.layout_id, schema) && (/^(HEADING|BULLET_[1-4]|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
@@ -1496,6 +1572,51 @@ export function compileDeckLayoutToElements(schema, options = {}) {
   if (isTwoParaRightImageLayout(schema?.layout_id, schema)) {
     return buildTwoParaRightImageCanvasElements({ schema, options })
   }
+  if (isContactLeftImageLayout(schema?.layout_id, schema)) {
+    return buildContactLeftImageCanvasElements({ schema, options })
+  }
+  if (isContactRightImageLayout(schema?.layout_id, schema)) {
+    return buildContactRightImageCanvasElements({ schema, options })
+  }
+  if (isContactImageBottomLayout(schema?.layout_id, schema)) {
+    return buildContactImageBottomCanvasElements({ schema, options })
+  }
+  if (isTeamSpeakerBioLayout(schema?.layout_id, schema)) {
+    return buildTeamSpeakerBioCanvasElements({ schema, options })
+  }
+  if (isSpeakerBioImageRightLayout(schema?.layout_id, schema)) {
+    return buildSpeakerBioImageRightCanvasElements({ schema, options })
+  }
+  if (isSpeakerBioCenteredLayout(schema?.layout_id, schema)) {
+    return buildSpeakerBioCenteredCanvasElements({ schema, options })
+  }
+  if (isCenteredTextCtaLayout(schema?.layout_id, schema)) {
+    return buildCenteredTextCtaCanvasElements({ schema, options })
+  }
+  if (isClosingThankYouLayout(schema?.layout_id, schema)) {
+    return buildClosingThankYouCanvasElements({ schema, options })
+  }
+  if (isMinimalTextCtaLayout(schema?.layout_id, schema)) {
+    return buildMinimalTextCtaCanvasElements({ schema, options })
+  }
+  if (isClosingContactCtaLayout(schema?.layout_id, schema)) {
+    return buildClosingContactCtaCanvasElements({ schema, options })
+  }
+  if (isContactCardCtaLayout(schema?.layout_id, schema)) {
+    return buildContactCardCtaCanvasElements({ schema, options })
+  }
+  if (isContactSplitCtaLayout(schema?.layout_id, schema)) {
+    return buildContactSplitCtaCanvasElements({ schema, options })
+  }
+  if (isParaImageCtaLayout(schema?.layout_id, schema)) {
+    return buildParaImageCtaCanvasElements({ schema, options })
+  }
+  if (isImageParaCtaLayout(schema?.layout_id, schema)) {
+    return buildImageParaCtaCanvasElements({ schema, options })
+  }
+  if (isOverlayImageCtaLayout(schema?.layout_id, schema)) {
+    return buildOverlayImageCtaCanvasElements({ schema, options })
+  }
   if (isTwoParaRightImageBottomLayout(schema?.layout_id, schema)) {
     return buildTwoParaRightImageBottomCanvasElements({ schema, options })
   }
@@ -1592,6 +1713,14 @@ export function compileDeckLayoutToElements(schema, options = {}) {
 
   const slots = Array.isArray(schema?.slots) ? schema.slots : []
   if (!slots.length) return []
+
+  if (
+    options.content &&
+    typeof options.content === 'object' &&
+    options.skipContentValidation !== true
+  ) {
+    validateContentForLayout(options.content, schema)
+  }
 
   const canvasW = options.canvas?.width || 1920
   const canvasH = options.canvas?.height || 1080

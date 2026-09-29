@@ -1,0 +1,113 @@
+.igcg-allocate-layer {
+  position: relative;
+  z-index: 13000;
+  isolation: isolate;
+}
+
+.igcg-allocate-layer .allocate-credits-overlay,
+.igcg-allocate-layer .modal-overlay-wrapper {
+  z-index: 13050;
+}
+
+.igcg-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  background: rgba(15, 23, 42, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.igcg-card {
+  position: relative;
+  width: min(420px, 100%);
+  background: var(--bg-surface, #fff);
+  color: var(--text-main, #111827);
+  border-radius: 20px;
+  padding: 28px 24px 22px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.igcg-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.igcg-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--primary, #2563eb) 12%, transparent);
+  color: var(--primary, #2563eb);
+  margin-bottom: 12px;
+}
+
+.igcg-card h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.igcg-card p {
+  margin: 0 0 16px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-secondary, #4b5563);
+}
+
+.igcg-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.igcg-pills span {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--bg-main, #f3f4f6);
+  color: var(--text-secondary, #4b5563);
+}
+
+.igcg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.igcg-primary,
+.igcg-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+}
+
+.igcg-primary {
+  background: var(--primary, #2563eb);
+  color: #fff;
+}
+
+.igcg-secondary {
+  background: transparent;
+  color: var(--text-main, #111827);
+  border: 1px solid var(--border-color, #e5e7eb);
+}

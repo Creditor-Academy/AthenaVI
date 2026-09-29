@@ -13,6 +13,9 @@ import chatgptLogo from '../../../assets/chatgpt_logo.svg';
 import OriginalAIImageStudio from './AIImageStudio.jsx';
 import AIConversationalStudio from './AIConversationalStudio.jsx';
 import WorkspaceImageLibrary from './WorkspaceImageLibrary.jsx';
+import ImageGenSaveLocation from '../../../components/features/image-generation/ImageGenSaveLocation.jsx';
+import ImageGenCreditsGate from '../../../components/features/image-generation/ImageGenCreditsGate.jsx';
+import { checkImageGenCredits } from '../../../utils/imageGenCreditsCheck.js';
 
 import style3dImg from '../../../assets/slides_icons/style_3d.jpg';
 import styleBauhausImg from '../../../assets/slides_icons/style_bauhaus.jpg';
@@ -83,6 +86,12 @@ const TOPICS = [
 
 const INFOGRAPHIC_TOPICS = ['Presentations', 'Reports', 'Dashboards', 'Timelines', 'Workflows', 'Mind Maps'];
 export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavigateLibrary, createContext }) {
+  const [saveWorkspaceId, setSaveWorkspaceId] = useState(
+    createContext?.workspaceId || createContext?.config?.workspaceId || '',
+  );
+  const [saveFolderId, setSaveFolderId] = useState(
+    createContext?.folderId || createContext?.config?.folderId || '',
+  );
   const [catalogs, setCatalogs] = useState({ models: [], formats: [], styles: [], archetypes: [] });
   const [activeMode, setActiveMode] = useState('image'); // 'image' or 'infographic'
   const [prompt, setPrompt] = useState('');
@@ -157,6 +166,8 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
   }, []);
   const [activeThreadId, setActiveThreadId] = useState(null);
   const [launchStudio, setLaunchStudio] = useState(false);
+  const [creditsGate, setCreditsGate] = useState(null);
+  const [creditsBusy, setCreditsBusy] = useState(false);
   const [backgroundTheme, setBackgroundTheme] = useState('blue');
   const [backgroundMode, setBackgroundMode] = useState('dark');
 
@@ -216,20 +227,71 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
   };
 
   useEffect(() => {
+    const nextWs = createContext?.workspaceId || createContext?.config?.workspaceId || '';
+    const nextFld = createContext?.folderId || createContext?.config?.folderId || '';
+    if (nextWs) setSaveWorkspaceId(nextWs);
+    if (nextFld) setSaveFolderId(nextFld);
+  }, [createContext?.workspaceId, createContext?.folderId, createContext?.config?.workspaceId, createContext?.config?.folderId]);
+
+  const handleSaveLocationChange = ({ workspaceId, folderId }) => {
+    setSaveWorkspaceId(workspaceId || '');
+    setSaveFolderId(folderId || '');
+  };
+
+  const tryLaunchStudio = async () => {
+    if (!prompt.trim() || creditsBusy) return;
+    const wsId = saveWorkspaceId || createContext?.workspaceId || createContext?.config?.workspaceId;
+    if (!wsId) {
+      setLaunchStudio(true);
+      return;
+    }
+    setCreditsBusy(true);
+    try {
+      const check = await checkImageGenCredits(wsId, {
+        modelId: selectedModel,
+        mode: activeMode,
+      });
+      if (!check.ok) {
+        setCreditsGate({
+          workspaceId: wsId,
+          needed: check.needed,
+          pool: check.pool,
+          personal: check.personal,
+          isTeam: check.isTeam,
+        });
+        return;
+      }
+      setLaunchStudio(true);
+    } catch {
+      setLaunchStudio(true);
+    } finally {
+      setCreditsBusy(false);
+    }
+  };
+
+  useEffect(() => {
     async function loadUserSession() {
       try {
-        const balance = await creditsService.getPersonalBalance();
-        setCredits(balance.personalCredits || 0);
+        const balance = saveWorkspaceId
+          ? await creditsService.getWorkspaceBalance(saveWorkspaceId)
+          : await creditsService.getPersonalBalance();
+        setCredits(balance.workspaceCredits || balance.personalCredits || balance.credits || 0);
 
-        const workspaceId = createContext?.workspaceId || null;
-        const history = await imageGenService.listThreads(workspaceId, { take: 10 });
+        if (!saveWorkspaceId) {
+          setRecentChats([]);
+          return;
+        }
+        const history = await imageGenService.listThreads(saveWorkspaceId, {
+          folderId: saveFolderId || undefined,
+          take: 10,
+        });
         setRecentChats(history || []);
       } catch(e) {
         console.error("Failed to load user session", e);
       }
     }
     loadUserSession();
-  }, [createContext]);
+  }, [saveWorkspaceId, saveFolderId]);
 
   const getStyleImage = (styleId) => {
     switch(styleId) {
@@ -327,8 +389,11 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
         onOpenBilling={onOpenBilling}
         createContext={{
           ...createContext,
+          workspaceId: saveWorkspaceId,
+          folderId: saveFolderId,
           threadId: activeThreadId
         }}
+        onLocationChange={handleSaveLocationChange}
         initialPrompt={prompt}
         activeMode={activeMode}
         selectedModel={selectedModel}
@@ -379,9 +444,16 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
 
       {/* Main Content */}
       <main className="ai-gen-main" style={{ position: 'relative' }}>
+        <div className="ai-gen-save-corner">
+          <ImageGenSaveLocation
+            workspaceId={saveWorkspaceId}
+            folderId={saveFolderId}
+            onChange={handleSaveLocationChange}
+          />
+        </div>
         {activeMode === 'library' ? (
           <WorkspaceImageLibrary 
-            workspaceId={createContext?.workspaceId || createContext?.config?.workspaceId}
+            workspaceId={saveWorkspaceId || createContext?.workspaceId || createContext?.config?.workspaceId}
             onImageClick={(threadId) => {
               if (threadId) {
                 setActiveThreadId(threadId);
@@ -522,7 +594,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey && prompt.trim()) {
                       e.preventDefault();
-                      setLaunchStudio(true);
+                      tryLaunchStudio();
                     }
                   }}
                   rows={1}
@@ -623,8 +695,9 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                 </div>
                 <button 
                   className="generate-btn" 
-                  onClick={() => setLaunchStudio(true)}
-                  style={{ background: 'var(--primary, #2563eb)', color: '#ffffff' }}
+                  onClick={tryLaunchStudio}
+                  disabled={creditsBusy}
+                  style={{ background: 'var(--primary, #2563eb)', color: '#ffffff', opacity: creditsBusy ? 0.7 : 1 }}
                 >
                   <Sparkles size={16}/> Generate
                 </button>
@@ -634,6 +707,20 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
           </>
         )}
       </main>
+      <ImageGenCreditsGate
+        open={Boolean(creditsGate)}
+        workspaceId={creditsGate?.workspaceId}
+        needed={creditsGate?.needed}
+        pool={creditsGate?.pool}
+        personal={creditsGate?.personal}
+        isTeam={creditsGate?.isTeam}
+        onClose={() => setCreditsGate(null)}
+        onBuy={onOpenBilling}
+        onReady={() => {
+          setCreditsGate(null);
+          setLaunchStudio(true);
+        }}
+      />
     </div>
   )
 }

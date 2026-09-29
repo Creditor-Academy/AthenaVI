@@ -1,17 +1,50 @@
 /** Map slide content objects to per-slot text for canvas compile. */
 import { normalizeChartContent } from './chartContentNormalize.js'
-import { normalizeContentForLayout } from './contentContract.js'
+import {
+  normalizeContentForLayout,
+  deriveContentContract,
+  textForSlot,
+  coerceSlotText,
+  clampSlotText,
+} from './contentContract.js'
 
-function columnAt(content, index) {
-  const cols = content?.columns
-  if (!Array.isArray(cols)) return null
-  return cols[index] || null
-}
+const NON_TEXT_SLOT_ROLES = new Set(['image', 'chart', 'decoration', 'background', 'table'])
 
-function statAt(content, index) {
-  const stats = content?.stats
-  if (!Array.isArray(stats)) return null
-  return stats[index] || null
+function applyContentAliases(content, out) {
+  if (content.title) {
+    out.HEADING = out.HEADING || content.title
+    out.MAIN_TITLE = out.MAIN_TITLE || content.title
+    out.TITLE = out.TITLE || content.title
+    out.HEADING_L = out.HEADING_L || content.title
+  }
+  if (content.subtitle) {
+    out.SUBTITLE = out.SUBTITLE || content.subtitle
+    out.SUBHEADING = out.SUBHEADING || content.subtitle
+  }
+  if (content.body) {
+    out.BODY = out.BODY || content.body
+    out.BODY_L = out.BODY_L || content.body
+  }
+  if (content.quote) {
+    out.QUOTE = out.QUOTE || content.quote
+    out.STATEMENT = out.STATEMENT || content.quote
+  }
+  if (content.cta) out.CTA = out.CTA || content.cta
+  if (content.contact) {
+    if (typeof content.contact === 'string') out.CONTACT = out.CONTACT || content.contact
+    else {
+      out.CONTACT =
+        out.CONTACT ||
+        [content.contact.email, content.contact.phone, content.contact.address].filter(Boolean).join(' · ')
+    }
+  }
+  if (content.bullets && !content.body && !out.BODY) {
+    out.BODY = content.bullets
+      .map((b) => (typeof b === 'string' ? b : String(b?.text || b?.label)))
+      .filter(Boolean)
+      .map((l) => (l.startsWith('•') ? l : `• ${l}`))
+      .join('\n')
+  }
 }
 
 function chartDatasetAt(content, index) {
@@ -71,188 +104,18 @@ export function buildContentBySlotIdFromSlideContent(rawContent = {}, schema = n
 
   const content = normalizeContentForLayout(rawContent, schema)
   const slots = Array.isArray(schema?.slots) ? schema.slots : []
+  const contract = deriveContentContract(schema)
 
-  // Globals
-  if (content.title) {
-    out.HEADING = content.title
-    out.MAIN_TITLE = content.title
-    out.TITLE = content.title
-    out.HEADING_L = content.title
-  }
-  if (content.subtitle) {
-    out.SUBTITLE = content.subtitle
-    out.SUBHEADING = content.subtitle
-  }
-  if (content.body) {
-    out.BODY = content.body
-    out.BODY_L = content.body
-  }
-  if (content.quote) {
-    out.QUOTE = content.quote
-    out.STATEMENT = content.quote
-  }
-  if (content.cta) {
-    out.CTA = content.cta
-  }
-  if (content.contact) {
-    if (typeof content.contact === 'string') out.CONTACT = content.contact
-    else {
-      out.CONTACT = [content.contact.email, content.contact.phone, content.contact.address]
-        .filter(Boolean)
-        .join(' · ')
-    }
-  }
-  if (content.bullets && !content.body) {
-     out.BODY = content.bullets.map(b => typeof b === 'string' ? b : String(b?.text || b?.label)).filter(Boolean).map(l => l.startsWith('•') ? l : `• ${l}`).join('\n')
-  }
-
-  // Strict mapping based on actual slots to avoid overflow
   for (const slot of slots) {
-    const id = String(slot.id || '').toUpperCase()
-
-    // Match column-like slots
-    const colMatch = id.match(/^(?:CARD|COL|ROW|FEATURE|METRIC)_(\d+)_(TITLE|BODY|HEADING)$/i) || id.match(/^METRIC_(TITLE|BODY)_(\d+)$/i)
-    if (colMatch && Array.isArray(content.columns)) {
-      const idxStr = colMatch[1] === 'TITLE' || colMatch[1] === 'BODY' ? colMatch[2] : colMatch[1]
-      const fieldStr = colMatch[1] === 'TITLE' || colMatch[1] === 'BODY' ? colMatch[1] : colMatch[2]
-      
-      const idx = parseInt(idxStr, 10) - 1
-      const field = fieldStr.toUpperCase()
-      const col = content.columns[idx]
-      if (col) {
-        if ((field === 'TITLE' || field === 'HEADING') && (col.title || col.heading || col.label)) out[slot.id] = col.title || col.heading || col.label
-        if (field === 'BODY' && (col.body || col.text)) out[slot.id] = col.body || col.text
-      }
-    }
-
-    const bodyMatch = id.match(/^BODY_(\d+)$/i)
-    if (bodyMatch && Array.isArray(content.columns)) {
-      const idx = parseInt(bodyMatch[1], 10) - 1
-      const col = content.columns[idx]
-      if (col && (col.body || col.text)) out[slot.id] = col.body || col.text
-    }
-    const labelMatch = id.match(/^IMAGE_(\d+)_LABEL$/i)
-    if (labelMatch && Array.isArray(content.columns)) {
-      const idx = parseInt(labelMatch[1], 10) - 1
-      const col = content.columns[idx]
-      if (col && (col.title || col.heading || col.label)) out[slot.id] = col.title || col.heading || col.label
-    }
-
-    // Match stats
-    const statMatch = id.match(/^STAT_(\d+)_(VALUE|LABEL|DESC|TREND|STATUS)$/i)
-    if (statMatch && Array.isArray(content.stats)) {
-      const idx = parseInt(statMatch[1], 10) - 1
-      const field = statMatch[2].toUpperCase()
-      const stat = content.stats[idx]
-      if (stat) {
-        if (field === 'VALUE' && stat.value) out[slot.id] = stat.value
-        if (field === 'LABEL' && stat.label) out[slot.id] = stat.label
-        if (field === 'DESC' && (stat.desc || stat.description)) out[slot.id] = stat.desc || stat.description
-        if (field === 'TREND' && stat.trend) out[slot.id] = stat.trend
-        if (field === 'STATUS' && stat.status) out[slot.id] = stat.status
-      }
-    }
-
-    // Match card trend (alternative format CARD{X}_TREND)
-    const cardTrendMatch = id.match(/^CARD(\d+)_TREND$/i)
-    if (cardTrendMatch && Array.isArray(content.stats)) {
-      const idx = parseInt(cardTrendMatch[1], 10) - 1
-      const stat = content.stats[idx]
-      if (stat && stat.trend) out[slot.id] = stat.trend
-    }
-
-    // Match members
-    const memberMatch = id.match(/^MEMBER_(\d+)_(NAME|ROLE|BIO|EMAIL)$/i)
-    if (memberMatch && Array.isArray(content.members)) {
-      const idx = parseInt(memberMatch[1], 10) - 1
-      const field = memberMatch[2].toUpperCase()
-      const member = content.members[idx]
-      if (member) {
-        if (field === 'NAME' && member.name) out[slot.id] = member.name
-        if (field === 'ROLE' && (member.role || member.title)) out[slot.id] = member.role || member.title
-        if (field === 'BIO' && (member.bio || member.description)) out[slot.id] = member.bio || member.description
-        if (field === 'EMAIL' && member.email) out[slot.id] = member.email
-      }
-    }
-
-    // Match timeline
-    const mileMatch = id.match(/^MILESTONE_(\d+)_(LABEL|DETAIL)$/i)
-    if (mileMatch && Array.isArray(content.timeline)) {
-      const idx = parseInt(mileMatch[1], 10) - 1
-      const field = mileMatch[2].toUpperCase()
-      const item = content.timeline[idx]
-      if (item) {
-        if (field === 'LABEL' && item.label) out[slot.id] = item.label
-        if (field === 'DETAIL' && item.detail) out[slot.id] = item.detail
-      }
-    }
-    const legacyMileMatch = id.match(/^MILESTONE_(\d+)$/i)
-    if (legacyMileMatch && Array.isArray(content.timeline)) {
-      const idx = parseInt(legacyMileMatch[1], 10) - 1
-      const item = content.timeline[idx]
-      if (item) {
-        out[slot.id] = item.label && item.detail ? `${item.label}\n${item.detail}` : item.label || item.detail
-      }
-    }
-
-    // Match diagrams
-    const qMatch = id.match(/^Q(\d+)_(TITLE|BODY)$/i) || id.match(/^(?:FUNNEL|STEP)_(\d+)_(TITLE|BODY)$/i)
-    if (qMatch) {
-      const idx = parseInt(qMatch[1], 10) - 1
-      const field = qMatch[2].toUpperCase()
-      const cells = content.diagram?.cells || content.cells || content.quadrants || content.steps || content.funnel
-      if (Array.isArray(cells)) {
-        const cell = cells[idx]
-        if (cell) {
-          if (field === 'TITLE' && (cell.title || cell.label || cell.heading)) out[slot.id] = cell.title || cell.label || cell.heading
-          if (field === 'BODY' && (cell.body || cell.text || cell.detail)) out[slot.id] = cell.body || cell.text || cell.detail
-        }
-      }
-    }
-
-    // Match bullets and items
-    const bulletMatch = id.match(/^BULLET_(\d+)$/i)
-    if (bulletMatch && Array.isArray(content.bullets)) {
-      const idx = parseInt(bulletMatch[1], 10) - 1
-      const b = content.bullets[idx]
-      if (b) out[slot.id] = typeof b === 'string' ? b : String(b.text || b.label)
-    }
-
-    const itemMatch = id.match(/^ITEM_(\d+)$/i)
-    if (itemMatch && Array.isArray(content.items)) {
-      const idx = parseInt(itemMatch[1], 10) - 1
-      const it = content.items[idx]
-      if (it) out[slot.id] = typeof it === 'string' ? it : String(it.title || it.label || it.text)
-    }
-
-    // Match quotes
-    const quoteMatch = id.match(/^QUOTE_(\d+)$/i)
-    if (quoteMatch && Array.isArray(content.quotes)) {
-      const idx = parseInt(quoteMatch[1], 10) - 1
-      const q = content.quotes[idx]
-      if (q) out[slot.id] = typeof q === 'string' ? q : String(q.text || q.quote)
-    }
-    
-    // Match agenda
-    const agendaHeadingMatch = id.match(/^AGENDA_COL_(\d+)_HEADING$/i)
-    if (agendaHeadingMatch && Array.isArray(content.agenda?.columns)) {
-      const idx = parseInt(agendaHeadingMatch[1], 10) - 1
-      const col = content.agenda.columns[idx]
-      if (col && (col.heading || col.title)) out[slot.id] = col.heading || col.title
-    }
-    
-    const agendaItemMatch = id.match(/^AGENDA_COL_(\d+)_ITEM_(\d+)$/i)
-    if (agendaItemMatch && Array.isArray(content.agenda?.columns)) {
-      const colIdx = parseInt(agendaItemMatch[1], 10) - 1
-      const itemIdx = parseInt(agendaItemMatch[2], 10) - 1
-      const col = content.agenda.columns[colIdx]
-      if (col && Array.isArray(col.items)) {
-        const item = col.items[itemIdx]
-        if (item) out[slot.id] = typeof item === 'string' ? item : String(item.text || '')
-      }
-    }
+    if (!slot?.id) continue
+    const role = String(slot.role || '').toLowerCase()
+    if (NON_TEXT_SLOT_ROLES.has(role)) continue
+    const raw = textForSlot(slot.id, content, schema)
+    const text = clampSlotText(coerceSlotText(raw), contract.slots[slot.id])
+    if (text) out[slot.id] = text
   }
 
+  applyContentAliases(content, out)
   mapChartToSlots(content, schema, out)
 
   const members = Array.isArray(content.members)

@@ -128,7 +128,7 @@ const CATALOG = {
     }),
     ctaPill('cols 4-9, rows 6-7'),
     slot('CTA', 'cols 4-9, rows 6-7', 'cta', 'Book a demo', { layer: 10, typography: typo('cta') }),
-  ], { mode: 'closing_cta' }),
+  ], { mode: 'minimal_text_cta' }),
 
   closing_contact_cta_v1: layoutBase('closing_contact_cta_v1', 'closing', [
     slot('HEADING', 'cols 2-11, rows 2-4', 'heading', "Let's connect", {
@@ -141,7 +141,7 @@ const CATALOG = {
     }),
     ctaPill('cols 4-9, rows 6-7'),
     slot('CTA', 'cols 4-9, rows 6-7', 'cta', 'Get in touch', { layer: 10, typography: typo('cta') }),
-  ], { mode: 'closing_cta' }),
+  ], { mode: 'closing_contact_cta' }),
 
   contact_card_cta_v1: layoutBase('contact_card_cta_v1', 'closing', [
     slot('HEADING', 'cols 3-10, rows 2-3', 'heading', "Let's connect", {
@@ -165,7 +165,7 @@ const CATALOG = {
     }),
     ctaPill('cols 4-9, rows 7-8'),
     slot('CTA', 'cols 4-9, rows 7-8', 'cta', 'Get in touch', { layer: 10, typography: typo('cta') }),
-  ], { mode: 'closing_cta' }),
+  ], { mode: 'contact_card_cta' }),
 
   contact_split_cta_v1: layoutBase('contact_split_cta_v1', 'closing', [
     heading('HEADING', 'cols 2-6, rows 2-3', "Let's connect", {
@@ -202,14 +202,14 @@ const CATALOG = {
     ctaPill('cols 2-5, rows 6-7'),
     slot('CTA', 'cols 2-5, rows 6-7', 'cta', 'Book a demo', { layer: 10, typography: typo('cta') }),
     imageRight(),
-  ], { mode: 'closing_image_right' }),
+  ], { mode: 'para_image_cta' }),
 
   image_para_cta_v1: layoutBase('image_para_cta_v1', 'closing', [
     imageLeft('cols 1-6, rows 1-10', 'HERO_IMAGE'),
     body('BODY', 'cols 7-11, rows 2-5', P.short, 4),
     ctaPill('cols 7-10, rows 6-7'),
     slot('CTA', 'cols 7-10, rows 6-7', 'cta', 'Book a demo', { layer: 10, typography: typo('cta') }),
-  ], { mode: 'closing_image_left' }),
+  ], { mode: 'image_para_cta' }),
 
   overlay_image_cta_v1: layoutBase('overlay_image_cta_v1', 'closing', [
     slot('BACKGROUND_IMAGE', 'cols 1-12, rows 1-10', 'background', null, { layer: 0, fit: 'cover' }),
@@ -224,7 +224,7 @@ const CATALOG = {
     }),
     ctaPill('cols 4-9, rows 7-8'),
     slot('CTA', 'cols 4-9, rows 7-8', 'cta', 'Get in touch', { layer: 10, typography: typo('cta') }),
-  ], { mode: 'closing_overlay' }),
+  ], { mode: 'overlay_image_cta' }),
 }
 
 export default CATALOG

@@ -24,6 +24,14 @@ export default defineConfig(({ mode }) => {
     base: '/',
     plugins: [react()],
     server: {
+      fs: {
+        allow: ['.'],
+      },
+      hmr: {
+        host: 'localhost',
+        port: 5173,
+        clientPort: 5173,
+      },
       proxy: {
         '/api': {
           target: apiBaseUrl,
@@ -32,6 +40,14 @@ export default defineConfig(({ mode }) => {
           timeout: 1800000,
         },
       },
+    },
+    optimizeDeps: {
+      include: [
+        '@athena/contracts/contentContract.js',
+        '@athena/contracts/errors.js',
+        '@athena/contracts/textNormalize.js',
+        '@athena/contracts/slotText.js',
+      ],
     },
   }
 })
