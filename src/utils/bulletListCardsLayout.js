@@ -130,11 +130,11 @@ function buildElements({ canvasW, canvasH, heading, titles, bodies, accent, text
     {
       id: prev.IMAGE_CARD_BG?.id || prev.CARD_1_BG?.id || 'slot-IMAGE_CARD_BG',
       slotId: 'IMAGE_CARD_BG',
-      type: 'graphic',
-      role: 'decoration',
+        type: 'graphic',
+        role: 'decoration',
       layer: 2,
       placement: { x: 0, y: 0, width: canvasW, height: canvasH, rotation: 0, opacity: 1 },
-      content: {
+        content: {
         svg: buildBulletListCardsChromeSvg(),
         preserveAspectRatio: 'none',
         colorMode: 'recolorable',

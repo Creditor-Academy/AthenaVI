@@ -45,9 +45,9 @@ function isGeminiRequest({ provider, modelId } = {}) {
 
 function timeoutForRequest({ mode, kind = 'generate', provider, modelId } = {}) {
   if (isGeminiRequest({ provider, modelId })) return GEMINI_TIMEOUT_MS
-  const infographic = mode === 'infographic'
-  if (kind === 'tweak') return infographic ? INFOGRAPHIC_TWEAK_TIMEOUT_MS : TWEAK_TIMEOUT_MS
-  return infographic ? INFOGRAPHIC_GENERATE_TIMEOUT_MS : IMAGE_GENERATE_TIMEOUT_MS
+  const longMode = mode === 'infographic' || mode === 'social' || mode === 'printable'
+  if (kind === 'tweak') return longMode ? INFOGRAPHIC_TWEAK_TIMEOUT_MS : TWEAK_TIMEOUT_MS
+  return longMode ? INFOGRAPHIC_GENERATE_TIMEOUT_MS : IMAGE_GENERATE_TIMEOUT_MS
 }
 
 function saveBlob(blob, filename) {
@@ -252,9 +252,19 @@ class ImageGenService {
     }
   }
 
-  async getModels() {
+  async getModelsCatalog() {
     const data = await this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.MODELS)
-    return data?.models || []
+    return {
+      models: data?.models || [],
+      providers: data?.providers || [],
+      defaults: data?.defaults || {},
+      defaultProviderModel: data?.defaultProviderModel || {},
+    }
+  }
+
+  async getModels() {
+    const pack = await this.getModelsCatalog()
+    return pack.models
   }
 
   async getFormats() {
@@ -273,13 +283,13 @@ class ImageGenService {
   }
 
   async getCatalogs() {
-    const [models, formats, styles, archetypes] = await Promise.all([
-      this.getModels(),
+    const [modelPack, formats, styles, archetypes] = await Promise.all([
+      this.getModelsCatalog(),
       this.getFormats(),
       this.getStyles(),
       this.getArchetypes().catch(() => []),
     ])
-    return { models, formats, styles, archetypes }
+    return { ...modelPack, formats, styles, archetypes }
   }
 
   async estimate(workspaceId, { modelId, mode = 'image', tweak = false } = {}) {

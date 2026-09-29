@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
   AlertTriangle,
   Check,
-  FileText,
   FolderOpen,
   Image as ImageIcon,
   Loader2,
@@ -184,10 +183,13 @@ export default function ImageGenContextAttach({
   onContextChange,
   disabled = false,
   compact = false,
+  plusMenu = true,
   children,
 }) {
   const imageFileRef = useRef(null)
-  const docFileRef = useRef(null)
+  const plusWrapRef = useRef(null)
+  const uploadFromPlusRef = useRef(false)
+  const [plusMenuOpen, setPlusMenuOpen] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [tab, setTab] = useState('add') // add | brief | library
   const [pendingFiles, setPendingFiles] = useState([])
@@ -275,17 +277,26 @@ export default function ImageGenContextAttach({
     return () => window.removeEventListener('keydown', onKey)
   }, [expandedThumb])
 
-  const openModal = (nextTab = 'add') => {
-    if (disabled) return
-    setError('')
-    setNotice('')
-    setTab(nextTab)
-    setModalOpen(true)
-  }
+  useEffect(() => {
+    if (!plusMenuOpen) return undefined
+    const onDoc = (e) => {
+      if (plusWrapRef.current?.contains(e.target)) return
+      setPlusMenuOpen(false)
+    }
+    const onKey = (e) => {
+      if (e.key === 'Escape') setPlusMenuOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [plusMenuOpen])
 
   const closeModal = () => {
     setModalOpen(false)
-    setTab('add')
+    setTab('library')
     setDragOver(null)
   }
 
@@ -350,16 +361,39 @@ export default function ImageGenContextAttach({
   }
 
   const openLibrary = async () => {
-    if (!workspaceId || disabled) return
+    if (!workspaceId || disabled) {
+      setError(workspaceId ? '' : 'Choose a save location first, then pick from the library.')
+      return
+    }
+    setModalOpen(true)
     setTab('library')
     setLibraryError('')
     setLibraryLoading(true)
     try {
-      const list = await assetService.listAssets(workspaceId, { take: 100 })
-      const images = (list || [])
+      const [list, gens] = await Promise.all([
+        assetService.listAssets(workspaceId, { take: 100 }),
+        imageGenService.listGenerations(workspaceId, { take: 40 }).catch(() => []),
+      ])
+      const fromAssets = (list || [])
         .map((a) => assetService.normalizeAsset(a))
         .filter((a) => a && assetService.inferMediaType(a) === 'image')
-      setLibraryItems(images)
+      const fromGens = (gens || [])
+        .map((g) => {
+          const id = g.assetId || g.asset?.id
+          const url = g.url || g.asset?.url
+          if (!id || !url) return null
+          return {
+            id,
+            url,
+            name: String(g.prompt || g.title || 'Generated image').slice(0, 48),
+          }
+        })
+        .filter(Boolean)
+      const byId = new Map()
+      ;[...fromGens, ...fromAssets].forEach((item) => {
+        if (item?.id && !byId.has(item.id)) byId.set(item.id, item)
+      })
+      setLibraryItems([...byId.values()])
     } catch (err) {
       setLibraryError(err?.message || 'Couldn’t load library images.')
       setLibraryItems([])
@@ -428,10 +462,9 @@ export default function ImageGenContextAttach({
       }
       onContextChange?.({ ...created, localImages })
       setDirtyAfterAttach(false)
-      setTab('brief')
-      setNotice(
-        Array.isArray(created?.warnings) && created.warnings.length ? created.warnings[0] : ''
-      )
+      setModalOpen(false)
+      setTab('library')
+      setDragOver(null)
     } catch (err) {
       setError(friendlyContextError(err))
     } finally {
@@ -534,7 +567,7 @@ export default function ImageGenContextAttach({
             setInlineText('')
             setDirtyAfterAttach(false)
             setNotice('Brief was used for a generation — cleared locally.')
-            setTab('add')
+            setTab('library')
             return
           }
           if (err?.status !== 404) throw err
@@ -546,7 +579,7 @@ export default function ImageGenContextAttach({
         setInlineText('')
         setDirtyAfterAttach(false)
         setNotice('Brief was used for a generation — cleared locally.')
-        setTab('add')
+        setTab('library')
         return
       }
       onContextChange?.(null)
@@ -554,7 +587,7 @@ export default function ImageGenContextAttach({
       setPendingAssets([])
       setInlineText('')
       setDirtyAfterAttach(false)
-      setTab('add')
+      setTab('library')
     } catch (err) {
       setError(friendlyContextError(err))
     } finally {
@@ -592,17 +625,70 @@ export default function ImageGenContextAttach({
       </div>
     ) : null
 
+  const pickFromUpload = () => {
+    setPlusMenuOpen(false)
+    if (disabled) return
+    if (!workspaceId) {
+      setError('Choose a save location first, then upload a reference.')
+      return
+    }
+    uploadFromPlusRef.current = true
+    imageFileRef.current?.click()
+  }
+
   const plusButton = (
-    <button
-      type="button"
-      className={`igc-plus ${compact ? 'igc-plus--compact' : ''} ${modalOpen ? 'is-on' : ''} ${isReady ? 'is-ready' : ''}`}
-      disabled={disabled}
-      aria-label="Attach brief or references"
-      title="Attach brief & images"
-      onClick={() => openModal(isReady ? 'brief' : 'add')}
-    >
-      <Plus size={18} strokeWidth={2.25} />
-    </button>
+    <div className="igc-plus-wrap" ref={plusWrapRef}>
+      <button
+        type="button"
+        className={`igc-plus ${compact ? 'igc-plus--compact' : ''} ${modalOpen || plusMenuOpen ? 'is-on' : ''} ${isReady ? 'is-ready' : ''}`}
+        disabled={disabled}
+        aria-label="Attach references"
+        aria-haspopup={plusMenu ? 'menu' : undefined}
+        aria-expanded={plusMenu ? plusMenuOpen : undefined}
+        title="Upload or choose from library"
+        onClick={() => {
+          if (disabled) return
+          if (plusMenu) setPlusMenuOpen((open) => !open)
+          else openLibrary()
+        }}
+      >
+        <Plus size={18} strokeWidth={2.25} />
+      </button>
+      {plusMenu && plusMenuOpen && (
+        <div className="igc-plus-menu" role="menu">
+          <button type="button" role="menuitem" onClick={pickFromUpload}>
+            <Upload size={15} strokeWidth={2} />
+            Upload
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setPlusMenuOpen(false)
+              openLibrary()
+            }}
+          >
+            <FolderOpen size={15} strokeWidth={2} />
+            Choose from library
+          </button>
+        </div>
+      )}
+      <input
+        ref={imageFileRef}
+        type="file"
+        multiple
+        accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+        hidden
+        onChange={(e) => {
+          const fromPlus = uploadFromPlusRef.current
+          uploadFromPlusRef.current = false
+          const files = e.target.files
+          e.target.value = ''
+          if (fromPlus) ingestComposerFiles(files)
+          else addFiles(files, 'image')
+        }}
+      />
+    </div>
   )
 
   const triggerNode = compact ? (
@@ -618,7 +704,7 @@ export default function ImageGenContextAttach({
               type="button"
               className="igc-ready-chip"
               disabled={disabled}
-              onClick={() => openModal('brief')}
+              onClick={() => openLibrary()}
             >
               <Paperclip size={12} />
               <span>
@@ -632,7 +718,7 @@ export default function ImageGenContextAttach({
               type="button"
               className="igc-dirty-chip"
               disabled={disabled}
-              onClick={() => openModal('add')}
+              onClick={() => openLibrary()}
             >
               <AlertTriangle size={11} />
               Re-attach to update
@@ -642,7 +728,7 @@ export default function ImageGenContextAttach({
               type="button"
               className="igc-hint-btn"
               disabled={disabled}
-              onClick={() => openModal('add')}
+              onClick={() => openLibrary()}
             >
               {composerThumbs.length > 0
                 ? `${composerThumbs.length} image${composerThumbs.length === 1 ? '' : 's'} · Attach`
@@ -653,9 +739,9 @@ export default function ImageGenContextAttach({
               type="button"
               className="igc-hint-btn"
               disabled={disabled}
-              onClick={() => openModal('add')}
+              onClick={() => openLibrary()}
             >
-              Brief & refs
+              References
             </button>
           )}
         </div>
@@ -723,508 +809,85 @@ export default function ImageGenContextAttach({
         >
           <header className="igc-modal-head">
             <div>
-              <h3>Add references</h3>
-              <p>Images set the look. A brief is optional — it sets the story.</p>
+              <h3>Choose from library</h3>
+              <p>Select images to use as context. The brief is built on the server.</p>
             </div>
             <button type="button" onClick={closeModal} aria-label="Close">
               <X size={16} />
             </button>
           </header>
 
-          <div className="igc-modal-tabs" role="tablist">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === 'add' || tab === 'library'}
-              className={tab === 'add' || tab === 'library' ? 'is-on' : ''}
-              onClick={() => setTab('add')}
-            >
-              Add
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={tab === 'brief'}
-              className={tab === 'brief' ? 'is-on' : ''}
-              onClick={() => setTab('brief')}
-            >
-              Review
-              {isReady && <span className="igc-tab-dot" />}
-            </button>
-          </div>
-
           <div className="igc-modal-body">
-            <AnimatePresence mode="wait">
-              {(tab === 'add' || tab === 'library') && (
-                <motion.div
-                  key={tab === 'library' ? 'library' : 'add'}
-                  className={`igc-modal-pane ${attaching && tab !== 'library' ? 'is-busy' : ''}`}
-                  initial={{ opacity: 0, x: 8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -8 }}
-                  transition={{ duration: 0.18 }}
-                >
-                  {tab === 'library' ? (
-                    <>
-                      <div className="igc-lib-toolbar">
-                        <button
-                          type="button"
-                          className="igc-linkish"
-                          onClick={() => setTab('add')}
-                        >
-                          ← Back to Add
-                        </button>
-                        <span>
-                          {pendingCount}/{MAX_CONTEXT_ITEMS} selected
-                        </span>
-                      </div>
-                      {libraryLoading && (
-                        <div className="igc-lib-empty">
-                          <Loader2 size={18} className="igc-spin" />
-                          Loading images…
-                        </div>
-                      )}
-                      {!libraryLoading && libraryError && (
-                        <div className="igc-lib-empty">{libraryError}</div>
-                      )}
-                      {!libraryLoading && !libraryError && libraryItems.length === 0 && (
-                        <div className="igc-lib-empty">No image assets in this workspace yet.</div>
-                      )}
-                      {!libraryLoading && !libraryError && libraryItems.length > 0 && (
-                        <div className="igc-lib-grid">
-                          {libraryItems.map((asset) => {
-                            const selected = pendingAssets.some((a) => a.id === asset.id)
-                            return (
-                              <button
-                                key={asset.id}
-                                type="button"
-                                className={`igc-lib-item ${selected ? 'is-selected' : ''}`}
-                                onClick={() => toggleLibraryAsset(asset)}
-                              >
-                                {asset.url ? (
-                                  <img src={asset.url} alt={asset.name || ''} />
-                                ) : (
-                                  <span className="igc-lib-fallback">
-                                    <ImageIcon size={20} />
-                                  </span>
-                                )}
-                                {selected && (
-                                  <span className="igc-lib-check">
-                                    <Check size={12} strokeWidth={3} />
-                                  </span>
-                                )}
-                                <span className="igc-lib-name">{asset.name || 'Image'}</span>
-                              </button>
-                            )
-                          })}
-                        </div>
-                      )}
-                      <div className="igc-modal-pane-foot">
-                        <button
-                          type="button"
-                          className="igc-attach-btn"
-                          onClick={() => setTab('add')}
-                        >
-                          Done
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <section className="igc-section">
-                        <div className="igc-section-head">
-                          <ImageIcon size={15} />
-                          <div>
-                            <strong>Style images</strong>
-                            <span>Photos or art the model should match</span>
-                          </div>
-                        </div>
-                        <div
-                          className={`igc-dropzone ${dragOver === 'image' ? 'is-over' : ''}`}
-                          onDragOver={(e) => {
-                            e.preventDefault()
-                            setDragOver('image')
-                          }}
-                          onDragLeave={() => setDragOver(null)}
-                          onDrop={(e) => {
-                            e.preventDefault()
-                            setDragOver(null)
-                            addFiles(e.dataTransfer.files, 'image')
-                          }}
-                        >
-                          <button
-                            type="button"
-                            className="igc-dropzone-main igc-dropzone-main--sm"
-                            disabled={disabled || slotsLeft <= 0 || attaching}
-                            onClick={() => imageFileRef.current?.click()}
-                          >
-                            <Upload size={18} strokeWidth={1.75} />
-                            <strong>Drop images or browse</strong>
-                            <span>PNG, JPG, WebP · up to 20 MB</span>
-                          </button>
-                          <button
-                            type="button"
-                            className="igc-lib-btn"
-                            disabled={disabled || slotsLeft <= 0 || attaching}
-                            onClick={openLibrary}
-                          >
-                            <FolderOpen size={15} />
-                            Choose from library
-                          </button>
-                        </div>
-                        <input
-                          ref={imageFileRef}
-                          type="file"
-                          multiple
-                          accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
-                          hidden
-                          onChange={(e) => {
-                            addFiles(e.target.files, 'image')
-                            e.target.value = ''
-                          }}
-                        />
-                        {(pendingFiles.some(isImageFile) || pendingAssets.length > 0) && (
-                          <div className="igc-pick-grid">
-                            {pendingFiles.map((file, idx) => {
-                              if (!isImageFile(file)) return null
-                              const preview = filePreviewUrls[idx]
-                              return (
-                                <div key={`f-${file.name}-${idx}`} className="igc-pick">
-                                  <button
-                                    type="button"
-                                    className="igc-pick-open"
-                                    onClick={() =>
-                                      preview &&
-                                      setExpandedThumb({
-                                        id: `file-${file.name}-${idx}`,
-                                        src: preview,
-                                        name: file.name || 'Image',
-                                      })
-                                    }
-                                  >
-                                    {preview ? (
-                                      <img src={preview} alt="" />
-                                    ) : (
-                                      <ImageIcon size={18} />
-                                    )}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="igc-pick-remove"
-                                    aria-label={`Remove ${file.name}`}
-                                    disabled={disabled || attaching}
-                                    onClick={() => removePendingFile(idx)}
-                                  >
-                                    <X size={11} />
-                                  </button>
-                                </div>
-                              )
-                            })}
-                            {pendingAssets.map((asset) => (
-                              <div key={`a-${asset.id}`} className="igc-pick">
-                                <button
-                                  type="button"
-                                  className="igc-pick-open"
-                                  onClick={() =>
-                                    asset.url &&
-                                    setExpandedThumb({
-                                      id: `asset-${asset.id}`,
-                                      src: asset.url,
-                                      name: asset.name || 'Library image',
-                                    })
-                                  }
-                                >
-                                  {asset.url ? (
-                                    <img src={asset.url} alt="" />
-                                  ) : (
-                                    <ImageIcon size={18} />
-                                  )}
-                                </button>
-                                  <button
-                                    type="button"
-                                    className="igc-pick-remove"
-                                    aria-label={`Remove ${asset.name}`}
-                                    disabled={disabled || attaching}
-                                    onClick={() => removePendingAsset(asset.id)}
-                                  >
-                                    <X size={11} />
-                                  </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </section>
-
-                      <section className="igc-section">
-                        <div className="igc-section-head">
-                          <FileText size={15} />
-                          <div>
-                            <strong>Brief</strong>
-                            <span>Optional — PDF, Word, Markdown, or a short note</span>
-                          </div>
-                        </div>
-                        <div
-                          className={`igc-dropzone ${dragOver === 'doc' ? 'is-over' : ''}`}
-                          onDragOver={(e) => {
-                            e.preventDefault()
-                            setDragOver('doc')
-                          }}
-                          onDragLeave={() => setDragOver(null)}
-                          onDrop={(e) => {
-                            e.preventDefault()
-                            setDragOver(null)
-                            addFiles(e.dataTransfer.files, 'doc')
-                          }}
-                        >
-                          <button
-                            type="button"
-                            className="igc-dropzone-main igc-dropzone-main--sm"
-                            disabled={disabled || slotsLeft <= 0 || attaching}
-                            onClick={() => docFileRef.current?.click()}
-                          >
-                            <Upload size={18} strokeWidth={1.75} />
-                            <strong>Drop a document or browse</strong>
-                            <span>PDF, DOCX, MD, TXT · up to 20 MB</span>
-                          </button>
-                        </div>
-                        <input
-                          ref={docFileRef}
-                          type="file"
-                          multiple
-                          accept=".pdf,.docx,.md,.txt,application/pdf,text/plain,text/markdown"
-                          hidden
-                          onChange={(e) => {
-                            addFiles(e.target.files, 'doc')
-                            e.target.value = ''
-                          }}
-                        />
-                        {pendingFiles.some(isDocFile) && (
-                          <ul className="igc-doc-list">
-                            {pendingFiles.map((file, idx) => {
-                              if (!isDocFile(file)) return null
-                              return (
-                                <li key={`d-${file.name}-${idx}`} className="igc-doc-row">
-                                  <FileText size={14} />
-                                  <em>{file.name}</em>
-                                  <button
-                                    type="button"
-                                    aria-label={`Remove ${file.name}`}
-                                    disabled={disabled || attaching}
-                                    onClick={() => removePendingFile(idx)}
-                                  >
-                                    <X size={12} />
-                                  </button>
-                                </li>
-                              )
-                            })}
-                          </ul>
-                        )}
-                        <label className="igc-notes-label">
-                          Or type a note
-                          <textarea
-                            className="igc-tray-notes"
-                            rows={3}
-                            placeholder="e.g. Premium SaaS look, blue and teal, lots of space…"
-                            value={inlineText}
-                            disabled={disabled || attaching}
-                            maxLength={8000}
-                            onChange={(e) => {
-                              setInlineText(e.target.value)
-                              markDirty()
-                              setError('')
-                            }}
-                          />
-                        </label>
-                      </section>
-
-                      <div className="igc-modal-pane-foot">
-                        <span className="igc-tray-slots">
-                          {slotsLeft} of {MAX_CONTEXT_ITEMS} left · attaching is free
-                        </span>
-                        <button
-                          type="button"
-                          className="igc-attach-btn"
-                          disabled={disabled || attaching || !hasPending}
-                          onClick={handleAttach}
-                        >
-                          {attaching ? (
-                            <>
-                              <Loader2 size={14} className="igc-spin" />
-                              Reading…
-                            </>
-                          ) : dirtyAfterAttach ? (
-                            <>
-                              <Paperclip size={14} />
-                              Update
-                            </>
-                          ) : (
-                            <>
-                              <Check size={14} />
-                              Use these
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </motion.div>
+            <div className={`igc-modal-pane ${attaching ? 'is-busy' : ''}`}>
+              <div className="igc-lib-toolbar">
+                <span>
+                  {pendingCount}/{MAX_CONTEXT_ITEMS} selected
+                </span>
+              </div>
+              {libraryLoading && (
+                <div className="igc-lib-empty">
+                  <Loader2 size={18} className="igc-spin" />
+                  Loading images…
+                </div>
               )}
-
-              {tab === 'brief' && (
-                <motion.div
-                  key="brief"
-                  className="igc-modal-pane"
-                  initial={{ opacity: 0, x: 8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -8 }}
-                  transition={{ duration: 0.18 }}
-                >
-                  {!isReady && (
-                    <div className="igc-brief-empty">
-                      <Paperclip size={22} strokeWidth={1.6} />
-                      <strong>Nothing attached yet</strong>
-                      <p>
-                        Add style images and an optional brief, then tap Use these to see what the
-                        AI understood.
-                      </p>
+              {!libraryLoading && libraryError && (
+                <div className="igc-lib-empty">{libraryError}</div>
+              )}
+              {!libraryLoading && !libraryError && libraryItems.length === 0 && (
+                <div className="igc-lib-empty">No image assets in this workspace yet.</div>
+              )}
+              {!libraryLoading && !libraryError && libraryItems.length > 0 && (
+                <div className="igc-lib-grid">
+                  {libraryItems.map((asset) => {
+                    const selected = pendingAssets.some((a) => a.id === asset.id)
+                    return (
                       <button
+                        key={asset.id}
                         type="button"
-                        className="igc-attach-btn"
-                        onClick={() => setTab('add')}
+                        className={`igc-lib-item ${selected ? 'is-selected' : ''}`}
+                        onClick={() => toggleLibraryAsset(asset)}
                       >
-                        Go to Add
-                      </button>
-                    </div>
-                  )}
-
-                  {isReady && context && (
-                    <div className="igc-brief-ready">
-                      <div className="igc-brief-badge-row">
-                        <span className="igc-ready-chip igc-ready-chip--static">
-                          <Paperclip size={12} />
-                          {readyLabel}
-                        </span>
-                        <button
-                          type="button"
-                          className="igc-linkish"
-                          onClick={() => {
-                            setDirtyAfterAttach(true)
-                            setTab('add')
-                          }}
-                        >
-                          Replace
-                        </button>
-                      </div>
-
-                      {composerThumbs.length > 0 && !(context.previews?.images || []).length && (
-                        <div className="igc-preview-block">
-                          <strong>
-                            <ImageIcon size={12} />
-                            Look
-                          </strong>
-                          <div className="igc-thumbs igc-thumbs--modal">
-                            {composerThumbs.map((thumb) => (
-                              <div key={thumb.id} className="igc-thumb">
-                                <button
-                                  type="button"
-                                  className="igc-thumb-open"
-                                  onClick={() => setExpandedThumb(thumb)}
-                                  aria-label={`Expand ${thumb.name}`}
-                                >
-                                  <img src={thumb.src} alt={thumb.name} />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {context.previews?.inlineText && (
-                        <div className="igc-preview-block">
-                          <strong>Notes</strong>
-                          <p>{context.previews.inlineText}</p>
-                        </div>
-                      )}
-
-                      {(context.previews?.documents || []).map((doc, i) => (
-                        <div key={`doc-${doc.name}-${i}`} className="igc-preview-block">
-                          <strong>
-                            <FileText size={12} />
-                            {doc.name || 'Document'}
-                            {doc.truncated && <em className="igc-trunc">Truncated</em>}
-                          </strong>
-                          <p>{doc.excerpt || 'No document text extracted.'}</p>
-                        </div>
-                      ))}
-
-                      {(context.previews?.images || []).length > 0 && (
-                        <div className="igc-preview-block">
-                          <strong>
-                            <ImageIcon size={12} />
-                            Brief
-                          </strong>
-                          <p className="igc-preview-lede">What we read from your images</p>
-                          <ul className="igc-brief-list">
-                            {(context.previews.images || []).map((img, i) => {
-                              const thumb =
-                                composerThumbs.find((t) => t.name === img.name) ||
-                                composerThumbs[i]
-                              return (
-                                <li key={`img-${img.name}-${i}`} className="igc-brief-row">
-                                  {thumb?.src ? (
-                                    <button
-                                      type="button"
-                                      className="igc-brief-thumb"
-                                      onClick={() => setExpandedThumb(thumb)}
-                                      aria-label={`Expand ${img.name || 'image'}`}
-                                    >
-                                      <img src={thumb.src} alt="" />
-                                    </button>
-                                  ) : (
-                                    <span className="igc-brief-thumb igc-brief-thumb--empty">
-                                      <ImageIcon size={16} />
-                                    </span>
-                                  )}
-                                  <p>{img.summary || 'No style notes for this image.'}</p>
-                                </li>
-                              )
-                            })}
-                          </ul>
-                        </div>
-                      )}
-
-                      {(context.previews?.assetRefs || []).length > 0 &&
-                        composerThumbs.length === 0 && (
-                          <div className="igc-preview-block">
-                            <strong>Library references</strong>
-                            <div className="igc-asset-refs">
-                              {context.previews.assetRefs.map((ref) => (
-                                <span key={ref.assetId} className="igc-asset-ref">
-                                  {ref.name || 'Image'}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
+                        {asset.url ? (
+                          <img src={asset.url} alt={asset.name || ''} />
+                        ) : (
+                          <span className="igc-lib-fallback">
+                            <ImageIcon size={20} />
+                          </span>
                         )}
-
-                      {(context.warnings || []).map((w, i) => (
-                        <div key={`warn-${i}`} className="igc-warn">
-                          <AlertTriangle size={12} />
-                          {w}
-                        </div>
-                      ))}
-
-                      <div className="igc-modal-pane-foot">
-                        <button type="button" className="igc-attach-btn" onClick={closeModal}>
-                          Done
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </motion.div>
+                        {selected && (
+                          <span className="igc-lib-check">
+                            <Check size={12} strokeWidth={3} />
+                          </span>
+                        )}
+                        <span className="igc-lib-name">{asset.name || 'Image'}</span>
+                      </button>
+                    )
+                  })}
+                </div>
               )}
-            </AnimatePresence>
-
+              <div className="igc-modal-pane-foot">
+                <button
+                  type="button"
+                  className="igc-attach-btn"
+                  disabled={disabled || attaching}
+                  onClick={() => {
+                    if (pendingAssets.length || pendingFiles.length) handleAttach()
+                    else closeModal()
+                  }}
+                >
+                  {attaching ? (
+                    <>
+                      <Loader2 size={14} className="igc-spin" />
+                      Adding…
+                    </>
+                  ) : pendingAssets.length ? (
+                    'Use these'
+                  ) : (
+                    'Done'
+                  )}
+                </button>
+              </div>
+            </div>
             {error && <p className="igc-error">{error}</p>}
           </div>
         </motion.div>

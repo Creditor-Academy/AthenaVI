@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
-  ArrowLeft, RotateCcw, Sparkles, Edit3, Wand2, Download, Maximize2, 
+  ArrowLeft, RotateCcw, Sparkles, Edit3, Wand2, Download, 
   X, Send, AlertCircle, CheckCircle2, ChevronRight, Copy, ChevronDown, Share2, User, ThumbsUp, ThumbsDown,
   Link2, Facebook, Twitter, MessageCircle, Linkedin
 } from 'lucide-react';
-import imageGenService from '../../../services/imageGenService.js';
+import imageGenService, { ImageGenProviderError } from '../../../services/imageGenService.js';
 import creditsService, { isInsufficientCreditsError } from '../../../services/creditsService.js';
 import { resolvePresentationWorkspaceContext } from '../../../utils/presentationContext.js';
 import LogoImg from '../../../assets/herologo.png';
@@ -12,6 +12,7 @@ import InfographicAnimatedBackground from './InfographicAnimatedBackground.jsx';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import ImageGenSaveLocation from '../../../components/features/image-generation/ImageGenSaveLocation.jsx';
 import ImageGenCreditsGate from '../../../components/features/image-generation/ImageGenCreditsGate.jsx';
+import ImageGenContextAttach from '../../../components/features/image-generation/ImageGenContextAttach.jsx';
 import { checkImageGenCredits } from '../../../utils/imageGenCreditsCheck.js';
 import './AIConversationalStudio.css';
 
@@ -29,6 +30,71 @@ const VALID_STYLES = [
 
 const VALID_ARCHETYPES = ['process', 'timeline', 'comparison', 'stats', 'hierarchy', 'list', 'cycle'];
 
+const FOLLOWUP_BY_MODE = {
+  image: {
+    before: 'Would you like to ',
+    mid: ', or ',
+    after: '?',
+    actions: [
+      { label: 'brighten the lighting', send: 'Brighten the lighting and keep the same composition.' },
+      { label: 'add more background detail', send: 'Add more detail in the background while keeping the main subject the same.' },
+    ],
+  },
+  infographic: {
+    before: 'Would you like to ',
+    mid: ', or ',
+    after: '?',
+    actions: [
+      { label: 'simplify the layout', send: 'Simplify the layout and keep the same information.' },
+      { label: 'make the numbers larger', send: 'Make the numbers and labels larger and easier to read.' },
+    ],
+  },
+  social: {
+    before: 'Would you like to ',
+    mid: ', or ',
+    after: '?',
+    actions: [
+      { label: 'make the headline bolder', send: 'Make the headline larger and bolder, keep the same layout.' },
+      { label: 'increase contrast for mobile', send: 'Increase contrast so the text reads clearly on a phone.' },
+    ],
+  },
+};
+
+function refsFromContext(ctx) {
+  if (!ctx) return [];
+  const local = Array.isArray(ctx.localImages)
+    ? ctx.localImages
+        .map((img) => ({ name: img?.name || 'Reference', src: img?.src || img?.url || '' }))
+        .filter((img) => img.src)
+    : [];
+  if (local.length) return local;
+  const previews = ctx.previews || ctx.request?.contextSnapshot?.previews || ctx.contextSnapshot?.previews || {};
+  const fromImages = (previews.images || []).map((img) => ({
+    name: img?.name || 'Reference',
+    src: img?.url || img?.src || '',
+  }));
+  const fromAssets = (previews.assetRefs || []).map((ref) => ({
+    name: ref?.name || 'Library image',
+    src: ref?.url || '',
+  }));
+  return [...fromImages, ...fromAssets].filter((img) => img.src);
+}
+
+async function resolveContextImages(workspaceId, ctx, generation) {
+  const fromCtx = refsFromContext(ctx);
+  if (fromCtx.length) return fromCtx;
+  const fromGen = refsFromContext(generation) || refsFromContext(generation?.request);
+  if (fromGen.length) return fromGen;
+  const contextId = generation?.contextId || generation?.request?.contextId || ctx?.id;
+  if (!workspaceId || !contextId) return [];
+  try {
+    const live = await imageGenService.getContext(workspaceId, contextId);
+    return refsFromContext(live);
+  } catch {
+    return [];
+  }
+}
+
 export default function AIConversationalStudio({
   onBack,
   onOpenBilling,
@@ -40,6 +106,7 @@ export default function AIConversationalStudio({
   selectedStyle = null,
   activeThreadId: propThreadId = null,
   onLocationChange = null,
+  initialContext = null,
 }) {
   const [workspaceId, setWorkspaceId] = useState(createContext?.workspaceId || null);
   const [folderId, setFolderId] = useState(createContext?.folderId || null);
@@ -54,6 +121,8 @@ export default function AIConversationalStudio({
   const [modelId, setModelId] = useState(selectedModel || 'gpt-image-1');
   const [formatId, setFormatId] = useState(selectedFormat || (activeMode === 'infographic' ? 'landscape' : 'square'));
   const [styleId, setStyleId] = useState(selectedStyle || null);
+  const [imageContext, setImageContext] = useState(initialContext || null);
+  const [pendingRefs, setPendingRefs] = useState([]);
 
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
@@ -130,7 +199,7 @@ export default function AIConversationalStudio({
     else if (formatId === 'portrait') parts.push('9:16');
     else parts.push(formatId);
 
-    parts.push(mode === 'infographic' ? 'Infographic' : 'Image');
+    parts.push(mode === 'infographic' ? 'Infographic' : mode === 'social' ? 'Social' : 'Image');
     if (styleId) {
       parts.push(typeof styleId === 'string' ? styleId.charAt(0).toUpperCase() + styleId.slice(1) : 'Custom');
     }
@@ -190,13 +259,6 @@ export default function AIConversationalStudio({
     }
   }, [generations, isGenerating]);
 
-  // Trigger feedback modal after first generation
-  useEffect(() => {
-    if (generations.length === 1 && !isGenerating && !feedbackSubmitted) {
-      const timer = setTimeout(() => setShowFeedbackModal(true), 2500);
-      return () => clearTimeout(timer);
-    }
-  }, [generations.length, isGenerating, feedbackSubmitted]);
   // Cycle step status while generating
   useEffect(() => {
     if (isGenerating) {
@@ -211,6 +273,30 @@ export default function AIConversationalStudio({
       if (stepTimerRef.current) clearInterval(stepTimerRef.current);
     };
   }, [isGenerating]);
+
+  useEffect(() => {
+    const refs = refsFromContext(imageContext);
+    if (!refs.length) return;
+    setGenerations((prev) => {
+      if (!prev.length) return prev;
+      let changed = false;
+      const next = prev.map((g) => {
+        if (g.contextImages?.length) return g;
+        changed = true;
+        return { ...g, contextImages: refs };
+      });
+      return changed ? next : prev;
+    });
+  }, [imageContext]);
+
+  useEffect(() => {
+    if (!fullscreenUrl) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setFullscreenUrl(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [fullscreenUrl]);
 
   // Fetch thread history
   const loadThread = async (wsId = workspaceId, tId = threadId) => {
@@ -245,7 +331,8 @@ export default function AIConversationalStudio({
               url: imgUrl,
               prompt: m.content || m.prompt || latestUserPrompt,
               version: `v${vNum}`,
-              threadId: tId
+              threadId: tId,
+              contextImages: refsFromContext(m),
             });
           }
           if (m.content && i > 1) {
@@ -254,7 +341,20 @@ export default function AIConversationalStudio({
         }
       }
 
-      setGenerations(loadedGens);
+      const withRefs = await Promise.all(
+        loadedGens.map(async (g) => {
+          if (g.contextImages?.length) return g;
+          try {
+            const full = await imageGenService.getGeneration(activeWs, g.id);
+            const images = await resolveContextImages(activeWs, null, full);
+            return { ...g, raw: full, contextImages: images };
+          } catch {
+            return g;
+          }
+        })
+      );
+
+      setGenerations(withRefs);
       setActiveGenIndex(loadedGens.length - 1);
       setConversation(chatItems);
     } catch (err) {
@@ -277,9 +377,14 @@ export default function AIConversationalStudio({
       return;
     }
 
+    if (mode === 'social' && !formatId) {
+      setErrorMsg('Select a destination first.');
+      return;
+    }
+
     try {
       const check = await checkImageGenCredits(activeWs, {
-        modelId: modelId || 'gpt-image-1',
+        modelId: modelId || (mode === 'image' ? 'gpt-image-1-hd' : 'gemini-3-pro-image'),
         mode: mode || 'image',
       });
       if (!check.ok) {
@@ -292,17 +397,27 @@ export default function AIConversationalStudio({
     
     setIsGenerating(true);
     setPendingPrompt(promptText);
+    setPendingRefs(refsFromContext(imageContext));
     setErrorMsg('');
 
     try {
+      const formatForMode =
+        mode === 'social'
+          ? formatId
+          : formatId || (mode === 'infographic' ? 'landscape' : 'square');
+      if (mode === 'social' && !formatForMode) {
+        setErrorMsg('Select a destination first.');
+        return;
+      }
+
       const payload = {
         mode: mode || 'image',
         folderId: activeFld,
-        modelId: modelId || 'gpt-image-1',
-        formatId: formatId || (mode === 'infographic' ? 'landscape' : 'square'),
+        modelId: modelId || (mode === 'image' ? 'gpt-image-1-hd' : 'gemini-3-pro-image'),
+        formatId: formatForMode,
         prompt: mode === 'infographic' ? `${promptText.trim()}, clean minimalist layout, no text, no words, empty placeholders` : promptText.trim()
       };
-      if (styleId) {
+      if (mode !== 'social' && styleId) {
         if (VALID_STYLES.includes(styleId)) {
           payload.style = styleId;
           payload.styleId = styleId;
@@ -310,6 +425,7 @@ export default function AIConversationalStudio({
           payload.archetypeHint = styleId;
         }
       }
+      if (imageContext?.id) payload.contextId = imageContext.id;
 
       const res = await imageGenService.generate(activeWs, payload);
       const gen = res?.generation;
@@ -321,13 +437,15 @@ export default function AIConversationalStudio({
         throw new Error("No image returned from generation service.");
       }
 
+      const contextImages = await resolveContextImages(activeWs, imageContext, gen);
       const newGenItem = {
         id: gen.id,
         url: imgUrl,
         prompt: promptText,
         version: `v${generations.length + 1}`,
         threadId: newThreadId,
-        raw: gen
+        raw: gen,
+        contextImages,
       };
 
       setGenerations(prev => {
@@ -346,6 +464,8 @@ export default function AIConversationalStudio({
       console.error("Generation failed:", err);
       if (isInsufficientCreditsError(err)) {
         await showCreditsGate(() => executeGenerate(promptText, wsId, fldId), activeWs);
+      } else if (err instanceof ImageGenProviderError || err.status === 503) {
+        setErrorMsg(err.message || 'Gemini isn’t available on this server. Switch to an OpenAI model.');
       } else {
         const msg = err?.data?.message || err.message || "Image generation failed. Please try again.";
         setErrorMsg(msg);
@@ -356,15 +476,21 @@ export default function AIConversationalStudio({
   };
 
   // Conversational Re-Prompt / Tweak
-  const handleSendPrompt = async () => {
-    const text = chatInput.trim();
-    if (!text || isGenerating || !workspaceId) return;
+  const handleSendPrompt = async (preset, fromGen) => {
+    const text = (typeof preset === 'string' ? preset : chatInput).trim();
+    if (!text || isGenerating) return;
+    const activeWs = workspaceId || createContext?.workspaceId;
+    if (!activeWs) {
+      setErrorMsg('Workspace connection failed. Please refresh the page or log in again.');
+      return;
+    }
+
+    setChatInput(text);
 
     try {
-      const check = await checkImageGenCredits(workspaceId, { modelId, mode });
+      const check = await checkImageGenCredits(activeWs, { modelId, mode });
       if (!check.ok) {
-        setChatInput(text);
-        await showCreditsGate(() => handleSendPrompt());
+        await showCreditsGate(() => handleSendPrompt(text, fromGen));
         return;
       }
     } catch {
@@ -374,22 +500,23 @@ export default function AIConversationalStudio({
     setChatInput('');
     setIsGenerating(true);
     setPendingPrompt(text);
+    setPendingRefs(refsFromContext(imageContext));
     setErrorMsg('');
 
     try {
       let res;
-      const parentGen = activeGeneration || generations[generations.length - 1];
+      const parentGen = fromGen || activeGeneration || generations[generations.length - 1];
 
       const tweakText = mode === 'infographic' ? `${text}, maintain clean minimalist layout, no text, no words` : text;
 
       if (threadId) {
-        res = await imageGenService.sendThreadMessage(workspaceId, threadId, tweakText, {
+        res = await imageGenService.sendThreadMessage(activeWs, threadId, tweakText, {
           fromGenerationId: parentGen?.id,
           mode,
           modelId
         });
       } else if (parentGen?.id) {
-        res = await imageGenService.tweak(workspaceId, parentGen.id, tweakText, {
+        res = await imageGenService.tweak(activeWs, parentGen.id, tweakText, {
           mode,
           modelId
         });
@@ -410,7 +537,8 @@ export default function AIConversationalStudio({
             fallbackBody.archetypeHint = styleId;
           }
         }
-        res = await imageGenService.generate(workspaceId, fallbackBody);
+        if (imageContext?.id) fallbackBody.contextId = imageContext.id;
+        res = await imageGenService.generate(activeWs, fallbackBody);
       }
 
       const gen = res?.generation;
@@ -420,13 +548,18 @@ export default function AIConversationalStudio({
       const imgUrl = gen?.url || gen?.asset?.url || null;
       if (!imgUrl) throw new Error("No image was returned from refinement.");
 
+      const contextImages =
+        refsFromContext(imageContext).length
+          ? refsFromContext(imageContext)
+          : (parentGen?.contextImages || await resolveContextImages(activeWs, imageContext, gen));
       const newGenItem = {
         id: gen.id,
         url: imgUrl,
         prompt: text,
         version: `v${generations.length + 1}`,
         threadId: nextThreadId,
-        raw: gen
+        raw: gen,
+        contextImages,
       };
 
       setGenerations(prev => {
@@ -445,7 +578,7 @@ export default function AIConversationalStudio({
       console.error("Re-prompt failed:", err);
       if (isInsufficientCreditsError(err)) {
         setChatInput(text);
-        await showCreditsGate(() => handleSendPrompt());
+        await showCreditsGate(() => handleSendPrompt(text, fromGen));
       } else {
         const msg = err?.data?.message || err.message || "Failed to refine image. Please try again.";
         setErrorMsg(msg);
@@ -464,15 +597,16 @@ export default function AIConversationalStudio({
 
     setIsGenerating(true);
     setPendingPrompt("Regenerate alternative");
+    setPendingRefs(parentGen.contextImages || []);
     setErrorMsg('');
 
     try {
       const regenBody = {
         mode,
         modelId,
-        formatId,
         prompt: mode === 'infographic' ? `${basePrompt}, clean minimalist layout, no text, no words, empty placeholders` : basePrompt
       };
+      if (mode !== 'social' && formatId) regenBody.formatId = formatId;
       if (styleId) {
         if (VALID_STYLES.includes(styleId)) {
           regenBody.style = styleId;
@@ -494,7 +628,8 @@ export default function AIConversationalStudio({
         prompt: parentGen.prompt,
         version: `v${generations.length + 1}`,
         threadId: threadId,
-        raw: gen
+        raw: gen,
+        contextImages: parentGen.contextImages || [],
       };
 
       setGenerations(prev => {
@@ -571,8 +706,17 @@ export default function AIConversationalStudio({
     switch (fId) {
       case 'landscape': return { aspectRatio: '16/9', maxWidth: '720px' };
       case 'portrait': return { aspectRatio: '9/16', maxWidth: '360px' };
-      case 'landscape-3-2': return { aspectRatio: '3/2', maxWidth: '640px' };
-      case 'portrait-2-3': return { aspectRatio: '2/3', maxWidth: '400px' };
+      case 'landscape-3-2':
+      case 'landscape-16-9': return { aspectRatio: '16/9', maxWidth: '720px' };
+      case 'portrait-2-3':
+      case 'portrait-9-16': return { aspectRatio: '9/16', maxWidth: '360px' };
+      case 'youtube-thumbnail':
+      case 'youtube-banner':
+      case 'twitter-post': return { aspectRatio: '16/9', maxWidth: '720px' };
+      case 'instagram-post': return { aspectRatio: '4/5', maxWidth: '400px' };
+      case 'facebook-post': return { aspectRatio: '940/788', maxWidth: '560px' };
+      case 'facebook-cover': return { aspectRatio: '851/315', maxWidth: '720px' };
+      case 'linkedin-banner': return { aspectRatio: '1584/396', maxWidth: '720px' };
       case 'square': default: return { aspectRatio: '1/1', maxWidth: '480px' };
     }
   };
@@ -649,6 +793,21 @@ export default function AIConversationalStudio({
                      <button className="conv-icon-btn" title="Edit" onClick={() => { setChatInput(gen.prompt); focusComposer(); }}><Edit3 size={16}/></button>
                   </div>
                   <div className="conv-user-bubble">
+                    {(gen.contextImages || []).length > 0 && (
+                      <div className="conv-user-refs" aria-label="Reference images">
+                        {gen.contextImages.map((img, i) => (
+                          <button
+                            key={`${img.src}-${i}`}
+                            type="button"
+                            className="conv-user-ref"
+                            title={img.name || 'Reference'}
+                            onClick={() => setFullscreenUrl(img.src)}
+                          >
+                            <img src={img.src} alt={img.name || 'Reference'} />
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     <span className="conv-user-bubble-text">{gen.prompt}</span>
                   </div>
                 </div>
@@ -668,7 +827,14 @@ export default function AIConversationalStudio({
                 </div>
                 <div className="conv-showcase-container">
                   <div className="conv-unified-frame slide-in-left">
-                    <img src={gen.url} alt={gen.prompt || "Generated output"} className="conv-hero-img-front" />
+                    <button
+                      type="button"
+                      className="conv-hero-open"
+                      title="View larger"
+                      onClick={() => setFullscreenUrl(gen.url)}
+                    >
+                      <img src={gen.url} alt={gen.prompt || "Generated output"} className="conv-hero-img-front" />
+                    </button>
                   </div>
                   
                   {/* Actions & Credits */}
@@ -687,7 +853,32 @@ export default function AIConversationalStudio({
                   {/* Conversational Follow-up (only for latest generation) */}
                   {idx === generations.length - 1 && !isGenerating && (
                     <div className="conv-followup-text slide-in-bottom">
-                      Would you like to adjust this image by <strong>adding more specific Indonesian ingredients</strong> like tempeh or soft-boiled eggs, or would you prefer to <strong>change the lighting style</strong>?
+                      {(() => {
+                        const follow = FOLLOWUP_BY_MODE[mode] || FOLLOWUP_BY_MODE.image;
+                        return (
+                          <>
+                            {follow.before}
+                            <button
+                              type="button"
+                              className="conv-followup-link"
+                              disabled={isGenerating}
+                              onClick={() => handleSendPrompt(follow.actions[0].send, gen)}
+                            >
+                              {follow.actions[0].label}
+                            </button>
+                            {follow.mid}
+                            <button
+                              type="button"
+                              className="conv-followup-link"
+                              disabled={isGenerating}
+                              onClick={() => handleSendPrompt(follow.actions[1].send, gen)}
+                            >
+                              {follow.actions[1].label}
+                            </button>
+                            {follow.after}
+                          </>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
@@ -701,6 +892,21 @@ export default function AIConversationalStudio({
               <div className="conv-chat-row user-row">
                 <div className="conv-user-bubble-container">
                   <div className="conv-user-bubble">
+                    {pendingRefs.length > 0 && (
+                      <div className="conv-user-refs" aria-label="Reference images">
+                        {pendingRefs.map((img, i) => (
+                          <button
+                            key={`pending-${img.src}-${i}`}
+                            type="button"
+                            className="conv-user-ref"
+                            title={img.name || 'Reference'}
+                            onClick={() => setFullscreenUrl(img.src)}
+                          >
+                            <img src={img.src} alt={img.name || 'Reference'} />
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     <span className="conv-user-bubble-text">{pendingPrompt}</span>
                   </div>
                 </div>
@@ -890,48 +1096,69 @@ export default function AIConversationalStudio({
       <footer className="conv-composer-dock">
         <div className="conv-composer-box">
           <div className="conv-composer-header">You</div>
-          <div className="conv-composer-input-row">
-            <textarea
-              ref={composerInputRef}
-              className="conv-composer-textarea"
-              placeholder={
-                mode === 'infographic'
-                  ? "Make the infographic more minimal and use larger typography..."
-                  : "Make the colors softer and add warmer lighting..."
-              }
-              value={chatInput}
-              rows={1}
-              onChange={(e) => {
-                setChatInput(e.target.value);
-                e.target.style.height = 'auto';
-                e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSendPrompt();
-                }
-              }}
-            />
-            <button
-              className="conv-send-btn"
-              disabled={isGenerating || !chatInput.trim()}
-              onClick={handleSendPrompt}
-            >
-              <span>Send</span>
-              <Send size={14} />
-            </button>
-          </div>
+          <ImageGenContextAttach
+            workspaceId={workspaceId}
+            context={imageContext}
+            onContextChange={setImageContext}
+            compact
+            plusMenu
+            disabled={isGenerating}
+          >
+            {({ thumbs, trigger, composerBind, isDragOver }) => (
+              <div className={`conv-composer-attach${isDragOver ? ' is-file-over' : ''}`} {...composerBind}>
+                {thumbs}
+                <div className="conv-composer-input-row">
+                  {trigger}
+                  <textarea
+                    ref={composerInputRef}
+                    className="conv-composer-textarea"
+                    placeholder={
+                      mode === 'infographic'
+                        ? "Make the infographic more minimal and use larger typography..."
+                        : "Make the colors softer and add warmer lighting..."
+                    }
+                    value={chatInput}
+                    rows={1}
+                    onPaste={composerBind.onPaste}
+                    onChange={(e) => {
+                      setChatInput(e.target.value);
+                      e.target.style.height = 'auto';
+                      e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendPrompt();
+                      }
+                    }}
+                  />
+                  <button
+                    className="conv-send-btn"
+                    disabled={isGenerating || !chatInput.trim()}
+                    onClick={handleSendPrompt}
+                  >
+                    <span>Send</span>
+                    <Send size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </ImageGenContextAttach>
         </div>
       </footer>
 
       {/* Fullscreen Preview Modal */}
       {fullscreenUrl && (
-        <div className="conv-fullscreen-overlay" onClick={() => setFullscreenUrl(null)}>
-          <button className="conv-fullscreen-close" onClick={() => setFullscreenUrl(null)}>
+        <div className="conv-fullscreen-overlay" onClick={() => setFullscreenUrl(null)} role="dialog" aria-modal="true" aria-label="Image preview">
+          <button className="conv-fullscreen-close" onClick={() => setFullscreenUrl(null)} aria-label="Close">
             <X size={20} />
           </button>
-          <img src={fullscreenUrl} alt="Fullscreen preview" className="conv-fullscreen-img" />
+          <img
+            src={fullscreenUrl}
+            alt="Fullscreen preview"
+            className="conv-fullscreen-img"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
 

@@ -2,20 +2,31 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   Plus, Search, Image as ImageIcon,
   ChevronDown, Mic, Sparkles, X, Lightbulb,
-  ListOrdered, Clock, Columns2, BarChart3, Network, List, RefreshCw, Hexagon, Library
+  ListOrdered, Clock, Columns2, BarChart3, Network, List, RefreshCw, Hexagon, Library,
+  Share2, Printer, FileText
 } from 'lucide-react';
+import { FaInstagram, FaFacebookF, FaYoutube, FaLinkedinIn, FaXTwitter } from 'react-icons/fa6';
 import imageGenService from '../../../services/imageGenService.js';
 import creditsService from '../../../services/creditsService.js';
 import LogoImg from '../../../assets/herologo.png';
 import geminiLogo from '../../../assets/google_gemini_logo.svg';
 import chatgptLogo from '../../../assets/chatgpt_logo.svg';
+import youtubeThumbPreview from '../../../assets/ai-img-gen/Youtube_thumbnail.png';
+import instagramPostPreview from '../../../assets/ai-img-gen/Instagram_post.png';
+import facebookPostPreview from '../../../assets/ai-img-gen/facebook_post.png';
+import facebookCoverPreview from '../../../assets/ai-img-gen/Facebook_banner.png';
+import youtubeBannerPreview from '../../../assets/ai-img-gen/Insta_landscape.png';
+import twitterPostPreview from '../../../assets/ai-img-gen/X_Twitter_Post.png';
+import linkedinBannerPreview from '../../../assets/ai-img-gen/Linkedin_Banner.png';
 
 import OriginalAIImageStudio from './AIImageStudio.jsx';
 import AIConversationalStudio from './AIConversationalStudio.jsx';
 import WorkspaceImageLibrary from './WorkspaceImageLibrary.jsx';
 import ImageGenSaveLocation from '../../../components/features/image-generation/ImageGenSaveLocation.jsx';
 import ImageGenCreditsGate from '../../../components/features/image-generation/ImageGenCreditsGate.jsx';
+import ImageGenContextAttach from '../../../components/features/image-generation/ImageGenContextAttach.jsx';
 import { checkImageGenCredits } from '../../../utils/imageGenCreditsCheck.js';
+import { defaultImageGenModelId, modelsForImageGenMode, isDraftQualityModel } from '../../../utils/imageGenDefaults.js';
 
 import style3dImg from '../../../assets/slides_icons/style_3d.jpg';
 import styleBauhausImg from '../../../assets/slides_icons/style_bauhaus.jpg';
@@ -52,6 +63,74 @@ const layoutImages = {
   cycle: layoutCycle
 };
 
+const SOCIAL_DESTINATION_FALLBACK = [
+  { id: 'youtube-thumbnail', name: 'YouTube thumbnail', platform: 'youtube', width: 1280, height: 720 },
+  { id: 'instagram-post', name: 'Instagram post', platform: 'instagram', width: 1080, height: 1350 },
+  { id: 'facebook-post', name: 'Facebook post', platform: 'facebook', width: 940, height: 788 },
+  { id: 'facebook-cover', name: 'Facebook cover', platform: 'facebook', width: 851, height: 315 },
+  { id: 'youtube-banner', name: 'YouTube banner', platform: 'youtube', width: 2560, height: 1440 },
+  { id: 'twitter-post', name: 'X / Twitter post', platform: 'twitter', width: 1600, height: 900 },
+  { id: 'linkedin-banner', name: 'LinkedIn banner', platform: 'linkedin', width: 1584, height: 396 },
+];
+
+const MODE_SWITCHES = [
+  { id: 'image', label: 'Image', fullName: 'Images', Icon: ImageIcon },
+  { id: 'infographic', label: 'Info', fullName: 'Infographics', Icon: BarChart3 },
+  { id: 'social', label: 'Social', fullName: 'Social', Icon: Share2 },
+  { id: 'printable', label: 'Print', fullName: 'Print', Icon: Printer, disabled: true },
+];
+
+function formatServesMode(format, mode) {
+  const modes = Array.isArray(format?.modes) ? format.modes : [];
+  if (modes.length) return modes.includes(mode);
+  return false;
+}
+
+function socialDestinationsFrom(formats = []) {
+  const fromApi = formats.filter((f) => formatServesMode(f, 'social'));
+  return fromApi.length ? fromApi : SOCIAL_DESTINATION_FALLBACK;
+}
+
+const SOCIAL_PREVIEW = {
+  'youtube-thumbnail': youtubeThumbPreview,
+  'instagram-post': instagramPostPreview,
+  'facebook-post': facebookPostPreview,
+  'facebook-cover': facebookCoverPreview,
+  'youtube-banner': youtubeBannerPreview,
+  'twitter-post': twitterPostPreview,
+  'linkedin-banner': linkedinBannerPreview,
+};
+
+function socialPreviewShape(dest) {
+  const id = dest.id || '';
+  const ratio = Number(dest.width) / Math.max(Number(dest.height) || 1, 1);
+  if (id.includes('instagram') || ratio < 0.85) return 'portrait';
+  if (id.includes('cover') || id.includes('banner') || id.includes('linkedin') || ratio > 2.2) return 'banner';
+  return 'landscape';
+}
+function resolveSocialPlatform(chat) {
+  const direct = String(chat?.platform || chat?.head?.platform || '').toLowerCase();
+  if (direct) return direct;
+  const fid = String(chat?.formatId || chat?.head?.formatId || '').toLowerCase();
+  if (fid.includes('instagram')) return 'instagram';
+  if (fid.includes('facebook')) return 'facebook';
+  if (fid.includes('linkedin')) return 'linkedin';
+  if (fid.includes('twitter') || fid.startsWith('x-') || fid.includes('x-twitter')) return 'twitter';
+  if (fid.includes('youtube')) return 'youtube';
+  return '';
+}
+
+function SocialPlatformIcon({ platform, size = 16 }) {
+  const key = String(platform || '').toLowerCase();
+  const s = { width: size, height: size, flexShrink: 0 };
+  if (key.includes('youtube')) return <FaYoutube style={{ ...s, color: '#FF0000' }} title="YouTube" />;
+  if (key.includes('instagram')) return <FaInstagram style={{ ...s, color: '#E4405F' }} title="Instagram" />;
+  if (key.includes('facebook')) return <FaFacebookF style={{ ...s, color: '#1877F2' }} title="Facebook" />;
+  if (key.includes('linkedin')) return <FaLinkedinIn style={{ ...s, color: '#0A66C2' }} title="LinkedIn" />;
+  if (key.includes('twitter') || key === 'x') return <FaXTwitter style={{ ...s, color: '#111827' }} title="X" />;
+  return <Share2 size={size} />;
+}
+
 import './AIImageGenerationUpdate.css';
 import InfographicAnimatedBackground from './InfographicAnimatedBackground.jsx';
 
@@ -85,6 +164,16 @@ const TOPICS = [
 ];
 
 const INFOGRAPHIC_TOPICS = ['Presentations', 'Reports', 'Dashboards', 'Timelines', 'Workflows', 'Mind Maps'];
+
+const SOCIAL_TOPICS = [
+  'YouTube thumbnail',
+  'Instagram post',
+  'Facebook cover',
+  'LinkedIn banner',
+  'X / Twitter post',
+  'YouTube banner',
+  'Facebook post',
+];
 export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavigateLibrary, createContext }) {
   const [saveWorkspaceId, setSaveWorkspaceId] = useState(
     createContext?.workspaceId || createContext?.config?.workspaceId || '',
@@ -109,8 +198,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
 
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
-  const [uploadedImage, setUploadedImage] = useState(null);
-  const fileInputRef = useRef(null);
+  const [imageContext, setImageContext] = useState(null);
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -145,13 +233,6 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
     } else {
       recognitionRef.current.start();
       setIsListening(true);
-    }
-  };
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setUploadedImage(URL.createObjectURL(file));
     }
   };
 
@@ -192,9 +273,10 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
       try {
         const cats = await imageGenService.getCatalogs();
         setCatalogs(cats);
-        // Default model and format
-        if (cats.models.length > 0) setSelectedModel(cats.models[0].id);
-        if (cats.formats.length > 0) setSelectedFormat(cats.formats[0].id);
+        const imageFormats = (cats.formats || []).filter((f) => formatServesMode(f, 'image'));
+        const defaultFormat = imageFormats.find((f) => f.id === 'square') || imageFormats[0] || cats.formats[0];
+        setSelectedModel(defaultImageGenModelId('image', cats));
+        if (defaultFormat?.id) setSelectedFormat(defaultFormat.id);
       } catch(e) {
         console.error("Failed to load catalogs", e);
       }
@@ -240,6 +322,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
 
   const tryLaunchStudio = async () => {
     if (!prompt.trim() || creditsBusy) return;
+    if (activeMode === 'social' && !selectedFormat) return;
     const wsId = saveWorkspaceId || createContext?.workspaceId || createContext?.config?.workspaceId;
     if (!wsId) {
       setLaunchStudio(true);
@@ -377,7 +460,33 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
 
   const selectedModelObj = catalogs.models.find(m => m.id === selectedModel);
 
-  const currentStyles = activeMode === 'infographic' ? catalogs.archetypes : catalogs.styles;
+  const switchStudioMode = (next) => {
+    if (!next || next === 'printable') return;
+    setActiveMode(next);
+    setSelectedStyle(null);
+    setIsComposerExpanded(false);
+    setShowFormatDropdown(false);
+    setSelectedModel(defaultImageGenModelId(next, catalogs));
+    if (next === 'social') {
+      setSelectedFormat('');
+      return;
+    }
+    const pool = catalogs.formats.filter((f) => formatServesMode(f, next));
+    const fallbackId = next === 'infographic' ? 'landscape' : 'square';
+    const nextFormat = pool.find((f) => f.id === fallbackId) || pool[0];
+    if (nextFormat?.id) setSelectedFormat(nextFormat.id);
+  };
+
+  const socialDestinations = socialDestinationsFrom(catalogs.formats);
+  const GENERIC_FORMAT_IDS = ['square', 'landscape', 'portrait', 'landscape-16-9', 'portrait-9-16'];
+  const aspectFormats = catalogs.formats.filter((f) =>
+    formatServesMode(f, activeMode === 'infographic' ? 'infographic' : 'image')
+  );
+  const sizeOptions = aspectFormats.length
+    ? aspectFormats
+    : catalogs.formats.filter((f) => GENERIC_FORMAT_IDS.includes(f.id));
+  const selectedSocial = socialDestinations.find((f) => f.id === selectedFormat);
+  const canGenerate = Boolean(prompt.trim()) && !creditsBusy && (activeMode !== 'social' || Boolean(selectedFormat));
 
   if (launchStudio || activeThreadId) {
     return (
@@ -400,6 +509,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
         selectedFormat={selectedFormat}
         selectedStyle={selectedStyle}
         activeThreadId={activeThreadId}
+        initialContext={imageContext}
       />
     );
   }
@@ -410,8 +520,20 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
       <aside className="ai-gen-sidebar">
         
         <div className="mode-toggle">
-          <span className={activeMode === 'image' ? 'active' : ''} onClick={() => setActiveMode('image')}>Images</span>
-          <span className={activeMode === 'infographic' ? 'active' : ''} onClick={() => setActiveMode('infographic')}>Infographics</span>
+          {MODE_SWITCHES.map(({ id, label, fullName, Icon, disabled }) => (
+            <button
+              key={id}
+              type="button"
+              className={activeMode === id ? 'active' : ''}
+              disabled={disabled}
+              aria-label={disabled ? 'Print coming next' : fullName}
+              title={disabled ? 'Print coming next' : fullName}
+              onClick={() => switchStudioMode(id)}
+            >
+              <Icon size={15} strokeWidth={2} />
+              <span className="mode-toggle-label">{label}</span>
+            </button>
+          ))}
         </div>
 
         <div className="sidebar-actions">
@@ -426,14 +548,33 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
         </nav>
 
         <div className="sidebar-recent" style={{ flex: 1 }}>
-           <h3>Recent</h3>
+           <h3><Clock size={14} /> Recent</h3>
            <ul>
-             {recentChats.map((chat, idx) => (
-               <li key={chat.id || idx} onClick={() => setActiveThreadId(chat.id)} style={{ cursor: 'pointer' }}>
-                 {chat.title || chat.prompt || chat.name || "Untitled chat"}
-               </li>
-             ))}
-             {recentChats.length === 0 && <li style={{color: 'var(--text-secondary, #6b7280)', cursor: 'default'}}>No recent chats</li>}
+             {recentChats.map((chat, idx) => {
+               const chatMode = String(chat.mode || chat.head?.mode || '').toLowerCase();
+               const platform = resolveSocialPlatform(chat);
+               const isInfographic = chatMode === 'infographic';
+               const isSocial = chatMode === 'social' || Boolean(platform);
+               const isPrint = chatMode === 'printable';
+               const label = chat.title || chat.prompt || chat.name || 'Untitled chat';
+               return (
+                 <li key={chat.id || idx} onClick={() => setActiveThreadId(chat.id)} title={isInfographic ? 'Infographic' : isSocial ? 'Social' : isPrint ? 'Print' : 'Image'}>
+                   <span className="recent-chat-icon" aria-hidden>
+                     {isSocial ? (
+                       <SocialPlatformIcon platform={platform} size={15} />
+                     ) : isInfographic ? (
+                       <BarChart3 size={15} />
+                     ) : isPrint ? (
+                       <FileText size={15} />
+                     ) : (
+                       <ImageIcon size={15} />
+                     )}
+                   </span>
+                   <span className="recent-chat-title">{label}</span>
+                 </li>
+               );
+             })}
+             {recentChats.length === 0 && <li className="recent-chat-empty" style={{color: 'var(--text-secondary, #6b7280)', cursor: 'default'}}>No recent chats</li>}
            </ul>
         </div>
 
@@ -443,7 +584,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
       </aside>
 
       {/* Main Content */}
-      <main className="ai-gen-main" style={{ position: 'relative' }}>
+      <main className={`ai-gen-main${activeMode === 'infographic' && isComposerExpanded ? ' composer-open' : ''}`} style={{ position: 'relative' }}>
         <div className="ai-gen-save-corner">
           <ImageGenSaveLocation
             workspaceId={saveWorkspaceId}
@@ -493,6 +634,16 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
               </h1>
               <p>Try a template or describe a visual in chat. Create with Athena AI.</p>
             </>
+          ) : activeMode === 'social' ? (
+            <>
+              <h1>
+                Create a{' '}
+                <span className={`topic-dynamic ${fadeTopic ? 'fade-in' : 'fade-out'}`}>
+                  {SOCIAL_TOPICS[topicIndex % SOCIAL_TOPICS.length]}
+                </span>
+              </h1>
+              <p>Pick a destination first — YouTube, Instagram, Facebook, X, or LinkedIn. Then describe the post.</p>
+            </>
           ) : (
             <>
               <h1>
@@ -504,6 +655,31 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
           )}
         </header>
 
+        {activeMode === 'social' && (
+          <section className="styles-grid-container social-destinations" style={{ position: 'relative', zIndex: 1 }}>
+            <div className="styles-grid-title">Choose a destination</div>
+            <div className="social-dest-grid">
+              {socialDestinations.map((dest) => (
+                <button
+                  type="button"
+                  key={dest.id}
+                  data-shape={socialPreviewShape(dest)}
+                  className={`social-dest-card ${selectedFormat === dest.id ? 'selected' : ''}`}
+                  onClick={() => setSelectedFormat(dest.id)}
+                >
+                  <span className="social-dest-preview">
+                    <img src={SOCIAL_PREVIEW[dest.id] || dest.previewUrl} alt="" />
+                    <span className="social-dest-badge">
+                      <SocialPlatformIcon platform={dest.platform} size={14} />
+                    </span>
+                  </span>
+                  <span className="social-dest-name">{dest.name}</span>
+                  <span className="social-dest-size">{dest.width}×{dest.height}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
         {activeMode === 'image' && (
           <section className="styles-grid-container" style={{ position: 'relative', zIndex: 1 }}>
             <div className="styles-grid-title">Choose a style</div>
@@ -570,40 +746,68 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
               </div>
             )}
 
-             {uploadedImage && (
-               <div className="uploaded-image-preview" style={{ padding: '0 24px', marginTop: '16px' }}>
-                 <div style={{ position: 'relative', display: 'inline-block' }}>
-                   <img src={uploadedImage} alt="Uploaded" style={{ height: '60px', borderRadius: '8px', border: '1px solid #e5e7eb', objectFit: 'cover' }} />
-                   <button onClick={() => setUploadedImage(null)} style={{ position: 'absolute', top: '-6px', right: '-6px', background: '#ef4444', color: 'white', borderRadius: '50%', border: 'none', padding: '2px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                     <X size={12}/>
-                   </button>
-                 </div>
-               </div>
-             )}
-             <div className="chatbox-input">
-                <input type="file" hidden ref={fileInputRef} onChange={handleImageUpload} accept="image/*" />
-                <button className="attach-btn" onClick={() => fileInputRef.current?.click()}><Plus size={20}/></button>
-                <textarea 
-                  ref={textareaRef}
-                  placeholder={activeMode === 'image' ? "Describe your visual..." : "Describe your infographic..."}
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  onFocus={() => {
-                    if (activeMode === 'infographic') setIsComposerExpanded(true);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey && prompt.trim()) {
-                      e.preventDefault();
-                      tryLaunchStudio();
-                    }
-                  }}
-                  rows={1}
-                />
-                <button className="mic-btn" onClick={toggleMic} style={{ color: isListening ? '#ef4444' : '' }}><Mic size={20}/></button>
-                <button className="inspire-btn" title="Inspire Me" onClick={handleInspire} disabled={isTyping} style={{ opacity: isTyping ? 0.5 : 1 }}>
-                  <Lightbulb size={20}/>
-                </button>
-             </div>
+            {activeMode === 'social' && selectedSocial && (
+              <div className="selected-layout-chip-container">
+                <div className="selected-layout-chip">
+                  <span>
+                    Destination: <strong>{selectedSocial.name}</strong>
+                  </span>
+                  <button className="clear-chip-btn" onClick={() => setSelectedFormat('')}>
+                    <X size={12} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <ImageGenContextAttach
+              workspaceId={saveWorkspaceId}
+              context={imageContext}
+              onContextChange={setImageContext}
+              compact
+              plusMenu
+            >
+              {({ thumbs, trigger, composerBind, isDragOver, error: contextError }) => (
+                <>
+                  {thumbs}
+                  {contextError && (
+                    <p className="chatbox-context-error">{contextError}</p>
+                  )}
+                  <div
+                    className={`chatbox-input${isDragOver ? ' is-file-over' : ''}`}
+                    {...composerBind}
+                  >
+                    {trigger}
+                    <textarea
+                      ref={textareaRef}
+                      placeholder={
+                        activeMode === 'social'
+                          ? 'Describe the post...'
+                          : activeMode === 'image'
+                            ? 'Describe your visual...'
+                            : 'Describe your infographic...'
+                      }
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      onPaste={composerBind.onPaste}
+                      onFocus={() => {
+                        if (activeMode === 'infographic') setIsComposerExpanded(true);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey && prompt.trim()) {
+                          e.preventDefault();
+                          tryLaunchStudio();
+                        }
+                      }}
+                      rows={1}
+                    />
+                    <button className="mic-btn" onClick={toggleMic} style={{ color: isListening ? '#ef4444' : '' }}><Mic size={20}/></button>
+                    <button className="inspire-btn" title="Inspire Me" onClick={handleInspire} disabled={isTyping} style={{ opacity: isTyping ? 0.5 : 1 }}>
+                      <Lightbulb size={20}/>
+                    </button>
+                  </div>
+                </>
+              )}
+            </ImageGenContextAttach>
              
              <div className="chatbox-footer">
                 <div className="chatbox-selectors" style={{ overflow: 'visible', flexWrap: 'wrap' }}>
@@ -619,7 +823,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                         <div className="model-modal-content">
                         {(() => {
                           const buckets = new Map();
-                          catalogs.models.forEach((m) => {
+                          modelsForImageGenMode(catalogs.models, activeMode).forEach((m) => {
                             const key = m.provider || (String(m.id).includes('gemini') ? 'gemini' : 'openai');
                             if (!buckets.has(key)) buckets.set(key, []);
                             buckets.get(key).push(m);
@@ -641,7 +845,8 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                                     <div className="model-name">
                                       {getModelIcon(m.id)} {m.name || m.id}
                                     </div>
-                                    {m.recommended && <span className="recommended-badge">Recommended</span>}
+                                    {m.recommended && activeMode === 'image' && <span className="recommended-badge">Recommended</span>}
+                                    {isDraftQualityModel(m) && <span className="recommended-badge">Draft quality</span>}
                                   </div>
                                   <div className="model-desc">{m.description || "High performance AI image generation model."}</div>
                                   <div className="model-meta">
@@ -659,10 +864,11 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                     )}
                   </div>
                   
+                  {activeMode !== 'social' && (
                   <div className="custom-dropdown">
                     <button className="dropdown-trigger" onClick={() => setShowFormatDropdown(!showFormatDropdown)}>
                       {(() => {
-                        const selFormat = catalogs.formats.find(f => f.id === selectedFormat);
+                        const selFormat = sizeOptions.find(f => f.id === selectedFormat) || catalogs.formats.find(f => f.id === selectedFormat);
                         if (!selFormat) return <span>Size</span>;
                         return (
                           <>
@@ -677,7 +883,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                       <div className="model-modal" style={{ right: 0, left: 'auto', minWidth: '180px' }}>
                         <div className="model-modal-content">
                           <div className="model-group-title">Aspect Ratio</div>
-                          {catalogs.formats.map(f => (
+                          {sizeOptions.map(f => (
                             <div 
                               key={f.id} 
                               className={`model-card ${selectedFormat === f.id ? 'active' : ''}`}
@@ -692,15 +898,21 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                       </div>
                     )}
                   </div>
+                  )}
                 </div>
+                <span
+                  className={`generate-btn-wrap${activeMode === 'social' && !selectedFormat ? ' needs-destination' : ''}`}
+                  data-tip={activeMode === 'social' && !selectedFormat ? 'Select a destination first' : undefined}
+                >
                 <button 
                   className="generate-btn" 
                   onClick={tryLaunchStudio}
-                  disabled={creditsBusy}
-                  style={{ background: 'var(--primary, #2563eb)', color: '#ffffff', opacity: creditsBusy ? 0.7 : 1 }}
+                  disabled={!canGenerate}
+                  style={{ background: 'var(--primary, #2563eb)', color: '#ffffff', opacity: canGenerate ? 1 : 0.45 }}
                 >
                   <Sparkles size={16}/> Generate
                 </button>
+                </span>
              </div>
           </div>
         </section>
