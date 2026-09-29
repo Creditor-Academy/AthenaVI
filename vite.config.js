@@ -24,9 +24,8 @@ export default defineConfig(({ mode }) => {
     base: '/',
     plugins: [react()],
     server: {
-      // Linked @athena/contracts lives outside the app root
       fs: {
-        allow: ['..'],
+        allow: ['.'],
       },
       hmr: {
         host: 'localhost',

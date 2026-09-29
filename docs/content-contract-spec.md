@@ -1,6 +1,11 @@
 # Content Contract Specification
 
-Shared rules for mapping AI slide JSON into layout slot text on **both** the presentation backend and the PPT canvas frontend. Implementation lives in [`packages/athena-contracts`](../../packages/athena-contracts) (`@athena/contracts`).
+Shared rules for mapping AI slide JSON into layout slot text on **both** the presentation backend and the PPT canvas frontend. Implementation is **`@athena/contracts`**:
+
+- **Backend (canonical):** `AthenaVI_backend/packages/athena-contracts`
+- **Frontend (deploy copy):** [`packages/athena-contracts`](../packages/athena-contracts)
+
+After backend changes, run `npm run sync:athena-contracts` in the backend repo and commit both copies.
 
 Related: [ppt-canvas-backend-data-contract.md](./ppt-canvas-backend-data-contract.md)
 
