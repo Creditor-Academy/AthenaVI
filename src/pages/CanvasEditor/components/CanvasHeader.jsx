@@ -10,6 +10,7 @@ import {
   FiShare2,
   FiAlertCircle,
   FiLoader,
+  FiSliders,
 } from 'react-icons/fi'
 
 const SAVE_BADGE_BY_STATE = {
@@ -31,6 +32,8 @@ export default function CanvasHeader({
   onOpenExportModal,
   activeCanvas,
   saveState = null,
+  inspectorOpen = true,
+  onToggleInspector = null,
 }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const badge = (saveState && SAVE_BADGE_BY_STATE[saveState]) || SAVE_BADGE_BY_STATE.saved
@@ -118,8 +121,20 @@ export default function CanvasHeader({
         </button>
       </div>
 
-      {/* Right: Share & Export */}
+      {/* Right: Inspector Toggle, Share & Export */}
       <div className="canva-header-right">
+        {onToggleInspector && (
+          <button
+            type="button"
+            className={`canva-header-secondary-btn ${inspectorOpen ? 'is-active' : ''}`}
+            onClick={onToggleInspector}
+            title={inspectorOpen ? 'Hide Inspector Panel' : 'Show Inspector Panel'}
+          >
+            <FiSliders />
+            <span>Inspector</span>
+          </button>
+        )}
+
         <button
           type="button"
           className="canva-header-secondary-btn"
