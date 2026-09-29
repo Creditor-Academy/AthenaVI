@@ -1,19 +1,26 @@
 /* ==========================================================================
-   CANVA-STYLE STUDIO EDITOR DESIGN SYSTEM
+   FLOATING STUDIO EDITOR DESIGN SYSTEM (CANVA / FIGMA STYLE)
    ========================================================================== */
 
 .canvas-editor-page {
-  --canva-bg: var(--bg-main, #f3f4f6);
+  --canva-bg: var(--bg-main, #0b0f19);
+  --canva-bg-subtle: #0f172a;
   --canva-surface: var(--bg-surface, #ffffff);
+  --canva-surface-solid: #ffffff;
   --canva-card: var(--bg-card, #ffffff);
-  --canva-border: var(--border-color, #e5e7eb);
-  --canva-text: var(--text-main, #111827);
-  --canva-muted: var(--text-muted, #6b7280);
+  --canva-border: rgba(226, 232, 240, 0.85);
+  --canva-border-subtle: rgba(226, 232, 240, 0.5);
+  --canva-glass-bg: rgba(255, 255, 255, 0.9);
+  --canva-glass-border: rgba(255, 255, 255, 0.7);
+  --canva-glass-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.14), 0 4px 12px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+  --canva-text: #0f172a;
+  --canva-muted: #64748b;
   --canva-accent: var(--primary, #2563eb);
   --canva-accent-hover: var(--primary-hover, #1d4ed8);
-  --canva-accent-soft: color-mix(in srgb, var(--canva-accent) 12%, transparent);
-  --canva-dock-bg: #111827;
-  --canva-dock-text: #9ca3af;
+  --canva-accent-soft: rgba(37, 99, 235, 0.1);
+  --canva-dock-bg: rgba(15, 23, 42, 0.94);
+  --canva-dock-border: rgba(255, 255, 255, 0.12);
+  --canva-dock-text: #94a3b8;
   --canva-dock-active: #ffffff;
 
   position: fixed;
@@ -24,7 +31,10 @@
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  background: var(--canva-bg);
+  background:
+    radial-gradient(ellipse 75% 45% at 50% -10%, rgba(37, 99, 235, 0.1), transparent 70%),
+    radial-gradient(ellipse 55% 35% at 90% 90%, rgba(139, 92, 246, 0.08), transparent 60%),
+    var(--canva-bg);
   color: var(--canva-text);
   font-family: var(--font-family, Inter, system-ui, -apple-system, sans-serif);
   user-select: none;
@@ -38,22 +48,85 @@
   color: inherit;
 }
 
+/* Floating entrance animations */
+@keyframes canvaFloatFadeDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@keyframes canvaHeaderFloatIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes canvaDrawerFloatIn {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes canvaInspectorFloatIn {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes canvaFloatFadeUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
 /* ==========================================================================
-   1. CANVA HEADER TOP BAR
+   1. FLOATING TOP HEADER NAVBAR
    ========================================================================== */
 
 .canva-header {
-  position: relative;
-  z-index: 50;
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  right: 16px;
+  z-index: 60;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  height: 54px;
+  gap: 14px;
+  height: 52px;
   padding: 0 16px;
-  border-bottom: 1px solid var(--canva-border);
-  background: var(--canva-surface);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  border-radius: 16px;
+  background: var(--canva-glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--canva-border);
+  box-shadow: var(--canva-glass-shadow);
+  animation: canvaHeaderFloatIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .canva-header-left,
@@ -61,7 +134,7 @@
 .canva-header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .canva-header-back-btn {
@@ -73,8 +146,8 @@
   padding: 0;
   flex-shrink: 0;
   border: 1px solid var(--canva-border);
-  border-radius: 8px;
-  background: var(--canva-surface);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.6);
   color: var(--canva-text);
   font-size: 17px;
   cursor: pointer;
@@ -85,6 +158,7 @@
   border-color: var(--canva-accent);
   color: var(--canva-accent);
   background: var(--canva-accent-soft);
+  transform: scale(1.04);
 }
 
 .canva-header-divider {
@@ -106,7 +180,7 @@
   height: 32px;
   padding: 0 10px;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: 8px;
   background: transparent;
   color: var(--canva-text);
   font-size: 14px;
@@ -117,7 +191,7 @@
 
 .canva-header-title-btn:hover {
   border-color: var(--canva-border);
-  background: var(--canva-bg);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .canva-header-title-text {
@@ -136,8 +210,8 @@
   height: 32px;
   padding: 0 10px;
   border: 2px solid var(--canva-accent);
-  border-radius: 6px;
-  background: var(--canva-surface);
+  border-radius: 8px;
+  background: #ffffff;
   color: var(--canva-text);
   font-size: 14px;
   font-weight: 700;
@@ -178,9 +252,9 @@
 .canva-header-history-group {
   display: flex;
   align-items: center;
-  background: var(--canva-bg);
+  background: rgba(0, 0, 0, 0.04);
   border: 1px solid var(--canva-border);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 2px;
 }
 
@@ -188,8 +262,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border: none;
   border-radius: 6px;
   background: transparent;
@@ -215,8 +289,8 @@
   height: 34px;
   padding: 0 12px;
   border: 1px solid var(--canva-border);
-  border-radius: 8px;
-  background: var(--canva-surface);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.6);
   color: var(--canva-muted);
   font-size: 12px;
   font-weight: 650;
@@ -227,19 +301,20 @@
 .canva-header-size-pill:hover {
   border-color: var(--canva-accent);
   color: var(--canva-text);
+  background: #ffffff;
 }
 
 .canva-header-secondary-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 36px;
-  padding: 0 14px;
+  gap: 7px;
+  height: 34px;
+  padding: 0 12px;
   border: 1px solid var(--canva-border);
-  border-radius: 8px;
-  background: var(--canva-surface);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.6);
   color: var(--canva-text);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 650;
   cursor: pointer;
   transition: all 150ms ease;
@@ -248,64 +323,85 @@
 .canva-header-secondary-btn:hover {
   border-color: var(--canva-accent);
   color: var(--canva-accent);
+  background: var(--canva-accent-soft);
+}
+
+.canva-header-secondary-btn.is-active {
+  border-color: var(--canva-accent);
+  background: var(--canva-accent-soft);
+  color: var(--canva-accent);
 }
 
 .canva-header-primary-btn {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 36px;
-  padding: 0 18px;
+  gap: 7px;
+  height: 34px;
+  padding: 0 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--canva-accent);
   color: #ffffff;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 750;
   cursor: pointer;
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--canva-accent) 35%, transparent);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--canva-accent) 40%, transparent);
   transition: all 160ms ease;
 }
 
 .canva-header-primary-btn:hover {
   background: var(--canva-accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px color-mix(in srgb, var(--canva-accent) 45%, transparent);
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--canva-accent) 50%, transparent);
 }
 
 /* ==========================================================================
-   2. STUDIO 3-PANE LAYOUT BODY
+   2. FLOATING STUDIO OVERLAY BODY
    ========================================================================== */
 
 .canvas-editor-studio-body {
-  display: flex;
-  flex: 1;
-  height: calc(100vh - 54px);
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
+  pointer-events: none;
+}
+
+.canvas-editor-studio-body > * {
+  pointer-events: auto;
 }
 
 /* ==========================================================================
-   3. CANVA FAR LEFT DOCK (NARROW SIDEBAR)
+   3. FLOATING LEFT DOCK (NARROW SIDEBAR)
    ========================================================================== */
 
 .canva-dock {
+  position: absolute;
+  top: 76px;
+  bottom: 16px;
+  left: 16px;
+  width: 68px;
+  height: auto;
+  border-radius: 18px;
+  background: var(--canva-dock-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--canva-dock-border);
+  box-shadow: 0 18px 45px -6px rgba(0, 0, 0, 0.35), 0 4px 14px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 68px;
-  height: 100%;
-  border-right: 1px solid var(--canva-border);
-  background: var(--canva-dock-bg);
-  color: var(--canva-dock-text);
   padding: 12px 0;
-  z-index: 30;
+  z-index: 45;
+  overflow: hidden;
 }
 
 .canva-dock-tabs {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   width: 100%;
   flex: 1;
   overflow-y: auto;
@@ -320,36 +416,51 @@
   justify-content: center;
   gap: 4px;
   width: 56px;
-  min-height: 48px;
-  height: 48px;
+  min-height: 50px;
+  height: 50px;
   flex-shrink: 0;
-  border: none;
-  border-radius: 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
   background: transparent;
-  color: var(--canva-dock-text);
+  color: #f1f5f9;
   cursor: pointer;
   transition: all 150ms ease;
 }
 
 .canva-dock-tab-icon {
   font-size: 20px;
+  color: #e2e8f0;
 }
 
 .canva-dock-tab-label {
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 10.5px;
+  font-weight: 700;
   letter-spacing: -0.01em;
+  color: #cbd5e1;
 }
 
 .canva-dock-tab:hover {
-  color: var(--canva-dock-active);
-  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.canva-dock-tab:hover .canva-dock-tab-icon,
+.canva-dock-tab:hover .canva-dock-tab-label {
+  color: #ffffff;
 }
 
 .canva-dock-tab.is-active {
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--canva-accent);
   color: #ffffff;
-  font-weight: 700;
+  font-weight: 750;
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);
+}
+
+.canva-dock-tab.is-active .canva-dock-tab-icon,
+.canva-dock-tab.is-active .canva-dock-tab-label {
+  color: #ffffff !important;
 }
 
 .canva-dock-toggle-btn {
@@ -359,32 +470,44 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--canva-dock-text);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
   cursor: pointer;
   transition: all 150ms ease;
 }
 
 .canva-dock-toggle-btn:hover {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.06);
 }
 
 /* ==========================================================================
-   4. EXPANDABLE LEFT DRAWER PANEL
+   4. FLOATING LEFT DRAWER PANEL
    ========================================================================== */
 
 .canva-drawer {
+  position: absolute;
+  top: 76px;
+  bottom: 16px;
+  left: 94px;
   width: 380px;
-  height: 100%;
-  border-right: 1px solid var(--canva-border);
-  background: var(--canva-surface);
+  height: auto;
+  max-width: calc(100vw - 120px);
+  border-radius: 18px;
+  background: #ffffff;
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 20px 50px -8px rgba(0, 0, 0, 0.24), 0 6px 18px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
-  z-index: 20;
-  box-shadow: 4px 0 16px rgba(0, 0, 0, 0.04);
+  z-index: 44;
+  overflow: hidden;
+  color: #0f172a;
+  animation: canvaDrawerFloatIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .canva-drawer-header {
@@ -392,14 +515,15 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid var(--canva-border);
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
 }
 
 .canva-drawer-title {
   margin: 0;
   font-size: 15px;
   font-weight: 800;
-  color: var(--canva-text);
+  color: #0f172a;
 }
 
 .canva-drawer-close-btn {
@@ -408,17 +532,19 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  border: none;
+  border: 1px solid #e2e8f0;
   border-radius: 50%;
-  background: transparent;
-  color: var(--canva-muted);
-  font-size: 16px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 15px;
   cursor: pointer;
+  transition: all 140ms ease;
 }
 
 .canva-drawer-close-btn:hover {
-  background: var(--canva-bg);
-  color: var(--canva-text);
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #ef4444;
 }
 
 .canva-drawer-search {
@@ -430,10 +556,10 @@
   width: 100%;
   height: 38px;
   padding: 0 36px 0 36px;
-  border: 1px solid var(--canva-border);
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
-  background: var(--canva-bg);
-  color: var(--canva-text);
+  background: #f8fafc;
+  color: #0f172a;
   font-size: 13px;
   outline: none;
   transition: border-color 150ms ease;
@@ -441,14 +567,14 @@
 
 .canva-drawer-search input:focus {
   border-color: var(--canva-accent);
-  background: var(--canva-surface);
+  background: #ffffff;
 }
 
 .canva-drawer-search-icon {
   position: absolute;
   left: 12px;
   top: 11px;
-  color: var(--canva-muted);
+  color: #64748b;
   font-size: 16px;
 }
 
@@ -458,7 +584,7 @@
   top: 10px;
   border: none;
   background: transparent;
-  color: var(--canva-muted);
+  color: #64748b;
   cursor: pointer;
 }
 
@@ -466,6 +592,8 @@
   flex: 1;
   overflow-y: auto;
   padding: 20px;
+  background: #ffffff;
+  color: #0f172a;
 }
 
 .canva-drawer-body--ppt-panels {
@@ -490,6 +618,7 @@
   border: none;
   border-radius: 0;
   box-shadow: none;
+  color: #0f172a;
 }
 
 .canva-drawer .ppt-insert-panel {
@@ -514,12 +643,27 @@
 .canva-drawer .ppt-insert-rail {
   width: 132px;
   padding-top: 12px;
+  border-right: 1px solid #e2e8f0;
+}
+
+.canva-drawer .ppt-insert-rail button {
+  color: #334155;
+  font-weight: 650;
+  font-size: 12.5px;
+}
+
+.canva-drawer .ppt-insert-rail button.is-active,
+.canva-drawer .ppt-insert-rail button:hover {
+  color: var(--canva-accent);
+  background: #eff6ff;
+  font-weight: 750;
 }
 
 .canva-drawer .ppt-insert-main {
   min-width: 0;
   flex: 1;
   overflow-y: auto;
+  color: #0f172a;
 }
 
 .canva-drawer-section {
@@ -529,11 +673,11 @@
 }
 
 .canva-drawer-label {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 750;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--canva-muted);
+  color: #475569;
 }
 
 /* Text Presets Cards */
@@ -542,10 +686,10 @@
   display: flex;
   align-items: center;
   padding: 14px 16px;
-  border: 1px solid var(--canva-border);
+  border: 1px solid #e2e8f0;
   border-radius: 10px;
-  background: var(--canva-bg);
-  color: var(--canva-text);
+  background: #f8fafc;
+  color: #0f172a;
   cursor: pointer;
   transition: all 160ms ease;
   text-align: left;
@@ -553,24 +697,26 @@
 
 .canva-text-preset-card:hover {
   border-color: var(--canva-accent);
-  background: var(--canva-surface);
+  background: #ffffff;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.1);
 }
 
 .canva-text-preset-card.heading strong {
   font-size: 20px;
   font-weight: 800;
+  color: #0f172a;
 }
 
 .canva-text-preset-card.subheading span {
   font-size: 16px;
   font-weight: 650;
+  color: #1e293b;
 }
 
 .canva-text-preset-card.body small {
   font-size: 13px;
-  color: var(--canva-muted);
+  color: #64748b;
 }
 
 /* Shapes Grid */
@@ -588,27 +734,31 @@
   justify-content: center;
   gap: 6px;
   padding: 14px 8px;
-  border: 1px solid var(--canva-border);
-  border-radius: 8px;
-  background: var(--canva-bg);
-  color: var(--canva-text);
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #0f172a;
   cursor: pointer;
   transition: all 150ms ease;
 }
 
 .canva-shape-card:hover {
   border-color: var(--canva-accent);
-  background: var(--canva-surface);
+  background: #ffffff;
   color: var(--canva-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
 }
 
 .canva-shape-icon {
   font-size: 24px;
+  color: var(--canva-accent);
 }
 
 .canva-shape-card span {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 /* Uploads & Photos */
@@ -620,9 +770,9 @@
   justify-content: center;
   gap: 6px;
   padding: 20px;
-  border: 2px dashed var(--canva-border);
-  border-radius: 10px;
-  background: var(--canva-bg);
+  border: 2px dashed #94a3b8;
+  border-radius: 12px;
+  background: #f8fafc;
   cursor: pointer;
   text-align: center;
   transition: all 150ms ease;
@@ -640,12 +790,13 @@
 
 .canva-upload-dropzone strong {
   font-size: 13px;
-  color: var(--canva-text);
+  color: #0f172a;
+  font-weight: 750;
 }
 
 .canva-upload-dropzone span {
-  font-size: 11px;
-  color: var(--canva-muted);
+  font-size: 11.5px;
+  color: #64748b;
 }
 
 .canva-photos-grid {
@@ -661,7 +812,7 @@
   border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
-  border: 1px solid var(--canva-border);
+  border: 1px solid #e2e8f0;
 }
 
 .canva-photo-card img {
@@ -688,7 +839,7 @@
   height: 36px;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid var(--canva-border);
+  border: 1px solid #e2e8f0;
 }
 
 .canva-brand-color-swatch {
@@ -715,32 +866,36 @@
   align-items: center;
   gap: 12px;
   padding: 10px;
-  border: 1px solid var(--canva-border);
-  border-radius: 8px;
-  background: var(--canva-bg);
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
   cursor: pointer;
   transition: all 150ms ease;
 }
 
 .canva-page-card:hover {
   border-color: var(--canva-accent);
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
 }
 
 .canva-page-card.is-active {
   border-color: var(--canva-accent);
+  background: #eff6ff;
   box-shadow: 0 0 0 1px var(--canva-accent);
 }
 
 .canva-page-card-thumb {
   width: 44px;
   height: 44px;
-  border-radius: 4px;
-  border: 1px solid var(--canva-border);
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 10px;
-  color: var(--canva-muted);
+  font-weight: 700;
+  color: #475569;
 }
 
 .canva-page-card-info {
@@ -749,13 +904,14 @@
 
 .canva-page-card-info strong {
   display: block;
-  font-size: 12px;
-  color: var(--canva-text);
+  font-size: 12.5px;
+  font-weight: 750;
+  color: #0f172a;
 }
 
 .canva-page-card-info small {
-  font-size: 10px;
-  color: var(--canva-muted);
+  font-size: 11px;
+  color: #64748b;
 }
 
 .canva-page-card-actions {
@@ -769,16 +925,18 @@
   justify-content: center;
   width: 26px;
   height: 26px;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--canva-muted);
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #475569;
   cursor: pointer;
+  transition: all 120ms ease;
 }
 
 .canva-page-card-actions button:hover {
-  background: var(--canva-surface);
-  color: var(--canva-text);
+  background: #f1f5f9;
+  border-color: var(--canva-accent);
+  color: var(--canva-accent);
 }
 
 .canva-add-page-btn {
@@ -788,32 +946,39 @@
   gap: 6px;
   height: 38px;
   margin-top: 10px;
-  border: 1px dashed var(--canva-border);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--canva-text);
+  border: 1px dashed #94a3b8;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #0f172a;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
+  transition: all 140ms ease;
 }
 
 .canva-add-page-btn:hover {
   border-color: var(--canva-accent);
   color: var(--canva-accent);
+  background: #eff6ff;
 }
 
 /* ==========================================================================
-   5. CENTER VIEWPORT WORKSPACE STAGE
+   5. CENTER VIEWPORT WORKSPACE STAGE (IMMERSIVE BACKDROP)
    ========================================================================== */
 
 .canva-stage-viewport {
-  flex: 1;
+  position: absolute;
+  inset: 0;
+  width: 100%;
   height: 100%;
-  position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--canva-bg);
+  background-color: var(--canva-bg);
+  background-image: radial-gradient(rgba(148, 163, 184, 0.14) 1px, transparent 1px);
+  background-size: 24px 24px;
+  z-index: 10;
+  pointer-events: auto;
 }
 
 .canva-stage-container {
@@ -822,7 +987,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px 20px 80px;
+  padding-top: 86px;
+  padding-bottom: 96px;
+  padding-left: var(--stage-pad-left, 490px);
+  padding-right: var(--stage-pad-right, 350px);
+  transition: padding 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  scroll-behavior: smooth;
 }
 
 .canva-page-block {
@@ -843,7 +1013,7 @@
 }
 
 .canva-page-meta-title strong {
-  color: var(--canva-text);
+  color: #f1f5f9;
   font-size: 13px;
   margin-right: 8px;
 }
@@ -860,15 +1030,17 @@
   width: 28px;
   height: 28px;
   border: 1px solid var(--canva-border);
-  border-radius: 6px;
-  background: var(--canva-surface);
+  border-radius: 8px;
+  background: var(--canva-glass-bg);
   color: var(--canva-muted);
   cursor: pointer;
+  transition: all 140ms ease;
 }
 
 .canva-page-meta-actions button:hover {
   border-color: var(--canva-accent);
   color: var(--canva-text);
+  background: #ffffff;
 }
 
 .canva-surface-wrapper {
@@ -880,8 +1052,8 @@
 
 .canva-surface {
   position: relative;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-  border-radius: 4px;
+  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.35), 0 6px 20px rgba(0, 0, 0, 0.15);
+  border-radius: 6px;
   overflow: visible;
   transition: transform 120ms ease;
 }
@@ -925,7 +1097,7 @@
 
 .canva-page-block.is-active .canva-surface {
   outline: 2px solid var(--canva-accent);
-  outline-offset: 3px;
+  outline-offset: 4px;
 }
 
 /* Inactive pages are previews: nothing inside them (even overflowing elements) takes input. */
@@ -964,43 +1136,51 @@
   padding: 8px 18px;
   border: 1px solid var(--canva-border);
   border-radius: 20px;
-  background: var(--canva-surface);
+  background: var(--canva-glass-bg);
+  backdrop-filter: blur(12px);
   color: var(--canva-text);
   font-size: 13px;
   font-weight: 650;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
   transition: all 150ms ease;
 }
 
 .canva-add-page-pill-btn:hover {
   border-color: var(--canva-accent);
   color: var(--canva-accent);
+  background: #ffffff;
   transform: translateY(-1px);
 }
 
 /* ==========================================================================
-   6. CANVA BOTTOM CONTROL BAR
+   6. FLOATING BOTTOM CONTROL BAR
    ========================================================================== */
 
 .canva-bottom-bar {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 42px;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 44px;
   padding: 0 16px;
-  border-top: 1px solid var(--canva-border);
-  background: var(--canva-surface);
+  border-radius: 30px;
+  background: var(--canva-glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--canva-border);
+  box-shadow: var(--canva-glass-shadow);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  z-index: 30;
+  gap: 16px;
+  z-index: 50;
+  animation: canvaFloatFadeUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .canva-bottom-page-badge {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 650;
   color: var(--canva-muted);
 }
 
@@ -1011,12 +1191,19 @@
   height: 28px;
   padding: 0 10px;
   border: 1px solid var(--canva-border);
-  border-radius: 6px;
-  background: transparent;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.03);
   color: var(--canva-muted);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 11.5px;
+  font-weight: 650;
   cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.canva-bottom-icon-btn:hover {
+  border-color: var(--canva-accent);
+  color: var(--canva-text);
+  background: #ffffff;
 }
 
 .canva-bottom-icon-btn.is-active {
@@ -1029,10 +1216,10 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  background: var(--canva-bg);
+  background: rgba(0, 0, 0, 0.04);
   border: 1px solid var(--canva-border);
-  border-radius: 6px;
-  padding: 2px 4px;
+  border-radius: 20px;
+  padding: 2px 6px;
 }
 
 .canva-bottom-zoom-btn {
@@ -1046,6 +1233,13 @@
   color: var(--canva-text);
   font-size: 12px;
   cursor: pointer;
+  border-radius: 50%;
+  transition: all 120ms ease;
+}
+
+.canva-bottom-zoom-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--canva-accent);
 }
 
 .canva-bottom-zoom-select {
@@ -1057,27 +1251,33 @@
   font-size: 11px;
   font-weight: 650;
   cursor: pointer;
+  outline: none;
 }
 
 /* ==========================================================================
-   7. RIGHT INSPECTOR SIDEBAR
-   ========================================================================== */
-
-/* ==========================================================================
-   7. TOP CONTEXTUAL BAR (CANVA-STYLE)
+   7. FLOATING CONTEXTUAL ACTION BAR
    ========================================================================== */
 
 .canva-context-bar {
+  position: absolute;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 55;
   display: flex;
   align-items: center;
   min-height: 44px;
   height: auto;
-  padding: 6px 16px;
-  border-bottom: 1px solid var(--canva-border);
-  background: var(--canva-surface);
-  z-index: 35;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  padding: 5px 14px;
+  border-radius: 14px;
+  background: var(--canva-glass-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--canva-border);
+  box-shadow: var(--canva-glass-shadow);
+  max-width: calc(100vw - 32px);
   overflow-x: auto;
+  animation: canvaFloatFadeDown 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .canva-context-bar-group {
@@ -1353,18 +1553,28 @@
 }
 
 /* ==========================================================================
-   8. RIGHT INSPECTOR SIDEBAR (CANVA-STYLE)
+   8. FLOATING RIGHT INSPECTOR SIDEBAR (CANVA / FIGMA STYLE)
    ========================================================================== */
 
 .canva-inspector {
+  position: absolute;
+  top: 76px;
+  bottom: 16px;
+  right: 16px;
   width: 320px;
-  height: 100%;
-  border-left: 1px solid var(--canva-border);
-  background: var(--canva-surface);
+  height: auto;
+  max-width: calc(100vw - 32px);
+  border-radius: 18px;
+  background: var(--canva-glass-bg);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid var(--canva-border);
+  box-shadow: 0 20px 50px -8px rgba(0, 0, 0, 0.18), 0 6px 18px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  z-index: 20;
+  z-index: 45;
+  animation: canvaInspectorFloatIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .canva-inspector-header {
@@ -2408,5 +2618,67 @@
 .ppt-el-ctx-sub-panel {
   z-index: 120010 !important;
 }
+
+/* ==========================================================================
+   RESPONSIVE ADJUSTMENTS FOR FLOATING CANVAS STUDIO
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .canva-stage-container {
+    padding: 86px 80px 96px 80px;
+  }
+  .canva-drawer {
+    left: 88px;
+    width: 320px;
+    z-index: 65;
+  }
+  .canva-inspector {
+    width: 290px;
+    z-index: 65;
+  }
+}
+
+@media (max-width: 768px) {
+  .canva-header {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    padding: 0 10px;
+  }
+  .canva-header-title-text {
+    max-width: 120px;
+  }
+  .canva-dock {
+    top: 68px;
+    left: 8px;
+    bottom: 10px;
+    width: 58px;
+  }
+  .canva-drawer {
+    top: 68px;
+    left: 72px;
+    bottom: 10px;
+    width: calc(100vw - 84px);
+  }
+  .canva-inspector {
+    top: 68px;
+    right: 8px;
+    bottom: 10px;
+    width: calc(100vw - 16px);
+  }
+  .canva-context-bar {
+    top: 68px;
+    max-width: calc(100vw - 16px);
+  }
+  .canva-bottom-bar {
+    bottom: 10px;
+    padding: 0 10px;
+    gap: 8px;
+  }
+  .canva-stage-container {
+    padding: 76px 16px 80px 16px;
+  }
+}
+
 
 

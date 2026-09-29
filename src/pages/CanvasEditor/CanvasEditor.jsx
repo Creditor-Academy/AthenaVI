@@ -7,6 +7,7 @@ import CanvasLeftDrawer from './components/CanvasLeftDrawer'
 import CanvasStage from './components/CanvasStage'
 import CanvasRightInspector from './components/CanvasRightInspector'
 import CanvasBottomBar from './components/CanvasBottomBar'
+import CanvasContextBar from './components/CanvasContextBar'
 import CanvasSizeModal from './CanvasSizeModal'
 import CanvasExportModal from './CanvasExportModal'
 import PptElementContextMenu from '../Slides/AIPptComponents/PptElementContextMenu'
@@ -134,11 +135,51 @@ export default function CanvasEditor({
 
   // Layout & Dock States
   const [drawerOpen, setDrawerOpen] = useState(true)
+  const [inspectorOpen, setInspectorOpen] = useState(true)
   const [activeTab, setActiveTab] = useState('text')
 
+  // Calculate zoom that fits the canvas inside the available unobstructed viewport
+  const calculateFitZoom = useCallback(
+    (isDrawerOpen = drawerOpen, isInspectorOpen = inspectorOpen, currentSize = size) => {
+      if (typeof window === 'undefined') return 0.75
+      const leftPad = isDrawerOpen ? 490 : 96
+      const rightPad = isInspectorOpen ? 350 : 36
+      const topPad = 80
+      const bottomPad = 80
+
+      const availW = Math.max(280, window.innerWidth - leftPad - rightPad)
+      const availH = Math.max(280, window.innerHeight - topPad - bottomPad)
+
+      const canvasW = currentSize?.width || DEFAULT_SIZE.width
+      const canvasH = currentSize?.height || DEFAULT_SIZE.height
+
+      const scaleX = (availW * 0.88) / canvasW
+      const scaleY = (availH * 0.88) / canvasH
+
+      const fit = Math.min(scaleX, scaleY)
+      return Math.max(0.15, Math.min(2.0, Math.round(fit * 100) / 100))
+    },
+    [drawerOpen, inspectorOpen, size]
+  )
+
   // Viewport Zoom & Display States
-  const [zoom, setZoom] = useState(0.75)
+  const [zoom, setZoom] = useState(() => calculateFitZoom(true, true, startingSize))
   const [showGrid, setShowGrid] = useState(false)
+
+  // Automatically recalculate zoom whenever drawer or inspector expands/collapses or canvas size changes
+  useEffect(() => {
+    const nextZoom = calculateFitZoom(drawerOpen, inspectorOpen, size)
+    setZoom(nextZoom)
+  }, [drawerOpen, inspectorOpen, size, calculateFitZoom])
+
+  // Recalculate zoom on window resize
+  useEffect(() => {
+    const onResize = () => {
+      setZoom(calculateFitZoom(drawerOpen, inspectorOpen, size))
+    }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [drawerOpen, inspectorOpen, size, calculateFitZoom])
 
   // Modals & Context Menus
   const [showSizeModal, setShowSizeModal] = useState(false)
@@ -1346,12 +1387,12 @@ export default function CanvasEditor({
         setZoom((z) => Math.max(0.2, Number((z - 0.1).toFixed(2))))
         break
       case 'zoom-fit':
-        setZoom(0.85)
+        setZoom(calculateFitZoom())
         break
       default:
         break
     }
-  }, [undo, redo, duplicateSelection, copySelection, pasteClipboard, groupSelection, ungroupSelection, toggleLock, smartTidy, smartSwap, bringForward, sendBackward, bringToFront, sendToBack])
+  }, [undo, redo, duplicateSelection, copySelection, pasteClipboard, groupSelection, ungroupSelection, toggleLock, smartTidy, smartSwap, bringForward, sendBackward, bringToFront, sendToBack, calculateFitZoom])
 
   // ── Derived state for context menu ──────────────────────────────────────
   const selectedElement = activeCanvas?.elements?.find((el) => el.id === selected.elementId)
@@ -1395,11 +1436,34 @@ export default function CanvasEditor({
         onOpenExportModal={() => setShowExportModal(true)}
         activeCanvas={activeCanvas}
         saveState={canPersist ? saveState : null}
+        inspectorOpen={inspectorOpen}
+        onToggleInspector={() => setInspectorOpen((prev) => !prev)}
       />
+
+      {/* Floating Contextual Toolbar when element or elements are selected */}
+      {(selectedElement || multiSelectIds.length > 1) && (
+        <CanvasContextBar
+          selectedElement={selectedElement}
+          multiSelectIds={multiSelectIds}
+          usedFontFamilies={usedFontFamilies}
+          onUpdateContent={updateElementContent}
+          onUpdatePlacement={updateElementPlacement}
+          onToggleLock={(elId) => toggleLock([elId])}
+          onDuplicate={() => duplicateSelection(canvasSelectionIds)}
+          onDelete={() => deleteElements(canvasSelectionIds)}
+          onGroup={() => groupSelection(canvasSelectionIds)}
+          onUngroup={() => ungroupSelection(canvasSelectionIds)}
+          canGroup={canGroupSelection}
+          canUngroup={canUngroupSelection}
+          onAlignSelection={(alignment) => alignSelection(canvasSelectionIds, alignment)}
+          onReplaceImage={openMediaForReplace}
+          onCropImage={() => setCropModalOpen(true)}
+        />
+      )}
 
       {/* 2. Studio Layout Body */}
       <div className="canvas-editor-studio-body">
-        {/* Far Left Icon Dock */}
+        {/* Far Left Icon Dock (Floating) */}
         <CanvasLeftDock
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -1407,7 +1471,7 @@ export default function CanvasEditor({
           setDrawerOpen={setDrawerOpen}
         />
 
-        {/* Expandable Left Drawer */}
+        {/* Expandable Left Drawer (Floating) */}
         <CanvasLeftDrawer
           activeTab={activeTab}
           isOpen={drawerOpen}
@@ -1435,8 +1499,14 @@ export default function CanvasEditor({
           }}
         />
 
-        {/* Center Workspace Stage */}
-        <main className="canva-stage-viewport">
+        {/* Center Workspace Stage with dynamic padding to prevent overlap */}
+        <main
+          className="canva-stage-viewport"
+          style={{
+            '--stage-pad-left': `${drawerOpen ? 490 : 96}px`,
+            '--stage-pad-right': `${inspectorOpen ? 350 : 36}px`,
+          }}
+        >
           <CanvasStage
             canvases={canvases}
             activeCanvasIndex={activeCanvasIndex}
@@ -1472,7 +1542,7 @@ export default function CanvasEditor({
             onDeleteCanvas={deleteCanvas}
           />
 
-          {/* Canva Bottom Control Bar */}
+          {/* Canva Bottom Control Bar (Floating) */}
           <CanvasBottomBar
             zoom={zoom}
             setZoom={setZoom}
@@ -1480,32 +1550,36 @@ export default function CanvasEditor({
             setShowGrid={setShowGrid}
             pageCount={canvases.length}
             activeCanvasIndex={activeCanvasIndex}
+            onFitZoom={() => setZoom(calculateFitZoom())}
           />
         </main>
 
-        {/* Right Inspector Sidebar */}
-        <CanvasRightInspector
-          selectedElement={selectedElement}
-          activeCanvas={activeCanvas}
-          elements={activeCanvas?.elements || []}
-          usedFontFamilies={usedFontFamilies}
-          onUpdatePlacement={updateElementPlacement}
-          onUpdateContent={updateElementContent}
-          onUpdateBackground={updateCanvasBackground}
-          onApplyPresetSize={applyCanvasSize}
-          onToggleLock={(elId) => toggleLock([elId])}
-          onBringForward={bringForward}
-          onSendBackward={sendBackward}
-          onBringToFront={bringToFront}
-          onSendToBack={sendToBack}
-          onAlignSelection={(alignment) => alignSelection(canvasSelectionIds, alignment)}
-          onSelectElement={(id) => handleSelect(id)}
-          onDeleteElement={(id) => deleteElements([id])}
-          onReplaceImage={openMediaForReplace}
-          onCropImage={() => setCropModalOpen(true)}
-          onClearDeviceFrameScreen={handleClearDeviceFrameScreen}
-          onToggleImageAsBackground={handleToggleImageAsBackground}
-        />
+        {/* Right Inspector Sidebar (Floating) */}
+        {inspectorOpen && (
+          <CanvasRightInspector
+            selectedElement={selectedElement}
+            activeCanvas={activeCanvas}
+            elements={activeCanvas?.elements || []}
+            usedFontFamilies={usedFontFamilies}
+            onClose={() => setInspectorOpen(false)}
+            onUpdatePlacement={updateElementPlacement}
+            onUpdateContent={updateElementContent}
+            onUpdateBackground={updateCanvasBackground}
+            onApplyPresetSize={applyCanvasSize}
+            onToggleLock={(elId) => toggleLock([elId])}
+            onBringForward={bringForward}
+            onSendBackward={sendBackward}
+            onBringToFront={bringToFront}
+            onSendToBack={sendToBack}
+            onAlignSelection={(alignment) => alignSelection(canvasSelectionIds, alignment)}
+            onSelectElement={(id) => handleSelect(id)}
+            onDeleteElement={(id) => deleteElements([id])}
+            onReplaceImage={openMediaForReplace}
+            onCropImage={() => setCropModalOpen(true)}
+            onClearDeviceFrameScreen={handleClearDeviceFrameScreen}
+            onToggleImageAsBackground={handleToggleImageAsBackground}
+          />
+        )}
       </div>
 
       {/* Modals & Context Menu */}

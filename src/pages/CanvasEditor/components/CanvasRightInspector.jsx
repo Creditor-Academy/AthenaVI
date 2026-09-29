@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FiLock, FiUnlock, FiTrash2 } from 'react-icons/fi'
+import { FiLock, FiUnlock, FiTrash2, FiX } from 'react-icons/fi'
 import {
   AlignHorizontalJustifyStart,
   AlignHorizontalJustifyCenter,
@@ -40,6 +40,7 @@ export default function CanvasRightInspector({
   activeCanvas,
   elements = [],
   usedFontFamilies = [],
+  onClose = null,
   onUpdatePlacement,
   onUpdateContent,
   onUpdateBackground,
@@ -80,8 +81,8 @@ export default function CanvasRightInspector({
               ? `${type.charAt(0).toUpperCase() + type.slice(1)} Settings`
               : 'Canvas Settings'}
           </h3>
-          {selectedElement && (
-            <div className="canva-inspector-header-actions">
+          <div className="canva-inspector-header-actions">
+            {selectedElement && (
               <button
                 type="button"
                 className={`canva-inspector-tool-btn ${locked ? 'is-locked' : ''}`}
@@ -90,8 +91,19 @@ export default function CanvasRightInspector({
               >
                 {locked ? <FiLock /> : <FiUnlock />}
               </button>
-            </div>
-          )}
+            )}
+            {onClose && (
+              <button
+                type="button"
+                className="canva-inspector-tool-btn"
+                onClick={onClose}
+                title="Close Inspector"
+                aria-label="Close Inspector"
+              >
+                <FiX />
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="canva-inspector-nav-tabs">

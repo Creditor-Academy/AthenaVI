@@ -12,6 +12,7 @@ export default function CanvasBottomBar({
   setShowGrid,
   pageCount,
   activeCanvasIndex,
+  onFitZoom = null,
 }) {
   return (
     <footer className="canva-bottom-bar">
@@ -38,7 +39,7 @@ export default function CanvasBottomBar({
           <button
             type="button"
             className="canva-bottom-zoom-btn"
-            onClick={() => setZoom((z) => Math.max(0.2, Number((z - 0.1).toFixed(2))))}
+            onClick={() => setZoom((z) => Math.max(0.15, Number((z - 0.1).toFixed(2))))}
             title="Zoom Out"
           >
             <FiZoomOut />
@@ -46,16 +47,20 @@ export default function CanvasBottomBar({
 
           <select
             className="canva-bottom-zoom-select"
-            value={zoom}
-            onChange={(e) => setZoom(Number(e.target.value))}
+            value={Math.round(zoom * 100)}
+            onChange={(e) => setZoom(Number(e.target.value) / 100)}
             aria-label="Zoom Level"
           >
-            <option value="0.4">40%</option>
-            <option value="0.6">60%</option>
-            <option value="0.85">85%</option>
-            <option value="1">100%</option>
-            <option value="1.25">125%</option>
-            <option value="1.5">150%</option>
+            <option value="25">25%</option>
+            <option value="40">40%</option>
+            <option value="50">50%</option>
+            <option value="60">60%</option>
+            <option value="75">75%</option>
+            <option value="85">85%</option>
+            <option value="100">100%</option>
+            <option value="125">125%</option>
+            <option value="150">150%</option>
+            <option value="200">200%</option>
           </select>
 
           <button
@@ -70,8 +75,8 @@ export default function CanvasBottomBar({
           <button
             type="button"
             className="canva-bottom-zoom-btn"
-            onClick={() => setZoom(0.85)}
-            title="Reset Zoom to 85%"
+            onClick={onFitZoom ? onFitZoom : () => setZoom(0.85)}
+            title="Fit Canvas to Screen"
           >
             <FiMaximize2 />
           </button>
