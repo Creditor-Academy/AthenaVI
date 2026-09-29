@@ -139,9 +139,9 @@ const RANDOM_PROMPTS = [
   "A highly detailed, cinematic photograph of a futuristic cyberpunk cafe at night, illuminated by soft neon pink and cyan lights, with steam rising from a cup of coffee on a metallic table.",
   "An expansive, surreal landscape showing floating islands connected by glowing vines, with waterfalls cascading into the starry night sky, rendered in a 3D fantasy style with vivid purples and blues.",
   "A striking, geometric pop-art illustration of a vintage sports car driving down a coastal highway at sunset, using bold contrasting colors like bright yellow, deep teal, and crimson.",
-  "Design a modern corporate infographic layout explaining artificial intelligence, using a clean isometric aesthetic, translucent glassmorphism elements, and a professional blue and silver color scheme.",
   "A macro photography shot of a solitary dewdrop on a vibrant green fern leaf in a dense, misty forest, capturing the intricate reflection of the surrounding ancient trees inside the drop.",
-  "An isometric 3D cozy study room belonging to a lo-fi producer, filled with analog synthesizers, vinyl records, scattered sheet music, and a purring cat sleeping on a vintage rug."
+  "An isometric 3D cozy study room belonging to a lo-fi producer, filled with analog synthesizers, vinyl records, scattered sheet music, and a purring cat sleeping on a vintage rug.",
+  "A fashion editorial photo of a model in a rain-soaked Tokyo alley, neon reflections on wet pavement, shallow depth of field, cinematic color grade.",
 ];
 
 const RANDOM_INFOGRAPHIC_PROMPTS = [
@@ -150,8 +150,104 @@ const RANDOM_INFOGRAPHIC_PROMPTS = [
   "An educational hierarchy chart breaking down the layers of a neural network model, styled in a sleek, scientific medical visualization style.",
   "A playful, colorful step-by-step process guide for planting an indoor garden, with soft pastel backgrounds and organic shapes.",
   "A professional statistical breakdown of global renewable energy usage, featuring bold typography, large numbers, and minimalist graphs.",
-  "A side-by-side product comparison chart showing the features of a smart home ecosystem, using translucent glassmorphism containers and neon accents."
+  "A side-by-side product comparison chart showing the features of a smart home ecosystem, using translucent glassmorphism containers and neon accents.",
 ];
+
+const INFOGRAPHIC_PROMPTS_BY_LAYOUT = {
+  process: [
+    "A 5-step onboarding process infographic for a SaaS product, left-to-right flow, numbered stages, clean icons, lots of whitespace, no words on the graphic.",
+    "A manufacturing process infographic from raw materials to finished product, isometric machines, muted industrial palette, empty placeholder boxes for labels.",
+  ],
+  timeline: [
+    "A 2018–2026 product roadmap timeline infographic with milestone markers, thin connecting line, corporate navy and gold, empty date labels.",
+    "A company history timeline infographic spanning five eras, horizontal layout, archival photo-style icons, cream and charcoal colors.",
+  ],
+  comparison: [
+    "A side-by-side comparison infographic of Plan A vs Plan B for remote work, two equal columns, check vs tradeoff icons, cool blue vs warm orange.",
+    "A before-and-after comparison infographic of a city block after a green redesign, split canvas, clean vector buildings, no text.",
+  ],
+  stats: [
+    "A stats infographic of quarterly KPIs with four large number callouts, thin bar charts, dark dashboard look, empty numeric placeholders.",
+    "A global energy mix stats infographic with pie and bar visuals, bold numerals, teal and charcoal, lots of negative space.",
+  ],
+  hierarchy: [
+    "An org-hierarchy infographic for a product team, top-down tree, rounded cards, soft gray connectors, empty name placeholders.",
+    "A knowledge hierarchy infographic from fundamentals to expert skills, pyramid layers, educational pastel palette, no words.",
+  ],
+  list: [
+    "A vertical list infographic of 6 packing tips for a weekend trip, numbered rows, travel icons, airy layout, empty caption boxes.",
+    "A ranked list infographic of top workplace benefits, 1–7, simple icons, mint and navy, plenty of space for labels.",
+  ],
+  cycle: [
+    "A circular cycle infographic of a 4-stage design sprint, arrows around a center, isometric icons, lavender and slate.",
+    "A feedback-loop cycle infographic for continuous improvement, six segments, clean line icons, no text on the image.",
+  ],
+};
+
+const RANDOM_SOCIAL_PROMPTS = [
+  "A bold social post announcing a summer product drop, bright sunlight, lifestyle photography, room for a short headline.",
+  "A clean promotional graphic for a Monday motivation quote, soft gradient, generous empty space for overlay text.",
+  "A cinematic still of friends at a rooftop cafe at golden hour, shallow depth of field, ready for a social caption.",
+];
+
+const SOCIAL_PROMPTS_BY_DESTINATION = {
+  'youtube-thumbnail': [
+    "A high-contrast YouTube thumbnail of a creator reacting in shock to a glowing laptop screen, big empty space on the left for a 4-word title, 1280×720 energy.",
+    "A YouTube thumbnail for a cooking tutorial: close-up of a skillet flare, chef in the corner, dark background so text can sit on top.",
+  ],
+  'instagram-post': [
+    "A vertical Instagram post of a minimal skincare flat-lay on travertine, soft daylight, empty band at the bottom for a product name.",
+    "An Instagram portrait of a vintage camera on a linen table, film-grain, muted pastels, space for a short overlay headline.",
+  ],
+  'facebook-post': [
+    "A Facebook post visual for a weekend market: crowd and string lights, warm tones, centered subject, space for a short promo line.",
+    "A Facebook post graphic of a new office opening, bright interior photo, friendly and inviting, room for event details.",
+  ],
+  'facebook-cover': [
+    "A wide Facebook cover of a coastal road at dusk, cinematic, subject on the right so a logo can sit on the left, 851×315 feel.",
+    "A Facebook cover of a sunlit co-working loft, people softly blurred, open sky area for a brand name.",
+  ],
+  'youtube-banner': [
+    "A wide YouTube channel banner of a creator studio, gear on the sides, empty center third for a channel name, 2560×1440 cinematic.",
+    "A YouTube banner of an abstract gradient mesh in brand colors, lots of safe-area empty space in the middle for text.",
+  ],
+  'twitter-post': [
+    "An X / Twitter post visual of a product teaser on a dark desk, neon accent light, landscape crop, space for a one-line hook.",
+    "A landscape X post of a city skyline at blue hour, crisp, news-ready, empty lower third for overlay text.",
+  ],
+  'linkedin-banner': [
+    "A LinkedIn banner of a calm architectural interior, professional daylight, extra-wide, empty left third for a name and title.",
+    "A LinkedIn cover of abstract geometric glass panels in navy and white, corporate, lots of negative space.",
+  ],
+};
+
+function pickRandom(list) {
+  if (!Array.isArray(list) || !list.length) return '';
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function pickInspirePrompt(mode, layoutId, formatId, platform) {
+  if (mode === 'infographic') {
+    const keyed = layoutId ? INFOGRAPHIC_PROMPTS_BY_LAYOUT[String(layoutId).toLowerCase()] : null;
+    if (keyed?.length) return pickRandom(keyed);
+    return pickRandom(RANDOM_INFOGRAPHIC_PROMPTS);
+  }
+  if (mode === 'social') {
+    const byId = formatId ? SOCIAL_PROMPTS_BY_DESTINATION[formatId] : null;
+    if (byId?.length) return pickRandom(byId);
+    const plat = String(platform || '').toLowerCase();
+    const byPlat =
+      plat.includes('youtube') ? SOCIAL_PROMPTS_BY_DESTINATION['youtube-thumbnail']
+      : plat.includes('instagram') ? SOCIAL_PROMPTS_BY_DESTINATION['instagram-post']
+      : plat.includes('facebook') ? SOCIAL_PROMPTS_BY_DESTINATION['facebook-post']
+      : plat.includes('linkedin') ? SOCIAL_PROMPTS_BY_DESTINATION['linkedin-banner']
+      : plat.includes('twitter') || plat === 'x' ? SOCIAL_PROMPTS_BY_DESTINATION['twitter-post']
+      : null;
+    if (byPlat?.length) return pickRandom(byPlat);
+    return pickRandom(RANDOM_SOCIAL_PROMPTS);
+  }
+  return pickRandom(RANDOM_PROMPTS);
+}
 
 const TOPICS = [
   'Modern Product Launch',
@@ -294,8 +390,13 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
 
   const handleInspire = async () => {
     if (isTyping) return;
-    const promptsPool = activeMode === 'infographic' ? RANDOM_INFOGRAPHIC_PROMPTS : RANDOM_PROMPTS;
-    const random = promptsPool[Math.floor(Math.random() * promptsPool.length)];
+    const layoutId = activeMode === 'infographic' ? selectedStyle : '';
+    const destId = activeMode === 'social' ? selectedFormat : '';
+    const dest = activeMode === 'social'
+      ? socialDestinationsFrom(catalogs.formats).find((f) => f.id === selectedFormat)
+      : null;
+    const random = pickInspirePrompt(activeMode, layoutId, destId, dest?.platform);
+    if (!random) return;
     setIsTyping(true);
     setPrompt('');
     let currentText = '';
