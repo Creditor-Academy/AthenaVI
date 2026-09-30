@@ -684,21 +684,35 @@
 
 .conv-composer-textarea {
   flex: 1;
+  min-width: 0;
+}
+
+.conv-composer-input-row .aig-md-editor {
   background: transparent;
   border: none;
   outline: none;
   color: var(--text-main, #111827);
   font-size: 14px;
   line-height: 1.5;
-  resize: none;
   min-height: 24px;
   max-height: 120px;
   padding: 0;
-  font-family: inherit;
+  caret-color: var(--text-main, #111827);
 }
 
-.conv-composer-textarea::placeholder {
+.conv-composer-input-row .aig-md-placeholder {
   color: var(--text-secondary, #9ca3af);
+  font-size: 14px;
+  inset: 0;
+}
+
+.conv-user-bubble-text.aig-md-preview {
+  white-space: pre-wrap;
+}
+
+.conv-user-bubble-text .aig-md-strong {
+  font-weight: 700;
+  color: #111827;
 }
 
 .conv-send-btn {

@@ -25,6 +25,8 @@ import WorkspaceImageLibrary from './WorkspaceImageLibrary.jsx';
 import ImageGenSaveLocation from '../../../components/features/image-generation/ImageGenSaveLocation.jsx';
 import ImageGenCreditsGate from '../../../components/features/image-generation/ImageGenCreditsGate.jsx';
 import ImageGenContextAttach from '../../../components/features/image-generation/ImageGenContextAttach.jsx';
+import MarkdownPromptInput from '../../../components/features/image-generation/MarkdownPromptInput.jsx';
+import '../../../components/features/image-generation/MarkdownPromptInput.css';
 import { checkImageGenCredits } from '../../../utils/imageGenCreditsCheck.js';
 import { defaultImageGenModelId, modelsForImageGenMode, isDraftQualityModel } from '../../../utils/imageGenDefaults.js';
 
@@ -878,8 +880,9 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                     {...composerBind}
                   >
                     {trigger}
-                    <textarea
+                    <MarkdownPromptInput
                       ref={textareaRef}
+                      className="chatbox-md-input"
                       placeholder={
                         activeMode === 'social'
                           ? 'Describe the post...'
@@ -899,7 +902,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                           tryLaunchStudio();
                         }
                       }}
-                      rows={1}
+                      aria-label="Describe what you want to create"
                     />
                     <button className="mic-btn" onClick={toggleMic} style={{ color: isListening ? '#ef4444' : '' }}><Mic size={20}/></button>
                     <button className="inspire-btn" title="Inspire Me" onClick={handleInspire} disabled={isTyping} style={{ opacity: isTyping ? 0.5 : 1 }}>

@@ -15,6 +15,7 @@ const MarkdownPromptInput = forwardRef(function MarkdownPromptInput(
     onChange,
     onKeyDown,
     onPaste,
+    onFocus,
     onInput,
     className = '',
     placeholder,
@@ -127,6 +128,7 @@ const MarkdownPromptInput = forwardRef(function MarkdownPromptInput(
         aria-label={ariaLabel}
         suppressContentEditableWarning
         onInput={handleInput}
+        onFocus={onFocus}
         onKeyDown={onKeyDown}
         onPaste={handlePaste}
       />

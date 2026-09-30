@@ -13,6 +13,9 @@ import { useAuth } from '../../../contexts/AuthContext.jsx';
 import ImageGenCreditsGate from '../../../components/features/image-generation/ImageGenCreditsGate.jsx';
 import ImageGenContextAttach from '../../../components/features/image-generation/ImageGenContextAttach.jsx';
 import { checkImageGenCredits } from '../../../utils/imageGenCreditsCheck.js';
+import MarkdownPromptInput from '../../../components/features/image-generation/MarkdownPromptInput.jsx';
+import { highlightMarkdownSource } from '../../../utils/markdownPrompt.jsx';
+import '../../../components/features/image-generation/MarkdownPromptInput.css';
 import './AIConversationalStudio.css';
 
 const GENERATION_STEPS = [
@@ -784,7 +787,7 @@ export default function AIConversationalStudio({
                         ))}
                       </div>
                     )}
-                    <span className="conv-user-bubble-text">{gen.prompt}</span>
+                    <span className="conv-user-bubble-text aig-md-preview">{highlightMarkdownSource(gen.prompt)}</span>
                   </div>
                 </div>
                 <div className="conv-chat-avatar user-avatar">
@@ -883,7 +886,7 @@ export default function AIConversationalStudio({
                         ))}
                       </div>
                     )}
-                    <span className="conv-user-bubble-text">{pendingPrompt}</span>
+                    <span className="conv-user-bubble-text aig-md-preview">{highlightMarkdownSource(pendingPrompt)}</span>
                   </div>
                 </div>
                 <div className="conv-chat-avatar user-avatar">
@@ -1085,7 +1088,7 @@ export default function AIConversationalStudio({
                 {thumbs}
                 <div className="conv-composer-input-row">
                   {trigger}
-                  <textarea
+                  <MarkdownPromptInput
                     ref={composerInputRef}
                     className="conv-composer-textarea"
                     placeholder={
@@ -1094,19 +1097,15 @@ export default function AIConversationalStudio({
                         : "Make the colors softer and add warmer lighting..."
                     }
                     value={chatInput}
-                    rows={1}
                     onPaste={composerBind.onPaste}
-                    onChange={(e) => {
-                      setChatInput(e.target.value);
-                      e.target.style.height = 'auto';
-                      e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
-                    }}
+                    onChange={(e) => setChatInput(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
                         handleSendPrompt();
                       }
                     }}
+                    aria-label="Follow-up prompt"
                   />
                   <button
                     className="conv-send-btn"

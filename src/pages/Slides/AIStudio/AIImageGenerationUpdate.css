@@ -629,25 +629,31 @@
 }
 .attach-btn:hover, .mic-btn:hover, .inspire-btn:hover { background: var(--bg-card, #333537); color: var(--text-main, #fff); }
 
-.chatbox-input textarea {
+.chatbox-input textarea,
+.chatbox-input .aig-md-field {
+  flex: 1;
+  min-width: 0;
+}
+.chatbox-input .aig-md-editor {
   flex: 1;
   background: transparent;
   border: none;
   color: var(--text-main, #333);
   font-size: 16px;
-  outline: none;
-  resize: none;
-  font-family: inherit;
   min-height: 28px;
   max-height: 150px;
-  overflow-y: auto;
-  line-height: 1.5;
   padding: 0;
-  margin: 0;
-  display: block;
-  box-sizing: border-box;
+  caret-color: var(--text-main, #333);
 }
-.chatbox-input textarea::placeholder { color: var(--text-secondary, #666); }
+.chatbox-input .aig-md-placeholder {
+  color: var(--text-secondary, #666);
+  font-size: 16px;
+  inset: 0;
+}
+.chatbox-input .aig-md-strong,
+.chatbox-input .aig-md-editor strong {
+  color: var(--text-main, #111);
+}
 
 .chatbox-footer {
   display: flex;
