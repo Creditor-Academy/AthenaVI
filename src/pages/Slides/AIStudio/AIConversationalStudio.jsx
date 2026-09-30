@@ -10,7 +10,6 @@ import { resolvePresentationWorkspaceContext } from '../../../utils/presentation
 import LogoImg from '../../../assets/herologo.png';
 import InfographicAnimatedBackground from './InfographicAnimatedBackground.jsx';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
-import ImageGenSaveLocation from '../../../components/features/image-generation/ImageGenSaveLocation.jsx';
 import ImageGenCreditsGate from '../../../components/features/image-generation/ImageGenCreditsGate.jsx';
 import ImageGenContextAttach from '../../../components/features/image-generation/ImageGenContextAttach.jsx';
 import { checkImageGenCredits } from '../../../utils/imageGenCreditsCheck.js';
@@ -748,29 +747,6 @@ export default function AIConversationalStudio({
         </div>
 
         <div className="conv-studio-header-right">
-          <ImageGenSaveLocation
-            workspaceId={workspaceId}
-            folderId={folderId}
-            disabled={isGenerating}
-            onChange={({ workspaceId: nextWs, folderId: nextFld }) => {
-              const wsChanged = String(nextWs || '') !== String(workspaceId || '');
-              setWorkspaceId(nextWs || null);
-              setFolderId(nextFld || null);
-              onLocationChange?.({ workspaceId: nextWs, folderId: nextFld });
-              if (wsChanged && threadId) {
-                setThreadId(null);
-                setGenerations([]);
-                setConversation([]);
-              }
-              if (nextWs) {
-                creditsService.getWorkspaceBalance(nextWs)
-                  .then((balance) => {
-                    setCredits(balance.workspaceCredits || balance.personalCredits || balance.credits || 0);
-                  })
-                  .catch(() => {});
-              }
-            }}
-          />
           <div className="conv-credits-tag">
             <Sparkles size={14} />
             <span>{credits} credits</span>
