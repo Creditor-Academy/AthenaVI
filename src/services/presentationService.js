@@ -782,27 +782,13 @@ class PresentationService {
                 : undefined,
           }
         : null,
-      {
-        method: 'GET',
-        endpoint: API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE_VIEWERS(workspaceId, presentationId),
-      },
-      {
-        method: 'GET',
-        endpoint: API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE_PRESENCE(workspaceId, presentationId),
-      },
-      {
-        method: 'PUT',
-        endpoint: API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE_PRESENCE(workspaceId, presentationId),
-        body: JSON.stringify({ viewerSessionId, slideIndex }),
-      },
+      // Member heartbeat — the only presence route the backend exposes for editors
+      // (it returns the viewer list); the former /share/viewers and /share/presence
+      // probes never existed and just produced 404s on every first poll.
       {
         method: 'PUT',
         endpoint: API_CONFIG.ENDPOINTS.PRESENTATIONS.PRESENCE(workspaceId, presentationId),
         body: JSON.stringify({ viewerSessionId, slideIndex }),
-      },
-      {
-        method: 'GET',
-        endpoint: API_CONFIG.ENDPOINTS.PRESENTATIONS.PRESENCE(workspaceId, presentationId),
       },
     ].filter(Boolean)
 
