@@ -135,7 +135,7 @@ export default function CanvasEditor({
 
   // Layout & Dock States
   const [drawerOpen, setDrawerOpen] = useState(true)
-  const [inspectorOpen, setInspectorOpen] = useState(true)
+  const [inspectorOpen, setInspectorOpen] = useState(false)
   const [activeTab, setActiveTab] = useState('text')
 
   // Calculate zoom that fits the canvas inside the available unobstructed viewport

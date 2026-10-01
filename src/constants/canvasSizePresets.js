@@ -1,13 +1,15 @@
 export const CANVAS_SIZE_PRESETS = [
-  { id: 'instagram-post', label: 'Instagram Post', group: 'Social', width: 1080, height: 1080, aspect: '1 / 1', desc: '1080 × 1080 px' },
-  { id: 'instagram-reel', label: 'Story / Reel', group: 'Social', width: 1080, height: 1920, aspect: '9 / 16', desc: '1080 × 1920 px' },
-  { id: 'youtube-banner', label: 'YouTube Banner', group: 'Social', width: 2560, height: 1440, aspect: '16 / 9', desc: '2560 × 1440 px' },
-  { id: 'linkedin-post', label: 'LinkedIn Post', group: 'Social', width: 1200, height: 627, aspect: '1200 / 627', desc: '1200 × 627 px' },
-  { id: 'flyer', label: 'Flyer', group: 'Print', width: 1275, height: 1650, aspect: '1275 / 1650', desc: '1275 × 1650 px' },
-  { id: 'a4', label: 'A4 Document', group: 'Print', width: 794, height: 1123, aspect: '794 / 1123', desc: '794 × 1123 px' },
-  { id: 'presentation', label: 'Presentation 16:9', group: 'Global', width: 1920, height: 1080, aspect: '16 / 9', desc: '1920 × 1080 px' },
-  { id: 'desktop', label: 'Desktop Canvas', group: 'Global', width: 1440, height: 900, aspect: '16 / 10', desc: '1440 × 900 px' },
-  { id: 'square', label: 'Square Canvas', group: 'Global', width: 1200, height: 1200, aspect: '1 / 1', desc: '1200 × 1200 px' },
+  { id: 'instagram-post', label: 'Instagram Post', group: 'Social', width: 1080, height: 1080, aspect: '1 / 1', desc: '1080 × 1080 px', tag: '1:1 Square' },
+  { id: 'instagram-reel', label: 'Story / Reel', group: 'Social', width: 1080, height: 1920, aspect: '9 / 16', desc: '1080 × 1920 px', tag: '9:16 Portrait' },
+  { id: 'youtube-banner', label: 'YouTube Banner', group: 'Social', width: 2560, height: 1440, aspect: '16 / 9', desc: '2560 × 1440 px', tag: '16:9 Banner' },
+  { id: 'linkedin-post', label: 'LinkedIn Post', group: 'Social', width: 1200, height: 627, aspect: '1200 / 627', desc: '1200 × 627 px', tag: 'Landscape' },
+  { id: 'facebook-post', label: 'Facebook Post', group: 'Social', width: 940, height: 788, aspect: '940 / 788', desc: '940 × 788 px', tag: 'Feed Post' },
+  { id: 'twitter-post', label: 'X / Twitter Post', group: 'Social', width: 1600, height: 900, aspect: '16 / 9', desc: '1600 × 900 px', tag: '16:9 Landscape' },
+  { id: 'flyer', label: 'Flyer', group: 'Print', width: 1275, height: 1650, aspect: '1275 / 1650', desc: '1275 × 1650 px', tag: 'US Letter' },
+  { id: 'a4', label: 'A4 Document', group: 'Print', width: 794, height: 1123, aspect: '794 / 1123', desc: '794 × 1123 px', tag: 'A4 Print' },
+  { id: 'presentation', label: 'Presentation 16:9', group: 'Global', width: 1920, height: 1080, aspect: '16 / 9', desc: '1920 × 1080 px', tag: 'Full HD' },
+  { id: 'desktop', label: 'Desktop Canvas', group: 'Global', width: 1440, height: 900, aspect: '16 / 10', desc: '1440 × 900 px', tag: '16:10 Screen' },
+  { id: 'square', label: 'Square Canvas', group: 'Global', width: 1200, height: 1200, aspect: '1 / 1', desc: '1200 × 1200 px', tag: '1:1 High Res' },
 ]
 
 export const DEFAULT_CANVAS_SIZE = { width: 1080, height: 1080 }

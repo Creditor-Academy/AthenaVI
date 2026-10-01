@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { FiPlus, FiCopy, FiTrash2 } from 'react-icons/fi'
+import { FiPlus, FiCopy, FiTrash2, FiMoreVertical, FiCheck } from 'react-icons/fi'
 import { MdRotateRight } from 'react-icons/md'
 import PptCanvasElement from '../../Slides/AIPptComponents/PptCanvasElement'
 import PptCanvasGuidesOverlay from '../../Slides/AIPptComponents/PptCanvasGuidesOverlay'
@@ -694,6 +694,8 @@ export default function CanvasStage({
   const [surfaceRefs] = useState(() => new Map())
   const pageBlockRefsRef = useRef(new Map())
   const [smartGuides, setSmartGuides] = useState([])
+  const [openPageMenuId, setOpenPageMenuId] = useState(null)
+  const [copiedPageId, setCopiedPageId] = useState(null)
 
   const getSurfaceRef = (canvasId) => {
     if (!surfaceRefs.has(canvasId)) surfaceRefs.set(canvasId, { current: null })
@@ -708,6 +710,36 @@ export default function CanvasStage({
     block?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' })
   }, [activeCanvas?.id, canvases.length])
 
+  // Close page action dropdown on click outside
+  useEffect(() => {
+    if (!openPageMenuId) return
+    const handleOutside = (e) => {
+      if (!e.target.closest('.canva-page-actions-menu-wrapper')) {
+        setOpenPageMenuId(null)
+      }
+    }
+    window.addEventListener('pointerdown', handleOutside)
+    return () => window.removeEventListener('pointerdown', handleOutside)
+  }, [openPageMenuId])
+
+  const handleCopyPage = async (canvas) => {
+    try {
+      const payload = JSON.stringify({
+        kind: 'canvas-page',
+        elements: canvas.elements || [],
+        width: canvas.width,
+        height: canvas.height,
+        background: canvas.background || '#ffffff',
+      })
+      await navigator.clipboard.writeText(payload)
+    } catch (err) {
+      // fallback
+    }
+    setCopiedPageId(canvas.id)
+    setTimeout(() => setCopiedPageId(null), 2000)
+    setOpenPageMenuId(null)
+  }
+
   const selectedIds = multiSelectIds.length
     ? multiSelectIds
     : selectedId
@@ -720,6 +752,8 @@ export default function CanvasStage({
         const isCurrent = canvas.id === activeCanvas.id
         const surfaceRef = getSurfaceRef(canvas.id)
         const pageSelectedIds = isCurrent ? selectedIds : []
+        const isMenuOpen = openPageMenuId === canvas.id
+        const isCopied = copiedPageId === canvas.id
 
         return (
           <div
@@ -733,26 +767,74 @@ export default function CanvasStage({
             {/* Page Header Meta */}
             <div className="canva-page-meta">
               <div className="canva-page-meta-title">
-                <strong>Page {index + 1} of {canvases.length}</strong>
-                <span>{canvas.width} × {canvas.height} px</span>
+                <div className="canva-page-meta-badge">
+                  <strong>Page {index + 1} of {canvases.length}</strong>
+                </div>
+                <span className="canva-page-meta-dim">{canvas.width} × {canvas.height} px</span>
               </div>
+
               <div className="canva-page-meta-actions">
-                <button
-                  type="button"
-                  onClick={() => onDuplicateCanvas(canvas)}
-                  title="Duplicate page"
-                >
-                  <FiCopy />
-                </button>
-                {canvases.length > 1 && (
+                <div className="canva-page-actions-menu-wrapper">
                   <button
                     type="button"
-                    onClick={() => onDeleteCanvas(canvas.id)}
-                    title="Delete page"
+                    className={`canva-page-action-btn ${isMenuOpen ? 'is-active' : ''}`}
+                    onClick={() => setOpenPageMenuId(isMenuOpen ? null : canvas.id)}
+                    title="Page options (Copy, Duplicate, Delete)"
+                    aria-label="Page options"
+                    aria-haspopup="true"
+                    aria-expanded={isMenuOpen}
                   >
-                    <FiTrash2 />
+                    <FiCopy size={14} />
                   </button>
-                )}
+
+                  {isMenuOpen && (
+                    <div className="canva-page-actions-dropdown" role="menu">
+                      <button
+                        type="button"
+                        className="canva-page-dropdown-item"
+                        onClick={() => handleCopyPage(canvas)}
+                        role="menuitem"
+                      >
+                        {isCopied ? (
+                          <FiCheck size={14} className="canva-page-check-icon" />
+                        ) : (
+                          <FiCopy size={14} />
+                        )}
+                        <span>{isCopied ? 'Copied' : 'Copy'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className="canva-page-dropdown-item"
+                        onClick={() => {
+                          onDuplicateCanvas(canvas)
+                          setOpenPageMenuId(null)
+                        }}
+                        role="menuitem"
+                      >
+                        <FiCopy size={14} />
+                        <span>Duplicate</span>
+                      </button>
+
+                      <div className="canva-page-dropdown-divider" />
+
+                      <button
+                        type="button"
+                        className="canva-page-dropdown-item canva-page-dropdown-item--danger"
+                        disabled={canvases.length <= 1}
+                        onClick={() => {
+                          onDeleteCanvas(canvas.id)
+                          setOpenPageMenuId(null)
+                        }}
+                        role="menuitem"
+                        title={canvases.length <= 1 ? 'Cannot delete the only page' : 'Delete page'}
+                      >
+                        <FiTrash2 size={14} />
+                        <span>Delete</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 

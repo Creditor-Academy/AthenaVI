@@ -32,7 +32,7 @@ export default function CanvasHeader({
   onOpenExportModal,
   activeCanvas,
   saveState = null,
-  inspectorOpen = true,
+  inspectorOpen = false,
   onToggleInspector = null,
 }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)

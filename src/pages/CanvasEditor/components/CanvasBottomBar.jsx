@@ -16,33 +16,34 @@ export default function CanvasBottomBar({
 }) {
   return (
     <footer className="canva-bottom-bar">
-      <div className="canva-bottom-left">
+      <div className="canva-bottom-controls">
         <span className="canva-bottom-page-badge">
           Page {activeCanvasIndex + 1} of {pageCount}
         </span>
-      </div>
 
-      <div className="canva-bottom-center">
+        <div className="canva-bottom-divider" />
+
         <button
           type="button"
           className={`canva-bottom-icon-btn ${showGrid ? 'is-active' : ''}`}
           onClick={() => setShowGrid(!showGrid)}
           title="Toggle Grid Background"
         >
-          <FiGrid />
+          <FiGrid size={13} />
           <span>Grid</span>
         </button>
-      </div>
 
-      <div className="canva-bottom-right">
+        <div className="canva-bottom-divider" />
+
         <div className="canva-bottom-zoom-group">
           <button
             type="button"
             className="canva-bottom-zoom-btn"
             onClick={() => setZoom((z) => Math.max(0.15, Number((z - 0.1).toFixed(2))))}
             title="Zoom Out"
+            aria-label="Zoom out"
           >
-            <FiZoomOut />
+            <FiZoomOut size={13} />
           </button>
 
           <select
@@ -68,8 +69,9 @@ export default function CanvasBottomBar({
             className="canva-bottom-zoom-btn"
             onClick={() => setZoom((z) => Math.min(2.5, Number((z + 0.1).toFixed(2))))}
             title="Zoom In"
+            aria-label="Zoom in"
           >
-            <FiZoomIn />
+            <FiZoomIn size={13} />
           </button>
 
           <button
@@ -77,8 +79,9 @@ export default function CanvasBottomBar({
             className="canva-bottom-zoom-btn"
             onClick={onFitZoom ? onFitZoom : () => setZoom(0.85)}
             title="Fit Canvas to Screen"
+            aria-label="Fit to screen"
           >
-            <FiMaximize2 />
+            <FiMaximize2 size={13} />
           </button>
         </div>
       </div>
