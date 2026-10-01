@@ -650,7 +650,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
            <a href="#" className={activeMode === 'library' ? 'active' : ''} onClick={(e) => { e.preventDefault(); setActiveMode('library'); }}><Library size={18}/> Library</a>
         </nav>
 
-        <div className="sidebar-recent" style={{ flex: 1 }}>
+        <div className="sidebar-recent">
            <h3><Clock size={14} /> Recent</h3>
            <ul>
              {recentChats.map((chat, idx) => {
@@ -681,7 +681,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
            </ul>
         </div>
 
-        <div style={{ marginTop: 'auto', paddingBottom: '16px' }}>
+        <div className="sidebar-footer">
            <button className="new-chat-btn" onClick={() => { setActiveThreadId(null); setLaunchStudio(false); }}><Plus size={16}/> New chat</button>
         </div>
       </aside>
