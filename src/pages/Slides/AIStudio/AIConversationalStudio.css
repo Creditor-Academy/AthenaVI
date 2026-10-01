@@ -488,7 +488,7 @@
   z-index: 25;
   pointer-events: auto;
   font-size: 15px;
-  color: #374151;
+  color: var(--text-muted, #64748b);
   line-height: 1.6;
   text-align: left;
   width: 100%;
@@ -503,12 +503,13 @@
   background: none;
   font: inherit;
   font-weight: 650;
-  color: #0f172a;
+  color: var(--text-main, #0f172a);
   cursor: pointer;
   text-decoration: underline;
   text-decoration-style: dotted;
   text-underline-offset: 3px;
   text-decoration-thickness: 1.5px;
+  text-decoration-color: color-mix(in srgb, var(--primary, #2563eb) 55%, var(--text-muted, #94a3b8));
 }
 
 .conv-followup-link:hover:not(:disabled) {
