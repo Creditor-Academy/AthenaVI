@@ -4399,6 +4399,38 @@ export default function AIPptEditor({
                   </div>
                   )}
 
+                  {slide.status === 'FAILED' && (
+                    <div
+                      className="aig-slide-failed-banner"
+                      style={{
+                        position: 'absolute', top: 10, left: 10, right: 10, zIndex: 5,
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                        padding: '8px 12px', borderRadius: 8,
+                        background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.35)',
+                        backdropFilter: 'blur(6px)', fontSize: 12.5, color: '#b91c1c',
+                      }}
+                    >
+                      <span>This slide failed to generate and is showing placeholder content.</span>
+                      {!viewOnly && (
+                        <button
+                          type="button"
+                          disabled={busy || isGenerating}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleSlideAiEdit(slide, { target: 'full' })
+                          }}
+                          style={{
+                            flexShrink: 0, border: '1px solid rgba(239, 68, 68, 0.4)', borderRadius: 6,
+                            background: '#fff', color: '#b91c1c', fontWeight: 600, fontSize: 12,
+                            padding: '4px 10px', cursor: busy || isGenerating ? 'not-allowed' : 'pointer',
+                          }}
+                        >
+                          Regenerate
+                        </button>
+                      )}
+                    </div>
+                  )}
+
                   <SlideContentGate
                     slide={slide}
                     priority={selectedSlideId === slide.id || idx === 0}
