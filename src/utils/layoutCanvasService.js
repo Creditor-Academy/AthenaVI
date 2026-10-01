@@ -15,6 +15,7 @@ import {
   resolveLayoutSchemaById,
 } from './deckLayoutRegistry'
 import { parseRegion } from './layoutPreviewUtils'
+import { resolveSmartLayoutState } from './smartLayoutState'
 import { buildCanvasDoc, resolveCanvasSize } from './presentationHelpers'
 import { layoutSchemaHasCanvasElements, resolveLayoutCanvasElementsDoc } from './videoTemplateToCanvasElements'
 import {
@@ -288,10 +289,23 @@ export function extractContentBySlotFromElements(elements = [], schema) {
   return bySlotId
 }
 
-export function needsLayoutCanvasRepair(slide, elements = [], schema = null, opts = {}) {
-  if (slide?.manuallyEdited) return false
+/** A canvas with zero elements is never a hand-made layout — rebuild it when the slide has copy. */
+function slideHasCopy(slide) {
+  const content = slide?.content && typeof slide.content === 'object' ? slide.content : {}
+  return Boolean(
+    String(slide?.title || content.title || content.body || content.subtitle || '').trim() ||
+      (Array.isArray(content.bullets) && content.bullets.length) ||
+      (Array.isArray(content.columns) && content.columns.length) ||
+      (Array.isArray(content.diagram?.cells) && content.diagram.cells.length)
+  )
+}
 
+export function needsLayoutCanvasRepair(slide, elements = [], schema = null, opts = {}) {
   const list = Array.isArray(elements) ? elements : []
+  // Generation can leave a slide with an empty canvas (flagged manuallyEdited by a later save);
+  // that must still be rebuilt from its layout or the editor shows bare text / nothing.
+  if (slide?.manuallyEdited && (list.length > 0 || !slideHasCopy(slide))) return false
+
   const layoutId = slide?.layoutId || slide?.layout_id || schema?.layout_id
   if (opts?.deckPackId) {
     if (isTitleCustomLayout(layoutId, schema)) return false
@@ -546,6 +560,7 @@ export async function applyCompiledLayoutToSlide({
     ...compileOptions,
     contentBySlotId,
     content,
+    skipContentValidation: skipContentValidation === true,
     debugGeometry: import.meta.env?.DEV === true,
   })
 
@@ -607,11 +622,16 @@ export async function repairPresentationLayoutSlides({
           imageRef: slide.imageRef || slide.content?.imageRef || null,
         },
         mergeFromElements: elements,
+        // Repair is best-effort: render whatever content exists instead of leaving the canvas broken.
+        skipContentValidation: true,
       })
     )
   }
 
   if (!repairs.length) return false
-  await Promise.all(repairs)
-  return true
+  const results = await Promise.allSettled(repairs)
+  results.forEach((r) => {
+    if (r.status === 'rejected') console.warn('[layoutCanvasService] slide repair failed', r.reason)
+  })
+  return results.some((r) => r.status === 'fulfilled' && r.value)
 }

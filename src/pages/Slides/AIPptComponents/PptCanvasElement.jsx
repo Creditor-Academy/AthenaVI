@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { FiCode } from 'react-icons/fi'
 import PptChartRenderer, { getEmbedIframeUrl } from './PptChartRenderer'
 import ExternalLinkHoverLayer from './ExternalLinkHoverLayer'
@@ -105,6 +105,7 @@ function EditableText({
   style,
 }) {
   const ref = useRef(null)
+  const wrapRef = useRef(null)
   const measureRaf = useRef(null)
   const endedRef = useRef(false)
   const startTextRef = useRef('')
@@ -202,6 +203,38 @@ function EditableText({
   useEffect(() => {
     return () => cancelAnimationFrame(measureRaf.current)
   }, [])
+
+  // Layout-bound text (generated slides) must stay inside its box: shrink the rendered
+  // font until the content fits instead of spilling over neighbouring elements.
+  // User-made text boxes (no slotId) keep their size — they grow with typing instead.
+  const fitToBox = Boolean(el?.slotId) && c.fit !== false
+  useLayoutEffect(() => {
+    if (editing || !fitToBox) return undefined
+    const node = ref.current
+    const wrap = wrapRef.current
+    if (!node || !wrap) return undefined
+    const base = fontSize
+    const noWrap = c.wrap === 'nowrap'
+    const fit = () => {
+      node.style.fontSize = `${base}px`
+      const boxH = wrap.clientHeight
+      const boxW = wrap.clientWidth
+      if (!boxH || !boxW) return
+      const minPx = Math.max(8, base * 0.45)
+      const overflows = () =>
+        node.scrollHeight > boxH + 1 || (noWrap && node.scrollWidth > boxW + 1)
+      let size = base
+      for (let i = 0; i < 28 && size > minPx && overflows(); i += 1) {
+        size = Math.max(minPx, size - Math.max(0.5, size * 0.04))
+        node.style.fontSize = `${size}px`
+      }
+    }
+    fit()
+    if (typeof ResizeObserver === 'undefined') return undefined
+    const observer = new ResizeObserver(fit)
+    observer.observe(wrap)
+    return () => observer.disconnect()
+  }, [editing, fitToBox, fontSize, plainText, runsSig, c.lineHeight, c.letterSpacing, c.padding, c.paddingX, c.listType, c.wrap])
 
   const color = resolveTextHex(c, palette)
   const weight = c.fontWeight || (c.bold ? 700 : 400)
@@ -349,7 +382,7 @@ function EditableText({
     .join(' ')
 
   return (
-    <div style={wrapStyle}>
+    <div ref={wrapRef} style={wrapStyle}>
       <div
         key="ppt-text-view"
         ref={ref}
