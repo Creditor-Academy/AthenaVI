@@ -1,6 +1,14 @@
 import { useRef, useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { FiPlus, FiCopy, FiTrash2, FiMoreVertical, FiCheck } from 'react-icons/fi'
+import {
+  FiPlus,
+  FiCopy,
+  FiTrash2,
+  FiCheck,
+  FiArrowUp,
+  FiArrowDown,
+  FiLayers,
+} from 'react-icons/fi'
 import { MdRotateRight } from 'react-icons/md'
 import PptCanvasElement from '../../Slides/AIPptComponents/PptCanvasElement'
 import PptCanvasGuidesOverlay from '../../Slides/AIPptComponents/PptCanvasGuidesOverlay'
@@ -689,12 +697,12 @@ export default function CanvasStage({
   onAddCanvas,
   onDuplicateCanvas,
   onDeleteCanvas,
+  onMoveCanvas,
 }) {
   // One surface ref per page — element drag/resize maths is relative to its own page.
   const [surfaceRefs] = useState(() => new Map())
   const pageBlockRefsRef = useRef(new Map())
   const [smartGuides, setSmartGuides] = useState([])
-  const [openPageMenuId, setOpenPageMenuId] = useState(null)
   const [copiedPageId, setCopiedPageId] = useState(null)
 
   const getSurfaceRef = (canvasId) => {
@@ -709,18 +717,6 @@ export default function CanvasStage({
     const block = pageBlockRefsRef.current.get(activeCanvas?.id)
     block?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' })
   }, [activeCanvas?.id, canvases.length])
-
-  // Close page action dropdown on click outside
-  useEffect(() => {
-    if (!openPageMenuId) return
-    const handleOutside = (e) => {
-      if (!e.target.closest('.canva-page-actions-menu-wrapper')) {
-        setOpenPageMenuId(null)
-      }
-    }
-    window.addEventListener('pointerdown', handleOutside)
-    return () => window.removeEventListener('pointerdown', handleOutside)
-  }, [openPageMenuId])
 
   const handleCopyPage = async (canvas) => {
     try {
@@ -737,7 +733,6 @@ export default function CanvasStage({
     }
     setCopiedPageId(canvas.id)
     setTimeout(() => setCopiedPageId(null), 2000)
-    setOpenPageMenuId(null)
   }
 
   const selectedIds = multiSelectIds.length
@@ -752,7 +747,6 @@ export default function CanvasStage({
         const isCurrent = canvas.id === activeCanvas.id
         const surfaceRef = getSurfaceRef(canvas.id)
         const pageSelectedIds = isCurrent ? selectedIds : []
-        const isMenuOpen = openPageMenuId === canvas.id
         const isCopied = copiedPageId === canvas.id
 
         return (
@@ -764,77 +758,92 @@ export default function CanvasStage({
             }}
             className={`canva-page-block ${isCurrent ? 'is-active' : 'is-inactive'}`}
           >
-            {/* Page Header Meta */}
-            <div className="canva-page-meta">
-              <div className="canva-page-meta-title">
-                <div className="canva-page-meta-badge">
-                  <strong>Page {index + 1} of {canvases.length}</strong>
-                </div>
-                <span className="canva-page-meta-dim">{canvas.width} × {canvas.height} px</span>
+            {/* Page Header Meta - Right-aligned, no container */}
+            <div
+              className="canva-page-meta"
+              style={{ width: `${canvas.width * zoom}px`, maxWidth: '100%' }}
+            >
+              <div className="canva-page-meta-info">
+                <span className="canva-page-meta-label">
+                  Page {index + 1} of {canvases.length}
+                </span>
+                <span className="canva-page-meta-dim">
+                  {canvas.width} × {canvas.height} px
+                </span>
               </div>
 
-              <div className="canva-page-meta-actions">
-                <div className="canva-page-actions-menu-wrapper">
-                  <button
-                    type="button"
-                    className={`canva-page-action-btn ${isMenuOpen ? 'is-active' : ''}`}
-                    onClick={() => setOpenPageMenuId(isMenuOpen ? null : canvas.id)}
-                    title="Page options (Copy, Duplicate, Delete)"
-                    aria-label="Page options"
-                    aria-haspopup="true"
-                    aria-expanded={isMenuOpen}
-                  >
-                    <FiCopy size={14} />
-                  </button>
+              <div className="canva-page-action-row" role="toolbar" aria-label="Page actions">
+                <button
+                  type="button"
+                  className="canva-page-action-btn"
+                  disabled={index === 0}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onMoveCanvas?.(index, -1)
+                  }}
+                  title={index === 0 ? 'Cannot move top page up' : 'Move page up'}
+                  aria-label="Move page up"
+                >
+                  <FiArrowUp size={15} />
+                </button>
 
-                  {isMenuOpen && (
-                    <div className="canva-page-actions-dropdown" role="menu">
-                      <button
-                        type="button"
-                        className="canva-page-dropdown-item"
-                        onClick={() => handleCopyPage(canvas)}
-                        role="menuitem"
-                      >
-                        {isCopied ? (
-                          <FiCheck size={14} className="canva-page-check-icon" />
-                        ) : (
-                          <FiCopy size={14} />
-                        )}
-                        <span>{isCopied ? 'Copied' : 'Copy'}</span>
-                      </button>
+                <button
+                  type="button"
+                  className="canva-page-action-btn"
+                  disabled={index === canvases.length - 1}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onMoveCanvas?.(index, 1)
+                  }}
+                  title={index === canvases.length - 1 ? 'Cannot move bottom page down' : 'Move page down'}
+                  aria-label="Move page down"
+                >
+                  <FiArrowDown size={15} />
+                </button>
 
-                      <button
-                        type="button"
-                        className="canva-page-dropdown-item"
-                        onClick={() => {
-                          onDuplicateCanvas(canvas)
-                          setOpenPageMenuId(null)
-                        }}
-                        role="menuitem"
-                      >
-                        <FiCopy size={14} />
-                        <span>Duplicate</span>
-                      </button>
+                <button
+                  type="button"
+                  className="canva-page-action-btn"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDuplicateCanvas?.(canvas)
+                  }}
+                  title="Duplicate page"
+                  aria-label="Duplicate page"
+                >
+                  <FiLayers size={15} />
+                </button>
 
-                      <div className="canva-page-dropdown-divider" />
-
-                      <button
-                        type="button"
-                        className="canva-page-dropdown-item canva-page-dropdown-item--danger"
-                        disabled={canvases.length <= 1}
-                        onClick={() => {
-                          onDeleteCanvas(canvas.id)
-                          setOpenPageMenuId(null)
-                        }}
-                        role="menuitem"
-                        title={canvases.length <= 1 ? 'Cannot delete the only page' : 'Delete page'}
-                      >
-                        <FiTrash2 size={14} />
-                        <span>Delete</span>
-                      </button>
-                    </div>
+                <button
+                  type="button"
+                  className={`canva-page-action-btn ${isCopied ? 'is-copied' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleCopyPage(canvas)
+                  }}
+                  title={isCopied ? 'Copied to clipboard!' : 'Copy page'}
+                  aria-label="Copy page"
+                >
+                  {isCopied ? (
+                    <FiCheck size={15} className="canva-page-check-icon" />
+                  ) : (
+                    <FiCopy size={15} />
                   )}
-                </div>
+                </button>
+
+                <button
+                  type="button"
+                  className="canva-page-action-btn canva-page-action-btn--danger"
+                  disabled={canvases.length <= 1}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDeleteCanvas?.(canvas.id)
+                  }}
+                  title={canvases.length <= 1 ? 'Cannot delete the only page' : 'Delete page'}
+                  aria-label="Delete page"
+                >
+                  <FiTrash2 size={15} />
+                </button>
               </div>
             </div>
 

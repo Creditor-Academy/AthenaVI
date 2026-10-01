@@ -493,9 +493,8 @@
   top: 76px;
   bottom: 16px;
   left: 94px;
-  width: 380px;
+  width: min(420px, calc(100vw - 110px));
   height: auto;
-  max-width: calc(100vw - 120px);
   border-radius: 18px;
   background: #ffffff;
   backdrop-filter: blur(24px) saturate(190%);
@@ -514,15 +513,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 14px 18px;
+  border-bottom: 1px solid #f1f5f9;
   background: #ffffff;
 }
 
 .canva-drawer-title {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
+  letter-spacing: -0.015em;
   color: #0f172a;
 }
 
@@ -547,51 +547,10 @@
   color: #ef4444;
 }
 
-.canva-drawer-search {
-  position: relative;
-  margin: 16px 20px 0;
-}
-
-.canva-drawer-search input {
-  width: 100%;
-  height: 38px;
-  padding: 0 36px 0 36px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: #f8fafc;
-  color: #0f172a;
-  font-size: 13px;
-  outline: none;
-  transition: border-color 150ms ease;
-}
-
-.canva-drawer-search input:focus {
-  border-color: var(--canva-accent);
-  background: #ffffff;
-}
-
-.canva-drawer-search-icon {
-  position: absolute;
-  left: 12px;
-  top: 11px;
-  color: #64748b;
-  font-size: 16px;
-}
-
-.canva-drawer-search-clear {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  border: none;
-  background: transparent;
-  color: #64748b;
-  cursor: pointer;
-}
-
 .canva-drawer-body {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 18px;
   background: #ffffff;
   color: #0f172a;
 }
@@ -608,62 +567,357 @@
   overflow-y: auto;
 }
 
+/* Transform insert panels into a clean single-column horizontal category layout */
 .canva-drawer .ppt-insert-panel,
 .canva-drawer .ppt-insert-popover {
   width: 100% !important;
-  min-width: 0;
-  max-width: none;
-  max-height: none;
-  height: 100%;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  color: #0f172a;
-}
-
-.canva-drawer .ppt-insert-panel {
-  display: flex;
-  min-height: 0;
+  min-width: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  height: 100% !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: #0f172a !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
 }
 
 .canva-drawer .ppt-insert-popover {
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  padding: 12px 16px 20px;
-  background: transparent;
+  overflow-y: auto !important;
+  padding: 14px 18px 20px !important;
 }
 
 .canva-drawer .ppt-insert-popover-title,
 .canva-drawer .ppt-insert-popover-sub,
 .canva-drawer .ppt-insert-rail-title {
-  display: none;
+  display: none !important;
 }
 
+/* Horizontal sliding category rail at top */
 .canva-drawer .ppt-insert-rail {
-  width: 132px;
-  padding-top: 12px;
-  border-right: 1px solid #e2e8f0;
+  width: 100% !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 10px 16px 8px !important;
+  border-right: none !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  background: #ffffff !important;
+  gap: 8px !important;
+  overflow: hidden !important;
 }
 
-.canva-drawer .ppt-insert-rail button {
-  color: #334155;
-  font-weight: 650;
-  font-size: 12.5px;
+.canva-drawer .ppt-insert-rail-scroll {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 6px !important;
+  overflow-x: auto !important;
+  width: 100% !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  padding-bottom: 2px !important;
 }
 
-.canva-drawer .ppt-insert-rail button.is-active,
-.canva-drawer .ppt-insert-rail button:hover {
-  color: var(--canva-accent);
-  background: #eff6ff;
-  font-weight: 750;
+.canva-drawer .ppt-insert-rail-scroll::-webkit-scrollbar {
+  display: none !important;
 }
 
+.canva-drawer .ppt-insert-rail-section {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-shrink: 0 !important;
+}
+
+.canva-drawer .ppt-insert-rail-section-label {
+  display: none !important;
+}
+
+.canva-drawer .ppt-insert-rail-item {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px 14px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 999px !important;
+  background: #f8fafc !important;
+  color: #475569 !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+  transition: all 140ms ease !important;
+  width: auto !important;
+}
+
+.canva-drawer .ppt-insert-rail-item:hover:not(:disabled) {
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+  background: #f1f5f9 !important;
+}
+
+.canva-drawer .ppt-insert-rail-item.is-active {
+  background: var(--primary, var(--canva-accent, #2563eb)) !important;
+  color: #ffffff !important;
+  border-color: var(--primary, var(--canva-accent, #2563eb)) !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.28) !important;
+  font-weight: 700 !important;
+}
+
+.canva-drawer .ppt-insert-rail-item.is-active .ppt-insert-rail-icon,
+.canva-drawer .ppt-insert-rail-item.is-active .ppt-insert-rail-label {
+  color: #ffffff !important;
+}
+
+.canva-drawer .ppt-insert-rail-icon {
+  display: inline-flex !important;
+  align-items: center !important;
+  font-size: 14px !important;
+}
+
+.canva-drawer .ppt-insert-rail-footer {
+  flex-shrink: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+.canva-drawer .ppt-insert-upload-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 6px 14px !important;
+  border: none !important;
+  border-radius: 999px !important;
+  background: var(--primary, var(--canva-accent, #2563eb)) !important;
+  color: #ffffff !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
+  transition: all 140ms ease !important;
+}
+
+.canva-drawer .ppt-insert-upload-btn:hover {
+  background: var(--primary-hover, #1d4ed8) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Main content area gets full width & clean scrolling */
 .canva-drawer .ppt-insert-main {
-  min-width: 0;
-  flex: 1;
-  overflow-y: auto;
-  color: #0f172a;
+  min-width: 0 !important;
+  flex: 1 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 14px 18px 24px !important;
+  color: #0f172a !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Full-width Search Bar */
+.canva-drawer .ppt-insert-search-wrap {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  margin: 0 0 4px !important;
+  position: relative !important;
+}
+
+.canva-drawer .ppt-insert-search-icon {
+  position: absolute !important;
+  left: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: #94a3b8 !important;
+  pointer-events: none !important;
+}
+
+.canva-drawer .ppt-insert-search {
+  flex: 1 !important;
+  height: 38px !important;
+  padding: 0 14px 0 36px !important;
+  border: 1.5px solid #e2e8f0 !important;
+  border-radius: 999px !important;
+  background: #f8fafc !important;
+  color: #0f172a !important;
+  font-size: 13px !important;
+  outline: none !important;
+  transition: all 140ms ease !important;
+}
+
+.canva-drawer .ppt-insert-search:focus {
+  border-color: var(--primary, #2563eb) !important;
+  background: #ffffff !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+}
+
+.canva-drawer .ppt-insert-search-go {
+  height: 38px !important;
+  padding: 0 18px !important;
+  border: none !important;
+  border-radius: 999px !important;
+  background: #0f172a !important;
+  color: #ffffff !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 140ms ease !important;
+  white-space: nowrap !important;
+}
+
+.canva-drawer .ppt-insert-search-go:hover {
+  background: #1e293b !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Sliding Horizontal Categories & Topic Chips below search bar */
+.canva-drawer .ppt-topic-chip-row,
+.canva-drawer .ppt-insert-chip-row {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+  overflow-x: auto !important;
+  width: 100% !important;
+  padding: 4px 2px 8px !important;
+  margin-bottom: 4px !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  flex-shrink: 0 !important;
+}
+
+.canva-drawer .ppt-topic-chip-row::-webkit-scrollbar,
+.canva-drawer .ppt-insert-chip-row::-webkit-scrollbar {
+  display: none !important;
+}
+
+.canva-drawer .ppt-topic-chip {
+  flex: 0 0 auto !important;
+  min-width: 86px !important;
+  height: 36px !important;
+  padding: 0 14px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+  color: #ffffff !important;
+  font-size: 12px !important;
+  font-weight: 750 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85) !important;
+  transition: all 140ms ease !important;
+}
+
+.canva-drawer .ppt-topic-chip:hover {
+  transform: translateY(-1px) scale(1.03) !important;
+}
+
+.canva-drawer .ppt-topic-chip.is-active {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--primary, #2563eb) !important;
+}
+
+.canva-drawer .ppt-insert-chip {
+  flex: 0 0 auto !important;
+  padding: 6px 14px !important;
+  border-radius: 999px !important;
+  border: 1px solid #e2e8f0 !important;
+  background: #f8fafc !important;
+  color: #475569 !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+  transition: all 130ms ease !important;
+}
+
+.canva-drawer .ppt-insert-chip:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.canva-drawer .ppt-insert-chip.is-active {
+  background: var(--primary, #2563eb) !important;
+  color: #ffffff !important;
+  border-color: var(--primary, #2563eb) !important;
+}
+
+/* 2-Column Spacious Masonry Photo Gallery in Drawer */
+.canva-drawer .ppt-media-grid--masonry {
+  columns: 2 !important;
+  column-gap: 12px !important;
+  width: 100% !important;
+}
+
+.canva-drawer .ppt-media-card--masonry {
+  margin-bottom: 12px !important;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+}
+
+.canva-drawer .ppt-media-tile--masonry {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  background: #f1f5f9 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+
+.canva-drawer .ppt-media-tile--masonry img {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  border-radius: 12px !important;
+  transition: transform 0.25s ease !important;
+}
+
+.canva-drawer .ppt-media-tile--masonry:hover img {
+  transform: scale(1.05) !important;
+}
+
+.canva-drawer .ppt-media-attribution {
+  font-size: 11px !important;
+  color: #64748b !important;
+  font-weight: 600 !important;
+  margin-top: 4px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Shapes, Graphics, and Charts clean grid layout in drawer */
+.canva-drawer .ppt-shapes-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+
+.canva-drawer .ppt-graphics-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 10px !important;
+  width: 100% !important;
+}
+
+.canva-drawer .ppt-chart-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 10px !important;
+  width: 100% !important;
 }
 
 .canva-drawer-section {
@@ -1008,158 +1262,77 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  margin-bottom: 12px;
-  font-size: 12px;
-  color: var(--canva-muted);
+  margin-bottom: 8px;
+  padding: 0 2px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
-.canva-page-meta-title {
+.canva-page-meta-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  background: transparent;
 }
 
-.canva-page-meta-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 5px 14px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
-}
-
-.canva-page-meta-badge strong {
-  color: #ffffff !important;
-  font-size: 13px;
-  font-weight: 800;
+.canva-page-meta-label {
+  font-size: 12.5px;
+  font-weight: 750;
+  color: #0f172a;
   letter-spacing: -0.01em;
 }
 
 .canva-page-meta-dim {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid var(--canva-border);
   font-size: 11.5px;
-  font-weight: 700;
-  color: #475569;
+  font-weight: 600;
+  color: #64748b;
 }
 
-.canva-page-meta-actions {
+.canva-page-action-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.canva-page-actions-menu-wrapper {
-  position: relative;
-  display: inline-flex;
+  gap: 2px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
 }
 
 .canva-page-action-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border: 1px solid var(--canva-border);
-  border-radius: 10px;
-  background: var(--canva-glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  color: var(--canva-text);
-  cursor: pointer;
-  transition: all 140ms ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.canva-page-action-btn:hover {
-  border-color: var(--canva-accent, #2563eb);
-  color: var(--canva-accent, #2563eb);
-  background: #ffffff;
-  transform: scale(1.05);
-}
-
-.canva-page-action-btn.is-active {
-  border-color: var(--canva-accent, #2563eb);
-  background: var(--canva-accent-soft, rgba(37, 99, 235, 0.12));
-  color: var(--canva-accent, #2563eb);
-}
-
-.canva-page-actions-dropdown {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  z-index: 100;
-  min-width: 160px;
-  padding: 6px;
-  border-radius: 14px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  box-shadow:
-    0 16px 36px -4px rgba(15, 23, 42, 0.22),
-    0 4px 12px rgba(15, 23, 42, 0.08);
-  animation: canvaDropdownIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes canvaDropdownIn {
-  from {
-    opacity: 0;
-    transform: translateY(-6px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.canva-page-dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  width: 100%;
-  padding: 8px 12px;
+  width: 28px;
+  height: 28px;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
-  color: #0f172a;
-  font-size: 13px;
-  font-weight: 650;
+  color: #475569;
   cursor: pointer;
-  text-align: left;
-  transition: all 120ms ease;
+  transition: all 130ms ease;
+  box-shadow: none;
 }
 
-.canva-page-dropdown-item:hover {
-  background: #f1f5f9;
-  color: var(--primary, #2563eb);
+.canva-page-action-btn:hover:not(:disabled) {
+  color: #0f172a;
+  background: rgba(0, 0, 0, 0.06);
 }
 
-.canva-page-dropdown-item--danger {
-  color: #e11d48;
-}
-
-.canva-page-dropdown-item--danger:hover:not(:disabled) {
-  background: rgba(225, 29, 72, 0.08);
-  color: #e11d48;
-}
-
-.canva-page-dropdown-item:disabled {
-  opacity: 0.4;
+.canva-page-action-btn:disabled {
+  opacity: 0.28;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
-.canva-page-dropdown-divider {
-  height: 1px;
-  margin: 5px 0;
-  background: #f1f5f9;
+.canva-page-action-btn.is-copied {
+  color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.12) !important;
+}
+
+.canva-page-action-btn--danger:hover:not(:disabled) {
+  color: #e11d48 !important;
+  background: rgba(225, 29, 72, 0.1) !important;
 }
 
 .canva-page-check-icon {

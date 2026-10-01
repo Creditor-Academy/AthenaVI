@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, Component } from 'react'
 import { createPortal } from 'react-dom'
 import { Search, Plus, X, LayoutTemplate, CheckCircle2, XCircle, Eye, GripVertical, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import superadminService, { SuperadminApiError } from '../../../../services/superadminService'
@@ -386,10 +386,67 @@ function buildLayoutCatalog(templates = []) {
 }
 
 function unwrapTemplateRows(data) {
-  if (Array.isArray(data)) return data
-  if (Array.isArray(data?.templates)) return data.templates
-  if (Array.isArray(data?.data)) return data.data
-  return []
+  let list = []
+  if (Array.isArray(data)) list = data
+  else if (Array.isArray(data?.templates)) list = data.templates
+  else if (Array.isArray(data?.data)) list = data.data
+  if (!Array.isArray(list)) return []
+  return list
+    .filter(Boolean)
+    .map((t) => {
+      let schema = t.schema
+      if (typeof schema === 'string') {
+        try {
+          schema = JSON.parse(schema)
+        } catch {
+          schema = {}
+        }
+      }
+      return {
+        ...t,
+        schema: schema && typeof schema === 'object' ? schema : {},
+      }
+    })
+}
+
+class TemplateErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false }
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+  componentDidCatch(err) {
+    console.warn('[TemplateErrorBoundary]: Error rendering template thumbnail', err)
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        this.props.fallback || (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'var(--bg-card, #f8fafc)',
+              color: 'var(--text-muted, #94a3b8)',
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              padding: 8,
+              textAlign: 'center',
+            }}
+          >
+            Preview unavailable
+          </div>
+        )
+      )
+    }
+    return this.props.children
+  }
 }
 
 const DECK_LAYOUT_PLACEHOLDER = JSON.stringify({
@@ -4147,53 +4204,55 @@ export default function SuperadminTemplatesPanel() {
                   >
                     {/* thumbnail */}
                     <div style={{ aspectRatio: aspectRatioToCss(t.schema?.aspectRatio ?? '16:9'), position: 'relative', overflow: 'hidden', background: 'var(--bg-card)' }}>
-                      {t.type === 'DECK_LAYOUT' ? (
-                        <LayoutPolishedPreview
-                          schema={enrichLayoutSchemaForPreview(t.schema)}
-                          slots={t.schema?.slots ?? []}
-                          fill
-                        />
-                      ) : (
-                        // ── Pack / Video Scene: themed gradient ──
-                        <>
-                          <div style={{
-                            position: 'absolute', inset: 0,
-                            background: tc
-                              ? `linear-gradient(140deg, ${tc.bg} 0%, ${tc.surface ?? tc.bg} 55%, ${tc.accent}30 100%)`
-                              : fallbackColor
-                                ? `linear-gradient(140deg, ${fallbackColor}dd 0%, ${fallbackColor}44 100%)`
-                                : t.type === 'VIDEO_PACK'
-                                  ? 'linear-gradient(140deg, #0f172a, #1e293b)'
-                                  : t.type === 'VIDEO_SCENE'
-                                    ? 'linear-gradient(140deg, #0f0f1a, #1a1a2e)'
-                                    : 'linear-gradient(140deg, color-mix(in srgb, var(--primary) 5%, var(--bg-card)), color-mix(in srgb, var(--primary) 12%, var(--bg-card)))',
-                          }} />
-                          {/* accent bottom stripe */}
-                          {tc && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: tc.accent, opacity: 0.9 }} />}
-                          {/* content: palette + label */}
-                          {tc && (
-                            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', padding: '12px 12px 16px' }}>
-                              {/* palette row top */}
-                              <div style={{ display: 'flex', gap: 5 }}>
-                                {[tc.accent, tc.text, tc.surface ?? tc.bg].map((c, i) => (
-                                  <div key={i} style={{
-                                    width: i === 0 ? 12 : 8, height: i === 0 ? 12 : 8,
-                                    borderRadius: '50%', background: c,
-                                    border: '1.5px solid rgba(255,255,255,0.2)',
-                                    boxShadow: i === 0 ? `0 0 8px ${c}99` : 'none',
-                                  }} />
-                                ))}
+                      <TemplateErrorBoundary>
+                        {t.type === 'DECK_LAYOUT' ? (
+                          <LayoutPolishedPreview
+                            schema={enrichLayoutSchemaForPreview(t.schema || {})}
+                            slots={t.schema?.slots ?? []}
+                            fill
+                          />
+                        ) : (
+                          // ── Pack / Video Scene: themed gradient ──
+                          <>
+                            <div style={{
+                              position: 'absolute', inset: 0,
+                              background: tc
+                                ? `linear-gradient(140deg, ${tc.bg} 0%, ${tc.surface ?? tc.bg} 55%, ${tc.accent}30 100%)`
+                                : fallbackColor
+                                  ? `linear-gradient(140deg, ${fallbackColor}dd 0%, ${fallbackColor}44 100%)`
+                                  : t.type === 'VIDEO_PACK'
+                                    ? 'linear-gradient(140deg, #0f172a, #1e293b)'
+                                    : t.type === 'VIDEO_SCENE'
+                                      ? 'linear-gradient(140deg, #0f0f1a, #1a1a2e)'
+                                      : 'linear-gradient(140deg, color-mix(in srgb, var(--primary) 5%, var(--bg-card)), color-mix(in srgb, var(--primary) 12%, var(--bg-card)))',
+                            }} />
+                            {/* accent bottom stripe */}
+                            {tc && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 3, background: tc.accent, opacity: 0.9 }} />}
+                            {/* content: palette + label */}
+                            {tc && (
+                              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'space-between', padding: '12px 12px 16px' }}>
+                                {/* palette row top */}
+                                <div style={{ display: 'flex', gap: 5 }}>
+                                  {[tc.accent, tc.text, tc.surface ?? tc.bg].map((c, i) => (
+                                    <div key={i} style={{
+                                      width: i === 0 ? 12 : 8, height: i === 0 ? 12 : 8,
+                                      borderRadius: '50%', background: c,
+                                      border: '1.5px solid rgba(255,255,255,0.2)',
+                                      boxShadow: i === 0 ? `0 0 8px ${c}99` : 'none',
+                                    }} />
+                                  ))}
+                                </div>
+                                {/* theme name bottom */}
+                                {t.schema?.themeId && (
+                                  <span style={{ fontSize: '0.53rem', fontWeight: 600, color: tc.text, opacity: 0.4, letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'monospace' }}>
+                                    {t.schema.themeId.replace(/_/g, ' ')}
+                                  </span>
+                                )}
                               </div>
-                              {/* theme name bottom */}
-                              {t.schema?.themeId && (
-                                <span style={{ fontSize: '0.53rem', fontWeight: 600, color: tc.text, opacity: 0.4, letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'monospace' }}>
-                                  {t.schema.themeId.replace(/_/g, ' ')}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </>
-                      )}
+                            )}
+                          </>
+                        )}
+                      </TemplateErrorBoundary>
                       {/* slide count badge for packs */}
                       {t.type === 'DECK_PACK' && t.schema?.slides?.length > 0 && (
                         <div style={{ position: 'absolute', bottom: 10, left: 10, padding: '2px 7px', borderRadius: 5, fontSize: '0.62rem', fontWeight: 700, background: 'rgba(0,0,0,0.45)', color: '#fff', backdropFilter: 'blur(4px)', letterSpacing: '0.02em' }}>
@@ -4386,13 +4445,15 @@ export default function SuperadminTemplatesPanel() {
             </div>
 
             {/* modal body */}
-            {previewTemplate.type === 'DECK_PACK' ? (
-              <InlinePackSlideViewer template={previewTemplate} layoutSchemaMap={layoutSchemaMap} />
-            ) : (
-              <div className="sa-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px' }}>
-                <TemplateVisualPreview template={previewTemplate} layoutSchemaMap={layoutSchemaMap} />
-              </div>
-            )}
+            <TemplateErrorBoundary>
+              {previewTemplate.type === 'DECK_PACK' ? (
+                <InlinePackSlideViewer template={previewTemplate} layoutSchemaMap={layoutSchemaMap} />
+              ) : (
+                <div className="sa-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '20px' }}>
+                  <TemplateVisualPreview template={previewTemplate} layoutSchemaMap={layoutSchemaMap} />
+                </div>
+              )}
+            </TemplateErrorBoundary>
           </div>
         </div>
         )

@@ -571,6 +571,17 @@ export default function CanvasEditor({
     setMultiSelectIds([])
   }
 
+  const moveCanvas = (fromIndex, direction) => {
+    const toIndex = fromIndex + direction
+    if (toIndex < 0 || toIndex >= canvases.length || fromIndex === toIndex) return
+    const nextCanvases = [...canvases]
+    const [moved] = nextCanvases.splice(fromIndex, 1)
+    nextCanvases.splice(toIndex, 0, moved)
+    updateCanvasesWithHistory(nextCanvases)
+    setActiveCanvasIndex(toIndex)
+    setSelected({ canvasId: moved.id, elementId: null })
+  }
+
   const handlePlacementLive = (patches) => {
     const canvasId = activeCanvas.id
     setCanvases((prevCanvases) =>
@@ -1540,6 +1551,7 @@ export default function CanvasEditor({
             onAddCanvas={() => addCanvas(activeCanvas)}
             onDuplicateCanvas={duplicateCanvas}
             onDeleteCanvas={deleteCanvas}
+            onMoveCanvas={moveCanvas}
           />
 
           {/* Canva Bottom Control Bar (Floating) */}
