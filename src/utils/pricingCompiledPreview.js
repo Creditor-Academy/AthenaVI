@@ -198,6 +198,7 @@ export function compilePricingLayoutPreviewSlide(schema, aspectRatio = '16:9', o
     slideTitle: schema?.title || schema?.name || '',
     themeVisual: options.themeVisual || null,
     palette: options.themeVisual?.palette || null,
+    skipContentValidation: true,
     content: {
       imageUrl: schema?.preview?.imageUrl || undefined,
       slotImageUrls: Object.keys(slotImageUrls).length ? slotImageUrls : undefined,
