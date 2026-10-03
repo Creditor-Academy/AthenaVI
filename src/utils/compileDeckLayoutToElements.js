@@ -6,7 +6,7 @@ import {
   findDeviceFrameSlot,
 } from './deviceFrameCanvas.js'
 import { buildContentBySlotIdFromSlideContent, mergeContentBySlotId } from './contentSlotMapping.js'
-import { validateContentForLayout } from './contentContract.js'
+import { validateContentForLayout, ContentContractValidationError } from './contentContract.js'
 import { fontSizeForTextSlot, resolveTypeScaleFontSize, fitTextToSlot } from './canvasTypography.js'
 import {
   compileLayoutGeometry,
@@ -1719,7 +1719,11 @@ export function compileDeckLayoutToElements(schema, options = {}) {
     typeof options.content === 'object' &&
     options.skipContentValidation !== true
   ) {
-    validateContentForLayout(options.content, schema)
+    try {
+      validateContentForLayout(options.content, schema)
+    } catch (err) {
+      if (!(err instanceof ContentContractValidationError)) throw err
+    }
   }
 
   const canvasW = options.canvas?.width || 1920

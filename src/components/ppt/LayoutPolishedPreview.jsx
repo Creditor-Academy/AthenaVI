@@ -2675,7 +2675,13 @@ export default function LayoutPolishedPreview({
   const previewMode = resolvePreviewMode(schema) || previewHints.mode
   const cssAspect = aspectRatioToCss(aspectRatio)
   const compiledPricingSlide = useMemo(
-    () => compilePricingLayoutPreviewSlide(schema, aspectRatio, { themeVisual }),
+    () => {
+      try {
+        return compilePricingLayoutPreviewSlide(schema, aspectRatio, { themeVisual })
+      } catch {
+        return null
+      }
+    },
     [schema, aspectRatio, themeVisual],
   )
 
