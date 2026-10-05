@@ -193,6 +193,18 @@ function printSizeLabel(print = {}) {
   return '';
 }
 
+function printChipLabel(format) {
+  if (!format) return '';
+  const print = format.print || {};
+  const kind = String(print.kind || '').replace(/_/g, '-');
+  const series = print.series || String(format.id || '').split('-')[1];
+  const group = PRINT_GROUPS.find((g) => {
+    if (g.formatId) return g.formatId === format.id;
+    return g.kind === kind && g.series === series;
+  });
+  return group?.label || String(format.name || format.id).replace(/\s*\([^)]*\)\s*$/, '');
+}
+
 function printFormatForGroup(group, formats, orientation) {
   if (!group) return null;
   if (group.formatId) return formats.find((f) => f.id === group.formatId) || null;
@@ -1057,10 +1069,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
               <div className="selected-layout-chip-container">
                 <div className="selected-layout-chip">
                   <span>
-                    Size:{' '}
-                    <strong>
-                      {selectedPrint.name || selectedPrint.id} · {printSizeLabel(selectedPrint.print)} · {selectedPrint.print?.dpi} DPI
-                    </strong>
+                    Size: <strong>{printChipLabel(selectedPrint)}</strong>
                   </span>
                   <button className="clear-chip-btn" onClick={() => setSelectedFormat('')}>
                     <X size={12} />
