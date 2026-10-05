@@ -497,6 +497,62 @@ export function getPptTextSelection() {
   return lastTextRange
 }
 
+function parseHexRgb(hex) {
+  if (!hex || typeof hex !== 'string') return null
+  const raw = hex.trim().replace(/^#/, '')
+  if (raw.length !== 6 && raw.length !== 3) return null
+  const full =
+    raw.length === 3
+      ? raw
+          .split('')
+          .map((ch) => ch + ch)
+          .join('')
+      : raw
+  const r = parseInt(full.slice(0, 2), 16)
+  const g = parseInt(full.slice(2, 4), 16)
+  const b = parseInt(full.slice(4, 6), 16)
+  if ([r, g, b].some((n) => Number.isNaN(n))) return null
+  return { r, g, b }
+}
+
+function contrastRatioHex(fg, bg) {
+  const a = parseHexRgb(cssColorToHex(fg, ''))
+  const b = parseHexRgb(cssColorToHex(bg, ''))
+  if (!a || !b) return null
+  const lum = ({ r, g, b: bl }) => {
+    const s = [r, g, bl].map((v) => {
+      const c = v / 255
+      return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+    })
+    return 0.2126 * s[0] + 0.7152 * s[1] + 0.0722 * s[2]
+  }
+  const la = lum(a)
+  const lb = lum(b)
+  const lighter = Math.max(la, lb)
+  const darker = Math.min(la, lb)
+  return (lighter + 0.05) / (darker + 0.05)
+}
+
+function readableInkOnBackground(palette, bgHex) {
+  const onLight = (contrastRatioHex('#0F172A', bgHex) ?? 0) >= 4.5
+  const candidates = onLight
+    ? [
+        { hex: palette?.text || '#0F172A', role: 'text' },
+        { hex: palette?.muted || '#64748B', role: 'muted' },
+        { hex: '#0F172A', role: 'text' },
+      ]
+    : [
+        { hex: palette?.text || '#F8FAFC', role: 'text' },
+        { hex: palette?.muted || '#94A3B8', role: 'muted' },
+        { hex: '#F8FAFC', role: 'text' },
+      ]
+  const scored = candidates
+    .map((c) => ({ ...c, ratio: contrastRatioHex(c.hex, bgHex) }))
+    .filter((c) => c.ratio != null && c.ratio >= 4.5)
+    .sort((x, y) => y.ratio - x.ratio)
+  return scored[0]?.hex || candidates[0].hex
+}
+
 export function resolveTextHex(content, palette, fallback = '#0F172A') {
   const c = content || {}
   const run = Array.isArray(c.runs)
@@ -509,14 +565,22 @@ export function resolveTextHex(content, palette, fallback = '#0F172A') {
     const first = fromFill.stops?.[0]?.color
     if (first) return cssColorToHex(String(first), fallback)
   }
-  const resolved =
+  let resolved =
     resolveThemeColor(c.color, palette, undefined) ||
     resolveThemeColor(c.colorRole, palette, undefined) ||
     resolveThemeColor(run?.color || run?.colorRole, palette, undefined) ||
     resolveThemeColor('text', palette, undefined) ||
     resolveThemeColor('textOnImage', palette, fallback) ||
     fallback
-  return cssColorToHex(resolved, fallback)
+  resolved = cssColorToHex(resolved, fallback)
+  const slideBg = palette?.bg || palette?.surface
+  if (slideBg) {
+    const ratio = contrastRatioHex(resolved, slideBg)
+    if (ratio != null && ratio < 4.5) {
+      resolved = cssColorToHex(readableInkOnBackground(palette, slideBg), fallback)
+    }
+  }
+  return resolved
 }
 
 export function contentFillValue(content, palette, elementId) {

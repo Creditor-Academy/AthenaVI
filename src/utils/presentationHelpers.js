@@ -1,3 +1,8 @@
+import { SHAPE_LIBRARY } from '../constants/shapeLibrary'
+import { appearanceFromThemeBg } from './themeAppearance'
+
+export { enforceAppearancePalette } from './themeAppearance'
+
 export function normalizeProgressStatus(val) {
   if (val === null) return null
   if (val === 'TODO' || val === 'IN_PROGRESS' || val === 'COMPLETED') return val
@@ -12,7 +17,6 @@ export function normalizeProgressStatus(val) {
 }
 
 /** Caps from PRESENTATION_FRONTEND_INTEGRATION */
-import { SHAPE_LIBRARY } from '../constants/shapeLibrary'
 
 export const PPT_CAPS = {
   AI_SLIDE_MIN: 5,
@@ -634,7 +638,13 @@ export function buildWizardThemeTokens(colorThemeId, colorThemes = []) {
   const text = theme.textPrimary || theme.text_primary
   const muted = theme.textSecondary || theme.text_secondary
 
+  const appearance =
+    theme.appearance === 'dark' || theme.appearance === 'light'
+      ? theme.appearance
+      : appearanceFromThemeBg(bg)
+
   return {
+    appearance,
     palette: {
       bg,
       surface,
@@ -643,6 +653,8 @@ export function buildWizardThemeTokens(colorThemeId, colorThemes = []) {
       secondary: theme.secondary,
       text,
       muted,
+      heading: text,
+      body: muted,
       accent: theme.accent,
       border: theme.border,
       overlayScrim: 'rgba(0,0,0,0.5)',
@@ -766,16 +778,33 @@ export function normalizeOutlineSlides(payload) {
       beats: Array.isArray(slide.beats) ? slide.beats : [],
       visual: slide.visual || '',
       intent: slide.intent || slide.purpose || null,
+      narrativeRole: slide.narrativeRole || slide.narrative_role || null,
       isEditing: false,
     }
   })
+}
+
+function titleCaseWord(word) {
+  if (!word) return ''
+  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
 }
 
 /** Human label for catalog content types in the Blueprint UI. */
 export function formatOutlineContentType(value) {
   const raw = String(value || '').trim()
   if (!raw) return ''
-  return raw.replace(/_/g, ' ').replace(/\+/g, ' + ')
+  return raw
+    .split('+')
+    .map((part) =>
+      part
+        .split('_')
+        .filter(Boolean)
+        .map(titleCaseWord)
+        .join(' ')
+        .trim()
+    )
+    .filter(Boolean)
+    .join(' + ')
 }
 
 /** Build PATCH/POST outline body from UI cards. */
@@ -821,6 +850,7 @@ export function outlineCardsToApiPayload(
         ...(Array.isArray(card.beats) && card.beats.length ? { beats: card.beats } : {}),
         ...(card.visual ? { visual: card.visual } : {}),
         ...(card.intent ? { intent: card.intent } : {}),
+        ...(card.narrativeRole ? { narrativeRole: card.narrativeRole } : {}),
       }
     }),
   }
