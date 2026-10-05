@@ -4,7 +4,6 @@ import { Sparkles, ArrowUp, ArrowRight, Paperclip, Check, Globe, Image as ImageI
 import { MdDescription, MdMenuBook, MdInsights } from 'react-icons/md'
 import { useAuth } from '../../../contexts/AuthContext'
 import presentationService from '../../../services/presentationService'
-import userService from '../../../services/userService'
 import { isInsufficientCreditsError } from '../../../services/creditsService'
 import { resolvePresentationWorkspaceContext } from '../../../utils/presentationContext'
 import {
@@ -432,21 +431,13 @@ export default function AIPptWizard({
     const knownIds = new Set(IMAGE_STYLES.map((style) => style.id))
 
     ;(async () => {
-      const [remote, decks] = await Promise.all([
-        userService.getPptSettings().catch(() => null),
-        presentationService
-          .listPresentations(workspaceHint.workspaceId, { take: 30 })
-          .catch(() => null),
-      ])
+      const decks = await presentationService
+        .listPresentations(workspaceHint.workspaceId, { take: 30 })
+        .catch(() => null)
       if (cancelled) return
 
-      const remoteIds = Array.isArray(remote?.recentArtStyles) ? remote.recentArtStyles : []
       const fromDecks = recentIdsFromPresentations(decks, knownIds)
-      const merged = mergeRecentArtStyles(
-        readRecentArtStyles(recentsUserKey),
-        remoteIds,
-        fromDecks
-      )
+      const merged = mergeRecentArtStyles(readRecentArtStyles(recentsUserKey), fromDecks)
       writeRecentArtStyles(recentsUserKey, merged)
       setRecentArtStyleIds(merged)
       setMediaStyle((current) =>
@@ -465,7 +456,6 @@ export default function AIPptWizard({
       setMediaStyle(id)
       const next = rememberArtStyle(recentsUserKey, id)
       setRecentArtStyleIds(next)
-      userService.updatePptSettings({ recentArtStyles: next }).catch(() => {})
     },
     [recentsUserKey]
   )
@@ -617,7 +607,6 @@ export default function AIPptWizard({
 
       const persistedStyles = rememberArtStyle(recentsUserKey, mediaStyle)
       setRecentArtStyleIds(persistedStyles)
-      userService.updatePptSettings({ recentArtStyles: persistedStyles }).catch(() => {})
 
       const aiDeckTitle =
         outlinePayload?.presentation?.title ||
