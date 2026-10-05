@@ -179,6 +179,7 @@ export default function AIConversationalStudio({
   
   // Share Modal
   const [shareModalGen, setShareModalGen] = useState(null);
+  const [shareCopied, setShareCopied] = useState(false);
   const [userFeedback, setUserFeedback] = useState({});
   
   const [chatInput, setChatInput] = useState('');
@@ -745,8 +746,7 @@ export default function AIConversationalStudio({
     }
     switch (fId) {
       case 'poster-a4-portrait':
-      case 'invitation-a6-portrait':
-        return { aspectRatio: '210/297', maxWidth: fId.includes('invitation') ? '340px' : '400px' };
+        return { aspectRatio: '210/297', maxWidth: '400px' };
       case 'poster-a4-landscape':
         return { aspectRatio: '297/210', maxWidth: '640px' };
       case 'poster-a3-portrait':
@@ -793,6 +793,7 @@ export default function AIConversationalStudio({
   // Share action
   const handleShare = async (gen) => {
     if (gen?.id) {
+      setShareCopied(false);
       setShareModalGen(gen);
     }
   };
@@ -802,7 +803,8 @@ export default function AIConversationalStudio({
     const link = `${window.location.origin}/share/${shareModalGen.id}`;
     try {
       await navigator.clipboard.writeText(link);
-      alert('Public share link copied to clipboard!');
+      setShareCopied(true);
+      window.setTimeout(() => setShareCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy', err);
     }
@@ -1149,68 +1151,6 @@ export default function AIConversationalStudio({
             </div>
           )}
 
-          {/* Share Modal */}
-          {shareModalGen && (
-            <div className="conv-fullscreen-overlay" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.5)' }}>
-              <div className="slide-in-bottom" style={{ background: '#fff', borderRadius: '24px', width: '100%', maxWidth: '380px', position: 'relative', padding: '40px 24px 32px 24px', textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}>
-                <button 
-                  onClick={() => setShareModalGen(null)}
-                  style={{ position: 'absolute', top: '16px', right: '16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#64748b' }}
-                >
-                  <X size={16} />
-                </button>
-
-                <div style={{ position: 'absolute', top: '-28px', left: '50%', transform: 'translateX(-50%)', background: '#f8fafc', padding: '12px', borderRadius: '50%', border: '4px solid #fff' }}>
-                   <Link2 size={24} color="#334155" />
-                </div>
-
-                <h3 style={{ margin: '0 0 8px 0', fontSize: '22px', color: '#0f172a', fontWeight: '700' }}>Share with Friends</h3>
-                <p style={{ margin: '0 0 24px 0', fontSize: '14px', color: '#64748b', lineHeight: '1.5' }}>Trading is more effective when<br/>you connect with friends!</p>
-                
-                <div style={{ textAlign: 'left', marginBottom: '24px' }}>
-                  <div style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a', marginBottom: '8px' }}>Share your link</div>
-                  <div style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', borderRadius: '12px', padding: '12px 16px', border: '1px solid #f1f5f9' }}>
-                    <input 
-                      type="text" 
-                      readOnly 
-                      value={`${window.location.origin}/share/${shareModalGen.id}`}
-                      style={{ flex: 1, border: 'none', background: 'transparent', fontSize: '13px', color: '#334155', outline: 'none' }}
-                    />
-                    <button onClick={handleCopyShareLink} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', display: 'flex', padding: 0 }}>
-                      <Copy size={18} />
-                    </button>
-                  </div>
-                </div>
-                
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: '14px', fontWeight: '600', color: '#0f172a', marginBottom: '16px' }}>Share to</div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 8px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/share/' + shareModalGen.id)}`)}>
-                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#1877f2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><Facebook size={24} /></div>
-                      <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>Facebook</span>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => window.open(`https://twitter.com/intent/tweet?text=Check out my AI creation on Athena!&url=${encodeURIComponent(window.location.origin + '/share/' + shareModalGen.id)}`)}>
-                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: '24px', fontWeight: '600' }}>X</div>
-                      <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>X</span>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => window.open(`https://api.whatsapp.com/send?text=Check out my AI creation on Athena! ${encodeURIComponent(window.location.origin + '/share/' + shareModalGen.id)}`)}>
-                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#25d366', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><MessageCircle size={24} /></div>
-                      <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>Whatsapp</span>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.origin + '/share/' + shareModalGen.id)}&text=Check out my AI creation!`)}>
-                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#0088cc', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><Send size={20} style={{ transform: 'translateX(-2px)' }} /></div>
-                      <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>Telegram</span>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.origin + '/share/' + shareModalGen.id)}`)}>
-                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#0a66c2', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}><Linkedin size={24} /></div>
-                      <span style={{ fontSize: '12px', color: '#64748b', fontWeight: '500' }}>LinkedIn</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
           <div ref={chatBottomRef} />
         </div>
       </main>
@@ -1285,6 +1225,62 @@ export default function AIConversationalStudio({
           </ImageGenContextAttach>
         </div>
       </footer>
+
+      {shareModalGen && (
+        <div
+          className="conv-share-overlay"
+          onClick={() => setShareModalGen(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Share"
+        >
+          <div className="conv-share-card slide-in-bottom" onClick={(e) => e.stopPropagation()}>
+            <button type="button" className="conv-share-close" onClick={() => setShareModalGen(null)} aria-label="Close">
+              <X size={16} />
+            </button>
+            <div className="conv-share-icon">
+              <Link2 size={24} color="#334155" />
+            </div>
+            <h3>Share</h3>
+            <p>Copy a link or send this design to a social app.</p>
+            <div className="conv-share-link-label">Share your link</div>
+            <div className="conv-share-link-row">
+              <input type="text" readOnly value={`${window.location.origin}/share/${shareModalGen.id}`} />
+              <button
+                type="button"
+                className={shareCopied ? 'is-copied' : ''}
+                onClick={handleCopyShareLink}
+                aria-label={shareCopied ? 'Copied' : 'Copy link'}
+              >
+                {shareCopied ? <CheckCircle2 size={18} /> : <Copy size={18} />}
+              </button>
+            </div>
+            <div className="conv-share-link-label">Share to</div>
+            <div className="conv-share-apps">
+              <button type="button" onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.origin + '/share/' + shareModalGen.id)}`)}>
+                <span className="conv-share-app-icon" style={{ background: '#1877f2' }}><Facebook size={22} /></span>
+                Facebook
+              </button>
+              <button type="button" onClick={() => window.open(`https://twitter.com/intent/tweet?text=Check out my AI creation on Athena!&url=${encodeURIComponent(window.location.origin + '/share/' + shareModalGen.id)}`)}>
+                <span className="conv-share-app-icon" style={{ background: '#111827' }}>X</span>
+                X
+              </button>
+              <button type="button" onClick={() => window.open(`https://api.whatsapp.com/send?text=Check out my AI creation on Athena! ${encodeURIComponent(window.location.origin + '/share/' + shareModalGen.id)}`)}>
+                <span className="conv-share-app-icon" style={{ background: '#25d366' }}><MessageCircle size={22} /></span>
+                WhatsApp
+              </button>
+              <button type="button" onClick={() => window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.origin + '/share/' + shareModalGen.id)}&text=Check out my AI creation!`)}>
+                <span className="conv-share-app-icon" style={{ background: '#0088cc' }}><Send size={18} /></span>
+                Telegram
+              </button>
+              <button type="button" onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.origin + '/share/' + shareModalGen.id)}`)}>
+                <span className="conv-share-app-icon" style={{ background: '#0a66c2' }}><Linkedin size={22} /></span>
+                LinkedIn
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Fullscreen Preview Modal */}
       {fullscreenUrl && (
