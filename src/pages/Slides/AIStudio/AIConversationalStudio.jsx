@@ -60,6 +60,15 @@ const FOLLOWUP_BY_MODE = {
       { label: 'increase contrast for mobile', send: 'Increase contrast so the text reads clearly on a phone.' },
     ],
   },
+  printable: {
+    before: 'Would you like to ',
+    mid: ', or ',
+    after: '?',
+    actions: [
+      { label: 'change the date', send: 'Change the date in the copy and keep the same layout.' },
+      { label: 'make the background darker', send: 'Make the background darker while keeping the same size and text.' },
+    ],
+  },
 };
 
 function refsFromContext(ctx) {

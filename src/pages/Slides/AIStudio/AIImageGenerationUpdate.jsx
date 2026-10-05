@@ -3,7 +3,7 @@ import {
   Plus, Search, Image as ImageIcon,
   ChevronDown, Mic, Sparkles, X, Lightbulb,
   ListOrdered, Clock, Columns2, BarChart3, Network, List, RefreshCw, Hexagon, Library,
-  Share2, Printer, FileText
+  Share2, Printer, CreditCard, Mail
 } from 'lucide-react';
 import { FaInstagram, FaFacebookF, FaYoutube, FaLinkedinIn, FaXTwitter } from 'react-icons/fa6';
 import imageGenService from '../../../services/imageGenService.js';
@@ -46,6 +46,9 @@ import styleSceneImg from '../../../assets/slides_icons/style_scene.jpg';
 import styleSpotColorImg from '../../../assets/slides_icons/style_spot_color.jpg';
 import styleStillLifeImg from '../../../assets/slides_icons/style_still_life.jpg';
 import styleWatercolorImg from '../../../assets/slides_icons/style_watercolor.jpg';
+import formatPortraitImg from '../../../assets/ai-img-gen/format-portrait.jpg';
+import formatLandscapeImg from '../../../assets/ai-img-gen/format-landscape.jpg';
+import formatSquareImg from '../../../assets/ai-img-gen/format-square.jpg';
 
 import layoutProcess from '../../../assets/layouts/layout_process_v2.jpg';
 import layoutTimeline from '../../../assets/layouts/layout_timeline_v2.jpg';
@@ -79,7 +82,7 @@ const MODE_SWITCHES = [
   { id: 'image', label: 'Image', fullName: 'Images', Icon: ImageIcon },
   { id: 'infographic', label: 'Info', fullName: 'Infographics', Icon: BarChart3 },
   { id: 'social', label: 'Social', fullName: 'Social', Icon: Share2 },
-  { id: 'printable', label: 'Print', fullName: 'Print', Icon: Printer, disabled: true },
+  { id: 'printable', label: 'Print', fullName: 'Print', Icon: Printer },
 ];
 
 function formatServesMode(format, mode) {
@@ -88,9 +91,102 @@ function formatServesMode(format, mode) {
   return false;
 }
 
+const SOCIAL_DESTINATION_IDS = SOCIAL_DESTINATION_FALLBACK.map((d) => d.id);
+
 function socialDestinationsFrom(formats = []) {
-  const fromApi = formats.filter((f) => formatServesMode(f, 'social'));
-  return fromApi.length ? fromApi : SOCIAL_DESTINATION_FALLBACK;
+  const fromApi = (Array.isArray(formats) ? formats : []).filter(
+    (f) => formatServesMode(f, 'social') && SOCIAL_DESTINATION_IDS.includes(f.id)
+  );
+  const byId = new Map(fromApi.map((f) => [f.id, f]));
+  return SOCIAL_DESTINATION_FALLBACK.map((fallback) => {
+    const hit = byId.get(fallback.id);
+    if (!hit) return fallback;
+    return {
+      ...fallback,
+      ...hit,
+      name: hit.name || fallback.name,
+      platform: hit.platform || fallback.platform,
+      width: hit.width || fallback.width,
+      height: hit.height || fallback.height,
+    };
+  });
+}
+
+const PRINTABLE_FORMAT_FALLBACK = [
+  {
+    id: 'poster-a4-portrait',
+    name: 'A4 poster',
+    modes: ['printable'],
+    print: { kind: 'poster', series: 'a4', orientation: 'portrait', widthMm: 210, heightMm: 297, dpi: 300 },
+  },
+  {
+    id: 'poster-a4-landscape',
+    name: 'A4 poster',
+    modes: ['printable'],
+    print: { kind: 'poster', series: 'a4', orientation: 'landscape', widthMm: 297, heightMm: 210, dpi: 300 },
+  },
+  {
+    id: 'poster-a3-portrait',
+    name: 'A3 poster',
+    modes: ['printable'],
+    print: { kind: 'poster', series: 'a3', orientation: 'portrait', widthMm: 297, heightMm: 420, dpi: 150 },
+  },
+  {
+    id: 'poster-a3-landscape',
+    name: 'A3 poster',
+    modes: ['printable'],
+    print: { kind: 'poster', series: 'a3', orientation: 'landscape', widthMm: 420, heightMm: 297, dpi: 150 },
+  },
+  {
+    id: 'poster-a2-portrait',
+    name: 'A2 poster',
+    modes: ['printable'],
+    print: { kind: 'poster', series: 'a2', orientation: 'portrait', widthMm: 420, heightMm: 594, dpi: 150 },
+  },
+  {
+    id: 'poster-a2-landscape',
+    name: 'A2 poster',
+    modes: ['printable'],
+    print: { kind: 'poster', series: 'a2', orientation: 'landscape', widthMm: 594, heightMm: 420, dpi: 150 },
+  },
+  {
+    id: 'business-card',
+    name: 'Business card',
+    modes: ['printable'],
+    print: { kind: 'business-card', orientation: 'landscape', widthIn: 3.5, heightIn: 2, widthMm: 89, heightMm: 51, dpi: 300 },
+  },
+  {
+    id: 'invitation-a6-portrait',
+    name: 'Invitation',
+    modes: ['printable'],
+    print: { kind: 'invitation', series: 'a6', orientation: 'portrait', widthMm: 105, heightMm: 148, dpi: 300 },
+  },
+];
+
+const PRINT_GROUPS = [
+  { id: 'a4', label: 'A4 poster', kind: 'poster', series: 'a4', hint: 'Headline ≤ 60 · 4 details · CTA ≤ 40' },
+  { id: 'a3', label: 'A3 poster', kind: 'poster', series: 'a3', hint: 'Headline ≤ 60 · 4 details · CTA ≤ 40' },
+  { id: 'a2', label: 'A2 poster', kind: 'poster', series: 'a2', hint: 'Headline ≤ 60 · 4 details · CTA ≤ 40' },
+  { id: 'business-card', label: 'Business card', kind: 'business-card', formatId: 'business-card', hint: 'Name ≤ 40 · 4 contact lines' },
+  { id: 'invitation', label: 'Invitation', kind: 'invitation', formatId: 'invitation-a6-portrait', hint: 'Headline ≤ 60 · 5 details · CTA ≤ 40' },
+];
+
+function printablesFrom(formats = []) {
+  const fromApi = formats.filter((f) => formatServesMode(f, 'printable') && f?.print);
+  return fromApi.length ? fromApi : PRINTABLE_FORMAT_FALLBACK;
+}
+
+function printSizeLabel(print = {}) {
+  if (print.widthIn && print.heightIn) return `${print.widthIn}×${print.heightIn} in`;
+  if (print.widthMm && print.heightMm) return `${print.widthMm}×${print.heightMm} mm`;
+  return '';
+}
+
+function printFormatForGroup(group, formats, orientation) {
+  if (!group) return null;
+  if (group.formatId) return formats.find((f) => f.id === group.formatId) || null;
+  const id = `poster-${group.series}-${orientation}`;
+  return formats.find((f) => f.id === id) || null;
 }
 
 const SOCIAL_PREVIEW = {
@@ -248,6 +344,31 @@ function pickInspirePrompt(mode, layoutId, formatId, platform) {
     if (byPlat?.length) return pickRandom(byPlat);
     return pickRandom(RANDOM_SOCIAL_PROMPTS);
   }
+  if (mode === 'printable') {
+    const id = String(formatId || '');
+    if (id.includes('business-card')) {
+      return pickRandom([
+        'Business card for Maya Chen, Product Designer at Athena VI, maya@athenavi.com, +91 98765 43210, athenavi.com, Bengaluru.',
+        'Front-only business card for Dr. Arjun Mehta, Cardiology, Fortis Heart Clinic, 080 2222 1100, reception@fortisheart.in.',
+      ]);
+    }
+    if (id.includes('invitation')) {
+      return pickRandom([
+        'Invitation to Priya & Rohan’s wedding reception, 18 October 2026, 7:00 PM, The Leela Palace Bengaluru. RSVP +91 99887 76655.',
+        'Invitation to the Athena Learning Summit dinner, 14 November 2026, 8:00 PM, Bengaluru International Centre. RSVP events@athenavi.com.',
+      ]);
+    }
+    if (id.includes('poster')) {
+      return pickRandom([
+        'Poster for the Athena Learning Summit, 14–15 November 2026 at Bengaluru International Centre. Register at athenavi.com/summit.',
+        'Campus recruitment poster: Athena VI internships, apply by 30 October 2026, careers@athenavi.com, walk-in 10 AM–4 PM.',
+      ]);
+    }
+    return pickRandom([
+      'Poster for a weekend pottery workshop, 22 November 2026, 11 AM–4 PM, Indiranagar Studio, tickets claylab.in/weekend.',
+      'Invitation to a product launch evening, 5 December 2026, 6:30 PM, UB City gallery. RSVP hello@athenavi.com.',
+    ]);
+  }
   return pickRandom(RANDOM_PROMPTS);
 }
 
@@ -263,15 +384,7 @@ const TOPICS = [
 
 const INFOGRAPHIC_TOPICS = ['Presentations', 'Reports', 'Dashboards', 'Timelines', 'Workflows', 'Mind Maps'];
 
-const SOCIAL_TOPICS = [
-  'YouTube thumbnail',
-  'Instagram post',
-  'Facebook cover',
-  'LinkedIn banner',
-  'X / Twitter post',
-  'YouTube banner',
-  'Facebook post',
-];
+const PRINT_TOPICS = ['A4 poster', 'A3 poster', 'business card', 'invitation', 'A2 poster'];
 export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavigateLibrary, createContext }) {
   const [saveWorkspaceId, setSaveWorkspaceId] = useState(
     createContext?.workspaceId || createContext?.config?.workspaceId || '',
@@ -280,7 +393,8 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
     createContext?.folderId || createContext?.config?.folderId || '',
   );
   const [catalogs, setCatalogs] = useState({ models: [], formats: [], styles: [], archetypes: [] });
-  const [activeMode, setActiveMode] = useState('image'); // 'image' or 'infographic'
+  const [activeMode, setActiveMode] = useState('image');
+  const [printOrientation, setPrintOrientation] = useState('portrait');
   const [prompt, setPrompt] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
   const [selectedFormat, setSelectedFormat] = useState('');
@@ -393,7 +507,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
   const handleInspire = async () => {
     if (isTyping) return;
     const layoutId = activeMode === 'infographic' ? selectedStyle : '';
-    const destId = activeMode === 'social' ? selectedFormat : '';
+    const destId = activeMode === 'social' || activeMode === 'printable' ? selectedFormat : '';
     const dest = activeMode === 'social'
       ? socialDestinationsFrom(catalogs.formats).find((f) => f.id === selectedFormat)
       : null;
@@ -425,7 +539,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
 
   const tryLaunchStudio = async () => {
     if (!prompt.trim() || creditsBusy) return;
-    if (activeMode === 'social' && !selectedFormat) return;
+    if ((activeMode === 'social' || activeMode === 'printable') && !selectedFormat) return;
     const wsId = saveWorkspaceId || createContext?.workspaceId || createContext?.config?.workspaceId;
     if (!wsId) {
       setLaunchStudio(true);
@@ -564,13 +678,13 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
   const selectedModelObj = catalogs.models.find(m => m.id === selectedModel);
 
   const switchStudioMode = (next) => {
-    if (!next || next === 'printable') return;
+    if (!next) return;
     setActiveMode(next);
     setSelectedStyle(null);
     setIsComposerExpanded(false);
     setShowFormatDropdown(false);
     setSelectedModel(defaultImageGenModelId(next, catalogs));
-    if (next === 'social') {
+    if (next === 'social' || next === 'printable') {
       setSelectedFormat('');
       return;
     }
@@ -581,6 +695,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
   };
 
   const socialDestinations = socialDestinationsFrom(catalogs.formats);
+  const selectedSocial = socialDestinations.find((d) => d.id === selectedFormat);
   const GENERIC_FORMAT_IDS = ['square', 'landscape', 'portrait', 'landscape-16-9', 'portrait-9-16'];
   const aspectFormats = catalogs.formats.filter((f) =>
     formatServesMode(f, activeMode === 'infographic' ? 'infographic' : 'image')
@@ -588,8 +703,10 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
   const sizeOptions = aspectFormats.length
     ? aspectFormats
     : catalogs.formats.filter((f) => GENERIC_FORMAT_IDS.includes(f.id));
-  const selectedSocial = socialDestinations.find((f) => f.id === selectedFormat);
-  const canGenerate = Boolean(prompt.trim()) && !creditsBusy && (activeMode !== 'social' || Boolean(selectedFormat));
+  const printFormats = printablesFrom(catalogs.formats);
+  const selectedPrint = printFormats.find((f) => f.id === selectedFormat);
+  const needsSizePick = activeMode === 'social' || activeMode === 'printable';
+  const canGenerate = Boolean(prompt.trim()) && !creditsBusy && (!needsSizePick || Boolean(selectedFormat));
 
   if (launchStudio || activeThreadId) {
     return (
@@ -629,8 +746,8 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
               type="button"
               className={activeMode === id ? 'active' : ''}
               disabled={disabled}
-              aria-label={disabled ? 'Print coming next' : fullName}
-              title={disabled ? 'Print coming next' : fullName}
+              aria-label={fullName}
+              title={fullName}
               onClick={() => switchStudioMode(id)}
             >
               <Icon size={15} strokeWidth={2} />
@@ -668,7 +785,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                      ) : isInfographic ? (
                        <BarChart3 size={15} />
                      ) : isPrint ? (
-                       <FileText size={15} />
+                       <Printer size={15} />
                      ) : (
                        <ImageIcon size={15} />
                      )}
@@ -747,6 +864,16 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
               </h1>
               <p>Pick a destination first — YouTube, Instagram, Facebook, X, or LinkedIn. Then describe the post.</p>
             </>
+          ) : activeMode === 'printable' ? (
+            <>
+              <h1>
+                Create a{' '}
+                <span className={`topic-dynamic ${fadeTopic ? 'fade-in' : 'fade-out'}`}>
+                  {PRINT_TOPICS[topicIndex % PRINT_TOPICS.length]}
+                </span>
+              </h1>
+              <p>Pick a print size first. Include every date, venue, name, phone, email and URL you want printed.</p>
+            </>
           ) : (
             <>
               <h1>
@@ -758,6 +885,80 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
           )}
         </header>
 
+        {activeMode === 'printable' && (
+          <section className="styles-grid-container social-destinations print-sizes" style={{ position: 'relative', zIndex: 1 }}>
+            <div className="styles-grid-title">Choose a print size</div>
+            <div className="print-orient-row">
+              <span>Posters</span>
+              <div className="print-orient-toggle" role="group" aria-label="Poster orientation">
+                <button
+                  type="button"
+                  className={printOrientation === 'portrait' ? 'active' : ''}
+                  onClick={() => {
+                    setPrintOrientation('portrait');
+                    const current = printFormats.find((f) => f.id === selectedFormat);
+                    if (current?.print?.kind === 'poster') {
+                      const series = current.print.series;
+                      const group = PRINT_GROUPS.find((g) => g.kind === 'poster' && g.series === series);
+                      const fmt = printFormatForGroup(group, printFormats, 'portrait');
+                      if (fmt?.id) setSelectedFormat(fmt.id);
+                    }
+                  }}
+                >
+                  Portrait
+                </button>
+                <button
+                  type="button"
+                  className={printOrientation === 'landscape' ? 'active' : ''}
+                  onClick={() => {
+                    setPrintOrientation('landscape');
+                    const current = printFormats.find((f) => f.id === selectedFormat);
+                    if (current?.print?.kind === 'poster') {
+                      const series = current.print.series;
+                      const group = PRINT_GROUPS.find((g) => g.kind === 'poster' && g.series === series);
+                      const fmt = printFormatForGroup(group, printFormats, 'landscape');
+                      if (fmt?.id) setSelectedFormat(fmt.id);
+                    }
+                  }}
+                >
+                  Landscape
+                </button>
+              </div>
+            </div>
+            <div className="social-dest-grid print-size-grid">
+              {PRINT_GROUPS.map((group) => {
+                const fmt = printFormatForGroup(group, printFormats, printOrientation);
+                if (!fmt) return null;
+                const print = fmt.print || {};
+                const orient = print.orientation || 'portrait';
+                const previewSrc = print.kind === 'business-card'
+                  ? formatLandscapeImg
+                  : orient === 'landscape'
+                    ? formatLandscapeImg
+                    : formatPortraitImg;
+                const selected = selectedFormat === fmt.id;
+                return (
+                  <button
+                    type="button"
+                    key={group.id}
+                    data-shape={orient === 'landscape' ? 'banner' : 'portrait'}
+                    className={`social-dest-card print-size-card ${selected ? 'selected' : ''}`}
+                    onClick={() => setSelectedFormat(fmt.id)}
+                  >
+                    <span className="social-dest-preview print-size-preview">
+                      <img src={previewSrc} alt="" />
+                      <span className="social-dest-badge">
+                        {print.kind === 'business-card' ? <CreditCard size={14} /> : print.kind === 'invitation' ? <Mail size={14} /> : <Printer size={14} />}
+                      </span>
+                    </span>
+                    <span className="social-dest-name">{group.label}</span>
+                    <span className="social-dest-size">{printSizeLabel(print)} · {print.dpi} DPI</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
         {activeMode === 'social' && (
           <section className="styles-grid-container social-destinations" style={{ position: 'relative', zIndex: 1 }}>
             <div className="styles-grid-title">Choose a destination</div>
@@ -862,6 +1063,22 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
               </div>
             )}
 
+            {activeMode === 'printable' && selectedPrint && (
+              <div className="selected-layout-chip-container">
+                <div className="selected-layout-chip">
+                  <span>
+                    Size:{' '}
+                    <strong>
+                      {selectedPrint.name || selectedPrint.id} · {printSizeLabel(selectedPrint.print)} · {selectedPrint.print?.dpi} DPI
+                    </strong>
+                  </span>
+                  <button className="clear-chip-btn" onClick={() => setSelectedFormat('')}>
+                    <X size={12} />
+                  </button>
+                </div>
+              </div>
+            )}
+
             <ImageGenContextAttach
               workspaceId={saveWorkspaceId}
               context={imageContext}
@@ -884,11 +1101,13 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                       ref={textareaRef}
                       className="chatbox-md-input"
                       placeholder={
-                        activeMode === 'social'
-                          ? 'Describe the post...'
-                          : activeMode === 'image'
-                            ? 'Describe your visual...'
-                            : 'Describe your infographic...'
+                        activeMode === 'printable'
+                          ? 'Include every date, venue, name, phone, email and URL you want printed.'
+                          : activeMode === 'social'
+                            ? 'Describe the post...'
+                            : activeMode === 'image'
+                              ? 'Describe your visual...'
+                              : 'Describe your infographic...'
                       }
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
@@ -968,7 +1187,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                     )}
                   </div>
                   
-                  {activeMode !== 'social' && (
+                  {activeMode !== 'social' && activeMode !== 'printable' && (
                   <div className="custom-dropdown">
                     <button className="dropdown-trigger" onClick={() => setShowFormatDropdown(!showFormatDropdown)}>
                       {(() => {
@@ -1005,8 +1224,14 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                   )}
                 </div>
                 <span
-                  className={`generate-btn-wrap${activeMode === 'social' && !selectedFormat ? ' needs-destination' : ''}`}
-                  data-tip={activeMode === 'social' && !selectedFormat ? 'Select a destination first' : undefined}
+                  className={`generate-btn-wrap${needsSizePick && !selectedFormat ? ' needs-destination' : ''}`}
+                  data-tip={
+                    activeMode === 'printable' && !selectedFormat
+                      ? 'Select a print size first'
+                      : activeMode === 'social' && !selectedFormat
+                        ? 'Select a destination first'
+                        : undefined
+                  }
                 >
                 <button 
                   className="generate-btn" 
