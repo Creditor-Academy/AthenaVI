@@ -1,16 +1,33 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   Search, RefreshCw, Plus, LayoutTemplate, Palette, Code2,
-  FileText, Eye, Edit3, Send, Trash2, AlertTriangle
+  FileText, Eye, Edit3, Send, Trash2, AlertTriangle, Sparkles
 } from 'lucide-react'
 import superadminService from '../../../../../../services/superadminService'
+import { EMAIL_TEMPLATES } from '../../broadcastTemplates'
 import { timeAgo } from '../broadcastUtils'
 import PreviewModal from '../modals/PreviewModal'
 import CreateTemplateChooserModal from '../modals/CreateTemplateChooserModal'
 import TemplateEditorModal from '../modals/TemplateEditorModal'
 
-export default function TemplatesTab({ onUseInCompose }) {
-  const [templates, setTemplates] = useState([])
+// Pre-existing templates built into Virtual Studio
+const BUILT_IN_TEMPLATES = EMAIL_TEMPLATES
+  .filter((t) => t.id !== 'custom')
+  .map((t) => ({
+    id: `preset-${t.id}`,
+    name: t.label,
+    subject: t.subject || '',
+    type: 'html',
+    htmlBody: t.html,
+    textBody: t.description || '',
+    isPreset: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    createdBy: { name: 'Virtual Studio System' },
+  }))
+
+export default function TemplatesTab({ onUseInCompose, onTemplatesUpdated }) {
+  const [dbTemplates, setDbTemplates] = useState([])
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState('')
   const [search, setSearch] = useState('')
@@ -29,17 +46,37 @@ export default function TemplatesTab({ onUseInCompose }) {
         type: typeFilter || undefined,
         limit: 100,
       })
-      setTemplates(res.templates || [])
+      const list = res.templates || []
+      setDbTemplates(list)
+      onTemplatesUpdated?.()
     } catch (e) {
       setErr(e.message || 'Failed to load templates')
     } finally {
       setLoading(false)
     }
-  }, [search, typeFilter])
+  }, [search, typeFilter, onTemplatesUpdated])
 
   useEffect(() => {
     loadTemplates()
   }, [loadTemplates])
+
+  // Combine DB custom templates with 5 built-in pre-existing templates
+  const allTemplates = useMemo(() => {
+    const customNames = new Set(dbTemplates.map((t) => t.name.toLowerCase()))
+    const activePresets = BUILT_IN_TEMPLATES.filter((p) => !customNames.has(p.name.toLowerCase()))
+    const combined = [...dbTemplates, ...activePresets]
+
+    return combined.filter((tpl) => {
+      if (typeFilter && tpl.type !== typeFilter) return false
+      if (search.trim()) {
+        const q = search.toLowerCase()
+        const nameMatch = (tpl.name || '').toLowerCase().includes(q)
+        const subMatch = (tpl.subject || '').toLowerCase().includes(q)
+        if (!nameMatch && !subMatch) return false
+      }
+      return true
+    })
+  }, [dbTemplates, typeFilter, search])
 
   const handleDelete = async (id, e) => {
     e.stopPropagation()
@@ -48,6 +85,7 @@ export default function TemplatesTab({ onUseInCompose }) {
     try {
       await superadminService.deleteEmailTemplate(id)
       setTemplates((prev) => prev.filter((t) => t.id !== id))
+      onTemplatesUpdated?.()
     } catch (err) {
       alert(err.message || 'Failed to delete template')
     } finally {
@@ -81,7 +119,7 @@ export default function TemplatesTab({ onUseInCompose }) {
     if (type === 'design') {
       return (
         <span className="sa-broadcast-type-badge sa-broadcast-type-badge--design">
-          <Palette size={11} /> Design
+          <Palette size={11} /> Visual Design
         </span>
       )
     }
@@ -112,7 +150,10 @@ export default function TemplatesTab({ onUseInCompose }) {
       {activeEditorTemplate !== null && (
         <TemplateEditorModal
           template={activeEditorTemplate}
-          onSave={loadTemplates}
+          onSave={() => {
+            loadTemplates()
+            onTemplatesUpdated?.()
+          }}
           onClose={() => setActiveEditorTemplate(null)}
         />
       )}
@@ -125,8 +166,9 @@ export default function TemplatesTab({ onUseInCompose }) {
         />
       )}
 
-      <div className="sa-broadcast-toolbar">
-        <div className="sa-search-field" style={{ minWidth: 240, maxWidth: 360 }}>
+      {/* ── Table Toolbar with Search, Filter Tabs, and Create Action ── */}
+      <div className="sa-table-toolbar">
+        <div className="sa-search-field" style={{ minWidth: 220, maxWidth: 320 }}>
           <Search className="sa-search-field-icon" size={14} aria-hidden />
           <input
             className="sa-input"
@@ -137,28 +179,28 @@ export default function TemplatesTab({ onUseInCompose }) {
           />
         </div>
 
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div className="sa-filter-tabs" role="tablist" aria-label="Filter template types">
           {[
-            { id: '', label: 'All Types' },
+            { id: '', label: 'All Templates' },
             { id: 'design', label: 'Design' },
             { id: 'html', label: 'HTML' },
-            { id: 'text', label: 'Text' },
+            { id: 'text', label: 'Plain Text' },
           ].map(({ id, label }) => {
             const active = typeFilter === id
+            const count = id === ''
+              ? allTemplates.length
+              : allTemplates.filter(t => t.type === id).length
             return (
               <button
                 key={id}
                 type="button"
+                role="tab"
+                aria-selected={active}
+                className={`sa-filter-tab${active ? ' active' : ''}`}
                 onClick={() => setTypeFilter(id)}
-                style={{
-                  height: 32, padding: '0 12px', borderRadius: 6, border: '1px solid',
-                  fontSize: '0.75rem', fontWeight: active ? 700 : 500, cursor: 'pointer',
-                  borderColor: active ? 'var(--primary)' : 'var(--border-color)',
-                  background: active ? 'color-mix(in srgb, var(--primary) 12%, var(--bg-card))' : 'transparent',
-                  color: active ? 'var(--primary)' : 'var(--text-muted)',
-                }}
               >
-                {label}
+                <span>{label}</span>
+                {allTemplates.length > 0 && <span className="sa-filter-count">{count}</span>}
               </button>
             )
           })}
@@ -188,11 +230,11 @@ export default function TemplatesTab({ onUseInCompose }) {
       <div className="sa-scroll" style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: 20 }}>
         {err && <div className="sa-alert sa-alert--error"><AlertTriangle size={13} style={{ marginRight: 6 }} />{err}</div>}
 
-        {loading && templates.length === 0 && (
+        {loading && allTemplates.length === 0 && (
           <div className="sa-loading" style={{ padding: '60px 0' }}><span className="sa-spinner" /> Loading templates…</div>
         )}
 
-        {!loading && templates.length === 0 && !err && (
+        {!loading && allTemplates.length === 0 && !err && (
           <div className="sa-empty" style={{ padding: '60px 0' }}>
             <LayoutTemplate className="sa-empty-icon" size={42} />
             <p style={{ marginTop: 12, fontWeight: 600 }}>No email templates found</p>
@@ -210,16 +252,16 @@ export default function TemplatesTab({ onUseInCompose }) {
           </div>
         )}
 
-        {templates.length > 0 && (
+        {allTemplates.length > 0 && (
           <div className="sa-broadcast-template-grid">
-            {templates.map((tpl) => (
+            {allTemplates.map((tpl) => (
               <div key={tpl.id} className="sa-broadcast-template-card">
                 <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
-                  <div>
-                    <h4 className="sa-broadcast-template-title">
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <h4 className="sa-broadcast-template-title" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', margin: 0 }}>
                       {tpl.name}
                     </h4>
-                    <p className="sa-broadcast-template-subject">
+                    <p className="sa-broadcast-template-subject" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 3 }}>
                       {tpl.subject ? `Subject: ${tpl.subject}` : '(No default subject)'}
                     </p>
                   </div>
@@ -243,7 +285,19 @@ export default function TemplatesTab({ onUseInCompose }) {
                   <button
                     type="button"
                     className="sa-btn sa-btn--sm sa-btn--ghost"
-                    onClick={() => setActiveEditorTemplate(tpl)}
+                    onClick={() => {
+                      if (tpl.isPreset) {
+                        setActiveEditorTemplate({
+                          name: tpl.name,
+                          subject: tpl.subject,
+                          type: tpl.type,
+                          htmlBody: tpl.htmlBody,
+                          textBody: tpl.textBody,
+                        })
+                      } else {
+                        setActiveEditorTemplate(tpl)
+                      }
+                    }}
                     style={{ flex: 1, gap: 4, height: 30, fontSize: '0.75rem' }}
                   >
                     <Edit3 size={12} /> Edit
@@ -256,16 +310,18 @@ export default function TemplatesTab({ onUseInCompose }) {
                   >
                     <Send size={12} /> Use
                   </button>
-                  <button
-                    type="button"
-                    className="sa-btn sa-btn--sm sa-btn--ghost"
-                    onClick={(e) => handleDelete(tpl.id, e)}
-                    disabled={deletingId === tpl.id}
-                    title="Delete template"
-                    style={{ width: 30, height: 30, padding: 0, color: '#f87171' }}
-                  >
-                    <Trash2 size={12} />
-                  </button>
+                  {!tpl.isPreset && (
+                    <button
+                      type="button"
+                      className="sa-btn sa-btn--sm sa-btn--ghost"
+                      onClick={(e) => handleDelete(tpl.id, e)}
+                      disabled={deletingId === tpl.id}
+                      title="Delete template"
+                      style={{ width: 30, height: 30, padding: 0, color: '#ef4444' }}
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

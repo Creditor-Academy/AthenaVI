@@ -15,6 +15,7 @@ const MAIN_TABS = [
 export default function SuperadminBroadcastPanel() {
   const [activeTab, setActiveTab] = useState('compose')
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0)
+  const [templatesRefreshKey, setTemplatesRefreshKey] = useState(0)
   const [composeSeedData, setComposeSeedData] = useState(null)
 
   const handleUseTemplateInCompose = (template) => {
@@ -37,7 +38,7 @@ export default function SuperadminBroadcastPanel() {
 
   return (
     <div className="sa-broadcast-panel sa-panel">
-      {/* Page Header */}
+      {/* ── Page Header ── */}
       <div className="sa-panel-header">
         <div className="sa-panel-header-title-group">
           <h2 className="sa-panel-title">Email Broadcast & Templates</h2>
@@ -47,42 +48,56 @@ export default function SuperadminBroadcastPanel() {
         </div>
       </div>
 
-      {/* Main Tab Bar */}
-      <div className="sa-tab-bar" style={{ flexShrink: 0 }}>
-        {MAIN_TABS.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            type="button"
-            className={`sa-tab${activeTab === id ? ' sa-tab--active' : ''}`}
-            onClick={() => setActiveTab(id)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 7 }}
-          >
-            <Icon size={14} />
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab Content Container */}
+      {/* ── Main Data Card with Navigation Tabs & Panel Content ── */}
       <div className="sa-table-card" style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        {activeTab === 'compose' && (
-          <ComposeTab
-            initialData={composeSeedData}
-            onSent={() => setHistoryRefreshKey((k) => k + 1)}
-            onOpenTemplatesTab={() => setActiveTab('templates')}
-          />
-        )}
+        {/* Navigation Tabs Toolbar */}
+        <div className="sa-table-toolbar" style={{ borderBottom: '1px solid color-mix(in srgb, var(--border-color) 35%, transparent)' }}>
+          <div className="sa-filter-tabs" role="tablist" aria-label="Broadcast Navigation Tabs">
+            {MAIN_TABS.map(({ id, label, icon: Icon }) => {
+              const active = activeTab === id
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  className={`sa-filter-tab${active ? ' active' : ''}`}
+                  onClick={() => setActiveTab(id)}
+                >
+                  <Icon size={14} />
+                  <span>{label}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
 
-        {activeTab === 'templates' && (
-          <TemplatesTab onUseInCompose={handleUseTemplateInCompose} />
-        )}
+        {/* Tab Body */}
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {activeTab === 'compose' && (
+            <ComposeTab
+              initialData={composeSeedData}
+              onSent={() => {
+                setHistoryRefreshKey((k) => k + 1)
+              }}
+              onOpenTemplatesTab={() => setActiveTab('templates')}
+            />
+          )}
 
-        {activeTab === 'history' && (
-          <HistoryTab
-            refreshKey={historyRefreshKey}
-            onReuseInCompose={handleReuseBroadcastInCompose}
-          />
-        )}
+          {activeTab === 'templates' && (
+            <TemplatesTab
+              onUseInCompose={handleUseTemplateInCompose}
+              onTemplatesUpdated={() => setTemplatesRefreshKey((k) => k + 1)}
+            />
+          )}
+
+          {activeTab === 'history' && (
+            <HistoryTab
+              refreshKey={historyRefreshKey}
+              onReuseInCompose={handleReuseBroadcastInCompose}
+            />
+          )}
+        </div>
       </div>
     </div>
   )

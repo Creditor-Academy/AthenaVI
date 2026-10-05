@@ -124,7 +124,8 @@ export default function ComposeTab({ initialData, onSent, onOpenTemplatesTab }) 
         />
       )}
 
-      <div className="sa-broadcast-toolbar">
+      {/* ── Table Toolbar with Audience Pill & Compose Actions ── */}
+      <div className="sa-table-toolbar">
         <div className="sa-broadcast-audience-indicator">
           <Users size={15} style={{ color: 'var(--primary)' }} />
           <span>Audience: All active subscribers</span>
@@ -162,7 +163,7 @@ export default function ComposeTab({ initialData, onSent, onOpenTemplatesTab }) 
             className="sa-btn sa-btn--sm sa-btn--primary"
             disabled={!canSend}
             onClick={() => setShowConfirm(true)}
-            style={{ gap: 5 }}
+            style={{ gap: 6, height: 34, padding: '0 16px' }}
           >
             <Send size={13} /> Send Broadcast
           </button>
