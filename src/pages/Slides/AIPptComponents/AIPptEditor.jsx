@@ -25,6 +25,7 @@ import PptCanvasGuidesOverlay from './PptCanvasGuidesOverlay'
 import PresentMode from './PresentMode'
 import SharePresentationModal from './SharePresentationModal'
 import ExportPresentationModal from './ExportPresentationModal'
+import ConvertToTemplateModal from './ConvertToTemplateModal'
 import ImageCropModal from './ImageCropModal'
 import PptQuickMenu from './PptQuickMenu'
 import PptElementContextMenu from './PptElementContextMenu'
@@ -1114,7 +1115,7 @@ export default function AIPptEditor({
 }) {
   const workspaceId = workspaceIdProp || config.workspaceId
   const presentationId = presentationIdProp || config.presentationId
-  const { user } = useAuth()
+  const { user, canAccessSuperadminPortal } = useAuth()
 
   const [localSlides, setLocalSlides] = useState(() => {
     if (viewOnly && initialDeck) {
@@ -1134,6 +1135,7 @@ export default function AIPptEditor({
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [exportModalOpen, setExportModalOpen] = useState(false)
+  const [convertTemplateOpen, setConvertTemplateOpen] = useState(false)
   const [selectedSlideId, setSelectedSlideId] = useState(null)
   const [selectedElementId, setSelectedElementId] = useState(null)
   const [themeTokens, setThemeTokens] = useState(null)
@@ -1829,6 +1831,37 @@ export default function AIPptEditor({
     }
     return current
   }, [])
+
+  const flushPendingCanvasSaves = useCallback(async () => {
+    if (!workspaceId || !presentationId || viewOnly || isGenerating) return
+    const timers = canvasSaveTimers.current
+    Object.keys(timers).forEach((slideId) => {
+      clearTimeout(timers[slideId])
+      delete timers[slideId]
+    })
+    const slides = localSlidesRef.current || []
+    const saves = slides
+      .filter((s) => s?.id && s?.elements && !isOptimisticSlideId(s.id))
+      .map((s) => {
+        const id = resolvePersistedSlideId(s.id)
+        if (isOptimisticSlideId(id)) return null
+        return presentationService.saveCanvas(workspaceId, presentationId, id, s.elements)
+      })
+      .filter(Boolean)
+    if (saves.length) await Promise.all(saves)
+  }, [workspaceId, presentationId, viewOnly, isGenerating, resolvePersistedSlideId])
+
+  const handleOpenConvertTemplate = useCallback(() => {
+    if (viewOnly) {
+      askOwner()
+      return
+    }
+    if (!presentationId) {
+      setError('Save the presentation before converting to a template.')
+      return
+    }
+    setConvertTemplateOpen(true)
+  }, [viewOnly, presentationId, askOwner])
 
   const remapSlideId = useCallback((tempId, realId) => {
     if (!tempId || !realId || tempId === realId) return
@@ -4093,6 +4126,11 @@ export default function AIPptEditor({
             onUndo={viewOnly ? askOwner : handleUndo}
             onRedo={viewOnly ? askOwner : handleRedo}
             onExit={onBack}
+            onConvertToTemplate={
+              canAccessSuperadminPortal && !viewOnly
+                ? handleOpenConvertTemplate
+                : undefined
+            }
           />
           {presentationId && <span className="aig-editor-badge">Saved</span>}
         </div>
@@ -4907,6 +4945,21 @@ export default function AIPptEditor({
           presentationId={presentationId}
           title={deckTitle}
           onClose={() => setExportModalOpen(false)}
+        />
+      )}
+
+      {convertTemplateOpen && presentationId && (
+        <ConvertToTemplateModal
+          presentationId={presentationId}
+          defaultName={deckTitle}
+          defaultThemeId={
+            toApiThemeId(themeTokens?.wizardColorThemeId || config.theme) ||
+            themeTokens?.wizardColorThemeId ||
+            ''
+          }
+          slideCount={localSlides.length}
+          onBeforePublish={flushPendingCanvasSaves}
+          onClose={() => setConvertTemplateOpen(false)}
         />
       )}
 

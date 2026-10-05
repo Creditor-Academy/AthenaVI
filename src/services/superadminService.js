@@ -44,11 +44,15 @@ async function superadminRequest(path, options = {}) {
   }
 
   if (!body.success) {
-    throw new SuperadminApiError(
-      body.message || 'Request failed',
-      response.status,
-      body.errors || []
-    )
+    const errors = body.errors || []
+    let message = body.message || 'Request failed'
+    if (
+      errors.length &&
+      (!message || message === 'Validation error' || message === 'Request failed')
+    ) {
+      message = errors.map(String).join(' ')
+    }
+    throw new SuperadminApiError(message, response.status, errors)
   }
 
   return body.data

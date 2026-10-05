@@ -49,7 +49,6 @@ const API_CONFIG = {
       USER_SETTINGS: {
         APPEARANCE: '/api/user/settings/appearance',
         NOTIFICATIONS: '/api/user/settings/notifications',
-        PPT: '/api/user/settings/ppt',
       },
       INBOX: {
         LIST: '/api/user/inbox',
