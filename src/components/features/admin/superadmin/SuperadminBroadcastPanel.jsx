@@ -15,7 +15,6 @@ const MAIN_TABS = [
 export default function SuperadminBroadcastPanel() {
   const [activeTab, setActiveTab] = useState('compose')
   const [historyRefreshKey, setHistoryRefreshKey] = useState(0)
-  const [templatesRefreshKey, setTemplatesRefreshKey] = useState(0)
   const [composeSeedData, setComposeSeedData] = useState(null)
 
   const handleUseTemplateInCompose = (template) => {
@@ -87,7 +86,6 @@ export default function SuperadminBroadcastPanel() {
           {activeTab === 'templates' && (
             <TemplatesTab
               onUseInCompose={handleUseTemplateInCompose}
-              onTemplatesUpdated={() => setTemplatesRefreshKey((k) => k + 1)}
             />
           )}
 

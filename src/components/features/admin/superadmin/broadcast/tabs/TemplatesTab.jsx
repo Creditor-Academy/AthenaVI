@@ -41,20 +41,15 @@ export default function TemplatesTab({ onUseInCompose, onTemplatesUpdated }) {
     setLoading(true)
     setErr('')
     try {
-      const res = await superadminService.listEmailTemplates({
-        search: search || undefined,
-        type: typeFilter || undefined,
-        limit: 100,
-      })
+      const res = await superadminService.listEmailTemplates({ limit: 100 })
       const list = res.templates || []
       setDbTemplates(list)
-      onTemplatesUpdated?.()
     } catch (e) {
       setErr(e.message || 'Failed to load templates')
     } finally {
       setLoading(false)
     }
-  }, [search, typeFilter, onTemplatesUpdated])
+  }, [])
 
   useEffect(() => {
     loadTemplates()
@@ -84,7 +79,7 @@ export default function TemplatesTab({ onUseInCompose, onTemplatesUpdated }) {
     setDeletingId(id)
     try {
       await superadminService.deleteEmailTemplate(id)
-      setTemplates((prev) => prev.filter((t) => t.id !== id))
+      setDbTemplates((prev) => prev.filter((t) => t.id !== id))
       onTemplatesUpdated?.()
     } catch (err) {
       alert(err.message || 'Failed to delete template')
@@ -211,6 +206,8 @@ export default function TemplatesTab({ onUseInCompose, onTemplatesUpdated }) {
             type="button"
             className="sa-btn sa-btn--sm sa-btn--ghost"
             onClick={loadTemplates}
+            disabled={loading}
+            aria-label="Refresh templates"
             title="Refresh templates"
             style={{ width: 34, height: 34, padding: 0 }}
           >
