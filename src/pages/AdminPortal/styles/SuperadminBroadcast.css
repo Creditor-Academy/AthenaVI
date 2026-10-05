@@ -1,0 +1,585 @@
+/* ==========================================================================
+   Superadmin Email Broadcast & Templates Stylesheet
+   Design System tokens & components for Broadcast Composer, CRM Templates,
+   and Delivery History matching Admin Management & Reports standards.
+   ========================================================================== */
+
+/* ── Layout & Card Containers ─────────────────────────────────────────────── */
+.sa-broadcast-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sa-broadcast-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.sa-broadcast-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 35%, transparent);
+  background: color-mix(in srgb, var(--bg-card) 95%, transparent);
+  flex-shrink: 0;
+}
+
+.sa-broadcast-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.sa-broadcast-audience-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(var(--primary-rgb), 0.1);
+  border: 1px solid rgba(var(--primary-rgb), 0.22);
+  font-size: 0.8125rem;
+  color: var(--primary);
+  font-weight: 650;
+}
+
+.sa-broadcast-code-editor {
+  flex: 1;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  outline: none;
+  resize: none;
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  padding: 16px 18px;
+  font-family: "Fira Code", "Consolas", monospace;
+  caret-color: var(--primary);
+  min-height: 260px;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.sa-broadcast-code-editor:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.14);
+}
+
+.sa-broadcast-char-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 4px 10px;
+  background: color-mix(in srgb, var(--text-muted) 8%, transparent);
+  border-radius: 6px;
+}
+
+.sa-broadcast-char-badge--warn {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* ── Modals & Overlays ─────────────────────────────────────────────────────── */
+.sa-broadcast-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: saFadeIn 0.15s ease-out;
+}
+
+.sa-broadcast-modal {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  animation: saModalScale 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sa-broadcast-modal--sm {
+  max-width: 440px;
+}
+
+.sa-broadcast-modal--md {
+  max-width: 600px;
+  max-height: 88vh;
+}
+
+.sa-broadcast-modal--lg {
+  max-width: 900px;
+  height: min(86vh, 740px);
+}
+
+.sa-broadcast-modal--xl {
+  max-width: 1140px;
+  height: min(92vh, 860px);
+}
+
+.sa-broadcast-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 8%, var(--bg-card)) 0%, var(--bg-card) 100%);
+}
+
+.sa-broadcast-modal-header-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.18) 0%, rgba(var(--primary-rgb), 0.28) 100%);
+  border: 1px solid rgba(var(--primary-rgb), 0.3);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.15);
+}
+
+.sa-broadcast-modal-footer {
+  padding: 14px 22px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  background: color-mix(in srgb, var(--bg-card) 95%, transparent);
+  flex-shrink: 0;
+}
+
+.sa-broadcast-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: color-mix(in srgb, var(--text-muted) 10%, transparent);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.sa-broadcast-close-btn:hover {
+  background: color-mix(in srgb, var(--text-muted) 20%, transparent);
+  color: var(--text-main);
+  transform: scale(1.05);
+}
+
+/* ── Email Client Preview Window ──────────────────────────────────────────── */
+.sa-broadcast-preview-chrome {
+  background: #f1f5f9;
+  border-bottom: 1px solid #cbd5e1;
+  padding: 10px 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sa-broadcast-preview-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sa-broadcast-preview-dot--red { background: #ef4444; }
+.sa-broadcast-preview-dot--yellow { background: #f59e0b; }
+.sa-broadcast-preview-dot--green { background: #22c55e; }
+
+.sa-broadcast-preview-bar {
+  flex: 1;
+  margin-left: 8px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 0.72rem;
+  font-family: monospace;
+  color: #475569;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sa-broadcast-preview-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  background: #ffffff;
+}
+
+/* ── Template Cards & Grid ────────────────────────────────────────────────── */
+.sa-broadcast-template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.sa-broadcast-template-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.sa-broadcast-template-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border-color));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.sa-broadcast-template-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+}
+
+.sa-broadcast-template-subject {
+  margin: 3px 0 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.sa-broadcast-template-meta {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--border-color);
+  padding-top: 10px;
+  margin-top: auto;
+}
+
+.sa-broadcast-type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.sa-broadcast-type-badge--design {
+  background: color-mix(in srgb, #8b5cf6 14%, transparent);
+  color: #8b5cf6;
+  border: 1px solid color-mix(in srgb, #8b5cf6 28%, transparent);
+}
+
+.sa-broadcast-type-badge--html {
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
+}
+
+.sa-broadcast-type-badge--text {
+  background: color-mix(in srgb, #10b981 14%, transparent);
+  color: #10b981;
+  border: 1px solid color-mix(in srgb, #10b981 28%, transparent);
+}
+
+/* ── CRM Template Visual Editor ───────────────────────────────────────────── */
+.sa-broadcast-editor-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+}
+
+.sa-broadcast-editor-left {
+  overflow-y: auto;
+  padding: 20px;
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sa-broadcast-editor-right {
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+  overflow: hidden;
+}
+
+.sa-broadcast-mode-switcher {
+  display: flex;
+  gap: 6px;
+  background: var(--bg-main);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+}
+
+.sa-broadcast-mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  border: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-muted);
+  transition: all 0.15s ease;
+}
+
+.sa-broadcast-mode-btn--active {
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.sa-broadcast-highlight-card {
+  padding: 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--text-muted) 4%, var(--bg-card));
+  border: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Broadcast History Table ──────────────────────────────────────────────── */
+.sa-broadcast-history-table {
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg-card);
+}
+
+.sa-broadcast-table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  padding: 13px 16px;
+  gap: 12px;
+  align-items: center;
+  transition: background 0.15s ease;
+}
+
+.sa-broadcast-table-row--header {
+  padding: 10px 16px;
+  background: color-mix(in srgb, var(--text-muted) 5%, var(--bg-card));
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.sa-broadcast-table-row--stripe {
+  background: color-mix(in srgb, var(--text-muted) 2%, transparent);
+}
+
+.sa-broadcast-table-row:not(.sa-broadcast-table-row--header):hover {
+  background: color-mix(in srgb, var(--primary) 4%, transparent);
+}
+
+.sa-broadcast-status-badge {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+
+/* ── Audience Selector & Resend Form ──────────────────────────────────────── */
+.sa-broadcast-audience-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-main);
+  font-weight: 500;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.sa-broadcast-audience-btn--active {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, var(--bg-card));
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* ── Select Your Editing Experience Chooser Modal ─────────────────────────── */
+.sa-editing-exp-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 24px 28px 12px;
+  flex-shrink: 0;
+}
+
+.sa-editing-exp-title {
+  margin: 0;
+  font-size: 1.1875rem;
+  font-weight: 750;
+  letter-spacing: -0.015em;
+  color: var(--text-main);
+  line-height: 1.3;
+}
+
+.sa-editing-exp-subtitle {
+  margin: 5px 0 0;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.sa-editing-exp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  padding: 12px 28px 28px;
+}
+
+@media (max-width: 860px) {
+  .sa-editing-exp-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.sa-editing-exp-card {
+  background: var(--bg-card);
+  border: 1.5px solid var(--border-color);
+  border-radius: 14px;
+  padding: 26px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.sa-editing-exp-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--border-color));
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.sa-editing-exp-card-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 750;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+}
+
+.sa-editing-exp-card-sub {
+  margin: 4px 0 0;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.sa-editing-exp-illustration {
+  width: 100%;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 14px 0 16px;
+}
+
+.sa-editing-exp-btn {
+  width: 100%;
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-main);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s ease;
+  margin-top: auto;
+}
+
+.sa-editing-exp-card:hover .sa-editing-exp-btn,
+.sa-editing-exp-btn:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(var(--primary-rgb), 0.28);
+}
+
+/* ── Keyframe Animations ─────────────────────────────────────────────────── */
+@keyframes saFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes saModalScale {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
