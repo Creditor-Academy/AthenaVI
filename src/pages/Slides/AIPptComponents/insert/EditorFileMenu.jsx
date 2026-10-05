@@ -32,6 +32,7 @@ export default function EditorFileMenu({
   onRedo,
   onExit,
   onFindReplace,
+  onConvertToTemplate,
   viewOnly = false,
 }) {
   const [open, setOpen] = useState(false)
@@ -65,7 +66,13 @@ export default function EditorFileMenu({
     { id: 'duplicate', label: 'Duplicate', Icon: FiCopy, action: onDuplicate },
     { id: 'share-preview', label: 'Share preview', Icon: FiShare2, action: onSharePreview, hidden: viewOnly || !onSharePreview },
     { id: 'unsub', label: 'Unsubscribe', Icon: FiBellOff, action: null, disabled: true },
-    { id: 'template', label: 'Convert to template', Icon: FiFileText, action: null, disabled: true },
+    {
+      id: 'template',
+      label: 'Convert to template',
+      Icon: FiFileText,
+      action: onConvertToTemplate,
+      hidden: !onConvertToTemplate,
+    },
     { id: 'export', label: 'Export presentation', Icon: FiUpload, action: onExport },
   ]
 
