@@ -161,6 +161,12 @@ const PRINTABLE_FORMAT_FALLBACK = [
     modes: ['printable'],
     print: { kind: 'invitation', series: 'a6', orientation: 'portrait', widthMm: 105, heightMm: 148, dpi: 300 },
   },
+  {
+    id: 'invitation-a6-landscape',
+    name: 'Invitation',
+    modes: ['printable'],
+    print: { kind: 'invitation', series: 'a6', orientation: 'landscape', widthMm: 148, heightMm: 105, dpi: 300 },
+  },
 ];
 
 const PRINT_GROUPS = [
@@ -168,12 +174,17 @@ const PRINT_GROUPS = [
   { id: 'a3', label: 'A3 poster', kind: 'poster', series: 'a3', hint: 'Headline ≤ 60 · 4 details · CTA ≤ 40' },
   { id: 'a2', label: 'A2 poster', kind: 'poster', series: 'a2', hint: 'Headline ≤ 60 · 4 details · CTA ≤ 40' },
   { id: 'business-card', label: 'Business card', kind: 'business-card', formatId: 'business-card', hint: 'Name ≤ 40 · 4 contact lines' },
-  { id: 'invitation', label: 'Invitation', kind: 'invitation', formatId: 'invitation-a6-portrait', hint: 'Headline ≤ 60 · 5 details · CTA ≤ 40' },
+  { id: 'invitation', label: 'Invitation', kind: 'invitation', series: 'a6', hint: 'Headline ≤ 60 · 5 details · CTA ≤ 40' },
 ];
 
 function printablesFrom(formats = []) {
   const fromApi = formats.filter((f) => formatServesMode(f, 'printable') && f?.print);
-  return fromApi.length ? fromApi : PRINTABLE_FORMAT_FALLBACK;
+  const base = fromApi.length ? fromApi : PRINTABLE_FORMAT_FALLBACK;
+  const byId = new Map(base.map((f) => [f.id, f]));
+  PRINTABLE_FORMAT_FALLBACK.forEach((fb) => {
+    if (!byId.has(fb.id)) byId.set(fb.id, fb);
+  });
+  return [...byId.values()];
 }
 
 function printSizeLabel(print = {}) {
@@ -185,7 +196,8 @@ function printSizeLabel(print = {}) {
 function printFormatForGroup(group, formats, orientation) {
   if (!group) return null;
   if (group.formatId) return formats.find((f) => f.id === group.formatId) || null;
-  const id = `poster-${group.series}-${orientation}`;
+  const prefix = group.kind === 'invitation' ? 'invitation' : 'poster';
+  const id = `${prefix}-${group.series}-${orientation}`;
   return formats.find((f) => f.id === id) || null;
 }
 
@@ -383,6 +395,8 @@ const TOPICS = [
 ];
 
 const INFOGRAPHIC_TOPICS = ['Presentations', 'Reports', 'Dashboards', 'Timelines', 'Workflows', 'Mind Maps'];
+
+const SOCIAL_TOPICS = ['YouTube thumbnail', 'Instagram post', 'Facebook cover', 'LinkedIn banner', 'X post'];
 
 const PRINT_TOPICS = ['A4 poster', 'A3 poster', 'business card', 'invitation', 'A2 poster'];
 export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavigateLibrary, createContext }) {
@@ -708,6 +722,19 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
   const needsSizePick = activeMode === 'social' || activeMode === 'printable';
   const canGenerate = Boolean(prompt.trim()) && !creditsBusy && (!needsSizePick || Boolean(selectedFormat));
 
+  const applyPrintOrientation = (next) => {
+    setPrintOrientation(next);
+    setShowFormatDropdown(false);
+    setShowModelDropdown(false);
+    const current = printFormats.find((f) => f.id === selectedFormat);
+    const kind = String(current?.print?.kind || '').replace(/_/g, '-');
+    if (kind !== 'poster' && kind !== 'invitation') return;
+    const series = current.print?.series || String(current.id || '').split('-')[1];
+    const group = PRINT_GROUPS.find((g) => g.kind === kind && g.series === series);
+    const fmt = printFormatForGroup(group, printFormats, next);
+    if (fmt?.id) setSelectedFormat(fmt.id);
+  };
+
   if (launchStudio || activeThreadId) {
     return (
       <AIConversationalStudio 
@@ -888,43 +915,6 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
         {activeMode === 'printable' && (
           <section className="styles-grid-container social-destinations print-sizes" style={{ position: 'relative', zIndex: 1 }}>
             <div className="styles-grid-title">Choose a print size</div>
-            <div className="print-orient-row">
-              <span>Posters</span>
-              <div className="print-orient-toggle" role="group" aria-label="Poster orientation">
-                <button
-                  type="button"
-                  className={printOrientation === 'portrait' ? 'active' : ''}
-                  onClick={() => {
-                    setPrintOrientation('portrait');
-                    const current = printFormats.find((f) => f.id === selectedFormat);
-                    if (current?.print?.kind === 'poster') {
-                      const series = current.print.series;
-                      const group = PRINT_GROUPS.find((g) => g.kind === 'poster' && g.series === series);
-                      const fmt = printFormatForGroup(group, printFormats, 'portrait');
-                      if (fmt?.id) setSelectedFormat(fmt.id);
-                    }
-                  }}
-                >
-                  Portrait
-                </button>
-                <button
-                  type="button"
-                  className={printOrientation === 'landscape' ? 'active' : ''}
-                  onClick={() => {
-                    setPrintOrientation('landscape');
-                    const current = printFormats.find((f) => f.id === selectedFormat);
-                    if (current?.print?.kind === 'poster') {
-                      const series = current.print.series;
-                      const group = PRINT_GROUPS.find((g) => g.kind === 'poster' && g.series === series);
-                      const fmt = printFormatForGroup(group, printFormats, 'landscape');
-                      if (fmt?.id) setSelectedFormat(fmt.id);
-                    }
-                  }}
-                >
-                  Landscape
-                </button>
-              </div>
-            </div>
             <div className="social-dest-grid print-size-grid">
               {PRINT_GROUPS.map((group) => {
                 const fmt = printFormatForGroup(group, printFormats, printOrientation);
@@ -1187,6 +1177,47 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                     )}
                   </div>
                   
+                  {activeMode === 'printable' && (
+                  <div className="custom-dropdown">
+                    <button
+                      className="dropdown-trigger"
+                      onClick={() => {
+                        setShowFormatDropdown(!showFormatDropdown);
+                        setShowModelDropdown(false);
+                      }}
+                      aria-label="Print orientation"
+                    >
+                      {renderFormatIcon({
+                        width: printOrientation === 'landscape' ? 16 : 9,
+                        height: printOrientation === 'landscape' ? 9 : 16,
+                      })}
+                      <span>{printOrientation === 'landscape' ? 'Landscape' : 'Portrait'}</span>
+                      <ChevronDown size={14}/>
+                    </button>
+                    {showFormatDropdown && (
+                      <div className="model-modal" style={{ right: 0, left: 'auto', minWidth: '180px' }}>
+                        <div className="model-modal-content">
+                          <div className="model-group-title">Orientation</div>
+                          {['portrait', 'landscape'].map((orient) => (
+                            <div
+                              key={orient}
+                              className={`model-card ${printOrientation === orient ? 'active' : ''}`}
+                              onClick={() => applyPrintOrientation(orient)}
+                              style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
+                            >
+                              {renderFormatIcon({
+                                width: orient === 'landscape' ? 16 : 9,
+                                height: orient === 'landscape' ? 9 : 16,
+                              })}
+                              <span>{orient === 'landscape' ? 'Landscape' : 'Portrait'}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  )}
+
                   {activeMode !== 'social' && activeMode !== 'printable' && (
                   <div className="custom-dropdown">
                     <button className="dropdown-trigger" onClick={() => setShowFormatDropdown(!showFormatDropdown)}>

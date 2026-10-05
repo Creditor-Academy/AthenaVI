@@ -390,9 +390,13 @@ class ImageGenService {
   /**
    * Binary download — returns { blob, filename }.
    * format: png | jpg | jpeg | pdf
+   * bleed: printable PDF only — crop marks + BleedBox/TrimBox
    */
-  async download(workspaceId, generationId, format = 'png') {
-    const query = this.buildQuery({ format })
+  async download(workspaceId, generationId, format = 'png', { bleed = false } = {}) {
+    const query = this.buildQuery({
+      format,
+      bleed: bleed ? 'true' : undefined,
+    })
     const response = await fetch(
       buildUrl(`${API_CONFIG.ENDPOINTS.IMAGE_GEN.DOWNLOAD(workspaceId, generationId)}${query}`),
       { headers: getAuthHeaders() }
@@ -413,8 +417,8 @@ class ImageGenService {
     return { blob, filename }
   }
 
-  async downloadAndSave(workspaceId, generationId, format = 'png') {
-    const { blob, filename } = await this.download(workspaceId, generationId, format)
+  async downloadAndSave(workspaceId, generationId, format = 'png', options = {}) {
+    const { blob, filename } = await this.download(workspaceId, generationId, format, options)
     saveBlob(blob, filename)
   }
 
@@ -473,11 +477,16 @@ class ImageGenService {
    * Client-side zip of several generations (API is per-file only).
    * @param {{ generationId: string, name: string }[]} items
    */
-  async downloadAllAsZip(workspaceId, items = [], format = 'png') {
+  async downloadAllAsZip(workspaceId, items = [], format = 'png', options = {}) {
     const used = new Set()
     const entries = []
     for (const item of items) {
-      const { blob, filename } = await this.download(workspaceId, item.generationId, format)
+      const { blob, filename } = await this.download(
+        workspaceId,
+        item.generationId,
+        format,
+        item.bleed ? { bleed: true } : options
+      )
       let name = String(item.name || filename || `image.${format}`).replace(/[\\/]/g, '-')
       if (used.has(name)) {
         const stem = name.replace(/(\.[^.]+)$/, '')

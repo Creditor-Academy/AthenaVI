@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   ArrowLeft, RotateCcw, Sparkles, Edit3, Wand2, Download, 
-  X, Send, AlertCircle, CheckCircle2, ChevronRight, Copy, ChevronDown, Share2, User, ThumbsUp, ThumbsDown,
+  X, Send, AlertCircle, CheckCircle2, ChevronRight, Copy, Share2, User, ThumbsUp, ThumbsDown,
   Link2, Facebook, Twitter, MessageCircle, Linkedin
 } from 'lucide-react';
 import imageGenService, { ImageGenProviderError } from '../../../services/imageGenService.js';
@@ -70,6 +70,33 @@ const FOLLOWUP_BY_MODE = {
     ],
   },
 };
+
+function printKindOf(print) {
+  return String(print?.kind || '').replace(/_/g, '-');
+}
+
+function printPhysicalLabel(print = {}) {
+  if (print.widthIn && print.heightIn) return `${print.widthIn}×${print.heightIn} in`;
+  if (print.widthMm && print.heightMm) return `${print.widthMm}×${print.heightMm} mm`;
+  return '';
+}
+
+function printFromRaw(raw) {
+  return raw?.print || raw?.request?.print || null;
+}
+
+function warningsFromRaw(raw) {
+  const w = raw?.request?.warnings || raw?.warnings;
+  if (!w) return [];
+  return (Array.isArray(w) ? w : [w]).map((item) => String(item || '').trim()).filter(Boolean);
+}
+
+function modeLabel(mode) {
+  if (mode === 'infographic') return 'Infographic';
+  if (mode === 'social') return 'Social';
+  if (mode === 'printable') return 'Print';
+  return 'Image';
+}
 
 function refsFromContext(ctx) {
   if (!ctx) return [];
@@ -155,6 +182,9 @@ export default function AIConversationalStudio({
   const [userFeedback, setUserFeedback] = useState({});
   
   const [chatInput, setChatInput] = useState('');
+  const [editMode, setEditMode] = useState('auto');
+  const [downloadMenuFor, setDownloadMenuFor] = useState(null);
+  const [dismissedWarnings, setDismissedWarnings] = useState({});
 
   // UI Modals
   const [fullscreenUrl, setFullscreenUrl] = useState(null);
@@ -210,7 +240,7 @@ export default function AIConversationalStudio({
     else if (formatId === 'portrait') parts.push('9:16');
     else parts.push(formatId);
 
-    parts.push(mode === 'infographic' ? 'Infographic' : mode === 'social' ? 'Social' : 'Image');
+    parts.push(modeLabel(mode));
     if (styleId) {
       parts.push(typeof styleId === 'string' ? styleId.charAt(0).toUpperCase() + styleId.slice(1) : 'Custom');
     }
@@ -368,6 +398,10 @@ export default function AIConversationalStudio({
       setGenerations(withRefs);
       setActiveGenIndex(loadedGens.length - 1);
       setConversation(chatItems);
+      const head = data?.thread || data?.head || withRefs[0]?.raw || {};
+      if (head.mode) setMode(head.mode);
+      if (head.formatId) setFormatId(head.formatId);
+      else if (withRefs[0]?.raw?.formatId) setFormatId(withRefs[0].raw.formatId);
     } catch (err) {
       console.error("Failed to load thread:", err);
       setErrorMsg("Failed to load previous generation session.");
@@ -388,8 +422,8 @@ export default function AIConversationalStudio({
       return;
     }
 
-    if (mode === 'social' && !formatId) {
-      setErrorMsg('Select a destination first.');
+    if ((mode === 'social' || mode === 'printable') && !formatId) {
+      setErrorMsg(mode === 'printable' ? 'Select a print size first.' : 'Select a destination first.');
       return;
     }
 
@@ -413,11 +447,11 @@ export default function AIConversationalStudio({
 
     try {
       const formatForMode =
-        mode === 'social'
+        mode === 'social' || mode === 'printable'
           ? formatId
           : formatId || (mode === 'infographic' ? 'landscape' : 'square');
-      if (mode === 'social' && !formatForMode) {
-        setErrorMsg('Select a destination first.');
+      if ((mode === 'social' || mode === 'printable') && !formatForMode) {
+        setErrorMsg(mode === 'printable' ? 'Select a print size first.' : 'Select a destination first.');
         return;
       }
 
@@ -456,6 +490,7 @@ export default function AIConversationalStudio({
         version: `v${generations.length + 1}`,
         threadId: newThreadId,
         raw: gen,
+        creditsCharged: res?.creditsCharged,
         contextImages,
       };
 
@@ -524,12 +559,14 @@ export default function AIConversationalStudio({
         res = await imageGenService.sendThreadMessage(activeWs, threadId, tweakText, {
           fromGenerationId: parentGen?.id,
           mode,
-          modelId
+          modelId,
+          editMode: (mode === 'printable' || mode === 'social' || mode === 'infographic') && editMode !== 'auto' ? editMode : undefined,
         });
       } else if (parentGen?.id) {
         res = await imageGenService.tweak(activeWs, parentGen.id, tweakText, {
           mode,
-          modelId
+          modelId,
+          editMode: (mode === 'printable' || mode === 'social' || mode === 'infographic') && editMode !== 'auto' ? editMode : undefined,
         });
       } else {
         // Fallback to fresh generate with combined prompt
@@ -570,6 +607,7 @@ export default function AIConversationalStudio({
         version: `v${generations.length + 1}`,
         threadId: nextThreadId,
         raw: gen,
+        creditsCharged: res?.creditsCharged,
         contextImages,
       };
 
@@ -617,7 +655,7 @@ export default function AIConversationalStudio({
         modelId,
         prompt: mode === 'infographic' ? `${basePrompt}, clean minimalist layout, no text, no words, empty placeholders` : basePrompt
       };
-      if (mode !== 'social' && formatId) regenBody.formatId = formatId;
+      if (mode !== 'social' && mode !== 'printable' && formatId) regenBody.formatId = formatId;
       if (styleId) {
         if (VALID_STYLES.includes(styleId)) {
           regenBody.style = styleId;
@@ -640,6 +678,7 @@ export default function AIConversationalStudio({
         version: `v${generations.length + 1}`,
         threadId: threadId,
         raw: gen,
+        creditsCharged: res?.creditsCharged,
         contextImages: parentGen.contextImages || [],
       };
 
@@ -659,7 +698,7 @@ export default function AIConversationalStudio({
       if (isInsufficientCreditsError(err)) {
         await showCreditsGate(() => handleRegenerate(targetGen));
       } else {
-        setErrorMsg(err.message || "Regeneration failed.");
+        setErrorMsg(err?.data?.message || err.message || "Regeneration failed.");
       }
     } finally {
       setIsGenerating(false);
@@ -667,15 +706,16 @@ export default function AIConversationalStudio({
   };
 
   // Download action
-  const handleDownload = async (targetGen) => {
+  const handleDownload = async (targetGen, format = 'png', { bleed = false } = {}) => {
     const gen = targetGen || activeGeneration;
     if (!gen?.id || !workspaceId) return;
+    setDownloadMenuFor(null);
     try {
-      await imageGenService.downloadAndSave(workspaceId, gen.id, 'png');
+      await imageGenService.downloadAndSave(workspaceId, gen.id, format, { bleed });
     } catch (err) {
       console.error("Download failed:", err);
-      // Fallback direct link download
-      if (gen.url) {
+      setErrorMsg(err?.data?.message || err.message || 'Download failed.');
+      if (!bleed && format === 'png' && gen.url) {
         const a = document.createElement('a');
         a.href = gen.url;
         a.download = `athena-${mode}-${gen.version || 'v1'}.png`;
@@ -686,6 +726,69 @@ export default function AIConversationalStudio({
       }
     }
   };
+
+  const printAspectFor = (fId, print) => {
+    if (print?.widthMm && print?.heightMm) {
+      const kind = printKindOf(print);
+      const landscape = print.orientation === 'landscape' || Number(print.widthMm) > Number(print.heightMm);
+      const maxWidth = kind.includes('business')
+        ? '480px'
+        : kind.includes('invitation')
+          ? '340px'
+          : landscape
+            ? '640px'
+            : '400px';
+      return { aspectRatio: `${print.widthMm}/${print.heightMm}`, maxWidth };
+    }
+    if (print?.widthIn && print?.heightIn) {
+      return { aspectRatio: `${print.widthIn}/${print.heightIn}`, maxWidth: '480px' };
+    }
+    switch (fId) {
+      case 'poster-a4-portrait':
+      case 'invitation-a6-portrait':
+        return { aspectRatio: '210/297', maxWidth: fId.includes('invitation') ? '340px' : '400px' };
+      case 'poster-a4-landscape':
+        return { aspectRatio: '297/210', maxWidth: '640px' };
+      case 'poster-a3-portrait':
+        return { aspectRatio: '297/420', maxWidth: '400px' };
+      case 'poster-a3-landscape':
+        return { aspectRatio: '420/297', maxWidth: '640px' };
+      case 'poster-a2-portrait':
+        return { aspectRatio: '420/594', maxWidth: '400px' };
+      case 'poster-a2-landscape':
+        return { aspectRatio: '594/420', maxWidth: '640px' };
+      case 'business-card':
+        return { aspectRatio: '3.5/2', maxWidth: '480px' };
+      case 'invitation-a6-portrait':
+        return { aspectRatio: '105/148', maxWidth: '340px' };
+      case 'invitation-a6-landscape':
+        return { aspectRatio: '148/105', maxWidth: '480px' };
+      default:
+        return null;
+    }
+  };
+
+  const getAspectDims = (fId, print) => {
+    const printDims = printAspectFor(fId, print);
+    if (printDims) return printDims;
+    switch (fId) {
+      case 'landscape': return { aspectRatio: '16/9', maxWidth: '720px' };
+      case 'portrait': return { aspectRatio: '9/16', maxWidth: '360px' };
+      case 'landscape-3-2':
+      case 'landscape-16-9': return { aspectRatio: '16/9', maxWidth: '720px' };
+      case 'portrait-2-3':
+      case 'portrait-9-16': return { aspectRatio: '9/16', maxWidth: '360px' };
+      case 'youtube-thumbnail':
+      case 'youtube-banner':
+      case 'twitter-post': return { aspectRatio: '16/9', maxWidth: '720px' };
+      case 'instagram-post': return { aspectRatio: '4/5', maxWidth: '400px' };
+      case 'facebook-post': return { aspectRatio: '940/788', maxWidth: '560px' };
+      case 'facebook-cover': return { aspectRatio: '851/315', maxWidth: '720px' };
+      case 'linkedin-banner': return { aspectRatio: '1584/396', maxWidth: '720px' };
+      case 'square': default: return { aspectRatio: '1/1', maxWidth: '480px' };
+    }
+  };
+  const aspectStyle = getAspectDims(formatId, printFromRaw(activeGeneration?.raw));
 
   // Share action
   const handleShare = async (gen) => {
@@ -712,26 +815,6 @@ export default function AIConversationalStudio({
       composerInputRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   };
-
-  const getAspectDims = (fId) => {
-    switch (fId) {
-      case 'landscape': return { aspectRatio: '16/9', maxWidth: '720px' };
-      case 'portrait': return { aspectRatio: '9/16', maxWidth: '360px' };
-      case 'landscape-3-2':
-      case 'landscape-16-9': return { aspectRatio: '16/9', maxWidth: '720px' };
-      case 'portrait-2-3':
-      case 'portrait-9-16': return { aspectRatio: '9/16', maxWidth: '360px' };
-      case 'youtube-thumbnail':
-      case 'youtube-banner':
-      case 'twitter-post': return { aspectRatio: '16/9', maxWidth: '720px' };
-      case 'instagram-post': return { aspectRatio: '4/5', maxWidth: '400px' };
-      case 'facebook-post': return { aspectRatio: '940/788', maxWidth: '560px' };
-      case 'facebook-cover': return { aspectRatio: '851/315', maxWidth: '720px' };
-      case 'linkedin-banner': return { aspectRatio: '1584/396', maxWidth: '720px' };
-      case 'square': default: return { aspectRatio: '1/1', maxWidth: '480px' };
-    }
-  };
-  const aspectStyle = getAspectDims(formatId);
 
   return (
     <div className="conv-studio-root">
@@ -814,30 +897,82 @@ export default function AIConversationalStudio({
                   <img src={LogoImg} alt="Athena" />
                 </div>
                 <div className="conv-showcase-container">
-                  <div className="conv-unified-frame slide-in-left">
+                  {(() => {
+                    const raw = gen.raw || {};
+                    const print = printFromRaw(raw);
+                    const warns = warningsFromRaw(raw);
+                    const charged = gen.creditsCharged ?? raw.creditsCharged;
+                    const showBleed = Boolean(print?.bleedAvailable);
+                    const frameStyle = getAspectDims(raw.formatId || formatId, print);
+                    return (
+                  <>
+                  <div className="conv-unified-frame slide-in-left" style={frameStyle}>
                     <button
                       type="button"
                       className="conv-hero-open"
                       title="View larger"
                       onClick={() => setFullscreenUrl(gen.url)}
                     >
-                      <img src={gen.url} alt={gen.prompt || "Generated output"} className="conv-hero-img-front" />
+                      <img src={gen.url} alt={gen.prompt || "Generated output"} className={`conv-hero-img-front${print ? ' is-print' : ''}`} />
                     </button>
                   </div>
+                  {print && (
+                    <div className="conv-print-meta">
+                      {printPhysicalLabel(print)}
+                      {print.dpi ? ` · ${print.dpi} DPI` : ''}
+                      {print.orientation ? ` · ${print.orientation}` : ''}
+                    </div>
+                  )}
+                  {warns.length > 0 && !dismissedWarnings[gen.id] && (
+                    <div className="conv-print-warning">
+                      <AlertCircle size={14} />
+                      <span>{warns.join(' ')}</span>
+                      <button type="button" aria-label="Dismiss" onClick={() => setDismissedWarnings((p) => ({ ...p, [gen.id]: true }))}>
+                        <X size={12} />
+                      </button>
+                    </div>
+                  )}
                   
-                  {/* Actions & Credits */}
-                  <div className="conv-actions-bar-icons slide-in-bottom" style={{ width: '100%', display: 'flex', gap: '8px' }}>
+                  <div className="conv-actions-bar-icons slide-in-bottom" style={{ width: '100%', display: 'flex', gap: '8px', position: 'relative' }}>
                      <button className={`conv-action-icon-btn ${userFeedback[gen.id] === 'like' ? 'active' : ''}`} title="Like" onClick={() => setUserFeedback(prev => ({...prev, [gen.id]: 'like'}))}><ThumbsUp size={16}/></button>
                      <button className={`conv-action-icon-btn ${userFeedback[gen.id] === 'dislike' ? 'active' : ''}`} title="Dislike" onClick={() => setUserFeedback(prev => ({...prev, [gen.id]: 'dislike'}))}><ThumbsDown size={16}/></button>
                      <div style={{ width: '1px', height: '24px', background: '#e2e8f0', margin: '0 8px' }}></div>
                      <button className="conv-action-icon-btn" title="Share" onClick={() => handleShare(gen)}><Share2 size={16}/></button>
                      <button className="conv-action-icon-btn" title="Regenerate" onClick={() => handleRegenerate(gen)}><RotateCcw size={16}/></button>
-                     <button className="conv-action-icon-btn" title="Download" onClick={() => handleDownload(gen)}><Download size={16}/></button>
+                     <div className="conv-download-wrap">
+                       <button
+                         className="conv-action-icon-btn"
+                         title="Download"
+                         onClick={() => setDownloadMenuFor(downloadMenuFor === gen.id ? null : gen.id)}
+                       >
+                         <Download size={16}/>
+                       </button>
+                       {downloadMenuFor === gen.id && (
+                         <div className="conv-download-menu" role="menu">
+                           <button type="button" onClick={() => handleDownload(gen, 'png')}>PNG</button>
+                           <button type="button" onClick={() => handleDownload(gen, 'jpg')}>JPG</button>
+                           {mode === 'printable' || print ? (
+                             <>
+                               <button type="button" onClick={() => handleDownload(gen, 'pdf')}>PDF</button>
+                               {showBleed && (
+                                 <button type="button" onClick={() => handleDownload(gen, 'pdf', { bleed: true })}>
+                                   PDF for print
+                                 </button>
+                               )}
+                             </>
+                           ) : (
+                             <button type="button" onClick={() => handleDownload(gen, 'pdf')}>PDF</button>
+                           )}
+                         </div>
+                       )}
+                     </div>
                      <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', paddingRight: '8px' }}>
-                       <Sparkles size={12} /> -1 credit
+                       <Sparkles size={12} /> {charged ? `-${charged} credits` : 'charged on success'}
                      </span>
                   </div>
-                  
+                  </>
+                    );
+                  })()} 
                   {/* Conversational Follow-up (only for latest generation) */}
                   {idx === generations.length - 1 && !isGenerating && (
                     <div className="conv-followup-text slide-in-bottom">
@@ -1084,6 +1219,24 @@ export default function AIConversationalStudio({
       <footer className="conv-composer-dock">
         <div className="conv-composer-box">
           <div className="conv-composer-header">You</div>
+          {(mode === 'printable' || mode === 'social' || mode === 'infographic') && (
+            <div className="conv-edit-mode" role="group" aria-label="Edit type">
+              {[
+                { id: 'auto', label: 'Auto' },
+                { id: 'spec', label: 'Copy' },
+                { id: 'pixel', label: 'Visual' },
+              ].map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  className={editMode === opt.id ? 'active' : ''}
+                  onClick={() => setEditMode(opt.id)}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
           <ImageGenContextAttach
             workspaceId={workspaceId}
             context={imageContext}
@@ -1101,9 +1254,11 @@ export default function AIConversationalStudio({
                     ref={composerInputRef}
                     className="conv-composer-textarea"
                     placeholder={
-                      mode === 'infographic'
-                        ? "Make the infographic more minimal and use larger typography..."
-                        : "Make the colors softer and add warmer lighting..."
+                      mode === 'printable'
+                        ? "Change the date, add a phone number, or make the background darker..."
+                        : mode === 'infographic'
+                          ? "Make the infographic more minimal and use larger typography..."
+                          : "Make the colors softer and add warmer lighting..."
                     }
                     value={chatInput}
                     onPaste={composerBind.onPaste}
