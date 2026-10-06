@@ -49,6 +49,14 @@ import styleWatercolorImg from '../../../assets/slides_icons/style_watercolor.jp
 import formatPortraitImg from '../../../assets/ai-img-gen/format-portrait.jpg';
 import formatLandscapeImg from '../../../assets/ai-img-gen/format-landscape.jpg';
 import formatSquareImg from '../../../assets/ai-img-gen/format-square.jpg';
+import printA4PortraitPreview from '../../../assets/ai-img-gen/Minimal Blue Poster Template Illustration.png';
+import printA3PortraitPreview from '../../../assets/ai-img-gen/a3-portrait.png';
+import printA2PortraitPreview from '../../../assets/ai-img-gen/a2-portrait.png';
+import printA4LandscapePreview from '../../../assets/ai-img-gen/a4-landscape.png';
+import printA3LandscapePreview from '../../../assets/ai-img-gen/a3-landscape.png';
+import printA2LandscapePreview from '../../../assets/ai-img-gen/a2-landscape.png';
+import printBusinessCardPreview from '../../../assets/ai-img-gen/business-portrait.png';
+import printInvitationPreview from '../../../assets/ai-img-gen/invitation-portrait.png';
 
 import layoutProcess from '../../../assets/layouts/layout_process_v2.jpg';
 import layoutTimeline from '../../../assets/layouts/layout_timeline_v2.jpg';
@@ -170,6 +178,16 @@ const PRINT_GROUPS = [
   { id: 'business-card', label: 'Business card', kind: 'business-card', formatId: 'business-card', hint: 'Name ≤ 40 · 4 contact lines' },
   { id: 'invitation', label: 'Invitation', kind: 'invitation', formatId: 'invitation-a6-portrait', hint: 'Headline ≤ 60 · 5 details · CTA ≤ 40' },
 ];
+
+function printPreviewFor(group, orientation) {
+  const landscape = orientation === 'landscape';
+  if (group?.kind === 'business-card') return printBusinessCardPreview;
+  if (group?.kind === 'invitation') return printInvitationPreview;
+  if (group?.id === 'a4') return landscape ? printA4LandscapePreview : printA4PortraitPreview;
+  if (group?.id === 'a3') return landscape ? printA3LandscapePreview : printA3PortraitPreview;
+  if (group?.id === 'a2') return landscape ? printA2LandscapePreview : printA2PortraitPreview;
+  return printA4PortraitPreview;
+}
 
 function printablesFrom(formats = []) {
   const fromApi = formats.filter((f) => formatServesMode(f, 'printable') && f?.print);
@@ -941,11 +959,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                 if (!fmt) return null;
                 const print = fmt.print || {};
                 const orient = print.orientation || 'portrait';
-                const previewSrc = print.kind === 'business-card'
-                  ? formatLandscapeImg
-                  : orient === 'landscape'
-                    ? formatLandscapeImg
-                    : formatPortraitImg;
+                const previewSrc = printPreviewFor(group, printOrientation);
                 const selected = selectedFormat === fmt.id;
                 return (
                   <button
