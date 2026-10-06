@@ -7,6 +7,7 @@ import {
   toApiThemeId,
   buildWizardThemeTokens,
 } from '../../../utils/presentationHelpers'
+import { enforceAppearancePalette } from '../../../utils/themeAppearance'
 import { THEMES } from '../../../constants/pptWizardThemes'
 import MinimapSlidePreview from './MinimapSlidePreview'
 import './PptHistoryPreview.css'
@@ -23,12 +24,13 @@ function readDeckStatus(data) {
 }
 
 function resolveThemeVisual(themeId, themeTokens) {
-  const palette = themeTokens?.palette
+  const enforced = themeTokens?.palette ? enforceAppearancePalette(themeTokens) : themeTokens
+  const palette = enforced?.palette
   if (palette?.bg || palette?.primary || palette?.text) {
     const bg = palette.bg || palette.surface || '#FFFFFF'
     const primary = palette.primary || '#3B82F6'
     const secondary = palette.secondary || primary
-    const text = palette.text || '#0F172A'
+    const text = palette.text || (enforced?.appearance === 'dark' ? '#F8FAFC' : '#0F172A')
     const muted = palette.muted || '#64748B'
     return {
       id: 'themeTokens',

@@ -9,17 +9,19 @@ import {
   toApiThemeId,
   buildWizardThemeTokens,
 } from '../../utils/presentationHelpers'
+import { enforceAppearancePalette } from '../../utils/themeAppearance'
 import { shouldPaintElement } from '../../utils/canvasRenderDebug'
 import { THEMES } from '../../constants/pptWizardThemes'
 import { coercePlainText } from '../../utils/pptTextContent'
 
 export function resolvePreviewThemeVisual(themeTokens, themeId) {
-  const palette = themeTokens?.palette
+  const enforced = themeTokens?.palette ? enforceAppearancePalette(themeTokens) : themeTokens
+  const palette = enforced?.palette
   if (palette?.bg || palette?.primary || palette?.text) {
     const bg = palette.bg || palette.surface || DEFAULT_SLIDE_BG
     const primary = palette.primary || '#3B82F6'
     const secondary = palette.secondary || primary
-    const text = palette.text || '#0F172A'
+    const text = palette.text || (enforced?.appearance === 'dark' ? '#F8FAFC' : '#0F172A')
     const muted = palette.muted || '#64748B'
     return {
       id: 'themeTokens',

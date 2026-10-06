@@ -258,6 +258,47 @@ const superadminService = {
     )
   },
 
+  resendProductEmailBroadcast(broadcastId, { emails } = {}) {
+    return superadminRequest(`/api/superadmin/broadcasts/product-email/${broadcastId}/resend`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emails, confirm: 'send' }),
+    })
+  },
+
+  // ── Email Templates (CRM style) ───────────────────────────────────────────
+  listEmailTemplates({ page = 1, limit = 50, search, type } = {}) {
+    return superadminRequest(
+      `/api/superadmin/email-templates${toQuery({ page, limit, search, type })}`
+    )
+  },
+
+  getEmailTemplate(templateId) {
+    return superadminRequest(`/api/superadmin/email-templates/${templateId}`)
+  },
+
+  createEmailTemplate({ name, subject, htmlBody, textBody, type }) {
+    return superadminRequest('/api/superadmin/email-templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, subject, htmlBody, textBody, type }),
+    })
+  },
+
+  updateEmailTemplate(templateId, { name, subject, htmlBody, textBody, type }) {
+    return superadminRequest(`/api/superadmin/email-templates/${templateId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, subject, htmlBody, textBody, type }),
+    })
+  },
+
+  deleteEmailTemplate(templateId) {
+    return superadminRequest(`/api/superadmin/email-templates/${templateId}`, {
+      method: 'DELETE',
+    })
+  },
+
   // ── Templates ────────────────────────────────────────────────────────────
   listTemplates({ type, isActive } = {}) {
     return superadminRequest(`/api/superadmin/templates${toQuery({ type, isActive })}`)

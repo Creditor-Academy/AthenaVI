@@ -1,6 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Edit2, Check, LayoutTemplate, Plus, Lock } from 'lucide-react'
 import { PPT_CAPS, formatOutlineContentType } from '../../../utils/presentationHelpers'
+import { formatNarrativeRole } from '../../../constants/narrativeRoleLabels'
+import {
+  buildBlueprintThemeStyle,
+  blueprintCardClassName,
+  resolveBlueprintThemeLabel,
+} from '../../../utils/blueprintThemeVars'
 
 function layoutName(layoutId, choices) {
   if (!layoutId) return ''
@@ -44,6 +50,21 @@ function intentHint(slide) {
   return parts.filter(Boolean).join(' · ')
 }
 
+function BlueprintThemeBar({ themeLabel, palette }) {
+  if (!palette?.bg && !palette?.primary) return null
+  return (
+    <div className="aig-blueprint-theme-bar" aria-label={`Deck palette: ${themeLabel || 'Theme'}`}>
+      <div className="aig-blueprint-theme-preview">
+        <span style={{ background: palette.bg }} title="Background" />
+        <span style={{ background: palette.primary }} title="Primary" />
+        <span style={{ background: palette.secondary || palette.primary }} title="Secondary" />
+        <span style={{ background: palette.accent || palette.secondary || palette.primary }} title="Accent" />
+      </div>
+      {themeLabel ? <span className="aig-blueprint-theme-name">Palette: {themeLabel}</span> : null}
+    </div>
+  )
+}
+
 export default function AIPptOutline({
   initialOutline,
   layoutChoices = [],
@@ -52,9 +73,20 @@ export default function AIPptOutline({
   onBack,
   creditEstimate = null,
   isSubmitting = false,
+  colorThemeId = null,
+  colorThemes = [],
 }) {
   const [outline, setOutline] = useState(initialOutline)
   const [stepReady, setStepReady] = useState(false)
+
+  const blueprintTheme = useMemo(
+    () => buildBlueprintThemeStyle(colorThemeId, colorThemes),
+    [colorThemeId, colorThemes]
+  )
+  const themeLabel = useMemo(
+    () => resolveBlueprintThemeLabel(colorThemeId, colorThemes),
+    [colorThemeId, colorThemes]
+  )
 
   useEffect(() => {
     setOutline(initialOutline)
@@ -120,28 +152,48 @@ export default function AIPptOutline({
               Review each slide&apos;s story and intent. Layouts are picked automatically after content is
               generated — lock one only if you want a specific template.
             </p>
+            <BlueprintThemeBar themeLabel={themeLabel} palette={blueprintTheme.palette} />
             {fontLabel && <p className="aig-credit-estimate-hint">Type: {fontLabel}</p>}
-            {estimateLabel && (
-              <p className="aig-credit-estimate-hint">{estimateLabel}</p>
-            )}
+            {estimateLabel && <p className="aig-credit-estimate-hint">{estimateLabel}</p>}
           </div>
 
           <div className={`aig-step-body ${stepReady ? 'aig-body-visible' : 'aig-body-hidden'}`}>
-            <div className="aig-outline-list">
+            <div
+              className="aig-outline-list"
+              style={blueprintTheme.style}
+              data-blueprint-appearance={blueprintTheme.appearance}
+            >
               {outline.map((slide, idx) => {
                 const layoutStatus = layoutStatusCopy(slide)
                 const hint = intentHint(slide)
+                const roleMeta = formatNarrativeRole(slide.narrativeRole)
+                const typeLabel = formatOutlineContentType(slide.suggestedContentType)
 
                 return (
                   <div
                     key={slide.id}
-                    className="aig-outline-card aig-stagger-fade-in"
+                    className={`${blueprintCardClassName(blueprintTheme.appearance)} aig-stagger-fade-in`}
                     style={{ animationDelay: `${idx * 0.05}s` }}
                   >
                     <div className="aig-outline-number">
                       <span>{idx + 1}</span>
                     </div>
                     <div className="aig-outline-content">
+                      {!slide.isEditing && (roleMeta.label || typeLabel) ? (
+                        <div className="aig-outline-meta-row">
+                          {roleMeta.label ? (
+                            <span
+                              className={`aig-outline-role-chip aig-outline-role-chip--${roleMeta.group}`}
+                            >
+                              {roleMeta.label}
+                            </span>
+                          ) : null}
+                          {typeLabel ? (
+                            <span className="aig-outline-type-chip">{typeLabel}</span>
+                          ) : null}
+                        </div>
+                      ) : null}
+
                       {slide.isEditing ? (
                         <input
                           className="aig-outline-input fade-in"

@@ -37,7 +37,6 @@ import PptDeckOpenBoot from './PptDeckOpenBoot'
 import { usePptEditorHistory } from '../../../hooks/usePptEditorHistory'
 import { usePptElementMutations } from './usePptElementMutations'
 import { computePptSmartGuides } from '../../../utils/pptSmartGuides'
-import { coercePlainText } from '../../../utils/pptTextContent'
 import {
   canPptGroup,
   canPptUngroup,
@@ -89,6 +88,8 @@ import {
   toApiThemeId,
   buildWizardThemeTokens,
 } from '../../../utils/presentationHelpers'
+import { enforceAppearancePalette } from '../../../utils/themeAppearance'
+import { coercePlainText } from '../../../utils/pptTextContent'
 import { compileDeckLayoutToElements, buildThemeCompileOptions } from '../../../utils/compileDeckLayoutToElements'
 import { finalizeChartShapes } from '../../../utils/chartShapeFinalize'
 import { resolveLayoutSchemaById } from '../../../utils/deckLayoutRegistry'
@@ -311,12 +312,13 @@ const DEFAULT_SLIDE_BG = '#FFFFFF'
 const DEFAULT_TEXT_COLOR = '#0F172A'
 
 function resolveThemeVisual(themeId, themeTokens) {
-  const palette = themeTokens?.palette
+  const enforced = themeTokens?.palette ? enforceAppearancePalette(themeTokens) : themeTokens
+  const palette = enforced?.palette
   if (palette?.bg || palette?.primary || palette?.text) {
     const bg = palette.bg || palette.surface || DEFAULT_SLIDE_BG
     const primary = palette.primary || '#3B82F6'
     const secondary = palette.secondary || primary
-    const text = palette.text || '#0F172A'
+    const text = palette.text || (enforced?.appearance === 'dark' ? '#F8FAFC' : '#0F172A')
     const muted = palette.muted || '#64748B'
     return {
       id: 'themeTokens',
@@ -330,6 +332,7 @@ function resolveThemeVisual(themeId, themeTokens) {
       accent: palette.accent || secondary,
       background: bg,
       palette,
+      appearance: enforced?.appearance,
     }
   }
   const id = String(themeTokens?.wizardColorThemeId || themeId || '')
@@ -1096,7 +1099,7 @@ function SlideStage({
   )
 }
 
-export default function AIPptEditor({
+function AIPptEditor({
   outline = [],
   config = {},
   workspaceId: workspaceIdProp,
@@ -4973,3 +4976,5 @@ export default function AIPptEditor({
     </div>
   )
 }
+
+export default AIPptEditor
