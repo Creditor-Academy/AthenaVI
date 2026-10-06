@@ -49,6 +49,14 @@ import styleWatercolorImg from '../../../assets/slides_icons/style_watercolor.jp
 import formatPortraitImg from '../../../assets/ai-img-gen/format-portrait.jpg';
 import formatLandscapeImg from '../../../assets/ai-img-gen/format-landscape.jpg';
 import formatSquareImg from '../../../assets/ai-img-gen/format-square.jpg';
+import printA4PortraitPreview from '../../../assets/ai-img-gen/Minimal Blue Poster Template Illustration.png';
+import printA3PortraitPreview from '../../../assets/ai-img-gen/a3-portrait.png';
+import printA2PortraitPreview from '../../../assets/ai-img-gen/a2-portrait.png';
+import printA4LandscapePreview from '../../../assets/ai-img-gen/a4-landscape.png';
+import printA3LandscapePreview from '../../../assets/ai-img-gen/a3-landscape.png';
+import printA2LandscapePreview from '../../../assets/ai-img-gen/a2-landscape.png';
+import printBusinessCardPreview from '../../../assets/ai-img-gen/business-portrait.png';
+import printInvitationPreview from '../../../assets/ai-img-gen/invitation-portrait.png';
 
 import layoutProcess from '../../../assets/layouts/layout_process_v2.jpg';
 import layoutTimeline from '../../../assets/layouts/layout_timeline_v2.jpg';
@@ -161,12 +169,6 @@ const PRINTABLE_FORMAT_FALLBACK = [
     modes: ['printable'],
     print: { kind: 'invitation', series: 'a6', orientation: 'portrait', widthMm: 105, heightMm: 148, dpi: 300 },
   },
-  {
-    id: 'invitation-a6-landscape',
-    name: 'Invitation',
-    modes: ['printable'],
-    print: { kind: 'invitation', series: 'a6', orientation: 'landscape', widthMm: 148, heightMm: 105, dpi: 300 },
-  },
 ];
 
 const PRINT_GROUPS = [
@@ -174,8 +176,18 @@ const PRINT_GROUPS = [
   { id: 'a3', label: 'A3 poster', kind: 'poster', series: 'a3', hint: 'Headline ≤ 60 · 4 details · CTA ≤ 40' },
   { id: 'a2', label: 'A2 poster', kind: 'poster', series: 'a2', hint: 'Headline ≤ 60 · 4 details · CTA ≤ 40' },
   { id: 'business-card', label: 'Business card', kind: 'business-card', formatId: 'business-card', hint: 'Name ≤ 40 · 4 contact lines' },
-  { id: 'invitation', label: 'Invitation', kind: 'invitation', series: 'a6', hint: 'Headline ≤ 60 · 5 details · CTA ≤ 40' },
+  { id: 'invitation', label: 'Invitation', kind: 'invitation', formatId: 'invitation-a6-portrait', hint: 'Headline ≤ 60 · 5 details · CTA ≤ 40' },
 ];
+
+function printPreviewFor(group, orientation) {
+  const landscape = orientation === 'landscape';
+  if (group?.kind === 'business-card') return printBusinessCardPreview;
+  if (group?.kind === 'invitation') return printInvitationPreview;
+  if (group?.id === 'a4') return landscape ? printA4LandscapePreview : printA4PortraitPreview;
+  if (group?.id === 'a3') return landscape ? printA3LandscapePreview : printA3PortraitPreview;
+  if (group?.id === 'a2') return landscape ? printA2LandscapePreview : printA2PortraitPreview;
+  return printA4PortraitPreview;
+}
 
 function printablesFrom(formats = []) {
   const fromApi = formats.filter((f) => formatServesMode(f, 'printable') && f?.print);
@@ -734,17 +746,32 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
   const needsSizePick = activeMode === 'social' || activeMode === 'printable';
   const canGenerate = Boolean(prompt.trim()) && !creditsBusy && (!needsSizePick || Boolean(selectedFormat));
 
+  useEffect(() => {
+    if (selectedFormat === 'invitation-a6-landscape') {
+      setSelectedFormat('invitation-a6-portrait');
+    }
+  }, [selectedFormat]);
+
   const applyPrintOrientation = (next) => {
     setPrintOrientation(next);
     setShowFormatDropdown(false);
     setShowModelDropdown(false);
     const current = printFormats.find((f) => f.id === selectedFormat);
     const kind = String(current?.print?.kind || '').replace(/_/g, '-');
-    if (kind !== 'poster' && kind !== 'invitation') return;
-    const series = current.print?.series || String(current.id || '').split('-')[1];
-    const group = PRINT_GROUPS.find((g) => g.kind === kind && g.series === series);
-    const fmt = printFormatForGroup(group, printFormats, next);
-    if (fmt?.id) setSelectedFormat(fmt.id);
+    if (kind === 'poster') {
+      const series = current.print?.series || String(current.id || '').split('-')[1];
+      const group = PRINT_GROUPS.find((g) => g.kind === 'poster' && g.series === series);
+      const fmt = printFormatForGroup(group, printFormats, next);
+      if (fmt?.id) setSelectedFormat(fmt.id);
+      return;
+    }
+    if (kind === 'invitation' && next === 'landscape') {
+      setSelectedFormat('');
+      return;
+    }
+    if (kind === 'business-card' && next === 'portrait') {
+      setSelectedFormat('');
+    }
   };
 
   if (launchStudio || activeThreadId) {
@@ -927,17 +954,18 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
         {activeMode === 'printable' && (
           <section className="styles-grid-container social-destinations print-sizes" style={{ position: 'relative', zIndex: 1 }}>
             <div className="styles-grid-title">Choose a print size</div>
-            <div className="social-dest-grid print-size-grid">
-              {PRINT_GROUPS.map((group) => {
+            <div className={`social-dest-grid print-size-grid${printOrientation === 'landscape' ? ' is-landscape' : ''}`}>
+              {PRINT_GROUPS.filter((group) => {
+                if (group.kind === 'poster') return true;
+                if (group.kind === 'invitation') return printOrientation === 'portrait';
+                if (group.kind === 'business-card') return printOrientation === 'landscape';
+                return false;
+              }).map((group) => {
                 const fmt = printFormatForGroup(group, printFormats, printOrientation);
                 if (!fmt) return null;
                 const print = fmt.print || {};
                 const orient = print.orientation || 'portrait';
-                const previewSrc = print.kind === 'business-card'
-                  ? formatLandscapeImg
-                  : orient === 'landscape'
-                    ? formatLandscapeImg
-                    : formatPortraitImg;
+                const previewSrc = printPreviewFor(group, printOrientation);
                 const selected = selectedFormat === fmt.id;
                 return (
                   <button
