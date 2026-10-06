@@ -290,6 +290,51 @@
   font-size: 0.8125rem;
 }
 
+.sa-storage-input-group {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.sa-storage-input-group .sa-storage-amount-input {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: none;
+  flex: 1;
+  min-width: 0;
+  height: 34px;
+}
+
+.sa-storage-input-group .sa-storage-unit-select {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  height: 34px;
+  padding: 0 8px 0 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background-color: color-mix(in srgb, var(--bg-card) 85%, var(--border-color));
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  width: auto;
+  min-width: 58px;
+  cursor: pointer;
+}
+
+.sa-storage-input-group .sa-storage-unit-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  z-index: 1;
+}
+
+.sa-storage-calc-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  word-break: break-all;
+}
+
+
 .sa-reason-toggle {
   background: none;
   border: none;
