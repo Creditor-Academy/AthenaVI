@@ -23,7 +23,8 @@ import { fetchTemplateBundles } from '../../utils/fetchTemplateBundles.js'
 import { CREATE_OPTIONS } from '../../constants/createOptions.js'
 import TemplateScenePreview from '../../components/features/editor/editor/TemplateScenePreview'
 import ProjectSceneThumbnail from '../../components/features/workspace/workspace/ProjectSceneThumbnail.jsx'
-import { SkeletonProjectCard } from '../page-skeleton/SkeletonPrimitives'
+import { SkeletonItemCard, SkeletonProjectCard } from '../page-skeleton/SkeletonPrimitives'
+import '../../components/features/workspace/workspace/WorkspaceStyles.css'
 import '../page-skeleton/skeleton.css'
 import notebookImage from '../../assets/home_quickcreate/notebook.png'
 import paintBucketImage from '../../assets/home_quickcreate/paint_bucket.png'
@@ -448,7 +449,7 @@ function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigat
                         {templatesLoading && (
                             <div className="projects-grid-override">
                                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                                    <SkeletonProjectCard key={i} />
+                                    <SkeletonItemCard key={i} />
                                 ))}
                             </div>
                         )}
@@ -465,13 +466,13 @@ function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigat
                         )}
 
                         {!templatesLoading && featuredTemplates.length > 0 && (
-                            <div className="projects-grid-override">
+                            <div className="projects-grid-override home-templates-grid">
                                 {featuredTemplates.map((bundle) => {
                                     const sceneCount = bundle.scenes?.length || 0
                                     return (
-                                        <div
+                                        <article
                                             key={bundle.id}
-                                            className="project-card home-template-card"
+                                            className="wsc-card wsc-video-card home-template-card"
                                             onClick={() => onSelectTemplate?.(bundle)}
                                             onKeyDown={(e) => {
                                                 if (e.key === 'Enter' || e.key === ' ') {
@@ -481,46 +482,68 @@ function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigat
                                             }}
                                             role="button"
                                             tabIndex={0}
+                                            aria-label={`Use template ${bundle.name}`}
                                         >
-                                            <div className="project-thumb-container home-template-thumb">
-                                                {bundle.coverScene ? (
-                                                    <div className="home-template-preview">
-                                                        <TemplateScenePreview template={bundle.coverScene} compact={true} />
-                                                    </div>
-                                                ) : (
-                                                    <div className="project-thumb-placeholder">
-                                                        <MdLayers size={36} />
-                                                    </div>
+                                            <div className="wsc-video-card__thumb home-template-thumb">
+                                                <div className="wsc-video-card__thumb-inner home-template-thumb-inner">
+                                                    {bundle.coverScene ? (
+                                                        <div className="home-template-preview">
+                                                            <TemplateScenePreview template={bundle.coverScene} compact={true} />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="home-template-placeholder">
+                                                            <MdLayers size={36} />
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {bundle.category && (
+                                                    <span className="wsc-kind-badge home-template-kind-badge">
+                                                        <MdAutoAwesome size={12} />
+                                                        <span>{bundle.category}</span>
+                                                    </span>
                                                 )}
-                                                <span className="home-template-badge">{bundle.category}</span>
-                                                <div className="project-overlay">
-                                                    <button
-                                                        type="button"
-                                                        className="btn-edit-premium"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation()
-                                                            onSelectTemplate?.(bundle)
-                                                        }}
-                                                    >
-                                                        <MdAutoAwesome size={18} /> Use Template
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div className="project-content">
-                                                <div className="project-info">
-                                                    <h3>{bundle.name}</h3>
-                                                    <div className="project-meta">
-                                                        {sceneCount} scene{sceneCount !== 1 ? 's' : ''} · {bundle.aspectRatio || '16:9'}
+
+                                                <div className="wsc-card__hover-overlay">
+                                                    <div className="wsc-card__action-pill">
+                                                        <MdAutoAwesome size={15} />
+                                                        <span>Use Template</span>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
+
+                                            <div className="wsc-video-card__meta home-template-meta">
+                                                <div className="wsc-video-card__info">
+                                                    <div className="wsc-video-card__title-row">
+                                                        <h4 className="wsc-video-card__title" title={bundle.name}>
+                                                            {bundle.name}
+                                                        </h4>
+                                                        <span className="wsc-status-capsule wsc-status-capsule--template">
+                                                            <span className="wsc-status-capsule__dot" />
+                                                            {bundle.aspectRatio || '16:9'}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="wsc-video-card__byline">
+                                                        <span className="wsc-byline-item">
+                                                            <MdLayers size={13} />
+                                                            <span>{sceneCount} scene{sceneCount !== 1 ? 's' : ''}</span>
+                                                        </span>
+                                                        <span className="wsc-card__dot" aria-hidden="true">·</span>
+                                                        <span className="wsc-byline-item meta-tag-highlight">
+                                                            {bundle.category || 'Featured'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </article>
                                     )
                                 })}
                             </div>
                         )}
                     </div>
                 )}
+
 
                 {activeTab === 'recent' && (
                     <div className="tab-pane fade-in">

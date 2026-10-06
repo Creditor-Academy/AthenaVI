@@ -25,6 +25,7 @@ import {
 } from '../../utils/workspaceLibrary.js'
 import '../../components/features/workspace/workspace/WorkspaceStyles.css'
 import VideosSkeleton from '../page-skeleton/VideosSkeleton'
+import { SkeletonMediaCollection } from '../page-skeleton/SkeletonPrimitives'
 import ExportVideoCard from './ExportVideoCard.jsx'
 import ExportVideoRow from './ExportVideoRow.jsx'
 import PresentationDeckPreviewModal from './PresentationDeckPreviewModal.jsx'
@@ -42,6 +43,8 @@ import {
   WORK_CATEGORY_TABS,
 } from './videosUtils'
 import './Videos.css'
+
+const BATCH_SIZE = 16
 
 const CATEGORY_TAB_ICONS = {
   all: MdApps,
@@ -88,12 +91,14 @@ function Videos({ onEdit, onOpenImage }) {
   const [filterBy, setFilterBy] = useState('all')
   const [sortBy, setSortBy] = useState('completed_desc')
   const [groupBy, setGroupBy] = useState('none')
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE)
   const [previewItem, setPreviewItem] = useState(null)
   const [previewUrl, setPreviewUrl] = useState('')
   const [actionId, setActionId] = useState(null)
   const [toast, setToast] = useState(null)
   const toastTimeoutRef = useRef(null)
   const workspacesRef = useRef([])
+  const loadMoreSentinelRef = useRef(null)
 
   useEffect(() => {
     const ctx = consumeDashboardSearchContext('videos')
@@ -111,6 +116,11 @@ function Videos({ onEdit, onOpenImage }) {
       if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
     }
   }, [])
+
+  // Reset pagination on filter or category change
+  useEffect(() => {
+    setVisibleCount(BATCH_SIZE)
+  }, [activeCategory, activeSection, searchQuery, filterBy, sortBy, groupBy])
 
   const loadLibraryForWorkspaces = useCallback(async (workspaces, category) => {
     const catsToLoad =
@@ -220,6 +230,51 @@ function Videos({ onEdit, onOpenImage }) {
     () => groupVideos(filteredWorkItems, groupBy),
     [filteredWorkItems, groupBy]
   )
+
+  const hasMore = visibleCount < filteredWorkItems.length
+
+  // Batch slicing for scroll performance
+  const visibleWorkGroups = useMemo(() => {
+    if (groupBy === 'none') {
+      return [{ key: 'all', label: null, videos: filteredWorkItems.slice(0, visibleCount) }]
+    }
+    let remainingBudget = visibleCount
+    return workGroups
+      .map((group) => {
+        if (remainingBudget <= 0) return null
+        const take = Math.min(group.videos.length, remainingBudget)
+        remainingBudget -= take
+        return {
+          ...group,
+          videos: group.videos.slice(0, take),
+          totalCount: group.videos.length,
+        }
+      })
+      .filter(Boolean)
+  }, [workGroups, filteredWorkItems, visibleCount, groupBy])
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!hasMore) return
+    const sentinel = loadMoreSentinelRef.current
+    if (!sentinel) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0]
+        if (first?.isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + BATCH_SIZE, filteredWorkItems.length))
+        }
+      },
+      {
+        rootMargin: '250px',
+        threshold: 0.05,
+      }
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasMore, filteredWorkItems.length])
 
   const hasSearch =
     Boolean(searchQuery.trim()) ||
@@ -480,17 +535,32 @@ function Videos({ onEdit, onOpenImage }) {
             </div>
           ) : (
             <div className="videos-groups">
-              {workGroups.map((group) => (
+              {visibleWorkGroups.map((group) => (
                 <section key={group.key} className="videos-group">
                   {group.label ? (
                     <h3 className="videos-group__heading">
                       <span>{group.label}</span>
-                      <span className="videos-group__count">({group.videos.length})</span>
+                      <span className="videos-group__count">
+                        ({group.videos.length}
+                        {group.totalCount && group.totalCount > group.videos.length
+                          ? ` of ${group.totalCount}`
+                          : ''}
+                        )
+                      </span>
                     </h3>
                   ) : null}
                   {renderWorkCollection(group.videos)}
                 </section>
               ))}
+
+              {hasMore && (
+                <div ref={loadMoreSentinelRef} className="videos-scroll-loader" aria-busy="true" aria-label="Loading more items">
+                  <SkeletonMediaCollection
+                    viewMode={viewMode}
+                    cardCount={Math.min(viewMode === 'grid' ? 4 : 2, filteredWorkItems.length - visibleCount)}
+                  />
+                </div>
+              )}
             </div>
           )}
         </main>

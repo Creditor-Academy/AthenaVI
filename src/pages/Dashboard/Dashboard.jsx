@@ -742,6 +742,8 @@ function Dashboard({ onCreate, initialSection }) {
               onTabChange={handleAdminTabChange}
               onNavigateHelp={() => goToSection('help')}
               onCloseMobile={() => setSidebarMobileOpen(false)}
+              collapsed={sidebarCollapsed}
+              onToggleCollapse={toggleSidebarCollapsed}
             />
           ) : (
             <DashboardSidebar
