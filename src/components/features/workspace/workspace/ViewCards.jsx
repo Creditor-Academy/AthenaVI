@@ -261,22 +261,29 @@ export const FolderCard = ({ folder, onClick, contextProps }) => {
                 </div>
 
                 <div className="wsc-card__hover-overlay">
-                    <span>Open Folder</span>
+                    <div className="wsc-card__action-pill">
+                        <MdFolderOpen size={15} />
+                        <span>Open Folder</span>
+                    </div>
                 </div>
             </div>
 
             {/* Meta */}
             <div className="wsc-folder-card__meta">
                 <div className="wsc-folder-card__info">
-                    <h4 className="wsc-folder-card__title">{folder.name}</h4>
+                    <h4 className="wsc-folder-card__title" title={folder.name}>{folder.name}</h4>
                     <div className="wsc-folder-card__byline">
-                        <MdSchedule size={11} />
-                        <span>{relative}</span>
+                        <span className="wsc-byline-item">
+                            <MdSchedule size={12} />
+                            <span>{relative}</span>
+                        </span>
                         {folder.createdBy && (
                             <>
                                 <span className="wsc-card__dot" aria-hidden="true">·</span>
-                                <UserIdentity name={folder.createdBy} compact showName={false} />
-                                <span className="wsc-folder-card__creator">{folder.createdBy}</span>
+                                <span className="wsc-byline-author">
+                                    <UserIdentity name={folder.createdBy} compact showName={false} />
+                                    <span className="wsc-folder-card__creator">{folder.createdBy}</span>
+                                </span>
                             </>
                         )}
                     </div>
@@ -302,27 +309,27 @@ function KindBadge({ kind }) {
     if (kind === 'presentation') {
         return (
             <span className="wsc-kind-badge wsc-kind-badge--presentation">
-                <MdSlideshow size={11} /> Presentation
+                <MdSlideshow size={12} /> Presentation
             </span>
         );
     }
     if (kind === 'image') {
         return (
             <span className="wsc-kind-badge wsc-kind-badge--image">
-                <MdImage size={11} /> Image
+                <MdImage size={12} /> Image
             </span>
         );
     }
     if (kind === 'canvas') {
         return (
             <span className="wsc-kind-badge wsc-kind-badge--canvas">
-                <MdBrush size={11} /> Design
+                <MdBrush size={12} /> Design
             </span>
         );
     }
     return (
         <span className="wsc-kind-badge wsc-kind-badge--video">
-            <MdMovieCreation size={11} /> Video
+            <MdMovieCreation size={12} /> Video
         </span>
     );
 }
@@ -372,6 +379,7 @@ export const VideoCard = ({ video, onClick, contextProps }) => {
     const statusLabel = statusRaw
         ? String(statusRaw).charAt(0).toUpperCase() + String(statusRaw).slice(1).toLowerCase()
         : null;
+    const statusKey = String(statusRaw || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
     const openLabel =
         kind === 'presentation'
             ? 'Open Presentation'
@@ -396,43 +404,65 @@ export const VideoCard = ({ video, onClick, contextProps }) => {
 
     return (
         <div className={`wsc-card wsc-video-card wsc-card--${kind}`} onClick={onClick}>
-            <div className="wsc-video-card__thumb" aria-hidden="true">
+            <div className="wsc-video-card__thumb">
                 <div className="wsc-video-card__thumb-inner">
                     <LibraryThumb item={video} kind={kind} />
                 </div>
 
-                <div className="wsc-card__hover-overlay">
-                    <div className="wsc-video-card__play-btn">
-                        {kind === 'image' ? <MdImage size={20} /> : kind === 'presentation' ? <MdSlideshow size={20} /> : kind === 'canvas' ? <MdBrush size={20} /> : <MdPlayArrow size={22} />}
-                    </div>
-                    <span>{openLabel}</span>
-                </div>
-
                 <KindBadge kind={kind} />
 
-                {statusLabel && (
-                    <div className={`wsc-video-card__status wsc-video-card__status--${String(statusRaw || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-')}`}>
-                        {statusLabel}
+                <div
+                    className="wsc-card__menu"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                >
+                    <ContextMenu type="video" {...(contextProps || {})} />
+                </div>
+
+                <div className="wsc-card__hover-overlay">
+                    <div className="wsc-card__action-pill">
+                        {kind === 'image' ? (
+                            <MdImage size={15} />
+                        ) : kind === 'presentation' ? (
+                            <MdSlideshow size={15} />
+                        ) : kind === 'canvas' ? (
+                            <MdBrush size={15} />
+                        ) : (
+                            <MdPlayArrow size={16} />
+                        )}
+                        <span>{openLabel}</span>
                     </div>
-                )}
+                </div>
             </div>
 
             <div className="wsc-video-card__meta">
                 <div className="wsc-video-card__info">
-                    <h4 className="wsc-video-card__title">{video.name || video.title}</h4>
+                    <div className="wsc-video-card__title-row">
+                        <h4 className="wsc-video-card__title" title={video.name || video.title}>
+                            {video.name || video.title}
+                        </h4>
+                        {statusLabel && (
+                            <span className={`wsc-status-capsule wsc-status-capsule--${statusKey}`}>
+                                <span className="wsc-status-capsule__dot" />
+                                {statusLabel}
+                            </span>
+                        )}
+                    </div>
+
                     <div className="wsc-video-card__byline">
-                        <MdSchedule size={11} />
-                        <span>{relative}</span>
+                        <span className="wsc-byline-item">
+                            <MdSchedule size={12} />
+                            <span>{relative}</span>
+                        </span>
                         {kind === 'presentation' && video.slideCount != null && (
                             <>
                                 <span className="wsc-card__dot" aria-hidden="true">·</span>
-                                <span>{video.slideCount} slides</span>
+                                <span className="wsc-byline-item">{video.slideCount} slides</span>
                             </>
                         )}
                         {kind === 'image' && video.mode && (
                             <>
                                 <span className="wsc-card__dot" aria-hidden="true">·</span>
-                                <span>
+                                <span className="wsc-byline-item">
                                   {video.mode === 'infographic' ? 'Infographic' : 'Image'}
                                   {video.archetype ? ` · ${video.archetype}` : ''}
                                 </span>
@@ -441,19 +471,14 @@ export const VideoCard = ({ video, onClick, contextProps }) => {
                         {creatorName ? (
                             <>
                                 <span className="wsc-card__dot" aria-hidden="true">·</span>
-                                <UserIdentity name={creatorName} compact showName={false} />
-                                <span className="wsc-video-card__creator">{creatorName}</span>
+                                <span className="wsc-byline-author">
+                                    <UserIdentity name={creatorName} compact showName={false} />
+                                    <span className="wsc-video-card__creator">{creatorName}</span>
+                                </span>
                             </>
                         ) : null}
                     </div>
                 </div>
-            </div>
-
-            <div
-                className="wsc-card__menu"
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            >
-                <ContextMenu type="video" {...(contextProps || {})} />
             </div>
         </div>
     );
