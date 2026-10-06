@@ -161,12 +161,6 @@ const PRINTABLE_FORMAT_FALLBACK = [
     modes: ['printable'],
     print: { kind: 'invitation', series: 'a6', orientation: 'portrait', widthMm: 105, heightMm: 148, dpi: 300 },
   },
-  {
-    id: 'invitation-a6-landscape',
-    name: 'Invitation',
-    modes: ['printable'],
-    print: { kind: 'invitation', series: 'a6', orientation: 'landscape', widthMm: 148, heightMm: 105, dpi: 300 },
-  },
 ];
 
 const PRINT_GROUPS = [
@@ -174,7 +168,7 @@ const PRINT_GROUPS = [
   { id: 'a3', label: 'A3 poster', kind: 'poster', series: 'a3', hint: 'Headline ≤ 60 · 4 details · CTA ≤ 40' },
   { id: 'a2', label: 'A2 poster', kind: 'poster', series: 'a2', hint: 'Headline ≤ 60 · 4 details · CTA ≤ 40' },
   { id: 'business-card', label: 'Business card', kind: 'business-card', formatId: 'business-card', hint: 'Name ≤ 40 · 4 contact lines' },
-  { id: 'invitation', label: 'Invitation', kind: 'invitation', series: 'a6', hint: 'Headline ≤ 60 · 5 details · CTA ≤ 40' },
+  { id: 'invitation', label: 'Invitation', kind: 'invitation', formatId: 'invitation-a6-portrait', hint: 'Headline ≤ 60 · 5 details · CTA ≤ 40' },
 ];
 
 function printablesFrom(formats = []) {
@@ -734,17 +728,28 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
   const needsSizePick = activeMode === 'social' || activeMode === 'printable';
   const canGenerate = Boolean(prompt.trim()) && !creditsBusy && (!needsSizePick || Boolean(selectedFormat));
 
+  useEffect(() => {
+    if (selectedFormat === 'invitation-a6-landscape') {
+      setSelectedFormat('invitation-a6-portrait');
+    }
+  }, [selectedFormat]);
+
   const applyPrintOrientation = (next) => {
     setPrintOrientation(next);
     setShowFormatDropdown(false);
     setShowModelDropdown(false);
     const current = printFormats.find((f) => f.id === selectedFormat);
     const kind = String(current?.print?.kind || '').replace(/_/g, '-');
-    if (kind !== 'poster' && kind !== 'invitation') return;
-    const series = current.print?.series || String(current.id || '').split('-')[1];
-    const group = PRINT_GROUPS.find((g) => g.kind === kind && g.series === series);
-    const fmt = printFormatForGroup(group, printFormats, next);
-    if (fmt?.id) setSelectedFormat(fmt.id);
+    if (kind === 'poster') {
+      const series = current.print?.series || String(current.id || '').split('-')[1];
+      const group = PRINT_GROUPS.find((g) => g.kind === 'poster' && g.series === series);
+      const fmt = printFormatForGroup(group, printFormats, next);
+      if (fmt?.id) setSelectedFormat(fmt.id);
+      return;
+    }
+    if (next === 'landscape' && (kind === 'invitation' || kind === 'business-card')) {
+      setSelectedFormat('');
+    }
   };
 
   if (launchStudio || activeThreadId) {
@@ -928,7 +933,10 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
           <section className="styles-grid-container social-destinations print-sizes" style={{ position: 'relative', zIndex: 1 }}>
             <div className="styles-grid-title">Choose a print size</div>
             <div className="social-dest-grid print-size-grid">
-              {PRINT_GROUPS.map((group) => {
+              {PRINT_GROUPS.filter((group) => {
+                if (group.kind === 'poster') return true;
+                return printOrientation === 'portrait';
+              }).map((group) => {
                 const fmt = printFormatForGroup(group, printFormats, printOrientation);
                 if (!fmt) return null;
                 const print = fmt.print || {};

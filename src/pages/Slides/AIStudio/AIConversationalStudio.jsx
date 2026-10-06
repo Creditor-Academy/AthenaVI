@@ -761,8 +761,6 @@ export default function AIConversationalStudio({
         return { aspectRatio: '3.5/2', maxWidth: '480px' };
       case 'invitation-a6-portrait':
         return { aspectRatio: '105/148', maxWidth: '340px' };
-      case 'invitation-a6-landscape':
-        return { aspectRatio: '148/105', maxWidth: '480px' };
       default:
         return null;
     }
