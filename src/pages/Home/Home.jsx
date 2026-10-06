@@ -394,6 +394,28 @@ function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigat
                 ))}
             </div>
 
+            <div className="home-referral-banner" onClick={() => onNavigate?.('referrals')}>
+                <div className="home-referral-banner-content">
+                    <span className="home-referral-banner-badge">Coming Soon</span>
+                    <h3>Invite friends, get 100 credits!</h3>
+                    <p>Be the first to know when referrals go live.</p>
+                </div>
+                <svg className="home-referral-banner-svg" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="blob-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#3b82f6" />
+                            <stop offset="50%" stopColor="#6366f1" />
+                            <stop offset="100%" stopColor="#8b5cf6" />
+                        </linearGradient>
+                        <mask id="star-mask">
+                            <rect width="200" height="200" fill="white" />
+                            <path d="M100 35 Q100 95 40 100 Q100 105 100 165 Q100 105 160 100 Q100 95 100 35 Z" fill="black" />
+                        </mask>
+                    </defs>
+                    <circle cx="100" cy="100" r="95" fill="url(#blob-grad)" mask="url(#star-mask)" />
+                </svg>
+            </div>
+
             <div className="home-tabs-wrapper">
                 <div className="home-tabs">
                     <button
@@ -414,31 +436,6 @@ function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigat
             <div className="tab-content-area">
                 {activeTab === 'templates' && (
                     <div className="tab-pane fade-in">
-                        <div className="home-referral-banner" onClick={() => onNavigate?.('referrals')}>
-                            <div className="home-referral-banner-content">
-                                <span className="home-referral-banner-badge">Coming Soon</span>
-                                <h3>Invite friends, get 100 credits!</h3>
-                                <p>Be the first to know when referrals go live.</p>
-                            </div>
-                            <svg className="home-referral-banner-svg" viewBox="0 0 200 200">
-                                <defs>
-                                    <linearGradient id="blob-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stopColor="#3b82f6" />
-                                        <stop offset="50%" stopColor="#6366f1" />
-                                        <stop offset="100%" stopColor="#8b5cf6" />
-                                    </linearGradient>
-                                    <mask id="star-mask">
-                                        <rect width="200" height="200" fill="white" />
-                                        <path d="M100 50 Q100 95 55 100 Q100 105 100 150 Q100 105 145 100 Q100 95 100 50" fill="black" />
-                                    </mask>
-                                </defs>
-                                <path 
-                                    d="M100,10 C140,-10 190,30 190,80 C190,110 210,140 170,170 C130,200 70,210 30,170 C-10,130 -10,70 30,30 C60,-10 80,10 100,10 Z" 
-                                    fill="url(#blob-grad)" 
-                                    mask="url(#star-mask)"
-                                />
-                            </svg>
-                        </div>
                         <div className="section-header">
                             <h2>Top Templates for You</h2>
                             {onBrowseTemplates && (

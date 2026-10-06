@@ -44,9 +44,9 @@ function AdminPortalSidebar({ activeTab, onTabChange, onNavigateHelp, onCloseMob
                     <span style={{
                       display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                       minWidth: 18, height: 18, padding: '0 5px', borderRadius: 999,
-                      background: 'color-mix(in srgb, #f59e0b 20%, transparent)',
-                      border: '1px solid color-mix(in srgb, #f59e0b 40%, var(--border-color))',
-                      color: '#f59e0b', fontSize: '0.65rem', fontWeight: 700, marginLeft: 'auto',
+                      background: 'color-mix(in srgb, var(--primary) 18%, transparent)',
+                      border: '1px solid color-mix(in srgb, var(--primary) 45%, var(--border-color))',
+                      color: 'var(--primary)', fontSize: '0.65rem', fontWeight: 700, marginLeft: 'auto',
                     }}>
                       {badgeCount}
                     </span>

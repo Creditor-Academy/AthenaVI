@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Building2, BarChart3, Video, HardDrive, Shield, Mail, UserCheck, LayoutTemplate, Shapes } from 'lucide-react'
+import { LayoutDashboard, Users, Building2, BarChart3, Video, HardDrive, Shield, Mail, UserCheck, LayoutTemplate, Shapes, Settings } from 'lucide-react'
 
 export const adminPortalSidebarGroups = [
   {
@@ -40,6 +40,12 @@ export const adminPortalSidebarGroups = [
     label: 'Communications',
     items: [
       { id: 'broadcast', label: 'Email Broadcast', Icon: Mail },
+    ],
+  },
+  {
+    label: 'Account',
+    items: [
+      { id: 'settings', label: 'Settings', Icon: Settings },
     ],
   },
 ]
