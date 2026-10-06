@@ -25,6 +25,7 @@ import {
   outlineCardsToApiPayload,
   toApiThemeId,
 } from '../../utils/presentationHelpers'
+import { THEMES } from '../../constants/pptWizardThemes'
 
 const PPT_DAY_BACKGROUNDS = {
   morning: pptBgMorning,
@@ -253,6 +254,8 @@ export default function AIPptGenerator({
           fontPairing={config.fontPairing || null}
           creditEstimate={creditEstimate}
           isSubmitting={isBusy}
+          colorThemeId={config.theme}
+          colorThemes={config.availableOptions?.colorThemes || THEMES}
           onGenerate={handleOutlineComplete}
           onBack={() => setStage('wizard')}
         />
