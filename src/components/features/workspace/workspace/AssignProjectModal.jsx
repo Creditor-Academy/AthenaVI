@@ -121,7 +121,7 @@ const AssignProjectModal = ({ isOpen, onClose, onAssigned, workspaceId, project 
               )}
               {!membersLoading &&
                 members.map((member) => {
-                  const memberId = member.id || member.userId || member.user?.id || member.user?._id;
+                  const memberId = member.userId || member.user?.id || member.user?._id || member.id;
                   const label = member.user?.name || member.user?.email || member.name || member.email || 'Member';
                   const email = member.user?.email || member.email || '';
                   const selected = currentAssigneeId === memberId;

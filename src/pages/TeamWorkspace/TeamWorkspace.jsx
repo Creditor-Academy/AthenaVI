@@ -1103,7 +1103,17 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
       <AssignProjectModal
         isOpen={!!assignTargetItem}
         onClose={() => { setAssignTargetItem(null); setAssignTargetWorkspace(null); }}
-        onAssigned={() => setLibraryEpoch((n) => n + 1)}
+        onAssigned={(updated) => {
+          setLibraryEpoch((n) => n + 1);
+          const projectName =
+            updated?.name || updated?.title || assignTargetItem?.name || assignTargetItem?.title || 'Project';
+          if (updated?.assignee) {
+            const memberName = updated.assignee.name || updated.assignee.email || 'member';
+            showToast(`"${projectName}" assigned to ${memberName}`, 'success');
+          } else {
+            showToast(`"${projectName}" unassigned`, 'success');
+          }
+        }}
         workspaceId={assignTargetWorkspace?.id}
         project={assignTargetItem}
       />

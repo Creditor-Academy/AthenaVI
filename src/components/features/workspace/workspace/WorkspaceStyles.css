@@ -897,9 +897,10 @@
 }
 
 .wsc-card:has(.is-open),
+.wsc-card:has(.context-menu-dropdown),
 .wsc-card.has-menu-open {
-  overflow: visible;
-  z-index: 25;
+  overflow: visible !important;
+  z-index: 100 !important;
 }
 
 .wsc-card:hover,
@@ -924,10 +925,16 @@
   position: absolute;
   top: 10px;
   right: 10px;
-  z-index: 6;
+  z-index: 25;
   opacity: 1;
   pointer-events: auto;
   transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.wsc-card__menu:has(.is-open),
+.wsc-card__menu:has(.context-menu-dropdown),
+.wsc-card__menu.is-open {
+  z-index: 9999 !important;
 }
 
 .wsc-card__menu .context-menu-btn {
@@ -2767,11 +2774,11 @@ button.workspace-flow-card__tool--credits:hover {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.18), 0 4px 10px rgba(0, 0, 0, 0.08);
   padding: 8px 0;
   width: max-content;
-  min-width: min-content;
-  z-index: 50;
+  min-width: 160px;
+  z-index: 9999 !important;
   margin-top: 4px;
 }
 
