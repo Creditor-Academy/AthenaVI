@@ -191,6 +191,7 @@ function Library() {
 
   const INITIAL_PAGE_SIZE = 24
   const [visibleCount, setVisibleCount] = useState(INITIAL_PAGE_SIZE)
+  const loadMoreSentinelRef = useRef(null)
 
   useEffect(() => {
     setVisibleCount(INITIAL_PAGE_SIZE)
@@ -225,6 +226,30 @@ function Library() {
   }, [filteredAssets, visibleCount])
 
   const hasMoreAssets = visibleCount < filteredAssets.length
+
+  // Infinite scroll observer for library assets
+  useEffect(() => {
+    if (!hasMoreAssets) return
+    const sentinel = loadMoreSentinelRef.current
+    if (!sentinel) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0]
+        if (first?.isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + INITIAL_PAGE_SIZE, filteredAssets.length))
+        }
+      },
+      {
+        root: document.querySelector('.assets-scroller'),
+        rootMargin: '250px',
+        threshold: 0.05,
+      }
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasMoreAssets, filteredAssets.length])
 
   const handleDeleteAsset = async (assetId) => {
     if (!workspaceId || !assetId) return
@@ -815,11 +840,13 @@ function Library() {
                   </div>
 
                   {hasMoreAssets && (
-                    <LoadMoreButton
-                      onClick={() => setVisibleCount((prev) => prev + INITIAL_PAGE_SIZE)}
-                      label="Load more assets"
-                      remainingCount={filteredAssets.length - visibleAssets.length}
-                    />
+                    <div ref={loadMoreSentinelRef} className="library-scroll-loader" aria-busy="true">
+                      <LoadMoreButton
+                        onClick={() => setVisibleCount((prev) => prev + INITIAL_PAGE_SIZE)}
+                        label="Load more assets"
+                        remainingCount={filteredAssets.length - visibleAssets.length}
+                      />
+                    </div>
                   )}
                 </>
               )}

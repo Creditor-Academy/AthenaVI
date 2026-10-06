@@ -26,6 +26,7 @@ import {
   CreateVideoCard,
 } from './ViewCards.jsx'
 import { VideoRow } from './ViewRows.jsx'
+import { SkeletonItemCard, SkeletonListRow } from '../../../../pages/page-skeleton/SkeletonPrimitives.jsx'
 
 const CATEGORY_ICONS = {
   video: MdVideoLibrary,
@@ -104,6 +105,13 @@ export default function WorkspaceLibrary({
   const [loadingItems, setLoadingItems] = useState(false)
   const [error, setError] = useState(null)
   const [imageMode, setImageMode] = useState('all')
+  const BATCH_SIZE = 16
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE)
+  const loadMoreSentinelRef = useRef(null)
+
+  useEffect(() => {
+    setVisibleCount(BATCH_SIZE)
+  }, [activeCategory, imageMode, workspaceId])
 
   const loadCategories = useCallback(async () => {
     if (!workspaceId) return
@@ -186,6 +194,34 @@ export default function WorkspaceLibrary({
   }, [categories, activeCategory, items.length])
 
   const sortedItems = useMemo(() => sortItems(items), [items, sortItems])
+  const visibleSortedItems = useMemo(
+    () => sortedItems.slice(0, visibleCount),
+    [sortedItems, visibleCount]
+  )
+  const hasMore = visibleCount < sortedItems.length
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!hasMore) return
+    const sentinel = loadMoreSentinelRef.current
+    if (!sentinel) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0]
+        if (first?.isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + BATCH_SIZE, sortedItems.length))
+        }
+      },
+      {
+        rootMargin: '250px',
+        threshold: 0.05,
+      }
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasMore, sortedItems.length])
 
   const createMeta = CATEGORY_CREATE[activeCategory] || CATEGORY_CREATE.video
 
@@ -198,7 +234,7 @@ export default function WorkspaceLibrary({
 
   const renderItems = () => {
     const Component = viewMode === 'tile' ? VideoCard : VideoRow
-    const itemElements = sortedItems.map((item) => {
+    const itemElements = visibleSortedItems.map((item) => {
       const kind = normalizeLibraryCategoryId(item.kind) || 'video'
       return (
         <Component
@@ -216,6 +252,16 @@ export default function WorkspaceLibrary({
       )
     })
 
+    const skeletonElements = hasMore
+      ? Array.from({ length: Math.min(4, sortedItems.length - visibleCount) }, (_, i) =>
+          viewMode === 'tile' ? (
+            <SkeletonItemCard key={`skel-more-${i}`} />
+          ) : (
+            <SkeletonListRow key={`skel-more-${i}`} />
+          )
+        )
+      : null
+
     if (viewMode === 'tile' && canEdit) {
       return (
         <Fragment>
@@ -227,11 +273,19 @@ export default function WorkspaceLibrary({
             icon={createMeta.icon}
           />
           {itemElements}
+          {skeletonElements}
+          {hasMore && <div ref={loadMoreSentinelRef} style={{ gridColumn: '1 / -1', height: 1 }} aria-hidden />}
         </Fragment>
       )
     }
 
-    return <Fragment>{itemElements}</Fragment>
+    return (
+      <Fragment>
+        {itemElements}
+        {skeletonElements}
+        {hasMore && <div ref={loadMoreSentinelRef} style={{ width: '100%', height: 1 }} aria-hidden />}
+      </Fragment>
+    )
   }
 
   return (

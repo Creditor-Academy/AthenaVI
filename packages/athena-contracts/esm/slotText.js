@@ -1,4 +1,5 @@
-import cjs from '../slotText.js';
+import * as cjsModule from '../slotText.js';
+const cjs = cjsModule.default || cjsModule;
 
 export const {
   textForSlot,

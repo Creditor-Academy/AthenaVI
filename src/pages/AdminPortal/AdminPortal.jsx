@@ -10,10 +10,11 @@ import SuperadminBroadcastPanel from '../../components/features/admin/superadmin
 import SuperadminEarlyAccessPanel from '../../components/features/admin/superadmin/SuperadminEarlyAccessPanel'
 import SuperadminTemplatesPanel from '../../components/features/admin/superadmin/SuperadminTemplatesPanel'
 import SuperadminGraphicsPanel from '../../components/features/admin/superadmin/SuperadminGraphicsPanel'
+import Settings from '../Settings/Settings.jsx'
 import './styles/AdminBase.css'
 import './styles/SuperadminBase.css'
 
-const VALID_TABS = new Set(['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'platform-actions', 'heygen', 'broadcast', 'early-access', 'templates', 'graphics', 'ai-template'])
+const VALID_TABS = new Set(['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'platform-actions', 'heygen', 'broadcast', 'early-access', 'templates', 'graphics', 'ai-template', 'settings'])
 
 function normalizeTab(tab) {
   return VALID_TABS.has(tab) ? tab : 'overview'
@@ -79,6 +80,7 @@ const AdminPortal = ({
         {activeTab === 'early-access' && <SuperadminEarlyAccessPanel />}
         {activeTab === 'templates' && <SuperadminTemplatesPanel />}
         {activeTab === 'graphics' && <SuperadminGraphicsPanel />}
+        {activeTab === 'settings' && <Settings />}
       </AdminPanelErrorBoundary>
     </div>
   )

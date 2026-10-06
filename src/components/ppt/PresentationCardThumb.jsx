@@ -20,8 +20,13 @@ export default function PresentationCardThumb({
 }) {
   const presentationId = item?.id || ''
   const workspaceId = item?.workspaceId || ''
-  // User requested Slide 1 canvas instead of flat generated images
-  const catalogUrl = null // resolvePresentationThumbnailUrl(item)
+  const catalogUrl =
+    resolvePresentationThumbnailUrl(item) ||
+    item?.thumbnailUrl ||
+    item?.thumbnail ||
+    item?.coverUrl ||
+    item?.url ||
+    null
 
   const hostRef = useRef(null)
   const loadedForIdRef = useRef('')
