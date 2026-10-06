@@ -13,7 +13,7 @@ import {
   workspaceCanEdit,
   hasConflictingName,
   findVideoLocation,
-  getTeamWorkspaceNames,
+  getAllWorkspaceNames,
 } from './workspaceUtils.js';
 import {
   DUPLICATE_PROJECT_NAME_MESSAGE,
@@ -66,7 +66,7 @@ export function useWorkspaceActions({
 
     const duplicateWorkspace = hasConflictingName(
       trimmedName,
-      getTeamWorkspaceNames(workspaces)
+      getAllWorkspaceNames(workspaces)
     );
     if (duplicateWorkspace) {
       throw new Error('This workspace name already exists');
@@ -245,7 +245,7 @@ export function useWorkspaceActions({
 
       const duplicateWorkspace = hasConflictingName(
         newName,
-        getTeamWorkspaceNames(workspaces),
+        getAllWorkspaceNames(workspaces),
         { excludeName: targetWorkspace.name }
       );
       if (duplicateWorkspace) {
@@ -311,9 +311,17 @@ export function useWorkspaceActions({
     }
 
     if (type === 'image-thread') {
-      const parentWorkspace = activeWorkspace;
-      if (!workspaceCanEdit(parentWorkspace)) {
+      const videoLocation = findVideoLocation(workspaces, id);
+      const parentWorkspace = videoLocation?.workspace || activeWorkspace;
+      if (!parentWorkspace || !workspaceCanEdit(parentWorkspace)) {
         throw new Error('You do not have permission to rename this chat.');
+      }
+      const videosInScope = videoLocation?.videos || [];
+      const duplicate = findDuplicateProjectName(newName, videosInScope, {
+        excludeProjectId: id,
+      });
+      if (duplicate) {
+        throw new Error(`A project named "${newName}" already exists in this folder.`);
       }
       await imageGenService.renameThread(parentWorkspace.id, id, newName);
       showToast('Chat renamed', 'success');

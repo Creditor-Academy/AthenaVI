@@ -204,6 +204,14 @@ function CreateLocationModal({
     const trimmedName = newWorkspaceName.trim()
     if (!trimmedName || creatingWorkspace) return
 
+    const isDuplicate = workspaceOptions.some(
+      (ws) => String(ws.name || '').trim().toLowerCase() === trimmedName.toLowerCase()
+    )
+    if (isDuplicate) {
+      setError('This workspace name already exists')
+      return
+    }
+
     setCreatingWorkspace(true)
     setError('')
     try {
@@ -233,6 +241,14 @@ function CreateLocationModal({
   const handleCreateFolderInline = async () => {
     const trimmedName = newFolderName.trim()
     if (!trimmedName || !workspaceId || creatingFolder) return
+
+    const isDuplicate = folderOptions.some(
+      (f) => String(f.name || '').trim().toLowerCase() === trimmedName.toLowerCase()
+    )
+    if (isDuplicate) {
+      setError('This folder name already exists in this workspace')
+      return
+    }
 
     setCreatingFolder(true)
     setError('')

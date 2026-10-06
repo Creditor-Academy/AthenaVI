@@ -1,6 +1,8 @@
 import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api.js'
 import { InsufficientCreditsError } from './creditsService.js'
 import { PPT_TITLE_MAX, sleep } from '../utils/presentationHelpers.js'
+import { generateUniqueProjectName } from '../utils/projectNameValidation.js'
+import workspaceService from './workspaceService.js'
 
 /** Turn a { message, errors } envelope into one readable line for the UI. */
 function formatValidationMessage(payload) {
@@ -191,13 +193,22 @@ class PresentationService {
     })
   }
 
-  createPresentation(workspaceId, body) {
-    const title = String(body?.title || '').trim()
+  async createPresentation(workspaceId, body) {
+    const rawTitle = String(body?.title || '').trim() || 'Untitled Presentation'
+    let finalTitle = rawTitle
+    if (body?.folderId && workspaceId) {
+      try {
+        const projects = await workspaceService.listProjectsInFolder(workspaceId, body.folderId)
+        finalTitle = generateUniqueProjectName(rawTitle, projects)
+      } catch {
+        // Fallback to rawTitle if listing fails
+      }
+    }
     return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.LIST(workspaceId), {
       method: 'POST',
       body: JSON.stringify({
         ...body,
-        title: title.slice(0, PPT_TITLE_MAX) || 'Untitled Presentation',
+        title: finalTitle.slice(0, PPT_TITLE_MAX),
       }),
     })
   }

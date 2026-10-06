@@ -1,14 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MdClose, MdFolderOpen } from 'react-icons/md';
 import './PremiumModal.css';
 
 const CreateFolderModal = ({ isOpen, onClose, onCreate, existingFolders = [] }) => {
-    const [folderName, setFolderName] = useState('Default');
+    const [folderName, setFolderName] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
 
-    const isDuplicate = existingFolders.some(f => f.name.toLowerCase() === folderName.trim().toLowerCase());
+    const trimmedName = folderName.trim().toLowerCase();
+    const isDuplicate = Boolean(
+        trimmedName &&
+        existingFolders.some(
+            (f) => String(f?.name || f?.title || '').trim().toLowerCase() === trimmedName
+        )
+    );
+
+    useEffect(() => {
+        if (isOpen) {
+            setFolderName('');
+            setError('');
+            setIsSubmitting(false);
+        }
+    }, [isOpen]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -18,7 +32,7 @@ const CreateFolderModal = ({ isOpen, onClose, onCreate, existingFolders = [] }) 
         setError('');
         try {
             await onCreate(folderName.trim());
-            setFolderName('Default');
+            setFolderName('');
             onClose();
         } catch (err) {
             console.error('Failed to create folder:', err);
