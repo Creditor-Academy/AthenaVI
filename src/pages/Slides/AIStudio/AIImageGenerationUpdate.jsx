@@ -765,7 +765,11 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
       if (fmt?.id) setSelectedFormat(fmt.id);
       return;
     }
-    if (next === 'landscape' && (kind === 'invitation' || kind === 'business-card')) {
+    if (kind === 'invitation' && next === 'landscape') {
+      setSelectedFormat('');
+      return;
+    }
+    if (kind === 'business-card' && next === 'portrait') {
       setSelectedFormat('');
     }
   };
@@ -950,10 +954,12 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
         {activeMode === 'printable' && (
           <section className="styles-grid-container social-destinations print-sizes" style={{ position: 'relative', zIndex: 1 }}>
             <div className="styles-grid-title">Choose a print size</div>
-            <div className="social-dest-grid print-size-grid">
+            <div className={`social-dest-grid print-size-grid${printOrientation === 'landscape' ? ' is-landscape' : ''}`}>
               {PRINT_GROUPS.filter((group) => {
                 if (group.kind === 'poster') return true;
-                return printOrientation === 'portrait';
+                if (group.kind === 'invitation') return printOrientation === 'portrait';
+                if (group.kind === 'business-card') return printOrientation === 'landscape';
+                return false;
               }).map((group) => {
                 const fmt = printFormatForGroup(group, printFormats, printOrientation);
                 if (!fmt) return null;
