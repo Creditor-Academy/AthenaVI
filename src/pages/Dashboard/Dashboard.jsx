@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import Home from '../Home/Home.jsx'
-import Videos from '../Videos/Videos.jsx'
+import MyWork from '../MyWork/MyWork.jsx'
 import Avatars from '../Avatars/Avatars.jsx'
 import CreateAvatar from '../Avatars/CreateAvatar.jsx'
 import CreateAvatarLook from '../Avatars/CreateAvatarLook.jsx'
@@ -185,6 +185,7 @@ function Dashboard({ onCreate, initialSection }) {
   const noPaddingSections = ['templates', 'template-details']
   const workspaceConsistentSections = [
     'home',
+    'my-work',
     'videos',
     'workspace',
     'library',
@@ -781,8 +782,8 @@ function Dashboard({ onCreate, initialSection }) {
               }}
             />
           )}
-          {section === 'videos' && (
-            <Videos
+          {(section === 'my-work' || section === 'videos') && (
+            <MyWork
               onCreate={handleOpenCreateVideoModal}
               onEdit={handleEditVideo}
               onOpenImage={(item) => {

@@ -1,11 +1,13 @@
 import { normalizeId } from '../TeamWorkspace/workspaceUtils.js';
 
-export const VIDEO_SECTION_OPTIONS = [
+export const WORK_SECTION_OPTIONS = [
   { value: 'all', label: 'All Workspaces' },
   { value: 'personal', label: 'Personal Workspace' },
   { value: 'my-workspace', label: 'My Workspaces' },
   { value: 'shared-with-me', label: 'Shared with Me' },
 ];
+
+export const VIDEO_SECTION_OPTIONS = WORK_SECTION_OPTIONS;
 
 export const WORK_CATEGORY_TABS = [
   { id: 'all', label: 'All' },
@@ -26,18 +28,18 @@ export function normalizeWorkCategoryId(value) {
 
 export const SAMPLE_WORK_ITEMS = [];
 
-export function getVideoSection(video, workspaceById, currentUserId) {
-  const workspace = workspaceById?.get(video.workspaceId);
-  const nested = video.workspace || {};
+export function getWorkSection(item, workspaceById, currentUserId) {
+  const workspace = workspaceById?.get(item.workspaceId);
+  const nested = item.workspace || {};
   const typeRaw = String(
-    workspace?.type || nested.type || video.workspaceType || ''
+    workspace?.type || nested.type || item.workspaceType || ''
   ).toLowerCase();
 
   const isPersonal =
     workspace?.type === 'personal' ||
     typeRaw === 'personal' ||
     typeRaw === 'private' ||
-    video.workspaceId === 'personal';
+    item.workspaceId === 'personal';
 
   if (isPersonal) return 'personal';
 
@@ -49,7 +51,7 @@ export function getVideoSection(video, workspaceById, currentUserId) {
   );
   const role = String(
     workspace?.userRole ||
-    video.membershipRole ||
+    item.membershipRole ||
     nested.userRole ||
     nested.role ||
     ''
@@ -62,7 +64,9 @@ export function getVideoSection(video, workspaceById, currentUserId) {
   return isOwner ? 'my-workspace' : 'shared-with-me';
 }
 
-export function getVideoSectionSubtitle(tabId, categoryId = 'all') {
+export const getVideoSection = getWorkSection;
+
+export function getWorkSectionSubtitle(tabId, categoryId = 'all') {
   const cat = normalizeWorkCategoryId(categoryId);
   let categoryLabel = 'work items';
   if (cat === 'video') categoryLabel = 'videos';
@@ -81,7 +85,9 @@ export function getVideoSectionSubtitle(tabId, categoryId = 'all') {
   }
 }
 
-export function getVideoEmptyTitle(tabId, hasSearch, categoryId = 'all') {
+export const getVideoSectionSubtitle = getWorkSectionSubtitle;
+
+export function getWorkEmptyTitle(tabId, hasSearch, categoryId = 'all') {
   if (hasSearch) return 'No matching items found';
   const cat = normalizeWorkCategoryId(categoryId);
   let catText = 'items';
@@ -101,7 +107,9 @@ export function getVideoEmptyTitle(tabId, hasSearch, categoryId = 'all') {
   }
 }
 
-export function getVideoEmptyHint(tabId, hasSearch, categoryId = 'all') {
+export const getVideoEmptyTitle = getWorkEmptyTitle;
+
+export function getWorkEmptyHint(tabId, hasSearch, categoryId = 'all') {
   if (hasSearch) {
     return 'Try adjusting your search query, clearing filters, or switching categories.';
   }
@@ -117,6 +125,8 @@ export function getVideoEmptyHint(tabId, hasSearch, categoryId = 'all') {
   }
   return 'Create videos, presentations, or images to see your work here.';
 }
+
+export const getVideoEmptyHint = getWorkEmptyHint;
 
 export function getCategoryFilterOptions(activeCategory) {
   const cat = normalizeWorkCategoryId(activeCategory);
@@ -147,7 +157,7 @@ export function getCategoryFilterOptions(activeCategory) {
   ];
 }
 
-export const VIDEO_SORT_OPTIONS = [
+export const WORK_SORT_OPTIONS = [
   { value: 'completed_desc', label: 'Newest first' },
   { value: 'completed_asc', label: 'Oldest first' },
   { value: 'name_asc', label: 'Name (A-Z)' },
@@ -156,17 +166,21 @@ export const VIDEO_SORT_OPTIONS = [
   { value: 'size_asc', label: 'Smallest first' },
 ];
 
-export const VIDEO_GROUP_OPTIONS = [
+export const VIDEO_SORT_OPTIONS = WORK_SORT_OPTIONS;
+
+export const WORK_GROUP_OPTIONS = [
   { value: 'none', label: 'None' },
   { value: 'category', label: 'Category' },
   { value: 'workspace', label: 'Workspace' },
   { value: 'date', label: 'Completed date' },
 ];
 
+export const VIDEO_GROUP_OPTIONS = WORK_GROUP_OPTIONS;
+
 const LARGE_FILE_BYTES = 50 * 1024 * 1024;
 
-function getTriggeredById(video) {
-  const triggeredBy = video?.triggeredBy;
+function getTriggeredById(item) {
+  const triggeredBy = item?.triggeredBy;
   if (!triggeredBy) return '';
   return normalizeId(
     triggeredBy.id ||
@@ -176,13 +190,13 @@ function getTriggeredById(video) {
   );
 }
 
-export function applyVideoFilters(
-  videos,
+export function applyWorkFilters(
+  items,
   { searchQuery, filterBy, currentUserId, workspaceMap, activeSection, activeCategory = 'all' }
 ) {
-  const q = searchQuery.trim().toLowerCase();
+  const q = (searchQuery || '').trim().toLowerCase();
 
-  return videos.filter((item) => {
+  return items.filter((item) => {
     // Category filter
     const itemCategory = normalizeWorkCategoryId(item.category || item.kind || 'video');
     const active = normalizeWorkCategoryId(activeCategory);
@@ -191,7 +205,7 @@ export function applyVideoFilters(
     }
 
     // Workspace section filter
-    const section = getVideoSection(item, workspaceMap, currentUserId);
+    const section = getWorkSection(item, workspaceMap, currentUserId);
     if (activeSection !== 'all' && section !== activeSection) return false;
 
     // Filter dropdown conditions
@@ -222,8 +236,10 @@ export function applyVideoFilters(
   });
 }
 
-export function sortVideos(videos, sortBy) {
-  const list = [...videos];
+export const applyVideoFilters = applyWorkFilters;
+
+export function sortWorkItems(items, sortBy) {
+  const list = [...items];
 
   list.sort((a, b) => {
     switch (sortBy) {
@@ -246,6 +262,8 @@ export function sortVideos(videos, sortBy) {
   return list;
 }
 
+export const sortVideos = sortWorkItems;
+
 function getMonthGroupLabel(iso) {
   if (!iso) return 'Unknown date';
   const date = new Date(iso);
@@ -253,9 +271,9 @@ function getMonthGroupLabel(iso) {
   return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 }
 
-export function groupVideos(videos, groupBy) {
-  if (groupBy === 'none' || videos.length === 0) {
-    return [{ key: 'all', label: null, videos }];
+export function groupWorkItems(items, groupBy) {
+  if (groupBy === 'none' || items.length === 0) {
+    return [{ key: 'all', label: null, videos: items }];
   }
 
   if (groupBy === 'category') {
@@ -267,49 +285,51 @@ export function groupVideos(videos, groupBy) {
       ppt: 'Presentations',
     };
     const groups = new Map();
-    videos.forEach((item) => {
+    items.forEach((item) => {
       const catKey = normalizeWorkCategoryId(item.category || item.kind || 'video');
       const label = categoryNames[catKey] || 'Other Work';
       if (!groups.has(label)) groups.set(label, []);
       groups.get(label).push(item);
     });
 
-    return Array.from(groups.entries()).map(([label, items]) => ({
+    return Array.from(groups.entries()).map(([label, groupItems]) => ({
       key: label,
       label,
-      videos: items,
+      videos: groupItems,
     }));
   }
 
   if (groupBy === 'workspace') {
     const groups = new Map();
-    videos.forEach((video) => {
-      const label = video.workspaceName || 'Workspace';
+    items.forEach((item) => {
+      const label = item.workspaceName || 'Workspace';
       if (!groups.has(label)) groups.set(label, []);
-      groups.get(label).push(video);
+      groups.get(label).push(item);
     });
 
     return Array.from(groups.entries())
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([label, items]) => ({ key: label, label, videos: items }));
+      .map(([label, groupItems]) => ({ key: label, label, videos: groupItems }));
   }
 
   if (groupBy === 'date') {
     const groups = new Map();
-    videos.forEach((video) => {
-      const label = getMonthGroupLabel(video.completedAt);
+    items.forEach((item) => {
+      const label = getMonthGroupLabel(item.completedAt);
       if (!groups.has(label)) groups.set(label, []);
-      groups.get(label).push(video);
+      groups.get(label).push(item);
     });
 
     return Array.from(groups.entries())
       .sort(([a], [b]) => {
-        const dateA = videos.find((v) => getMonthGroupLabel(v.completedAt) === a)?.completedAt;
-        const dateB = videos.find((v) => getMonthGroupLabel(v.completedAt) === b)?.completedAt;
+        const dateA = items.find((v) => getMonthGroupLabel(v.completedAt) === a)?.completedAt;
+        const dateB = items.find((v) => getMonthGroupLabel(v.completedAt) === b)?.completedAt;
         return new Date(dateB || 0) - new Date(dateA || 0);
       })
-      .map(([label, items]) => ({ key: label, label, videos: items }));
+      .map(([label, groupItems]) => ({ key: label, label, videos: groupItems }));
   }
 
-  return [{ key: 'all', label: null, videos }];
+  return [{ key: 'all', label: null, videos: items }];
 }
+
+export const groupVideos = groupWorkItems;

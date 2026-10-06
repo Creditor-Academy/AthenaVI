@@ -26,8 +26,8 @@ import { consumeDashboardSearchContext } from '../../utils/dashboardSearchNaviga
 import { getSanitizedErrorMessage } from '../../utils/userFacingMessage';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 import AvatarsSkeleton from '../page-skeleton/AvatarsSkeleton';
-import { VideosToolbarDropdown, LibrarySearchBar } from '../Videos/VideosToolbar.jsx';
-import '../Videos/Videos.css';
+import { MyWorkToolbarDropdown as VideosToolbarDropdown, LibrarySearchBar } from '../MyWork/MyWorkToolbar.jsx';
+import '../MyWork/MyWork.css';
 import AvatarCreationCard from './AvatarCreationCard.jsx';
 import AvatarLibraryCard from './AvatarLibraryCard.jsx';
 import AvatarLibraryRow from './AvatarLibraryRow.jsx';

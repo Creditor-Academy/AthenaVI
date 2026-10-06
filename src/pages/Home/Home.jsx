@@ -215,7 +215,7 @@ function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigat
                         : 'None published yet',
                 trendVariant: summary.exportCount > 0 ? 'up' : 'neutral',
                 cta: 'View exports',
-                navigateTo: 'videos',
+                navigateTo: 'my-work',
                 icon: <MdVideoLibrary />,
             },
             {

@@ -309,7 +309,7 @@ export function resolveNotificationDestination(notification) {
     if (editorConfig?.videoId) {
       return { type: 'create', config: editorConfig };
     }
-    return { type: 'dashboard', section: 'videos' };
+    return { type: 'dashboard', section: 'my-work' };
   }
 
   if (category === 'platform' || type.includes('platform')) {

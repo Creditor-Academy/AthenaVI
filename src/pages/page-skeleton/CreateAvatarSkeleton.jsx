@@ -1,4 +1,4 @@
-import '../Videos/Videos.css'
+import '../MyWork/MyWork.css'
 import './skeleton.css'
 
 const CreateAvatarSkeleton = () => {

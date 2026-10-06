@@ -112,11 +112,11 @@ export function applySearchResult(result, handlers = {}) {
         return;
       }
       setDashboardSearchContext({
-        section: 'videos',
+        section: 'my-work',
         searchQuery: result.title,
         entityId: action.video?.id,
       });
-      goToSection?.('videos');
+      goToSection?.('my-work');
       return;
     }
 

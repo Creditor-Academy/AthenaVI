@@ -15,7 +15,7 @@ import VoicePreviewUnavailableNotice, {
 } from '../../components/ui/VoicePreviewNotice/VoicePreviewNotice'
 import AudioPreviewPlayer from '../../components/ui/AudioPreviewPlayer/AudioPreviewPlayer'
 import '../../components/features/workspace/workspace/WorkspaceStyles.css'
-import '../Videos/Videos.css'
+import '../MyWork/MyWork.css'
 import '../Avatars/Avatars.css'
 import './Voices.css'
 

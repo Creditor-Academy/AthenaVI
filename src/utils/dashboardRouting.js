@@ -1,6 +1,7 @@
 /** Dashboard section ids ↔ URL paths (keep in sync with App PATH_TO_VIEW_MAP). */
 export const DASHBOARD_SECTIONS = new Set([
   'home',
+  'my-work',
   'videos',
   'avatars',
   'create-avatar',
@@ -38,7 +39,7 @@ export function normalizeClientPath(pathname = '') {
   return path;
 }
 
-/** Use hash as route only when it encodes a path (e.g. #/dashboard/videos). */
+/** Use hash as route only when it encodes a path (e.g. #/dashboard/my-work). */
 export function readClientPath(pathname = window.location.pathname, hash = window.location.hash) {
   const hashRoute = (hash || '').replace(/^#/, '');
   if (hashRoute.startsWith('/')) {
@@ -61,6 +62,7 @@ export function resolveDashboardSectionFromPath(pathname = window.location.pathn
   if (path.startsWith('/dashboard/')) {
     const slug = path.slice('/dashboard/'.length).split('/')[0];
     if (!slug) return 'home';
+    if (slug === 'videos') return 'my-work';
     if (DASHBOARD_SECTIONS.has(slug)) return slug;
     return 'home';
   }
@@ -71,6 +73,7 @@ export function resolveDashboardSectionFromPath(pathname = window.location.pathn
 export function dashboardPathForSection(section) {
   if (section === 'home') return '/dashboard';
   if (section === 'profile') return '/profile';
+  if (section === 'videos') return '/dashboard/my-work';
   return `/dashboard/${section}`;
 }
 

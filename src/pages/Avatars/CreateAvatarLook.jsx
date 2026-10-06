@@ -14,7 +14,7 @@ import {
 } from '../../utils/heygenAvatars';
 import { HEYGEN_SOURCE_MAX_BYTES } from '../../utils/heygenAssetUpload';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
-import '../Videos/Videos.css';
+import '../MyWork/MyWork.css';
 import './Avatars.css';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
