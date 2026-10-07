@@ -23,7 +23,7 @@ export const mainDashboardSidebarGroups = [
     label: 'Work',
     items: [
       { id: 'workspace', label: 'Workspace', Icon: Building2 },
-      { id: 'videos', label: 'My work', Icon: Briefcase }
+      { id: 'my-work', label: 'My work', Icon: Briefcase }
     ]
   },
   {

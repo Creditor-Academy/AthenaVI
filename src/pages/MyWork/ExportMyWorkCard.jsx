@@ -11,19 +11,19 @@ import {
 import PresentationCardThumb from '../../components/ppt/PresentationCardThumb.jsx'
 import ProjectSceneThumbnail from '../../components/features/workspace/workspace/ProjectSceneThumbnail.jsx'
 
-function resolveOwnerLabel(video) {
+function resolveOwnerLabel(item) {
   const candidates = [
-    video?.createdBy,
-    video?.owner?.name,
-    video?.owner?.email,
-    video?.triggeredBy?.name,
+    item?.createdBy,
+    item?.owner?.name,
+    item?.owner?.email,
+    item?.triggeredBy?.name,
   ]
   for (const candidate of candidates) {
     if (candidate == null || candidate === '') continue
     const text = String(candidate).trim()
     if (text && !looksLikeId(text)) return text
   }
-  const kind = normalizeLibraryCategoryId(video?.kind || video?.category) || ''
+  const kind = normalizeLibraryCategoryId(item?.kind || item?.category) || ''
   if (kind === 'image' || kind === 'presentation') return ATHENA_AI_OWNER
   return 'Unknown'
 }
@@ -65,20 +65,22 @@ function KindBadge({ kind }) {
   )
 }
 
-function ExportVideoCard({
+function ExportMyWorkCard({
   video,
+  item,
   onPreview,
   onDownload,
   onOpenProject,
   downloading = false,
 }) {
-  const category = normalizeLibraryCategoryId(video.category || video.kind) || 'video'
-  const title = video.title || video.name || 'Untitled'
-  const thumbSrc = video.thumbnailUrl || video.thumbnail || video.url || null
-  const authorName = resolveOwnerLabel(video)
-  const relative = formatRelativeLabel(video.createdAt || video.updatedAt || video.lastModifiedAt)
+  const workItem = video || item || {}
+  const category = normalizeLibraryCategoryId(workItem.category || workItem.kind) || 'video'
+  const title = workItem.title || workItem.name || 'Untitled'
+  const thumbSrc = workItem.thumbnailUrl || workItem.thumbnail || workItem.url || null
+  const authorName = resolveOwnerLabel(workItem)
+  const relative = formatRelativeLabel(workItem.createdAt || workItem.updatedAt || workItem.lastModifiedAt)
 
-  const statusRaw = video.deckStatus || video.status || 'completed'
+  const statusRaw = workItem.deckStatus || workItem.status || 'completed'
   const statusLabel = statusRaw
     ? String(statusRaw).charAt(0).toUpperCase() + String(statusRaw).slice(1).toLowerCase()
     : null
@@ -92,18 +94,18 @@ function ExportVideoCard({
         : 'Open Video'
 
   const detailTag =
-    category === 'presentation' && video.slideCount
-      ? `${video.slideCount} slides`
-      : category === 'image' && video.mode
-        ? video.mode
-        : video.fileSizeBytes
-          ? formatBytes(video.fileSizeBytes)
+    category === 'presentation' && workItem.slideCount
+      ? `${workItem.slideCount} slides`
+      : category === 'image' && workItem.mode
+        ? workItem.mode
+        : workItem.fileSizeBytes
+          ? formatBytes(workItem.fileSizeBytes)
           : null
 
   const thumbMedia =
     category === 'presentation' ? (
       <PresentationCardThumb
-        item={video}
+        item={workItem}
         title={title}
         imageClassName="wsc-library-thumb-img ppt-thumb-fade"
         hostClassName="wsc-ppt-thumb-host"
@@ -130,11 +132,11 @@ function ExportVideoCard({
         draggable={false}
       />
     ) : (
-      <ProjectSceneThumbnail video={video} />
+      <ProjectSceneThumbnail video={workItem} />
     )
 
   return (
-    <article className={`wsc-card wsc-video-card videos-export-card work-card-${category}`} onClick={onPreview}>
+    <article className={`wsc-card wsc-video-card videos-export-card my-work-card work-card-${category}`} onClick={onPreview}>
       {/* Thumbnail */}
       <div className="wsc-video-card__thumb">
         <div className="wsc-video-card__thumb-inner">
@@ -214,11 +216,11 @@ function ExportVideoCard({
               <MdSchedule size={12} />
               <span>{relative}</span>
             </span>
-            {video.workspaceName && (
+            {workItem.workspaceName && (
               <>
                 <span className="wsc-card__dot" aria-hidden="true">·</span>
-                <span className="wsc-byline-item videos-export-workspace" title={video.workspaceName}>
-                  {video.workspaceName}
+                <span className="wsc-byline-item videos-export-workspace" title={workItem.workspaceName}>
+                  {workItem.workspaceName}
                 </span>
               </>
             )}
@@ -244,4 +246,5 @@ function ExportVideoCard({
   )
 }
 
-export default ExportVideoCard
+export const ExportVideoCard = ExportMyWorkCard
+export default ExportMyWorkCard

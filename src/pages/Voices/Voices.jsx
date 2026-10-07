@@ -17,8 +17,8 @@ import { consumeDashboardSearchContext } from '../../utils/dashboardSearchNaviga
 import ConfirmDialog from '../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 import VoicesSkeleton from '../page-skeleton/VoicesSkeleton';
-import { VideosToolbarDropdown, LibrarySearchBar } from '../Videos/VideosToolbar.jsx';
-import '../Videos/Videos.css';
+import { MyWorkToolbarDropdown as VideosToolbarDropdown, LibrarySearchBar } from '../MyWork/MyWorkToolbar.jsx';
+import '../MyWork/MyWork.css';
 import VoiceCreationCard from './VoiceCreationCard.jsx';
 import VoiceLibraryCard from './VoiceLibraryCard.jsx';
 import VoiceLibraryRow from './VoiceLibraryRow.jsx';

@@ -28,7 +28,15 @@ import WorkspaceCreditsUsageModal from '../../components/features/workspace/work
 import WorkspaceStorageBreadcrumb from '../../components/features/workspace/workspace/WorkspaceStorageBreadcrumb.jsx';
 import TeamWorkspaceSkeleton from '../page-skeleton/TeamWorkspaceSkeleton';
 
-import { extractUserId, normalizeWorkspace, normalizeFolder, normalizeVideo, workspaceCanEdit, workspaceCanManageContributors } from './workspaceUtils.js';
+import {
+  extractUserId,
+  normalizeWorkspace,
+  normalizeFolder,
+  normalizeVideo,
+  workspaceCanEdit,
+  workspaceCanManageContributors,
+  getRenameSiblingNames,
+} from './workspaceUtils.js';
 import { projectTypeForKind, resolveLibraryKind } from '../../utils/workspaceLibrary.js';
 import { useWorkspaceData } from './useWorkspaceData.js';
 import { useWorkspaceActions } from './useWorkspaceActions.js';
@@ -1069,6 +1077,7 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
         onRename={(newName) => handleRename(newName, renameTarget)}
         currentName={renameTarget?.name || ''}
         itemType={renameTarget?.type || 'workspace'}
+        existingNames={getRenameSiblingNames(workspaces, renameTarget)}
       />
 
       <ItemDetailsModal
@@ -1094,7 +1103,17 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
       <AssignProjectModal
         isOpen={!!assignTargetItem}
         onClose={() => { setAssignTargetItem(null); setAssignTargetWorkspace(null); }}
-        onAssigned={() => setLibraryEpoch((n) => n + 1)}
+        onAssigned={(updated) => {
+          setLibraryEpoch((n) => n + 1);
+          const projectName =
+            updated?.name || updated?.title || assignTargetItem?.name || assignTargetItem?.title || 'Project';
+          if (updated?.assignee) {
+            const memberName = updated.assignee.name || updated.assignee.email || 'member';
+            showToast(`"${projectName}" assigned to ${memberName}`, 'success');
+          } else {
+            showToast(`"${projectName}" unassigned`, 'success');
+          }
+        }}
         workspaceId={assignTargetWorkspace?.id}
         project={assignTargetItem}
       />

@@ -612,6 +612,14 @@ const CreateVideoModal = ({
     const trimmedName = newWorkspaceName.trim();
     if (!trimmedName) return;
 
+    const isDuplicate = workspaceOptions.some(
+      (ws) => String(ws.name || '').trim().toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (isDuplicate) {
+      showToast('This workspace name already exists', 'error');
+      return;
+    }
+
     setCreatingWorkspace(true);
     try {
       const created = await workspaceService.createWorkspace(trimmedName);
@@ -639,6 +647,14 @@ const CreateVideoModal = ({
   const handleCreateFolderInline = async () => {
     const trimmedName = newFolderName.trim();
     if (!trimmedName || !workspaceId) return;
+
+    const isDuplicate = folderOptions.some(
+      (f) => String(f.name || '').trim().toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (isDuplicate) {
+      showToast('This folder name already exists in this workspace', 'error');
+      return;
+    }
 
     setCreatingFolder(true);
     try {

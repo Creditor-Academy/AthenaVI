@@ -47,7 +47,7 @@ import Toast from '../../components/ui/Toast/Toast'
 import { sanitizeUserFacingMessage } from '../../utils/userFacingMessage'
 import '../../components/ui/ConfirmDialog/ConfirmDialog.css'
 import '../../components/features/workspace/workspace/WorkspaceStyles.css'
-import '../Videos/Videos.css'
+import '../MyWork/MyWork.css'
 import './BrandKits.css'
 
 function serializeBrandKitDraft({ kitName, slogan, isDefault, logoFile, kitData }) {

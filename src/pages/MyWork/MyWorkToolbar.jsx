@@ -5,7 +5,7 @@ import {
   MdSearch,
 } from 'react-icons/md';
 
-export function VideosToolbarDropdown({
+export function MyWorkToolbarDropdown({
   label,
   icon: Icon,
   value,
@@ -31,7 +31,7 @@ export function VideosToolbarDropdown({
   }, []);
 
   return (
-    <div className="workspace-header-control workspace-header-control--dropdown videos-toolbar__dropdown" ref={rootRef}>
+    <div className="workspace-header-control workspace-header-control--dropdown videos-toolbar__dropdown my-work-toolbar__dropdown" ref={rootRef}>
       <button
         type="button"
         className={`workspace-header-control__trigger ${open ? 'is-open' : ''} ${isActive ? 'has-active-filter' : ''}`}
@@ -76,6 +76,8 @@ export function VideosToolbarDropdown({
   );
 }
 
+export const VideosToolbarDropdown = MyWorkToolbarDropdown;
+
 export function LibrarySearchBar({
   searchQuery = '',
   onSearchChange,
@@ -107,7 +109,7 @@ export function LibrarySearchBar({
   );
 }
 
-function VideosToolbar({
+function MyWorkToolbar({
   searchQuery = '',
   onSearchChange,
   searchPlaceholder,
@@ -123,4 +125,5 @@ function VideosToolbar({
   );
 }
 
-export default VideosToolbar;
+export const VideosToolbar = MyWorkToolbar;
+export default MyWorkToolbar;

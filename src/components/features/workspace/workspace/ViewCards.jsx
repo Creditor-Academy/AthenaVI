@@ -411,13 +411,6 @@ export const VideoCard = ({ video, onClick, contextProps }) => {
 
                 <KindBadge kind={kind} />
 
-                <div
-                    className="wsc-card__menu"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                >
-                    <ContextMenu type="video" {...(contextProps || {})} />
-                </div>
-
                 <div className="wsc-card__hover-overlay">
                     <div className="wsc-card__action-pill">
                         {kind === 'image' ? (
@@ -479,6 +472,14 @@ export const VideoCard = ({ video, onClick, contextProps }) => {
                         ) : null}
                     </div>
                 </div>
+            </div>
+
+            {/* ✅ Menu at card root level — escapes thumbnail's overflow:hidden and renders above meta container */}
+            <div
+                className="wsc-card__menu"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            >
+                <ContextMenu type="video" {...(contextProps || {})} />
             </div>
         </div>
     );

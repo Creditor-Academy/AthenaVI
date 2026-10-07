@@ -8,33 +8,35 @@ import {
   normalizeLibraryCategoryId,
 } from '../../utils/workspaceLibrary.js'
 
-function resolveOwnerLabel(video) {
+function resolveOwnerLabel(item) {
   const candidates = [
-    video?.createdBy,
-    video?.owner?.name,
-    video?.owner?.email,
-    video?.triggeredBy?.name,
+    item?.createdBy,
+    item?.owner?.name,
+    item?.owner?.email,
+    item?.triggeredBy?.name,
   ]
   for (const candidate of candidates) {
     if (candidate == null || candidate === '') continue
     const text = String(candidate).trim()
     if (text && !looksLikeId(text)) return text
   }
-  const kind = normalizeLibraryCategoryId(video?.kind || video?.category) || ''
+  const kind = normalizeLibraryCategoryId(item?.kind || item?.category) || ''
   if (kind === 'image' || kind === 'presentation') return ATHENA_AI_OWNER
   return 'Unknown'
 }
 
-function ExportVideoRow({
+function ExportMyWorkRow({
   video,
+  item,
   onPreview,
   onDownload,
   onOpenProject,
   downloading = false,
 }) {
-  const category = normalizeLibraryCategoryId(video.category || video.kind) || 'video'
-  const title = video.title || video.name || 'Untitled'
-  const authorName = resolveOwnerLabel(video)
+  const workItem = video || item || {}
+  const category = normalizeLibraryCategoryId(workItem.category || workItem.kind) || 'video'
+  const title = workItem.title || workItem.name || 'Untitled'
+  const authorName = resolveOwnerLabel(workItem)
 
   const typeLabel =
     category === 'presentation' ? 'Presentation' : category === 'image' ? 'Image' : 'Video'
@@ -47,7 +49,7 @@ function ExportVideoRow({
 
   return (
     <article
-      className={`workspace-item-row export-item-row work-row-${category}`}
+      className={`workspace-item-row export-item-row my-work-row work-row-${category}`}
       onClick={onPreview}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -70,19 +72,19 @@ function ExportVideoRow({
         <span className={`row-category-pill pill-${category}`}>{typeLabel}</span>
       </div>
 
-      <div className="col col-workspace" title={video.workspaceName}>
-        {video.workspaceName || 'Workspace'}
+      <div className="col col-workspace" title={workItem.workspaceName}>
+        {workItem.workspaceName || 'Workspace'}
       </div>
 
-      <div className="col col-completed">{formatOnlyDate(video.completedAt)}</div>
+      <div className="col col-completed">{formatOnlyDate(workItem.completedAt)}</div>
 
       <div className="col col-size">
-        {category === 'presentation' && video.slideCount
-          ? `${video.slideCount} slides`
-          : category === 'image' && video.mode
-            ? video.mode
-            : video.fileSizeBytes
-              ? formatBytes(video.fileSizeBytes)
+        {category === 'presentation' && workItem.slideCount
+          ? `${workItem.slideCount} slides`
+          : category === 'image' && workItem.mode
+            ? workItem.mode
+            : workItem.fileSizeBytes
+              ? formatBytes(workItem.fileSizeBytes)
               : '—'}
       </div>
 
@@ -123,4 +125,5 @@ function ExportVideoRow({
   )
 }
 
-export default ExportVideoRow
+export const ExportVideoRow = ExportMyWorkRow
+export default ExportMyWorkRow

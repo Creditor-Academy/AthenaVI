@@ -24,25 +24,25 @@ import {
   normalizeLibraryCategoryId,
 } from '../../utils/workspaceLibrary.js'
 import '../../components/features/workspace/workspace/WorkspaceStyles.css'
-import VideosSkeleton from '../page-skeleton/VideosSkeleton'
+import MyWorkSkeleton from '../page-skeleton/MyWorkSkeleton'
 import { SkeletonMediaCollection } from '../page-skeleton/SkeletonPrimitives'
-import ExportVideoCard from './ExportVideoCard.jsx'
-import ExportVideoRow from './ExportVideoRow.jsx'
+import ExportMyWorkCard from './ExportMyWorkCard.jsx'
+import ExportMyWorkRow from './ExportMyWorkRow.jsx'
 import PresentationDeckPreviewModal from './PresentationDeckPreviewModal.jsx'
-import { VideosToolbarDropdown } from './VideosToolbar.jsx'
+import { MyWorkToolbarDropdown } from './MyWorkToolbar.jsx'
 import {
-  applyVideoFilters,
+  applyWorkFilters,
   getCategoryFilterOptions,
-  getVideoEmptyHint,
-  getVideoEmptyTitle,
-  groupVideos,
+  getWorkEmptyHint,
+  getWorkEmptyTitle,
+  groupWorkItems,
   normalizeWorkCategoryId,
-  sortVideos,
-  VIDEO_GROUP_OPTIONS,
-  VIDEO_SORT_OPTIONS,
+  sortWorkItems,
+  WORK_GROUP_OPTIONS,
+  WORK_SORT_OPTIONS,
   WORK_CATEGORY_TABS,
-} from './videosUtils'
-import './Videos.css'
+} from './myWorkUtils'
+import './MyWork.css'
 
 const BATCH_SIZE = 16
 
@@ -72,7 +72,7 @@ function toWorkCardItem(item, workspace, currentUserId, authUser) {
   }
 }
 
-function Videos({ onEdit, onOpenImage }) {
+function MyWork({ onCreate, onEdit, onOpenImage }) {
   const { user: authUser } = useAuth()
   const currentUserId = extractUserId(authUser)
   const [fetchedVideos, setFetchedVideos] = useState([])
@@ -101,7 +101,7 @@ function Videos({ onEdit, onOpenImage }) {
   const loadMoreSentinelRef = useRef(null)
 
   useEffect(() => {
-    const ctx = consumeDashboardSearchContext('videos')
+    const ctx = consumeDashboardSearchContext('my-work') || consumeDashboardSearchContext('videos')
     if (ctx?.searchQuery) setSearchQuery(ctx.searchQuery)
   }, [])
 
@@ -206,7 +206,7 @@ function Videos({ onEdit, onOpenImage }) {
   )
 
   const filteredWorkItems = useMemo(() => {
-    const filtered = applyVideoFilters(allWorkItems, {
+    const filtered = applyWorkFilters(allWorkItems, {
       searchQuery,
       filterBy,
       currentUserId,
@@ -214,7 +214,7 @@ function Videos({ onEdit, onOpenImage }) {
       activeSection,
       activeCategory,
     })
-    return sortVideos(filtered, sortBy)
+    return sortWorkItems(filtered, sortBy)
   }, [
     allWorkItems,
     workspaceMap,
@@ -227,7 +227,7 @@ function Videos({ onEdit, onOpenImage }) {
   ])
 
   const workGroups = useMemo(
-    () => groupVideos(filteredWorkItems, groupBy),
+    () => groupWorkItems(filteredWorkItems, groupBy),
     [filteredWorkItems, groupBy]
   )
 
@@ -357,7 +357,7 @@ function Videos({ onEdit, onOpenImage }) {
 
   const renderWorkCollection = (collection) => (
     <div
-      className={`items-container videos-export-items ${
+      className={`items-container videos-export-items my-work-export-items ${
         viewMode === 'grid' ? 'tile-view' : 'list-view export-list-view'
       }`}
     >
@@ -383,15 +383,17 @@ function Videos({ onEdit, onOpenImage }) {
         }
 
         return viewMode === 'grid' ? (
-          <ExportVideoCard
+          <ExportMyWorkCard
             key={`${item.kind}-${item.workspaceId}-${item.id}`}
             video={item}
+            item={item}
             {...handlers}
           />
         ) : (
-          <ExportVideoRow
+          <ExportMyWorkRow
             key={`${item.kind}-${item.workspaceId}-${item.id}`}
             video={item}
+            item={item}
             {...handlers}
           />
         )
@@ -405,14 +407,14 @@ function Videos({ onEdit, onOpenImage }) {
 
   return (
     <div className="videos-page my-work-page">
-      <div className="videos-shell">
-        <header className="videos-page-header">
-          <div className="videos-title-section">
-            <h1 className="videos-page-title">My Work</h1>
+      <div className="videos-shell my-work-shell">
+        <header className="videos-page-header my-work-page-header">
+          <div className="videos-title-section my-work-title-section">
+            <h1 className="videos-page-title my-work-page-title">My Work</h1>
           </div>
 
-          <div className="videos-actions">
-            <VideosToolbarDropdown
+          <div className="videos-actions my-work-actions">
+            <MyWorkToolbarDropdown
               label="Filter"
               icon={MdFilterList}
               value={filterBy}
@@ -445,22 +447,22 @@ function Videos({ onEdit, onOpenImage }) {
               </button>
             </div>
 
-            <VideosToolbarDropdown
+            <MyWorkToolbarDropdown
               label="Sort"
               icon={MdSort}
               value={sortBy}
               defaultValue="completed_desc"
-              options={VIDEO_SORT_OPTIONS}
+              options={WORK_SORT_OPTIONS}
               onChange={setSortBy}
               menuLabel="Sort options"
             />
 
-            <VideosToolbarDropdown
+            <MyWorkToolbarDropdown
               label="Group"
               icon={MdViewModule}
               value={groupBy}
               defaultValue="none"
-              options={VIDEO_GROUP_OPTIONS}
+              options={WORK_GROUP_OPTIONS}
               onChange={setGroupBy}
               menuLabel="Group by options"
             />
@@ -498,12 +500,12 @@ function Videos({ onEdit, onOpenImage }) {
           </div>
         </div>
 
-        <main className="videos-main">
+        <main className="videos-main my-work-main">
           {loading && fetchedVideos.length === 0 ? (
-            <VideosSkeleton viewMode={viewMode} />
+            <MyWorkSkeleton viewMode={viewMode} />
           ) : filteredWorkItems.length === 0 ? (
-            <div className="videos-empty-state">
-              <div className="videos-empty-state__card">
+            <div className="videos-empty-state my-work-empty-state">
+              <div className="videos-empty-state__card my-work-empty-state__card">
                 <span className="videos-empty-state__icon-wrap" aria-hidden>
                   {activeCategory === 'presentation' ? (
                     <MdSlideshow size={28} />
@@ -517,15 +519,15 @@ function Videos({ onEdit, onOpenImage }) {
                   {hasSearch ? 'No matching results' : 'Empty collection'}
                 </p>
                 <h3 className="videos-empty-state__title">
-                  {getVideoEmptyTitle(activeSection, hasSearch, activeCategory)}
+                  {getWorkEmptyTitle(activeSection, hasSearch, activeCategory)}
                 </h3>
                 <p className="videos-empty-state__description">
-                  {getVideoEmptyHint(activeSection, hasSearch, activeCategory)}
+                  {getWorkEmptyHint(activeSection, hasSearch, activeCategory)}
                 </p>
                 {hasSearch ? (
                   <button
                     type="button"
-                    className="videos-empty-state__cta"
+                    className="videos-empty-state__cta my-work-empty-state__cta"
                     onClick={handleResetFilters}
                   >
                     Reset All Filters
@@ -534,11 +536,11 @@ function Videos({ onEdit, onOpenImage }) {
               </div>
             </div>
           ) : (
-            <div className="videos-groups">
+            <div className="videos-groups my-work-groups">
               {visibleWorkGroups.map((group) => (
-                <section key={group.key} className="videos-group">
+                <section key={group.key} className="videos-group my-work-group">
                   {group.label ? (
-                    <h3 className="videos-group__heading">
+                    <h3 className="videos-group__heading my-work-group__heading">
                       <span>{group.label}</span>
                       <span className="videos-group__count">
                         ({group.videos.length}
@@ -554,7 +556,7 @@ function Videos({ onEdit, onOpenImage }) {
               ))}
 
               {hasMore && (
-                <div ref={loadMoreSentinelRef} className="videos-scroll-loader" aria-busy="true" aria-label="Loading more items">
+                <div ref={loadMoreSentinelRef} className="videos-scroll-loader my-work-scroll-loader" aria-busy="true" aria-label="Loading more items">
                   <SkeletonMediaCollection
                     viewMode={viewMode}
                     cardCount={Math.min(viewMode === 'grid' ? 4 : 2, filteredWorkItems.length - visibleCount)}
@@ -663,4 +665,5 @@ function Videos({ onEdit, onOpenImage }) {
   )
 }
 
-export default Videos
+export const Videos = MyWork
+export default MyWork

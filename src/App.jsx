@@ -68,6 +68,7 @@ const PATH_TO_VIEW_MAP = {
   '/products/choose': 'dashboard',
   '/dashboard': 'dashboard',
   '/dashboard/home': 'dashboard',
+  '/dashboard/my-work': 'dashboard',
   '/dashboard/videos': 'dashboard',
   '/dashboard/avatars': 'dashboard',
   '/dashboard/create-avatar': 'dashboard',

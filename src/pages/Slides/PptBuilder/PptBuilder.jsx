@@ -91,12 +91,14 @@ export default function PptBuilder({
         }
       }
 
+      const presentationTitle = created?.title || created?.name || body.title
+
       const nextSession = {
         workspaceId: ctx.workspaceId,
         folderId: ctx.folderId,
         presentationId,
         config: {
-          title: body.title,
+          title: presentationTitle,
           theme: toApiThemeId(template.themeId || template.id) || 'petrol',
           workspaceId: ctx.workspaceId,
           presentationId,

@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Search, ChevronLeft, ChevronRight, X, Shield, Users, Coins, Sparkles, UserCheck, ArrowUpRight, Filter } from 'lucide-react'
 import superadminService, { SuperadminApiError } from '../../../../services/superadminService'
-import { formatAc, formatDate, formatShortDate, txTypeLabel, formatBytes, storageTxTypeLabel } from './superadminUtils'
+import { formatAc, formatDate, formatShortDate, txTypeLabel, formatBytes, storageTxTypeLabel, STORAGE_UNITS, parseStorageToBytes } from './superadminUtils'
 import { useAuth } from '../../../../contexts/AuthContext'
+import Toast from '../../../../components/ui/Toast/Toast'
+import { sanitizeUserFacingMessage } from '../../../../utils/userFacingMessage'
 import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
 import '../../../../pages/AdminPortal/styles/SuperadminUsers.css'
 import '../../../../pages/AdminPortal/styles/SuperadminDrawer.css'
@@ -86,17 +88,18 @@ function CreditActionCard({ mode, onSubmit, loading, disabled }) {
 }
 
 /* ─── right-side drawer ───────────────────────── */
-function UserDrawer({ open, user, detail, history, historyPagination, historyPage, setHistoryPage, historyType, setHistoryType, detailLoading, detailError, actionLoading, actionMessage, actionError, onCreditAction, onClose, onPlatformAccessChange, currentUserId }) {
+function UserDrawer({ open, user, detail, history, historyPagination, historyPage, setHistoryPage, historyType, setHistoryType, detailLoading, detailError, actionLoading, actionMessage, actionError, onCreditAction, onClose, onPlatformAccessChange, currentUserId, showToast }) {
   const [activeTab, setActiveTab] = useState('profile')
 
   // storage state
   const [storage, setStorage]           = useState(null)
   const [storageLoading, setStorageLoading] = useState(false)
   const [storageError, setStorageError]     = useState('')
-  const [storageMsg, setStorageMsg]         = useState('')
   const [storageActionLoading, setStorageActionLoading] = useState(false)
-  const [grantBytes, setGrantBytes]     = useState('')
-  const [revokeBytes, setRevokeBytes]   = useState('')
+  const [grantValue, setGrantValue]     = useState('')
+  const [grantUnit, setGrantUnit]       = useState('GB')
+  const [revokeValue, setRevokeValue]   = useState('')
+  const [revokeUnit, setRevokeUnit]     = useState('GB')
   const [storageReason, setStorageReason] = useState('')
   const [storageTiers, setStorageTiers] = useState([])
   const [selectedTierId, setSelectedTierId] = useState('')
@@ -107,16 +110,23 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
   const [platformAccessError, setPlatformAccessError] = useState('')
   const [isSuperadmin, setIsSuperadmin] = useState(Boolean(user?.isPlatformSuperadmin))
 
+  const calculatedGrantBytes = parseStorageToBytes(grantValue, grantUnit)
+  const calculatedRevokeBytes = parseStorageToBytes(revokeValue, revokeUnit)
+
   useEffect(() => {
     if (open) {
       setActiveTab('profile')
       setStorage(null)
-      setStorageMsg('')
       setStorageError('')
       setPlatformAccessError('')
       setIsSuperadmin(Boolean(user?.isPlatformSuperadmin))
       setStorageHistory([])
       setStorageHistoryPage(1)
+      setGrantValue('')
+      setGrantUnit('GB')
+      setRevokeValue('')
+      setRevokeUnit('GB')
+      setStorageReason('')
     }
   }, [open, user?.id, user?.isPlatformSuperadmin])
 
@@ -151,14 +161,18 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
   const handlePlatformAccessToggle = async () => {
     if (!user?.id) return
     const next = !isSuperadmin
+    const targetName = user?.name || user?.email || 'user'
     setPlatformAccessLoading(true)
     setPlatformAccessError('')
     try {
       await superadminService.updateUserPlatformAccess(user.id, { isPlatformSuperadmin: next })
       setIsSuperadmin(next)
       onPlatformAccessChange?.(user.id, next)
+      showToast?.(`Superadmin access ${next ? 'granted to' : 'revoked from'} ${targetName}`, 'success')
     } catch (err) {
-      setPlatformAccessError(err.message || 'Failed to update platform access')
+      const msg = err.message || 'Failed to update platform access'
+      setPlatformAccessError(msg)
+      showToast?.(msg, 'error')
     } finally {
       setPlatformAccessLoading(false)
     }
@@ -167,49 +181,66 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
   const handleTierGrant = async (e) => {
     e.preventDefault()
     if (!selectedTierId) return
-    setStorageActionLoading(true); setStorageMsg(''); setStorageError('')
+    const targetName = user?.name || user?.email || 'user'
+    setStorageActionLoading(true); setStorageError('')
     try {
       const result = await superadminService.grantUserStorage(user.id, {
         tierId: selectedTierId,
         reason: storageReason.trim() || undefined,
       })
-      setStorageMsg(`Set tier limit to ${formatBytes(result.user?.storageLimit)}`)
+      showToast?.(`Set tier preset to ${formatBytes(result.user?.storageLimit)} for ${targetName}`, 'success')
       setSelectedTierId('')
       const fresh = await superadminService.getUserStorage(user.id)
       setStorage(fresh)
-    } catch (err) { setStorageError(err.message || 'Grant failed') }
+    } catch (err) {
+      const msg = err.message || 'Grant failed'
+      setStorageError(msg)
+      showToast?.(msg, 'error')
+    }
     finally { setStorageActionLoading(false) }
   }
 
   const handleStorageGrant = async (e) => {
     e.preventDefault()
-    const bytes = parseInt(grantBytes, 10)
+    const bytes = calculatedGrantBytes
     if (!bytes || bytes <= 0) return
-    setStorageActionLoading(true); setStorageMsg(''); setStorageError('')
+    const targetName = user?.name || user?.email || 'user'
+    setStorageActionLoading(true); setStorageError('')
     try {
       const result = await superadminService.grantUserStorage(user.id, { additionalBytes: bytes, reason: storageReason.trim() || undefined })
-      setStorageMsg(`Granted ${formatBytes(bytes)}. New limit: ${formatBytes(result.storageLimit ?? result.user?.storageLimit)}`)
-      setGrantBytes(''); setStorageReason('')
+      showToast?.(`Successfully granted ${formatBytes(bytes)} storage to ${targetName}. New limit: ${formatBytes(result.storageLimit ?? result.user?.storageLimit)}`, 'success')
+      setGrantValue(''); setStorageReason('')
       const fresh = await superadminService.getUserStorage(user.id)
       setStorage(fresh)
-    } catch (err) { setStorageError(err.message || 'Grant failed') }
+    } catch (err) {
+      const msg = err.message || 'Grant failed'
+      setStorageError(msg)
+      showToast?.(msg, 'error')
+    }
     finally { setStorageActionLoading(false) }
   }
 
   const handleStorageRevoke = async (e) => {
     e.preventDefault()
-    const bytes = parseInt(revokeBytes, 10)
+    const bytes = calculatedRevokeBytes
     if (!bytes || bytes <= 0) return
-    setStorageActionLoading(true); setStorageMsg(''); setStorageError('')
+    const targetName = user?.name || user?.email || 'user'
+    setStorageActionLoading(true); setStorageError('')
     try {
       const result = await superadminService.revokeUserStorage(user.id, { amountBytes: bytes, reason: storageReason.trim() || undefined })
-      setStorageMsg(`Revoked ${formatBytes(bytes)}. New limit: ${formatBytes(result.storageLimit ?? result.user?.storageLimit)}`)
-      setRevokeBytes(''); setStorageReason('')
+      showToast?.(`Successfully revoked ${formatBytes(bytes)} storage from ${targetName}. New limit: ${formatBytes(result.storageLimit ?? result.user?.storageLimit)}`, 'success')
+      setRevokeValue(''); setStorageReason('')
       const fresh = await superadminService.getUserStorage(user.id)
       setStorage(fresh)
-    } catch (err) { setStorageError(err.message || 'Revoke failed') }
+    } catch (err) {
+      const msg = err.message || 'Revoke failed'
+      setStorageError(msg)
+      showToast?.(msg, 'error')
+    }
     finally { setStorageActionLoading(false) }
   }
+
+
 
   return (
     <>
@@ -451,7 +482,6 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
 
               {activeTab === 'storage' && (
                 <div className="sa-tab-pane" style={{ padding: '20px 24px' }}>
-                  {storageMsg   && <div className="sa-alert sa-alert--success">{storageMsg}</div>}
                   {storageError && <div className="sa-alert sa-alert--error">{storageError}</div>}
 
                   {/* Storage usage summary */}
@@ -533,24 +563,42 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
                       </div>
                       <form className="sa-action-form" onSubmit={handleStorageGrant}>
                         <div className="sa-field sa-field--inline">
-                          <input
-                            className="sa-input sa-input--amount"
-                            type="number" min="1" step="1"
-                            placeholder="Bytes"
-                            value={grantBytes}
-                            onChange={e => setGrantBytes(e.target.value)}
-                            disabled={storageActionLoading}
-                            required
-                            aria-label="Bytes to grant"
-                          />
-                          <button type="submit" className="sa-btn sa-btn--sm sa-btn--primary"
-                            disabled={storageActionLoading || !grantBytes}>
+                          <div className="sa-storage-input-group">
+                            <input
+                              className="sa-input sa-input--amount sa-storage-amount-input"
+                              type="number"
+                              min="0.000001"
+                              step="any"
+                              placeholder="Amount"
+                              value={grantValue}
+                              onChange={e => setGrantValue(e.target.value)}
+                              disabled={storageActionLoading}
+                              required
+                              aria-label="Storage amount to grant"
+                            />
+                            <select
+                              className="sa-select sa-storage-unit-select"
+                              value={grantUnit}
+                              onChange={e => setGrantUnit(e.target.value)}
+                              disabled={storageActionLoading}
+                              aria-label="Storage unit to grant"
+                            >
+                              {STORAGE_UNITS.map(u => (
+                                <option key={u.value} value={u.value}>{u.label}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <button
+                            type="submit"
+                            className="sa-btn sa-btn--sm sa-btn--primary"
+                            disabled={storageActionLoading || !grantValue || calculatedGrantBytes <= 0}
+                          >
                             {storageActionLoading ? '…' : 'Grant'}
                           </button>
                         </div>
-                        {grantBytes > 0 && (
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>
-                            ≈ {formatBytes(parseInt(grantBytes, 10))}
+                        {calculatedGrantBytes > 0 && (
+                          <div className="sa-storage-calc-hint">
+                            ≈ {formatBytes(calculatedGrantBytes)} <span style={{ opacity: 0.75 }}>({calculatedGrantBytes.toLocaleString()} B)</span>
                           </div>
                         )}
                       </form>
@@ -564,24 +612,42 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
                       </div>
                       <form className="sa-action-form" onSubmit={handleStorageRevoke}>
                         <div className="sa-field sa-field--inline">
-                          <input
-                            className="sa-input sa-input--amount"
-                            type="number" min="1" step="1"
-                            placeholder="Bytes"
-                            value={revokeBytes}
-                            onChange={e => setRevokeBytes(e.target.value)}
-                            disabled={storageActionLoading}
-                            required
-                            aria-label="Bytes to revoke"
-                          />
-                          <button type="submit" className="sa-btn sa-btn--sm sa-btn--danger"
-                            disabled={storageActionLoading || !revokeBytes}>
+                          <div className="sa-storage-input-group">
+                            <input
+                              className="sa-input sa-input--amount sa-storage-amount-input"
+                              type="number"
+                              min="0.000001"
+                              step="any"
+                              placeholder="Amount"
+                              value={revokeValue}
+                              onChange={e => setRevokeValue(e.target.value)}
+                              disabled={storageActionLoading}
+                              required
+                              aria-label="Storage amount to revoke"
+                            />
+                            <select
+                              className="sa-select sa-storage-unit-select"
+                              value={revokeUnit}
+                              onChange={e => setRevokeUnit(e.target.value)}
+                              disabled={storageActionLoading}
+                              aria-label="Storage unit to revoke"
+                            >
+                              {STORAGE_UNITS.map(u => (
+                                <option key={u.value} value={u.value}>{u.label}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <button
+                            type="submit"
+                            className="sa-btn sa-btn--sm sa-btn--danger"
+                            disabled={storageActionLoading || !revokeValue || calculatedRevokeBytes <= 0}
+                          >
                             {storageActionLoading ? '…' : 'Revoke'}
                           </button>
                         </div>
-                        {revokeBytes > 0 && (
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>
-                            ≈ {formatBytes(parseInt(revokeBytes, 10))}
+                        {calculatedRevokeBytes > 0 && (
+                          <div className="sa-storage-calc-hint">
+                            ≈ {formatBytes(calculatedRevokeBytes)} <span style={{ opacity: 0.75 }}>({calculatedRevokeBytes.toLocaleString()} B)</span>
                           </div>
                         )}
                       </form>
@@ -642,6 +708,22 @@ function SuperadminUsersPanel() {
   const [listLoading, setListLoading] = useState(true)
   const [listError, setListError]     = useState('')
   const [adminFilter, setAdminFilter] = useState('all') // all, admin, non-admin
+
+  // toast state (same as workspace)
+  const [toast, setToast]             = useState(null)
+  const toastTimeoutRef               = useRef(null)
+
+  const showToast = useCallback((message, type = 'success') => {
+    setToast({ message: sanitizeUserFacingMessage(message), type })
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    toastTimeoutRef.current = setTimeout(() => setToast(null), 2800)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    }
+  }, [])
 
   const [selectedId, setSelectedId]   = useState(null)
   const [drawerOpen, setDrawerOpen]   = useState(false)
@@ -719,19 +801,24 @@ function SuperadminUsersPanel() {
 
   const handleCreditAction = async (mode, payload) => {
     if (!selectedId) return false
+    const targetUser = users.find(u => u.id === selectedId) || detail?.user
+    const targetName = targetUser?.name || targetUser?.email || 'user'
     setActionLoading(true); setActionError(''); setActionMessage('')
     try {
       const fn = mode === 'grant' ? superadminService.grantUserCredits : superadminService.revokeUserCredits
       const result = await fn(selectedId, payload)
-      setActionMessage(
+      const msg =
         mode === 'grant'
-          ? `Granted ${formatAc(payload.amount)}. New balance: ${formatAc(result.user?.personalCredits)}`
-          : `Revoked ${formatAc(payload.amount)}. New balance: ${formatAc(result.user?.personalCredits)}`
-      )
+          ? `Successfully granted ${formatAc(payload.amount)} to ${targetName}. New balance: ${formatAc(result.user?.personalCredits)}`
+          : `Successfully revoked ${formatAc(payload.amount)} from ${targetName}. New balance: ${formatAc(result.user?.personalCredits)}`
+      setActionMessage(msg)
+      showToast(msg, 'success')
       await loadDetail(selectedId); await loadUsers()
       return true
     } catch (err) {
-      setActionError(err instanceof SuperadminApiError && err.status === 402 ? 'Insufficient credits.' : err.message || 'Action failed')
+      const errMsg = err instanceof SuperadminApiError && err.status === 402 ? 'Insufficient credits.' : err.message || 'Action failed'
+      setActionError(errMsg)
+      showToast(errMsg, 'error')
       return false
     } finally { setActionLoading(false) }
   }
@@ -1031,7 +1118,10 @@ function SuperadminUsersPanel() {
         onClose={closeDrawer}
         onPlatformAccessChange={handlePlatformAccessChange}
         currentUserId={currentUser?.id}
+        showToast={showToast}
       />
+
+      <Toast toast={toast} />
     </div>
   )
 }

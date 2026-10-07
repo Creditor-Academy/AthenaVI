@@ -4,8 +4,10 @@ import { Sparkles, ArrowUp, ArrowRight, Paperclip, Check, Globe, Image as ImageI
 import { MdDescription, MdMenuBook, MdInsights } from 'react-icons/md'
 import { useAuth } from '../../../contexts/AuthContext'
 import presentationService from '../../../services/presentationService'
+import workspaceService from '../../../services/workspaceService'
 import { isInsufficientCreditsError } from '../../../services/creditsService'
 import { resolvePresentationWorkspaceContext } from '../../../utils/presentationContext'
+import { generateUniqueProjectName } from '../../../utils/projectNameValidation'
 import {
   listBrandKitsUsableInWorkspace,
   ensureBrandKitInWorkspace,
@@ -608,12 +610,20 @@ export default function AIPptWizard({
       const persistedStyles = rememberArtStyle(recentsUserKey, mediaStyle)
       setRecentArtStyleIds(persistedStyles)
 
-      const aiDeckTitle =
+      const rawAiDeckTitle =
         outlinePayload?.presentation?.title ||
         outlinePayload?.outline?.title ||
         outlinePayload?.data?.presentation?.title ||
         outlinePayload?.data?.outline?.title ||
         'Untitled Presentation'
+
+      let aiDeckTitle = rawAiDeckTitle
+      try {
+        const existingProjects = await workspaceService.listProjectsInFolder(ctx.workspaceId, ctx.folderId)
+        aiDeckTitle = generateUniqueProjectName(rawAiDeckTitle, existingProjects, { excludeProjectId: presentationId })
+      } catch {
+        // Fallback to rawAiDeckTitle
+      }
 
       const config = {
         title: aiDeckTitle,

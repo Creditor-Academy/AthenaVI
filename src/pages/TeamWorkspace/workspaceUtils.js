@@ -270,17 +270,21 @@ export function normalizeItemName(name) {
   return String(name || '').trim().toLowerCase();
 }
 
+export function getAllWorkspaceNames(workspaces = []) {
+  return (workspaces || [])
+    .map((workspace) => workspace.name)
+    .filter(Boolean);
+}
+
 export function getTeamWorkspaceNames(workspaces = []) {
-  return workspaces
-    .filter((workspace) => workspace.type !== 'personal')
-    .map((workspace) => workspace.name);
+  return getAllWorkspaceNames(workspaces);
 }
 
 export function hasConflictingName(name, existingNames = [], { excludeName = null } = {}) {
   const normalized = normalizeItemName(name);
   if (!normalized) return false;
   const excluded = excludeName != null ? normalizeItemName(excludeName) : null;
-  return existingNames.some((existing) => {
+  return (existingNames || []).some((existing) => {
     const candidate = normalizeItemName(existing);
     return candidate && candidate !== excluded && candidate === normalized;
   });

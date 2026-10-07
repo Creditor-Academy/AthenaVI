@@ -1,4 +1,6 @@
 import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api.js'
+import { generateUniqueProjectName } from '../utils/projectNameValidation.js'
+import workspaceService from './workspaceService.js'
 
 function normalizeId(item) {
   if (!item || typeof item !== 'object') return item
@@ -13,10 +15,23 @@ async function readErrorMessage(response, fallbackMessage) {
 class CanvasService {
   /** Create a new canvas document inside a workspace folder. */
   async createCanvas(workspaceId, { name, folderId, data, thumbnail } = {}) {
+    const rawName = String(name || '').trim() || 'Untitled Design'
+    let finalName = rawName
+    if (folderId && workspaceId) {
+      try {
+        const projects = await workspaceService.listProjectsInFolder(workspaceId, folderId)
+        finalName = generateUniqueProjectName(rawName, projects)
+      } catch {
+        // Continue with rawName if listing fails
+      }
+    }
+
+    const canvasData = data ? { ...data, docTitle: finalName } : data
+
     const response = await fetch(buildUrl(API_CONFIG.ENDPOINTS.CANVASES.LIST(workspaceId)), {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ name, folderId, data, thumbnail }),
+      body: JSON.stringify({ name: finalName, folderId, data: canvasData, thumbnail }),
     })
 
     if (!response.ok) {

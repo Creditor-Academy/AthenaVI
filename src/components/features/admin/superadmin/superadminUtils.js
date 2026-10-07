@@ -72,6 +72,29 @@ export function formatBytes(bytes) {
   return `${i === 0 ? val : val.toFixed(2)} ${units[i]}`
 }
 
+export const STORAGE_UNITS = [
+  { value: 'B', label: 'B' },
+  { value: 'KB', label: 'KB' },
+  { value: 'MB', label: 'MB' },
+  { value: 'GB', label: 'GB' },
+  { value: 'TB', label: 'TB' },
+]
+
+export const STORAGE_UNIT_MULTIPLIERS = {
+  B: 1,
+  KB: 1024,
+  MB: 1024 ** 2,
+  GB: 1024 ** 3,
+  TB: 1024 ** 4,
+}
+
+export function parseStorageToBytes(value, unit = 'GB') {
+  const num = parseFloat(value)
+  if (!Number.isFinite(num) || num <= 0) return 0
+  const mult = STORAGE_UNIT_MULTIPLIERS[unit] || 1
+  return Math.round(num * mult)
+}
+
 export const STORAGE_TX_TYPE_LABELS = {
   initial: 'Initial quota',
   platform_grant: 'Platform grant',
@@ -90,3 +113,4 @@ export function storageStatusLabel(status) {
   if (s === 'rejected') return 'Rejected'
   return status || 'Unknown'
 }
+

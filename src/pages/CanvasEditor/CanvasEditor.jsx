@@ -350,8 +350,11 @@ export default function CanvasEditor({
             data: { version: 1, docTitle: sentTitle, size: sentSize, canvases: sentCanvases },
           })
           if (cancelled) return
-          savedSnapshotRef.current = { canvases: sentCanvases, docTitle: sentTitle, size: sentSize }
-          lastSyncedTitleRef.current = sentTitle
+          const createdName = created.name || created.title || sentTitle
+          setDocTitle(createdName)
+          docTitleRef.current = createdName
+          savedSnapshotRef.current = { canvases: sentCanvases, docTitle: createdName, size: sentSize }
+          lastSyncedTitleRef.current = createdName
           canvasIdRef.current = created.id
           setCanvasId(created.id)
           setSaveState('saved')

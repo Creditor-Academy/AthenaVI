@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MdClose, MdAdd, MdGroupWork } from 'react-icons/md';
 import {
-  getTeamWorkspaceNames,
+  getAllWorkspaceNames,
   hasConflictingName,
 } from '../../../../pages/TeamWorkspace/workspaceUtils.js';
 import './PremiumModal.css';
@@ -14,8 +14,8 @@ const CreateWorkspaceModal = ({ isOpen, onClose, onCreate, workspaces = [] }) =>
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
 
-    const teamWorkspaceNames = useMemo(
-        () => getTeamWorkspaceNames(workspaces),
+    const allWorkspaceNames = useMemo(
+        () => getAllWorkspaceNames(workspaces),
         [workspaces]
     );
 
@@ -23,7 +23,7 @@ const CreateWorkspaceModal = ({ isOpen, onClose, onCreate, workspaces = [] }) =>
     const isDuplicate =
         !isSubmitting &&
         Boolean(trimmedName) &&
-        hasConflictingName(trimmedName, teamWorkspaceNames);
+        hasConflictingName(trimmedName, allWorkspaceNames);
 
     useEffect(() => {
         if (!isOpen) return;

@@ -1,5 +1,6 @@
 export { default as HomeSkeleton } from './HomeSkeleton'
-export { default as VideosSkeleton } from './VideosSkeleton'
+export { default as MyWorkSkeleton } from './MyWorkSkeleton'
+export { default as VideosSkeleton } from './MyWorkSkeleton'
 export { default as AvatarsSkeleton } from './AvatarsSkeleton'
 export { default as CreateAvatarSkeleton } from './CreateAvatarSkeleton'
 export { default as TrashSkeleton } from './TrashSkeleton'
