@@ -1,5 +1,4 @@
-import * as cjsModule from '../contentRepair.js';
-const cjs = cjsModule.default || cjsModule;
+import cjs from '../contentRepair.js';
 
 export const {
   clampRepeatingGroups,

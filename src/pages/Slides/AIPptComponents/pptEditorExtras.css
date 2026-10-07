@@ -1,3 +1,18 @@
+.ppt-canvas-text-safe-area {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 998;
+}
+
+.ppt-canvas-text-safe-area__rect {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px dashed rgba(239, 68, 68, 0.45);
+  border-radius: 2px;
+  background: rgba(239, 68, 68, 0.03);
+}
+
 .ppt-canvas-guides-overlay {
   position: absolute;
   inset: 0;

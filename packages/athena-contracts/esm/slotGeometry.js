@@ -1,5 +1,4 @@
-import * as cjsModule from '../slotGeometry.js';
-const cjs = cjsModule.default || cjsModule;
+import cjs from '../slotGeometry.js';
 
 export const { slotEnvelope, getGridDims } = cjs;
 

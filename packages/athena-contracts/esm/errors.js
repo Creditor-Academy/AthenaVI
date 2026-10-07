@@ -1,5 +1,4 @@
-import * as cjsModule from '../errors.js';
-const cjs = cjsModule.default || cjsModule;
+import cjs from '../errors.js';
 
 export const { ContentContractValidationError } = cjs;
 

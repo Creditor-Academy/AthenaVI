@@ -220,7 +220,10 @@ function EditableText({
       const boxH = wrap.clientHeight
       const boxW = wrap.clientWidth
       if (!boxH || !boxW) return
-      const minPx = Math.max(8, base * 0.45)
+      const slotKey = String(el?.slotId || '').toLowerCase()
+      const isCardTitle = /^(card|col|row|feature|bullet|item)_\d+_title$/.test(slotKey)
+      const minScale = isCardTitle ? 0.85 : 0.45
+      const minPx = Math.max(8, base * minScale)
       const overflows = () =>
         node.scrollHeight > boxH + 1 || (noWrap && node.scrollWidth > boxW + 1)
       let size = base
