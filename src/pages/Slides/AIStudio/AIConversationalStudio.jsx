@@ -900,10 +900,12 @@ export default function AIConversationalStudio({
             <PanelLeft size={18} />
           </button>
         </div>
-        <button type="button" className="conv-rail-item conv-rail-new" onClick={() => (onNewChat || onBack)?.()} title="New chat">
-          <Plus size={18} />
-          {sidebarOpen && <span>New chat</span>}
-        </button>
+        {sidebarOpen && (
+          <div className="conv-rail-search">
+            <Search size={16} />
+            <input type="search" placeholder="Search chats" readOnly />
+          </div>
+        )}
         <button type="button" className="conv-rail-item" onClick={() => (onOpenLibrary || onBack)?.()} title="Library">
           <Library size={18} />
           {sidebarOpen && <span>Library</span>}
@@ -929,21 +931,25 @@ export default function AIConversationalStudio({
           </>
         )}
         {sidebarOpen && (
-          <>
-            <div className="conv-rail-search">
-              <Search size={14} />
-              <input type="search" placeholder="Search chats" readOnly />
+          <div className="conv-rail-recent-wrap">
+            <div className="conv-rail-label">
+              <Clock size={14} /> Recent
             </div>
-            <div className="conv-rail-label">Recent</div>
             <ul className="conv-rail-recents">
               {renderRecentRows()}
             </ul>
-          </>
+          </div>
         )}
-        <button type="button" className="conv-rail-item conv-rail-exit" onClick={onBack} title="Exit to studio home">
-          <LogOut size={18} />
-          {sidebarOpen && <span>Exit</span>}
-        </button>
+        <div className="conv-rail-footer">
+          <button type="button" className="conv-rail-new" onClick={() => (onNewChat || onBack)?.()} title="New chat">
+            <Plus size={16} />
+            {sidebarOpen && <span>New chat</span>}
+          </button>
+          <button type="button" className="conv-rail-exit" onClick={onBack} title="Exit to studio home">
+            <LogOut size={16} />
+            {sidebarOpen && <span>Exit</span>}
+          </button>
+        </div>
         {!sidebarOpen && railFlyout && (
           <div className="conv-rail-flyout" role="dialog" aria-label="Recents">
             {railFlyout === 'search' && (
