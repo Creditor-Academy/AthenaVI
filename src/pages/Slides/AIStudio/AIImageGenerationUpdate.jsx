@@ -783,6 +783,20 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
           setLaunchStudio(false);
           setActiveThreadId(null);
         }}
+        onNewChat={() => {
+          setLaunchStudio(false);
+          setActiveThreadId(null);
+          setPrompt('');
+        }}
+        onOpenLibrary={() => {
+          setLaunchStudio(false);
+          setActiveThreadId(null);
+          setActiveMode('library');
+        }}
+        onSelectThread={(id) => {
+          setActiveThreadId(id);
+          setLaunchStudio(true);
+        }}
         onOpenBilling={onOpenBilling}
         createContext={{
           ...createContext,
@@ -797,6 +811,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
         selectedFormat={selectedFormat}
         selectedStyle={selectedStyle}
         activeThreadId={activeThreadId}
+        key={activeThreadId || 'new-studio'}
         initialContext={imageContext}
       />
     );
