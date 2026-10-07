@@ -172,6 +172,22 @@
   margin: 0 0 12px;
   flex-shrink: 0;
 }
+
+.recent-refresh-btn {
+  margin-left: auto;
+  border: none;
+  background: transparent;
+  color: inherit;
+  display: inline-flex;
+  padding: 2px;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.recent-refresh-btn:hover {
+  color: var(--text-main, #111827);
+  background: color-mix(in srgb, var(--text-main, #111827) 6%, transparent);
+}
 .sidebar-recent ul {
   list-style: none;
   padding: 0;
