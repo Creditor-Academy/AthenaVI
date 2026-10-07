@@ -61,7 +61,7 @@ const WorkspaceHeader = ({
                         <MdArrowBack size={20} />
                     </button>
                 )}
-                <h2>Workspaces</h2>
+                <h1 className="workspace-title page-header-title">Workspaces</h1>
             </div>
 
             <div className="workspace-header-actions">

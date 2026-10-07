@@ -176,14 +176,17 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
         return next;
       });
 
-      setHasMore(!!(data?.has_more ?? responseData?.has_more));
-      setNextToken(
+      const rawToken =
         data?.token ??
         responseData?.token ??
         data?.next_token ??
         responseData?.next_token ??
-        null
-      );
+        null;
+      const validToken = (typeof rawToken === 'string' && rawToken.trim() !== '') ? rawToken.trim() : null;
+      const serverHasMore = Boolean(data?.has_more ?? responseData?.has_more);
+
+      setHasMore(mappedAvatars.length > 0 && Boolean(validToken || (serverHasMore && validToken)));
+      setNextToken(validToken);
     } catch (err) {
       if (requestId !== fetchRequestRef.current) return;
       console.error('Failed to fetch avatars:', err);
@@ -626,26 +629,7 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
               menuLabel="Sort avatars"
             />
 
-            {activeSection === 'private' && onCreateAvatar ? (
-              <>
-                <button
-                  type="button"
-                  className="btn-secondary videos-create-btn"
-                  onClick={() => onCreate?.()}
-                >
-                  <MdAdd size={18} />
-                  <span>Create Video</span>
-                </button>
-                <button
-                  type="button"
-                  className="videos-create-btn"
-                  onClick={onCreateAvatar}
-                >
-                  <MdAdd size={18} />
-                  <span>Create Avatar</span>
-                </button>
-              </>
-            ) : onCreate ? (
+            {onCreate ? (
               <button type="button" className="videos-create-btn" onClick={onCreate}>
                 <MdAdd size={18} />
                 <span>Create Video</span>
@@ -750,7 +734,7 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
             </div>
           )}
 
-          {hasMore && !loading ? (
+          {hasMore && !loading && avatars.length > 0 && filteredAvatars.length > 0 && Boolean(nextToken) ? (
             <LoadMoreButton
               loading={loadingMore}
               disabled={loadingMore}

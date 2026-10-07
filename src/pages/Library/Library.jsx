@@ -107,6 +107,7 @@ function Library() {
 
   const [assets, setAssets] = useState([])
   const [assetsLoading, setAssetsLoading] = useState(false)
+  const [hasLoadedAssets, setHasLoadedAssets] = useState(false)
   const [assetsError, setAssetsError] = useState('')
   const [uploading, setUploading] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
@@ -125,9 +126,12 @@ function Library() {
           const personal = list.find((ws) => String(ws.type || ws.workspaceType).toUpperCase() === 'PRIVATE')
           return personal?.id || list[0].id
         })
+      } else {
+        setHasLoadedAssets(true)
       }
     } catch {
       setWorkspaces([])
+      setHasLoadedAssets(true)
     } finally {
       setWorkspaceLoading(false)
     }
@@ -148,6 +152,7 @@ function Library() {
       setAssetsError(err?.message || 'Failed to load assets')
     } finally {
       setAssetsLoading(false)
+      setHasLoadedAssets(true)
     }
   }, [workspaceId])
 
@@ -226,6 +231,33 @@ function Library() {
   }, [filteredAssets, visibleCount])
 
   const hasMoreAssets = visibleCount < filteredAssets.length
+
+  // Each image's real aspect ratio, probed once per asset so the masonry grid can
+  // reserve its true box up front instead of growing from nothing as the full
+  // image downloads (that growth was what caused already-placed cards to keep
+  // shifting down as later images loaded in).
+  const [imageRatios, setImageRatios] = useState({})
+  const probedImageIdsRef = useRef(new Set())
+
+  useEffect(() => {
+    visibleAssets.forEach((asset) => {
+      if (asset.mediaType !== 'image' || !asset.url) return
+      if (probedImageIdsRef.current.has(asset.id)) return
+      probedImageIdsRef.current.add(asset.id)
+
+      const probe = new window.Image()
+      const settle = (ratio) => {
+        setImageRatios((prev) =>
+          prev[asset.id] != null ? prev : { ...prev, [asset.id]: ratio }
+        )
+      }
+      probe.onload = () => {
+        settle(probe.naturalWidth && probe.naturalHeight ? probe.naturalWidth / probe.naturalHeight : 4 / 3)
+      }
+      probe.onerror = () => settle(4 / 3)
+      probe.src = asset.url
+    })
+  }, [visibleAssets])
 
   // Infinite scroll observer for library assets
   useEffect(() => {
@@ -368,7 +400,11 @@ function Library() {
   }
 
   const isUnsupportedCategory = selectedCategory === 'fonts' || selectedCategory === 'templates'
-  const isCurrentTabEmpty = !assetsLoading && filteredAssets.length === 0
+  const isInitialLoading =
+    workspaceLoading ||
+    !hasLoadedAssets ||
+    (assetsLoading && filteredAssets.length === 0)
+  const isCurrentTabEmpty = !isInitialLoading && !assetsLoading && filteredAssets.length === 0
 
   const assetIcon = (asset) => {
     if (asset.mediaType === 'video') return <MdVideocam />
@@ -489,6 +525,7 @@ function Library() {
             alt={asset.name}
             loading={index < 8 ? 'eager' : 'lazy'}
             decoding="async"
+            style={imageRatios[asset.id] ? { aspectRatio: imageRatios[asset.id] } : undefined}
           />
         ) : (
           <div className="asset-preview-icon">{assetIcon(asset)}</div>
@@ -591,7 +628,11 @@ function Library() {
                               aria-selected={isSelected}
                               className={`library-workspace-item ${isSelected ? 'selected' : ''}`}
                               onClick={() => {
-                                setWorkspaceId(ws.id)
+                                if (String(ws.id) !== String(workspaceId)) {
+                                  setHasLoadedAssets(false)
+                                  setAssets([])
+                                  setWorkspaceId(ws.id)
+                                }
                                 setWorkspaceDropdownOpen(false)
                               }}
                             >
@@ -744,7 +785,7 @@ function Library() {
                   category={selectedCategory}
                   onBrowseMedia={() => handleCategoryClick(CATEGORY_CARDS[0])}
                 />
-              ) : assetsLoading && filteredAssets.length === 0 ? (
+              ) : isInitialLoading ? (
                 activeView === 'list' ? renderListSkeleton() : renderMasonrySkeleton()
               ) : isCurrentTabEmpty ? (
                 <div className="library-empty-state">

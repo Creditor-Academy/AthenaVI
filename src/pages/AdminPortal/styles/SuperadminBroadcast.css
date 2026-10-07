@@ -24,6 +24,47 @@
   overflow-y: auto;
 }
 
+/* ── Main Top Navigation Tabs (Accent Themed) ── */
+.sa-broadcast-nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(var(--primary-rgb), 0.08);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid rgba(var(--primary-rgb), 0.2);
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.sa-broadcast-nav-tab {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.16s ease;
+  white-space: nowrap;
+}
+
+.sa-broadcast-nav-tab:hover:not(.active) {
+  color: var(--primary);
+  background: rgba(var(--primary-rgb), 0.12);
+}
+
+.sa-broadcast-nav-tab.active {
+  color: #ffffff;
+  background: var(--primary);
+  font-weight: 650;
+  box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.32);
+}
+
 .sa-broadcast-toolbar {
   display: flex;
   align-items: center;

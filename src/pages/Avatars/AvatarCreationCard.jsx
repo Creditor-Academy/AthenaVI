@@ -10,9 +10,12 @@ function AvatarCreationCard({ onClick }) {
         aria-label="Create new custom avatar"
       >
         <span className="avatars-creation-card__icon" aria-hidden>
-          <MdAdd size={32} />
+          <MdAdd size={30} />
         </span>
-        <span className="avatars-creation-card__label">Create New Custom Avatar</span>
+        <div className="avatars-creation-card__content">
+          <h4 className="avatars-creation-card__title">Create New Avatar</h4>
+          <p className="avatars-creation-card__desc">Custom Twin & Looks</p>
+        </div>
       </button>
     </article>
   );

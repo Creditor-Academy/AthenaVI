@@ -51,7 +51,7 @@ export default function SuperadminBroadcastPanel() {
       <div className="sa-table-card" style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {/* Navigation Tabs Toolbar */}
         <div className="sa-table-toolbar" style={{ borderBottom: '1px solid color-mix(in srgb, var(--border-color) 35%, transparent)' }}>
-          <div className="sa-filter-tabs" role="tablist" aria-label="Broadcast Navigation Tabs">
+          <div className="sa-broadcast-nav-tabs" role="tablist" aria-label="Broadcast Navigation Tabs">
             {MAIN_TABS.map(({ id, label, icon: Icon }) => {
               const active = activeTab === id
               return (
@@ -60,7 +60,7 @@ export default function SuperadminBroadcastPanel() {
                   type="button"
                   role="tab"
                   aria-selected={active}
-                  className={`sa-filter-tab${active ? ' active' : ''}`}
+                  className={`sa-broadcast-nav-tab${active ? ' active' : ''}`}
                   onClick={() => setActiveTab(id)}
                 >
                   <Icon size={14} />

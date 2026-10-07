@@ -354,14 +354,24 @@
   position: absolute;
   top: 8px;
   left: 8px;
-  padding: 3px 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
   border-radius: 999px;
   background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   color: #fff;
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  line-height: 1;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
+  white-space: nowrap;
+  box-sizing: border-box;
+  pointer-events: none;
   z-index: 2;
 }
 
@@ -1001,7 +1011,7 @@
 
 .asset-card.grid.masonry-card .asset-preview img {
   width: 100%;
-  height: auto;
+  aspect-ratio: 4 / 3;
   display: block;
   object-fit: cover;
 }

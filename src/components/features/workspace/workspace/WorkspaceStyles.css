@@ -27,12 +27,15 @@
   min-width: 0;
 }
 
-.workspace-header-title h2 {
+.workspace-header-title h1,
+.workspace-header-title h2,
+.workspace-title {
   margin: 0;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
+  line-height: 1.2;
   color: var(--text-main);
-  letter-spacing: -0.3px;
+  letter-spacing: -0.01em;
 }
 
 .workspace-back-btn {
