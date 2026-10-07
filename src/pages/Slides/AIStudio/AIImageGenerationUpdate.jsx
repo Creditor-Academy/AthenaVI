@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Plus, Search, Image as ImageIcon,
   ChevronDown, Mic, Sparkles, X, Lightbulb,
@@ -607,29 +607,31 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
     }
   };
 
-  useEffect(() => {
-    async function loadUserSession() {
-      try {
-        const balance = saveWorkspaceId
-          ? await creditsService.getWorkspaceBalance(saveWorkspaceId)
-          : await creditsService.getPersonalBalance();
-        setCredits(balance.workspaceCredits || balance.personalCredits || balance.credits || 0);
+  const loadRecentChats = useCallback(async () => {
+    try {
+      const balance = saveWorkspaceId
+        ? await creditsService.getWorkspaceBalance(saveWorkspaceId)
+        : await creditsService.getPersonalBalance();
+      setCredits(balance.workspaceCredits || balance.personalCredits || balance.credits || 0);
 
-        if (!saveWorkspaceId) {
-          setRecentChats([]);
-          return;
-        }
-        const history = await imageGenService.listThreads(saveWorkspaceId, {
-          folderId: saveFolderId || undefined,
-          take: 10,
-        });
-        setRecentChats(history || []);
-      } catch(e) {
-        console.error("Failed to load user session", e);
+      if (!saveWorkspaceId) {
+        setRecentChats([]);
+        return;
       }
+      const history = await imageGenService.listThreads(saveWorkspaceId, {
+        folderId: saveFolderId || undefined,
+        take: 20,
+      });
+      setRecentChats(history || []);
+    } catch (e) {
+      console.error("Failed to load user session", e);
     }
-    loadUserSession();
   }, [saveWorkspaceId, saveFolderId]);
+
+  useEffect(() => {
+    if (launchStudio || activeThreadId) return undefined;
+    loadRecentChats();
+  }, [launchStudio, activeThreadId, loadRecentChats]);
 
   const getStyleImage = (styleId) => {
     switch(styleId) {
@@ -781,6 +783,20 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
           setLaunchStudio(false);
           setActiveThreadId(null);
         }}
+        onNewChat={() => {
+          setLaunchStudio(false);
+          setActiveThreadId(null);
+          setPrompt('');
+        }}
+        onOpenLibrary={() => {
+          setLaunchStudio(false);
+          setActiveThreadId(null);
+          setActiveMode('library');
+        }}
+        onSelectThread={(id) => {
+          setActiveThreadId(id);
+          setLaunchStudio(true);
+        }}
         onOpenBilling={onOpenBilling}
         createContext={{
           ...createContext,
@@ -795,6 +811,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
         selectedFormat={selectedFormat}
         selectedStyle={selectedStyle}
         activeThreadId={activeThreadId}
+        key={activeThreadId || 'new-studio'}
         initialContext={imageContext}
       />
     );
@@ -834,7 +851,17 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
         </nav>
 
         <div className="sidebar-recent">
-           <h3><Clock size={14} /> Recent</h3>
+           <h3>
+             <Clock size={14} /> Recent
+             <button
+               type="button"
+               className="recent-refresh-btn"
+               title="Refresh recents"
+               onClick={loadRecentChats}
+             >
+               <RefreshCw size={12} />
+             </button>
+           </h3>
            <ul>
              {recentChats.map((chat, idx) => {
                const chatMode = String(chat.mode || chat.head?.mode || '').toLowerCase();

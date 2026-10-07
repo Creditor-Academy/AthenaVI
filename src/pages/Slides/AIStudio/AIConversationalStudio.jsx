@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   ArrowLeft, RotateCcw, Sparkles, Edit3, Wand2, Download, 
   X, Send, AlertCircle, CheckCircle2, ChevronRight, Copy, Share2, User, ThumbsUp, ThumbsDown,
-  Link2, Facebook, Twitter, MessageCircle, Linkedin
+  Link2, Facebook, Twitter, MessageCircle, Linkedin,
+  PanelLeft, Plus, Library, Search, Clock, LogOut, Image as ImageIcon, BarChart3, Printer
 } from 'lucide-react';
 import imageGenService, { ImageGenProviderError } from '../../../services/imageGenService.js';
 import creditsService, { isInsufficientCreditsError } from '../../../services/creditsService.js';
@@ -136,6 +137,9 @@ async function resolveContextImages(workspaceId, ctx, generation) {
 export default function AIConversationalStudio({
   onBack,
   onOpenBilling,
+  onNewChat = null,
+  onOpenLibrary = null,
+  onSelectThread = null,
   createContext = null,
   initialPrompt = '',
   activeMode = 'image',
@@ -183,6 +187,10 @@ export default function AIConversationalStudio({
   const [userFeedback, setUserFeedback] = useState({});
   
   const [chatInput, setChatInput] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [railFlyout, setRailFlyout] = useState(null);
+  const [railRecents, setRailRecents] = useState([]);
+  const railFlyoutRef = useRef(null);
   const [editMode, setEditMode] = useState('auto');
   const [downloadMenuFor, setDownloadMenuFor] = useState(null);
   const [dismissedWarnings, setDismissedWarnings] = useState({});
@@ -250,6 +258,24 @@ export default function AIConversationalStudio({
 
   const isInitializedRef = useRef(false);
 
+  useEffect(() => {
+    if (!railFlyout) return undefined;
+    const onDoc = (e) => {
+      if (railFlyoutRef.current && !railFlyoutRef.current.contains(e.target)) {
+        setRailFlyout(null);
+      }
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') setRailFlyout(null);
+    };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [railFlyout]);
+
   // Load Workspace, Folder, and Credits
   useEffect(() => {
     let active = true;
@@ -293,6 +319,15 @@ export default function AIConversationalStudio({
     initWorkspace();
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    if (!workspaceId) return undefined;
+    let live = true;
+    imageGenService.listThreads(workspaceId, { take: 100 })
+      .then((rows) => { if (live) setRailRecents(rows || []); })
+      .catch(() => { if (live) setRailRecents([]); });
+    return () => { live = false; };
+  }, [workspaceId, generations.length]);
 
   // Scroll to bottom when new messages/generations are added or generation starts
   useEffect(() => {
@@ -816,8 +851,122 @@ export default function AIConversationalStudio({
     }
   };
 
+  const renderRecentRows = (onPick) => (
+    <>
+      {railRecents.map((chat) => {
+        const chatMode = String(chat.mode || chat.head?.mode || '').toLowerCase();
+        const label = chat.title || chat.prompt || chat.name || 'Untitled chat';
+        const Icon = chatMode === 'printable' ? Printer : chatMode === 'infographic' ? BarChart3 : chatMode === 'social' ? Share2 : ImageIcon;
+        return (
+          <li key={chat.id}>
+            <button
+              type="button"
+              className={chat.id === threadId ? 'is-on' : ''}
+              title={label}
+              onClick={() => {
+                onSelectThread?.(chat.id);
+                onPick?.();
+              }}
+            >
+              <Icon size={14} />
+              <span>{label}</span>
+            </button>
+          </li>
+        );
+      })}
+      {railRecents.length === 0 && <li className="conv-rail-empty">No recent chats</li>}
+    </>
+  );
+
   return (
-    <div className="conv-studio-root">
+    <div className={`conv-studio-root${sidebarOpen ? '' : ' is-rail-collapsed'}`}>
+      <aside className="conv-rail" aria-label="Studio menu" ref={railFlyoutRef}>
+        <div className="conv-rail-top">
+          {sidebarOpen && (
+            <div className="conv-rail-brand">
+              <img src={LogoImg} alt="" />
+              <span>Athena Studio</span>
+            </div>
+          )}
+          <button
+            type="button"
+            className="conv-rail-icon-btn"
+            title={sidebarOpen ? 'Collapse sidebar' : 'Open sidebar'}
+            onClick={() => {
+              setRailFlyout(null);
+              setSidebarOpen((o) => !o);
+            }}
+          >
+            <PanelLeft size={18} />
+          </button>
+        </div>
+        {sidebarOpen && (
+          <div className="conv-rail-search">
+            <Search size={16} />
+            <input type="search" placeholder="Search chats" readOnly />
+          </div>
+        )}
+        <button type="button" className="conv-rail-item" onClick={() => (onOpenLibrary || onBack)?.()} title="Library">
+          <Library size={18} />
+          {sidebarOpen && <span>Library</span>}
+        </button>
+        {!sidebarOpen && (
+          <>
+            <button
+              type="button"
+              className={`conv-rail-item${railFlyout === 'search' ? ' is-on' : ''}`}
+              title="Search chats"
+              onClick={() => setRailFlyout((v) => (v === 'search' ? null : 'search'))}
+            >
+              <Search size={18} />
+            </button>
+            <button
+              type="button"
+              className={`conv-rail-item${railFlyout === 'recents' ? ' is-on' : ''}`}
+              title="Recents"
+              onClick={() => setRailFlyout((v) => (v === 'recents' ? null : 'recents'))}
+            >
+              <MessageCircle size={18} />
+            </button>
+          </>
+        )}
+        {sidebarOpen && (
+          <div className="conv-rail-recent-wrap">
+            <div className="conv-rail-label">
+              <Clock size={14} /> Recent
+            </div>
+            <ul className="conv-rail-recents">
+              {renderRecentRows()}
+            </ul>
+          </div>
+        )}
+        <div className="conv-rail-footer">
+          <button type="button" className="conv-rail-new" onClick={() => (onNewChat || onBack)?.()} title="New chat">
+            <Plus size={16} />
+            {sidebarOpen && <span>New chat</span>}
+          </button>
+          <button type="button" className="conv-rail-exit" onClick={onBack} title="Exit to studio home">
+            <LogOut size={16} />
+            {sidebarOpen && <span>Exit</span>}
+          </button>
+        </div>
+        {!sidebarOpen && railFlyout && (
+          <div className="conv-rail-flyout" role="dialog" aria-label="Recents">
+            {railFlyout === 'search' && (
+              <div className="conv-rail-flyout-search">
+                <Search size={14} />
+                <input type="search" placeholder="Search chats" autoFocus />
+              </div>
+            )}
+            <div className="conv-rail-flyout-title">Recents</div>
+            <ul className="conv-rail-flyout-list">
+              {renderRecentRows(() => setRailFlyout(null))}
+            </ul>
+          </div>
+        )}
+      </aside>
+
+      <div className="conv-studio-shell">
       {/* Ambient background glow & infographic network matching theme */}
       <div className="conv-studio-bg">
         {mode === 'infographic' && (
@@ -831,15 +980,7 @@ export default function AIConversationalStudio({
 
       {/* Top Header */}
       <header className="conv-studio-header">
-        <div className="conv-studio-header-left">
-          <button className="conv-back-btn" onClick={onBack}>
-            <ArrowLeft size={16} /> Back
-          </button>
-          <div className="conv-brand-badge">
-            <img src={LogoImg} alt="Athena" className="conv-brand-logo" />
-            <span>Athena Studio</span>
-          </div>
-        </div>
+        <div className="conv-studio-header-left" />
 
         <div className="conv-studio-header-right">
           <div className="conv-credits-tag">
@@ -1294,6 +1435,8 @@ export default function AIConversationalStudio({
           />
         </div>
       )}
+
+      </div>
 
       <ImageGenCreditsGate
         open={Boolean(creditsGate)}
