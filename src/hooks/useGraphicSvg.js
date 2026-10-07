@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { resolveGraphicDisplayColor } from '../utils/graphicTheme.js'
 
 /**
  * Load an SVG URL for display.
@@ -103,11 +104,7 @@ function sanitizeInlineSvg(raw) {
   return svg
 }
 
-export function resolveGraphicThemeColor(content = {}, palette = {}) {
-  const fill = content.fill
-  if (typeof fill === 'string' && fill) return fill
-  if (fill && typeof fill === 'object' && fill.color) return fill.color
-  const overrides = content.colorOverrides || {}
-  if (typeof overrides.primary === 'string' && overrides.primary) return overrides.primary
-  return palette?.primary || palette?.accent || '#6366F1'
+export function resolveGraphicThemeColor(content = {}, palette = {}, colorRoles = null) {
+  const roles = colorRoles || palette?.colorRoles || content?.colorRoles || null
+  return resolveGraphicDisplayColor(content, palette, roles)
 }

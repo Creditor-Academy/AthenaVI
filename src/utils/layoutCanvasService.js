@@ -296,8 +296,37 @@ function slideHasCopy(slide) {
     String(slide?.title || content.title || content.body || content.subtitle || '').trim() ||
       (Array.isArray(content.bullets) && content.bullets.length) ||
       (Array.isArray(content.columns) && content.columns.length) ||
-      (Array.isArray(content.diagram?.cells) && content.diagram.cells.length)
+      (Array.isArray(content.diagram?.cells) && content.diagram.cells.length) ||
+      (Array.isArray(content.plans) && content.plans.length >= 2)
   )
+}
+
+function isWeakPricingEditorText(text) {
+  const t = String(text || '').trim().toLowerCase()
+  return !t || t === 'double-click to edit' || t === 'double click to edit'
+}
+
+function isPricingLayoutSchema(schema, layoutId) {
+  const id = String(layoutId || schema?.layout_id || '')
+  const ct = String(schema?.content_type || '').toLowerCase()
+  return ct === 'pricing' || /^pricing_/i.test(id)
+}
+
+function hasWeakPricingPlanElements(elements = []) {
+  return elements.some((el) => {
+    if (el.type !== 'text' && el.type !== 'textbox') return false
+    const sid = String(el.slotId || el.id || '').toUpperCase()
+    if (!/^PLAN_\d+_(LABEL|NAME|PRICE|ITEM_|PERIOD|CTA)/.test(sid)) return false
+    return isWeakPricingEditorText(el.content?.text)
+  })
+}
+
+function needsPricingPlansRehydrate(slide, elements = [], schema = null) {
+  const layoutId = slide?.layoutId || slide?.layout_id
+  if (!isPricingLayoutSchema(schema, layoutId)) return false
+  const plans = slide?.content?.plans
+  if (!Array.isArray(plans) || plans.length < 2) return false
+  return hasWeakPricingPlanElements(elements)
 }
 
 export function needsLayoutCanvasRepair(slide, elements = [], schema = null, opts = {}) {
@@ -307,6 +336,8 @@ export function needsLayoutCanvasRepair(slide, elements = [], schema = null, opt
   if (slide?.manuallyEdited && (list.length > 0 || !slideHasCopy(slide))) return false
 
   const layoutId = slide?.layoutId || slide?.layout_id || schema?.layout_id
+  if (needsPricingPlansRehydrate(slide, list, schema)) return true
+
   if (opts?.deckPackId) {
     if (isTitleCustomLayout(layoutId, schema)) return false
     return hasOverlappingTextPlacements(list)
@@ -412,6 +443,7 @@ function needsContentHydration(slide, elements = []) {
       (Array.isArray(content.diagram?.cells) && content.diagram.cells.length) ||
       (Array.isArray(content.cells) && content.cells.length) ||
       (Array.isArray(content.funnel) && content.funnel.length) ||
+      (Array.isArray(content.plans) && content.plans.length >= 2) ||
       content.chart
   )
   if (hasCopy) {
@@ -634,4 +666,36 @@ export async function repairPresentationLayoutSlides({
     if (r.status === 'rejected') console.warn('[layoutCanvasService] slide repair failed', r.reason)
   })
   return results.some((r) => r.status === 'fulfilled' && r.value)
+}
+
+/** In-editor safety net: recompile tier text from slide.content.plans when PLAN slots are empty. */
+export function rehydratePricingSlideElementsLocally(
+  slide,
+  schema,
+  { aspectRatio = '16:9', themeTokens = null, palette = null } = {}
+) {
+  const elements = slide?.elements?.elements || []
+  if (!schema?.slots?.length || !needsPricingPlansRehydrate(slide, elements, schema)) {
+    return slide
+  }
+  const canvas = resolveCanvasSize(null, aspectRatio)
+  const content = {
+    ...(slide.content && typeof slide.content === 'object' ? slide.content : {}),
+    ...(slide.title && !(slide.content && slide.content.title) ? { title: slide.title } : {}),
+  }
+  const smartSchema = resolveSmartLayoutState(schema, content)
+  const compileOptions = buildThemeCompileOptions(themeTokens, { palette })
+  const compiled = compileDeckLayoutToElements(smartSchema, {
+    canvas,
+    ...compileOptions,
+    content,
+    contentBySlotId: buildContentBySlotIdFromSlideContent(content, smartSchema),
+    skipContentValidation: true,
+  })
+  const canvasDoc = buildCanvasDoc(null, {
+    aspectRatio,
+    elements: compiled,
+    backgroundColor: compileOptions.palette?.bg || palette?.bg || slide?.backgroundColor || null,
+  })
+  return { ...slide, elements: canvasDoc }
 }

@@ -1,5 +1,16 @@
-# @athena/contracts (frontend copy)
+# @athena/contracts
 
-Mirror of `AthenaVI_backend/packages/athena-contracts`. Edit the **backend** copy first, then run `npm run sync:athena-contracts` in the backend repo and commit both.
+Shared layout content contract, normalization, slot text, and repair helpers used by **AthenaVI_backend** and **AthenaVI**.
 
-See `AthenaVI/docs/content-contract-spec.md`.
+- **Canonical copy:** this folder in the backend repo.
+- **Frontend:** `AthenaVI/packages/athena-contracts` (same contents; keep in sync).
+
+After changing files here, from the backend repo run:
+
+```bash
+npm run sync:athena-contracts
+```
+
+Then commit the package in **both** repos (or your team’s chosen sync process).
+
+Tests: `npm run test:content-contract-parity` and `npm run test:content-repair` in the backend repo.

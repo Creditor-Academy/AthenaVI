@@ -1,4 +1,5 @@
 import useGraphicSvg, { resolveGraphicThemeColor } from '../../hooks/useGraphicSvg'
+import { isThemedColorMode } from '../../utils/graphicTheme.js'
 
 /** Hit-test painted strokes/fills only so empty SVG boxes don't steal clicks. */
 function svgWithPaintHits(markup, { hitThrough = false } = {}) {
@@ -21,13 +22,20 @@ function svgWithPaintHits(markup, { hitThrough = false } = {}) {
  * - recolorable: only tint when the SVG uses currentColor (inline);
  *   otherwise show the original multi-color artwork (never CSS mask silhouettes)
  */
-export default function GraphicCanvasVisual({ content = {}, palette = {}, style = {}, hitThrough = false }) {
+export default function GraphicCanvasVisual({
+  content = {},
+  palette = {},
+  colorRoles = null,
+  style = {},
+  hitThrough = false,
+}) {
   const rawSrc = content.src || content.url || content.previewUrl
   const inlineMarkup = typeof content.svg === 'string' && content.svg.includes('<svg') ? content.svg : null
   const colorMode = content.colorMode || 'fixed'
-  const wantRecolor = colorMode === 'recolorable'
+  const wantRecolor = isThemedColorMode(colorMode) || colorMode === 'recolorable'
   const { imgSrc, inlineSvg } = useGraphicSvg(rawSrc, { preferInline: wantRecolor })
-  const themeColor = resolveGraphicThemeColor(content, palette)
+  const roles = colorRoles || palette?.colorRoles || content?.colorRoles || null
+  const themeColor = resolveGraphicThemeColor(content, palette, roles)
 
   const boxStyle = {
     ...style,
@@ -37,11 +45,12 @@ export default function GraphicCanvasVisual({ content = {}, palette = {}, style 
   }
 
   if (inlineMarkup) {
+    const tintInline = wantRecolor || isThemedColorMode(colorMode)
     return (
       <div
         style={{
           ...boxStyle,
-          color: themeColor,
+          color: tintInline ? themeColor : undefined,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

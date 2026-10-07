@@ -1,5 +1,4 @@
-import * as cjsModule from '../textNormalize.js';
-const cjs = cjsModule.default || cjsModule;
+import cjs from '../textNormalize.js';
 
 export const {
   stripUnicodeControls,

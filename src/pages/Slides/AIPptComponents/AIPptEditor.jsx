@@ -22,6 +22,7 @@ import EditorRightRail from './insert/EditorRightRail'
 import AddSlideModal from './insert/AddSlideModal'
 import PptCanvasElement from './PptCanvasElement'
 import PptCanvasGuidesOverlay from './PptCanvasGuidesOverlay'
+import PptCanvasTextSafeAreaOverlay from './PptCanvasTextSafeAreaOverlay'
 import PresentMode from './PresentMode'
 import SharePresentationModal from './SharePresentationModal'
 import ExportPresentationModal from './ExportPresentationModal'
@@ -100,8 +101,10 @@ import {
 import {
   applyCompiledLayoutToSlide,
   fetchLayoutSchemaMap,
+  rehydratePricingSlideElementsLocally,
   repairPresentationLayoutSlides,
 } from '../../../utils/layoutCanvasService'
+import { rethemeSlidesGraphicElements } from '../../../utils/rethemeGraphicElements'
 import { contentPlainText, contentWithSyncedText, setPptTextSelection } from '../../../utils/pptTextContent'
 import { PPT_DEFAULT_PLACEMENTS } from '../../../constants/pptInsertCatalog'
 import {
@@ -320,6 +323,8 @@ function resolveThemeVisual(themeId, themeTokens) {
     const secondary = palette.secondary || primary
     const text = palette.text || (enforced?.appearance === 'dark' ? '#F8FAFC' : '#0F172A')
     const muted = palette.muted || '#64748B'
+    const colorRoles = themeTokens?.colorRoles || palette?.colorRoles || null
+    const paletteWithRoles = colorRoles ? { ...palette, colorRoles } : palette
     return {
       id: 'themeTokens',
       name: themeTokens?.brand?.name || 'Brand Kit',
@@ -331,7 +336,7 @@ function resolveThemeVisual(themeId, themeTokens) {
       secondary,
       accent: palette.accent || secondary,
       background: bg,
-      palette,
+      palette: paletteWithRoles,
       appearance: enforced?.appearance,
     }
   }
@@ -1000,6 +1005,7 @@ function SlideStage({
       {/* Elements live outside the hard clip so selected overflow can paint
           immediately (per-element clip/mask — no ghost remount on select). */}
       <div className="aig-slide-stage-elements" style={{ color: themeVisual.body }}>
+        <PptCanvasTextSafeAreaOverlay canvasW={canvas.width} canvasH={canvas.height} />
         <PptCanvasGuidesOverlay guides={smartGuides} canvasW={canvas.width} canvasH={canvas.height} />
         {hasElements
           ? elements.map((el, i) => (
@@ -1286,6 +1292,31 @@ function AIPptEditor({
   useEffect(() => {
     layoutRepairPassRef.current = ''
   }, [presentationId, layoutSchemaMap])
+
+  const isGeneratingEarly = String(deckStatus).toUpperCase() === 'GENERATING'
+  useEffect(() => {
+    if (viewOnly || isGeneratingEarly) return
+    if (!Object.keys(layoutSchemaMap).length) return
+    setLocalSlides((prev) => {
+      if (!prev?.length) return prev
+      let changed = false
+      const next = prev.map((slide) => {
+        const layoutId = slide.layoutId || slide.layout_id
+        if (!layoutId) return slide
+        const schema = layoutSchemaMap[layoutId] || resolveLayoutSchemaById(layoutId)
+        const patched = rehydratePricingSlideElementsLocally(slide, schema, {
+          aspectRatio,
+          themeTokens,
+          palette: themeTokens?.palette || null,
+        })
+        if (patched !== slide) changed = true
+        return patched
+      })
+      if (!changed) return prev
+      localSlidesRef.current = next
+      return next
+    })
+  }, [layoutSchemaMap, aspectRatio, themeTokens, viewOnly, isGeneratingEarly, deckStatus])
 
   const themeVisual = useMemo(
     () => resolveThemeVisual(themeTokens?.wizardColorThemeId || config.theme, themeTokens),
@@ -1600,6 +1631,8 @@ function AIPptEditor({
       data?.themeTokens ||
       data?.presentation?.deck?.themeTokens ||
       null
+
+    slides = rethemeSlidesGraphicElements(slides, tokens)
 
     if (!generating && Object.keys(layoutSchemaMapRef.current || {}).length) {
       const packId = extractDeckPackId(data) || deckPackIdRef.current
