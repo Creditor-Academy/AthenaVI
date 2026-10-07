@@ -7,7 +7,6 @@ import CanvasLeftDrawer from './components/CanvasLeftDrawer'
 import CanvasStage from './components/CanvasStage'
 import CanvasRightInspector from './components/CanvasRightInspector'
 import CanvasBottomBar from './components/CanvasBottomBar'
-import CanvasContextBar from './components/CanvasContextBar'
 import CanvasSizeModal from './CanvasSizeModal'
 import CanvasExportModal from './CanvasExportModal'
 import PptElementContextMenu from '../Slides/AIPptComponents/PptElementContextMenu'
@@ -1139,6 +1138,7 @@ export default function CanvasEditor({
     setSelected({ canvasId, elementId: targetId })
     setMultiSelectIds([targetId])
     setEditing({ canvasId: null, elementId: null })
+    setInspectorOpen(true)
   }, [])
 
   const handleContextMenu = useCallback((event, elementId) => {
@@ -1454,27 +1454,6 @@ export default function CanvasEditor({
         onToggleInspector={() => setInspectorOpen((prev) => !prev)}
       />
 
-      {/* Floating Contextual Toolbar when element or elements are selected */}
-      {(selectedElement || multiSelectIds.length > 1) && (
-        <CanvasContextBar
-          selectedElement={selectedElement}
-          multiSelectIds={multiSelectIds}
-          usedFontFamilies={usedFontFamilies}
-          onUpdateContent={updateElementContent}
-          onUpdatePlacement={updateElementPlacement}
-          onToggleLock={(elId) => toggleLock([elId])}
-          onDuplicate={() => duplicateSelection(canvasSelectionIds)}
-          onDelete={() => deleteElements(canvasSelectionIds)}
-          onGroup={() => groupSelection(canvasSelectionIds)}
-          onUngroup={() => ungroupSelection(canvasSelectionIds)}
-          canGroup={canGroupSelection}
-          canUngroup={canUngroupSelection}
-          onAlignSelection={(alignment) => alignSelection(canvasSelectionIds, alignment)}
-          onReplaceImage={openMediaForReplace}
-          onCropImage={() => setCropModalOpen(true)}
-        />
-      )}
-
       {/* 2. Studio Layout Body */}
       <div className="canvas-editor-studio-body">
         {/* Far Left Icon Dock (Floating) */}
@@ -1510,6 +1489,10 @@ export default function CanvasEditor({
           }
           onFillElement={(payload) => {
             if (selectedElement) handleFillImage(selectedElement.id, payload)
+          }}
+          editImageElement={selectedElement}
+          onChangeEditImageContent={(content) => {
+            if (selectedElement) updateElementContent(selectedElement.id, content)
           }}
         />
 

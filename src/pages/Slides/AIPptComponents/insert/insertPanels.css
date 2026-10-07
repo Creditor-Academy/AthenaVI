@@ -3155,6 +3155,29 @@ body.ppt-layers-dragging * {
   color: #475569;
 }
 
+.ppt-fill-picker-eyedropper {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #475569;
+}
+
+.ppt-fill-picker-eyedropper:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.ppt-fill-picker-eyedropper:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .ppt-fill-picker-presets {
   display: grid;
   grid-template-columns: repeat(5, 1fr);

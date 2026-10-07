@@ -1242,7 +1242,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 86px;
+  padding-top: var(--stage-pad-top, 86px);
   padding-bottom: 96px;
   padding-left: var(--stage-pad-left, 490px);
   padding-right: var(--stage-pad-right, 350px);
@@ -1606,19 +1606,32 @@
   border: 1px solid var(--canva-border);
   box-shadow: var(--canva-glass-shadow);
   max-width: calc(100vw - 32px);
-  overflow-x: auto;
+  overflow: visible;
   animation: canvaFloatFadeDown 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .canva-context-bar-group {
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: 100%;
-  flex-wrap: wrap;
+  gap: 6px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+/* The editor shell is position:fixed at z-index 10000, so body-portaled color
+   popovers (z-index 4200 by default) rendered behind it and never appeared. */
+body > .ppt-fill-picker-pop {
+  z-index: 10500;
 }
 
 .canva-context-bar .ppt-element-toolbar {
+  position: static;
+  top: auto;
+  left: auto;
+  transform: none;
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: calc(100vw - 300px);
   background: transparent;
   border: none;
   box-shadow: none;
@@ -1687,6 +1700,7 @@
   border-radius: 6px;
   background: var(--canva-bg);
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .canva-context-bar-stepper button {
@@ -1720,6 +1734,7 @@
 }
 
 .canva-context-bar-color-btn {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1730,6 +1745,26 @@
   background: var(--canva-bg);
   cursor: pointer;
   padding: 4px;
+  flex-shrink: 0;
+}
+
+.canva-context-bar-opacity {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.canva-context-bar-opacity input[type='range'] {
+  width: 64px;
+}
+
+.canva-context-bar-opacity span {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--canva-muted);
+  min-width: 30px;
+  text-align: right;
 }
 
 .canva-context-bar-color-preview {
@@ -1838,10 +1873,17 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
-.canva-context-bar-btn:hover {
+.canva-context-bar-btn:hover:not(:disabled) {
   border-color: var(--canva-accent);
+}
+
+.canva-context-bar-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .canva-context-bar-icon-btn {
@@ -1856,7 +1898,13 @@
   color: var(--canva-text);
   font-size: 14px;
   cursor: pointer;
+  flex-shrink: 0;
   transition: all 140ms ease;
+}
+
+.canva-context-bar-icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .canva-context-bar-icon-btn:hover:not(:disabled) {
@@ -3175,5 +3223,302 @@
   }
 }
 
+/* ── "Edit image" panel (Tools / Filters / Apps) ── */
+.cep-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 16px 18px 20px;
+}
+
+.cep-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cep-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11.5px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #475569;
+}
+
+.cep-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.cep-tool-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+  cursor: pointer;
+  text-align: center;
+}
+
+.cep-tool-tile:hover:not(:disabled) {
+  border-color: var(--canva-accent);
+  background: #fff;
+}
+
+.cep-tool-tile:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cep-tool-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+  color: #4f46e5;
+}
+
+.cep-tool-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.cep-thumb-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+}
+
+.cep-thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  width: 76px;
+}
+
+.cep-thumb-frame {
+  width: 76px;
+  height: 76px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  background: #f1f5f9;
+  display: block;
+}
+
+.cep-thumb.is-active .cep-thumb-frame {
+  border-color: var(--canva-accent);
+}
+
+.cep-thumb-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cep-thumb-empty {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #e2e8f0;
+}
+
+.cep-thumb-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.cep-coming-soon {
+  margin: 0;
+  font-size: 12.5px;
+  color: #94a3b8;
+}
+
+.cep-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.cep-slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cep-slider-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.cep-slider-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cep-slider-control input[type='range'] {
+  flex: 1;
+}
+
+.cep-slider-control button {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #475569;
+  flex-shrink: 0;
+}
+
+.cep-slider-control button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cep-reset-btn {
+  align-self: flex-start;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+}
+
+.cep-reset-btn:hover:not(:disabled) {
+  border-color: var(--canva-accent);
+  color: var(--canva-accent);
+}
 
 
+
+/* Image panel shadow thumbs */
+.cep-thumb-frame--shadow {
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  background: #f8fafc;
+  overflow: visible;
+}
+.cep-thumb-frame--shadow img {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+}
+
+/* Inspector cards (Border / Shadow) */
+.cin-card {
+  margin-top: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+.cin-card-head {
+  padding: 9px 14px;
+  font-size: 11.5px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #475569;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+.cin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+}
+.cin-row + .cin-row {
+  border-top: 1px solid #f1f5f9;
+}
+.cin-row-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  flex-shrink: 0;
+}
+.cin-slider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-end;
+  min-width: 0;
+}
+.cin-slider input[type='range'] {
+  flex: 1;
+  min-width: 60px;
+  max-width: 130px;
+}
+.cin-slider span {
+  min-width: 38px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+}
+.cin-chips {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 12px 14px;
+}
+.cin-chip {
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+}
+.cin-chip:hover:not(:disabled) {
+  border-color: var(--canva-accent);
+}
+.cin-chip.is-active {
+  border-color: var(--canva-accent);
+  background: var(--canva-accent-soft);
+  color: var(--canva-accent);
+}
+.cin-chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

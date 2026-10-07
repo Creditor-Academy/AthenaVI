@@ -11,6 +11,8 @@ import {
 import DesignContextPanel from '../../Slides/AIPptComponents/insert/DesignContextPanel'
 import ColorFillPicker from '../../Slides/AIPptComponents/insert/ColorFillPicker'
 import { CANVAS_SIZE_PRESETS } from '../../../constants/canvasSizePresets'
+import { normalizeFillValue } from '../../../utils/pptTextContent'
+import CanvasEditImagePanel from './CanvasEditImagePanel'
 
 const DEFAULT_PALETTE = {
   bg: '#FFFFFF',
@@ -22,6 +24,13 @@ const DEFAULT_PALETTE = {
 
 function isLocked(el) {
   return Boolean(el?.locked || el?.placement?.locked)
+}
+
+function fillSolidColor(fill, fallback) {
+  const normalized = normalizeFillValue(fill, fallback)
+  return normalized?.type === 'gradient'
+    ? normalized.stops?.[0]?.color || fallback
+    : normalized?.color || fallback
 }
 
 function layerLabel(el) {
@@ -70,6 +79,14 @@ export default function CanvasRightInspector({
     onUpdatePlacement(selectedElement.id, patch)
   }
 
+  const isImage = type === 'image' || type === 'icon'
+  const c = selectedElement?.content || {}
+  const patchContent = (patch) => {
+    if (!selectedElement) return
+    onUpdateContent(selectedElement.id, patch)
+  }
+  const currentTab = activeTab === 'edit' && !isImage ? 'style' : activeTab
+
   const layers = [...(elements || [])].sort((a, b) => (b.layer || 0) - (a.layer || 0))
 
   return (
@@ -109,15 +126,24 @@ export default function CanvasRightInspector({
         <div className="canva-inspector-nav-tabs">
           <button
             type="button"
-            className={`canva-inspector-nav-tab ${activeTab === 'style' ? 'is-active' : ''}`}
+            className={`canva-inspector-nav-tab ${currentTab === 'style' ? 'is-active' : ''}`}
             onClick={() => setActiveTab('style')}
           >
             {selectedElement ? 'Style' : 'Canvas'}
           </button>
+          {selectedElement && isImage && (
+            <button
+              type="button"
+              className={`canva-inspector-nav-tab ${activeTab === 'edit' ? 'is-active' : ''}`}
+              onClick={() => setActiveTab('edit')}
+            >
+              Edit
+            </button>
+          )}
           {selectedElement && (
             <button
               type="button"
-              className={`canva-inspector-nav-tab ${activeTab === 'position' ? 'is-active' : ''}`}
+              className={`canva-inspector-nav-tab ${currentTab === 'position' ? 'is-active' : ''}`}
               onClick={() => setActiveTab('position')}
             >
               Position
@@ -134,7 +160,7 @@ export default function CanvasRightInspector({
       </header>
 
       <div className="canva-inspector-body">
-        {activeTab === 'layers' ? (
+        {currentTab === 'layers' ? (
           <div className="canva-inspector-stack">
             <div className="canva-inspector-group">
               <label className="canva-inspector-group-title">Page layers</label>
@@ -170,7 +196,13 @@ export default function CanvasRightInspector({
           </div>
         ) : selectedElement ? (
           <div className="canva-inspector-stack">
-            {activeTab === 'style' ? (
+            {currentTab === 'edit' ? (
+              <CanvasEditImagePanel
+                element={selectedElement}
+                disabled={locked}
+                onChangeContent={patchContent}
+              />
+            ) : currentTab === 'style' ? (
               <div className="canva-inspector-design">
                 <DesignContextPanel
                   focus={designFocus}
@@ -190,6 +222,52 @@ export default function CanvasRightInspector({
                   onClearDeviceFrameScreen={onClearDeviceFrameScreen}
                   onToggleImageAsBackground={onToggleImageAsBackground}
                 />
+
+                {isImage && (
+                  <section className="cin-card">
+                    <header className="cin-card-head">Border</header>
+                    <div className="cin-row">
+                      <span className="cin-row-label">Color</span>
+                      <ColorFillPicker
+                        title="Border color"
+                        compact
+                        value={normalizeFillValue(c.stroke, '#000000')}
+                        palette={DEFAULT_PALETTE}
+                        disabled={locked}
+                        fallbackHex="#000000"
+                        onChange={(fill) => patchContent({ stroke: fillSolidColor(fill, '#000000') })}
+                      />
+                    </div>
+                    <div className="cin-row">
+                      <span className="cin-row-label">Width</span>
+                      <div className="cin-slider">
+                        <input
+                          type="range"
+                          min={0}
+                          max={40}
+                          value={c.strokeWidth ?? 0}
+                          disabled={locked}
+                          onChange={(e) => patchContent({ strokeWidth: Number(e.target.value) })}
+                        />
+                        <span>{c.strokeWidth ?? 0}px</span>
+                      </div>
+                    </div>
+                    <div className="cin-row">
+                      <span className="cin-row-label">Corner radius</span>
+                      <div className="cin-slider">
+                        <input
+                          type="range"
+                          min={0}
+                          max={200}
+                          value={Math.min(200, c.borderRadius ?? 0)}
+                          disabled={locked}
+                          onChange={(e) => patchContent({ borderRadius: Number(e.target.value) })}
+                        />
+                        <span>{c.borderRadius ?? 0}px</span>
+                      </div>
+                    </div>
+                  </section>
+                )}
               </div>
             ) : (
               <>

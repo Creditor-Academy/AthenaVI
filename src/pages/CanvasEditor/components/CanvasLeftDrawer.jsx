@@ -7,6 +7,7 @@ import ChartPanel from '../../Slides/AIPptComponents/insert/ChartPanel'
 import TablePopover from '../../Slides/AIPptComponents/insert/TablePopover'
 import EmbedPanel from '../../Slides/AIPptComponents/insert/EmbedPanel'
 import ColorFillPicker from '../../Slides/AIPptComponents/insert/ColorFillPicker'
+import CanvasEditImagePanel from './CanvasEditImagePanel'
 import '../../Slides/AIPptComponents/insert/insertPanels.css'
 
 const TAB_TITLES = {
@@ -18,6 +19,7 @@ const TAB_TITLES = {
   tables: 'Tables',
   embeds: 'Embed',
   canvases: 'Pages',
+  editImage: 'Edit image',
 }
 
 export default function CanvasLeftDrawer({
@@ -36,6 +38,8 @@ export default function CanvasLeftDrawer({
   workspaceId = null,
   fillElementId = null,
   onFillElement,
+  editImageElement = null,
+  onChangeEditImageContent,
 }) {
   if (!isOpen) return null
 
@@ -65,6 +69,12 @@ export default function CanvasLeftDrawer({
         {activeTab === 'charts' && <ChartPanel onInsert={onInsertElement} />}
         {activeTab === 'tables' && <TablePopover onInsert={onInsertElement} />}
         {activeTab === 'embeds' && <EmbedPanel onInsert={onInsertElement} />}
+        {activeTab === 'editImage' && (
+          <CanvasEditImagePanel
+            element={editImageElement}
+            onChangeContent={onChangeEditImageContent}
+          />
+        )}
 
         {activeTab === 'canvases' && (
           <div className="canva-drawer-section">

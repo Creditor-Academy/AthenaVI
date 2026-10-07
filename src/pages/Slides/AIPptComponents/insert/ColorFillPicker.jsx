@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { FiMinus, FiPlus } from 'react-icons/fi'
+import { MdColorize } from 'react-icons/md'
 import { cssGradientFromFill, resolveFillCss } from '../../../../utils/presentationHelpers'
 import { cssColorToHex, getPptTextSelection, normalizeFillValue } from '../../../../utils/pptTextContent'
 import './insertPanels.css'
@@ -72,6 +73,31 @@ function SolidSwatch({ color, active, disabled, onPick }) {
       disabled={disabled}
       onClick={() => onPick(color)}
     />
+  )
+}
+
+const supportsEyeDropper = typeof window !== 'undefined' && typeof window.EyeDropper === 'function'
+
+function EyedropperButton({ disabled, onPick }) {
+  if (!supportsEyeDropper) return null
+  return (
+    <button
+      type="button"
+      className="ppt-fill-picker-eyedropper"
+      title="Pick from screen"
+      disabled={disabled}
+      onClick={async () => {
+        try {
+          const dropper = new window.EyeDropper()
+          const result = await dropper.open()
+          if (result?.sRGBHex) onPick(result.sRGBHex)
+        } catch {
+          // user cancelled the pick — nothing to do
+        }
+      }}
+    >
+      <MdColorize size={15} />
+    </button>
   )
 }
 
@@ -176,6 +202,7 @@ function FillPickerBody({
                 if (/^#[0-9a-fA-F]{3,8}$/.test(next)) setSolid(next)
               }}
             />
+            <EyedropperButton disabled={disabled} onPick={setSolid} />
           </div>
         </div>
       ) : (
