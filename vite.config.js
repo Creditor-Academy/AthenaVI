@@ -47,6 +47,7 @@ export default defineConfig(({ mode }) => {
         '@athena/contracts/errors.js',
         '@athena/contracts/textNormalize.js',
         '@athena/contracts/slotText.js',
+        '@athena/contracts/graphicTheme.js',
       ],
     },
   }

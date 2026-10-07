@@ -1,5 +1,4 @@
-import * as cjsModule from '../contentContract.js';
-const cjs = cjsModule.default || cjsModule;
+import cjs from '../contentContract.js';
 
 export const {
   CHARS_PER_WORD,
