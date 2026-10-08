@@ -3206,11 +3206,10 @@ function AIPptEditor({
     if (type === 'text' && !content.color && !content.colorRole) {
       content.color = DEFAULT_TEXT_COLOR
     }
-    if ((type === 'image' || type === 'icon' || type === 'graphic') && !content.url && content.src) {
-      content.url = content.src
-    }
-    if ((type === 'image' || type === 'icon' || type === 'graphic') && content.url && !content.src) {
-      content.src = content.url
+    if (['image', 'icon', 'graphic'].includes(type)) {
+      if (!content.url && content.src) content.url = content.src
+      if (content.url && !content.src) content.src = content.url
+      if (content.strokeWidth == null) content.strokeWidth = 0
     }
 
     const localEl = {

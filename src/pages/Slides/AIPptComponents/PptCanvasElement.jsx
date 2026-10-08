@@ -4,6 +4,7 @@ import PptChartRenderer, { getEmbedIframeUrl } from './PptChartRenderer'
 import ExternalLinkHoverLayer from './ExternalLinkHoverLayer'
 import {
   resolveThemeColor,
+  resolveFillCss,
   buildCanvasShapeStyle,
   buildNativeShapeBoxStyle,
   buildImageEdgeFadeMask,
@@ -829,24 +830,28 @@ export default function PptCanvasElement({
       String(el.slotId || '').toUpperCase() === 'BACKGROUND_IMAGE' ||
       String(el.role || '').toLowerCase() === 'background' ||
       c.useAsBackground
-    const strokeWidth = Number(c.strokeWidth) || (c.stroke ? 1 : 0)
-    const hasBorder = strokeWidth > 0 && Boolean(c.stroke)
+    const strokeWidth = c.strokeWidth != null ? Number(c.strokeWidth) : 0
+    const hasBorder =
+      strokeWidth > 0 &&
+      Boolean(c.stroke) &&
+      c.stroke !== 'none' &&
+      c.stroke !== 'transparent'
     const strokeCss = hasBorder ? resolveFillCss(c.stroke, palette, '#000000') : undefined
     const isGradientStroke = typeof strokeCss === 'string' && strokeCss.includes('gradient(')
     const borderStyle = c.borderStyle || 'solid'
+    const radius = clipPath || edgeFadeMask || isFullBleedMedia ? 0 : c.borderRadius != null ? Number(c.borderRadius) : 0
     const borderProp = hasBorder
       ? `${strokeWidth}px ${borderStyle} ${isGradientStroke ? 'transparent' : strokeCss}`
       : undefined
-    const borderImageProp = hasBorder && isGradientStroke ? `${strokeCss} 1` : undefined
 
     return (
       <div
         style={{
           ...fillStyle,
           overflow: 'hidden',
-          borderRadius: clipPath || edgeFadeMask || isFullBleedMedia ? 0 : c.borderRadius != null ? c.borderRadius : undefined,
+          borderRadius: radius > 0 ? `${radius}px` : undefined,
           border: borderProp,
-          borderImage: borderImageProp,
+          background: isGradientStroke && hasBorder ? strokeCss : undefined,
           boxSizing: 'border-box',
           ...(clipPath ? { clipPath, WebkitClipPath: clipPath } : {}),
         }}
@@ -861,7 +866,6 @@ export default function PptCanvasElement({
             objectFit: c.fit || (el.type === 'icon' ? 'contain' : 'cover'),
             objectPosition: 'center',
             opacity: c.opacity != null ? c.opacity : 1,
-            borderRadius: clipPath || edgeFadeMask || isFullBleedMedia ? 0 : c.borderRadius != null ? c.borderRadius : undefined,
             boxShadow: c.boxShadow || c.shadow || undefined,
             filter: c.cssFilter || c.filter || undefined,
             display: 'block',

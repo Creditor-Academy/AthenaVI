@@ -879,6 +879,68 @@ function ImageDesignSection({
 
           <section className="ppt-props-group">
             <header className="ppt-props-group-head">
+              <h3 className="ppt-props-group-title">Border</h3>
+            </header>
+            <div className="ppt-props-group-body">
+              <div className="ppt-props-row ppt-props-row--fill">
+                <span className="ppt-props-row-label">Color</span>
+                <div className="ppt-props-row-control">
+                  <ColorFillPicker
+                    title="Border color"
+                    value={normalizeFillValue(c.stroke, '#000000')}
+                    palette={palette}
+                    disabled={disabled}
+                    fallbackHex="#000000"
+                    onChange={(fill) =>
+                      onChangeContent?.({
+                        stroke: fill,
+                        strokeWidth: (Number(c.strokeWidth) || 0) <= 0 ? 2 : Number(c.strokeWidth),
+                      })
+                    }
+                  />
+                </div>
+              </div>
+              <div className="ppt-props-row ppt-props-row--slider">
+                <span className="ppt-props-row-label">Width</span>
+                <div className="ppt-props-slider">
+                  <input
+                    type="range"
+                    min={0}
+                    max={40}
+                    value={c.strokeWidth ?? 0}
+                    disabled={disabled}
+                    aria-label="Border width"
+                    onChange={(e) =>
+                      onChangeContent?.({ strokeWidth: Number(e.target.value) })
+                    }
+                  />
+                  <span className="ppt-props-slider-value">{c.strokeWidth ?? 0}px</span>
+                </div>
+              </div>
+              <div className="ppt-props-row ppt-props-row--slider">
+                <span className="ppt-props-row-label">Corner radius</span>
+                <div className="ppt-props-slider">
+                  <input
+                    type="range"
+                    min={0}
+                    max={200}
+                    value={Math.min(200, c.borderRadius ?? 0)}
+                    disabled={disabled}
+                    aria-label="Corner radius"
+                    onChange={(e) =>
+                      onChangeContent?.({ borderRadius: Number(e.target.value) })
+                    }
+                  />
+                  <span className="ppt-props-slider-value">
+                    {Math.min(200, c.borderRadius ?? 0)}px
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="ppt-props-group">
+            <header className="ppt-props-group-head">
               <h3 className="ppt-props-group-title">Transform</h3>
             </header>
             <div className="ppt-props-group-body">
