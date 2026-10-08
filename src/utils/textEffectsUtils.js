@@ -123,18 +123,31 @@ export function computeCurvedTextSvgPath(width, height, curveAmount = 50) {
   const cy = h / 2
 
   if (Math.abs(curveAmount) >= 95) {
-    // Full 360 circle
-    const r = Math.max(20, Math.min(w, h) * 0.42)
+    // Full 360 circle:
+    // When curveAmount > 0 (Top circle), start at bottom (cx, cy + r) and sweep clockwise to top (cx, cy - r)
+    // so at startOffset="50%" middle-anchor, the text is right-side-up and centered at the top!
+    const r = Math.max(20, Math.min(w, h) * 0.45)
     return curveAmount > 0
-      ? `M ${cx}, ${cy - r} a ${r},${r} 0 1,1 0,${r * 2} a ${r},${r} 0 1,1 0,-${r * 2}`
-      : `M ${cx}, ${cy + r} a ${r},${r} 0 1,0 0,-${r * 2} a ${r},${r} 0 1,0 0,${r * 2}`
+      ? `M ${cx},${cy + r} A ${r},${r} 0 1,1 ${cx},${cy - r} A ${r},${r} 0 1,1 ${cx},${cy + r}`
+      : `M ${cx},${cy - r} A ${r},${r} 0 1,0 ${cx},${cy + r} A ${r},${r} 0 1,0 ${cx},${cy - r}`
   }
 
   // Smooth quadratic bezier arc from left to right
-  const norm = curveAmount / 100 // -1 to +1
-  const startY = cy + norm * (h * 0.35)
-  const endY = startY
-  const controlY = cy - norm * (h * 0.75)
+  const norm = Math.max(-1, Math.min(1, curveAmount / 100))
+  const sag = Math.abs(norm) * (h * 0.7 + w * 0.1)
 
-  return `M 4,${startY} Q ${cx},${controlY} ${w - 4},${endY}`
+  if (norm > 0) {
+    // Upward arch
+    const startY = Math.min(h - 4, cy + sag * 0.45)
+    const ctrlY = Math.max(-h * 0.5, cy - sag * 0.85)
+    return `M 4,${startY} Q ${cx},${ctrlY} ${w - 4},${startY}`
+  } else if (norm < 0) {
+    // Downward smile curve
+    const startY = Math.max(4, cy - sag * 0.45)
+    const ctrlY = Math.min(h * 1.5, cy + sag * 0.85)
+    return `M 4,${startY} Q ${cx},${ctrlY} ${w - 4},${startY}`
+  }
+
+  // Straight flat line
+  return `M 4,${cy} L ${w - 4},${cy}`
 }

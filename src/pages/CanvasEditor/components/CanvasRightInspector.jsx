@@ -13,6 +13,7 @@ import ColorFillPicker from '../../Slides/AIPptComponents/insert/ColorFillPicker
 import { CANVAS_SIZE_PRESETS } from '../../../constants/canvasSizePresets'
 import { normalizeFillValue } from '../../../utils/pptTextContent'
 import CanvasEditImagePanel from './CanvasEditImagePanel'
+import TextEffectsPanel from '../../Slides/AIPptComponents/insert/TextEffectsPanel'
 
 const DEFAULT_PALETTE = {
   bg: '#FFFFFF',
@@ -80,12 +81,16 @@ export default function CanvasRightInspector({
   }
 
   const isImage = type === 'image' || type === 'icon'
+  const isText = type === 'text' || type === 'textbox'
   const c = selectedElement?.content || {}
   const patchContent = (patch) => {
     if (!selectedElement) return
     onUpdateContent(selectedElement.id, patch)
   }
-  const currentTab = activeTab === 'edit' && !isImage ? 'style' : activeTab
+  const currentTab =
+    (activeTab === 'edit' && !isImage) || (activeTab === 'effects' && !isText)
+      ? 'style'
+      : activeTab
 
   const layers = [...(elements || [])].sort((a, b) => (b.layer || 0) - (a.layer || 0))
 
@@ -134,10 +139,19 @@ export default function CanvasRightInspector({
           {selectedElement && isImage && (
             <button
               type="button"
-              className={`canva-inspector-nav-tab ${activeTab === 'edit' ? 'is-active' : ''}`}
+              className={`canva-inspector-nav-tab ${currentTab === 'edit' ? 'is-active' : ''}`}
               onClick={() => setActiveTab('edit')}
             >
               Edit
+            </button>
+          )}
+          {selectedElement && isText && (
+            <button
+              type="button"
+              className={`canva-inspector-nav-tab ${currentTab === 'effects' ? 'is-active' : ''}`}
+              onClick={() => setActiveTab('effects')}
+            >
+              Effects
             </button>
           )}
           {selectedElement && (
@@ -196,11 +210,18 @@ export default function CanvasRightInspector({
           </div>
         ) : selectedElement ? (
           <div className="canva-inspector-stack">
-            {currentTab === 'edit' ? (
+            {currentTab === 'edit' && isImage ? (
               <CanvasEditImagePanel
                 element={selectedElement}
                 disabled={locked}
                 onChangeContent={patchContent}
+              />
+            ) : currentTab === 'effects' && isText ? (
+              <TextEffectsPanel
+                element={selectedElement}
+                palette={DEFAULT_PALETTE}
+                disabled={locked}
+                onChange={patchContent}
               />
             ) : currentTab === 'style' ? (
               <div className="canva-inspector-design">
@@ -210,6 +231,7 @@ export default function CanvasRightInspector({
                   palette={DEFAULT_PALETTE}
                   usedFontFamilies={usedFontFamilies}
                   disabled={locked}
+                  hideNestedTabs={true}
                   onChangeElementContent={(content) =>
                     onUpdateContent(selectedElement.id, content)
                   }

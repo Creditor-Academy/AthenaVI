@@ -20,7 +20,14 @@ export default function TextEffectsPanel({
   onChange,
 }) {
   const c = element?.content || {}
-  const shape = c.shapeEffect || (c.curveAmount != null && c.curveAmount !== 0 ? 'curve' : 'none')
+  const shape =
+    c.shapeEffect ||
+    c.textShape ||
+    (c.curveAmount != null && Number(c.curveAmount) !== 0
+      ? Math.abs(Number(c.curveAmount)) >= 95
+        ? 'circle'
+        : 'curve'
+      : 'none')
   const styleEffect = c.textEffect || 'none'
 
   const patch = (updates) => {
@@ -29,11 +36,12 @@ export default function TextEffectsPanel({
 
   const setShape = (nextShape) => {
     if (nextShape === 'none') {
-      patch({ shapeEffect: 'none', curveAmount: 0 })
+      patch({ shapeEffect: 'none', textShape: 'none', curveAmount: 0 })
     } else if (nextShape === 'circle') {
-      patch({ shapeEffect: 'circle', curveAmount: 100 })
+      patch({ shapeEffect: 'circle', textShape: 'circle', curveAmount: 100 })
     } else {
-      patch({ shapeEffect: 'curve', curveAmount: c.curveAmount || 50 })
+      const amt = c.curveAmount && Number(c.curveAmount) !== 0 ? Number(c.curveAmount) : 50
+      patch({ shapeEffect: 'curve', textShape: 'curve', curveAmount: amt })
     }
   }
 
@@ -41,7 +49,7 @@ export default function TextEffectsPanel({
     patch({ textEffect: nextEffect })
   }
 
-  const curveAmount = c.curveAmount != null ? c.curveAmount : 50
+  const curveAmount = c.curveAmount != null ? Number(c.curveAmount) : 50
 
   return (
     <div className="ppt-text-effects-panel">
@@ -55,10 +63,10 @@ export default function TextEffectsPanel({
             {SHAPE_EFFECT_OPTIONS.map((opt) => {
               const active =
                 opt.id === 'circle'
-                  ? shape === 'circle' || Math.abs(c.curveAmount) >= 95
+                  ? shape === 'circle' || Math.abs(curveAmount) >= 95
                   : opt.id === 'curve'
-                    ? (shape === 'curve' || (c.curveAmount != null && c.curveAmount !== 0)) && Math.abs(c.curveAmount) < 95
-                    : shape === 'none' && (!c.curveAmount || c.curveAmount === 0)
+                    ? (shape === 'curve' || curveAmount !== 0) && Math.abs(curveAmount) < 95
+                    : (shape === 'none' || !shape) && curveAmount === 0
 
               return (
                 <button
@@ -77,7 +85,7 @@ export default function TextEffectsPanel({
             })}
           </div>
 
-          {(shape === 'curve' || shape === 'circle' || (c.curveAmount != null && c.curveAmount !== 0)) && (
+          {(shape === 'curve' || shape === 'circle' || curveAmount !== 0) && (
             <div className="ppt-effect-params">
               <div className="ppt-props-row ppt-props-row--slider">
                 <div className="ppt-props-row-head">
@@ -91,14 +99,18 @@ export default function TextEffectsPanel({
                     max={100}
                     value={curveAmount}
                     disabled={disabled}
-                    onChange={(e) => patch({ curveAmount: Number(e.target.value) })}
+                    onChange={(e) => {
+                      const val = Number(e.target.value)
+                      const nextS = Math.abs(val) >= 95 ? 'circle' : val !== 0 ? 'curve' : 'none'
+                      patch({ curveAmount: val, shapeEffect: nextS, textShape: nextS })
+                    }}
                   />
                   <button
                     type="button"
                     className="ppt-effect-reset-btn"
                     title="Reset curve"
                     disabled={disabled || curveAmount === 0}
-                    onClick={() => patch({ curveAmount: 0, shapeEffect: 'none' })}
+                    onClick={() => patch({ curveAmount: 0, shapeEffect: 'none', textShape: 'none' })}
                   >
                     <FiRotateCcw size={12} />
                   </button>

@@ -755,6 +755,7 @@ function ImageDesignSection({
   onCropImage,
   onToggleUseAsBackground,
   disabled,
+  hideNestedTabs = false,
 }) {
   const [activeTab, setActiveTab] = useState('style')
   const c = element?.content || {}
@@ -766,28 +767,30 @@ function ImageDesignSection({
 
   return (
     <div className="ppt-props-stack ppt-image-design-panel">
-      <div className="ppt-image-tabs-nav" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'style'}
-          className={`ppt-image-tab-btn ${activeTab === 'style' ? 'is-active' : ''}`}
-          onClick={() => setActiveTab('style')}
-        >
-          Style
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'edit'}
-          className={`ppt-image-tab-btn ${activeTab === 'edit' ? 'is-active' : ''}`}
-          onClick={() => setActiveTab('edit')}
-        >
-          Edit &amp; Filters
-        </button>
-      </div>
+      {!hideNestedTabs && (
+        <div className="ppt-image-tabs-nav" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'style'}
+            className={`ppt-image-tab-btn ${activeTab === 'style' ? 'is-active' : ''}`}
+            onClick={() => setActiveTab('style')}
+          >
+            Style
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'edit'}
+            className={`ppt-image-tab-btn ${activeTab === 'edit' ? 'is-active' : ''}`}
+            onClick={() => setActiveTab('edit')}
+          >
+            Edit &amp; Filters
+          </button>
+        </div>
+      )}
 
-      {activeTab === 'edit' ? (
+      {!hideNestedTabs && activeTab === 'edit' ? (
         <CanvasEditImagePanel
           element={element}
           disabled={disabled}
@@ -943,6 +946,7 @@ function TextDesignSection({
   onChangePlacement,
   onToggleLock,
   disabled,
+  hideNestedTabs = false,
 }) {
   const [activeTab, setActiveTab] = useState('format')
   const p = element?.placement || {}
@@ -951,28 +955,30 @@ function TextDesignSection({
 
   return (
     <div className="ppt-props-stack ppt-text-design-panel">
-      <div className="ppt-image-tabs-nav" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'format'}
-          className={`ppt-image-tab-btn ${activeTab === 'format' ? 'is-active' : ''}`}
-          onClick={() => setActiveTab('format')}
-        >
-          Format
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={activeTab === 'effects'}
-          className={`ppt-image-tab-btn ${activeTab === 'effects' ? 'is-active' : ''}`}
-          onClick={() => setActiveTab('effects')}
-        >
-          Effects
-        </button>
-      </div>
+      {!hideNestedTabs && (
+        <div className="ppt-image-tabs-nav" role="tablist">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'format'}
+            className={`ppt-image-tab-btn ${activeTab === 'format' ? 'is-active' : ''}`}
+            onClick={() => setActiveTab('format')}
+          >
+            Format
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'effects'}
+            className={`ppt-image-tab-btn ${activeTab === 'effects' ? 'is-active' : ''}`}
+            onClick={() => setActiveTab('effects')}
+          >
+            Effects
+          </button>
+        </div>
+      )}
 
-      {activeTab === 'effects' ? (
+      {!hideNestedTabs && activeTab === 'effects' ? (
         <TextEffectsPanel
           element={element}
           palette={palette}
@@ -1104,6 +1110,7 @@ export default function DesignContextPanel({
   onChangeTransition,
   disabled,
   usedFontFamilies = [],
+  hideNestedTabs = false,
 }) {
   return (
     <div className="ppt-design-context-panel">
@@ -1135,6 +1142,7 @@ export default function DesignContextPanel({
           palette={palette}
           disabled={disabled}
           usedFontFamilies={usedFontFamilies}
+          hideNestedTabs={hideNestedTabs}
           onChangeContent={onChangeElementContent}
           onChangePlacement={onChangeElementPlacement}
           onToggleLock={onToggleElementLock}
@@ -1145,6 +1153,7 @@ export default function DesignContextPanel({
         <ImageDesignSection
           element={element}
           slide={slide}
+          hideNestedTabs={hideNestedTabs}
           onChangeContent={onChangeElementContent}
           onChangePlacement={onChangeElementPlacement}
           onToggleLock={onToggleElementLock}

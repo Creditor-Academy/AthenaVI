@@ -107,7 +107,7 @@ function CurvedTextDisplay({
 }) {
   const generatedId = useId()
   const pathId = useMemo(() => `ppt_curve_${generatedId.replace(/[^a-zA-Z0-9_-]/g, '_')}`, [generatedId])
-  const w = Math.max(40, width || 200)
+  const w = Math.max(60, width || 200)
   const h = Math.max(30, height || 60)
   const pathD = computeCurvedTextSvgPath(w, h, curveAmount)
 
@@ -117,9 +117,9 @@ function CurvedTextDisplay({
   return (
     <svg
       viewBox={`0 0 ${w} ${h}`}
+      width="100%"
+      height="100%"
       style={{
-        width: '100%',
-        height: '100%',
         overflow: 'visible',
         display: 'block',
         pointerEvents: 'none',
@@ -136,10 +136,11 @@ function CurvedTextDisplay({
           fontFamily,
           fontStyle,
           letterSpacing: letterSpacing != null ? letterSpacing : undefined,
+          dominantBaseline: 'central',
           ...effectStyle,
         }}
       >
-        <textPath href={`#${pathId}`} startOffset={startOffset} textAnchor={textAnchor}>
+        <textPath href={`#${pathId}`} xlinkHref={`#${pathId}`} startOffset={startOffset} textAnchor={textAnchor}>
           {text}
         </textPath>
       </text>
@@ -434,9 +435,15 @@ function EditableText({
   }
 
   const displayText = plainText || (editable || showEmptyHint ? 'Double-click to edit' : '')
-  const isCurved = (c.textShape === 'curve' || c.textShape === 'circle') && c.curveAmount !== 0
-  const elW = el?.width || 240
-  const elH = el?.height || 80
+  const isCurved =
+    !editing &&
+    (c.shapeEffect === 'curve' ||
+      c.shapeEffect === 'circle' ||
+      c.textShape === 'curve' ||
+      c.textShape === 'circle' ||
+      (c.curveAmount != null && Number(c.curveAmount) !== 0))
+  const elW = el?.placement?.width || el?.width || wrapRef.current?.clientWidth || 240
+  const elH = el?.placement?.height || el?.height || wrapRef.current?.clientHeight || 80
   const className = [
     'ppt-text-display',
     editable ? 'ppt-text-display--editable' : '',
@@ -463,10 +470,16 @@ function EditableText({
       >
         {isCurved ? (
           <CurvedTextDisplay
-            text={displayText}
+            text={String(displayText || '').replace(/\r?\n/g, ' ')}
             width={elW}
             height={elH}
-            curveAmount={c.curveAmount != null ? c.curveAmount : (c.textShape === 'circle' ? 100 : 50)}
+            curveAmount={
+              c.curveAmount != null
+                ? Number(c.curveAmount)
+                : c.shapeEffect === 'circle' || c.textShape === 'circle'
+                  ? 100
+                  : 50
+            }
             fontSize={fontSize}
             fontWeight={weight}
             fontFamily={c.fontFamily}
