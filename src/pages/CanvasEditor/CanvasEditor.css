@@ -2003,6 +2003,13 @@ body > .ppt-fill-picker-pop {
 .canva-inspector-nav-tabs {
   display: flex;
   gap: 14px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.canva-inspector-nav-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .canva-inspector-nav-tab {
@@ -2016,6 +2023,7 @@ body > .ppt-fill-picker-pop {
   letter-spacing: 0.015em;
   cursor: pointer;
   transition: all 140ms ease;
+  white-space: nowrap;
 }
 
 .canva-inspector-nav-tab:hover {
@@ -2030,6 +2038,7 @@ body > .ppt-fill-picker-pop {
 .canva-inspector-body {
   padding: 14px 14px 20px;
   overflow-y: auto;
+  overflow-x: hidden;
   flex: 1;
 }
 
@@ -3331,6 +3340,13 @@ body > .ppt-fill-picker-pop {
   display: flex;
   gap: 10px;
   overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 2px;
+}
+
+.cep-thumb-row::-webkit-scrollbar {
+  display: none;
 }
 
 .cep-thumb {

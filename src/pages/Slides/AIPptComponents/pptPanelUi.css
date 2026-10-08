@@ -2023,6 +2023,13 @@
   border-bottom: 1px solid #e2e8f0;
   padding-bottom: 8px;
   margin-bottom: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.ppt-image-tabs-nav::-webkit-scrollbar {
+  display: none;
 }
 
 .ppt-image-tab-btn {
@@ -2036,6 +2043,7 @@
   letter-spacing: 0.015em;
   cursor: pointer;
   transition: all 140ms ease;
+  white-space: nowrap;
 }
 
 .ppt-image-tab-btn:hover {
@@ -2122,8 +2130,13 @@
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding-bottom: 6px;
-  scrollbar-width: thin;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.cep-thumb-row::-webkit-scrollbar {
+  display: none;
 }
 
 .cep-thumb {
@@ -2262,5 +2275,142 @@
   width: 100%;
   height: 100%;
   border-radius: 4px;
+}
+
+/* ── Text Effects Panel ── */
+.ppt-text-effects-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px 0 16px;
+}
+
+.ppt-effects-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.ppt-effects-grid--shape {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.ppt-effect-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  cursor: pointer;
+  text-align: center;
+  transition: all 140ms ease;
+}
+
+.ppt-effect-tile:hover:not(:disabled) {
+  border-color: #2563eb;
+  background: #fff;
+}
+
+.ppt-effect-tile.is-active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 0 0 1px #2563eb;
+}
+
+.ppt-effect-tile:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ppt-effect-thumb {
+  width: 48px;
+  height: 38px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.ppt-effect-tile.is-active .ppt-effect-thumb {
+  border-color: #bfdbfe;
+}
+
+.ppt-effect-thumb-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 0.02em;
+}
+
+.ppt-effect-thumb--curve .ppt-effect-thumb-text {
+  transform: translateY(2px) scaleY(0.9);
+  border-bottom: 2px solid #2563eb;
+  border-radius: 50%;
+  padding-bottom: 2px;
+}
+
+.ppt-effect-thumb--circle .ppt-effect-thumb-text {
+  font-size: 11px;
+  border: 2px solid #2563eb;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+}
+
+.ppt-effect-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.ppt-effect-tile.is-active .ppt-effect-label {
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.ppt-effect-params {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+.ppt-props-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.ppt-effect-reset-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #475569;
+  flex-shrink: 0;
+  transition: all 120ms ease;
+}
+
+.ppt-effect-reset-btn:hover:not(:disabled) {
+  border-color: #2563eb;
+  color: #2563eb;
 }
 

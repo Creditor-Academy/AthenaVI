@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef } from 'react'
 import { FiCode } from 'react-icons/fi'
 import PptChartRenderer, { getEmbedIframeUrl } from './PptChartRenderer'
 import ExternalLinkHoverLayer from './ExternalLinkHoverLayer'
@@ -34,6 +34,7 @@ import ClipShapeSvg from '../../../components/ppt/ClipShapeSvg'
 import GraphicCanvasVisual from '../../../components/ppt/GraphicCanvasVisual'
 import { isPptHitThroughElement } from '../../../utils/pptHitThrough'
 import { parsePolygonClipPath } from '../../../utils/shapeClipSvg'
+import { buildTextEffectStyle, computeCurvedTextSvgPath } from '../../../utils/textEffectsUtils'
 
 function TextListDisplay({ text, listType }) {
   const lines = splitTextLines(text)
@@ -88,6 +89,62 @@ function readEditableText(node, listType, fallback = '') {
   let text = node?.innerText ?? fallback
   if (listType) text = stripLeadingListMarkers(text)
   return text
+}
+
+function CurvedTextDisplay({
+  text,
+  width,
+  height,
+  curveAmount = 50,
+  fontSize = 24,
+  fontWeight = 400,
+  fontFamily = 'inherit',
+  fontStyle = 'normal',
+  letterSpacing,
+  fill = '#000000',
+  effectStyle = {},
+  align = 'center',
+}) {
+  const generatedId = useId()
+  const pathId = useMemo(() => `ppt_curve_${generatedId.replace(/[^a-zA-Z0-9_-]/g, '_')}`, [generatedId])
+  const w = Math.max(40, width || 200)
+  const h = Math.max(30, height || 60)
+  const pathD = computeCurvedTextSvgPath(w, h, curveAmount)
+
+  const startOffset = align === 'left' ? '0%' : align === 'right' ? '100%' : '50%'
+  const textAnchor = align === 'left' ? 'start' : align === 'right' ? 'end' : 'middle'
+
+  return (
+    <svg
+      viewBox={`0 0 ${w} ${h}`}
+      style={{
+        width: '100%',
+        height: '100%',
+        overflow: 'visible',
+        display: 'block',
+        pointerEvents: 'none',
+      }}
+    >
+      <defs>
+        <path id={pathId} d={pathD} fill="none" />
+      </defs>
+      <text
+        fill={fill}
+        style={{
+          fontSize: `${fontSize}px`,
+          fontWeight,
+          fontFamily,
+          fontStyle,
+          letterSpacing: letterSpacing != null ? letterSpacing : undefined,
+          ...effectStyle,
+        }}
+      >
+        <textPath href={`#${pathId}`} startOffset={startOffset} textAnchor={textAnchor}>
+          {text}
+        </textPath>
+      </text>
+    </svg>
+  )
 }
 
 function EditableText({
@@ -249,6 +306,7 @@ function EditableText({
   const usesRuns = contentUsesFullRuns({ ...c, runs: paintRuns })
   const boxPaint =
     !usesRuns && isGradientFill(c.fill) ? textPaintStyle(c.fill, palette, color) : { color }
+  const effectStyle = buildTextEffectStyle(c, palette, color)
 
   const isHeading =
     el?.role === 'heading' ||
@@ -280,6 +338,7 @@ function EditableText({
       c.padding != null
         ? `${c.padding}px ${c.paddingX != null ? c.paddingX : c.padding}px`
         : undefined,
+    ...effectStyle,
     ...(editing
       ? {
           height: 'auto',
@@ -375,6 +434,9 @@ function EditableText({
   }
 
   const displayText = plainText || (editable || showEmptyHint ? 'Double-click to edit' : '')
+  const isCurved = (c.textShape === 'curve' || c.textShape === 'circle') && c.curveAmount !== 0
+  const elW = el?.width || 240
+  const elH = el?.height || 80
   const className = [
     'ppt-text-display',
     editable ? 'ppt-text-display--editable' : '',
@@ -399,7 +461,22 @@ function EditableText({
           }
         }}
       >
-        {c.listType && (c.text || plainText) ? (
+        {isCurved ? (
+          <CurvedTextDisplay
+            text={displayText}
+            width={elW}
+            height={elH}
+            curveAmount={c.curveAmount != null ? c.curveAmount : (c.textShape === 'circle' ? 100 : 50)}
+            fontSize={fontSize}
+            fontWeight={weight}
+            fontFamily={c.fontFamily}
+            fontStyle={c.italic ? 'italic' : 'normal'}
+            letterSpacing={c.letterSpacing}
+            fill={color}
+            effectStyle={effectStyle}
+            align={c.align || 'center'}
+          />
+        ) : c.listType && (c.text || plainText) ? (
           <TextListDisplay text={plainText || c.text} listType={c.listType} />
         ) : usesRuns ? (
           <RichTextDisplay runs={paintRuns} palette={palette} baseStyle={textStyle} />

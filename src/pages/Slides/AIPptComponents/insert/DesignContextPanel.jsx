@@ -9,6 +9,7 @@ import LayoutPolishedPreview from '../../../../components/ppt/LayoutPolishedPrev
 import { measureTextContentSize } from '../../../../utils/canvasTransformUtils'
 import { ensureGoogleFontLoaded } from '../../../../utils/googleFonts'
 import CanvasEditImagePanel from '../../../CanvasEditor/components/CanvasEditImagePanel'
+import TextEffectsPanel from './TextEffectsPanel'
 import {
   mediaFlipTransform,
   PPT_SHAPE_BORDER_STYLES,
@@ -943,87 +944,120 @@ function TextDesignSection({
   onToggleLock,
   disabled,
 }) {
+  const [activeTab, setActiveTab] = useState('format')
   const p = element?.placement || {}
   const c = element?.content || {}
   const opacity = p.opacity != null ? Math.round(p.opacity * 100) : 100
 
   return (
     <div className="ppt-props-stack ppt-text-design-panel">
-      <ElementToolbar
-        element={element}
-        palette={palette}
-        disabled={disabled}
-        variant="panel"
-        usedFontFamilies={usedFontFamilies}
-        onChange={(content) => onChangeContent?.(content)}
-      />
+      <div className="ppt-image-tabs-nav" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'format'}
+          className={`ppt-image-tab-btn ${activeTab === 'format' ? 'is-active' : ''}`}
+          onClick={() => setActiveTab('format')}
+        >
+          Format
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'effects'}
+          className={`ppt-image-tab-btn ${activeTab === 'effects' ? 'is-active' : ''}`}
+          onClick={() => setActiveTab('effects')}
+        >
+          Effects
+        </button>
+      </div>
 
-      <section className="ppt-props-group">
-        <header className="ppt-props-group-head">
-          <h3 className="ppt-props-group-title">Transform</h3>
-        </header>
-        <div className="ppt-props-group-body">
-          <ElementTransformControls
-            key={element?.id || 'text-transform'}
-            placement={p}
-            content={c}
+      {activeTab === 'effects' ? (
+        <TextEffectsPanel
+          element={element}
+          palette={palette}
+          disabled={disabled}
+          onChange={onChangeContent}
+        />
+      ) : (
+        <>
+          <ElementToolbar
+            element={element}
+            palette={palette}
             disabled={disabled}
-            onChangePlacement={onChangePlacement}
-            onChangeContent={onChangeContent}
+            variant="panel"
+            usedFontFamilies={usedFontFamilies}
+            onChange={(content) => onChangeContent?.(content)}
           />
-        </div>
-      </section>
 
-      <section className="ppt-props-group">
-        <header className="ppt-props-group-head">
-          <h3 className="ppt-props-group-title">Appearance</h3>
-        </header>
-        <div className="ppt-props-group-body">
-          <div className="ppt-props-row ppt-props-row--slider">
-            <span className="ppt-props-row-label">Transparency</span>
-            <div className="ppt-props-slider">
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={opacity}
+          <section className="ppt-props-group">
+            <header className="ppt-props-group-head">
+              <h3 className="ppt-props-group-title">Transform</h3>
+            </header>
+            <div className="ppt-props-group-body">
+              <ElementTransformControls
+                key={element?.id || 'text-transform'}
+                placement={p}
+                content={c}
                 disabled={disabled}
-                aria-label="Transparency"
-                onChange={(e) =>
-                  onChangePlacement?.({ opacity: Number(e.target.value) / 100 })
-                }
+                onChangePlacement={onChangePlacement}
+                onChangeContent={onChangeContent}
               />
-              <span className="ppt-props-slider-value">{opacity}%</span>
             </div>
-          </div>
-          <div className="ppt-props-row ppt-props-row--switch">
-            <span className="ppt-props-row-label">Lock position</span>
-            <button
-              type="button"
-              className={`ppt-props-lock-btn ${element?.locked ? 'is-locked' : ''}`}
-              disabled={disabled}
-              onClick={onToggleLock}
-              aria-pressed={!!element?.locked}
-            >
-              {element?.locked ? <FiLock size={14} aria-hidden /> : <FiUnlock size={14} aria-hidden />}
-              {element?.locked ? 'Locked' : 'Unlocked'}
-            </button>
-          </div>
-          <div className="ppt-props-actions">
-            <button
-              type="button"
-              className="ppt-props-action-btn"
-              disabled={disabled}
-              onClick={() => {
-                const nextH = fitTextBoxToContent(element)
-                if (nextH) onChangePlacement?.({ height: nextH })
-              }}
-            >
-              Fit to text
-            </button>
-          </div>
-        </div>
-      </section>
+          </section>
+
+          <section className="ppt-props-group">
+            <header className="ppt-props-group-head">
+              <h3 className="ppt-props-group-title">Appearance</h3>
+            </header>
+            <div className="ppt-props-group-body">
+              <div className="ppt-props-row ppt-props-row--slider">
+                <span className="ppt-props-row-label">Transparency</span>
+                <div className="ppt-props-slider">
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={opacity}
+                    disabled={disabled}
+                    aria-label="Transparency"
+                    onChange={(e) =>
+                      onChangePlacement?.({ opacity: Number(e.target.value) / 100 })
+                    }
+                  />
+                  <span className="ppt-props-slider-value">{opacity}%</span>
+                </div>
+              </div>
+              <div className="ppt-props-row ppt-props-row--switch">
+                <span className="ppt-props-row-label">Lock position</span>
+                <button
+                  type="button"
+                  className={`ppt-props-lock-btn ${element?.locked ? 'is-locked' : ''}`}
+                  disabled={disabled}
+                  onClick={onToggleLock}
+                  aria-pressed={!!element?.locked}
+                >
+                  {element?.locked ? <FiLock size={14} aria-hidden /> : <FiUnlock size={14} aria-hidden />}
+                  {element?.locked ? 'Locked' : 'Unlocked'}
+                </button>
+              </div>
+              <div className="ppt-props-actions">
+                <button
+                  type="button"
+                  className="ppt-props-action-btn"
+                  disabled={disabled}
+                  onClick={() => {
+                    const nextH = fitTextBoxToContent(element)
+                    if (nextH) onChangePlacement?.({ height: nextH })
+                  }}
+                >
+                  Fit to text
+                </button>
+              </div>
+            </div>
+          </section>
+        </>
+      )}
     </div>
   )
 }
