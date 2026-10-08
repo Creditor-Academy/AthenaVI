@@ -15,6 +15,8 @@ import {
 import {
   PPT_AI_SLIDE_COUNTS,
   buildWizardThemeTokens,
+  buildThemeTokensFromPromptSuggestion,
+  PROMPT_SUGGESTED_THEME_ID,
   clampAiSlideCount,
   flattenPresentationPrompt,
   mapDensity,
@@ -351,6 +353,7 @@ export default function AIPptWizard({
   const [selectedBrandKitId, setSelectedBrandKitId] = useState('')
   const [selectedBrandKitWorkspaceId, setSelectedBrandKitWorkspaceId] = useState('')
   const [themeMode, setThemeMode] = useState(null)
+  const [promptPaletteSuggestion, setPromptPaletteSuggestion] = useState(null)
   const [workspaceHint, setWorkspaceHint] = useState(null)
   
   const outlineRef = useRef(null)
@@ -540,13 +543,23 @@ export default function AIPptWizard({
 
       // Mutually exclusive with brand kit / pack — only send theme when those are unset
       const useCatalogTheme = !brandKitId && !packId
-      const wizardThemeTokens = useCatalogTheme ? buildWizardThemeTokens(theme, THEMES) : null
+      let wizardThemeTokens = null
+      if (useCatalogTheme) {
+        const usesPromptPalette =
+          themeMode === 'palette' &&
+          theme === PROMPT_SUGGESTED_THEME_ID &&
+          promptPaletteSuggestion?.themeTokens &&
+          !promptPaletteSuggestion.fallback
+        wizardThemeTokens = usesPromptPalette
+          ? buildThemeTokensFromPromptSuggestion(promptPaletteSuggestion)
+          : buildWizardThemeTokens(theme, THEMES)
+      }
 
       const created = await presentationService.createPresentation(ctx.workspaceId, {
         title: 'Untitled Presentation',
         folderId: ctx.folderId,
         ...(useCatalogTheme && wizardThemeTokens
-          ? { themeId: theme, themeTokens: wizardThemeTokens }
+          ? { themeId: toApiThemeId(theme), themeTokens: wizardThemeTokens }
           : {}),
         locale: 'en',
         aspectRatio: screenSize,
@@ -649,6 +662,8 @@ export default function AIPptWizard({
         imageStyleFilter,
         packId,
         brandKitId,
+        promptPaletteSuggestion:
+          themeMode === 'palette' && promptPaletteSuggestion ? promptPaletteSuggestion : null,
         layoutChoices:
           outlinePayload?.outline?.layoutChoices ||
           outlinePayload?.data?.outline?.layoutChoices ||
@@ -958,6 +973,10 @@ export default function AIPptWizard({
         {step === 2 && (
             <AIPptVibeStep
             workspaceId={workspaceHint?.workspaceId}
+            prompt={prompt}
+            tone={tone}
+            audience={audience}
+            purpose={purpose}
             brandKits={brandKits}
             selectedBrandKitId={selectedBrandKitId}
             onSelectBrandKit={handleSelectBrandKit}
@@ -969,6 +988,8 @@ export default function AIPptWizard({
             themeMode={themeMode}
             onSelectTheme={setTheme}
             onThemeModeChange={setThemeMode}
+            onPromptPaletteSelect={setPromptPaletteSuggestion}
+            promptPaletteSuggestion={promptPaletteSuggestion}
             onOpenThemeModal={() => setIsThemeModalOpen(true)}
             screenSize={screenSize}
             onScreenSizeChange={setScreenSize}

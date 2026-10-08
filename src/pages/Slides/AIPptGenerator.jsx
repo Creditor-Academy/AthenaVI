@@ -22,6 +22,8 @@ import { isInsufficientCreditsError } from '../../services/creditsService'
 import {
   buildPresentationGenerationPayload,
   buildWizardThemeTokens,
+  buildThemeTokensFromPromptSuggestion,
+  PROMPT_SUGGESTED_THEME_ID,
   outlineCardsToApiPayload,
   toApiThemeId,
 } from '../../utils/presentationHelpers'
@@ -94,19 +96,30 @@ export default function AIPptGenerator({
         })
       )
 
-      const wizardThemeTokens = buildWizardThemeTokens(
-        config.theme,
-        config.availableOptions?.colorThemes
-      )
       const paletteMode =
         config.themeMode === 'palette' ||
         (!config.themeMode && !config.brandKitId && !config.packId)
+
+      let wizardThemeTokens = null
+      if (paletteMode) {
+        const usesPromptPalette =
+          config.theme === PROMPT_SUGGESTED_THEME_ID &&
+          config.promptPaletteSuggestion?.themeTokens &&
+          !config.promptPaletteSuggestion.fallback
+        wizardThemeTokens = usesPromptPalette
+          ? buildThemeTokensFromPromptSuggestion(config.promptPaletteSuggestion)
+          : buildWizardThemeTokens(config.theme, config.availableOptions?.colorThemes)
+      }
+
       if (paletteMode && wizardThemeTokens) {
         await presentationService.setTheme(session.workspaceId, session.presentationId, {
-          themeId: config.theme || undefined,
+          themeId: toApiThemeId(config.theme) || undefined,
           themeTokens: wizardThemeTokens,
         })
-      } else if (toApiThemeId(config.backendThemeId)) {
+      } else if (
+        toApiThemeId(config.backendThemeId) &&
+        config.backendThemeId !== toApiThemeId(PROMPT_SUGGESTED_THEME_ID)
+      ) {
         await presentationService.setTheme(session.workspaceId, session.presentationId, {
           themeId: toApiThemeId(config.backendThemeId),
         })

@@ -609,6 +609,28 @@ export function derivePresentationTitle(text, fallback = 'Untitled Presentation'
   return `${base.replace(/[,;:\-–—]+$/, '')}…`
 }
 
+/** Wizard theme id for AI-generated 5-color palette from Step 1 prompt. */
+export const PROMPT_SUGGESTED_THEME_ID = 'prompt-suggested'
+
+/**
+ * Normalize suggest-vibe-palette API payload for createPresentation themeTokens.
+ * @param {object} apiPayload - unwrapped API data
+ */
+export function buildThemeTokensFromPromptSuggestion(apiPayload) {
+  if (!apiPayload || typeof apiPayload !== 'object') return null
+  const tokens = apiPayload.themeTokens
+  if (!tokens?.palette) return null
+  return {
+    ...tokens,
+    wizardColorThemeId:
+      tokens.wizardColorThemeId ||
+      (apiPayload.fallback && apiPayload.catalogThemeId
+        ? apiPayload.catalogThemeId
+        : PROMPT_SUGGESTED_THEME_ID),
+    fontSource: tokens.fontSource || 'wizard',
+  }
+}
+
 /** Theme ids must use underscores (midnight_blue), not kebab-case. */
 export function toApiThemeId(themeId) {
   if (!themeId) return undefined

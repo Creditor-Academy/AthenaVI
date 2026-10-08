@@ -234,6 +234,8 @@ const API_CONFIG = {
     // Presentations (AI PPT / Canvas)
     PRESENTATIONS: {
       LIST: (workspaceId) => `/api/workspaces/${workspaceId}/presentations`,
+      SUGGEST_VIBE_PALETTE: (workspaceId) =>
+        `/api/workspaces/${workspaceId}/presentations/suggest-vibe-palette`,
       ONE: (workspaceId, presentationId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}`,
       PREVIEW: (workspaceId, presentationId) =>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import {
   Check,
@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { MdDashboard } from 'react-icons/md'
 import presentationService from '../../../services/presentationService'
+import { PROMPT_SUGGESTED_THEME_ID } from '../../../utils/presentationHelpers'
 import brandKitService from '../../../services/brandKitService'
 import { listBrandKitsUsableInWorkspace } from '../../../utils/brandKitWorkspace'
 import { dedupeBrandKitList } from '../../../utils/brandKitHelpers'
@@ -58,11 +59,11 @@ function ColorStripeCard({
   badge,
 }) {
   const cleaned = colors.filter(Boolean)
-  // Match brand-kit tiles: 4 vertical bands (last slightly wider)
-  const fallback = ['#64748b', '#e2e8f0', '#94a3b8', '#0f172a']
+  const bandCount = Math.min(Math.max(cleaned.length, 4), 5)
+  const fallback = ['#64748b', '#e2e8f0', '#94a3b8', '#0f172a', '#334155']
   const source = cleaned.length ? cleaned : fallback
-  const palette = source.slice(0, 4)
-  while (palette.length < 4) {
+  const palette = source.slice(0, bandCount)
+  while (palette.length < bandCount) {
     palette.push(fallback[palette.length] || '#e2e8f0')
   }
 
@@ -73,7 +74,10 @@ function ColorStripeCard({
       onClick={onSelect}
     >
       {badge ? <span className="aig-color-stripe-badge">{badge}</span> : null}
-      <div className="aig-color-stripe-preview" aria-hidden>
+      <div
+        className={`aig-color-stripe-preview${bandCount >= 5 ? ' aig-color-stripe-preview--five' : ''}`}
+        aria-hidden
+      >
         {palette.map((hex, index) => (
           <div
             key={`${hex}-${index}`}
@@ -160,8 +164,70 @@ function packMatchesAspect(pack, aspectRatio = FIXED_ASPECT) {
  * drawer: null | 'brand' | 'palette' | 'template'
  * User can configure any one or combination via the three tiles.
  */
+function suggestionThemeId(suggestion) {
+  if (!suggestion) return null
+  if (suggestion.fallback && suggestion.catalogThemeId) {
+    return String(suggestion.catalogThemeId)
+  }
+  return PROMPT_SUGGESTED_THEME_ID
+}
+
+function isSuggestionSelected(suggestion, theme, activeChoice) {
+  if (!suggestion || activeChoice !== 'palette') return false
+  const id = suggestionThemeId(suggestion)
+  return id != null && String(theme) === String(id)
+}
+
+function SuggestedPaletteSection({
+  suggestion,
+  loading,
+  error,
+  onRetry,
+  theme,
+  activeChoice,
+  onSelect,
+  className = '',
+}) {
+  if (!loading && !suggestion && !error) return null
+
+  return (
+    <section className={`aig-vibe-suggested ${className}`.trim()} aria-label="Suggested palette">
+      <div className="aig-vibe-suggested-header">
+        <h3 className="aig-vibe-suggested-title">Suggested for your topic</h3>
+        {error ? (
+          <button type="button" className="aig-vibe-suggested-retry" onClick={onRetry}>
+            Retry
+          </button>
+        ) : null}
+      </div>
+      {loading && !suggestion ? (
+        <div className="aig-vibe-suggested-loading">Building a palette…</div>
+      ) : null}
+      {suggestion ? (
+        <div className="aig-vibe-suggested-card-wrap">
+          <ColorStripeCard
+            title={suggestion.name}
+            subtitle={suggestion.subtitle || 'From your topic'}
+            colors={suggestion.colors || []}
+            selected={isSuggestionSelected(suggestion, theme, activeChoice)}
+            onSelect={() => onSelect(suggestion)}
+            badge="Suggested"
+          />
+        </div>
+      ) : null}
+      {error && !suggestion ? (
+        <p className="aig-vibe-suggested-error">{error}</p>
+      ) : null}
+    </section>
+  )
+}
+
 export default function AIPptVibeStep({
   workspaceId,
+  prompt = '',
+  tone = '',
+  audience = '',
+  purpose = '',
   brandKits = [],
   selectedBrandKitId,
   onSelectBrandKit,
@@ -173,11 +239,25 @@ export default function AIPptVibeStep({
   onSelectTheme,
   themeMode = null,
   onThemeModeChange,
+  onPromptPaletteSelect,
+  promptPaletteSuggestion = null,
   onOpenThemeModal: _onOpenThemeModal,
   screenSize,
   onScreenSizeChange,
   stepReady,
 }) {
+  const [paletteSuggestLoading, setPaletteSuggestLoading] = useState(false)
+  const [paletteSuggestError, setPaletteSuggestError] = useState('')
+
+  const effectiveSuggestion = promptPaletteSuggestion
+
+  const promptContextKey = useMemo(
+    () =>
+      [String(prompt || '').trim(), tone, audience, purpose]
+        .map((v) => String(v || '').trim())
+        .join('\u0001'),
+    [prompt, tone, audience, purpose]
+  )
   const [drawer, setDrawer] = useState(null) // 'brand' | 'palette' | 'template'
   // Only one of Brand Kit / Palette / Template can be active
   const [activeChoice, setActiveChoice] = useState(() => {
@@ -190,6 +270,56 @@ export default function AIPptVibeStep({
   useEffect(() => {
     onThemeModeChange?.(activeChoice)
   }, [activeChoice, onThemeModeChange])
+
+  const fetchPaletteSuggestion = useCallback(async () => {
+    const trimmed = String(prompt || '').trim()
+    if (!workspaceId || !trimmed) {
+      onPromptPaletteSelect?.(null)
+      return
+    }
+    setPaletteSuggestLoading(true)
+    setPaletteSuggestError('')
+    try {
+      const data = await presentationService.suggestVibePalette(workspaceId, {
+        prompt: trimmed,
+        tone: tone || undefined,
+        audience: audience || undefined,
+        purpose: purpose || undefined,
+      })
+      onPromptPaletteSelect?.(data)
+    } catch (err) {
+      setPaletteSuggestError(err.message || 'Could not suggest a palette')
+      onPromptPaletteSelect?.(null)
+    } finally {
+      setPaletteSuggestLoading(false)
+    }
+  }, [workspaceId, prompt, tone, audience, purpose, onPromptPaletteSelect])
+
+  useEffect(() => {
+    if (!stepReady) return undefined
+    const trimmed = String(prompt || '').trim()
+    if (!workspaceId || !trimmed) return undefined
+    const timer = setTimeout(() => {
+      fetchPaletteSuggestion()
+    }, 350)
+    return () => clearTimeout(timer)
+  }, [workspaceId, promptContextKey, stepReady, fetchPaletteSuggestion])
+
+  const prevPromptKeyRef = useRef(promptContextKey)
+  useEffect(() => {
+    if (prevPromptKeyRef.current === promptContextKey) return
+    prevPromptKeyRef.current = promptContextKey
+    if (activeChoice !== 'palette') return
+    const hadSuggested =
+      theme === PROMPT_SUGGESTED_THEME_ID ||
+      (promptPaletteSuggestion?.fallback &&
+        theme === promptPaletteSuggestion.catalogThemeId)
+    if (hadSuggested) {
+      onSelectTheme('soft-sky')
+      setActiveChoice(null)
+    }
+  }, [promptContextKey, activeChoice, theme, promptPaletteSuggestion, onSelectTheme])
+
   const [searchQuery, setSearchQuery] = useState('')
   const [appearanceFilter, setAppearanceFilter] = useState('all') // 'all' | 'light' | 'dark'
   const [brandKitDetails, setBrandKitDetails] = useState({})
@@ -336,6 +466,17 @@ export default function AIPptVibeStep({
     setDrawer(null)
   }
 
+  const selectSuggestedPalette = (suggestion) => {
+    if (!suggestion) return
+    onPromptPaletteSelect?.(suggestion)
+    const themeId = suggestionThemeId(suggestion)
+    onSelectTheme(themeId)
+    onSelectBrandKit('', null)
+    onSelectPack('')
+    setActiveChoice('palette')
+    setDrawer(null)
+  }
+
   const selectTemplate = (id) => {
     onSelectPack(String(id))
     onSelectBrandKit('', null)
@@ -456,6 +597,16 @@ export default function AIPptVibeStep({
               }
             />
           </div>
+
+          <SuggestedPaletteSection
+            suggestion={effectiveSuggestion}
+            loading={paletteSuggestLoading}
+            error={paletteSuggestError}
+            onRetry={fetchPaletteSuggestion}
+            theme={theme}
+            activeChoice={activeChoice}
+            onSelect={selectSuggestedPalette}
+          />
         </section>
       </div>
 
@@ -578,7 +729,19 @@ export default function AIPptVibeStep({
 
                 {drawer === 'palette' && (
                   <>
-                    {!filteredThemes.length && (
+                    {(effectiveSuggestion || paletteSuggestLoading) && (
+                      <SuggestedPaletteSection
+                        suggestion={effectiveSuggestion}
+                        loading={paletteSuggestLoading}
+                        error={paletteSuggestError}
+                        onRetry={fetchPaletteSuggestion}
+                        theme={theme}
+                        activeChoice={activeChoice}
+                        onSelect={selectSuggestedPalette}
+                        className="aig-vibe-suggested--drawer"
+                      />
+                    )}
+                    {!filteredThemes.length && !effectiveSuggestion && !paletteSuggestLoading && (
                       <div className="aig-template-drawer-empty">
                         No {appearanceFilter === 'all' ? '' : `${appearanceFilter} `}themes match your search.
                       </div>

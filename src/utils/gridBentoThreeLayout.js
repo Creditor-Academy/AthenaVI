@@ -120,9 +120,9 @@ export const GRID_BENTO_THEMES = [
 ]
 
 export const GRID_BENTO_THREE_DEFAULTS = {
-  BADGE: 'CURATED SHOWCASE',
-  HEADING: 'Three-part bento overview',
-  SUBTITLE: 'Flagship product experiences, botanical purity, and sensory wellness highlights.',
+  BADGE: 'HIGHLIGHTS',
+  HEADING: '',
+  SUBTITLE: '',
 }
 
 export function isGridBentoThreeLayout(layoutId) {
@@ -216,7 +216,9 @@ export function layoutGridBentoThree(docOrElements = [], schema = {}, palette = 
     if (typeof el?.text === 'string' && el.text.trim()) {
       return el.text
     }
-    return defaults[slotId] || fallback
+    const preset = defaults[slotId]
+    if (typeof preset === 'string' && preset.trim()) return preset
+    return fallback || ''
   }
 
   const getImageContent = (idx) => {
