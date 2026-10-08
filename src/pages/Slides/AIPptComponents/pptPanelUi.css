@@ -2016,3 +2016,251 @@
   backdrop-filter: blur(3px);
 }
 
+/* ── Image Design Tabs (Style vs Edit & Filters) ── */
+.ppt-image-tabs-nav {
+  display: flex;
+  gap: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+.ppt-image-tab-btn {
+  padding: 6px 0;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #64748b;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.015em;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.ppt-image-tab-btn:hover {
+  color: #0f172a;
+}
+
+.ppt-image-tab-btn.is-active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
+/* ── "Edit image" panel (Tools / Filters / Shadows / Apps) ── */
+.cep-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px 0 16px;
+}
+
+.cep-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cep-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10.5px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #475569;
+}
+
+.cep-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.cep-tool-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  cursor: pointer;
+  text-align: center;
+  transition: all 140ms ease;
+}
+
+.cep-tool-tile:hover:not(:disabled) {
+  border-color: #2563eb;
+  background: #fff;
+}
+
+.cep-tool-tile:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cep-tool-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+  color: #4f46e5;
+}
+
+.cep-tool-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.cep-thumb-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: thin;
+}
+
+.cep-thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  width: 68px;
+}
+
+.cep-thumb-frame {
+  width: 68px;
+  height: 68px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  background: #f1f5f9;
+  display: block;
+}
+
+.cep-thumb.is-active .cep-thumb-frame {
+  border-color: #2563eb;
+}
+
+.cep-thumb-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cep-thumb-empty {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #e2e8f0;
+}
+
+.cep-thumb-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.cep-coming-soon {
+  margin: 0;
+  font-size: 11.5px;
+  color: #94a3b8;
+}
+
+.cep-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.cep-slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cep-slider-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.cep-slider-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cep-slider-control input[type='range'] {
+  flex: 1;
+}
+
+.cep-slider-control button {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #475569;
+  flex-shrink: 0;
+}
+
+.cep-slider-control button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cep-reset-btn {
+  align-self: flex-start;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  padding: 6px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+}
+
+.cep-reset-btn:hover:not(:disabled) {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.cep-thumb-frame--shadow {
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: #f8fafc;
+  overflow: visible;
+}
+.cep-thumb-frame--shadow img {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+}
+

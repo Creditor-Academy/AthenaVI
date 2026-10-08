@@ -1969,8 +1969,8 @@ body > .ppt-fill-picker-pop {
 
 .canva-inspector-header h3 {
   margin: 0;
-  font-size: 14px;
-  font-weight: 750;
+  font-size: 13px;
+  font-weight: 700;
   color: var(--canva-text);
 }
 
@@ -2002,17 +2002,18 @@ body > .ppt-fill-picker-pop {
 
 .canva-inspector-nav-tabs {
   display: flex;
-  gap: 16px;
+  gap: 14px;
 }
 
 .canva-inspector-nav-tab {
-  padding: 8px 0;
+  padding: 6px 0 8px;
   border: none;
   border-bottom: 2px solid transparent;
   background: transparent;
   color: var(--canva-muted);
-  font-size: 13px;
-  font-weight: 650;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.015em;
   cursor: pointer;
   transition: all 140ms ease;
 }
@@ -2035,6 +2036,39 @@ body > .ppt-fill-picker-pop {
 .canva-inspector-design .ppt-design-context-panel,
 .canva-inspector-design .ppt-props-stack {
   width: 100%;
+}
+
+.canva-inspector .ppt-props-row-label,
+.canva-inspector .ppt-slide-panel-label {
+  font-size: 11.5px;
+}
+
+.canva-inspector .ppt-props-group-title {
+  font-size: 10.5px;
+  letter-spacing: 0.05em;
+}
+
+.canva-inspector .ppt-segmented-btn {
+  font-size: 11px;
+  min-height: 28px;
+  padding: 0 6px;
+}
+
+.canva-inspector .ppt-props-action-btn {
+  font-size: 11.5px;
+  padding: 6px 10px;
+}
+
+.canva-inspector .ppt-shape-border-style-label {
+  font-size: 10.5px;
+}
+
+.canva-inspector .ppt-props-slider-value {
+  font-size: 11px;
+}
+
+.canva-inspector .ppt-props-empty {
+  font-size: 11.5px;
 }
 
 .canva-inspector-empty {
@@ -2113,7 +2147,7 @@ body > .ppt-fill-picker-pop {
 }
 
 .canva-inspector-group-title {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 750;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -2122,12 +2156,12 @@ body > .ppt-fill-picker-pop {
 
 .canva-inspector-textarea {
   width: 100%;
-  padding: 10px;
+  padding: 8px 10px;
   border: 1px solid var(--canva-border);
   border-radius: 8px;
   background: var(--canva-bg);
   color: var(--canva-text);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.4;
   resize: vertical;
   outline: none;
@@ -2139,13 +2173,13 @@ body > .ppt-fill-picker-pop {
 
 .canva-inspector-select {
   width: 100%;
-  height: 36px;
+  height: 34px;
   padding: 0 10px;
   border: 1px solid var(--canva-border);
   border-radius: 8px;
   background: var(--canva-bg);
   color: var(--canva-text);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
 }
@@ -3241,7 +3275,7 @@ body > .ppt-fill-picker-pop {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11.5px;
+  font-size: 10.5px;
   font-weight: 750;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -3288,7 +3322,7 @@ body > .ppt-fill-picker-pop {
 }
 
 .cep-tool-label {
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   color: #0f172a;
 }
@@ -3340,14 +3374,14 @@ body > .ppt-fill-picker-pop {
 }
 
 .cep-thumb-label {
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
   color: #334155;
 }
 
 .cep-coming-soon {
   margin: 0;
-  font-size: 12.5px;
+  font-size: 11.5px;
   color: #94a3b8;
 }
 
@@ -3359,7 +3393,7 @@ body > .ppt-fill-picker-pop {
   border: none;
   background: none;
   padding: 0;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: #0f172a;
   cursor: pointer;
@@ -3374,7 +3408,7 @@ body > .ppt-fill-picker-pop {
 .cep-slider-head {
   display: flex;
   justify-content: space-between;
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 600;
   color: #334155;
 }
@@ -3412,8 +3446,8 @@ body > .ppt-fill-picker-pop {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #fff;
-  padding: 7px 14px;
-  font-size: 12.5px;
+  padding: 6px 12px;
+  font-size: 11.5px;
   font-weight: 600;
   color: #334155;
   cursor: pointer;
@@ -3423,8 +3457,6 @@ body > .ppt-fill-picker-pop {
   border-color: var(--canva-accent);
   color: var(--canva-accent);
 }
-
-
 
 /* Image panel shadow thumbs */
 .cep-thumb-frame--shadow {
@@ -3449,8 +3481,8 @@ body > .ppt-fill-picker-pop {
   overflow: hidden;
 }
 .cin-card-head {
-  padding: 9px 14px;
-  font-size: 11.5px;
+  padding: 8px 12px;
+  font-size: 10.5px;
   font-weight: 750;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -3463,13 +3495,13 @@ body > .ppt-fill-picker-pop {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 14px;
+  padding: 9px 12px;
 }
 .cin-row + .cin-row {
   border-top: 1px solid #f1f5f9;
 }
 .cin-row-label {
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 600;
   color: #334155;
   flex-shrink: 0;
@@ -3490,7 +3522,7 @@ body > .ppt-fill-picker-pop {
 .cin-slider span {
   min-width: 38px;
   text-align: right;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: #64748b;
 }
@@ -3498,14 +3530,14 @@ body > .ppt-fill-picker-pop {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
-  padding: 12px 14px;
+  padding: 10px 12px;
 }
 .cin-chip {
-  padding: 8px 10px;
+  padding: 7px 9px;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   background: #fff;
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 600;
   color: #334155;
   cursor: pointer;

@@ -696,6 +696,7 @@ export default function PptCanvasElement({
             opacity: c.opacity != null ? c.opacity : 1,
             borderRadius: clipPath || edgeFadeMask || isFullBleedMedia ? 0 : c.borderRadius != null ? c.borderRadius : undefined,
             boxShadow: c.boxShadow || c.shadow || undefined,
+            filter: c.cssFilter || c.filter || undefined,
             display: 'block',
             transform: mediaFlipTransform(c),
             transformOrigin: 'center center',

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { FiCrop, FiImage, FiLock, FiUnlock, FiRefreshCw } from 'react-icons/fi'
 import ElementToolbar from './ElementToolbar'
 import ElementPropertiesPanel from '../ElementPropertiesPanel'
@@ -8,6 +8,7 @@ import FontPicker from '../../../../components/shared/fonts/FontPicker'
 import LayoutPolishedPreview from '../../../../components/ppt/LayoutPolishedPreview'
 import { measureTextContentSize } from '../../../../utils/canvasTransformUtils'
 import { ensureGoogleFontLoaded } from '../../../../utils/googleFonts'
+import CanvasEditImagePanel from '../../../CanvasEditor/components/CanvasEditImagePanel'
 import {
   mediaFlipTransform,
   PPT_SHAPE_BORDER_STYLES,
@@ -754,6 +755,7 @@ function ImageDesignSection({
   onToggleUseAsBackground,
   disabled,
 }) {
+  const [activeTab, setActiveTab] = useState('style')
   const c = element?.content || {}
   const p = element?.placement || {}
   const opacity = p.opacity != null ? Math.round(p.opacity * 100) : 100
@@ -763,139 +765,171 @@ function ImageDesignSection({
 
   return (
     <div className="ppt-props-stack ppt-image-design-panel">
-      <section className="ppt-props-group">
-        <header className="ppt-props-group-head">
-          <h3 className="ppt-props-group-title">Media</h3>
-        </header>
-        <div className="ppt-props-group-body">
-          {(c.url || c.src) && (
-            <div className="ppt-design-image-preview">
-              <img
-                src={c.url || c.src}
-                alt=""
-                className="ppt-media-flip"
-                style={{
-                  transform: mediaFlipTransform(c),
-                  transformOrigin: 'center center',
-                }}
-              />
-            </div>
-          )}
-          <div className="ppt-props-actions">
-            <button
-              type="button"
-              className="ppt-props-action-btn"
-              disabled={disabled}
-              onClick={onReplaceImage}
-            >
-              <FiImage size={15} aria-hidden />
-              Replace
-            </button>
-            <button
-              type="button"
-              className="ppt-props-action-btn"
-              disabled={disabled}
-              onClick={onCropImage}
-            >
-              <FiCrop size={15} aria-hidden />
-              Crop
-            </button>
-          </div>
-        </div>
-      </section>
+      <div className="ppt-image-tabs-nav" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'style'}
+          className={`ppt-image-tab-btn ${activeTab === 'style' ? 'is-active' : ''}`}
+          onClick={() => setActiveTab('style')}
+        >
+          Style
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === 'edit'}
+          className={`ppt-image-tab-btn ${activeTab === 'edit' ? 'is-active' : ''}`}
+          onClick={() => setActiveTab('edit')}
+        >
+          Edit &amp; Filters
+        </button>
+      </div>
 
-      <section className="ppt-props-group">
-        <header className="ppt-props-group-head">
-          <h3 className="ppt-props-group-title">Crop &amp; fit</h3>
-        </header>
-        <div className="ppt-props-group-body">
-          <div className="ppt-props-row ppt-props-row--stack">
-            <span className="ppt-props-row-label">Fit</span>
-            <div className="ppt-segmented" role="radiogroup" aria-label="Image fit">
-              {IMAGE_FIT_OPTIONS.map((opt) => (
+      {activeTab === 'edit' ? (
+        <CanvasEditImagePanel
+          element={element}
+          disabled={disabled}
+          onChangeContent={onChangeContent}
+        />
+      ) : (
+        <>
+          <section className="ppt-props-group">
+            <header className="ppt-props-group-head">
+              <h3 className="ppt-props-group-title">Media</h3>
+            </header>
+            <div className="ppt-props-group-body">
+              {(c.url || c.src) && (
+                <div className="ppt-design-image-preview">
+                  <img
+                    src={c.url || c.src}
+                    alt=""
+                    className="ppt-media-flip"
+                    style={{
+                      transform: mediaFlipTransform(c),
+                      transformOrigin: 'center center',
+                      filter: c.cssFilter || undefined,
+                    }}
+                  />
+                </div>
+              )}
+              <div className="ppt-props-actions">
                 <button
-                  key={opt.value}
                   type="button"
-                  role="radio"
-                  aria-checked={(c.fit || 'cover') === opt.value}
-                  className={`ppt-segmented-btn ${(c.fit || 'cover') === opt.value ? 'is-active' : ''}`}
+                  className="ppt-props-action-btn"
                   disabled={disabled}
-                  onClick={() => onChangeContent?.({ fit: opt.value })}
+                  onClick={onReplaceImage}
                 >
-                  {opt.label}
+                  <FiImage size={15} aria-hidden />
+                  Replace
                 </button>
-              ))}
+                <button
+                  type="button"
+                  className="ppt-props-action-btn"
+                  disabled={disabled}
+                  onClick={onCropImage}
+                >
+                  <FiCrop size={15} aria-hidden />
+                  Crop
+                </button>
+              </div>
             </div>
-          </div>
-          <div className="ppt-props-row ppt-props-row--switch">
-            <span className="ppt-props-row-label">Use as background</span>
-            <button
-              type="button"
-              className={`ppt-toggle-switch ${isBackground ? 'is-on' : ''}`}
-              role="switch"
-              aria-checked={isBackground}
-              aria-label="Use as background"
-              disabled={disabled || (!canUseAsBackground && !isBackground)}
-              onClick={() => onToggleUseAsBackground?.(!isBackground)}
-            />
-          </div>
-        </div>
-      </section>
+          </section>
 
-      <section className="ppt-props-group">
-        <header className="ppt-props-group-head">
-          <h3 className="ppt-props-group-title">Transform</h3>
-        </header>
-        <div className="ppt-props-group-body">
-          <ElementTransformControls
-            key={element?.id || 'transform'}
-            placement={p}
-            content={c}
-            showFlip
-            disabled={disabled}
-            onChangePlacement={onChangePlacement}
-            onChangeContent={onChangeContent}
-          />
-        </div>
-      </section>
+          <section className="ppt-props-group">
+            <header className="ppt-props-group-head">
+              <h3 className="ppt-props-group-title">Crop &amp; fit</h3>
+            </header>
+            <div className="ppt-props-group-body">
+              <div className="ppt-props-row ppt-props-row--stack">
+                <span className="ppt-props-row-label">Fit</span>
+                <div className="ppt-segmented" role="radiogroup" aria-label="Image fit">
+                  {IMAGE_FIT_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={(c.fit || 'cover') === opt.value}
+                      className={`ppt-segmented-btn ${(c.fit || 'cover') === opt.value ? 'is-active' : ''}`}
+                      disabled={disabled}
+                      onClick={() => onChangeContent?.({ fit: opt.value })}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="ppt-props-row ppt-props-row--switch">
+                <span className="ppt-props-row-label">Use as background</span>
+                <button
+                  type="button"
+                  className={`ppt-toggle-switch ${isBackground ? 'is-on' : ''}`}
+                  role="switch"
+                  aria-checked={isBackground}
+                  aria-label="Use as background"
+                  disabled={disabled || (!canUseAsBackground && !isBackground)}
+                  onClick={() => onToggleUseAsBackground?.(!isBackground)}
+                />
+              </div>
+            </div>
+          </section>
 
-      <section className="ppt-props-group">
-        <header className="ppt-props-group-head">
-          <h3 className="ppt-props-group-title">Appearance</h3>
-        </header>
-        <div className="ppt-props-group-body">
-          <div className="ppt-props-row ppt-props-row--slider">
-            <span className="ppt-props-row-label">Transparency</span>
-            <div className="ppt-props-slider">
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={opacity}
+          <section className="ppt-props-group">
+            <header className="ppt-props-group-head">
+              <h3 className="ppt-props-group-title">Transform</h3>
+            </header>
+            <div className="ppt-props-group-body">
+              <ElementTransformControls
+                key={element?.id || 'transform'}
+                placement={p}
+                content={c}
+                showFlip
                 disabled={disabled}
-                aria-label="Transparency"
-                onChange={(e) =>
-                  onChangePlacement?.({ opacity: Number(e.target.value) / 100 })
-                }
+                onChangePlacement={onChangePlacement}
+                onChangeContent={onChangeContent}
               />
-              <span className="ppt-props-slider-value">{opacity}%</span>
             </div>
-          </div>
-          <div className="ppt-props-row ppt-props-row--switch">
-            <span className="ppt-props-row-label">Lock position</span>
-            <button
-              type="button"
-              className={`ppt-props-lock-btn ${element?.locked ? 'is-locked' : ''}`}
-              disabled={disabled}
-              onClick={onToggleLock}
-              aria-pressed={!!element?.locked}
-            >
-              {element?.locked ? <FiLock size={14} aria-hidden /> : <FiUnlock size={14} aria-hidden />}
-              {element?.locked ? 'Locked' : 'Unlocked'}
-            </button>
-          </div>
-        </div>
-      </section>
+          </section>
+
+          <section className="ppt-props-group">
+            <header className="ppt-props-group-head">
+              <h3 className="ppt-props-group-title">Appearance</h3>
+            </header>
+            <div className="ppt-props-group-body">
+              <div className="ppt-props-row ppt-props-row--slider">
+                <span className="ppt-props-row-label">Transparency</span>
+                <div className="ppt-props-slider">
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={opacity}
+                    disabled={disabled}
+                    aria-label="Transparency"
+                    onChange={(e) =>
+                      onChangePlacement?.({ opacity: Number(e.target.value) / 100 })
+                    }
+                  />
+                  <span className="ppt-props-slider-value">{opacity}%</span>
+                </div>
+              </div>
+              <div className="ppt-props-row ppt-props-row--switch">
+                <span className="ppt-props-row-label">Lock position</span>
+                <button
+                  type="button"
+                  className={`ppt-props-lock-btn ${element?.locked ? 'is-locked' : ''}`}
+                  disabled={disabled}
+                  onClick={onToggleLock}
+                  aria-pressed={!!element?.locked}
+                >
+                  {element?.locked ? <FiLock size={14} aria-hidden /> : <FiUnlock size={14} aria-hidden />}
+                  {element?.locked ? 'Locked' : 'Unlocked'}
+                </button>
+              </div>
+            </div>
+          </section>
+        </>
+      )}
     </div>
   )
 }
