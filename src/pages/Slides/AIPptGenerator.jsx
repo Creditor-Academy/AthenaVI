@@ -111,7 +111,12 @@ export default function AIPptGenerator({
           : buildWizardThemeTokens(config.theme, config.availableOptions?.colorThemes)
       }
 
-      if (paletteMode && wizardThemeTokens) {
+      if (paletteMode) {
+        if (!wizardThemeTokens) {
+          throw new Error(
+            'Selected color theme could not be applied. Re-open The Vibe and pick a palette again.'
+          )
+        }
         await presentationService.setTheme(session.workspaceId, session.presentationId, {
           themeId: toApiThemeId(config.theme) || undefined,
           themeTokens: wizardThemeTokens,

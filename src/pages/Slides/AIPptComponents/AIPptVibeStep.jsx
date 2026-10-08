@@ -459,6 +459,7 @@ export default function AIPptVibeStep({
   }
 
   const selectPalette = (id) => {
+    onPromptPaletteSelect?.(null)
     onSelectTheme(id)
     onSelectBrandKit('', null)
     onSelectPack('')

@@ -663,7 +663,13 @@ export default function AIPptWizard({
         packId,
         brandKitId,
         promptPaletteSuggestion:
-          themeMode === 'palette' && promptPaletteSuggestion ? promptPaletteSuggestion : null,
+          themeMode === 'palette' &&
+          promptPaletteSuggestion &&
+          (theme === PROMPT_SUGGESTED_THEME_ID ||
+            (promptPaletteSuggestion.fallback &&
+              theme === promptPaletteSuggestion.catalogThemeId))
+            ? promptPaletteSuggestion
+            : null,
         layoutChoices:
           outlinePayload?.outline?.layoutChoices ||
           outlinePayload?.data?.outline?.layoutChoices ||

@@ -339,6 +339,18 @@ export function buildPresentationGenerationPayload(
   config = {},
   { finalOutline = [], overwriteManualEdits = false } = {}
 ) {
+  const paletteMode =
+    config.themeMode === 'palette' ||
+    (!config.themeMode && !config.packId && !config.brandKitId)
+  const usesPromptPalette =
+    paletteMode &&
+    config.theme === PROMPT_SUGGESTED_THEME_ID &&
+    config.promptPaletteSuggestion?.themeTokens &&
+    !config.promptPaletteSuggestion.fallback
+  const customThemeTokens = usesPromptPalette
+    ? buildThemeTokensFromPromptSuggestion(config.promptPaletteSuggestion)
+    : undefined
+
   return {
     density: config.density || mapDensity(config.textAmount),
     overwriteManualEdits,
@@ -359,9 +371,8 @@ export function buildPresentationGenerationPayload(
         themeMode:
           config.themeMode ||
           (config.packId ? 'template' : config.brandKitId ? 'brand' : 'palette'),
-        colorTheme: config.themeMode === 'palette' || (!config.themeMode && !config.packId && !config.brandKitId)
-          ? (config.theme || '')
-          : '',
+        colorTheme: paletteMode ? (config.theme || '') : '',
+        ...(customThemeTokens ? { customThemeTokens } : {}),
         canvasSize: config.screenSize || '16:9',
         imageType: config.imageSource || '',
         imageStyle: config.mediaStyle || '',
