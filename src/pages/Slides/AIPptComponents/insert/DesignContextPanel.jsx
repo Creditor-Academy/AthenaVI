@@ -501,7 +501,7 @@ function ShapeDesignSection({
   const patchContent = (updates) => onChangeContent?.(updates)
   const ensureVisibleStroke = (patch = {}) => {
     if ((c.strokeWidth ?? 0) <= 0) patch.strokeWidth = 2
-    if (!c.stroke) patch.stroke = fillSolidColor(c.fill, '#0f172a')
+    if (!c.stroke && !patch.stroke) patch.stroke = c.fill || '#0f172a'
     return patch
   }
 
@@ -558,8 +558,7 @@ function ShapeDesignSection({
                   disabled={disabled}
                   fallbackHex="#0f172a"
                   onChange={(fill) => {
-                    const color = fillSolidColor(fill, '#0f172a')
-                    patchContent(ensureVisibleStroke({ stroke: color }))
+                    patchContent(ensureVisibleStroke({ stroke: fill }))
                   }}
                 />
               </div>

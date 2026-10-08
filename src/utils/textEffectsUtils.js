@@ -1,4 +1,5 @@
 import { resolveTextHex } from './pptTextContent'
+import { resolveFillCss } from './presentationHelpers'
 
 export const SHAPE_EFFECT_OPTIONS = [
   { id: 'none', label: 'None' },
@@ -98,11 +99,13 @@ export function buildTextEffectStyle(content = {}, palette = {}, fallbackColor =
       }
     }
     case 'background': {
-      const bg = content.textBgColor || '#FEF08A'
+      const bg = resolveFillCss(content.textBgColor || '#FEF08A', palette, '#FEF08A')
+      const isGrad = typeof bg === 'string' && bg.includes('gradient(')
       const radius = content.textBgRadius != null ? content.textBgRadius : 8
       const pad = content.textBgPadding != null ? content.textBgPadding : 6
       return {
-        backgroundColor: bg,
+        background: isGrad ? bg : undefined,
+        backgroundColor: isGrad ? undefined : bg,
         borderRadius: `${radius}px`,
         padding: `${pad}px ${pad * 1.5}px`,
         display: 'inline-block',

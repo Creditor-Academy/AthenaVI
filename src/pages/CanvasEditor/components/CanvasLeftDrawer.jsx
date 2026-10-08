@@ -8,6 +8,8 @@ import TablePopover from '../../Slides/AIPptComponents/insert/TablePopover'
 import EmbedPanel from '../../Slides/AIPptComponents/insert/EmbedPanel'
 import ColorFillPicker from '../../Slides/AIPptComponents/insert/ColorFillPicker'
 import CanvasEditImagePanel from './CanvasEditImagePanel'
+import { resolveFillCss } from '../../../utils/presentationHelpers'
+import { normalizeFillValue } from '../../../utils/pptTextContent'
 import '../../Slides/AIPptComponents/insert/insertPanels.css'
 
 const TAB_TITLES = {
@@ -86,7 +88,15 @@ export default function CanvasLeftDrawer({
                   className={`canva-page-card ${index === activeCanvasIndex ? 'is-active' : ''}`}
                   onClick={() => setActiveCanvasIndex(index)}
                 >
-                  <div className="canva-page-card-thumb" style={{ background: c.background || '#ffffff' }}>
+                  <div
+                    className="canva-page-card-thumb"
+                    style={{
+                      background:
+                        c.background && typeof c.background === 'object'
+                          ? resolveFillCss(c.background)
+                          : c.background || '#ffffff',
+                    }}
+                  >
                     <small>Page {index + 1}</small>
                   </div>
                   <div className="canva-page-card-info">
@@ -127,11 +137,7 @@ export default function CanvasLeftDrawer({
 
             <label className="canva-drawer-label" style={{ marginTop: 18 }}>Canvas background</label>
             <ColorFillPicker
-              value={
-                activeCanvas?.background && typeof activeCanvas.background === 'object'
-                  ? activeCanvas.background
-                  : { type: 'solid', color: activeCanvas?.background || '#FFFFFF' }
-              }
+              value={normalizeFillValue(activeCanvas?.background, '#FFFFFF')}
               palette={{ bg: '#FFF', surface: '#FFF', text: '#000', title: '#000', accent: '#2563EB' }}
               onChange={(fill) => onUpdateBackground(fill)}
             />

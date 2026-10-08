@@ -1354,9 +1354,15 @@
   transition: transform 120ms ease;
 }
 
-.canva-surface.has-grid-bg {
+.canva-surface.has-grid-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
   background-image: radial-gradient(rgba(156, 163, 175, 0.25) 1px, transparent 1px);
   background-size: 20px 20px;
+  pointer-events: none;
+  border-radius: inherit;
+  z-index: 1;
 }
 
 .canva-element {

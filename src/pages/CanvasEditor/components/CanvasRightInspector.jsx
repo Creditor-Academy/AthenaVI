@@ -246,49 +246,70 @@ export default function CanvasRightInspector({
                 />
 
                 {isImage && (
-                  <section className="cin-card">
-                    <header className="cin-card-head">Border</header>
-                    <div className="cin-row">
-                      <span className="cin-row-label">Color</span>
-                      <ColorFillPicker
-                        title="Border color"
-                        compact
-                        value={normalizeFillValue(c.stroke, '#000000')}
-                        palette={DEFAULT_PALETTE}
-                        disabled={locked}
-                        fallbackHex="#000000"
-                        onChange={(fill) => patchContent({ stroke: fillSolidColor(fill, '#000000') })}
-                      />
-                    </div>
-                    <div className="cin-row">
-                      <span className="cin-row-label">Width</span>
-                      <div className="cin-slider">
-                        <input
-                          type="range"
-                          min={0}
-                          max={40}
-                          value={c.strokeWidth ?? 0}
+                  <>
+                    <section className="cin-card">
+                      <header className="cin-card-head">Border</header>
+                      <div className="cin-row">
+                        <span className="cin-row-label">Color</span>
+                        <ColorFillPicker
+                          title="Border color"
+                          compact
+                          value={normalizeFillValue(c.stroke, '#000000')}
+                          palette={DEFAULT_PALETTE}
                           disabled={locked}
-                          onChange={(e) => patchContent({ strokeWidth: Number(e.target.value) })}
+                          fallbackHex="#000000"
+                          onChange={(fill) => patchContent({ stroke: fill })}
                         />
-                        <span>{c.strokeWidth ?? 0}px</span>
+                      </div>
+                      <div className="cin-row">
+                        <span className="cin-row-label">Width</span>
+                        <div className="cin-slider">
+                          <input
+                            type="range"
+                            min={0}
+                            max={40}
+                            value={c.strokeWidth ?? 0}
+                            disabled={locked}
+                            onChange={(e) => patchContent({ strokeWidth: Number(e.target.value) })}
+                          />
+                          <span>{c.strokeWidth ?? 0}px</span>
+                        </div>
+                      </div>
+                      <div className="cin-row">
+                        <span className="cin-row-label">Corner radius</span>
+                        <div className="cin-slider">
+                          <input
+                            type="range"
+                            min={0}
+                            max={200}
+                            value={Math.min(200, c.borderRadius ?? 0)}
+                            disabled={locked}
+                            onChange={(e) => patchContent({ borderRadius: Number(e.target.value) })}
+                          />
+                          <span>{c.borderRadius ?? 0}px</span>
+                        </div>
+                      </div>
+                    </section>
+
+                    <div className="canva-inspector-group" style={{ marginTop: 14 }}>
+                      <label className="canva-inspector-group-title">Quick dimensions</label>
+                      <div className="canva-inspector-presets-grid">
+                        {SIZE_PRESETS_SHORT.map((preset) => (
+                          <button
+                            type="button"
+                            key={preset.id}
+                            className="canva-inspector-preset-card"
+                            onClick={() => onApplyPresetSize?.(preset)}
+                          >
+                            <strong>{preset.label || preset.name}</strong>
+                            <small>
+                              {preset.width} × {preset.height}
+                            </small>
+                          </button>
+                        ))}
                       </div>
                     </div>
-                    <div className="cin-row">
-                      <span className="cin-row-label">Corner radius</span>
-                      <div className="cin-slider">
-                        <input
-                          type="range"
-                          min={0}
-                          max={200}
-                          value={Math.min(200, c.borderRadius ?? 0)}
-                          disabled={locked}
-                          onChange={(e) => patchContent({ borderRadius: Number(e.target.value) })}
-                        />
-                        <span>{c.borderRadius ?? 0}px</span>
-                      </div>
-                    </div>
-                  </section>
+                  </>
                 )}
               </div>
             ) : (
@@ -408,11 +429,7 @@ export default function CanvasRightInspector({
             <div className="canva-inspector-group">
               <label className="canva-inspector-group-title">Canvas background</label>
               <ColorFillPicker
-                value={
-                  activeCanvas?.background && typeof activeCanvas.background === 'object'
-                    ? activeCanvas.background
-                    : { type: 'solid', color: activeCanvas?.background || '#FFFFFF' }
-                }
+                value={normalizeFillValue(activeCanvas?.background, '#FFFFFF')}
                 palette={DEFAULT_PALETTE}
                 onChange={(fill) => onUpdateBackground(fill)}
               />

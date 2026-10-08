@@ -95,15 +95,22 @@ function minOverlapPx(size) {
 function canvasSurfaceStyle(canvas, zoom) {
   const bg = canvas.background
   const fillCss =
-    bg && typeof bg === 'object' ? resolveFillCss(bg) : bg || '#FFFFFF'
+    bg && typeof bg === 'object' ? resolveFillCss(bg, DEFAULT_PALETTE) : bg || '#FFFFFF'
+  const isGradient = typeof fillCss === 'string' && fillCss.includes('gradient(')
+
   return {
     width: `${canvas.width * zoom}px`,
     height: `${canvas.height * zoom}px`,
     aspectRatio: `${canvas.width} / ${canvas.height}`,
-    backgroundColor: fillCss,
+    backgroundColor: isGradient ? 'transparent' : fillCss,
+    background: !canvas.backgroundImage && isGradient ? fillCss : undefined,
     backgroundImage: canvas.backgroundImage
-      ? `url(${canvas.backgroundImage})`
-      : undefined,
+      ? isGradient
+        ? `url(${canvas.backgroundImage}), ${fillCss}`
+        : `url(${canvas.backgroundImage})`
+      : isGradient
+        ? fillCss
+        : undefined,
     backgroundSize: canvas.backgroundImageFit || 'cover',
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat',

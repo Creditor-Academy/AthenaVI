@@ -1294,17 +1294,19 @@ export function buildCanvasShapeStyle(content = {}, palette = {}) {
   const lib = entry?.style || {}
 
   const fill = resolveFillCss(content.fill, palette, 'rgba(148,163,184,0.35)')
-  const stroke = content.stroke ? resolveThemeColor(content.stroke, palette, content.stroke) : undefined
+  const stroke = content.stroke ? resolveFillCss(content.stroke, palette, content.stroke) : undefined
   const strokeWidth = content.strokeWidth != null ? content.strokeWidth : stroke ? 1 : 0
   const borderStyle = normalizeShapeBorderStyle(content.borderStyle)
   const isOutlined = content.variant === 'outlined'
   const hasBorder = borderStyle !== 'none' && (Number(strokeWidth) > 0 || isOutlined || Boolean(stroke))
   const borderWidth = hasBorder ? Number(strokeWidth) || (isOutlined ? 3 : 1) : 0
   const borderColor = stroke || fill
+  const isGradientStroke = typeof borderColor === 'string' && borderColor.includes('gradient(')
   const cssBorder =
     hasBorder && borderStyle !== 'none'
-      ? `${borderWidth}px ${borderStyle} ${borderColor}`
+      ? `${borderWidth}px ${borderStyle} ${isGradientStroke ? 'transparent' : borderColor}`
       : undefined
+  const borderImage = hasBorder && isGradientStroke ? `${borderColor} 1` : undefined
   const dasharray = hasBorder ? shapeStrokeDasharray(borderStyle, borderWidth) : undefined
   const shapeOpacity =
     content.opacity != null && Number.isFinite(Number(content.opacity))
@@ -1369,6 +1371,8 @@ export function buildCanvasShapeStyle(content = {}, palette = {}) {
         height: '100%',
         background: isOutlined ? 'transparent' : background,
         clipPath: isOutlined ? undefined : clipPath,
+        border,
+        borderImage,
         boxSizing: 'border-box',
         ...(shapeOpacity != null ? { opacity: shapeOpacity } : {}),
       },
@@ -1383,6 +1387,7 @@ export function buildCanvasShapeStyle(content = {}, palette = {}) {
       background: background === 'transparent' ? 'transparent' : background,
       borderRadius: borderRadius ?? 0,
       border,
+      borderImage,
       boxShadow: content.shadow || content.boxShadow || undefined,
       boxSizing: 'border-box',
       ...(shapeOpacity != null ? { opacity: shapeOpacity } : {}),
@@ -1413,7 +1418,7 @@ export function resolveThemeColor(value, palette = {}, fallback = undefined) {
     raw.startsWith('hsl') ||
     raw.startsWith('url(') ||
     raw === 'transparent' ||
-    raw.startsWith('linear-gradient') ||
+    raw.includes('gradient(') ||
     raw.startsWith('color-mix')
   ) {
     return raw
@@ -1432,7 +1437,8 @@ function gradientStopParts(fill, palette = {}) {
   if (stops.length) {
     return stops.map((stop) => {
       const color = resolveThemeColor(stop.color || stop, palette, '#94A3B8')
-      const at = stop.at != null ? ` ${Math.round(Number(stop.at) * (Number(stop.at) <= 1 ? 100 : 1))}%` : ''
+      const offsetVal = stop.at != null ? stop.at : stop.offset
+      const at = offsetVal != null ? ` ${Math.round(Number(offsetVal) * (Number(offsetVal) <= 1 ? 100 : 1))}%` : ''
       return `${color}${at}`
     })
   }
