@@ -20,11 +20,11 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding-left: 272px;
+  padding: 16px 16px 16px 272px;
 }
 
 .conv-studio-root.is-rail-collapsed .conv-studio-shell {
-  padding-left: 90px;
+  padding: 16px 16px 16px 80px;
 }
 
 .conv-rail {
@@ -55,36 +55,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 4px;
   width: 100%;
-  margin-bottom: 8px;
-  padding: 0 16px;
+  margin-bottom: 4px;
+  padding: 0 8px 0 8px;
   flex-shrink: 0;
-}
-
-.conv-rail-brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  color: var(--text-main, #111827);
-}
-
-.conv-rail-brand img {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
-.conv-rail-brand span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .conv-rail-icon-btn {
@@ -212,7 +187,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
+  width: auto;
   border: none;
   background: transparent;
   color: var(--text-main, #334155);
@@ -288,11 +265,11 @@
 .conv-rail-search {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 24px;
-  margin-bottom: 4px;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 8px 8px 8px 12px;
   color: var(--text-secondary, #a0a0a0);
-  flex-shrink: 0;
 }
 
 .conv-rail-search input {
@@ -346,11 +323,21 @@
   height: 0;
 }
 
+.conv-rail-recents li,
+.conv-rail-flyout-list li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
 .conv-rail-recents button {
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
+  width: auto;
   border: none;
   background: transparent;
   color: var(--text-main, #334155);
@@ -360,10 +347,18 @@
   text-align: left;
 }
 
-.conv-rail-recents button span {
+.conv-rail-recents button span,
+.conv-rail-flyout-list button span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.conv-rail-chat-icon {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  color: var(--text-secondary, #6b7280);
 }
 
 .conv-rail-recents button:hover span,
@@ -442,11 +437,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 28px;
-  background: color-mix(in srgb, var(--bg-surface, #ffffff) 85%, transparent);
+  min-height: 64px;
+  padding: 14px 24px;
+  background: color-mix(in srgb, var(--bg-surface, #ffffff) 88%, transparent);
   backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border-color, #e5e7eb);
+  border: 1px solid color-mix(in srgb, var(--border-color, #e5e7eb) 70%, transparent);
+  border-radius: 16px;
   flex-shrink: 0;
+}
+
+.conv-studio-root.is-rail-collapsed .conv-studio-header {
+  width: 100%;
 }
 
 .conv-studio-header-left {

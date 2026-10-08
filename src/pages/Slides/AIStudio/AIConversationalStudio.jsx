@@ -5,6 +5,7 @@ import {
   Link2, Facebook, Twitter, MessageCircle, Linkedin,
   PanelLeft, Plus, Library, Search, Clock, LogOut, Image as ImageIcon, BarChart3, Printer
 } from 'lucide-react';
+import { FaInstagram, FaFacebookF, FaYoutube, FaLinkedinIn, FaXTwitter } from 'react-icons/fa6';
 import imageGenService, { ImageGenProviderError } from '../../../services/imageGenService.js';
 import creditsService, { isInsufficientCreditsError } from '../../../services/creditsService.js';
 import { resolvePresentationWorkspaceContext } from '../../../utils/presentationContext.js';
@@ -18,6 +19,8 @@ import MarkdownPromptInput from '../../../components/features/image-generation/M
 import { highlightMarkdownSource } from '../../../utils/markdownPrompt.jsx';
 import '../../../components/features/image-generation/MarkdownPromptInput.css';
 import './AIConversationalStudio.css';
+import RecentChatMenu from './RecentChatMenu.jsx';
+import ConfirmDialog from '../../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
 
 const GENERATION_STEPS = [
   "Drafting vision...",
@@ -32,6 +35,29 @@ const VALID_STYLES = [
 ];
 
 const VALID_ARCHETYPES = ['process', 'timeline', 'comparison', 'stats', 'hierarchy', 'list', 'cycle'];
+
+function resolveSocialPlatform(chat) {
+  const direct = String(chat?.platform || chat?.head?.platform || '').toLowerCase();
+  if (direct) return direct;
+  const fid = String(chat?.formatId || chat?.head?.formatId || '').toLowerCase();
+  if (fid.includes('instagram')) return 'instagram';
+  if (fid.includes('facebook')) return 'facebook';
+  if (fid.includes('linkedin')) return 'linkedin';
+  if (fid.includes('twitter') || fid.startsWith('x-') || fid.includes('x-twitter')) return 'twitter';
+  if (fid.includes('youtube')) return 'youtube';
+  return '';
+}
+
+function SocialPlatformIcon({ platform, size = 15 }) {
+  const key = String(platform || '').toLowerCase();
+  const s = { width: size, height: size, flexShrink: 0 };
+  if (key.includes('youtube')) return <FaYoutube style={{ ...s, color: '#FF0000' }} title="YouTube" />;
+  if (key.includes('instagram')) return <FaInstagram style={{ ...s, color: '#E4405F' }} title="Instagram" />;
+  if (key.includes('facebook')) return <FaFacebookF style={{ ...s, color: '#1877F2' }} title="Facebook" />;
+  if (key.includes('linkedin')) return <FaLinkedinIn style={{ ...s, color: '#0A66C2' }} title="LinkedIn" />;
+  if (key.includes('twitter') || key === 'x') return <FaXTwitter style={{ ...s, color: '#111827' }} title="X" />;
+  return <Share2 size={size} />;
+}
 
 const FOLLOWUP_BY_MODE = {
   image: {
@@ -189,7 +215,12 @@ export default function AIConversationalStudio({
   const [chatInput, setChatInput] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [railFlyout, setRailFlyout] = useState(null);
+  const [railQuery, setRailQuery] = useState('');
   const [railRecents, setRailRecents] = useState([]);
+  const [recentMenuId, setRecentMenuId] = useState(null);
+  const [renamingId, setRenamingId] = useState(null);
+  const [renameDraft, setRenameDraft] = useState('');
+  const [confirmDialog, setConfirmDialog] = useState(null);
   const railFlyoutRef = useRef(null);
   const [editMode, setEditMode] = useState('auto');
   const [downloadMenuFor, setDownloadMenuFor] = useState(null);
@@ -257,6 +288,16 @@ export default function AIConversationalStudio({
   }, [modelId, formatId, mode, styleId]);
 
   const isInitializedRef = useRef(false);
+
+  useEffect(() => {
+    if (!recentMenuId) return undefined;
+    const close = (e) => {
+      if (e.target.closest('.recent-chat-menu-wrap') || e.target.closest('.recent-chat-menu')) return;
+      setRecentMenuId(null);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [recentMenuId]);
 
   useEffect(() => {
     if (!railFlyout) return undefined;
@@ -851,30 +892,126 @@ export default function AIConversationalStudio({
     }
   };
 
+  const chatLabel = (chat) => chat.title || chat.prompt || chat.name || 'Untitled chat';
+
+  const shareChat = (chat) => {
+    const genId = chat.headGenerationId || chat.head?.id;
+    if (genId) {
+      setShareModalGen({ id: genId });
+      return;
+    }
+    navigator.clipboard.writeText(window.location.href).catch(() => {});
+  };
+
+  const commitRename = async (chat) => {
+    const next = renameDraft.trim();
+    setRenamingId(null);
+    setRecentMenuId(null);
+    if (!workspaceId || !chat?.id || !next || next === chatLabel(chat)) return;
+    try {
+      await imageGenService.renameThread(workspaceId, chat.id, next);
+      setRailRecents((rows) => rows.map((row) => (row.id === chat.id ? { ...row, title: next } : row)));
+    } catch (err) {
+      console.error('Rename chat failed', err);
+    }
+  };
+
+  const deleteChat = (chat) => {
+    setRecentMenuId(null);
+    if (!workspaceId || !chat?.id) return;
+    setConfirmDialog({
+      title: 'Delete chat?',
+      message: 'This chat will be removed from Recents. Images may still stay in Library.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await imageGenService.deleteThread(workspaceId, chat.id);
+          setRailRecents((rows) => rows.filter((row) => row.id !== chat.id));
+          if (chat.id === threadId) (onNewChat || onBack)?.();
+        } catch (err) {
+          console.error('Delete chat failed', err);
+        }
+      },
+    });
+  };
+
+  const filteredRailRecents = useMemo(() => {
+    const q = railQuery.trim().toLowerCase();
+    if (!q) return railRecents;
+    return railRecents.filter((chat) => {
+      const label = `${chat.title || ''} ${chat.prompt || ''} ${chat.name || ''}`.toLowerCase();
+      return label.includes(q);
+    });
+  }, [railRecents, railQuery]);
+
   const renderRecentRows = (onPick) => (
     <>
-      {railRecents.map((chat) => {
+      {filteredRailRecents.map((chat) => {
         const chatMode = String(chat.mode || chat.head?.mode || '').toLowerCase();
         const label = chat.title || chat.prompt || chat.name || 'Untitled chat';
-        const Icon = chatMode === 'printable' ? Printer : chatMode === 'infographic' ? BarChart3 : chatMode === 'social' ? Share2 : ImageIcon;
+        const platform = resolveSocialPlatform(chat);
+        const isSocial = chatMode === 'social' || Boolean(platform);
+        const Icon = chatMode === 'printable' ? Printer : chatMode === 'infographic' ? BarChart3 : ImageIcon;
         return (
           <li key={chat.id}>
-            <button
-              type="button"
-              className={chat.id === threadId ? 'is-on' : ''}
-              title={label}
-              onClick={() => {
-                onSelectThread?.(chat.id);
-                onPick?.();
+            {renamingId === chat.id ? (
+              <input
+                className="recent-chat-rename-input"
+                value={renameDraft}
+                autoFocus
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => setRenameDraft(e.target.value)}
+                onBlur={() => commitRename(chat)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') commitRename(chat);
+                  if (e.key === 'Escape') setRenamingId(null);
+                }}
+              />
+            ) : (
+              <button
+                type="button"
+                className={chat.id === threadId ? 'is-on' : ''}
+                title={label}
+                onClick={() => {
+                  onSelectThread?.(chat.id);
+                  onPick?.();
+                }}
+              >
+                {isSocial ? (
+                  <SocialPlatformIcon platform={platform} size={15} />
+                ) : (
+                  <Icon size={15} className="conv-rail-chat-icon" />
+                )}
+                <span>{label}</span>
+              </button>
+            )}
+            <RecentChatMenu
+              open={recentMenuId === chat.id}
+              onToggle={() => setRecentMenuId((id) => (id === chat.id ? null : chat.id))}
+              onShare={(e) => {
+                e?.stopPropagation?.();
+                setRecentMenuId(null);
+                shareChat(chat);
               }}
-            >
-              <Icon size={14} />
-              <span>{label}</span>
-            </button>
+              onRename={(e) => {
+                e?.stopPropagation?.();
+                setRecentMenuId(null);
+                setRenameDraft(label);
+                setRenamingId(chat.id);
+              }}
+              onDelete={(e) => {
+                e?.stopPropagation?.();
+                deleteChat(chat);
+              }}
+            />
           </li>
         );
       })}
-      {railRecents.length === 0 && <li className="conv-rail-empty">No recent chats</li>}
+      {filteredRailRecents.length === 0 && (
+        <li className="conv-rail-empty">{railQuery.trim() ? 'No matching chats' : 'No recent chats'}</li>
+      )}
     </>
   );
 
@@ -883,9 +1020,14 @@ export default function AIConversationalStudio({
       <aside className="conv-rail" aria-label="Studio menu" ref={railFlyoutRef}>
         <div className="conv-rail-top">
           {sidebarOpen && (
-            <div className="conv-rail-brand">
-              <img src={LogoImg} alt="" />
-              <span>Athena Studio</span>
+            <div className="conv-rail-search">
+              <Search size={16} />
+              <input
+                type="search"
+                placeholder="Search chats"
+                value={railQuery}
+                onChange={(e) => setRailQuery(e.target.value)}
+              />
             </div>
           )}
           <button
@@ -900,12 +1042,6 @@ export default function AIConversationalStudio({
             <PanelLeft size={18} />
           </button>
         </div>
-        {sidebarOpen && (
-          <div className="conv-rail-search">
-            <Search size={16} />
-            <input type="search" placeholder="Search chats" readOnly />
-          </div>
-        )}
         <button type="button" className="conv-rail-item" onClick={() => (onOpenLibrary || onBack)?.()} title="Library">
           <Library size={18} />
           {sidebarOpen && <span>Library</span>}
@@ -955,7 +1091,13 @@ export default function AIConversationalStudio({
             {railFlyout === 'search' && (
               <div className="conv-rail-flyout-search">
                 <Search size={14} />
-                <input type="search" placeholder="Search chats" autoFocus />
+                <input
+                  type="search"
+                  placeholder="Search chats"
+                  autoFocus
+                  value={railQuery}
+                  onChange={(e) => setRailQuery(e.target.value)}
+                />
               </div>
             )}
             <div className="conv-rail-flyout-title">Recents</div>
@@ -980,7 +1122,12 @@ export default function AIConversationalStudio({
 
       {/* Top Header */}
       <header className="conv-studio-header">
-        <div className="conv-studio-header-left" />
+        <div className="conv-studio-header-left">
+          <div className="conv-brand-badge">
+            <img src={LogoImg} alt="" className="conv-brand-logo" />
+            <span>Athena Studio</span>
+          </div>
+        </div>
 
         <div className="conv-studio-header-right">
           <div className="conv-credits-tag">
@@ -1438,6 +1585,7 @@ export default function AIConversationalStudio({
 
       </div>
 
+      <ConfirmDialog dialog={confirmDialog} onCancel={() => setConfirmDialog(null)} />
       <ImageGenCreditsGate
         open={Boolean(creditsGate)}
         workspaceId={creditsGate?.workspaceId}
