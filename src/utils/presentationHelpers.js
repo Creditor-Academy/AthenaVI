@@ -339,6 +339,18 @@ export function buildPresentationGenerationPayload(
   config = {},
   { finalOutline = [], overwriteManualEdits = false } = {}
 ) {
+  const paletteMode =
+    config.themeMode === 'palette' ||
+    (!config.themeMode && !config.packId && !config.brandKitId)
+  const usesPromptPalette =
+    paletteMode &&
+    config.theme === PROMPT_SUGGESTED_THEME_ID &&
+    config.promptPaletteSuggestion?.themeTokens &&
+    !config.promptPaletteSuggestion.fallback
+  const customThemeTokens = usesPromptPalette
+    ? buildThemeTokensFromPromptSuggestion(config.promptPaletteSuggestion)
+    : undefined
+
   return {
     density: config.density || mapDensity(config.textAmount),
     overwriteManualEdits,
@@ -359,9 +371,8 @@ export function buildPresentationGenerationPayload(
         themeMode:
           config.themeMode ||
           (config.packId ? 'template' : config.brandKitId ? 'brand' : 'palette'),
-        colorTheme: config.themeMode === 'palette' || (!config.themeMode && !config.packId && !config.brandKitId)
-          ? (config.theme || '')
-          : '',
+        colorTheme: paletteMode ? (config.theme || '') : '',
+        ...(customThemeTokens ? { customThemeTokens } : {}),
         canvasSize: config.screenSize || '16:9',
         imageType: config.imageSource || '',
         imageStyle: config.mediaStyle || '',
@@ -607,6 +618,28 @@ export function derivePresentationTitle(text, fallback = 'Untitled Presentation'
   const lastSpace = clipped.lastIndexOf(' ')
   const base = lastSpace > 40 ? clipped.slice(0, lastSpace) : clipped
   return `${base.replace(/[,;:\-–—]+$/, '')}…`
+}
+
+/** Wizard theme id for AI-generated 5-color palette from Step 1 prompt. */
+export const PROMPT_SUGGESTED_THEME_ID = 'prompt-suggested'
+
+/**
+ * Normalize suggest-vibe-palette API payload for createPresentation themeTokens.
+ * @param {object} apiPayload - unwrapped API data
+ */
+export function buildThemeTokensFromPromptSuggestion(apiPayload) {
+  if (!apiPayload || typeof apiPayload !== 'object') return null
+  const tokens = apiPayload.themeTokens
+  if (!tokens?.palette) return null
+  return {
+    ...tokens,
+    wizardColorThemeId:
+      tokens.wizardColorThemeId ||
+      (apiPayload.fallback && apiPayload.catalogThemeId
+        ? apiPayload.catalogThemeId
+        : PROMPT_SUGGESTED_THEME_ID),
+    fontSource: tokens.fontSource || 'wizard',
+  }
 }
 
 /** Theme ids must use underscores (midnight_blue), not kebab-case. */

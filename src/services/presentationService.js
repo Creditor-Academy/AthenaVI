@@ -193,6 +193,14 @@ class PresentationService {
     })
   }
 
+  suggestVibePalette(workspaceId, { prompt, tone, audience, purpose } = {}) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.SUGGEST_VIBE_PALETTE(workspaceId), {
+      method: 'POST',
+      body: JSON.stringify({ prompt, tone, audience, purpose }),
+      quiet: true,
+    })
+  }
+
   async createPresentation(workspaceId, body) {
     const rawTitle = String(body?.title || '').trim() || 'Untitled Presentation'
     let finalTitle = rawTitle

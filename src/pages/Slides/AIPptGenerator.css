@@ -6010,6 +6010,68 @@ html.ppt-drag-cursor-lock * {
   background: rgba(var(--primary-rgb), 0.14);
 }
 
+.aig-vibe-suggested {
+  margin-top: 28px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.aig-vibe-suggested--drawer {
+  margin-top: 0;
+  margin-bottom: 16px;
+  max-width: none;
+  grid-column: 1 / -1;
+}
+
+.aig-vibe-suggested-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.aig-vibe-suggested-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text-primary, #0f172a);
+}
+
+.aig-vibe-suggested-retry {
+  border: none;
+  background: transparent;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.aig-vibe-suggested-loading {
+  font-size: 13px;
+  color: var(--text-secondary, #64748b);
+  padding: 12px 0;
+}
+
+.aig-vibe-suggested-error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary, #64748b);
+}
+
+.aig-vibe-suggested-card-wrap .aig-color-stripe-card {
+  width: 100%;
+}
+
+.aig-color-stripe-preview--five .aig-color-stripe-band {
+  flex: 1 1 0;
+}
+
+.aig-color-stripe-preview--five .aig-color-stripe-band.is-wide {
+  flex: 1.15 1 0;
+}
+
 .aig-color-stripe-card {
   position: relative;
   display: flex;
