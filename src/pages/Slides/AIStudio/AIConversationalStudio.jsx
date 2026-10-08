@@ -189,6 +189,7 @@ export default function AIConversationalStudio({
   const [chatInput, setChatInput] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [railFlyout, setRailFlyout] = useState(null);
+  const [railQuery, setRailQuery] = useState('');
   const [railRecents, setRailRecents] = useState([]);
   const railFlyoutRef = useRef(null);
   const [editMode, setEditMode] = useState('auto');
@@ -851,9 +852,18 @@ export default function AIConversationalStudio({
     }
   };
 
+  const filteredRailRecents = useMemo(() => {
+    const q = railQuery.trim().toLowerCase();
+    if (!q) return railRecents;
+    return railRecents.filter((chat) => {
+      const label = `${chat.title || ''} ${chat.prompt || ''} ${chat.name || ''}`.toLowerCase();
+      return label.includes(q);
+    });
+  }, [railRecents, railQuery]);
+
   const renderRecentRows = (onPick) => (
     <>
-      {railRecents.map((chat) => {
+      {filteredRailRecents.map((chat) => {
         const chatMode = String(chat.mode || chat.head?.mode || '').toLowerCase();
         const label = chat.title || chat.prompt || chat.name || 'Untitled chat';
         const Icon = chatMode === 'printable' ? Printer : chatMode === 'infographic' ? BarChart3 : chatMode === 'social' ? Share2 : ImageIcon;
@@ -874,7 +884,9 @@ export default function AIConversationalStudio({
           </li>
         );
       })}
-      {railRecents.length === 0 && <li className="conv-rail-empty">No recent chats</li>}
+      {filteredRailRecents.length === 0 && (
+        <li className="conv-rail-empty">{railQuery.trim() ? 'No matching chats' : 'No recent chats'}</li>
+      )}
     </>
   );
 
@@ -883,9 +895,14 @@ export default function AIConversationalStudio({
       <aside className="conv-rail" aria-label="Studio menu" ref={railFlyoutRef}>
         <div className="conv-rail-top">
           {sidebarOpen && (
-            <div className="conv-rail-brand">
-              <img src={LogoImg} alt="" />
-              <span>Athena Studio</span>
+            <div className="conv-rail-search">
+              <Search size={16} />
+              <input
+                type="search"
+                placeholder="Search chats"
+                value={railQuery}
+                onChange={(e) => setRailQuery(e.target.value)}
+              />
             </div>
           )}
           <button
@@ -900,12 +917,6 @@ export default function AIConversationalStudio({
             <PanelLeft size={18} />
           </button>
         </div>
-        {sidebarOpen && (
-          <div className="conv-rail-search">
-            <Search size={16} />
-            <input type="search" placeholder="Search chats" readOnly />
-          </div>
-        )}
         <button type="button" className="conv-rail-item" onClick={() => (onOpenLibrary || onBack)?.()} title="Library">
           <Library size={18} />
           {sidebarOpen && <span>Library</span>}
@@ -955,7 +966,13 @@ export default function AIConversationalStudio({
             {railFlyout === 'search' && (
               <div className="conv-rail-flyout-search">
                 <Search size={14} />
-                <input type="search" placeholder="Search chats" autoFocus />
+                <input
+                  type="search"
+                  placeholder="Search chats"
+                  autoFocus
+                  value={railQuery}
+                  onChange={(e) => setRailQuery(e.target.value)}
+                />
               </div>
             )}
             <div className="conv-rail-flyout-title">Recents</div>
@@ -980,7 +997,12 @@ export default function AIConversationalStudio({
 
       {/* Top Header */}
       <header className="conv-studio-header">
-        <div className="conv-studio-header-left" />
+        <div className="conv-studio-header-left">
+          <div className="conv-brand-badge">
+            <img src={LogoImg} alt="" className="conv-brand-logo" />
+            <span>Athena Studio</span>
+          </div>
+        </div>
 
         <div className="conv-studio-header-right">
           <div className="conv-credits-tag">
