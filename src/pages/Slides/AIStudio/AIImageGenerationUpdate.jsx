@@ -26,6 +26,8 @@ import ImageGenSaveLocation from '../../../components/features/image-generation/
 import ImageGenCreditsGate from '../../../components/features/image-generation/ImageGenCreditsGate.jsx';
 import ImageGenContextAttach from '../../../components/features/image-generation/ImageGenContextAttach.jsx';
 import MarkdownPromptInput from '../../../components/features/image-generation/MarkdownPromptInput.jsx';
+import RecentChatMenu from './RecentChatMenu.jsx';
+import ConfirmDialog from '../../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
 import '../../../components/features/image-generation/MarkdownPromptInput.css';
 import { checkImageGenCredits } from '../../../utils/imageGenCreditsCheck.js';
 import { defaultImageGenModelId, modelsForImageGenMode, isDraftQualityModel } from '../../../utils/imageGenDefaults.js';
@@ -439,6 +441,10 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [credits, setCredits] = useState(0);
   const [recentChats, setRecentChats] = useState([]);
+  const [recentMenuId, setRecentMenuId] = useState(null);
+  const [renamingId, setRenamingId] = useState(null);
+  const [renameDraft, setRenameDraft] = useState('');
+  const [confirmDialog, setConfirmDialog] = useState(null);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [showStyleDropdown, setShowStyleDropdown] = useState(false);
   const [showFormatDropdown, setShowFormatDropdown] = useState(false);
@@ -620,7 +626,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
       }
       const history = await imageGenService.listThreads(saveWorkspaceId, {
         folderId: saveFolderId || undefined,
-        take: 20,
+        take: 100,
       });
       setRecentChats(history || []);
     } catch (e) {
@@ -632,6 +638,56 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
     if (launchStudio || activeThreadId) return undefined;
     loadRecentChats();
   }, [launchStudio, activeThreadId, loadRecentChats]);
+
+  useEffect(() => {
+    if (!recentMenuId) return undefined;
+    const close = (e) => {
+      if (e.target.closest('.recent-chat-menu-wrap') || e.target.closest('.recent-chat-menu')) return;
+      setRecentMenuId(null);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [recentMenuId]);
+
+  const shareRecentChat = (chat) => {
+    const genId = chat.headGenerationId || chat.head?.id;
+    const link = genId ? `${window.location.origin}/share/${genId}` : window.location.href;
+    navigator.clipboard.writeText(link).catch(() => {});
+  };
+
+  const commitRecentRename = async (chat) => {
+    const label = chat.title || chat.prompt || chat.name || 'Untitled chat';
+    const next = renameDraft.trim();
+    setRenamingId(null);
+    setRecentMenuId(null);
+    if (!saveWorkspaceId || !chat?.id || !next || next === label) return;
+    try {
+      await imageGenService.renameThread(saveWorkspaceId, chat.id, next);
+      setRecentChats((rows) => rows.map((row) => (row.id === chat.id ? { ...row, title: next } : row)));
+    } catch (err) {
+      console.error('Rename chat failed', err);
+    }
+  };
+
+  const deleteRecentChat = (chat) => {
+    setRecentMenuId(null);
+    if (!saveWorkspaceId || !chat?.id) return;
+    setConfirmDialog({
+      title: 'Delete chat?',
+      message: 'This chat will be removed from Recents. Images may still stay in Library.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          await imageGenService.deleteThread(saveWorkspaceId, chat.id);
+          setRecentChats((rows) => rows.filter((row) => row.id !== chat.id));
+        } catch (err) {
+          console.error('Delete chat failed', err);
+        }
+      },
+    });
+  };
 
   const getStyleImage = (styleId) => {
     switch(styleId) {
@@ -871,7 +927,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                const isPrint = chatMode === 'printable';
                const label = chat.title || chat.prompt || chat.name || 'Untitled chat';
                return (
-                 <li key={chat.id || idx} onClick={() => setActiveThreadId(chat.id)} title={isInfographic ? 'Infographic' : isSocial ? 'Social' : isPrint ? 'Print' : 'Image'}>
+                 <li key={chat.id || idx} onClick={() => renamingId !== chat.id && setActiveThreadId(chat.id)} title={isInfographic ? 'Infographic' : isSocial ? 'Social' : isPrint ? 'Print' : 'Image'}>
                    <span className="recent-chat-icon" aria-hidden>
                      {isSocial ? (
                        <SocialPlatformIcon platform={platform} size={15} />
@@ -883,7 +939,36 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                        <ImageIcon size={15} />
                      )}
                    </span>
-                   <span className="recent-chat-title">{label}</span>
+                   {renamingId === chat.id ? (
+                     <input
+                       className="recent-chat-rename-input"
+                       value={renameDraft}
+                       autoFocus
+                       onClick={(e) => e.stopPropagation()}
+                       onChange={(e) => setRenameDraft(e.target.value)}
+                       onBlur={() => commitRecentRename(chat)}
+                       onKeyDown={(e) => {
+                         if (e.key === 'Enter') commitRecentRename(chat);
+                         if (e.key === 'Escape') setRenamingId(null);
+                       }}
+                     />
+                   ) : (
+                     <span className="recent-chat-title">{label}</span>
+                   )}
+                   <RecentChatMenu
+                     open={recentMenuId === chat.id}
+                     onToggle={() => setRecentMenuId((id) => (id === chat.id ? null : chat.id))}
+                     onShare={() => {
+                       setRecentMenuId(null);
+                       shareRecentChat(chat);
+                     }}
+                     onRename={() => {
+                       setRecentMenuId(null);
+                       setRenameDraft(label);
+                       setRenamingId(chat.id);
+                     }}
+                     onDelete={() => deleteRecentChat(chat)}
+                   />
                  </li>
                );
              })}
@@ -1343,6 +1428,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
           </>
         )}
       </main>
+      <ConfirmDialog dialog={confirmDialog} onCancel={() => setConfirmDialog(null)} />
       <ImageGenCreditsGate
         open={Boolean(creditsGate)}
         workspaceId={creditsGate?.workspaceId}

@@ -187,7 +187,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
+  width: auto;
   border: none;
   background: transparent;
   color: var(--text-main, #334155);
@@ -321,11 +323,21 @@
   height: 0;
 }
 
+.conv-rail-recents li,
+.conv-rail-flyout-list li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
 .conv-rail-recents button {
   display: flex;
   align-items: center;
   gap: 10px;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
+  width: auto;
   border: none;
   background: transparent;
   color: var(--text-main, #334155);
@@ -335,10 +347,18 @@
   text-align: left;
 }
 
-.conv-rail-recents button span {
+.conv-rail-recents button span,
+.conv-rail-flyout-list button span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.conv-rail-chat-icon {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  color: var(--text-secondary, #6b7280);
 }
 
 .conv-rail-recents button:hover span,
