@@ -344,6 +344,11 @@
   margin-top: 28px;
 }
 
+.social-destinations.print-sizes {
+  margin-top: 12px;
+  overflow: visible;
+}
+
 .social-destinations .styles-grid-title {
   margin-bottom: 10px;
 }
@@ -483,25 +488,40 @@
 }
 
 .print-size-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  max-width: 960px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  max-width: 1120px;
+  max-height: none;
+  overflow: visible;
+  gap: 14px;
+  padding: 0 20px 8px;
 }
 
-.print-size-grid.is-landscape {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  max-width: 980px;
+.print-size-grid .social-dest-card {
+  padding: 8px 8px 10px;
+  gap: 7px;
+  border-radius: 16px;
 }
 
-.print-size-grid.is-landscape .social-dest-card[data-shape="banner"] .social-dest-preview {
-  height: 128px;
+.print-size-grid .social-dest-preview,
+.print-size-grid .social-dest-card[data-shape="portrait"] .social-dest-preview,
+.print-size-grid .social-dest-card[data-shape="banner"] .social-dest-preview {
+  height: 138px;
+  border-radius: 12px;
+}
+
+.print-size-grid .social-dest-name {
+  font-size: 13px;
+}
+
+.print-size-grid .social-dest-size {
+  font-size: 11px;
 }
 
 @media (max-width: 1100px) {
   .social-dest-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-  .print-size-grid,
-  .print-size-grid.is-landscape {
+  .print-size-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
