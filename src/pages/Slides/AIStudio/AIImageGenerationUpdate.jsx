@@ -459,6 +459,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
   const [selectedStyle, setSelectedStyle] = useState(null);
   const [credits, setCredits] = useState(0);
   const [recentChats, setRecentChats] = useState([]);
+  const [recentQuery, setRecentQuery] = useState('');
   const [recentMenuId, setRecentMenuId] = useState(null);
   const [renamingId, setRenamingId] = useState(null);
   const [renameDraft, setRenameDraft] = useState('');
@@ -921,7 +922,12 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
         <div className="sidebar-actions">
            <div className="search-bar">
              <Search size={16}/> 
-             <input type="text" placeholder="Search chats" />
+             <input
+               type="search"
+               placeholder="Search chats"
+               value={recentQuery}
+               onChange={(e) => setRecentQuery(e.target.value)}
+             />
            </div>
         </div>
 
@@ -942,7 +948,12 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
              </button>
            </h3>
            <ul>
-             {recentChats.map((chat, idx) => {
+             {recentChats.filter((chat) => {
+               const q = recentQuery.trim().toLowerCase();
+               if (!q) return true;
+               const label = `${chat.title || ''} ${chat.prompt || ''} ${chat.name || ''}`.toLowerCase();
+               return label.includes(q);
+             }).map((chat, idx) => {
                const chatMode = String(chat.mode || chat.head?.mode || '').toLowerCase();
                const platform = resolveSocialPlatform(chat);
                const isInfographic = chatMode === 'infographic';
@@ -996,6 +1007,9 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                );
              })}
              {recentChats.length === 0 && <li className="recent-chat-empty" style={{color: 'var(--text-secondary, #6b7280)', cursor: 'default'}}>No recent chats</li>}
+             {recentChats.length > 0 && recentQuery.trim() && !recentChats.some((chat) => `${chat.title || ''} ${chat.prompt || ''} ${chat.name || ''}`.toLowerCase().includes(recentQuery.trim().toLowerCase())) && (
+               <li className="recent-chat-empty" style={{color: 'var(--text-secondary, #6b7280)', cursor: 'default'}}>No matching chats</li>
+             )}
            </ul>
         </div>
 
