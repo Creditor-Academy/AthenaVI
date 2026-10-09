@@ -9,6 +9,7 @@ import {
   Loader2,
   Paperclip,
   Plus,
+  Search,
   Upload,
   X,
 } from 'lucide-react'
@@ -204,6 +205,7 @@ export default function ImageGenContextAttach({
   const [composerDragOver, setComposerDragOver] = useState(false)
   const [libraryLoading, setLibraryLoading] = useState(false)
   const [libraryItems, setLibraryItems] = useState([])
+  const [libraryQuery, setLibraryQuery] = useState('')
   const [libraryError, setLibraryError] = useState('')
   const [expandedThumb, setExpandedThumb] = useState(null)
 
@@ -298,6 +300,7 @@ export default function ImageGenContextAttach({
     setModalOpen(false)
     setTab('library')
     setDragOver(null)
+    setLibraryQuery('')
   }
 
   const markDirty = () => {
@@ -810,20 +813,30 @@ export default function ImageGenContextAttach({
           <header className="igc-modal-head">
             <div>
               <h3>Choose from library</h3>
-              <p>Select images to use as context. The brief is built on the server.</p>
+              <p>Pick up to {MAX_CONTEXT_ITEMS} images to use as references.</p>
             </div>
             <button type="button" onClick={closeModal} aria-label="Close">
               <X size={16} />
             </button>
           </header>
 
+          <div className="igc-lib-toolbar">
+            <label className="igc-lib-search">
+              <Search size={14} />
+              <input
+                type="search"
+                placeholder="Search images"
+                value={libraryQuery}
+                onChange={(e) => setLibraryQuery(e.target.value)}
+              />
+            </label>
+            <span className={`igc-lib-count${pendingCount ? ' is-on' : ''}`}>
+              {pendingCount}/{MAX_CONTEXT_ITEMS} selected
+            </span>
+          </div>
+
           <div className="igc-modal-body">
             <div className={`igc-modal-pane ${attaching ? 'is-busy' : ''}`}>
-              <div className="igc-lib-toolbar">
-                <span>
-                  {pendingCount}/{MAX_CONTEXT_ITEMS} selected
-                </span>
-              </div>
               {libraryLoading && (
                 <div className="igc-lib-empty">
                   <Loader2 size={18} className="igc-spin" />
@@ -837,14 +850,24 @@ export default function ImageGenContextAttach({
                 <div className="igc-lib-empty">No image assets in this workspace yet.</div>
               )}
               {!libraryLoading && !libraryError && libraryItems.length > 0 && (
+                (() => {
+                  const q = libraryQuery.trim().toLowerCase()
+                  const visible = q
+                    ? libraryItems.filter((asset) => String(asset.name || '').toLowerCase().includes(q))
+                    : libraryItems
+                  if (!visible.length) {
+                    return <div className="igc-lib-empty">No matching images.</div>
+                  }
+                  return (
                 <div className="igc-lib-grid">
-                  {libraryItems.map((asset) => {
+                  {visible.map((asset) => {
                     const selected = pendingAssets.some((a) => a.id === asset.id)
                     return (
                       <button
                         key={asset.id}
                         type="button"
                         className={`igc-lib-item ${selected ? 'is-selected' : ''}`}
+                        title={asset.name || 'Image'}
                         onClick={() => toggleLibraryAsset(asset)}
                       >
                         {asset.url ? (
@@ -854,41 +877,44 @@ export default function ImageGenContextAttach({
                             <ImageIcon size={20} />
                           </span>
                         )}
-                        {selected && (
-                          <span className="igc-lib-check">
-                            <Check size={12} strokeWidth={3} />
-                          </span>
-                        )}
+                        <span className={`igc-lib-check${selected ? ' is-on' : ''}`}>
+                          {selected ? <Check size={12} strokeWidth={3} /> : null}
+                        </span>
                         <span className="igc-lib-name">{asset.name || 'Image'}</span>
                       </button>
                     )
                   })}
                 </div>
+                  )
+                })()
               )}
-              <div className="igc-modal-pane-foot">
-                <button
-                  type="button"
-                  className="igc-attach-btn"
-                  disabled={disabled || attaching}
-                  onClick={() => {
-                    if (pendingAssets.length || pendingFiles.length) handleAttach()
-                    else closeModal()
-                  }}
-                >
-                  {attaching ? (
-                    <>
-                      <Loader2 size={14} className="igc-spin" />
-                      Adding…
-                    </>
-                  ) : pendingAssets.length ? (
-                    'Use these'
-                  ) : (
-                    'Done'
-                  )}
-                </button>
-              </div>
             </div>
             {error && <p className="igc-error">{error}</p>}
+          </div>
+          <div className="igc-modal-pane-foot">
+            <button type="button" className="igc-lib-cancel" onClick={closeModal}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="igc-attach-btn"
+              disabled={disabled || attaching}
+              onClick={() => {
+                if (pendingAssets.length || pendingFiles.length) handleAttach()
+                else closeModal()
+              }}
+            >
+              {attaching ? (
+                <>
+                  <Loader2 size={14} className="igc-spin" />
+                  Adding…
+                </>
+              ) : pendingAssets.length ? (
+                `Use ${pendingAssets.length} image${pendingAssets.length === 1 ? '' : 's'}`
+              ) : (
+                'Done'
+              )}
+            </button>
           </div>
         </motion.div>
       </div>,
