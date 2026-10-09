@@ -651,10 +651,10 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
         folderId: saveFolderId || undefined,
         take: 100,
       });
-      setRecentChats(history || []);
+        setRecentChats(history || []);
     } catch (e) {
-      console.error("Failed to load user session", e);
-    }
+        console.error("Failed to load user session", e);
+      }
   }, [saveWorkspaceId, saveFolderId]);
 
   useEffect(() => {
@@ -992,7 +992,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                      }}
                      onDelete={() => deleteRecentChat(chat)}
                    />
-                 </li>
+               </li>
                );
              })}
              {recentChats.length === 0 && <li className="recent-chat-empty" style={{color: 'var(--text-secondary, #6b7280)', cursor: 'default'}}>No recent chats</li>}
@@ -1232,10 +1232,10 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                   </span>
                   <button className="clear-chip-btn" onClick={() => setSelectedFormat('')}>
                     <X size={12} />
-                  </button>
-                </div>
-              </div>
-            )}
+                   </button>
+                 </div>
+               </div>
+             )}
 
             {activeMode === 'printable' && selectedPrint && (
               <div className="selected-layout-chip-container">
@@ -1269,7 +1269,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                   >
                     {trigger}
                     <MarkdownPromptInput
-                      ref={textareaRef}
+                  ref={textareaRef}
                       className="chatbox-md-input"
                       placeholder={
                         activeMode === 'printable'
@@ -1280,25 +1280,25 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                               ? 'Describe your visual...'
                               : 'Describe your infographic...'
                       }
-                      value={prompt}
-                      onChange={(e) => setPrompt(e.target.value)}
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
                       onPaste={composerBind.onPaste}
-                      onFocus={() => {
-                        if (activeMode === 'infographic') setIsComposerExpanded(true);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !e.shiftKey && prompt.trim()) {
-                          e.preventDefault();
+                  onFocus={() => {
+                    if (activeMode === 'infographic') setIsComposerExpanded(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey && prompt.trim()) {
+                      e.preventDefault();
                           tryLaunchStudio();
-                        }
-                      }}
+                    }
+                  }}
                       aria-label="Describe what you want to create"
-                    />
-                    <button className="mic-btn" onClick={toggleMic} style={{ color: isListening ? '#ef4444' : '' }}><Mic size={20}/></button>
-                    <button className="inspire-btn" title="Inspire Me" onClick={handleInspire} disabled={isTyping} style={{ opacity: isTyping ? 0.5 : 1 }}>
-                      <Lightbulb size={20}/>
-                    </button>
-                  </div>
+                />
+                <button className="mic-btn" onClick={toggleMic} style={{ color: isListening ? '#ef4444' : '' }}><Mic size={20}/></button>
+                <button className="inspire-btn" title="Inspire Me" onClick={handleInspire} disabled={isTyping} style={{ opacity: isTyping ? 0.5 : 1 }}>
+                  <Lightbulb size={20}/>
+                </button>
+             </div>
                 </>
               )}
             </ImageGenContextAttach>

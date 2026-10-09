@@ -414,8 +414,8 @@
 }
 
 .igc-modal {
-  width: min(580px, 100%);
-  max-height: min(84vh, 720px);
+  width: min(720px, 100%);
+  max-height: min(86vh, 780px);
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -806,14 +806,29 @@
 .igc-modal-pane-foot {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: auto;
-  position: sticky;
-  bottom: -18px;
-  z-index: 3;
-  padding: 12px 0 2px;
-  background: linear-gradient(180deg, transparent, var(--bg-card) 28%);
+  justify-content: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+  margin-top: 0;
+  padding: 12px 18px 16px;
+  border-top: 1px solid color-mix(in srgb, var(--border-color) 70%, transparent);
+  background: var(--bg-card);
+}
+
+.igc-lib-cancel {
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: transparent;
+  color: var(--text-main, #334155);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 10px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.igc-lib-cancel:hover {
+  background: color-mix(in srgb, var(--bg-main) 70%, transparent);
 }
 
 .igc-tray-slots {
@@ -835,7 +850,6 @@
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 8px 20px rgba(var(--primary-rgb), 0.22);
-  margin-left: auto;
 }
 
 .igc-attach-btn:hover:not(:disabled) {
@@ -1082,14 +1096,47 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
+  flex-shrink: 0;
   font-size: 12.5px;
   color: var(--text-muted);
-  position: sticky;
-  top: -14px;
-  z-index: 2;
-  padding: 8px 0 10px;
+  padding: 0 18px 12px;
   background: var(--bg-card);
+}
+
+.igc-lib-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: color-mix(in srgb, var(--bg-main) 55%, transparent);
+  color: var(--text-secondary, #64748b);
+}
+
+.igc-lib-search input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  font-size: 13px;
+  color: var(--text-main, #111827);
+}
+
+.igc-lib-count {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-main) 70%, transparent);
+  font-weight: 650;
+}
+
+.igc-lib-count.is-on {
+  background: color-mix(in srgb, var(--primary, #2563eb) 12%, transparent);
+  color: var(--primary, #2563eb);
 }
 
 .igc-lib-empty {
@@ -1104,24 +1151,29 @@
 
 .igc-lib-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+  gap: 12px;
+  padding-bottom: 8px;
 }
 
 .igc-lib-item {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: block;
   padding: 0;
-  border: 1.5px solid transparent;
-  border-radius: 14px;
+  border: 2px solid transparent;
+  border-radius: 16px;
   background: transparent;
   cursor: pointer;
   font: inherit;
   color: var(--text-main);
   overflow: hidden;
   text-align: left;
+  transition: transform 0.15s ease, border-color 0.15s, box-shadow 0.15s;
+}
+
+.igc-lib-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.1);
 }
 
 .igc-lib-item img,
@@ -1129,7 +1181,8 @@
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: 14px;
+  display: block;
   background: color-mix(in srgb, var(--bg-main) 80%, var(--border-color));
 }
 
@@ -1141,6 +1194,7 @@
 
 .igc-lib-item.is-selected {
   border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary, #2563eb) 18%, transparent);
 }
 
 .igc-lib-check {
@@ -1152,17 +1206,30 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--primary);
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  background: rgba(15, 23, 42, 0.28);
   color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.igc-lib-check.is-on {
+  border-color: transparent;
+  background: var(--primary);
 }
 
 .igc-lib-name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   font-size: 11.5px;
-  padding: 0 4px 4px;
+  font-weight: 600;
+  padding: 22px 8px 8px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--text-muted);
+  color: #fff;
+  background: linear-gradient(180deg, transparent, rgba(15, 23, 42, 0.72));
 }
 
 @media (max-width: 520px) {
