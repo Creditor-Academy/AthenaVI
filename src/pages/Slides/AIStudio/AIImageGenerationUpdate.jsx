@@ -227,6 +227,24 @@ function printFormatForGroup(group, formats, orientation) {
   return formats.find((f) => f.id === id) || null;
 }
 
+function printOrientsForGroup(group) {
+  if (!group) return ['portrait', 'landscape'];
+  if (group.kind === 'business-card') return ['landscape'];
+  if (group.kind === 'invitation') return ['portrait'];
+  return ['portrait', 'landscape'];
+}
+
+function printGroupForFormat(format) {
+  if (!format) return null;
+  const print = format.print || {};
+  const kind = String(print.kind || '').replace(/_/g, '-');
+  const series = print.series || String(format.id || '').split('-')[1];
+  return PRINT_GROUPS.find((g) => {
+    if (g.formatId) return g.formatId === format.id;
+    return g.kind === kind && g.series === series;
+  }) || null;
+}
+
 const SOCIAL_PREVIEW = {
   'youtube-thumbnail': youtubeThumbPreview,
   'instagram-post': instagramPostPreview,
@@ -496,6 +514,11 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
     const handleClickOutside = (event) => {
       if (chatboxRef.current && !chatboxRef.current.contains(event.target)) {
         setIsComposerExpanded(false);
+      }
+      if (!event.target.closest('.custom-dropdown')) {
+        setShowFormatDropdown(false);
+        setShowModelDropdown(false);
+        setShowStyleDropdown(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -810,26 +833,26 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
     }
   }, [selectedFormat]);
 
+  const selectedPrintGroup = printGroupForFormat(selectedPrint);
+  const printOrientOptions = printOrientsForGroup(selectedPrintGroup);
+
   const applyPrintOrientation = (next) => {
+    if (!printOrientOptions.includes(next)) return;
     setPrintOrientation(next);
     setShowFormatDropdown(false);
     setShowModelDropdown(false);
-    const current = printFormats.find((f) => f.id === selectedFormat);
-    const kind = String(current?.print?.kind || '').replace(/_/g, '-');
-    if (kind === 'poster') {
-      const series = current.print?.series || String(current.id || '').split('-')[1];
-      const group = PRINT_GROUPS.find((g) => g.kind === 'poster' && g.series === series);
-      const fmt = printFormatForGroup(group, printFormats, next);
-      if (fmt?.id) setSelectedFormat(fmt.id);
-      return;
-    }
-    if (kind === 'invitation' && next === 'landscape') {
-      setSelectedFormat('');
-      return;
-    }
-    if (kind === 'business-card' && next === 'portrait') {
-      setSelectedFormat('');
-    }
+    const group = selectedPrintGroup;
+    if (!group) return;
+    const fmt = printFormatForGroup(group, printFormats, next);
+    if (fmt?.id) setSelectedFormat(fmt.id);
+  };
+
+  const selectPrintGroup = (group) => {
+    const orients = printOrientsForGroup(group);
+    const nextOrient = orients.includes(printOrientation) ? printOrientation : orients[0];
+    setPrintOrientation(nextOrient);
+    const fmt = printFormatForGroup(group, printFormats, nextOrient);
+    if (fmt?.id) setSelectedFormat(fmt.id);
   };
 
   if (launchStudio || activeThreadId) {
@@ -977,7 +1000,18 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
         </div>
 
         <div className="sidebar-footer">
-           <button className="new-chat-btn" onClick={() => { setActiveThreadId(null); setLaunchStudio(false); }}><Plus size={16}/> New chat</button>
+           <button
+             className="new-chat-btn"
+             onClick={() => {
+               setActiveThreadId(null);
+               setLaunchStudio(false);
+               setPrompt('');
+               setImageContext(null);
+               if (activeMode === 'library') switchStudioMode('image');
+             }}
+           >
+             <Plus size={16}/> New chat
+           </button>
         </div>
       </aside>
 
@@ -1066,26 +1100,24 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
         {activeMode === 'printable' && (
           <section className="styles-grid-container social-destinations print-sizes" style={{ position: 'relative', zIndex: 1 }}>
             <div className="styles-grid-title">Choose a print size</div>
-            <div className={`social-dest-grid print-size-grid${printOrientation === 'landscape' ? ' is-landscape' : ''}`}>
-              {PRINT_GROUPS.filter((group) => {
-                if (group.kind === 'poster') return true;
-                if (group.kind === 'invitation') return printOrientation === 'portrait';
-                if (group.kind === 'business-card') return printOrientation === 'landscape';
-                return false;
-              }).map((group) => {
-                const fmt = printFormatForGroup(group, printFormats, printOrientation);
+            <div className="social-dest-grid print-size-grid">
+              {PRINT_GROUPS.map((group) => {
+                const labelOrient = printOrientsForGroup(group)[0];
+                const fmt = printFormatForGroup(group, printFormats, labelOrient);
                 if (!fmt) return null;
                 const print = fmt.print || {};
-                const orient = print.orientation || 'portrait';
-                const previewSrc = printPreviewFor(group, printOrientation);
-                const selected = selectedFormat === fmt.id;
+                const previewSrc = printPreviewFor(
+                  group,
+                  group.kind === 'poster' ? 'landscape' : labelOrient
+                );
+                const selected = selectedPrintGroup?.id === group.id;
                 return (
                   <button
                     type="button"
                     key={group.id}
-                    data-shape={orient === 'landscape' ? 'banner' : 'portrait'}
+                    data-shape={group.kind === 'poster' || labelOrient === 'landscape' ? 'banner' : 'portrait'}
                     className={`social-dest-card print-size-card ${selected ? 'selected' : ''}`}
-                    onClick={() => setSelectedFormat(fmt.id)}
+                    onClick={() => selectPrintGroup(group)}
                   >
                     <span className="social-dest-preview print-size-preview">
                       <img src={previewSrc} alt="" />
@@ -1275,7 +1307,10 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                 <div className="chatbox-selectors" style={{ overflow: 'visible', flexWrap: 'wrap' }}>
                   
                   <div className="custom-dropdown">
-                    <button className="dropdown-trigger" onClick={() => setShowModelDropdown(!showModelDropdown)}>
+                    <button className="dropdown-trigger" onClick={() => {
+                      setShowModelDropdown(!showModelDropdown);
+                      setShowFormatDropdown(false);
+                    }}>
                       {getModelIcon(selectedModel)}
                       <span>{selectedModelObj?.name || selectedModel || "GPT Image"}</span>
                       <ChevronDown size={14}/>
@@ -1347,7 +1382,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                       <div className="model-modal" style={{ right: 0, left: 'auto', minWidth: '180px' }}>
                         <div className="model-modal-content">
                           <div className="model-group-title">Orientation</div>
-                          {['portrait', 'landscape'].map((orient) => (
+                          {printOrientOptions.map((orient) => (
                             <div
                               key={orient}
                               className={`model-card ${printOrientation === orient ? 'active' : ''}`}
