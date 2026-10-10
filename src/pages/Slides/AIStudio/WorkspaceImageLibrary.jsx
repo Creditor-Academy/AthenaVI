@@ -6,6 +6,35 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, hideT
   const [generations, setGenerations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [downloadingId, setDownloadingId] = useState(null);
+
+  const handleDownload = async (event, gen, idx) => {
+    event.stopPropagation();
+    const key = gen.id || idx;
+    if (downloadingId === key) return;
+    setDownloadingId(key);
+    try {
+      if (workspaceId && gen.id) {
+        await imageGenService.downloadAndSave(workspaceId, gen.id, 'png');
+        return;
+      }
+      const response = await fetch(gen.url || gen.resultUrl);
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = `generation_${gen.id || idx}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch (err) {
+      console.error('Library download failed:', err);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   useEffect(() => {
     if (!workspaceId) {
@@ -167,15 +196,8 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, hideT
                 <div className="cute-library-card-actions">
                   <button 
                     className="library-action-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const a = document.createElement('a');
-                      a.href = imgUrl;
-                      a.download = `generation_${gen.id || idx}.png`;
-                      document.body.appendChild(a);
-                      a.click();
-                      document.body.removeChild(a);
-                    }}
+                    onClick={(e) => handleDownload(e, gen, idx)}
+                    disabled={downloadingId === (gen.id || idx)}
                     title="Download Image"
                   >
                     <Download size={16} />

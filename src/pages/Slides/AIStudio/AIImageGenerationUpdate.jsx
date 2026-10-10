@@ -51,14 +51,11 @@ import styleWatercolorImg from '../../../assets/slides_icons/style_watercolor.jp
 import formatPortraitImg from '../../../assets/ai-img-gen/format-portrait.jpg';
 import formatLandscapeImg from '../../../assets/ai-img-gen/format-landscape.jpg';
 import formatSquareImg from '../../../assets/ai-img-gen/format-square.jpg';
-import printA4PortraitPreview from '../../../assets/ai-img-gen/Minimal Blue Poster Template Illustration.png';
-import printA3PortraitPreview from '../../../assets/ai-img-gen/a3-portrait.png';
-import printA2PortraitPreview from '../../../assets/ai-img-gen/a2-portrait.png';
-import printA4LandscapePreview from '../../../assets/ai-img-gen/a4-landscape.png';
-import printA3LandscapePreview from '../../../assets/ai-img-gen/a3-landscape.png';
-import printA2LandscapePreview from '../../../assets/ai-img-gen/a2-landscape.png';
-import printBusinessCardPreview from '../../../assets/ai-img-gen/business-portrait.png';
-import printInvitationPreview from '../../../assets/ai-img-gen/invitation-portrait.png';
+import printA4Preview from '../../../assets/ai-img-gen/print-a4.jpg';
+import printA3Preview from '../../../assets/ai-img-gen/print-a3.jpg';
+import printA2Preview from '../../../assets/ai-img-gen/print-a2.jpg';
+import printBusinessCardPreview from '../../../assets/ai-img-gen/print-business-card.jpg';
+import printInvitationPreview from '../../../assets/ai-img-gen/print-invitation.jpg';
 
 import layoutProcess from '../../../assets/layouts/layout_process_v2.jpg';
 import layoutTimeline from '../../../assets/layouts/layout_timeline_v2.jpg';
@@ -181,14 +178,13 @@ const PRINT_GROUPS = [
   { id: 'invitation', label: 'Invitation', kind: 'invitation', formatId: 'invitation-a6-portrait', hint: 'Headline ≤ 60 · 5 details · CTA ≤ 40' },
 ];
 
-function printPreviewFor(group, orientation) {
-  const landscape = orientation === 'landscape';
+function printPreviewFor(group) {
   if (group?.kind === 'business-card') return printBusinessCardPreview;
   if (group?.kind === 'invitation') return printInvitationPreview;
-  if (group?.id === 'a4') return landscape ? printA4LandscapePreview : printA4PortraitPreview;
-  if (group?.id === 'a3') return landscape ? printA3LandscapePreview : printA3PortraitPreview;
-  if (group?.id === 'a2') return landscape ? printA2LandscapePreview : printA2PortraitPreview;
-  return printA4PortraitPreview;
+  if (group?.id === 'a4') return printA4Preview;
+  if (group?.id === 'a3') return printA3Preview;
+  if (group?.id === 'a2') return printA2Preview;
+  return printA4Preview;
 }
 
 function printablesFrom(formats = []) {
@@ -1120,10 +1116,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                 const fmt = printFormatForGroup(group, printFormats, labelOrient);
                 if (!fmt) return null;
                 const print = fmt.print || {};
-                const previewSrc = printPreviewFor(
-                  group,
-                  group.kind === 'poster' ? 'landscape' : labelOrient
-                );
+                const previewSrc = printPreviewFor(group);
                 const selected = selectedPrintGroup?.id === group.id;
                 return (
                   <button
