@@ -1214,7 +1214,7 @@ export default function AIConversationalStudio({
                     const frameStyle = getAspectDims(raw.formatId || formatId, print);
                     return (
                   <>
-                  <div className="conv-unified-frame slide-in-left" style={frameStyle}>
+                  <div className="conv-unified-frame conv-unified-frame--result slide-in-left" style={{ maxWidth: frameStyle.maxWidth }}>
                     <button
                       type="button"
                       className="conv-hero-open"

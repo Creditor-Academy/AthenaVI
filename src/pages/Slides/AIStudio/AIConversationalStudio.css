@@ -692,6 +692,12 @@
   transition: aspect-ratio 0.3s ease;
 }
 
+.conv-unified-frame--result {
+  width: auto;
+  aspect-ratio: auto;
+  line-height: 0;
+}
+
 @keyframes slideInLeft {
   from { opacity: 0; transform: translateX(-40px); }
   to { opacity: 1; transform: translateX(0); }
@@ -828,8 +834,9 @@
 .conv-hero-img-front {
   position: relative;
   z-index: 2;
-  width: 100%;
-  max-height: 400px;
+  width: auto;
+  max-width: 100%;
+  max-height: min(520px, 62vh);
   height: auto;
   border-radius: 12px;
   object-fit: contain;
@@ -843,7 +850,8 @@
   border: none;
   background: transparent;
   cursor: zoom-in;
-  width: 100%;
+  width: auto;
+  line-height: 0;
 }
 
 .conv-sparkle-corner {
@@ -857,8 +865,8 @@
 .conv-actions-bar-icons {
   display: flex;
   gap: 24px;
-  margin-top: 16px;
-  margin-bottom: 24px;
+  margin-top: 8px;
+  margin-bottom: 4px;
 }
 
 .conv-action-icon-btn {
@@ -892,7 +900,7 @@
   line-height: 1.6;
   text-align: left;
   width: 100%;
-  padding: 8px 0 20px;
+  padding: 2px 0 4px;
 }
 
 .conv-followup-link {
