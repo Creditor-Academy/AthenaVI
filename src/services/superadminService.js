@@ -83,6 +83,31 @@ const superadminService = {
     })
   },
 
+  pauseUser(userId, { reason } = {}) {
+    return superadminRequest(`/api/superadmin/users/${userId}/pause`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: reason || undefined }),
+    })
+  },
+
+  resumeUser(userId) {
+    return superadminRequest(`/api/superadmin/users/${userId}/resume`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+  },
+
+  /** Permanent. `confirmEmail` must equal the user's email. */
+  deleteUser(userId, { confirmEmail }) {
+    return superadminRequest(`/api/superadmin/users/${userId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirmEmail }),
+    })
+  },
+
   updateUserPlatformAccess(userId, { isPlatformSuperadmin }) {
     return superadminRequest(`/api/superadmin/users/${userId}/platform-access`, {
       method: 'PATCH',
