@@ -20,6 +20,7 @@ import { highlightMarkdownSource } from '../../../utils/markdownPrompt.jsx';
 import '../../../components/features/image-generation/MarkdownPromptInput.css';
 import './AIConversationalStudio.css';
 import RecentChatMenu from './RecentChatMenu.jsx';
+import WorkspaceImageLibrary from './WorkspaceImageLibrary.jsx';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
 
 const GENERATION_STEPS = [
@@ -214,6 +215,7 @@ export default function AIConversationalStudio({
   
   const [chatInput, setChatInput] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [studioView, setStudioView] = useState('chat');
   const [railFlyout, setRailFlyout] = useState(null);
   const [railQuery, setRailQuery] = useState('');
   const [railRecents, setRailRecents] = useState([]);
@@ -975,8 +977,9 @@ export default function AIConversationalStudio({
                 className={chat.id === threadId ? 'is-on' : ''}
                 title={label}
                 onClick={() => {
-                  onSelectThread?.(chat.id);
-                  onPick?.();
+                setStudioView('chat');
+                onSelectThread?.(chat.id);
+                onPick?.();
                 }}
               >
                 {isSocial ? (
@@ -1016,7 +1019,7 @@ export default function AIConversationalStudio({
   );
 
   return (
-    <div className={`conv-studio-root${sidebarOpen ? '' : ' is-rail-collapsed'}`}>
+    <div className={`conv-studio-root${sidebarOpen ? '' : ' is-rail-collapsed'}${studioView === 'library' ? ' is-library-view' : ''}`}>
       <aside className="conv-rail" aria-label="Studio menu" ref={railFlyoutRef}>
         <div className="conv-rail-top">
           {sidebarOpen && (
@@ -1042,7 +1045,15 @@ export default function AIConversationalStudio({
             <PanelLeft size={18} />
           </button>
         </div>
-        <button type="button" className="conv-rail-item" onClick={() => (onOpenLibrary || onBack)?.()} title="Library">
+        <button
+          type="button"
+          className={`conv-rail-item${studioView === 'library' ? ' is-on' : ''}`}
+          title="Library"
+          onClick={() => {
+            setRailFlyout(null);
+            setStudioView('library');
+          }}
+        >
           <Library size={18} />
           {sidebarOpen && <span>Library</span>}
         </button>
@@ -1120,7 +1131,7 @@ export default function AIConversationalStudio({
         <div className="glow-orb-2" />
       </div>
 
-      {/* Top Header */}
+      {studioView !== 'library' && (
       <header className="conv-studio-header">
         <div className="conv-studio-header-left">
           <div className="conv-brand-badge">
@@ -1136,11 +1147,20 @@ export default function AIConversationalStudio({
           </div>
         </div>
       </header>
+      )}
 
       {/* Main Generation & Showcase Body */}
-      <main className="conv-studio-body">
-        
-        {/* Dynamic Chat Feed */}
+      <main className={`conv-studio-body${studioView === 'library' ? ' is-library' : ''}`}>
+        {studioView === 'library' ? (
+          <WorkspaceImageLibrary
+            workspaceId={workspaceId}
+            onImageClick={(id) => {
+              if (!id) return;
+              setStudioView('chat');
+              onSelectThread?.(id);
+            }}
+          />
+        ) : (
         <div className="conv-chat-feed-container" style={{ width: '100%', paddingBottom: '40px' }}>
           {generations.map((gen, idx) => (
             <React.Fragment key={gen.id || idx}>
@@ -1439,9 +1459,10 @@ export default function AIConversationalStudio({
 
           <div ref={chatBottomRef} />
         </div>
+        )}
       </main>
 
-      {/* Conversational Re-Prompt Composer Dock */}
+      {studioView === 'chat' && (
       <footer className="conv-composer-dock">
         <div className="conv-composer-box">
           <div className="conv-composer-header">You</div>
@@ -1511,6 +1532,7 @@ export default function AIConversationalStudio({
           </ImageGenContextAttach>
         </div>
       </footer>
+      )}
 
       {shareModalGen && (
         <div

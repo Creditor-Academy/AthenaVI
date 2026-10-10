@@ -27,6 +27,14 @@
   padding: 16px 16px 16px 80px;
 }
 
+.conv-studio-root.is-library-view .conv-studio-header {
+  display: none;
+}
+
+.conv-studio-root.is-library-view .conv-studio-shell {
+  padding-top: 8px;
+}
+
 .conv-rail {
   width: 240px;
   position: absolute;
@@ -527,6 +535,12 @@
   padding: 24px 24px 180px 24px;
   scrollbar-width: thin;
   scrollbar-color: var(--border-color, #e5e7eb) transparent;
+}
+
+.conv-studio-body.is-library {
+  align-items: stretch;
+  padding: 8px 8px 16px;
+  overflow: hidden;
 }
 
 .conv-chat-row {
