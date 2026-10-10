@@ -4,7 +4,6 @@ import {
   AlertTriangle,
   Wallet,
   HardDrive,
-  UserCheck,
   ShieldCheck,
   RefreshCw,
   X,
@@ -60,14 +59,12 @@ function AdminAlertsQuickModal({ onClose, onNavigateTab }) {
   // Derive alert items
   const heygenAlert = alerts?.heygenWallet
   const storageCount = Number(alerts?.pendingStorageCount ?? alerts?.pendingStorageRequestsCount ?? 0)
-  const earlyAccessCount = Number(alerts?.pendingEarlyAccessCount ?? 0)
   const unreadPlatformCount = Number(alerts?.unreadPlatformCount ?? 0)
   const listAlerts = Array.isArray(alerts?.alerts) ? alerts.alerts : []
 
   const totalAlertItems =
     (heygenAlert?.isLow ? 1 : 0) +
     (storageCount > 0 ? 1 : 0) +
-    (earlyAccessCount > 0 ? 1 : 0) +
     (unreadPlatformCount > 0 ? 1 : 0) +
     listAlerts.length
 
@@ -197,32 +194,7 @@ function AdminAlertsQuickModal({ onClose, onNavigateTab }) {
                 </div>
               )}
 
-              {/* 3. Pending Early Access Applications */}
-              {earlyAccessCount > 0 && (
-                <div className="admin-alert-item admin-alert-item--info">
-                  <div className="admin-alert-item-icon">
-                    <UserCheck size={18} />
-                  </div>
-                  <div className="admin-alert-item-content">
-                    <div className="admin-alert-item-top">
-                      <span className="admin-alert-item-tag">Early Access</span>
-                      <span className="admin-alert-pill--info">{earlyAccessCount} New</span>
-                    </div>
-                    <div className="admin-alert-item-main">
-                      <strong>{earlyAccessCount}</strong> new early access application{earlyAccessCount === 1 ? '' : 's'} in queue.
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="admin-alert-item-btn"
-                    onClick={() => handleAction('early-access')}
-                  >
-                    Review <ChevronRight size={14} />
-                  </button>
-                </div>
-              )}
-
-              {/* 4. Unread Platform Alerts */}
+              {/* 3. Unread Platform Alerts */}
               {unreadPlatformCount > 0 && (
                 <div className="admin-alert-item admin-alert-item--alert">
                   <div className="admin-alert-item-icon">

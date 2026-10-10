@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Search, ChevronLeft, ChevronRight, X, Shield, Users, Coins, Sparkles, UserCheck, ArrowUpRight, Filter } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, X, Shield, Users, Coins, Sparkles, UserCheck, ArrowUpRight, Filter, UserPlus } from 'lucide-react'
 import superadminService, { SuperadminApiError } from '../../../../services/superadminService'
 import { formatAc, formatDate, formatShortDate, txTypeLabel, formatBytes, storageTxTypeLabel, STORAGE_UNITS, parseStorageToBytes } from './superadminUtils'
 import { useAuth } from '../../../../contexts/AuthContext'
@@ -10,6 +10,8 @@ import '../../../../pages/AdminPortal/styles/SuperadminUsers.css'
 import '../../../../pages/AdminPortal/styles/SuperadminDrawer.css'
 import '../../../../pages/page-skeleton/skeleton.css'
 import { AdminTableRowsSkeleton } from './skeletons/AdminSkeletons'
+import CreateUserModal from './CreateUserModal'
+import { createUserSuccessMessage } from './createUserForm'
 
 /* Simple inline skeleton component */
 function Sk({ w = '100%', h = 16, radius = 4 }) {
@@ -708,6 +710,8 @@ function SuperadminUsersPanel() {
   const [listLoading, setListLoading] = useState(true)
   const [listError, setListError]     = useState('')
   const [adminFilter, setAdminFilter] = useState('all') // all, admin, non-admin
+  const [createOpen, setCreateOpen]   = useState(false)
+  const [reloadTick, setReloadTick]   = useState(0) // bump to force a list refetch
 
   // toast state (same as workspace)
   const [toast, setToast]             = useState(null)
@@ -757,6 +761,18 @@ function SuperadminUsersPanel() {
     finally { setListLoading(false) }
   }, [page, search, adminFilter])
 
+  const handleUserCreated = useCallback((result, payload) => {
+    setCreateOpen(false)
+    const { type, message } = createUserSuccessMessage(result, payload)
+    showToast(message, type)
+    // New accounts sort first; clear filters so the admin sees the user they just made.
+    setSearchInput('')
+    setSearch('')
+    setAdminFilter('all')
+    setPage(1)
+    setReloadTick((n) => n + 1)
+  }, [showToast])
+
   const loadDetail = useCallback(async (userId) => {
     if (!userId) return
     setDetailLoading(true); setDetailError(''); setActionMessage(''); setActionError('')
@@ -778,7 +794,8 @@ function SuperadminUsersPanel() {
     return () => clearTimeout(t)
   }, [searchInput])
 
-  useEffect(() => { loadUsers() }, [loadUsers])
+  // reloadTick is bumped after creating a user so the list refetches even if no filter changed.
+  useEffect(() => { loadUsers() }, [loadUsers, reloadTick])
   useEffect(() => { if (selectedId) loadDetail(selectedId) }, [selectedId, loadDetail])
 
   // close drawer on Escape
@@ -842,6 +859,9 @@ function SuperadminUsersPanel() {
           <h2 className="sa-panel-title">Users &amp; Credit Management</h2>
           <p className="sa-panel-desc">Manage platform user accounts, grant and revoke personal credits, and assign platform administrator privileges.</p>
         </div>
+        <button type="button" className="sa-btn sa-btn--primary" onClick={() => setCreateOpen(true)}>
+          <UserPlus size={14} /> Create user
+        </button>
       </div>
 
       {listError && <div className="sa-alert sa-alert--error">{listError}</div>}
@@ -1119,6 +1139,12 @@ function SuperadminUsersPanel() {
         onPlatformAccessChange={handlePlatformAccessChange}
         currentUserId={currentUser?.id}
         showToast={showToast}
+      />
+
+      <CreateUserModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={handleUserCreated}
       />
 
       <Toast toast={toast} />

@@ -7,7 +7,6 @@ export const AUTH_NO_REFRESH_PATHS = [
   '/api/auth/forget-password',
   '/api/auth/reset-password',
   '/api/auth/superadmin/login',
-  '/api/early-access/request',
 ]
 
 export function shouldSkipTokenRefresh(error) {
