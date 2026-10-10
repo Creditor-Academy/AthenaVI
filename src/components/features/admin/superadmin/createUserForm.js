@@ -78,8 +78,21 @@ export function mapCreateUserError(error) {
   return { fieldErrors: {}, formError: message || 'Could not create the user. Please try again.' }
 }
 
-/** Toast copy for a successful create. */
+/** Toast copy for a successful create or bulk import. */
 export function createUserSuccessMessage(result, payload) {
+  if (result?.isBulk) {
+    const { successCount = 0, failedCount = 0, total = 0 } = result
+    if (failedCount > 0) {
+      return {
+        type: 'warning',
+        message: `Imported ${successCount} of ${total} users. ${failedCount} failed to create.`,
+      }
+    }
+    return {
+      type: 'success',
+      message: `Successfully created ${successCount} user${successCount === 1 ? '' : 's'}.`,
+    }
+  }
   const label = result?.user?.email || payload?.email || 'User'
   if (payload?.sendWelcomeEmail && result?.welcomeEmailSent === false) {
     return {
@@ -89,3 +102,197 @@ export function createUserSuccessMessage(result, payload) {
   }
   return { type: 'success', message: `${label} was created.` }
 }
+
+/** Robust RFC-4180 compliant CSV line/cell parser */
+export function parseCsvRows(text) {
+  if (!text || typeof text !== 'string') return []
+  const rows = []
+  let currentRow = []
+  let currentCell = ''
+  let insideQuotes = false
+  let i = 0
+
+  while (i < text.length) {
+    const char = text[i]
+    const nextChar = text[i + 1]
+
+    if (insideQuotes) {
+      if (char === '"') {
+        if (nextChar === '"') {
+          currentCell += '"'
+          i += 2
+          continue
+        } else {
+          insideQuotes = false
+          i++
+          continue
+        }
+      } else {
+        currentCell += char
+        i++
+        continue
+      }
+    } else {
+      if (char === '"') {
+        insideQuotes = true
+        i++
+        continue
+      } else if (char === ',') {
+        currentRow.push(currentCell.trim())
+        currentCell = ''
+        i++
+        continue
+      } else if (char === '\r') {
+        if (nextChar === '\n') i++
+        currentRow.push(currentCell.trim())
+        rows.push(currentRow)
+        currentRow = []
+        currentCell = ''
+        i++
+        continue
+      } else if (char === '\n') {
+        currentRow.push(currentCell.trim())
+        rows.push(currentRow)
+        currentRow = []
+        currentCell = ''
+        i++
+        continue
+      } else {
+        currentCell += char
+        i++
+        continue
+      }
+    }
+  }
+
+  if (currentCell.length > 0 || currentRow.length > 0) {
+    currentRow.push(currentCell.trim())
+    rows.push(currentRow)
+  }
+
+  return rows
+}
+
+/** Parses CSV text into validated user items ready for preview & provisioning */
+export function parseCsvUsers(text) {
+  const rawRows = parseCsvRows(text)
+  const nonEmptyRows = rawRows.filter((r) => r.some((cell) => cell.length > 0))
+
+  if (nonEmptyRows.length === 0) {
+    return {
+      rows: [],
+      validRows: [],
+      invalidRows: [],
+      totalCount: 0,
+      validCount: 0,
+      invalidCount: 0,
+      error: 'The CSV file appears to be empty.',
+    }
+  }
+
+  const headerRow = nonEmptyRows[0]
+  let nameIndex = -1
+  let emailIndex = -1
+  let passwordIndex = -1
+
+  headerRow.forEach((col, idx) => {
+    const clean = col.toLowerCase().replace(/[^a-z0-9]/g, '')
+    if (['name', 'fullname', 'username', 'user', 'namecolumn'].includes(clean)) nameIndex = idx
+    else if (['email', 'emailaddress', 'useremail', 'mail'].includes(clean)) emailIndex = idx
+    else if (['password', 'pass', 'temppassword', 'userpassword'].includes(clean)) passwordIndex = idx
+  })
+
+  // Fallback index assignment if standard header words aren't fully matched
+  if (nameIndex === -1 && headerRow.length >= 1) nameIndex = 0
+  if (emailIndex === -1 && headerRow.length >= 2) emailIndex = 1
+  if (passwordIndex === -1 && headerRow.length >= 3) passwordIndex = 2
+
+  const dataRows = nonEmptyRows.slice(1)
+  if (dataRows.length === 0) {
+    return {
+      rows: [],
+      validRows: [],
+      invalidRows: [],
+      totalCount: 0,
+      validCount: 0,
+      invalidCount: 0,
+      error: 'No data rows found below the header row.',
+    }
+  }
+
+  const seenEmails = new Set()
+  const rows = dataRows.map((cols, index) => {
+    const rowNumber = index + 2
+    const name = String(cols[nameIndex] || '').trim()
+    const email = String(cols[emailIndex] || '').trim().toLowerCase()
+    const password = passwordIndex >= 0 ? String(cols[passwordIndex] || '').trim() : ''
+
+    const passwordMode = password ? PASSWORD_MODE.MANUAL : PASSWORD_MODE.EMAIL_LINK
+    const errors = validateCreateUserForm({
+      name,
+      email,
+      passwordMode,
+      password,
+    })
+
+    if (email && seenEmails.has(email)) {
+      errors.email = 'Duplicate email found within this CSV.'
+    } else if (email) {
+      seenEmails.add(email)
+    }
+
+    const isValid = Object.keys(errors).length === 0
+
+    return {
+      id: `row-${rowNumber}`,
+      rowNumber,
+      name,
+      email,
+      password,
+      passwordMode,
+      isValid,
+      errors,
+      status: 'pending',
+      statusMessage: '',
+    }
+  })
+
+  const validRows = rows.filter((r) => r.isValid)
+  const invalidRows = rows.filter((r) => !r.isValid)
+
+  return {
+    rows,
+    validRows,
+    invalidRows,
+    totalCount: rows.length,
+    validCount: validRows.length,
+    invalidCount: invalidRows.length,
+    error: null,
+  }
+}
+
+/** Generates standard sample CSV content */
+export function generateUserCsvTemplate() {
+  return [
+    'Full Name,Email Address,Password',
+    'Sarah Connor,sarah.connor@example.com,',
+    'John Doe,john.doe@example.com,TempPass123!',
+    'Jane Smith,jane.smith@example.com,',
+  ].join('\r\n')
+}
+
+/** Triggers download of sample CSV template in browser */
+export function downloadUserCsvTemplate() {
+  if (typeof document === 'undefined') return
+  const content = generateUserCsvTemplate()
+  const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.setAttribute('href', url)
+  link.setAttribute('download', 'users_import_template.csv')
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+

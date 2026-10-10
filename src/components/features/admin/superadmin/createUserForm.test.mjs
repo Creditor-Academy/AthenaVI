@@ -12,6 +12,9 @@ import {
   buildCreateUserPayload,
   mapCreateUserError,
   createUserSuccessMessage,
+  parseCsvRows,
+  parseCsvUsers,
+  generateUserCsvTemplate,
 } from './createUserForm.js'
 
 const valid = { ...INITIAL_CREATE_USER_VALUES, name: 'Jane Doe', email: 'jane@example.com' }
@@ -118,4 +121,57 @@ describe('createUserSuccessMessage', () => {
     const out = createUserSuccessMessage({ user: { email: 'a@b.co' }, welcomeEmailSent: false }, { sendWelcomeEmail: false })
     assert.equal(out.type, 'success')
   })
+
+  it('handles bulk create results properly', () => {
+    const allSuccess = createUserSuccessMessage({ isBulk: true, successCount: 5, failedCount: 0, total: 5 })
+    assert.equal(allSuccess.type, 'success')
+    assert.match(allSuccess.message, /Successfully created 5 users/)
+
+    const partial = createUserSuccessMessage({ isBulk: true, successCount: 3, failedCount: 2, total: 5 })
+    assert.equal(partial.type, 'warning')
+    assert.match(partial.message, /Imported 3 of 5 users. 2 failed/)
+  })
 })
+
+describe('parseCsvRows & parseCsvUsers', () => {
+  it('parses valid CSV rows with and without passwords', () => {
+    const csv = `Full Name,Email Address,Password\nAlice Smith,alice@example.com,\nBob Jones,bob@example.com,SecretPass123`
+    const result = parseCsvUsers(csv)
+    assert.equal(result.totalCount, 2)
+    assert.equal(result.validCount, 2)
+    assert.equal(result.invalidCount, 0)
+    assert.equal(result.rows[0].name, 'Alice Smith')
+    assert.equal(result.rows[0].email, 'alice@example.com')
+    assert.equal(result.rows[0].passwordMode, PASSWORD_MODE.EMAIL_LINK)
+    assert.equal(result.rows[1].name, 'Bob Jones')
+    assert.equal(result.rows[1].email, 'bob@example.com')
+    assert.equal(result.rows[1].passwordMode, PASSWORD_MODE.MANUAL)
+  })
+
+  it('handles quotes and escaped quotes in CSV', () => {
+    const csv = `"Name","Email","Password"\n"Doe, John","john.doe@example.com",""\n"Sarah ""Ace"" Connor","sarah@example.com","TestPassword123"`
+    const result = parseCsvUsers(csv)
+    assert.equal(result.validCount, 2)
+    assert.equal(result.rows[0].name, 'Doe, John')
+    assert.equal(result.rows[1].name, 'Sarah "Ace" Connor')
+  })
+
+  it('flags invalid rows and detects duplicates within CSV', () => {
+    const csv = `name,email,password\nToo Short,bad-email,\nA,other@example.com,\nValid User,other@example.com,\nGood User,good@example.com,`
+    const result = parseCsvUsers(csv)
+    assert.equal(result.totalCount, 4)
+    assert.equal(result.invalidCount, 3)
+    assert.equal(result.validCount, 1)
+    assert.match(result.rows[0].errors.email, /valid email/)
+    assert.match(result.rows[1].errors.name, /at least 2/)
+    assert.match(result.rows[2].errors.email, /Duplicate email/)
+  })
+
+  it('generates a valid CSV template', () => {
+    const template = generateUserCsvTemplate()
+    const parsed = parseCsvUsers(template)
+    assert.equal(parsed.validCount, 3)
+    assert.equal(parsed.invalidCount, 0)
+  })
+})
+
