@@ -148,7 +148,7 @@ function Dashboard({ onCreate, initialSection }) {
   const [avatarCreateTypeId, setAvatarCreateTypeId] = useState(null)
   const [adminTab, setAdminTab] = useState(() => {
     const saved = localStorage.getItem('adminPortalTab')
-    const valid = ['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'platform-actions', 'heygen', 'broadcast', 'early-access', 'templates', 'graphics', 'ai-template', 'settings']
+    const valid = ['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'platform-actions', 'heygen', 'broadcast', 'templates', 'graphics', 'ai-template', 'settings']
     return valid.includes(saved) ? saved : 'overview'
   })
   const [settingsInitialTab, setSettingsInitialTab] = useState(() => resolveSettingsTabFromSearch())
@@ -167,8 +167,7 @@ function Dashboard({ onCreate, initialSection }) {
         const unread = Number(data.unreadPlatformCount ?? 0)
         const lowHeygen = data.heygenWallet?.isLow ? 1 : 0
         const pendingStorage = Number(data.pendingStorageCount ?? data.pendingStorageRequestsCount ?? 0)
-        const pendingEarly = Number(data.pendingEarlyAccessCount ?? 0)
-        const total = unread + lowHeygen + pendingStorage + pendingEarly
+        const total = unread + lowHeygen + pendingStorage
         setAdminAlertsCount(total)
       })
       .catch(() => {})

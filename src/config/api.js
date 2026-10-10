@@ -5,11 +5,6 @@ const API_CONFIG = {
   
   // API Endpoints (matching your backend documentation)
   ENDPOINTS: {
-    // Early Access (public, no auth)
-    EARLY_ACCESS: {
-      REQUEST: '/api/early-access/request',
-    },
-
     GRAPHICS: {
       LIST: '/api/graphics',
       SEARCH: '/api/graphics/search',

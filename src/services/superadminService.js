@@ -74,6 +74,15 @@ const superadminService = {
     return superadminRequest(`/api/superadmin/users${toQuery({ page, limit, search })}`)
   },
 
+  /** Admin-provisioned account. Resolves to { user, welcomeEmailSent }. */
+  createUser({ name, email, password, sendWelcomeEmail }) {
+    return superadminRequest('/api/superadmin/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, sendWelcomeEmail }),
+    })
+  },
+
   updateUserPlatformAccess(userId, { isPlatformSuperadmin }) {
     return superadminRequest(`/api/superadmin/users/${userId}/platform-access`, {
       method: 'PATCH',
@@ -207,38 +216,6 @@ const superadminService = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ subject, html, text: text || undefined, confirm: 'send' }),
-    })
-  },
-
-  listEarlyAccessRequests({ page = 1, limit = 20, status } = {}) {
-    return superadminRequest(
-      `/api/superadmin/early-access/requests${toQuery({ page, limit, status })}`
-    )
-  },
-
-  getEarlyAccessRequest(requestId) {
-    return superadminRequest(`/api/superadmin/early-access/requests/${requestId}`)
-  },
-
-  updateEarlyAccessStatus(requestId, { status }) {
-    return superadminRequest(`/api/superadmin/early-access/requests/${requestId}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    })
-  },
-
-  approveEarlyAccessRequest(requestId) {
-    return superadminRequest(`/api/superadmin/early-access/requests/${requestId}/approve`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    })
-  },
-
-  rejectEarlyAccessRequest(requestId) {
-    return superadminRequest(`/api/superadmin/early-access/requests/${requestId}/reject`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
     })
   },
 
