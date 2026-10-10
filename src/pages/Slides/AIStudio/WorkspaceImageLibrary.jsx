@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Loader2, Sparkles, Image as ImageIcon, Download, Copy } from 'lucide-react';
 import imageGenService from '../../../services/imageGenService.js';
 
-export default function WorkspaceImageLibrary({ workspaceId, onImageClick }) {
+export default function WorkspaceImageLibrary({ workspaceId, onImageClick, hideTitle = false }) {
   const [generations, setGenerations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -132,12 +132,14 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick }) {
         }
       `}</style>
       
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
+      {!hideTitle && (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px', flexShrink: 0 }}>
         <div style={{ padding: '8px 12px', background: 'color-mix(in srgb, var(--primary, #2563eb) 10%, transparent)', borderRadius: '12px', color: 'var(--primary, #2563eb)' }}>
           <ImageIcon size={20} />
         </div>
         <h2 style={{ fontSize: '22px', fontWeight: '600', color: 'var(--text-main, #111827)', margin: 0 }}>Workspace Library</h2>
       </div>
+      )}
 
       <div style={{ 
         columnCount: 'auto', 
