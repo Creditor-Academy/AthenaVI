@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef } from 'react'
 import { FiCode } from 'react-icons/fi'
 import PptChartRenderer, { getEmbedIframeUrl } from './PptChartRenderer'
 import ExternalLinkHoverLayer from './ExternalLinkHoverLayer'
 import {
   resolveThemeColor,
+  resolveFillCss,
   buildCanvasShapeStyle,
   buildNativeShapeBoxStyle,
   buildImageEdgeFadeMask,
@@ -34,6 +35,7 @@ import ClipShapeSvg from '../../../components/ppt/ClipShapeSvg'
 import GraphicCanvasVisual from '../../../components/ppt/GraphicCanvasVisual'
 import { isPptHitThroughElement } from '../../../utils/pptHitThrough'
 import { parsePolygonClipPath } from '../../../utils/shapeClipSvg'
+import { buildTextEffectStyle, computeCurvedTextSvgPath } from '../../../utils/textEffectsUtils'
 
 function TextListDisplay({ text, listType }) {
   const lines = splitTextLines(text)
@@ -57,10 +59,19 @@ function TextListDisplay({ text, listType }) {
 }
 
 function runPaintStyle(run, palette, fallbackColor) {
-  const fill = runFill(run, { type: 'solid', color: fallbackColor })
-  const paint = textPaintStyle(fill, palette, fallbackColor)
+  const fill = runFill(run, null)
+  if (fill && isGradientFill(fill)) {
+    const paint = textPaintStyle(fill, palette, fallbackColor)
+    return {
+      ...paint,
+      fontWeight: run.fontWeight ?? (run.bold ? 700 : undefined),
+      fontStyle: run.italic ? 'italic' : undefined,
+      fontFamily: run.fontFamily,
+    }
+  }
   return {
-    ...paint,
+    color: run.color || undefined,
+    WebkitTextFillColor: run.color || undefined,
     fontWeight: run.fontWeight ?? (run.bold ? 700 : undefined),
     fontStyle: run.italic ? 'italic' : undefined,
     fontFamily: run.fontFamily,
@@ -88,6 +99,116 @@ function readEditableText(node, listType, fallback = '') {
   let text = node?.innerText ?? fallback
   if (listType) text = stripLeadingListMarkers(text)
   return text
+}
+
+function parseGradientStops(fill, palette = {}) {
+  if (!fill) return null
+  if (typeof fill === 'object' && fill.type === 'gradient' && Array.isArray(fill.stops)) {
+    return {
+      kind: fill.kind || 'linear',
+      angle: fill.angle != null ? Number(fill.angle) : 90,
+      stops: fill.stops.map((s, i) => ({
+        offset:
+          s.at != null
+            ? `${Math.round(Number(s.at) * (Number(s.at) <= 1 ? 100 : 1))}%`
+            : s.offset != null
+              ? `${s.offset}%`
+              : `${(i / Math.max(1, fill.stops.length - 1)) * 100}%`,
+        color: resolveThemeColor(s.color, palette, s.color || '#000000'),
+      })),
+    }
+  }
+  if (typeof fill === 'string' && fill.includes('gradient')) {
+    const angleMatch = fill.match(/linear-gradient\s*\(\s*(-?\d+)deg/i)
+    const angle = angleMatch ? Number(angleMatch[1]) : 90
+    const stopsMatch = fill.match(/(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\))\s*(\d+%)?/g)
+    if (stopsMatch && stopsMatch.length >= 2) {
+      const stops = stopsMatch.map((matchStr, i) => {
+        const parts = matchStr.trim().split(/\s+/)
+        const color = parts[0]
+        const offset = parts[1] || `${(i / (stopsMatch.length - 1)) * 100}%`
+        return { color, offset }
+      })
+      return { kind: 'linear', angle, stops }
+    }
+  }
+  return null
+}
+
+function CurvedTextDisplay({
+  text,
+  width,
+  height,
+  curveAmount = 50,
+  fontSize = 24,
+  fontWeight = 400,
+  fontFamily = 'inherit',
+  fontStyle = 'normal',
+  letterSpacing,
+  fill = '#000000',
+  effectStyle = {},
+  align = 'center',
+  palette = {},
+}) {
+  const generatedId = useId()
+  const pathId = useMemo(() => `ppt_curve_${generatedId.replace(/[^a-zA-Z0-9_-]/g, '_')}`, [generatedId])
+  const gradId = useMemo(() => `ppt_grad_${generatedId.replace(/[^a-zA-Z0-9_-]/g, '_')}`, [generatedId])
+  const w = Math.max(60, width || 200)
+  const h = Math.max(30, height || 60)
+  const pathD = computeCurvedTextSvgPath(w, h, curveAmount)
+
+  const gradInfo = useMemo(() => parseGradientStops(fill, palette), [fill, palette])
+
+  const startOffset = align === 'left' ? '0%' : align === 'right' ? '100%' : '50%'
+  const textAnchor = align === 'left' ? 'start' : align === 'right' ? 'end' : 'middle'
+
+  const angleRad = ((gradInfo?.angle ?? 90) - 90) * (Math.PI / 180)
+  const x1 = Math.round(50 - Math.cos(angleRad) * 50) + '%'
+  const y1 = Math.round(50 - Math.sin(angleRad) * 50) + '%'
+  const x2 = Math.round(50 + Math.cos(angleRad) * 50) + '%'
+  const y2 = Math.round(50 + Math.sin(angleRad) * 50) + '%'
+
+  const textFill = gradInfo ? `url(#${gradId})` : (typeof fill === 'string' ? fill : '#000000')
+
+  return (
+    <svg
+      viewBox={`0 0 ${w} ${h}`}
+      width="100%"
+      height="100%"
+      style={{
+        overflow: 'visible',
+        display: 'block',
+        pointerEvents: 'none',
+      }}
+    >
+      <defs>
+        <path id={pathId} d={pathD} fill="none" />
+        {gradInfo && (
+          <linearGradient id={gradId} x1={x1} y1={y1} x2={x2} y2={y2}>
+            {gradInfo.stops.map((s, idx) => (
+              <stop key={idx} offset={s.offset} stopColor={s.color} />
+            ))}
+          </linearGradient>
+        )}
+      </defs>
+      <text
+        fill={textFill}
+        style={{
+          fontSize: `${fontSize}px`,
+          fontWeight,
+          fontFamily,
+          fontStyle,
+          letterSpacing: letterSpacing != null ? letterSpacing : undefined,
+          dominantBaseline: 'central',
+          ...effectStyle,
+        }}
+      >
+        <textPath href={`#${pathId}`} xlinkHref={`#${pathId}`} startOffset={startOffset} textAnchor={textAnchor}>
+          {text}
+        </textPath>
+      </text>
+    </svg>
+  )
 }
 
 function EditableText({
@@ -247,8 +368,10 @@ function EditableText({
   const cursor = editing ? 'text' : selected && editable ? 'default' : editable ? 'pointer' : undefined
   const paintRuns = collapseDuplicatedRuns(c)
   const usesRuns = contentUsesFullRuns({ ...c, runs: paintRuns })
-  const boxPaint =
-    !usesRuns && isGradientFill(c.fill) ? textPaintStyle(c.fill, palette, color) : { color }
+  const rawFill = c.fill || (isGradientFill(c.color) ? c.color : null)
+  const hasGrad = isGradientFill(rawFill)
+  const boxPaint = hasGrad ? textPaintStyle(rawFill, palette, color) : { color }
+  const effectStyle = buildTextEffectStyle(c, palette, color)
 
   const isHeading =
     el?.role === 'heading' ||
@@ -280,6 +403,7 @@ function EditableText({
       c.padding != null
         ? `${c.padding}px ${c.paddingX != null ? c.paddingX : c.padding}px`
         : undefined,
+    ...effectStyle,
     ...(editing
       ? {
           height: 'auto',
@@ -375,6 +499,15 @@ function EditableText({
   }
 
   const displayText = plainText || (editable || showEmptyHint ? 'Double-click to edit' : '')
+  const isCurved =
+    !editing &&
+    (c.shapeEffect === 'curve' ||
+      c.shapeEffect === 'circle' ||
+      c.textShape === 'curve' ||
+      c.textShape === 'circle' ||
+      (c.curveAmount != null && Number(c.curveAmount) !== 0))
+  const elW = el?.placement?.width || el?.width || wrapRef.current?.clientWidth || 240
+  const elH = el?.placement?.height || el?.height || wrapRef.current?.clientHeight || 80
   const className = [
     'ppt-text-display',
     editable ? 'ppt-text-display--editable' : '',
@@ -399,7 +532,29 @@ function EditableText({
           }
         }}
       >
-        {c.listType && (c.text || plainText) ? (
+        {isCurved ? (
+          <CurvedTextDisplay
+            text={String(displayText || '').replace(/\r?\n/g, ' ')}
+            width={elW}
+            height={elH}
+            curveAmount={
+              c.curveAmount != null
+                ? Number(c.curveAmount)
+                : c.shapeEffect === 'circle' || c.textShape === 'circle'
+                  ? 100
+                  : 50
+            }
+            fontSize={fontSize}
+            fontWeight={weight}
+            fontFamily={c.fontFamily}
+            fontStyle={c.italic ? 'italic' : 'normal'}
+            letterSpacing={c.letterSpacing}
+            fill={hasGrad ? rawFill : color}
+            effectStyle={effectStyle}
+            align={c.align || 'center'}
+            palette={palette}
+          />
+        ) : c.listType && (c.text || plainText) ? (
           <TextListDisplay text={plainText || c.text} listType={c.listType} />
         ) : usesRuns ? (
           <RichTextDisplay runs={paintRuns} palette={palette} baseStyle={textStyle} />
@@ -675,12 +830,29 @@ export default function PptCanvasElement({
       String(el.slotId || '').toUpperCase() === 'BACKGROUND_IMAGE' ||
       String(el.role || '').toLowerCase() === 'background' ||
       c.useAsBackground
+    const strokeWidth = c.strokeWidth != null ? Number(c.strokeWidth) : 0
+    const hasBorder =
+      strokeWidth > 0 &&
+      Boolean(c.stroke) &&
+      c.stroke !== 'none' &&
+      c.stroke !== 'transparent'
+    const strokeCss = hasBorder ? resolveFillCss(c.stroke, palette, '#000000') : undefined
+    const isGradientStroke = typeof strokeCss === 'string' && strokeCss.includes('gradient(')
+    const borderStyle = c.borderStyle || 'solid'
+    const radius = clipPath || edgeFadeMask || isFullBleedMedia ? 0 : c.borderRadius != null ? Number(c.borderRadius) : 0
+    const borderProp = hasBorder
+      ? `${strokeWidth}px ${borderStyle} ${isGradientStroke ? 'transparent' : strokeCss}`
+      : undefined
+
     return (
       <div
         style={{
           ...fillStyle,
           overflow: 'hidden',
-          borderRadius: clipPath || edgeFadeMask || isFullBleedMedia ? 0 : c.borderRadius != null ? c.borderRadius : undefined,
+          borderRadius: radius > 0 ? `${radius}px` : undefined,
+          border: borderProp,
+          background: isGradientStroke && hasBorder ? strokeCss : undefined,
+          boxSizing: 'border-box',
           ...(clipPath ? { clipPath, WebkitClipPath: clipPath } : {}),
         }}
       >
@@ -694,8 +866,8 @@ export default function PptCanvasElement({
             objectFit: c.fit || (el.type === 'icon' ? 'contain' : 'cover'),
             objectPosition: 'center',
             opacity: c.opacity != null ? c.opacity : 1,
-            borderRadius: clipPath || edgeFadeMask || isFullBleedMedia ? 0 : c.borderRadius != null ? c.borderRadius : undefined,
             boxShadow: c.boxShadow || c.shadow || undefined,
+            filter: c.cssFilter || c.filter || undefined,
             display: 'block',
             transform: mediaFlipTransform(c),
             transformOrigin: 'center center',
@@ -829,8 +1001,38 @@ export default function PptCanvasElement({
         ? 'none'
         : rendered.fill || rendered.style?.background || '#475569'
       const fillColor = typeof svgFill === 'string' ? svgFill : '#475569'
+      const isGrad = typeof fillColor === 'string' && (fillColor.includes('gradient(') || fillColor.includes('linear-gradient') || fillColor.includes('radial-gradient'))
       const canSvg = Boolean(parsePolygonClipPath(rendered.clipPath))
       if (canSvg) {
+        if (isGrad && !rendered.outlined) {
+          return (
+            <div style={{ ...fillStyle, position: 'relative' }}>
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: fillColor,
+                  clipPath: rendered.clipPath,
+                  WebkitClipPath: rendered.clipPath,
+                }}
+              />
+              {rendered.strokeWidth > 0 && (
+                <ClipShapeSvg
+                  clipPath={rendered.clipPath}
+                  fill="none"
+                  stroke={
+                    typeof rendered.stroke === 'string' ? rendered.stroke : '#475569'
+                  }
+                  strokeWidth={rendered.strokeWidth || 0}
+                  strokeDasharray={rendered.strokeDasharray}
+                  outlined
+                  style={{ position: 'absolute', inset: 0 }}
+                />
+              )}
+              {inner}
+            </div>
+          )
+        }
         return (
           <div style={{ ...fillStyle, position: 'relative' }}>
             <ClipShapeSvg

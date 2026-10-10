@@ -13,6 +13,7 @@ import ColorFillPicker from '../../Slides/AIPptComponents/insert/ColorFillPicker
 import { CANVAS_SIZE_PRESETS } from '../../../constants/canvasSizePresets'
 import { normalizeFillValue } from '../../../utils/pptTextContent'
 import CanvasEditImagePanel from './CanvasEditImagePanel'
+import TextEffectsPanel from '../../Slides/AIPptComponents/insert/TextEffectsPanel'
 
 const DEFAULT_PALETTE = {
   bg: '#FFFFFF',
@@ -80,12 +81,16 @@ export default function CanvasRightInspector({
   }
 
   const isImage = type === 'image' || type === 'icon'
+  const isText = type === 'text' || type === 'textbox'
   const c = selectedElement?.content || {}
   const patchContent = (patch) => {
     if (!selectedElement) return
     onUpdateContent(selectedElement.id, patch)
   }
-  const currentTab = activeTab === 'edit' && !isImage ? 'style' : activeTab
+  const currentTab =
+    (activeTab === 'edit' && !isImage) || (activeTab === 'effects' && !isText)
+      ? 'style'
+      : activeTab
 
   const layers = [...(elements || [])].sort((a, b) => (b.layer || 0) - (a.layer || 0))
 
@@ -134,10 +139,19 @@ export default function CanvasRightInspector({
           {selectedElement && isImage && (
             <button
               type="button"
-              className={`canva-inspector-nav-tab ${activeTab === 'edit' ? 'is-active' : ''}`}
+              className={`canva-inspector-nav-tab ${currentTab === 'edit' ? 'is-active' : ''}`}
               onClick={() => setActiveTab('edit')}
             >
               Edit
+            </button>
+          )}
+          {selectedElement && isText && (
+            <button
+              type="button"
+              className={`canva-inspector-nav-tab ${currentTab === 'effects' ? 'is-active' : ''}`}
+              onClick={() => setActiveTab('effects')}
+            >
+              Effects
             </button>
           )}
           {selectedElement && (
@@ -196,11 +210,18 @@ export default function CanvasRightInspector({
           </div>
         ) : selectedElement ? (
           <div className="canva-inspector-stack">
-            {currentTab === 'edit' ? (
+            {currentTab === 'edit' && isImage ? (
               <CanvasEditImagePanel
                 element={selectedElement}
                 disabled={locked}
                 onChangeContent={patchContent}
+              />
+            ) : currentTab === 'effects' && isText ? (
+              <TextEffectsPanel
+                element={selectedElement}
+                palette={DEFAULT_PALETTE}
+                disabled={locked}
+                onChange={patchContent}
               />
             ) : currentTab === 'style' ? (
               <div className="canva-inspector-design">
@@ -210,6 +231,7 @@ export default function CanvasRightInspector({
                   palette={DEFAULT_PALETTE}
                   usedFontFamilies={usedFontFamilies}
                   disabled={locked}
+                  hideNestedTabs={true}
                   onChangeElementContent={(content) =>
                     onUpdateContent(selectedElement.id, content)
                   }
@@ -224,49 +246,24 @@ export default function CanvasRightInspector({
                 />
 
                 {isImage && (
-                  <section className="cin-card">
-                    <header className="cin-card-head">Border</header>
-                    <div className="cin-row">
-                      <span className="cin-row-label">Color</span>
-                      <ColorFillPicker
-                        title="Border color"
-                        compact
-                        value={normalizeFillValue(c.stroke, '#000000')}
-                        palette={DEFAULT_PALETTE}
-                        disabled={locked}
-                        fallbackHex="#000000"
-                        onChange={(fill) => patchContent({ stroke: fillSolidColor(fill, '#000000') })}
-                      />
+                  <div className="canva-inspector-group" style={{ marginTop: 14 }}>
+                    <label className="canva-inspector-group-title">Quick dimensions</label>
+                    <div className="canva-inspector-presets-grid">
+                      {SIZE_PRESETS_SHORT.map((preset) => (
+                        <button
+                          type="button"
+                          key={preset.id}
+                          className="canva-inspector-preset-card"
+                          onClick={() => onApplyPresetSize?.(preset)}
+                        >
+                          <strong>{preset.label || preset.name}</strong>
+                          <small>
+                            {preset.width} × {preset.height}
+                          </small>
+                        </button>
+                      ))}
                     </div>
-                    <div className="cin-row">
-                      <span className="cin-row-label">Width</span>
-                      <div className="cin-slider">
-                        <input
-                          type="range"
-                          min={0}
-                          max={40}
-                          value={c.strokeWidth ?? 0}
-                          disabled={locked}
-                          onChange={(e) => patchContent({ strokeWidth: Number(e.target.value) })}
-                        />
-                        <span>{c.strokeWidth ?? 0}px</span>
-                      </div>
-                    </div>
-                    <div className="cin-row">
-                      <span className="cin-row-label">Corner radius</span>
-                      <div className="cin-slider">
-                        <input
-                          type="range"
-                          min={0}
-                          max={200}
-                          value={Math.min(200, c.borderRadius ?? 0)}
-                          disabled={locked}
-                          onChange={(e) => patchContent({ borderRadius: Number(e.target.value) })}
-                        />
-                        <span>{c.borderRadius ?? 0}px</span>
-                      </div>
-                    </div>
-                  </section>
+                  </div>
                 )}
               </div>
             ) : (
@@ -386,11 +383,7 @@ export default function CanvasRightInspector({
             <div className="canva-inspector-group">
               <label className="canva-inspector-group-title">Canvas background</label>
               <ColorFillPicker
-                value={
-                  activeCanvas?.background && typeof activeCanvas.background === 'object'
-                    ? activeCanvas.background
-                    : { type: 'solid', color: activeCanvas?.background || '#FFFFFF' }
-                }
+                value={normalizeFillValue(activeCanvas?.background, '#FFFFFF')}
                 palette={DEFAULT_PALETTE}
                 onChange={(fill) => onUpdateBackground(fill)}
               />

@@ -69,8 +69,11 @@ function createElement(payload, canvas, index) {
   }
   const content = { ...(payload?.content || {}) }
   if (type === 'text' && !content.color && !content.colorRole) content.color = '#172033'
-  if (['image', 'icon', 'graphic'].includes(type) && !content.url && content.src) content.url = content.src
-  if (['image', 'icon', 'graphic'].includes(type) && content.url && !content.src) content.src = content.url
+  if (['image', 'icon', 'graphic'].includes(type)) {
+    if (!content.url && content.src) content.url = content.src
+    if (content.url && !content.src) content.src = content.url
+    if (content.strokeWidth == null) content.strokeWidth = 0
+  }
   return {
     id: `element-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     type,

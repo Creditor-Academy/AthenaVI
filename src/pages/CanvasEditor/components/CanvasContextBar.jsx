@@ -232,7 +232,12 @@ export default function CanvasContextBar({
                 palette={DEFAULT_PALETTE}
                 disabled={locked}
                 fallbackHex="#000000"
-                onChange={(fill) => onUpdateContent(selectedElement.id, { stroke: fillSolidColor(fill, '#000000') })}
+                onChange={(fill) =>
+                  onUpdateContent(selectedElement.id, {
+                    stroke: fill,
+                    strokeWidth: (Number(c.strokeWidth) || 0) <= 0 ? 2 : Number(c.strokeWidth),
+                  })
+                }
               />
               <div className="canva-context-bar-stepper" title="Border width">
                 <button

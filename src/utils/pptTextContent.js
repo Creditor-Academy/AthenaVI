@@ -107,24 +107,37 @@ export function normalizeFillValue(value, fallbackHex = '#0F172A') {
 }
 
 export function isGradientFill(fill) {
-  return Boolean(fill && typeof fill === 'object' && fill.type === 'gradient')
+  if (!fill) return false
+  if (typeof fill === 'string') return /gradient\(/i.test(fill)
+  if (typeof fill === 'object') {
+    return (
+      fill.type === 'gradient' ||
+      fill.kind === 'radial' ||
+      fill.kind === 'linear' ||
+      Array.isArray(fill.stops)
+    )
+  }
+  return false
 }
 
 export function textPaintStyle(fill, palette, fallback = '#0F172A') {
   const css = resolveFillCss(fill, palette, fallback)
-  if (typeof css === 'string' && /gradient/i.test(css)) {
+  if (typeof css === 'string' && /gradient\(/i.test(css)) {
     return {
       backgroundImage: css,
+      background: css,
       WebkitBackgroundClip: 'text',
       backgroundClip: 'text',
       color: 'transparent',
       WebkitTextFillColor: 'transparent',
+      display: 'inline-block',
     }
   }
   return {
     color: css || fallback,
     WebkitTextFillColor: css || fallback,
     backgroundImage: 'none',
+    background: 'none',
     WebkitBackgroundClip: 'unset',
     backgroundClip: 'unset',
   }

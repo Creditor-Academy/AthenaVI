@@ -2016,3 +2016,401 @@
   backdrop-filter: blur(3px);
 }
 
+/* ── Image Design Tabs (Style vs Edit & Filters) ── */
+.ppt-image-tabs-nav {
+  display: flex;
+  gap: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.ppt-image-tabs-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.ppt-image-tab-btn {
+  padding: 6px 0;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #64748b;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.015em;
+  cursor: pointer;
+  transition: all 140ms ease;
+  white-space: nowrap;
+}
+
+.ppt-image-tab-btn:hover {
+  color: #0f172a;
+}
+
+.ppt-image-tab-btn.is-active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
+/* ── "Edit image" panel (Tools / Filters / Shadows / Apps) ── */
+.cep-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px 0 16px;
+}
+
+.cep-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cep-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10.5px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #475569;
+}
+
+.cep-tools-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.cep-tool-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 6px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  cursor: pointer;
+  text-align: center;
+  transition: all 140ms ease;
+}
+
+.cep-tool-tile:hover:not(:disabled) {
+  border-color: #2563eb;
+  background: #fff;
+}
+
+.cep-tool-tile:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cep-tool-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+  color: #4f46e5;
+}
+
+.cep-tool-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.cep-thumb-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.cep-thumb-row::-webkit-scrollbar {
+  display: none;
+}
+
+.cep-thumb {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  width: 68px;
+}
+
+.cep-thumb-frame {
+  width: 68px;
+  height: 68px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  background: #f1f5f9;
+  display: block;
+}
+
+.cep-thumb.is-active .cep-thumb-frame {
+  border-color: #2563eb;
+}
+
+.cep-thumb-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cep-thumb-empty {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #e2e8f0;
+}
+
+.cep-thumb-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.cep-coming-soon {
+  margin: 0;
+  font-size: 11.5px;
+  color: #94a3b8;
+}
+
+.cep-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.cep-slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cep-slider-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.cep-slider-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cep-slider-control input[type='range'] {
+  flex: 1;
+}
+
+.cep-slider-control button {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #475569;
+  flex-shrink: 0;
+}
+
+.cep-slider-control button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cep-reset-btn {
+  align-self: flex-start;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  padding: 6px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+}
+
+.cep-reset-btn:hover:not(:disabled) {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.cep-thumb-frame--shadow {
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: #f8fafc;
+  overflow: visible;
+}
+.cep-thumb-frame--shadow img {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+}
+
+/* ── Text Effects Panel ── */
+.ppt-text-effects-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px 0 16px;
+}
+
+.ppt-effects-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.ppt-effects-grid--shape {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.ppt-effect-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 4px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  cursor: pointer;
+  text-align: center;
+  transition: all 140ms ease;
+}
+
+.ppt-effect-tile:hover:not(:disabled) {
+  border-color: #2563eb;
+  background: #fff;
+}
+
+.ppt-effect-tile.is-active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 0 0 1px #2563eb;
+}
+
+.ppt-effect-tile:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ppt-effect-thumb {
+  width: 48px;
+  height: 38px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.ppt-effect-tile.is-active .ppt-effect-thumb {
+  border-color: #bfdbfe;
+}
+
+.ppt-effect-thumb-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: 0.02em;
+}
+
+.ppt-effect-thumb--curve .ppt-effect-thumb-text {
+  transform: translateY(2px) scaleY(0.9);
+  border-bottom: 2px solid #2563eb;
+  border-radius: 50%;
+  padding-bottom: 2px;
+}
+
+.ppt-effect-thumb--circle .ppt-effect-thumb-text {
+  font-size: 11px;
+  border: 2px solid #2563eb;
+  border-radius: 50%;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+}
+
+.ppt-effect-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.ppt-effect-tile.is-active .ppt-effect-label {
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.ppt-effect-params {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+.ppt-props-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.ppt-effect-reset-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #475569;
+  flex-shrink: 0;
+  transition: all 120ms ease;
+}
+
+.ppt-effect-reset-btn:hover:not(:disabled) {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+

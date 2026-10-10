@@ -24,8 +24,19 @@ const TOOLS = [
 
 const FILTER_PRESETS = [
   { id: 'natural', label: 'Natural', value: null },
-  { id: 'warm', label: 'Warm', value: 'sepia(0.25) saturate(1.35) brightness(1.05)' },
-  { id: 'cool', label: 'Cool', value: 'saturate(1.12) brightness(1.02) hue-rotate(-8deg)' },
+  { id: 'warm', label: 'Warm', value: 'sepia(0.28) saturate(1.35) brightness(1.04)' },
+  { id: 'cool', label: 'Cool', value: 'saturate(1.15) brightness(1.02) hue-rotate(-12deg)' },
+  { id: 'vivid', label: 'Vivid', value: 'saturate(1.6) contrast(1.12) brightness(1.05)' },
+  { id: 'vintage', label: 'Vintage', value: 'sepia(0.4) contrast(1.15) brightness(0.95) saturate(1.2)' },
+  { id: 'bw', label: 'B&W', value: 'grayscale(1) contrast(1.15) brightness(1.05)' },
+  { id: 'noir', label: 'Noir', value: 'grayscale(1) contrast(1.65) brightness(0.88)' },
+  { id: 'cinematic', label: 'Cinematic', value: 'contrast(1.2) saturate(1.25) hue-rotate(-6deg) brightness(0.96)' },
+  { id: 'retro', label: 'Retro', value: 'sepia(0.22) contrast(0.92) brightness(1.1) saturate(0.85)' },
+  { id: 'dramatic', label: 'Dramatic', value: 'contrast(1.38) brightness(0.95) saturate(1.2)' },
+  { id: 'golden', label: 'Golden', value: 'sepia(0.38) saturate(1.55) brightness(1.08) hue-rotate(-4deg)' },
+  { id: 'rosy', label: 'Rosy', value: 'sepia(0.18) saturate(1.3) brightness(1.05) hue-rotate(330deg)' },
+  { id: 'cyber', label: 'Cyber', value: 'contrast(1.25) saturate(1.85) hue-rotate(45deg)' },
+  { id: 'pastel', label: 'Pastel', value: 'saturate(0.65) brightness(1.12) contrast(0.94)' },
 ]
 
 const SHADOW_PRESETS = [
