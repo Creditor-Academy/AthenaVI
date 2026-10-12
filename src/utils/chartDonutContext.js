@@ -2,6 +2,8 @@
  * Chart donut context — Donut chart on left + context panel on right.
  * Layout id: chart_donut_context_v1.
  */
+import { textForSlot } from './contentContract.js'
+import { isCatalogPlaceholderText } from './catalogPlaceholder.js'
 
 export const CDC_GEOM = {
   viewW: 1000,
@@ -455,12 +457,20 @@ const plainTextFromContent = (content = {}) => {
   return ''
 }
 
-const filledContent = (el, slotId, style) => {
-  const sid = String(slotId || '')
+const filledContent = (el, slotId, style, content = null, schema = null) => {
+  const sid = String(slotId || '').toUpperCase()
+  const fromContent =
+    content && schema ? String(textForSlot(sid, content, schema) || '').trim() : ''
   const existing = plainTextFromContent(el?.content)
-  const text = existing && existing.toLowerCase() !== 'double-click to edit'
-    ? existing
-    : (CDC_DEFAULTS[sid] || existing)
+  const existingOk =
+    existing &&
+    existing.toLowerCase() !== 'double-click to edit' &&
+    !isCatalogPlaceholderText(existing) &&
+    !/^metric [abcd]$/i.test(existing.trim())
+  let text = fromContent || (existingOk ? existing : '')
+  if (!text && !content) {
+    text = CDC_DEFAULTS[sid] || existing
+  }
   return {
     ...(el?.content || {}),
     ...style,
@@ -481,6 +491,7 @@ const newId = (prefix) => {
 
 export const layoutChartDonutContext = (elements, schema, palette = {}, canvas = {}) => {
   if (!Array.isArray(elements)) return elements
+  const slideContent = canvas?.slideContent || null
   const canvasW = canvas.width || 1920
   const canvasH = canvas.height || 1080
   const sx = canvasW / CDC_GEOM.viewW
@@ -512,7 +523,7 @@ export const layoutChartDonutContext = (elements, schema, palette = {}, canvas =
       role: prev?.role || role || 'body',
       layer: 12,
       placement: { x: box.x, y: box.y, width: box.width, height: box.height, rotation: 0, opacity: 1 },
-      content: filledContent(prev, slotId, style),
+      content: filledContent(prev, slotId, style, slideContent, schema),
     }
   }
 

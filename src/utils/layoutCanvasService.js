@@ -8,6 +8,12 @@ import {
 import { buildContentBySlotIdFromSlideContent, mergeContentBySlotId } from './contentSlotMapping'
 import { isCatalogPlaceholderText } from './catalogPlaceholder'
 import {
+  rebindSlideContent,
+  rebindAndFinalizeSlideElements,
+  slideContentHasStructuredCopy,
+  countPlaceholderHeavyTextSlots,
+} from './rebindSlideContent.js'
+import {
   buildLayoutSchemaMap,
   getDeckLayoutSchema,
   listDeckLayoutIds,
@@ -329,6 +335,42 @@ function needsPricingPlansRehydrate(slide, elements = [], schema = null) {
   return hasWeakPricingPlanElements(elements)
 }
 
+export function needsStructuralCanvasRepair(slide, elements = [], schema = null, opts = {}) {
+  const list = Array.isArray(elements) ? elements : []
+  if (slide?.manuallyEdited && list.length > 0) return false
+
+  const layoutId = slide?.layoutId || slide?.layout_id || schema?.layout_id
+  const slots = Array.isArray(schema?.slots) ? schema.slots : []
+
+  if (slots.length && !list.length) return true
+  if (!list.length) return false
+  if (isTitleCustomLayout(layoutId, schema)) return false
+  if (schemaCanvasSlotMismatch(list, schema)) return true
+  if (processLinnerCanvasMismatch(list, schema)) return true
+  if (needsLegacyBrokenLayout(list, slide?.title)) return true
+
+  if (opts?.deckPackId) {
+    const { placeholders, filled } = countPlaceholderHeavyTextSlots(list, schema)
+    if (placeholders > filled && slideContentHasStructuredCopy(slide?.content)) return false
+    if (hasOverlappingTextPlacements(list) && needsLegacyBrokenLayout(list, slide?.title)) return true
+    return false
+  }
+
+  if (
+    hasOverlappingTextPlacements(list) &&
+    !list.some((el) =>
+      /^TEAM_(FOUR|FIVE|SIX)_(CARD|PHOTO_BG)_|^TEAM_DEPT_(BAR|PILL|RING)_|^TEAM_LEAD_(BAND|CURVE|PANEL|RING|DOT)_|^TEAM_ORG_(HALO|RING|LINE)_/i.test(
+        String(el.slotId || '')
+      )
+    ) &&
+    needsLegacyBrokenLayout(list, slide?.title)
+  ) {
+    return true
+  }
+
+  return false
+}
+
 export function needsLayoutCanvasRepair(slide, elements = [], schema = null, opts = {}) {
   const list = Array.isArray(elements) ? elements : []
   // Generation can leave a slide with an empty canvas (flagged manuallyEdited by a later save);
@@ -338,22 +380,8 @@ export function needsLayoutCanvasRepair(slide, elements = [], schema = null, opt
   const layoutId = slide?.layoutId || slide?.layout_id || schema?.layout_id
   if (needsPricingPlansRehydrate(slide, list, schema)) return true
 
-  if (opts?.deckPackId) {
-    if (isTitleCustomLayout(layoutId, schema)) return false
-    return hasOverlappingTextPlacements(list)
-  }
-  const slots = Array.isArray(schema?.slots) ? schema.slots : []
-
-  if (slots.length && !list.length) return true
-  if (!list.length) return false
-
-  if (isTitleCustomLayout(layoutId, schema)) return false
-
-  if (hasOverlappingTextPlacements(list) && !list.some((el) => /^TEAM_(FOUR|FIVE|SIX)_(CARD|PHOTO_BG)_|^TEAM_DEPT_(BAR|PILL|RING)_|^TEAM_LEAD_(BAND|CURVE|PANEL|RING|DOT)_|^TEAM_ORG_(HALO|RING|LINE)_/i.test(String(el.slotId || '')))) return true
-  if (needsLegacyBrokenLayout(list, slide?.title)) return true
+  if (needsStructuralCanvasRepair(slide, list, schema, opts)) return true
   if (needsContentHydration(slide, list)) return true
-  if (schemaCanvasSlotMismatch(list, schema)) return true
-  if (processLinnerCanvasMismatch(list, schema)) return true
 
   return false
 }
@@ -433,19 +461,7 @@ function isEmptyCanvasText(text) {
 
 function needsContentHydration(slide, elements = []) {
   const content = slide?.content && typeof slide.content === 'object' ? slide.content : {}
-  const hasCopy = Boolean(
-    String(content.body || content.summary || content.cta || content.subtitle || '').trim() ||
-      (Array.isArray(content.bullets) && content.bullets.length) ||
-      (Array.isArray(content.columns) && content.columns.length) ||
-      (Array.isArray(content.members) && content.members.length) ||
-      (Array.isArray(content.team) && content.team.length) ||
-      (Array.isArray(content.people) && content.people.length) ||
-      (Array.isArray(content.diagram?.cells) && content.diagram.cells.length) ||
-      (Array.isArray(content.cells) && content.cells.length) ||
-      (Array.isArray(content.funnel) && content.funnel.length) ||
-      (Array.isArray(content.plans) && content.plans.length >= 2) ||
-      content.chart
-  )
+  const hasCopy = slideContentHasStructuredCopy(content)
   if (hasCopy) {
     const emptyText = elements.some(
       (el) =>
@@ -587,14 +603,31 @@ export async function applyCompiledLayoutToSlide({
     fonts,
     typeScale,
   })
-  const elements = compileDeckLayoutToElements(smartSchema, {
-    canvas,
-    ...compileOptions,
-    contentBySlotId,
-    content,
-    skipContentValidation: skipContentValidation === true,
-    debugGeometry: import.meta.env?.DEV === true,
-  })
+
+  const existingElements = Array.isArray(mergeFromElements) ? mergeFromElements : []
+  const slideStub = { content, title: content.title || slideTitle, manuallyEdited: false }
+  const structural = needsStructuralCanvasRepair(slideStub, existingElements, smartSchema)
+  const canRebind =
+    existingElements.length > 0 &&
+    !structural &&
+    slideContentHasStructuredCopy(content)
+
+  let elements
+  if (canRebind) {
+    elements = await rebindAndFinalizeSlideElements(existingElements, content, smartSchema, {
+      palette: compileOptions.palette || palette || {},
+      canvas,
+    })
+  } else {
+    elements = compileDeckLayoutToElements(smartSchema, {
+      canvas,
+      ...compileOptions,
+      contentBySlotId,
+      content,
+      skipContentValidation: skipContentValidation === true,
+      debugGeometry: import.meta.env?.DEV === true,
+    })
+  }
 
   const canvasDoc = buildCanvasDoc(null, {
     aspectRatio,
@@ -668,34 +701,96 @@ export async function repairPresentationLayoutSlides({
   return results.some((r) => r.status === 'fulfilled' && r.value)
 }
 
-/** In-editor safety net: recompile tier text from slide.content.plans when PLAN slots are empty. */
-export function rehydratePricingSlideElementsLocally(
+/** In-editor sync: rebind text only (geometry already finalized from backend). */
+export function rebindSlideContentLocally(slide, schema, { aspectRatio = '16:9', themeTokens = null, palette = null } = {}) {
+  const elements = slide?.elements?.elements || []
+  if (!schema?.slots?.length) return slide
+
+  const content = {
+    ...(slide.content && typeof slide.content === 'object' ? slide.content : {}),
+    ...(slide.title && !(slide.content && slide.content.title) ? { title: slide.title } : {}),
+  }
+  if (!slideContentHasStructuredCopy(content)) return slide
+
+  const { placeholders, filled } = countPlaceholderHeavyTextSlots(elements, schema)
+  const needsRebind =
+    needsPricingPlansRehydrate(slide, elements, schema) ||
+    (placeholders > 0 && placeholders >= filled) ||
+    needsContentHydration(slide, elements)
+  if (!needsRebind) return slide
+
+  const canvas = resolveCanvasSize(null, aspectRatio)
+  const smartSchema = resolveSmartLayoutState(schema, content)
+  const compileOptions = buildThemeCompileOptions(themeTokens, { palette })
+  const structural = needsStructuralCanvasRepair(slide, elements, smartSchema)
+  if (structural || !elements.length) return slide
+
+  const nextElements = rebindSlideContent(elements, content, smartSchema, {
+    palette: compileOptions.palette || palette || {},
+    canvas,
+  })
+  const canvasDoc = buildCanvasDoc(null, {
+    aspectRatio,
+    elements: nextElements,
+    backgroundColor: compileOptions.palette?.bg || palette?.bg || slide?.backgroundColor || null,
+  })
+  return { ...slide, elements: canvasDoc }
+}
+
+/** In-editor: rebind slide.content onto canvas when copy is missing but geometry is OK. */
+export async function rebindOrRepairSlideLocally(
   slide,
   schema,
   { aspectRatio = '16:9', themeTokens = null, palette = null } = {}
 ) {
   const elements = slide?.elements?.elements || []
-  if (!schema?.slots?.length || !needsPricingPlansRehydrate(slide, elements, schema)) {
-    return slide
-  }
-  const canvas = resolveCanvasSize(null, aspectRatio)
+  if (!schema?.slots?.length) return slide
+
   const content = {
     ...(slide.content && typeof slide.content === 'object' ? slide.content : {}),
     ...(slide.title && !(slide.content && slide.content.title) ? { title: slide.title } : {}),
   }
+  if (!slideContentHasStructuredCopy(content)) return slide
+
+  const { placeholders, filled } = countPlaceholderHeavyTextSlots(elements, schema)
+  const pricingRehydrate = needsPricingPlansRehydrate(slide, elements, schema)
+  const needsRebind =
+    pricingRehydrate ||
+    (placeholders > 0 && placeholders >= filled) ||
+    needsContentHydration(slide, elements)
+
+  if (!needsRebind) return slide
+
+  const canvas = resolveCanvasSize(null, aspectRatio)
   const smartSchema = resolveSmartLayoutState(schema, content)
   const compileOptions = buildThemeCompileOptions(themeTokens, { palette })
-  const compiled = compileDeckLayoutToElements(smartSchema, {
-    canvas,
-    ...compileOptions,
-    content,
-    contentBySlotId: buildContentBySlotIdFromSlideContent(content, smartSchema),
-    skipContentValidation: true,
-  })
+  const structural = needsStructuralCanvasRepair(slide, elements, smartSchema)
+
+  let nextElements
+  if (!structural && elements.length) {
+    nextElements = await rebindAndFinalizeSlideElements(elements, content, smartSchema, {
+      palette: compileOptions.palette || palette || {},
+      canvas,
+    })
+  } else {
+    nextElements = compileDeckLayoutToElements(smartSchema, {
+      canvas,
+      ...compileOptions,
+      content,
+      contentBySlotId: buildContentBySlotIdFromSlideContent(content, smartSchema),
+      skipContentValidation: true,
+    })
+  }
+
   const canvasDoc = buildCanvasDoc(null, {
     aspectRatio,
-    elements: compiled,
+    elements: nextElements,
     backgroundColor: compileOptions.palette?.bg || palette?.bg || slide?.backgroundColor || null,
   })
   return { ...slide, elements: canvasDoc }
+}
+
+/** @deprecated Use rebindOrRepairSlideLocally */
+export function rehydratePricingSlideElementsLocally(slide, schema, opts = {}) {
+  return rebindOrRepairSlideLocally(slide, schema, opts)
 }

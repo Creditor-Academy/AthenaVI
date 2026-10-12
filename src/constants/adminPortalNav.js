@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Building2, BarChart3, Video, HardDrive, Shield, Mail, UserCheck, LayoutTemplate, Shapes, Settings } from 'lucide-react'
+import { LayoutDashboard, Users, Building2, BarChart3, Video, HardDrive, Shield, Mail, LayoutTemplate, Shapes, Settings } from 'lucide-react'
 
 export const adminPortalSidebarGroups = [
   {
@@ -13,7 +13,6 @@ export const adminPortalSidebarGroups = [
       { id: 'users', label: 'Users', Icon: Users },
       { id: 'workspaces', label: 'Workspaces', Icon: Building2 },
       { id: 'storage-requests', label: 'Storage Queue', Icon: HardDrive, badgeKey: 'pendingStorageCount' },
-      { id: 'early-access', label: 'Early Access', Icon: UserCheck, badgeKey: 'pendingEarlyAccessCount' },
     ],
   },
   {

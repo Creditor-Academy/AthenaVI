@@ -7,6 +7,7 @@ import {
   coerceSlotText,
   clampSlotText,
 } from './contentContract.js'
+import { runContentPreShape } from './contentPreShape.util.js'
 
 const NON_TEXT_SLOT_ROLES = new Set(['image', 'chart', 'decoration', 'background', 'table'])
 
@@ -98,11 +99,48 @@ function mapChartToSlots(content, schema, out) {
   })
 }
 
+function mapDonutContextMetrics(content, schema, out) {
+  const layoutId = String(schema?.layout_id || '').toLowerCase()
+  if (!/chart_donut_context/.test(layoutId)) return
+
+  const chart = content?.chart && typeof content.chart === 'object' ? content.chart : null
+  const labels = chart?.labels || chart?.series?.[0]?.labels || []
+  const values =
+    chart?.series?.[0]?.values ||
+    chart?.values ||
+    chart?.data ||
+    (Array.isArray(content.stats) ? content.stats.map((s) => s?.value ?? s?.number) : [])
+
+  const ids = ['A', 'B', 'C', 'D']
+  ids.forEach((id, index) => {
+    const stat = Array.isArray(content.stats) ? content.stats[index] : null
+    const label = String(
+      stat?.label ?? stat?.title ?? labels[index] ?? out[`METRIC_${id}_LABEL`] ?? ''
+    ).trim()
+    const rawVal = stat?.value ?? stat?.number ?? values[index]
+    const value =
+      rawVal != null && rawVal !== ''
+        ? String(rawVal).includes('%')
+          ? String(rawVal)
+          : `${rawVal}%`
+        : ''
+    const desc = String(stat?.body ?? stat?.description ?? stat?.text ?? '').trim()
+    if (label) out[`METRIC_${id}_LABEL`] = label
+    if (value) out[`METRIC_${id}_VALUE`] = value
+    if (desc) out[`METRIC_${id}_DESC`] = desc
+  })
+
+  if (content.title) out.PANEL_HEADING = out.PANEL_HEADING || content.title
+  const insight = String(content.body || content.summary || '').trim()
+  if (insight) out.PANEL_SUBHEADING = out.PANEL_SUBHEADING || insight
+}
+
 export function buildContentBySlotIdFromSlideContent(rawContent = {}, schema = null) {
   const out = {}
   if (!rawContent || typeof rawContent !== 'object') return out
 
-  const content = normalizeContentForLayout(rawContent, schema)
+  const shaped = runContentPreShape(rawContent, schema)
+  const content = normalizeContentForLayout(shaped, schema)
   const slots = Array.isArray(schema?.slots) ? schema.slots : []
   const contract = deriveContentContract(schema)
 
@@ -117,6 +155,7 @@ export function buildContentBySlotIdFromSlideContent(rawContent = {}, schema = n
 
   applyContentAliases(content, out)
   mapChartToSlots(content, schema, out)
+  mapDonutContextMetrics(content, schema, out)
 
   const members = Array.isArray(content.members)
     ? content.members

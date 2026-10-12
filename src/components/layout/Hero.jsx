@@ -381,11 +381,11 @@ function Hero({ onContactSalesClick }) {
               className="btn-primary"
               onClick={(e) => {
                 e.preventDefault();
-                window.history.pushState({ view: 'early-access' }, '', '/early-access');
+                window.history.pushState({ view: 'login' }, '', '/signup');
                 window.dispatchEvent(new PopStateEvent('popstate'));
               }}
             >
-              Request Early Access
+              Get Started Free
               <MdArrowOutward />
             </button>
             <button 

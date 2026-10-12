@@ -81,11 +81,16 @@ export function comparisonTableGeom(canvasW = 1920, canvasH = 1080, isGrid = fal
   return geom
 }
 
-const COLORS = {
-  leftHeader: '#7dd3fc',
-  leftRows: ['#f0f9ff', '#e0f2fe', '#bae6fd'],
-  rightHeader: '#fdba74',
-  rightRows: ['#fff7ed', '#ffedd5', '#fed7aa']
+function resolveComparisonColors(palette = {}) {
+  const primary = palette.primary || palette.accent || '#6366F1'
+  const muted = palette.muted || palette.surfaceMuted || '#E5E7EB'
+  const surface = palette.surface || palette.card || '#F9FAFB'
+  return {
+    leftHeader: palette.comparisonLeft || primary,
+    leftRows: [surface, muted, surface],
+    rightHeader: palette.comparisonRight || palette.secondary || primary,
+    rightRows: [surface, muted, surface],
+  }
 }
 
 function renderPillarSvg(w, h) {
@@ -137,6 +142,7 @@ export function layoutComparisonTable(docOrElements, schema, themeTokens, canvas
   const isGrid = /grid/i.test(layoutId)
   const g = comparisonTableGeom(canvasW, canvasH, isGrid)
   const radius = isGrid ? 0 : 16
+  const COLORS = resolveComparisonColors(themeTokens?.palette || themeTokens || {})
   
   let out = []
 
