@@ -257,8 +257,19 @@ export default function ImageGenContextAttach({
         assetId: asset.id,
       })
     })
+    ;(context?.localImages || []).forEach((img, idx) => {
+      const src = img?.src || img?.url
+      if (!src) return
+      thumbs.push({
+        id: `local-${idx}-${src}`,
+        src,
+        name: img.name || 'Library image',
+        kind: 'local',
+        index: idx,
+      })
+    })
     return thumbs.filter((t) => t.src)
-  }, [pendingFiles, pendingAssets, filePreviewUrls])
+  }, [pendingFiles, pendingAssets, filePreviewUrls, context?.localImages])
 
   const pendingDocCount = pendingFiles.filter((f) => !isImageFile(f)).length
 
@@ -361,6 +372,10 @@ export default function ImageGenContextAttach({
   const removeThumb = (thumb) => {
     if (thumb.kind === 'file') removePendingFile(thumb.index)
     else if (thumb.kind === 'asset') removePendingAsset(thumb.assetId)
+    else if (thumb.kind === 'local') {
+      const next = (context?.localImages || []).filter((_, i) => i !== thumb.index)
+      onContextChange?.({ ...(context || {}), localImages: next })
+    }
   }
 
   const openLibrary = async () => {
@@ -606,12 +621,17 @@ export default function ImageGenContextAttach({
             <button
               type="button"
               className="igc-thumb-open"
-              disabled={disabled}
+              disabled={disabled || context?.attaching}
               onClick={() => setExpandedThumb(thumb)}
               aria-label={`Expand ${thumb.name}`}
-              title="Click to expand"
+              title={context?.attaching ? 'Adding image' : 'Click to expand'}
             >
               <img src={thumb.src} alt={thumb.name} />
+              {context?.attaching && (
+                <span className="igc-thumb-loading" aria-hidden>
+                  <Loader2 size={16} className="spinning" />
+                </span>
+              )}
             </button>
             <button
               type="button"

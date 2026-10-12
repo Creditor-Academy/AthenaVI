@@ -58,7 +58,7 @@ function saveBlob(blob, filename) {
   document.body.appendChild(a)
   a.click()
   a.remove()
-  URL.revokeObjectURL(url)
+  setTimeout(() => URL.revokeObjectURL(url), 2000)
 }
 
 function crc32(bytes) {
@@ -501,7 +501,9 @@ class ImageGenService {
     if (!entries.length) {
       throw new Error('Nothing to zip')
     }
-    saveBlob(buildZip(entries), 'athena-images.zip')
+    const zip = buildZip(entries)
+    if (options.save !== false) saveBlob(zip, 'athena-images.zip')
+    return zip
   }
 }
 

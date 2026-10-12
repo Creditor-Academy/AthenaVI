@@ -166,6 +166,7 @@ export default function AIConversationalStudio({
   onOpenBilling,
   onNewChat = null,
   onOpenLibrary = null,
+  onStartChatFromLibrary = null,
   onSelectThread = null,
   createContext = null,
   initialPrompt = '',
@@ -578,6 +579,7 @@ export default function AIConversationalStudio({
         setActiveGenIndex(next.length - 1);
         return next;
       });
+      setImageContext(null);
 
       // Refresh credits
       try {
@@ -1175,6 +1177,7 @@ export default function AIConversationalStudio({
               setStudioView('chat');
               onSelectThread?.(id);
             }}
+            onStartChat={(payload) => onStartChatFromLibrary?.(payload)}
           />
         ) : (
         <div className="conv-chat-feed-container" style={{ width: '100%', paddingBottom: '40px' }}>

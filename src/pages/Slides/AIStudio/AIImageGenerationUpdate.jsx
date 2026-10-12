@@ -602,7 +602,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
   };
 
   const tryLaunchStudio = async () => {
-    if (!prompt.trim() || creditsBusy) return;
+    if (!prompt.trim() || creditsBusy || imageContext?.attaching) return;
     if ((activeMode === 'social' || activeMode === 'printable') && !selectedFormat) return;
     const wsId = saveWorkspaceId || createContext?.workspaceId || createContext?.config?.workspaceId;
     if (!wsId) {
@@ -810,6 +810,32 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
     if (nextFormat?.id) setSelectedFormat(nextFormat.id);
   };
 
+  const startChatFromLibrary = async ({ mode, images }) => {
+    const localImages = (images || [])
+      .map((img) => ({ name: img.name || 'Library image', src: img.src }))
+      .filter((img) => img.src);
+    switchStudioMode(mode);
+    setActiveThreadId(null);
+    setLaunchStudio(false);
+    setPrompt('');
+    if (!localImages.length) {
+      setImageContext(null);
+      return;
+    }
+    setImageContext({ localImages, attaching: true });
+    const assetIds = (images || []).map((img) => img.assetId).filter(Boolean).slice(0, 5);
+    if (saveWorkspaceId && assetIds.length) {
+      try {
+        const created = await imageGenService.createContext(saveWorkspaceId, { assetIds });
+        setImageContext({ ...created, localImages, attaching: false });
+        return;
+      } catch (err) {
+        console.error('Could not attach library images', err);
+      }
+    }
+    setImageContext({ localImages, attaching: false });
+  };
+
   const socialDestinations = socialDestinationsFrom(catalogs.formats);
   const selectedSocial = socialDestinations.find((d) => d.id === selectedFormat);
   const GENERIC_FORMAT_IDS = ['square', 'landscape', 'portrait', 'landscape-16-9', 'portrait-9-16'];
@@ -822,7 +848,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
   const printFormats = printablesFrom(catalogs.formats);
   const selectedPrint = printFormats.find((f) => f.id === selectedFormat);
   const needsSizePick = activeMode === 'social' || activeMode === 'printable';
-  const canGenerate = Boolean(prompt.trim()) && !creditsBusy && (!needsSizePick || Boolean(selectedFormat));
+  const canGenerate = Boolean(prompt.trim()) && !creditsBusy && !imageContext?.attaching && (!needsSizePick || Boolean(selectedFormat));
 
   useEffect(() => {
     if (selectedFormat === 'invitation-a6-landscape') {
@@ -869,6 +895,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
           setActiveThreadId(null);
           setActiveMode('library');
         }}
+        onStartChatFromLibrary={startChatFromLibrary}
         onSelectThread={(id) => {
           setActiveThreadId(id);
           setLaunchStudio(true);
@@ -1043,6 +1070,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
 
       {/* Main Content */}
       <main className={`ai-gen-main${activeMode === 'infographic' && isComposerExpanded ? ' composer-open' : ''}`} style={{ position: 'relative' }}>
+        {activeMode !== 'library' && (
         <div className="ai-gen-save-corner">
           <ImageGenSaveLocation
             workspaceId={saveWorkspaceId}
@@ -1050,6 +1078,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
             onChange={handleSaveLocationChange}
           />
         </div>
+        )}
         {activeMode === 'library' ? (
           <WorkspaceImageLibrary 
             workspaceId={saveWorkspaceId || createContext?.workspaceId || createContext?.config?.workspaceId}
@@ -1059,6 +1088,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                 setActiveMode('image');
               }
             }}
+            onStartChat={startChatFromLibrary}
           />
         ) : (
           <>
