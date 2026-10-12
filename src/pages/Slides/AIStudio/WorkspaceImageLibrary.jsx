@@ -15,6 +15,7 @@ const LIBRARY_CATEGORIES = [
   { id: 'infographic', label: 'Infographics' },
   { id: 'social', label: 'Social' },
   { id: 'printable', label: 'Print' },
+  { id: 'liked', label: 'Liked' },
 ];
 
 export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onStartChat, hideTitle = false }) {
@@ -142,8 +143,17 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
     onStartChat?.({ mode, images });
   };
 
-  const deleteSelectedLocally = () => {
+  const deleteSelectedLocally = async () => {
     const drop = new Set(selectedIds);
+    const ids = selected.map((gen) => gen.id).filter(Boolean);
+    if (workspaceId && ids.length) {
+      try {
+        await imageGenService.hideGenerations(workspaceId, ids);
+      } catch (err) {
+        console.error('Library hide failed:', err);
+        return;
+      }
+    }
     setGenerations((rows) => rows.filter((gen, idx) => !drop.has(gen.id || idx)));
     clearSelection();
   };
@@ -734,7 +744,9 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
         }}
       >
         {generations.filter((gen) => {
-          if (category !== 'all' && String(gen.mode || 'image').toLowerCase() !== category) return false;
+          if (category === 'liked') {
+            if (gen.feedback !== 'LIKE') return false;
+          } else if (category !== 'all' && String(gen.mode || 'image').toLowerCase() !== category) return false;
           const q = query.trim().toLowerCase();
           if (!q) return true;
           return `${gen.prompt || ''} ${gen.title || ''}`.toLowerCase().includes(q);

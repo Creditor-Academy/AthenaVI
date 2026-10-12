@@ -208,6 +208,9 @@ const API_CONFIG = {
         `/api/image-gen/workspaces/${workspaceId}/generations/${generationId}/tweak`,
       DOWNLOAD: (workspaceId, generationId) =>
         `/api/image-gen/workspaces/${workspaceId}/generations/${generationId}/download`,
+      FEEDBACK: (workspaceId, generationId) =>
+        `/api/image-gen/workspaces/${workspaceId}/generations/${generationId}/feedback`,
+      HIDE: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/generations/hide`,
       THREADS: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/threads`,
       THREAD: (workspaceId, threadId) =>
         `/api/image-gen/workspaces/${workspaceId}/threads/${threadId}`,

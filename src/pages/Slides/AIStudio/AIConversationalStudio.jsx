@@ -468,7 +468,7 @@ export default function AIConversationalStudio({
           try {
             const full = await imageGenService.getGeneration(activeWs, g.id);
             const images = await resolveContextImages(activeWs, null, full);
-            return { ...g, raw: full, contextImages: images };
+            return { ...g, raw: full, feedback: full?.feedback || null, contextImages: images };
           } catch {
             return g;
           }
@@ -476,6 +476,14 @@ export default function AIConversationalStudio({
       );
 
       setGenerations(withRefs);
+      setUserFeedback((prev) => {
+        const next = { ...prev };
+        withRefs.forEach((g) => {
+          if (g.feedback === 'LIKE') next[g.id] = 'like';
+          else if (g.feedback === 'DISLIKE') next[g.id] = 'dislike';
+        });
+        return next;
+      });
       setActiveGenIndex(loadedGens.length - 1);
       setConversation(chatItems);
       const head = data?.thread || data?.head || withRefs[0]?.raw || {};
@@ -1261,8 +1269,16 @@ export default function AIConversationalStudio({
                   )}
                   
                   <div className="conv-actions-bar-icons slide-in-bottom" style={{ width: '100%', display: 'flex', gap: '8px', position: 'relative' }}>
-                     <button className={`conv-action-icon-btn ${userFeedback[gen.id] === 'like' ? 'active' : ''}`} title="Like" onClick={() => setUserFeedback(prev => ({...prev, [gen.id]: 'like'}))}><ThumbsUp size={16}/></button>
-                     <button className={`conv-action-icon-btn ${userFeedback[gen.id] === 'dislike' ? 'active' : ''}`} title="Dislike" onClick={() => setUserFeedback(prev => ({...prev, [gen.id]: 'dislike'}))}><ThumbsDown size={16}/></button>
+                     <button className={`conv-action-icon-btn ${userFeedback[gen.id] === 'like' ? 'active' : ''}`} title="Like" onClick={() => {
+                       const next = userFeedback[gen.id] === 'like' ? null : 'LIKE';
+                       setUserFeedback(prev => ({...prev, [gen.id]: next === 'LIKE' ? 'like' : undefined}));
+                       if (workspaceId && gen.id) imageGenService.setFeedback(workspaceId, gen.id, next).catch((err) => console.error('Save like failed', err));
+                     }}><ThumbsUp size={16}/></button>
+                     <button className={`conv-action-icon-btn ${userFeedback[gen.id] === 'dislike' ? 'active' : ''}`} title="Dislike" onClick={() => {
+                       const next = userFeedback[gen.id] === 'dislike' ? null : 'DISLIKE';
+                       setUserFeedback(prev => ({...prev, [gen.id]: next === 'DISLIKE' ? 'dislike' : undefined}));
+                       if (workspaceId && gen.id) imageGenService.setFeedback(workspaceId, gen.id, next).catch((err) => console.error('Save dislike failed', err));
+                     }}><ThumbsDown size={16}/></button>
                      <div style={{ width: '1px', height: '24px', background: '#e2e8f0', margin: '0 8px' }}></div>
                      <button className="conv-action-icon-btn" title="Share" onClick={() => handleShare(gen)}><Share2 size={16}/></button>
                      <button className="conv-action-icon-btn" title="Regenerate" onClick={() => handleRegenerate(gen)}><RotateCcw size={16}/></button>

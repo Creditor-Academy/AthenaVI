@@ -362,6 +362,21 @@ class ImageGenService {
     return data?.generations || []
   }
 
+  async setFeedback(workspaceId, generationId, feedback) {
+    const data = await this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.FEEDBACK(workspaceId, generationId), {
+      method: 'PATCH',
+      body: JSON.stringify({ feedback }),
+    })
+    return data?.feedback || data
+  }
+
+  async hideGenerations(workspaceId, ids) {
+    return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.HIDE(workspaceId), {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    })
+  }
+
   async getGeneration(workspaceId, generationId) {
     const data = await this.request(
       API_CONFIG.ENDPOINTS.IMAGE_GEN.GENERATION(workspaceId, generationId)
