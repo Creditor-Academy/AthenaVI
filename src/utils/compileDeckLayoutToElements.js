@@ -9,6 +9,13 @@ import { buildContentBySlotIdFromSlideContent, mergeContentBySlotId } from './co
 import { validateContentForLayout, ContentContractValidationError } from './contentContract.js'
 import { fontSizeForTextSlot, resolveTypeScaleFontSize, fitTextToSlot } from './canvasTypography.js'
 import {
+  isFullBleedImageTitleLayout,
+  isSplitHeroTitleLayout,
+  resolveSlotTextSurface,
+  isImageOverlaySurface,
+} from './artDirection/textSurface.js'
+import { resolveHeadingTypography } from './artDirection/resolveHeadingTypography.js'
+import {
   compileLayoutGeometry,
   getSlotPlacement,
   geometrySnapshot,
@@ -403,7 +410,40 @@ function resolveShapeFill(shapeSpec, palette = null) {
   }
 }
 
-function isOverlayLayout(schema) {
+function mergeDesignTokensWithTheme(designTokens, themeTokens, schema) {
+  const overlay = isOverlayLayout(schema, designTokens)
+  const defaults = themeTokens?.overlayDefaults || {}
+  if (!overlay) return designTokens || null
+  return {
+    backgroundStyle: designTokens?.backgroundStyle || defaults.backgroundStyle || 'image',
+    overlayOpacity:
+      designTokens?.overlayOpacity != null
+        ? designTokens.overlayOpacity
+        : defaults.overlayOpacity != null
+          ? defaults.overlayOpacity
+          : 0.45,
+    textContrast: designTokens?.textContrast || defaults.textContrast || 'high',
+  }
+}
+
+function overlayColorRoleForSlot(role, ty = {}, overlayActive) {
+  if (!overlayActive) return null
+  if (ty.colorRole === 'textOnImage' || ty.colorRole === 'textOnImageMuted') return ty.colorRole
+  if (ty.textSurface === 'card' || ty.surface === 'card') return null
+  if (role === 'caption' || role === 'eyebrow' || role === 'subheading' || role === 'body') {
+    return 'textOnImageMuted'
+  }
+  return 'textOnImage'
+}
+
+function isOverlayLayout(schema, designTokens = null) {
+  if (designTokens?.backgroundStyle === 'image' || designTokens?.textContrast === 'high') {
+    return true
+  }
+  if (isFullBleedImageTitleLayout(schema)) return true
+  if (String(schema?.content_type || '').toLowerCase() === 'title' && isSplitHeroTitleLayout(schema)) {
+    return true
+  }
   if (isTitleFullbleedOverlayLayout(schema?.layout_id, schema)) return false
   if (isTitleFullbleedLayout(schema?.layout_id, schema)) return false
   if (isWideImageStatementOverlayLayout(schema?.layout_id, schema)) return false
@@ -412,7 +452,7 @@ function isOverlayLayout(schema) {
   const layoutId = String(schema?.layout_id || '')
   const slots = Array.isArray(schema?.slots) ? schema.slots : []
   if (slots.some((s) => s.id === 'BACKGROUND_IMAGE' || /OVERLAY_SCRIM/i.test(String(s.id || '')))) return true
-  return /full_bg|overlay|statement_top|statement_bottom/i.test(layoutId)
+  return /full_bg|overlay|statement_top|statement_bottom|title_hero|title_fullbleed/i.test(layoutId)
 }
 
 const TEXT_ROLES = new Set([
@@ -957,27 +997,54 @@ function buildTextElement(slot, placement, options) {
   const role = slot.role || 'body'
   let text = resolveSlotText(slot, contentBySlotId, schema, options)
   const ty = slot.typography || {}
-  const overlay = isOverlayLayout(schema)
+  const themeTokens = options.themeTokens || options.theme || null
+  const mergedDesignTokens = mergeDesignTokensWithTheme(
+    options.designTokens || options.slideDesignPlan?.designTokens,
+    themeTokens,
+    schema
+  )
+  let overlay = isOverlayLayout(schema, mergedDesignTokens)
+  const textSurface = resolveSlotTextSurface(slot, schema, mergedDesignTokens, themeTokens)
+  if (isImageOverlaySurface(textSurface)) overlay = true
   const pad = textPaddingForRole(role, slot)
+  const headingTy = resolveHeadingTypography({
+    slot,
+    layoutSchema: schema,
+    themeTokens,
+    placement,
+    canvasWidth: options.canvasWidth || options.width || 1920,
+    canvasFontSizeForTextSlot: fontSizeForTextSlot,
+    resolveTypeScaleFontSize,
+    styleForSlotFallback: null,
+  })
   const fitted = fitTextToSlot(text, slot, placement, {
     ...options,
     contentPadding: pad,
+    preferredFontSize: headingTy.fontSize,
   })
   text = fitted.text
-  const fontSize = fitted.fontSize
+  const fontSize = fitted.fontSize ?? headingTy.fontSize
   const verticalAlign =
     ty.verticalAlign ||
     slot.verticalAlign ||
     (role === 'stat' || role === 'stat_label' ? 'center' : 'flex-start')
   const colorMap = colorRoleMapFromPalette(options.palette)
   let colorRole = ty.colorRole || null
+  if (
+    isImageOverlaySurface(textSurface) &&
+    colorRole &&
+    (colorRole === 'text' || colorRole === 'muted') &&
+    !ty.textSurface &&
+    !ty.surface
+  ) {
+    colorRole = null
+  }
   if (!colorRole) {
-    if (role === 'stat') {
+    const overlayRole = overlayColorRoleForSlot(role, ty, overlay)
+    if (overlayRole) {
+      colorRole = overlayRole
+    } else if (role === 'stat') {
       colorRole = 'accent'
-    } else if (overlay && (role === 'caption' || role === 'eyebrow' || role === 'subheading' || role === 'body')) {
-      colorRole = 'textOnImageMuted'
-    } else if (overlay) {
-      colorRole = 'textOnImage'
     } else if (role === 'caption' || role === 'eyebrow' || role === 'stat_label' || role === 'body') {
       colorRole = 'muted'
     } else {
@@ -988,8 +1055,8 @@ function buildTextElement(slot, placement, options) {
     colorRole = 'accent'
   }
   if (overlay && (colorRole === 'text' || colorRole === 'muted')) {
-    colorRole =
-      role === 'body' || role === 'caption' || role === 'subheading' ? 'textOnImageMuted' : 'textOnImage'
+    const overlayRole = overlayColorRoleForSlot(role, ty, overlay)
+    if (overlayRole) colorRole = overlayRole
   }
   // Prioritize explicit color from typography, otherwise use colorRole mapping
   const color = ty.color || colorMap[colorRole] || colorMap.text
@@ -1913,7 +1980,12 @@ export function compileDeckLayoutToElements(schema, options = {}) {
     themedPalette
   )
   result = finalizeTimelineShapes(result, schema, colorMap, { width: canvasW, height: canvasH })
-  result = finalizeChartShapes(result, schema, colorMap, { width: canvasW, height: canvasH })
+  result = finalizeChartShapes(result, schema, colorMap, {
+    width: canvasW,
+    height: canvasH,
+    slideContent: options.content,
+    themeTokens: compileOptions?.themeTokens || compileOptions?.theme || null,
+  })
   result = applyThemeSlideBackground(result, themedPalette, canvasW, canvasH)
   result = applyReadableTextContrastForPreview(result, colorRoleMapFromPalette(options.palette), schema)
   if (options.packColumnStacks === true) {

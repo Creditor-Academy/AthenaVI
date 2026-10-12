@@ -4,6 +4,9 @@
  *  2) Feature Single-Surface Layout (`grid_device_mockups_feature_v1`)
  */
 
+import { textForSlot } from './contentContract.js'
+import { isCatalogPlaceholderText, isLayoutEngineDefaultText } from './catalogPlaceholder.js'
+
 export const GDM_CANVAS = {
   w: 1920,
   h: 1080,
@@ -100,6 +103,61 @@ const cardBorderColor = (palette = {}) => {
 
 const newId = (prefix) => `${prefix}-${Math.random().toString(36).slice(2, 9)}`
 
+function plainTextFromEl(el) {
+  const c = el?.content
+  if (typeof c?.text === 'string' && c.text.trim()) return c.text.trim()
+  return ''
+}
+
+function gdmColsFromContent(slideContent) {
+  if (!slideContent) return []
+  if (Array.isArray(slideContent.columns) && slideContent.columns.length) return slideContent.columns
+  if (Array.isArray(slideContent.features) && slideContent.features.length) return slideContent.features
+  if (Array.isArray(slideContent.cards) && slideContent.cards.length) return slideContent.cards
+  return []
+}
+
+function gdmFeatureField(slotId, slideContent, schema, prevEl, previewOnly) {
+  const sid = String(slotId || '').replace(/^slot-/, '').toUpperCase()
+  if (slideContent && schema) {
+    const fromSlot = String(textForSlot(sid, slideContent, schema) || '').trim()
+    if (fromSlot && !isLayoutEngineDefaultText(fromSlot)) return fromSlot
+  }
+  const cols = gdmColsFromContent(slideContent)
+  const idxMap = {
+    FEATURE_1_TITLE: [0, 'title'],
+    FEATURE_TITLE: [0, 'title'],
+    FEATURE_1_BODY: [0, 'body'],
+    FEATURE_BODY: [0, 'body'],
+    FEATURE_2_TITLE: [1, 'title'],
+    FEATURE_2_BODY: [1, 'body'],
+  }
+  const spec = idxMap[sid]
+  if (spec) {
+    const col = cols[spec[0]]
+    if (col && typeof col === 'object') {
+      const val = String(col[spec[1]] ?? col.text ?? col.description ?? '').trim()
+      if (val) return val
+    }
+  }
+  const existing = plainTextFromEl(prevEl)
+  if (existing && !isLayoutEngineDefaultText(existing) && !isCatalogPlaceholderText(existing)) {
+    return existing
+  }
+  if (previewOnly) return GDM_DEFAULTS[sid] || ''
+  return ''
+}
+
+function gdmFontSizes(themeTokens, sy, variant) {
+  const scale = themeTokens?.typeScale || {}
+  const titleBase = scale.subtitle ?? scale.title ?? (variant === 'feature' ? 38 : 26)
+  const bodyBase = scale.body ?? (variant === 'feature' ? 18 : 14.5)
+  return {
+    title: Math.round(Number(titleBase) * sy),
+    body: Math.round(Number(bodyBase) * sy),
+  }
+}
+
 /**
  * Feature Variant: Single unified slide surface with left-side narrative & laptop,
  * and a tall, prominent mobile phone mockup vertically centered on the right.
@@ -109,6 +167,9 @@ function layoutGridDeviceMockupsFeature(elements, schema, palette = {}, canvas =
   const canvasH = canvas.height || GDM_CANVAS.h
   const sx = canvasW / GDM_CANVAS.w
   const sy = canvasH / GDM_CANVAS.h
+  const slideContent = canvas.slideContent || null
+  const previewOnly = !slideContent
+  const fonts = gdmFontSizes(canvas.themeTokens, sy, 'feature')
 
   const bySlot = new Map(
     elements.map((el) => {
@@ -142,10 +203,10 @@ function layoutGridDeviceMockupsFeature(elements, schema, palette = {}, canvas =
       opacity: 1,
     },
     content: {
-      text: prevTitle?.content?.text || GDM_DEFAULTS.FEATURE_1_TITLE,
+      text: gdmFeatureField('FEATURE_1_TITLE', slideContent, schema, prevTitle, previewOnly),
       align: 'left',
       verticalAlign: 'center',
-      fontSize: Math.round(38 * sy),
+      fontSize: fonts.title,
       fontWeight: 800,
       color: headingInk(palette),
       lineHeight: 1.15,
@@ -170,10 +231,10 @@ function layoutGridDeviceMockupsFeature(elements, schema, palette = {}, canvas =
       opacity: 1,
     },
     content: {
-      text: prevBody?.content?.text || GDM_DEFAULTS.FEATURE_1_BODY,
+      text: gdmFeatureField('FEATURE_1_BODY', slideContent, schema, prevBody, previewOnly),
       align: 'left',
       verticalAlign: 'top',
-      fontSize: Math.round(18 * sy),
+      fontSize: fonts.body,
       fontWeight: 400,
       color: bodyInk(palette),
       lineHeight: 1.55,
@@ -378,6 +439,9 @@ function layoutGridDeviceMockupsDualCards(elements, schema, palette = {}, canvas
   const canvasH = canvas.height || GDM_CANVAS.h
   const sx = canvasW / GDM_CANVAS.w
   const sy = canvasH / GDM_CANVAS.h
+  const slideContent = canvas.slideContent || null
+  const previewOnly = !slideContent
+  const fonts = gdmFontSizes(canvas.themeTokens, sy, 'dual')
 
   const bySlot = new Map(
     elements.map((el) => {
@@ -477,10 +541,10 @@ function layoutGridDeviceMockupsDualCards(elements, schema, palette = {}, canvas
       opacity: 1,
     },
     content: {
-      text: prevF1Title?.content?.text || GDM_DEFAULTS.FEATURE_1_TITLE,
+      text: gdmFeatureField('FEATURE_1_TITLE', slideContent, schema, prevF1Title, previewOnly),
       align: 'left',
       verticalAlign: 'center',
-      fontSize: Math.round(26 * sy),
+      fontSize: fonts.title,
       fontWeight: 800,
       color: headingInk(palette),
       lineHeight: 1.15,
@@ -505,10 +569,10 @@ function layoutGridDeviceMockupsDualCards(elements, schema, palette = {}, canvas
       opacity: 1,
     },
     content: {
-      text: prevF1Body?.content?.text || GDM_DEFAULTS.FEATURE_1_BODY,
+      text: gdmFeatureField('FEATURE_1_BODY', slideContent, schema, prevF1Body, previewOnly),
       align: 'left',
       verticalAlign: 'top',
-      fontSize: Math.round(14.5 * sy),
+      fontSize: fonts.body,
       fontWeight: 400,
       color: bodyInk(palette),
       lineHeight: 1.4,
@@ -536,10 +600,10 @@ function layoutGridDeviceMockupsDualCards(elements, schema, palette = {}, canvas
       opacity: 1,
     },
     content: {
-      text: prevF2Title?.content?.text || GDM_DEFAULTS.FEATURE_2_TITLE,
+      text: gdmFeatureField('FEATURE_2_TITLE', slideContent, schema, prevF2Title, previewOnly),
       align: 'left',
       verticalAlign: 'center',
-      fontSize: Math.round(26 * sy),
+      fontSize: fonts.title,
       fontWeight: 800,
       color: headingInk(palette),
       lineHeight: 1.15,
@@ -564,10 +628,10 @@ function layoutGridDeviceMockupsDualCards(elements, schema, palette = {}, canvas
       opacity: 1,
     },
     content: {
-      text: prevF2Body?.content?.text || GDM_DEFAULTS.FEATURE_2_BODY,
+      text: gdmFeatureField('FEATURE_2_BODY', slideContent, schema, prevF2Body, previewOnly),
       align: 'left',
       verticalAlign: 'top',
-      fontSize: Math.round(14.5 * sy),
+      fontSize: fonts.body,
       fontWeight: 400,
       color: bodyInk(palette),
       lineHeight: 1.4,
