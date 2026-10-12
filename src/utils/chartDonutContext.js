@@ -3,7 +3,11 @@
  * Layout id: chart_donut_context_v1.
  */
 import { textForSlot } from './contentContract.js'
-import { isCatalogPlaceholderText } from './catalogPlaceholder.js'
+import { isCatalogPlaceholderText, isLayoutEngineDefaultText } from './catalogPlaceholder.js'
+import {
+  mapDonutContextMetrics,
+  textForDonutContextSlot,
+} from '../packages/athena-contracts/donutContextMetrics.js'
 
 export const CDC_GEOM = {
   viewW: 1000,
@@ -457,20 +461,20 @@ const plainTextFromContent = (content = {}) => {
   return ''
 }
 
-const filledContent = (el, slotId, style, content = null, schema = null) => {
+const filledContent = (el, slotId, style, slideContent = null, schema = null, previewOnly = false) => {
   const sid = String(slotId || '').toUpperCase()
-  const fromContent =
-    content && schema ? String(textForSlot(sid, content, schema) || '').trim() : ''
+  let text = ''
+  if (slideContent && schema) {
+    text = String(textForDonutContextSlot(sid, slideContent, schema, textForSlot) || '').trim()
+  }
   const existing = plainTextFromContent(el?.content)
   const existingOk =
     existing &&
     existing.toLowerCase() !== 'double-click to edit' &&
     !isCatalogPlaceholderText(existing) &&
-    !/^metric [abcd]$/i.test(existing.trim())
-  let text = fromContent || (existingOk ? existing : '')
-  if (!text && !content) {
-    text = CDC_DEFAULTS[sid] || existing
-  }
+    !isLayoutEngineDefaultText(existing)
+  if (!text && existingOk) text = existing
+  if (!text && previewOnly) text = CDC_DEFAULTS[sid] || existing || ''
   return {
     ...(el?.content || {}),
     ...style,
@@ -523,15 +527,22 @@ export const layoutChartDonutContext = (elements, schema, palette = {}, canvas =
       role: prev?.role || role || 'body',
       layer: 12,
       placement: { x: box.x, y: box.y, width: box.width, height: box.height, rotation: 0, opacity: 1 },
-      content: filledContent(prev, slotId, style, slideContent, schema),
+      content: filledContent(prev, slotId, style, slideContent, schema, !slideContent),
     }
   }
 
+  const mappedMetrics = slideContent ? mapDonutContextMetrics(slideContent, schema, {}) : {}
+
   // Extract metric values to compute dynamic segment angles and labels
   const getMetricVal = (id, fallback) => {
+    const fromMap = mappedMetrics[`METRIC_${id}_VALUE`]
+    if (fromMap) {
+      const parsed = parseFloat(String(fromMap).replace(/[^\d.]/g, ''))
+      if (!Number.isNaN(parsed) && parsed > 0) return parsed
+    }
     const prev = bySlot.get(`METRIC_${id}_VALUE`)
     const txt = plainTextFromContent(prev?.content)
-    if (txt && txt.trim()) {
+    if (txt && txt.trim() && !isLayoutEngineDefaultText(txt)) {
       const parsed = parseFloat(txt.replace(/[^\d.]/g, ''))
       if (!isNaN(parsed) && parsed > 0) return parsed
     }

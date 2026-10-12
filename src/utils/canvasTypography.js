@@ -117,10 +117,12 @@ export function fitTextToSlot(text, slot, placement, options = {}) {
           : 4)
 
   let fontSize =
-    ty.fontSize != null
-      ? Number(ty.fontSize)
-      : resolveTypeScaleFontSize(role, options.typeScale) ??
-        fontSizeForTextSlot(slot, placement, canvasWidth)
+    options.preferredFontSize != null && Number(options.preferredFontSize) > 0
+      ? Number(options.preferredFontSize)
+      : ty.fontSize != null
+        ? Number(ty.fontSize)
+        : resolveTypeScaleFontSize(role, options.typeScale) ??
+          fontSizeForTextSlot(slot, placement, canvasWidth)
 
   const minSize = options.minFontSize ?? (role === 'stat' ? 20 : 12)
   const maxWords = slot?.max_words || null

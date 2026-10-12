@@ -25,7 +25,7 @@ export const PPT_CAPS = {
   ELEMENTS_PER_SLIDE: 60,
 }
 
-export const PPT_AI_SLIDE_COUNTS = [5, 8, 10, 12, 15, 20]
+export const PPT_AI_SLIDE_COUNTS = [5, 8, 10, 12, 20]
 
 export const PPT_EXPORT_FORMATS = ['PPTX', 'PDF', 'PNG', 'JPEG']
 
@@ -746,8 +746,18 @@ export function buildImageClipPath(imageMask) {
 }
 
 export function clampAiSlideCount(count) {
-  const n = Number(count) || PPT_CAPS.AI_SLIDE_MIN
-  return Math.min(PPT_CAPS.AI_SLIDE_MAX, Math.max(PPT_CAPS.AI_SLIDE_MIN, n))
+  const n = Number(count) || 12
+  if (PPT_AI_SLIDE_COUNTS.includes(n)) return n
+  let best = PPT_AI_SLIDE_COUNTS[0]
+  let dist = Math.abs(best - n)
+  for (const c of PPT_AI_SLIDE_COUNTS) {
+    const d = Math.abs(c - n)
+    if (d < dist) {
+      dist = d
+      best = c
+    }
+  }
+  return best
 }
 
 /**
@@ -874,7 +884,13 @@ export function outlineCardsToApiPayload(
         suggestedContentType:
           card.suggestedContentType ||
           card.layoutHint ||
-          (index === 0 ? 'title' : 'bullet_list'),
+          (index === 0
+            ? 'title'
+            : index === 1
+              ? 'agenda'
+              : index === (cards || []).length - 1
+                ? 'closing'
+                : 'bullet_list'),
         layoutLocked,
         ...(lockedLayoutId ? { layoutId: lockedLayoutId } : {}),
         ...(card.layoutWhy ? { layoutWhy: card.layoutWhy } : {}),

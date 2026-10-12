@@ -26,7 +26,32 @@ const CATALOG_PLACEHOLDER_PATTERNS = [
   /^metric [abcd]$/i,
   /^this is a sample description for metric/i,
   /^lorem ipsum$/i,
+  /^describe this feature\.?$/i,
+  /^market share$/i,
+  /represents the largest share of the market/i,
+  /maintains a steady presence with consistent growth/i,
 ]
+
+const LAYOUT_ENGINE_DEFAULT_EXACT = new Set(
+  [
+    'MARKET SHARE',
+    'Metric A',
+    'Metric B',
+    'Metric C',
+    'Metric D',
+    'Describe this feature',
+    'Market share',
+    'TOTAL',
+    '100%',
+  ].map((s) => s.toLowerCase())
+)
+
+export function isLayoutEngineDefaultText(text) {
+  const t = String(text || '').trim()
+  if (!t) return false
+  if (LAYOUT_ENGINE_DEFAULT_EXACT.has(t.toLowerCase())) return true
+  return isCatalogPlaceholderText(t)
+}
 
 export function isCatalogPlaceholderText(text) {
   const t = String(text || '').trim()
