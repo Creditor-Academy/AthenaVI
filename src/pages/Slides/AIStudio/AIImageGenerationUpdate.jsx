@@ -3,7 +3,7 @@ import {
   Plus, Search, Image as ImageIcon,
   ChevronDown, Mic, Sparkles, X, Lightbulb,
   ListOrdered, Clock, Columns2, BarChart3, Network, List, RefreshCw, Hexagon, Library,
-  Share2, Printer, CreditCard, Mail
+  Share2, Printer, CreditCard, Mail, Check
 } from 'lucide-react';
 import { FaInstagram, FaFacebookF, FaYoutube, FaLinkedinIn, FaXTwitter } from 'react-icons/fa6';
 import imageGenService from '../../../services/imageGenService.js';
@@ -985,6 +985,21 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                    ) : (
                      <span className="recent-chat-title">{label}</span>
                    )}
+                   {renamingId === chat.id ? (
+                     <button
+                       type="button"
+                       className="recent-chat-more recent-chat-rename-ok"
+                       title="Save name"
+                       aria-label="Save name"
+                       onMouseDown={(e) => e.preventDefault()}
+                       onClick={(e) => {
+                         e.stopPropagation();
+                         commitRecentRename(chat);
+                       }}
+                     >
+                       <Check size={16} />
+                     </button>
+                   ) : (
                    <RecentChatMenu
                      open={recentMenuId === chat.id}
                      onToggle={() => setRecentMenuId((id) => (id === chat.id ? null : chat.id))}
@@ -999,6 +1014,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                      }}
                      onDelete={() => deleteRecentChat(chat)}
                    />
+                   )}
                </li>
                );
              })}

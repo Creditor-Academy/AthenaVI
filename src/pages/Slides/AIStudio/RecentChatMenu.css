@@ -28,6 +28,17 @@ li:hover > .recent-chat-menu-wrap,
   cursor: pointer;
 }
 
+.recent-chat-rename-ok {
+  margin-left: auto;
+  color: var(--primary, #2563eb);
+  opacity: 1;
+}
+
+.recent-chat-rename-ok:hover {
+  background: color-mix(in srgb, var(--primary, #2563eb) 12%, transparent);
+  color: var(--primary, #2563eb);
+}
+
 .recent-chat-more:hover,
 .recent-chat-menu-wrap.is-open .recent-chat-more {
   background: color-mix(in srgb, var(--text-main, #111827) 8%, transparent);

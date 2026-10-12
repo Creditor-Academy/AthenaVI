@@ -3,7 +3,7 @@ import {
   ArrowLeft, RotateCcw, Sparkles, Edit3, Wand2, Download, 
   X, Send, AlertCircle, CheckCircle2, ChevronRight, Copy, Share2, User, ThumbsUp, ThumbsDown,
   Link2, Facebook, Twitter, MessageCircle, Linkedin,
-  PanelLeft, Plus, Library, Search, Clock, LogOut, Image as ImageIcon, BarChart3, Printer
+  PanelLeft, Plus, Library, Search, Clock, LogOut, Image as ImageIcon, BarChart3, Printer, Check
 } from 'lucide-react';
 import { FaInstagram, FaFacebookF, FaYoutube, FaLinkedinIn, FaXTwitter } from 'react-icons/fa6';
 import imageGenService, { ImageGenProviderError } from '../../../services/imageGenService.js';
@@ -990,6 +990,21 @@ export default function AIConversationalStudio({
                 <span>{label}</span>
               </button>
             )}
+            {renamingId === chat.id ? (
+              <button
+                type="button"
+                className="recent-chat-more recent-chat-rename-ok"
+                title="Save name"
+                aria-label="Save name"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  commitRename(chat);
+                }}
+              >
+                <Check size={16} />
+              </button>
+            ) : (
             <RecentChatMenu
               open={recentMenuId === chat.id}
               onToggle={() => setRecentMenuId((id) => (id === chat.id ? null : chat.id))}
@@ -1009,6 +1024,7 @@ export default function AIConversationalStudio({
                 deleteChat(chat);
               }}
             />
+            )}
           </li>
         );
       })}
