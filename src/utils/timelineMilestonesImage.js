@@ -2,6 +2,7 @@
  * Timeline milestones image — alternating above/below arrow-bar with photo frames.
  * Layout id: timeline_milestones_image_v1 only (not image_right / image_top).
  */
+import { textForSlot } from './contentContract.js'
 
 export const TLMI_GEOM = {
   viewW: 1000,
@@ -229,13 +230,21 @@ function plainTextFromContent(content = {}) {
   return ''
 }
 
-function filledContent(el, slotId, style) {
+function filledContent(el, slotId, style, content = null, schema = null) {
   const sid = String(slotId || '')
+  const fromContent =
+    content && schema ? String(textForSlot(sid, content, schema) || '').trim() : ''
   const existing = plainTextFromContent(el?.content)
   const stale = /^(2020|key event summary)$/i.test(existing.trim())
-  const text = existing && existing.toLowerCase() !== 'double-click to edit' && !stale
-    ? existing
-    : (TLMI_DEFAULTS[sid] || existing)
+  const existingOk =
+    existing &&
+    existing.toLowerCase() !== 'double-click to edit' &&
+    !stale &&
+    !(content && String(existing).trim().toLowerCase() === String(content.title || '').trim().toLowerCase())
+  let text = fromContent || (existingOk ? existing : '')
+  if (!text && !content) {
+    text = TLMI_DEFAULTS[sid] || existing
+  }
   return {
     ...(el?.content || {}),
     ...style,
@@ -263,6 +272,7 @@ function imageIndex(el) {
 
 export function layoutTimelineMilestonesImage(elements, schema, palette = {}, canvas = {}) {
   if (!Array.isArray(elements)) return elements
+  const slideContent = canvas?.slideContent || null
   const canvasW = canvas.width || 1920
   const canvasH = canvas.height || 1080
   const sx = canvasW / TLMI_GEOM.viewW
@@ -290,7 +300,7 @@ export function layoutTimelineMilestonesImage(elements, schema, palette = {}, ca
       role: prev?.role || role || 'body',
       layer: 12,
       placement: { x: box.x, y: box.y, width: box.width, height: box.height, rotation: 0, opacity: 1 },
-      content: filledContent(prev, slotId, style),
+      content: filledContent(prev, slotId, style, slideContent, schema),
     }
   }
 

@@ -53,17 +53,18 @@ export function fontSizeForTextSlot(slot, placement, canvasWidth = CANVAS_REF_WI
 }
 
 export function resolveTypeScaleFontSize(role, typeScale = {}) {
+  const ts = typeScale && typeof typeScale === 'object' ? typeScale : {}
   const r = String(role || '').toLowerCase()
   const map = {
-    heading: typeScale.title ?? typeScale.display,
-    quote: typeScale.subtitle ?? typeScale.title,
-    subheading: typeScale.subtitle,
-    body: typeScale.body,
-    caption: typeScale.caption,
-    stat_label: typeScale.caption,
-    eyebrow: typeScale.caption,
-    stat: typeScale.stat ?? typeScale.display,
-    cta: typeScale.subtitle,
+    heading: ts.title ?? ts.display,
+    quote: ts.subtitle ?? ts.title,
+    subheading: ts.subtitle,
+    body: ts.body,
+    caption: ts.caption,
+    stat_label: ts.caption,
+    eyebrow: ts.caption,
+    stat: ts.stat ?? ts.display,
+    cta: ts.subtitle,
   }
   const size = map[r]
   return size != null && Number(size) > 0 ? Number(size) : null

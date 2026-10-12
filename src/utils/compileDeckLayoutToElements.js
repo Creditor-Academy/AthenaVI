@@ -669,12 +669,33 @@ function lookupSlotValue(contentBySlotId, slotId) {
   return found ? contentBySlotId[found] : undefined
 }
 
+function slideContentHasStructuredCopy(content) {
+  if (!content || typeof content !== 'object') return false
+  return Boolean(
+    String(content.title || '').trim() ||
+      String(content.body || content.summary || '').trim() ||
+      (Array.isArray(content.bullets) && content.bullets.length) ||
+      (Array.isArray(content.columns) && content.columns.length) ||
+      (Array.isArray(content.timeline) && content.timeline.length) ||
+      (Array.isArray(content.milestones) && content.milestones.length) ||
+      (content.comparison && typeof content.comparison === 'object') ||
+      (Array.isArray(content.comparisonRows) && content.comparisonRows.length) ||
+      (content.left && typeof content.left === 'object') ||
+      (content.right && typeof content.right === 'object') ||
+      (Array.isArray(content.plans) && content.plans.length) ||
+      (Array.isArray(content.stats) && content.stats.length) ||
+      (Array.isArray(content.metrics) && content.metrics.length) ||
+      (content.chart && typeof content.chart === 'object') ||
+      (content.table && typeof content.table === 'object')
+  )
+}
+
 function resolveSlotText(slot, contentBySlotId, schema, options = {}) {
   const slotId = slot?.id
   const role = String(slot?.role || '')
   const placeholder = slot?.placeholder_text != null ? String(slot.placeholder_text).trim() : ''
   const content = options.content && typeof options.content === 'object' ? options.content : null
-  const hasSlideContent = Boolean(content && (content.title || content.body || content.summary || content.bullets))
+  const hasSlideContent = slideContentHasStructuredCopy(content)
 
   const mapped = lookupSlotValue(contentBySlotId, slotId)
   if (mapped != null) {
@@ -684,7 +705,7 @@ function resolveSlotText(slot, contentBySlotId, schema, options = {}) {
     }
   }
 
-  // Keep metric/stat/member catalog samples so empty authoring still looks designed.
+  // Catalog placeholders for empty manual previews only — never when slide.content exists.
   const memberSlot = /^MEMBER_\d+_(NAME|ROLE|EMAIL|BIO|BODY|DESC)$/i.test(String(slotId || ''))
   const keepPricingThreePlans = /pricing_three_plans_v1$/i.test(String(schema?.layout_id || ''))
     && !/featured|highlight/i.test(String(schema?.layout_id || ''))
@@ -725,9 +746,47 @@ function resolveSlotText(slot, contentBySlotId, schema, options = {}) {
   const keepTitleImageLogo = /title_image_logo/i.test(String(schema?.layout_id || ''))
   const keepTitleHero = /title_hero/i.test(String(schema?.layout_id || ''))
   const keepTitleFullbleed = /title_fullbleed/i.test(String(schema?.layout_id || ''))
+  const keepDemoLayout =
+    keepTitleCentered ||
+    keepTitleMinimal ||
+    keepTitleImageLogo ||
+    keepTitleHero ||
+    keepTitleFullbleed ||
+    keepTableSingle ||
+    keepTableSingleCards ||
+    keepPricingThreePlans ||
+    keepPricingThreePlansFeatured ||
+    keepPricingThreeHighlight ||
+    keepPricingThreeHighlightSplit ||
+    keepPricingFourPlans ||
+    keepPricingFourPlansFeatured ||
+    keepPricingFourPara ||
+    keepPricingFourParaCards ||
+    keepPricingComparisonTable ||
+    keepPricingComparisonCards ||
+    keepTimelineHorizontal ||
+    keepTimelineHorizontalCards ||
+    keepTimelineMilestones ||
+    keepTimelineMilestonesCards ||
+    keepTimelineMilestonesImage ||
+    keepTimelineMilestonesImageRight ||
+    keepTimelineVertical ||
+    keepTimelineVerticalCards ||
+    keepTimelineRoadmap ||
+    keepProcessLinearNumeric ||
+    keepProcessLinearNumericCards
+
+  if (hasSlideContent) {
+    return ''
+  }
+
   if (
     placeholder &&
-    (!hasSlideContent || role === 'stat' || role === 'stat_label' || memberSlot || keepTitleCentered || keepTitleMinimal || keepTitleImageLogo || keepTitleHero || keepTitleFullbleed || keepTableSingle || keepTableSingleCards || keepPricingThreePlans || keepPricingThreePlansFeatured || keepPricingThreeHighlight || keepPricingThreeHighlightSplit || keepPricingFourPlans || keepPricingFourPlansFeatured || keepPricingFourPara || keepPricingFourParaCards || keepPricingComparisonTable || keepPricingComparisonCards || keepTimelineHorizontal || keepTimelineHorizontalCards || keepTimelineMilestones || keepTimelineMilestonesCards || keepTimelineMilestonesImage || keepTimelineMilestonesImageRight || keepTimelineVertical || keepTimelineVerticalCards || keepTimelineRoadmap || keepProcessLinearNumeric || keepProcessLinearNumericCards)
+    (!hasSlideContent &&
+      (role === 'stat' ||
+        role === 'stat_label' ||
+        memberSlot ||
+        keepDemoLayout))
   ) {
     return placeholder
   }
@@ -813,8 +872,10 @@ function resolveChartContent(slot, schema, palette, contentBySlotId, slideConten
     chart = slideContent?.chart && typeof slideContent.chart === 'object' ? slideContent.chart : null
   }
 
-  // Multi-chart layouts: never drop CHART_2/CHART_3 — use distinct sample data for empty slots
-  if (chartMatch && !chart) {
+  const illustrative =
+    slideContent?.chart?.isIllustrative === true ||
+    slideContent?.chart?.is_illustrative === true
+  if (chartMatch && !chart && illustrative) {
     const idx = Number(chartMatch[1]) - 1
     chart = sampleChartDataset(idx, layoutId)
   }
@@ -1907,6 +1968,8 @@ export function compileDeckLayoutToElements(schema, options = {}) {
 }
 
 export { geometrySnapshot, validateLayoutGeometry, compileLayoutGeometry }
+
+export { resolveSlotText, slideContentHasStructuredCopy }
 
 export function isTextLayoutRole(role) {
   return TEXT_ROLES.has(role)

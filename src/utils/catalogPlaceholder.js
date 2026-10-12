@@ -22,6 +22,10 @@ const CATALOG_PLACEHOLDER_PATTERNS = [
   /^\d+\. step \d+$/i,
   /^0\d · /i,
   /^double-?click to edit$/i,
+  /^option [ab]$/i,
+  /^metric [abcd]$/i,
+  /^this is a sample description for metric/i,
+  /^lorem ipsum$/i,
 ]
 
 export function isCatalogPlaceholderText(text) {

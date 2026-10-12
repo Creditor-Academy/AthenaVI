@@ -101,7 +101,7 @@ import {
 import {
   applyCompiledLayoutToSlide,
   fetchLayoutSchemaMap,
-  rehydratePricingSlideElementsLocally,
+  rebindSlideContentLocally,
   repairPresentationLayoutSlides,
 } from '../../../utils/layoutCanvasService'
 import { rethemeSlidesGraphicElements } from '../../../utils/rethemeGraphicElements'
@@ -1304,7 +1304,7 @@ function AIPptEditor({
         const layoutId = slide.layoutId || slide.layout_id
         if (!layoutId) return slide
         const schema = layoutSchemaMap[layoutId] || resolveLayoutSchemaById(layoutId)
-        const patched = rehydratePricingSlideElementsLocally(slide, schema, {
+        const patched = rebindSlideContentLocally(slide, schema, {
           aspectRatio,
           themeTokens,
           palette: themeTokens?.palette || null,
