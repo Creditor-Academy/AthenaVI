@@ -426,6 +426,36 @@ class PresentationService {
     throw new Error('Timed out waiting for presentation generation')
   }
 
+  /**
+   * Poll GET .../status until one slide leaves PENDING | GENERATING.
+   * Single-slide regenerate leaves the deck READY, so deck-level polling returns too early.
+   */
+  async pollSlideUntilSettled(
+    workspaceId,
+    presentationId,
+    slideId,
+    { intervalMs = 2000, timeoutMs = 5 * 60 * 1000 } = {}
+  ) {
+    const started = Date.now()
+    while (Date.now() - started < timeoutMs) {
+      const status = await this.getStatus(workspaceId, presentationId)
+      const slide = (status?.slides || []).find((s) => s.id === slideId)
+      if (!slide) throw new Error('Slide no longer exists')
+
+      const slideStatus = String(slide.status || '').toUpperCase()
+      if (slideStatus === 'READY') return slide
+      if (slideStatus === 'FAILED') {
+        const err = new Error('Slide regeneration failed')
+        err.status = 'FAILED'
+        err.data = slide
+        throw err
+      }
+
+      await sleep(intervalMs)
+    }
+    throw new Error('Timed out waiting for slide regeneration')
+  }
+
   // ── Slides ─────────────────────────────────────────────────────────
 
   addSlide(workspaceId, presentationId, body = {}) {
@@ -625,7 +655,8 @@ class PresentationService {
   startExport(workspaceId, presentationId, { format = 'PPTX', slideId = null } = {}) {
     return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.EXPORT(workspaceId, presentationId), {
       method: 'POST',
-      body: JSON.stringify({ format, slideId }),
+      // Omit slideId for whole-deck exports (backend treats missing/null as all slides).
+      body: JSON.stringify(slideId ? { format, slideId } : { format }),
     })
   }
 

@@ -62,6 +62,9 @@ export const PROCESS_LINEAR_FOUR_CARDS_GEOM = {
   iconSize: 38,
 }
 
+import { themeProcessSteps, customProcessColor } from './processThemeColors.js'
+
+/** Legacy fixed palette — used only by catalog previews; compiled slides use theme colors. */
 export const PROCESS_LINEAR_FOUR_CARDS_DEFAULT_COLORS = [
   '#E15537', // 1: Coral Red
   '#E08E1A', // 2: Amber Gold
@@ -362,7 +365,7 @@ export function layoutProcessLinearFourCards(elements, schema, palette = {}, can
     }
   }
   const stepCount = detectedCount >= 2 ? detectedCount : 4
-  const steps = calculateLinearFourCardsGeometries(stepCount)
+  const steps = themeProcessSteps(calculateLinearFourCardsGeometries(stepCount), palette)
 
   const prevBySlot = new Map()
   safeElements.forEach((el) => {
@@ -401,7 +404,7 @@ export function layoutProcessLinearFourCards(elements, schema, palette = {}, can
       fontSize: 28,
       fontWeight: 800,
       colorRole: 'text',
-      color: prevHeading?.content?.color || '#0F172A',
+      color: prevHeading?.content?.color || palette?.text || '#0F172A',
       lineHeight: 1.15,
       clipToSlot: false,
     },
@@ -415,7 +418,7 @@ export function layoutProcessLinearFourCards(elements, schema, palette = {}, can
     const prevTitle = prevBySlot.get(`STEP_${n}_TITLE`)
     const prevBody = prevBySlot.get(`STEP_${n}_BODY`)
 
-    const cardColor = prevCard?.content?.fill || prevCard?.content?.color || step.color
+    const cardColor = customProcessColor(prevCard?.content?.fill, prevCard?.content?.color) || step.color
 
     // 2A. Recolorable Card Container (outer box, banner, number circle, and bottom icon)
     const cardSvg = buildLinearFourCardSvg(step)
@@ -510,7 +513,7 @@ export function layoutProcessLinearFourCards(elements, schema, palette = {}, can
         fontSize: 11.5,
         fontWeight: 400,
         colorRole: 'muted',
-        color: prevBody?.content?.color || '#475569',
+        color: prevBody?.content?.color || palette?.muted || '#475569',
         lineHeight: 1.5,
         clipToSlot: false,
       },

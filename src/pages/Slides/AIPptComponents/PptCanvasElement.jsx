@@ -343,7 +343,8 @@ function EditableText({
       if (!boxH || !boxW) return
       const slotKey = String(el?.slotId || '').toLowerCase()
       const isCardTitle = /^(card|col|row|feature|bullet|item)_\d+_title$/.test(slotKey)
-      const minScale = isCardTitle ? 0.85 : 0.45
+      // Deck-harmonized headings must stay (near) identical across slides.
+      const minScale = isCardTitle || c.deckHeading === true ? 0.85 : 0.45
       const minPx = Math.max(8, base * minScale)
       const overflows = () =>
         node.scrollHeight > boxH + 1 || (noWrap && node.scrollWidth > boxW + 1)
@@ -358,7 +359,7 @@ function EditableText({
     const observer = new ResizeObserver(fit)
     observer.observe(wrap)
     return () => observer.disconnect()
-  }, [editing, fitToBox, fontSize, plainText, runsSig, c.lineHeight, c.letterSpacing, c.padding, c.paddingX, c.listType, c.wrap])
+  }, [editing, fitToBox, fontSize, plainText, runsSig, c.lineHeight, c.letterSpacing, c.padding, c.paddingX, c.listType, c.wrap, c.deckHeading])
 
   const color = resolveTextHex(c, palette)
   const weight = c.fontWeight || (c.bold ? 700 : 400)

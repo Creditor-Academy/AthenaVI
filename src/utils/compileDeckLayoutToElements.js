@@ -1,4 +1,5 @@
 import { resolvePreviewMode } from './deckLayoutRegistry.js'
+import { applyDeckHeadingSize, resolveDeckHeadingPx } from './deckHeadingSize.js'
 import { resolveImagePresentation } from './deckLayoutV2Helpers.js'
 import { parseRegion, regionToBox, getGridDims } from './layoutPreviewUtils.js'
 import {
@@ -1657,7 +1658,18 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
 /**
  * Compile DECK_LAYOUT schema slots into canvas elements (1920×1080 space).
  */
+/** Compile a layout, then apply the deck-wide heading size (covers every early-return builder). */
 export function compileDeckLayoutToElements(schema, options = {}) {
+  const elements = compileDeckLayoutToElementsForLayout(schema, options)
+  if (!Array.isArray(elements)) return elements
+  return applyDeckHeadingSize(elements, {
+    schema,
+    targetPx: resolveDeckHeadingPx(options.themeTokens || options.theme || null),
+    canvas: options.canvas || {},
+  })
+}
+
+function compileDeckLayoutToElementsForLayout(schema, options = {}) {
   if (isTitleHeroLeftBlobLayout(schema?.layout_id, schema)) {
     return buildTitleHeroLeftBlobCanvasElements({ schema, options })
   }

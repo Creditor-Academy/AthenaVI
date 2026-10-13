@@ -1,6 +1,12 @@
 /** Post-compile timeline connector + Process Linner shapes (mirrors backend finalizeElementsDoc). */
 
 import {
+  isTimelineLayoutId,
+  snapshotTimelineText,
+  countTimelineItems,
+  pruneTimelineToItemCount,
+} from './timelineItemCount.js'
+import {
   cycleSegmentInlineSvg,
   cycleSegmentPlacement,
   CYCLE_SEGMENT_COLORS,
@@ -5288,7 +5294,16 @@ export function layoutDiagramVenn(elements, schema, palette = {}, canvas = {}) {
   return [...rings, ...next.filter(Boolean)]
 }
 
+/** Timeline compilers draw a fixed card count — drop cards beyond the slide's real entries. */
 export function finalizeTimelineShapes(elements, schema, palette = {}, canvas = {}) {
+  const layoutId = schema?.layout_id || schema?.id || schema?.layoutId
+  if (!isTimelineLayoutId(layoutId)) return finalizeTimelineShapesForLayout(elements, schema, palette, canvas)
+  const textBySlot = snapshotTimelineText(elements)
+  const out = finalizeTimelineShapesForLayout(elements, schema, palette, canvas)
+  return pruneTimelineToItemCount(out, textBySlot, countTimelineItems(textBySlot))
+}
+
+function finalizeTimelineShapesForLayout(elements, schema, palette = {}, canvas = {}) {
   const layoutId = schema?.layout_id || schema?.id || schema?.layoutId
   if (isTimelineRoadmapHorizontalLayout(layoutId)) {
     return layoutTimelineRoadmapHorizontal(elements, schema, palette, canvas)
