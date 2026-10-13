@@ -205,6 +205,16 @@ export default function CanvasEditor({
   const canvasIdRef = useRef(canvasId)
   useEffect(() => { canvasIdRef.current = canvasId }, [canvasId])
   const hydratedRef = useRef(false)
+  // Reopening an existing canvas: show a loading screen instead of the 1080x1080 default.
+  const [hydrating, setHydrating] = useState(Boolean(initialCanvasId && workspaceId))
+  const [loadError, setLoadError] = useState('')
+  // Refs survive React StrictMode's dev-only mount/unmount/mount, so the load/create runs once.
+  const hydrateStartedRef = useRef(false)
+  const mountedRef = useRef(true)
+  useEffect(() => {
+    mountedRef.current = true
+    return () => { mountedRef.current = false }
+  }, [])
   const saveTimerRef = useRef(null)
   const savingRef = useRef(false)
   const pendingSaveRef = useRef(false)
@@ -314,14 +324,19 @@ export default function CanvasEditor({
       return undefined
     }
 
-    let cancelled = false
+    // StrictMode runs this effect twice in dev; a second create would leave an orphan project
+    // with a duplicate name, so only the first run does the work.
+    if (hydrateStartedRef.current) return undefined
+    hydrateStartedRef.current = true
+
+    const isCancelled = () => !mountedRef.current
 
     async function hydrate() {
       setSaveState('loading')
       try {
         if (initialCanvasId) {
           const doc = await canvasService.getCanvas(workspaceId, initialCanvasId)
-          if (cancelled) return
+          if (isCancelled()) return
           const data = doc?.data || {}
           const loadedCanvases =
             Array.isArray(data.canvases) && data.canvases.length > 0
@@ -351,7 +366,7 @@ export default function CanvasEditor({
             folderId,
             data: { version: 1, docTitle: sentTitle, size: sentSize, canvases: sentCanvases },
           })
-          if (cancelled) return
+          if (isCancelled()) return
           const createdName = created.name || created.title || sentTitle
           setDocTitle(createdName)
           docTitleRef.current = createdName
@@ -368,18 +383,20 @@ export default function CanvasEditor({
         }
       } catch (error) {
         console.error('Failed to load/create canvas:', error)
-        if (!cancelled) setSaveState('error')
+        if (!isCancelled()) {
+          setSaveState('error')
+          if (initialCanvasId) setLoadError(error?.message || 'Failed to load this design.')
+        }
       } finally {
-        if (!cancelled) hydratedRef.current = true
+        hydratedRef.current = true
+        if (!isCancelled()) setHydrating(false)
       }
     }
 
     hydratePromiseRef.current = hydrate().finally(() => {
       hydratePromiseRef.current = null
     })
-    return () => {
-      cancelled = true
-    }
+    return undefined
     // Runs once on mount — the effect below handles ongoing autosave.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -1429,6 +1446,28 @@ export default function CanvasEditor({
     })
     return [...fonts]
   }, [canvases])
+
+  // Don't flash the empty 1080x1080 default while the saved design is still being fetched.
+  if (hydrating || loadError) {
+    return (
+      <div className="canvas-editor-page canvas-editor-loading" role="status" aria-live="polite">
+        {loadError ? (
+          <div className="canvas-editor-loading-card">
+            <p className="canvas-editor-loading-title">Couldn&apos;t open this design</p>
+            <p className="canvas-editor-loading-sub">{loadError}</p>
+            <button type="button" className="canva-header-primary-btn" onClick={onBack}>
+              Go back
+            </button>
+          </div>
+        ) : (
+          <div className="canvas-editor-loading-card">
+            <span className="canvas-editor-spinner" aria-hidden="true" />
+            <p className="canvas-editor-loading-title">Loading your design…</p>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className="canvas-editor-page">
