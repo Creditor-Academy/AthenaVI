@@ -471,15 +471,14 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
         .library-liked-btn {
           display: inline-flex;
           align-items: center;
-          gap: 8px;
+          justify-content: center;
+          width: 40px;
           height: 40px;
-          padding: 0 14px;
+          padding: 0;
           border-radius: 12px;
           border: 1px solid #e6ebf2;
           background: #fff;
           color: #475569;
-          font-size: 14px;
-          font-weight: 650;
           cursor: pointer;
         }
         .library-liked-btn:hover {
@@ -882,13 +881,14 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           type="button"
           className={`library-liked-btn${category === 'liked' ? ' is-on' : ''}`}
           aria-pressed={category === 'liked'}
+          aria-label="Liked"
+          title="Liked"
           onClick={() => {
             setCategory((current) => (current === 'liked' ? 'all' : 'liked'));
             clearSelection();
           }}
         >
-          <Heart size={16} fill={category === 'liked' ? 'currentColor' : 'none'} />
-          Liked
+          <Heart size={18} fill={category === 'liked' ? 'currentColor' : 'none'} />
         </button>
       </div>
 
