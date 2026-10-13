@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, Sparkles, Image as ImageIcon, Download, Copy, Check, MessageSquare, Trash2, X, BarChart3, Share2, Printer, Plus, Search, LayoutGrid, List } from 'lucide-react';
+import { Loader2, Sparkles, Image as ImageIcon, Download, Copy, Check, MessageSquare, Trash2, X, BarChart3, Share2, Printer, Plus, Search, LayoutGrid, List, Heart, ChevronDown } from 'lucide-react';
 import imageGenService from '../../../services/imageGenService.js';
+import ConfirmDialog from '../../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
 
 const START_CHAT_MODES = [
   { id: 'image', label: 'Image', Icon: ImageIcon },
@@ -15,7 +16,6 @@ const LIBRARY_CATEGORIES = [
   { id: 'infographic', label: 'Infographics' },
   { id: 'social', label: 'Social' },
   { id: 'printable', label: 'Print' },
-  { id: 'liked', label: 'Liked' },
 ];
 
 export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onStartChat, hideTitle = false }) {
@@ -78,12 +78,20 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
   const downloadSelected = async () => {
     if (downloadingSelection || !selected.length) return;
     setDownloadingSelection(true);
-    const queued = selected.filter((gen) => workspaceId && gen.id).length || selected.length;
-    if (queued > 1) setDownloadProgress({ done: 0, total: queued });
+    const withIds = selected.filter((gen) => gen.id);
+    const queue = (workspaceId && withIds.length ? withIds : selected).map((gen, i) => ({
+      id: gen.id || i,
+      src: gen.url || gen.resultUrl,
+      status: 'waiting',
+    }));
+    if (queue.length > 1) setDownloadProgress(queue);
+    const mark = (index, status) => {
+      setDownloadProgress((rows) => (Array.isArray(rows) ? rows.map((row, i) => (i === index ? { ...row, status } : row)) : rows));
+    };
     try {
-      const withIds = selected.filter((gen) => gen.id);
       if (workspaceId && withIds.length) {
         for (let i = 0; i < withIds.length; i += 1) {
+          if (withIds.length > 1) mark(i, 'downloading');
           const { blob, filename } = await imageGenService.download(workspaceId, withIds[i].id, 'png');
           const safeName = /\.png$/i.test(filename) ? filename : `athena-image-${i + 1}.png`;
           const objectUrl = URL.createObjectURL(blob);
@@ -94,7 +102,7 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           a.click();
           a.remove();
           setTimeout(() => URL.revokeObjectURL(objectUrl), 15000);
-          if (withIds.length > 1) setDownloadProgress({ done: i + 1, total: withIds.length });
+          if (withIds.length > 1) mark(i, 'done');
           if (i < withIds.length - 1) {
             await new Promise((resolve) => setTimeout(resolve, 400));
           }
@@ -106,6 +114,7 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
       }
       for (let i = 0; i < selected.length; i += 1) {
         const gen = selected[i];
+        if (selected.length > 1) mark(i, 'downloading');
         const response = await fetch(gen.url || gen.resultUrl);
         if (!response.ok) continue;
         const blob = await response.blob();
@@ -117,7 +126,7 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
         a.click();
         a.remove();
         setTimeout(() => URL.revokeObjectURL(objectUrl), 2000);
-        if (selected.length > 1) setDownloadProgress({ done: i + 1, total: selected.length });
+        if (selected.length > 1) mark(i, 'done');
       }
       setDownloadProgress(null);
       setDownloadNotice('Downloaded');
@@ -157,6 +166,17 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
     setGenerations((rows) => rows.filter((gen, idx) => !drop.has(gen.id || idx)));
     clearSelection();
   };
+
+  useEffect(() => {
+    if (!newMenuOpen && !modeMenuOpen) return undefined;
+    const close = (event) => {
+      if (event.target.closest('.library-new-wrap') || event.target.closest('.library-start-wrap')) return;
+      setNewMenuOpen(false);
+      setModeMenuOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [newMenuOpen, modeMenuOpen]);
 
   useEffect(() => {
     if (!workspaceId) {
@@ -313,39 +333,41 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           color: #fff;
         }
         .library-selection-bar {
-          position: sticky;
-          bottom: 16px;
-          z-index: 6;
+          position: fixed;
+          left: 50%;
+          bottom: 28px;
+          transform: translateX(-50%);
+          z-index: 40;
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
           width: fit-content;
-          max-width: calc(100% - 24px);
-          margin: 8px auto 0;
-          padding: 8px 10px 8px 16px;
+          max-width: calc(100% - 32px);
+          margin: 0;
+          padding: 12px 14px 12px 20px;
           border-radius: 999px;
-          background: var(--bg-surface, #ffffff);
-          color: var(--text-main, #111827);
-          border: 1px solid var(--border-color, #e5e7eb);
-          box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+          background: #ffffff;
+          color: #111827;
+          border: 1px solid #e5e7eb;
+          box-shadow: 0 18px 50px rgba(15, 23, 42, 0.22);
         }
         .library-selection-count {
-          font-size: 13px;
-          font-weight: 650;
-          margin-right: 4px;
+          font-size: 15px;
+          font-weight: 700;
+          margin-right: 6px;
           white-space: nowrap;
         }
         .library-selection-btn {
           display: inline-flex;
           align-items: center;
-          gap: 6px;
+          gap: 8px;
           border: none;
-          background: var(--bg-card, #f3f4f6);
-          color: var(--text-main, #111827);
+          background: #f3f4f6;
+          color: #111827;
           border-radius: 999px;
-          padding: 8px 12px;
-          font-size: 13px;
-          font-weight: 600;
+          padding: 10px 16px;
+          font-size: 15px;
+          font-weight: 650;
           cursor: pointer;
         }
         .library-selection-btn:hover {
@@ -359,8 +381,8 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           background: #b91c1c;
         }
         .library-selection-icon {
-          width: 32px;
-          height: 32px;
+          width: 40px;
+          height: 40px;
           border: none;
           border-radius: 50%;
           background: transparent;
@@ -376,6 +398,7 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
         }
         .library-mode-pop {
           position: absolute;
+          z-index: 30;
           left: 0;
           bottom: calc(100% + 8px);
           min-width: 180px;
@@ -406,35 +429,71 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
         .library-start-wrap {
           position: relative;
         }
+        .library-filter-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          margin: 0 0 22px;
+          flex-wrap: wrap;
+        }
         .library-categories {
           display: flex;
           flex-wrap: wrap;
           gap: 8px;
-          margin: 0 0 22px;
+          margin: 0;
           padding: 0;
           background: transparent;
           border: none;
+          border-radius: 0;
         }
         .library-category {
-          border: none;
-          background: #eef2f7;
-          color: #64748b;
-          font-size: 13px;
+          border: 1px solid #e6ebf2;
+          background: #fff;
+          color: #475569;
+          font-size: 14px;
           font-weight: 650;
-          padding: 8px 14px;
+          height: 40px;
+          padding: 0 16px;
           border-radius: 999px;
           cursor: pointer;
         }
         .library-category:hover {
-          background: #e4eaf2;
-          color: #334155;
+          border-color: #cbd5e1;
+          color: #111827;
         }
         .library-category.is-on {
           background: var(--primary, #2563eb);
+          border-color: var(--primary, #2563eb);
           color: #fff;
           box-shadow: none;
         }
+        .library-liked-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          height: 40px;
+          padding: 0 14px;
+          border-radius: 12px;
+          border: 1px solid #e6ebf2;
+          background: #fff;
+          color: #475569;
+          font-size: 14px;
+          font-weight: 650;
+          cursor: pointer;
+        }
+        .library-liked-btn:hover {
+          border-color: #fecdd3;
+          color: #be123c;
+        }
+        .library-liked-btn.is-on {
+          background: #fff1f2;
+          border-color: #fecdd3;
+          color: #be123c;
+        }
         .library-head {
+          position: relative;
+          z-index: 5;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -521,13 +580,14 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
         }
         .library-new-wrap {
           position: relative;
+          z-index: 6;
         }
         .library-new-btn {
           display: inline-flex;
           align-items: center;
           gap: 6px;
           height: 40px;
-          padding: 0 16px;
+          padding: 0 14px 0 16px;
           border: none;
           border-radius: 999px;
           background: var(--primary, #2563eb);
@@ -535,6 +595,32 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           font-size: 14px;
           font-weight: 650;
           cursor: pointer;
+        }
+        .library-new-menu {
+          min-width: 220px;
+          padding: 8px;
+          border-radius: 16px;
+          box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
+        }
+        .library-new-menu-label {
+          padding: 8px 10px 6px;
+          font-size: 12px;
+          font-weight: 600;
+          color: #94a3b8;
+        }
+        .library-new-menu button {
+          gap: 12px;
+          padding: 10px 10px;
+          border-radius: 10px;
+          font-size: 15px;
+          font-weight: 550;
+          color: #1e293b;
+        }
+        .library-new-menu button svg {
+          color: #64748b;
+        }
+        .library-new-menu button:hover {
+          background: #f1f5f9;
         }
         .library-grid.is-list {
           column-count: 1;
@@ -660,6 +746,62 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           background: #16a34a;
           transition: width 0.25s ease;
         }
+        .library-dl-list {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-top: 14px;
+        }
+        .library-dl-row {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .library-dl-thumb {
+          width: 44px;
+          height: 44px;
+          border-radius: 8px;
+          object-fit: cover;
+          flex-shrink: 0;
+          background: #f1f5f9;
+        }
+        .library-dl-meta {
+          flex: 1;
+          min-width: 0;
+        }
+        .library-dl-meta strong {
+          display: block;
+          font-size: 13px;
+          font-weight: 650;
+        }
+        .library-dl-meta span {
+          margin: 0;
+          font-size: 12px;
+          font-weight: 500;
+        }
+        .library-dl-track {
+          margin-top: 6px;
+          height: 4px;
+          border-radius: 999px;
+          background: #e8f8ee;
+          overflow: hidden;
+        }
+        .library-dl-track i {
+          display: block;
+          height: 100%;
+          width: 35%;
+          border-radius: 999px;
+          background: #16a34a;
+          animation: library-dl-slide 1s ease-in-out infinite;
+        }
+        .library-dl-track.is-done i {
+          width: 100%;
+          animation: none;
+        }
+        @keyframes library-dl-slide {
+          0% { transform: translateX(-120%); }
+          100% { transform: translateX(320%); }
+        }
       `}</style>
       
       <div className="library-head">
@@ -694,10 +836,11 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
             className="library-new-btn"
             onClick={() => setNewMenuOpen((open) => !open)}
           >
-            <Plus size={16} /> New
+            <Plus size={16} /> New <ChevronDown size={14} />
           </button>
           {newMenuOpen && (
-            <div className="library-mode-pop" role="menu" style={{ top: 'calc(100% + 8px)', bottom: 'auto', right: 0, left: 'auto' }}>
+            <div className="library-mode-pop library-new-menu" role="menu" style={{ top: 'calc(100% + 8px)', bottom: 'auto', right: 0, left: 'auto' }}>
+              <div className="library-new-menu-label">Create new</div>
               {START_CHAT_MODES.map(({ id, label, Icon }) => (
                 <button
                   key={id}
@@ -717,22 +860,36 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
       </div>
       </div>
 
-      <div className="library-categories" role="tablist" aria-label="Library categories">
-        {LIBRARY_CATEGORIES.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            role="tab"
-            aria-selected={category === item.id}
-            className={`library-category${category === item.id ? ' is-on' : ''}`}
-            onClick={() => {
-              setCategory(item.id);
-              clearSelection();
-            }}
-          >
-            {item.label}
-          </button>
-        ))}
+      <div className="library-filter-row">
+        <div className="library-categories" role="tablist" aria-label="Library categories">
+          {LIBRARY_CATEGORIES.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={category === item.id}
+              className={`library-category${category === item.id ? ' is-on' : ''}`}
+              onClick={() => {
+                setCategory(item.id);
+                clearSelection();
+              }}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          className={`library-liked-btn${category === 'liked' ? ' is-on' : ''}`}
+          aria-pressed={category === 'liked'}
+          onClick={() => {
+            setCategory((current) => (current === 'liked' ? 'all' : 'liked'));
+            clearSelection();
+          }}
+        >
+          <Heart size={16} fill={category === 'liked' ? 'currentColor' : 'none'} />
+          Liked
+        </button>
       </div>
 
       <div
@@ -852,15 +1009,22 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           );
         })}
       </div>
-      {downloadProgress && (
+      {Array.isArray(downloadProgress) && downloadProgress.length > 0 && (
         <div className="library-download-progress" role="status">
           Downloading
-          <span>{downloadProgress.done} of {downloadProgress.total} downloaded</span>
-          <div className="library-download-track" aria-hidden>
-            <div
-              className="library-download-fill"
-              style={{ width: `${Math.max(8, Math.round((downloadProgress.done / downloadProgress.total) * 100))}%` }}
-            />
+          <span>{downloadProgress.filter((item) => item.status === 'done').length} of {downloadProgress.length} downloaded</span>
+          <div className="library-dl-list">
+            {downloadProgress.map((item) => (
+              <div className="library-dl-row" key={item.id}>
+                <img className="library-dl-thumb" src={item.src} alt="" />
+                <div className="library-dl-meta">
+                  <strong>{item.status === 'done' ? 'Downloaded' : item.status === 'downloading' ? 'Downloading' : 'Waiting'}</strong>
+                  <div className={`library-dl-track${item.status === 'done' ? ' is-done' : ''}`} aria-hidden>
+                    <i />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -880,10 +1044,11 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
               <MessageSquare size={15} /> Start chat
             </button>
             {modeMenuOpen && (
-              <div className="library-mode-pop" role="menu">
+              <div className="library-mode-pop library-new-menu" role="menu">
+                <div className="library-new-menu-label">Start in</div>
                 {START_CHAT_MODES.map(({ id, label, Icon }) => (
                   <button key={id} type="button" role="menuitem" onClick={() => startChat(id)}>
-                    <Icon size={15} /> {label}
+                    <Icon size={16} /> {label}
                   </button>
                 ))}
               </div>
@@ -897,20 +1062,25 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           >
             <Download size={15} /> {downloadingSelection ? 'Downloading…' : 'Download'}
           </button>
-          {confirmDelete ? (
-            <button type="button" className="library-selection-btn is-danger" onClick={deleteSelectedLocally}>
-              <Trash2 size={15} /> Delete {selected.length}
-            </button>
-          ) : (
-            <button type="button" className="library-selection-btn is-danger" onClick={() => { setModeMenuOpen(false); setConfirmDelete(true); }}>
-              <Trash2 size={15} /> Delete
-            </button>
-          )}
+          <button type="button" className="library-selection-btn is-danger" onClick={() => { setModeMenuOpen(false); setConfirmDelete(true); }}>
+            <Trash2 size={15} /> Delete
+          </button>
           <button type="button" className="library-selection-icon" title="Clear selection" aria-label="Clear selection" onClick={clearSelection}>
             <X size={16} />
           </button>
         </div>
       )}
+      <ConfirmDialog
+        dialog={confirmDelete ? {
+          title: selected.length === 1 ? 'Delete this image?' : `Delete ${selected.length} images?`,
+          message: 'They will be removed from the library.',
+          confirmLabel: 'Delete',
+          cancelLabel: 'Cancel',
+          variant: 'danger',
+          onConfirm: () => deleteSelectedLocally(),
+        } : null}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </div>
   );
 }
