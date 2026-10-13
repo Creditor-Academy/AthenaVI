@@ -50,8 +50,6 @@ function textForDonutContextSlot(slotId, content, layoutSchema, textForSlot) {
   return textForSlot ? textForSlot(slotId, content, layoutSchema) : '';
 }
 
-export { mapDonutContextMetrics, textForDonutContextSlot };
-
 module.exports = {
   mapDonutContextMetrics,
   textForDonutContextSlot,

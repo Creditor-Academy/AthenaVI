@@ -7,7 +7,7 @@ import { isCatalogPlaceholderText, isLayoutEngineDefaultText } from './catalogPl
 import {
   mapDonutContextMetrics,
   textForDonutContextSlot,
-} from '../packages/athena-contracts/donutContextMetrics.js'
+} from '../../packages/athena-contracts/esm/donutContextMetrics.js'
 
 export const CDC_GEOM = {
   viewW: 1000,
