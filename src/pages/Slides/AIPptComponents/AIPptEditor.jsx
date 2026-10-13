@@ -3165,13 +3165,17 @@ function AIPptEditor({
         ...(prompt ? { prompt } : {}),
         ...(actionId ? { action: actionId } : {}),
       })
-      await presentationService.pollUntilReady(workspaceId, presentationId, {
+      await presentationService.pollSlideUntilSettled(workspaceId, presentationId, slide.id, {
         intervalMs: 2000,
       })
       await reloadPresentation()
       setSlideAiEditId(null)
     } catch (err) {
-      if (err instanceof PresentationConflictError) {
+      if (err?.status === 'FAILED') {
+        // Reload so the slide shows its failed state + Regenerate action instead of stale content.
+        await reloadPresentation().catch(() => {})
+        setError('Slide regeneration failed — try again.')
+      } else if (err instanceof PresentationConflictError) {
         setError('Cannot overwrite — confirm overwrite or wait for generation to finish.')
       } else if (isInsufficientCreditsError(err)) {
         setError(err.message || 'Insufficient credits')

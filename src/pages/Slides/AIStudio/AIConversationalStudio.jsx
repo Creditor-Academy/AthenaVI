@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   ArrowLeft, RotateCcw, Sparkles, Edit3, Wand2, Download, 
-  X, Send, AlertCircle, CheckCircle2, ChevronRight, Copy, Share2, User, ThumbsUp, ThumbsDown,
+  X, Send, AlertCircle, CheckCircle2, ChevronRight, Copy, Share2, User, ThumbsUp, ThumbsDown, Loader2,
   Link2, Facebook, Twitter, MessageCircle, Linkedin,
   PanelLeft, Plus, Library, Search, Clock, LogOut, Image as ImageIcon, BarChart3, Printer, Check
 } from 'lucide-react';
@@ -224,6 +224,7 @@ export default function AIConversationalStudio({
   const [renamingId, setRenamingId] = useState(null);
   const [renameDraft, setRenameDraft] = useState('');
   const [confirmDialog, setConfirmDialog] = useState(null);
+  const [restoringId, setRestoringId] = useState(null);
   const railFlyoutRef = useRef(null);
   const [editMode, setEditMode] = useState('auto');
   const [downloadMenuFor, setDownloadMenuFor] = useState(null);
@@ -444,12 +445,16 @@ export default function AIConversationalStudio({
             chatItems.push({ role: 'user', content: m.content });
           }
         } else if (m.role === 'assistant' || m.generationId) {
-          const imgUrl = m.url || m.asset?.url || null;
-          if (imgUrl) {
+          const imgUrl = m.deleted ? null : (m.url || m.asset?.url || null);
+          const trashed = Boolean(m.deleted);
+          const gone = !trashed && !imgUrl && !m.content;
+          if (imgUrl || trashed || gone) {
             const vNum = loadedGens.length + 1;
             loadedGens.push({
-              id: m.generationId || `gen_${i}`,
+              id: m.generationId || `gone_${i}`,
               url: imgUrl,
+              removed: trashed || gone,
+              trashed,
               prompt: m.content || m.prompt || latestUserPrompt,
               version: `v${vNum}`,
               threadId: tId,
@@ -464,7 +469,7 @@ export default function AIConversationalStudio({
 
       const withRefs = await Promise.all(
         loadedGens.map(async (g) => {
-          if (g.contextImages?.length) return g;
+          if (g.removed || g.contextImages?.length) return g;
           try {
             const full = await imageGenService.getGeneration(activeWs, g.id);
             const images = await resolveContextImages(activeWs, null, full);
@@ -495,6 +500,27 @@ export default function AIConversationalStudio({
       setErrorMsg("Failed to load previous generation session.");
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const restoreFromChat = async (gen) => {
+    if (!workspaceId || !gen?.id || String(gen.id).startsWith('gone_') || restoringId) return;
+    setRestoringId(gen.id);
+    try {
+      await imageGenService.restoreGenerations(workspaceId, [gen.id]);
+      const full = await imageGenService.getGeneration(workspaceId, gen.id);
+      const imgUrl = full?.url || full?.asset?.url || null;
+      if (!imgUrl) return;
+      setGenerations((prev) => prev.map((item) => (
+        item.id === gen.id
+          ? { ...item, url: imgUrl, removed: false, trashed: false, raw: full, feedback: full?.feedback || null }
+          : item
+      )));
+    } catch (err) {
+      console.error('Restore from chat failed:', err);
+      setErrorMsg('Could not restore this image.');
+    } finally {
+      setRestoringId(null);
     }
   };
 
@@ -1242,6 +1268,23 @@ export default function AIConversationalStudio({
                     return (
                   <>
                   <div className="conv-unified-frame conv-unified-frame--result slide-in-left" style={{ maxWidth: frameStyle.maxWidth }}>
+                    {gen.removed ? (
+                      <div
+                        className="conv-deleted-image"
+                        style={{ width: frameStyle.maxWidth, aspectRatio: frameStyle.aspectRatio, maxHeight: 'min(520px, 62vh)' }}
+                      >
+                        {restoringId === gen.id ? (
+                          <Loader2 className="conv-restore-spin" size={28} />
+                        ) : (
+                          <ImageIcon size={22} />
+                        )}
+                        <strong>{restoringId === gen.id ? 'Restoring' : 'Image unavailable'}</strong>
+                        <span>{restoringId === gen.id ? 'Bringing this image back' : (gen.trashed ? 'This image was deleted' : 'This image was permanently deleted')}</span>
+                        {gen.trashed && restoringId !== gen.id && (
+                          <button type="button" onClick={() => restoreFromChat(gen)}>Restore from Trash</button>
+                        )}
+                      </div>
+                    ) : (
                     <button
                       type="button"
                       className="conv-hero-open"
@@ -1250,6 +1293,7 @@ export default function AIConversationalStudio({
                     >
                       <img src={gen.url} alt={gen.prompt || "Generated output"} className={`conv-hero-img-front${print ? ' is-print' : ''}`} />
                     </button>
+                    )}
                   </div>
                   {print && (
                     <div className="conv-print-meta">
@@ -1268,7 +1312,7 @@ export default function AIConversationalStudio({
                     </div>
                   )}
                   
-                  <div className="conv-actions-bar-icons slide-in-bottom" style={{ width: '100%', display: 'flex', gap: '8px', position: 'relative' }}>
+                  {!gen.removed && <div className="conv-actions-bar-icons slide-in-bottom" style={{ width: '100%', display: 'flex', gap: '8px', position: 'relative' }}>
                      <button className={`conv-action-icon-btn ${userFeedback[gen.id] === 'like' ? 'active' : ''}`} title="Like" onClick={() => {
                        const next = userFeedback[gen.id] === 'like' ? null : 'LIKE';
                        setUserFeedback(prev => ({...prev, [gen.id]: next === 'LIKE' ? 'like' : undefined}));
@@ -1312,7 +1356,7 @@ export default function AIConversationalStudio({
                      <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '4px', paddingRight: '8px' }}>
                        <Sparkles size={12} /> {charged ? `-${charged} credits` : 'charged on success'}
                      </span>
-                  </div>
+                  </div>}
                   </>
                     );
                   })()} 

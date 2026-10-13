@@ -49,6 +49,9 @@ export const PROCESS_LINEAR_HORIZONTAL_GEOM = {
 
 // 5 default colors matching reference image:
 // 1: Amber Yellow, 2: Orange, 3: Magenta Pink, 4: Aqua Blue, 5: Royal Blue
+import { themeProcessSteps, customProcessColor } from './processThemeColors.js'
+
+/** Legacy fixed palette — used only by catalog previews; compiled slides use theme colors. */
 export const PROCESS_LINEAR_HORIZONTAL_DEFAULT_COLORS = [
   '#F5A623', // 1: Warm Amber / Yellow
   '#FF793F', // 2: Vibrant Orange
@@ -362,7 +365,7 @@ export function layoutProcessLinearHorizontal(elements = [], schema = {}, palett
     }
   }
   const stepCount = detectedCount >= 2 ? detectedCount : 5
-  const steps = calculateLinearHorizontalStepGeometries(stepCount)
+  const steps = themeProcessSteps(calculateLinearHorizontalStepGeometries(stepCount), palette)
 
   const prevBySlot = new Map()
   safeElements.forEach((el) => {
@@ -448,7 +451,7 @@ export function layoutProcessLinearHorizontal(elements = [], schema = {}, palett
     const prevTitle = prevBySlot.get(`STEP_${n}_TITLE`)
     const prevBody = prevBySlot.get(`STEP_${n}_BODY`)
 
-    const cardColor = prevCard?.content?.fill || prevCard?.content?.color || step.color
+    const cardColor = customProcessColor(prevCard?.content?.fill, prevCard?.content?.color) || step.color
 
     // 3A. Standalone Card Graphic (frame + colored ribbon)
     const cardSvg = buildLinearHorizontalCardSvg(step)
@@ -535,7 +538,7 @@ export function layoutProcessLinearHorizontal(elements = [], schema = {}, palett
         fontSize: 13,
         fontWeight: 800,
         colorRole: 'primary',
-        color: prevTitle?.content?.color || cardColor,
+        color: customProcessColor(prevTitle?.content?.color) || cardColor,
         lineHeight: 1.15,
         clipToSlot: false,
       },
@@ -570,7 +573,7 @@ export function layoutProcessLinearHorizontal(elements = [], schema = {}, palett
         fontSize: 11,
         fontWeight: 400,
         colorRole: 'muted',
-        color: prevBody?.content?.color || '#64748B',
+        color: prevBody?.content?.color || palette?.muted || '#64748B',
         lineHeight: 1.45,
         clipToSlot: false,
       },

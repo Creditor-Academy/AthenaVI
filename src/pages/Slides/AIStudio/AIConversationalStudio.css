@@ -337,6 +337,16 @@
   align-items: center;
   gap: 4px;
   min-width: 0;
+  border-radius: 10px;
+}
+
+.conv-rail-recents li {
+  padding: 0 8px;
+}
+
+.conv-rail-recents li:hover,
+.conv-rail-recents li:has(button.is-on) {
+  background: #eceff3;
 }
 
 .conv-rail-recents button {
@@ -371,7 +381,7 @@
 
 .conv-rail-recents button:hover span,
 .conv-rail-recents button.is-on span {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .conv-rail-recents button:hover,
@@ -696,6 +706,51 @@
   width: auto;
   aspect-ratio: auto;
   line-height: 0;
+}
+
+.conv-deleted-image {
+  max-width: 100%;
+  min-height: 0;
+  border-radius: 12px;
+  background: #4b5563;
+  color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 20px;
+  text-align: center;
+  box-sizing: border-box;
+  line-height: 1.4;
+}
+
+.conv-deleted-image span {
+  color: #e2e8f0;
+  font-size: 14px;
+}
+
+.conv-deleted-image button {
+  margin-top: 6px;
+  border: none;
+  border-radius: 999px;
+  background: #374151;
+  color: #f8fafc;
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.conv-deleted-image button:hover {
+  background: #1f2937;
+}
+
+.conv-restore-spin {
+  animation: conv-restore-spin 0.8s linear infinite;
+}
+
+@keyframes conv-restore-spin {
+  to { transform: rotate(360deg); }
 }
 
 @keyframes slideInLeft {

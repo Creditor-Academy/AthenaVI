@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { resolveGraphicDisplayColor } from '../utils/graphicTheme.js'
+import { sanitizeSvgMarkup } from '../utils/sanitizeSvg.js'
 
 /**
  * Load an SVG URL for display.
@@ -85,11 +86,8 @@ function decodeDataSvg(dataUrl) {
 
 /** Strip scripts / event handlers before inlining. */
 function sanitizeInlineSvg(raw) {
-  let svg = String(raw || '')
-  svg = svg.replace(/<script[\s\S]*?<\/script>/gi, '')
-  svg = svg.replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-  svg = svg.replace(/javascript:/gi, '')
-  if (!/<svg[\s>]/i.test(svg)) return null
+  let svg = sanitizeSvgMarkup(raw)
+  if (!svg) return null
   // Ensure it scales to the container
   svg = svg.replace(
     /<svg\b([^>]*)>/i,

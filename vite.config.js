@@ -41,6 +41,13 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+    build: {
+      // @athena/contracts is CommonJS linked from ./packages (outside node_modules); without this,
+      // production builds fail with '"default" is not exported' (dev works via optimizeDeps below).
+      commonjsOptions: {
+        include: [/node_modules/, /packages[\\/]athena-contracts/],
+      },
+    },
     optimizeDeps: {
       include: [
         '@athena/contracts/contentContract.js',

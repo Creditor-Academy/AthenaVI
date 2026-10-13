@@ -863,7 +863,7 @@ export const layoutMetricTwoSplit = (elements, schema, palette = {}, canvas = {}
 
 /**
  * Polished SVG Preview for Metric Two Split thumbnail in slide picker.
- * Uses its own compact 560x340 coordinate system â€” independent from MTS_GEOM.
+ * Uses its own compact 560x340 coordinate system — independent from MTS_GEOM.
  */
 export function metricTwoSplitPreviewSvg(previewHints = {}, theme = {}) {
   const slots = previewHints?.slots || {}

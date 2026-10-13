@@ -285,13 +285,14 @@ import './AIImageGenerationUpdate.css';
 import InfographicAnimatedBackground from './InfographicAnimatedBackground.jsx';
 
 const RANDOM_PROMPTS = [
-  "Create a minimalist and elegant brand poster for my artisanal coffee shop, featuring a warm beige and mocha color palette, a single latte cup with perfect latte art, and clean sans-serif typography.",
-  "A highly detailed, cinematic photograph of a futuristic cyberpunk cafe at night, illuminated by soft neon pink and cyan lights, with steam rising from a cup of coffee on a metallic table.",
-  "An expansive, surreal landscape showing floating islands connected by glowing vines, with waterfalls cascading into the starry night sky, rendered in a 3D fantasy style with vivid purples and blues.",
-  "A striking, geometric pop-art illustration of a vintage sports car driving down a coastal highway at sunset, using bold contrasting colors like bright yellow, deep teal, and crimson.",
-  "A macro photography shot of a solitary dewdrop on a vibrant green fern leaf in a dense, misty forest, capturing the intricate reflection of the surrounding ancient trees inside the drop.",
-  "An isometric 3D cozy study room belonging to a lo-fi producer, filled with analog synthesizers, vinyl records, scattered sheet music, and a purring cat sleeping on a vintage rug.",
-  "A fashion editorial photo of a model in a rain-soaked Tokyo alley, neon reflections on wet pavement, shallow depth of field, cinematic color grade.",
+  "A square brand poster for an artisanal coffee shop. One ceramic cup of latte with a clear fern latte-art pattern, sitting on pale oak, warm beige and mocha palette. Soft window light from the left, shallow depth of field, a few coffee beans scattered, no people. Clean empty space at the top for a short shop name. Photoreal, quiet, premium, not a collage.",
+  "Cinematic night photo inside a small futuristic cafe. A single cup of coffee on a brushed-metal table, steam rising, rain on the window behind it. Neon pink and cyan light only, reflections on the wet table, one empty stool, no readable signs. Shot on a 35mm lens, moody, sharp subject, dark background.",
+  "A wide fantasy landscape of three floating islands linked by glowing vines. Waterfalls drop from the islands into a starry sky. Purple and deep blue twilight, soft fog in the valleys, one tiny lantern on the nearest island so the scale is clear. Detailed 3D illustration, no text, no characters in the foreground.",
+  "Pop-art illustration of a cream vintage sports car on a coastal highway at sunset. Bold flat shapes, thick black outlines, colors limited to bright yellow, deep teal, and crimson. Ocean on the right, sun low on the horizon, car large in the frame, graphic and clean, not photoreal.",
+  "Macro photograph of one dewdrop on a bright green fern in a misty forest. The drop clearly reflects tall trees. Soft morning light, dark blurred background, extremely sharp leaf veins, natural colors, no insects, no text.",
+  "Isometric 3D view of a small lo-fi music studio. Analog synthesizer, a short stack of vinyl, sheet music on the desk, warm lamp, a gray cat asleep on a vintage rug. Cozy evening light, wooden floor, cables neatly visible, no people, no readable album titles.",
+  "Fashion photo of one model standing in a rain-soaked Tokyo alley at night. Black coat, neon signs reflected in puddles, wet pavement, shallow depth of field, cinematic teal and amber grade. Model looking slightly off camera, full outfit visible, no logos, no extra people.",
+  "Editorial food photo of a sliced citrus tart on a marble counter. Overhead three-quarter angle, linen napkin, one fork, scattered zest, bright natural daylight, airy white background. Sharp texture on the crust, appetizing, no text, no hands.",
 ];
 
 const RANDOM_INFOGRAPHIC_PROMPTS = [
@@ -305,32 +306,32 @@ const RANDOM_INFOGRAPHIC_PROMPTS = [
 
 const INFOGRAPHIC_PROMPTS_BY_LAYOUT = {
   process: [
-    "A 5-step onboarding process infographic for a SaaS product, left-to-right flow, numbered stages, clean icons, lots of whitespace, no words on the graphic.",
-    "A manufacturing process infographic from raw materials to finished product, isometric machines, muted industrial palette, empty placeholder boxes for labels.",
+    "A 5-step onboarding infographic for a SaaS product, left to right. Steps labeled Sign up, Connect data, Invite team, Set goals, Go live. Each step is a numbered rounded card with one simple icon, a short one-line description under the title, and an arrow to the next card. White background, navy and sky blue, lots of margin, flat vector, no photos, no tiny unreadable text.",
+    "A manufacturing process infographic from raw material to finished product, four stages: Source, Shape, Assemble, Ship. Isometric machines, muted steel and amber palette, a short label under each stage, a thin arrow between stages. Clean poster layout, one title at the top, no photographs.",
   ],
   timeline: [
-    "A 2018–2026 product roadmap timeline infographic with milestone markers, thin connecting line, corporate navy and gold, empty date labels.",
-    "A company history timeline infographic spanning five eras, horizontal layout, archival photo-style icons, cream and charcoal colors.",
+    "A horizontal timeline infographic from 2018 to 2026 with five milestones: Launch, First customers, Series A, New product, Global rollout. Thin navy line, gold dots, a year and a two-word label on each milestone, white background, corporate and spacious, no photos.",
+    "A company-history timeline with five eras on one horizontal line. Each era has a year, a short title, and one small archival-style icon. Cream background, charcoal text, clear spacing so every label is readable.",
   ],
   comparison: [
-    "A side-by-side comparison infographic of Plan A vs Plan B for remote work, two equal columns, check vs tradeoff icons, cool blue vs warm orange.",
-    "A before-and-after comparison infographic of a city block after a green redesign, split canvas, clean vector buildings, no text.",
+    "A two-column comparison infographic, Plan A versus Plan B, for remote work. Equal columns, cool blue on the left and warm orange on the right. Five rows: cost, flexibility, tools, support, best for. Each row has a short phrase and a simple check or minus icon. Title at the top, white background, no photos.",
+    "A split before-and-after infographic of one city block. Left side labeled Before: gray street, few trees. Right side labeled After: bike lane, trees, benches. Same camera angle on both halves, clean vector buildings, a short caption under each half, no tiny street text.",
   ],
   stats: [
-    "A stats infographic of quarterly KPIs with four large number callouts, thin bar charts, dark dashboard look, empty numeric placeholders.",
-    "A global energy mix stats infographic with pie and bar visuals, bold numerals, teal and charcoal, lots of negative space.",
+    "A dark dashboard infographic with four large KPI cards: Revenue, Users, Retention, Support time. Each card has one big number, a one-word label, and a thin bar underneath. Teal accents on charcoal, aligned grid, no photos, no paragraphs.",
+    "An energy-mix infographic with one donut chart and three horizontal bars for Solar, Wind, and Other. Big readable percentages, teal and charcoal, white background, a short title, plenty of empty margin.",
   ],
   hierarchy: [
-    "An org-hierarchy infographic for a product team, top-down tree, rounded cards, soft gray connectors, empty name placeholders.",
-    "A knowledge hierarchy infographic from fundamentals to expert skills, pyramid layers, educational pastel palette, no words.",
+    "A top-down org chart for a product team. One card at the top labeled Product lead, then three cards: Design, Engineering, Research, then two smaller cards under Engineering. Rounded cards, short role titles only, soft gray connectors, white background.",
+    "A four-layer pyramid infographic of skills: Fundamentals, Practice, Projects, Expert. Widest layer at the bottom, a short label centered in each layer, pastel blue to deep indigo, educational and simple, no extra icons crowding the labels.",
   ],
   list: [
-    "A vertical list infographic of 6 packing tips for a weekend trip, numbered rows, travel icons, airy layout, empty caption boxes.",
-    "A ranked list infographic of top workplace benefits, 1–7, simple icons, mint and navy, plenty of space for labels.",
+    "A vertical list infographic of 6 weekend packing tips. Numbered rows 1 to 6, each with a small travel icon, a short title, and one short line of advice. Airy white layout, navy text, even spacing, no photos.",
+    "A ranked list infographic of 7 workplace benefits, numbers 1 to 7 down the page. Each row has a simple icon, a benefit name, and a five-word description. Mint and navy, lots of space, poster-clear type.",
   ],
   cycle: [
-    "A circular cycle infographic of a 4-stage design sprint, arrows around a center, isometric icons, lavender and slate.",
-    "A feedback-loop cycle infographic for continuous improvement, six segments, clean line icons, no text on the image.",
+    "A circular 4-stage design-sprint infographic around an empty center. Stages labeled Understand, Sketch, Decide, Test, with a curved arrow from each to the next. One isometric icon per stage, lavender and slate, white background, labels outside the circle so they stay readable.",
+    "A six-segment improvement cycle: Plan, Do, Check, Learn, Adjust, Repeat. Equal slices, a short label in each slice, arrows showing the loop, clean line icons, light gray background, no paragraphs.",
   ],
 };
 
@@ -342,32 +343,32 @@ const RANDOM_SOCIAL_PROMPTS = [
 
 const SOCIAL_PROMPTS_BY_DESTINATION = {
   'youtube-thumbnail': [
-    "A high-contrast YouTube thumbnail of a creator reacting in shock to a glowing laptop screen, big empty space on the left for a 4-word title, 1280×720 energy.",
-    "A YouTube thumbnail for a cooking tutorial: close-up of a skillet flare, chef in the corner, dark background so text can sit on top.",
+    "YouTube thumbnail, 16:9. A creator on the right third, eyes wide, looking at a glowing laptop. Face large and sharp, dark background, one strong pink rim light. The entire left half is empty dark space for a 4-word title. High contrast, no tiny text, no logos, no clutter.",
+    "YouTube thumbnail for a cooking video. Close-up skillet with a tall flame, chef’s face in the lower right, surprised expression. Dark kitchen so a bold title can sit across the top. Saturated food colors, sharp, not a collage.",
   ],
   'instagram-post': [
-    "A vertical Instagram post of a minimal skincare flat-lay on travertine, soft daylight, empty band at the bottom for a product name.",
-    "An Instagram portrait of a vintage camera on a linen table, film-grain, muted pastels, space for a short overlay headline.",
+    "Vertical Instagram post. Skincare flat-lay on warm travertine: one bottle, one dropper, a linen cloth. Soft side daylight, calm beige palette. Leave a clear empty band across the bottom third for a product name. No faces, no logos, no busy pattern.",
+    "Vertical Instagram photo of one vintage camera on a linen table, film grain, muted sage and cream. Camera sharp, background soft. Empty space above the camera for a short headline. Natural light, no extra props.",
   ],
   'facebook-post': [
-    "A Facebook post visual for a weekend market: crowd and string lights, warm tones, centered subject, space for a short promo line.",
-    "A Facebook post graphic of a new office opening, bright interior photo, friendly and inviting, room for event details.",
+    "Facebook post photo of a weekend night market. String lights overhead, one food stall in the center, warm amber light, a few people softly out of focus. Leave a clean strip along the bottom for one promo line. Inviting, not crowded, no readable shop signs.",
+    "Facebook post photo of a bright new office on opening morning. One person at a plant-filled desk, large windows, friendly daylight. Subject on the right, open wall on the left for a short event line. No logos.",
   ],
   'facebook-cover': [
-    "A wide Facebook cover of a coastal road at dusk, cinematic, subject on the right so a logo can sit on the left, 851×315 feel.",
-    "A Facebook cover of a sunlit co-working loft, people softly blurred, open sky area for a brand name.",
+    "Extra-wide Facebook cover of a coastal road at dusk. The road and car sit on the right. The left third is open sky and sea so a logo can sit there. Cinematic, quiet, no text in the image, no crowded foreground.",
+    "Extra-wide Facebook cover of a sunlit co-working loft. People blurred in the background, plants and wood in the middle. Keep the upper-left area simple and bright for a brand name. Natural light, no signage.",
   ],
   'youtube-banner': [
-    "A wide YouTube channel banner of a creator studio, gear on the sides, empty center third for a channel name, 2560×1440 cinematic.",
-    "A YouTube banner of an abstract gradient mesh in brand colors, lots of safe-area empty space in the middle for text.",
+    "Very wide YouTube channel banner. A creator studio: camera and softbox on the far left, shelves on the far right. The center third is a clean wall with even light so a channel name can sit there. Cinematic, no text, no faces cut off at the edges.",
+    "Very wide YouTube banner made of a smooth gradient mesh in deep blue and warm amber. No objects in the center safe area. Subtle texture only at the far left and right edges. No text, no logos.",
   ],
   'twitter-post': [
-    "An X / Twitter post visual of a product teaser on a dark desk, neon accent light, landscape crop, space for a one-line hook.",
-    "A landscape X post of a city skyline at blue hour, crisp, news-ready, empty lower third for overlay text.",
+    "Landscape X post. One new product, a matte black speaker, on a dark desk, single neon accent light from the left. Product large and centered, empty lower third for a one-line hook. Sharp, premium, no extra gadgets, no text.",
+    "Landscape X post of a city skyline at blue hour, shot straight on, crisp buildings, one warm window cluster as the focal point. Empty darker band along the bottom for overlay text. News-photo clarity, no captions baked in.",
   ],
   'linkedin-banner': [
-    "A LinkedIn banner of a calm architectural interior, professional daylight, extra-wide, empty left third for a name and title.",
-    "A LinkedIn cover of abstract geometric glass panels in navy and white, corporate, lots of negative space.",
+    "Extra-wide LinkedIn banner of a calm concrete-and-glass office interior in daylight. Furniture sits on the right. The left third is a plain bright wall for a name and title. Professional, quiet, no people in the foreground, no text.",
+    "Extra-wide LinkedIn cover of geometric glass panels in navy and white. Simple, corporate, large empty area on the left for a name. No photos of people, no small patterns, no words in the image.",
   ],
 };
 
@@ -400,20 +401,20 @@ function pickInspirePrompt(mode, layoutId, formatId, platform) {
     const id = String(formatId || '');
     if (id.includes('business-card')) {
       return pickRandom([
-        'Business card for Maya Chen, Product Designer at Athena VI, maya@athenavi.com, +91 98765 43210, athenavi.com, Bengaluru.',
-        'Front-only business card for Dr. Arjun Mehta, Cardiology, Fortis Heart Clinic, 080 2222 1100, reception@fortisheart.in.',
+        'Front of a business card for Maya Chen, Product Designer at Athena VI. Show the name large, the role under it, then maya@athenavi.com, +91 98765 43210, athenavi.com, Bengaluru. Cream paper, one thin navy rule, lots of margin, real readable type, no fake logos, no photo.',
+        'Front of a business card for Dr. Arjun Mehta, Cardiology, Fortis Heart Clinic. Name large, specialty under it, then 080 2222 1100 and reception@fortisheart.in. White card, deep green accent, quiet and medical, every word readable, no clip art.',
       ]);
     }
     if (id.includes('invitation')) {
       return pickRandom([
-        'Invitation to Priya & Rohan’s wedding reception, 18 October 2026, 7:00 PM, The Leela Palace Bengaluru. RSVP +91 99887 76655.',
-        'Invitation to the Athena Learning Summit dinner, 14 November 2026, 8:00 PM, Bengaluru International Centre. RSVP events@athenavi.com.',
+        'Wedding invitation card for Priya and Rohan’s reception. Centered serif type, names largest, then 18 October 2026, 7:00 PM, The Leela Palace Bengaluru, RSVP +91 99887 76655. Ivory paper, a thin floral border, generous margins, every line readable.',
+        'Dinner invitation for the Athena Learning Summit. Title at the top, then 14 November 2026, 8:00 PM, Bengaluru International Centre, RSVP events@athenavi.com. Navy text on warm white, one gold line, formal and spacious, no photos.',
       ]);
     }
     if (id.includes('poster')) {
       return pickRandom([
-        'Poster for the Athena Learning Summit, 14–15 November 2026 at Bengaluru International Centre. Register at athenavi.com/summit.',
-        'Campus recruitment poster: Athena VI internships, apply by 30 October 2026, careers@athenavi.com, walk-in 10 AM–4 PM.',
+        'A portrait event poster for the Athena Learning Summit. Huge title, then 14–15 November 2026, Bengaluru International Centre, and Register at athenavi.com/summit near the bottom. Deep blue background, one gold accent, large readable type, no stock photos of crowds.',
+        'A recruitment poster for Athena VI internships. Headline, then apply by 30 October 2026, careers@athenavi.com, walk-in 10 AM–4 PM. White poster, bold black type, one blue block behind the headline, clear hierarchy, no tiny paragraphs.',
       ]);
     }
     return pickRandom([

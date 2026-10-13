@@ -144,6 +144,9 @@ export const DECK_LAYOUT_SLOT_ROLES = [
   'contact',
   'eyebrow',
   'divider',
+  'badge',
+  'graphic',
+  'shape',
 ]
 
 export const CANVAS_ELEMENT_TYPES = ['text', 'image', 'shape', 'icon', 'chart', 'table', 'embed']

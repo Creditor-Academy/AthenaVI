@@ -50,6 +50,9 @@ export const PROCESS_LINEAR_BUSINESS_GEOM = {
   bodyH: 98,
 }
 
+import { themeProcessSteps, customProcessColor } from './processThemeColors.js'
+
+/** Legacy fixed palette — used only by catalog previews; compiled slides use theme colors. */
 export const PROCESS_LINEAR_DEFAULT_COLORS = [
   '#2C3E50', // 1: Dark Slate Navy
   '#2563EB', // 2: Royal Blue
@@ -305,7 +308,7 @@ export function layoutProcessLinearBusiness(elements = [], schema = {}, palette 
     }
   }
   const stepCount = Math.max(detectedCount, 7)
-  const steps = calculateStepGeometries(stepCount)
+  const steps = themeProcessSteps(calculateStepGeometries(stepCount), palette)
 
   // Map existing elements by slotId
   const prevBySlot = new Map()
@@ -341,7 +344,7 @@ export function layoutProcessLinearBusiness(elements = [], schema = {}, palette 
       fontSize: 26,
       fontWeight: 800,
       colorRole: 'text',
-      color: '#334155',
+      color: palette?.text || '#334155',
       lineHeight: 1.15,
       clipToSlot: false,
     },
@@ -356,8 +359,8 @@ export function layoutProcessLinearBusiness(elements = [], schema = {}, palette 
     const prevCard = prevBySlot.get(`STEP_${n}_CARD`)
     const prevIcon = prevBySlot.get(`STEP_${n}_ICON`)
 
-    const chevronColor = prevChevron?.content?.fill || step.color
-    const cardColor = prevCard?.content?.fill || step.color
+    const chevronColor = customProcessColor(prevChevron?.content?.fill) || step.color
+    const cardColor = customProcessColor(prevCard?.content?.fill) || step.color
     const iconColor = prevIcon?.content?.fill || '#FFFFFF'
 
     // 2A. Standalone Chevron Arrow Graphic
@@ -471,7 +474,7 @@ export function layoutProcessLinearBusiness(elements = [], schema = {}, palette 
         fontSize: 13.5,
         fontWeight: 800,
         colorRole: 'text',
-        color: '#1E293B',
+        color: palette?.text || '#1E293B',
         lineHeight: 1.2,
         clipToSlot: false,
       },
@@ -505,7 +508,7 @@ export function layoutProcessLinearBusiness(elements = [], schema = {}, palette 
         fontSize: 10.5,
         fontWeight: 400,
         colorRole: 'muted',
-        color: '#64748B',
+        color: palette?.muted || '#64748B',
         lineHeight: 1.35,
         clipToSlot: false,
       },
