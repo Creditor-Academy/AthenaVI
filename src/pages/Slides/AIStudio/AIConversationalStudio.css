@@ -337,6 +337,16 @@
   align-items: center;
   gap: 4px;
   min-width: 0;
+  border-radius: 10px;
+}
+
+.conv-rail-recents li {
+  padding: 0 8px;
+}
+
+.conv-rail-recents li:hover,
+.conv-rail-recents li:has(button.is-on) {
+  background: #eceff3;
 }
 
 .conv-rail-recents button {
@@ -371,7 +381,7 @@
 
 .conv-rail-recents button:hover span,
 .conv-rail-recents button.is-on span {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .conv-rail-recents button:hover,
