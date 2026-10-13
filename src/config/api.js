@@ -211,6 +211,8 @@ const API_CONFIG = {
       FEEDBACK: (workspaceId, generationId) =>
         `/api/image-gen/workspaces/${workspaceId}/generations/${generationId}/feedback`,
       HIDE: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/generations/hide`,
+      RESTORE: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/generations/restore`,
+      PURGE: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/generations/purge`,
       THREADS: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/threads`,
       THREAD: (workspaceId, threadId) =>
         `/api/image-gen/workspaces/${workspaceId}/threads/${threadId}`,

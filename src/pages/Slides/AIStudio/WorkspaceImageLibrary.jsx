@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Loader2, Sparkles, Image as ImageIcon, Download, Copy, Check, MessageSquare, Trash2, X, BarChart3, Share2, Printer, Plus, Search, LayoutGrid, List, Heart, ChevronDown } from 'lucide-react';
+import { Loader2, Sparkles, Image as ImageIcon, Download, Copy, Check, MessageSquare, Trash2, X, BarChart3, Share2, Printer, Plus, Search, LayoutGrid, List, Heart, ChevronDown, SlidersHorizontal, MoreHorizontal, RotateCcw } from 'lucide-react';
 import imageGenService from '../../../services/imageGenService.js';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
 
@@ -30,9 +30,13 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
   const [downloadNotice, setDownloadNotice] = useState('');
   const [downloadProgress, setDownloadProgress] = useState(null);
   const [category, setCategory] = useState('all');
+  const [libraryView, setLibraryView] = useState('library');
   const [query, setQuery] = useState('');
   const [layout, setLayout] = useState('grid');
   const [newMenuOpen, setNewMenuOpen] = useState(false);
+  const [manageMenuOpen, setManageMenuOpen] = useState(false);
+  const [trashMenuId, setTrashMenuId] = useState(null);
+  const [confirmPurge, setConfirmPurge] = useState(false);
 
   const handleDownload = async (event, gen, idx) => {
     event.stopPropagation();
@@ -167,16 +171,51 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
     clearSelection();
   };
 
+  const selectedTrashIds = () => selected.map((gen) => gen.id).filter(Boolean);
+
+  const restoreSelected = async (ids) => {
+    const unique = [...new Set((ids || selectedTrashIds()).filter(Boolean))];
+    if (!workspaceId || !unique.length) return;
+    try {
+      await imageGenService.restoreGenerations(workspaceId, unique);
+    } catch (err) {
+      console.error('Library restore failed:', err);
+      return;
+    }
+    const drop = new Set(unique);
+    setGenerations((rows) => rows.filter((gen) => !drop.has(gen.id)));
+    setTrashMenuId(null);
+    clearSelection();
+  };
+
+  const purgeSelected = async (ids) => {
+    const unique = [...new Set((ids || selectedTrashIds()).filter(Boolean))];
+    if (!workspaceId || !unique.length) return;
+    try {
+      await imageGenService.purgeGenerations(workspaceId, unique);
+    } catch (err) {
+      console.error('Library purge failed:', err);
+      return;
+    }
+    const drop = new Set(unique);
+    setGenerations((rows) => rows.filter((gen) => !drop.has(gen.id)));
+    setTrashMenuId(null);
+    setConfirmPurge(false);
+    clearSelection();
+  };
+
   useEffect(() => {
-    if (!newMenuOpen && !modeMenuOpen) return undefined;
+    if (!newMenuOpen && !modeMenuOpen && !manageMenuOpen && !trashMenuId) return undefined;
     const close = (event) => {
-      if (event.target.closest('.library-new-wrap') || event.target.closest('.library-start-wrap')) return;
+      if (event.target.closest('.library-new-wrap') || event.target.closest('.library-start-wrap') || event.target.closest('.library-manage-wrap') || event.target.closest('.library-trash-menu')) return;
       setNewMenuOpen(false);
       setModeMenuOpen(false);
+      setManageMenuOpen(false);
+      setTrashMenuId(null);
     };
     document.addEventListener('mousedown', close);
     return () => document.removeEventListener('mousedown', close);
-  }, [newMenuOpen, modeMenuOpen]);
+  }, [newMenuOpen, modeMenuOpen, manageMenuOpen, trashMenuId]);
 
   useEffect(() => {
     if (!workspaceId) {
@@ -188,7 +227,10 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
     const fetchGenerations = async () => {
       try {
         setLoading(true);
-        const results = await imageGenService.listGenerations(workspaceId, { take: 100 });
+        const results = await imageGenService.listGenerations(workspaceId, {
+          take: 100,
+          trashed: libraryView === 'trash',
+        });
         setGenerations(results || []);
       } catch (err) {
         console.error("Failed to load generations:", err);
@@ -199,7 +241,7 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
     };
 
     fetchGenerations();
-  }, [workspaceId]);
+  }, [workspaceId, libraryView === 'trash']);
 
   if (loading) {
     return (
@@ -324,6 +366,7 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           z-index: 2;
         }
         .cute-library-card:hover .library-select-box,
+        .cute-library-card.is-trash .library-select-box,
         .library-select-box.is-on {
           opacity: 1;
         }
@@ -468,27 +511,126 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           color: #fff;
           box-shadow: none;
         }
-        .library-liked-btn {
+        .library-manage-wrap {
+          position: relative;
+          z-index: 6;
+        }
+        .library-manage-btn {
           display: inline-flex;
           align-items: center;
           justify-content: center;
           width: 40px;
           height: 40px;
           padding: 0;
-          border-radius: 12px;
+          border-radius: 999px;
           border: 1px solid #e6ebf2;
           background: #fff;
           color: #475569;
           cursor: pointer;
         }
-        .library-liked-btn:hover {
-          border-color: #fecdd3;
-          color: #be123c;
+        .library-manage-btn:hover,
+        .library-manage-btn.is-on {
+          background: #f8fafc;
+          color: var(--primary, #2563eb);
+          border-color: #dbe4f0;
         }
-        .library-liked-btn.is-on {
-          background: #fff1f2;
-          border-color: #fecdd3;
-          color: #be123c;
+        .library-manage-menu button.is-on {
+          background: #f1f5f9;
+          color: var(--primary, #2563eb);
+        }
+        .library-crumb {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin: 4px 0 14px;
+          font-size: 18px;
+          font-weight: 650;
+          color: #0f172a;
+        }
+        .library-crumb button {
+          border: none;
+          background: none;
+          padding: 0;
+          font: inherit;
+          color: #64748b;
+          cursor: pointer;
+        }
+        .library-crumb button:hover {
+          color: #0f172a;
+        }
+        .library-crumb span {
+          color: #cbd5e1;
+          font-weight: 500;
+        }
+        .library-trash-note {
+          margin: 0 0 18px;
+          padding: 14px 16px;
+          border-radius: 12px;
+          background: #f4f7fb;
+          color: #475569;
+          font-size: 14px;
+        }
+        .library-days-left {
+          position: absolute;
+          left: 10px;
+          bottom: 10px;
+          z-index: 3;
+          padding: 4px 8px;
+          border-radius: 999px;
+          background: rgba(15, 23, 42, 0.72);
+          color: #fff;
+          font-size: 12px;
+          font-weight: 650;
+        }
+        .library-more-wrap {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          z-index: 3;
+        }
+        .library-more-btn {
+          width: 32px;
+          height: 32px;
+          border: none;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.94);
+          color: #334155;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          box-shadow: 0 1px 4px rgba(15, 23, 42, 0.16);
+        }
+        .library-trash-pop {
+          position: absolute;
+          top: 38px;
+          right: 0;
+          min-width: 190px;
+          padding: 6px;
+          border-radius: 12px;
+          background: #fff;
+          border: 1px solid #e6ebf2;
+          box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+          z-index: 5;
+        }
+        .library-trash-pop button {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          border: none;
+          background: none;
+          border-radius: 8px;
+          padding: 9px 10px;
+          font-size: 14px;
+          color: #1e293b;
+          cursor: pointer;
+        }
+        .library-trash-pop button:hover {
+          background: #f8fafc;
+        }
+        .library-trash-pop button.is-danger {
+          color: #dc2626;
         }
         .library-head {
           position: relative;
@@ -829,11 +971,14 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
             <List size={16} />
           </button>
         </div>
-        <div className="library-new-wrap">
+        {libraryView !== 'trash' && <div className="library-new-wrap">
           <button
             type="button"
             className="library-new-btn"
-            onClick={() => setNewMenuOpen((open) => !open)}
+            onClick={() => {
+              setManageMenuOpen(false);
+              setNewMenuOpen((open) => !open);
+            }}
           >
             <Plus size={16} /> New <ChevronDown size={14} />
           </button>
@@ -855,11 +1000,75 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
               ))}
             </div>
           )}
+        </div>}
+        <div className="library-manage-wrap">
+          <button
+            type="button"
+            className={`library-manage-btn${libraryView !== 'library' || manageMenuOpen ? ' is-on' : ''}`}
+            aria-label="Manage"
+            aria-expanded={manageMenuOpen}
+            title="Manage"
+            onClick={() => {
+              setNewMenuOpen(false);
+              setManageMenuOpen((open) => !open);
+            }}
+          >
+            <SlidersHorizontal size={16} />
+          </button>
+          {manageMenuOpen && (
+            <div className="library-mode-pop library-new-menu library-manage-menu" role="menu" style={{ top: 'calc(100% + 8px)', bottom: 'auto', right: 0, left: 'auto' }}>
+              <div className="library-new-menu-label">Manage</div>
+              <button
+                type="button"
+                role="menuitem"
+                className={libraryView === 'liked' ? 'is-on' : ''}
+                onClick={() => {
+                  setLibraryView((current) => (current === 'liked' ? 'library' : 'liked'));
+                  setManageMenuOpen(false);
+                  clearSelection();
+                }}
+              >
+                <Heart size={15} /> Liked images
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className={libraryView === 'trash' ? 'is-on' : ''}
+                onClick={() => {
+                  setLibraryView((current) => (current === 'trash' ? 'library' : 'trash'));
+                  setManageMenuOpen(false);
+                  clearSelection();
+                }}
+              >
+                <Trash2 size={15} /> Trash
+              </button>
+            </div>
+          )}
         </div>
       </div>
       </div>
 
-      <div className="library-filter-row">
+      {libraryView !== 'library' && (
+        <div className="library-crumb">
+          <button
+            type="button"
+            onClick={() => {
+              setLibraryView('library');
+              clearSelection();
+            }}
+          >
+            Library
+          </button>
+          <span>›</span>
+          {libraryView === 'trash' ? 'Trash' : 'Liked images'}
+        </div>
+      )}
+
+      {libraryView === 'trash' && (
+        <p className="library-trash-note">Restore images you recently deleted. They are deleted forever after 30 days.</p>
+      )}
+
+      {libraryView === 'library' && <div className="library-filter-row">
         <div className="library-categories" role="tablist" aria-label="Library categories">
           {LIBRARY_CATEGORIES.map((item) => (
             <button
@@ -877,20 +1086,7 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          className={`library-liked-btn${category === 'liked' ? ' is-on' : ''}`}
-          aria-pressed={category === 'liked'}
-          aria-label="Liked"
-          title="Liked"
-          onClick={() => {
-            setCategory((current) => (current === 'liked' ? 'all' : 'liked'));
-            clearSelection();
-          }}
-        >
-          <Heart size={18} fill={category === 'liked' ? 'currentColor' : 'none'} />
-        </button>
-      </div>
+      </div>}
 
       <div
         className={`library-grid${layout === 'list' ? ' is-list' : ''}`}
@@ -901,9 +1097,8 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
         }}
       >
         {generations.filter((gen) => {
-          if (category === 'liked') {
-            if (gen.feedback !== 'LIKE') return false;
-          } else if (category !== 'all' && String(gen.mode || 'image').toLowerCase() !== category) return false;
+          if (libraryView === 'liked' && gen.feedback !== 'LIKE') return false;
+          if (libraryView === 'library' && category !== 'all' && String(gen.mode || 'image').toLowerCase() !== category) return false;
           const q = query.trim().toLowerCase();
           if (!q) return true;
           return `${gen.prompt || ''} ${gen.title || ''}`.toLowerCase().includes(q);
@@ -922,8 +1117,8 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           return (
             <div 
               key={gen.id || idx} 
-              className={`cute-library-card${isSelected ? ' is-selected' : ''}`}
-              onClick={() => onImageClick && gen.threadId && onImageClick(gen.threadId)}
+              className={`cute-library-card${isSelected ? ' is-selected' : ''}${libraryView === 'trash' ? ' is-trash' : ''}`}
+              onClick={() => libraryView !== 'trash' && onImageClick && gen.threadId && onImageClick(gen.threadId)}
               style={{ cursor: gen.threadId ? 'pointer' : 'default' }}
             >
               {layout === 'list' && (
@@ -946,6 +1141,40 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
                   className="cute-library-card-img"
                   loading="lazy"
                 />
+                {libraryView === 'trash' && (
+                  <span className="library-days-left">
+                    {(() => {
+                      const deleted = gen.deletedAt ? new Date(gen.deletedAt).getTime() : Date.now();
+                      const left = Math.max(0, Math.ceil((deleted + 30 * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000)));
+                      return left === 1 ? '1 day left' : `${left} days left`;
+                    })()}
+                  </span>
+                )}
+                {libraryView === 'trash' ? (
+                  <div className="library-more-wrap library-trash-menu">
+                    <button
+                      type="button"
+                      className="library-more-btn"
+                      aria-label="Image actions"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTrashMenuId((current) => (current === (gen.id || idx) ? null : (gen.id || idx)));
+                      }}
+                    >
+                      <MoreHorizontal size={16} />
+                    </button>
+                    {trashMenuId === (gen.id || idx) && (
+                      <div className="library-trash-pop" role="menu">
+                        <button type="button" onClick={(e) => { e.stopPropagation(); restoreSelected([gen.id]); }}>
+                          <RotateCcw size={15} /> Restore
+                        </button>
+                        <button type="button" className="is-danger" onClick={(e) => { e.stopPropagation(); setConfirmPurge([gen.id]); setTrashMenuId(null); }}>
+                          <Trash2 size={15} /> Permanently delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
                 <div className="cute-library-card-actions">
                   <button 
                     className="library-action-btn"
@@ -966,6 +1195,7 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
                     <Copy size={16} />
                   </button>
                 </div>
+                )}
                 <button
                   type="button"
                   className={`library-select-box${selectedIds.includes(gen.id || idx) ? ' is-on' : ''}`}
@@ -982,7 +1212,7 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
               {layout === 'list' && (
                 <>
                   <div className="library-list-name" title={imageName}>{imageName}</div>
-                  <div className="library-list-actions">
+                  {libraryView !== 'trash' && <div className="library-list-actions">
                     <button
                       type="button"
                       className="library-action-btn"
@@ -1002,7 +1232,7 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
                     >
                       <Copy size={15} />
                     </button>
-                  </div>
+                  </div>}
                 </>
               )}
             </div>
@@ -1029,7 +1259,21 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
         </div>
       )}
       {!downloadProgress && downloadNotice && <div className="library-download-toast" role="status">{downloadNotice}</div>}
-      {selected.length > 0 && (
+      {selected.length > 0 && libraryView === 'trash' && (
+        <div className="library-selection-bar" role="toolbar" aria-label="Selected trash images">
+          <span className="library-selection-count">{selected.length} selected</span>
+          <button type="button" className="library-selection-btn" onClick={() => restoreSelected()}>
+            <RotateCcw size={15} /> Restore
+          </button>
+          <button type="button" className="library-selection-btn is-danger" onClick={() => setConfirmPurge(selectedTrashIds())}>
+            <Trash2 size={15} /> Delete forever
+          </button>
+          <button type="button" className="library-selection-icon" title="Clear selection" aria-label="Clear selection" onClick={clearSelection}>
+            <X size={16} />
+          </button>
+        </div>
+      )}
+      {selected.length > 0 && libraryView !== 'trash' && (
         <div className="library-selection-bar" role="toolbar" aria-label="Selected images">
           <span className="library-selection-count">{selected.length} selected</span>
           <div className="library-start-wrap">
@@ -1073,13 +1317,26 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
       <ConfirmDialog
         dialog={confirmDelete ? {
           title: selected.length === 1 ? 'Delete this image?' : `Delete ${selected.length} images?`,
-          message: 'They will be removed from the library.',
+          message: selected.length === 1
+            ? 'It will be moved to Trash. You can restore it from there. It is permanently deleted after 30 days.'
+            : 'They will be moved to Trash. You can restore them from there. They are permanently deleted after 30 days.',
           confirmLabel: 'Delete',
           cancelLabel: 'Cancel',
           variant: 'danger',
           onConfirm: () => deleteSelectedLocally(),
         } : null}
         onCancel={() => setConfirmDelete(false)}
+      />
+      <ConfirmDialog
+        dialog={confirmPurge ? {
+          title: confirmPurge.length === 1 ? 'Delete this image forever?' : `Delete ${confirmPurge.length} images forever?`,
+          message: 'This cannot be undone.',
+          confirmLabel: 'Delete forever',
+          cancelLabel: 'Cancel',
+          variant: 'danger',
+          onConfirm: () => purgeSelected(confirmPurge),
+        } : null}
+        onCancel={() => setConfirmPurge(false)}
       />
     </div>
   );

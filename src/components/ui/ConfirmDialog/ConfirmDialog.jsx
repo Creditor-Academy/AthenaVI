@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import { MdWarning } from 'react-icons/md'
 import './ConfirmDialog.css'
 
@@ -15,7 +16,7 @@ const ConfirmDialog = ({ dialog, onCancel }) => {
 
   const isDanger = variant === 'danger'
 
-  return (
+  return createPortal(
     <div className="confirm-dialog-overlay" onClick={onCancel} role="presentation">
       <div
         className="confirm-dialog"
@@ -52,7 +53,8 @@ const ConfirmDialog = ({ dialog, onCancel }) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

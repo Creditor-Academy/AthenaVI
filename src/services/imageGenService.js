@@ -354,8 +354,8 @@ class ImageGenService {
     })
   }
 
-  async listGenerations(workspaceId, { take = 40, skip = 0, mode } = {}) {
-    const query = this.buildQuery({ take, skip, mode })
+  async listGenerations(workspaceId, { take = 40, skip = 0, mode, trashed } = {}) {
+    const query = this.buildQuery({ take, skip, mode, trashed: trashed ? 'true' : undefined })
     const data = await this.request(
       `${API_CONFIG.ENDPOINTS.IMAGE_GEN.GENERATIONS(workspaceId)}${query}`
     )
@@ -372,6 +372,20 @@ class ImageGenService {
 
   async hideGenerations(workspaceId, ids) {
     return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.HIDE(workspaceId), {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    })
+  }
+
+  async restoreGenerations(workspaceId, ids) {
+    return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.RESTORE(workspaceId), {
+      method: 'POST',
+      body: JSON.stringify({ ids }),
+    })
+  }
+
+  async purgeGenerations(workspaceId, ids) {
+    return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.PURGE(workspaceId), {
       method: 'POST',
       body: JSON.stringify({ ids }),
     })
