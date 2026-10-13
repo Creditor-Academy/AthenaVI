@@ -39,6 +39,11 @@
       "import": "./esm/graphicTheme.js",
       "require": "./graphicTheme.js",
       "default": "./graphicTheme.js"
+    },
+    "./donutContextMetrics.js": {
+      "import": "./esm/donutContextMetrics.js",
+      "require": "./donutContextMetrics.js",
+      "default": "./donutContextMetrics.js"
     }
   }
 }

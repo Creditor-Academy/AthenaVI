@@ -8,6 +8,7 @@ import {
   clampSlotText,
 } from './contentContract.js'
 import { runContentPreShape } from './contentPreShape.util.js'
+import { mapDonutContextMetrics as mapDonutContextMetricsShared } from '../../packages/athena-contracts/esm/donutContextMetrics.js'
 
 const NON_TEXT_SLOT_ROLES = new Set(['image', 'chart', 'decoration', 'background', 'table'])
 
@@ -98,8 +99,6 @@ function mapChartToSlots(content, schema, out) {
     out[`${slot.id}__chart`] = buildChartPayload(chartObj, slot, schema)
   })
 }
-
-import { mapDonutContextMetrics as mapDonutContextMetricsShared } from '../packages/athena-contracts/donutContextMetrics.js'
 
 function mapDonutContextMetrics(content, schema, out) {
   return mapDonutContextMetricsShared(content, schema, out)
