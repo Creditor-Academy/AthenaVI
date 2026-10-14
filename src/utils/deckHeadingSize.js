@@ -127,6 +127,48 @@ export function applyDeckHeadingSize(elements, { schema = null, targetPx, canvas
   return elements.map((el) => (el === heading ? next : el))
 }
 
+/** Mirrors backend textHierarchy.tierOf: 2 = card title/subheading, 3 = body, 4 = caption. */
+function tierOf(el) {
+  if (el?.content?.deckHeading) return 1
+  const role = String(el?.role || '').toLowerCase()
+  const sid = String(el?.slotId || '')
+  if (/^(stat|metric|quote|cta)$/.test(role) || /^(stat|metric|quote|cta)/i.test(sid)) return 0
+  if (/caption|eyebrow|attribution|footnote/.test(role)) return 4
+  if (role === 'heading' || role === 'subheading' || /_(TITLE|HEADING|HEADER)$/i.test(sid)) return 2
+  return 3
+}
+
+/** Apply the deck's harmonized tier sizes (themeTokens.typeScale.deckTiers) to a freshly compiled slide. */
+export function applyDeckTierSizes(elements, { schema = null, tiers = null } = {}) {
+  if (!Array.isArray(elements) || !tiers || isDeckHeadingExemptLayout(schema)) return elements
+  const sizeFor = { 2: Number(tiers.t2), 3: Number(tiers.t3), 4: Number(tiers.t4) }
+  return elements.map((el) => {
+    if (!el || (el.type !== 'text' && el.type !== 'textbox') || !plainText(el.content).trim()) return el
+    const tier = tierOf(el)
+    const size = sizeFor[tier]
+    if (!(size > 0)) return el
+    const sized = withFontSize(el, size)
+    return { ...sized, content: { ...sized.content, deckHeading: undefined, deckTier: tier } }
+  })
+}
+
+/** Rebind/finalize rebuilds text at layout default sizes — keep each slot's deck tier size. */
+export function preserveDeckTierSizes(previousElements, nextElements) {
+  if (!Array.isArray(nextElements)) return nextElements
+  const bySlot = new Map(
+    (previousElements || [])
+      .filter((el) => el?.content?.deckTier && el.slotId)
+      .map((el) => [el.slotId, el])
+  )
+  if (!bySlot.size) return nextElements
+  return nextElements.map((el) => {
+    const prev = bySlot.get(el?.slotId)
+    if (!prev || el.type !== 'text') return el
+    const sized = withFontSize(el, Number(prev.content.fontSize))
+    return { ...sized, content: { ...sized.content, deckHeading: undefined, deckTier: prev.content.deckTier } }
+  })
+}
+
 /** Rebind/finalize may rebuild the heading with a layout's hardcoded size — keep the deck size it had. */
 export function preserveDeckHeadingSize(previousElements, nextElements) {
   if (!Array.isArray(nextElements)) return nextElements

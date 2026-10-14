@@ -93,8 +93,8 @@ export async function rebindAndFinalizeSlideElements(
   next = finalizeTimelineShapes(next, layoutSchema, palette, canvasBox)
   next = finalizeChartShapes(next, layoutSchema, palette, canvasBox)
   // Diagram finalizers rebuild the heading at their hardcoded size — keep the deck heading size.
-  const { preserveDeckHeadingSize } = await import('./deckHeadingSize.js')
-  return preserveDeckHeadingSize(elements, next)
+  const { preserveDeckHeadingSize, preserveDeckTierSizes } = await import('./deckHeadingSize.js')
+  return preserveDeckTierSizes(elements, preserveDeckHeadingSize(elements, next))
 }
 
 export function slideContentHasStructuredCopy(content) {

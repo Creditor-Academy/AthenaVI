@@ -1,5 +1,5 @@
 import { resolvePreviewMode } from './deckLayoutRegistry.js'
-import { applyDeckHeadingSize, resolveDeckHeadingPx } from './deckHeadingSize.js'
+import { applyDeckHeadingSize, applyDeckTierSizes, resolveDeckHeadingPx } from './deckHeadingSize.js'
 import { resolveImagePresentation } from './deckLayoutV2Helpers.js'
 import { parseRegion, regionToBox, getGridDims } from './layoutPreviewUtils.js'
 import {
@@ -1662,11 +1662,14 @@ function applyReadableTextContrastForPreview(elements, palette, schema) {
 export function compileDeckLayoutToElements(schema, options = {}) {
   const elements = compileDeckLayoutToElementsForLayout(schema, options)
   if (!Array.isArray(elements)) return elements
-  return applyDeckHeadingSize(elements, {
+  const themeTokens = options.themeTokens || options.theme || null
+  const withHeading = applyDeckHeadingSize(elements, {
     schema,
-    targetPx: resolveDeckHeadingPx(options.themeTokens || options.theme || null),
+    targetPx: resolveDeckHeadingPx(themeTokens),
     canvas: options.canvas || {},
   })
+  // Card title / paragraph / caption sizes harmonized for the deck at generation.
+  return applyDeckTierSizes(withHeading, { schema, tiers: themeTokens?.typeScale?.deckTiers || null })
 }
 
 function compileDeckLayoutToElementsForLayout(schema, options = {}) {
