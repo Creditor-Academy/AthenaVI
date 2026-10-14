@@ -4404,7 +4404,14 @@ function AIPptEditor({
         />
       ) : null}
 
-      <div className="aig-editor-workspace gamma-layout">
+      <div
+        className="aig-editor-workspace gamma-layout"
+        style={{
+          // Theme fonts for text that has none (stage + sidebar thumbnails).
+          '--ppt-font-heading': slideStyles?.headerFont ? `"${slideStyles.headerFont}", sans-serif` : undefined,
+          '--ppt-font-body': slideStyles?.bodyFont ? `"${slideStyles.bodyFont}", sans-serif` : undefined,
+        }}
+      >
         <main
           className={`aig-editor-main-scroll ${sidebarOpen ? 'is-sidebar-open' : ''} ${showMinimap ? 'is-minimap-open' : ''}`}
           style={{

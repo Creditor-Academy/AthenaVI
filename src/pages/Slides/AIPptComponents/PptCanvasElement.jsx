@@ -387,7 +387,10 @@ function EditableText({
     fontWeight: weight,
     fontStyle: c.italic ? 'italic' : 'normal',
     textDecoration: decoration || undefined,
-    fontFamily: c.fontFamily || undefined,
+    // No font on the element → the deck theme font for its role (set as CSS vars by the editor).
+    fontFamily:
+      c.fontFamily ||
+      (isHeading ? 'var(--ppt-font-heading, inherit)' : 'var(--ppt-font-body, inherit)'),
     textAlign: c.align || 'left',
     textTransform: c.textTransform || undefined,
     letterSpacing: c.letterSpacing != null ? c.letterSpacing : undefined,
