@@ -22,7 +22,7 @@ import linkedinBannerPreview from '../../../assets/ai-img-gen/Linkedin_Banner.pn
 import OriginalAIImageStudio from './AIImageStudio.jsx';
 import AIConversationalStudio from './AIConversationalStudio.jsx';
 import WorkspaceImageLibrary from './WorkspaceImageLibrary.jsx';
-import ImageGenSaveLocation from '../../../components/features/image-generation/ImageGenSaveLocation.jsx';
+import ImageGenStudioSettings from '../../../components/features/image-generation/ImageGenStudioSettings.jsx';
 import ImageGenCreditsGate from '../../../components/features/image-generation/ImageGenCreditsGate.jsx';
 import ImageGenContextAttach from '../../../components/features/image-generation/ImageGenContextAttach.jsx';
 import MarkdownPromptInput from '../../../components/features/image-generation/MarkdownPromptInput.jsx';
@@ -1073,10 +1073,11 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
       <main className={`ai-gen-main${activeMode === 'infographic' && isComposerExpanded ? ' composer-open' : ''}`} style={{ position: 'relative' }}>
         {activeMode !== 'library' && (
         <div className="ai-gen-save-corner">
-          <ImageGenSaveLocation
+          <ImageGenStudioSettings
             workspaceId={saveWorkspaceId}
             folderId={saveFolderId}
             onChange={handleSaveLocationChange}
+            onCreditsChanged={loadRecentChats}
           />
         </div>
         )}

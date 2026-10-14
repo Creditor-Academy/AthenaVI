@@ -1,0 +1,347 @@
+.igs-settings-btn {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border-color, #e5e7eb) 80%, transparent);
+  background: color-mix(in srgb, var(--bg-surface, #ffffff) 88%, transparent);
+  color: var(--text-secondary, #64748b);
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+.igs-settings-btn:hover,
+.igs-settings-btn.is-on {
+  color: var(--primary, #2563eb);
+  border-color: color-mix(in srgb, var(--primary, #2563eb) 40%, var(--border-color, #e5e7eb));
+}
+
+.igs-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+}
+
+.igs-backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: rgba(15, 23, 42, 0.28);
+  backdrop-filter: blur(3px);
+  cursor: pointer;
+}
+
+.igs-panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: min(320px, calc(100% - 24px));
+  height: calc(100% - 24px);
+  border-radius: 22px;
+  background: #f7f9fc;
+  box-shadow: -16px 0 40px rgba(15, 23, 42, 0.12);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.igs-scroll {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 18px 14px 24px;
+  scrollbar-gutter: auto;
+}
+
+.igs-panel::before,
+.igs-panel::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.igs-panel::before {
+  top: -36px;
+  right: -48px;
+  width: 160px;
+  height: 90px;
+  background: radial-gradient(ellipse at center, rgba(186, 230, 253, 0.7), transparent 70%);
+  border-radius: 50%;
+}
+
+.igs-panel::after {
+  right: -40px;
+  bottom: -28px;
+  left: auto;
+  width: 180px;
+  height: 90px;
+  background: radial-gradient(ellipse at center, rgba(199, 210, 254, 0.55), transparent 72%);
+  border-radius: 50%;
+}
+
+.igs-head,
+.igs-section {
+  position: relative;
+  z-index: 1;
+}
+
+.igs-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.igs-head-copy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.igs-head-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: linear-gradient(145deg, #60a5fa, #2563eb);
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.28);
+}
+
+.igs-head h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 720;
+  color: #0f172a;
+}
+
+.igs-head-copy p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.igs-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #334155;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.igs-section {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #e6ebf2;
+}
+
+.igs-section-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.igs-mark {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.igs-mark--credits {
+  color: #0f766e;
+  background: #ecfdf5;
+}
+
+.igs-section h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.igs-section-title p,
+.igs-loading {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #64748b;
+}
+
+.igs-panel .igsl--embedded {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.igs-section:has(.igsl-pick.is-open) {
+  z-index: 4;
+}
+
+.igs-panel .igsl-pick.is-open {
+  z-index: 5;
+}
+
+.igs-panel .igsl-menu {
+  z-index: 6;
+}
+
+.igs-panel .igsl-pick-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  height: auto;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  position: relative;
+}
+
+.igs-panel .igsl-pick-btn:hover:not(:disabled) {
+  border-color: #cbd5e1;
+  background: #fff;
+}
+
+.igs-panel .igsl-pick-label {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.igs-panel .igsl-pick-value {
+  font-size: 14px;
+  font-weight: 650;
+  color: #0f172a;
+  padding-right: 18px;
+}
+
+.igs-panel .igsl-pick-chevron {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+}
+
+.igs-pools {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.igs-pool {
+  padding: 12px;
+  border-radius: 14px;
+  background: #f8fafc;
+}
+
+.igs-pool--personal {
+  background: linear-gradient(180deg, #eff6ff, #f8fafc);
+}
+
+.igs-pool--workspace {
+  background: linear-gradient(180deg, #ecfdf5, #f8fafc);
+}
+
+.igs-pool span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.igs-pools span {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.igs-pools strong {
+  font-size: 18px;
+  color: #0f172a;
+}
+
+.igs-add {
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid #eef2f6;
+}
+
+.igs-add label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.igs-add-row {
+  display: flex;
+  gap: 8px;
+}
+
+.igs-add-row input {
+  flex: 1;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  padding: 0 12px;
+  font-size: 14px;
+}
+
+.igs-add-row button {
+  height: 40px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 10px;
+  background: var(--primary, #2563eb);
+  color: #fff;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.igs-add-row button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.igs-hint {
+  margin: 8px 0 0 !important;
+  font-size: 12px !important;
+  line-height: 1.35;
+  color: #94a3b8 !important;
+}
+
+.igs-ok {
+  color: #15803d !important;
+}
+
+.igs-err {
+  color: #dc2626 !important;
+}

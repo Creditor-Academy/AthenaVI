@@ -178,6 +178,10 @@ export default function ImageGenSaveLocation({
     </>
   )
 
+  if (variant === 'embedded') {
+    return <div className="igsl igsl--embedded">{fields}</div>
+  }
+
   return (
     <div className={`igsl igsl--info ${open ? 'is-open' : ''}`} ref={rootRef}>
       <button
