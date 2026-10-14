@@ -1,5 +1,7 @@
+import { useMemo } from 'react'
 import useGraphicSvg, { resolveGraphicThemeColor } from '../../hooks/useGraphicSvg'
 import { isThemedColorMode } from '../../utils/graphicTheme.js'
+import { sanitizeSvgMarkup } from '../../utils/sanitizeSvg.js'
 
 /** Hit-test painted strokes/fills only so empty SVG boxes don't steal clicks. */
 function svgWithPaintHits(markup, { hitThrough = false } = {}) {
@@ -30,7 +32,11 @@ export default function GraphicCanvasVisual({
   hitThrough = false,
 }) {
   const rawSrc = content.src || content.url || content.previewUrl
-  const inlineMarkup = typeof content.svg === 'string' && content.svg.includes('<svg') ? content.svg : null
+  // content.svg is stored element data (AI output / any workspace member) — sanitize before innerHTML.
+  const inlineMarkup = useMemo(
+    () => (typeof content.svg === 'string' && content.svg.includes('<svg') ? sanitizeSvgMarkup(content.svg) : null),
+    [content.svg]
+  )
   const colorMode = content.colorMode || 'fixed'
   const wantRecolor = isThemedColorMode(colorMode) || colorMode === 'recolorable'
   const { imgSrc, inlineSvg } = useGraphicSvg(rawSrc, { preferInline: wantRecolor })

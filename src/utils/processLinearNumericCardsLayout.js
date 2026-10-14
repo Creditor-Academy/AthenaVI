@@ -63,6 +63,9 @@ export const PROCESS_LINEAR_NUMERIC_CARDS_GEOM = {
 // 2: Coral / Poppy Red
 // 3: Deep Slate Navy
 // 4: Vibrant Cyan / Sky Blue
+import { themeProcessSteps, customProcessColor } from './processThemeColors.js'
+
+/** Legacy fixed palette — used only by catalog previews; compiled slides use theme colors. */
 export const PROCESS_LINEAR_NUMERIC_CARDS_DEFAULT_COLORS = [
   '#F59E0B', // 1: Warm Amber
   '#EF4444', // 2: Coral Red
@@ -304,7 +307,7 @@ export function layoutProcessLinearNumericCards(elements, schema, palette = {}, 
   })
 
   const newId = (prefix) => `plnc-${prefix}-${Math.random().toString(36).slice(2, 9)}`
-  const steps = calculateProcessLinearNumericCardsGeometries(4)
+  const steps = themeProcessSteps(calculateProcessLinearNumericCardsGeometries(4), palette)
 
   const newElements = []
 
@@ -332,7 +335,7 @@ export function layoutProcessLinearNumericCards(elements, schema, palette = {}, 
       fontSize: 28,
       fontWeight: 800,
       colorRole: 'text',
-      color: prevHeading?.content?.color || '#1E293B',
+      color: prevHeading?.content?.color || palette?.text || '#1E293B',
       lineHeight: 1.15,
       clipToSlot: false,
     },
@@ -344,7 +347,8 @@ export function layoutProcessLinearNumericCards(elements, schema, palette = {}, 
     const nextStep = steps[i + 1]
 
     const prevCardNext = prevBySlot.get(`STEP_${nextStep.stepNum}_CARD`) || prevBySlot.get(`STEP_${nextStep.stepNum}_SHAPE`)
-    const bridgeColor = prevCardNext?.content?.fill || prevCardNext?.content?.color || nextStep.color
+    const bridgeColor =
+      customProcessColor(prevCardNext?.content?.fill, prevCardNext?.content?.color) || nextStep.color
 
     const bridgeX = curStep.x + g.cardW - 8
     const bridgeW = g.gap + 16
@@ -388,7 +392,7 @@ export function layoutProcessLinearNumericCards(elements, schema, palette = {}, 
     const prevTitle = prevBySlot.get(`STEP_${n}_TITLE`)
     const prevBody = prevBySlot.get(`STEP_${n}_BODY`)
 
-    const cardColor = prevCard?.content?.fill || prevCard?.content?.color || step.color
+    const cardColor = customProcessColor(prevCard?.content?.fill, prevCard?.content?.color) || step.color
     const defaultStep = PROCESS_LINEAR_NUMERIC_CARDS_DEFAULT_STEPS[step.index % PROCESS_LINEAR_NUMERIC_CARDS_DEFAULT_STEPS.length]
 
     // 3A. Card Container
@@ -423,7 +427,7 @@ export function layoutProcessLinearNumericCards(elements, schema, palette = {}, 
     const titleW = Math.round((step.w - 32) * scaleX)
     const titleX = Math.round((step.x + 16) * scaleX)
     const titleY = Math.round((step.y + g.titleOffsetY) * scaleY)
-    const titleColor = prevTitle?.content?.color || cardColor
+    const titleColor = customProcessColor(prevTitle?.content?.color) || cardColor
 
     newElements.push({
       id: prevTitle?.id || newId(`title-${n}`),
@@ -477,7 +481,7 @@ export function layoutProcessLinearNumericCards(elements, schema, palette = {}, 
         fontSize: 12,
         fontWeight: 400,
         colorRole: 'muted',
-        color: prevBody?.content?.color || '#64748B',
+        color: prevBody?.content?.color || palette?.muted || '#64748B',
         lineHeight: 1.45,
         clipToSlot: false,
       },

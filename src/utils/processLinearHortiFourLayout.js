@@ -47,6 +47,9 @@ export const PROCESS_LINEAR_HORTI_FOUR_GEOM = {
 }
 
 // 4 Vibrant colors matching reference image: Red, Orange, Sky Blue, Royal Blue
+import { themeProcessSteps, customProcessColor } from './processThemeColors.js'
+
+/** Legacy fixed palette — used only by catalog previews; compiled slides use theme colors. */
 export const PROCESS_LINEAR_HORTI_FOUR_DEFAULT_COLORS = [
   '#EE3B3B', // 1: Coral Red
   '#FB8C00', // 2: Amber Orange
@@ -357,7 +360,7 @@ export function layoutProcessLinearHortiFour(elements, schema, palette = {}, can
     }
   }
   const stepCount = detectedCount >= 2 ? detectedCount : 4
-  const steps = calculateProcessHortiFourStepGeometries(stepCount)
+  const steps = themeProcessSteps(calculateProcessHortiFourStepGeometries(stepCount), palette)
 
   // Map existing elements by slotId
   const prevBySlot = new Map()
@@ -397,7 +400,7 @@ export function layoutProcessLinearHortiFour(elements, schema, palette = {}, can
       fontSize: 28,
       fontWeight: 800,
       colorRole: 'text',
-      color: prevHeading?.content?.color || '#1E293B',
+      color: prevHeading?.content?.color || palette?.text || '#1E293B',
       lineHeight: 1.15,
       clipToSlot: false,
     },
@@ -412,7 +415,7 @@ export function layoutProcessLinearHortiFour(elements, schema, palette = {}, can
     const prevTitle = prevBySlot.get(`STEP_${n}_TITLE`)
     const prevBody = prevBySlot.get(`STEP_${n}_BODY`)
 
-    const shapeColor = prevShape?.content?.fill || prevShape?.content?.color || step.color
+    const shapeColor = customProcessColor(prevShape?.content?.fill, prevShape?.content?.color) || step.color
 
     // 2A. Standalone Badge Graphic (filled circle, dotted top arc, solid bottom arc, connector & ring, white icon)
     const badgeSvg = buildProcessHortiFourStepSvg(step)
@@ -447,7 +450,7 @@ export function layoutProcessLinearHortiFour(elements, schema, palette = {}, can
     const textW = Math.round(g.titleW * scaleX)
     const textX = Math.round((step.cx - g.titleW / 2) * scaleX)
     const titleY = Math.round((step.cy + g.titleOffsetY) * scaleY)
-    const titleColor = prevTitle?.content?.color || shapeColor
+    const titleColor = customProcessColor(prevTitle?.content?.color) || shapeColor
 
     newElements.push({
       id: prevTitle?.id || newId(`txt-step-${n}-title`),
@@ -499,7 +502,7 @@ export function layoutProcessLinearHortiFour(elements, schema, palette = {}, can
         fontSize: 11.5,
         fontWeight: 400,
         colorRole: 'muted',
-        color: prevBody?.content?.color || '#64748B',
+        color: prevBody?.content?.color || palette?.muted || '#64748B',
         lineHeight: 1.45,
         clipToSlot: false,
       },

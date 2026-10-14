@@ -54,6 +54,9 @@ export const PROCESS_LINEAR_NUMERIC_GEOM = {
 
 // 5 harmonious step colors matching reference image:
 // Yellow -> Warm Amber -> Ochre/Rust -> Brick Red -> Crimson/Berry
+import { themeProcessSteps, customProcessColor } from './processThemeColors.js'
+
+/** Legacy fixed palette — used only by catalog previews; compiled slides use theme colors. */
 export const PROCESS_LINEAR_NUMERIC_DEFAULT_COLORS = [
   '#EAB308', // 1: Golden Yellow
   '#F59E0B', // 2: Warm Amber
@@ -317,7 +320,7 @@ export function layoutProcessLinearNumeric(elements, schema, palette = {}, canva
     }
   }
   const stepCount = detectedCount >= 2 ? detectedCount : 5
-  const steps = calculateProcessLinearNumericStepGeometries(stepCount)
+  const steps = themeProcessSteps(calculateProcessLinearNumericStepGeometries(stepCount), palette)
 
   const prevBySlot = new Map()
   safeElements.forEach((el) => {
@@ -356,7 +359,7 @@ export function layoutProcessLinearNumeric(elements, schema, palette = {}, canva
       fontSize: 28,
       fontWeight: 800,
       colorRole: 'text',
-      color: prevHeading?.content?.color || '#1E293B',
+      color: prevHeading?.content?.color || palette?.text || '#1E293B',
       lineHeight: 1.15,
       clipToSlot: false,
     },
@@ -395,7 +398,7 @@ export function layoutProcessLinearNumeric(elements, schema, palette = {}, canva
     const prevTitle = prevBySlot.get(`STEP_${n}_TITLE`)
     const prevBody = prevBySlot.get(`STEP_${n}_BODY`)
 
-    const badgeColor = prevShape?.content?.fill || prevShape?.content?.color || step.color
+    const badgeColor = customProcessColor(prevShape?.content?.fill, prevShape?.content?.color) || step.color
 
     // 3A. Pin Pointer Badge (with white inner circle, number, and connector dot)
     const pinSvg = buildLinearNumericPinSvg(step)
@@ -430,7 +433,7 @@ export function layoutProcessLinearNumeric(elements, schema, palette = {}, canva
     const textW = Math.round(g.titleW * scaleX)
     const textX = Math.round((step.cx - g.titleW / 2) * scaleX)
     const titleY = Math.round((g.spineY + g.titleOffsetY) * scaleY)
-    const titleColor = prevTitle?.content?.color || badgeColor
+    const titleColor = customProcessColor(prevTitle?.content?.color) || badgeColor
 
     newElements.push({
       id: prevTitle?.id || newId(`txt-step-${n}-title`),
@@ -481,7 +484,7 @@ export function layoutProcessLinearNumeric(elements, schema, palette = {}, canva
         fontSize: 11,
         fontWeight: 400,
         colorRole: 'muted',
-        color: prevBody?.content?.color || '#64748B',
+        color: prevBody?.content?.color || palette?.muted || '#64748B',
         lineHeight: 1.45,
         clipToSlot: false,
       },

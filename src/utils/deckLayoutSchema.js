@@ -17,6 +17,9 @@ export const DECK_LAYOUT_SLOT_ROLES = [
   'contact',
   'eyebrow',
   'divider',
+  'badge',
+  'graphic',
+  'shape',
 ]
 
 /** Common mistakes → valid backend role. */

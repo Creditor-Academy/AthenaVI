@@ -30,6 +30,22 @@ const CATALOG_PLACEHOLDER_PATTERNS = [
   /^market share$/i,
   /represents the largest share of the market/i,
   /maintains a steady presence with consistent growth/i,
+  /^step \d+$/i,
+  /^phase \d+$/i,
+  // grid_insights_chart_* sample copy
+  /^insight \d+$/i,
+  /^revenue growth$/i,
+  /^monthly performance$/i,
+  /^key takeaway$/i,
+  // timeline_* diagram sample copy
+  /insert your desired text here/i,
+  /this is a sample text/i,
+  /^lorem ipsum dolor sit amet/i,
+  /^bring your presentation to life/i,
+  /^option 0?\d+$/i,
+  /^milestone 0?\d+$/i,
+  /^phase 0\d$/i,
+  /^stage \d+: (master plan|permits|design|schedule|build)$/i,
 ]
 
 const LAYOUT_ENGINE_DEFAULT_EXACT = new Set(

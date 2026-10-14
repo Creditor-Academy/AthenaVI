@@ -40,10 +40,12 @@
   user-select: none;
 }
 
-.canvas-editor-page button,
-.canvas-editor-page input,
-.canvas-editor-page select,
-.canvas-editor-page textarea {
+/* :where() keeps this reset at zero specificity so component classes (e.g. white text on
+   accent buttons) are not overridden by `color: inherit`. */
+:where(.canvas-editor-page) button,
+:where(.canvas-editor-page) input,
+:where(.canvas-editor-page) select,
+:where(.canvas-editor-page) textarea {
   font: inherit;
   color: inherit;
 }
@@ -470,12 +472,18 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.14);
   color: #ffffff;
+  font-size: 17px;
   cursor: pointer;
   transition: all 150ms ease;
+}
+
+.canva-dock-toggle-btn svg {
+  stroke: currentColor;
+  stroke-width: 2.4;
 }
 
 .canva-dock-toggle-btn:hover {
@@ -3575,4 +3583,84 @@ body > .ppt-fill-picker-pop {
 .cin-chip:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+/* ── Loading / failed-to-open screen ── */
+.canvas-editor-loading {
+  align-items: center;
+  justify-content: center;
+}
+
+.canvas-editor-loading-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 32px 40px;
+  text-align: center;
+}
+
+.canvas-editor-loading-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--canva-text);
+}
+
+.canvas-editor-loading-sub {
+  margin: 0;
+  max-width: 360px;
+  font-size: 13px;
+  color: var(--canva-muted);
+}
+
+.canvas-editor-spinner {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 3px solid color-mix(in srgb, var(--canva-accent) 20%, transparent);
+  border-top-color: var(--canva-accent);
+  animation: canvaEditorSpin 0.8s linear infinite;
+}
+
+@keyframes canvaEditorSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Name step (before choosing a canvas size) ── */
+.canvas-size-modal.canvas-name-modal {
+  width: min(520px, 94vw);
+}
+
+.canvas-name-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 8px 28px 0;
+}
+
+.canvas-name-form .canvas-size-modal-actions {
+  margin: 0 -28px;
+}
+
+.canvas-name-input--error {
+  border-color: #dc2626 !important;
+}
+
+.canvas-name-error {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.canvas-name-hint {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.canvas-size-create:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }

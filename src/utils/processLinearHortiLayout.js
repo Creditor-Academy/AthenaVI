@@ -56,6 +56,9 @@ export const PROCESS_LINEAR_HORTI_GEOM = {
 
 // Default harmonious palette from the reference image:
 // 1: Cyan/Teal, 2: Coral Red, 3: Slate Blue, 4: Golden Yellow, 5: Sage Green
+import { themeProcessSteps, customProcessColor } from './processThemeColors.js'
+
+/** Legacy fixed palette — used only by catalog previews; compiled slides use theme colors. */
 export const PROCESS_LINEAR_HORTI_DEFAULT_COLORS = [
   '#54B2C8', // 1: Cyan / Teal
   '#E85B4E', // 2: Coral Red
@@ -361,7 +364,7 @@ export function layoutProcessLinearHorti(elements = [], schema = {}, palette = {
     }
   }
   const stepCount = detectedCount >= 2 ? detectedCount : 5
-  const steps = calculateProcessHortiStepGeometries(stepCount)
+  const steps = themeProcessSteps(calculateProcessHortiStepGeometries(stepCount), palette)
 
   // Map existing elements by slotId
   const prevBySlot = new Map()
@@ -401,7 +404,7 @@ export function layoutProcessLinearHorti(elements = [], schema = {}, palette = {
       fontSize: 26,
       fontWeight: 800,
       colorRole: 'text',
-      color: prevHeading?.content?.color || '#1E293B',
+      color: prevHeading?.content?.color || palette?.text || '#1E293B',
       lineHeight: 1.15,
       clipToSlot: false,
     },
@@ -438,7 +441,7 @@ export function layoutProcessLinearHorti(elements = [], schema = {}, palette = {
         fontSize: 12.5,
         fontWeight: 400,
         colorRole: 'muted',
-        color: prevSubtitle?.content?.color || '#64748B',
+        color: prevSubtitle?.content?.color || palette?.muted || '#64748B',
         lineHeight: 1.45,
         clipToSlot: false,
       },
@@ -455,8 +458,8 @@ export function layoutProcessLinearHorti(elements = [], schema = {}, palette = {
     const prevTitle = prevBySlot.get(`STEP_${n}_TITLE`)
     const prevBody = prevBySlot.get(`STEP_${n}_BODY`)
 
-    const shapeColor = prevShape?.content?.fill || prevShape?.content?.color || step.color
-    const iconColor = prevIcon?.content?.fill || prevIcon?.content?.color || shapeColor
+    const shapeColor = customProcessColor(prevShape?.content?.fill, prevShape?.content?.color) || step.color
+    const iconColor = customProcessColor(prevIcon?.content?.fill, prevIcon?.content?.color) || shapeColor
 
     // 3A. Standalone Badge Graphic (ring, connector, orbital arc, and terminal dot)
     const badgeSvg = buildProcessHortiStepSvg(step)
@@ -547,7 +550,7 @@ export function layoutProcessLinearHorti(elements = [], schema = {}, palette = {
         fontSize: 13,
         fontWeight: 800,
         colorRole: 'primary',
-        color: prevTitle?.content?.color || shapeColor,
+        color: customProcessColor(prevTitle?.content?.color) || shapeColor,
         lineHeight: 1.15,
         clipToSlot: false,
       },
@@ -583,7 +586,7 @@ export function layoutProcessLinearHorti(elements = [], schema = {}, palette = {
         fontSize: 11,
         fontWeight: 400,
         colorRole: 'muted',
-        color: prevBody?.content?.color || '#64748B',
+        color: prevBody?.content?.color || palette?.muted || '#64748B',
         lineHeight: 1.45,
         clipToSlot: false,
       },
