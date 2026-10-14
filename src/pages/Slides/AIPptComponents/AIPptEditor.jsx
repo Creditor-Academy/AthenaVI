@@ -4517,7 +4517,8 @@ function AIPptEditor({
                       themeVisual={themeVisual}
                       aspectRatio={aspectRatio}
                       editable={!viewOnly && !isGenerating && !busy && selectedSlideId === slide.id}
-                      showEmptyTextHint={!viewOnly && !isGenerating}
+                      // Edit hint only on the slide being edited — other slides render empty boxes blank.
+                      showEmptyTextHint={!viewOnly && !isGenerating && selectedSlideId === slide.id}
                       selectedElementId={
                         selectedSlideId === slide.id ? selectedElementId : null
                       }

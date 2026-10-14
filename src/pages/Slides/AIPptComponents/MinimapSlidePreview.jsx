@@ -176,7 +176,7 @@ function MinimapSlidePreview({
                     el={previewEl}
                     palette={palette}
                     editable={false}
-                    showEmptyTextHint
+                    showEmptyTextHint={false}
                     canvasW={canvas.width}
                   />
               </div>
