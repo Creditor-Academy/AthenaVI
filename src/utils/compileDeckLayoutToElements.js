@@ -1877,6 +1877,7 @@ function compileDeckLayoutToElementsForLayout(schema, options = {}) {
     buildContentBySlotIdFromSlideContent(options.content, schema),
     options.contentBySlotId || {}
   )
+  const compileOptions = { ...options, schema, contentBySlotId }
 
   const palette = options.palette || LAYOUT_SURFACE
   const colorMap = colorRoleMapFromPalette(options.palette)
@@ -1888,7 +1889,6 @@ function compileDeckLayoutToElementsForLayout(schema, options = {}) {
     const placement = getSlotPlacement(geometryMap, slot.id, slot)
     if (!placement) return []
     const role = slot.role || 'body'
-    const compileOptions = { ...options, schema, contentBySlotId }
     const slotIdUpper = String(slot.id || '').toUpperCase()
 
     // BACKGROUND_IMAGE / HERO_IMAGE must compile as images (not shapes) so URLs bind.
