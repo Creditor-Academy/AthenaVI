@@ -62,6 +62,14 @@ import instagramStoryPreview from '../../../assets/ai-img-gen/Instagram_Story.pn
 import instagramLandscapePreview from '../../../assets/ai-img-gen/Insta_landscape.png'
 import facebookPostPreview from '../../../assets/ai-img-gen/facebook_post.png'
 import './AIImageStudio.css'
+import {
+  TWEAK_INSTRUCTION_MAX,
+  canStartGenerate,
+  canApplyTweak,
+  buildImageGenerateBody,
+  applyGenerationToThread,
+  nextThreadIdFromResult,
+} from './imageStudioGenerateFlow.js'
 
 // Image Gen backend is Mode 1 (image) only. Infographic/social UI is parked below, not deleted.
 const MODE_TABS = [
@@ -88,7 +96,6 @@ const FALLBACK_ARCHETYPES = [
 ]
 
 const AUTO_ARCHETYPE = { id: 'auto', label: 'Auto', description: 'Let the model pick a layout' }
-const TWEAK_INSTRUCTION_MAX = 4000
 const INFOGRAPHIC_PREFERRED_STYLES = ['flat_illustration', 'corporate', 'minimal']
 const INFOGRAPHIC_IGNORED_STYLES = new Set([
   'cinematic',
@@ -1576,24 +1583,18 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
     []
   )
 
-  const buildGenerateBody = () => {
-    const body = {
+  const buildGenerateBody = () =>
+    buildImageGenerateBody({
       mode,
       folderId,
       modelId,
-      formatId: selectedFormat?.id || (mode === 'infographic' ? 'landscape' : 'square'),
-      style: styleId,
+      formatId: selectedFormat?.id,
       styleId,
-      prompt: prompt.trim(),
-    }
-    if (mode === 'infographic') {
-      if (infoLayout && infoLayout !== 'auto') body.archetypeHint = infoLayout
-      const hint = styleHint.trim()
-      if (hint) body.styleHint = hint
-    }
-    if (imageContext?.id) body.contextId = imageContext.id
-    return body
-  }
+      prompt,
+      infoLayout,
+      styleHint,
+      contextId: imageContext?.id,
+    })
 
   const buildRegenerateBody = () => {
     const full = buildGenerateBody()
@@ -1604,7 +1605,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
   const applyResult = (data, turnId) => {
     const gen = data?.generation
     if (!gen) return
-    const nextThreadId = data?.thread?.id || data?.actions?.threadId || gen.threadId || activeThreadId
+    const nextThreadId = nextThreadIdFromResult(data, activeThreadId)
     if (nextThreadId) {
       const draft = readThreadRefs(workspaceId, 'draft')
       if (draft?.id || draft?.localImages?.length) {
@@ -1621,13 +1622,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
       return [gen, ...rest]
     })
     if (turnId) {
-      setThread((prev) =>
-        prev.map((t) =>
-          t.id === turnId
-            ? { ...t, status: 'done', generation: gen, error: null }
-            : t
-        )
-      )
+      setThread((prev) => applyGenerationToThread(prev, turnId, data).thread)
     }
     refreshCredits(workspaceId)
   }
@@ -1792,14 +1787,9 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
   )
 
   const runGenerate = async () => {
-    const hasPrompt = Boolean(prompt.trim())
-    if (!workspaceId || isGenerating) return
-    if (!folderId) {
-      setActionError('Pick a folder first. Image chats are saved in a workspace folder.')
-      return
-    }
-    if (!hasPrompt) {
-      setActionError('Add a prompt to generate.')
+    const gate = canStartGenerate({ workspaceId, folderId, prompt, isGenerating })
+    if (!gate.ok) {
+      if (gate.error) setActionError(gate.error)
       return
     }
 
@@ -1889,16 +1879,18 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
   }
 
   const submitChat = async () => {
-    const instruction = chatInput.trim()
-    if (!workspaceId || !activeGeneration?.id || !instruction || isGenerating) return
-    if (mode !== 'infographic' && selectedModel?.supportsEdit === false) {
-      setActionError('This model does not support image tweaks. Try regenerating instead.')
+    const tweakGate = canApplyTweak({
+      workspaceId,
+      activeGeneration,
+      instruction: chatInput,
+      isGenerating,
+      supportsEdit: mode === 'infographic' ? undefined : selectedModel?.supportsEdit,
+    })
+    if (!tweakGate.ok) {
+      if (tweakGate.error) setActionError(tweakGate.error)
       return
     }
-    if (instruction.length > TWEAK_INSTRUCTION_MAX) {
-      setActionError(`Tweak instruction is too long. Maximum ${TWEAK_INSTRUCTION_MAX} characters allowed.`)
-      return
-    }
+    const instruction = tweakGate.instruction
     const turnId = `turn_${Date.now()}`
     setChatInput('')
     if (chatInputRef.current) chatInputRef.current.style.height = ''
