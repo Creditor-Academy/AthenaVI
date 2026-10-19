@@ -911,23 +911,6 @@ export default function CanvasEditor({
     updateCanvasesWithHistory(updated)
   }
 
-  /** Batch-update placements for multiple element IDs by the same delta. */
-  const batchUpdatePlacements = (elementIds, patchFn) => {
-    const canvasId = activeCanvas.id
-    const idSet = new Set(elementIds)
-    const updated = canvases.map((canvas) =>
-      canvas.id !== canvasId
-        ? canvas
-        : {
-            ...canvas,
-            elements: canvas.elements.map((el) =>
-              idSet.has(el.id) ? { ...el, placement: { ...el.placement, ...patchFn(el) } } : el
-            ),
-          }
-    )
-    updateCanvasesWithHistory(updated)
-  }
-
   const updateElementContent = (elementId, contentPatch) => {
     const canvasId = activeCanvas.id
     const updated = canvases.map((canvas) =>
@@ -978,14 +961,6 @@ export default function CanvasEditor({
     setEditing({ canvasId: null, elementId: null })
     setMultiSelectIds([])
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const deleteSelected = useCallback((canvasId) => {
-    const ids = multiSelectIdsRef.current.length
-      ? multiSelectIdsRef.current
-      : [selectedRef.current.elementId].filter(Boolean)
-    if (!ids.length) return
-    deleteElements(ids)
-  }, [deleteElements])
 
   // ── Clipboard ───────────────────────────────────────────────────────────
   const copySelection = useCallback((ids) => {
@@ -1381,7 +1356,6 @@ export default function CanvasEditor({
 
   // ── Quick Action (from floating bar / legacy) ───────────────────────────
   const handleQuickAction = (action, elementId) => {
-    const canvasId = activeCanvas.id
     const element = activeCanvas.elements.find((el) => el.id === elementId)
     if (!element) return
 
