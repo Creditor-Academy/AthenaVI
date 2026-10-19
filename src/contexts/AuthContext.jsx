@@ -71,6 +71,9 @@ export const AuthProvider = ({ children }) => {
   // Check authentication status on mount
   useEffect(() => {
     const completeGoogleOAuth = async (accessToken) => {
+      // When the OAuth request carried an invitation token, the backend has already
+      // accepted it and reports the joined workspace in the redirect hash.
+      const invitedWorkspaceId = new URLSearchParams((window.location.hash || '').slice(1)).get('workspace_id')
       localStorage.setItem('accessToken', accessToken)
       clearOAuthParamsFromUrl()
 
@@ -88,7 +91,7 @@ export const AuthProvider = ({ children }) => {
 
       setIsAuthenticated(true)
       window.history.replaceState({ view: 'dashboard' }, '', '/dashboard')
-      window.dispatchEvent(new CustomEvent('auth:oauth-complete'))
+      window.dispatchEvent(new CustomEvent('auth:oauth-complete', { detail: { workspaceId: invitedWorkspaceId } }))
       window.dispatchEvent(new CustomEvent('auth:session-ready'))
     }
 
@@ -271,6 +274,7 @@ export const AuthProvider = ({ children }) => {
       if (!accessToken) {
         return { success: false, error: 'No access token found in URL' }
       }
+      const invitedWorkspaceId = new URLSearchParams((window.location.hash || '').slice(1)).get('workspace_id')
       localStorage.setItem('accessToken', accessToken)
       clearOAuthParamsFromUrl()
       const { default: userService } = await import('../services/userService.js')
@@ -281,7 +285,7 @@ export const AuthProvider = ({ children }) => {
       setUser(userData)
       setIsAuthenticated(true)
       window.history.replaceState({ view: 'dashboard' }, '', '/dashboard')
-      window.dispatchEvent(new CustomEvent('auth:oauth-complete'))
+      window.dispatchEvent(new CustomEvent('auth:oauth-complete', { detail: { workspaceId: invitedWorkspaceId } }))
       window.dispatchEvent(new CustomEvent('auth:session-ready'))
       return { success: true }
     } catch (error) {

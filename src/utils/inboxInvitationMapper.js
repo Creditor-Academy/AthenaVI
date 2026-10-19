@@ -7,6 +7,8 @@ export function mapInboxNotificationToInvitation(notification) {
   const metadata = notification.metadata || {}
   const token = metadata.token
   if (!token) return null
+  // Expired invites can no longer be accepted; don't list them as pending.
+  if (metadata.expiresAt && new Date(metadata.expiresAt).getTime() < Date.now()) return null
 
   return {
     id: metadata.invitationId || notification.id,

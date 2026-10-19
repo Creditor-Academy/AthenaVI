@@ -417,7 +417,8 @@ const ContributorsPanel = ({
                                       onClick={() => {
                                         workspaceService
                                           .removeInvitation(workspace.id, invitee.id)
-                                          .then(() => loadContributors(workspace));
+                                          .catch((error) => console.error('Failed to cancel invitation:', error))
+                                          .finally(() => loadContributors(workspace));
                                         setActiveMemberMenuId(null);
                                       }}
                                       className="astryd-dropdown-item danger"

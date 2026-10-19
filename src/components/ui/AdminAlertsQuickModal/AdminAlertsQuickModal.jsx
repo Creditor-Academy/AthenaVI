@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import {
   Bell,
   AlertTriangle,
@@ -7,12 +7,12 @@ import {
   ShieldCheck,
   RefreshCw,
   X,
-  ExternalLink,
-  ChevronRight,
+  ArrowUpRight,
   Activity,
 } from 'lucide-react'
 import superadminService from '../../../services/superadminService.js'
-import './AdminAlertsQuickModal.css'
+import InboxPopover, { InboxDetailPanel, InboxListItem } from '../InboxPopover/InboxPopover.jsx'
+import { formatInboxFullTimestamp, formatInboxRelativeTime } from '../../../utils/inboxNotifications.js'
 
 function usdFormat(value) {
   const n = Number(value)
@@ -20,10 +20,99 @@ function usdFormat(value) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
 }
 
+/** Flatten the alerts summary into list rows: { id, tone, icon, tag, title, preview, body, facts, action }. */
+function buildAlertItems(alerts) {
+  const items = []
+
+  const heygen = alerts?.heygenWallet
+  if (heygen) {
+    const remaining = usdFormat(heygen.remainingBalanceUsd)
+    const threshold = usdFormat(heygen.thresholdUsd)
+    items.push({
+      id: 'heygen-wallet',
+      tone: heygen.isLow ? 'warn' : 'info',
+      icon: heygen.isLow ? AlertTriangle : Wallet,
+      tag: 'HeyGen Wallet',
+      title: heygen.isLow ? 'HeyGen wallet balance is low' : 'HeyGen wallet balance',
+      preview: `Remaining ${remaining} · warning threshold ${threshold}`,
+      body: heygen.isLow
+        ? 'Your HeyGen API balance is below the warning threshold. Top up to avoid video synthesis interruption.'
+        : 'Your HeyGen API balance is above the warning threshold.',
+      facts: [
+        ['Remaining balance', remaining],
+        ['Warning threshold', threshold],
+      ],
+      action: { label: 'Manage wallet', tab: 'heygen' },
+    })
+  }
+
+  const storageCount = Number(alerts?.pendingStorageCount ?? alerts?.pendingStorageRequestsCount ?? 0)
+  if (storageCount > 0) {
+    const plural = storageCount === 1 ? '' : 's'
+    items.push({
+      id: 'storage-queue',
+      tone: 'warn',
+      icon: HardDrive,
+      tag: 'Storage Queue',
+      title: `${storageCount} storage request${plural} pending`,
+      preview: `${storageCount} storage upgrade request${plural} awaiting admin approval.`,
+      body: `${storageCount} storage upgrade request${plural} ${storageCount === 1 ? 'is' : 'are'} awaiting admin approval. Review the queue to approve or decline.`,
+      facts: [['Pending requests', String(storageCount)]],
+      action: { label: 'Review queue', tab: 'storage-requests' },
+    })
+  }
+
+  const unreadPlatformCount = Number(alerts?.unreadPlatformCount ?? 0)
+  if (unreadPlatformCount > 0) {
+    const plural = unreadPlatformCount === 1 ? '' : 's'
+    items.push({
+      id: 'platform-unread',
+      tone: 'alert',
+      icon: Bell,
+      tag: 'Platform Health',
+      title: `${unreadPlatformCount} unread platform alert${plural}`,
+      preview: `${unreadPlatformCount} unread platform incident or broadcast alert${plural}.`,
+      body: `There ${unreadPlatformCount === 1 ? 'is' : 'are'} ${unreadPlatformCount} unread platform incident or broadcast alert${plural}. Open the overview to review them.`,
+      facts: [['Unread alerts', String(unreadPlatformCount)]],
+      action: { label: 'View overview', tab: 'overview' },
+    })
+  }
+
+  const listAlerts = Array.isArray(alerts?.alerts) ? alerts.alerts : []
+  listAlerts.forEach((item, idx) => {
+    const title = item.title || item.message || 'Platform notice'
+    const message = item.title ? item.message : ''
+    items.push({
+      id: `alert-${item.id || idx}`,
+      tone: 'info',
+      icon: Activity,
+      tag: item.type || 'Notice',
+      title,
+      preview: message || item.severity || '',
+      body: message,
+      facts: item.severity ? [['Severity', item.severity]] : [],
+      createdAt: item.createdAt,
+    })
+  })
+
+  return items
+}
+
+function countActiveAlerts(alerts) {
+  const listAlerts = Array.isArray(alerts?.alerts) ? alerts.alerts : []
+  return (
+    (alerts?.heygenWallet?.isLow ? 1 : 0) +
+    (Number(alerts?.pendingStorageCount ?? alerts?.pendingStorageRequestsCount ?? 0) > 0 ? 1 : 0) +
+    (Number(alerts?.unreadPlatformCount ?? 0) > 0 ? 1 : 0) +
+    listAlerts.length
+  )
+}
+
 function AdminAlertsQuickModal({ onClose, onNavigateTab }) {
   const [loading, setLoading] = useState(true)
   const [alerts, setAlerts] = useState(null)
   const [error, setError] = useState('')
+  const [selectedId, setSelectedId] = useState(null)
 
   const loadAlerts = useCallback(async () => {
     setLoading(true)
@@ -42,226 +131,122 @@ function AdminAlertsQuickModal({ onClose, onNavigateTab }) {
     loadAlerts()
   }, [loadAlerts])
 
-  // Close on Escape key
-  useEffect(() => {
-    const handleKey = (e) => {
-      if (e.key === 'Escape') onClose?.()
-    }
-    window.addEventListener('keydown', handleKey)
-    return () => window.removeEventListener('keydown', handleKey)
-  }, [onClose])
+  const items = useMemo(() => buildAlertItems(alerts), [alerts])
+  const activeCount = useMemo(() => countActiveAlerts(alerts), [alerts])
+  const selected = items.find((item) => item.id === selectedId) || null
+  const closeDetail = useCallback(() => setSelectedId(null), [])
 
   const handleAction = (tabId) => {
     onNavigateTab?.(tabId)
     onClose?.()
   }
 
-  // Derive alert items
-  const heygenAlert = alerts?.heygenWallet
-  const storageCount = Number(alerts?.pendingStorageCount ?? alerts?.pendingStorageRequestsCount ?? 0)
-  const unreadPlatformCount = Number(alerts?.unreadPlatformCount ?? 0)
-  const listAlerts = Array.isArray(alerts?.alerts) ? alerts.alerts : []
-
-  const totalAlertItems =
-    (heygenAlert?.isLow ? 1 : 0) +
-    (storageCount > 0 ? 1 : 0) +
-    (unreadPlatformCount > 0 ? 1 : 0) +
-    listAlerts.length
+  const detail = selected ? (
+    <InboxDetailPanel
+      icon={selected.icon}
+      tone={selected.tone}
+      eyebrow={selected.tag}
+      title={selected.title}
+      timestamp={formatInboxFullTimestamp(selected.createdAt)}
+      timestampIso={selected.createdAt}
+      onClose={closeDetail}
+      footer={
+        selected.action && (
+          <button
+            type="button"
+            className="inbox-pop-btn inbox-pop-btn--primary"
+            onClick={() => handleAction(selected.action.tab)}
+          >
+            {selected.action.label}
+            <ArrowUpRight size={14} strokeWidth={2} aria-hidden />
+          </button>
+        )
+      }
+    >
+      {selected.body && <p>{selected.body}</p>}
+      {selected.facts.length > 0 && (
+        <dl className="inbox-pop-facts">
+          {selected.facts.map(([label, value]) => (
+            <div key={label} className="inbox-pop-fact">
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </InboxDetailPanel>
+  ) : null
 
   return (
-    <div className="admin-alerts-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-label="Platform Superadmin Alerts">
-      <div className="admin-alerts-card" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div className="admin-alerts-header">
-          <div className="admin-alerts-header-lead">
-            <div className="admin-alerts-header-icon">
-              <Bell size={18} />
-              {totalAlertItems > 0 && <span className="admin-alerts-pulse-dot" />}
-            </div>
-            <div>
-              <div className="admin-alerts-title-wrap">
-                <h3 className="admin-alerts-title">Platform Alerts</h3>
-                {totalAlertItems > 0 && (
-                  <span className="admin-alerts-badge">{totalAlertItems} active</span>
-                )}
-              </div>
-              <p className="admin-alerts-sub">Live health &amp; queue telemetry from Superadmin API</p>
-            </div>
-          </div>
-
-          <div className="admin-alerts-header-actions">
-            <button
-              type="button"
-              className="admin-alerts-btn-icon"
-              onClick={loadAlerts}
-              title="Refresh alerts"
-              disabled={loading}
-              aria-label="Refresh alerts"
-            >
-              <RefreshCw size={16} className={loading ? 'admin-alerts-spin' : ''} />
-            </button>
-            <button
-              type="button"
-              className="admin-alerts-btn-icon"
-              onClick={onClose}
-              title="Close"
-              aria-label="Close modal"
-            >
-              <X size={18} />
-            </button>
-          </div>
-        </div>
-
-        {/* Content Body */}
-        <div className="admin-alerts-body">
-          {error && (
-            <div className="admin-alerts-error-banner">
-              <AlertTriangle size={15} />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {loading && !alerts ? (
-            <div className="admin-alerts-loading">
-              <div className="admin-alerts-spinner" />
-              <span>Checking platform telemetry…</span>
-            </div>
-          ) : totalAlertItems === 0 && !error ? (
-            <div className="admin-alerts-empty">
-              <div className="admin-alerts-empty-icon">
-                <ShieldCheck size={32} />
-              </div>
-              <h4>All Systems Nominal</h4>
-              <p>No critical alerts, wallet low-balance warnings, or pending review queues.</p>
-            </div>
-          ) : (
-            <div className="admin-alerts-list">
-              {/* 1. HeyGen Wallet Low Balance */}
-              {heygenAlert && (
-                <div className={`admin-alert-item ${heygenAlert.isLow ? 'admin-alert-item--warn' : 'admin-alert-item--info'}`}>
-                  <div className="admin-alert-item-icon">
-                    {heygenAlert.isLow ? <AlertTriangle size={18} /> : <Wallet size={18} />}
-                  </div>
-                  <div className="admin-alert-item-content">
-                    <div className="admin-alert-item-top">
-                      <span className="admin-alert-item-tag">HeyGen Wallet</span>
-                      {heygenAlert.isLow && <span className="admin-alert-pill--warn">Low Balance</span>}
-                    </div>
-                    <div className="admin-alert-item-main">
-                      Remaining Balance: <strong>{usdFormat(heygenAlert.remainingBalanceUsd)}</strong>
-                      <span className="admin-alert-item-detail">
-                        Threshold: {usdFormat(heygenAlert.thresholdUsd)}
-                      </span>
-                    </div>
-                    {heygenAlert.isLow && (
-                      <p className="admin-alert-item-desc">
-                        Your HeyGen API balance is below the warning threshold. Top up to avoid video synthesis interruption.
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    className="admin-alert-item-btn"
-                    onClick={() => handleAction('heygen')}
-                  >
-                    Manage <ChevronRight size={14} />
-                  </button>
-                </div>
-              )}
-
-              {/* 2. Pending Storage Requests */}
-              {storageCount > 0 && (
-                <div className="admin-alert-item admin-alert-item--warn">
-                  <div className="admin-alert-item-icon">
-                    <HardDrive size={18} />
-                  </div>
-                  <div className="admin-alert-item-content">
-                    <div className="admin-alert-item-top">
-                      <span className="admin-alert-item-tag">Storage Queue</span>
-                      <span className="admin-alert-pill--warn">{storageCount} Pending</span>
-                    </div>
-                    <div className="admin-alert-item-main">
-                      <strong>{storageCount}</strong> storage upgrade request{storageCount === 1 ? '' : 's'} awaiting admin approval.
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="admin-alert-item-btn"
-                    onClick={() => handleAction('storage-requests')}
-                  >
-                    Review Queue <ChevronRight size={14} />
-                  </button>
-                </div>
-              )}
-
-              {/* 3. Unread Platform Alerts */}
-              {unreadPlatformCount > 0 && (
-                <div className="admin-alert-item admin-alert-item--alert">
-                  <div className="admin-alert-item-icon">
-                    <Bell size={18} />
-                  </div>
-                  <div className="admin-alert-item-content">
-                    <div className="admin-alert-item-top">
-                      <span className="admin-alert-item-tag">Platform Health</span>
-                      <span className="admin-alert-pill--alert">{unreadPlatformCount} Unread</span>
-                    </div>
-                    <div className="admin-alert-item-main">
-                      <strong>{unreadPlatformCount}</strong> unread platform incident or broadcast alert{unreadPlatformCount === 1 ? '' : 's'}.
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="admin-alert-item-btn"
-                    onClick={() => handleAction('overview')}
-                  >
-                    View Overview <ChevronRight size={14} />
-                  </button>
-                </div>
-              )}
-
-              {/* 5. Detailed alert list items if provided */}
-              {listAlerts.map((item, idx) => (
-                <div key={item.id || idx} className="admin-alert-item admin-alert-item--info">
-                  <div className="admin-alert-item-icon">
-                    <Activity size={18} />
-                  </div>
-                  <div className="admin-alert-item-content">
-                    <div className="admin-alert-item-top">
-                      <span className="admin-alert-item-tag">{item.type || 'Notice'}</span>
-                      {item.severity && <span className="admin-alert-pill--warn">{item.severity}</span>}
-                    </div>
-                    <div className="admin-alert-item-main">
-                      <strong>{item.title || item.message}</strong>
-                    </div>
-                    {item.message && item.title && (
-                      <p className="admin-alert-item-desc">{item.message}</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="admin-alerts-footer">
+    <InboxPopover
+      label="Platform alerts"
+      onClose={onClose}
+      detail={detail}
+      onCloseDetail={closeDetail}
+      busy={loading}
+    >
+      <header className="inbox-pop-header inbox-pop-header--divided">
+        <h4 className="inbox-pop-title">
+          Platform alerts
+          {activeCount > 0 && <span className="inbox-pop-count">{activeCount} active</span>}
+        </h4>
+        <div className="inbox-pop-header-actions">
           <button
             type="button"
-            className="admin-alerts-footer-link"
-            onClick={() => handleAction('overview')}
+            className="inbox-pop-icon-btn"
+            onClick={loadAlerts}
+            disabled={loading}
+            aria-label="Refresh alerts"
+            title="Refresh alerts"
           >
-            <Activity size={14} /> Platform Dashboard Overview
+            <RefreshCw size={15} strokeWidth={1.85} className={loading ? 'inbox-pop-spin' : ''} />
           </button>
-          <button
-            type="button"
-            className="admin-alerts-footer-close"
-            onClick={onClose}
-          >
-            Done
+          <button type="button" className="inbox-pop-icon-btn" onClick={onClose} aria-label="Close" title="Close">
+            <X size={16} strokeWidth={1.85} />
           </button>
         </div>
+      </header>
+
+      <div className="inbox-pop-list">
+        {error && <p className="inbox-pop-error">{error}</p>}
+
+        {loading && !alerts ? (
+          <div className="inbox-pop-state">
+            <RefreshCw size={18} className="inbox-pop-spin" aria-hidden />
+            <span>Checking platform telemetry…</span>
+          </div>
+        ) : activeCount === 0 && !error ? (
+          <div className="inbox-pop-state">
+            <span className="inbox-pop-state-icon" aria-hidden>
+              <ShieldCheck size={20} strokeWidth={1.75} />
+            </span>
+            <strong>All systems nominal</strong>
+            <p>No critical alerts, wallet low-balance warnings, or pending review queues.</p>
+          </div>
+        ) : (
+          items.map((item) => (
+            <InboxListItem
+              key={item.id}
+              icon={item.icon}
+              tone={item.tone}
+              title={item.title}
+              preview={item.preview}
+              time={formatInboxRelativeTime(item.createdAt)}
+              timeIso={item.createdAt}
+              unread={item.tone !== 'info'}
+              selected={item.id === selectedId}
+              onSelect={() => setSelectedId(item.id)}
+            />
+          ))
+        )}
       </div>
-    </div>
+
+      <div className="inbox-pop-footer">
+        <button type="button" className="inbox-pop-footer-link" onClick={() => handleAction('overview')}>
+          <Activity size={14} aria-hidden /> Platform dashboard overview
+        </button>
+      </div>
+    </InboxPopover>
   )
 }
 

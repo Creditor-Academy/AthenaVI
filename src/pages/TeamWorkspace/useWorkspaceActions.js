@@ -85,12 +85,17 @@ export function useWorkspaceActions({
         .map((email) => String(email || '').trim())
         .filter(Boolean);
 
+      let failedInvites = [];
       if (inviteList.length > 0) {
-        await Promise.all(
+        const results = await Promise.all(
           inviteList.map((email) =>
-            workspaceService.inviteMember(mappedWorkspace.id, { email, role: 'MEMBER' }).catch(() => null)
+            workspaceService
+              .inviteMember(mappedWorkspace.id, { email, role: 'MEMBER' })
+              .then(() => null)
+              .catch(() => email)
           )
         );
+        failedInvites = results.filter(Boolean);
       }
 
       setWorkspaces((prev) => [...prev, mappedWorkspace]);
@@ -103,7 +108,14 @@ export function useWorkspaceActions({
         ]
       }));
 
-      showToast('Workspace created successfully', 'success');
+      if (failedInvites.length > 0) {
+        showToast(
+          `Workspace created, but ${failedInvites.length} invite${failedInvites.length === 1 ? '' : 's'} could not be sent (${failedInvites.join(', ')})`,
+          'error'
+        );
+      } else {
+        showToast('Workspace created successfully', 'success');
+      }
       return mappedWorkspace;
     } catch (error) {
       showToast(error.message || 'Failed to create workspace', 'error');

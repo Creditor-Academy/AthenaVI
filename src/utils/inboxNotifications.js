@@ -1,4 +1,5 @@
 import { dashboardPathForSection, resolveDashboardSectionFromPath } from './dashboardRouting.js';
+import { savePendingInvitation } from './inviteNavigation.js';
 
 export const INBOX_CATEGORIES = [
   { id: '', label: 'All' },
@@ -22,6 +23,19 @@ export function formatInboxRelativeTime(iso) {
   const days = Math.floor(hrs / 24);
   if (days < 7) return `${days}d ago`;
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+export function formatInboxFullTimestamp(iso) {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
 }
 
 export function formatInboxCategory(category) {
@@ -267,6 +281,21 @@ export function resolveNotificationDestination(notification) {
     notification.type || notification.eventType || notification.kind || ''
   ).toLowerCase();
 
+  // Invitations open the accept page (checked before the generic workspace route).
+  if (type === 'workspace_invitation' && meta.token) {
+    return {
+      type: 'invite',
+      path: `/invitations/accept/${encodeURIComponent(meta.token)}`,
+      pending: {
+        token: meta.token,
+        email: meta.email,
+        notificationId: notification.id,
+        workspaceId: meta.workspaceId,
+        workspaceName: meta.workspaceName,
+      },
+    };
+  }
+
   if (isCreditsNotification(category, type)) {
     return { type: 'dashboard', section: 'credits', settingsTab: 'billing' };
   }
@@ -317,6 +346,35 @@ export function resolveNotificationDestination(notification) {
   }
 
   return { type: 'dashboard', section: 'home' };
+}
+
+const SECTION_ACTION_LABELS = {
+  credits: 'View credits',
+  workspace: 'Go to workspace',
+  'my-work': 'View my work',
+  settings: 'Open settings',
+};
+
+/** Button label for the notification's primary action, or null when it only leads home. */
+export function getNotificationActionLabel(notification) {
+  const destination = resolveNotificationDestination(notification);
+  if (!destination) return null;
+
+  switch (destination.type) {
+    case 'invite':
+      return 'View invitation';
+    case 'create':
+      return destination.config?.openComments ? 'View comment' : 'Open project';
+    case 'dashboard':
+      if (destination.section === 'home') return null;
+      return SECTION_ACTION_LABELS[destination.section] || 'Open';
+    case 'external':
+      return 'Open link';
+    case 'path':
+      return 'Open';
+    default:
+      return null;
+  }
 }
 
 export function parseNotificationActionUrl(actionUrl) {
@@ -416,6 +474,13 @@ export function navigateToNotification(notification, handlers = {}) {
       );
       return true;
     }
+
+    case 'invite':
+      // Keep the notification id so it is dismissed once the invite is accepted.
+      // Full page load: App only detects the invite route on initial render.
+      savePendingInvitation(destination.pending);
+      window.location.assign(destination.path);
+      return true;
 
     case 'external':
       window.open(destination.url, '_blank', 'noopener,noreferrer');

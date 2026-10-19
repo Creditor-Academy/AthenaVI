@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  ArrowUpRight,
   Bell,
+  CheckCheck,
   Coins,
   HardDrive,
   MessageSquare,
@@ -12,20 +14,21 @@ import {
 } from 'lucide-react';
 import inboxService from '../../../services/inboxService.js';
 import LoadingDots from '../LoadingDots/LoadingDots.jsx';
+import InboxPopover, { InboxDetailPanel, InboxListItem } from '../InboxPopover/InboxPopover.jsx';
 import { getSanitizedErrorMessage } from '../../../utils/userFacingMessage.js';
 import {
   countUnreadUserFacingInboxNotifications,
   filterInboxNotificationsByCategory,
   filterUserFacingInboxNotifications,
   formatInboxCategory,
+  formatInboxFullTimestamp,
   formatInboxRelativeTime,
   getInboxEmptyState,
+  getNotificationActionLabel,
   INBOX_CATEGORIES,
   isInboxNotificationUnread,
   navigateToNotification,
 } from '../../../utils/inboxNotifications.js';
-import { savePendingInvitation } from '../../../utils/inviteNavigation.js';
-import './NotificationsQuickModal.css';
 
 const CATEGORY_ICONS = {
   videos: Video,
@@ -36,13 +39,8 @@ const CATEGORY_ICONS = {
   platform: Shield,
 };
 
-function NotificationCategoryIcon({ category }) {
-  const Icon = CATEGORY_ICONS[String(category || '').toLowerCase()] || Bell;
-  return (
-    <span className={`inbox-notif-icon inbox-notif-icon--${category || 'default'}`} aria-hidden>
-      <Icon size={16} strokeWidth={1.85} />
-    </span>
-  );
+function categoryOf(notification) {
+  return String(notification?.category || '').toLowerCase();
 }
 
 function NotificationsQuickModal({ onClose, onUnreadCountChange, onOpenNotificationSettings, onNavigate }) {
@@ -53,6 +51,9 @@ function NotificationsQuickModal({ onClose, onUnreadCountChange, onOpenNotificat
   const [error, setError] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [unreadOnly, setUnreadOnly] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
+  // Keeps the opened message visible after "Unread" filtering would hide it once read.
+  const [selectedSnapshot, setSelectedSnapshot] = useState(null);
 
   const syncUnreadCount = useCallback(
     (items) => {
@@ -106,36 +107,48 @@ function NotificationsQuickModal({ onClose, onUnreadCountChange, onOpenNotificat
     [notifications]
   );
 
-  const handleItemClick = async (notification) => {
-    if (isInboxNotificationUnread(notification)) {
-      try {
-        const updated = await inboxService.markRead(notification.id);
-        setNotifications((prev) => {
-          const next = prev.map((item) =>
-            item.id === notification.id
-              ? { ...item, readAt: updated?.readAt ?? new Date().toISOString() }
-              : item
-          );
-          syncUnreadCount(next);
-          return next;
-        });
-      } catch {
-        // still navigate
-      }
-    }
+  const selected = useMemo(
+    () => notifications.find((item) => item.id === selectedId) || (selectedId ? selectedSnapshot : null),
+    [notifications, selectedId, selectedSnapshot]
+  );
 
+  const closeDetail = useCallback(() => {
+    setSelectedId(null);
+    setSelectedSnapshot(null);
+  }, []);
+
+  const handleSelect = async (notification) => {
+    setSelectedId(notification.id);
+    setSelectedSnapshot(notification);
+    if (!isInboxNotificationUnread(notification)) return;
+
+    try {
+      const updated = await inboxService.markRead(notification.id);
+      const readAt = updated?.readAt ?? new Date().toISOString();
+      setSelectedSnapshot((prev) => (prev?.id === notification.id ? { ...prev, readAt } : prev));
+      setNotifications((prev) => {
+        const next = prev.map((item) => (item.id === notification.id ? { ...item, readAt } : item));
+        syncUnreadCount(next);
+        return next;
+      });
+    } catch {
+      // Opening the message still works if marking read fails.
+    }
+  };
+
+  const handleOpenDestination = (notification) => {
     onClose();
     navigateToNotification(notification, onNavigate);
   };
 
-  const handleDismiss = async (event, notification) => {
-    event.stopPropagation();
+  const handleDismiss = async (notification) => {
     if (dismissingId) return;
 
     setDismissingId(notification.id);
     setError('');
     try {
       await inboxService.dismiss(notification.id);
+      if (selectedId === notification.id) closeDetail();
       setNotifications((prev) => {
         const next = prev.filter((item) => item.id !== notification.id);
         syncUnreadCount(next);
@@ -171,156 +184,163 @@ function NotificationsQuickModal({ onClose, onUnreadCountChange, onOpenNotificat
     onOpenNotificationSettings?.();
   };
 
+  const detail = selected ? (
+    <NotificationDetail
+      notification={selected}
+      dismissing={dismissingId === selected.id}
+      onClose={closeDetail}
+      onDismiss={() => handleDismiss(selected)}
+      onOpen={() => handleOpenDestination(selected)}
+    />
+  ) : null;
+
   return (
-    <div className="quick-access-modal-overlay" onClick={onClose}>
-      <div
-        className="quick-access-modal notifications-modal notifications-modal--enhanced"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-labelledby="notifications-modal-title"
-        aria-busy={loading}
-      >
-        <div className="notifications-modal-header">
-          <div className="notifications-modal-heading">
-            <div className="notifications-modal-title-row">
-              <span className="notifications-modal-title-icon" aria-hidden>
-                <Bell size={18} strokeWidth={1.85} />
-              </span>
-              <div>
-                <h4 id="notifications-modal-title">Notifications</h4>
-                <p className="notifications-modal-subtitle">
-                  {loading
-                    ? 'Loading your alerts…'
-                    : unreadCount > 0
-                      ? `${unreadCount} unread alert${unreadCount === 1 ? '' : 's'}`
-                      : 'You are all caught up'}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="notifications-modal-actions">
-            {unreadCount > 0 && !loading && (
-              <button
-                type="button"
-                className="notifications-action-btn notifications-action-btn--text"
-                onClick={handleMarkAllRead}
-                disabled={markingAll}
-              >
-                {markingAll ? 'Marking…' : 'Mark all read'}
-              </button>
-            )}
+    <InboxPopover
+      label="Notifications"
+      onClose={onClose}
+      detail={detail}
+      onCloseDetail={closeDetail}
+      busy={loading}
+    >
+      <header className="inbox-pop-header">
+        <h4 className="inbox-pop-title">
+          Notifications
+          {!loading && unreadCount > 0 && <span className="inbox-pop-count">{unreadCount} new</span>}
+        </h4>
+        <div className="inbox-pop-header-actions">
+          {!loading && unreadCount > 0 && (
             <button
               type="button"
-              className="notifications-action-btn"
-              onClick={handleOpenSettings}
-              aria-label="Notification settings"
-              title="Notification settings"
+              className="inbox-pop-icon-btn"
+              onClick={handleMarkAllRead}
+              disabled={markingAll}
+              aria-label="Mark all as read"
+              title="Mark all as read"
             >
-              <Settings size={16} strokeWidth={1.85} />
+              <CheckCheck size={16} strokeWidth={1.85} />
             </button>
-            <button type="button" className="notifications-action-btn" onClick={onClose} aria-label="Close">
-              <X size={16} strokeWidth={1.85} />
-            </button>
-          </div>
-        </div>
-
-        <div className="inbox-modal-toolbar">
-          <div className="notifications-filter-bar">
-            <span className="notifications-filter-label">Filter by</span>
-            <button
-              type="button"
-              className={`notifications-unread-pill${unreadOnly ? ' active' : ''}`}
-              onClick={() => setUnreadOnly((value) => !value)}
-              disabled={loading}
-              aria-pressed={unreadOnly}
-            >
-              Unread only
-            </button>
-          </div>
-          <div className="inbox-category-filters-track" role="tablist" aria-label="Filter by category">
-            {INBOX_CATEGORIES.map((cat) => {
-              const Icon = cat.id ? CATEGORY_ICONS[cat.id] : Bell;
-              const isActive = categoryFilter === cat.id;
-              return (
-                <button
-                  key={cat.id || 'all'}
-                  type="button"
-                  role="tab"
-                  aria-selected={isActive}
-                  className={`inbox-category-chip${isActive ? ' active' : ''}`}
-                  onClick={() => setCategoryFilter(cat.id)}
-                  disabled={loading}
-                >
-                  <Icon size={14} strokeWidth={1.85} aria-hidden />
-                  <span>{cat.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {error && <p className="inbox-modal-error">{error}</p>}
-
-        <div className="notifications-list-mini">
-          {loading ? (
-            <p className="inbox-modal-loading">
-              <LoadingDots size="sm" /> Loading notifications…
-            </p>
-          ) : notifications.length === 0 ? (
-            <div className="inbox-modal-empty">
-              <span className="inbox-empty-icon" aria-hidden>
-                <Bell size={28} strokeWidth={1.5} />
-              </span>
-              <strong>{emptyState.title}</strong>
-              <p>{emptyState.message}</p>
-            </div>
-          ) : (
-            notifications.map((notification) => {
-              const unread = isInboxNotificationUnread(notification);
-              const category = notification.category || '';
-              return (
-                <div key={notification.id} className="notification-item-row">
-                  <button
-                    type="button"
-                    className={`notification-item-mini${unread ? '' : ' notification-item-mini--read'}`}
-                    onClick={() => handleItemClick(notification)}
-                  >
-                    <NotificationCategoryIcon category={category} />
-                    <div className="notif-content-mini">
-                      {category && (
-                        <span className={`inbox-cat-badge inbox-cat-badge--${category}`}>
-                          {formatInboxCategory(category)}
-                        </span>
-                      )}
-                      <h6>{notification.title}</h6>
-                      <p>{notification.message}</p>
-                    </div>
-                    <div className="notif-item-meta">
-                      <time className="notif-time" dateTime={notification.createdAt || undefined}>
-                        {formatInboxRelativeTime(notification.createdAt)}
-                      </time>
-                      {unread && <span className="notif-unread-pill" aria-label="Unread" />}
-                    </div>
-                  </button>
-                  <button
-                    type="button"
-                    className="inbox-dismiss-btn"
-                    aria-label="Dismiss notification"
-                    disabled={dismissingId === notification.id}
-                    onClick={(event) => handleDismiss(event, notification)}
-                  >
-                    <X size={14} />
-                  </button>
-                </div>
-              );
-            })
           )}
+          <button
+            type="button"
+            className="inbox-pop-icon-btn"
+            onClick={handleOpenSettings}
+            aria-label="Notification settings"
+            title="Notification settings"
+          >
+            <Settings size={16} strokeWidth={1.85} />
+          </button>
+          <button type="button" className="inbox-pop-icon-btn" onClick={onClose} aria-label="Close" title="Close">
+            <X size={16} strokeWidth={1.85} />
+          </button>
         </div>
+      </header>
 
-        
+      <div className="inbox-pop-toolbar">
+        <div className="inbox-pop-tabs" role="tablist" aria-label="Read status">
+          {[
+            { value: false, label: 'All' },
+            { value: true, label: 'Unread' },
+          ].map((tab) => (
+            <button
+              key={tab.label}
+              type="button"
+              role="tab"
+              aria-selected={unreadOnly === tab.value}
+              className={`inbox-pop-tab${unreadOnly === tab.value ? ' active' : ''}`}
+              onClick={() => setUnreadOnly(tab.value)}
+              disabled={loading}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="inbox-pop-chips" role="group" aria-label="Filter by category">
+          {INBOX_CATEGORIES.map((cat) => (
+            <button
+              key={cat.id || 'all'}
+              type="button"
+              aria-pressed={categoryFilter === cat.id}
+              className={`inbox-pop-chip${categoryFilter === cat.id ? ' active' : ''}`}
+              onClick={() => setCategoryFilter(cat.id)}
+              disabled={loading}
+            >
+              {cat.id ? cat.label : 'All categories'}
+            </button>
+          ))}
+        </div>
       </div>
-    </div>
+
+      {error && <p className="inbox-pop-error">{error}</p>}
+
+      <div className="inbox-pop-list">
+        {loading ? (
+          <div className="inbox-pop-state">
+            <LoadingDots size="sm" />
+            <span>Loading notifications…</span>
+          </div>
+        ) : notifications.length === 0 ? (
+          <div className="inbox-pop-state">
+            <span className="inbox-pop-state-icon" aria-hidden>
+              <Bell size={20} strokeWidth={1.75} />
+            </span>
+            <strong>{emptyState.title}</strong>
+            <p>{emptyState.message}</p>
+          </div>
+        ) : (
+          notifications.map((notification) => {
+            const category = categoryOf(notification);
+            return (
+              <InboxListItem
+                key={notification.id}
+                icon={CATEGORY_ICONS[category] || Bell}
+                tone={CATEGORY_ICONS[category] ? category : 'default'}
+                title={notification.title}
+                preview={notification.message}
+                time={formatInboxRelativeTime(notification.createdAt)}
+                timeIso={notification.createdAt}
+                unread={isInboxNotificationUnread(notification)}
+                selected={notification.id === selectedId}
+                onSelect={() => handleSelect(notification)}
+                onDismiss={() => handleDismiss(notification)}
+                dismissing={dismissingId === notification.id}
+              />
+            );
+          })
+        )}
+      </div>
+    </InboxPopover>
+  );
+}
+
+function NotificationDetail({ notification, dismissing, onClose, onDismiss, onOpen }) {
+  const category = categoryOf(notification);
+  const actionLabel = getNotificationActionLabel(notification);
+
+  return (
+    <InboxDetailPanel
+      icon={CATEGORY_ICONS[category] || Bell}
+      tone={CATEGORY_ICONS[category] ? category : 'default'}
+      eyebrow={formatInboxCategory(category) || 'Notification'}
+      title={notification.title}
+      timestamp={formatInboxFullTimestamp(notification.createdAt)}
+      timestampIso={notification.createdAt}
+      onClose={onClose}
+      footer={
+        <>
+          <button type="button" className="inbox-pop-btn inbox-pop-btn--ghost" onClick={onDismiss} disabled={dismissing}>
+            {dismissing ? 'Dismissing…' : 'Dismiss'}
+          </button>
+          {actionLabel && (
+            <button type="button" className="inbox-pop-btn inbox-pop-btn--primary" onClick={onOpen}>
+              {actionLabel}
+              <ArrowUpRight size={14} strokeWidth={2} aria-hidden />
+            </button>
+          )}
+        </>
+      }
+    >
+      {notification.message ? <p>{notification.message}</p> : <p>No additional details.</p>}
+    </InboxDetailPanel>
   );
 }
 

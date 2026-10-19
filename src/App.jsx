@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import invitationFlowService from './services/invitationFlowService.js'
@@ -352,9 +352,19 @@ function App() {
     }
   }, [view])
 
-  const handleAuthComplete = useCallback(async () => {
+  const acceptingInviteRef = useRef(false)
+
+  const handleAuthComplete = useCallback(async ({ workspaceId } = {}) => {
     const pending = getPendingInvitation()
+    // Google OAuth already accepted the invite server-side; just land in the workspace.
+    if (workspaceId) {
+      invitationFlowService.finishInviteWithWorkspace({ id: workspaceId, name: pending?.workspaceName })
+      return
+    }
     if (pending?.token) {
+      // The OAuth-complete event can fire twice; never accept the same invite concurrently.
+      if (acceptingInviteRef.current) return
+      acceptingInviteRef.current = true
       try {
         const workspace = await invitationFlowService.completePendingInvitation()
         invitationFlowService.redirectAfterInvite(
@@ -364,6 +374,8 @@ function App() {
       } catch (err) {
         console.error('Failed to complete workspace invitation:', err)
         localStorage.setItem('authError', err.message || 'Failed to accept workspace invitation')
+      } finally {
+        acceptingInviteRef.current = false
       }
     }
     setView('dashboard')
@@ -376,7 +388,7 @@ function App() {
 
   // After Google OAuth completes, switch from callback spinner to product chooser
   useEffect(() => {
-    const onOAuthComplete = () => { handleAuthComplete() }
+    const onOAuthComplete = (event) => { handleAuthComplete({ workspaceId: event?.detail?.workspaceId }) }
     const onOAuthError = () => setView('login')
     window.addEventListener('auth:oauth-complete', onOAuthComplete)
     window.addEventListener('auth:oauth-error', onOAuthError)
