@@ -246,6 +246,18 @@
   color: #ef4444;
 }
 
+button.canva-header-save-badge--action {
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+button.canva-header-save-badge--action:hover,
+button.canva-header-save-badge--action:focus-visible {
+  background: rgba(239, 68, 68, 0.2);
+  outline: none;
+}
+
 @keyframes canva-header-spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
@@ -3625,6 +3637,44 @@ body > .ppt-fill-picker-pop {
 
 @keyframes canvaEditorSpin {
   to { transform: rotate(360deg); }
+}
+
+.canvas-editor-loading-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* ── Notice (caps reached, failed uploads) ── */
+.canvas-editor-notice {
+  position: fixed;
+  left: 50%;
+  bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 10px 12px 10px 16px;
+  border-radius: 10px;
+  background: #1e293b;
+  color: #f8fafc;
+  font-size: 13px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.3);
+  transform: translateX(-50%);
+}
+
+.canvas-editor-notice button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.canvas-editor-notice button:hover {
+  opacity: 1;
 }
 
 /* ── Name step (before choosing a canvas size) ── */

@@ -273,3 +273,20 @@ describe('history', () => {
     assert.equal(currentEntry(history)[0].elements[0].content.url, 'https://cdn/a.png')
   })
 })
+
+describe('createElement', () => {
+  it('centres the catalogue placement on the page and fills content defaults', async () => {
+    const { createElement } = await import('./canvasDocument.js')
+    const page = createDocument(SIZE)[0]
+    const text = createElement({ type: 'text', content: { text: 'Hi' } }, page, 2, { id: 't1' })
+    assert.equal(text.id, 't1')
+    assert.equal(text.layer, 3)
+    assert.equal(text.content.color, '#172033')
+    assert.equal(text.placement.x, Math.round((page.width - text.placement.width) / 2))
+    assert.equal(text.placement.y, Math.round((page.height - text.placement.height) / 2))
+
+    const image = createElement({ type: 'image', content: { src: 'https://cdn/a.png' } }, page, 0)
+    assert.equal(image.content.url, 'https://cdn/a.png')
+    assert.equal(image.content.strokeWidth, 0)
+  })
+})
