@@ -21,6 +21,9 @@ dist-ssr
 .env.test.local
 .env.production.local
 
+# Local team reports (not part of the product)
+team-reports/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

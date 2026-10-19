@@ -46,3 +46,38 @@ export function lifecycleSuccessMessage(action, user) {
   if (action === 'resume') return `Service resumed for ${label}.`
   return `${label} was deleted.`
 }
+
+/** Payload the pause control sends to POST /api/superadmin/users/:id/pause */
+export function pauseUserRequest(reason) {
+  return { reason: String(reason || '').trim() }
+}
+
+export function pauseUserListPatch(result, reason, now = () => new Date().toISOString()) {
+  const trimmed = String(reason || '').trim()
+  return {
+    pausedAt: result?.user?.pausedAt ?? now(),
+    pauseReason: result?.user?.pauseReason ?? (trimmed || null),
+  }
+}
+
+/**
+ * Pause control: blocked users never hit the network; otherwise call pauseUser
+ * with the same payload the row action uses.
+ */
+export async function executePauseUser({
+  pauseUser,
+  user,
+  reason,
+  currentUserId,
+  now = () => new Date().toISOString(),
+} = {}) {
+  const blocked = lifecycleBlockedReason(user, currentUserId)
+  if (blocked) {
+    const error = new Error(blocked)
+    error.blocked = true
+    throw error
+  }
+  const payload = pauseUserRequest(reason)
+  const result = await pauseUser(user.id, payload)
+  return { payload, result, patch: pauseUserListPatch(result, reason, now) }
+}

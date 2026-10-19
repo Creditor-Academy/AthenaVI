@@ -19,14 +19,7 @@ import pptBgNight from '../../assets/ppt-bg/night.png'
 import { usePptDaypart } from '../../utils/pptDaypart'
 import presentationService, { PresentationConflictError } from '../../services/presentationService'
 import { isInsufficientCreditsError } from '../../services/creditsService'
-import {
-  buildPresentationGenerationPayload,
-  buildWizardThemeTokens,
-  buildThemeTokensFromPromptSuggestion,
-  PROMPT_SUGGESTED_THEME_ID,
-  outlineCardsToApiPayload,
-  toApiThemeId,
-} from '../../utils/presentationHelpers'
+import { startPptGenerateFromOutline } from './AIPptComponents/pptGenerateHappyPath.js'
 import { THEMES } from '../../constants/pptWizardThemes'
 
 const PPT_DAY_BACKGROUNDS = {
@@ -86,58 +79,12 @@ export default function AIPptGenerator({
     setIsBusy(true)
     setFlowError('')
     try {
-      await presentationService.updateOutline(
-        session.workspaceId,
-        session.presentationId,
-        outlineCardsToApiPayload(finalOutline, {
-          title: config.title,
-          density: config.textAmount,
-          locale: config.locale || 'en',
-        })
-      )
-
-      const paletteMode =
-        config.themeMode === 'palette' ||
-        (!config.themeMode && !config.brandKitId && !config.packId)
-
-      let wizardThemeTokens = null
-      if (paletteMode) {
-        const usesPromptPalette =
-          config.theme === PROMPT_SUGGESTED_THEME_ID &&
-          config.promptPaletteSuggestion?.themeTokens &&
-          !config.promptPaletteSuggestion.fallback
-        wizardThemeTokens = usesPromptPalette
-          ? buildThemeTokensFromPromptSuggestion(config.promptPaletteSuggestion)
-          : buildWizardThemeTokens(config.theme, config.availableOptions?.colorThemes)
-      }
-
-      if (paletteMode) {
-        if (!wizardThemeTokens) {
-          throw new Error(
-            'Selected color theme could not be applied. Re-open The Vibe and pick a palette again.'
-          )
-        }
-        await presentationService.setTheme(session.workspaceId, session.presentationId, {
-          themeId: toApiThemeId(config.theme) || undefined,
-          themeTokens: wizardThemeTokens,
-        })
-      } else if (
-        toApiThemeId(config.backendThemeId) &&
-        config.backendThemeId !== toApiThemeId(PROMPT_SUGGESTED_THEME_ID)
-      ) {
-        await presentationService.setTheme(session.workspaceId, session.presentationId, {
-          themeId: toApiThemeId(config.backendThemeId),
-        })
-      }
-
-      await presentationService.startGenerate(
-        session.workspaceId,
-        session.presentationId,
-        buildPresentationGenerationPayload(config, {
-          finalOutline,
-          overwriteManualEdits: false,
-        })
-      )
+      await startPptGenerateFromOutline({
+        api: presentationService,
+        session,
+        config,
+        finalOutline,
+      })
       setOutlineData(finalOutline)
       setStage('generating')
     } catch (error) {
