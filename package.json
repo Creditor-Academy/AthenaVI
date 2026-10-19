@@ -10,7 +10,8 @@
     "seed:layouts": "node scripts/seed-presentation-templates.mjs",
     "seed:layouts:update": "node scripts/seed-presentation-templates.mjs --update",
     "seed:layouts:dry-run": "node scripts/seed-presentation-templates.mjs --dry-run",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node scripts/run-tests.mjs"
   },
   "dependencies": {
     "@athena/contracts": "file:./packages/athena-contracts",

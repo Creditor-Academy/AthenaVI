@@ -8,6 +8,7 @@ import {
   isDeleteConfirmed,
   mapLifecycleError,
   lifecycleSuccessMessage,
+  executePauseUser,
 } from './userLifecycle'
 import { formatShortDate } from './superadminUtils'
 import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
@@ -146,8 +147,14 @@ export default function UserLifecycleCard({ user, currentUserId, onUserUpdated, 
     setError('')
     const ok = await run(
       'pause',
-      () => superadminService.pauseUser(user.id, { reason: reason.trim() }),
-      (result) => onUserUpdated?.(user.id, { pausedAt: result?.user?.pausedAt ?? new Date().toISOString(), pauseReason: result?.user?.pauseReason ?? (reason.trim() || null) })
+      () =>
+        executePauseUser({
+          pauseUser: (userId, payload) => superadminService.pauseUser(userId, payload),
+          user,
+          reason,
+          currentUserId,
+        }),
+      (out) => onUserUpdated?.(user.id, out.patch)
     )
     if (ok) {
       setPausing(false)
