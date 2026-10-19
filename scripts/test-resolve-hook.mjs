@@ -25,5 +25,18 @@ export async function resolve(specifier, context, nextResolve) {
     throw error
   }
 }
+
+export async function load(url, context, nextLoad) {
+  const result = await nextLoad(url, context)
+  if (result.format !== 'module' || result.source == null) return result
+  const original = typeof result.source === 'string'
+    ? result.source
+    : Buffer.from(result.source).toString('utf8')
+  if (!original.includes('import.meta.env')) return result
+  const source =
+    'const __viteEnv = globalThis.__ATHENA_VITE_ENV__ || { VITE_API_BASE_URL: "", VITE_ENV: "test", DEV: false, PROD: false, MODE: "test" };\\n' +
+    original.replace(/import\\.meta\\.env/g, '__viteEnv')
+  return { shortCircuit: true, format: 'module', source }
+}
 `)
 )

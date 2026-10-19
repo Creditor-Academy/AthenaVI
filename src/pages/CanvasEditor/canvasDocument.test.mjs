@@ -12,6 +12,7 @@ import {
   movePage,
   resizeDocument,
   insertElements,
+  cloneElementsWithOffset,
   collectIds,
   isLocalUrl,
   replaceUrlInDocument,
@@ -117,6 +118,19 @@ describe('elements', () => {
     const full = Array.from({ length: MAX_ELEMENTS_PER_PAGE }, (_, i) => textElement(`e${i}`))
     const doc = [{ ...createDocument(SIZE)[0], elements: full }]
     assert.equal(insertElements(doc, doc[0].id, [textElement('extra')]), doc)
+  })
+
+  it('cloneElementsWithOffset remaps ids and shifts placement', () => {
+    const group = { ...textElement('g1'), type: 'group', childIds: ['a'] }
+    const child = { ...textElement('a'), groupId: 'g1', placement: { x: 10, y: 20, width: 100, height: 40 } }
+    const [copyGroup, copyChild] = cloneElementsWithOffset([group, child], 4)
+    assert.notEqual(copyGroup.id, 'g1')
+    assert.notEqual(copyChild.id, 'a')
+    assert.deepEqual(copyGroup.childIds, [copyChild.id])
+    assert.equal(copyChild.groupId, copyGroup.id)
+    assert.equal(copyChild.placement.x, 34)
+    assert.equal(copyChild.placement.y, 44)
+    assert.equal(copyGroup.layer, 5)
   })
 
   it('collectIds lists page and element ids', () => {
