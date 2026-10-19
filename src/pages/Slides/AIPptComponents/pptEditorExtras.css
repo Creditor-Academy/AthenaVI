@@ -8,9 +8,9 @@
 .ppt-canvas-text-safe-area__rect {
   position: absolute;
   box-sizing: border-box;
-  border: 1px dashed rgba(239, 68, 68, 0.45);
+  border: 1px dashed rgba(100, 116, 139, 0.55);
   border-radius: 2px;
-  background: rgba(239, 68, 68, 0.03);
+  background: transparent;
 }
 
 .ppt-canvas-guides-overlay {
