@@ -437,7 +437,7 @@ scene07.clips = [
 
   shape('row_c2', 2, 73, 400, 520, 80, { backgroundColor: '#f8fafc', borderRadius: '12px', border: `1px solid ${C.light}` }),
   ...iconBadge('ico_email', 8, 93, 415, 50, 'email', C.secondary),
-  text('t_email', 14, 160, 426, 320, 32, 'support@athenavi.com', { fontSize: 16, fontWeight: '700', color: C.dark, fontFamily: F.sans }),
+  text('t_email', 14, 160, 426, 320, 32, 'support@lmsathena.com', { fontSize: 16, fontWeight: '700', color: C.dark, fontFamily: F.sans }),
 
   shape('row_c3', 2, 73, 500, 520, 80, { backgroundColor: '#f8fafc', borderRadius: '12px', border: `1px solid ${C.light}` }),
   ...iconBadge('ico_web', 8, 93, 515, 50, 'website', C.navy),

@@ -295,7 +295,7 @@ function PrivacyPolicy({ onLoginClick, onLogoClick, onNavigateToCompany, onNavig
             <h3>11. Contact Us</h3>
             <p>If you have any questions about this Privacy Policy or our privacy practices, please contact us:</p>
             <ul>
-              <li><strong>Email:</strong> virtual.studio@lmsathena.com.com</li>
+              <li><strong>Email:</strong> <a href="mailto:support@lmsathena.com">support@lmsathena.com</a></li>
               <li><strong>Address:</strong>  Virtual Studio Privacy Team, [Your Address]</li>
             </ul>
             <p>We will respond to your inquiry within 30 days.</p>

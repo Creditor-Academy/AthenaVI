@@ -210,7 +210,7 @@ Team owners can review workspace credit history and usage-by-member inside the w
       title: 'Email support',
       readTime: '1 min',
       tag: 'Reference',
-      body: `For account, billing, or technical issues, email **support@athenavi.com** with your workspace name, project title, and steps to reproduce.
+      body: `For account, billing, or technical issues, email **support@lmsathena.com** with your workspace name, project title, and steps to reproduce.
 
 Include screenshots or export IDs when reporting render failures.`,
     },
@@ -252,6 +252,6 @@ export const helpFaqs = [
 
 export const helpQuickLinks = [
   { id: 'ticket', label: 'Create ticket', desc: 'Draft a support note' },
-  { id: 'email', label: 'Email support', desc: 'support@athenavi.com' },
+  { id: 'email', label: 'Email support', desc: 'support@lmsathena.com' },
   { id: 'billing', label: 'Billing & storage', desc: 'Review usage in Settings' },
 ]
