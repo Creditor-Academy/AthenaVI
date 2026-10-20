@@ -57,7 +57,14 @@ import presentationService, {
   PresentationConflictError,
 } from '../../../services/presentationService'
 import workspaceService from '../../../services/workspaceService'
-import { normalizeWorkspace, extractUserId, workspaceCanManageContributors } from '../../TeamWorkspace/workspaceUtils'
+import { normalizeWorkspace, extractUserId } from '../../TeamWorkspace/workspaceUtils'
+import {
+  beginAssignSlide,
+  canManageAssignment,
+  finishAssignSlide,
+  optimisticAssigneeFromMembers,
+  rollbackAssignSlide,
+} from '../../../utils/assignmentFlow'
 import { extractShareToken, getOrCreateViewerSessionId } from '../../../utils/pptShareSession'
 import { savePresentationEditorSession } from '../../../utils/presentationEditorSession'
 import PptPresenceAvatars from './PptPresenceAvatars'
@@ -2795,7 +2802,7 @@ function AIPptEditor({
   // Assign/unassign is workflow-only (never gates who can open/edit) and only
   // exists on TEAM workspaces; OWNER/ADMIN can act, everyone else sees the avatar.
   const isTeamWorkspace = workspaceInfo?.type === 'workspace'
-  const canManageAssignee = workspaceCanManageContributors(workspaceInfo)
+  const canManageAssignee = canManageAssignment(workspaceInfo)
 
   const loadWorkspaceMembers = () => {
     if (!canManageAssignee || workspaceMembers.length || membersLoading) return
@@ -2816,16 +2823,10 @@ function AIPptEditor({
     if (!workspaceId || !presentationId || !slideId || assigneeBusy) return
     setAssigneeBusy(true)
     setError('')
-    const previousAssignee = selectedSlide?.assignee ?? null
-    const optimisticUser = userId
-      ? workspaceMembers.find((m) => (m.user?.id || m.id) === userId)?.user || null
-      : null
+    const { previousAssignee } = beginAssignSlide(localSlides, slideId, userId, workspaceMembers)
+    const optimisticUser = optimisticAssigneeFromMembers(workspaceMembers, userId)
 
-    setLocalSlides((prev) =>
-      prev.map((s) =>
-        s.id === slideId ? { ...s, assignee: userId ? optimisticUser || previousAssignee : null } : s
-      )
-    )
+    setLocalSlides((prev) => beginAssignSlide(prev, slideId, userId, workspaceMembers).slides)
 
     try {
       const result = await presentationService.updateSlideAssignee(workspaceId, presentationId, slideId, userId)
@@ -2833,18 +2834,10 @@ function AIPptEditor({
       if (updatedSlide) {
         applySlideUpdate(updatedSlide)
       } else {
-        setLocalSlides((prev) =>
-          prev.map((s) =>
-            s.id === slideId
-              ? { ...s, assignee: userId ? optimisticUser : null, assignedBy: null, assignedAt: null }
-              : s
-          )
-        )
+        setLocalSlides((prev) => finishAssignSlide(prev, slideId, userId, optimisticUser))
       }
     } catch (err) {
-      setLocalSlides((prev) =>
-        prev.map((s) => (s.id === slideId ? { ...s, assignee: previousAssignee } : s))
-      )
+      setLocalSlides((prev) => rollbackAssignSlide(prev, slideId, previousAssignee))
       setError(err.message || 'Failed to update slide assignee')
     } finally {
       setAssigneeBusy(false)
