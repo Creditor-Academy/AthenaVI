@@ -106,6 +106,20 @@ export function deletePage(canvases, pageId) {
   return next.length === canvases.length ? canvases : next
 }
 
+/**
+ * Which page stays selected after a delete.
+ * Deleting a page above the selection shifts the index; deleting the selection
+ * lands on the page that slides into that slot.
+ */
+export function activeIndexAfterPageDelete(canvases, activeIndex, removedId) {
+  const removedIndex = canvases.findIndex((page) => page.id === removedId)
+  if (removedIndex < 0 || canvases.length <= 1) return Math.max(0, activeIndex)
+  const nextLength = canvases.length - 1
+  if (activeIndex > removedIndex) return activeIndex - 1
+  if (activeIndex === removedIndex) return Math.min(removedIndex, nextLength - 1)
+  return activeIndex
+}
+
 export function movePage(canvases, fromIndex, toIndex) {
   if (
     fromIndex === toIndex ||

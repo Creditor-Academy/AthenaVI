@@ -25,6 +25,7 @@ import {
   addPage,
   duplicatePage,
   deletePage,
+  activeIndexAfterPageDelete,
   movePage,
   resizeDocument,
   insertElements,
@@ -60,7 +61,13 @@ import {
   clearLocalDraft,
   shouldOfferDraftRestore,
 } from './canvasLocalDraft'
-import { canOpenCanvasEditor, flushCanvasSave, FOLDER_REQUIRED_MESSAGE } from './canvasPersist'
+import {
+  canOpenCanvasEditor,
+  flushCanvasSave,
+  FOLDER_REQUIRED_MESSAGE,
+  describeLoadFailure,
+  resolveCanvasLoadView,
+} from './canvasPersist'
 import { nextThumbnail, previewSignature } from './canvasThumbnail'
 import {
   canPptGroup,
@@ -232,6 +239,7 @@ export default function CanvasEditor({
   // Reopening an existing canvas: show a loading screen instead of the 1080x1080 default.
   const [hydrating, setHydrating] = useState(Boolean(initialCanvasId && workspaceId))
   const [loadError, setLoadError] = useState(missingLocation ? MISSING_LOCATION_MESSAGE : '')
+  const [loadCanRetry, setLoadCanRetry] = useState(false)
   // Refs survive React StrictMode's dev-only mount/unmount/mount, so the load/create runs once.
   const hydrateStartedRef = useRef(false)
   const mountedRef = useRef(true)
@@ -489,6 +497,7 @@ export default function CanvasEditor({
   /** Initial open, and the Retry button on the load-error screen. */
   const openStoredDesign = useCallback(async () => {
     setLoadError('')
+    setLoadCanRetry(false)
     setHydrating(true)
     setSaveState('loading')
     try {
@@ -497,12 +506,10 @@ export default function CanvasEditor({
     } catch (error) {
       console.error('Failed to load canvas:', error)
       if (mountedRef.current) {
+        const failure = describeLoadFailure(classifySaveError(error), error)
         setSaveState('error')
-        setLoadError(
-          classifySaveError(error) === SAVE_ERROR.NOT_FOUND
-            ? 'This design was deleted or you no longer have access to it.'
-            : error?.message || 'Failed to load this design.'
-        )
+        setLoadError(failure.message)
+        setLoadCanRetry(failure.canRetry)
       }
     } finally {
       hydratedRef.current = true
@@ -911,8 +918,9 @@ export default function CanvasEditor({
   const deleteCanvas = (canvasId) => {
     const updated = deletePage(canvases, canvasId)
     if (updated === canvases) return
+    const nextIndex = activeIndexAfterPageDelete(canvases, activeCanvasIndex, canvasId)
     updateCanvasesWithHistory(updated)
-    setActiveCanvasIndex((prev) => Math.max(0, prev - 1))
+    setActiveCanvasIndex(nextIndex)
     setSelected({ canvasId: null, elementId: null })
     setMultiSelectIds([])
   }
@@ -1759,15 +1767,21 @@ export default function CanvasEditor({
   }, [canvases])
 
   // Don't flash the empty 1080x1080 default while the saved design is still being fetched.
-  if (hydrating || loadError) {
+  // An empty stored document still opens as one blank page (`ready`), not this screen.
+  const loadView = resolveCanvasLoadView({ hydrating, loadError, canRetry: loadCanRetry })
+  if (loadView.screen !== 'ready') {
     return (
-      <div className="canvas-editor-page canvas-editor-loading" role="status" aria-live="polite">
-        {loadError ? (
+      <div
+        className="canvas-editor-page canvas-editor-loading"
+        role={loadView.screen === 'error' ? 'alert' : 'status'}
+        aria-live="polite"
+      >
+        {loadView.screen === 'error' ? (
           <div className="canvas-editor-loading-card">
-            <p className="canvas-editor-loading-title">Couldn&apos;t open this design</p>
-            <p className="canvas-editor-loading-sub">{loadError}</p>
+            <p className="canvas-editor-loading-title">{loadView.title}</p>
+            <p className="canvas-editor-loading-sub">{loadView.message}</p>
             <div className="canvas-editor-loading-actions">
-              {initialCanvasId && !missingLocation && (
+              {loadView.canRetry && (
                 <button type="button" className="canva-header-secondary-btn" onClick={openStoredDesign}>
                   Try again
                 </button>
@@ -1780,7 +1794,7 @@ export default function CanvasEditor({
         ) : (
           <div className="canvas-editor-loading-card">
             <span className="canvas-editor-spinner" aria-hidden="true" />
-            <p className="canvas-editor-loading-title">Loading your design…</p>
+            <p className="canvas-editor-loading-title">{loadView.title}</p>
           </div>
         )}
       </div>

@@ -9,6 +9,7 @@ import {
   addPage,
   duplicatePage,
   deletePage,
+  activeIndexAfterPageDelete,
   movePage,
   resizeDocument,
   insertElements,
@@ -89,6 +90,14 @@ describe('pages', () => {
     assert.equal(deletePage(doc, doc[0].id), doc)
     const two = addPage(doc, SIZE)
     assert.deepEqual(deletePage(two, two[0].id), [two[1]])
+  })
+
+  it('activeIndexAfterPageDelete keeps the page the user was on', () => {
+    const doc = addPage(addPage(createDocument(SIZE), SIZE), SIZE)
+    assert.equal(activeIndexAfterPageDelete(doc, 2, doc[0].id), 1)
+    assert.equal(activeIndexAfterPageDelete(doc, 1, doc[1].id), 1)
+    assert.equal(activeIndexAfterPageDelete(doc, 0, doc[2].id), 0)
+    assert.equal(activeIndexAfterPageDelete(doc, 0, doc[0].id), 0)
   })
 
   it('movePage reorders and ignores out-of-range moves', () => {
@@ -214,6 +223,29 @@ describe('save and load', () => {
     const page = { ...createDocument(SIZE)[0], elements: [imageElement('blob:dead')] }
     const loaded = hydrateFromServer({ data: { canvases: [page] } })
     assert.equal(loaded.canvases[0].elements[0].content.url, null)
+  })
+
+  it('add, delete, and reorder pages survive save and reload', () => {
+    let canvases = addPage(addPage(createDocument(SIZE), SIZE), { width: 800, height: 600 })
+    canvases = insertElements(canvases, canvases[1].id, [textElement('on-page-2')])
+    canvases = deletePage(canvases, canvases[0].id)
+    canvases = movePage(canvases, 0, 1)
+    const payload = serializeForSave({ canvases, docTitle: 'Multi page', size: SIZE })
+    const loaded = hydrateFromServer({ name: 'Multi page', data: payload })
+    assert.deepEqual(
+      loaded.canvases.map((page) => page.id),
+      canvases.map((page) => page.id)
+    )
+    assert.equal(loaded.canvases[1].elements[0].id, 'on-page-2')
+    assert.equal(loaded.canvases[0].width, 800)
+    assert.equal(loaded.docTitle, 'Multi page')
+  })
+
+  it('an empty stored design opens as one blank page, not a load error', () => {
+    const loaded = hydrateFromServer({ name: 'Empty', data: { canvases: [] } }, SIZE, 'Empty')
+    assert.equal(loaded.canvases.length, 1)
+    assert.deepEqual(loaded.canvases[0].elements, [])
+    assert.equal(loaded.docTitle, 'Empty')
   })
 
   it('validateForSave mirrors the server caps and flags pending uploads', () => {
