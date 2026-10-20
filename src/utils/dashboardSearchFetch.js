@@ -4,6 +4,7 @@ import heygenService from '../services/heygenService';
 import assetService from '../services/assetService';
 import { fetchTemplateBundles } from './fetchTemplateBundles';
 import { createSearchResult } from './dashboardSearchIndex';
+import { libraryEditorTarget } from './canvasLibrary.js';
 
 const MAX_PROJECTS = 100;
 const MAX_ASSETS = 200;
@@ -153,17 +154,21 @@ export async function fetchDynamicSearchIndex() {
             keywords: [project.title, project.name, wsName, folderName],
             action: {
               type: 'editVideo',
-              video: {
+              video: libraryEditorTarget({
                 id: project.id,
                 workspaceId: wsId,
                 folderId: folderId || null,
                 title: project.title || project.name,
                 name: project.title || project.name,
+                type: project.type,
+                projectType: project.projectType,
+                kind: project.kind,
+                category: project.category,
                 workspaceName: wsName,
                 folderName,
                 workspace: ws,
                 folder,
-              },
+              }),
             },
           })
         );

@@ -324,7 +324,7 @@ export function getRenameSiblingNames(workspaces = [], renameTarget) {
       .map((folder) => folder.name);
   }
 
-  if (type === 'video') {
+  if (type === 'video' || type === 'canvas') {
     const location = findVideoLocation(workspaces, id);
     return (location?.videos || [])
       .filter((video) => String(video.id) !== String(id))

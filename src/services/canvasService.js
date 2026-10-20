@@ -1,4 +1,5 @@
 import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api.js'
+import { canvasDuplicateRequest } from '../utils/canvasLibrary.js'
 import { generateUniqueProjectName } from '../utils/projectNameValidation.js'
 import workspaceService from './workspaceService.js'
 
@@ -136,6 +137,16 @@ class CanvasService {
 
     const json = await response.json()
     return normalizeId(json.data?.canvas || json.canvas)
+  }
+
+  /** New design in the same folder, with the same document and cover. */
+  async duplicateCanvas(workspaceId, canvasId) {
+    const source = await this.getCanvas(workspaceId, canvasId)
+    const request = canvasDuplicateRequest(source)
+    if (!request.folderId) {
+      throw new Error('A design has to live in a folder.')
+    }
+    return this.createCanvas(workspaceId, request)
   }
 
   async deleteCanvas(workspaceId, canvasId) {
