@@ -333,3 +333,38 @@ export function getRenameSiblingNames(workspaces = [], renameTarget) {
 
   return [currentName].filter(Boolean);
 }
+
+/**
+ * Move a library project between folders in the workspace list the dashboard is showing.
+ * The project leaves its old folder and shows up in the destination with the same document.
+ */
+export function relocateProjectInWorkspaces(workspaces, { workspaceId, project, targetFolderId }) {
+  const projectId = project?.id;
+  return (workspaces || []).map((workspace) => {
+    if (String(workspace.id) !== String(workspaceId)) return workspace;
+
+    const cleared = (workspace.folders || []).map((folder) => ({
+      ...folder,
+      videos: (folder.videos || []).filter((item) => String(item.id) !== String(projectId)),
+    }));
+
+    const folders = cleared.map((folder) => {
+      if (String(folder.id) !== String(targetFolderId)) return folder;
+      const already = (folder.videos || []).some((item) => String(item.id) === String(projectId));
+      const updated = { ...project, folderId: targetFolderId };
+      return {
+        ...folder,
+        videos: already ? folder.videos : [...(folder.videos || []), updated],
+      };
+    });
+
+    let videos = (workspace.videos || []).filter((item) => String(item.id) !== String(projectId));
+    if (!targetFolderId) {
+      const already = videos.some((item) => String(item.id) === String(projectId));
+      const updated = { ...project, folderId: null };
+      videos = already ? videos : [...videos, updated];
+    }
+
+    return { ...workspace, folders, videos };
+  });
+}

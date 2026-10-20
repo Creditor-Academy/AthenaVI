@@ -46,6 +46,7 @@ export default function CanvasHeader({
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const badge = (saveState && SAVE_BADGE_BY_STATE[saveState]) || SAVE_BADGE_BY_STATE.saved
   const BadgeIcon = badge.icon
+  const badgeText = saveMessage || badge.label
 
   return (
     <header className="canva-header">
@@ -95,7 +96,7 @@ export default function CanvasHeader({
               aria-live="polite"
             >
               <BadgeIcon className="canva-header-check-icon" />
-              <span>{badge.label}</span>
+              <span>{badgeText}</span>
             </button>
           ) : (
             <div
@@ -104,7 +105,7 @@ export default function CanvasHeader({
               aria-live="polite"
             >
               <BadgeIcon className="canva-header-check-icon" />
-              <span>{badge.label}</span>
+              <span>{badgeText}</span>
             </div>
           )}
         </div>

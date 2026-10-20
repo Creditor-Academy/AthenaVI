@@ -14,12 +14,14 @@ import {
   hasConflictingName,
   findVideoLocation,
   getAllWorkspaceNames,
+  relocateProjectInWorkspaces,
 } from './workspaceUtils.js';
 import {
   DUPLICATE_PROJECT_NAME_MESSAGE,
   findDuplicateProjectName,
   getProjectDisplayName,
 } from '../../utils/projectNameValidation.js';
+import { libraryItemRequiresFolder, libraryMoveLabel } from '../../utils/workspaceLibrary.js';
 
 /**
  * All user-triggered mutation handlers for the workspace page.
@@ -672,10 +674,15 @@ export function useWorkspaceActions({
   const handleMoveProject = useCallback(async (targetFolderId, moveTargetVideo, moveTargetWorkspace) => {
     if (!moveTargetVideo || !moveTargetWorkspace) return;
     try {
+      if (libraryItemRequiresFolder(moveTargetVideo) && !targetFolderId) {
+        throw new Error(
+          libraryMoveLabel(moveTargetVideo) === 'Design'
+            ? 'A design has to live in a folder.'
+            : 'Image chats must live in a folder.'
+        );
+      }
+
       if (moveTargetVideo.kind === 'image' || moveTargetVideo.category === 'image') {
-        if (!targetFolderId) {
-          throw new Error('Image chats must live in a folder.');
-        }
         await imageGenService.moveThread(moveTargetWorkspace.id, moveTargetVideo.id, targetFolderId);
         showToast('Chat moved', 'success');
         setMoveTargetVideo(null);
@@ -699,40 +706,14 @@ export function useWorkspaceActions({
       await workspaceService.moveProjectFolder(moveTargetWorkspace.id, moveTargetVideo.id, targetFolderId);
 
       setWorkspaces((prev) =>
-        prev.map((workspace) => {
-          if (String(workspace.id) !== String(moveTargetWorkspace.id)) return workspace;
-
-          const updatedFolders = workspace.folders.map((folder) => ({
-            ...folder,
-            videos: (folder.videos || []).filter((v) => String(v.id) !== String(moveTargetVideo.id))
-          }));
-
-          const updatedFoldersWithAdded = updatedFolders.map((folder) => {
-            if (String(folder.id) !== String(targetFolderId)) return folder;
-            const alreadyExists = (folder.videos || []).some((v) => String(v.id) === String(moveTargetVideo.id));
-            const updatedVideo = { ...moveTargetVideo, folderId: targetFolderId };
-            return {
-              ...folder,
-              videos: alreadyExists ? folder.videos : [...(folder.videos || []), updatedVideo]
-            };
-          });
-
-          let updatedRootVideos = (workspace.videos || []).filter((v) => String(v.id) !== String(moveTargetVideo.id));
-          if (!targetFolderId) {
-            const alreadyExists = updatedRootVideos.some((v) => String(v.id) === String(moveTargetVideo.id));
-            const updatedVideo = { ...moveTargetVideo, folderId: null };
-            updatedRootVideos = alreadyExists ? updatedRootVideos : [...updatedRootVideos, updatedVideo];
-          }
-
-          return {
-            ...workspace,
-            folders: updatedFoldersWithAdded,
-            videos: updatedRootVideos
-          };
+        relocateProjectInWorkspaces(prev, {
+          workspaceId: moveTargetWorkspace.id,
+          project: moveTargetVideo,
+          targetFolderId,
         })
       );
 
-      showToast('Video moved successfully', 'success');
+      showToast(`${libraryMoveLabel(moveTargetVideo)} moved`, 'success');
       setMoveTargetVideo(null);
       setMoveTargetWorkspace(null);
     } catch (err) {

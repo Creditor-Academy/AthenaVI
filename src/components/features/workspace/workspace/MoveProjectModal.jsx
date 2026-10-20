@@ -3,7 +3,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MdClose, MdDriveFileMove } from 'react-icons/md';
 import './PremiumModal.css';
 
-const MoveProjectModal = ({ isOpen, onClose, onMove, folders = [], currentFolderId = null, videoTitle = '' }) => {
+const MoveProjectModal = ({
+    isOpen,
+    onClose,
+    onMove,
+    folders = [],
+    currentFolderId = null,
+    videoTitle = '',
+    itemKind = 'video',
+}) => {
     const [targetFolderId, setTargetFolderId] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState('');
@@ -14,6 +22,16 @@ const MoveProjectModal = ({ isOpen, onClose, onMove, folders = [], currentFolder
             setError('');
         }
     }, [isOpen, currentFolderId]);
+
+    const requireFolder = itemKind === 'canvas' || itemKind === 'image';
+    const noun =
+        itemKind === 'canvas'
+            ? 'design'
+            : itemKind === 'presentation'
+                ? 'presentation'
+                : itemKind === 'image'
+                    ? 'chat'
+                    : 'video';
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -55,8 +73,8 @@ const MoveProjectModal = ({ isOpen, onClose, onMove, folders = [], currentFolder
                                     <MdDriveFileMove size={20} />
                                 </div>
                                 <div>
-                                    <h2>Move Video</h2>
-                                    <p className="astryd-subtitle">Move "{videoTitle || 'Untitled Video'}" to another folder</p>
+                                    <h2>Move {noun}</h2>
+                                    <p className="astryd-subtitle">Move "{videoTitle || `Untitled ${noun}`}" to another folder</p>
                                 </div>
                             </div>
                             <button className="astryd-close-btn" onClick={onClose} title="Close">
@@ -77,7 +95,9 @@ const MoveProjectModal = ({ isOpen, onClose, onMove, folders = [], currentFolder
                                     className="astryd-input"
                                     disabled={isSubmitting}
                                 >
-                                    <option value="">Workspace Root (No Folder)</option>
+                                    {!requireFolder && (
+                                        <option value="">Workspace Root (No Folder)</option>
+                                    )}
                                     {folders.map(folder => (
                                         <option key={folder.id} value={folder.id}>
                                             {folder.name}
@@ -101,7 +121,7 @@ const MoveProjectModal = ({ isOpen, onClose, onMove, folders = [], currentFolder
                                     className="astryd-btn-primary"
                                     disabled={isSubmitting}
                                 >
-                                    {isSubmitting ? 'Moving...' : 'Move Video'}
+                                    {isSubmitting ? 'Moving...' : `Move ${noun}`}
                                 </button>
                             </div>
                         </form>

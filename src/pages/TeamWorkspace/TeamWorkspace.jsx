@@ -1098,6 +1098,7 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
           null
         }
         videoTitle={moveTargetVideo?.name || moveTargetVideo?.title || ''}
+        itemKind={moveTargetVideo?.kind || moveTargetVideo?.category || 'video'}
       />
 
       <AssignProjectModal

@@ -60,6 +60,8 @@ import {
   clearLocalDraft,
   shouldOfferDraftRestore,
 } from './canvasLocalDraft'
+import { canOpenCanvasEditor, flushCanvasSave, FOLDER_REQUIRED_MESSAGE } from './canvasPersist'
+import { nextThumbnail, previewSignature } from './canvasThumbnail'
 import {
   canPptGroup,
   canPptUngroup,
@@ -92,8 +94,7 @@ const NOTICE_MS = 6000
 const KEEPALIVE_MAX_CHARS = 60000
 const ELEMENT_CAP_NOTICE = `A page can hold at most ${MAX_ELEMENTS_PER_PAGE} elements. Add a new page for more.`
 const PAGE_CAP_NOTICE = `A design can have at most ${MAX_PAGES} pages.`
-const MISSING_LOCATION_MESSAGE =
-  'Choose a workspace folder before creating a design, so there is somewhere to save it.'
+const MISSING_LOCATION_MESSAGE = FOLDER_REQUIRED_MESSAGE
 
 function isCanvasElementLocked(el) {
   return Boolean(el?.locked || el?.placement?.locked)
@@ -212,7 +213,12 @@ export default function CanvasEditor({
   // ── Backend persistence (save within the workspace folder the canvas was created in) ──
   // A design is always stored in a workspace folder; without one there is nowhere to save it,
   // so the editor refuses to open rather than letting the user work on something that will vanish.
-  const missingLocation = !workspaceId || (!initialCanvasId && !folderId)
+  // New designs are refused without a folder. Reopen only needs workspace + canvas id.
+  const missingLocation = !canOpenCanvasEditor({
+    workspaceId,
+    folderId,
+    canvasId: initialCanvasId,
+  })
   const canPersist = !missingLocation
   const [canvasId, setCanvasId] = useState(initialCanvasId)
   // idle | loading | saving | saved | retrying | error | conflict
@@ -239,6 +245,12 @@ export default function CanvasEditor({
   // Server revision this editor last loaded or saved. Sent with every save so the server
   // refuses (409) instead of overwriting a newer save from another tab or person.
   const revisionRef = useRef(0)
+  // Cover of the first page last stored on the project. Null until a thumbnail lands.
+  const thumbSigRef = useRef(null)
+  const thumbGenRef = useRef(0)
+  const thumbFlightSigRef = useRef(null)
+  const thumbPromiseRef = useRef(null)
+  const commitThumbnailRef = useRef(async () => null)
   const retryTimerRef = useRef(null)
   const retryAttemptRef = useRef(0)
   // Conflict, deleted design or expired session: autosave stays off until the user picks a way out.
@@ -288,6 +300,39 @@ export default function CanvasEditor({
   const persistRef = useRef(null)
   const createRef = useRef(null)
   const creatingRef = useRef(null)
+
+  /**
+   * Store a first-page cover when the page looks different from the last one we saved.
+   * Failures stay off the document-save path: the design is already stored, and the
+   * next edit or leave-flush tries the cover again.
+   */
+  const commitThumbnail = useCallback((canvases) => {
+    const id = canvasIdRef.current
+    if (!workspaceId || !id) return Promise.resolve(null)
+    const plan = nextThumbnail(canvases, thumbSigRef.current)
+    if (!plan.changed || !plan.url) return thumbPromiseRef.current || Promise.resolve(null)
+    if (thumbFlightSigRef.current === plan.signature && thumbPromiseRef.current) {
+      return thumbPromiseRef.current
+    }
+    const gen = ++thumbGenRef.current
+    thumbFlightSigRef.current = plan.signature
+    const job = canvasService
+      .updateCanvasMeta(workspaceId, id, { thumbnail: plan.url })
+      .then(() => {
+        if (thumbGenRef.current === gen) thumbSigRef.current = plan.signature
+        return plan.url
+      })
+      .catch((error) => {
+        console.error('Failed to update canvas thumbnail:', error)
+        return null
+      })
+      .finally(() => {
+        if (thumbFlightSigRef.current === plan.signature) thumbFlightSigRef.current = null
+      })
+    thumbPromiseRef.current = job
+    return job
+  }, [workspaceId])
+  commitThumbnailRef.current = commitThumbnail
 
   const handleSaveFailure = useCallback((error) => {
     const kind = classifySaveError(error)
@@ -350,6 +395,7 @@ export default function CanvasEditor({
         setSaveError(null)
         setSaveState('saved')
         if (!isDirty()) clearLocalDraft(id)
+        void commitThumbnailRef.current?.(snapshot.canvases)
       } catch (error) {
         handleSaveFailure(error)
       } finally {
@@ -368,16 +414,26 @@ export default function CanvasEditor({
 
   /** Save anything not yet on the server right now. Resolves true when nothing is left unsaved. */
   const flushPendingSave = useCallback(async () => {
-    if (saveTimerRef.current) {
-      clearTimeout(saveTimerRef.current)
-      saveTimerRef.current = null
-    }
-    if (hydratePromiseRef.current) await hydratePromiseRef.current
-    // Uploads swap their blob: URL for the stored one, which is itself an edit to save.
-    if (pendingUploadsRef.current.size) await Promise.allSettled([...pendingUploadsRef.current.values()])
-    if (currentSaveRef.current) await currentSaveRef.current
-    if (isDirty()) await persistCanvasData()
-    return !isDirty()
+    const saved = await flushCanvasSave({
+      clearDebounce: () => {
+        if (saveTimerRef.current) {
+          clearTimeout(saveTimerRef.current)
+          saveTimerRef.current = null
+        }
+      },
+      awaitHydrate: () => hydratePromiseRef.current,
+      // Uploads swap their blob: URL for the stored one, which is itself an edit to save.
+      awaitUploads: () =>
+        pendingUploadsRef.current.size
+          ? Promise.allSettled([...pendingUploadsRef.current.values()])
+          : null,
+      awaitInFlight: () => currentSaveRef.current,
+      isDirty,
+      persist: () => persistCanvasData(),
+    })
+    // Cover follows the document. A failed cover must not trap the user in the editor.
+    if (saved) await commitThumbnailRef.current?.(canvasesRef.current)
+    return saved && !isDirty()
   }, [isDirty, persistCanvasData])
 
   /** Header retry / "Try again": start a fresh save now. */
@@ -420,6 +476,8 @@ export default function CanvasEditor({
     const loaded = applyServerDocument(project)
     canvasIdRef.current = project.id
     setCanvasId(project.id)
+    thumbSigRef.current = project.thumbnail ? previewSignature(loaded.canvases) : null
+    if (!project.thumbnail) void commitThumbnailRef.current?.(loaded.canvases)
     const draft = readLocalDraft(project.id)
     if (draft && shouldOfferDraftRestore(draft, loaded.revision)) {
       setRecovery({ kind: 'draft', draft })
@@ -461,10 +519,12 @@ export default function CanvasEditor({
         const sentCanvases = canvasesRef.current
         const sentTitle = docTitleRef.current || initialTitle
         const sentSize = sizeRef.current
+        const cover = nextThumbnail(sentCanvases, null)
         const created = await canvasService.createCanvas(workspaceId, {
           name: sentTitle,
           folderId,
           data: serializeForSave({ canvases: sentCanvases, docTitle: sentTitle, size: sentSize }),
+          thumbnail: cover.url || undefined,
         })
         if (!mountedRef.current) return
         const createdName = created.name || created.title || sentTitle
@@ -477,6 +537,7 @@ export default function CanvasEditor({
         savedSnapshotRef.current = { canvases: sentCanvases, docTitle: createdName, size: sentSize }
         lastSyncedTitleRef.current = createdName
         revisionRef.current = readRevision(created.data) || 1
+        if (cover.url) thumbSigRef.current = cover.signature
         canvasIdRef.current = created.id
         setCanvasId(created.id)
         retryAttemptRef.current = 0
