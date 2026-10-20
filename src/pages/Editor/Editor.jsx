@@ -28,7 +28,8 @@ import avatar1 from '../../assets/Avatarr1.png'
 import projectTemplate from '../../constants/projectTemplate.json'
 import workspaceService from '../../services/workspaceService'
 import { useAuth } from '../../contexts/AuthContext'
-import { normalizeWorkspace, extractUserId, workspaceCanManageContributors } from '../TeamWorkspace/workspaceUtils'
+import { normalizeWorkspace, extractUserId } from '../TeamWorkspace/workspaceUtils'
+import { canManageAssignment, executeAssignScene } from '../../utils/assignmentFlow'
 import {
   applyPresenterSeedToScene,
   buildHeygenAvatarContent,
@@ -1854,7 +1855,7 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
   }, [sceneAssigneeWorkspaceId, authUser])
 
   const isTeamWorkspace = sceneWorkspaceInfo?.type === 'workspace'
-  const canManageSceneAssignee = workspaceCanManageContributors(sceneWorkspaceInfo)
+  const canManageSceneAssignee = canManageAssignment(sceneWorkspaceInfo)
 
   const loadSceneAssigneeMembers = () => {
     if (!canManageSceneAssignee || sceneWorkspaceMembers.length || sceneMembersLoading) return
@@ -1871,17 +1872,14 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
     if (!sceneAssigneeWorkspaceId || !projectId || !sceneId || sceneAssigneeBusy) return
     setSceneAssigneeBusy(true)
     try {
-      const updatedScene = await workspaceService.updateSceneAssignee(
-        sceneAssigneeWorkspaceId,
+      const patch = await executeAssignScene({
+        updateSceneAssignee: (...args) => workspaceService.updateSceneAssignee(...args),
+        workspaceId: sceneAssigneeWorkspaceId,
         projectId,
         sceneId,
-        userId
-      )
-      updateScene(sceneId, {
-        assignee: updatedScene?.assignee ?? null,
-        assignedBy: updatedScene?.assignedBy ?? null,
-        assignedAt: updatedScene?.assignedAt ?? null,
+        assigneeId: userId,
       })
+      updateScene(sceneId, patch)
     } catch (err) {
       showToast(err.message || 'Failed to update scene assignee', 'error')
     } finally {

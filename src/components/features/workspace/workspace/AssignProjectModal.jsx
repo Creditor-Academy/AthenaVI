@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MdClose, MdAssignmentInd, MdPerson, MdPersonOff, MdCheck } from 'react-icons/md';
 import workspaceService from '../../../../services/workspaceService.js';
+import { currentAssigneeId, executeAssignProject, resolveMemberUserId } from '../../../../utils/assignmentFlow.js';
 import './PremiumModal.css';
 
 /**
@@ -16,7 +17,7 @@ const AssignProjectModal = ({ isOpen, onClose, onAssigned, workspaceId, project 
   const [assigningId, setAssigningId] = useState(null); // 'unassign' | memberId | null
   const [error, setError] = useState('');
 
-  const currentAssigneeId = project?.assignee?.id || project?.assignedToId || null;
+  const selectedAssigneeId = currentAssigneeId(project);
   const projectTitle = project?.name || project?.title || 'Untitled';
 
   useEffect(() => {
@@ -45,7 +46,12 @@ const AssignProjectModal = ({ isOpen, onClose, onAssigned, workspaceId, project 
     setAssigningId(memberId || 'unassign');
     setError('');
     try {
-      const updated = await workspaceService.updateProjectAssignee(workspaceId, project.id, memberId);
+      const updated = await executeAssignProject({
+        updateProjectAssignee: (...args) => workspaceService.updateProjectAssignee(...args),
+        workspaceId,
+        projectId: project.id,
+        assigneeId: memberId,
+      });
       onAssigned?.(updated);
       onClose();
     } catch (err) {
@@ -110,7 +116,7 @@ const AssignProjectModal = ({ isOpen, onClose, onAssigned, workspaceId, project 
                       {assigningId === 'unassign' ? 'Unassigning…' : 'Unassigned'}
                     </div>
                   </div>
-                  {!currentAssigneeId && <MdCheck size={16} style={{ color: 'var(--primary)' }} />}
+                  {!selectedAssigneeId && <MdCheck size={16} style={{ color: 'var(--primary)' }} />}
                 </div>
               </button>
 
@@ -121,10 +127,10 @@ const AssignProjectModal = ({ isOpen, onClose, onAssigned, workspaceId, project 
               )}
               {!membersLoading &&
                 members.map((member) => {
-                  const memberId = member.userId || member.user?.id || member.user?._id || member.id;
+                  const memberId = resolveMemberUserId(member);
                   const label = member.user?.name || member.user?.email || member.name || member.email || 'Member';
                   const email = member.user?.email || member.email || '';
-                  const selected = currentAssigneeId === memberId;
+                  const selected = selectedAssigneeId === memberId;
                   return (
                     <button
                       key={memberId}

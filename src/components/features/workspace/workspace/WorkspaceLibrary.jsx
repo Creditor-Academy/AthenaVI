@@ -18,8 +18,8 @@ import {
 import {
   extractUserId,
   workspaceCanEdit,
-  workspaceCanManageContributors,
 } from '../../../../pages/TeamWorkspace/workspaceUtils.js'
+import { canManageAssignment } from '../../../../utils/assignmentFlow.js'
 import WorkspaceSection from './WorkspaceSection.jsx'
 import {
   VideoCard,
@@ -93,7 +93,7 @@ export default function WorkspaceLibrary({
 }) {
   const workspaceId = workspace?.id
   const folderId = folder?.id || null
-  const canAssign = workspaceCanManageContributors(workspace)
+  const canAssign = canManageAssignment(workspace)
   const canEdit = workspaceCanEdit(workspace)
   const { user: authUser } = useAuth()
   const currentUserId = extractUserId(authUser)

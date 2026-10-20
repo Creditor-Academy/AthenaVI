@@ -1,5 +1,6 @@
 import React from 'react';
 import { MdCheck, MdPersonOff } from 'react-icons/md';
+import { resolveMemberUserId } from '../../../../utils/assignmentFlow.js';
 import './SceneAssigneePicker.css';
 
 function initials(name) {
@@ -66,7 +67,7 @@ function SceneAssigneePicker({
         {!membersLoading &&
           members.map((member) => {
             const memberUser = member.user || {};
-            const memberId = memberUser.id || member.id;
+            const memberId = resolveMemberUserId(member);
             const selected = assignee?.id === memberId;
             const label = memberUser.name || memberUser.email || 'Member';
             return (
