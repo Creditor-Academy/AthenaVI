@@ -86,6 +86,7 @@ export default function WorkspaceLibrary({
   onDetails,
   onRename,
   onMove,
+  onDuplicate,
   onDelete,
   onAssign,
   refreshKey = 0,
@@ -245,6 +246,7 @@ export default function WorkspaceLibrary({
             onDetails: onDetails ? () => onDetails(item) : null,
             onRename: canEdit && onRename ? () => onRename(item) : null,
             onMove: canEdit && onMove ? () => onMove(item) : null,
+            onDuplicate: canEdit && onDuplicate && kind === 'canvas' ? () => onDuplicate(item) : null,
             onDelete: canEdit && onDelete ? () => onDelete(item) : null,
             onAssign: canAssign && onAssign && kind !== 'image' ? () => onAssign(item) : null,
           }}

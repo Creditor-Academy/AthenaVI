@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import workspaceService from '../../services/workspaceService.js';
+import canvasService from '../../services/canvasService.js';
 import imageGenService from '../../services/imageGenService.js';
 import invitationFlowService from '../../services/invitationFlowService.js';
 import inboxService from '../../services/inboxService.js';
@@ -343,6 +344,26 @@ export function useWorkspaceActions({
       return;
     }
 
+    if (type === 'canvas') {
+      const workspaceId = renameTarget.workspaceId || activeWorkspace?.id;
+      const parentWorkspace =
+        workspaces.find((workspace) => String(workspace.id) === String(workspaceId)) || activeWorkspace;
+      if (!parentWorkspace || !workspaceCanEdit(parentWorkspace)) {
+        throw new Error('You do not have permission to rename this design.');
+      }
+      if (renameTarget.folderId) {
+        const projects = await workspaceService.listProjectsInFolder(parentWorkspace.id, renameTarget.folderId);
+        const duplicate = findDuplicateProjectName(newName, projects, { excludeProjectId: id });
+        if (duplicate) {
+          throw new Error(`A project named "${newName}" already exists in this folder.`);
+        }
+      }
+      await canvasService.updateCanvasMeta(parentWorkspace.id, id, { name: newName });
+      onLibraryChange?.();
+      showToast('Design renamed', 'success');
+      return;
+    }
+
     if (type === 'video') {
       const videoLocation = findVideoLocation(workspaces, id);
       const parentWorkspace = videoLocation?.workspace || activeWorkspace;
@@ -359,6 +380,7 @@ export function useWorkspaceActions({
       }
 
       await workspaceService.updateProject(parentWorkspace.id, id, { name: newName });
+      const renamed = (videoLocation?.videos || []).find((video) => String(video.id) === String(id));
       setWorkspaces((prev) =>
         prev.map((workspace) => ({
           ...workspace,
@@ -379,7 +401,8 @@ export function useWorkspaceActions({
           }))
         }))
       );
-      showToast('Video renamed successfully', 'success');
+      onLibraryChange?.();
+      showToast(`${libraryMoveLabel(renamed)} renamed`, 'success');
     }
   }, [workspaces, activeWorkspace, authUser, setWorkspaces, setLocalAdditions, setCurrentLevel, showToast, onLibraryChange]);
 
@@ -506,6 +529,25 @@ export function useWorkspaceActions({
       return;
     }
 
+    if (type === 'canvas') {
+      const parentWorkspace = workspaceContext || activeWorkspace;
+      if (!parentWorkspace || !workspaceCanEdit(parentWorkspace)) {
+        showToast('You do not have permission to delete this design.', 'error');
+        return;
+      }
+      openConfirmDialog('Delete this design? This cannot be undone.', async () => {
+        try {
+          await canvasService.deleteCanvas(parentWorkspace.id, id);
+          await refreshWorkspaceData();
+          onLibraryChange?.();
+          showToast('Design deleted', 'success');
+        } catch (error) {
+          showToast(error.message || 'Failed to delete design', 'error');
+        }
+      });
+      return;
+    }
+
     if (type === 'video') {
       const parentWorkspace = activeWorkspace;
       const parentFolder = activeFolder;
@@ -539,13 +581,14 @@ export function useWorkspaceActions({
             }
           }));
           await refreshWorkspaceData();
+          onLibraryChange?.();
           showToast('Video deleted successfully', 'success');
         } catch (error) {
           showToast(error.message || 'Failed to delete video', 'error');
         }
       });
     }
-  }, [workspaces, activeWorkspace, activeFolder, currentLevel, setWorkspaces, setLocalAdditions, setCurrentLevel, showToast, openConfirmDialog, refreshWorkspaceData]);
+  }, [workspaces, activeWorkspace, activeFolder, currentLevel, setWorkspaces, setLocalAdditions, setCurrentLevel, showToast, openConfirmDialog, refreshWorkspaceData, onLibraryChange]);
 
   // ------------------------------------------------------------------
   // Leave shared workspace
@@ -716,11 +759,27 @@ export function useWorkspaceActions({
       showToast(`${libraryMoveLabel(moveTargetVideo)} moved`, 'success');
       setMoveTargetVideo(null);
       setMoveTargetWorkspace(null);
+      onLibraryChange?.();
     } catch (err) {
       showToast(err.message || 'Failed to move video', 'error');
       throw err;
     }
-  }, [setWorkspaces, showToast, setMoveTargetVideo, setMoveTargetWorkspace]);
+  }, [setWorkspaces, showToast, setMoveTargetVideo, setMoveTargetWorkspace, onLibraryChange]);
+
+  const handleDuplicateCanvas = useCallback(async (item, workspace) => {
+    const parentWorkspace = workspace || activeWorkspace;
+    if (!parentWorkspace || !workspaceCanEdit(parentWorkspace)) {
+      showToast('You do not have permission to duplicate this design.', 'error');
+      return;
+    }
+    try {
+      await canvasService.duplicateCanvas(parentWorkspace.id, item.id);
+      onLibraryChange?.();
+      showToast('Design duplicated', 'success');
+    } catch (error) {
+      showToast(error.message || 'Failed to duplicate design', 'error');
+    }
+  }, [activeWorkspace, showToast, onLibraryChange]);
 
   return {
     handleCreateWorkspace,
@@ -739,6 +798,7 @@ export function useWorkspaceActions({
     inviteSending,
     handleChangeMemberRole,
     handleRemoveMember,
-    handleMoveProject
+    handleMoveProject,
+    handleDuplicateCanvas,
   };
 }
