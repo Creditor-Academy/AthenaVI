@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react'
+import { memo, useMemo, useRef, useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import {
   FiPlus,
@@ -10,6 +10,7 @@ import {
   FiLayers,
 } from 'react-icons/fi'
 import { MdRotateRight } from 'react-icons/md'
+import { pageCoverDataUrl } from '../canvasThumbnail'
 import PptCanvasElement from '../../Slides/AIPptComponents/PptCanvasElement'
 import PptCanvasGuidesOverlay from '../../Slides/AIPptComponents/PptCanvasGuidesOverlay'
 import { computePptSmartGuides } from '../../../utils/pptSmartGuides'
@@ -34,6 +35,12 @@ import {
   isPptDeviceFrameElement,
 } from '../../../components/ppt/DeviceFrameVisual'
 import { resolveFillCss } from '../../../utils/presentationHelpers'
+
+const InactivePageCover = memo(function InactivePageCover({ page }) {
+  const src = useMemo(() => pageCoverDataUrl(page), [page])
+  if (!src) return null
+  return <img className="canva-page-static-cover" alt="" src={src} />
+})
 
 const DEFAULT_PALETTE = {
   bg: '#FFFFFF',
@@ -881,7 +888,7 @@ export default function CanvasStage({
                   onContextMenu?.(e, null)
                 }}
               >
-                {canvas.elements.map((element, elIdx) => {
+                {isCurrent ? canvas.elements.map((element, elIdx) => {
                   const isSelected =
                     pageSelectedIds.includes(element.id) ||
                     Boolean(element.groupId && pageSelectedIds.includes(element.groupId))
@@ -967,7 +974,9 @@ export default function CanvasStage({
                       />
                     </InteractiveCanvasElementShell>
                   )
-                })}
+                }) : (
+                  <InactivePageCover page={canvas} />
+                )}
 
                 {isCurrent && (
                   <PptCanvasGuidesOverlay
@@ -977,7 +986,7 @@ export default function CanvasStage({
                   />
                 )}
 
-                {!canvas.elements.length && (
+                {isCurrent && !canvas.elements.length && (
                   <div className="canva-surface-empty">
                     <p>Select text, shapes, or images from the left panel to build your design</p>
                   </div>

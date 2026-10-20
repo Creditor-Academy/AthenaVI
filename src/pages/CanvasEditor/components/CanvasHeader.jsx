@@ -42,6 +42,7 @@ export default function CanvasHeader({
   onSaveBadgeClick = null,
   inspectorOpen = false,
   onToggleInspector = null,
+  onOpenShortcuts = null,
 }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const badge = (saveState && SAVE_BADGE_BY_STATE[saveState]) || SAVE_BADGE_BY_STATE.saved
@@ -158,6 +159,18 @@ export default function CanvasHeader({
           >
             <FiSliders />
             <span>Inspector</span>
+          </button>
+        )}
+
+        {onOpenShortcuts && (
+          <button
+            type="button"
+            className="canva-header-secondary-btn"
+            onClick={onOpenShortcuts}
+            title="Keyboard shortcuts (?)"
+            aria-label="Keyboard shortcuts"
+          >
+            ?
           </button>
         )}
 

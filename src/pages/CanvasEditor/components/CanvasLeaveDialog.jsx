@@ -1,4 +1,6 @@
+import { useRef } from 'react'
 import { MdWarning } from 'react-icons/md'
+import { useCanvasDialogFocus } from '../canvasDialogFocus'
 import '../../../components/ui/ConfirmDialog/ConfirmDialog.css'
 
 /**
@@ -6,9 +8,14 @@ import '../../../components/ui/ConfirmDialog/ConfirmDialog.css'
  * status: 'ask' | 'saving' | 'failed'
  */
 export default function CanvasLeaveDialog({ status, canSave, failureMessage = '', onSave, onDiscard, onCancel }) {
-  if (!status) return null
-
+  const dialogRef = useRef(null)
   const saving = status === 'saving'
+  useCanvasDialogFocus(dialogRef, {
+    active: Boolean(status),
+    onEscape: saving ? undefined : onCancel,
+  })
+
+  if (!status) return null
   const failed = status === 'failed'
 
   const title = failed ? "Couldn't save your changes" : 'Save changes before leaving?'
@@ -21,6 +28,7 @@ export default function CanvasLeaveDialog({ status, canSave, failureMessage = ''
   return (
     <div className="confirm-dialog-overlay" onClick={saving ? undefined : onCancel} role="presentation">
       <div
+        ref={dialogRef}
         className="confirm-dialog"
         role="dialog"
         aria-modal="true"
