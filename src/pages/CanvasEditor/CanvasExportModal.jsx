@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react'
+import { useCanvasDialogFocus } from './canvasDialogFocus'
 import { FiDownload, FiCheck, FiX } from 'react-icons/fi'
 import CanvasExportFrame from './CanvasExportFrame'
 import {
@@ -61,6 +62,8 @@ export default function CanvasExportModal({
   const [capturePage, setCapturePage] = useState(null)
   const frameRef = useRef(null)
   const pendingFrame = useRef(null)
+  const dialogRef = useRef(null)
+  useCanvasDialogFocus(dialogRef, { onEscape: isExporting ? undefined : onClose })
 
   useLayoutEffect(() => {
     if (!capturePage || !frameRef.current || !pendingFrame.current) return
@@ -167,7 +170,7 @@ export default function CanvasExportModal({
 
   return (
     <div className="canvas-size-modal-backdrop" onClick={isExporting ? undefined : onClose}>
-      <div className="canvas-export-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="canvas-export-title">
+      <div ref={dialogRef} className="canvas-export-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="canvas-export-title">
         <header className="canvas-export-header">
           <div>
             <p className="canvas-editor-kicker">Export design</p>

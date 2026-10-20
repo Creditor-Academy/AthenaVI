@@ -115,6 +115,14 @@ export function buildCoverSvg(page, { maxEdge = 480, withText = true, limit = MA
   return parts.join('')
 }
 
+/** Small SVG cover for a page card or an inactive page. Not stored. */
+export function pageCoverDataUrl(page, options = {}) {
+  if (!page) return null
+  const svg = buildCoverSvg(page, { maxEdge: 160, withText: true, limit: 12, ...options })
+  if (!svg) return null
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+}
+
 /** `data:image/svg+xml` URL small enough to store on the project row. */
 export function thumbnailDataUrl(page) {
   if (!page) return null
