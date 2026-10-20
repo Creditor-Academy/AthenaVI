@@ -4,6 +4,7 @@
 export {
   deriveContentContract,
   normalizeContentForLayout,
+  collectRawArrayOverflowErrors,
   validateContentForLayout,
   repairContentForLayout,
   assertContentForLayout,
