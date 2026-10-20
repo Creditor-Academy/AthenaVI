@@ -12,6 +12,7 @@ import CanvasEditImagePanel from '../../../CanvasEditor/components/CanvasEditIma
 import TextEffectsPanel from './TextEffectsPanel'
 import {
   mediaFlipTransform,
+  cssPaintString,
   PPT_SHAPE_BORDER_STYLES,
   normalizeShapeBorderStyle,
   slideBackgroundFill,
@@ -747,6 +748,7 @@ function ShapeDesignSection({
 function ImageDesignSection({
   element,
   slide,
+  palette,
   onChangeContent,
   onChangePlacement,
   onToggleLock,
@@ -811,7 +813,7 @@ function ImageDesignSection({
                     style={{
                       transform: mediaFlipTransform(c),
                       transformOrigin: 'center center',
-                      filter: c.cssFilter || undefined,
+                      filter: cssPaintString(c.cssFilter),
                     }}
                   />
                 </div>
@@ -1214,6 +1216,7 @@ export default function DesignContextPanel({
         <ImageDesignSection
           element={element}
           slide={slide}
+          palette={palette}
           hideNestedTabs={hideNestedTabs}
           onChangeContent={onChangeElementContent}
           onChangePlacement={onChangeElementPlacement}
