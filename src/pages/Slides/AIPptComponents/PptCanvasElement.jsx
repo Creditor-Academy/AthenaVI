@@ -11,6 +11,7 @@ import {
   buildImageClipPath,
   shapeElementUsesNativeStyle,
   mediaFlipTransform,
+  cssPaintString,
 } from '../../../utils/presentationHelpers'
 import { getListMarker, splitTextLines, stripLeadingListMarkers } from '../../../utils/textListUtils'
 import { measureTextContentSize } from '../../../utils/canvasTransformUtils'
@@ -870,8 +871,8 @@ export default function PptCanvasElement({
             objectFit: c.fit || (el.type === 'icon' ? 'contain' : 'cover'),
             objectPosition: 'center',
             opacity: c.opacity != null ? c.opacity : 1,
-            boxShadow: c.boxShadow || c.shadow || undefined,
-            filter: c.cssFilter || c.filter || undefined,
+            boxShadow: cssPaintString(c.boxShadow) || cssPaintString(c.shadow),
+            filter: cssPaintString(c.cssFilter) || cssPaintString(c.filter),
             display: 'block',
             transform: mediaFlipTransform(c),
             transformOrigin: 'center center',

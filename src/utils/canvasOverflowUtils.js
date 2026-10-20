@@ -178,11 +178,26 @@ export function canvasIntersectionPct(p, canvasW, canvasH) {
   return { il, it, ir, ib, hasIntersection, fullyOnCanvas }
 }
 
+/** True when the element already clips/masks itself (hero blob, oval, edge fade). */
+export function contentUsesInnerClipOrMask(content = {}) {
+  if (!content || typeof content !== 'object') return false
+  if (typeof content.clipPath === 'string' && content.clipPath.trim()) return true
+  const mask = content.imageMask
+  if (mask && typeof mask === 'object') {
+    const type = String(mask.type || '').toLowerCase()
+    if (type && type !== 'none') return true
+  }
+  if (content.edgeFade && typeof content.edgeFade === 'object') return true
+  return false
+}
+
 /** Hard-clip to the on-canvas portion (unselected overflow). Rotation-aware. */
 export function onCanvasOnlyClipPath(p, canvasW, canvasH) {
   if (!elementOverflowsCanvas(p, canvasW, canvasH)) return undefined
   const poly = canvasIntersectionLocalPolygon(p, canvasW, canvasH)
-  if (!poly.length) return 'inset(100%)'
+  // Empty intersection is often a clip-math miss on rotated/shaped photos — never
+  // hide the whole element (`inset(100%)` paints a blank slide on select).
+  if (!poly.length) return undefined
   if (polygonNearlyFull(poly)) return undefined
   return `polygon(${polygonToCss(poly)})`
 }
@@ -263,6 +278,7 @@ export function overflowPaintStyle({
   selected = false,
   editing = false,
   outsideAlpha = 0.45,
+  skipOverflowMask = false,
 } = {}) {
   const clear = {
     maskImage: 'none',
@@ -271,7 +287,8 @@ export function overflowPaintStyle({
     WebkitClipPath: 'none',
   }
   const p = { x, y, width, height, rotation }
-  if (editing || !elementOverflowsCanvas(p, canvasW, canvasH)) return clear
+  // Parent mask/clip + inner image clip-path blanks the photo in Chromium/Safari.
+  if (skipOverflowMask || editing || !elementOverflowsCanvas(p, canvasW, canvasH)) return clear
   if (selected) {
     const mask = selectedOverflowMaskStyle(p, canvasW, canvasH, outsideAlpha)
     return mask ? { ...clear, ...mask, clipPath: 'none', WebkitClipPath: 'none' } : clear

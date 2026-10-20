@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import EditorErrorBoundary from '../../../components/ui/EditorErrorBoundary/EditorErrorBoundary.jsx'
 import { createPortal } from 'react-dom'
 import {
   FiPlay,
@@ -138,6 +139,7 @@ import {
   minOverlapPx,
   clampPlacementOverflow,
   overflowPaintStyle,
+  contentUsesInnerClipOrMask,
 } from '../../../utils/canvasOverflowUtils'
 import {
   clearImageMediaPatch,
@@ -689,6 +691,7 @@ function InteractiveElementShell({
       selected,
       editing,
       outsideAlpha: 0.45,
+      skipOverflowMask: contentUsesInnerClipOrMask(el.content),
     }),
     cursor: isText || !editable || locked ? 'pointer' : selected ? 'move' : 'pointer',
     touchAction: 'none',
@@ -1203,7 +1206,6 @@ function AIPptEditor({
   const selectedElementIdRef = useRef(null)
   const multiSelectIdsRef = useRef([])
   const elementMutationsRef = useRef(null)
-  const imageRefreshInFlight = useRef(new Set())
   const layoutRepairPassRef = useRef('')
   const slideContainerRefs = useRef({})
   const minimapItemRefs = useRef({})
@@ -3631,23 +3633,11 @@ function AIPptEditor({
     [selectedSlideId, localSlides, isGenerating, persistElementOrder]
   )
 
-  const handleImageAuthError = useCallback(
-    async (elementId) => {
-      const slideId = selectedSlideId || localSlides[0]?.id
-      if (!slideId || !workspaceId || !presentationId) return
-      const key = `${slideId}:${elementId || '*'}`
-      if (imageRefreshInFlight.current.has(key)) return
-      imageRefreshInFlight.current.add(key)
-      try {
-        await refreshSlide(slideId)
-      } catch {
-        // ignore refresh failures; image stays dimmed by browser
-      } finally {
-        imageRefreshInFlight.current.delete(key)
-      }
-    },
-    [selectedSlideId, localSlides, workspaceId, presentationId, refreshSlide]
-  )
+  const handleImageAuthError = useCallback(() => {
+    // Preview <img> in the design panel can 403 a signed URL on select.
+    // Refreshing the whole slide here blanks the canvas; leave the broken
+    // bitmap in place instead.
+  }, [])
 
   const handleMediaAttached = useCallback(
     async (result) => {
@@ -4132,6 +4122,7 @@ function AIPptEditor({
   }
 
   return (
+    <EditorErrorBoundary label="PPT editor">
     <div className="aig-editor-container fade-in">
       {isGenerating && (
         <div className="aig-generating-lock" role="status">
@@ -5018,6 +5009,7 @@ function AIPptEditor({
         />
       )}
     </div>
+    </EditorErrorBoundary>
   )
 }
 

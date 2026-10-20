@@ -37,6 +37,17 @@ export const PPT_CANVAS_SIZES = {
 
 export const DEFAULT_SLIDE_BG = '#FFFFFF'
 
+/** CSS `filter` / `box-shadow` must be strings — objects crash React and blank the editor. */
+export function cssPaintString(value) {
+  if (value == null || value === false) return undefined
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    return trimmed && trimmed !== 'none' ? trimmed : undefined
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  return undefined
+}
+
 /** CSS transform for image/icon flip (local axes, before placement rotation). */
 export function mediaFlipTransform(content = {}) {
   const flipH = content.flipHorizontal === true || content.scaleX === -1

@@ -17,6 +17,7 @@ import { collectPptMoveIds } from '../../../utils/pptGroupUtils'
 import {
   overflowPaintStyle,
   clampPlacementOverflow,
+  contentUsesInnerClipOrMask,
 } from '../../../utils/canvasOverflowUtils'
 import { exceedsDragThreshold } from '../../../utils/pointerDrag'
 import {
@@ -532,6 +533,7 @@ function InteractiveCanvasElementShell({
       selected,
       editing,
       outsideAlpha: 0.45,
+      skipOverflowMask: contentUsesInnerClipOrMask(el.content),
     }),
     cursor: isText || !editable || locked ? 'pointer' : selected ? 'move' : 'pointer',
     touchAction: 'none',
