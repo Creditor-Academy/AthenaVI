@@ -1995,6 +1995,8 @@ export default function CanvasEditor({
       {showExportModal && (
         <CanvasExportModal
           canvas={activeCanvas}
+          canvases={canvases}
+          activeIndex={activeCanvasIndex}
           title={docTitle}
           onClose={() => setShowExportModal(false)}
         />

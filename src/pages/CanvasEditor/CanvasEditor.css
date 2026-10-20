@@ -3218,6 +3218,45 @@ body > .ppt-fill-picker-pop {
   cursor: pointer;
 }
 
+.canvas-export-range {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--text-main, #0f172a);
+}
+
+.canvas-export-range label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.canvas-export-range input {
+  width: 72px;
+  padding: 6px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.canvas-export-note {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.canvas-export-error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 /* ==========================================================================
    CONTEXT MENU STYLING & PORTAL Z-INDEX
    ========================================================================== */
