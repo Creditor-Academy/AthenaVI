@@ -71,6 +71,7 @@ import {
 } from '../../utils/canvasEditorSession.js'
 import useDashboardSearch from '../../hooks/useDashboardSearch.js'
 import { applySearchResult } from '../../utils/dashboardSearchNavigate.js'
+import { createSurfaceForOption, editorSurfaceForLibraryItem } from '../../utils/editorSurface.js'
 import './Dashboard.css'
 
 const AVATAR_FLOW_SECTIONS = new Set(['avatars', 'create-avatar-look', 'create-avatar'])
@@ -337,13 +338,12 @@ function Dashboard({ onCreate, initialSection }) {
 
   const handleEditVideo = useCallback(
     (video) => {
-      const kind = String(video?.kind || video?.category || '').toLowerCase()
-      const projectType = String(video?.type || video?.projectType || '').toUpperCase()
+      const surface = editorSurfaceForLibraryItem(video)
       const folderId =
         video?.folderId || (video?.folder && (video.folder.id || video.folder._id)) || null
 
-      // Design canvases have their own editor — never the video editor at /create.
-      if (kind === 'canvas' || projectType === 'CANVAS') {
+      // Design canvases have their own editor — never AIPptEditor or the video editor.
+      if (surface === 'canvas') {
         openCanvasEditor({
           workspaceId: video.workspaceId,
           canvasId: video.id || video._id,
@@ -354,7 +354,7 @@ function Dashboard({ onCreate, initialSection }) {
         return
       }
 
-      if (kind === 'presentation' || projectType === 'PRESENTATION') {
+      if (surface === 'presentation') {
         openPresentationEditor({
           outline: [],
           config: {
@@ -892,7 +892,7 @@ function Dashboard({ onCreate, initialSection }) {
                   return
                 }
 
-                if (preferred === 'image-editor' && workspaceId) {
+                if (createSurfaceForOption(preferred) === 'canvas' && workspaceId) {
                   // Canvases are saved into a folder — ask for one when created from the workspace root.
                   if (!folderId) {
                     handleOpenCreateLocationModal('image-editor', { workspaceId })

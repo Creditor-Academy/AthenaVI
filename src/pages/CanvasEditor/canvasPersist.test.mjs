@@ -2,7 +2,16 @@
 /** Run: node --test src/pages/CanvasEditor/canvasPersist.test.mjs */
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { canOpenCanvasEditor, flushCanvasSave, reopenView } from './canvasPersist.js'
+import {
+  canOpenCanvasEditor,
+  flushCanvasSave,
+  reopenView,
+  describeLoadFailure,
+  resolveCanvasLoadView,
+  FOLDER_REQUIRED_MESSAGE,
+  LOAD_NOT_FOUND_MESSAGE,
+  LOAD_FAILED_MESSAGE,
+} from './canvasPersist.js'
 import { serializeForSave, hydrateFromServer, createDocument, addPage } from './canvasDocument.js'
 import { normalizeLibraryItem } from '../../utils/workspaceLibrary.js'
 import { relocateProjectInWorkspaces } from '../TeamWorkspace/workspaceUtils.js'
@@ -20,6 +29,45 @@ describe('canvas folder policy', () => {
 
   it('reopens an existing canvas without asking for a folder again', () => {
     assert.equal(canOpenCanvasEditor({ workspaceId: 'ws', canvasId: 'canvas-1' }), true)
+  })
+})
+
+describe('failed to load this design', () => {
+  it('shows loading, then a retryable error, and recovers on the next attempt', () => {
+    assert.deepEqual(resolveCanvasLoadView({ hydrating: true }), {
+      screen: 'loading',
+      title: 'Loading your design…',
+      message: '',
+      canRetry: false,
+    })
+
+    const network = describeLoadFailure('network', new TypeError('Failed to fetch'))
+    assert.equal(network.canRetry, true)
+    assert.equal(network.message, 'Failed to fetch')
+    const failed = resolveCanvasLoadView({ loadError: network.message, canRetry: network.canRetry })
+    assert.equal(failed.screen, 'error')
+    assert.equal(failed.title, "Couldn't open this design")
+    assert.equal(failed.canRetry, true)
+
+    assert.equal(resolveCanvasLoadView({}).screen, 'ready')
+  })
+
+  it('does not offer retry when the design is gone, the session expired, or no folder was chosen', () => {
+    const missing = describeLoadFailure('not-found', { message: 'nope', status: 404 })
+    assert.equal(missing.message, LOAD_NOT_FOUND_MESSAGE)
+    assert.equal(missing.canRetry, false)
+    assert.equal(describeLoadFailure('auth', {}).canRetry, false)
+    const unnamed = describeLoadFailure('server', {})
+    assert.equal(unnamed.message, LOAD_FAILED_MESSAGE)
+    assert.equal(unnamed.canRetry, true)
+
+    const blocked = resolveCanvasLoadView({
+      loadError: FOLDER_REQUIRED_MESSAGE,
+      canRetry: false,
+    })
+    assert.equal(blocked.screen, 'error')
+    assert.equal(blocked.canRetry, false)
+    assert.match(blocked.message, /folder/)
   })
 })
 
