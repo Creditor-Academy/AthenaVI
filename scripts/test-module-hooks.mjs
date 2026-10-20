@@ -27,9 +27,14 @@ function fileUrlFor(specifier, context) {
   return new URL(specifier, context.parentURL).href
 }
 
+const ASSET = /\.(?:png|jpe?g|gif|webp|avif|svg|ico|mp4|webm|woff2?)$/
+
 export async function resolve(specifier, context, nextResolve) {
   if (specifier.endsWith('.css')) {
     return { shortCircuit: true, url: 'data:text/css,/* test css stub */' }
+  }
+  if (ASSET.test(specifier.split('?')[0])) {
+    return { shortCircuit: true, url: 'data:text/javascript,export default "asset"' }
   }
   try {
     return await nextResolve(specifier, context)
@@ -60,6 +65,9 @@ export async function resolve(specifier, context, nextResolve) {
 export async function load(url, context, nextLoad) {
   if (url.startsWith('data:text/css')) {
     return { format: 'module', source: 'export default {}', shortCircuit: true }
+  }
+  if (url.startsWith('data:text/javascript,')) {
+    return { format: 'module', source: decodeURIComponent(url.slice('data:text/javascript,'.length)), shortCircuit: true }
   }
   if (url.endsWith('.jsx')) {
     const source = withViteEnv(transformSync(readFileSync(fileURLToPath(url), 'utf8'), {
