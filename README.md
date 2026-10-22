@@ -28,9 +28,14 @@ In development, `/api` requests are proxied to `VITE_API_BASE_URL` (defaults to 
 
 ## Environment variables
 
+Copy `.env.example` to `.env.local`. `.env.local` is gitignored so real values stay off git.
+
 | Variable | Description |
 |----------|-------------|
-| `VITE_API_BASE_URL` | Backend API base URL. Required at **build time** for production so API calls resolve correctly. |
+| `VITE_API_BASE_URL` | Backend API base URL, no trailing slash. Required at **build time** for production. |
+| `VITE_ENV` | Environment label (`development` / `production`). |
+
+Do **not** put API keys, JWT, AWS, HeyGen, OpenAI, or database credentials in this frontend env. Vite inlines every `VITE_*` key into the browser bundle. Those secrets live in `AthenaVI_backend/.env.development`.
 
 ## Deployment
 
