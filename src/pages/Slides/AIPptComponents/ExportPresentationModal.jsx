@@ -85,13 +85,21 @@ function ExportPreview({ kind }) {
   )
 }
 
+const EXPORT_STATUS_LABEL = {
+  QUEUED: 'Queued — starting export…',
+  RENDERING: 'Building file — this can take a few minutes for large decks…',
+  READY: 'Ready',
+  FAILED: 'Failed',
+};
+
 export default function ExportPresentationModal({
   workspaceId,
   presentationId,
   title = 'Presentation',
+  slideCount = null,
   onClose,
 }) {
-  const [selected, setSelected] = useState('PDF')
+  const [selected, setSelected] = useState('PPTX')
   const [group, setGroup] = useState('file')
   const [phase, setPhase] = useState('pick')
   const [statusText, setStatusText] = useState('')
@@ -118,8 +126,14 @@ export default function ExportPresentationModal({
     if (busy) return
     setGroup(nextGroup)
     const nextFormats = GROUPS.find((g) => g.id === nextGroup)?.formats || []
-    if (!nextFormats.includes(selected)) setSelected(nextFormats[0] || 'PDF')
+    if (!nextFormats.includes(selected)) setSelected(nextFormats[0] || 'PPTX')
   }
+
+  const exportTimeoutMs = useMemo(() => {
+    const slides = Number(slideCount) > 0 ? Number(slideCount) : 12
+    const perSlideMs = selected === 'PPTX' ? 90_000 : 120_000
+    return Math.min(45 * 60 * 1000, Math.max(10 * 60 * 1000, slides * perSlideMs))
+  }, [slideCount, selected])
 
   const runExport = useCallback(async () => {
     if (!workspaceId || !presentationId) {
@@ -145,9 +159,11 @@ export default function ExportPresentationModal({
         presentationId,
         exportId,
         {
+          timeoutMs: exportTimeoutMs,
           onProgress: (s) => {
-            const st = s?.status || s?.exportStatus || 'PROCESSING'
-            setStatusText(`${selected}: ${String(st).toLowerCase()}…`)
+            const st = String(s?.status || s?.exportStatus || 'PROCESSING').toUpperCase()
+            const label = EXPORT_STATUS_LABEL[st] || `${selected}: ${st.toLowerCase()}…`
+            setStatusText(label)
           },
         }
       )
@@ -168,7 +184,7 @@ export default function ExportPresentationModal({
       }
       setStatusText('')
     }
-  }, [workspaceId, presentationId, selected, meta.label])
+  }, [workspaceId, presentationId, selected, meta.label, exportTimeoutMs])
 
   const canExport = Boolean(workspaceId && presentationId)
 

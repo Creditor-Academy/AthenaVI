@@ -1,5 +1,42 @@
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
+
+const rootDir = path.dirname(fileURLToPath(import.meta.url))
+const contractsEsm = (file) => path.resolve(rootDir, 'packages/athena-contracts/esm', file)
+
+/** Dev: resolve linked package to workspace ESM shims (avoids stale optimizeDeps pre-bundles). */
+const athenaContractsAliases = {
+  '@athena/contracts/contentContract.js': contractsEsm('contentContract.js'),
+  '@athena/contracts/errors.js': contractsEsm('errors.js'),
+  '@athena/contracts/textNormalize.js': contractsEsm('textNormalize.js'),
+  '@athena/contracts/slotText.js': contractsEsm('slotText.js'),
+  '@athena/contracts/slotGeometry.js': contractsEsm('slotGeometry.js'),
+  '@athena/contracts/contentRepair.js': contractsEsm('contentRepair.js'),
+  '@athena/contracts/graphicTheme.js': contractsEsm('graphicTheme.js'),
+  '@athena/contracts/donutContextMetrics.js': contractsEsm('donutContextMetrics.js'),
+}
+
+const athenaContractsIds = Object.keys(athenaContractsAliases)
+const athenaContractsRoot = path.resolve(rootDir, 'packages/athena-contracts')
+
+/** Linked CJS package must be pre-bundled for the browser; rebuild when sources change. */
+function athenaContractsOptimizePlugin() {
+  return {
+    name: 'athena-contracts-optimize',
+    configureServer(server) {
+      server.watcher.add(athenaContractsRoot)
+      server.watcher.on('change', (file) => {
+        if (!file.startsWith(athenaContractsRoot) || !file.endsWith('.js')) return
+        server.config.logger.info(
+          '[athena-contracts] source changed — restarting dev server to refresh optimized deps',
+        )
+        server.restart()
+      })
+    },
+  }
+}
 
 // https://vite.dev/config/
 function resolveDevApiTarget(raw) {
@@ -22,7 +59,10 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: '/',
-    plugins: [react()],
+    plugins: [react(), athenaContractsOptimizePlugin()],
+    resolve: {
+      alias: athenaContractsAliases,
+    },
     server: {
       fs: {
         allow: ['.'],
@@ -42,20 +82,14 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      // @athena/contracts is CommonJS linked from ./packages (outside node_modules); without this,
-      // production builds fail with '"default" is not exported' (dev works via optimizeDeps below).
+      // @athena/contracts is CommonJS linked from ./packages (outside node_modules).
       commonjsOptions: {
         include: [/node_modules/, /packages[\\/]athena-contracts/],
       },
     },
     optimizeDeps: {
-      include: [
-        '@athena/contracts/contentContract.js',
-        '@athena/contracts/errors.js',
-        '@athena/contracts/textNormalize.js',
-        '@athena/contracts/slotText.js',
-        '@athena/contracts/graphicTheme.js',
-      ],
+      // ESM shims import CJS siblings; without pre-bundle, Vite serves raw `require()` to the browser.
+      include: athenaContractsIds,
     },
   }
 })

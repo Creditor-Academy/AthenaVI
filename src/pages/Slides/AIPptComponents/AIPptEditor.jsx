@@ -4975,6 +4975,7 @@ function AIPptEditor({
           workspaceId={workspaceId}
           presentationId={presentationId}
           title={deckTitle}
+          slideCount={localSlides.length}
           onClose={() => setExportModalOpen(false)}
         />
       )}
