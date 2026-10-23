@@ -368,11 +368,14 @@ export default function AIConversationalStudio({
   useEffect(() => {
     if (!workspaceId) return undefined;
     let live = true;
-    imageGenService.listThreads(workspaceId, { take: 100 })
+    imageGenService.listThreads(workspaceId, {
+      folderId: folderId || undefined,
+      take: 100,
+    })
       .then((rows) => { if (live) setRailRecents(rows || []); })
       .catch(() => { if (live) setRailRecents([]); });
     return () => { live = false; };
-  }, [workspaceId, generations.length]);
+  }, [workspaceId, folderId, generations.length]);
 
   // Scroll to bottom when new messages/generations are added or generation starts
   useEffect(() => {
