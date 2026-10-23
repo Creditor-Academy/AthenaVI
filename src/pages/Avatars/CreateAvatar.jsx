@@ -1,6 +1,6 @@
 import { MdArrowBack } from 'react-icons/md';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
-import '../Videos/Videos.css';
+import '../MyWork/MyWork.css';
 import { AVATAR_TYPE_OPTIONS } from './avatarTypeOptions';
 import './Avatars.css';
 

@@ -1,0 +1,1552 @@
+import { SHAPE_LIBRARY } from '../constants/shapeLibrary'
+import { appearanceFromThemeBg } from './themeAppearance'
+
+export { enforceAppearancePalette } from './themeAppearance'
+
+export function normalizeProgressStatus(val) {
+  if (val === null) return null
+  if (val === 'TODO' || val === 'IN_PROGRESS' || val === 'COMPLETED') return val
+  if (typeof val === 'string') {
+    const lower = val.toLowerCase().replace(/-/g, '_')
+    if (lower === 'todo') return 'TODO'
+    if (lower === 'in_progress' || lower === 'inprogress') return 'IN_PROGRESS'
+    if (lower === 'completed' || lower === 'done') return 'COMPLETED'
+    if (lower === 'none' || lower === 'null' || lower === '') return null
+  }
+  return null
+}
+
+/** Caps from PRESENTATION_FRONTEND_INTEGRATION */
+
+export const PPT_CAPS = {
+  AI_SLIDE_MIN: 5,
+  AI_SLIDE_MAX: 20,
+  DECK_MAX_SLIDES: 40,
+  ELEMENTS_PER_SLIDE: 60,
+}
+
+export const PPT_AI_SLIDE_COUNTS = [5, 8, 10, 12, 20]
+
+export const PPT_EXPORT_FORMATS = ['PPTX', 'PDF', 'PNG', 'JPEG']
+
+/** PPT canvas pixel sizes (stage must follow slide.elements.canvas). */
+export const PPT_CANVAS_SIZES = {
+  '16:9': { width: 1920, height: 1080 },
+  '4:3': { width: 1600, height: 1200 },
+}
+
+export const DEFAULT_SLIDE_BG = '#FFFFFF'
+
+/** CSS `filter` / `box-shadow` must be strings — objects crash React and blank the editor. */
+export function cssPaintString(value) {
+  if (value == null || value === false) return undefined
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    return trimmed && trimmed !== 'none' ? trimmed : undefined
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value)
+  return undefined
+}
+
+/** CSS transform for image/icon flip (local axes, before placement rotation). */
+export function mediaFlipTransform(content = {}) {
+  const flipH = content.flipHorizontal === true || content.scaleX === -1
+  const flipV = content.flipVertical === true || content.scaleY === -1
+  if (!flipH && !flipV) return undefined
+  return `scale(${flipH ? -1 : 1}, ${flipV ? -1 : 1})`
+}
+
+export function isSlideBackgroundElement(el, slide) {
+  if (!el) return false
+  // Keep BACKGROUND_IMAGE / hero photos in the element list so they paint as images.
+  // Only CSS-owned stage fills (design_bg) and explicit useAsBackground hooks are filtered.
+  if (el.type === 'image' && !el.content?.useAsBackground) {
+    if (slide?.backgroundImageElementId && el.id === slide.backgroundImageElementId) {
+      return Boolean(slide?.backgroundImage)
+    }
+    return false
+  }
+
+  if (el.content?.useAsBackground) return true
+  if (slide?.backgroundImageElementId && el.id === slide.backgroundImageElementId) return true
+
+  const role = String(el?.role || '').toLowerCase()
+  if (role === 'design_bg') return true
+
+  if (role === 'background' && el.type === 'shape') {
+    const canvas = slide?.elements?.canvas || {}
+    const cw = canvas.width || 1920
+    const ch = canvas.height || 1080
+    const p = el.placement || {}
+    if ((p.width ?? 0) >= cw * 0.9 && (p.height ?? 0) >= ch * 0.9) return true
+  }
+
+  if (el.type === 'shape' && el.content?.layoutSurface) {
+    const canvas = slide?.elements?.canvas || {}
+    const cw = canvas.width || 1920
+    const ch = canvas.height || 1080
+    const p = el.placement || {}
+    if ((p.width ?? 0) >= cw * 0.9 && (p.height ?? 0) >= ch * 0.9) return true
+  }
+
+  return false
+}
+
+function isDefaultSlideBackgroundColor(color) {
+  if (!color) return true
+  const normalized = String(color).trim().toLowerCase()
+  return normalized === DEFAULT_SLIDE_BG.toLowerCase() || normalized === '#fff' || normalized === 'white'
+}
+
+/** Prefer explicit design_bg fill when stage CSS replaces the filtered element. */
+function resolveDesignBgFillColor(slide, palette = {}) {
+  const elements = slide?.elements?.elements || []
+  const designBg = elements.find((el) => String(el?.role || '').toLowerCase() === 'design_bg')
+  if (!designBg) return null
+  const fill = designBg.content?.fill
+  if (fill == null) return null
+  const css = resolveFillCss(fill, palette, null)
+  if (!css || css === 'transparent') return null
+  // Gradients are applied via background shorthand separately.
+  if (String(css).includes('gradient')) return { background: css }
+  return { backgroundColor: css }
+}
+
+export function slideBackgroundFill(slide, fallback = DEFAULT_SLIDE_BG) {
+  if (slide?.backgroundFill && typeof slide.backgroundFill === 'object') {
+    return slide.backgroundFill
+  }
+  const stops = Array.isArray(slide?.backgroundGradientStops) ? slide.backgroundGradientStops : null
+  if (stops?.length >= 2 || (slide?.backgroundGradientStart && slide?.backgroundGradientEnd)) {
+    return {
+      type: 'gradient',
+      kind: slide.backgroundGradientKind === 'radial' ? 'radial' : 'linear',
+      angle: slide.backgroundGradientAngle != null ? Number(slide.backgroundGradientAngle) : 135,
+      stops: stops?.length
+        ? stops
+        : [
+            { color: slide.backgroundGradientStart, at: 0 },
+            { color: slide.backgroundGradientEnd, at: 1 },
+          ],
+    }
+  }
+  return { type: 'solid', color: slide?.backgroundColor || fallback }
+}
+
+export function patchFromBackgroundFill(fill, fallback = DEFAULT_SLIDE_BG) {
+  if (!fill || fill.type === 'solid') {
+    return {
+      backgroundColor: fill?.color || fallback,
+      backgroundGradientStart: undefined,
+      backgroundGradientEnd: undefined,
+      backgroundGradientAngle: undefined,
+      backgroundGradientKind: undefined,
+      backgroundGradientStops: undefined,
+      backgroundFill: undefined,
+    }
+  }
+  const stops = Array.isArray(fill.stops) ? fill.stops : []
+  return {
+    backgroundColor: undefined,
+    backgroundGradientStart: stops[0]?.color || '#E0F2FE',
+    backgroundGradientEnd: stops[stops.length - 1]?.color || '#FFFFFF',
+    backgroundGradientAngle: fill.angle ?? 135,
+    backgroundGradientKind: fill.kind || 'linear',
+    backgroundGradientStops: stops,
+    backgroundFill: fill,
+  }
+}
+
+export function resolveSlideStageBackground(slide, fallback = DEFAULT_SLIDE_BG, palette = null) {
+  const stored = slide?.backgroundColor || slide?.elements?.backgroundColor || null
+  const color = isDefaultSlideBackgroundColor(stored) ? fallback : stored
+  if (slide?.backgroundImage) {
+    const fit = slide.backgroundImageFit || 'cover'
+    return {
+      backgroundColor: color,
+      backgroundImage: `url(${slide.backgroundImage})`,
+      backgroundSize: fit === 'fill' ? '100% 100%' : fit,
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+    }
+  }
+  const fill = slideBackgroundFill(slide, fallback)
+  if (fill?.type === 'gradient') {
+    const css = cssGradientFromFill(fill, palette || {})
+    if (css) return { background: css }
+  }
+  if (slide?.backgroundGradientStart && slide?.backgroundGradientEnd) {
+    const angle = slide.backgroundGradientAngle != null ? Number(slide.backgroundGradientAngle) : 135
+    const kind = slide.backgroundGradientKind === 'radial' ? 'radial' : 'linear'
+    const css = cssGradientFromFill(
+      {
+        type: 'gradient',
+        kind,
+        angle,
+        stops: [
+          { color: slide.backgroundGradientStart, at: 0 },
+          { color: slide.backgroundGradientEnd, at: 1 },
+        ],
+      },
+      palette || {}
+    )
+    if (css) return { background: css }
+  }
+  const fromDesignBg = resolveDesignBgFillColor(slide, palette || {})
+  if (fromDesignBg) return fromDesignBg
+  return { background: color }
+}
+
+const SHAPE_ALIAS = {
+  square: 'rect',
+  'triangle-up': 'triangle',
+  'triangle-down': 'triangle',
+  plus: 'plus',
+  // Legacy broken alias — map old saved shapes to a real library entry
+  arrows: 'arrow-right',
+}
+
+const LEGACY_SHAPE_IDS = {
+  arrows: 'arrow-right',
+}
+
+const FALLBACK_CLIP = {
+  triangle: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+  diamond: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+  star: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)',
+}
+
+const FALLBACK_RADIUS = {
+  circle: '50%',
+  ellipse: '50%',
+  pill: 999,
+  'rounded-rect': 12,
+}
+
+function getShapeLibraryEntry(shapeId) {
+  const id = String(shapeId || 'rect')
+  const legacy = LEGACY_SHAPE_IDS[id]
+  return SHAPE_LIBRARY.find((s) => s.id === id) || (legacy ? SHAPE_LIBRARY.find((s) => s.id === legacy) : null)
+}
+
+function parseShapeRadius(value) {
+  if (value == null) return undefined
+  if (typeof value === 'number') return value
+  const raw = String(value).trim()
+  if (!raw) return undefined
+  if (raw.includes('%') || raw.includes('/') || raw.includes(' ')) return raw
+  if (raw.endsWith('px')) return parseFloat(raw) || 0
+  if (raw === '999' || raw.includes('999')) return 999
+  const n = Number(raw)
+  return Number.isFinite(n) ? n : raw
+}
+
+function isHorizontalLineShape(entry, shapeId) {
+  const id = String(shapeId || '')
+  if (entry?.category === 'lines' && entry.style?.clipPath) return false
+  if (entry?.style?.height === '0px' && entry.style?.borderTop) return true
+  return /^line-(solid|dashed|dotted)$/.test(id)
+}
+
+function resolveLineBorder(content, entry, fill, stroke, isOutlined) {
+  const libBorder = entry?.style?.borderTop || '4px solid currentColor'
+  const match = libBorder.match(/^(\d+(?:\.\d+)?)px\s+(solid|dashed|dotted)\s+/i)
+  const width = content.strokeWidth != null ? content.strokeWidth : match ? Number(match[1]) : 4
+  const style = content.borderStyle
+    ? shapeBorderCssStyle(content.borderStyle)
+    : match?.[2]?.toLowerCase() || 'solid'
+  if (style === 'none' || width <= 0) return 'none'
+  const color = isOutlined ? stroke || fill : fill
+  return `${width}px ${style} ${color}`
+}
+
+export const PPT_SHAPE_BORDER_STYLES = [
+  { id: 'solid', label: 'Line' },
+  { id: 'dashed', label: 'Dashed' },
+  { id: 'dotted', label: 'Dots' },
+]
+
+export function normalizeShapeBorderStyle(value) {
+  const v = String(value || 'solid').toLowerCase()
+  if (v === 'none' || v === 'hidden') return 'none'
+  if (v === 'dashed' || v === 'dash' || v === 'line-break' || v === 'break') return 'dashed'
+  if (v === 'dotted' || v === 'dot' || v === 'dots') return 'dotted'
+  return 'solid'
+}
+
+export function shapeBorderCssStyle(value) {
+  return normalizeShapeBorderStyle(value)
+}
+
+export function shapeStrokeDasharray(value, strokeWidth = 2) {
+  const style = normalizeShapeBorderStyle(value)
+  const w = Math.max(1, Number(strokeWidth) || 2)
+  if (style === 'dashed') return `${(w * 3.6).toFixed(1)} ${(w * 2.2).toFixed(1)}`
+  if (style === 'dotted') return `0 ${(w * 2.4).toFixed(1)}`
+  return undefined
+}
+
+/** Resolve stage pixels from slide.elements.canvas, then aspectRatio, then 16:9. */
+export function resolveCanvasSize(slideOrDoc, aspectRatio = '16:9') {
+  const canvas =
+    slideOrDoc?.elements?.canvas ||
+    slideOrDoc?.canvas ||
+    null
+  const width = Number(canvas?.width)
+  const height = Number(canvas?.height)
+  if (width > 0 && height > 0) return { width, height }
+
+  const key = String(aspectRatio || '16:9')
+  if (PPT_CANVAS_SIZES[key]) return { ...PPT_CANVAS_SIZES[key] }
+  // Map legacy tall ratios to closest supported PPT size
+  if (key === '9:16') return { ...PPT_CANVAS_SIZES['16:9'] }
+  return { ...PPT_CANVAS_SIZES['16:9'] }
+}
+
+const DENSITY_MAP = {
+  Minimal: 'concise',
+  Concise: 'concise',
+  Balanced: 'balanced',
+  Detailed: 'detailed',
+  Extensive: 'detailed',
+  minimal: 'concise',
+  concise: 'concise',
+  balanced: 'balanced',
+  detailed: 'detailed',
+  extensive: 'detailed',
+}
+
+/** Flatten user prompt + wizard context into the outline/generation source string. */
+export function flattenPresentationPrompt({
+  prompt = '',
+  title = '',
+  outline = '',
+  tone = '',
+  audience = '',
+  purpose = '',
+  mediaStyle = '',
+  textAmount = '',
+  imageSource = '',
+} = {}) {
+  const userPrompt = String(prompt || title || '').trim()
+  const parts = []
+  if (userPrompt) parts.push(userPrompt)
+  if (outline?.trim()) parts.push(`Brief / notes: ${outline.trim()}`)
+  if (tone) parts.push(`Tone / voice: ${tone}`)
+  if (audience) parts.push(`Audience: ${audience}`)
+  if (purpose) parts.push(`Purpose: ${purpose}`)
+  if (mediaStyle) parts.push(`Image style: ${mediaStyle}`)
+  if (imageSource) parts.push(`Image source preference: ${imageSource}`)
+  if (textAmount) parts.push(`Text density preference: ${textAmount}`)
+  return parts.join('\n') || userPrompt || 'Untitled presentation'
+}
+
+export function mapDensity(textAmount) {
+  return DENSITY_MAP[textAmount] || 'balanced'
+}
+
+/** Build the complete, persistable configuration sent when generation starts. */
+export function buildPresentationGenerationPayload(
+  config = {},
+  { finalOutline = [], overwriteManualEdits = false } = {}
+) {
+  const paletteMode =
+    config.themeMode === 'palette' ||
+    (!config.themeMode && !config.packId && !config.brandKitId)
+  const usesPromptPalette =
+    paletteMode &&
+    config.theme === PROMPT_SUGGESTED_THEME_ID &&
+    config.promptPaletteSuggestion?.themeTokens &&
+    !config.promptPaletteSuggestion.fallback
+  const customThemeTokens = usesPromptPalette
+    ? buildThemeTokensFromPromptSuggestion(config.promptPaletteSuggestion)
+    : undefined
+
+  return {
+    density: config.density || mapDensity(config.textAmount),
+    overwriteManualEdits,
+    generationFlow: {
+      version: 1,
+      source: 'ai_ppt_wizard',
+      selections: {
+        prompt: config.prompt || '',
+        title: config.title || '',
+        outlineNotes: config.outline || '',
+        voiceAndTone: config.tone || '',
+        audience: config.audience || '',
+        purpose: config.purpose || '',
+        style: config.style || '',
+        color: config.color || '',
+        industries: Array.isArray(config.industries) ? config.industries : [],
+        baseTemplate: config.baseTemplate || '',
+        themeMode:
+          config.themeMode ||
+          (config.packId ? 'template' : config.brandKitId ? 'brand' : 'palette'),
+        colorTheme: paletteMode ? (config.theme || '') : '',
+        ...(customThemeTokens ? { customThemeTokens } : {}),
+        canvasSize: config.screenSize || '16:9',
+        imageType: config.imageSource || '',
+        imageStyle: config.mediaStyle || '',
+        imageStyleFilter: config.imageStyleFilter || '',
+        textContent: config.textAmount || '',
+        density: config.density || mapDensity(config.textAmount),
+        slideCount: clampAiSlideCount(
+          finalOutline.length || config.slides || PPT_CAPS.AI_SLIDE_MIN
+        ),
+        locale: config.locale || 'en',
+        packId: config.packId || null,
+        brandKitId: config.brandKitId || null,
+      },
+      availableOptions: config.availableOptions || {},
+    },
+  }
+}
+
+/** Parse template schema whether object or JSON string. */
+export function parsePackSchema(raw) {
+  if (!raw) return {}
+  if (typeof raw === 'string') {
+    try {
+      return JSON.parse(raw)
+    } catch {
+      return {}
+    }
+  }
+  if (typeof raw === 'object') return raw
+  return {}
+}
+
+function extractPackSlides(pack, schema) {
+  if (Array.isArray(schema?.slides) && schema.slides.length) return schema.slides
+  if (Array.isArray(pack?.slides) && pack.slides.length) return pack.slides
+  if (Array.isArray(pack?.raw?.slides) && pack.raw.slides.length) return pack.raw.slides
+  return []
+}
+
+function readPackMedia(pack) {
+  return Array.isArray(pack?.media) ? pack.media : []
+}
+
+function readMediaSlotUrl(media, slotHint) {
+  if (!slotHint) return null
+  const entry = media.find(
+    (m) => String(m?.slotHint || m?.slot_hint || '').toLowerCase() === String(slotHint).toLowerCase()
+  )
+  return entry?.url || null
+}
+
+/** Pack card thumbnail priority (list + detail summary). */
+export function resolvePackThumbnailUrl(pack) {
+  if (!pack) return null
+  const direct = pack.previewImageUrl || pack.preview_image_url
+  if (direct) return direct
+
+  const preview = pack.preview || {}
+  if (preview.imageUrl) return preview.imageUrl
+  if (preview.thumbnailUrl) return preview.thumbnailUrl
+
+  const media = readPackMedia(pack)
+  return (
+    readMediaSlotUrl(media, 'preview') ||
+    readMediaSlotUrl(media, 'slide:1') ||
+    null
+  )
+}
+
+/** Solid-color fallback when a pack has no preview image. */
+export function resolvePackColorFallback(pack) {
+  const preview = pack?.preview || {}
+  return {
+    color: preview.color || '#f8fafc',
+    accentColor: preview.accentColor || preview.accent_color || '#94a3b8',
+  }
+}
+
+/** Slide preview thumbnail — previewImageUrl, then media slot slide:{order}. */
+export function resolveSlidePreviewThumbnail(slidePreview, media = []) {
+  if (!slidePreview) return null
+  const direct = slidePreview.previewImageUrl || slidePreview.preview_image_url
+  if (direct) return direct
+  const order = slidePreview.order ?? 1
+  return readMediaSlotUrl(media, `slide:${order}`)
+}
+
+/** Summary row from GET .../presentation-deck-packs (no schema / slidePreviews). */
+export function normalizeDeckPackListItem(pack) {
+  if (!pack) return null
+  const id = pack.id || pack._id
+  if (!id) return null
+
+  const meta = pack.meta || {}
+  const preview = pack.preview || parsePackSchema(pack.schema)?.preview || null
+
+  return {
+    id,
+    name: pack.name || meta.name || 'Deck Pack',
+    packId: pack.packId || pack.pack_id || null,
+    themeId: pack.themeId || pack.theme_id || null,
+    aspectRatio: pack.aspectRatio || pack.aspect_ratio || '16:9',
+    slideCount: pack.slideCount ?? pack.slide_count ?? null,
+    meta: {
+      description: meta.description || '',
+      useCase: meta.useCase || meta.use_case || '',
+    },
+    narrative: pack.narrative || null,
+    previewImageUrl: pack.previewImageUrl || pack.preview_image_url || null,
+    preview,
+    media: readPackMedia(pack),
+    generationDefaults: pack.generationDefaults || pack.generation_defaults || null,
+    variant: pack.variant ?? null,
+    version: pack.version ?? null,
+    thumbnailUrl: resolvePackThumbnailUrl(pack),
+  }
+}
+
+/** Full pack from GET .../presentation-deck-packs/:id */
+export function normalizeDeckPackDetail(payload) {
+  const pack = payload?.pack ?? payload?.data?.pack ?? payload
+  const base = normalizeDeckPackListItem(pack)
+  if (!base) return null
+
+  const schema = parsePackSchema(pack?.schema)
+  const slides = extractPackSlides(pack, schema)
+  const rawPreviews = pack?.slidePreviews || pack?.slide_previews || []
+  const slidePreviews = (Array.isArray(rawPreviews) ? rawPreviews : [])
+    .slice()
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+    .map((sp) => ({
+      ...sp,
+      thumbnailUrl: resolveSlidePreviewThumbnail(sp, base.media),
+    }))
+
+  return {
+    ...base,
+    thumbnailUrl: resolvePackThumbnailUrl({ ...pack, preview: base.preview, media: base.media }),
+    schema: slides.length ? { ...schema, slides } : schema.slides ? schema : { ...schema, slides: [] },
+    slidePreviews,
+  }
+}
+
+/** Normalize one deck-pack / DECK_PACK template row (detail when schema present). */
+export function normalizeDeckPackRecord(pack) {
+  if (!pack) return null
+  const id = pack.id || pack._id || pack.templateId
+  if (!id) return null
+
+  if (pack.schema || pack.slidePreviews || pack.slide_previews) {
+    return normalizeDeckPackDetail({ pack })
+  }
+
+  return normalizeDeckPackListItem(pack)
+}
+
+/** Normalize deck-pack list from GET .../presentation-deck-packs */
+export function normalizeDeckPacks(payload) {
+  const root = payload?.data ?? payload
+  const list = Array.isArray(root)
+    ? root
+    : root?.packs || root?.items || root?.templates || root?.deckPacks || []
+  return (list || []).map(normalizeDeckPackListItem).filter(Boolean)
+}
+
+/** Merge deck-pack list rows with DECK_PACK rows from presentation-templates. */
+export function mergeDeckPackCatalog(deckPacksPayload, templatesPayload) {
+  const byId = new Map()
+
+  for (const pack of normalizeDeckPacks(deckPacksPayload)) {
+    byId.set(String(pack.id), pack)
+  }
+
+  const templates = Array.isArray(templatesPayload)
+    ? templatesPayload
+    : templatesPayload?.templates ||
+      templatesPayload?.items ||
+      templatesPayload?.data ||
+      []
+
+  for (const row of templates) {
+    const type = String(row?.type || '').toUpperCase()
+    const schema = parsePackSchema(row?.schema)
+    const isPack = type === 'DECK_PACK' || Boolean(schema.pack_id)
+    if (!isPack) continue
+
+    const id = row.id || row.templateId
+    if (!id) continue
+
+    const next = normalizeDeckPackRecord(row)
+    if (!next) continue
+
+    const key = String(id)
+    const prev = byId.get(key)
+
+    if (!prev) {
+      byId.set(key, next)
+      continue
+    }
+
+    const prevDetail = prev.schema || prev.slidePreviews ? normalizeDeckPackDetail({ pack: prev }) : prev
+    const nextDetail = normalizeDeckPackRecord(row)
+    const merged = normalizeDeckPackDetail({
+      pack: {
+        ...prevDetail,
+        ...nextDetail,
+        schema:
+          nextDetail?.schema?.slides?.length
+            ? nextDetail.schema
+            : prevDetail?.schema?.slides?.length
+              ? prevDetail.schema
+              : nextDetail?.schema || prevDetail?.schema,
+        slidePreviews:
+          nextDetail?.slidePreviews?.length
+            ? nextDetail.slidePreviews
+            : prevDetail?.slidePreviews || [],
+      },
+    })
+
+    byId.set(key, merged || { ...prev, ...next })
+  }
+
+  return [...byId.values()]
+}
+
+export const PPT_TITLE_MAX = 255
+
+/**
+ * The wizard's single input doubles as the prompt, so it can be far longer than the
+ * deck title the API accepts. Take the first sentence/line and cut on a word boundary.
+ */
+export function derivePresentationTitle(text, fallback = 'Untitled Presentation') {
+  const flat = String(text || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (!flat) return fallback
+
+  const firstSentence = flat.split(/(?<=[.!?])\s|[\n·•|]/)[0].trim() || flat
+  const limit = 120
+  if (firstSentence.length <= limit) return firstSentence
+
+  const clipped = firstSentence.slice(0, limit)
+  const lastSpace = clipped.lastIndexOf(' ')
+  const base = lastSpace > 40 ? clipped.slice(0, lastSpace) : clipped
+  return `${base.replace(/[,;:\-–—]+$/, '')}…`
+}
+
+/** Wizard theme id for AI-generated 5-color palette from Step 1 prompt. */
+export const PROMPT_SUGGESTED_THEME_ID = 'prompt-suggested'
+
+/**
+ * Normalize suggest-vibe-palette API payload for createPresentation themeTokens.
+ * @param {object} apiPayload - unwrapped API data
+ */
+export function buildThemeTokensFromPromptSuggestion(apiPayload) {
+  if (!apiPayload || typeof apiPayload !== 'object') return null
+  const tokens = apiPayload.themeTokens
+  if (!tokens?.palette) return null
+  return {
+    ...tokens,
+    wizardColorThemeId:
+      tokens.wizardColorThemeId ||
+      (apiPayload.fallback && apiPayload.catalogThemeId
+        ? apiPayload.catalogThemeId
+        : PROMPT_SUGGESTED_THEME_ID),
+    fontSource: tokens.fontSource || 'wizard',
+  }
+}
+
+/** Theme ids must use underscores (midnight_blue), not kebab-case. */
+export function toApiThemeId(themeId) {
+  if (!themeId) return undefined
+  return String(themeId).trim().replace(/-/g, '_')
+}
+
+/**
+ * Build wizard themeTokens for API setTheme/create when id is not in backend catalog.
+ * @param {string} colorThemeId - e.g. earthy-sage
+ * @param {Array<object>} [colorThemes] - from wizard availableOptions.colorThemes
+ */
+export function buildWizardThemeTokens(colorThemeId, colorThemes = []) {
+  const raw = String(colorThemeId || '').trim()
+  if (!raw) return null
+
+  const normalized = raw.replace(/_/g, '-')
+  const theme = (Array.isArray(colorThemes) ? colorThemes : []).find(
+    (t) =>
+      String(t.id || '').trim() === raw ||
+      String(t.id || '').trim() === normalized ||
+      String(t.id || '').trim().replace(/_/g, '-') === normalized
+  )
+  if (!theme) return null
+
+  const bg = theme.background
+  const surface = theme.backgroundSecondary || theme.background_secondary || bg
+  const text = theme.textPrimary || theme.text_primary
+  const muted = theme.textSecondary || theme.text_secondary
+
+  const appearance =
+    theme.appearance === 'dark' || theme.appearance === 'light'
+      ? theme.appearance
+      : appearanceFromThemeBg(bg)
+
+  return {
+    appearance,
+    palette: {
+      bg,
+      surface,
+      cardBg: surface,
+      primary: theme.primary,
+      secondary: theme.secondary,
+      text,
+      muted,
+      heading: text,
+      body: muted,
+      accent: theme.accent,
+      border: theme.border,
+      overlayScrim: 'rgba(0,0,0,0.5)',
+      textOnImage: '#FFFFFF',
+      textOnImageMuted: 'rgba(255,255,255,0.85)',
+    },
+    wizardColorThemeId: theme.id,
+    colorTreatment: `${theme.vibe || 'professional'}; primary ${theme.primary}, accent ${theme.accent}`,
+    fontSource: 'wizard',
+  }
+}
+
+/** CSS mask for split-layout hero images — background bleeds smoothly into photo edge. */
+export function buildImageEdgeFadeMask(edgeFade) {
+  if (!edgeFade || typeof edgeFade !== 'object') return null
+  const width = Math.min(0.55, Math.max(0.12, Number(edgeFade.width) || 0.35))
+  const pct = Math.round(width * 100)
+  const p1 = Math.round(pct * 0.18)
+  const p2 = Math.round(pct * 0.50)
+  const p3 = Math.round(pct * 0.82)
+  const side = String(edgeFade.side || 'left').toLowerCase()
+  if (side === 'right') {
+    return `linear-gradient(to left, transparent 0%, rgba(0,0,0,0.06) ${p1}%, rgba(0,0,0,0.45) ${p2}%, rgba(0,0,0,0.88) ${p3}%, black ${pct}%, black 100%)`
+  }
+  return `linear-gradient(to right, transparent 0%, rgba(0,0,0,0.06) ${p1}%, rgba(0,0,0,0.45) ${p2}%, rgba(0,0,0,0.88) ${p3}%, black ${pct}%, black 100%)`
+}
+
+/** Clip-path masks for shaped hero images on title slides. */
+export function buildImageClipPath(imageMask) {
+  if (!imageMask || typeof imageMask !== 'object') return null
+  const type = String(imageMask.type || '').toLowerCase()
+  const side = String(imageMask.side || 'right').toLowerCase()
+
+  if (type === 'oval') {
+    if (side === 'left') return 'ellipse(88% 96% at 0% 50%)'
+    return 'ellipse(88% 96% at 100% 50%)'
+  }
+
+  if (type === 'blob') {
+    if (side === 'left') {
+      return 'polygon(95% 54%, 95% 59%, 94% 64%, 92% 69%, 90% 73%, 87% 78%, 84% 81%, 80% 85%, 76% 87%, 71% 90%, 66% 92%, 61% 93%, 56% 94%, 51% 95%, 46% 95%, 40% 95%, 35% 94%, 30% 93%, 25% 92%, 20% 90%, 16% 88%, 13% 86%, 11% 83%, 9% 81%, 7% 77%, 5% 74%, 4% 70%, 3% 66%, 2% 61%, 2% 57%, 2% 52%, 2% 47%, 3% 42%, 4% 37%, 5% 32%, 7% 28%, 9% 23%, 12% 20%, 15% 17%, 18% 14%, 22% 12%, 27% 10%, 32% 9%, 37% 9%, 41% 9%, 46% 10%, 51% 12%, 55% 13%, 60% 15%, 64% 18%, 68% 20%, 72% 22%, 76% 25%, 80% 28%, 84% 31%, 87% 34%, 90% 37%, 92% 41%, 94% 45%, 95% 49%)'
+    }
+    return 'polygon(5% 54%, 5% 59%, 6% 64%, 8% 69%, 10% 73%, 13% 78%, 16% 81%, 20% 85%, 24% 87%, 29% 90%, 34% 92%, 39% 93%, 44% 94%, 49% 95%, 54% 95%, 60% 95%, 65% 94%, 70% 93%, 75% 92%, 80% 90%, 84% 88%, 87% 86%, 89% 83%, 91% 81%, 93% 77%, 95% 74%, 96% 70%, 97% 66%, 98% 61%, 98% 57%, 98% 52%, 98% 47%, 97% 42%, 96% 37%, 95% 32%, 93% 28%, 91% 23%, 88% 20%, 85% 17%, 82% 14%, 78% 12%, 73% 10%, 68% 9%, 63% 9%, 59% 9%, 54% 10%, 49% 12%, 45% 13%, 40% 15%, 36% 18%, 32% 20%, 28% 22%, 24% 25%, 20% 28%, 16% 31%, 13% 34%, 10% 37%, 8% 41%, 6% 45%, 5% 49%)'
+  }
+
+  if (type === 'arch') {
+    if (side === 'left') return 'ellipse(92% 100% at 0% 100%)'
+    return 'ellipse(92% 100% at 100% 100%)'
+  }
+
+  if (type === 'hexagon') {
+    return 'polygon(50% 0%, 93% 25%, 93% 75%, 50% 100%, 7% 75%, 7% 25%)'
+  }
+
+  return null
+}
+
+export function clampAiSlideCount(count) {
+  const n = Number(count) || 12
+  if (PPT_AI_SLIDE_COUNTS.includes(n)) return n
+  let best = PPT_AI_SLIDE_COUNTS[0]
+  let dist = Math.abs(best - n)
+  for (const c of PPT_AI_SLIDE_COUNTS) {
+    const d = Math.abs(c - n)
+    if (d < dist) {
+      dist = d
+      best = c
+    }
+  }
+  return best
+}
+
+/**
+ * Normalize outline API / UI shapes into cards for the outline review UI.
+ * Accepts: { slides: [...] }, { outline: { slides } }, or a slides array.
+ */
+export function normalizeOutlineSlides(payload) {
+  const root = payload?.outline ?? payload?.data?.outline ?? payload
+  const slides =
+    root?.slides ||
+    root?.items ||
+    (Array.isArray(root) ? root : null) ||
+    payload?.slides ||
+    []
+
+  return (slides || []).map((slide, index) => {
+    const bullets =
+      slide.bullets ||
+      slide.points ||
+      slide.keyPoints ||
+      (Array.isArray(slide.description) ? slide.description : null) ||
+      (typeof slide.description === 'string' && slide.description
+        ? [slide.description]
+        : null) ||
+      (typeof slide.summary === 'string' && slide.summary
+        ? [slide.summary]
+        : null) ||
+      (typeof slide.content === 'string' ? [slide.content] : []) ||
+      []
+
+    const layoutLocked = Boolean(slide.layoutLocked ?? slide.layout_locked)
+    const rawLayoutId = slide.layoutId || slide.layout_id || null
+
+    return {
+      id: slide.id || slide.slideId || index + 1,
+      title: slide.title || slide.topic || `Slide ${index + 1}`,
+      description: bullets,
+      summary:
+        slide.summary ||
+        slide.contentIntent ||
+        (Array.isArray(bullets) ? bullets.join(' ') : String(bullets || '')),
+      purpose: slide.purpose || slide.intent || null,
+      contentIntent: slide.contentIntent || slide.summary || null,
+      contentTypeHints: Array.isArray(slide.contentType)
+        ? slide.contentType
+        : Array.isArray(slide.contentTypes)
+          ? slide.contentTypes
+          : [],
+      visualIntent: Array.isArray(slide.visualIntent) ? slide.visualIntent : [],
+      suggestedContentType:
+        slide.suggestedContentType ||
+        slide.content_type ||
+        slide.layoutHint ||
+        slide.layout ||
+        '',
+      layoutId: layoutLocked ? rawLayoutId : null,
+      layoutLocked,
+      layoutWhy: slide.layoutWhy || slide.layout_why || '',
+      visual_need: slide.visual_need || slide.visualNeed || '',
+      subtitle: slide.subtitle || '',
+      beats: Array.isArray(slide.beats) ? slide.beats : [],
+      visual: slide.visual || '',
+      intent: slide.intent || slide.purpose || null,
+      narrativeRole: slide.narrativeRole || slide.narrative_role || null,
+      isEditing: false,
+    }
+  })
+}
+
+function titleCaseWord(word) {
+  if (!word) return ''
+  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+}
+
+/** Human label for catalog content types in the Blueprint UI. */
+export function formatOutlineContentType(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  return raw
+    .split('+')
+    .map((part) =>
+      part
+        .split('_')
+        .filter(Boolean)
+        .map(titleCaseWord)
+        .join(' ')
+        .trim()
+    )
+    .filter(Boolean)
+    .join(' + ')
+}
+
+/** Build PATCH/POST outline body from UI cards. */
+export function outlineCardsToApiPayload(
+  cards,
+  { title = 'Untitled Presentation', density = 'balanced', locale = 'en' } = {}
+) {
+  return {
+    title,
+    slideCount: (cards || []).length,
+    density: mapDensity(density),
+    locale,
+    slides: (cards || []).map((card, index) => {
+      const layoutLocked = Boolean(card.layoutLocked)
+      const lockedLayoutId = layoutLocked && card.layoutId ? card.layoutId : null
+      const summaryText =
+        card.summary ||
+        (Array.isArray(card.description)
+          ? card.description.join(' ')
+          : String(card.description || ''))
+
+      return {
+        order: index + 1,
+        title: card.title,
+        summary: summaryText,
+        ...(card.purpose || card.intent ? { purpose: card.purpose || card.intent } : {}),
+        ...(card.contentIntent ? { contentIntent: card.contentIntent } : {}),
+        ...(Array.isArray(card.contentTypeHints) && card.contentTypeHints.length
+          ? { contentType: card.contentTypeHints }
+          : {}),
+        ...(Array.isArray(card.visualIntent) && card.visualIntent.length
+          ? { visualIntent: card.visualIntent }
+          : {}),
+        suggestedContentType:
+          card.suggestedContentType ||
+          card.layoutHint ||
+          (index === 0
+            ? 'title'
+            : index === 1
+              ? 'agenda'
+              : index === (cards || []).length - 1
+                ? 'closing'
+                : 'bullet_list'),
+        layoutLocked,
+        ...(lockedLayoutId ? { layoutId: lockedLayoutId } : {}),
+        ...(card.layoutWhy ? { layoutWhy: card.layoutWhy } : {}),
+        ...(card.visual_need ? { visual_need: card.visual_need } : {}),
+        ...(card.subtitle ? { subtitle: card.subtitle } : {}),
+        ...(Array.isArray(card.beats) && card.beats.length ? { beats: card.beats } : {}),
+        ...(card.visual ? { visual: card.visual } : {}),
+        ...(card.intent ? { intent: card.intent } : {}),
+        ...(card.narrativeRole ? { narrativeRole: card.narrativeRole } : {}),
+      }
+    }),
+  }
+}
+
+export function extractDeckPackId(presentation) {
+  const metrics =
+    presentation?.deck?.generationMetrics ||
+    presentation?.generationMetrics ||
+    presentation?.presentation?.deck?.generationMetrics ||
+    null
+  return metrics?.deckPack?.packId || null
+}
+
+export function extractAppliedBrandKitId(presentation, fallbackConfig = {}) {
+  const metrics =
+    presentation?.deck?.generationMetrics ||
+    presentation?.generationMetrics ||
+    presentation?.presentation?.deck?.generationMetrics ||
+    null
+  const tokens =
+    presentation?.deck?.themeTokens ||
+    presentation?.themeTokens ||
+    presentation?.presentation?.deck?.themeTokens ||
+    null
+  const candidates = [
+    metrics?.deckPack?.brandKitId,
+    tokens?.brand?.brandKitId,
+    fallbackConfig.brandKitId,
+  ]
+  for (const value of candidates) {
+    const text = value == null ? '' : String(value).trim()
+    if (text) return text
+  }
+  return ''
+}
+
+function firstNonEmptyText(...values) {
+  for (const value of values) {
+    const text = typeof value === 'string' ? value.trim() : ''
+    if (text) return text
+  }
+  return ''
+}
+
+/** Original wizard prompt used to generate the deck (not title/tone fallbacks). */
+export function extractGenerationPrompt(presentation, fallbackConfig = {}) {
+  const deck =
+    presentation?.deck ||
+    presentation?.presentation?.deck ||
+    presentation ||
+    {}
+  const metrics =
+    deck.generationMetrics ||
+    presentation?.generationMetrics ||
+    presentation?.presentation?.deck?.generationMetrics ||
+    null
+  const selections = metrics?.generationFlow?.selections || {}
+  const outline = deck.outline || presentation?.outline || {}
+
+  return firstNonEmptyText(
+    presentation?.generationPrompt,
+    selections.prompt,
+    fallbackConfig.prompt,
+    fallbackConfig.generationPrompt,
+    outline.sourcePrompt,
+    outline.prompt
+  )
+}
+
+/** Assignee/owner fields appear flat, or nested under .presentation / .project. */
+export function extractAssignee(payload) {
+  return payload?.assignee ?? payload?.presentation?.assignee ?? payload?.project?.assignee ?? null
+}
+
+export function extractOwner(payload) {
+  return payload?.owner ?? payload?.presentation?.owner ?? payload?.project?.owner ?? null
+}
+
+export function extractAssignedBy(payload) {
+  return (
+    payload?.assignedBy ?? payload?.presentation?.assignedBy ?? payload?.project?.assignedBy ?? null
+  )
+}
+
+export function extractAssignedAt(payload) {
+  return (
+    payload?.assignedAt ?? payload?.presentation?.assignedAt ?? payload?.project?.assignedAt ?? null
+  )
+}
+
+export function extractPresentationId(payload) {
+  return (
+    payload?.id ||
+    payload?._id ||
+    payload?.presentationId ||
+    payload?.presentation?.id ||
+    payload?.presentation?._id ||
+    payload?.project?.id ||
+    payload?.project?._id ||
+    null
+  )
+}
+
+function firstSlideList(node, depth = 0) {
+  if (!node || typeof node !== 'object' || depth > 5) return null
+  if (Array.isArray(node.slides)) return node.slides
+  if (Array.isArray(node.pages)) return node.pages
+  for (const key of ['deck', 'presentation', 'payload', 'data', 'result']) {
+    const found = firstSlideList(node[key], depth + 1)
+    if (found) return found
+  }
+  return null
+}
+
+export function extractSlidesFromPresentation(presentation) {
+  const slides = firstSlideList(presentation) || []
+  const aspectRatio =
+    presentation?.aspectRatio ||
+    presentation?.deck?.aspectRatio ||
+    presentation?.presentation?.aspectRatio ||
+    presentation?.canvasSize ||
+    '16:9'
+  return (slides || []).map((slide, index) =>
+    normalizeSlideForEditor(slide, index, aspectRatio)
+  )
+}
+
+export function normalizeElementPlacement(placement, canvas = PPT_CANVAS_SIZES['16:9']) {
+  const canvasW = canvas?.width || 1920
+  const canvasH = canvas?.height || 1080
+  const raw = placement || {}
+
+  let x = raw.x ?? raw.left ?? raw.position?.x
+  let y = raw.y ?? raw.top ?? raw.position?.y
+  let width = raw.width ?? raw.size?.width
+  let height = raw.height ?? raw.size?.height
+
+  const finite = [x, y, width, height].filter((v) => Number.isFinite(Number(v)))
+  const looksNormalized =
+    finite.length >= 2 &&
+    finite.every((v) => Number(v) >= 0 && Number(v) <= 1) &&
+    (width == null || Number(width) <= 1) &&
+    (height == null || Number(height) <= 1)
+
+  if (looksNormalized) {
+    x = Number(x || 0) * canvasW
+    y = Number(y || 0) * canvasH
+    width = Number(width || 0.5) * canvasW
+    height = Number(height || 0.12) * canvasH
+  }
+
+  return {
+    x: Number(x) || 0,
+    y: Number(y) || 0,
+    width: Math.max(Number(width) || 200, 40),
+    height: Math.max(Number(height) || 80, 24),
+    ...(raw.rotation != null ? { rotation: raw.rotation } : {}),
+    ...(raw.opacity != null ? { opacity: raw.opacity } : {}),
+  }
+}
+
+export function normalizeSlideForEditor(slide, index = 0, aspectRatio = '16:9') {
+  const elementsDoc = slide?.elements
+  const elements = Array.isArray(elementsDoc?.elements)
+    ? elementsDoc.elements
+    : Array.isArray(elementsDoc)
+      ? elementsDoc
+      : []
+
+  const titleFromContent =
+    slide?.content?.title ||
+    slide?.title ||
+    elements.find((el) => el.role === 'title' || el.role === 'heading' || el.type === 'text')
+      ?.content?.text ||
+    `Slide ${index + 1}`
+
+  const bodyFromContent =
+    slide?.content?.body ||
+    slide?.content?.bullets ||
+    slide?.description ||
+    []
+
+  const canvas = resolveCanvasSize(
+    { elements: { canvas: elementsDoc?.canvas } },
+    aspectRatio
+  )
+
+  return {
+    id: slide?.id || slide?._id || `slide-${index + 1}`,
+    title: titleFromContent,
+    description: Array.isArray(bodyFromContent)
+      ? bodyFromContent
+      : bodyFromContent
+        ? [String(bodyFromContent)]
+        : [],
+    content: slide?.content || {},
+    backgroundColor:
+      slide?.backgroundColor || elementsDoc?.backgroundColor || DEFAULT_SLIDE_BG,
+    backgroundGradientStart:
+      slide?.backgroundGradientStart || elementsDoc?.backgroundGradientStart,
+    backgroundGradientEnd:
+      slide?.backgroundGradientEnd || elementsDoc?.backgroundGradientEnd,
+    backgroundGradientAngle:
+      slide?.backgroundGradientAngle ?? elementsDoc?.backgroundGradientAngle,
+    backgroundGradientKind:
+      slide?.backgroundGradientKind || elementsDoc?.backgroundGradientKind,
+    backgroundGradientStops:
+      slide?.backgroundGradientStops || elementsDoc?.backgroundGradientStops,
+    backgroundFill: slide?.backgroundFill || elementsDoc?.backgroundFill,
+    backgroundImage: slide?.backgroundImage,
+    backgroundImageFit: slide?.backgroundImageFit || 'cover',
+    backgroundImageElementId: slide?.backgroundImageElementId,
+    elements: {
+      version: elementsDoc?.version || 1,
+      canvas,
+      elements: [...elements]
+        .map((el) => ({
+          ...el,
+          placement: normalizeElementPlacement(el.placement, canvas),
+        }))
+        .sort((a, b) => (a.layer || 0) - (b.layer || 0)),
+      ...(elementsDoc?.transition ? { transition: elementsDoc.transition } : {}),
+      ...(elementsDoc?.contributorStatus
+        ? { contributorStatus: elementsDoc.contributorStatus }
+        : {}),
+      ...(elementsDoc?.speakerNotes != null ? { speakerNotes: elementsDoc.speakerNotes } : {}),
+    },
+    manuallyEdited: Boolean(slide?.manuallyEdited),
+    status: slide?.status || 'READY',
+    progressStatus: (() => {
+      if (Object.prototype.hasOwnProperty.call(slide || {}, 'progressStatus')) {
+        return slide.progressStatus ?? null
+      }
+      const legacy =
+        slide?.contributorStatus ||
+        elementsDoc?.contributorStatus ||
+        elementsDoc?.progressStatus
+      if (legacy == null || legacy === '' || legacy === 'none' || legacy === 'NONE') return null
+      const upper = String(legacy).toUpperCase().replace(/-/g, '_')
+      if (upper === 'TODO') return 'TODO'
+      if (upper === 'IN_PROGRESS' || upper === 'INPROGRESS' || upper === 'IN-PROGRESS') {
+        return 'IN_PROGRESS'
+      }
+      if (upper === 'COMPLETED' || upper === 'DONE') return 'COMPLETED'
+      if (String(legacy).toLowerCase() === 'todo') return 'TODO'
+      if (String(legacy).toLowerCase() === 'in-progress') return 'IN_PROGRESS'
+      if (String(legacy).toLowerCase() === 'done') return 'COMPLETED'
+      return null
+    })(),
+    layoutId: slide?.layoutId || slide?.layout_id || null,
+    imageRef: slide?.imageRef || null,
+    transition: slide?.transition || elementsDoc?.transition || 'none',
+    contributorStatus:
+      slide?.contributorStatus || elementsDoc?.contributorStatus || 'none',
+    speakerNotes: slide?.speakerNotes || elementsDoc?.speakerNotes || '',
+    // Per-slide assignee — workflow-only, TEAM workspaces, OWNER/ADMIN can set.
+    assignee: slide?.assignee ?? null,
+    assignedBy: slide?.assignedBy ?? null,
+    assignedAt: slide?.assignedAt ?? null,
+  }
+}
+
+/**
+ * Resolve a slide's visual.
+ * Canvas elements are the render truth; imageRef is the fallback.
+ * source: "none" means the slide is intentionally image-free (title/agenda/chart).
+ */
+export function getSlideImage(slide) {
+  const elements = Array.isArray(slide?.elements?.elements)
+    ? slide.elements.elements
+    : Array.isArray(slide?.elements)
+      ? slide.elements
+      : []
+
+  const imageEl = elements.find(
+    (el) =>
+      (el.type === 'image' || el.type === 'icon') &&
+      (el.content?.url || el.content?.src)
+  )
+  const elementUrl = imageEl?.content?.url || imageEl?.content?.src || null
+
+  const imageRef = slide?.imageRef
+  const refUrl =
+    typeof imageRef === 'string'
+      ? imageRef
+      : imageRef?.url || imageRef?.presignedUrl || imageRef?.src || null
+
+  const source = typeof imageRef === 'object' ? imageRef?.source || '' : ''
+  const error = typeof imageRef === 'object' ? imageRef?.error || null : null
+
+  return {
+    url: elementUrl || refUrl || null,
+    source,
+    error,
+    intentionallyNone: String(source).toLowerCase() === 'none' && !elementUrl,
+  }
+}
+
+export function extractSlideImageUrl(slide) {
+  return getSlideImage(slide).url
+}
+
+export function emptyCanvasDoc(aspectRatio = '16:9') {
+  return {
+    version: 1,
+    canvas: { ...resolveCanvasSize(null, aspectRatio) },
+    elements: [],
+  }
+}
+
+export function buildCanvasDoc(slide, { aspectRatio = '16:9', elements, backgroundColor } = {}) {
+  const canvas = resolveCanvasSize(slide, aspectRatio)
+  const list = Array.isArray(elements)
+    ? elements
+    : Array.isArray(slide?.elements?.elements)
+      ? slide.elements.elements
+      : []
+  const fromSlide = (key) =>
+    slide && Object.prototype.hasOwnProperty.call(slide, key) ? slide[key] : slide?.elements?.[key]
+  const bgColor =
+    backgroundColor ||
+    fromSlide('backgroundColor') ||
+    slide?.backgroundColor ||
+    slide?.elements?.backgroundColor ||
+    undefined
+  const bg = {
+    ...(bgColor ? { backgroundColor: bgColor } : {}),
+    ...(fromSlide('backgroundGradientStart')
+      ? { backgroundGradientStart: fromSlide('backgroundGradientStart') }
+      : {}),
+    ...(fromSlide('backgroundGradientEnd')
+      ? { backgroundGradientEnd: fromSlide('backgroundGradientEnd') }
+      : {}),
+    ...(fromSlide('backgroundGradientAngle') != null
+      ? { backgroundGradientAngle: fromSlide('backgroundGradientAngle') }
+      : {}),
+    ...(fromSlide('backgroundGradientKind')
+      ? { backgroundGradientKind: fromSlide('backgroundGradientKind') }
+      : {}),
+    ...(fromSlide('backgroundGradientStops')
+      ? { backgroundGradientStops: fromSlide('backgroundGradientStops') }
+      : {}),
+    ...(fromSlide('backgroundFill') ? { backgroundFill: fromSlide('backgroundFill') } : {}),
+    ...(fromSlide('backgroundImage') ? { backgroundImage: fromSlide('backgroundImage') } : {}),
+    ...(fromSlide('backgroundImageFit')
+      ? { backgroundImageFit: fromSlide('backgroundImageFit') }
+      : {}),
+    ...(fromSlide('backgroundImageElementId')
+      ? { backgroundImageElementId: fromSlide('backgroundImageElementId') }
+      : {}),
+  }
+  return {
+    version: slide?.elements?.version || 1,
+    canvas,
+    elements: list,
+    ...bg,
+    ...(slide?.elements?.transition ? { transition: slide.elements.transition } : {}),
+    ...(slide?.elements?.contributorStatus
+      ? { contributorStatus: slide.elements.contributorStatus }
+      : {}),
+    ...(slide?.elements?.speakerNotes != null || slide?.speakerNotes
+      ? { speakerNotes: slide?.elements?.speakerNotes ?? slide.speakerNotes }
+      : {}),
+  }
+}
+
+/** Normalize GET .../presentation-elements payload. */
+export function normalizeElementPresets(payload) {
+  const root = payload?.data ?? payload
+  const list = Array.isArray(root)
+    ? root
+    : root?.presets || root?.items || root?.elements || []
+  const canvas = resolveCanvasSize(root, '16:9')
+  const presets = (list || [])
+    .map((p) => {
+      const presetId = p.presetId || p.id
+      if (!presetId) return null
+      return {
+        id: presetId,
+        presetId,
+        type: p.type || 'text',
+        label: p.label || p.name || presetId,
+        content: p.content || p.defaultContent || {},
+        defaultPlacement: p.defaultPlacement || p.placement || null,
+        defaultContent: p.defaultContent || {},
+        category: p.category || null,
+        raw: p,
+      }
+    })
+    .filter(Boolean)
+  return { canvas, presets }
+}
+
+export function normalizeApiShape(shape) {
+  if (!shape) return 'rect'
+  const key = String(shape)
+  return SHAPE_ALIAS[key] || key
+}
+
+/**
+ * Resolve canvas CSS for a shape element using the shape library + content overrides.
+ */
+export function buildCanvasShapeStyle(content = {}, palette = {}) {
+  const rawShape = content.shape || 'rect'
+  const shapeId = normalizeApiShape(rawShape)
+  const entry = getShapeLibraryEntry(rawShape) || getShapeLibraryEntry(shapeId)
+  const lib = entry?.style || {}
+
+  const fill = resolveFillCss(content.fill, palette, 'rgba(148,163,184,0.35)')
+  const stroke = content.stroke ? resolveFillCss(content.stroke, palette, content.stroke) : undefined
+  const strokeWidth = content.strokeWidth != null ? content.strokeWidth : stroke ? 1 : 0
+  const borderStyle = normalizeShapeBorderStyle(content.borderStyle)
+  const isOutlined = content.variant === 'outlined'
+  const hasBorder = borderStyle !== 'none' && (Number(strokeWidth) > 0 || isOutlined || Boolean(stroke))
+  const borderWidth = hasBorder ? Number(strokeWidth) || (isOutlined ? 3 : 1) : 0
+  const borderColor = stroke || fill
+  const isGradientStroke = typeof borderColor === 'string' && borderColor.includes('gradient(')
+  const cssBorder =
+    hasBorder && borderStyle !== 'none'
+      ? `${borderWidth}px ${borderStyle} ${isGradientStroke ? 'transparent' : borderColor}`
+      : undefined
+  const borderImage = hasBorder && isGradientStroke ? `${borderColor} 1` : undefined
+  const dasharray = hasBorder ? shapeStrokeDasharray(borderStyle, borderWidth) : undefined
+  const shapeOpacity =
+    content.opacity != null && Number.isFinite(Number(content.opacity))
+      ? Number(content.opacity)
+      : undefined
+
+  if (content.border && !content.clipPath && !content.borderStyle) {
+    return {
+      kind: 'box',
+      style: {
+        width: '100%',
+        height: '100%',
+        background: fill === 'rgba(148,163,184,0.35)' && content.fill == null ? 'transparent' : fill,
+        border: content.border,
+        borderRadius: content.borderRadius ?? 0,
+        boxShadow: content.shadow || content.boxShadow || undefined,
+        boxSizing: 'border-box',
+        ...(shapeOpacity != null ? { opacity: shapeOpacity } : {}),
+      },
+    }
+  }
+
+  if (isHorizontalLineShape(entry, rawShape)) {
+    return {
+      kind: 'line',
+      style: {
+        width: '100%',
+        height: 0,
+        background: 'transparent',
+        borderTop: resolveLineBorder(content, entry, fill, stroke, isOutlined),
+        alignSelf: 'center',
+        boxSizing: 'border-box',
+        flexShrink: 0,
+        ...(shapeOpacity != null ? { opacity: shapeOpacity } : {}),
+      },
+    }
+  }
+
+  const clipPath = content.clipPath || lib.clipPath || FALLBACK_CLIP[shapeId]
+  let borderRadius =
+    content.borderRadius != null ? content.borderRadius : parseShapeRadius(lib.borderRadius)
+  if (borderRadius == null && FALLBACK_RADIUS[shapeId] != null) {
+    borderRadius = FALLBACK_RADIUS[shapeId]
+  }
+
+  const background = isOutlined ? 'transparent' : fill
+  const border = cssBorder
+
+  if (clipPath) {
+    const outlineStroke = hasBorder ? borderColor : undefined
+    const outlineWidth = hasBorder ? borderWidth : 0
+    return {
+      kind: 'clip',
+      clipPath,
+      outlined: isOutlined,
+      fill: background,
+      stroke: outlineStroke,
+      strokeWidth: outlineWidth,
+      strokeDasharray: dasharray,
+      style: {
+        width: '100%',
+        height: '100%',
+        background: isOutlined ? 'transparent' : background,
+        clipPath: isOutlined ? undefined : clipPath,
+        border,
+        borderImage,
+        boxSizing: 'border-box',
+        ...(shapeOpacity != null ? { opacity: shapeOpacity } : {}),
+      },
+    }
+  }
+
+  return {
+    kind: 'box',
+    style: {
+      width: '100%',
+      height: '100%',
+      background: background === 'transparent' ? 'transparent' : background,
+      borderRadius: borderRadius ?? 0,
+      border,
+      borderImage,
+      boxShadow: content.shadow || content.boxShadow || undefined,
+      boxSizing: 'border-box',
+      ...(shapeOpacity != null ? { opacity: shapeOpacity } : {}),
+    },
+  }
+}
+
+/**
+ * Resolve palette token / colorRole / hex / gradient object → CSS color or gradient.
+ * Tokens: bg, surface, primary, secondary, text, muted, accent, divider, cardBg, …
+ */
+export function resolveThemeColor(value, palette = {}, fallback = undefined) {
+  if (value == null || value === '') return fallback
+  if (typeof value === 'object') {
+    if (value.type === 'gradient') return cssGradientFromFill(value, palette)
+    if (value.color != null && value.color !== '') {
+      return resolveThemeColor(value.color, palette, fallback)
+    }
+    if (value.colorRole) {
+      return resolveThemeColor(value.colorRole, palette, fallback)
+    }
+    return fallback
+  }
+  const raw = String(value).trim()
+  if (
+    raw.startsWith('#') ||
+    raw.startsWith('rgb') ||
+    raw.startsWith('hsl') ||
+    raw.startsWith('url(') ||
+    raw === 'transparent' ||
+    raw.includes('gradient(') ||
+    raw.startsWith('color-mix')
+  ) {
+    return raw
+  }
+  if (palette?.[raw] != null) {
+    const hit = palette[raw]
+    if (typeof hit === 'string') return hit
+    if (hit && typeof hit === 'object') return resolveThemeColor(hit, palette, fallback)
+    return fallback !== undefined ? fallback : raw
+  }
+  return fallback !== undefined ? fallback : raw
+}
+
+function gradientStopParts(fill, palette = {}) {
+  const stops = Array.isArray(fill.stops) ? fill.stops : []
+  if (stops.length) {
+    return stops.map((stop) => {
+      const color = resolveThemeColor(stop.color || stop, palette, '#94A3B8')
+      const offsetVal = stop.at != null ? stop.at : stop.offset
+      const at = offsetVal != null ? ` ${Math.round(Number(offsetVal) * (Number(offsetVal) <= 1 ? 100 : 1))}%` : ''
+      return `${color}${at}`
+    })
+  }
+  const start =
+    resolveThemeColor(fill.from || fill.start || palette.gradientStart, palette, '#3B82F6')
+  const end =
+    resolveThemeColor(fill.to || fill.end || palette.gradientEnd, palette, '#8B5CF6')
+  return [start, end]
+}
+
+export function cssGradientFromFill(fill, palette = {}) {
+  if (!fill || typeof fill !== 'object') return null
+  const angle = fill.angle != null ? Number(fill.angle) : 135
+  const parts = gradientStopParts(fill, palette)
+  if (!parts.length) return null
+  if (fill.kind === 'radial' || fill.gradientKind === 'radial') {
+    return `radial-gradient(circle at center, ${parts.join(', ')})`
+  }
+  return `linear-gradient(${angle}deg, ${parts.join(', ')})`
+}
+
+/** Resolve shape/text fill (string token, hex, or { type: 'gradient'|'solid', … }). */
+export function resolveFillCss(fill, palette = {}, fallback = 'rgba(148,163,184,0.35)') {
+  if (fill == null || fill === '') return fallback
+  if (typeof fill === 'object') {
+    if (fill.type === 'gradient') {
+      return cssGradientFromFill(fill, palette) || fallback
+    }
+    if (fill.color != null && fill.color !== '') {
+      return resolveThemeColor(fill.color, palette, fallback)
+    }
+    if (fill.colorRole) {
+      return resolveThemeColor(fill.colorRole, palette, fallback)
+    }
+    return fallback
+  }
+  return resolveThemeColor(fill, palette, fallback)
+}
+
+/** CSS box for template shapes authored with clip-level nativeStyle (curves, borders). */
+export function buildNativeShapeBoxStyle(nativeStyle = {}) {
+  const style = nativeStyle || {}
+  const box = {
+    width: '100%',
+    height: '100%',
+    boxSizing: 'border-box',
+    border: style.border,
+    borderRadius: style.borderRadius,
+    boxShadow: style.boxShadow,
+    opacity: style.opacity,
+  }
+  if (style.background) box.background = style.background
+  else box.backgroundColor = style.backgroundColor || 'transparent'
+  return box
+}
+
+export function shapeElementUsesNativeStyle(el) {
+  if (!el || el.type !== 'shape' || !el.nativeStyle) return false
+  const style = el.nativeStyle
+  return Boolean(
+    style.background
+    || style.backgroundColor
+    || style.border
+    || style.borderRadius
+    || style.boxShadow
+  )
+}
+
+export function extractSlideFromMutation(payload) {
+  return (
+    payload?.slide ||
+    payload?.data?.slide ||
+    (payload?.id && payload?.elements ? payload : null) ||
+    null
+  )
+}
+
+export function extractElementFromMutation(payload) {
+  return payload?.element || payload?.data?.element || null
+}
+
+export function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}

@@ -1,0 +1,212 @@
+import { compileDeckLayoutToElements } from './compileDeckLayoutToElements.js'
+import { isPricingThreePlansLayout } from './pricingThreePlans.js'
+import { isPricingThreePlansFeaturedLayout } from './pricingThreePlansFeatured.js'
+import { isPricingThreeHighlightLayout } from './pricingThreeHighlight.js'
+import { isPricingThreeHighlightSplitLayout } from './pricingThreeHighlightSplit.js'
+import { isPricingFourPlansLayout } from './pricingFourPlans.js'
+import { isPricingFourPlansFeaturedLayout } from './pricingFourPlansFeatured.js'
+import { isPricingFourParaLayout } from './pricingFourPara.js'
+import { isPricingFourParaCardsLayout } from './pricingFourParaCards.js'
+import { isPricingComparisonTableLayout } from './pricingComparisonTable.js'
+import { isPricingComparisonCardsLayout } from './pricingComparisonCards.js'
+import { isTimelineHorizontalLayout } from './timelineHorizontal.js'
+import { isTimelineVerticalLayout } from './timelineVertical.js'
+import { isTimelineVerticalCardsLayout } from './timelineVerticalCards.js'
+import { isTimelineRoadmapLayout } from './timelineRoadmap.js'
+import { isTimelineRoadmapHorizontalLayout } from './timelineRoadmapHorizontal.js'
+import { isTimelineProcessStepsHorizontalLayout } from './timelineProcessStepsHorizontal.js'
+import { isTimelineProcessHorizontalLayout } from './diagramProcessHorizontal.js'
+import { isTimelineHorizontalCardsLayout } from './timelineHorizontalCards.js'
+import { isTimelineMilestonesLayout } from './timelineMilestones.js'
+import { isTimelineMilestonesCardsLayout } from './timelineMilestonesCards.js'
+import { isTimelineMilestonesImageLayout } from './timelineMilestonesImage.js'
+import { isTimelineMilestonesImageRightLayout } from './timelineMilestonesImageRight.js'
+import { isChartSingleBarLayout } from './chartSingleBar.js'
+import { isChartSingleBarSplitLayout } from './chartSingleBarSplit.js'
+import { isChartTwoBarLayout } from './chartTwoBar.js'
+import { isChartTwoBarSplitLayout } from './chartTwoBarSplit.js'
+import { isChartThreeBarLayout } from './chartThreeBar.js'
+import { isChartTwoMetricsComparisonLayout } from './chartTwoMetricsComparison.js'
+import { isChartTwoCardsLayout } from './chartTwoCards.js'
+import { isChartThreeCardsLayout } from './chartThreeCards.js'
+import { isChartThreeContextLayout } from './chartThreeContext.js'
+import { isChartThreeContextCardsLayout } from './chartThreeContextCards.js'
+import { isTableSingleLayout } from './tableSingleLayout.js'
+import { isTableSingleCardsLayout } from './tableSingleCardsLayout.js'
+import { isTableWithDescriptionLayout } from './tableWithDescriptionLayout.js'
+import { isTableWithDescriptionSideLayout } from './tableWithDescriptionSideLayout.js'
+import { isTableTwoDescLayout } from './tableTwoDescLayout.js'
+import { isTableTwoDescCardsLayout } from './tableTwoDescCardsLayout.js'
+import { isEightShortTextsImageLayout } from './eightShortTextsImageLayout.js'
+import { isFullBgImageOverlayLayout } from './fullBgImageOverlayLayout.js'
+import { isFullBgImageOverlayBottomLayout } from './fullBgImageOverlayBottomLayout.js'
+import { isFullBgImageOverlaySideLayout } from './fullBgImageOverlaySideLayout.js'
+import { isSectionDividerBandLayout } from './sectionDividerBandLayout.js'
+import { isSectionDividerBandFullLayout } from './sectionDividerBandFullLayout.js'
+import { isComparisonSideBySideLayout } from './comparisonSideBySideLayout.js'
+import { isComparisonSideBySideCardsLayout } from './comparisonSideBySideCardsLayout.js'
+import { isComparisonSideBySideCenterlineLayout } from './comparisonSideBySideCenterlineLayout.js'
+import { isBulletListCardsLayout } from './bulletListCardsLayout.js'
+import { isBulletListGridLayout } from './bulletListGridLayout.js'
+import { isIntroThreeParaIconsLayout } from './introThreeParaIconsLayout.js'
+import { isGridBentoThreeLayout } from './gridBentoThreeLayout.js'
+import { isGridBentoFourLayout } from './gridBentoFourLayout.js'
+import { isGridFourMosaicLayout } from './gridFourMosaicLayout.js'
+import { isGridSixImagesLayout } from './gridSixImagesLayout.js'
+import { isGridSixImagesMosaicLayout } from './gridSixImagesMosaicLayout.js'
+import { isGridTextImageCardsLayout } from './gridTextImageCardsLayout.js'
+import { isGridThreeImagesTextLayout } from './gridThreeImagesText.js'
+import { isGridThreeImagesTextAsymmetricLayout } from './gridThreeImagesTextAsymmetric.js'
+import { isGridImagesTextCardsLayout } from './gridImagesTextCards.js'
+import { isGridImagesTextMosaicLayout } from './gridImagesTextMosaic.js'
+import { isGridInsightsChartLayout } from './gridInsightsChart.js'
+import {
+  isLogoPartnerGridLayout,
+  isLogoPartnerStripLayout,
+  isLogoWallLayout,
+} from './logoPartnerLayouts.js'
+import { isLogoWallMasonryLayout } from './logoWallMasonryLayout.js'
+
+export function isCompiledGridLayout(layoutId, schema = null) {
+  const id = String(layoutId || schema?.layout_id || schema?.layoutId || '').toLowerCase().trim()
+  if (!id) return false
+  const ct = String(schema?.content_type || schema?.contentType || '').toLowerCase().trim()
+  if (ct === 'grid') return true
+
+  return (
+    id.startsWith('grid_') ||
+    id.startsWith('logo_') ||
+    id.startsWith('eight_short_texts') ||
+    id.startsWith('intro_three_para_icons') ||
+    isEightShortTextsImageLayout(id) ||
+    isIntroThreeParaIconsLayout(id) ||
+    isGridBentoThreeLayout(id) ||
+    isGridBentoFourLayout(id) ||
+    isGridFourMosaicLayout(id) ||
+    isGridSixImagesLayout(id) ||
+    isGridSixImagesMosaicLayout(id) ||
+    isGridTextImageCardsLayout(id) ||
+    isGridThreeImagesTextLayout(id) ||
+    isGridThreeImagesTextAsymmetricLayout(id) ||
+    isGridImagesTextCardsLayout(id) ||
+    isGridImagesTextMosaicLayout(id) ||
+    isGridInsightsChartLayout(id) ||
+    isLogoPartnerGridLayout(id) ||
+    isLogoPartnerStripLayout(id) ||
+    isLogoWallLayout(id) ||
+    isLogoWallMasonryLayout(id)
+  )
+}
+
+const SIMPLE_SLIDE_COMPILED_PREVIEW_IDS = new Set([
+  'title_image_logo_v1',
+  'section_with_image_v1',
+  'para_landscape_image_bottom_v1',
+  'para_landscape_image_top_v1',
+  'section_right_image_v1',
+  'section_right_image_fullheight_v1',
+  'section_left_image_v1',
+  'section_left_image_fullheight_v1',
+  'wide_image_statement_top_v1',
+  'wide_image_statement_bottom_v1',
+  'title_statement_split_v1',
+  'title_statement_v1',
+  'intro_four_para_v1',
+  'headline_right_text_v1',
+  'section_divider_split_image_v1',
+  'large_image_v1',
+  'full_bg_image_overlay_v1',
+  'full_bg_image_overlay_bottom_v1',
+  'full_bg_image_overlay_side_v1',
+  'section_divider_band_v1',
+  'section_divider_band_full_v1',
+  'comparison_side_by_side_v1',
+  'comparison_side_by_side_cards_v1',
+  'comparison_side_by_side_centerline_v1',
+  'bullet_list_cards_v1',
+  'bullet_list_grid_v1',
+])
+
+export function isCompiledPricingLayout(layoutId, schema = null) {
+  const id = String(layoutId || schema?.layout_id || schema?.layoutId || '').toLowerCase().trim()
+  if (SIMPLE_SLIDE_COMPILED_PREVIEW_IDS.has(id)) return true
+  if (isFullBgImageOverlayLayout(id, schema)) return true
+  if (isFullBgImageOverlayBottomLayout(id, schema)) return true
+  if (isFullBgImageOverlaySideLayout(id, schema)) return true
+  if (isSectionDividerBandLayout(id, schema)) return true
+  if (isSectionDividerBandFullLayout(id, schema)) return true
+  if (isComparisonSideBySideLayout(id, schema)) return true
+  if (isComparisonSideBySideCardsLayout(id, schema)) return true
+  if (isComparisonSideBySideCenterlineLayout(id, schema)) return true
+  if (isBulletListCardsLayout(id, schema)) return true
+  if (isBulletListGridLayout(id, schema)) return true
+  return isCompiledGridLayout(layoutId, schema)
+    || isPricingThreePlansLayout(layoutId)
+    || isPricingThreePlansFeaturedLayout(layoutId)
+    || isPricingThreeHighlightLayout(layoutId)
+    || isPricingThreeHighlightSplitLayout(layoutId)
+    || isPricingFourPlansLayout(layoutId)
+    || isPricingFourPlansFeaturedLayout(layoutId)
+    || isPricingFourParaLayout(layoutId)
+    || isPricingFourParaCardsLayout(layoutId)
+    || isPricingComparisonTableLayout(layoutId)
+    || isPricingComparisonCardsLayout(layoutId)
+    || isTimelineHorizontalLayout(layoutId)
+    || isTimelineHorizontalCardsLayout(layoutId)
+    || isTimelineMilestonesLayout(layoutId)
+    || isTimelineMilestonesCardsLayout(layoutId)
+    || isTimelineMilestonesImageLayout(layoutId)
+    || isTimelineMilestonesImageRightLayout(layoutId)
+    || isTimelineVerticalLayout(layoutId)
+    || isTimelineVerticalCardsLayout(layoutId)
+    || isTimelineRoadmapLayout(layoutId)
+    || isTimelineRoadmapHorizontalLayout(layoutId)
+    || isTimelineProcessStepsHorizontalLayout(layoutId)
+    || isTimelineProcessHorizontalLayout(layoutId)
+    || isChartSingleBarLayout(layoutId)
+    || isChartSingleBarSplitLayout(layoutId)
+    || isChartTwoBarLayout(layoutId)
+    || isChartTwoBarSplitLayout(layoutId)
+    || isChartThreeBarLayout(layoutId)
+    || isChartTwoMetricsComparisonLayout(layoutId)
+    || isChartTwoCardsLayout(layoutId)
+    || isChartThreeCardsLayout(layoutId)
+    || isChartThreeContextLayout(layoutId)
+    || isTableSingleLayout(layoutId)
+    || isTableSingleCardsLayout(layoutId)
+    || isTableWithDescriptionLayout(layoutId)
+    || isTableWithDescriptionSideLayout(layoutId)
+    || isTableTwoDescLayout(layoutId)
+    || isTableTwoDescCardsLayout(layoutId)
+}
+
+export function compilePricingLayoutPreviewSlide(schema, aspectRatio = '16:9', options = {}) {
+  if (!schema?.slots?.length || !isCompiledPricingLayout(schema.layout_id || schema.layoutId, schema)) {
+    return null
+  }
+  const canvas = aspectRatio === '4:3'
+    ? { width: 1600, height: 1200 }
+    : { width: 1920, height: 1080 }
+  const slotImageUrls = {}
+  if (schema?.preview?.slots && typeof schema.preview.slots === 'object') {
+    for (const [k, v] of Object.entries(schema.preview.slots)) {
+      if (v?.imageUrl) slotImageUrls[k] = v.imageUrl
+    }
+  }
+  const elements = compileDeckLayoutToElements(schema, {
+    canvas,
+    slideTitle: schema?.title || schema?.name || '',
+    themeVisual: options.themeVisual || null,
+    palette: options.themeVisual?.palette || null,
+    skipContentValidation: true,
+    content: {
+      imageUrl: schema?.preview?.imageUrl || undefined,
+      slotImageUrls: Object.keys(slotImageUrls).length ? slotImageUrls : undefined,
+    },
+  })
+  if (!elements.length) return null
+  return {
+    elements: { version: 1, canvas, elements },
+    backgroundColor: schema?.preview?.backgroundColor || schema?.backgroundColor || '#ffffff',
+  }
+}

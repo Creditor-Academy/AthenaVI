@@ -1,0 +1,1891 @@
+/**
+ * Extended polished layout previews for Grids + Charts & data catalog.
+ */
+
+import { aspectRatioToCss } from '../../utils/deckPackTheme'
+import { previewImageFrameStyle, PreviewImageIcon, PreviewImage } from './layoutPreviewImageShared.jsx'
+import { tableTwoSameHeaderPreviewSvg, tableTwoSameHeaderCardsPreviewSvg } from '../../utils/tableTwoSameHeaderLayout.js'
+import { gridBentoThreePreviewSvg } from '../../utils/gridBentoThreeLayout.js'
+import { gridBentoFourPreviewSvg } from '../../utils/gridBentoFourLayout.js'
+import { gridTextImageCardsPreviewSvg } from '../../utils/gridTextImageCardsLayout.js'
+import { isMetricSingleLayout, metricSinglePreviewSvg } from '../../utils/metricSingle.js'
+import { isMetricSingleSplitLayout, metricSingleSplitPreviewSvg } from '../../utils/metricSingleSplit.js'
+import { isMetricTwoLayout, metricTwoPreviewSvg } from '../../utils/metricTwo.js'
+import { isMetricTwoSplitLayout, metricTwoSplitPreviewSvg } from '../../utils/metricTwoSplit.js'
+import { isMetricThreeLayout, metricThreePreviewSvg } from '../../utils/metricThree.js'
+import { isMetricThreeCardsLayout, metricThreeCardsPreviewSvg } from '../../utils/metricThreeCards.js'
+import { isMetricFourLayout, metricFourPreviewSvg } from '../../utils/metricFour.js'
+import { isMetricFourCardsLayout, metricFourCardsPreviewSvg } from '../../utils/metricFourCards.js'
+import { isMetricFiveLayout, metricFivePreviewSvg } from '../../utils/metricFive.js'
+import { isMetricFiveCardsLayout, metricFiveCardsPreviewSvg } from '../../utils/metricFiveCards.js'
+import { isMetricSixCardsLayout, metricSixCardsPreviewSvg } from '../../utils/metricSixCards.js'
+import { isMetricSixParaLayout, metricSixParaPreviewSvg } from '../../utils/metricSixPara.js'
+import {
+  isMetricThreeVerticalLayout,
+  isMetricThreeVerticalCardsLayout,
+  metricThreeVerticalPreviewSvg,
+  metricThreeVerticalCardsPreviewSvg,
+} from '../../utils/metricThreeVertical.js'
+
+const PREVIEW_TITLE_FS = { large: '1.75rem', small: '0.92rem' }
+const PREVIEW_BODY_FS = { large: '0.88rem', small: '0.4rem' }
+const PREVIEW_CAPTION_FS = { large: '0.72rem', small: '0.34rem' }
+
+const theme = {
+  bg: 'var(--preview-bg, var(--bg-card, #ffffff))',
+  card: 'var(--preview-card, color-mix(in srgb, var(--border-color) 50%, var(--bg-card)))',
+  text: 'var(--preview-text, var(--text-main, #1f1f1f))',
+  muted: 'var(--preview-muted, var(--text-muted, #6f6f6f))',
+  accent: 'var(--preview-accent, #6366f1)',
+  accentSoft: 'var(--preview-accent-soft, rgba(99, 102, 241, 0.1))',
+  accentBorder: 'var(--preview-accent-border, rgba(99, 102, 241, 0.35))',
+}
+
+function frameProps({ large, fill, aspectRatio, className, style }) {
+  const frameStyle = fill
+    ? { width: '100%', height: '100%', aspectRatio: 'unset' }
+    : { width: '100%', aspectRatio: aspectRatioToCss(aspectRatio) }
+  return {
+    className,
+    style: {
+      position: 'relative',
+      ...frameStyle,
+      background: theme.bg,
+      overflow: 'hidden',
+      fontFamily: 'system-ui, sans-serif',
+      borderRadius: large ? 12 : 6,
+      boxSizing: 'border-box',
+      ...style,
+    },
+  }
+}
+
+function ImagePh({ large, hero = false }) {
+  return (
+    <div style={previewImageFrameStyle({ large, hero })}>
+      <PreviewImageIcon large={large} />
+    </div>
+  )
+}
+
+function BarChart({ large, values = [45, 62, 78, 91] }) {
+  const max = Math.max(...values, 1)
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: large ? 8 : 3, height: '100%', padding: large ? '8px 4px' : '2px 1px' }}>
+      {values.map((v, i) => (
+        <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
+          <div style={{ width: '70%', height: `${(v / max) * 100}%`, minHeight: large ? 8 : 3, background: theme.accent, borderRadius: large ? 4 : 2, opacity: 0.85 }} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function DonutChart({ large }) {
+  const size = large ? 80 : 28
+  // Mini 4-segment donut in preview colors
+  const segs = [
+    { pct: 32, color: '#3B82F6', lightColor: '#60A5FA', darkColor: '#1D4ED8' },
+    { pct: 24, color: '#8B5CF6', lightColor: '#A78BFA', darkColor: '#6D28D9' },
+    { pct: 18, color: '#10B981', lightColor: '#34D399', darkColor: '#047857' },
+    { pct: 26, color: '#64748B', lightColor: '#94A3B8', darkColor: '#334155' },
+  ]
+  const cx = 18, cy = 18, r = 13, ir = 8
+  const gap = 3.5
+  let angle = 0
+  const paths = segs.map((s, i) => {
+    const sweep = (s.pct / 100) * 360
+    const sA = angle + gap / 2
+    const eA = angle + sweep - gap / 2
+    angle += sweep
+    const toRad = (d) => ((d - 90) * Math.PI) / 180
+    const x1 = (cx + r * Math.cos(toRad(sA))).toFixed(2)
+    const y1 = (cy + r * Math.sin(toRad(sA))).toFixed(2)
+    const x2 = (cx + r * Math.cos(toRad(eA))).toFixed(2)
+    const y2 = (cy + r * Math.sin(toRad(eA))).toFixed(2)
+    const ix1 = (cx + ir * Math.cos(toRad(sA))).toFixed(2)
+    const iy1 = (cy + ir * Math.sin(toRad(sA))).toFixed(2)
+    const ix2 = (cx + ir * Math.cos(toRad(eA))).toFixed(2)
+    const iy2 = (cy + ir * Math.sin(toRad(eA))).toFixed(2)
+    const large = sweep > 180 ? 1 : 0
+    const d = `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} L ${ix2} ${iy2} A ${ir} ${ir} 0 ${large} 0 ${ix1} ${iy1} Z`
+    return { d, s, i }
+  })
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <svg width={size} height={size} viewBox="0 0 36 36" style={{ overflow: 'visible' }}>
+        <defs>
+          {paths.map(({ s, i }) => (
+            <linearGradient key={i} id={`dprev_${i}`} x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor={s.lightColor} />
+              <stop offset="100%" stopColor={s.color} />
+            </linearGradient>
+          ))}
+        </defs>
+        {/* 3D base */}
+        {paths.map(({ d, s, i }) => {
+          const toRad = (deg) => ((deg - 90) * Math.PI) / 180
+          let a = 0
+          const segsLocal = segs.slice(0, i)
+          segsLocal.forEach((seg) => { a += (seg.pct / 100) * 360 })
+          const sweep = (s.pct / 100) * 360
+          const sA = a + gap / 2
+          const eA = a + sweep - gap / 2
+          const x1b = (cx + r * Math.cos(toRad(sA))).toFixed(2)
+          const y1b = (cy + 2 + r * Math.sin(toRad(sA))).toFixed(2)
+          const x2b = (cx + r * Math.cos(toRad(eA))).toFixed(2)
+          const y2b = (cy + 2 + r * Math.sin(toRad(eA))).toFixed(2)
+          const ix1b = (cx + ir * Math.cos(toRad(sA))).toFixed(2)
+          const iy1b = (cy + 2 + ir * Math.sin(toRad(sA))).toFixed(2)
+          const ix2b = (cx + ir * Math.cos(toRad(eA))).toFixed(2)
+          const iy2b = (cy + 2 + ir * Math.sin(toRad(eA))).toFixed(2)
+          const lg = sweep > 180 ? 1 : 0
+          const db = `M ${x1b} ${y1b} A ${r} ${r} 0 ${lg} 1 ${x2b} ${y2b} L ${ix2b} ${iy2b} A ${ir} ${ir} 0 ${lg} 0 ${ix1b} ${iy1b} Z`
+          return <path key={i} d={db} fill={s.darkColor} opacity="0.85" />
+        })}
+        {/* Top faces */}
+        {paths.map(({ d, s, i }) => (
+          <path key={i} d={d} fill={`url(#dprev_${i})`} stroke="#fff" strokeWidth="0.5" strokeLinejoin="round" />
+        ))}
+        {/* Center plate */}
+        <circle cx={cx} cy={cy} r={ir - 0.5} fill="#fff" stroke="#e2e8f0" strokeWidth="0.5" />
+      </svg>
+    </div>
+  )
+}
+
+function TableMini({ large, headers = ['A', 'B', 'C'], rows = 3 }) {
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', gap: large ? 4 : 1, fontSize: large ? '0.62rem' : '0.22rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${headers.length}, 1fr)`, gap: large ? 4 : 1, fontWeight: 700, color: theme.text }}>
+        {headers.map((h) => <div key={h} style={{ padding: large ? '4px 6px' : '1px 2px', background: theme.card, borderRadius: 2 }}>{h}</div>)}
+      </div>
+      {Array.from({ length: rows }).map((_, ri) => (
+        <div key={ri} style={{ display: 'grid', gridTemplateColumns: `repeat(${headers.length}, 1fr)`, gap: large ? 4 : 1, color: theme.muted }}>
+          {headers.map((h, ci) => (
+            <div key={h} style={{ padding: large ? '4px 6px' : '1px 2px', background: theme.card, borderRadius: 2 }}>
+              {ci === 0 ? `Row ${ri + 1}` : '—'}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function DeviceFrame({ kind, large, children, style = {} }) {
+  const isPhone = kind === 'phone'
+  const isLaptop = kind === 'laptop'
+  const border = large ? (isPhone ? 6 : 4) : (isPhone ? 2.5 : 2)
+
+  if (isLaptop) {
+    return (
+      <div style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: large ? '2px 4px' : '1px 2px',
+        boxSizing: 'border-box',
+        ...style,
+      }}>
+        <div style={{
+          width: '92%',
+          aspectRatio: '16 / 10',
+          maxHeight: '84%',
+          borderRadius: large ? 9 : 4,
+          border: `${border}px solid #0f172a`,
+          outline: `${large ? 1.5 : 1}px solid #334155`,
+          outlineOffset: -1,
+          background: '#f8fafc',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          boxShadow: '0 8px 24px rgba(15,23,42,0.18)',
+          position: 'relative',
+        }}>
+          {/* Top camera bar */}
+          <div style={{
+            height: large ? 8 : 3.5,
+            background: '#1e293b',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <div style={{
+              width: large ? 3 : 1.5,
+              height: large ? 3 : 1.5,
+              borderRadius: '50%',
+              background: '#475569',
+            }} />
+          </div>
+          <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+            {children || <ImagePh large={large} />}
+          </div>
+        </div>
+        {/* Laptop keyboard base deck */}
+        <div style={{
+          width: '98%',
+          height: large ? 6 : 2.5,
+          marginTop: -1,
+          borderRadius: `0 0 ${large ? 5 : 2}px ${large ? 5 : 2}px`,
+          background: 'linear-gradient(180deg, #475569 0%, #334155 100%)',
+          border: '1px solid #0f172a',
+          position: 'relative',
+          flexShrink: 0,
+          boxShadow: '0 4px 10px rgba(15,23,42,0.15)',
+        }}>
+          {/* Notch center indent */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: large ? 20 : 8,
+            height: large ? 2 : 1,
+            background: '#1e293b',
+            borderRadius: `0 0 ${large ? 3 : 1}px ${large ? 3 : 1}px`,
+          }} />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: large ? 4 : 2,
+      boxSizing: 'border-box',
+      ...style,
+    }}>
+      <div style={{
+        height: '92%',
+        aspectRatio: '9 / 19.5',
+        maxHeight: '94%',
+        borderRadius: large ? 20 : 8,
+        border: `${border}px solid #0f172a`,
+        outline: `${large ? 1.5 : 1}px solid #334155`,
+        outlineOffset: -1,
+        background: '#f8fafc',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: '0 12px 28px rgba(15,23,42,0.2), 0 2px 6px rgba(15,23,42,0.1)',
+        position: 'relative',
+      }}>
+        {/* Dynamic Island pill */}
+        <div style={{
+          position: 'absolute',
+          top: large ? 6 : 2.5,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '32%',
+          height: large ? 5.5 : 2.5,
+          borderRadius: 99,
+          background: '#020617',
+          zIndex: 3,
+        }} />
+        <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+          {children || <ImagePh large={large} />}
+        </div>
+        {/* Home indicator bar */}
+        <div style={{
+          position: 'absolute',
+          bottom: large ? 5 : 2,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '34%',
+          height: large ? 3 : 1.5,
+          borderRadius: 99,
+          background: 'rgba(15, 23, 42, 0.35)',
+          zIndex: 3,
+        }} />
+      </div>
+    </div>
+  )
+}
+
+function pad(large) {
+  return large ? '6% 5%' : '8% 5%'
+}
+
+export function PolishedGridBentoThreePreview({ previewHints, ...props }) {
+  const { large } = props
+  const fp = frameProps(props)
+  const svg = gridBentoThreePreviewSvg()
+  return (
+    <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden', background: '#F8FAFC', borderRadius: large ? 12 : 6 }}>
+      <div
+        aria-hidden
+        style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+        dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+      />
+    </div>
+  )
+}
+
+export function PolishedGridBentoFourPreview({ previewHints, ...props }) {
+  const { large } = props
+  const variant = previewHints?.gridVariant || 'default'
+  const fp = frameProps(props)
+
+  if (variant === 'mosaic') {
+    return (
+      <div
+        {...fp}
+        style={{
+          ...fp.style,
+          padding: pad(large),
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gridTemplateRows: '1.35fr 0.85fr 1.35fr',
+          gap: large ? 10 : 3,
+        }}
+      >
+        <div style={{ gridColumn: '1', gridRow: '1 / 3', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+        <div style={{ gridColumn: '1', gridRow: '3 / 4', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+        <div style={{ gridColumn: '2', gridRow: '1 / 2', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+        <div style={{ gridColumn: '2', gridRow: '2 / 4', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+      </div>
+    )
+  }
+
+  if (variant === 'asymmetric') {
+    return (
+      <div
+        {...fp}
+        style={{
+          ...fp.style,
+          padding: pad(large),
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr 1.25fr',
+          gridTemplateRows: '1fr 1fr',
+          gap: large ? 10 : 3,
+        }}
+      >
+        <div style={{ gridColumn: '1 / 3', gridRow: '1', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+        <div style={{ gridColumn: '1', gridRow: '2', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+        <div style={{ gridColumn: '2', gridRow: '2', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+        <div style={{ gridColumn: '3', gridRow: '1 / 3', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} hero />
+        </div>
+      </div>
+    )
+  }
+
+  // Default: Grid Bento Four (Iconic Hero Left + Wide Top Right + 2 Balanced Squares Bottom Right)
+  const svg = gridBentoFourPreviewSvg()
+  return (
+    <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden', background: '#F8FAFC', borderRadius: large ? 12 : 6 }}>
+      <div
+        aria-hidden
+        style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+        dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+      />
+    </div>
+  )
+}
+
+export function PolishedGridFourMosaicPreview({ previewHints, ...props }) {
+  const { large } = props
+  const fp = frameProps(props)
+
+  return (
+    <div
+      {...fp}
+      style={{
+        ...fp.style,
+        padding: pad(large),
+        display: 'flex',
+        flexDirection: 'column',
+        gap: large ? 8 : 2.5,
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 3 : 1 }}>
+        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>
+          {previewHints?.slots?.HEADING?.text || 'Curated visual mosaic'}
+        </div>
+        <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>
+          {previewHints?.slots?.SUBTITLE?.text || 'An interlocking visual showcase'}
+        </div>
+      </div>
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gridTemplateRows: '1.3fr 0.9fr 1.3fr',
+          gap: large ? 8 : 2.5,
+        }}
+      >
+        <div style={{ gridColumn: '1', gridRow: '1 / 3', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+        <div style={{ gridColumn: '1', gridRow: '3 / 4', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+        <div style={{ gridColumn: '2', gridRow: '1 / 2', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+        <div style={{ gridColumn: '2', gridRow: '2 / 4', width: '100%', height: '100%', minHeight: 0 }}>
+          <ImagePh large={large} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function PolishedGridSixImagesPreview({ previewHints, ...props }) {
+  const { large } = props
+  const variant = previewHints?.gridVariant || 'default'
+  const fp = frameProps(props)
+  if (variant === 'mosaic' || variant === 'masonry') {
+    return (
+      <div
+        {...fp}
+        style={{
+          ...fp.style,
+          padding: pad(large),
+          display: 'flex',
+          flexDirection: 'column',
+          gap: large ? 8 : 2.5,
+        }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 3 : 1 }}>
+          <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>
+            {previewHints?.slots?.HEADING?.text || 'Dynamic visual mosaic'}
+          </div>
+          <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>
+            {previewHints?.slots?.SUBTITLE?.text || 'An interlocking six-part visual showcase across focus areas.'}
+          </div>
+        </div>
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: large ? 8 : 3,
+          }}
+        >
+          {/* Column 1: Tall (Image 1) / Short (Image 4) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3, height: '100%', minHeight: 0 }}>
+            <div style={{ flex: 1.48, minHeight: 0, width: '100%' }}>
+              <ImagePh large={large} />
+            </div>
+            <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
+              <ImagePh large={large} />
+            </div>
+          </div>
+          {/* Column 2: Short (Image 2) / Tall (Image 5) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3, height: '100%', minHeight: 0 }}>
+            <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
+              <ImagePh large={large} />
+            </div>
+            <div style={{ flex: 1.48, minHeight: 0, width: '100%' }}>
+              <ImagePh large={large} />
+            </div>
+          </div>
+          {/* Column 3: Tall (Image 3) / Short (Image 6) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3, height: '100%', minHeight: 0 }}>
+            <div style={{ flex: 1.48, minHeight: 0, width: '100%' }}>
+              <ImagePh large={large} />
+            </div>
+            <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
+              <ImagePh large={large} />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+  if (variant === 'staggered') {
+    return (
+      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: '0.8fr 1.2fr 1fr', gap: large ? 10 : 3 }}>
+        {[1, 2, 3, 4, 5, 6].map((n) => (
+          <div key={n} style={{ marginTop: n % 2 === 0 ? (large ? 12 : 4) : 0 }}><ImagePh large={large} /></div>
+        ))}
+      </div>
+    )
+  }
+  if (variant === 'centered') {
+    return (
+      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: large ? 10 : 3 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: large ? 10 : 3, width: '90%' }}>
+          {[1, 2, 3, 4].map((n) => <div key={n} style={{ minHeight: large ? 40 : 14 }}><ImagePh large={large} /></div>)}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 10 : 3, width: '70%' }}>
+          {[5, 6, 7].map((n) => <div key={n} style={{ minHeight: large ? 40 : 14 }}><ImagePh large={large} /></div>)}
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div
+      {...fp}
+      style={{
+        ...fp.style,
+        padding: pad(large),
+        display: 'flex',
+        flexDirection: 'column',
+        gap: large ? 8 : 2.5,
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 3 : 1 }}>
+        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>
+          {previewHints?.slots?.HEADING?.text || 'Comprehensive visual gallery'}
+        </div>
+        <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>
+          {previewHints?.slots?.SUBTITLE?.text || 'A curated showcase across six key visual highlights.'}
+        </div>
+      </div>
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gridTemplateRows: '1fr 1fr',
+          gap: large ? 8 : 2.5,
+        }}
+      >
+        {[1, 2, 3, 4, 5, 6].map((n) => (
+          <div key={n} style={{ width: '100%', height: '100%', minHeight: 0 }}>
+            <ImagePh large={large} />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function PolishedGridThreeImagesPreview({ previewHints, ...props }) {
+  const { large } = props
+  const variant = previewHints?.gridVariant || 'default'
+  const fp = frameProps(props)
+  const heading = previewHints?.slots?.HEADING?.text || (variant === 'grid' ? 'Trusted by Industry Leaders' : 'Partners')
+  const subtitle = previewHints?.slots?.SUBTITLE?.text || (variant === 'grid' ? 'Collaborating with visionary teams to deliver results' : 'Powering high-growth companies worldwide')
+
+  if (variant === 'grid' || variant === 'wall') {
+    return (
+      <div
+        {...fp}
+        style={{
+          ...fp.style,
+          padding: pad(large),
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          position: 'relative',
+          overflow: 'hidden',
+          background: '#FFFFFF',
+          boxSizing: 'border-box',
+        }}
+      >
+        {/* Ambient corner accents */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: large ? 70 : 24,
+            height: large ? 50 : 18,
+            background: 'radial-gradient(ellipse at 0% 0%, #EEF2FF 0%, #E0E7FF 40%, transparent 80%)',
+            pointerEvents: 'none',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            right: 0,
+            width: large ? 70 : 24,
+            height: large ? 50 : 18,
+            background: 'radial-gradient(ellipse at 100% 100%, #EEF2FF 0%, #E0E7FF 40%, transparent 80%)',
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* Header with Eyebrow rule */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: large ? 1.5 : 0.5, textAlign: 'center', width: '100%', zIndex: 1, marginBottom: large ? 3 : 1 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: large ? 4 : 1.5, justifyContent: 'center' }}>
+            <div style={{ width: large ? 16 : 6, height: 1.2, background: '#6366F1' }} />
+            <div style={{ fontSize: large ? '0.28rem' : '0.15rem', fontWeight: 700, color: '#4F46E5', letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+              {previewHints?.slots?.CATEGORY?.text || 'OUR PARTNERS'}
+            </div>
+            <div style={{ width: large ? 16 : 6, height: 1.2, background: '#6366F1' }} />
+          </div>
+          <div style={{ fontSize: large ? '0.54rem' : '0.28rem', fontWeight: 800, color: '#0B192C', lineHeight: 1.15, whiteSpace: 'nowrap' }}>
+            {heading}
+          </div>
+        </div>
+
+        {/* 6 Logo Cards */}
+        <div
+          style={{
+            flex: 1,
+            width: '100%',
+            minHeight: 0,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateRows: 'repeat(2, 1fr)',
+            gap: large ? 8 : 2.5,
+            marginTop: large ? 4 : 1,
+            zIndex: 1,
+          }}
+        >
+          {[1, 2, 3, 4, 5, 6].map((n) => (
+            <div
+              key={n}
+              style={{
+                background: '#F8FAFF',
+                border: '1px solid #E2E8F0',
+                borderRadius: large ? 8 : 3,
+                width: '100%',
+                height: '100%',
+                minHeight: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: large ? 6 : 2,
+                boxSizing: 'border-box',
+              }}
+            >
+              <ImagePh large={large} />
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // Logo Partner Strip
+  return (
+    <div
+      {...fp}
+      style={{
+        ...fp.style,
+        padding: pad(large),
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        boxSizing: 'border-box',
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%' }}>
+        <div style={{ fontSize: large ? '0.62rem' : '0.34rem', fontWeight: 800, color: theme.text, lineHeight: 1.15 }}>
+          {heading}
+        </div>
+      </div>
+      <div
+        style={{
+          width: '100%',
+          height: large ? 74 : 24,
+          minHeight: 0,
+          background: theme.card,
+          borderRadius: large ? 10 : 4,
+          padding: large ? 6 : 2,
+          boxSizing: 'border-box',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gap: large ? 8 : 3,
+          alignItems: 'center',
+          marginTop: large ? 6 : 2,
+          marginBottom: large ? 6 : 2,
+        }}
+      >
+        {[1, 2, 3, 4].map((n) => (
+          <div
+            key={n}
+            style={{
+              background: '#FFFFFF',
+              borderRadius: large ? 6 : 2.5,
+              height: '84%',
+              width: '100%',
+              minHeight: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: large ? 4 : 1.5,
+              boxSizing: 'border-box',
+            }}
+          >
+            <ImagePh large={large} />
+          </div>
+        ))}
+      </div>
+      <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted, fontWeight: 500, textAlign: 'center' }}>
+        {previewHints?.slots?.TRUST_LABEL?.text || 'Over 10,000+ teams build with our platform'}
+      </div>
+    </div>
+  )
+}
+
+export function PolishedLogoWallPreview({ previewHints, ...props }) {
+  const { large } = props
+  const fp = frameProps(props)
+  const heading = previewHints?.slots?.HEADING?.text || 'Trusted by leading teams'
+  const category = previewHints?.slots?.CATEGORY?.text || 'OUR PARTNERS'
+
+  return (
+    <div
+      {...fp}
+      style={{
+        ...fp.style,
+        padding: large ? '12px 14px 12px' : '4px 6px 4px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        background: '#FAFBFE',
+        position: 'relative',
+        overflow: 'hidden',
+        boxSizing: 'border-box',
+      }}
+    >
+      {/* Top-Left Ambient Organic Wave */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: large ? 68 : 22,
+          height: large ? 48 : 16,
+          background: 'radial-gradient(ellipse at 0% 0%, #EEF2FF 0%, #E0E7FF 45%, transparent 80%)',
+          pointerEvents: 'none',
+        }}
+      />
+      {/* Bottom-Right Ambient Organic Wave */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          right: 0,
+          width: large ? 68 : 22,
+          height: large ? 48 : 16,
+          background: 'radial-gradient(ellipse at 100% 100%, #EEF2FF 0%, #E0E7FF 45%, transparent 80%)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Header with Eyebrow rule */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: large ? 1.5 : 0.5, textAlign: 'center', width: '100%', zIndex: 1, marginBottom: large ? 4 : 1.5 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: large ? 4 : 1.5, justifyContent: 'center' }}>
+          <div style={{ width: large ? 16 : 6, height: 1.2, background: '#6366F1' }} />
+          <div style={{ fontSize: large ? '0.28rem' : '0.15rem', fontWeight: 700, color: '#4F46E5', letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+            {category}
+          </div>
+          <div style={{ width: large ? 16 : 6, height: 1.2, background: '#6366F1' }} />
+        </div>
+        <div style={{ fontSize: large ? '0.54rem' : '0.28rem', fontWeight: 800, color: '#0B192C', lineHeight: 1.15, whiteSpace: 'nowrap' }}>
+          {heading}
+        </div>
+      </div>
+
+      {/* 8 Logo Cards across 4 cols x 2 rows */}
+      <div
+        style={{
+          flex: 1,
+          width: '100%',
+          minHeight: 0,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(4, 1fr)',
+          gridTemplateRows: 'repeat(2, 1fr)',
+          gap: large ? 6 : 2.5,
+          zIndex: 1,
+        }}
+      >
+        {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+          <div
+            key={n}
+            style={{
+              background: '#F8FAFF',
+              border: '1px solid #E2E8F0',
+              borderRadius: large ? 6 : 2.5,
+              width: '100%',
+              height: '100%',
+              minHeight: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: large ? 4 : 1.5,
+              boxSizing: 'border-box',
+            }}
+          >
+            <ImagePh large={large} />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function PolishedLogoWallMasonryPreview({ previewHints, ...props }) {
+  const { large } = props
+  const fp = frameProps(props)
+  const heading = previewHints?.slots?.HEADING?.text || 'Trusted by leading teams'
+  const subtitle = previewHints?.slots?.SUBTITLE?.text || 'We work with innovative teams around the world to build better solutions, together.'
+  const category = previewHints?.slots?.CATEGORY?.text || 'OUR TEAM'
+
+  const cardStyle = {
+    background: '#F0F4FD',
+    border: '1px solid #E2E8F0',
+    borderRadius: large ? 6 : 2.5,
+    width: '100%',
+    height: '100%',
+    minHeight: 0,
+    minWidth: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    boxSizing: 'border-box',
+    padding: large ? 4 : 1.5,
+  }
+
+  return (
+    <div
+      {...fp}
+      style={{
+        ...fp.style,
+        padding: large ? '12px 14px 10px' : '4px 5px 3px',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        background: '#FAFBFE',
+        position: 'relative',
+        overflow: 'hidden',
+        boxSizing: 'border-box',
+      }}
+    >
+      {/* Top-Left Ambient Organic Wave */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: large ? 68 : 22,
+          height: large ? 48 : 16,
+          background: 'radial-gradient(ellipse at 0% 0%, #EEF2FF 0%, #E0E7FF 45%, transparent 80%)',
+          pointerEvents: 'none',
+        }}
+      />
+      {/* Bottom-Right Ambient Organic Wave */}
+      <div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          right: 0,
+          width: large ? 68 : 22,
+          height: large ? 48 : 16,
+          background: 'radial-gradient(ellipse at 100% 100%, #EEF2FF 0%, #E0E7FF 45%, transparent 80%)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Header with Eyebrow rule */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: large ? 1.5 : 0.5, textAlign: 'center', width: '100%', zIndex: 1, marginBottom: large ? 2 : 0.5 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: large ? 4 : 1.5, justifyContent: 'center' }}>
+          <div style={{ width: large ? 16 : 6, height: 1.2, background: '#6366F1' }} />
+          <div style={{ fontSize: large ? '0.28rem' : '0.15rem', fontWeight: 700, color: '#4F46E5', letterSpacing: '0.12em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+            {category}
+          </div>
+          <div style={{ width: large ? 16 : 6, height: 1.2, background: '#6366F1' }} />
+        </div>
+        <div style={{ fontSize: large ? '0.52rem' : '0.28rem', fontWeight: 800, color: '#0B192C', lineHeight: 1.15, whiteSpace: 'nowrap' }}>
+          {heading}
+        </div>
+        <div style={{ fontSize: large ? '0.26rem' : '0.14rem', color: '#64748B', lineHeight: 1.3, maxWidth: '92%' }}>
+          {subtitle}
+        </div>
+      </div>
+
+      {/* 8-Card Interlocking Masonry Grid (4 cols x 3 rows) */}
+      <div
+        style={{
+          flex: 1,
+          width: '100%',
+          minHeight: 0,
+          display: 'grid',
+          gridTemplateColumns: '227fr 179fr 290fr 172fr',
+          gridTemplateRows: '130fr 120fr 130fr',
+          gap: large ? 5 : 2,
+          zIndex: 1,
+        }}
+      >
+        {/* Card 1: Col 1, Row 1 (Landscape) */}
+        <div style={{ ...cardStyle, gridColumn: '1', gridRow: '1' }}>
+          <ImagePh large={large} />
+        </div>
+        {/* Card 2: Col 1, Row 2-3 (Tall Portrait) */}
+        <div style={{ ...cardStyle, gridColumn: '1', gridRow: '2 / 4' }}>
+          <ImagePh large={large} />
+        </div>
+        {/* Card 3: Col 2, Row 1-2 (Tall Portrait) */}
+        <div style={{ ...cardStyle, gridColumn: '2', gridRow: '1 / 3' }}>
+          <ImagePh large={large} />
+        </div>
+        {/* Card 4: Col 3, Row 1 (Landscape) */}
+        <div style={{ ...cardStyle, gridColumn: '3', gridRow: '1' }}>
+          <ImagePh large={large} />
+        </div>
+        {/* Card 5: Col 3, Row 2 (Landscape) */}
+        <div style={{ ...cardStyle, gridColumn: '3', gridRow: '2' }}>
+          <ImagePh large={large} />
+        </div>
+        {/* Card 6: Col 4, Row 1-2 (Tall Portrait) */}
+        <div style={{ ...cardStyle, gridColumn: '4', gridRow: '1 / 3' }}>
+          <ImagePh large={large} />
+        </div>
+        {/* Card 7: Col 2-3, Row 3 (Wide Landscape) */}
+        <div style={{ ...cardStyle, gridColumn: '2 / 4', gridRow: '3' }}>
+          <ImagePh large={large} />
+        </div>
+        {/* Card 8: Col 4, Row 3 (Landscape) */}
+        <div style={{ ...cardStyle, gridColumn: '4', gridRow: '3' }}>
+          <ImagePh large={large} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function PolishedGridTextImageCardsPreview({ previewHints, ...props }) {
+  const { large } = props
+  const variant = previewHints?.gridVariant || 'default'
+  const fp = frameProps(props)
+  if (variant === 'split') {
+    return (
+      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1fr 1fr', gap: large ? 10 : 3 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 6 : 2 }}>
+          <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>{previewHints.featureTitle || 'Describe this feature'}</div>
+          <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>{previewHints.featureBody || 'Explain what this section is about.'}</div>
+          <div style={{ flex: 1, minHeight: large ? 50 : 16 }}><ImagePh large={large} /></div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gap: large ? 8 : 3 }}>
+          {[1, 2].map((n) => <div key={n}><ImagePh large={large} /></div>)}
+        </div>
+      </div>
+    )
+  }
+
+  // Exact reference layout: Accent bar + Feature Title + Key Takeaway card + 3 equal gallery cards
+  const svg = gridTextImageCardsPreviewSvg()
+  return (
+    <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden', background: '#FFFFFF', borderRadius: large ? 12 : 6 }}>
+      <div
+        aria-hidden
+        style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none' }}
+        dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+      />
+    </div>
+  )
+}
+
+export function PolishedGridThreeImagesTextPreview({ previewHints, ...props }) {
+  const { large } = props
+  const variant = previewHints?.gridVariant || 'default'
+  const cols = previewHints.columns || [
+    { title: 'Feature One', body: 'Text one' },
+    { title: 'Feature Two', body: 'Text two' },
+    { title: 'Feature Three', body: 'Text three' },
+  ]
+  const fp = frameProps(props)
+  if (variant === 'horizontal') {
+    return (
+      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 10 : 3 }}>
+        {[0, 1, 2].map((i) => (
+          <div key={i} style={{ display: 'flex', flexDirection: 'row', gap: large ? 6 : 2, alignItems: 'center' }}>
+            <div style={{ width: large ? 48 : 16, height: large ? 48 : 16, flexShrink: 0 }}><ImagePh large={large} /></div>
+            <div>
+              {cols[i]?.title && <div style={{ fontSize: large ? '0.68rem' : '0.24rem', fontWeight: 700, color: theme.text, marginBottom: large ? 2 : 0 }}>{cols[i].title}</div>}
+              <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted }}>{cols[i]?.body}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+  if (variant === 'asymmetric') {
+    return (
+      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1.4fr 1fr 0.8fr', gap: large ? 10 : 3 }}>
+        {[0, 1, 2].map((i) => (
+          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: large ? 4 : 1 }}>
+            <div style={{ flex: 1, minHeight: large ? (i === 0 ? 70 : 50) : 16 }}><ImagePh large={large} /></div>
+            {cols[i]?.title && <div style={{ fontSize: large ? '0.68rem' : '0.24rem', fontWeight: 700, color: theme.text }}>{cols[i].title}</div>}
+            <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted }}>{cols[i]?.body}</div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+  // Default: balanced 3-column grid with images (50%), headings, body text
+  return (
+    <div
+      {...fp}
+      style={{
+        ...fp.style,
+        padding: pad(large),
+        display: 'flex',
+        flexDirection: 'column',
+        gap: large ? 8 : 2,
+      }}
+    >
+      {/* Image row — constrained to ~50% height */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 10 : 3, flex: '0 0 auto', height: large ? '45%' : '42%', minHeight: large ? 54 : 16, maxHeight: large ? 130 : 38 }}>
+        {[0, 1, 2].map((i) => <div key={i}><ImagePh large={large} /></div>)}
+      </div>
+      {/* Headings + body text per column */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 10 : 3, flex: 1, alignContent: 'start' }}>
+        {cols.slice(0, 3).map((c, i) => (
+          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: large ? 3 : 1 }}>
+            <div style={{ fontSize: large ? '0.78rem' : '0.28rem', fontWeight: 700, color: theme.text, lineHeight: 1.2 }}>{c.title || `Feature ${i + 1}`}</div>
+            <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted, lineHeight: 1.3 }}>{c.body}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function PolishedGridImagesTextCardsPreview({ previewHints, ...props }) {
+  const { large } = props
+  const variant = previewHints?.gridVariant || 'default'
+  const cols = previewHints.columns || [{ title: 'Feature A', body: 'Body' }, { title: 'Feature B', body: 'Body' }, { title: 'Feature C', body: 'Body' }]
+  const fp = frameProps(props)
+  if (variant === 'split') {
+    return (
+      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 3 }}>
+        {cols.slice(0, 3).map((col, i) => (
+          <div key={i} style={{ flex: 1, display: 'grid', gridTemplateColumns: i % 2 === 0 ? '1fr 1.2fr' : '1.2fr 1fr', gap: large ? 8 : 3, alignItems: 'center' }}>
+            {i % 2 === 0 ? (
+              <><div style={{ minHeight: large ? 40 : 14 }}><ImagePh large={large} /></div><div><div style={{ fontSize: large ? '0.68rem' : '0.26rem', fontWeight: 700, color: theme.text }}>{col.title}</div><div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted }}>{col.body}</div></div></>
+            ) : (
+              <><div><div style={{ fontSize: large ? '0.68rem' : '0.26rem', fontWeight: 700, color: theme.text }}>{col.title}</div><div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted }}>{col.body}</div></div><div style={{ minHeight: large ? 40 : 14 }}><ImagePh large={large} /></div></>
+            )}
+          </div>
+        ))}
+      </div>
+    )
+  }
+  if (variant === 'mosaic') {
+    return (
+      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1.3fr 1fr 0.9fr', gap: large ? 10 : 3, alignContent: 'start' }}>
+        {cols.slice(0, 3).map((col, i) => (
+          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: large ? 6 : 2, background: theme.card, borderRadius: large ? 8 : 3, padding: large ? 8 : 3 }}>
+            <div style={{ height: large ? (i === 0 ? 90 : 60) : 22 }}><ImagePh large={large} /></div>
+            <div style={{ fontSize: large ? '0.68rem' : '0.26rem', fontWeight: 700, color: theme.text }}>{col.title}</div>
+            <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted }}>{col.body}</div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+  return (
+    <div
+      {...fp}
+      style={{
+        ...fp.style,
+        padding: large ? '10% 5% 6%' : '12% 5% 7%',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: large ? 10 : 3,
+        alignContent: 'start',
+      }}
+    >
+      {cols.slice(0, 3).map((col, i) => (
+        <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: large ? 6 : 2, minHeight: 0 }}>
+          <div style={{ flex: '0 0 auto', height: large ? '48%' : '42%', minHeight: large ? 72 : 22, maxHeight: large ? 160 : 48 }}>
+            <ImagePh large={large} />
+          </div>
+          <div style={{ fontSize: large ? '0.68rem' : '0.26rem', fontWeight: 700, color: theme.text }}>{col.title}</div>
+          <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted }}>{col.body}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function PolishedGridMetricsMobilePreview({ previewHints, ...props }) {
+  const { large } = props
+  const variant = previewHints?.gridVariant || 'default'
+  const stats = previewHints.stats || [{ value: '100k', label: 'Metric' }, { value: '95%', label: 'Metric' }]
+  const fp = frameProps(props)
+  if (variant === 'phone_stack') {
+    return (
+      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1fr 1fr', gap: large ? 12 : 4 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 10 : 3 }}>
+          <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>{previewHints.slots?.FEATURE_TITLE?.text || 'Describe this feature'}</div>
+          <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>{previewHints.slots?.FEATURE_BODY?.text || 'Supporting copy.'}</div>
+          {stats.slice(0, 2).map((s, i) => (
+            <div key={i} style={{ background: theme.card, borderRadius: large ? 8 : 3, padding: large ? 10 : 4 }}>
+              <div style={{ fontSize: large ? '1.2rem' : '0.42rem', fontWeight: 800, color: theme.accent }}>{s.value}</div>
+              <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3, justifyContent: 'center' }}>
+          <DeviceFrame kind="phone" large={large}><ImagePh large={large} /></DeviceFrame>
+          <div style={{ opacity: 0.55, transform: 'scale(0.85)', transformOrigin: 'top center' }}>
+            <DeviceFrame kind="phone" large={large}><ImagePh large={large} /></DeviceFrame>
+          </div>
+        </div>
+      </div>
+    )
+  }
+  if (variant === 'devices') {
+    return (
+      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1.2fr 1fr 0.8fr', gap: large ? 10 : 3, alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3 }}>
+          <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>{previewHints.slots?.FEATURE_TITLE?.text || 'Describe this feature'}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: large ? 8 : 3 }}>
+            {stats.slice(0, 2).map((s, i) => (
+              <div key={i} style={{ background: theme.card, borderRadius: large ? 8 : 3, padding: large ? 8 : 3, textAlign: 'center' }}>
+                <div style={{ fontSize: large ? '1rem' : '0.36rem', fontWeight: 800, color: theme.accent }}>{s.value}</div>
+                <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.2rem', color: theme.muted }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <DeviceFrame kind="laptop" large={large}><ImagePh large={large} /></DeviceFrame>
+        <DeviceFrame kind="phone" large={large}><ImagePh large={large} /></DeviceFrame>
+      </div>
+    )
+  }
+  return (
+    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '2fr 1fr', gap: large ? 12 : 4 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 10 : 3 }}>
+        <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>{previewHints.slots?.FEATURE_TITLE?.text || 'Describe this feature'}</div>
+        <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>{previewHints.slots?.FEATURE_BODY?.text || 'Supporting copy.'}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: large ? 10 : 3 }}>
+          {stats.slice(0, 2).map((s, i) => (
+            <div key={i} style={{ background: theme.card, borderRadius: large ? 8 : 3, padding: large ? 10 : 4, textAlign: 'center' }}>
+              <div style={{ fontSize: large ? '1.2rem' : '0.42rem', fontWeight: 800, color: theme.accent }}>{s.value}</div>
+              <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <DeviceFrame kind="phone" large={large}><ImagePh large={large} /></DeviceFrame>
+    </div>
+  )
+}
+
+export function PolishedGridMetricsMasonryPreview({ previewHints, ...props }) {
+  const { large } = props
+  const variant = previewHints?.gridVariant || 'default'
+  const fp = frameProps(props)
+  const stats = Array.isArray(previewHints.stats) && previewHints.stats.length
+    ? previewHints.stats
+    : [
+        { value: '100k', label: 'Explain the meaning of this metric' },
+        { value: '95%', label: 'Explain the meaning of this metric' },
+      ]
+  const statBottom = stats[0] || { value: '100k', label: 'Explain the meaning of this metric' }
+  const statTop = stats[1] || { value: '95%', label: 'Explain the meaning of this metric' }
+  const columns = Array.isArray(previewHints.columns) ? previewHints.columns : []
+  const featLeft = {
+    title: previewHints.slots?.METRIC_TITLE_1?.text || columns[0]?.title || 'Describe this feature',
+    body: previewHints.slots?.METRIC_BODY_1?.text || columns[0]?.body || 'Explain what this section is about.',
+  }
+  const featRight = {
+    title: previewHints.slots?.METRIC_TITLE_3?.text || columns[2]?.title || columns[1]?.title || 'Describe this feature',
+    body: previewHints.slots?.METRIC_BODY_3?.text || columns[2]?.body || columns[1]?.body || 'Explain what this section is about.',
+  }
+  const slotSrc = (slotId) => previewHints.slots?.[slotId]?.imageUrl || previewHints.imageUrl || ''
+  const gap = large ? 8 : 3
+  const cardStyle = {
+    background: `linear-gradient(165deg, ${theme.accentSoft}, ${theme.card})`,
+    borderRadius: large ? 12 : 4,
+    padding: large ? 14 : 5,
+    display: 'flex',
+    minHeight: 0,
+    overflow: 'hidden',
+    boxSizing: 'border-box',
+  }
+  const statCardStyle = {
+    ...cardStyle,
+    background: theme.card,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: large ? 12 : 4,
+    padding: large ? 14 : 5,
+  }
+  const featureCardStyle = {
+    ...cardStyle,
+    flexDirection: 'column',
+    gap: large ? 6 : 2,
+  }
+  const areas = variant === 'staggered'
+    ? '"head head head head"'
+      + ' "statT featL featL featR"'
+      + ' "sq featL featL featR"'
+      + ' "statB statB featR featR"'
+      + ' "statB statB featR featR"'
+    : variant === 'asymmetric'
+      ? '"head head head head"'
+        + ' "featL featL featL featR"'
+        + ' "featL featL featL featR"'
+        + ' "statT sq featR featR"'
+        + ' "statB statB featR featR"'
+      : '"head head head head"'
+        + ' "featL featL statT statT"'
+        + ' "featL featL sq featR"'
+        + ' "statB statB statB featR"'
+        + ' "statB statB statB featR"'
+  return (
+    <div {...fp} style={{
+      ...fp.style,
+      padding: large ? '7% 5% 6%' : '9% 5% 7%',
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr 1fr 1fr',
+      gridTemplateRows: `auto repeat(4, minmax(0, 1fr))`,
+      gridTemplateAreas: areas,
+      gap,
+      height: '100%',
+      boxSizing: 'border-box',
+    }}>
+      <div style={{ gridArea: 'head', fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text, marginBottom: large ? 4 : 1 }}>
+        {previewHints.slots?.HEADING?.text || 'Performance highlights'}
+      </div>
+      <div style={{ ...featureCardStyle, gridArea: 'featL' }}>
+        <div style={{ fontSize: large ? '0.72rem' : '0.28rem', fontWeight: 700, color: theme.text }}>{featLeft.title}</div>
+        <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted, lineHeight: 1.35, flex: 1 }}>{featLeft.body}</div>
+      </div>
+      <div style={{ ...statCardStyle, gridArea: 'statT' }}>
+        <div style={{ fontSize: large ? '1.4rem' : '0.48rem', fontWeight: 800, color: theme.accent, lineHeight: 1, flexShrink: 0 }}>{statTop.value}</div>
+        <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted, lineHeight: 1.35 }}>{statTop.label}</div>
+      </div>
+      <div style={{ gridArea: 'sq', borderRadius: large ? 12 : 4, overflow: 'hidden', minHeight: 0, aspectRatio: '1 / 1', width: '100%', justifySelf: 'stretch', alignSelf: 'center' }}>
+        <PreviewImage large={large} src={slotSrc('METRIC_IMAGE_2')} />
+      </div>
+      <div style={{ ...statCardStyle, gridArea: 'statB' }}>
+        <div style={{ fontSize: large ? '1.4rem' : '0.48rem', fontWeight: 800, color: theme.accent, lineHeight: 1, flexShrink: 0 }}>{statBottom.value}</div>
+        <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted, lineHeight: 1.35 }}>{statBottom.label}</div>
+      </div>
+      <div style={{ ...featureCardStyle, gridArea: 'featR' }}>
+        <div style={{ fontSize: large ? '0.72rem' : '0.28rem', fontWeight: 700, color: theme.text }}>{featRight.title}</div>
+        <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted, lineHeight: 1.35, flex: 1 }}>{featRight.body}</div>
+      </div>
+    </div>
+  )
+}
+
+export function PolishedGridDeviceMockupsPreview({ previewHints, ...props }) {
+  const { large } = props
+  const variant = previewHints?.gridVariant || 'default'
+  const fp = frameProps(props)
+
+  const feature1Title = previewHints?.slots?.FEATURE_1_TITLE?.text || 'Describe this feature'
+  const feature1Body = previewHints?.slots?.FEATURE_1_BODY?.text || 'Full-featured desktop workspace'
+  const feature2Title = previewHints?.slots?.FEATURE_2_TITLE?.text || 'Describe this feature'
+  const feature2Body = previewHints?.slots?.FEATURE_2_BODY?.text || 'Seamless mobile companion'
+
+  const cardStyle = {
+    background: '#f8fafc',
+    borderRadius: large ? 10 : 5,
+    border: '1px solid #e2e8f0',
+    padding: large ? '10px 12px' : '4px 5px',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    boxShadow: '0 1px 3px rgba(15,23,42,0.04)',
+    height: '100%',
+    boxSizing: 'border-box',
+  }
+
+  if (variant === 'feature') {
+    return (
+      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1.25fr 0.85fr', gap: large ? 12 : 4, alignItems: 'stretch' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 6 : 2, height: '100%', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontSize: large ? '0.88rem' : '0.34rem', fontWeight: 800, color: theme.text, lineHeight: 1.2 }}>{feature1Title}</div>
+            <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted, lineHeight: 1.4, marginTop: large ? 4 : 1 }}>{feature1Body}</div>
+          </div>
+          <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <DeviceFrame kind="laptop" large={large}><ImagePh large={large} /></DeviceFrame>
+          </div>
+        </div>
+        <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <DeviceFrame kind="phone" large={large}><ImagePh large={large} /></DeviceFrame>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1.25fr 0.85fr', gap: large ? 10 : 3.5, alignItems: 'stretch' }}>
+      {/* Left Card: Desktop / Laptop */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 2 : 1, marginBottom: large ? 4 : 1.5 }}>
+          <div style={{ fontSize: large ? '0.78rem' : '0.3rem', fontWeight: 800, color: theme.text, lineHeight: 1.2 }}>
+            {feature1Title}
+          </div>
+          <div style={{ fontSize: large ? '0.52rem' : '0.2rem', color: theme.muted, lineHeight: 1.35, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {feature1Body}
+          </div>
+        </div>
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <DeviceFrame kind="laptop" large={large}><ImagePh large={large} /></DeviceFrame>
+        </div>
+      </div>
+
+      {/* Right Card: Mobile / Phone */}
+      <div style={cardStyle}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 2 : 1, marginBottom: large ? 4 : 1.5 }}>
+          <div style={{ fontSize: large ? '0.78rem' : '0.3rem', fontWeight: 800, color: theme.text, lineHeight: 1.2 }}>
+            {feature2Title}
+          </div>
+          <div style={{ fontSize: large ? '0.52rem' : '0.2rem', color: theme.muted, lineHeight: 1.35, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {feature2Body}
+          </div>
+        </div>
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <DeviceFrame kind="phone" large={large}><ImagePh large={large} /></DeviceFrame>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function PolishedChartDualPreview({ previewHints, ...props }) {
+  const { large } = props
+  const variant = previewHints.dataVariant || 'default'
+  const fp = frameProps(props)
+  const isSplit = variant === 'split'
+  return (
+    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 3 }}>
+      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>{previewHints.slots?.HEADING?.text || 'Compare metrics'}</div>
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: isSplit ? '1fr' : '1fr 1fr', gridTemplateRows: isSplit ? '1fr 1fr' : undefined, gap: large ? 10 : 3 }}>
+        {[1, 2].map((n) => (
+          <div key={n} style={{ background: theme.card, borderRadius: large ? 8 : 3, padding: large ? 8 : 3, minHeight: large ? 80 : 28 }}><BarChart large={large} /></div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function PolishedChartTriplePreview({ previewHints, ...props }) {
+  const { large } = props
+  const variant = previewHints.dataVariant || 'default'
+  const fp = frameProps(props)
+  const useCards = variant === 'cards'
+  return (
+    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 3 }}>
+      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>{previewHints.slots?.HEADING?.text || 'Three views'}</div>
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: variant === 'horizontal' ? 'repeat(3, 1fr)' : 'repeat(3, 1fr)', gap: large ? 8 : 3 }}>
+        {[1, 2, 3].map((n) => (
+          <div key={n} style={{ background: useCards ? theme.card : (variant === 'horizontal' ? 'transparent' : theme.card), border: useCards ? `1px solid ${theme.accentBorder}` : 'none', borderRadius: large ? 8 : 3, padding: large ? 6 : 2, minHeight: large ? 70 : 24 }}><BarChart large={large} values={[40, 70, 55, 90]} /></div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function PolishedChartCardGridPreview({ previewHints, ...props }) {
+  const { large } = props
+  const variant = previewHints?.dataVariant || 'default'
+  const fp = frameProps(props)
+  const isSplit = variant === 'split'
+  return (
+    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: isSplit ? '1fr' : '1fr 1fr', gridTemplateRows: isSplit ? '1fr 1fr' : undefined, gap: large ? 10 : 3 }}>
+      {[1, 2].map((n) => (
+        <div key={n} style={{ background: theme.card, borderRadius: large ? 8 : 3, padding: large ? 10 : 4, display: 'flex', flexDirection: variant === 'horizontal' ? 'row' : 'column', alignItems: variant === 'horizontal' ? 'center' : 'stretch', gap: large ? 6 : 2 }}>
+          <div style={{ fontSize: large ? '0.72rem' : '0.28rem', fontWeight: 700, color: theme.text, flexShrink: 0 }}>{n === 1 ? 'Metric A' : 'Metric B'}</div>
+          <div style={{ flex: 1, minHeight: large ? 60 : 20 }}><BarChart large={large} /></div>
+          {variant !== 'horizontal' && (
+            <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted, textAlign: 'center' }}>Caption</div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export function PolishedChartTripleContextPreview({ previewHints, ...props }) {
+  const { large } = props
+  const variant = previewHints.dataVariant || 'default'
+  const fp = frameProps(props)
+  const useCards = variant === 'cards'
+  return (
+    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 8 : 3 }}>
+      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>{previewHints.slots?.HEADING?.text || 'Quarterly breakdown'}</div>
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 8 : 3 }}>
+        {[1, 2, 3].map((n) => (
+          <div key={n} style={{ display: 'flex', flexDirection: 'column', gap: large ? 4 : 2, background: useCards ? theme.card : 'transparent', borderRadius: useCards ? (large ? 8 : 3) : 0, padding: useCards ? (large ? 6 : 2) : 0 }}>
+            <div style={{ flex: 1, minHeight: large ? 50 : 18, background: useCards ? 'transparent' : theme.card, borderRadius: large ? 6 : 2 }}><BarChart large={large} values={[30, 50, 40]} /></div>
+            <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.2rem', color: theme.muted }}>Context {n}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function PolishedChartDonutSplitPreview({ previewHints, ...props }) {
+  const { large } = props
+  const variant = previewHints.dataVariant || 'default'
+  const fp = frameProps(props)
+  const isBottom = variant === 'bottom'
+  const isRight = variant === 'right'
+  const donut = <div style={{ minHeight: large ? 100 : 36 }}><DonutChart large={large} /></div>
+  const text = (
+    <div>
+      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text, marginBottom: large ? 8 : 3 }}>{previewHints.slots?.HEADING?.text || 'Market share'}</div>
+      <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>{previewHints.bodyText || 'Supporting context for the chart.'}</div>
+    </div>
+  )
+  return (
+    <div {...fp} style={{
+      ...fp.style,
+      padding: pad(large),
+      display: isBottom ? 'flex' : 'grid',
+      flexDirection: isBottom ? 'column' : undefined,
+      gridTemplateColumns: isBottom ? undefined : '1fr 1fr',
+      gap: large ? 12 : 4,
+      alignItems: 'center',
+    }}>
+      {isRight ? (<>{text}{donut}</>) : isBottom ? (<>{donut}{text}</>) : (<>{donut}{text}</>)}
+    </div>
+  )
+}
+
+export function PolishedChartDonutRowPreview({ previewHints, ...props }) {
+  const { large } = props
+  const variant = previewHints.dataVariant || 'default'
+  const fp = frameProps(props)
+  const useCards = variant === 'cards'
+  const donutLabels = ['Category A', 'Category B', 'Category C']
+  const donutVals = ['32%', '58%', '74%']
+  return (
+    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 8 : 2 }}>
+      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>{previewHints.slots?.HEADING?.text || 'Segment mix'}</div>
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 8 : 2 }}>
+        {[0, 1, 2].map((n) => (
+          <div
+            key={n}
+            style={{
+              background: theme.card,
+              border: useCards ? `1px solid ${theme.accentBorder}` : `1px solid ${theme.accentBorder}20`,
+              borderRadius: large ? 10 : 3,
+              minHeight: large ? 70 : 24,
+              padding: large ? 6 : 2,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: large ? 4 : 1,
+            }}
+          >
+            <div style={{ flex: 1, width: '100%' }}><DonutChart large={large} /></div>
+            {large && (
+              <>
+                <div style={{ fontSize: '0.5rem', fontWeight: 800, color: theme.text }}>{donutVals[n]}</div>
+                <div style={{ fontSize: '0.38rem', color: theme.muted }}>{donutLabels[n]}</div>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function PolishedTablePreview({ previewHints, ...props }) {
+  const { large } = props
+  const variant = previewHints.dataVariant || 'default'
+  const fp = frameProps(props)
+  const headers = previewHints.tableHeaders || ['Column A', 'Column B', 'Column C']
+  const isMatrix = variant === 'matrix'
+  return (
+    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 3 }}>
+      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>{previewHints.slots?.HEADING?.text || 'Data table'}</div>
+      {isMatrix ? (
+        <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: large ? 4 : 2 }}>
+          {[1, 2, 3, 4, 5, 6].map((n) => (
+            <div key={n} style={{ background: theme.card, borderRadius: large ? 4 : 2, minHeight: large ? 28 : 10 }} />
+          ))}
+        </div>
+      ) : (
+        <div style={{ flex: 1, background: theme.card, borderRadius: large ? 8 : 3, padding: large ? 10 : 4, border: variant === 'cards' ? `1px solid ${theme.accentBorder}` : 'none' }}><TableMini large={large} headers={headers} /></div>
+      )}
+    </div>
+  )
+}
+
+export function PolishedTableWithDescPreview({ previewHints, ...props }) {
+  const { large } = props
+  const variant = previewHints.dataVariant || 'default'
+  const fp = frameProps(props)
+  const isSide = variant === 'side'
+  const content = (
+    <>
+      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>{previewHints.slots?.HEADING?.text || 'Data table'}</div>
+      <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>{previewHints.bodyText || 'Table description.'}</div>
+      <div style={{ flex: 1, background: theme.card, borderRadius: large ? 8 : 3, padding: large ? 10 : 4 }}><TableMini large={large} /></div>
+    </>
+  )
+  if (isSide) {
+    return (
+      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: large ? 10 : 3, alignItems: 'start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: large ? 8 : 3 }}>
+          <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>{previewHints.slots?.HEADING?.text || 'Data table'}</div>
+          <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>{previewHints.bodyText || 'Table description.'}</div>
+        </div>
+        <div style={{ background: theme.card, borderRadius: large ? 8 : 3, padding: large ? 10 : 4, minHeight: large ? 80 : 28 }}><TableMini large={large} /></div>
+      </div>
+    )
+  }
+  return (
+    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: variant === 'top' ? 'column' : 'column', gap: large ? 8 : 3 }}>
+      {content}
+    </div>
+  )
+}
+
+export function PolishedTableDualPreview({ previewHints, ...props }) {
+  const { large } = props
+  const variant = previewHints.dataVariant || 'default'
+  const fp = frameProps(props)
+  const isSplit = variant === 'split'
+  const useCards = variant === 'cards'
+  return (
+    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', gap: large ? 10 : 3 }}>
+      <div style={{ fontSize: large ? PREVIEW_TITLE_FS.large : '0.36rem', fontWeight: 800, color: theme.text }}>{previewHints.slots?.HEADING?.text || 'Compare datasets'}</div>
+      <div style={{ flex: 1, display: 'grid', gridTemplateColumns: isSplit ? '1fr' : '1fr 1fr', gridTemplateRows: isSplit ? '1fr 1fr' : undefined, gap: large ? 10 : 3 }}>
+        {[1, 2].map((n) => (
+          <div key={n} style={{ display: 'flex', flexDirection: 'column', gap: large ? 4 : 2 }}>
+            <div style={{ flex: 1, background: theme.card, borderRadius: large ? 8 : 3, padding: large ? 8 : 3, border: useCards ? `1px solid ${theme.accentBorder}` : 'none' }}><TableMini large={large} rows={3} /></div>
+            <div style={{ fontSize: large ? PREVIEW_CAPTION_FS.large : '0.22rem', color: theme.muted }}>Description {n}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function PolishedTableDualSharedHeaderPreview({ previewHints, ...props }) {
+  const fp = frameProps(props)
+  const isCards = String(previewHints?.layout_id || '').toLowerCase().includes('cards')
+  const svg = isCards ? tableTwoSameHeaderCardsPreviewSvg() : tableTwoSameHeaderPreviewSvg()
+  return (
+    <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+      <div
+        aria-hidden
+        style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+        dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+      />
+    </div>
+  )
+}
+
+export function PolishedStatHeroPreview({ previewHints = {}, ...props }) {
+  const { large } = props
+  if (isMetricSingleLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_single_v1') {
+    const svg = metricSinglePreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (isMetricSingleSplitLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_single_split_v1') {
+    const svg = metricSingleSplitPreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (isMetricTwoLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_two_v1') {
+    const svg = metricTwoPreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (isMetricTwoSplitLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_two_split_v1') {
+    const svg = metricTwoSplitPreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (isMetricThreeLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_three_v1') {
+    const svg = metricThreePreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (isMetricThreeCardsLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_three_cards_v1') {
+    const svg = metricThreeCardsPreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (isMetricFourLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_four_v1') {
+    const svg = metricFourPreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (isMetricFourCardsLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_four_cards_v1') {
+    const svg = metricFourCardsPreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (isMetricFiveLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_five_v1') {
+    const svg = metricFivePreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  if (isMetricFiveCardsLayout(previewHints?.layout_id) || previewHints?.layout_id === 'metric_five_cards_v1') {
+    const svg = metricFiveCardsPreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  const isCards = isMetricSixCardsLayout(previewHints?.layout_id, previewHints) ||
+                  previewHints?.layout_id === 'metric_six_cards_v1' ||
+                  previewHints?.dataVariant === 'cards' ||
+                  previewHints?.mode === 'metric_six_cards_v1'
+  if (isCards) {
+    const svg = metricSixCardsPreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  const isPara = isMetricSixParaLayout(previewHints?.layout_id, previewHints) ||
+                 previewHints?.layout_id === 'metric_six_para_v1' ||
+                 previewHints?.mode === 'stat_six_para' ||
+                 previewHints?.mode === 'metric_six_para_v1'
+  if (isPara) {
+    const svg = metricSixParaPreviewSvg(previewHints, theme)
+    const fp = frameProps(props)
+    return (
+      <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+        <div
+          aria-hidden
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+        />
+      </div>
+    )
+  }
+  const variant = previewHints.dataVariant || 'default'
+  const stat = (previewHints.stats || [{ value: '98%', label: 'Customer satisfaction' }])[0]
+  const fp = frameProps(props)
+  const isSplit = variant === 'split'
+  const isHero = variant === 'hero'
+  const valueSize = isHero ? (large ? '4.2rem' : '1rem') : (large ? '3.5rem' : '0.9rem')
+  if (isSplit) {
+    return (
+      <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'grid', gridTemplateColumns: '1fr 1fr', gap: large ? 12 : 4, alignItems: 'center' }}>
+        <div style={{ fontSize: valueSize, fontWeight: 900, color: theme.accent, lineHeight: 1, textAlign: 'center' }}>{stat.value}</div>
+        <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted }}>{stat.label}</div>
+      </div>
+    )
+  }
+  return (
+    <div {...fp} style={{ ...fp.style, padding: pad(large), display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: large ? 12 : 4 }}>
+      <div style={{ fontSize: valueSize, fontWeight: 900, color: theme.accent, lineHeight: 1 }}>{stat.value}</div>
+      <div style={{ fontSize: large ? PREVIEW_BODY_FS.large : PREVIEW_BODY_FS.small, color: theme.muted, textAlign: 'center' }}>{stat.label}</div>
+    </div>
+  )
+}
+
+export function PolishedStatSixCardsPreview({ previewHints, ...props }) {
+  const svg = metricSixCardsPreviewSvg(previewHints, theme)
+  const fp = frameProps(props)
+  return (
+    <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+      <div
+        aria-hidden
+        style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+        dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+      />
+    </div>
+  )
+}
+
+export function PolishedStatSixParaPreview({ previewHints, ...props }) {
+  const isCards = isMetricSixCardsLayout(previewHints?.layout_id, previewHints) ||
+                  previewHints?.layout_id === 'metric_six_cards_v1' ||
+                  previewHints?.dataVariant === 'cards' ||
+                  previewHints?.mode === 'metric_six_cards_v1'
+  const svg = isCards ? metricSixCardsPreviewSvg(previewHints, theme) : metricSixParaPreviewSvg(previewHints, theme)
+  const fp = frameProps(props)
+  return (
+    <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+      <div
+        aria-hidden
+        style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+        dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+      />
+    </div>
+  )
+}
+
+export function PolishedStatVerticalPreview({ previewHints, ...props }) {
+  const isCards = isMetricThreeVerticalCardsLayout(previewHints?.layout_id, previewHints) ||
+                  previewHints?.layout_id === 'metric_three_vertical_cards_v1' ||
+                  previewHints?.dataVariant === 'cards' ||
+                  previewHints?.mode === 'metric_three_vertical_cards_v1'
+  const svg = isCards
+    ? metricThreeVerticalCardsPreviewSvg(previewHints, theme)
+    : metricThreeVerticalPreviewSvg(previewHints, theme)
+  const fp = frameProps(props)
+  return (
+    <div {...fp} style={{ ...fp.style, position: 'relative', overflow: 'hidden' }}>
+      <div
+        aria-hidden
+        style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+        dangerouslySetInnerHTML={{ __html: svg.replace('<svg ', '<svg style="width:100%;height:100%;" ') }}
+      />
+    </div>
+  )
+}
+
+export const EXTENDED_PREVIEW_MODES = {
+  grid_bento_three: PolishedGridBentoThreePreview,
+  grid_bento_four: PolishedGridBentoFourPreview,
+  grid_four_mosaic: PolishedGridFourMosaicPreview,
+  grid_six_images: PolishedGridSixImagesPreview,
+  grid_three_images: PolishedGridThreeImagesPreview,
+  logo_partner_grid: PolishedGridThreeImagesPreview,
+  logo_partner_strip: PolishedGridThreeImagesPreview,
+  logo_wall: PolishedLogoWallPreview,
+  logo_wall_masonry: PolishedLogoWallMasonryPreview,
+  grid_text_image_cards: PolishedGridTextImageCardsPreview,
+  grid_three_images_text: PolishedGridThreeImagesTextPreview,
+  grid_images_text_cards: PolishedGridImagesTextCardsPreview,
+  grid_metrics_mobile: PolishedGridMetricsMobilePreview,
+  grid_metrics_masonry: PolishedGridMetricsMasonryPreview,
+  grid_device_mockups: PolishedGridDeviceMockupsPreview,
+  chart_dual: PolishedChartDualPreview,
+  chart_triple: PolishedChartTriplePreview,
+  chart_card_grid: PolishedChartCardGridPreview,
+  chart_triple_context: PolishedChartTripleContextPreview,
+  chart_donut_split: PolishedChartDonutSplitPreview,
+  chart_donut_row: PolishedChartDonutRowPreview,
+  table_preview: PolishedTablePreview,
+  table_with_desc: PolishedTableWithDescPreview,
+  table_dual: PolishedTableDualPreview,
+  table_dual_shared_header: PolishedTableDualSharedHeaderPreview,
+  stat_hero: PolishedStatHeroPreview,
+  metric_two_v1: PolishedStatHeroPreview,
+  metric_two_split_v1: PolishedStatHeroPreview,
+  metric_three_v1: PolishedStatHeroPreview,
+  metric_three_cards_v1: PolishedStatHeroPreview,
+  metric_four_v1: PolishedStatHeroPreview,
+  metric_four_cards_v1: PolishedStatHeroPreview,
+  metric_five_v1: PolishedStatHeroPreview,
+  metric_five_cards_v1: PolishedStatHeroPreview,
+  stat_six_para: PolishedStatSixParaPreview,
+  metric_six_para_v1: PolishedStatSixParaPreview,
+  metric_six_cards_v1: PolishedStatSixCardsPreview,
+  stat_vertical: PolishedStatVerticalPreview,
+  metric_three_vertical_v1: PolishedStatVerticalPreview,
+  metric_three_vertical_cards_v1: PolishedStatVerticalPreview,
+}

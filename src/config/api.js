@@ -5,9 +5,10 @@ const API_CONFIG = {
   
   // API Endpoints (matching your backend documentation)
   ENDPOINTS: {
-    // Early Access (public, no auth)
-    EARLY_ACCESS: {
-      REQUEST: '/api/early-access/request',
+    GRAPHICS: {
+      LIST: '/api/graphics',
+      SEARCH: '/api/graphics/search',
+      GET: (id) => `/api/graphics/${id}`,
     },
 
     // Authentication
@@ -42,7 +43,7 @@ const API_CONFIG = {
       // user settings endpoints are under /api/user/settings
       USER_SETTINGS: {
         APPEARANCE: '/api/user/settings/appearance',
-        NOTIFICATIONS: '/api/user/settings/notifications'
+        NOTIFICATIONS: '/api/user/settings/notifications',
       },
       INBOX: {
         LIST: '/api/user/inbox',
@@ -71,11 +72,14 @@ const API_CONFIG = {
       DELETE: (workspaceId, assetId) => `/api/assets/${workspaceId}/${assetId}`,
     },
 
-    // Video library (completed final renders)
+    // Video library (completed final renders / Remotion exports)
     VIDEO_LIBRARY: {
       USER: '/api/user/videos',
       WORKSPACE: (workspaceId) => `/api/workspaces/${workspaceId}/videos`,
     },
+
+    // Workspace content tabs: Videos (VIDEO projects) / Presentations / Image Gen
+    WORKSPACE_LIBRARY: (workspaceId) => `/api/workspaces/${workspaceId}/library`,
 
     // Credits API
     CREDITS: {
@@ -116,6 +120,15 @@ const API_CONFIG = {
       }
     },
 
+    // Generic project actions shared by videos & presentations
+    // (a presentation's project id is its presentationId).
+    PROJECTS: {
+      ASSIGNEE: (workspaceId, projectId) =>
+        `/api/workspaces/${workspaceId}/projects/${projectId}/assignee`,
+      SCENE_ASSIGNEE: (workspaceId, projectId, sceneId) =>
+        `/api/workspaces/${workspaceId}/projects/${projectId}/scenes/${sceneId}/assignee`,
+    },
+
     // Project comments
     PROJECT_COMMENTS: {
       BASE: (workspaceId, projectId) =>
@@ -124,7 +137,218 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/projects/${projectId}/comments/${commentId}`,
       MENTIONABLE_USERS: (workspaceId, projectId) =>
         `/api/workspaces/${workspaceId}/projects/${projectId}/comments/mentionable-users`,
-    }
+      RESOLVE: (workspaceId, projectId, commentId) =>
+        `/api/workspaces/${workspaceId}/projects/${projectId}/comments/${commentId}/resolve`,
+      UNRESOLVE: (workspaceId, projectId, commentId) =>
+        `/api/workspaces/${workspaceId}/projects/${projectId}/comments/${commentId}/unresolve`,
+    },
+
+    // Shared Google Fonts catalog (user-scoped)
+    FONTS: {
+      CATALOG: '/api/fonts/catalog',
+      CSS: '/api/fonts/css',
+    },
+
+    // Brand Kits (workspace branding)
+    BRAND_KITS: {
+      LIST: (workspaceId) => `/api/workspaces/${workspaceId}/brand-kits`,
+      ONE: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}`,
+      SET_DEFAULT: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/set-default`,
+      HEALTH: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/health`,
+      MEDIA: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/media`,
+      MEDIA_ONE: (workspaceId, brandKitId, mediaId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/media/${mediaId}`,
+      MEDIA_STREAM: (workspaceId, brandKitId, mediaId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/media/${mediaId}/stream`,
+      SUGGEST_COLORS: (workspaceId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/suggest/colors`,
+      SUGGEST_FONTS: (workspaceId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/suggest/fonts`,
+      SUGGEST_VOICE: (workspaceId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/suggest/voice`,
+      SUGGEST_IMAGE_STYLE: (workspaceId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/suggest/image-style`,
+      SUGGEST_LOGO_VARIANTS: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/suggest/logo-variants`,
+      MOCKUPS_CATALOG: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/mockups/catalog`,
+      MOCKUPS: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/mockups`,
+      MOCKUPS_GENERATE: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/mockups/generate`,
+      GUIDELINES: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/guidelines`,
+      GUIDELINES_PDF: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/guidelines/pdf`,
+      GUIDELINES_GENERATE: (workspaceId, brandKitId) =>
+        `/api/workspaces/${workspaceId}/brand-kits/${brandKitId}/guidelines/generate`,
+    },
+
+    // Image Gen (AI image studio)
+    IMAGE_GEN: {
+      MODELS: '/api/image-gen/models',
+      FORMATS: '/api/image-gen/formats',
+      STYLES: '/api/image-gen/styles',
+      ARCHETYPES: '/api/image-gen/archetypes',
+      ESTIMATE: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/estimate`,
+      CONTEXT: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/context`,
+      CONTEXT_ONE: (workspaceId, contextId) =>
+        `/api/image-gen/workspaces/${workspaceId}/context/${contextId}`,
+      GENERATE: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/generate`,
+      GENERATIONS: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/generations`,
+      GENERATION: (workspaceId, generationId) =>
+        `/api/image-gen/workspaces/${workspaceId}/generations/${generationId}`,
+      REGENERATE: (workspaceId, generationId) =>
+        `/api/image-gen/workspaces/${workspaceId}/generations/${generationId}/regenerate`,
+      TWEAK: (workspaceId, generationId) =>
+        `/api/image-gen/workspaces/${workspaceId}/generations/${generationId}/tweak`,
+      DOWNLOAD: (workspaceId, generationId) =>
+        `/api/image-gen/workspaces/${workspaceId}/generations/${generationId}/download`,
+      FEEDBACK: (workspaceId, generationId) =>
+        `/api/image-gen/workspaces/${workspaceId}/generations/${generationId}/feedback`,
+      HIDE: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/generations/hide`,
+      RESTORE: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/generations/restore`,
+      PURGE: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/generations/purge`,
+      THREADS: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/threads`,
+      THREAD: (workspaceId, threadId) =>
+        `/api/image-gen/workspaces/${workspaceId}/threads/${threadId}`,
+      THREAD_MESSAGES: (workspaceId, threadId) =>
+        `/api/image-gen/workspaces/${workspaceId}/threads/${threadId}/messages`,
+      THREAD_MOVE: (workspaceId, threadId) =>
+        `/api/image-gen/workspaces/${workspaceId}/threads/${threadId}/move-folder`,
+    },
+
+    // Design canvas (Canva-style multi-page canvas editor)
+    CANVASES: {
+      LIST: (workspaceId) => `/api/workspaces/${workspaceId}/canvases`,
+      ONE: (workspaceId, canvasId) => `/api/workspaces/${workspaceId}/canvases/${canvasId}`,
+      DATA: (workspaceId, canvasId) => `/api/workspaces/${workspaceId}/canvases/${canvasId}/data`,
+      MOVE_FOLDER: (workspaceId, canvasId) =>
+        `/api/workspaces/${workspaceId}/canvases/${canvasId}/move-folder`,
+    },
+
+    // Presentations (AI PPT / Canvas)
+    PRESENTATIONS: {
+      LIST: (workspaceId) => `/api/workspaces/${workspaceId}/presentations`,
+      SUGGEST_VIBE_PALETTE: (workspaceId) =>
+        `/api/workspaces/${workspaceId}/presentations/suggest-vibe-palette`,
+      ONE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}`,
+      PREVIEW: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/preview`,
+      TEMPLATES: (workspaceId) => `/api/workspaces/${workspaceId}/presentation-templates`,
+      DECK_PACKS: (workspaceId) => `/api/workspaces/${workspaceId}/presentation-deck-packs`,
+      DECK_PACK: (workspaceId, packId) =>
+        `/api/workspaces/${workspaceId}/presentation-deck-packs/${packId}`,
+      TEMPLATE: (workspaceId, templateId) =>
+        `/api/workspaces/${workspaceId}/presentation-templates/${templateId}`,
+      THEMES: (workspaceId) => `/api/workspaces/${workspaceId}/presentation-themes`,
+      ELEMENT_PRESETS: (workspaceId) => `/api/workspaces/${workspaceId}/presentation-elements`,
+      STATUS: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/status`,
+      CREDIT_ESTIMATE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/credit-estimate`,
+      OUTLINE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/outline`,
+      THEME: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/theme`,
+      APPLY_BRAND_KIT: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/apply-brand-kit`,
+      GENERATE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/generate`,
+      THUMBNAIL: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/thumbnail`,
+      THUMBNAIL_IMAGE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/thumbnail/image`,
+      SLIDES: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides`,
+      SLIDE: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}`,
+      SLIDE_DUPLICATE: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/duplicate`,
+      // Per-slide assignee — dedicated route so OWNER/ADMIN gating & assign notifications
+      // stay separate from the generic SLIDE PATCH (same reasoning as the project-level route).
+      SLIDE_ASSIGNEE: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/assignee`,
+      SLIDES_REORDER: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/reorder`,
+      APPLY_LAYOUT: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/apply-layout`,
+      CANVAS: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/canvas`,
+      SLIDE_ELEMENTS: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/elements`,
+      SLIDE_ELEMENT: (workspaceId, presentationId, slideId, elementId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/elements/${elementId}`,
+      SLIDE_ELEMENTS_REORDER: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/elements/reorder`,
+      SLIDE_ELEMENTS_BATCH: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/elements/batch`,
+      SLIDE_ELEMENTS_GROUP: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/elements/group`,
+      SLIDE_ELEMENTS_UNGROUP: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/elements/ungroup`,
+      SLIDE_ELEMENTS_ALIGN: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/elements/align`,
+      SLIDE_MEDIA: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/media`,
+      ATTACH_ASSET: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/attach-asset`,
+      INSERT_STOCK: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/insert-stock`,
+      REGENERATE: (workspaceId, presentationId, slideId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/regenerate`,
+      EXPORT: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/export`,
+      EXPORT_STATUS: (workspaceId, presentationId, exportId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/export/${exportId}`,
+      IMPORT: (workspaceId) => `/api/workspaces/${workspaceId}/presentations/import`,
+      DUPLICATE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/duplicate`,
+      SHARE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/share`,
+      SHARE_ROLE: (workspaceId, presentationId, role) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/share/${role}`,
+      SHARE_ROLE_ROTATE: (workspaceId, presentationId, role) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/share/${role}/rotate`,
+      SHARE_ROTATE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/share/rotate`,
+      SHARE_VIEWERS: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/share/viewers`,
+      SHARE_PRESENCE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/share/presence`,
+      PRESENCE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/presence`,
+      PRESENCE_LEAVE: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/presence/leave`,
+      COMMENTS: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/comments`,
+      COMMENT: (workspaceId, presentationId, commentId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/comments/${commentId}`,
+      COMMENT_RESOLVE: (workspaceId, presentationId, commentId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/comments/${commentId}/resolve`,
+      COMMENT_UNRESOLVE: (workspaceId, presentationId, commentId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/comments/${commentId}/unresolve`,
+      COMMENT_MENTIONS: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/comments/mentionable-users`,
+      PUBLIC_DECK: (token) => `/api/p/${encodeURIComponent(token)}`,
+      PUBLIC_SESSION: (token) => `/api/p/${encodeURIComponent(token)}/session`,
+      PUBLIC_PRESENCE: (token) => `/api/p/${encodeURIComponent(token)}/presence`,
+      PUBLIC_PRESENCE_LEAVE: (token) => `/api/p/${encodeURIComponent(token)}/presence/leave`,
+      PUBLIC_COMMENTS: (token) => `/api/p/${encodeURIComponent(token)}/comments`,
+      PUBLIC_COMMENT: (token, commentId) =>
+        `/api/p/${encodeURIComponent(token)}/comments/${encodeURIComponent(commentId)}`,
+      PUBLIC_COMMENT_RESOLVE: (token, commentId) =>
+        `/api/p/${encodeURIComponent(token)}/comments/${encodeURIComponent(commentId)}/resolve`,
+      PUBLIC_COMMENT_UNRESOLVE: (token, commentId) =>
+        `/api/p/${encodeURIComponent(token)}/comments/${encodeURIComponent(commentId)}/unresolve`,
+      PUBLIC_COMMENT_MENTIONS: (token) =>
+        `/api/p/${encodeURIComponent(token)}/comments/mentionable-users`,
+    },
   },
   
   // Default headers
@@ -132,6 +356,8 @@ const API_CONFIG = {
     'Content-Type': 'application/json'
   }
 }
+
+import { triggerSessionExpired } from '../utils/apiError.js'
 
 // Helper function to build full URLs
 export const buildUrl = (endpoint) => {
@@ -145,6 +371,14 @@ export const getAuthHeaders = () => {
     ...API_CONFIG.HEADERS,
     ...(token && { 'Authorization': `Bearer ${token}` })
   }
+}
+
+// Helper function to check fetch response status for auth expiration
+export const checkAuthResponse = (response) => {
+  if (response && response.status === 401) {
+    triggerSessionExpired()
+  }
+  return response
 }
 
 export default API_CONFIG

@@ -7,6 +7,7 @@ import {
   sendClipBackward,
   sendClipToBack,
   isCanvasNudgeableClip,
+  isBackgroundClip,
   snapPoint,
 } from '../utils/editorLayerUtils';
 import { buildSceneMusicClip } from '../utils/audioClipUtils';
@@ -17,6 +18,9 @@ import {
   ungroupGroup,
   isGroupClip,
 } from '../utils/editorGroupUtils';
+import { clampPlacementOverflow } from '../utils/canvasOverflowUtils';
+import { COMPOSITION_W, COMPOSITION_H } from '../utils/editorPlacementUtils';
+import { resolveClipRect } from '../utils/clipLayout';
 
 export function useEditorUx({
   project,
@@ -168,7 +172,23 @@ export function useEditorUx({
             ...s,
             clips: s.clips.map((c) => {
               if (c.id !== layerId || c.locked) return c;
-              return { ...c, position: snapped, _userPlaced: true };
+              if (isBackgroundClip(c)) {
+                return { ...c, position: snapped, _userPlaced: true };
+              }
+              const layout = resolveClipRect({ ...c, position: snapped });
+              const placed = clampPlacementOverflow(
+                snapped.x,
+                snapped.y,
+                layout.size.width,
+                layout.size.height,
+                COMPOSITION_W,
+                COMPOSITION_H
+              );
+              return {
+                ...c,
+                position: { x: Math.round(placed.x), y: Math.round(placed.y) },
+                _userPlaced: true,
+              };
             }),
           };
         }),
@@ -201,7 +221,23 @@ export function useEditorUx({
                 editorView.snapToGrid
               );
               moved = true;
-              return { ...c, position: snapped, _userPlaced: true };
+              if (isBackgroundClip(c)) {
+                return { ...c, position: snapped, _userPlaced: true };
+              }
+              const layout = resolveClipRect({ ...c, position: snapped });
+              const placed = clampPlacementOverflow(
+                snapped.x,
+                snapped.y,
+                layout.size.width,
+                layout.size.height,
+                COMPOSITION_W,
+                COMPOSITION_H
+              );
+              return {
+                ...c,
+                position: { x: Math.round(placed.x), y: Math.round(placed.y) },
+                _userPlaced: true,
+              };
             }),
           };
         }),
@@ -232,6 +268,25 @@ export function useEditorUx({
               }
               if (updates.style) {
                 next.style = { ...(c.style || {}), ...updates.style };
+              }
+              if (
+                (updates.position || updates.size) &&
+                !isBackgroundClip(next)
+              ) {
+                const layout = resolveClipRect(next);
+                const placed = clampPlacementOverflow(
+                  layout.position.x,
+                  layout.position.y,
+                  layout.size.width,
+                  layout.size.height,
+                  COMPOSITION_W,
+                  COMPOSITION_H
+                );
+                next.position = { x: Math.round(placed.x), y: Math.round(placed.y) };
+                next.size = {
+                  width: Math.round(placed.width),
+                  height: Math.round(placed.height),
+                };
               }
               return next;
             }),

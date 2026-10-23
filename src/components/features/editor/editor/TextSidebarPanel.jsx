@@ -21,11 +21,12 @@ import {
   MdInterests,
 } from 'react-icons/md';
 import {
-  FONT_FAMILIES,
   getClipTextContent,
   parseFontSize,
   resolveFontFamilyValue,
 } from '../../../../utils/textClip';
+import { ensureGoogleFontLoaded } from '../../../../utils/googleFonts';
+import FontPicker from '../../../shared/fonts/FontPicker';
 import {
   TEXT_EFFECT_OPTIONS,
   TEXT_SHAPE_OPTIONS,
@@ -35,8 +36,7 @@ import {
   getTextEffectId,
   getTextShapeId,
   getSuggestedAnimationId,
-} from '../../../../utils/textEffects';
-import {
+} from '../../../../utils/textEffects';import {
   getEntranceAnimation,
   setEntranceAnimation,
   getExitAnimation,
@@ -602,23 +602,16 @@ const TextSidebarPanel = ({
   const textToolbar = (
       <div className="text-sidebar-toolbar text-sidebar-toolbar--compact">
         <div className="text-sidebar-toolbar__row text-sidebar-toolbar__row--font">
-          <label className="text-sidebar-toolbar__font-label" htmlFor="text-font-family-select">
-            Font family
-          </label>
-          <select
-            id="text-font-family-select"
-            className="text-sidebar-toolbar__font"
+          <FontPicker
+            label="Font family"
             value={resolvedFontFamily}
-            onChange={(e) => updateStyle({ fontFamily: e.target.value })}
-            title="Font family"
-            style={{ fontFamily: resolvedFontFamily }}
-          >
-            {FONT_FAMILIES.map((f) => (
-              <option key={f.value} value={f.value} style={{ fontFamily: f.value }}>
-                {f.label}
-              </option>
-            ))}
-          </select>
+            compact
+            className="text-sidebar-toolbar__font-picker"
+            onChange={(family) => {
+              ensureGoogleFontLoaded(family)
+              updateStyle({ fontFamily: family })
+            }}
+          />
         </div>
         <div className="text-sidebar-toolbar__row">
           <div className="size-stepper">

@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import workspaceService from '../../services/workspaceService.js';
+import imageGenService from '../../services/imageGenService.js';
 import invitationFlowService from '../../services/invitationFlowService.js';
 import inboxService from '../../services/inboxService.js';
 import { savePendingInvitation } from '../../utils/inviteNavigation.js';
@@ -9,7 +10,10 @@ import {
   normalizeWorkspace,
   normalizeFolder,
   normalizeVideo,
-  workspaceCanEdit
+  workspaceCanEdit,
+  hasConflictingName,
+  findVideoLocation,
+  getAllWorkspaceNames,
 } from './workspaceUtils.js';
 import {
   DUPLICATE_PROJECT_NAME_MESSAGE,
@@ -46,7 +50,8 @@ export function useWorkspaceActions({
   showToast,
   openConfirmDialog,
   loadWorkspaces,
-  loadContributorsForWorkspace
+  loadContributorsForWorkspace,
+  onLibraryChange,
 }) {
   const [inviteSending, setInviteSending] = useState(false);
 
@@ -54,14 +59,44 @@ export function useWorkspaceActions({
   // Create workspace
   // ------------------------------------------------------------------
   const handleCreateWorkspace = useCallback(async ({ name, invites }) => {
+    const trimmedName = String(name || '').trim();
+    if (!trimmedName) {
+      throw new Error('Workspace name is required');
+    }
+
+    const duplicateWorkspace = hasConflictingName(
+      trimmedName,
+      getAllWorkspaceNames(workspaces)
+    );
+    if (duplicateWorkspace) {
+      throw new Error('This workspace name already exists');
+    }
+
     try {
-      const createdWorkspace = await workspaceService.createWorkspace(name);
+      const createdWorkspace = await workspaceService.createWorkspace(trimmedName);
       const mappedWorkspace = {
         ...normalizeWorkspace(createdWorkspace, currentUserId, authUser),
         userRole: 'OWNER',
         type: 'workspace',
         folders: []
       };
+
+      const inviteList = (Array.isArray(invites) ? invites : [])
+        .map((email) => String(email || '').trim())
+        .filter(Boolean);
+
+      let failedInvites = [];
+      if (inviteList.length > 0) {
+        const results = await Promise.all(
+          inviteList.map((email) =>
+            workspaceService
+              .inviteMember(mappedWorkspace.id, { email, role: 'MEMBER' })
+              .then(() => null)
+              .catch(() => email)
+          )
+        );
+        failedInvites = results.filter(Boolean);
+      }
 
       setWorkspaces((prev) => [...prev, mappedWorkspace]);
 
@@ -73,19 +108,20 @@ export function useWorkspaceActions({
         ]
       }));
 
-      if (invites && invites.length > 0) {
-        for (const email of invites) {
-          await workspaceService.inviteMember(mappedWorkspace.id, { email, role: 'MEMBER' }).catch(() => null);
-        }
+      if (failedInvites.length > 0) {
+        showToast(
+          `Workspace created, but ${failedInvites.length} invite${failedInvites.length === 1 ? '' : 's'} could not be sent (${failedInvites.join(', ')})`,
+          'error'
+        );
+      } else {
+        showToast('Workspace created successfully', 'success');
       }
-
-      showToast('Workspace created successfully', 'success');
       return mappedWorkspace;
     } catch (error) {
       showToast(error.message || 'Failed to create workspace', 'error');
       throw error;
     }
-  }, [currentUserId, authUser, setWorkspaces, setLocalAdditions, showToast]);
+  }, [currentUserId, authUser, workspaces, setWorkspaces, setLocalAdditions, showToast]);
 
   // ------------------------------------------------------------------
   // Create folder
@@ -98,9 +134,7 @@ export function useWorkspaceActions({
       throw new Error('You do not have permission to create folders in this workspace.');
     }
 
-    const duplicateFolder = workspace?.folders?.some(
-      (folder) => String(folder.name || '').toLowerCase() === String(folderName || '').toLowerCase()
-    );
+    const duplicateFolder = hasConflictingName(folderName, workspace?.folders?.map((folder) => folder.name));
     if (duplicateFolder) {
       throw new Error(`A folder named "${folderName}" already exists in this workspace.`);
     }
@@ -200,7 +234,7 @@ export function useWorkspaceActions({
       currentName = workspaces
         .flatMap((workspace) => workspace.folders)
         .find((folder) => String(folder.id) === String(id))?.name || '';
-    } else if (type === 'video') {
+    } else if (type === 'video' || type === 'image-thread') {
       currentName = workspaces
         .flatMap((workspace) => workspace.folders)
         .flatMap((folder) => folder.videos || [])
@@ -219,6 +253,15 @@ export function useWorkspaceActions({
       if (!targetWorkspace) return;
       if (String(targetWorkspace.userRole || '').toUpperCase() !== 'OWNER') {
         throw new Error('Only the owner can rename this workspace.');
+      }
+
+      const duplicateWorkspace = hasConflictingName(
+        newName,
+        getAllWorkspaceNames(workspaces),
+        { excludeName: targetWorkspace.name }
+      );
+      if (duplicateWorkspace) {
+        throw new Error('This workspace name already exists');
       }
 
       await workspaceService.updateWorkspace(id, { name: newName });
@@ -251,6 +294,15 @@ export function useWorkspaceActions({
         throw new Error('You do not have permission to rename this folder.');
       }
 
+      const duplicateFolder = hasConflictingName(
+        newName,
+        parentWorkspace.folders?.map((folder) => folder.name),
+        { excludeName: parentWorkspace.folders?.find((folder) => String(folder.id) === String(id))?.name }
+      );
+      if (duplicateFolder) {
+        throw new Error(`A folder named "${newName}" already exists in this workspace.`);
+      }
+
       await workspaceService.renameFolder(parentWorkspace.id, id, newName);
       setWorkspaces((prev) =>
         prev.map((workspace) => ({
@@ -270,16 +322,34 @@ export function useWorkspaceActions({
       showToast('Folder renamed successfully', 'success');
     }
 
+    if (type === 'image-thread') {
+      const videoLocation = findVideoLocation(workspaces, id);
+      const parentWorkspace = videoLocation?.workspace || activeWorkspace;
+      if (!parentWorkspace || !workspaceCanEdit(parentWorkspace)) {
+        throw new Error('You do not have permission to rename this chat.');
+      }
+      const videosInScope = videoLocation?.videos || [];
+      const duplicate = findDuplicateProjectName(newName, videosInScope, {
+        excludeProjectId: id,
+      });
+      if (duplicate) {
+        throw new Error(`A project named "${newName}" already exists in this folder.`);
+      }
+      await imageGenService.renameThread(parentWorkspace.id, id, newName);
+      showToast('Chat renamed', 'success');
+      onLibraryChange?.();
+      return;
+    }
+
     if (type === 'video') {
-      const parentWorkspace = activeWorkspace;
-      if (!workspaceCanEdit(parentWorkspace)) {
+      const videoLocation = findVideoLocation(workspaces, id);
+      const parentWorkspace = videoLocation?.workspace || activeWorkspace;
+      if (!parentWorkspace || !workspaceCanEdit(parentWorkspace)) {
         throw new Error('You do not have permission to rename this video.');
       }
 
-      const parentFolder = parentWorkspace.folders.find((folder) =>
-        (folder.videos || []).some((video) => String(video.id) === String(id))
-      );
-      const duplicateProject = findDuplicateProjectName(newName, parentFolder?.videos || [], {
+      const videosInScope = videoLocation?.videos || [];
+      const duplicateProject = findDuplicateProjectName(newName, videosInScope, {
         excludeProjectId: id,
       });
       if (duplicateProject) {
@@ -309,7 +379,7 @@ export function useWorkspaceActions({
       );
       showToast('Video renamed successfully', 'success');
     }
-  }, [workspaces, activeWorkspace, authUser, setWorkspaces, setLocalAdditions, setCurrentLevel, showToast]);
+  }, [workspaces, activeWorkspace, authUser, setWorkspaces, setLocalAdditions, setCurrentLevel, showToast, onLibraryChange]);
 
   // ------------------------------------------------------------------
   // Delete
@@ -409,6 +479,28 @@ export function useWorkspaceActions({
           showToast(error.message || 'Failed to delete folder', 'error');
         }
       });
+      return;
+    }
+
+    if (type === 'image-thread') {
+      const parentWorkspace = workspaceContext || activeWorkspace;
+      if (!workspaceCanEdit(parentWorkspace)) {
+        showToast('You do not have permission to delete this chat.', 'error');
+        return;
+      }
+      openConfirmDialog(
+        'Remove this image chat from the folder? Generated images stay in your assets.',
+        async () => {
+          try {
+            await imageGenService.deleteThread(parentWorkspace.id, id);
+            await refreshWorkspaceData();
+            onLibraryChange?.();
+            showToast('Chat removed', 'success');
+          } catch (error) {
+            showToast(error.message || 'Failed to delete chat', 'error');
+          }
+        }
+      );
       return;
     }
 
@@ -580,6 +672,18 @@ export function useWorkspaceActions({
   const handleMoveProject = useCallback(async (targetFolderId, moveTargetVideo, moveTargetWorkspace) => {
     if (!moveTargetVideo || !moveTargetWorkspace) return;
     try {
+      if (moveTargetVideo.kind === 'image' || moveTargetVideo.category === 'image') {
+        if (!targetFolderId) {
+          throw new Error('Image chats must live in a folder.');
+        }
+        await imageGenService.moveThread(moveTargetWorkspace.id, moveTargetVideo.id, targetFolderId);
+        showToast('Chat moved', 'success');
+        setMoveTargetVideo(null);
+        setMoveTargetWorkspace(null);
+        onLibraryChange?.();
+        return;
+      }
+
       const targetFolder = moveTargetWorkspace.folders?.find(
         (folder) => String(folder.id) === String(targetFolderId)
       );

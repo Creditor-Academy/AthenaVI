@@ -42,6 +42,28 @@ export function clearOAuthParamsFromUrl() {
   window.history.replaceState(null, '', path);
 }
 
+export function isPublicPresentationPath(pathname) {
+  const candidates = [
+    pathname,
+    typeof window !== 'undefined' ? window.location.pathname : '',
+    readClientPath(),
+  ];
+  return candidates.some((path) => /^\/p\/[^/?#]+/.test(normalizePathname(path || '')));
+}
+
+export function getPublicPresentationToken(pathname) {
+  const candidates = [
+    pathname,
+    typeof window !== 'undefined' ? window.location.pathname : '',
+    readClientPath(),
+  ];
+  for (const path of candidates) {
+    const match = normalizePathname(path || '').match(/^\/p\/([^/?#]+)/);
+    if (match?.[1]) return decodeURIComponent(match[1]);
+  }
+  return '';
+}
+
 export function resolveViewFromLocation(pathToViewMap) {
   if (getOAuthAccessTokenFromUrl() || isOAuthCallbackPath(window.location.pathname)) {
     return 'google-callback';
@@ -53,8 +75,20 @@ export function resolveViewFromLocation(pathToViewMap) {
 
   let currentPath = readClientPath();
 
+  if (isPublicPresentationPath(currentPath)) {
+    return 'public-presentation';
+  }
+
   const urlView = pathToViewMap[currentPath];
   if (urlView) return urlView;
+
+  if (currentPath === '/slides' || currentPath.startsWith('/slides/')) {
+    return 'dashboard';
+  }
+
+  if (currentPath === '/hub' || currentPath === '/products/choose') {
+    return 'dashboard';
+  }
 
   const isSpecialPath =
     currentPath.includes('/reset-password') ||
@@ -63,6 +97,12 @@ export function resolveViewFromLocation(pathToViewMap) {
   if (isSpecialPath) {
     return window.localStorage.getItem('athenavi:view') || 'landing';
   }
+
+  if (currentPath.startsWith('/share/')) {
+    return 'share';
+  }
+
+  return window.localStorage.getItem('athenavi:view') || 'landing';
 
   return 'not-found';
 }

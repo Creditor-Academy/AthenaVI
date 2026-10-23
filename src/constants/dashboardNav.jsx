@@ -1,13 +1,15 @@
 import {
   Home,
   Building2,
-  Video,
+  Briefcase,
   Trash2,
   Library,
   BookOpen,
   User,
   Volume2,
-  Settings
+  Palette,
+  Settings,
+  Gift
 } from 'lucide-react'
 
 /**
@@ -18,10 +20,10 @@ export const mainDashboardSidebarGroups = [
     items: [{ id: 'home', label: 'Home', Icon: Home }]
   },
   {
-    label: 'Videos',
+    label: 'Work',
     items: [
       { id: 'workspace', label: 'Workspace', Icon: Building2 },
-      { id: 'videos', label: 'My videos', Icon: Video }
+      { id: 'my-work', label: 'My work', Icon: Briefcase }
     ]
   },
   {
@@ -29,13 +31,15 @@ export const mainDashboardSidebarGroups = [
     items: [
       { id: 'library', label: 'Library', Icon: Library },
       { id: 'avatars', label: 'Avatars', Icon: User },
-      { id: 'voices', label: 'Voices', Icon: Volume2 }
+      { id: 'voices', label: 'Voices', Icon: Volume2 },
+      { id: 'brandkits', label: 'Brand Kit', Icon: Palette }
     ]
   },
   {
     label: 'Account',
     items: [
-      { id: 'settings', label: 'Settings', Icon: Settings }
+      { id: 'settings', label: 'Settings', Icon: Settings },
+      { id: 'referrals', label: 'Refer & Earn', Icon: Gift }
     ]
   }
 ]

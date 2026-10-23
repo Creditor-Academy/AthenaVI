@@ -2,8 +2,8 @@ import Navbar from '../../components/layout/Navbar/Navbar.jsx'
 import Hero from '../../components/layout/Hero.jsx'
 import UnifiedVideoSection from '../../components/layout/UnifiedVideoSection.jsx'
 import DigitalTwinSection from '../../components/layout/DigitalTwinSection.jsx'
-import ProductsSection from '../../components/layout/ProductsSection.jsx'
-import WebsiteTemplateDomeSection from '../../components/layout/WebsiteTemplateDomeSection.jsx'
+import PptSection from '../../components/layout/PptSection.jsx'
+import ImageGenerationSection from '../../components/layout/ImageGenerationSection.jsx'
 import TemplatesSection from '../../components/layout/TemplatesSection.jsx'
 import PlatformFeatures from '../../components/layout/PlatformFeatures.jsx'
 import ReadySection from '../../components/layout/ReadySection.jsx'
@@ -82,8 +82,8 @@ function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToC
         <Hero onContactSalesClick={() => onNavigateToSolution?.('Sales Solutions')} />
         <UnifiedVideoSection />
         <DigitalTwinSection />
-        <ProductsSection />
-        <WebsiteTemplateDomeSection onLoginClick={onLoginClick} />
+        <PptSection />
+        <ImageGenerationSection />
         <PlatformFeatures />
         <TemplatesSection onNavigateToSolution={onLoginClick} />
         <ReadySection />

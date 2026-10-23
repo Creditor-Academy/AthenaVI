@@ -1,0 +1,973 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { motion } from 'framer-motion'
+import {
+  AlertTriangle,
+  Check,
+  FolderOpen,
+  Image as ImageIcon,
+  Loader2,
+  Paperclip,
+  Plus,
+  Search,
+  Upload,
+  X,
+} from 'lucide-react'
+import assetService from '../../../services/assetService.js'
+import imageGenService, {
+  ImageGenContextPinnedError,
+  ImageGenRateLimitError,
+  ImageGenProviderError,
+} from '../../../services/imageGenService.js'
+import { isInsufficientCreditsError } from '../../../services/creditsService.js'
+import './ImageGenContextAttach.css'
+
+const MAX_CONTEXT_ITEMS = 5
+const MAX_FILE_BYTES = 20 * 1024 * 1024
+const ACCEPTED_EXT = /\.(pdf|docx|md|txt|png|jpe?g|webp)$/i
+const ACCEPTED_MIME = new Set([
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'text/markdown',
+  'text/plain',
+  'text/x-markdown',
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/webp',
+])
+
+function isAllowedFile(file) {
+  if (!file) return false
+  const name = String(file.name || '')
+  const mime = String(file.type || '').toLowerCase()
+  if (ACCEPTED_MIME.has(mime)) return true
+  if (!mime && ACCEPTED_EXT.test(name)) return true
+  return ACCEPTED_EXT.test(name)
+}
+
+function isImageFile(file) {
+  if (!file) return false
+  return /^image\//.test(file.type) || /\.(png|jpe?g|webp)$/i.test(file.name || '')
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onloadend = () => resolve(reader.result)
+    reader.onerror = () => reject(reader.error || new Error('Couldn’t read image'))
+    reader.readAsDataURL(file)
+  })
+}
+
+function isDocFile(file) {
+  if (!file) return false
+  const mime = String(file.type || '').toLowerCase()
+  const name = String(file.name || '')
+  if (
+    mime === 'application/pdf' ||
+    mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    mime === 'text/markdown' ||
+    mime === 'text/plain' ||
+    mime === 'text/x-markdown'
+  ) {
+    return true
+  }
+  return /\.(pdf|docx|md|txt)$/i.test(name)
+}
+
+function filenameFromUrl(url, mime = 'image/png') {
+  try {
+    const path = new URL(url).pathname
+    const base = decodeURIComponent(path.split('/').filter(Boolean).pop() || '')
+    if (/\.(png|jpe?g|webp)$/i.test(base)) return base
+  } catch {
+    /* ignore */
+  }
+  const ext = mime === 'image/jpeg' || mime === 'image/jpg' ? 'jpg' : mime === 'image/webp' ? 'webp' : 'png'
+  return `image.${ext}`
+}
+
+function urlsFromDataTransfer(dataTransfer) {
+  const urls = []
+  const uriList = String(dataTransfer?.getData('text/uri-list') || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith('#'))
+  urls.push(...uriList)
+
+  const html = String(dataTransfer?.getData('text/html') || '')
+  const imgSrc = html.match(/<img[^>]+src=["']([^"']+)["']/i)
+  if (imgSrc?.[1]) urls.push(imgSrc[1])
+
+  const plain = String(dataTransfer?.getData('text/plain') || '').trim()
+  if (/^https?:\/\//i.test(plain)) urls.push(plain)
+
+  return [...new Set(urls)].filter((u) => /^https?:\/\//i.test(u) || u.startsWith('data:image/'))
+}
+
+function isImageLikeDrag(dataTransfer) {
+  const types = Array.from(dataTransfer?.types || [])
+  if (types.includes('Files')) return true
+  if (types.includes('text/uri-list')) return true
+  if (types.includes('text/html')) return true
+  return false
+}
+
+async function fileFromImageUrl(url) {
+  if (url.startsWith('data:image/')) {
+    const res = await fetch(url)
+    const blob = await res.blob()
+    return new File([blob], filenameFromUrl('image', blob.type), { type: blob.type || 'image/png' })
+  }
+  const res = await fetch(url)
+  if (!res.ok) throw new Error('Couldn’t fetch that image.')
+  const blob = await res.blob()
+  const mime = String(blob.type || '').toLowerCase()
+  if (!mime.startsWith('image/')) throw new Error('That drop wasn’t an image file.')
+  if (!ACCEPTED_MIME.has(mime)) {
+    throw new Error('Use PNG, JPG, or WebP.')
+  }
+  return new File([blob], filenameFromUrl(url, mime), { type: mime })
+}
+
+function clipboardImageFiles(clipboardData) {
+  const files = []
+  const items = Array.from(clipboardData?.items || [])
+  for (const item of items) {
+    if (!String(item.type || '').startsWith('image/')) continue
+    const file = item.getAsFile()
+    if (file) files.push(file)
+  }
+  return files
+}
+
+function formatContextBadge(preview) {
+  if (!preview) return null
+  const docs = Number(preview.documentCount) || 0
+  const images = Number(preview.imageCount) || 0
+  if (!docs && !images) return 'Brief'
+  const parts = ['Brief']
+  if (docs) parts.push(`${docs} doc${docs === 1 ? '' : 's'}`)
+  if (images) parts.push(`${images} ref${images === 1 ? '' : 's'}`)
+  return parts.join(' · ')
+}
+
+export function contextPreviewBadge(generation) {
+  const preview =
+    generation?.contextPreview ||
+    generation?.request?.contextPreview ||
+    (generation?.contextId ? { documentCount: 0, imageCount: 0 } : null)
+  return formatContextBadge(preview)
+}
+
+function friendlyContextError(err) {
+  if (isInsufficientCreditsError(err)) return 'Not enough credits for this action.'
+  if (err instanceof ImageGenRateLimitError) {
+    return err.message || 'Image generation context rate limit exceeded. Try again later.'
+  }
+  if (err instanceof ImageGenProviderError) {
+    return err.message || 'Couldn’t process the brief right now. Try again.'
+  }
+  if (err instanceof ImageGenContextPinnedError) return err.message
+  if (err?.status === 404) return 'Context unavailable — please re-attach.'
+  return err?.message || 'Couldn’t attach context. Please try again.'
+}
+
+/**
+ * Prompt-bar + opens a two-pane modal: Add (upload) · Brief (what AI understood).
+ * Pass a children render prop to place thumbs above the textarea (ChatGPT-style).
+ */
+export default function ImageGenContextAttach({
+  workspaceId,
+  context,
+  onContextChange,
+  disabled = false,
+  compact = false,
+  plusMenu = true,
+  children,
+}) {
+  const imageFileRef = useRef(null)
+  const plusWrapRef = useRef(null)
+  const uploadFromPlusRef = useRef(false)
+  const [plusMenuOpen, setPlusMenuOpen] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [tab, setTab] = useState('add') // add | brief | library
+  const [pendingFiles, setPendingFiles] = useState([])
+  const [pendingAssets, setPendingAssets] = useState([])
+  const [inlineText, setInlineText] = useState('')
+  const [attaching, setAttaching] = useState(false)
+  const [clearing, setClearing] = useState(false)
+  const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
+  const [dirtyAfterAttach, setDirtyAfterAttach] = useState(false)
+  const [dragOver, setDragOver] = useState(null)
+  const [composerDragOver, setComposerDragOver] = useState(false)
+  const [libraryLoading, setLibraryLoading] = useState(false)
+  const [libraryItems, setLibraryItems] = useState([])
+  const [libraryQuery, setLibraryQuery] = useState('')
+  const [libraryError, setLibraryError] = useState('')
+  const [expandedThumb, setExpandedThumb] = useState(null)
+
+  const pendingCount = pendingFiles.length + pendingAssets.length
+  const slotsLeft = Math.max(0, MAX_CONTEXT_ITEMS - pendingCount)
+  const hasPending = pendingCount > 0 || Boolean(String(inlineText || '').trim())
+  const isReady = Boolean(context?.id) && !dirtyAfterAttach
+
+  const readyLabel = useMemo(() => {
+    if (!context?.id) return null
+    return formatContextBadge({
+      documentCount: context.previews?.documents?.length || 0,
+      imageCount:
+        (context.previews?.images?.length || 0) + (context.previews?.assetRefs?.length || 0),
+    })
+  }, [context])
+
+  const filePreviewUrls = useMemo(() => {
+    return pendingFiles.map((file) => (isImageFile(file) ? URL.createObjectURL(file) : null))
+  }, [pendingFiles])
+
+  useEffect(() => {
+    return () => {
+      filePreviewUrls.forEach((url) => {
+        if (url) URL.revokeObjectURL(url)
+      })
+    }
+  }, [filePreviewUrls])
+
+  const composerThumbs = useMemo(() => {
+    const thumbs = []
+    pendingFiles.forEach((file, idx) => {
+      if (!isImageFile(file)) return
+      thumbs.push({
+        id: `file-${file.name}-${idx}`,
+        src: filePreviewUrls[idx],
+        name: file.name || 'Image',
+        kind: 'file',
+        index: idx,
+      })
+    })
+    pendingAssets.forEach((asset) => {
+      if (!asset?.url) return
+      thumbs.push({
+        id: `asset-${asset.id}`,
+        src: asset.url,
+        name: asset.name || 'Library image',
+        kind: 'asset',
+        assetId: asset.id,
+      })
+    })
+    ;(context?.localImages || []).forEach((img, idx) => {
+      const src = img?.src || img?.url
+      if (!src) return
+      thumbs.push({
+        id: `local-${idx}-${src}`,
+        src,
+        name: img.name || 'Library image',
+        kind: 'local',
+        index: idx,
+      })
+    })
+    return thumbs.filter((t) => t.src)
+  }, [pendingFiles, pendingAssets, filePreviewUrls, context?.localImages])
+
+  const pendingDocCount = pendingFiles.filter((f) => !isImageFile(f)).length
+
+  useEffect(() => {
+    if (!context?.id) return
+    if (context.previews?.inlineText && !inlineText) {
+      setInlineText(context.previews.inlineText)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [context?.id])
+
+  useEffect(() => {
+    if (!expandedThumb) return undefined
+    const onKey = (e) => {
+      if (e.key === 'Escape') setExpandedThumb(null)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [expandedThumb])
+
+  useEffect(() => {
+    if (!plusMenuOpen) return undefined
+    const onDoc = (e) => {
+      if (plusWrapRef.current?.contains(e.target)) return
+      setPlusMenuOpen(false)
+    }
+    const onKey = (e) => {
+      if (e.key === 'Escape') setPlusMenuOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [plusMenuOpen])
+
+  const closeModal = () => {
+    setModalOpen(false)
+    setTab('library')
+    setDragOver(null)
+    setLibraryQuery('')
+  }
+
+  const markDirty = () => {
+    if (context?.id) setDirtyAfterAttach(true)
+  }
+
+  const addFiles = (fileList, kind = 'any') => {
+    const incoming = Array.from(fileList || [])
+    if (!incoming.length) return
+    setError('')
+    const next = []
+    for (const file of incoming) {
+      const image = isImageFile(file)
+      const doc = isDocFile(file)
+      if (kind === 'image' && !image) {
+        setError('That folder is for images only — PNG, JPG, or WebP.')
+        continue
+      }
+      if (kind === 'doc' && !doc) {
+        setError('That folder is for briefs — PDF, Word, Markdown, or TXT.')
+        continue
+      }
+      if (!isAllowedFile(file)) {
+        setError('Unsupported file. Images: PNG, JPG, WebP. Briefs: PDF, Word, MD, TXT.')
+        continue
+      }
+      if (file.size > MAX_FILE_BYTES) {
+        setError(`“${file.name}” is over 20 MB.`)
+        continue
+      }
+      next.push(file)
+    }
+    if (!next.length) return
+    setPendingFiles((prev) => {
+      const room = Math.max(0, MAX_CONTEXT_ITEMS - (prev.length + pendingAssets.length))
+      if (room <= 0) {
+        setError('Too many context files or assets (max 5).')
+        return prev
+      }
+      if (next.length > room) setError('Too many context files or assets (max 5).')
+      markDirty()
+      return [...prev, ...next.slice(0, room)]
+    })
+  }
+
+  const removePendingFile = (index) => {
+    setPendingFiles((prev) => prev.filter((_, i) => i !== index))
+    markDirty()
+    setError('')
+  }
+
+  const removePendingAsset = (assetId) => {
+    setPendingAssets((prev) => prev.filter((a) => a.id !== assetId))
+    markDirty()
+    setError('')
+  }
+
+  const removeThumb = (thumb) => {
+    if (thumb.kind === 'file') removePendingFile(thumb.index)
+    else if (thumb.kind === 'asset') removePendingAsset(thumb.assetId)
+    else if (thumb.kind === 'local') {
+      const next = (context?.localImages || []).filter((_, i) => i !== thumb.index)
+      onContextChange?.({ ...(context || {}), localImages: next })
+    }
+  }
+
+  const openLibrary = async () => {
+    if (!workspaceId || disabled) {
+      setError(workspaceId ? '' : 'Choose a save location first, then pick from the library.')
+      return
+    }
+    setModalOpen(true)
+    setTab('library')
+    setLibraryError('')
+    setLibraryLoading(true)
+    try {
+      const [list, gens] = await Promise.all([
+        assetService.listAssets(workspaceId, { take: 100 }),
+        imageGenService.listGenerations(workspaceId, { take: 40 }).catch(() => []),
+      ])
+      const fromAssets = (list || [])
+        .map((a) => assetService.normalizeAsset(a))
+        .filter((a) => a && assetService.inferMediaType(a) === 'image')
+      const fromGens = (gens || [])
+        .map((g) => {
+          const id = g.assetId || g.asset?.id
+          const url = g.url || g.asset?.url
+          if (!id || !url) return null
+          return {
+            id,
+            url,
+            name: String(g.prompt || g.title || 'Generated image').slice(0, 48),
+          }
+        })
+        .filter(Boolean)
+      const byId = new Map()
+      ;[...fromGens, ...fromAssets].forEach((item) => {
+        if (item?.id && !byId.has(item.id)) byId.set(item.id, item)
+      })
+      setLibraryItems([...byId.values()])
+    } catch (err) {
+      setLibraryError(err?.message || 'Couldn’t load library images.')
+      setLibraryItems([])
+    } finally {
+      setLibraryLoading(false)
+    }
+  }
+
+  const toggleLibraryAsset = (asset) => {
+    if (!asset?.id) return
+    setPendingAssets((prev) => {
+      const exists = prev.some((a) => a.id === asset.id)
+      if (exists) {
+        markDirty()
+        return prev.filter((a) => a.id !== asset.id)
+      }
+      if (prev.length + pendingFiles.length >= MAX_CONTEXT_ITEMS) {
+        setError('Too many context files or assets (max 5).')
+        return prev
+      }
+      markDirty()
+      setError('')
+      return [...prev, asset]
+    })
+  }
+
+  const handleAttach = async (override = null) => {
+    const files = override?.files ?? pendingFiles
+    const assets = override?.assets ?? pendingAssets
+    const text = override?.text ?? inlineText
+    if (!workspaceId || attaching || disabled) return
+    if (!files.length && !assets.length && !String(text || '').trim()) {
+      setError('Add a file, library image, or pasted note first.')
+      return
+    }
+    setAttaching(true)
+    setError('')
+    setNotice('')
+    try {
+      if (context?.id && !context.pinnedAt) {
+        try {
+          await imageGenService.deleteContext(workspaceId, context.id)
+        } catch {
+          /* replace still ok */
+        }
+      }
+      const created = await imageGenService.createContext(workspaceId, {
+        files,
+        inlineText: text,
+        assetIds: assets.map((a) => a.id),
+      })
+      const localImages = []
+      for (const file of files) {
+        if (!isImageFile(file)) continue
+        localImages.push({
+          name: file.name || 'Image',
+          src: await fileToDataUrl(file),
+        })
+      }
+      for (const asset of assets) {
+        if (!asset?.url) continue
+        localImages.push({
+          name: asset.name || 'Library image',
+          src: asset.url,
+        })
+      }
+      onContextChange?.({ ...created, localImages })
+      setDirtyAfterAttach(false)
+      setModalOpen(false)
+      setTab('library')
+      setDragOver(null)
+    } catch (err) {
+      setError(friendlyContextError(err))
+    } finally {
+      setAttaching(false)
+    }
+  }
+
+  const collectIncomingFiles = (incoming) => {
+    const accepted = []
+    for (const file of incoming || []) {
+      if (!isAllowedFile(file) && !isImageFile(file)) continue
+      if (file.size > MAX_FILE_BYTES) {
+        setError(`“${file.name}” is over 20 MB.`)
+        continue
+      }
+      accepted.push(file)
+    }
+    const room = Math.max(0, MAX_CONTEXT_ITEMS - (pendingFiles.length + pendingAssets.length))
+    if (!accepted.length) return []
+    if (room <= 0) {
+      setError('Too many context files or assets (max 5).')
+      return []
+    }
+    if (accepted.length > room) setError('Too many context files or assets (max 5).')
+    return accepted.slice(0, room)
+  }
+
+  const ingestComposerFiles = async (incoming) => {
+    const added = collectIncomingFiles(incoming)
+    if (!added.length) return false
+    const nextFiles = [...pendingFiles, ...added]
+    setPendingFiles(nextFiles)
+    markDirty()
+    setError('')
+    await handleAttach({ files: nextFiles, assets: pendingAssets, text: inlineText })
+    return true
+  }
+
+  const composerBind = {
+    onDragOver: (e) => {
+      if (disabled || !isImageLikeDrag(e.dataTransfer)) return
+      e.preventDefault()
+      e.stopPropagation()
+      e.dataTransfer.dropEffect = 'copy'
+      setComposerDragOver(true)
+    },
+    onDragLeave: (e) => {
+      if (e.currentTarget.contains(e.relatedTarget)) return
+      setComposerDragOver(false)
+    },
+    onDrop: async (e) => {
+      if (disabled) return
+      if (!isImageLikeDrag(e.dataTransfer)) return
+      e.preventDefault()
+      e.stopPropagation()
+      setComposerDragOver(false)
+      const fromFiles = Array.from(e.dataTransfer.files || []).filter(
+        (f) => isImageFile(f) || isAllowedFile(f)
+      )
+      if (fromFiles.length) {
+        await ingestComposerFiles(fromFiles)
+        return
+      }
+      const urls = urlsFromDataTransfer(e.dataTransfer)
+      if (!urls.length) return
+      try {
+        const fetched = []
+        for (const url of urls.slice(0, MAX_CONTEXT_ITEMS)) {
+          fetched.push(await fileFromImageUrl(url))
+        }
+        await ingestComposerFiles(fetched)
+      } catch (err) {
+        setError(err?.message || 'Couldn’t add that image. Save it and drop the file instead.')
+      }
+    },
+    onPaste: async (e) => {
+      if (disabled) return
+      const imageFiles = clipboardImageFiles(e.clipboardData)
+      if (!imageFiles.length) return
+      e.preventDefault()
+      e.stopPropagation()
+      await ingestComposerFiles(imageFiles)
+    },
+  }
+
+  const handleClear = async () => {
+    if (clearing || disabled) return
+    setClearing(true)
+    setError('')
+    setNotice('')
+    try {
+      if (context?.id && !context.pinnedAt) {
+        try {
+          await imageGenService.deleteContext(workspaceId, context.id)
+        } catch (err) {
+          if (err instanceof ImageGenContextPinnedError) {
+            onContextChange?.(null)
+            setPendingFiles([])
+            setPendingAssets([])
+            setInlineText('')
+            setDirtyAfterAttach(false)
+            setNotice('Brief was used for a generation — cleared locally.')
+            setTab('library')
+            return
+          }
+          if (err?.status !== 404) throw err
+        }
+      } else if (context?.pinnedAt) {
+        onContextChange?.(null)
+        setPendingFiles([])
+        setPendingAssets([])
+        setInlineText('')
+        setDirtyAfterAttach(false)
+        setNotice('Brief was used for a generation — cleared locally.')
+        setTab('library')
+        return
+      }
+      onContextChange?.(null)
+      setPendingFiles([])
+      setPendingAssets([])
+      setInlineText('')
+      setDirtyAfterAttach(false)
+      setTab('library')
+    } catch (err) {
+      setError(friendlyContextError(err))
+    } finally {
+      setClearing(false)
+    }
+  }
+
+  const thumbsNode =
+    composerThumbs.length > 0 ? (
+      <div className="igc-thumbs" aria-label="Attached images">
+        {composerThumbs.map((thumb) => (
+          <div key={thumb.id} className="igc-thumb">
+            <button
+              type="button"
+              className="igc-thumb-open"
+              disabled={disabled || context?.attaching}
+              onClick={() => setExpandedThumb(thumb)}
+              aria-label={`Expand ${thumb.name}`}
+              title={context?.attaching ? 'Adding image' : 'Click to expand'}
+            >
+              <img src={thumb.src} alt={thumb.name} />
+              {context?.attaching && (
+                <span className="igc-thumb-loading" aria-hidden>
+                  <Loader2 size={16} className="spinning" />
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              className="igc-thumb-remove"
+              disabled={disabled || attaching || clearing}
+              onClick={() => removeThumb(thumb)}
+              aria-label={`Remove ${thumb.name}`}
+              title="Remove"
+            >
+              <X size={11} strokeWidth={2.5} />
+            </button>
+          </div>
+        ))}
+      </div>
+    ) : null
+
+  const pickFromUpload = () => {
+    setPlusMenuOpen(false)
+    if (disabled) return
+    if (!workspaceId) {
+      setError('Choose a save location first, then upload a reference.')
+      return
+    }
+    uploadFromPlusRef.current = true
+    imageFileRef.current?.click()
+  }
+
+  const plusButton = (
+    <div className="igc-plus-wrap" ref={plusWrapRef}>
+      <button
+        type="button"
+        className={`igc-plus ${compact ? 'igc-plus--compact' : ''} ${modalOpen || plusMenuOpen ? 'is-on' : ''} ${isReady ? 'is-ready' : ''}`}
+        disabled={disabled}
+        aria-label="Attach references"
+        aria-haspopup={plusMenu ? 'menu' : undefined}
+        aria-expanded={plusMenu ? plusMenuOpen : undefined}
+        title="Upload or choose from library"
+        onClick={() => {
+          if (disabled) return
+          if (plusMenu) setPlusMenuOpen((open) => !open)
+          else openLibrary()
+        }}
+      >
+        <Plus size={18} strokeWidth={2.25} />
+      </button>
+      {plusMenu && plusMenuOpen && (
+        <div className="igc-plus-menu" role="menu">
+          <button type="button" role="menuitem" onClick={pickFromUpload}>
+            <Upload size={15} strokeWidth={2} />
+            Upload
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setPlusMenuOpen(false)
+              openLibrary()
+            }}
+          >
+            <FolderOpen size={15} strokeWidth={2} />
+            Choose from library
+          </button>
+        </div>
+      )}
+      <input
+        ref={imageFileRef}
+        type="file"
+        multiple
+        accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
+        hidden
+        onChange={(e) => {
+          const fromPlus = uploadFromPlusRef.current
+          uploadFromPlusRef.current = false
+          const files = e.target.files
+          e.target.value = ''
+          if (fromPlus) ingestComposerFiles(files)
+          else addFiles(files, 'image')
+        }}
+      />
+    </div>
+  )
+
+  const triggerNode = compact ? (
+    plusButton
+  ) : (
+    <div className={`igc-bar ${isReady ? 'igc-bar--ready' : ''}`}>
+      <div className="igc-bar-row">
+        {plusButton}
+
+        <div className="igc-chip-scroll">
+          {isReady && readyLabel ? (
+            <button
+              type="button"
+              className="igc-ready-chip"
+              disabled={disabled}
+              onClick={() => openLibrary()}
+            >
+              <Paperclip size={12} />
+              <span>
+                {composerThumbs.length > 0 && pendingDocCount === 0
+                  ? `${composerThumbs.length} ref${composerThumbs.length === 1 ? '' : 's'}`
+                  : readyLabel}
+              </span>
+            </button>
+          ) : dirtyAfterAttach ? (
+            <button
+              type="button"
+              className="igc-dirty-chip"
+              disabled={disabled}
+              onClick={() => openLibrary()}
+            >
+              <AlertTriangle size={11} />
+              Re-attach to update
+            </button>
+          ) : composerThumbs.length > 0 || pendingDocCount > 0 ? (
+            <button
+              type="button"
+              className="igc-hint-btn"
+              disabled={disabled}
+              onClick={() => openLibrary()}
+            >
+              {composerThumbs.length > 0
+                ? `${composerThumbs.length} image${composerThumbs.length === 1 ? '' : 's'} · Attach`
+                : `${pendingDocCount} file${pendingDocCount === 1 ? '' : 's'} · Attach`}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="igc-hint-btn"
+              disabled={disabled}
+              onClick={() => openLibrary()}
+            >
+              References
+            </button>
+          )}
+        </div>
+
+        {(context || hasPending) && (
+          <button
+            type="button"
+            className="igc-clear-inline"
+            disabled={disabled || attaching || clearing}
+            onClick={handleClear}
+            aria-label="Clear context"
+            title="Clear"
+          >
+            {clearing ? <Loader2 size={13} className="igc-spin" /> : <X size={14} />}
+          </button>
+        )}
+      </div>
+
+      {notice && !modalOpen && <p className="igc-notice">{notice}</p>}
+    </div>
+  )
+
+  const lightboxNode =
+    expandedThumb &&
+    createPortal(
+      <div
+        className="igc-lightbox"
+        role="dialog"
+        aria-modal="true"
+        aria-label={expandedThumb.name}
+        onClick={() => setExpandedThumb(null)}
+      >
+        <button
+          type="button"
+          className="igc-lightbox-close"
+          onClick={() => setExpandedThumb(null)}
+          aria-label="Close"
+        >
+          <X size={18} />
+        </button>
+        <img
+          src={expandedThumb.src}
+          alt={expandedThumb.name}
+          className="igc-lightbox-img"
+          onClick={(e) => e.stopPropagation()}
+        />
+        <p className="igc-lightbox-caption">{expandedThumb.name}</p>
+      </div>,
+      document.body
+    )
+
+  const modalNode =
+    modalOpen &&
+    createPortal(
+      <div className="igc-modal-backdrop" onClick={closeModal} role="presentation">
+        <motion.div
+          className="igc-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Add references"
+          onClick={(e) => e.stopPropagation()}
+          initial={{ opacity: 0, y: 18, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <header className="igc-modal-head">
+            <div>
+              <h3>Choose from library</h3>
+              <p>Pick up to {MAX_CONTEXT_ITEMS} images to use as references.</p>
+            </div>
+            <button type="button" onClick={closeModal} aria-label="Close">
+              <X size={16} />
+            </button>
+          </header>
+
+          <div className="igc-lib-toolbar">
+            <label className="igc-lib-search">
+              <Search size={14} />
+              <input
+                type="search"
+                placeholder="Search images"
+                value={libraryQuery}
+                onChange={(e) => setLibraryQuery(e.target.value)}
+              />
+            </label>
+            <span className={`igc-lib-count${pendingCount ? ' is-on' : ''}`}>
+              {pendingCount}/{MAX_CONTEXT_ITEMS} selected
+            </span>
+          </div>
+
+          <div className="igc-modal-body">
+            <div className={`igc-modal-pane ${attaching ? 'is-busy' : ''}`}>
+              {libraryLoading && (
+                <div className="igc-lib-empty">
+                  <Loader2 size={18} className="igc-spin" />
+                  Loading images…
+                </div>
+              )}
+              {!libraryLoading && libraryError && (
+                <div className="igc-lib-empty">{libraryError}</div>
+              )}
+              {!libraryLoading && !libraryError && libraryItems.length === 0 && (
+                <div className="igc-lib-empty">No image assets in this workspace yet.</div>
+              )}
+              {!libraryLoading && !libraryError && libraryItems.length > 0 && (
+                (() => {
+                  const q = libraryQuery.trim().toLowerCase()
+                  const visible = q
+                    ? libraryItems.filter((asset) => String(asset.name || '').toLowerCase().includes(q))
+                    : libraryItems
+                  if (!visible.length) {
+                    return <div className="igc-lib-empty">No matching images.</div>
+                  }
+                  return (
+                <div className="igc-lib-grid">
+                  {visible.map((asset) => {
+                    const selected = pendingAssets.some((a) => a.id === asset.id)
+                    return (
+                      <button
+                        key={asset.id}
+                        type="button"
+                        className={`igc-lib-item ${selected ? 'is-selected' : ''}`}
+                        title={asset.name || 'Image'}
+                        onClick={() => toggleLibraryAsset(asset)}
+                      >
+                        {asset.url ? (
+                          <img src={asset.url} alt={asset.name || ''} />
+                        ) : (
+                          <span className="igc-lib-fallback">
+                            <ImageIcon size={20} />
+                          </span>
+                        )}
+                        <span className={`igc-lib-check${selected ? ' is-on' : ''}`}>
+                          {selected ? <Check size={12} strokeWidth={3} /> : null}
+                        </span>
+                        <span className="igc-lib-name">{asset.name || 'Image'}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+                  )
+                })()
+              )}
+            </div>
+            {error && <p className="igc-error">{error}</p>}
+          </div>
+          <div className="igc-modal-pane-foot">
+            <button type="button" className="igc-lib-cancel" onClick={closeModal}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="igc-attach-btn"
+              disabled={disabled || attaching}
+              onClick={() => {
+                if (pendingAssets.length || pendingFiles.length) handleAttach()
+                else closeModal()
+              }}
+            >
+              {attaching ? (
+                <>
+                  <Loader2 size={14} className="igc-spin" />
+                  Adding…
+                </>
+              ) : pendingAssets.length ? (
+                `Use ${pendingAssets.length} image${pendingAssets.length === 1 ? '' : 's'}`
+              ) : (
+                'Done'
+              )}
+            </button>
+          </div>
+        </motion.div>
+      </div>,
+      document.body
+    )
+
+  const portals = (
+    <>
+      {lightboxNode}
+      {modalNode}
+    </>
+  )
+
+  if (typeof children === 'function') {
+    return (
+      <>
+        {children({
+          thumbs: thumbsNode,
+          trigger: triggerNode,
+          composerBind,
+          isDragOver: composerDragOver,
+          error,
+        })}
+        {portals}
+      </>
+    )
+  }
+
+  return (
+    <>
+      {thumbsNode}
+      {triggerNode}
+      {portals}
+    </>
+  )
+}

@@ -1,0 +1,378 @@
+import { getAuthDisplayName } from './workspaceUsers.js'
+
+/** Normalize library category ids from the workspace library API. */
+export function normalizeLibraryCategoryId(value) {
+  const raw = String(value || '')
+    .trim()
+    .toLowerCase()
+  if (raw === 'video' || raw === 'videos' || raw === 'avatar_video') return 'video'
+  if (raw === 'presentation' || raw === 'presentations' || raw === 'ppt') return 'presentation'
+  if (raw === 'canvas' || raw === 'canvases' || raw === 'design' || raw === 'designs') return 'canvas'
+  if (raw === 'image' || raw === 'images') return 'image'
+  return raw || null
+}
+
+/** Resolve item kind from library fields or project type. */
+export function resolveLibraryKind(item) {
+  if (!item || typeof item !== 'object') return 'video'
+  // Project type is authoritative — a CANVAS row must never be routed as a video.
+  const type = String(item.type || item.projectType || '').toUpperCase()
+  if (type === 'CANVAS') return 'canvas'
+  const fromKind = normalizeLibraryCategoryId(item.kind || item.category)
+  if (
+    fromKind === 'video' ||
+    fromKind === 'presentation' ||
+    fromKind === 'canvas' ||
+    fromKind === 'image'
+  ) {
+    return fromKind
+  }
+  if (type === 'PRESENTATION') return 'presentation'
+  if (type === 'IMAGE' || type === 'IMAGE_GEN') return 'image'
+  return 'video'
+}
+
+/** Project type (VIDEO / PRESENTATION / CANVAS) for a library kind. */
+export function projectTypeForKind(kind, fallback) {
+  if (kind === 'presentation') return 'PRESENTATION'
+  if (kind === 'canvas') return 'CANVAS'
+  if (kind === 'video') return 'VIDEO'
+  return fallback
+}
+
+const DEFAULT_CATEGORIES = [
+  { id: 'video', label: 'Videos', projectType: 'VIDEO', count: 0 },
+  { id: 'presentation', label: 'Presentations', projectType: 'PRESENTATION', count: 0 },
+  { id: 'canvas', label: 'Canvases', projectType: 'CANVAS', count: 0 },
+  { id: 'image', label: 'Images', count: 0 },
+]
+
+export const ATHENA_AI_OWNER = 'Athena AI'
+
+function firstNonEmptyUrl(...candidates) {
+  for (const candidate of candidates) {
+    const value = String(candidate || '').trim()
+    if (!value) continue
+    if (
+      value.startsWith('http://') ||
+      value.startsWith('https://') ||
+      value.startsWith('data:') ||
+      value.startsWith('blob:') ||
+      value.startsWith('/')
+    ) {
+      return value
+    }
+  }
+  return null
+}
+
+/** Best-effort image URL for a presentation library/project card (prefer first slide). */
+export function resolvePresentationThumbnailUrl(item) {
+  if (!item || typeof item !== 'object') return null
+  const slide0 = Array.isArray(item.slides)
+    ? item.slides[0]
+    : item.firstSlide && typeof item.firstSlide === 'object'
+      ? item.firstSlide
+      : null
+  const imageRef = slide0?.imageRef
+  const imageRefUrl =
+    typeof imageRef === 'string'
+      ? imageRef
+      : imageRef?.url || imageRef?.presignedUrl || imageRef?.src || null
+
+  return firstNonEmptyUrl(
+    item.thumbnailUrl,
+    item.thumbnail,
+    item.coverUrl,
+    item.coverImageUrl,
+    item.previewUrl,
+    item.previewImageUrl,
+    item.firstSlideThumbnailUrl,
+    item.firstSlideThumbUrl,
+    item.firstSlideUrl,
+    slide0?.thumbnailUrl,
+    slide0?.previewUrl,
+    slide0?.previewImageUrl,
+    slide0?.imageUrl,
+    slide0?.thumbnail,
+    imageRefUrl,
+    slide0?.content?.imageUrl,
+    slide0?.content?.image,
+    slide0?.backgroundImage
+  )
+}
+
+/** Best-effort image URL for a video library/project card (prefer first scene). */
+export function resolveVideoThumbnailUrl(item) {
+  if (!item || typeof item !== 'object') return null
+  const scenes = Array.isArray(item.scenes)
+    ? item.scenes
+    : Array.isArray(item.data?.scenes)
+      ? item.data.scenes
+      : []
+  const scene = scenes[0] || item.coverScene || null
+  const clips = Array.isArray(scene?.clips) ? scene.clips : []
+  const avatarClip = clips.find(
+    (clip) =>
+      String(clip?.type || '').toLowerCase() === 'avatar' ||
+      String(clip?.kind || '').toLowerCase() === 'avatar'
+  )
+  const imageClip = clips.find((clip) => String(clip?.type || '').toLowerCase() === 'image')
+  const videoClip = clips.find((clip) => String(clip?.type || '').toLowerCase() === 'video')
+  const bg =
+    scene?.background && typeof scene.background === 'object'
+      ? scene.background.value
+      : scene?.background
+
+  return firstNonEmptyUrl(
+    item.thumbnailUrl,
+    item.thumbnail,
+    item.coverUrl,
+    item.previewUrl,
+    scene?.thumbnail,
+    scene?.thumbnailUrl,
+    scene?.previewImage,
+    scene?.avatar,
+    scene?.cover,
+    scene?.backgroundImage,
+    bg,
+    avatarClip?.src,
+    avatarClip?.previewImage,
+    avatarClip?.thumbnail,
+    imageClip?.src,
+    imageClip?.url,
+    videoClip?.poster,
+    videoClip?.thumbnail
+  )
+}
+
+export function normalizeLibraryCategories(categories) {
+  const byId = new Map()
+  ;(Array.isArray(categories) ? categories : []).forEach((cat) => {
+    const id = normalizeLibraryCategoryId(cat?.id || cat?.projectType)
+    if (!id) return
+    byId.set(id, {
+      id,
+      label: cat.label || DEFAULT_CATEGORIES.find((d) => d.id === id)?.label || id,
+      projectType: cat.projectType || projectTypeForKind(id, undefined),
+      count: Number(cat.count) || 0,
+    })
+  })
+
+  return DEFAULT_CATEGORIES.map((fallback) => byId.get(fallback.id) || { ...fallback })
+}
+
+/** UUID / CUID / Mongo ObjectId / bare hex ids that should not show as owner names. */
+export function looksLikeId(value) {
+  const text = String(value || '').trim()
+  if (!text) return false
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(text)) {
+    return true
+  }
+  if (/^[0-9a-f]{24}$/i.test(text)) return true
+  if (/^c[a-z0-9]{24,}$/i.test(text)) return true
+  if (/^[0-9a-f]{32}$/i.test(text)) return true
+  return false
+}
+
+function toDisplayName(value) {
+  if (value == null || value === '') return ''
+  if (typeof value === 'string' || typeof value === 'number') {
+    const text = String(value).trim()
+    if (!text || looksLikeId(text)) return ''
+    return text
+  }
+  if (typeof value === 'object') {
+    const text = String(
+      value.name ||
+        value.fullName ||
+        value.displayName ||
+        value.email ||
+        value.username ||
+        value.user?.name ||
+        value.user?.email ||
+        ''
+    ).trim()
+    if (!text || looksLikeId(text)) return ''
+    return text
+  }
+  return ''
+}
+
+/** First raw id found across the creator-ish fields (used only for the current-user check below). */
+function extractRawOwnerId(item) {
+  const candidates = [item.createdBy, item.owner, item.creator, item.triggeredBy, item.lastModifiedBy]
+  for (const candidate of candidates) {
+    if (candidate == null || candidate === '') continue
+    if (typeof candidate === 'string' && !candidate.includes('@')) return candidate
+    if (typeof candidate === 'object') {
+      const id = candidate.id || candidate._id || candidate.userId || candidate.user_id
+      if (id) return String(id)
+    }
+  }
+  return ''
+}
+
+function resolveLibraryOwnerName(item, kind, { currentUserId, authUser } = {}) {
+  // Try every creator-ish field independently — a bare id in `createdBy` must not hide a
+  // hydrated `{ name, email }` object sitting in `owner` (the two used to be chained with
+  // `??`, which stops at the first non-nullish value even when it fails to resolve to a name).
+  const candidates = [item.createdBy, item.owner, item.creator, item.triggeredBy, item.lastModifiedBy]
+  for (const candidate of candidates) {
+    const name = toDisplayName(candidate)
+    if (name) return name
+  }
+
+  // Every candidate was missing or a bare id — this is exactly what a fresh AI generation
+  // looks like before the creator gets hydrated into a { name, email } object. If that id is
+  // the signed-in user, it's THEIR content: show them, never the "Athena AI" placeholder.
+  const rawId = extractRawOwnerId(item)
+  if (rawId && currentUserId && rawId === String(currentUserId)) {
+    return getAuthDisplayName(authUser) || 'You'
+  }
+
+  // Only genuinely unattributable rows (no id at all, or an id for someone we can't name)
+  // fall back to the product label — this must never override the actual creator.
+  if (kind === 'image' || kind === 'presentation') return ATHENA_AI_OWNER
+  if (
+    item.generatedByAi ||
+    item.aiGenerated ||
+    item.source === 'ai' ||
+    item.source === 'image-gen'
+  ) {
+    return ATHENA_AI_OWNER
+  }
+  return ''
+}
+
+/**
+ * Normalize a library list item for cards / routing.
+ * Ensures `kind`, `category`, display name, and type fields are consistent.
+ */
+export function normalizeLibraryItem(item, { workspaceId, currentUserId, authUser } = {}) {
+  if (!item || typeof item !== 'object') return item
+
+  const kind = resolveLibraryKind(item)
+  const id = item.id || item._id
+  const name =
+    item.name ||
+    item.title ||
+    (kind === 'image' ? truncatePrompt(item.prompt || item.revisedPrompt) : null) ||
+    (kind === 'presentation'
+      ? 'Untitled Presentation'
+      : kind === 'canvas'
+        ? 'Untitled Design'
+        : kind === 'image'
+          ? 'Untitled Image'
+          : 'Untitled Video')
+
+  const createdAt =
+    item.createdAt || item.created_at || item.dateCreated || item.created || null
+  const lastModifiedAt =
+    item.lastModifiedAt || item.updatedAt || item.modifiedAt || item.updated_at || createdAt || null
+
+  const createdBy = resolveLibraryOwnerName(item, kind, { currentUserId, authUser })
+  const lastModifiedBy =
+    toDisplayName(item.lastModifiedBy ?? item.updater ?? item.updatedBy) || createdBy
+
+  const ownerFallback =
+    kind === 'image' || kind === 'presentation' ? ATHENA_AI_OWNER : ''
+
+  const base = {
+    ...item,
+    id,
+    workspaceId: item.workspaceId || workspaceId || null,
+    kind,
+    category: kind,
+    name: String(name || 'Untitled'),
+    title: String(item.title || name || 'Untitled'),
+    type: item.type || item.projectType || projectTypeForKind(kind, item.type),
+    projectType: item.projectType || item.type || projectTypeForKind(kind, item.projectType),
+    thumbnail: item.thumbnail || item.thumbnailUrl || item.url || null,
+    thumbnailUrl: item.thumbnailUrl || item.thumbnail || item.url || null,
+    createdAt,
+    lastModifiedAt,
+    lastEditedAt: lastModifiedAt,
+    createdBy: createdBy || ownerFallback,
+    lastModifiedBy: lastModifiedBy || ownerFallback,
+    lastEditedBy: lastModifiedBy || ownerFallback,
+    folderId: item.folderId || item.folder?.id || item.folder?._id || null,
+    folder: item.folder || null,
+    owner: item.owner && typeof item.owner === 'object' ? item.owner : item.owner,
+  }
+
+  if (kind === 'presentation') {
+    const thumb = resolvePresentationThumbnailUrl(item)
+    return {
+      ...base,
+      thumbnail: thumb,
+      thumbnailUrl: thumb,
+      deckStatus: item.deckStatus || null,
+      slideCount: item.slideCount ?? item.slidesCount ?? null,
+      aspectRatio: item.aspectRatio || null,
+      partial: Boolean(item.partial),
+      status: item.status || null,
+    }
+  }
+
+  if (kind === 'canvas') {
+    const thumb = firstNonEmptyUrl(item.thumbnailUrl, item.thumbnail)
+    return { ...base, thumbnail: thumb, thumbnailUrl: thumb, status: item.status || 'draft' }
+  }
+
+  if (kind === 'image') {
+    const head = item.head && typeof item.head === 'object' ? item.head : null
+    const headUrl = head?.url || head?.asset?.url || item.url || item.thumbnail || item.thumbnailUrl || null
+    const headGenerationId = head?.generationId || item.generationId || item.headGenerationId || null
+    return {
+      ...base,
+      name: String(item.title || item.name || name || 'Untitled chat'),
+      title: String(item.title || item.name || name || 'Untitled chat'),
+      url: headUrl,
+      thumbnail: headUrl,
+      thumbnailUrl: headUrl,
+      prompt: item.prompt || item.title || '',
+      revisedPrompt: item.revisedPrompt || null,
+      mode: item.mode || item.head?.mode || 'image',
+      archetype: item.archetype || item.head?.archetype || null,
+      status: item.status || 'SUCCEEDED',
+      downloadFormats: item.downloadFormats || null,
+      assetId: item.assetId || item.asset?.id || head?.asset?.id || null,
+      asset: item.asset || head?.asset || null,
+      head,
+      headGenerationId,
+      generationId: headGenerationId,
+      threadId: item.threadId || item.id,
+      messageCount: item.messageCount ?? null,
+      versionCount: item.versionCount ?? null,
+    }
+  }
+
+  const videoThumb = resolveVideoThumbnailUrl(item)
+  return {
+    ...base,
+    thumbnail: videoThumb || base.thumbnail,
+    thumbnailUrl: videoThumb || base.thumbnailUrl,
+    status: item.status || 'draft',
+    storageBytes: item.storageBytes ?? item.sizeBytes ?? null,
+  }
+}
+
+function truncatePrompt(text, max = 48) {
+  const value = String(text || '').trim()
+  if (!value) return ''
+  return value.length > max ? `${value.slice(0, max - 1)}…` : value
+}
+
+export const IMAGE_MODE_FILTERS = [
+  { id: 'all', label: 'All' },
+  { id: 'image', label: 'Image' },
+  { id: 'infographic', label: 'Infographic' },
+]
+
+export const LIBRARY_CATEGORY_ICONS = {
+  video: 'video',
+  presentation: 'presentation',
+  canvas: 'canvas',
+  image: 'image',
+}

@@ -870,3 +870,159 @@ Returns a fresh presigned URL for the completed final MP4.
 **409** if the render is not completed yet.
 
 ---
+
+## Canvases
+
+Nested routes under **`/api/workspaces/:workspaceId/canvases`**. All routes require **`Authorization: Bearer <access_token>`** and workspace **member** access. Backed by the same `Project` row as videos/presentations (`type: "CANVAS"`), so a canvas is created **inside a workspace folder** exactly like a video or presentation project, and is listed/moved/deleted the same way.
+
+`Canvas.data` (stored on `Project.data`) is a multi-page design document:
+
+```json
+{
+  "version": 1,
+  "docTitle": "Untitled Design",
+  "size": { "width": 1080, "height": 1080 },
+  "canvases": [
+    {
+      "id": "canvas-...",
+      "width": 1080,
+      "height": 1080,
+      "background": "#FFFFFF",
+      "elements": [
+        {
+          "id": "element-...",
+          "type": "text",
+          "layer": 1,
+          "placement": { "x": 40, "y": 40, "width": 400, "height": 120, "rotation": 0, "opacity": 1 },
+          "content": { "text": "Hello", "fontSize": 64, "color": "#172033" }
+        }
+      ]
+    }
+  ]
+}
+```
+
+Supported element types: `text`, `textbox`, `image`, `icon`, `graphic`, `shape`, `chart`, `table`, `embed`, `group`.
+
+Caps: 40 pages per canvas, 200 elements per page.
+
+---
+
+### Create canvas
+
+| | |
+|---|---|
+| **Method** | `POST` |
+| **Path** | `/api/workspaces/:workspaceId/canvases` |
+| **Auth** | Bearer + member |
+
+**Request body**
+
+| Field | Required | Notes |
+|-------|----------|-------|
+| `name` | Yes | ≤ 255 chars |
+| `folderId` | Yes | Must belong to this workspace — this is what saves the canvas **into the folder it was created from** |
+| `data` | No | Partial/full canvas document (see shape above); defaults to a single blank page |
+| `thumbnail` | No | Preview image URL |
+
+```json
+{
+  "name": "Untitled Design",
+  "folderId": "folder-uuid",
+  "data": {
+    "version": 1,
+    "docTitle": "Untitled Design",
+    "size": { "width": 1080, "height": 1080 },
+    "canvases": [{ "id": "canvas-1", "width": 1080, "height": 1080, "background": "#FFFFFF", "elements": [] }]
+  }
+}
+```
+
+**Response (201)** – `data.canvas` (same shape as Get below).
+
+---
+
+### List canvases
+
+| | |
+|---|---|
+| **Method** | `GET` |
+| **Path** | `/api/workspaces/:workspaceId/canvases?folderId=...` |
+| **Auth** | Bearer + member |
+
+`folderId` is optional; omit to list every canvas in the workspace. Response items omit `data` (use Get for the full document).
+
+---
+
+### Get canvas
+
+| | |
+|---|---|
+| **Method** | `GET` |
+| **Path** | `/api/workspaces/:workspaceId/canvases/:canvasId` |
+| **Auth** | Bearer + member |
+
+**Response (200)** – `data.canvas`:
+
+```json
+{
+  "id": "canvas-project-uuid",
+  "name": "Untitled Design",
+  "type": "CANVAS",
+  "workspaceId": "...",
+  "folderId": "...",
+  "thumbnail": null,
+  "status": "draft",
+  "data": { "version": 1, "docTitle": "Untitled Design", "size": { "width": 1080, "height": 1080 }, "canvases": [] },
+  "createdAt": "...",
+  "lastModifiedAt": "..."
+}
+```
+
+---
+
+### Update canvas metadata
+
+| | |
+|---|---|
+| **Method** | `PATCH` |
+| **Path** | `/api/workspaces/:workspaceId/canvases/:canvasId` |
+| **Auth** | Bearer + member |
+
+Body: `{ "name"?, "thumbnail"? }` (at least one field).
+
+---
+
+### Save canvas data (autosave)
+
+| | |
+|---|---|
+| **Method** | `PATCH` |
+| **Path** | `/api/workspaces/:workspaceId/canvases/:canvasId/data` |
+| **Auth** | Bearer + member |
+
+Body: `{ "data": <full canvas document> }` — **replaces** the whole document (same replace semantics as the video editor's `/projects/:projectId/data`).
+
+---
+
+### Move canvas to another folder
+
+| | |
+|---|---|
+| **Method** | `PATCH` |
+| **Path** | `/api/workspaces/:workspaceId/canvases/:canvasId/move-folder` |
+| **Auth** | Bearer + member |
+
+Body: `{ "folderId": "target-folder-uuid" }` (must belong to the same workspace).
+
+---
+
+### Delete canvas
+
+| | |
+|---|---|
+| **Method** | `DELETE` |
+| **Path** | `/api/workspaces/:workspaceId/canvases/:canvasId` |
+| **Auth** | Bearer + member |
+
+---

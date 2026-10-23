@@ -10,6 +10,7 @@ import {
 } from 'react-icons/md';
 import videoLibraryService from '../../../../services/videoLibraryService.js';
 import { formatBytes } from '../../../../utils/formatSize.js';
+import LoadMoreButton from '../../../ui/LoadMoreButton/LoadMoreButton';
 import './WorkspaceVideoLibrary.css';
 
 function formatCompletedDate(iso) {
@@ -214,16 +215,13 @@ function WorkspaceVideoLibrary({
       )}
 
       {hasMore ? (
-        <div className="workspace-video-library__more">
-          <button
-            type="button"
-            className="btn-secondary"
-            disabled={loadingMore}
-            onClick={() => loadVideos({ page: pagination.page + 1, append: true })}
-          >
-            {loadingMore ? 'Loading…' : 'Load more'}
-          </button>
-        </div>
+        <LoadMoreButton
+          loading={loadingMore}
+          disabled={loadingMore}
+          onClick={() => loadVideos({ page: pagination.page + 1, append: true })}
+          label="Load more videos"
+          loadingLabel="Loading more videos…"
+        />
       ) : null}
 
       {previewVideo ? (

@@ -1,0 +1,669 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { sanitizeUserFacingMessage } from '../../utils/userFacingMessage'
+import { consumeDashboardSearchContext } from '../../utils/dashboardSearchNavigate.js'
+import Toast from '../../components/ui/Toast/Toast'
+import {
+  MdApps,
+  MdClose,
+  MdDownload,
+  MdFilterList,
+  MdGridView,
+  MdImage,
+  MdSlideshow,
+  MdSort,
+  MdVideoLibrary,
+  MdViewList,
+  MdViewModule,
+} from 'react-icons/md'
+import { useAuth } from '../../contexts/AuthContext'
+import workspaceService from '../../services/workspaceService'
+import { extractUserId, normalizeWorkspace } from '../TeamWorkspace/workspaceUtils'
+import {
+  normalizeLibraryItem,
+  normalizeLibraryCategories,
+  normalizeLibraryCategoryId,
+} from '../../utils/workspaceLibrary.js'
+import '../../components/features/workspace/workspace/WorkspaceStyles.css'
+import MyWorkSkeleton from '../page-skeleton/MyWorkSkeleton'
+import { SkeletonMediaCollection } from '../page-skeleton/SkeletonPrimitives'
+import ExportMyWorkCard from './ExportMyWorkCard.jsx'
+import ExportMyWorkRow from './ExportMyWorkRow.jsx'
+import PresentationDeckPreviewModal from './PresentationDeckPreviewModal.jsx'
+import { MyWorkToolbarDropdown } from './MyWorkToolbar.jsx'
+import {
+  applyWorkFilters,
+  getCategoryFilterOptions,
+  getWorkEmptyHint,
+  getWorkEmptyTitle,
+  groupWorkItems,
+  normalizeWorkCategoryId,
+  sortWorkItems,
+  WORK_GROUP_OPTIONS,
+  WORK_SORT_OPTIONS,
+  WORK_CATEGORY_TABS,
+} from './myWorkUtils'
+import './MyWork.css'
+
+const BATCH_SIZE = 16
+
+const CATEGORY_TAB_ICONS = {
+  all: MdApps,
+  video: MdVideoLibrary,
+  presentation: MdSlideshow,
+  image: MdImage,
+}
+
+function toWorkCardItem(item, workspace, currentUserId, authUser) {
+  const normalized = normalizeLibraryItem(item, { workspaceId: workspace?.id, currentUserId, authUser })
+  const kind = normalizeLibraryCategoryId(normalized.kind) || 'video'
+  return {
+    ...normalized,
+    category: kind,
+    kind,
+    title: normalized.title || normalized.name,
+    workspaceId: workspace?.id || normalized.workspaceId,
+    workspaceName: workspace?.name || item.workspaceName || '',
+    workspaceType: workspace?.type,
+    completedAt: normalized.lastModifiedAt || normalized.createdAt,
+    fileSizeBytes: normalized.storageBytes ?? normalized.sizeBytes ?? null,
+    thumbnailUrl: normalized.thumbnailUrl || normalized.thumbnail || null,
+    slideCount: normalized.slideCount,
+    triggeredBy: item.owner || item.lastModifiedBy || item.triggeredBy || null,
+  }
+}
+
+function MyWork({ onCreate, onEdit, onOpenImage }) {
+  const { user: authUser } = useAuth()
+  const currentUserId = extractUserId(authUser)
+  const [fetchedVideos, setFetchedVideos] = useState([])
+  const [workspaceMap, setWorkspaceMap] = useState(() => new Map())
+  const [categoryCounts, setCategoryCounts] = useState({
+    all: 0,
+    video: 0,
+    presentation: 0,
+    image: 0,
+  })
+  const [loading, setLoading] = useState(true)
+  const [viewMode, setViewMode] = useState('grid')
+  const [activeSection, setActiveSection] = useState('all')
+  const [activeCategory, setActiveCategory] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterBy, setFilterBy] = useState('all')
+  const [sortBy, setSortBy] = useState('completed_desc')
+  const [groupBy, setGroupBy] = useState('none')
+  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE)
+  const [previewItem, setPreviewItem] = useState(null)
+  const [previewUrl, setPreviewUrl] = useState('')
+  const [actionId, setActionId] = useState(null)
+  const [toast, setToast] = useState(null)
+  const toastTimeoutRef = useRef(null)
+  const workspacesRef = useRef([])
+  const loadMoreSentinelRef = useRef(null)
+
+  useEffect(() => {
+    const ctx = consumeDashboardSearchContext('my-work') || consumeDashboardSearchContext('videos')
+    if (ctx?.searchQuery) setSearchQuery(ctx.searchQuery)
+  }, [])
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message: sanitizeUserFacingMessage(message), type })
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    toastTimeoutRef.current = setTimeout(() => setToast(null), 2800)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current)
+    }
+  }, [])
+
+  // Reset pagination on filter or category change
+  useEffect(() => {
+    setVisibleCount(BATCH_SIZE)
+  }, [activeCategory, activeSection, searchQuery, filterBy, sortBy, groupBy])
+
+  const loadLibraryForWorkspaces = useCallback(async (workspaces, category) => {
+    const catsToLoad =
+      category === 'all' ? ['video', 'presentation', 'image'] : [normalizeWorkCategoryId(category)]
+
+    const results = await Promise.all(
+      workspaces.map(async (ws) => {
+        try {
+          const [catData, ...lists] = await Promise.all([
+            workspaceService.getLibrary(ws.id).catch(() => ({ categories: [] })),
+            ...catsToLoad.map((cat) =>
+              workspaceService
+                .getLibrary(ws.id, {
+                  category: cat,
+                  ...(cat === 'image' ? { take: 40, skip: 0 } : {}),
+                })
+                .catch(() => ({ items: [] }))
+            ),
+          ])
+
+          const categories = normalizeLibraryCategories(catData.categories)
+          const items = lists.flatMap((list, index) => {
+            const kind = catsToLoad[index]
+            return (list.items || []).map((item) =>
+              toWorkCardItem({ ...item, kind: item.kind || kind }, ws, currentUserId, authUser)
+            )
+          })
+
+          return { workspaceId: ws.id, categories, items }
+        } catch (error) {
+          console.warn(`Library load failed for workspace ${ws.id}:`, error)
+          return { workspaceId: ws.id, categories: normalizeLibraryCategories([]), items: [] }
+        }
+      })
+    )
+
+    const counts = { all: 0, video: 0, presentation: 0, image: 0 }
+    results.forEach((result) => {
+      result.categories.forEach((cat) => {
+        if (counts[cat.id] != null) counts[cat.id] += Number(cat.count) || 0
+      })
+    })
+    counts.all = counts.video + counts.presentation + counts.image
+
+    const items = results.flatMap((r) => r.items)
+    return { counts, items }
+  }, [currentUserId, authUser])
+
+  const fetchWorkItems = useCallback(async () => {
+    setLoading(true)
+    try {
+      let workspaces = workspacesRef.current
+      if (!workspaces.length) {
+        const rawWorkspaces = await workspaceService.listWorkspaces()
+        workspaces = (rawWorkspaces || []).map((ws) =>
+          normalizeWorkspace(ws, currentUserId, authUser)
+        )
+        workspacesRef.current = workspaces
+        setWorkspaceMap(new Map(workspaces.map((ws) => [ws.id, ws])))
+      }
+
+      const { counts, items } = await loadLibraryForWorkspaces(workspaces, activeCategory)
+      setCategoryCounts(counts)
+      setFetchedVideos(items)
+    } catch (error) {
+      console.error('Failed to fetch workspace library:', error)
+      showToast(error.message || 'Failed to load work items', 'error')
+      setFetchedVideos([])
+    } finally {
+      setLoading(false)
+    }
+  }, [activeCategory, authUser, currentUserId, loadLibraryForWorkspaces])
+
+  useEffect(() => {
+    fetchWorkItems()
+  }, [fetchWorkItems])
+
+  const allWorkItems = fetchedVideos
+
+  const dynamicFilterOptions = useMemo(
+    () => getCategoryFilterOptions(activeCategory),
+    [activeCategory]
+  )
+
+  const filteredWorkItems = useMemo(() => {
+    const filtered = applyWorkFilters(allWorkItems, {
+      searchQuery,
+      filterBy,
+      currentUserId,
+      workspaceMap,
+      activeSection,
+      activeCategory,
+    })
+    return sortWorkItems(filtered, sortBy)
+  }, [
+    allWorkItems,
+    workspaceMap,
+    currentUserId,
+    activeSection,
+    activeCategory,
+    searchQuery,
+    filterBy,
+    sortBy,
+  ])
+
+  const workGroups = useMemo(
+    () => groupWorkItems(filteredWorkItems, groupBy),
+    [filteredWorkItems, groupBy]
+  )
+
+  const hasMore = visibleCount < filteredWorkItems.length
+
+  // Batch slicing for scroll performance
+  const visibleWorkGroups = useMemo(() => {
+    if (groupBy === 'none') {
+      return [{ key: 'all', label: null, videos: filteredWorkItems.slice(0, visibleCount) }]
+    }
+    let remainingBudget = visibleCount
+    return workGroups
+      .map((group) => {
+        if (remainingBudget <= 0) return null
+        const take = Math.min(group.videos.length, remainingBudget)
+        remainingBudget -= take
+        return {
+          ...group,
+          videos: group.videos.slice(0, take),
+          totalCount: group.videos.length,
+        }
+      })
+      .filter(Boolean)
+  }, [workGroups, filteredWorkItems, visibleCount, groupBy])
+
+  // Infinite scroll observer
+  useEffect(() => {
+    if (!hasMore) return
+    const sentinel = loadMoreSentinelRef.current
+    if (!sentinel) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0]
+        if (first?.isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + BATCH_SIZE, filteredWorkItems.length))
+        }
+      },
+      {
+        rootMargin: '250px',
+        threshold: 0.05,
+      }
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasMore, filteredWorkItems.length])
+
+  const hasSearch =
+    Boolean(searchQuery.trim()) ||
+    filterBy !== 'all' ||
+    activeCategory !== 'all' ||
+    activeSection !== 'all'
+
+  const handleResetFilters = () => {
+    setSearchQuery('')
+    setFilterBy('all')
+    setActiveSection('all')
+    setGroupBy('none')
+  }
+
+  const openPreview = (item) => {
+    setPreviewItem(item)
+    const kind = normalizeWorkCategoryId(item.category || item.kind)
+    if (kind === 'presentation') {
+      // Deck images load via GET .../presentations/:id/preview — never list thumbnailUrl.
+      setPreviewUrl('')
+      return
+    }
+    if (kind === 'image') {
+      setPreviewUrl(item.url || item.thumbnailUrl || item.thumbnail || '')
+      return
+    }
+    setPreviewUrl(item.thumbnailUrl || item.thumbnail || '')
+  }
+
+  const handleDownload = async (item) => {
+    setActionId(item.id)
+    try {
+      const kind = normalizeWorkCategoryId(item.category || item.kind)
+      const href = item.url || item.thumbnailUrl || item.thumbnail
+      if (!href) {
+        showToast('No downloadable file for this item', 'error')
+        return
+      }
+      const link = document.createElement('a')
+      link.href = href
+      link.download = `${String(item.title || item.name || kind).replace(/\s+/g, '_')}`
+      link.target = '_blank'
+      link.rel = 'noopener noreferrer'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      showToast(
+        kind === 'presentation'
+          ? 'Presentation download started'
+          : kind === 'image'
+            ? 'Image download started'
+            : 'Download started',
+        'success'
+      )
+    } catch (err) {
+      showToast(err.message || 'Download failed', 'error')
+    } finally {
+      setActionId(null)
+    }
+  }
+
+  const handleOpenProject = (item) => {
+    const kind = normalizeWorkCategoryId(item.category || item.kind)
+    if (kind === 'image') {
+      onOpenImage?.(item)
+      return
+    }
+    if (!onEdit) return
+    onEdit({
+      ...item,
+      id: item.id,
+      workspaceId: item.workspaceId,
+      folderId: item.folderId,
+      title: item.title || item.name,
+      type: item.type || (kind === 'presentation' ? 'PRESENTATION' : 'VIDEO'),
+      kind,
+      category: kind,
+    })
+  }
+
+  const renderWorkCollection = (collection) => (
+    <div
+      className={`items-container videos-export-items my-work-export-items ${
+        viewMode === 'grid' ? 'tile-view' : 'list-view export-list-view'
+      }`}
+    >
+      {viewMode === 'list' ? (
+        <div className="list-header export-list-header">
+          <div className="col" />
+          <div className="col">Name</div>
+          <div className="col">Type</div>
+          <div className="col">Workspace</div>
+          <div className="col">Updated</div>
+          <div className="col">Details / Size</div>
+          <div className="col">Author</div>
+          <div className="col" />
+        </div>
+      ) : null}
+
+      {collection.map((item) => {
+        const handlers = {
+          onPreview: () => openPreview(item),
+          onDownload: () => handleDownload(item),
+          onOpenProject: onEdit || onOpenImage ? () => handleOpenProject(item) : null,
+          downloading: actionId === item.id,
+        }
+
+        return viewMode === 'grid' ? (
+          <ExportMyWorkCard
+            key={`${item.kind}-${item.workspaceId}-${item.id}`}
+            video={item}
+            item={item}
+            {...handlers}
+          />
+        ) : (
+          <ExportMyWorkRow
+            key={`${item.kind}-${item.workspaceId}-${item.id}`}
+            video={item}
+            item={item}
+            {...handlers}
+          />
+        )
+      })}
+    </div>
+  )
+
+  const previewKind = previewItem
+    ? normalizeWorkCategoryId(previewItem.category || previewItem.kind)
+    : null
+
+  return (
+    <div className="videos-page my-work-page">
+      <div className="videos-shell my-work-shell">
+        <header className="videos-page-header my-work-page-header">
+          <div className="videos-title-section my-work-title-section">
+            <h1 className="videos-page-title my-work-page-title">My Work</h1>
+          </div>
+
+          <div className="videos-actions my-work-actions">
+            <MyWorkToolbarDropdown
+              label="Filter"
+              icon={MdFilterList}
+              value={filterBy}
+              defaultValue="all"
+              options={dynamicFilterOptions}
+              onChange={setFilterBy}
+              menuLabel="Filter options"
+            />
+
+            <div className="view-toggle" role="group" aria-label="View mode">
+              <button
+                className={`view-toggle-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                onClick={() => setViewMode('grid')}
+                title="Grid view"
+                aria-label="Grid view"
+                aria-pressed={viewMode === 'grid'}
+                type="button"
+              >
+                <MdGridView size={18} />
+              </button>
+              <button
+                className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setViewMode('list')}
+                title="List view"
+                aria-label="List view"
+                aria-pressed={viewMode === 'list'}
+                type="button"
+              >
+                <MdViewList size={18} />
+              </button>
+            </div>
+
+            <MyWorkToolbarDropdown
+              label="Sort"
+              icon={MdSort}
+              value={sortBy}
+              defaultValue="completed_desc"
+              options={WORK_SORT_OPTIONS}
+              onChange={setSortBy}
+              menuLabel="Sort options"
+            />
+
+            <MyWorkToolbarDropdown
+              label="Group"
+              icon={MdViewModule}
+              value={groupBy}
+              defaultValue="none"
+              options={WORK_GROUP_OPTIONS}
+              onChange={setGroupBy}
+              menuLabel="Group by options"
+            />
+          </div>
+        </header>
+
+        <div
+          className="workspace-root-tabs-wrapper work-root-tabs-wrapper"
+          role="tablist"
+          aria-label="Work categories"
+        >
+          <div className="workspace-root-tabs">
+            {WORK_CATEGORY_TABS.map((cat) => {
+              const Icon = CATEGORY_TAB_ICONS[cat.id]
+              const isActive = activeCategory === cat.id
+              const count = categoryCounts[cat.id] || 0
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className={`workspace-root-tab ${isActive ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveCategory(cat.id)
+                    setFilterBy('all')
+                  }}
+                >
+                  <Icon size={18} />
+                  <span>{cat.label}</span>
+                  <span className="tab-count-badge">{count}</span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <main className="videos-main my-work-main">
+          {loading && fetchedVideos.length === 0 ? (
+            <MyWorkSkeleton viewMode={viewMode} />
+          ) : filteredWorkItems.length === 0 ? (
+            <div className="videos-empty-state my-work-empty-state">
+              <div className="videos-empty-state__card my-work-empty-state__card">
+                <span className="videos-empty-state__icon-wrap" aria-hidden>
+                  {activeCategory === 'presentation' ? (
+                    <MdSlideshow size={28} />
+                  ) : activeCategory === 'image' ? (
+                    <MdImage size={28} />
+                  ) : (
+                    <MdVideoLibrary size={28} />
+                  )}
+                </span>
+                <p className="videos-empty-state__eyebrow">
+                  {hasSearch ? 'No matching results' : 'Empty collection'}
+                </p>
+                <h3 className="videos-empty-state__title">
+                  {getWorkEmptyTitle(activeSection, hasSearch, activeCategory)}
+                </h3>
+                <p className="videos-empty-state__description">
+                  {getWorkEmptyHint(activeSection, hasSearch, activeCategory)}
+                </p>
+                {hasSearch ? (
+                  <button
+                    type="button"
+                    className="videos-empty-state__cta my-work-empty-state__cta"
+                    onClick={handleResetFilters}
+                  >
+                    Reset All Filters
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            <div className="videos-groups my-work-groups">
+              {visibleWorkGroups.map((group) => (
+                <section key={group.key} className="videos-group my-work-group">
+                  {group.label ? (
+                    <h3 className="videos-group__heading my-work-group__heading">
+                      <span>{group.label}</span>
+                      <span className="videos-group__count">
+                        ({group.videos.length}
+                        {group.totalCount && group.totalCount > group.videos.length
+                          ? ` of ${group.totalCount}`
+                          : ''}
+                        )
+                      </span>
+                    </h3>
+                  ) : null}
+                  {renderWorkCollection(group.videos)}
+                </section>
+              ))}
+
+              {hasMore && (
+                <div ref={loadMoreSentinelRef} className="videos-scroll-loader my-work-scroll-loader" aria-busy="true" aria-label="Loading more items">
+                  <SkeletonMediaCollection
+                    viewMode={viewMode}
+                    cardCount={Math.min(viewMode === 'grid' ? 4 : 2, filteredWorkItems.length - visibleCount)}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
+
+      {previewItem && previewKind === 'presentation' ? (
+        <PresentationDeckPreviewModal
+          item={previewItem}
+          onClose={() => setPreviewItem(null)}
+          onEdit={onEdit || onOpenImage ? handleOpenProject : undefined}
+        />
+      ) : null}
+
+      {previewItem && previewKind !== 'presentation' ? (
+        <div className="videos-preview-modal work-preview-modal" role="dialog" aria-modal="true">
+          <div className="videos-preview-backdrop" onClick={() => setPreviewItem(null)} />
+          <div className="videos-preview-panel work-preview-panel">
+            <header className="videos-preview-header">
+              <div className="preview-header-meta">
+                <span className={`preview-cat-badge badge-${previewKind || 'video'}`}>
+                  {previewKind === 'image' ? 'Image' : 'Video'}
+                </span>
+                <h3>{previewItem.title || previewItem.name}</h3>
+              </div>
+              <div className="preview-header-actions">
+                <button
+                  type="button"
+                  className="preview-download-btn"
+                  onClick={() => handleDownload(previewItem)}
+                  title="Download File"
+                >
+                  <MdDownload size={18} />
+                  Download
+                </button>
+                <button type="button" onClick={() => setPreviewItem(null)} aria-label="Close">
+                  <MdClose size={22} />
+                </button>
+              </div>
+            </header>
+
+            {previewKind === 'image' ? (
+              <div className="image-preview-container">
+                {previewUrl ? (
+                  <img src={previewUrl} alt={previewItem.title || previewItem.name} />
+                ) : (
+                  <div className="ppt-slide-placeholder">
+                    <MdImage size={64} />
+                    <p>No preview available</p>
+                  </div>
+                )}
+                {(onEdit || onOpenImage) && (
+                  <div className="ppt-preview-footer">
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={() => {
+                        handleOpenProject(previewItem)
+                        setPreviewItem(null)
+                      }}
+                    >
+                      Open in Image Gen
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="image-preview-container">
+                {previewUrl ? (
+                  <img src={previewUrl} alt={previewItem.title || previewItem.name} />
+                ) : (
+                  <div className="ppt-slide-placeholder">
+                    <MdVideoLibrary size={64} />
+                    <p>Open the project to view or edit this video.</p>
+                  </div>
+                )}
+                {onEdit && (
+                  <div className="ppt-preview-footer">
+                    <button
+                      type="button"
+                      className="btn-primary"
+                      onClick={() => {
+                        handleOpenProject(previewItem)
+                        setPreviewItem(null)
+                      }}
+                    >
+                      Open Project
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {toast ? (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      ) : null}
+    </div>
+  )
+}
+
+export const Videos = MyWork
+export default MyWork

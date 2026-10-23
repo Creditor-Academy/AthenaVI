@@ -507,7 +507,7 @@ function HelpCenter({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigate
             <p className="contact-description">
               Can't find what you're looking for? Our support team is here to help you 24/7.
             </p>
-            <a href="#" className="contact-button">
+            <a href="mailto:support@lmsathena.com" className="contact-button">
               <MdSupport />
               Contact Support
             </a>

@@ -44,6 +44,10 @@ class CommentService {
     return {
       ...comment,
       id: comment.id || comment._id,
+      parentId: comment.parentId || null,
+      replies: Array.isArray(comment.replies)
+        ? comment.replies.map((reply) => this.normalizeComment(reply))
+        : [],
       author: comment.author
         ? { ...comment.author, id: comment.author.id || comment.author._id }
         : comment.author,
@@ -88,6 +92,14 @@ class CommentService {
       { method: 'DELETE' }
     );
     return Boolean(data?.deleted);
+  }
+
+  async resolveComment(workspaceId, projectId, commentId, resolve = true) {
+    const endpoint = resolve
+      ? API_CONFIG.ENDPOINTS.PROJECT_COMMENTS.RESOLVE(workspaceId, projectId, commentId)
+      : API_CONFIG.ENDPOINTS.PROJECT_COMMENTS.UNRESOLVE(workspaceId, projectId, commentId);
+    const data = await this.request(endpoint, { method: 'POST' });
+    return this.normalizeComment(data?.comment || data);
   }
 
   async searchMentionableUsers(workspaceId, projectId, q = '') {

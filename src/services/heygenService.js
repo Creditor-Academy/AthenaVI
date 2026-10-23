@@ -250,10 +250,14 @@ class HeygenService {
       const queryParams = new URLSearchParams(mergedParams).toString();
       const endpoint = `${API_CONFIG.ENDPOINTS.HEYGEN.AVATARS.GROUPS}${queryParams ? `?${queryParams}` : ''}`;
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       const response = await fetch(buildUrl(endpoint), {
         method: 'GET',
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw userError(`Failed to fetch avatar groups: ${response.status}`);
@@ -263,6 +267,9 @@ class HeygenService {
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.getAvatarGroups:', error);
+      if (error?.name === 'AbortError') {
+        throw userError('Request timed out while loading avatars. Please check your connection and try again.');
+      }
       throw sanitizeThrownError(error);
     }
   }
@@ -683,10 +690,14 @@ class HeygenService {
       const fullUrl = buildUrl(endpoint);
       console.log('Virtual Studio: Fetching voices from...', fullUrl);
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       const response = await fetch(fullUrl, {
         method: 'GET',
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw userError(`Failed to fetch voices: ${response.status}`);
@@ -696,6 +707,9 @@ class HeygenService {
       return data.data || data;
     } catch (error) {
       console.error('Error in heygenService.getVoices:', error);
+      if (error?.name === 'AbortError') {
+        throw userError('Request timed out while loading voices. Please check your connection and try again.');
+      }
       throw sanitizeThrownError(error);
     }
   }

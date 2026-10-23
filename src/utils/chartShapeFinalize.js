@@ -1,0 +1,890 @@
+import { isChartSingleBarLayout, layoutChartSingleBar } from './chartSingleBar.js'
+import { isChartSingleBarSplitLayout, layoutChartSingleBarSplit } from './chartSingleBarSplit.js'
+import { isChartTwoBarLayout, layoutChartTwoBar } from './chartTwoBar.js'
+import { isChartTwoBarSplitLayout, layoutChartTwoBarSplit } from './chartTwoBarSplit.js'
+import { isChartThreeBarLayout, layoutChartThreeBar } from './chartThreeBar.js'
+import { isChartTwoMetricsComparisonLayout, layoutChartTwoMetricsComparison } from './chartTwoMetricsComparison.js'
+import { isChartTwoCardsLayout, layoutChartTwoCards } from './chartTwoCards.js'
+import { isChartThreeCardsLayout, layoutChartThreeCards } from './chartThreeCards.js'
+import { isChartThreeContextLayout, layoutChartThreeContext } from './chartThreeContext.js'
+import { isChartThreeContextCardsLayout, layoutChartThreeContextCards } from './chartThreeContextCards.js'
+import { isChartDonutContextLayout, layoutChartDonutContext } from './chartDonutContext.js'
+import { isMetricThreeCardsLayout, layoutMetricThreeCards } from './metricThreeCards.js'
+import { isMetricFourCardsLayout, layoutMetricFourCards } from './metricFourCards.js'
+import { isMetricSingleLayout, layoutMetricSingle } from './metricSingle.js'
+import { isMetricTwoLayout, layoutMetricTwo } from './metricTwo.js'
+import { isMetricSingleSplitLayout, layoutMetricSingleSplit } from './metricSingleSplit.js'
+import { isMetricThreeLayout, layoutMetricThree } from './metricThree.js'
+import { isMetricFourLayout, layoutMetricFour } from './metricFour.js'
+import { isMetricFiveLayout, layoutMetricFive } from './metricFive.js'
+import { isMetricFiveCardsLayout, layoutMetricFiveCards } from './metricFiveCards.js'
+import { isMetricSixCardsLayout, layoutMetricSixCards } from './metricSixCards.js'
+import { isMetricSixParaLayout, layoutMetricSixPara } from './metricSixPara.js'
+import {
+  isMetricThreeVerticalLayout,
+  isMetricThreeVerticalCardsLayout,
+  layoutMetricThreeVertical,
+  layoutMetricThreeVerticalCards,
+} from './metricThreeVertical.js'
+import { isMetricTwoSplitLayout, layoutMetricTwoSplit } from './metricTwoSplit.js'
+import { isTableSingleLayout, layoutTableSingle } from './tableSingleLayout.js'
+import { isTableSingleCardsLayout, layoutTableSingleCards } from './tableSingleCardsLayout.js'
+import { isTableWithDescriptionLayout, layoutTableWithDescription } from './tableWithDescriptionLayout.js'
+import { isTableWithDescriptionSideLayout, layoutTableWithDescriptionSide } from './tableWithDescriptionSideLayout.js'
+import { isTableTwoDescLayout, layoutTableTwoDesc } from './tableTwoDescLayout.js'
+import { isTableTwoDescCardsLayout, layoutTableTwoDescCards } from './tableTwoDescCardsLayout.js'
+import { isProcessLinearBusinessLayout, layoutProcessLinearBusiness } from './processLinearBusinessLayout.js'
+import { isProcessLinearHortiLayout, layoutProcessLinearHorti } from './processLinearHortiLayout.js'
+import { isProcessLinearHorizontalLayout, layoutProcessLinearHorizontal } from './processLinearHorizontalLayout.js'
+import { isProcessLinearHortiFourLayout, layoutProcessLinearHortiFour } from './processLinearHortiFourLayout.js'
+import { isProcessLinearFourCardsLayout, layoutProcessLinearFourCards } from './processLinearFourCardsLayout.js'
+import { isProcessLinearNumericLayout, layoutProcessLinearNumeric } from './processLinearNumericLayout.js'
+import { isProcessLinearNumericCardsLayout, layoutProcessLinearNumericCards } from './processLinearNumericCardsLayout.js'
+import {
+  isTableTwoSameHeaderLayout,
+  layoutTableTwoSameHeader,
+  isTableTwoSameHeaderCardsLayout,
+  layoutTableTwoSameHeaderCards,
+} from './tableTwoSameHeaderLayout.js'
+import {
+  isEightShortTextsImageLayout,
+  layoutEightShortTextsImage,
+} from './eightShortTextsImageLayout.js'
+import {
+  isBulletListDenseLayout,
+  layoutBulletListDense,
+} from './bulletListDenseLayout.js'
+import {
+  isBulletListNumberedLayout,
+  layoutBulletListNumbered,
+} from './bulletListNumberedLayout.js'
+import {
+  isBulletListTwoColumnLayout,
+  layoutBulletListTwoColumn,
+} from './bulletListTwoColumnLayout.js'
+import {
+  isTextOnlyCenteredLayout,
+  layoutTextOnlyCentered,
+} from './textOnlyCenteredLayout.js'
+import {
+  isSectionDividerSplitDiagonalLayout,
+  layoutSectionDividerSplitDiagonal,
+} from './sectionDividerSplitDiagonalLayout.js'
+import {
+  isSectionDividerSplitLayout,
+  layoutSectionDividerSplit,
+} from './sectionDividerSplitLayout.js'
+import {
+  isBulletListSplitLayout,
+  layoutBulletListSplit,
+} from './bulletListSplitLayout.js'
+import {
+  isBulletListNumberedVerticalLayout,
+  layoutBulletListNumberedVertical,
+} from './bulletListNumberedVerticalLayout.js'
+import {
+  isIntroThreeParaIconsLayout,
+  layoutIntroThreeParaIcons,
+} from './introThreeParaIconsLayout.js'
+import {
+  isWideImageStatementOverlayLayout,
+  layoutWideImageStatementOverlay,
+} from './wideImageStatementOverlayLayout.js'
+import {
+  isParaTitleLeftImageBoxedLayout,
+  layoutParaTitleLeftImageBoxed,
+} from './paraTitleLeftImageBoxedLayout.js'
+import {
+  isParaTitleRightImageBoxedLayout,
+  layoutParaTitleRightImageBoxed,
+} from './paraTitleRightImageBoxedLayout.js'
+import {
+  isParaTitleLeftImageOverlayLayout,
+  layoutParaTitleLeftImageOverlay,
+} from './paraTitleLeftImageOverlayLayout.js'
+import {
+  isParaTitleRightImageOverlayLayout,
+  layoutParaTitleRightImageOverlay,
+} from './paraTitleRightImageOverlayLayout.js'
+import {
+  isParaLandscapeImageLayout,
+  layoutParaLandscapeImage,
+} from './paraLandscapeImageLayout.js'
+import {
+  isParaSplit5050Layout,
+  layoutParaSplit5050,
+} from './paraSplit5050Layout.js'
+import {
+  isTwoParaRightImageLayout,
+  layoutTwoParaRightImage,
+} from './twoParaRightImageLayout.js'
+import {
+  isContactLeftImageLayout,
+  layoutContactLeftImage,
+} from './contactLeftImageLayout.js'
+import {
+  isContactRightImageLayout,
+  layoutContactRightImage,
+} from './contactRightImageLayout.js'
+import {
+  isContactImageBottomLayout,
+  layoutContactImageBottom,
+} from './contactImageBottomLayout.js'
+import {
+  isTeamSpeakerBioLayout,
+  layoutTeamSpeakerBio,
+} from './teamSpeakerBioLayout.js'
+import {
+  isSpeakerBioImageRightLayout,
+  layoutSpeakerBioImageRight,
+} from './speakerBioImageRightLayout.js'
+import {
+  isSpeakerBioCenteredLayout,
+  layoutSpeakerBioCentered,
+} from './speakerBioCenteredLayout.js'
+import {
+  isCenteredTextCtaLayout,
+  layoutCenteredTextCta,
+} from './centeredTextCtaLayout.js'
+import {
+  isClosingThankYouLayout,
+  layoutClosingThankYou,
+} from './closingThankYouLayout.js'
+import {
+  isMinimalTextCtaLayout,
+  layoutMinimalTextCta,
+} from './minimalTextCtaLayout.js'
+import {
+  isClosingContactCtaLayout,
+  layoutClosingContactCta,
+} from './closingContactCtaLayout.js'
+import {
+  isContactCardCtaLayout,
+  layoutContactCardCta,
+} from './contactCardCtaLayout.js'
+import {
+  isContactSplitCtaLayout,
+  layoutContactSplitCta,
+} from './contactSplitCtaLayout.js'
+import {
+  isParaImageCtaLayout,
+  layoutParaImageCta,
+} from './paraImageCtaLayout.js'
+import {
+  isImageParaCtaLayout,
+  layoutImageParaCta,
+} from './imageParaCtaLayout.js'
+import {
+  isOverlayImageCtaLayout,
+  layoutOverlayImageCta,
+} from './overlayImageCtaLayout.js'
+import {
+  isTwoParaRightImageBottomLayout,
+  layoutTwoParaRightImageBottom,
+} from './twoParaRightImageBottomLayout.js'
+import {
+  isThreeParaImageLayout,
+  layoutThreeParaImage,
+} from './threeParaImageLayout.js'
+import {
+  isFourParaImageLayout,
+  layoutFourParaImage,
+} from './fourParaImageLayout.js'
+import {
+  isFourParaImageGridLayout,
+  layoutFourParaImageGrid,
+} from './fourParaImageGridLayout.js'
+import {
+  isParaTwoImagesLayout,
+  layoutParaTwoImages,
+} from './paraTwoImagesLayout.js'
+import {
+  isParaThreeImagesLayout,
+  layoutParaThreeImages,
+} from './paraThreeImagesLayout.js'
+import {
+  isParaThreeImagesHorizontalLayout,
+  layoutParaThreeImagesHorizontal,
+} from './paraThreeImagesHorizontalLayout.js'
+import {
+  isParaThreeImagesStaggeredLayout,
+  layoutParaThreeImagesStaggered,
+} from './paraThreeImagesStaggeredLayout.js'
+import {
+  isThreeCardsImageTextLayout,
+  layoutThreeCardsImageText,
+} from './threeCardsImageTextLayout.js'
+import {
+  isTwoCardsImageTextLayout,
+  layoutTwoCardsImageText,
+} from './twoCardsImageTextLayout.js'
+import {
+  isTwoLargeImageCardsLayout,
+  layoutTwoLargeImageCards,
+} from './twoLargeImageCardsLayout.js'
+import {
+  isFourImagesTextLayout,
+  layoutFourImagesText,
+} from './fourImagesTextLayout.js'
+import {
+  isFourImagesTextMosaicLayout,
+  layoutFourImagesTextMosaic,
+} from './fourImagesTextMosaicLayout.js'
+import {
+  isHeadlineCenteredLayout,
+  layoutHeadlineCentered,
+} from './headlineCenteredLayout.js'
+import {
+  isTitleStatementSplitLayout,
+  layoutTitleStatementSplit,
+} from './titleStatementSplitLayout.js'
+import {
+  isTitleStatementLayout,
+  layoutTitleStatement,
+} from './titleStatementLayout.js'
+import {
+  isIntroFourParaLayout,
+  layoutIntroFourPara,
+} from './introFourParaLayout.js'
+import {
+  isHeadlineRightTextLayout,
+  layoutHeadlineRightText,
+} from './headlineRightTextLayout.js'
+import {
+  isSectionDividerSplitImageLayout,
+  layoutSectionDividerSplitImage,
+} from './sectionDividerSplitImageLayout.js'
+import {
+  isLargeImageLayout,
+  layoutLargeImage,
+} from './largeImageLayout.js'
+import {
+  isFullBgImageOverlayLayout,
+  layoutFullBgImageOverlay,
+} from './fullBgImageOverlayLayout.js'
+import {
+  isFullBgImageOverlayBottomLayout,
+  layoutFullBgImageOverlayBottom,
+} from './fullBgImageOverlayBottomLayout.js'
+import {
+  isFullBgImageOverlaySideLayout,
+  layoutFullBgImageOverlaySide,
+} from './fullBgImageOverlaySideLayout.js'
+import {
+  isSectionDividerBandLayout,
+  layoutSectionDividerBand,
+} from './sectionDividerBandLayout.js'
+import {
+  isSectionDividerBandFullLayout,
+  layoutSectionDividerBandFull,
+} from './sectionDividerBandFullLayout.js'
+import {
+  isComparisonSideBySideLayout,
+  layoutComparisonSideBySide,
+} from './comparisonSideBySideLayout.js'
+import {
+  isComparisonSideBySideCardsLayout,
+  layoutComparisonSideBySideCards,
+} from './comparisonSideBySideCardsLayout.js'
+import {
+  isComparisonSideBySideCenterlineLayout,
+  layoutComparisonSideBySideCenterline,
+} from './comparisonSideBySideCenterlineLayout.js'
+import {
+  isBulletListCardsLayout,
+  layoutBulletListCards,
+} from './bulletListCardsLayout.js'
+import {
+  isBulletListGridLayout,
+  layoutBulletListGrid,
+} from './bulletListGridLayout.js'
+import {
+  isGridBentoThreeLayout,
+  layoutGridBentoThree,
+} from './gridBentoThreeLayout.js'
+import {
+  isGridBentoFourLayout,
+  layoutGridBentoFour,
+} from './gridBentoFourLayout.js'
+import {
+  isGridFourMosaicLayout,
+  layoutGridFourMosaic,
+} from './gridFourMosaicLayout.js'
+import {
+  isGridSixImagesLayout,
+  layoutGridSixImages,
+} from './gridSixImagesLayout.js'
+import {
+  isGridSixImagesMosaicLayout,
+  layoutGridSixImagesMosaic,
+} from './gridSixImagesMosaicLayout.js'
+import {
+  isGridTextImageCardsLayout,
+  layoutGridTextImageCards,
+} from './gridTextImageCardsLayout.js'
+import {
+  isLogoPartnerGridLayout,
+  layoutLogoPartnerGrid,
+  isLogoPartnerStripLayout,
+  layoutLogoPartnerStrip,
+  isLogoWallLayout,
+  layoutLogoWall,
+} from './logoPartnerLayouts.js'
+import {
+  isLogoWallMasonryLayout,
+  layoutLogoWallMasonry,
+} from './logoWallMasonryLayout.js'
+import {
+  isGridThreeImagesTextLayout,
+  layoutGridThreeImagesText,
+} from './gridThreeImagesText.js'
+import {
+  isGridThreeImagesTextAsymmetricLayout,
+  layoutGridThreeImagesTextAsymmetric,
+} from './gridThreeImagesTextAsymmetric.js'
+import {
+  isGridImagesTextCardsLayout,
+  layoutGridImagesTextCards,
+} from './gridImagesTextCards.js'
+import {
+  isGridImagesTextMosaicLayout,
+  layoutGridImagesTextMosaic,
+} from './gridImagesTextMosaic.js'
+import {
+  isGridInsightsChartLayout,
+  layoutGridInsightsChart,
+} from './gridInsightsChart.js'
+import {
+  isGridInsightsChartSplitLayout,
+  layoutGridInsightsChartSplit,
+} from './gridInsightsChartSplit.js'
+import {
+  isGridMetricsMobileLayout,
+  layoutGridMetricsMobile,
+} from './gridMetricsMobile.js'
+import {
+  isGridMetricsMasonryLayout,
+  layoutGridMetricsMasonry,
+} from './gridMetricsMasonry.js'
+import {
+  isGridMetricsAsymmetricLayout,
+  layoutGridMetricsAsymmetric,
+} from './gridMetricsAsymmetric.js'
+import {
+  isGridDeviceMockupsLayout,
+  layoutGridDeviceMockups,
+} from './gridDeviceMockupsLayout.js'
+import {
+  isChartExponentialDescLayout,
+  layoutChartExponentialDesc,
+} from './chartExponentialDescLayout.js'
+import {
+  isChartWithDescriptionLayout,
+  layoutChartWithDescription,
+} from './chartWithDescriptionLayout.js'
+
+export function finalizeChartShapes(elements, schema, palette = {}, canvas = {}) {
+  const layoutId = schema?.layout_id || schema?.id || schema?.layoutId
+  
+  if (isChartSingleBarLayout(layoutId)) {
+    return layoutChartSingleBar(elements, schema, palette, canvas)
+  }
+  
+  if (isChartSingleBarSplitLayout(layoutId)) {
+    return layoutChartSingleBarSplit(elements, schema, palette, canvas)
+  }
+  
+  if (isChartTwoBarLayout(layoutId)) {
+    return layoutChartTwoBar(elements, schema, palette, canvas)
+  }
+  
+  if (isChartTwoBarSplitLayout(layoutId)) {
+    return layoutChartTwoBarSplit(elements, schema, palette, canvas)
+  }
+  
+  if (isChartThreeBarLayout(layoutId)) {
+    return layoutChartThreeBar(elements, schema, palette, canvas)
+  }
+  
+  if (isChartTwoMetricsComparisonLayout(layoutId)) {
+    return layoutChartTwoMetricsComparison(elements, schema, palette, canvas)
+  }
+  
+  if (isChartTwoCardsLayout(layoutId)) {
+    return layoutChartTwoCards(elements, schema, palette, canvas)
+  }
+  
+  if (isChartThreeCardsLayout(layoutId)) {
+    return layoutChartThreeCards(elements, schema, palette, canvas)
+  }
+  
+  if (isChartThreeContextLayout(layoutId)) {
+    return layoutChartThreeContext(elements, schema, palette, canvas)
+  }
+  
+  if (isChartThreeContextCardsLayout(layoutId)) {
+    return layoutChartThreeContextCards(elements, schema, palette, canvas)
+  }
+  
+  if (isChartDonutContextLayout(layoutId)) {
+    return layoutChartDonutContext(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricThreeCardsLayout(layoutId)) {
+    return layoutMetricThreeCards(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricSingleLayout(layoutId)) {
+    return layoutMetricSingle(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricTwoLayout(layoutId)) {
+    return layoutMetricTwo(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricSingleSplitLayout(layoutId)) {
+    return layoutMetricSingleSplit(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricThreeLayout(layoutId)) {
+    return layoutMetricThree(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricFourLayout(layoutId)) {
+    return layoutMetricFour(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricFourCardsLayout(layoutId)) {
+    return layoutMetricFourCards(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricFiveLayout(layoutId)) {
+    return layoutMetricFive(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricFiveCardsLayout(layoutId)) {
+    return layoutMetricFiveCards(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricSixCardsLayout(layoutId, schema)) {
+    return layoutMetricSixCards(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricSixParaLayout(layoutId, schema)) {
+    return layoutMetricSixPara(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricThreeVerticalCardsLayout(layoutId, schema)) {
+    return layoutMetricThreeVerticalCards(elements, schema, palette, canvas)
+  }
+
+  if (isMetricThreeVerticalLayout(layoutId, schema)) {
+    return layoutMetricThreeVertical(elements, schema, palette, canvas)
+  }
+  
+  if (isMetricTwoSplitLayout(layoutId)) {
+    return layoutMetricTwoSplit(elements, schema, palette, canvas)
+  }
+  
+  if (isTableSingleLayout(layoutId)) {
+    return layoutTableSingle(elements, schema, palette, canvas)
+  }
+  
+  if (isTableSingleCardsLayout(layoutId)) {
+    return layoutTableSingleCards(elements, schema, palette, canvas)
+  }
+  
+  if (isTableWithDescriptionLayout(layoutId)) {
+    return layoutTableWithDescription(elements, schema, palette, canvas)
+  }
+  
+  if (isTableWithDescriptionSideLayout(layoutId)) {
+    return layoutTableWithDescriptionSide(elements, schema, palette, canvas)
+  }
+  
+  if (isTableTwoDescLayout(layoutId)) {
+    return layoutTableTwoDesc(elements, schema, palette, canvas)
+  }
+  
+  if (isTableTwoDescCardsLayout(layoutId)) {
+    return layoutTableTwoDescCards(elements, schema, palette, canvas)
+  }
+  
+  if (isProcessLinearHortiLayout(layoutId)) {
+    return layoutProcessLinearHorti(elements, schema, palette, canvas)
+  }
+
+  if (isProcessLinearHortiFourLayout(layoutId)) {
+    return layoutProcessLinearHortiFour(elements, schema, palette, canvas)
+  }
+
+  if (isProcessLinearFourCardsLayout(layoutId)) {
+    return layoutProcessLinearFourCards(elements, schema, palette, canvas)
+  }
+
+  if (isProcessLinearNumericLayout(layoutId)) {
+    return layoutProcessLinearNumeric(elements, schema, palette, canvas)
+  }
+
+  if (isProcessLinearNumericCardsLayout(layoutId)) {
+    return layoutProcessLinearNumericCards(elements, schema, palette, canvas)
+  }
+
+  if (isProcessLinearHorizontalLayout(layoutId)) {
+    return layoutProcessLinearHorizontal(elements, schema, palette, canvas)
+  }
+
+  if (isProcessLinearBusinessLayout(layoutId)) {
+    return layoutProcessLinearBusiness(elements, schema, palette, canvas)
+  }
+  
+  if (isTableTwoSameHeaderCardsLayout(layoutId)) {
+    return layoutTableTwoSameHeaderCards(elements, schema, palette, canvas)
+  }
+
+  if (isTableTwoSameHeaderLayout(layoutId)) {
+    return layoutTableTwoSameHeader(elements, schema, palette, canvas)
+  }
+  
+  if (isEightShortTextsImageLayout(layoutId)) {
+    return layoutEightShortTextsImage(elements, schema, palette, canvas)
+  }
+
+  if (isBulletListDenseLayout(layoutId)) {
+    return layoutBulletListDense(elements, schema, palette, canvas)
+  }
+
+  if (isBulletListNumberedVerticalLayout(layoutId)) {
+    return layoutBulletListNumberedVertical(elements, schema, palette, canvas)
+  }
+
+  if (isBulletListNumberedLayout(layoutId)) {
+    return layoutBulletListNumbered(elements, schema, palette, canvas)
+  }
+
+  if (isBulletListSplitLayout(layoutId)) {
+    return layoutBulletListSplit(elements, schema, palette, canvas)
+  }
+
+  if (isBulletListTwoColumnLayout(layoutId)) {
+    return layoutBulletListTwoColumn(elements, schema, palette, canvas)
+  }
+
+  if (isTextOnlyCenteredLayout(layoutId)) {
+    return layoutTextOnlyCentered(elements, schema, palette, canvas)
+  }
+
+  if (isSectionDividerSplitDiagonalLayout(layoutId)) {
+    return layoutSectionDividerSplitDiagonal(elements, schema, palette, canvas)
+  }
+
+  if (isSectionDividerSplitLayout(layoutId)) {
+    return layoutSectionDividerSplit(elements, schema, palette, canvas)
+  }
+  
+  if (isIntroThreeParaIconsLayout(layoutId)) {
+    return layoutIntroThreeParaIcons(elements, schema, palette, canvas)
+  }
+
+  if (isWideImageStatementOverlayLayout(layoutId, schema)) {
+    return layoutWideImageStatementOverlay(elements, schema, palette, canvas)
+  }
+
+  if (isParaTitleLeftImageBoxedLayout(layoutId, schema)) {
+    return layoutParaTitleLeftImageBoxed(elements, schema, palette, canvas)
+  }
+
+  if (isParaTitleRightImageBoxedLayout(layoutId, schema)) {
+    return layoutParaTitleRightImageBoxed(elements, schema, palette, canvas)
+  }
+
+  if (isParaTitleLeftImageOverlayLayout(layoutId, schema)) {
+    return layoutParaTitleLeftImageOverlay(elements, schema, palette, canvas)
+  }
+
+  if (isParaTitleRightImageOverlayLayout(layoutId, schema)) {
+    return layoutParaTitleRightImageOverlay(elements, schema, palette, canvas)
+  }
+
+  if (isParaLandscapeImageLayout(layoutId, schema)) {
+    return layoutParaLandscapeImage(elements, schema, palette, canvas)
+  }
+
+  if (isParaSplit5050Layout(layoutId, schema)) {
+    return layoutParaSplit5050(elements, schema, palette, canvas)
+  }
+
+  if (isTwoParaRightImageLayout(layoutId, schema)) {
+    return layoutTwoParaRightImage(elements, schema, palette, canvas)
+  }
+
+  if (isContactLeftImageLayout(layoutId, schema)) {
+    return layoutContactLeftImage(elements, schema, palette, canvas)
+  }
+
+  if (isContactRightImageLayout(layoutId, schema)) {
+    return layoutContactRightImage(elements, schema, palette, canvas)
+  }
+
+  if (isContactImageBottomLayout(layoutId, schema)) {
+    return layoutContactImageBottom(elements, schema, palette, canvas)
+  }
+
+  if (isTeamSpeakerBioLayout(layoutId, schema)) {
+    return layoutTeamSpeakerBio(elements, schema, palette, canvas)
+  }
+
+  if (isSpeakerBioImageRightLayout(layoutId, schema)) {
+    return layoutSpeakerBioImageRight(elements, schema, palette, canvas)
+  }
+
+  if (isSpeakerBioCenteredLayout(layoutId, schema)) {
+    return layoutSpeakerBioCentered(elements, schema, palette, canvas)
+  }
+
+  if (isCenteredTextCtaLayout(layoutId, schema)) {
+    return layoutCenteredTextCta(elements, schema, palette, canvas)
+  }
+
+  if (isClosingThankYouLayout(layoutId, schema)) {
+    return layoutClosingThankYou(elements, schema, palette, canvas)
+  }
+
+  if (isMinimalTextCtaLayout(layoutId, schema)) {
+    return layoutMinimalTextCta(elements, schema, palette, canvas)
+  }
+
+  if (isClosingContactCtaLayout(layoutId, schema)) {
+    return layoutClosingContactCta(elements, schema, palette, canvas)
+  }
+
+  if (isContactCardCtaLayout(layoutId, schema)) {
+    return layoutContactCardCta(elements, schema, palette, canvas)
+  }
+
+  if (isContactSplitCtaLayout(layoutId, schema)) {
+    return layoutContactSplitCta(elements, schema, palette, canvas)
+  }
+
+  if (isParaImageCtaLayout(layoutId, schema)) {
+    return layoutParaImageCta(elements, schema, palette, canvas)
+  }
+
+  if (isImageParaCtaLayout(layoutId, schema)) {
+    return layoutImageParaCta(elements, schema, palette, canvas)
+  }
+
+  if (isOverlayImageCtaLayout(layoutId, schema)) {
+    return layoutOverlayImageCta(elements, schema, palette, canvas)
+  }
+
+  if (isTwoParaRightImageBottomLayout(layoutId, schema)) {
+    return layoutTwoParaRightImageBottom(elements, schema, palette, canvas)
+  }
+
+  if (isThreeParaImageLayout(layoutId, schema)) {
+    return layoutThreeParaImage(elements, schema, palette, canvas)
+  }
+
+  if (isFourParaImageLayout(layoutId, schema)) {
+    return layoutFourParaImage(elements, schema, palette, canvas)
+  }
+
+  if (isFourParaImageGridLayout(layoutId, schema)) {
+    return layoutFourParaImageGrid(elements, schema, palette, canvas)
+  }
+
+  if (isParaTwoImagesLayout(layoutId, schema)) {
+    return layoutParaTwoImages(elements, schema, palette, canvas)
+  }
+
+  if (isParaThreeImagesLayout(layoutId, schema)) {
+    return layoutParaThreeImages(elements, schema, palette, canvas)
+  }
+
+  if (isParaThreeImagesHorizontalLayout(layoutId, schema)) {
+    return layoutParaThreeImagesHorizontal(elements, schema, palette, canvas)
+  }
+
+  if (isParaThreeImagesStaggeredLayout(layoutId, schema)) {
+    return layoutParaThreeImagesStaggered(elements, schema, palette, canvas)
+  }
+
+  if (isThreeCardsImageTextLayout(layoutId, schema)) {
+    return layoutThreeCardsImageText(elements, schema, palette, canvas)
+  }
+
+  if (isTwoCardsImageTextLayout(layoutId, schema)) {
+    return layoutTwoCardsImageText(elements, schema, palette, canvas)
+  }
+
+  if (isTwoLargeImageCardsLayout(layoutId, schema)) {
+    return layoutTwoLargeImageCards(elements, schema, palette, canvas)
+  }
+
+  if (isFourImagesTextLayout(layoutId, schema)) {
+    return layoutFourImagesText(elements, schema, palette, canvas)
+  }
+
+  if (isFourImagesTextMosaicLayout(layoutId, schema)) {
+    return layoutFourImagesTextMosaic(elements, schema, palette, canvas)
+  }
+
+  if (isHeadlineCenteredLayout(layoutId, schema)) {
+    return layoutHeadlineCentered(elements, schema, palette, canvas)
+  }
+
+  if (isTitleStatementSplitLayout(layoutId, schema)) {
+    return layoutTitleStatementSplit(elements, schema, palette, canvas)
+  }
+
+  if (isTitleStatementLayout(layoutId, schema)) {
+    return layoutTitleStatement(elements, schema, palette, canvas)
+  }
+
+  if (isIntroFourParaLayout(layoutId, schema)) {
+    return layoutIntroFourPara(elements, schema, palette, canvas)
+  }
+
+  if (isHeadlineRightTextLayout(layoutId, schema)) {
+    return layoutHeadlineRightText(elements, schema, palette, canvas)
+  }
+
+  if (isSectionDividerSplitImageLayout(layoutId, schema)) {
+    return layoutSectionDividerSplitImage(elements, schema, palette, canvas)
+  }
+
+  if (isLargeImageLayout(layoutId, schema)) {
+    return layoutLargeImage(elements, schema, palette, canvas)
+  }
+
+  if (isFullBgImageOverlayLayout(layoutId, schema)) {
+    return layoutFullBgImageOverlay(elements, schema, palette, canvas)
+  }
+
+  if (isFullBgImageOverlayBottomLayout(layoutId, schema)) {
+    return layoutFullBgImageOverlayBottom(elements, schema, palette, canvas)
+  }
+
+  if (isFullBgImageOverlaySideLayout(layoutId, schema)) {
+    return layoutFullBgImageOverlaySide(elements, schema, palette, canvas)
+  }
+
+  if (isSectionDividerBandLayout(layoutId, schema)) {
+    return layoutSectionDividerBand(elements, schema, palette, canvas)
+  }
+
+  if (isSectionDividerBandFullLayout(layoutId, schema)) {
+    return layoutSectionDividerBandFull(elements, schema, palette, canvas)
+  }
+
+  if (isComparisonSideBySideLayout(layoutId, schema)) {
+    return layoutComparisonSideBySide(elements, schema, palette, canvas)
+  }
+
+  if (isComparisonSideBySideCardsLayout(layoutId, schema)) {
+    return layoutComparisonSideBySideCards(elements, schema, palette, canvas)
+  }
+
+  if (isComparisonSideBySideCenterlineLayout(layoutId, schema)) {
+    return layoutComparisonSideBySideCenterline(elements, schema, palette, canvas)
+  }
+
+  if (isBulletListCardsLayout(layoutId, schema)) {
+    return layoutBulletListCards(elements, schema, palette, canvas)
+  }
+
+  if (isBulletListGridLayout(layoutId, schema)) {
+    return layoutBulletListGrid(elements, schema, palette, canvas)
+  }
+  
+  if (isGridBentoThreeLayout(layoutId)) {
+    return layoutGridBentoThree(elements, schema, palette, canvas)
+  }
+  
+  if (isGridBentoFourLayout(layoutId)) {
+    return layoutGridBentoFour(elements, schema, palette, canvas)
+  }
+  
+  if (isGridFourMosaicLayout(layoutId)) {
+    return layoutGridFourMosaic(elements, schema, palette, canvas)
+  }
+  
+  if (isGridSixImagesLayout(layoutId)) {
+    return layoutGridSixImages(elements, schema, palette, canvas)
+  }
+  
+  if (isGridSixImagesMosaicLayout(layoutId)) {
+    return layoutGridSixImagesMosaic(elements, schema, palette, canvas)
+  }
+  
+  if (isGridTextImageCardsLayout(layoutId)) {
+    return layoutGridTextImageCards(elements, schema, palette, canvas)
+  }
+  
+  if (isLogoPartnerGridLayout(layoutId)) {
+    return layoutLogoPartnerGrid(elements, schema, palette, canvas)
+  }
+  
+  if (isLogoPartnerStripLayout(layoutId)) {
+    return layoutLogoPartnerStrip(elements, schema, palette, canvas)
+  }
+  
+  if (isLogoWallLayout(layoutId)) {
+    return layoutLogoWall(elements, schema, palette, canvas)
+  }
+  
+  if (isLogoWallMasonryLayout(layoutId)) {
+    return layoutLogoWallMasonry(elements, schema, palette, canvas)
+  }
+  
+  if (isGridThreeImagesTextLayout(layoutId)) {
+    return layoutGridThreeImagesText(elements, schema, palette, canvas)
+  }
+  
+  if (isGridThreeImagesTextAsymmetricLayout(layoutId)) {
+    return layoutGridThreeImagesTextAsymmetric(elements, schema, palette, canvas)
+  }
+  
+  if (isGridImagesTextCardsLayout(layoutId)) {
+    return layoutGridImagesTextCards(elements, schema, palette, canvas)
+  }
+  
+  if (isGridImagesTextMosaicLayout(layoutId)) {
+    return layoutGridImagesTextMosaic(elements, schema, palette, canvas)
+  }
+  
+  if (isGridInsightsChartLayout(layoutId)) {
+    return layoutGridInsightsChart(elements, schema, palette, canvas)
+  }
+  
+  if (isGridInsightsChartSplitLayout(layoutId)) {
+    return layoutGridInsightsChartSplit(elements, schema, palette, canvas)
+  }
+  
+  if (isGridMetricsMobileLayout(layoutId)) {
+    return layoutGridMetricsMobile(elements, schema, palette, canvas)
+  }
+  
+  if (isGridMetricsMasonryLayout(layoutId)) {
+    return layoutGridMetricsMasonry(elements, schema, palette, canvas)
+  }
+  
+  if (isGridMetricsAsymmetricLayout(layoutId)) {
+    return layoutGridMetricsAsymmetric(elements, schema, palette, canvas)
+  }
+  
+  if (isGridDeviceMockupsLayout(layoutId)) {
+    return layoutGridDeviceMockups(elements, schema, palette, canvas)
+  }
+  
+  if (isChartExponentialDescLayout(layoutId)) {
+    return layoutChartExponentialDesc(elements, schema, palette, canvas)
+  }
+  
+  if (isChartWithDescriptionLayout(layoutId)) {
+    return layoutChartWithDescription(elements, schema, palette, canvas)
+  }
+  
+  return elements
+}

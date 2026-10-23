@@ -832,15 +832,15 @@ function Navbar({
             Log in
           </a>
           <a
-            href="/early-access"
+            href="/signup"
             className="act-primary"
             onClick={(e) => {
               e.preventDefault();
-              window.history.pushState({ view: 'early-access' }, '', '/early-access');
+              window.history.pushState({ view: 'login' }, '', '/signup');
               window.dispatchEvent(new PopStateEvent('popstate'));
             }}
           >
-            Request Early Access <MdArrowOutward />
+            Get Started <MdArrowOutward />
           </a>
         </div>
 
@@ -953,16 +953,16 @@ function Navbar({
             Log in
           </a>
           <a 
-            href="/early-access" 
+            href="/signup" 
             className="act-primary" 
             onClick={(e) => { 
               e.preventDefault(); 
               setDrawerOpen(false);
-              window.history.pushState({ view: 'early-access' }, '', '/early-access');
+              window.history.pushState({ view: 'login' }, '', '/signup');
               window.dispatchEvent(new PopStateEvent('popstate'));
             }}
           >
-            Request Early Access <MdArrowOutward />
+            Get Started <MdArrowOutward />
           </a>
         </div>
       </aside>

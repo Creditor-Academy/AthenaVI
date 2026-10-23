@@ -1,0 +1,876 @@
+import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api.js'
+import { InsufficientCreditsError } from './creditsService.js'
+import { PPT_TITLE_MAX, sleep } from '../utils/presentationHelpers.js'
+import { generateUniqueProjectName } from '../utils/projectNameValidation.js'
+import workspaceService from './workspaceService.js'
+
+/** Turn a { message, errors } envelope into one readable line for the UI. */
+function formatValidationMessage(payload) {
+  const base = payload?.message || ''
+  const rawErrors = payload?.errors
+
+  let details = []
+  if (Array.isArray(rawErrors)) {
+    details = rawErrors.map((e) =>
+      typeof e === 'string' ? e : [e?.field || e?.path, e?.message].filter(Boolean).join(': ')
+    )
+  } else if (rawErrors && typeof rawErrors === 'object') {
+    details = Object.entries(rawErrors).map(([field, value]) => {
+      const text = Array.isArray(value) ? value.join(', ') : String(value?.message || value)
+      return `${field}: ${text}`
+    })
+  }
+
+  details = details.filter(Boolean)
+  if (!details.length) return base
+  return base ? `${base} — ${details.join('; ')}` : details.join('; ')
+}
+
+function safeParseBody(body) {
+  if (typeof body !== 'string') return body
+  try {
+    return JSON.parse(body)
+  } catch {
+    return body
+  }
+}
+
+export class PresentationConflictError extends Error {
+  constructor(message, data = {}) {
+    super(message || 'Presentation is busy or overwrite is blocked')
+    this.name = 'PresentationConflictError'
+    this.code = 'PRESENTATION_CONFLICT'
+    this.status = 409
+    this.data = data
+  }
+}
+
+export class PresentationRateLimitError extends Error {
+  constructor(message, data = {}) {
+    super(message || 'Too many generate requests. Please wait and try again.')
+    this.name = 'PresentationRateLimitError'
+    this.code = 'PRESENTATION_RATE_LIMIT'
+    this.status = 429
+    this.data = data
+  }
+}
+
+const sharePresenceRoute = new Map()
+
+class PresentationService {
+  unwrap(json) {
+    return json?.data ?? json
+  }
+
+  async readPayload(response) {
+    return response.json().catch(() => ({}))
+  }
+
+  buildQuery(params = {}) {
+    const search = new URLSearchParams()
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        search.set(key, String(value))
+      }
+    })
+    const query = search.toString()
+    return query ? `?${query}` : ''
+  }
+
+  async request(endpoint, options = {}) {
+    const { quiet, headers: extraHeaders, ...fetchOptions } = options
+    const headers = {
+      ...getAuthHeaders(),
+      ...(extraHeaders || {}),
+    }
+    if (fetchOptions.body instanceof FormData) {
+      delete headers['Content-Type']
+    }
+
+    const response = await fetch(buildUrl(endpoint), {
+      ...fetchOptions,
+      headers,
+    })
+
+    if (response.status === 402) {
+      const payload = await this.readPayload(response)
+      throw new InsufficientCreditsError(payload.message || 'Insufficient credits', payload)
+    }
+
+    if (response.status === 409) {
+      const payload = await this.readPayload(response)
+      throw new PresentationConflictError(
+        payload.message || 'Conflict — generation in progress or overwrite blocked',
+        payload
+      )
+    }
+
+    if (response.status === 429) {
+      const payload = await this.readPayload(response)
+      throw new PresentationRateLimitError(payload.message || 'Rate limited', payload)
+    }
+
+    if (!response.ok) {
+      const payload = await this.readPayload(response)
+      if (import.meta.env?.DEV && !quiet) {
+        console.error('[presentationService] request failed', {
+          endpoint,
+          status: response.status,
+          sentBody: safeParseBody(options.body),
+          response: payload,
+        })
+      }
+      const err = new Error(
+        formatValidationMessage(payload) || `Presentation request failed: ${response.status}`
+      )
+      err.status = response.status
+      err.data = payload
+      err.errors = payload.errors
+      throw err
+    }
+
+    if (response.status === 204) return null
+
+    // 202 Accepted may still return a JSON body
+    const json = await response.json().catch(() => ({}))
+    return this.unwrap(json)
+  }
+
+  // ── Workspace pickers ──────────────────────────────────────────────
+
+  listTemplates(workspaceId, { contentType } = {}) {
+    const query = this.buildQuery({ contentType })
+    return this.request(`${API_CONFIG.ENDPOINTS.PRESENTATIONS.TEMPLATES(workspaceId)}${query}`)
+  }
+
+  listDeckPacks(workspaceId) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.DECK_PACKS(workspaceId))
+  }
+
+  /** Full pack schema (includes slides[]) when list endpoint omits them. */
+  getDeckPack(workspaceId, packId) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.DECK_PACK(workspaceId, packId))
+  }
+
+  /** Single template row — fallback when pack detail route is unavailable. */
+  getTemplate(workspaceId, templateId) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.TEMPLATE(workspaceId, templateId))
+  }
+
+  listThemes(workspaceId) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.THEMES(workspaceId))
+  }
+
+  listElementPresets(workspaceId) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.ELEMENT_PRESETS(workspaceId))
+  }
+
+  applyBrandKit(workspaceId, presentationId, brandKitId) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.APPLY_BRAND_KIT(workspaceId, presentationId),
+      { method: 'POST', body: JSON.stringify({ brandKitId }) }
+    )
+  }
+
+  /**
+   * Assign / reassign / unassign this presentation (project id = presentationId).
+   * OWNER/ADMIN only — MEMBER gets 403; PRIVATE workspaces or an assignee outside
+   * the workspace get 400. Pass `assigneeId: null` to unassign.
+   */
+  updateAssignee(workspaceId, presentationId, assigneeId) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PROJECTS.ASSIGNEE(workspaceId, presentationId),
+      { method: 'PATCH', body: JSON.stringify({ assigneeId }) }
+    )
+  }
+
+  // ── Presentation CRUD ──────────────────────────────────────────────
+
+  listPresentations(workspaceId, params = {}) {
+    const query = this.buildQuery(params)
+    return this.request(`${API_CONFIG.ENDPOINTS.PRESENTATIONS.LIST(workspaceId)}${query}`, {
+      quiet: true,
+    })
+  }
+
+  suggestVibePalette(workspaceId, { prompt, tone, audience, purpose } = {}) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.SUGGEST_VIBE_PALETTE(workspaceId), {
+      method: 'POST',
+      body: JSON.stringify({ prompt, tone, audience, purpose }),
+      quiet: true,
+    })
+  }
+
+  async createPresentation(workspaceId, body) {
+    const rawTitle = String(body?.title || '').trim() || 'Untitled Presentation'
+    let finalTitle = rawTitle
+    if (body?.folderId && workspaceId) {
+      try {
+        const projects = await workspaceService.listProjectsInFolder(workspaceId, body.folderId)
+        finalTitle = generateUniqueProjectName(rawTitle, projects)
+      } catch {
+        // Fallback to rawTitle if listing fails
+      }
+    }
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.LIST(workspaceId), {
+      method: 'POST',
+      body: JSON.stringify({
+        ...body,
+        title: finalTitle.slice(0, PPT_TITLE_MAX),
+      }),
+    })
+  }
+
+  getPresentation(workspaceId, presentationId) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.ONE(workspaceId, presentationId))
+  }
+
+  /**
+   * Live-render deck preview for My Work / dashboard modals.
+   * Returns canvas documents (same shape as the editor), paged via offset/limit.
+   * Supports ETag / If-None-Match → 304.
+   */
+  async getPresentationPreview(
+    workspaceId,
+    presentationId,
+    { etag, offset = 0, limit = 8 } = {}
+  ) {
+    const headers = {
+      ...getAuthHeaders(),
+    }
+    if (etag) headers['If-None-Match'] = etag
+
+    const query = this.buildQuery({ offset, limit })
+    const response = await fetch(
+      `${buildUrl(API_CONFIG.ENDPOINTS.PRESENTATIONS.PREVIEW(workspaceId, presentationId))}${query}`,
+      { method: 'GET', headers }
+    )
+
+    if (response.status === 304) {
+      return {
+        notModified: true,
+        etag: etag || response.headers.get('ETag') || response.headers.get('etag') || null,
+      }
+    }
+
+    if (!response.ok) {
+      const payload = await this.readPayload(response)
+      const err = new Error(
+        formatValidationMessage(payload) || `Preview request failed: ${response.status}`
+      )
+      err.status = response.status
+      err.data = payload
+      throw err
+    }
+
+    const json = await response.json().catch(() => ({}))
+    const data = this.unwrap(json) || {}
+    return {
+      ...data,
+      notModified: false,
+      etag: response.headers.get('ETag') || response.headers.get('etag') || etag || null,
+    }
+  }
+
+  /**
+   * Upload a captured cover image for the My Work card grid.
+   * Multipart field `file` — JPEG / PNG / WebP, max 2 MB.
+   * `{ skipped: true }` means throttled within 10s — treat as success.
+   */
+  async uploadThumbnailImage(workspaceId, presentationId, file) {
+    if (!file) return null
+    const token = localStorage.getItem('accessToken')
+    const headers = {}
+    if (token) headers.Authorization = `Bearer ${token}`
+
+    const form = new FormData()
+    const blob = file instanceof Blob ? file : null
+    if (!blob) return null
+    const name =
+      (typeof File !== 'undefined' && file instanceof File && file.name) || 'cover.jpg'
+    form.append('file', blob, name)
+
+    const response = await fetch(
+      buildUrl(API_CONFIG.ENDPOINTS.PRESENTATIONS.THUMBNAIL_IMAGE(workspaceId, presentationId)),
+      { method: 'PUT', headers, body: form }
+    )
+
+    if (!response.ok) {
+      const payload = await this.readPayload(response)
+      const err = new Error(
+        formatValidationMessage(payload) || `Cover upload failed: ${response.status}`
+      )
+      err.status = response.status
+      err.data = payload
+      throw err
+    }
+
+    const json = await response.json().catch(() => ({}))
+    return this.unwrap(json) || json?.data || json
+  }
+
+  /**
+   * Persist deck cover thumbnail for library / My Work cards (JSON URL pointer).
+   * Prefer uploadThumbnailImage when capturing from the live preview.
+   * Quiet by default — older backends may not implement this yet.
+   */
+  updateThumbnail(workspaceId, presentationId, { thumbnailUrl, slideId } = {}) {
+    if (!thumbnailUrl) return Promise.resolve(null)
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.THUMBNAIL(workspaceId, presentationId),
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          thumbnailUrl,
+          ...(slideId ? { slideId } : {}),
+        }),
+        quiet: true,
+      }
+    ).catch(() =>
+      // Fallback: patch presentation resource if dedicated route is missing
+      this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.ONE(workspaceId, presentationId), {
+        method: 'PATCH',
+        body: JSON.stringify({ thumbnailUrl }),
+        quiet: true,
+      }).catch(() => null)
+    )
+  }
+
+  getCreditEstimate(workspaceId, presentationId, { slideCount } = {}) {
+    const query = this.buildQuery({ slideCount })
+    return this.request(
+      `${API_CONFIG.ENDPOINTS.PRESENTATIONS.CREDIT_ESTIMATE(workspaceId, presentationId)}${query}`
+    )
+  }
+
+  createOutline(workspaceId, presentationId, body) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.OUTLINE(workspaceId, presentationId), {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  }
+
+  /** Multipart outline from document upload */
+  async createOutlineFromDocument(
+    workspaceId,
+    presentationId,
+    { file, documentText, slideCount, density, locale = 'en' }
+  ) {
+    const form = new FormData()
+    form.append('source', 'document')
+    if (file) form.append('file', file)
+    if (documentText) form.append('documentText', documentText)
+    if (slideCount != null) form.append('slideCount', String(slideCount))
+    if (density) form.append('density', density)
+    if (locale) form.append('locale', locale)
+
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.OUTLINE(workspaceId, presentationId),
+      { method: 'POST', body: form }
+    )
+  }
+
+  updateOutline(workspaceId, presentationId, outline) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.OUTLINE(workspaceId, presentationId), {
+      method: 'PATCH',
+      body: JSON.stringify(outline),
+    })
+  }
+
+  setTheme(workspaceId, presentationId, body) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.THEME(workspaceId, presentationId), {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  }
+
+  startGenerate(workspaceId, presentationId, body = {}) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.GENERATE(workspaceId, presentationId), {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  }
+
+  getStatus(workspaceId, presentationId) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.STATUS(workspaceId, presentationId))
+  }
+
+  /**
+   * Poll GET .../status until deck READY | FAILED (or timeout).
+   * onProgress receives the latest status payload each tick.
+   */
+  async pollUntilReady(
+    workspaceId,
+    presentationId,
+    { intervalMs = 2000, timeoutMs = 10 * 60 * 1000, onProgress } = {}
+  ) {
+    const started = Date.now()
+    while (Date.now() - started < timeoutMs) {
+      const status = await this.getStatus(workspaceId, presentationId)
+      onProgress?.(status)
+
+      const deckStatus = String(
+        status?.status || status?.deckStatus || status?.deck?.status || ''
+      ).toUpperCase()
+
+      if (deckStatus === 'READY') return status
+      if (deckStatus === 'FAILED') {
+        const err = new Error(status?.message || status?.error || 'Presentation generation failed')
+        err.status = 'FAILED'
+        err.data = status
+        throw err
+      }
+
+      await sleep(intervalMs)
+    }
+    throw new Error('Timed out waiting for presentation generation')
+  }
+
+  /**
+   * Poll GET .../status until one slide leaves PENDING | GENERATING.
+   * Single-slide regenerate leaves the deck READY, so deck-level polling returns too early.
+   */
+  async pollSlideUntilSettled(
+    workspaceId,
+    presentationId,
+    slideId,
+    { intervalMs = 2000, timeoutMs = 5 * 60 * 1000 } = {}
+  ) {
+    const started = Date.now()
+    while (Date.now() - started < timeoutMs) {
+      const status = await this.getStatus(workspaceId, presentationId)
+      const slide = (status?.slides || []).find((s) => s.id === slideId)
+      if (!slide) throw new Error('Slide no longer exists')
+
+      const slideStatus = String(slide.status || '').toUpperCase()
+      if (slideStatus === 'READY') return slide
+      if (slideStatus === 'FAILED') {
+        const err = new Error('Slide regeneration failed')
+        err.status = 'FAILED'
+        err.data = slide
+        throw err
+      }
+
+      await sleep(intervalMs)
+    }
+    throw new Error('Timed out waiting for slide regeneration')
+  }
+
+  // ── Slides ─────────────────────────────────────────────────────────
+
+  addSlide(workspaceId, presentationId, body = {}) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDES(workspaceId, presentationId), {
+      method: 'POST',
+      body: JSON.stringify(body),
+    })
+  }
+
+  deleteSlide(workspaceId, presentationId, slideId) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE(workspaceId, presentationId, slideId),
+      { method: 'DELETE' }
+    )
+  }
+
+  duplicateSlide(workspaceId, presentationId, slideId) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE_DUPLICATE(workspaceId, presentationId, slideId),
+      { method: 'POST', body: JSON.stringify({}) }
+    )
+  }
+
+  reorderSlides(workspaceId, presentationId, slideIds) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDES_REORDER(workspaceId, presentationId),
+      { method: 'PATCH', body: JSON.stringify({ slideIds }) }
+    )
+  }
+
+  applyLayout(workspaceId, presentationId, slideId, templateId) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.APPLY_LAYOUT(workspaceId, presentationId, slideId),
+      { method: 'POST', body: JSON.stringify({ templateId }) }
+    )
+  }
+
+  getSlide(workspaceId, presentationId, slideId) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE(workspaceId, presentationId, slideId)
+    )
+  }
+
+  patchSlide(workspaceId, presentationId, slideId, body) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE(workspaceId, presentationId, slideId),
+      { method: 'PATCH', body: JSON.stringify(body) }
+    )
+  }
+
+  /**
+   * Assign / reassign / unassign one slide (project-level assignee's per-slide sibling).
+   * OWNER/ADMIN only — MEMBER gets 403; PRIVATE workspaces get 400. `assigneeId: null` unassigns.
+   */
+  updateSlideAssignee(workspaceId, presentationId, slideId, assigneeId) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE_ASSIGNEE(workspaceId, presentationId, slideId),
+      { method: 'PATCH', body: JSON.stringify({ assigneeId }) }
+    )
+  }
+
+  regenerateSlide(workspaceId, presentationId, slideId, body = {}) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.REGENERATE(workspaceId, presentationId, slideId),
+      { method: 'POST', body: JSON.stringify(body) }
+    )
+  }
+
+  // ── Canvas / elements ──────────────────────────────────────────────
+
+  saveCanvas(workspaceId, presentationId, slideId, canvasDoc) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.CANVAS(workspaceId, presentationId, slideId),
+      { method: 'PUT', body: JSON.stringify(canvasDoc) }
+    )
+  }
+
+  insertElement(workspaceId, presentationId, slideId, body) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE_ELEMENTS(workspaceId, presentationId, slideId),
+      { method: 'POST', body: JSON.stringify(body) }
+    )
+  }
+
+  updateElement(workspaceId, presentationId, slideId, elementId, body) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE_ELEMENT(
+        workspaceId,
+        presentationId,
+        slideId,
+        elementId
+      ),
+      { method: 'PATCH', body: JSON.stringify(body) }
+    )
+  }
+
+  batchUpdateElements(workspaceId, presentationId, slideId, patches) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE_ELEMENTS_BATCH(
+        workspaceId,
+        presentationId,
+        slideId
+      ),
+      { method: 'PATCH', body: JSON.stringify({ patches }) }
+    )
+  }
+
+  groupElements(workspaceId, presentationId, slideId, elementIds) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE_ELEMENTS_GROUP(
+        workspaceId,
+        presentationId,
+        slideId
+      ),
+      { method: 'POST', body: JSON.stringify({ elementIds }) }
+    )
+  }
+
+  ungroupElements(workspaceId, presentationId, slideId, elementId) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE_ELEMENTS_UNGROUP(
+        workspaceId,
+        presentationId,
+        slideId
+      ),
+      { method: 'POST', body: JSON.stringify({ elementId }) }
+    )
+  }
+
+  alignElements(workspaceId, presentationId, slideId, elementIds, alignment) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE_ELEMENTS_ALIGN(
+        workspaceId,
+        presentationId,
+        slideId
+      ),
+      { method: 'POST', body: JSON.stringify({ elementIds, alignment }) }
+    )
+  }
+
+  deleteElement(workspaceId, presentationId, slideId, elementId) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE_ELEMENT(
+        workspaceId,
+        presentationId,
+        slideId,
+        elementId
+      ),
+      { method: 'DELETE' }
+    )
+  }
+
+  reorderElements(workspaceId, presentationId, slideId, elementIds) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE_ELEMENTS_REORDER(
+        workspaceId,
+        presentationId,
+        slideId
+      ),
+      { method: 'PATCH', body: JSON.stringify({ elementIds }) }
+    )
+  }
+
+  /** Multipart image upload → canvas image element (optional elementId to replace). */
+  uploadSlideMedia(workspaceId, presentationId, slideId, file, { elementId } = {}) {
+    const form = new FormData()
+    form.append('file', file)
+    if (elementId) form.append('elementId', elementId)
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SLIDE_MEDIA(workspaceId, presentationId, slideId),
+      { method: 'POST', body: form }
+    )
+  }
+
+  attachSlideAsset(workspaceId, presentationId, slideId, { assetId, elementId } = {}) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.ATTACH_ASSET(workspaceId, presentationId, slideId),
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          assetId,
+          ...(elementId ? { elementId } : {}),
+        }),
+      }
+    )
+  }
+
+  insertStockOntoSlide(workspaceId, presentationId, slideId, body = {}) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.INSERT_STOCK(workspaceId, presentationId, slideId),
+      { method: 'POST', body: JSON.stringify(body) }
+    )
+  }
+
+  // ── Export ─────────────────────────────────────────────────────────
+
+  startExport(workspaceId, presentationId, { format = 'PPTX', slideId = null } = {}) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.EXPORT(workspaceId, presentationId), {
+      method: 'POST',
+      // Omit slideId for whole-deck exports (backend treats missing/null as all slides).
+      body: JSON.stringify(slideId ? { format, slideId } : { format }),
+    })
+  }
+
+  getExportStatus(workspaceId, presentationId, exportId) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.EXPORT_STATUS(workspaceId, presentationId, exportId)
+    )
+  }
+
+  async pollExportUntilReady(
+    workspaceId,
+    presentationId,
+    exportId,
+    { intervalMs = 2000, timeoutMs = 10 * 60 * 1000, onProgress } = {}
+  ) {
+    const started = Date.now()
+    while (Date.now() - started < timeoutMs) {
+      const status = await this.getExportStatus(workspaceId, presentationId, exportId)
+      onProgress?.(status)
+
+      const state = String(status?.status || status?.exportStatus || '').toUpperCase()
+      if (state === 'READY') return status
+      if (state === 'FAILED') {
+        throw new Error(status?.error || status?.message || 'Export failed')
+      }
+      await sleep(intervalMs)
+    }
+    const minutes = Math.round(timeoutMs / 60000)
+    throw new Error(
+      `Timed out waiting for export (${minutes} min). Large decks can take longer — try PowerPoint (PPTX) or retry.`
+    )
+  }
+
+  // ── Import / share / duplicate ─────────────────────────────────────
+
+  async importPresentation(workspaceId, file, { title } = {}) {
+    const form = new FormData()
+    form.append('file', file)
+    if (title) form.append('title', title)
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.IMPORT(workspaceId), {
+      method: 'POST',
+      body: form,
+    })
+  }
+
+  duplicatePresentation(workspaceId, presentationId) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.DUPLICATE(workspaceId, presentationId),
+      { method: 'POST' }
+    )
+  }
+
+  getShareLink(workspaceId, presentationId) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE(workspaceId, presentationId))
+  }
+
+  enableShareRole(workspaceId, presentationId, role) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE_ROLE(workspaceId, presentationId, role),
+      { method: 'PUT' }
+    )
+  }
+
+  updateShareRole(workspaceId, presentationId, role, payload = {}) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE_ROLE(workspaceId, presentationId, role),
+      { method: 'PATCH', body: JSON.stringify(payload) }
+    )
+  }
+
+  rotateShareRole(workspaceId, presentationId, role) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE_ROLE_ROTATE(workspaceId, presentationId, role),
+      { method: 'POST' }
+    )
+  }
+
+  enableShareLink(workspaceId, presentationId) {
+    return this.enableShareRole(workspaceId, presentationId, 'viewer')
+  }
+
+  updateShareLink(workspaceId, presentationId, payload = {}) {
+    return this.updateShareRole(workspaceId, presentationId, 'viewer', payload)
+  }
+
+  rotateShareLink(workspaceId, presentationId) {
+    return this.rotateShareRole(workspaceId, presentationId, 'viewer')
+  }
+
+  listPresentationComments(workspaceId, presentationId, params = {}) {
+    return this.request(
+      `${API_CONFIG.ENDPOINTS.PRESENTATIONS.COMMENTS(workspaceId, presentationId)}${this.buildQuery(params)}`
+    )
+  }
+
+  createPresentationComment(workspaceId, presentationId, payload) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.COMMENTS(workspaceId, presentationId), {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  }
+
+  deletePresentationComment(workspaceId, presentationId, commentId) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.COMMENT(workspaceId, presentationId, commentId),
+      { method: 'DELETE' }
+    )
+  }
+
+  resolvePresentationComment(workspaceId, presentationId, commentId, resolve = true) {
+    const endpoint = resolve
+      ? API_CONFIG.ENDPOINTS.PRESENTATIONS.COMMENT_RESOLVE(workspaceId, presentationId, commentId)
+      : API_CONFIG.ENDPOINTS.PRESENTATIONS.COMMENT_UNRESOLVE(workspaceId, presentationId, commentId)
+    return this.request(endpoint, { method: 'POST' })
+  }
+
+  // ── Present (member presenter lock / follow) ───────────────────────
+
+  /**
+   * PUT presence with { slideIndex, presenting }. Always send presenting explicitly —
+   * omitting it defaults to false server-side and releases the lock.
+   * Throws PresentationConflictError (409) when another member already holds the lock;
+   * err.data.errors[0] carries { presentingUserId, displayName }.
+   */
+  heartbeatPresence(workspaceId, presentationId, { slideIndex = 0, presenting = false } = {}) {
+    return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.PRESENCE(workspaceId, presentationId), {
+      method: 'PUT',
+      body: JSON.stringify({ slideIndex, presenting: presenting === true }),
+      quiet: true,
+    })
+  }
+
+  /**
+   * Release the presenter lock on tab close / navigation. Fires both a beacon
+   * (survives unload, can't carry Authorization) and a keepalive fetch with the
+   * bearer token, per the backend's documented "use both" guidance.
+   */
+  leavePresence(workspaceId, presentationId, leaveToken) {
+    if (!workspaceId || !presentationId) return
+    const query = leaveToken ? `?leaveToken=${encodeURIComponent(leaveToken)}` : ''
+    const url = buildUrl(
+      `${API_CONFIG.ENDPOINTS.PRESENTATIONS.PRESENCE_LEAVE(workspaceId, presentationId)}${query}`
+    )
+
+    try {
+      if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
+        navigator.sendBeacon(url)
+      }
+    } catch {
+      /* ignore */
+    }
+
+    try {
+      fetch(url, {
+        method: 'POST',
+        keepalive: true,
+        headers: { ...getAuthHeaders() },
+        body: JSON.stringify(leaveToken ? { leaveToken } : {}),
+      }).catch(() => {})
+    } catch {
+      /* ignore */
+    }
+  }
+
+  async pollSharePresence(workspaceId, presentationId, { viewerSessionId, slideIndex } = {}) {
+    const key = `${workspaceId}:${presentationId}`
+    const remembered = sharePresenceRoute.get(key)
+    const routes = [
+      remembered
+        ? {
+            method: remembered.method,
+            endpoint: remembered.endpoint,
+            body:
+              remembered.method === 'PUT'
+                ? JSON.stringify({ viewerSessionId, slideIndex })
+                : undefined,
+          }
+        : null,
+      // Member heartbeat — the only presence route the backend exposes for editors
+      // (it returns the viewer list); the former /share/viewers and /share/presence
+      // probes never existed and just produced 404s on every first poll.
+      {
+        method: 'PUT',
+        endpoint: API_CONFIG.ENDPOINTS.PRESENTATIONS.PRESENCE(workspaceId, presentationId),
+        body: JSON.stringify({ viewerSessionId, slideIndex }),
+      },
+    ].filter(Boolean)
+
+    const tried = new Set()
+    for (const route of routes) {
+      const id = `${route.method}:${route.endpoint}`
+      if (tried.has(id)) continue
+      tried.add(id)
+      try {
+        const data = await this.request(route.endpoint, {
+          method: route.method,
+          body: route.body,
+          quiet: true,
+        })
+        sharePresenceRoute.set(key, { method: route.method, endpoint: route.endpoint })
+        return data
+      } catch (err) {
+        if (err?.status && ![404, 405, 403].includes(err.status)) throw err
+      }
+    }
+
+    const data = await this.getShareLink(workspaceId, presentationId)
+    sharePresenceRoute.set(key, {
+      method: 'GET',
+      endpoint: API_CONFIG.ENDPOINTS.PRESENTATIONS.SHARE(workspaceId, presentationId),
+    })
+    return data
+  }
+}
+
+const presentationService = new PresentationService()
+export default presentationService

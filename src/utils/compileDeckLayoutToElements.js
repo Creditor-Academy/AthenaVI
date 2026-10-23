@@ -1,0 +1,2091 @@
+import { resolvePreviewMode } from './deckLayoutRegistry.js'
+import { applyDeckHeadingSize, applyDeckTierSizes, resolveDeckHeadingPx } from './deckHeadingSize.js'
+import { resolveImagePresentation } from './deckLayoutV2Helpers.js'
+import { parseRegion, regionToBox, getGridDims } from './layoutPreviewUtils.js'
+import {
+  buildDeviceFrameCanvasElements,
+  findDeviceFrameSlot,
+} from './deviceFrameCanvas.js'
+import { buildContentBySlotIdFromSlideContent, mergeContentBySlotId } from './contentSlotMapping.js'
+import { validateContentForLayout, ContentContractValidationError } from './contentContract.js'
+import { fontSizeForTextSlot, resolveTypeScaleFontSize, fitTextToSlot } from './canvasTypography.js'
+import {
+  isFullBleedImageTitleLayout,
+  isSplitHeroTitleLayout,
+  resolveSlotTextSurface,
+  isImageOverlaySurface,
+} from './artDirection/textSurface.js'
+import { resolveHeadingTypography } from './artDirection/resolveHeadingTypography.js'
+import {
+  compileLayoutGeometry,
+  getSlotPlacement,
+  geometrySnapshot,
+  validateLayoutGeometry,
+} from './compileLayoutGeometry.js'
+import { finalizeTimelineShapes } from './timelineShapeFinalize.js'
+import { finalizeChartShapes } from './chartShapeFinalize.js'
+import { isPricingFourPlansLayout } from './pricingFourPlans.js'
+import { isPricingFourPlansFeaturedLayout } from './pricingFourPlansFeatured.js'
+import { isPricingFourParaLayout } from './pricingFourPara.js'
+import { isPricingFourParaCardsLayout } from './pricingFourParaCards.js'
+import { isPricingComparisonTableLayout } from './pricingComparisonTable.js'
+import { isPricingComparisonCardsLayout } from './pricingComparisonCards.js'
+import { isTableSingleLayout } from './tableSingleLayout.js'
+import { isTableSingleCardsLayout } from './tableSingleCardsLayout.js'
+import { isTableWithDescriptionLayout } from './tableWithDescriptionLayout.js'
+import { isTableWithDescriptionSideLayout } from './tableWithDescriptionSideLayout.js'
+import { isTableTwoDescLayout } from './tableTwoDescLayout.js'
+import { isTableTwoDescCardsLayout } from './tableTwoDescCardsLayout.js'
+import { isProcessLinearBusinessLayout } from './processLinearBusinessLayout.js'
+import { isProcessLinearHortiLayout } from './processLinearHortiLayout.js'
+import { isProcessLinearHorizontalLayout } from './processLinearHorizontalLayout.js'
+import { isProcessLinearHortiFourLayout } from './processLinearHortiFourLayout.js'
+import { isProcessLinearFourCardsLayout } from './processLinearFourCardsLayout.js'
+import { isProcessLinearNumericLayout } from './processLinearNumericLayout.js'
+import { isBulletListDenseLayout } from './bulletListDenseLayout.js'
+import { isBulletListNumberedLayout } from './bulletListNumberedLayout.js'
+import { isBulletListTwoColumnLayout } from './bulletListTwoColumnLayout.js'
+import { isBulletListSplitLayout } from './bulletListSplitLayout.js'
+import { isTextOnlyCenteredLayout } from './textOnlyCenteredLayout.js'
+import { isSectionDividerSplitDiagonalLayout } from './sectionDividerSplitDiagonalLayout.js'
+import { isSectionDividerSplitLayout } from './sectionDividerSplitLayout.js'
+import { isBulletListNumberedVerticalLayout } from './bulletListNumberedVerticalLayout.js'
+import { isProcessLinearNumericCardsLayout } from './processLinearNumericCardsLayout.js'
+import { isTableTwoSameHeaderLayout, isTableTwoSameHeaderCardsLayout } from './tableTwoSameHeaderLayout.js'
+import { isTimelineHorizontalLayout } from './timelineHorizontal.js'
+import { isTimelineVerticalLayout } from './timelineVertical.js'
+import { isTimelineVerticalCardsLayout } from './timelineVerticalCards.js'
+import { isTimelineRoadmapLayout } from './timelineRoadmap.js'
+import { isTimelineHorizontalCardsLayout } from './timelineHorizontalCards.js'
+import { isTimelineMilestonesLayout } from './timelineMilestones.js'
+import { isTimelineMilestonesCardsLayout } from './timelineMilestonesCards.js'
+import { isTimelineMilestonesImageLayout } from './timelineMilestonesImage.js'
+import { isTimelineMilestonesImageRightLayout } from './timelineMilestonesImageRight.js'
+import { isSectionDividerNumberedCircleLayout } from './sectionDividerNumberedCircleLayout.js'
+import { isSectionDividerCenteredLayout } from './sectionDividerCenteredLayout.js'
+import { isEightShortTextsImageLayout } from './eightShortTextsImageLayout.js'
+import { isSectionWithImageLayout } from './sectionWithImageLayout.js'
+import { isParaLandscapeImageBottomLayout } from './paraLandscapeImageBottom.js'
+import { isParaLandscapeImageTopLayout } from './paraLandscapeImageTop.js'
+import {
+  isWideImageStatementOverlayLayout,
+  buildWideImageStatementOverlayCanvasElements,
+} from './wideImageStatementOverlayLayout.js'
+import {
+  isParaTitleLeftImageBoxedLayout,
+  buildParaTitleLeftImageBoxedCanvasElements,
+} from './paraTitleLeftImageBoxedLayout.js'
+import {
+  isParaTitleRightImageBoxedLayout,
+  buildParaTitleRightImageBoxedCanvasElements,
+} from './paraTitleRightImageBoxedLayout.js'
+import {
+  isParaTitleLeftImageOverlayLayout,
+  buildParaTitleLeftImageOverlayCanvasElements,
+} from './paraTitleLeftImageOverlayLayout.js'
+import {
+  isParaTitleRightImageOverlayLayout,
+  buildParaTitleRightImageOverlayCanvasElements,
+} from './paraTitleRightImageOverlayLayout.js'
+import {
+  isParaLandscapeImageLayout,
+  buildParaLandscapeImageCanvasElements,
+} from './paraLandscapeImageLayout.js'
+import {
+  isParaSplit5050Layout,
+  buildParaSplit5050CanvasElements,
+} from './paraSplit5050Layout.js'
+import {
+  isTwoParaRightImageLayout,
+  buildTwoParaRightImageCanvasElements,
+} from './twoParaRightImageLayout.js'
+import {
+  isContactLeftImageLayout,
+  buildContactLeftImageCanvasElements,
+} from './contactLeftImageLayout.js'
+import {
+  isContactRightImageLayout,
+  buildContactRightImageCanvasElements,
+} from './contactRightImageLayout.js'
+import {
+  isContactImageBottomLayout,
+  buildContactImageBottomCanvasElements,
+} from './contactImageBottomLayout.js'
+import {
+  isTeamSpeakerBioLayout,
+  buildTeamSpeakerBioCanvasElements,
+} from './teamSpeakerBioLayout.js'
+import {
+  isSpeakerBioImageRightLayout,
+  buildSpeakerBioImageRightCanvasElements,
+} from './speakerBioImageRightLayout.js'
+import {
+  isSpeakerBioCenteredLayout,
+  buildSpeakerBioCenteredCanvasElements,
+} from './speakerBioCenteredLayout.js'
+import {
+  isCenteredTextCtaLayout,
+  buildCenteredTextCtaCanvasElements,
+} from './centeredTextCtaLayout.js'
+import {
+  isClosingThankYouLayout,
+  buildClosingThankYouCanvasElements,
+} from './closingThankYouLayout.js'
+import {
+  isMinimalTextCtaLayout,
+  buildMinimalTextCtaCanvasElements,
+} from './minimalTextCtaLayout.js'
+import {
+  isClosingContactCtaLayout,
+  buildClosingContactCtaCanvasElements,
+} from './closingContactCtaLayout.js'
+import {
+  isContactCardCtaLayout,
+  buildContactCardCtaCanvasElements,
+} from './contactCardCtaLayout.js'
+import {
+  isContactSplitCtaLayout,
+  buildContactSplitCtaCanvasElements,
+} from './contactSplitCtaLayout.js'
+import {
+  isParaImageCtaLayout,
+  buildParaImageCtaCanvasElements,
+} from './paraImageCtaLayout.js'
+import {
+  isImageParaCtaLayout,
+  buildImageParaCtaCanvasElements,
+} from './imageParaCtaLayout.js'
+import {
+  isOverlayImageCtaLayout,
+  buildOverlayImageCtaCanvasElements,
+} from './overlayImageCtaLayout.js'
+import {
+  isTwoParaRightImageBottomLayout,
+  buildTwoParaRightImageBottomCanvasElements,
+} from './twoParaRightImageBottomLayout.js'
+import {
+  isThreeParaImageLayout,
+  buildThreeParaImageCanvasElements,
+} from './threeParaImageLayout.js'
+import {
+  isFourParaImageLayout,
+  buildFourParaImageCanvasElements,
+} from './fourParaImageLayout.js'
+import {
+  isFourParaImageGridLayout,
+  buildFourParaImageGridCanvasElements,
+} from './fourParaImageGridLayout.js'
+import {
+  isParaTwoImagesLayout,
+  buildParaTwoImagesCanvasElements,
+} from './paraTwoImagesLayout.js'
+import {
+  isParaThreeImagesLayout,
+  buildParaThreeImagesCanvasElements,
+} from './paraThreeImagesLayout.js'
+import {
+  isParaThreeImagesHorizontalLayout,
+  buildParaThreeImagesHorizontalCanvasElements,
+} from './paraThreeImagesHorizontalLayout.js'
+import {
+  isParaThreeImagesStaggeredLayout,
+  buildParaThreeImagesStaggeredCanvasElements,
+} from './paraThreeImagesStaggeredLayout.js'
+import {
+  isThreeCardsImageTextLayout,
+  buildThreeCardsImageTextCanvasElements,
+} from './threeCardsImageTextLayout.js'
+import {
+  isTwoCardsImageTextLayout,
+  buildTwoCardsImageTextCanvasElements,
+} from './twoCardsImageTextLayout.js'
+import {
+  isTwoLargeImageCardsLayout,
+  buildTwoLargeImageCardsCanvasElements,
+} from './twoLargeImageCardsLayout.js'
+import {
+  isFourImagesTextLayout,
+  buildFourImagesTextCanvasElements,
+} from './fourImagesTextLayout.js'
+import {
+  isFourImagesTextMosaicLayout,
+  buildFourImagesTextMosaicCanvasElements,
+} from './fourImagesTextMosaicLayout.js'
+import {
+  isHeadlineCenteredLayout,
+  buildHeadlineCenteredCanvasElements,
+} from './headlineCenteredLayout.js'
+import {
+  isTitleStatementSplitLayout,
+  buildTitleStatementSplitCanvasElements,
+} from './titleStatementSplitLayout.js'
+import {
+  isTitleStatementLayout,
+  buildTitleStatementCanvasElements,
+} from './titleStatementLayout.js'
+import {
+  isIntroFourParaLayout,
+  buildIntroFourParaCanvasElements,
+} from './introFourParaLayout.js'
+import {
+  isHeadlineRightTextLayout,
+  buildHeadlineRightTextCanvasElements,
+} from './headlineRightTextLayout.js'
+import {
+  isSectionDividerSplitImageLayout,
+  buildSectionDividerSplitImageCanvasElements,
+} from './sectionDividerSplitImageLayout.js'
+import {
+  isLargeImageLayout,
+  buildLargeImageCanvasElements,
+} from './largeImageLayout.js'
+import {
+  isFullBgImageOverlayLayout,
+  buildFullBgImageOverlayCanvasElements,
+} from './fullBgImageOverlayLayout.js'
+import {
+  isFullBgImageOverlayBottomLayout,
+  buildFullBgImageOverlayBottomCanvasElements,
+} from './fullBgImageOverlayBottomLayout.js'
+import {
+  isFullBgImageOverlaySideLayout,
+  buildFullBgImageOverlaySideCanvasElements,
+} from './fullBgImageOverlaySideLayout.js'
+import {
+  isSectionDividerBandLayout,
+  buildSectionDividerBandCanvasElements,
+} from './sectionDividerBandLayout.js'
+import {
+  isSectionDividerBandFullLayout,
+  buildSectionDividerBandFullCanvasElements,
+} from './sectionDividerBandFullLayout.js'
+import {
+  isComparisonSideBySideLayout,
+  buildComparisonSideBySideCanvasElements,
+} from './comparisonSideBySideLayout.js'
+import {
+  isComparisonSideBySideCardsLayout,
+  buildComparisonSideBySideCardsCanvasElements,
+} from './comparisonSideBySideCardsLayout.js'
+import {
+  isComparisonSideBySideCenterlineLayout,
+  buildComparisonSideBySideCenterlineCanvasElements,
+} from './comparisonSideBySideCenterlineLayout.js'
+import {
+  isBulletListCardsLayout,
+  buildBulletListCardsCanvasElements,
+} from './bulletListCardsLayout.js'
+import {
+  isBulletListGridLayout,
+  buildBulletListGridCanvasElements,
+} from './bulletListGridLayout.js'
+import { isCatalogPlaceholderText } from './catalogPlaceholder.js'
+import { normalizeChartContent } from './chartContentNormalize.js'
+import {
+  isTitleHeroLeftBlobLayout,
+  buildTitleHeroLeftBlobCanvasElements,
+  isTitleHeroLeftFadeLayout,
+  buildTitleHeroLeftFadeCanvasElements,
+  isTitleHeroRightOvalLayout,
+  buildTitleHeroRightOvalCanvasElements,
+  isTitleHeroRightFadeLayout,
+  buildTitleHeroRightFadeCanvasElements,
+  isTitleFullbleedLayout,
+  buildTitleFullbleedCanvasElements,
+  isTitleFullbleedOverlayLayout,
+  buildTitleFullbleedOverlayCanvasElements,
+  isTitleWithLogoLayout,
+  buildTitleWithLogoCanvasElements,
+} from './titleCentered.js'
+
+/**
+ * Merge theme tokens into compile options so editor preview matches AI output.
+ */
+export function buildThemeCompileOptions(themeTokens = null, overrides = {}) {
+  const palette =
+    overrides.palette ||
+    themeTokens?.palette ||
+    null
+  const fonts = overrides.fonts || themeTokens?.fonts || null
+  const typeScale = overrides.typeScale || themeTokens?.typeScale || null
+  return {
+    ...overrides,
+    palette,
+    fonts,
+    typeScale,
+    fontFamily:
+      overrides.fontFamily ||
+      fonts?.body ||
+      fonts?.heading ||
+      null,
+  }
+}
+
+function themedImagePlaceholder(palette) {
+  if (!palette || typeof palette !== 'object') return LAYOUT_SURFACE.image
+  const primary = palette.primary || palette.accent || '#6366f1'
+  const surface = palette.surface || palette.bg || '#f8fafc'
+  return `linear-gradient(145deg, color-mix(in srgb, ${primary} 10%, ${surface}) 0%, color-mix(in srgb, ${primary} 4%, #e2e8f0) 100%)`
+}
+
+/** Neutral layout surfaces — structure only, matches LayoutPolishedPreview (not brand theme). */
+const LAYOUT_SURFACE = {
+  card: 'color-mix(in srgb, #94a3b8 14%, #ffffff)',
+  cardBorder: 'color-mix(in srgb, #94a3b8 28%, transparent)',
+  cardShadow: '0 1px 2px rgba(15, 23, 42, 0.05), 0 10px 28px rgba(15, 23, 42, 0.04)',
+  iconFill: 'color-mix(in srgb, #64748b 18%, transparent)',
+  iconRing: 'color-mix(in srgb, #6366f1 32%, transparent)',
+  bar: 'color-mix(in srgb, #1f2937 55%, transparent)',
+  image: 'linear-gradient(145deg, color-mix(in srgb, #6366f1 8%, #f8fafc) 0%, #e2e8f0 52%, color-mix(in srgb, #6366f1 5%, #cbd5e1) 100%)',
+  text: '#1f2937',
+  textMuted: '#6b7280',
+  textOnImage: '#ffffff',
+  textOnImageMuted: 'rgba(255,255,255,0.85)',
+  overlayScrim: 'rgba(0,0,0,0.45)',
+  surface: '#f8fafc',
+  cardBg: 'color-mix(in srgb, #94a3b8 14%, #ffffff)',
+  accent: '#6366f1',
+  primary: '#2563eb',
+  radius: 12,
+  radiusSm: 8,
+}
+
+const COLOR_ROLE_MAP = {
+  text: LAYOUT_SURFACE.text,
+  muted: LAYOUT_SURFACE.textMuted,
+  primary: LAYOUT_SURFACE.primary,
+  accent: LAYOUT_SURFACE.accent,
+  surface: LAYOUT_SURFACE.surface,
+  cardBg: LAYOUT_SURFACE.cardBg,
+  textOnImage: LAYOUT_SURFACE.textOnImage,
+  textOnImageMuted: LAYOUT_SURFACE.textOnImageMuted,
+  overlayScrim: LAYOUT_SURFACE.overlayScrim,
+}
+
+function colorRoleMapFromPalette(palette = {}) {
+  if (!palette || typeof palette !== 'object' || Object.keys(palette).length === 0) {
+    return COLOR_ROLE_MAP
+  }
+  return {
+    bg: palette.bg || palette.surface || COLOR_ROLE_MAP.surface,
+    text: palette.text || COLOR_ROLE_MAP.text,
+    muted: palette.muted || palette.textMuted || COLOR_ROLE_MAP.muted,
+    primary: palette.primary || COLOR_ROLE_MAP.primary,
+    accent: palette.accent || COLOR_ROLE_MAP.accent,
+    surface: palette.surface || palette.bg || COLOR_ROLE_MAP.surface,
+    cardBg: palette.cardBg || palette.surface || COLOR_ROLE_MAP.cardBg,
+    textOnImage: palette.textOnImage || COLOR_ROLE_MAP.textOnImage,
+    textOnImageMuted: palette.textOnImageMuted || COLOR_ROLE_MAP.textOnImageMuted,
+    overlayScrim: palette.overlayScrim || COLOR_ROLE_MAP.overlayScrim,
+  }
+}
+
+function resolveFontFamily(options = {}, role = 'body') {
+  const fonts = options.fonts || {}
+  if (role === 'heading' || role === 'title' || role === 'stat') {
+    return fonts.heading || fonts.display || options.fontFamily || null
+  }
+  return fonts.body || options.fontFamily || null
+}
+
+function resolveShapeFill(shapeSpec, palette = null) {
+  const colorMap = palette ? colorRoleMapFromPalette(palette) : COLOR_ROLE_MAP
+  if (!shapeSpec) {
+    return { shape: 'rounded-rect', fill: colorMap.cardBg || LAYOUT_SURFACE.card, borderRadius: LAYOUT_SURFACE.radiusSm }
+  }
+  const type = shapeSpec.type === 'ellipse' ? 'circle' : shapeSpec.type === 'line' ? 'rect' : 'rounded-rect'
+  const borderRadius = shapeSpec.borderRadius ?? (type === 'circle' ? undefined : LAYOUT_SURFACE.radiusSm)
+  if (shapeSpec.fill?.color) {
+    return { shape: type, fill: shapeSpec.fill.color, borderRadius }
+  }
+  const role = shapeSpec.fillColorRole || shapeSpec.fill?.colorRole || 'cardBg'
+  const fill = colorMap[role] || palette?.[role] || LAYOUT_SURFACE.card
+  return {
+    shape: type,
+    fill,
+    stroke: role === 'cardBg' || role === 'surface' ? LAYOUT_SURFACE.cardBorder : undefined,
+    strokeWidth: role === 'cardBg' || role === 'surface' ? 1 : undefined,
+    borderRadius,
+    shadow: role === 'cardBg' ? LAYOUT_SURFACE.cardShadow : undefined,
+    layoutSurface: true,
+  }
+}
+
+function mergeDesignTokensWithTheme(designTokens, themeTokens, schema) {
+  const overlay = isOverlayLayout(schema, designTokens)
+  const defaults = themeTokens?.overlayDefaults || {}
+  if (!overlay) return designTokens || null
+  return {
+    backgroundStyle: designTokens?.backgroundStyle || defaults.backgroundStyle || 'image',
+    overlayOpacity:
+      designTokens?.overlayOpacity != null
+        ? designTokens.overlayOpacity
+        : defaults.overlayOpacity != null
+          ? defaults.overlayOpacity
+          : 0.45,
+    textContrast: designTokens?.textContrast || defaults.textContrast || 'high',
+  }
+}
+
+function overlayColorRoleForSlot(role, ty = {}, overlayActive) {
+  if (!overlayActive) return null
+  if (ty.colorRole === 'textOnImage' || ty.colorRole === 'textOnImageMuted') return ty.colorRole
+  if (ty.textSurface === 'card' || ty.surface === 'card') return null
+  if (role === 'caption' || role === 'eyebrow' || role === 'subheading' || role === 'body') {
+    return 'textOnImageMuted'
+  }
+  return 'textOnImage'
+}
+
+function isOverlayLayout(schema, designTokens = null) {
+  if (designTokens?.backgroundStyle === 'image' || designTokens?.textContrast === 'high') {
+    return true
+  }
+  if (isFullBleedImageTitleLayout(schema)) return true
+  if (String(schema?.content_type || '').toLowerCase() === 'title' && isSplitHeroTitleLayout(schema)) {
+    return true
+  }
+  if (isTitleFullbleedOverlayLayout(schema?.layout_id, schema)) return false
+  if (isTitleFullbleedLayout(schema?.layout_id, schema)) return false
+  if (isWideImageStatementOverlayLayout(schema?.layout_id, schema)) return false
+  if (isParaTitleLeftImageOverlayLayout(schema?.layout_id, schema)) return false
+  if (isParaTitleRightImageOverlayLayout(schema?.layout_id, schema)) return false
+  const layoutId = String(schema?.layout_id || '')
+  const slots = Array.isArray(schema?.slots) ? schema.slots : []
+  if (slots.some((s) => s.id === 'BACKGROUND_IMAGE' || /OVERLAY_SCRIM/i.test(String(s.id || '')))) return true
+  return /full_bg|overlay|statement_top|statement_bottom|title_hero|title_fullbleed/i.test(layoutId)
+}
+
+const TEXT_ROLES = new Set([
+  'heading',
+  'subheading',
+  'body',
+  'caption',
+  'stat',
+  'stat_label',
+  'quote',
+  'attribution',
+  'cta',
+  'contact',
+  'eyebrow',
+  'divider',
+])
+
+function boxToPlacement(box, canvasW, canvasH) {
+  return {
+    x: Math.round((box.x / 100) * canvasW),
+    y: Math.round((box.y / 100) * canvasH),
+    width: Math.max(Math.round((box.w / 100) * canvasW), 40),
+    height: Math.max(Math.round((box.h / 100) * canvasH), 24),
+  }
+}
+
+function shouldSplitSharedRow(upperRole, lowerRole) {
+  if (TEXT_ROLES.has(upperRole) && TEXT_ROLES.has(lowerRole)) return true
+  if (upperRole === 'heading' && lowerRole === 'body') return true
+  if (upperRole === 'chart' && (lowerRole === 'caption' || TEXT_ROLES.has(lowerRole))) return true
+  if (upperRole === 'image' && TEXT_ROLES.has(lowerRole)) return true
+  return false
+}
+
+/** Trim shared grid rows so adjacent slots do not occupy the same row twice. */
+export function adjustSlotRegion(reg, slot, allSlots) {
+  const adjusted = { ...reg }
+  const role = slot?.role || 'body'
+
+  for (const other of allSlots) {
+    if (other.id === slot.id) continue
+    const oreg = parseRegion(other.region)
+    if (!oreg) continue
+    const otherRole = other.role || 'body'
+
+    if (oreg.r1 === adjusted.r2 && shouldSplitSharedRow(role, otherRole)) {
+      adjusted.r2 -= 0.75
+    }
+    if (oreg.r2 === adjusted.r1 && shouldSplitSharedRow(otherRole, role)) {
+      adjusted.r1 += 0.75
+    }
+  }
+
+  if (adjusted.r2 < adjusted.r1) adjusted.r2 = adjusted.r1 + 0.5
+  return adjusted
+}
+
+function insetForRole(role, slotId, reg = null, COLS = 12, ROWS = 10) {
+  const id = String(slotId || '').toLowerCase()
+  // Full-bleed / hero media: 0 on flush canvas edges; soft inset on open edges.
+  if (/^background_image$|^hero_image$/i.test(String(slotId || ''))) {
+    if (!reg) return 0
+    const soft = 0.6
+    return {
+      left: reg.c1 <= 1 ? 0 : soft,
+      right: reg.c2 >= COLS ? 0 : soft,
+      top: reg.r1 <= 1 ? 0 : soft,
+      bottom: reg.r2 >= ROWS ? 0 : soft,
+    }
+  }
+  if (/^metric_card_\d+_bg$/i.test(id)) return 0.55
+  // Text inside masonry/metric cards — generous pad so copy never hugs edges
+  if (/^metric_(title|body)_\d+$|^stat_\d+_(value|label)$/i.test(id)) {
+    return { left: 2.4, right: 2.4, top: 2.0, bottom: 2.0 }
+  }
+  if (role === 'background' || /_bg$|card_bg|panel_bg/.test(id)) return 0.15
+  if (role === 'chart') return 1.2
+  if (role === 'image') {
+    // Standalone metric image: slight inset from neighbors, no nested card needed
+    if (/^metric_image_\d+$/i.test(id)) {
+      return { left: 0.35, right: 0.35, top: 0.35, bottom: 0.35 }
+    }
+    if (/^image_\d+$|^col_\d+_image$|^point_image$/i.test(id)) {
+      return { left: 0.5, right: 0.5, top: 0.5, bottom: 0.5 }
+    }
+    if (reg) {
+      const soft = 0.5
+      return {
+        left: reg.c1 <= 1 ? 0 : soft,
+        right: reg.c2 >= COLS ? 0 : soft,
+        top: reg.r1 <= 1 ? 0 : soft,
+        bottom: reg.r2 >= ROWS ? 0 : soft,
+      }
+    }
+    return 0
+  }
+  if (role === 'stat') return { left: 1.6, right: 1.2, top: 1.2, bottom: 1.2 }
+  if (role === 'caption' || role === 'stat_label') return { left: 1.2, right: 1.4, top: 1.2, bottom: 1.2 }
+  if (role === 'heading' || role === 'subheading') return 1
+  return 1.1
+}
+
+/** Center small icon circles inside their slot (insight cards, avatars). */
+function centerIconPlacement(placement) {
+  const size = Math.round(Math.min(placement.width, placement.height) * 0.36)
+  return {
+    x: Math.round(placement.x + (placement.width - size) / 2),
+    y: Math.round(placement.y + (placement.height - size) / 2),
+    width: Math.max(size, 28),
+    height: Math.max(size, 28),
+  }
+}
+
+function textPaddingForRole(role, slot = null) {
+  const slotPad = slot?.contentPadding
+  if (slotPad != null) {
+    if (typeof slotPad === 'number') return { x: slotPad, y: slotPad }
+    return { x: slotPad.x ?? slotPad.horizontal ?? 8, y: slotPad.y ?? slotPad.vertical ?? 8 }
+  }
+  return { x: 8, y: 8 }
+}
+
+const COLUMN_STACK_GAP_PX = 14
+const COLUMN_STACK_MIN_TITLE = 36
+const COLUMN_STACK_MIN_BODY = 48
+
+function columnStackKey(slotId) {
+  const m = String(slotId || '').match(
+    /^(CARD|COL|ROW|FEATURE)_(\d+)_(TITLE|SUBTITLE|BODY|TEXT)$/i
+  )
+  if (!m) return null
+  return `${m[1].toUpperCase()}_${m[2]}`
+}
+
+function columnStackPartWeight(part, text) {
+  const len = String(text || '').trim().length
+  const p = String(part || '').toUpperCase()
+  if (p === 'TITLE' || p === 'SUBTITLE') return Math.max(1, Math.min(4, Math.ceil(len / 18) || 1))
+  return Math.max(2, Math.min(10, Math.ceil(len / 40) || 2))
+}
+
+/** Re-pack CARD/COL/ROW title+body stacks within their original column band. */
+function packColumnTextStacks(elements) {
+  if (!Array.isArray(elements) || !elements.length) return elements
+  const groups = new Map()
+  for (const el of elements) {
+    if (!el || el.type !== 'text' || !el.placement) continue
+    const key = columnStackKey(el.slotId)
+    if (!key) continue
+    const part =
+      String(el.slotId)
+        .match(/_(TITLE|SUBTITLE|BODY|TEXT)$/i)?.[1]
+        ?.toUpperCase() || 'BODY'
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key).push({ el, part })
+  }
+
+  for (const items of groups.values()) {
+    if (items.length < 2) continue
+    items.sort((a, b) => (a.el.placement?.y || 0) - (b.el.placement?.y || 0))
+    const first = items[0].el.placement
+    const last = items[items.length - 1].el.placement
+    const bandTop = Number(first.y) || 0
+    const bandBottom = (Number(last.y) || 0) + (Number(last.height) || 0)
+    const bandH = Math.max(0, bandBottom - bandTop)
+    if (bandH < 40) continue
+
+    const gapsTotal = COLUMN_STACK_GAP_PX * (items.length - 1)
+    const usable = Math.max(0, bandH - gapsTotal)
+    const weights = items.map(({ el, part }) => columnStackPartWeight(part, el.content?.text))
+    const weightSum = weights.reduce((a, b) => a + b, 0) || items.length
+    let heights = items.map(({ part }, i) => {
+      const minH =
+        part === 'TITLE' || part === 'SUBTITLE' ? COLUMN_STACK_MIN_TITLE : COLUMN_STACK_MIN_BODY
+      return Math.max(minH, Math.round((weights[i] / weightSum) * usable))
+    })
+    let sumH = heights.reduce((a, b) => a + b, 0)
+    if (sumH > usable && sumH > 0) {
+      const scale = usable / sumH
+      heights = heights.map((h) => Math.max(28, Math.round(h * scale)))
+      sumH = heights.reduce((a, b) => a + b, 0)
+      heights[heights.length - 1] += Math.max(0, usable - sumH)
+    }
+
+    let y = bandTop
+    items.forEach(({ el }, i) => {
+      el.placement = {
+        ...el.placement,
+        y: Math.round(y),
+        height: Math.max(28, heights[i]),
+      }
+      y += heights[i] + COLUMN_STACK_GAP_PX
+    })
+  }
+  return elements
+}
+
+function layerForSlot(slot) {
+  if (slot?.layer != null) return Number(slot.layer)
+  const role = slot?.role || ''
+  const id = String(slot?.id || '').toLowerCase()
+  if (role === 'background') return 0
+  if (/_bg$|_card_bg|_panel_bg|card_bg|panel_bg/.test(id)) return 1
+  if (role === 'decoration') return 6
+  if (role === 'image' || role === 'chart' || role === 'table') return 12
+  const reg = parseRegion(slot?.region)
+  return 24 + (reg?.r1 || 0)
+}
+
+function fontSizeForTextSlotFromOptions(slot, placement, options = {}) {
+  const role = slot?.role || 'body'
+  const ty = slot?.typography || {}
+  let size = ty.fontSize != null ? Number(ty.fontSize) : null
+  if (size == null) {
+    const fromScale = resolveTypeScaleFontSize(role, options.typeScale)
+    if (fromScale != null) size = fromScale
+  }
+  if (size == null) {
+    const canvasW = options.canvas?.width || 1920
+    size = fontSizeForTextSlot(slot, placement, canvasW)
+  }
+  // Keep stats fully visible inside their card height
+  if (role === 'stat') {
+    const h = Number(placement?.height) || 0
+    if (h > 0) {
+      const maxByHeight = Math.max(22, Math.floor(h * 0.55))
+      size = Math.min(size, maxByHeight)
+    }
+  }
+  return size
+}
+
+function textAlignForRole(role) {
+  if (role === 'caption') return 'center'
+  return 'left'
+}
+
+function fontWeightForRole(role) {
+  if (role === 'stat') return 900
+  if (role === 'heading') return 800
+  return 400
+}
+
+function lookupSlotValue(contentBySlotId, slotId) {
+  if (!contentBySlotId || slotId == null) return undefined
+  if (contentBySlotId[slotId] != null) return contentBySlotId[slotId]
+  const key = String(slotId)
+  if (contentBySlotId[key] != null) return contentBySlotId[key]
+  const upper = key.toUpperCase()
+  const lower = key.toLowerCase()
+  if (contentBySlotId[upper] != null) return contentBySlotId[upper]
+  if (contentBySlotId[lower] != null) return contentBySlotId[lower]
+  const found = Object.keys(contentBySlotId).find((k) => k.toLowerCase() === lower)
+  return found ? contentBySlotId[found] : undefined
+}
+
+function slideContentHasStructuredCopy(content) {
+  if (!content || typeof content !== 'object') return false
+  return Boolean(
+    String(content.title || '').trim() ||
+      String(content.body || content.summary || '').trim() ||
+      (Array.isArray(content.bullets) && content.bullets.length) ||
+      (Array.isArray(content.columns) && content.columns.length) ||
+      (Array.isArray(content.timeline) && content.timeline.length) ||
+      (Array.isArray(content.milestones) && content.milestones.length) ||
+      (content.comparison && typeof content.comparison === 'object') ||
+      (Array.isArray(content.comparisonRows) && content.comparisonRows.length) ||
+      (content.left && typeof content.left === 'object') ||
+      (content.right && typeof content.right === 'object') ||
+      (Array.isArray(content.plans) && content.plans.length) ||
+      (Array.isArray(content.stats) && content.stats.length) ||
+      (Array.isArray(content.metrics) && content.metrics.length) ||
+      (content.chart && typeof content.chart === 'object') ||
+      (content.table && typeof content.table === 'object')
+  )
+}
+
+function resolveSlotText(slot, contentBySlotId, schema, options = {}) {
+  const slotId = slot?.id
+  const role = String(slot?.role || '')
+  const placeholder = slot?.placeholder_text != null ? String(slot.placeholder_text).trim() : ''
+  const content = options.content && typeof options.content === 'object' ? options.content : null
+  const hasSlideContent = slideContentHasStructuredCopy(content)
+
+  const mapped = lookupSlotValue(contentBySlotId, slotId)
+  if (mapped != null) {
+    const merged = String(mapped).trim()
+    if (merged && !isCatalogPlaceholderText(merged) && !isLikelyBadMergedText(merged, slot, schema)) {
+      return merged
+    }
+  }
+
+  // Catalog placeholders for empty manual previews only — never when slide.content exists.
+  const memberSlot = /^MEMBER_\d+_(NAME|ROLE|EMAIL|BIO|BODY|DESC)$/i.test(String(slotId || ''))
+  const keepPricingThreePlans = /pricing_three_plans_v1$/i.test(String(schema?.layout_id || ''))
+    && !/featured|highlight/i.test(String(schema?.layout_id || ''))
+  const keepPricingThreePlansFeatured = /pricing_three_plans_featured_v1$/i.test(String(schema?.layout_id || ''))
+  const keepPricingThreeHighlight = /pricing_three_highlight_v1$/i.test(String(schema?.layout_id || ''))
+    && !/split/i.test(String(schema?.layout_id || ''))
+  const keepPricingThreeHighlightSplit = /pricing_three_highlight_split_v1$/i.test(String(schema?.layout_id || ''))
+  const keepPricingFourPlans = /pricing_four_plans_v1$/i.test(String(schema?.layout_id || ''))
+    && !/featured/i.test(String(schema?.layout_id || ''))
+  const keepPricingFourPlansFeatured = /pricing_four_plans_featured_v1$/i.test(String(schema?.layout_id || ''))
+  const keepPricingFourPara = /pricing_four_para_v1$/i.test(String(schema?.layout_id || ''))
+    && !/cards/i.test(String(schema?.layout_id || ''))
+  const keepPricingFourParaCards = /pricing_four_para_cards_v1$/i.test(String(schema?.layout_id || ''))
+  const keepPricingComparisonTable = /pricing_comparison_table_v1$/i.test(String(schema?.layout_id || ''))
+    && !/cards/i.test(String(schema?.layout_id || ''))
+  const keepPricingComparisonCards = /pricing_comparison_cards_v1$/i.test(String(schema?.layout_id || ''))
+  const keepTableSingle = /table_single_v1$/i.test(String(schema?.layout_id || ''))
+    && !/cards/i.test(String(schema?.layout_id || ''))
+  const keepTableSingleCards = /table_single_cards_v1$/i.test(String(schema?.layout_id || ''))
+  const keepTimelineHorizontal = /timeline_horizontal_v1$/i.test(String(schema?.layout_id || ''))
+    && !/cards/i.test(String(schema?.layout_id || ''))
+  const keepTimelineHorizontalCards = /timeline_horizontal_cards_v1$/i.test(String(schema?.layout_id || ''))
+  const keepTimelineMilestones = /timeline_milestones_v1$/i.test(String(schema?.layout_id || ''))
+    && !/cards|image/i.test(String(schema?.layout_id || ''))
+  const keepTimelineMilestonesCards = /timeline_milestones_cards_v1$/i.test(String(schema?.layout_id || ''))
+  const keepTimelineMilestonesImage = /timeline_milestones_image_v1$/i.test(String(schema?.layout_id || ''))
+    && !/right|top/i.test(String(schema?.layout_id || ''))
+  const keepTimelineMilestonesImageRight = /timeline_milestones_image_right_v1$/i.test(String(schema?.layout_id || ''))
+  const keepTimelineVertical = /timeline_vertical_v1$/i.test(String(schema?.layout_id || ''))
+    && !/cards/i.test(String(schema?.layout_id || ''))
+  const keepTimelineVerticalCards = /timeline_vertical_cards_v1$/i.test(String(schema?.layout_id || ''))
+  const keepTimelineRoadmap = /timeline_roadmap_v1$/i.test(String(schema?.layout_id || ''))
+    && !/horizontal|lanes/i.test(String(schema?.layout_id || ''))
+  const keepProcessLinearNumeric = /process_linner_numeric|process_linear_numeric$/i.test(String(schema?.layout_id || ''))
+  const keepProcessLinearNumericCards = /process_linear_numeric_cards/i.test(String(schema?.layout_id || ''))
+  const keepTitleCentered = /title_centered/i.test(String(schema?.layout_id || ''))
+  const keepTitleMinimal = /title_minimal/i.test(String(schema?.layout_id || ''))
+  const keepTitleImageLogo = /title_image_logo/i.test(String(schema?.layout_id || ''))
+  const keepTitleHero = /title_hero/i.test(String(schema?.layout_id || ''))
+  const keepTitleFullbleed = /title_fullbleed/i.test(String(schema?.layout_id || ''))
+  const keepDemoLayout =
+    keepTitleCentered ||
+    keepTitleMinimal ||
+    keepTitleImageLogo ||
+    keepTitleHero ||
+    keepTitleFullbleed ||
+    keepTableSingle ||
+    keepTableSingleCards ||
+    keepPricingThreePlans ||
+    keepPricingThreePlansFeatured ||
+    keepPricingThreeHighlight ||
+    keepPricingThreeHighlightSplit ||
+    keepPricingFourPlans ||
+    keepPricingFourPlansFeatured ||
+    keepPricingFourPara ||
+    keepPricingFourParaCards ||
+    keepPricingComparisonTable ||
+    keepPricingComparisonCards ||
+    keepTimelineHorizontal ||
+    keepTimelineHorizontalCards ||
+    keepTimelineMilestones ||
+    keepTimelineMilestonesCards ||
+    keepTimelineMilestonesImage ||
+    keepTimelineMilestonesImageRight ||
+    keepTimelineVertical ||
+    keepTimelineVerticalCards ||
+    keepTimelineRoadmap ||
+    keepProcessLinearNumeric ||
+    keepProcessLinearNumericCards
+
+  if (hasSlideContent) {
+    return ''
+  }
+
+  if (
+    placeholder &&
+    (!hasSlideContent &&
+      (role === 'stat' ||
+        role === 'stat_label' ||
+        memberSlot ||
+        keepDemoLayout))
+  ) {
+    return placeholder
+  }
+  return ''
+}
+
+/** Reject backend/AI text that duplicated the layout or slide title into every slot. */
+function isLikelyBadMergedText(text, slot, schema) {
+  const value = String(text || '').trim().toLowerCase()
+  if (!value) return true
+
+  const layoutId = String(schema?.layout_id || '')
+    .replace(/_/g, ' ')
+    .replace(/\s+v\d+$/i, '')
+    .trim()
+    .toLowerCase()
+  const placeholder = String(slot?.placeholder_text || '').trim().toLowerCase()
+
+  if (layoutId && value === layoutId) return true
+  if (layoutId && value.replace(/\s+/g, ' ') === layoutId.replace(/\s+/g, ' ')) return true
+
+  if ((slot?.role === 'caption' || slot?.role === 'body' || slot?.role === 'stat_label') && layoutId) {
+    if (value.includes('insights chart') || value.includes('grid insights')) return true
+    if (value.length < 80 && layoutId.split(/\s+/).every((word) => word.length > 2 && value.includes(word))) return true
+  }
+
+  if (placeholder && value === placeholder) return true
+  if (isCatalogPlaceholderText(text)) return true
+  if (placeholder && (slot?.role === 'caption' || slot?.role === 'stat_label') && value.length > placeholder.length + 12) {
+    return true
+  }
+
+  return false
+}
+
+function resolveChartContent(slot, schema, palette, contentBySlotId, slideContent = null) {
+  const preview = schema?.preview || {}
+  const layoutId = String(schema?.layout_id || '').toLowerCase()
+  const slotId = String(slot?.id || '').toUpperCase()
+  const mode = resolvePreviewMode(schema)
+  
+  // Custom colors per chart for three-chart layouts
+  let barColor = palette?.primary || palette?.accent || LAYOUT_SURFACE.bar
+  if (layoutId === 'chart_three_cards_v1' || layoutId === 'chart_three_context_cards_v1') {
+    if (slotId === 'CHART_1') {
+      barColor = ['#60A5FA', '#3B82F6', '#1D4ED8', '#1E40AF'] // Blue shades
+    } else if (slotId === 'CHART_2') {
+      barColor = ['#C084FC', '#A855F7', '#9333EA', '#7E22CE'] // Purple shades
+    } else if (slotId === 'CHART_3') {
+      barColor = ['#34D399', '#10B981', '#059669', '#047857'] // Green/Teal shades
+    }
+  }
+  
+  const saved = contentBySlotId?.[`${slot.id}__chart`]
+  if (saved) {
+    return normalizeChartContent(
+      {
+        chartType: saved.chartType || saved.data?.chartType || 'column-grouped',
+        labels: saved.labels || saved.data?.labels || [],
+        series: saved.data?.series || saved.series || [{ name: 'Series', values: saved.values || [] }],
+        values: saved.values,
+        colors: Array.isArray(barColor) ? barColor : [barColor],
+        premium: true,
+        showGrid: true,
+        showLabels: true,
+      },
+      palette
+    )
+  }
+
+  const chartMatch = slotId.match(/^CHART_(\d+)$/)
+  let chart = null
+  if (chartMatch) {
+    const idx = Number(chartMatch[1]) - 1
+    if (Array.isArray(slideContent?.charts) && slideContent.charts[idx]) {
+      chart = slideContent.charts[idx]
+    } else if (idx === 0 && slideContent?.chart) {
+      chart = slideContent.chart
+    } else if (idx === 1 && slideContent?.chart2) {
+      chart = slideContent.chart2
+    }
+  } else {
+    chart = slideContent?.chart && typeof slideContent.chart === 'object' ? slideContent.chart : null
+  }
+
+  const illustrative =
+    slideContent?.chart?.isIllustrative === true ||
+    slideContent?.chart?.is_illustrative === true
+  if (chartMatch && !chart && illustrative) {
+    const idx = Number(chartMatch[1]) - 1
+    chart = sampleChartDataset(idx, layoutId)
+  }
+
+  let chartType =
+    chart?.type ||
+    chart?.chartType ||
+    slot?.chart_type ||
+    slot?.chartType ||
+    preview?.chartType ||
+    preview?.chart_type
+
+  if (!chartType) {
+    if (/^DONUT/.test(slotId) || /pie|donut/.test(layoutId)) {
+      chartType = 'donut'
+    } else if (/area/.test(layoutId)) {
+      chartType = 'area'
+    } else if (
+      /exponential|line_chart|line-chart/.test(layoutId) ||
+      /^LINE_/.test(slotId)
+    ) {
+      chartType = 'line-points'
+    } else if (/BAR_CHART|bar_chart|^BAR_/.test(slotId) || mode === 'grid_insights_chart') {
+      chartType = 'column-grouped'
+    } else if (/kpi|stat/.test(layoutId) && slotId.includes('KPI')) {
+      chartType = 'kpi'
+    } else {
+      chartType = 'column-grouped'
+    }
+  }
+
+  const labels =
+    (Array.isArray(chart?.labels) ? chart.labels : null) ||
+    preview?.chartLabels ||
+    []
+  const values =
+    chart?.series?.[0]?.values ||
+    chart?.data ||
+    chart?.values ||
+    preview?.chartValues ||
+    []
+
+  return normalizeChartContent(
+    {
+      chartType,
+      labels: Array.isArray(labels) && labels.length ? labels : [],
+      series: [{ name: saved?.data?.series?.[0]?.name || chart?.series?.[0]?.name || 'Series', values: (Array.isArray(values) ? values : []).map(Number).filter((v) => !Number.isNaN(v)) }],
+      values,
+      colors: Array.isArray(barColor) ? barColor : [barColor],
+      premium: true,
+      showGrid: true,
+      showLabels: true,
+    },
+    palette
+  )
+}
+
+/** Distinct demo datasets so empty CHART_1/2/3 slots all render in authoring. */
+function sampleChartDataset(index = 0, layoutId = '') {
+  const i = Math.max(0, Number(index) || 0)
+  if (/donut|pie/.test(String(layoutId || ''))) {
+    const sets = [
+      { labels: ['A', 'B', 'C', 'D'], values: [40, 25, 20, 15] },
+      { labels: ['A', 'B', 'C', 'D'], values: [30, 30, 25, 15] },
+      { labels: ['A', 'B', 'C', 'D'], values: [50, 20, 18, 12] },
+    ]
+    return sets[i % sets.length]
+  }
+  const sets = [
+    { labels: ['Q1', 'Q2', 'Q3', 'Q4'], values: [42, 58, 51, 67] },
+    { labels: ['Q1', 'Q2', 'Q3', 'Q4'], values: [28, 36, 44, 39] },
+    { labels: ['Q1', 'Q2', 'Q3', 'Q4'], values: [55, 48, 62, 71] },
+  ]
+  return sets[i % sets.length]
+}
+
+function buildTextElement(slot, placement, options) {
+  const { contentBySlotId, schema } = options
+  const role = slot.role || 'body'
+  let text = resolveSlotText(slot, contentBySlotId, schema, options)
+  const ty = slot.typography || {}
+  const themeTokens = options.themeTokens || options.theme || null
+  const mergedDesignTokens = mergeDesignTokensWithTheme(
+    options.designTokens || options.slideDesignPlan?.designTokens,
+    themeTokens,
+    schema
+  )
+  let overlay = isOverlayLayout(schema, mergedDesignTokens)
+  const textSurface = resolveSlotTextSurface(slot, schema, mergedDesignTokens, themeTokens)
+  if (isImageOverlaySurface(textSurface)) overlay = true
+  const pad = textPaddingForRole(role, slot)
+  const headingTy = resolveHeadingTypography({
+    slot,
+    layoutSchema: schema,
+    themeTokens,
+    placement,
+    canvasWidth: options.canvasWidth || options.width || 1920,
+    canvasFontSizeForTextSlot: fontSizeForTextSlot,
+    resolveTypeScaleFontSize,
+    styleForSlotFallback: null,
+  })
+  const fitted = fitTextToSlot(text, slot, placement, {
+    ...options,
+    contentPadding: pad,
+    preferredFontSize: headingTy.fontSize,
+  })
+  text = fitted.text
+  const fontSize = fitted.fontSize ?? headingTy.fontSize
+  const verticalAlign =
+    ty.verticalAlign ||
+    slot.verticalAlign ||
+    (role === 'stat' || role === 'stat_label' ? 'center' : 'flex-start')
+  const colorMap = colorRoleMapFromPalette(options.palette)
+  let colorRole = ty.colorRole || null
+  if (
+    isImageOverlaySurface(textSurface) &&
+    colorRole &&
+    (colorRole === 'text' || colorRole === 'muted') &&
+    !ty.textSurface &&
+    !ty.surface
+  ) {
+    colorRole = null
+  }
+  if (!colorRole) {
+    const overlayRole = overlayColorRoleForSlot(role, ty, overlay)
+    if (overlayRole) {
+      colorRole = overlayRole
+    } else if (role === 'stat') {
+      colorRole = 'accent'
+    } else if (role === 'caption' || role === 'eyebrow' || role === 'stat_label' || role === 'body') {
+      colorRole = 'muted'
+    } else {
+      colorRole = 'text'
+    }
+  }
+  if (role === 'stat' && (!colorRole || colorRole === 'text' || colorRole === 'muted')) {
+    colorRole = 'accent'
+  }
+  if (overlay && (colorRole === 'text' || colorRole === 'muted')) {
+    const overlayRole = overlayColorRoleForSlot(role, ty, overlay)
+    if (overlayRole) colorRole = overlayRole
+  }
+  // Prioritize explicit color from typography, otherwise use colorRole mapping
+  const color = ty.color || colorMap[colorRole] || colorMap.text
+  const align = ty.align || textAlignForRole(role)
+
+  // Strip raw markdown so editor preview matches backend rich-run rendering.
+  let runs = undefined
+  if (typeof text === 'string' && (text.includes('**') || text.includes('__'))) {
+    const textRole = overlay ? 'textOnImage' : 'text'
+    const mutedRole = overlay ? 'textOnImageMuted' : 'muted'
+    const lines = text.split('\n')
+    runs = []
+    lines.forEach((line, index) => {
+      if (index > 0) runs.push({ text: '\n', colorRole: mutedRole })
+      const parts = line.split(/(\*\*[^*]+\*\*)/g).filter((p) => p.length)
+      parts.forEach((part) => {
+        const bold = part.match(/^\*\*(.+)\*\*$/)
+        if (bold) runs.push({ text: bold[1], fontWeight: 700, colorRole: textRole })
+        else runs.push({ text: part.replace(/__(.+?)__/g, '$1'), colorRole: mutedRole })
+      })
+    })
+    text = text.replace(/\*\*(.+?)\*\*/g, '$1').replace(/__(.+?)__/g, '$1')
+  }
+
+  return {
+    id: `slot-${slot.id}`,
+    slotId: slot.id,
+    type: 'text',
+    role,
+    layer: layerForSlot(slot),
+    placement,
+    content: {
+      text,
+      fontSize,
+      bold: ty.fontWeight != null ? Number(ty.fontWeight) >= 600 : false,
+      fontWeight: ty.fontWeight != null ? Number(ty.fontWeight) : fontWeightForRole(role),
+      italic: role === 'quote',
+      align,
+      verticalAlign,
+      color,
+      colorRole,
+      fontFamily: resolveFontFamily(options, role),
+      lineHeight: fitted.lineHeight || ty.lineHeight || (role === 'stat' ? 1.08 : role === 'heading' ? 1.18 : 1.42),
+      letterSpacing: ty.letterSpacing != null ? `${ty.letterSpacing}em` : role === 'heading' ? '-0.02em' : role === 'caption' ? '0.01em' : undefined,
+      wrap: 'pre-wrap',
+      padding: pad.y,
+      paddingX: pad.x,
+      clipToSlot: slot.clipToSlot !== false,
+      slotMaxHeight: placement.height,
+      ...(runs ? { runs } : {}),
+    },
+  }
+}
+
+function isFullCanvasPlacement(placement, canvasW, canvasH) {
+  const p = placement || {}
+  return (
+    (p.x ?? 0) <= 2 &&
+    (p.y ?? 0) <= 2 &&
+    (p.width ?? 0) >= canvasW * 0.95 &&
+    (p.height ?? 0) >= canvasH * 0.95
+  )
+}
+
+function applyThemeSlideBackground(elements, palette, canvasW, canvasH) {
+  if (!palette?.bg) return elements
+  const hasFullBg = elements.some((el) => {
+    if (el.type !== 'shape') return false
+    const role = String(el.role || '').toLowerCase()
+    return (
+      (role === 'design_bg' || role === 'background') &&
+      isFullCanvasPlacement(el.placement, canvasW, canvasH)
+    )
+  })
+  if (hasFullBg) return elements
+  return [
+    {
+      id: `shp-theme-bg-${Math.random().toString(36).slice(2, 9)}`,
+      type: 'shape',
+      layer: 0,
+      placement: { x: 0, y: 0, width: canvasW, height: canvasH, rotation: 0, opacity: 1 },
+      content: {
+        shape: 'rect',
+        fill: { type: 'solid', color: palette.bg, colorRole: 'bg' },
+      },
+      role: 'design_bg',
+    },
+    ...elements,
+  ]
+}
+
+function buildBackgroundElement(slot, placement, options = {}) {
+  const resolved = resolveShapeFill(slot.shape, options.palette)
+  return {
+    id: `slot-${slot.id}`,
+    slotId: slot.id,
+    type: 'shape',
+    role: slot.role,
+    layer: layerForSlot(slot),
+    placement,
+    content: {
+      shape: resolved.shape,
+      fill: resolved.fill,
+      stroke: resolved.stroke,
+      strokeWidth: resolved.strokeWidth,
+      borderRadius: resolved.borderRadius,
+      shadow: resolved.shadow,
+      layoutSurface: resolved.layoutSurface ?? true,
+    },
+  }
+}
+
+function buildDecorationElement(slot, placement, options = {}) {
+  const id = String(slot.id || '').toLowerCase()
+  if (slot.shape) {
+    const resolved = resolveShapeFill(slot.shape, options.palette)
+    return {
+      id: `slot-${slot.id}`,
+      slotId: slot.id,
+      type: 'shape',
+      role: slot.role,
+      layer: layerForSlot(slot),
+      placement: slot.shape?.type === 'ellipse' ? centerIconPlacement(placement) : placement,
+      content: {
+        shape: resolved.shape,
+        fill: resolved.fill,
+        stroke: resolved.stroke || ( /icon|avatar|logo/.test(id) ? LAYOUT_SURFACE.iconRing : undefined),
+        strokeWidth: resolved.strokeWidth || (/icon|avatar|logo/.test(id) ? 1.5 : undefined),
+        borderRadius: resolved.borderRadius,
+        shadow: resolved.shadow,
+        layoutSurface: true,
+      },
+    }
+  }
+  if (/icon|avatar|logo/.test(id)) {
+    return {
+      id: `slot-${slot.id}`,
+      slotId: slot.id,
+      type: 'shape',
+      role: slot.role,
+      layer: layerForSlot(slot),
+      placement: centerIconPlacement(placement),
+      content: {
+        shape: 'circle',
+        fill: LAYOUT_SURFACE.iconFill,
+        stroke: LAYOUT_SURFACE.iconRing,
+        strokeWidth: 1.5,
+        layoutSurface: true,
+      },
+    }
+  }
+  return {
+    id: `slot-${slot.id}`,
+    slotId: slot.id,
+    type: 'shape',
+    role: slot.role,
+    layer: layerForSlot(slot),
+    placement,
+    content: {
+      shape: /circle|avatar/.test(id) ? 'circle' : 'rounded-rect',
+      fill: LAYOUT_SURFACE.card,
+      stroke: LAYOUT_SURFACE.cardBorder,
+      strokeWidth: 1,
+      borderRadius: LAYOUT_SURFACE.radiusSm,
+      layoutSurface: true,
+    },
+  }
+}
+
+function resolveSplitImageEdgeFade(schema, slot, allSlots) {
+  if (!slot?.region || !Array.isArray(allSlots)) return null
+  const contentType = String(schema?.content_type || '').toLowerCase()
+  const layoutId = String(schema?.layout_id || '').toLowerCase()
+  if (contentType !== 'title' && !/^title_/.test(layoutId)) return null
+
+  const imgReg = parseRegion(slot.region)
+  if (!imgReg) return null
+  const textRoles = new Set(['heading', 'subheading', 'body', 'caption', 'stat', 'stat_label', 'quote', 'eyebrow'])
+  const textSlots = allSlots.filter((s) => s.id !== slot.id && textRoles.has(String(s.role || '').toLowerCase()))
+  if (!textSlots.length) return null
+  let textColSum = 0
+  let textCount = 0
+  for (const ts of textSlots) {
+    const tr = parseRegion(ts.region)
+    if (!tr) continue
+    textColSum += (tr.c1 + tr.c2) / 2
+    textCount += 1
+  }
+  if (!textCount) return null
+  const textCenter = textColSum / textCount
+  const imgCenter = (imgReg.c1 + imgReg.c2) / 2
+  if (imgCenter > textCenter && imgReg.c1 >= 6) return { side: 'left', width: 0.3 }
+  if (imgCenter < textCenter && imgReg.c2 <= 7) return { side: 'right', width: 0.3 }
+  return null
+}
+
+function resolveImageUrl(slot, contentBySlotId, options = {}) {
+  const slotId = slot?.id
+  const mapped =
+    lookupSlotValue(contentBySlotId, `${slotId}__url`) ||
+    lookupSlotValue(contentBySlotId, `${slotId}_url`)
+  if (mapped) return String(mapped)
+  const content = options.content || {}
+  const map = content.slotImageUrls
+  if (map && typeof map === 'object') {
+    if (map[slotId]) return map[slotId]
+    if (map[String(slotId).toUpperCase()]) return map[String(slotId).toUpperCase()]
+    if (map[String(slotId).toLowerCase()]) return map[String(slotId).toLowerCase()]
+  }
+  const imageSlots = (options.schema?.slots || []).filter((s) => {
+    const r = String(s.role || '').toLowerCase()
+    const sid = String(s.id || '').toUpperCase()
+    return r === 'image' || sid === 'BACKGROUND_IMAGE' || sid === 'HERO_IMAGE'
+  })
+  const hero =
+    content.imageRef?.url ||
+    content.imageRef?.src ||
+    content.imageUrl ||
+    (Array.isArray(content.imageUrls) ? content.imageUrls[0] : null)
+  if (hero && (imageSlots.length <= 1 || /^(HERO_IMAGE|BACKGROUND_IMAGE)$/i.test(String(slotId)))) {
+    return hero
+  }
+  return null
+}
+
+function buildImageElement(slot, placement, contentBySlotId, options = {}) {
+  const url = resolveImageUrl(slot, contentBySlotId, options)
+  const presentation = resolveImagePresentation(slot)
+  const edgeFade = resolveSplitImageEdgeFade(options.schema, slot, options.schema?.slots)
+  const imageMask = slot.imageMask && typeof slot.imageMask === 'object' ? slot.imageMask : null
+  const shaped = Boolean(imageMask && imageMask.type && imageMask.type !== 'edgeFade')
+  const isFullBleedBg = String(slot.id || '').toUpperCase() === 'BACKGROUND_IMAGE'
+  const borderRadius =
+    edgeFade != null || shaped || isFullBleedBg
+      ? 0
+      : slot.borderRadius != null
+        ? slot.borderRadius
+        : presentation.borderRadius
+  const shadow =
+    edgeFade != null || shaped || isFullBleedBg
+      ? undefined
+      : slot.shadow ?? presentation.shadow
+  const colorMap = colorRoleMapFromPalette(options.palette)
+  return {
+    id: `slot-${slot.id}`,
+    slotId: slot.id,
+    type: 'image',
+    role: isFullBleedBg ? 'background' : 'image',
+    layer: layerForSlot(slot),
+    placement,
+    content: {
+      ...(url ? { url, src: url } : {}),
+      fit: slot.fit || 'cover',
+      alt: '',
+      placeholderFill: themedImagePlaceholder(options.palette),
+      skeletonColor: colorMap.surface || colorMap.cardBg,
+      borderRadius,
+      ...(shadow ? { boxShadow: shadow, shadow } : {}),
+      ...(edgeFade ? { edgeFade } : {}),
+      ...(imageMask && !edgeFade ? { imageMask } : {}),
+    },
+  }
+}
+
+function buildChartElement(slot, placement, options) {
+  const { palette, contentBySlotId, schema } = options
+  const content = resolveChartContent(slot, schema, palette, contentBySlotId, options.content)
+  if (!content) return null
+  return {
+    id: `slot-${slot.id}`,
+    slotId: slot.id,
+    type: 'chart',
+    role: 'chart',
+    layer: layerForSlot(slot),
+    placement,
+    content,
+  }
+}
+
+function buildTableElement(slot, placement, contentBySlotId = {}, slideContent = null) {
+  const saved = contentBySlotId?.[`${slot.id}__table`] || slideContent?.table
+  const headers = Array.isArray(saved?.headers) ? saved.headers : ['Column A', 'Column B', 'Column C']
+  const rows = Array.isArray(saved?.rows) ? saved.rows : [
+    ['Row 1', '—', '—'],
+    ['Row 2', '—', '—'],
+    ['Row 3', '—', '—'],
+  ]
+  const cells = [headers, ...rows]
+  return {
+    id: `slot-${slot.id}`,
+    slotId: slot.id,
+    type: 'table',
+    role: 'table',
+    layer: layerForSlot(slot),
+    placement,
+    content: {
+      rows: cells.length,
+      cols: headers.length,
+      hasHeader: true,
+      cells,
+    },
+  }
+}
+
+function isAiOnlyShapeSlot(slot) {
+  if (!slot) return false
+  const id = String(slot?.id || '')
+  const role = String(slot?.role || '').toLowerCase()
+  // Card backgrounds and device frames are compiled explicitly
+  if (/^METRIC_CARD_\d+_BG$/.test(id)) return false
+  if (/^CARD_\d+_BG$/i.test(id)) return false
+  if (/^TEXT_HALF_BG$/i.test(id)) return false
+  if (/^STEP_\d+_CIRCLE$/i.test(id) || slot.shapeHint?.kind === 'stepCircle') return false
+  if (/_(FRAME|_BG)$/i.test(id) && slot.shape) return false
+  if (slot.aiOnly === true) return true
+  if (/_BG$|CARD_BG|OVERLAY_SCRIM|CTA_BG/i.test(id)) return true
+  if (role === 'divider') return true
+  if (role === 'decoration' && slot.shape && !/logo|frame/i.test(id)) return true
+  if (role === 'background' && id !== 'BACKGROUND_IMAGE' && slot.shape) return true
+  if (/^ICON_\d+$/.test(id)) return true
+  return false
+}
+
+function isDeviceFrameSlot(slot) {
+  const id = String(slot?.id || '')
+  return /FRAME$/i.test(id) && slot?.shapeHint?.pairsWithSlotId
+}
+
+function applyTextOverImageContrast(elements, palette = LAYOUT_SURFACE) {
+  const images = elements.filter((el) => el.type === 'image')
+  if (!images.length) return elements
+
+  return elements.map((el) => {
+    if (el.type !== 'text') return el
+    const placement = el.placement || {}
+    const textArea = Math.max(1, (placement.width ?? 1) * (placement.height ?? 1))
+    let maxOverlap = 0
+    for (const img of images) {
+      const p = img.placement || {}
+      const overlapW = Math.max(0, Math.min((placement.x ?? 0) + (placement.width ?? 0), (p.x ?? 0) + (p.width ?? 0)) - Math.max(placement.x ?? 0, p.x ?? 0))
+      const overlapH = Math.max(0, Math.min((placement.y ?? 0) + (placement.height ?? 0), (p.y ?? 0) + (p.height ?? 0)) - Math.max(placement.y ?? 0, p.y ?? 0))
+      maxOverlap = Math.max(maxOverlap, (overlapW * overlapH) / textArea)
+    }
+    if (maxOverlap <= 0.25) return el
+
+    const role = String(el.role || '').toLowerCase()
+    const slotId = String(el.slotId || '').toLowerCase()
+    const isMuted =
+      role === 'body' ||
+      role === 'caption' ||
+      role === 'stat_label' ||
+      role === 'subheading' ||
+      slotId.includes('body') ||
+      slotId.includes('bullet')
+    const colorRole = isMuted ? 'textOnImageMuted' : 'textOnImage'
+    return {
+      ...el,
+      content: {
+        ...(el.content || {}),
+        colorRole,
+        color: COLOR_ROLE_MAP[colorRole] || el.content?.color,
+      },
+    }
+  })
+}
+
+function parseHexColor(hex) {
+  const raw = String(hex || '').trim().replace(/^#/, '')
+  if (!/^[0-9a-fA-F]{6}$/.test(raw)) return null
+  return {
+    r: parseInt(raw.slice(0, 2), 16),
+    g: parseInt(raw.slice(2, 4), 16),
+    b: parseInt(raw.slice(4, 6), 16),
+    a: 1,
+  }
+}
+
+function parseRgbaColor(color) {
+  const raw = String(color || '').trim()
+  const m = raw.match(/^rgba\s*\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*([01]?\.?\d+)\s*\)$/i)
+  if (!m) return null
+  return {
+    r: Math.max(0, Math.min(255, Number(m[1]))),
+    g: Math.max(0, Math.min(255, Number(m[2]))),
+    b: Math.max(0, Math.min(255, Number(m[3]))),
+    a: Math.max(0, Math.min(1, Number(m[4]))),
+  }
+}
+
+function relativeLuminance({ r, g, b }) {
+  const toLinear = (ch) => {
+    const c = ch / 255
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+  }
+  const rl = toLinear(r)
+  const gl = toLinear(g)
+  const bl = toLinear(b)
+  return 0.2126 * rl + 0.7152 * gl + 0.0722 * bl
+}
+
+function contrastRatioHex(hexA, hexB) {
+  const a = parseHexColor(hexA)
+  const b = parseHexColor(hexB)
+  if (!a || !b) return null
+  const la = relativeLuminance(a)
+  const lb = relativeLuminance(b)
+  const lighter = Math.max(la, lb)
+  const darker = Math.min(la, lb)
+  return (lighter + 0.05) / (darker + 0.05)
+}
+
+function compositeRgbaOnHex(fg, bgHex) {
+  const bg = parseHexColor(bgHex)
+  if (!bg) return null
+  const a = fg?.a == null ? 1 : fg.a
+  if (a >= 1) return `#${[fg.r, fg.g, fg.b]
+    .map((n) => Math.round(n).toString(16).padStart(2, '0'))
+    .join('')}`
+  const r = a * fg.r + (1 - a) * bg.r
+  const g = a * fg.g + (1 - a) * bg.g
+  const b = a * fg.b + (1 - a) * bg.b
+  return `#${[r, g, b]
+    .map((n) => Math.round(n).toString(16).padStart(2, '0'))
+    .join('')}`
+}
+
+function applyReadableTextContrastForPreview(elements, palette, schema) {
+  const bgHex = palette?.bg || palette?.surface || null
+  if (!bgHex) return elements
+
+  const overlay = isOverlayLayout(schema)
+
+  const bgLum = parseHexColor(bgHex)
+  if (!bgLum) return elements
+
+  return elements.map((el) => {
+    if (el.type !== 'text' && el.type !== 'textbox') return el
+    if (
+      /^CYCLE_NUM_[1-4]$/i.test(String(el.slotId || '')) ||
+      /^FUNNEL_NUM_[1-4]$/i.test(String(el.slotId || '')) ||
+      /^PYRAMID_NUM_[1-5]$/i.test(String(el.slotId || '')) ||
+      /^SWOT_LETTER_[1-4]$/i.test(String(el.slotId || '')) ||
+      /^SWOT_HUB_(TITLE|SUB)$/i.test(String(el.slotId || '')) ||
+      /^funnel_[1-5]_title$/i.test(String(el.slotId || '')) ||
+      /^Q[1-4]_(TITLE|BODY)$/i.test(String(el.slotId || '')) ||
+      /^MATRIX_(CENTER|X_LABEL|Y_LABEL)$/i.test(String(el.slotId || '')) ||
+      /^MEMBER_\d+_(NAME|ROLE|BIO|BODY|DESC|EMAIL)$/i.test(String(el.slotId || '')) ||
+      (isPricingFourPlansLayout(schema?.layout_id) && /^PLAN_\d+_/i.test(String(el.slotId || ''))) ||
+      (isPricingFourPlansFeaturedLayout(schema?.layout_id) && /^PLAN_\d+_/i.test(String(el.slotId || ''))) ||
+      (isPricingFourParaLayout(schema?.layout_id) && (/^PLAN_\d+_/i.test(String(el.slotId || '')) || String(el.slotId || '').toUpperCase() === 'BODY')) ||
+      (isPricingFourParaCardsLayout(schema?.layout_id) && (/^PLAN_\d+_/i.test(String(el.slotId || '')) || String(el.slotId || '').toUpperCase() === 'BODY')) ||
+      (isPricingComparisonTableLayout(schema?.layout_id) && (/^PLAN_\d+_/i.test(String(el.slotId || '')) || /^FEATURE_\d+$/i.test(String(el.slotId || '')) || String(el.slotId || '').toUpperCase() === 'HEADING')) ||
+      (isPricingComparisonCardsLayout(schema?.layout_id) && /^PLAN_\d+_/i.test(String(el.slotId || ''))) ||
+      (isTableSingleLayout(schema?.layout_id) && (/^(COL|ROW|CELL)_\d+/i.test(String(el.slotId || '')) || /^(HEADING|SUBTITLE)$/i.test(String(el.slotId || '')) && !/cards/i.test(String(schema?.layout_id || '')))) ||
+      (isTableSingleCardsLayout(schema?.layout_id) && (/^(COL|ROW|CELL|TOTAL)_\d+/i.test(String(el.slotId || '')) || /^(HEADING|SUBTITLE|TOTAL_LABEL)$/i.test(String(el.slotId || '')))) ||
+      (isTableWithDescriptionLayout(schema?.layout_id) && (/^(COL|ROW|CELL)_\d+/i.test(String(el.slotId || '')) || /^(HEADING|SUBTITLE|DESCRIPTION)$/i.test(String(el.slotId || '')))) ||
+      (isTableWithDescriptionSideLayout(schema?.layout_id) && (/^(COL|ROW|CELL)_\d+/i.test(String(el.slotId || '')) || /^(HEADING|SUBTITLE|SIDE_HEADING|BODY|DESCRIPTION)$/i.test(String(el.slotId || '')))) ||
+      (isTableTwoDescLayout(schema?.layout_id) && (/^(T[12]_|DATASET_|TABLE_|TAG_|DESC_|HEADING|SUBTITLE)/i.test(String(el.slotId || '')))) ||
+      (isTableTwoDescCardsLayout(schema?.layout_id) && (/^(T[12]_|DATASET_|TABLE_|TAG_|DESC_|SUB_|HEADING|SUBTITLE)/i.test(String(el.slotId || '')))) ||
+      (isProcessLinearBusinessLayout(schema?.layout_id) && (/^(STEP_\d+_(TITLE|BODY|SHAPE|CHEVRON|CARD|ICON)|HEADING|PROCESS_LINEAR_CHROME)$/i.test(String(el.slotId || '')))) ||
+      (isProcessLinearHortiLayout(schema?.layout_id) && (/^(STEP_\d+_(TITLE|BODY|SHAPE|RING|ARC|DOT|ICON|BADGE)|HEADING|SUBTITLE|PROCESS_LINEAR_HORTI_CHROME)$/i.test(String(el.slotId || '')))) ||
+      (isProcessLinearHortiFourLayout(schema?.layout_id) && (/^(STEP_\d+_(TITLE|BODY|SHAPE|RING|ARC|DOT|ICON|BADGE)|HEADING|SUBTITLE|PROCESS_LINEAR_HORTI_CHROME)$/i.test(String(el.slotId || '')))) ||
+      (isProcessLinearHorizontalLayout(schema?.layout_id) && (/^(STEP_\d+_(TITLE|BODY|CARD|ICON)|HEADING|PROCESS_TRACK)$/i.test(String(el.slotId || '')))) ||
+      (isProcessLinearFourCardsLayout(schema?.layout_id) && (/^(STEP_\d+_(TITLE|BODY|CARD|ICON)|HEADING)$/i.test(String(el.slotId || '')))) ||
+      (isProcessLinearNumericLayout(schema?.layout_id) && (/^(STEP_\d+_(TITLE|BODY|SHAPE|NUMBER|PIN|SPINE)|HEADING|PROCESS_NUMERIC_SPINE)$/i.test(String(el.slotId || '')))) ||
+      (isProcessLinearNumericCardsLayout(schema?.layout_id) && (/^(STEP_\d+_(TITLE|BODY|CARD|SHAPE)|HEADING|BRIDGE_\d+_\d+)$/i.test(String(el.slotId || '')))) ||
+      ((isTableTwoSameHeaderLayout(schema?.layout_id) || isTableTwoSameHeaderCardsLayout(schema?.layout_id)) && (/^(T[12]_|COL_[A-C]_HEADER|TAG_BADGE|HEADING|SUBTITLE|TABLE_HEADER)/i.test(String(el.slotId || '')))) ||
+      (isTimelineHorizontalLayout(schema?.layout_id) && /^milestone_\d+_(label|num)$/i.test(String(el.slotId || ''))) ||
+      (isTimelineHorizontalCardsLayout(schema?.layout_id) && /^milestone_\d+_(num|label|foot)$/i.test(String(el.slotId || ''))) ||
+      (isTimelineMilestonesLayout(schema?.layout_id) && /^milestone_\d+_(label|num|title)$/i.test(String(el.slotId || ''))) ||
+      (isTimelineMilestonesCardsLayout(schema?.layout_id) && /^milestone_\d+_(label|num|detail)$/i.test(String(el.slotId || ''))) ||
+      (isTimelineMilestonesImageLayout(schema?.layout_id) && /^milestone_\d+_(label|num)$/i.test(String(el.slotId || ''))) ||
+      (isTimelineMilestonesImageRightLayout(schema?.layout_id) && /^milestone_\d+_(label|num)$/i.test(String(el.slotId || ''))) ||
+      (isTimelineVerticalLayout(schema?.layout_id) && /^milestone_\d+_num$/i.test(String(el.slotId || ''))) ||
+      (isTimelineVerticalCardsLayout(schema?.layout_id) && /^milestone_\d+_(label|num)$/i.test(String(el.slotId || ''))) ||
+      (isTimelineRoadmapLayout(schema?.layout_id) && /^milestone_\d+_label$/i.test(String(el.slotId || ''))) ||
+      (isSectionDividerNumberedCircleLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'SECTION_NUMBER') ||
+      (isSectionDividerCenteredLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'SECTION_NUMBER') ||
+      (isTitleFullbleedOverlayLayout(schema?.layout_id, schema) && (/^(MAIN_TITLE|SUBTITLE|OVERLAY_CARD)$/i.test(String(el.slotId || '')))) ||
+      (isWideImageStatementOverlayLayout(schema?.layout_id, schema) && (/^(STATEMENT|SUBHEADLINE|OVERLAY_SCRIM|BACKGROUND_IMAGE)$/i.test(String(el.slotId || '')))) ||
+      (isParaTitleLeftImageBoxedLayout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaTitleRightImageBoxedLayout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaTitleLeftImageOverlayLayout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaTitleRightImageOverlayLayout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaLandscapeImageLayout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaSplit5050Layout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG|TEXT_HALF_BG)$/i.test(String(el.slotId || '')))) ||
+      (isTwoParaRightImageLayout(schema?.layout_id, schema) && (/^(BODY_1|BODY_2|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isContactLeftImageLayout(schema?.layout_id, schema) && (/^(HEADING|CONTACT_IMAGE|IMAGE_CARD_BG|CONTACT_(ADDRESS|PHONE|EMAIL)(_LABEL)?)$/i.test(String(el.slotId || '')))) ||
+      (isContactRightImageLayout(schema?.layout_id, schema) && (/^(HEADING|CONTACT_IMAGE|IMAGE_CARD_BG|CONTACT_(ADDRESS|PHONE|EMAIL)(_LABEL)?)$/i.test(String(el.slotId || '')))) ||
+      (isContactImageBottomLayout(schema?.layout_id, schema) && (/^(HEADING|CONTACT_IMAGE|IMAGE_CARD_BG|CONTACT_(ADDRESS|PHONE|EMAIL))$/i.test(String(el.slotId || '')))) ||
+      (isTeamSpeakerBioLayout(schema?.layout_id, schema) && (/^(MEMBER_1_(IMAGE|NAME|ROLE|BIO)|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isSpeakerBioImageRightLayout(schema?.layout_id, schema) && (/^(MEMBER_1_(IMAGE|NAME|ROLE|BIO)|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isSpeakerBioCenteredLayout(schema?.layout_id, schema) && (/^(MEMBER_1_(IMAGE|NAME|ROLE|BIO)|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isCenteredTextCtaLayout(schema?.layout_id, schema) && (/^(HEADING|SUBTITLE|CTA|CTA_BG|CONTACT|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isClosingThankYouLayout(schema?.layout_id, schema) && (/^(HEADING|SUBTITLE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isMinimalTextCtaLayout(schema?.layout_id, schema) && (/^(HEADING|CTA|CTA_BG|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isClosingContactCtaLayout(schema?.layout_id, schema) && (/^(HEADING|CONTACT|CTA|CTA_BG|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isContactCardCtaLayout(schema?.layout_id, schema) && (/^(HEADING|CONTACT_(ADDRESS|PHONE|EMAIL)|CTA|CTA_BG|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isContactSplitCtaLayout(schema?.layout_id, schema) && (/^(HEADING|CTA_HEADING|CONTACT_(ADDRESS|PHONE|EMAIL)|CTA|CTA_BG|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaImageCtaLayout(schema?.layout_id, schema) && (/^(BODY|CTA|CTA_BG|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isImageParaCtaLayout(schema?.layout_id, schema) && (/^(BODY|CTA|CTA_BG|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isOverlayImageCtaLayout(schema?.layout_id, schema) && (/^(BACKGROUND_IMAGE|OVERLAY_SCRIM|HEADING|BODY|CTA|CTA_BG)$/i.test(String(el.slotId || '')))) ||
+      (isTwoParaRightImageBottomLayout(schema?.layout_id, schema) && (/^(BODY_1|BODY_2|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isThreeParaImageLayout(schema?.layout_id, schema) && (/^(BODY_[123]|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isFourParaImageLayout(schema?.layout_id, schema) && (/^(HEADING|BULLET_[1-4]|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isFourParaImageGridLayout(schema?.layout_id, schema) && (/^(HEADING|BULLET_[1-4]|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaTwoImagesLayout(schema?.layout_id, schema) && (/^(BODY_[12]|IMAGE_[12]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaThreeImagesLayout(schema?.layout_id, schema) && (/^(BODY|IMAGE_[123]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaThreeImagesHorizontalLayout(schema?.layout_id, schema) && (/^(BODY|IMAGE_[123]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isParaThreeImagesStaggeredLayout(schema?.layout_id, schema) && (/^(BODY|IMAGE_[123]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isThreeCardsImageTextLayout(schema?.layout_id, schema) && (/^(HEADING|CARD_[123]_(TITLE|BODY)|IMAGE_[123]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isTwoCardsImageTextLayout(schema?.layout_id, schema) && (/^(EYEBROW|COL_[12]_(IMAGE|TITLE|BODY)|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isTwoLargeImageCardsLayout(schema?.layout_id, schema) && (/^(CARD_[12]_(TITLE|BODY)|IMAGE_[12]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isFourImagesTextLayout(schema?.layout_id, schema) && (/^(HEADING|IMAGE_[1234](_LABEL)?|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isFourImagesTextMosaicLayout(schema?.layout_id, schema) && (/^(HEADING|IMAGE_[1234](_LABEL)?|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isHeadlineCenteredLayout(schema?.layout_id, schema) && (/^(HEADLINE|BODY|IMAGE_CARD_BG|DIVIDER)$/i.test(String(el.slotId || '')))) ||
+      (isTitleStatementSplitLayout(schema?.layout_id, schema) && (/^(HEADLINE|BODY|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isTitleStatementLayout(schema?.layout_id, schema) && (/^(HEADLINE|BODY|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isIntroFourParaLayout(schema?.layout_id, schema) && (/^(INTRO|ITEM_[1-4]|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isHeadlineRightTextLayout(schema?.layout_id, schema) && (/^(HEADLINE|BODY|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isSectionDividerSplitImageLayout(schema?.layout_id, schema) && (/^(HEADING|BODY|HERO_IMAGE|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isLargeImageLayout(schema?.layout_id, schema) && (/^(HERO_IMAGE|CAPTION|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isFullBgImageOverlayLayout(schema?.layout_id, schema) && (/^(BACKGROUND_IMAGE|OVERLAY_SCRIM|MAIN_TITLE|SUBTITLE|BODY)$/i.test(String(el.slotId || '')))) ||
+      (isFullBgImageOverlayBottomLayout(schema?.layout_id, schema) && (/^(BACKGROUND_IMAGE|OVERLAY_SCRIM|MAIN_TITLE|SUBTITLE|BODY)$/i.test(String(el.slotId || '')))) ||
+      (isFullBgImageOverlaySideLayout(schema?.layout_id, schema) && (/^(BACKGROUND_IMAGE|OVERLAY_SCRIM|MAIN_TITLE|SUBTITLE|BODY)$/i.test(String(el.slotId || '')))) ||
+      (isSectionDividerBandLayout(schema?.layout_id, schema) && (/^(HEADING|BAND)$/i.test(String(el.slotId || '')))) ||
+      (isSectionDividerBandFullLayout(schema?.layout_id, schema) && (/^(HEADING|BAND)$/i.test(String(el.slotId || '')))) ||
+      (isComparisonSideBySideLayout(schema?.layout_id, schema) && (/^(HEADING|LEFT_TITLE|LEFT_BODY|RIGHT_TITLE|RIGHT_BODY|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isComparisonSideBySideCardsLayout(schema?.layout_id, schema) && (/^(HEADING|LEFT_TITLE|LEFT_BODY|RIGHT_TITLE|RIGHT_BODY|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isComparisonSideBySideCenterlineLayout(schema?.layout_id, schema) && (/^(HEADING|LEFT_TITLE|LEFT_BODY|RIGHT_TITLE|RIGHT_BODY|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isBulletListCardsLayout(schema?.layout_id, schema) && (/^(HEADING|CARD_[1-4]_(TITLE|BODY|BG)|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isBulletListGridLayout(schema?.layout_id, schema) && (/^(HEADING|CARD_[1-4]_(TITLE|BODY|BG)|IMAGE_CARD_BG)$/i.test(String(el.slotId || '')))) ||
+      (isEightShortTextsImageLayout(schema?.layout_id) && (/^(HEADING|SUBTITLE|TAG_BADGE|POINT_\d+_(TITLE|DESC|CARD|NUM)|HERO_IMAGE)$/i.test(String(el.slotId || '')))) ||
+      (isParaLandscapeImageBottomLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
+      (isParaLandscapeImageTopLayout(schema?.layout_id) && String(el.slotId || '').toUpperCase() === 'EYEBROW') ||
+      (isBulletListDenseLayout(schema?.layout_id) && (/^(HEADING|ITEM_\d+|NUMBER_\d+|BAR_\d+|SLIDE_BG)$/i.test(String(el.slotId || '')))) ||
+      (isBulletListNumberedLayout(schema?.layout_id) && (/^(HEADING|TITLE_\d+|ITEM_\d+|HEX_\d+|SLIDE_BG)$/i.test(String(el.slotId || '')))) ||
+      (isBulletListNumberedVerticalLayout(schema?.layout_id) && (/^(HEADING|TITLE_\d+|ITEM_\d+|ROW_\d+|SLIDE_BG)$/i.test(String(el.slotId || '')))) ||
+      (isBulletListTwoColumnLayout(schema?.layout_id) && (/^(HEADING|LEFT_\d+|RIGHT_\d+|CHROME|SLIDE_BG)$/i.test(String(el.slotId || '')))) ||
+      (isBulletListSplitLayout(schema?.layout_id) && (/^(HEADING|LEFT_TITLE|RIGHT_TITLE|LEFT_\d+|RIGHT_\d+|CARD_LEFT|CARD_RIGHT|SLIDE_BG)$/i.test(String(el.slotId || '')))) ||
+      (isTextOnlyCenteredLayout(schema?.layout_id) && (/^(HEADING|BODY|BADGE|CHROME)$/i.test(String(el.slotId || '')))) ||
+      (isSectionDividerSplitDiagonalLayout(schema?.layout_id) && (/^(HEADING|BODY|EYEBROW|LABEL|SECTION_NUMBER|CHROME)$/i.test(String(el.slotId || '')))) ||
+      (isSectionDividerSplitLayout(schema?.layout_id) && (/^(HEADING|BODY|CHROME)$/i.test(String(el.slotId || ''))))
+    ) return el
+    const colorRole = String(el.content?.colorRole || '').toLowerCase()
+    const rawColor = el.content?.color
+    if (!rawColor) return el
+
+    // If we are explicitly in an overlay layout and the renderer used text-on-image tokens,
+    // let the existing logic + overlay scrim handle readability.
+    if (
+      overlay &&
+      (colorRole === 'textonimage' || colorRole === 'textonimagemuted' || colorRole.includes('textonimage'))
+    ) {
+      return el
+    }
+
+    const hex = parseHexColor(rawColor)
+    const rgba = parseRgbaColor(rawColor)
+    let fgHex = hex ? rawColor : null
+    if (!fgHex && rgba) {
+      const composite = compositeRgbaOnHex(rgba, bgHex)
+      if (composite) fgHex = composite
+    }
+    if (!fgHex) return el
+
+    const ratio = contrastRatioHex(fgHex, bgHex)
+    if (ratio != null && ratio >= 4.5) return el
+
+    // Repair: choose between token "text" and "muted" based on contrast against background.
+    const candText = palette?.text || COLOR_ROLE_MAP.text
+    const candMuted = palette?.muted || COLOR_ROLE_MAP.textMuted
+    const candRoles = [
+      { role: 'text', hex: candText },
+      { role: 'muted', hex: candMuted },
+    ]
+    const scored = candRoles
+      .map((c) => ({ ...c, ratio: contrastRatioHex(c.hex, bgHex) }))
+      .filter((c) => c.ratio != null)
+      .sort((a, b) => b.ratio - a.ratio)
+
+    if (!scored.length) return el
+    const best = scored[0]
+    const bestRole = best.role
+    const bestColor = best.hex
+
+    return {
+      ...el,
+      content: {
+        ...(el.content || {}),
+        colorRole: bestRole,
+        color: bestColor,
+      },
+    }
+  })
+}
+
+/**
+ * Compile DECK_LAYOUT schema slots into canvas elements (1920×1080 space).
+ */
+/** Compile a layout, then apply the deck-wide heading size (covers every early-return builder). */
+export function compileDeckLayoutToElements(schema, options = {}) {
+  const elements = compileDeckLayoutToElementsForLayout(schema, options)
+  if (!Array.isArray(elements)) return elements
+  const themeTokens = options.themeTokens || options.theme || null
+  const withHeading = applyDeckHeadingSize(elements, {
+    schema,
+    targetPx: resolveDeckHeadingPx(themeTokens),
+    canvas: options.canvas || {},
+  })
+  // Card title / paragraph / caption sizes harmonized for the deck at generation.
+  return applyDeckTierSizes(withHeading, { schema, tiers: themeTokens?.typeScale?.deckTiers || null })
+}
+
+function compileDeckLayoutToElementsForLayout(schema, options = {}) {
+  if (isTitleHeroLeftBlobLayout(schema?.layout_id, schema)) {
+    return buildTitleHeroLeftBlobCanvasElements({ schema, options })
+  }
+  if (isTitleHeroLeftFadeLayout(schema?.layout_id, schema)) {
+    return buildTitleHeroLeftFadeCanvasElements({ schema, options })
+  }
+  if (isTitleHeroRightOvalLayout(schema?.layout_id, schema)) {
+    return buildTitleHeroRightOvalCanvasElements({ schema, options })
+  }
+  if (isTitleHeroRightFadeLayout(schema?.layout_id, schema)) {
+    return buildTitleHeroRightFadeCanvasElements({ schema, options })
+  }
+  if (isTitleFullbleedLayout(schema?.layout_id, schema)) {
+    return buildTitleFullbleedCanvasElements({ schema, options })
+  }
+  if (isTitleFullbleedOverlayLayout(schema?.layout_id, schema)) {
+    return buildTitleFullbleedOverlayCanvasElements({ schema, options })
+  }
+  if (isWideImageStatementOverlayLayout(schema?.layout_id, schema)) {
+    return buildWideImageStatementOverlayCanvasElements({ schema, options })
+  }
+  if (isParaTitleLeftImageBoxedLayout(schema?.layout_id, schema)) {
+    return buildParaTitleLeftImageBoxedCanvasElements({ schema, options })
+  }
+  if (isParaTitleRightImageBoxedLayout(schema?.layout_id, schema)) {
+    return buildParaTitleRightImageBoxedCanvasElements({ schema, options })
+  }
+  if (isParaTitleLeftImageOverlayLayout(schema?.layout_id, schema)) {
+    return buildParaTitleLeftImageOverlayCanvasElements({ schema, options })
+  }
+  if (isParaTitleRightImageOverlayLayout(schema?.layout_id, schema)) {
+    return buildParaTitleRightImageOverlayCanvasElements({ schema, options })
+  }
+  if (isParaLandscapeImageLayout(schema?.layout_id, schema)) {
+    return buildParaLandscapeImageCanvasElements({ schema, options })
+  }
+  if (isParaSplit5050Layout(schema?.layout_id, schema)) {
+    return buildParaSplit5050CanvasElements({ schema, options })
+  }
+  if (isTwoParaRightImageLayout(schema?.layout_id, schema)) {
+    return buildTwoParaRightImageCanvasElements({ schema, options })
+  }
+  if (isContactLeftImageLayout(schema?.layout_id, schema)) {
+    return buildContactLeftImageCanvasElements({ schema, options })
+  }
+  if (isContactRightImageLayout(schema?.layout_id, schema)) {
+    return buildContactRightImageCanvasElements({ schema, options })
+  }
+  if (isContactImageBottomLayout(schema?.layout_id, schema)) {
+    return buildContactImageBottomCanvasElements({ schema, options })
+  }
+  if (isTeamSpeakerBioLayout(schema?.layout_id, schema)) {
+    return buildTeamSpeakerBioCanvasElements({ schema, options })
+  }
+  if (isSpeakerBioImageRightLayout(schema?.layout_id, schema)) {
+    return buildSpeakerBioImageRightCanvasElements({ schema, options })
+  }
+  if (isSpeakerBioCenteredLayout(schema?.layout_id, schema)) {
+    return buildSpeakerBioCenteredCanvasElements({ schema, options })
+  }
+  if (isCenteredTextCtaLayout(schema?.layout_id, schema)) {
+    return buildCenteredTextCtaCanvasElements({ schema, options })
+  }
+  if (isClosingThankYouLayout(schema?.layout_id, schema)) {
+    return buildClosingThankYouCanvasElements({ schema, options })
+  }
+  if (isMinimalTextCtaLayout(schema?.layout_id, schema)) {
+    return buildMinimalTextCtaCanvasElements({ schema, options })
+  }
+  if (isClosingContactCtaLayout(schema?.layout_id, schema)) {
+    return buildClosingContactCtaCanvasElements({ schema, options })
+  }
+  if (isContactCardCtaLayout(schema?.layout_id, schema)) {
+    return buildContactCardCtaCanvasElements({ schema, options })
+  }
+  if (isContactSplitCtaLayout(schema?.layout_id, schema)) {
+    return buildContactSplitCtaCanvasElements({ schema, options })
+  }
+  if (isParaImageCtaLayout(schema?.layout_id, schema)) {
+    return buildParaImageCtaCanvasElements({ schema, options })
+  }
+  if (isImageParaCtaLayout(schema?.layout_id, schema)) {
+    return buildImageParaCtaCanvasElements({ schema, options })
+  }
+  if (isOverlayImageCtaLayout(schema?.layout_id, schema)) {
+    return buildOverlayImageCtaCanvasElements({ schema, options })
+  }
+  if (isTwoParaRightImageBottomLayout(schema?.layout_id, schema)) {
+    return buildTwoParaRightImageBottomCanvasElements({ schema, options })
+  }
+  if (isThreeParaImageLayout(schema?.layout_id, schema)) {
+    return buildThreeParaImageCanvasElements({ schema, options })
+  }
+  if (isFourParaImageLayout(schema?.layout_id, schema)) {
+    return buildFourParaImageCanvasElements({ schema, options })
+  }
+  if (isFourParaImageGridLayout(schema?.layout_id, schema)) {
+    return buildFourParaImageGridCanvasElements({ schema, options })
+  }
+  if (isParaTwoImagesLayout(schema?.layout_id, schema)) {
+    return buildParaTwoImagesCanvasElements({ schema, options })
+  }
+  if (isParaThreeImagesLayout(schema?.layout_id, schema)) {
+    return buildParaThreeImagesCanvasElements({ schema, options })
+  }
+  if (isParaThreeImagesHorizontalLayout(schema?.layout_id, schema)) {
+    return buildParaThreeImagesHorizontalCanvasElements({ schema, options })
+  }
+  if (isParaThreeImagesStaggeredLayout(schema?.layout_id, schema)) {
+    return buildParaThreeImagesStaggeredCanvasElements({ schema, options })
+  }
+  if (isThreeCardsImageTextLayout(schema?.layout_id, schema)) {
+    return buildThreeCardsImageTextCanvasElements({ schema, options })
+  }
+  if (isTwoCardsImageTextLayout(schema?.layout_id, schema)) {
+    return buildTwoCardsImageTextCanvasElements({ schema, options })
+  }
+  if (isTwoLargeImageCardsLayout(schema?.layout_id, schema)) {
+    return buildTwoLargeImageCardsCanvasElements({ schema, options })
+  }
+  if (isFourImagesTextLayout(schema?.layout_id, schema)) {
+    return buildFourImagesTextCanvasElements({ schema, options })
+  }
+  if (isFourImagesTextMosaicLayout(schema?.layout_id, schema)) {
+    return buildFourImagesTextMosaicCanvasElements({ schema, options })
+  }
+  if (isHeadlineCenteredLayout(schema?.layout_id, schema)) {
+    return buildHeadlineCenteredCanvasElements({ schema, options })
+  }
+  if (isTitleStatementSplitLayout(schema?.layout_id, schema)) {
+    return buildTitleStatementSplitCanvasElements({ schema, options })
+  }
+  if (isTitleStatementLayout(schema?.layout_id, schema)) {
+    return buildTitleStatementCanvasElements({ schema, options })
+  }
+  if (isIntroFourParaLayout(schema?.layout_id, schema)) {
+    return buildIntroFourParaCanvasElements({ schema, options })
+  }
+  if (isHeadlineRightTextLayout(schema?.layout_id, schema)) {
+    return buildHeadlineRightTextCanvasElements({ schema, options })
+  }
+  if (isSectionDividerSplitImageLayout(schema?.layout_id, schema)) {
+    return buildSectionDividerSplitImageCanvasElements({ schema, options })
+  }
+  if (isLargeImageLayout(schema?.layout_id, schema)) {
+    return buildLargeImageCanvasElements({ schema, options })
+  }
+  if (isFullBgImageOverlayLayout(schema?.layout_id, schema)) {
+    return buildFullBgImageOverlayCanvasElements({ schema, options })
+  }
+  if (isFullBgImageOverlayBottomLayout(schema?.layout_id, schema)) {
+    return buildFullBgImageOverlayBottomCanvasElements({ schema, options })
+  }
+  if (isFullBgImageOverlaySideLayout(schema?.layout_id, schema)) {
+    return buildFullBgImageOverlaySideCanvasElements({ schema, options })
+  }
+  if (isSectionDividerBandLayout(schema?.layout_id, schema)) {
+    return buildSectionDividerBandCanvasElements({ schema, options })
+  }
+  if (isSectionDividerBandFullLayout(schema?.layout_id, schema)) {
+    return buildSectionDividerBandFullCanvasElements({ schema, options })
+  }
+  if (isComparisonSideBySideLayout(schema?.layout_id, schema)) {
+    return buildComparisonSideBySideCanvasElements({ schema, options })
+  }
+  if (isComparisonSideBySideCardsLayout(schema?.layout_id, schema)) {
+    return buildComparisonSideBySideCardsCanvasElements({ schema, options })
+  }
+  if (isComparisonSideBySideCenterlineLayout(schema?.layout_id, schema)) {
+    return buildComparisonSideBySideCenterlineCanvasElements({ schema, options })
+  }
+  if (isBulletListCardsLayout(schema?.layout_id, schema)) {
+    return buildBulletListCardsCanvasElements({ schema, options })
+  }
+  if (isBulletListGridLayout(schema?.layout_id, schema)) {
+    return buildBulletListGridCanvasElements({ schema, options })
+  }
+  if (isTitleWithLogoLayout(schema?.layout_id, schema)) {
+    return buildTitleWithLogoCanvasElements({ schema, options })
+  }
+
+  const slots = Array.isArray(schema?.slots) ? schema.slots : []
+  if (!slots.length) return []
+
+  if (
+    options.content &&
+    typeof options.content === 'object' &&
+    options.skipContentValidation !== true
+  ) {
+    try {
+      validateContentForLayout(options.content, schema)
+    } catch (err) {
+      if (!(err instanceof ContentContractValidationError)) throw err
+    }
+  }
+
+  const canvasW = options.canvas?.width || 1920
+  const canvasH = options.canvas?.height || 1080
+  const canvas = { width: canvasW, height: canvasH }
+  const geometryMap = compileLayoutGeometry(schema, canvas)
+  const contentBySlotId = mergeContentBySlotId(
+    buildContentBySlotIdFromSlideContent(options.content, schema),
+    options.contentBySlotId || {}
+  )
+  const compileOptions = { ...options, schema, contentBySlotId }
+
+  const palette = options.palette || LAYOUT_SURFACE
+  const colorMap = colorRoleMapFromPalette(options.palette)
+
+  const elements = slots.flatMap((slot) => {
+    if (isDeviceFrameSlot(slot)) return []
+    if (isAiOnlyShapeSlot(slot)) return []
+
+    const placement = getSlotPlacement(geometryMap, slot.id, slot)
+    if (!placement) return []
+    const role = slot.role || 'body'
+    const slotIdUpper = String(slot.id || '').toUpperCase()
+
+    // BACKGROUND_IMAGE / HERO_IMAGE must compile as images (not shapes) so URLs bind.
+    if (slotIdUpper === 'BACKGROUND_IMAGE' || slotIdUpper === 'HERO_IMAGE') {
+      return [buildImageElement(slot, placement, contentBySlotId, compileOptions)]
+    }
+
+    if (/^STEP_\d+_CIRCLE$/i.test(String(slot.id || '')) || slot.shapeHint?.kind === 'stepCircle') {
+      const size = Math.min(placement.width || 64, placement.height || 64, 64)
+      const cx = (placement.x ?? 0) + (placement.width || size) / 2
+      const cy = (placement.y ?? 0) + (placement.height || size) / 2
+      const stepNum = String(slot.id).match(/(\d+)/)?.[1] || ''
+      const accent = colorMap.accent || colorMap.primary || '#6366F1'
+      const text = colorMap.text || '#0F172A'
+      const out = [
+        {
+          id: `shp-step-${Math.random().toString(36).slice(2, 9)}`,
+          type: 'shape',
+          slotId: slot.id,
+          layer: layerForSlot(slot),
+          placement: {
+            x: Math.round(cx - size / 2),
+            y: Math.round(cy - size / 2),
+            width: size,
+            height: size,
+            rotation: 0,
+            opacity: 1,
+          },
+          content: { shape: 'ellipse', fill: accent, layoutSurface: true },
+          role: 'decoration',
+        },
+      ]
+      if (stepNum) {
+        out.push({
+          id: `txt-step-num-${Math.random().toString(36).slice(2, 9)}`,
+          type: 'text',
+          slotId: `${slot.id}_NUM`,
+          layer: layerForSlot(slot) + 1,
+          placement: {
+            x: Math.round(cx - size / 2),
+            y: Math.round(cy + size / 2 + 4),
+            width: size,
+            height: 28,
+            rotation: 0,
+            opacity: 1,
+          },
+          content: {
+            text: String(stepNum),
+            align: 'center',
+            fontSize: 16,
+            fontWeight: 700,
+            color: text,
+          },
+          role: 'caption',
+        })
+      }
+      return out
+    }
+
+    if (role === 'background' || /^METRIC_CARD_\d+_BG$|^TEXT_HALF_BG$|^SURFACE_|_bg$|_card_bg|_panel_bg/i.test(String(slot.id || ''))) {
+      return [buildBackgroundElement(slot, placement, compileOptions)]
+    }
+    if (role === 'decoration') {
+      if (slot.shape) return [buildBackgroundElement(slot, placement, compileOptions)]
+      return [buildDecorationElement(slot, placement, compileOptions)]
+    }
+    if (role === 'image') {
+      const frameSlot = findDeviceFrameSlot(slots, slot.id)
+      if (frameSlot) {
+        const imageEl = buildImageElement(slot, placement, contentBySlotId, compileOptions)
+        const framePlacement =
+          getSlotPlacement(geometryMap, frameSlot.id, frameSlot) ||
+          getSlotPlacement(geometryMap, frameSlot.id)
+        if (!framePlacement) return [imageEl]
+        return buildDeviceFrameCanvasElements({
+          frameSlot,
+          imageSlot: slot,
+          framePlacement,
+          imageContent: imageEl.content,
+          layerBase: layerForSlot(frameSlot),
+          themeTokens: compileOptions?.themeTokens || compileOptions?.theme || null,
+        })
+      }
+      return [buildImageElement(slot, placement, contentBySlotId, compileOptions)]
+    }
+    if (role === 'chart') {
+      const chartEl = buildChartElement(slot, placement, compileOptions)
+      return chartEl ? [chartEl] : []
+    }
+    if (role === 'table') {
+      return [buildTableElement(slot, placement, contentBySlotId, options.content)]
+    }
+    if (TEXT_ROLES.has(role)) {
+      return [buildTextElement(slot, placement, compileOptions)]
+    }
+    return [buildTextElement(slot, placement, compileOptions)]
+  })
+
+  const themedPalette = colorMap.textOnImage
+    ? { ...palette, ...colorMap }
+    : palette
+  let result = applyTextOverImageContrast(
+    elements.sort((a, b) => (a.layer || 0) - (b.layer || 0)),
+    themedPalette
+  )
+  result = finalizeTimelineShapes(result, schema, colorMap, { width: canvasW, height: canvasH })
+  result = finalizeChartShapes(result, schema, colorMap, {
+    width: canvasW,
+    height: canvasH,
+    slideContent: options.content,
+    themeTokens: compileOptions?.themeTokens || compileOptions?.theme || null,
+  })
+  result = applyThemeSlideBackground(result, themedPalette, canvasW, canvasH)
+  result = applyReadableTextContrastForPreview(result, colorRoleMapFromPalette(options.palette), schema)
+  if (options.packColumnStacks === true) {
+    result = packColumnTextStacks(result)
+  }
+  const hasLoadedOverlayImage = result.some((e) => {
+    if (e.type !== 'image' || !e.content?.url) return false
+    const slotId = String(e.slotId || '').toUpperCase()
+    const role = String(e.role || '').toLowerCase()
+    if (slotId === 'BACKGROUND_IMAGE' || role === 'background') return true
+    const p = e.placement || {}
+    return (p.width || 0) * (p.height || 0) >= canvasW * canvasH * 0.7
+  })
+  if (
+    isOverlayLayout(schema) &&
+    hasLoadedOverlayImage &&
+    !result.some((e) => e.slotId === 'OVERLAY_SCRIM' || e.role === 'design_overlay')
+  ) {
+    result = [
+      {
+        id: `shp-overlay-${Math.random().toString(36).slice(2, 9)}`,
+        type: 'shape',
+        slotId: 'OVERLAY_SCRIM',
+        layer: 1,
+        placement: { x: 0, y: 0, width: canvasW, height: canvasH, rotation: 0, opacity: 1 },
+        content: {
+          shape: 'rect',
+          fill: themedPalette.overlayScrim || 'rgba(0,0,0,0.5)',
+          opacity: 0.5,
+        },
+        role: 'design_overlay',
+      },
+      ...result,
+    ]
+  }
+  if (options.debugGeometry) {
+    const snapshot = geometrySnapshot(schema, geometryMap, canvas)
+    const validation = validateLayoutGeometry(schema, result, geometryMap, canvas)
+    const drift = snapshot.slots.filter(
+      (s) =>
+        Math.abs(s.difference.x) > 1 ||
+        Math.abs(s.difference.y) > 1 ||
+        Math.abs(s.difference.width) > 1 ||
+        Math.abs(s.difference.height) > 1
+    )
+    if (drift.length || !validation.pass) {
+      console.debug('[layout-geometry]', schema?.layout_id, { snapshot, validation })
+    }
+  }
+
+  return result
+}
+
+export { geometrySnapshot, validateLayoutGeometry, compileLayoutGeometry }
+
+export { resolveSlotText, slideContentHasStructuredCopy }
+
+export function isTextLayoutRole(role) {
+  return TEXT_ROLES.has(role)
+}
+
+export function hasOverlappingTextPlacements(elements = []) {
+  const textEls = (elements || []).filter((el) => {
+    if (el.type !== 'text') return false
+    const opacity = el.placement?.opacity ?? el.content?.opacity ?? 1
+    if (opacity <= 0) return false
+    const x = el.placement?.x ?? 0
+    const y = el.placement?.y ?? 0
+    if (x < -40 || y < -40) return false
+    return true
+  })
+  for (let i = 0; i < textEls.length; i += 1) {
+    const a = textEls[i].placement || {}
+    for (let j = i + 1; j < textEls.length; j += 1) {
+      const b = textEls[j].placement || {}
+      const overlapX = (a.x ?? 0) < (b.x ?? 0) + (b.width ?? 0) && (b.x ?? 0) < (a.x ?? 0) + (a.width ?? 0)
+      const overlapY = (a.y ?? 0) < (b.y ?? 0) + (b.height ?? 0) && (b.y ?? 0) < (a.y ?? 0) + (a.height ?? 0)
+      if (overlapX && overlapY) {
+        const overlapArea =
+          Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x)) *
+          Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y))
+        const minArea = Math.min((a.width ?? 1) * (a.height ?? 1), (b.width ?? 1) * (b.height ?? 1))
+        if (overlapArea > minArea * 0.15) return true
+      }
+    }
+  }
+  return false
+}

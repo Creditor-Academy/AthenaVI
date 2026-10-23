@@ -82,39 +82,60 @@ export const ThemeProvider = ({ children }) => {
     return { theme: st, mode: sm, customPrimary: sp };
   });
 
-  // On mount: try to load server-saved appearance settings for authenticated users
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) return; // no authenticated user
+  const applyServerAppearance = (appearance) => {
+    if (!appearance) return;
 
-    let mounted = true;
-    (async () => {
+    let serverTheme = appearance.themePalette || appearance.theme || null;
+    if (serverTheme === 'default') serverTheme = 'original';
+    const serverMode = appearance.interfaceMode || appearance.mode || null;
+    const serverCustom = appearance.customAccentColor || appearance.customPrimary || null;
+
+    if (serverTheme) {
+      setTheme(serverTheme);
+      localStorage.setItem('athenavi-theme', serverTheme);
+    }
+    if (serverMode) {
+      setMode(serverMode);
+      localStorage.setItem('athenavi-mode', serverMode);
+    }
+    if (serverCustom) {
+      setCustomPrimary(serverCustom);
+      localStorage.setItem('athenavi-custom-primary', serverCustom);
+    }
+
+    setSavedSettings((prev) => ({
+      theme: serverTheme || prev.theme,
+      mode: serverMode || prev.mode,
+      customPrimary: serverCustom || prev.customPrimary,
+    }));
+  };
+
+  // Load on mount (refresh) and again when a session starts (login / OAuth).
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadAppearance = async () => {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+
       try {
         const appearance = await userService.getAppearanceSettings();
-        if (!mounted || !appearance) return;
-
-        // API returns field names: interfaceMode, themePalette, customAccentColor
-        let serverTheme = appearance.themePalette || appearance.theme || null;
-        if (serverTheme === 'default') serverTheme = 'original';
-        const serverMode = appearance.interfaceMode || null;
-        const serverCustom = appearance.customAccentColor || appearance.customPrimary || null;
-
-        if (serverTheme) setTheme(serverTheme);
-        if (serverMode) setMode(serverMode);
-        if (serverCustom) setCustomPrimary(serverCustom);
-
-        // Update saved settings snapshot
-        setSavedSettings({
-          theme: serverTheme || savedSettings.theme,
-          mode: serverMode || savedSettings.mode,
-          customPrimary: serverCustom || savedSettings.customPrimary
-        });
+        if (cancelled || !appearance) return;
+        applyServerAppearance(appearance);
       } catch (err) {
         console.warn('Could not load server appearance settings, falling back to local:', err.message || err);
       }
-    })();
+    };
 
-    return () => { mounted = false };
+    loadAppearance();
+    window.addEventListener('auth:session-ready', loadAppearance);
+    window.addEventListener('auth:oauth-complete', loadAppearance);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('auth:session-ready', loadAppearance);
+      window.removeEventListener('auth:oauth-complete', loadAppearance);
+    };
   }, []);
 
   // These are for the "applied but not yet saved" or preview state
@@ -123,29 +144,34 @@ export const ThemeProvider = ({ children }) => {
   // The user wants to "Apply" to permanently save.
 
   useEffect(() => {
-    // Apply changes to the DOM instantly
-    document.documentElement.setAttribute('data-theme', theme);
-    document.documentElement.setAttribute('data-mode', mode);
-    document.documentElement.className = `theme-${theme} mode-${mode}`;
+    const root = document.documentElement;
+    root.setAttribute('data-theme', theme);
+    root.setAttribute('data-mode', mode);
+
+    const themeClass = `theme-${theme}`;
+    const modeClass = `mode-${mode}`;
+    Array.from(root.classList).forEach((cls) => {
+      if ((cls.startsWith('theme-') && cls !== themeClass) || (cls.startsWith('mode-') && cls !== modeClass)) {
+        root.classList.remove(cls);
+      }
+    });
+    root.classList.add(themeClass, modeClass);
 
     if (theme === 'custom') {
-      document.documentElement.style.setProperty('--primary', customPrimary);
-      document.documentElement.style.setProperty('--primary-rgb', hexToRgbString(customPrimary));
-      document.documentElement.style.setProperty('--primary-hover', shiftHex(customPrimary, -18));
-      document.documentElement.style.setProperty('--primary-light', shiftHex(customPrimary, 36));
-      document.documentElement.style.setProperty('--primary-dark', shiftHex(customPrimary, -42));
-      document.documentElement.style.setProperty('--primary-contrast', getContrastColor(customPrimary));
+      root.style.setProperty('--primary', customPrimary);
+      root.style.setProperty('--primary-rgb', hexToRgbString(customPrimary));
+      root.style.setProperty('--primary-hover', shiftHex(customPrimary, -18));
+      root.style.setProperty('--primary-light', shiftHex(customPrimary, 36));
+      root.style.setProperty('--primary-dark', shiftHex(customPrimary, -42));
+      root.style.setProperty('--primary-contrast', getContrastColor(customPrimary));
     } else {
-      document.documentElement.style.removeProperty('--primary');
-      document.documentElement.style.removeProperty('--primary-rgb');
-      document.documentElement.style.removeProperty('--primary-hover');
-      document.documentElement.style.removeProperty('--primary-light');
-      document.documentElement.style.removeProperty('--primary-dark');
-      document.documentElement.style.removeProperty('--primary-contrast');
+      root.style.removeProperty('--primary');
+      root.style.removeProperty('--primary-rgb');
+      root.style.removeProperty('--primary-hover');
+      root.style.removeProperty('--primary-light');
+      root.style.removeProperty('--primary-dark');
+      root.style.removeProperty('--primary-contrast');
     }
-    
-    // We don't save to localStorage here if we want an explicit "Apply" button
-    // But the user said "Theme should be visible once we click"
   }, [theme, mode, customPrimary]);
 
   const saveSettings = () => {

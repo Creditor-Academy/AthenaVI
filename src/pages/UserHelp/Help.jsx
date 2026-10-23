@@ -307,7 +307,7 @@ function Help({ embedded = false, onOpenBilling }) {
             <h2>{activeTicket.subject}</h2>
             <p className="help-ticket-note">
               Saved locally in this browser. Email{' '}
-              <a href="mailto:support@athenavi.com">support@athenavi.com</a> with the same details for a live response.
+              <a href="mailto:support@lmsathena.com">support@lmsathena.com</a> with the same details for a live response.
             </p>
           </div>
           <div className="help-ticket-thread">
@@ -342,7 +342,7 @@ function Help({ embedded = false, onOpenBilling }) {
             <h2>Contact support</h2>
             <p>
               Draft a request here, then email{' '}
-              <a href="mailto:support@athenavi.com">support@athenavi.com</a> with the same details.
+              <a href="mailto:support@lmsathena.com">support@lmsathena.com</a> with the same details.
             </p>
           </div>
           <button type="button" className="help-btn-primary" onClick={() => setShowCreateModal(true)}>
@@ -521,9 +521,9 @@ function Help({ embedded = false, onOpenBilling }) {
             <button
               type="button"
               className="help-link-btn"
-              onClick={() => window.location.href = 'mailto:support@athenavi.com?subject=AthenaVI%20Support%20Request'}
+              onClick={() => window.location.href = 'mailto:support@lmsathena.com?subject=AthenaVI%20Support%20Request'}
             >
-              <MdMail size={16} /> Email support@athenavi.com
+              <MdMail size={16} /> Email support@lmsathena.com
             </button>
             {onOpenBilling && (
               <button type="button" className="help-link-btn" onClick={onOpenBilling}>
@@ -542,7 +542,7 @@ function Help({ embedded = false, onOpenBilling }) {
             </button>
             <h2>Draft support note</h2>
             <p className="help-modal-subtitle">
-              Saved in this browser only. Copy the details into an email to support@athenavi.com.
+              Saved in this browser only. Copy the details into an email to support@lmsathena.com.
             </p>
             <form onSubmit={handleCreateTicket} className="help-modal-form">
               <label>

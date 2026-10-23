@@ -1,50 +1,44 @@
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { MdDelete, MdEdit, MdMessage, MdSend } from 'react-icons/md';
-import MentionAutocomplete from './MentionAutocomplete.jsx';
-import UserIdentity from '../../workspace/workspace/UserIdentity.jsx';
-import { formatInboxRelativeTime } from '../../../../utils/inboxNotifications.js';
-import workspaceService from '../../../../services/workspaceService.js';
-import useProjectComments from '../../../../hooks/useProjectComments.js';
-import './ProjectCommentsPanel.css';
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
+import { FiRefreshCw, FiSend } from 'react-icons/fi'
+import MentionAutocomplete from './MentionAutocomplete.jsx'
+import {
+  PptCommentComposer,
+  PptCommentThread,
+  PptCommentsShell,
+} from '../../../../pages/Slides/AIPptComponents/PptCommentThread.jsx'
+import { isCommentResolved } from '../../../../pages/Slides/AIPptComponents/pptCommentUtils.js'
+import useProjectComments from '../../../../hooks/useProjectComments.js'
+import './ProjectCommentsPanel.css'
+import '../../../../pages/Slides/AIPptComponents/pptEditorExtras.css'
 
-const EMPTY_MENTION_IDS = Object.freeze([]);
+const EMPTY_MENTION_IDS = Object.freeze([])
 
-const CommentComposer = memo(function CommentComposer({
+function MentionComposer({
   workspaceId,
   projectId,
-  editKey = null,
-  initialBody = '',
-  initialMentionedUserIds = EMPTY_MENTION_IDS,
-  submitLabel = 'Post',
-  onSubmit,
-  onCancel,
+  placeholder,
   submitting = false,
+  onSubmit,
 }) {
-  const [body, setBody] = useState(initialBody);
-  const [mentionedUserIds, setMentionedUserIds] = useState(initialMentionedUserIds);
-
-  // Only sync when opening edit mode for a specific comment — never on create drafts
-  useEffect(() => {
-    if (editKey == null) return;
-    setBody(initialBody);
-    setMentionedUserIds(initialMentionedUserIds);
-  }, [editKey, initialBody, initialMentionedUserIds]);
+  const [body, setBody] = useState('')
+  const [mentionedUserIds, setMentionedUserIds] = useState(EMPTY_MENTION_IDS)
 
   const handleSubmit = async () => {
-    const trimmed = body.trim();
-    if (!trimmed || submitting) return;
-    await onSubmit({ body: trimmed, mentionedUserIds });
-    if (!onCancel) {
-      setBody('');
-      setMentionedUserIds(EMPTY_MENTION_IDS);
-    }
-  };
+    const trimmed = body.trim()
+    if (!trimmed || submitting) return
+    await onSubmit({ body: trimmed, mentionedUserIds })
+    setBody('')
+    setMentionedUserIds(EMPTY_MENTION_IDS)
+  }
 
   return (
-    <div
-      className="project-comments__composer"
+    <form
+      className="ppt-cmt-composer"
+      onSubmit={(event) => {
+        event.preventDefault()
+        handleSubmit()
+      }}
       onPointerDown={(event) => event.stopPropagation()}
-      onMouseDown={(event) => event.stopPropagation()}
     >
       <MentionAutocomplete
         workspaceId={workspaceId}
@@ -54,127 +48,20 @@ const CommentComposer = memo(function CommentComposer({
         mentionedUserIds={mentionedUserIds}
         onMentionedUserIdsChange={setMentionedUserIds}
         disabled={submitting}
+        placeholder={placeholder}
+        rows={2}
       />
-      <div className="project-comments__composer-actions">
-        {onCancel ? (
-          <button type="button" className="project-comments__btn project-comments__btn--ghost" onClick={onCancel}>
-            Cancel
-          </button>
-        ) : null}
-        <button
-          type="button"
-          className="project-comments__btn project-comments__btn--primary"
-          onClick={handleSubmit}
-          disabled={submitting || !body.trim()}
-        >
-          <MdSend size={16} aria-hidden />
-          {submitting ? 'Saving…' : submitLabel}
-        </button>
-      </div>
-    </div>
-  );
-});
-
-const CommentRow = memo(function CommentRow({
-  comment,
-  currentUserId,
-  workspaceId,
-  projectId,
-  highlighted = false,
-  onUpdate,
-  onDelete,
-  submitting = false,
-}) {
-  const [editing, setEditing] = useState(false);
-  const isAuthor = currentUserId && comment.author?.id === currentUserId;
-  const rowRef = useRef(null);
-  const mentionIds = comment.mentionedUserIds ?? EMPTY_MENTION_IDS;
-
-  useEffect(() => {
-    if (highlighted && rowRef.current) {
-      rowRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, [highlighted]);
-
-  const handleUpdate = async (payload) => {
-    await onUpdate(comment.id, payload);
-    setEditing(false);
-  };
-
-  const handleDelete = async () => {
-    if (!window.confirm('Delete this comment?')) return;
-    await onDelete(comment.id);
-  };
-
-  return (
-    <article
-      ref={rowRef}
-      className={`project-comments__item${highlighted ? ' is-highlighted' : ''}${isAuthor ? ' is-own' : ''}`}
-      id={`comment-${comment.id}`}
-    >
-      <div className="project-comments__item-layout">
-        <UserIdentity
-          name={comment.author?.name || 'Unknown'}
-          profileImage={comment.author?.profileImage}
-          compact
-          showName={false}
-          className="project-comments__avatar"
-        />
-
-        <div className="project-comments__item-content">
-          <div className="project-comments__item-meta">
-            <span className="project-comments__author-name">
-              {comment.author?.name || 'Unknown'}
-            </span>
-            <time className="project-comments__time" dateTime={comment.createdAt}>
-              {formatInboxRelativeTime(comment.createdAt)}
-              {comment.updatedAt && comment.updatedAt !== comment.createdAt ? ' · edited' : ''}
-            </time>
-          </div>
-
-          {editing ? (
-            <CommentComposer
-              editKey={comment.id}
-              workspaceId={workspaceId}
-              projectId={projectId}
-              initialBody={comment.body}
-              initialMentionedUserIds={mentionIds}
-              submitLabel="Save"
-              submitting={submitting}
-              onSubmit={handleUpdate}
-              onCancel={() => setEditing(false)}
-            />
-          ) : (
-            <p className="project-comments__body">{comment.body}</p>
-          )}
-
-          {!editing && isAuthor ? (
-            <div className="project-comments__item-actions">
-              <button
-                type="button"
-                className="project-comments__icon-btn"
-                onClick={() => setEditing(true)}
-                title="Edit comment"
-                aria-label="Edit comment"
-              >
-                <MdEdit size={15} />
-              </button>
-              <button
-                type="button"
-                className="project-comments__icon-btn project-comments__icon-btn--danger"
-                onClick={handleDelete}
-                title="Delete comment"
-                aria-label="Delete comment"
-              >
-                <MdDelete size={15} />
-              </button>
-            </div>
-          ) : null}
-        </div>
-      </div>
-    </article>
-  );
-});
+      <button
+        type="submit"
+        className="ppt-cmt-send"
+        disabled={submitting || !body.trim()}
+        aria-label={submitting ? 'Posting' : 'Post'}
+      >
+        <FiSend size={16} />
+      </button>
+    </form>
+  )
+}
 
 function ProjectCommentsPanel({
   workspaceId,
@@ -182,9 +69,9 @@ function ProjectCommentsPanel({
   highlightCommentId = null,
   onCommentCountChange,
 }) {
-  const currentUserId = workspaceService.getCurrentUserId();
-  const listRef = useRef(null);
-
+  const listRef = useRef(null)
+  const [replyTo, setReplyTo] = useState(null)
+  const [replyDraft, setReplyDraft] = useState('')
   const {
     comments,
     commentCount,
@@ -193,89 +80,131 @@ function ProjectCommentsPanel({
     loadingMore,
     error,
     creating,
-    updating,
     refresh,
     loadMore,
     createComment,
-    updateComment,
     deleteComment,
-  } = useProjectComments(workspaceId, projectId);
+    resolveComment,
+  } = useProjectComments(workspaceId, projectId)
 
   useEffect(() => {
-    onCommentCountChange?.(commentCount);
-  }, [commentCount, onCommentCountChange]);
+    onCommentCountChange?.(commentCount)
+  }, [commentCount, onCommentCountChange])
 
   const handleCreate = useCallback(
     async (payload) => {
-      await createComment(payload);
-      requestAnimationFrame(() => {
-        listRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
-      });
+      try {
+        await createComment(payload)
+        requestAnimationFrame(() => {
+          listRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+        })
+      } catch {
+        /* error is already set on the comments hook */
+      }
     },
     [createComment]
-  );
+  )
+
+  const submitReply = async (parent) => {
+    const text = replyDraft.trim()
+    if (!text || isCommentResolved(parent)) return
+    try {
+      await createComment({ body: text, parentId: parent.id })
+      setReplyDraft('')
+      setReplyTo(null)
+    } catch {
+      /* error is already set on the comments hook */
+    }
+  }
+
+  const resolveThread = async (comment, resolve) => {
+    try {
+      await resolveComment(comment.id, resolve)
+    } catch {
+      /* error is already set on the comments hook */
+    }
+  }
+
+  const removeComment = async (comment) => {
+    try {
+      await deleteComment(comment.id)
+      if (replyTo === comment.id) {
+        setReplyTo(null)
+        setReplyDraft('')
+      }
+    } catch {
+      /* error is already set on the comments hook */
+    }
+  }
 
   if (!workspaceId || !projectId) {
     return (
-      <div className="project-comments">
-        <p className="project-comments__empty">Save the project to a workspace to enable comments.</p>
+      <div className="project-comments project-comments--thread">
+        <PptCommentsShell
+          empty
+          emptyLabel="Comments unavailable"
+          emptyHint="Save the project to a workspace to enable comments."
+        />
       </div>
-    );
+    )
   }
 
   return (
-    <div className="project-comments">
-      <header className="project-comments__header">
-        <div className="project-comments__title-block">
-          <div className="project-comments__icon">
-            <MdMessage size={18} />
-          </div>
-          <div>
-            <h3 className="project-comments__title">Comments</h3>
-            <p className="project-comments__subtitle">Discuss this project with your team</p>
-          </div>
-        </div>
+    <div className="project-comments project-comments--thread">
+      <div className="project-comments__toolbar">
         <button
           type="button"
           className="project-comments__refresh-btn"
           onClick={refresh}
           disabled={loading}
         >
+          <FiRefreshCw size={13} />
           Refresh
         </button>
-      </header>
+      </div>
 
-      <CommentComposer
-        workspaceId={workspaceId}
-        projectId={projectId}
-        onSubmit={handleCreate}
-        submitting={creating}
-      />
-
-      {error ? <p className="project-comments__error">{error}</p> : null}
-
-      <div ref={listRef} className="project-comments__list premium-scrollbar">
-        {loading && comments.length === 0 ? (
-          <p className="project-comments__empty">Loading comments…</p>
-        ) : null}
-
-        {!loading && comments.length === 0 ? (
-          <p className="project-comments__empty">No comments yet. Start the conversation.</p>
-        ) : null}
-
-        {comments.map((comment) => (
-          <CommentRow
-            key={comment.id}
-            comment={comment}
-            currentUserId={currentUserId}
+      <PptCommentsShell
+        loading={loading && comments.length === 0}
+        error={error || ''}
+        empty={!loading && comments.length === 0}
+        emptyLabel="No comments yet"
+        emptyHint="Start a thread. If a comment has more than one reply, tap View all replies."
+        composer={
+          <MentionComposer
             workspaceId={workspaceId}
             projectId={projectId}
-            highlighted={highlightCommentId === comment.id}
-            onUpdate={updateComment}
-            onDelete={deleteComment}
-            submitting={updating}
+            onSubmit={handleCreate}
+            submitting={creating && !replyTo}
+            placeholder="Add a comment…"
           />
-        ))}
+        }
+      >
+        <div ref={listRef} className="project-comments__threads">
+          {comments.map((comment) => (
+            <div key={comment.id} id={`comment-${comment.id}`}>
+              <PptCommentThread
+                comment={comment}
+                highlighted={
+                  highlightCommentId === comment.id ||
+                  (comment.replies || []).some((reply) => reply.id === highlightCommentId)
+                }
+                canReply={!isCommentResolved(comment)}
+                canResolve
+                submitting={creating && replyTo === comment.id}
+                replyOpen={replyTo === comment.id}
+                replyDraft={replyDraft}
+                onReply={() => {
+                  setReplyTo(replyTo === comment.id ? null : comment.id)
+                  setReplyDraft('')
+                }}
+                onReplyDraft={setReplyDraft}
+                onSubmitReply={() => submitReply(comment)}
+                onResolve={resolveThread}
+                onDelete={removeComment}
+              />
+            </div>
+          ))}
+        </div>
 
         {nextCursor ? (
           <button
@@ -287,9 +216,9 @@ function ProjectCommentsPanel({
             {loadingMore ? 'Loading…' : 'Load older comments'}
           </button>
         ) : null}
-      </div>
+      </PptCommentsShell>
     </div>
-  );
+  )
 }
 
-export default memo(ProjectCommentsPanel);
+export default memo(ProjectCommentsPanel)

@@ -90,6 +90,9 @@ export function formatCreditTransactionTitle(transaction, options = {}) {
   if (detail.label) return detail.label;
 
   if (type === 'usage') {
+    if (detail.presentationName && isPresentationCreditFeature(detail.feature)) {
+      return `Presentation — "${detail.presentationName}"`;
+    }
     if (detail.consumptionType) return detail.consumptionType;
     if (detail.feature === 'voice_clone' && detail.voiceName) {
       return `Voice clone — ${detail.voiceName}`;
@@ -269,4 +272,171 @@ export function findRecentUsageCredits(transactions = [], { withinMs = 180000 } 
     if (amount > 0) return amount;
   }
   return null;
+}
+
+const PPT_FEATURE_BREAKDOWN_LABELS = Object.freeze({
+  ppt_outline: 'Outline',
+  ppt_slide_content: 'slide',
+  ppt_image_path_a: 'image',
+  ppt_image_path_b: 'diagram',
+  ppt_export: 'export',
+  ppt_image_cache_hit: 'cached image',
+});
+
+export function isPresentationCreditFeature(feature) {
+  const key = String(feature || '').toLowerCase();
+  return key.startsWith('ppt_');
+}
+
+function getPresentationGroupKey(transaction) {
+  const tx = transaction || {};
+  if (String(tx.type || '').toLowerCase() !== 'usage') return null;
+
+  const detail = tx.usageDetail || {};
+  const metadata = tx.metadata || {};
+  const feature = detail.feature || metadata.feature;
+  if (!isPresentationCreditFeature(feature)) return null;
+
+  return (
+    detail.deckId ||
+    metadata.deckId ||
+    detail.projectId ||
+    metadata.projectId ||
+    null
+  );
+}
+
+function resolvePresentationNameFromTx(tx) {
+  const detail = tx?.usageDetail || {};
+  const metadata = tx?.metadata || {};
+  return (
+    detail.presentationName ||
+    metadata.presentationName ||
+    detail.projectName ||
+    metadata.projectName ||
+    null
+  );
+}
+
+function buildPresentationBreakdown(featureCounts) {
+  const parts = [];
+  if (featureCounts.ppt_outline) parts.push('Outline');
+
+  const slides = featureCounts.ppt_slide_content || 0;
+  if (slides) parts.push(`${slides} slide${slides === 1 ? '' : 's'}`);
+
+  const images = featureCounts.ppt_image_path_a || 0;
+  if (images) parts.push(`${images} image${images === 1 ? '' : 's'}`);
+
+  const diagrams = featureCounts.ppt_image_path_b || 0;
+  if (diagrams) parts.push(`${diagrams} diagram${diagrams === 1 ? '' : 's'}`);
+
+  const exports = featureCounts.ppt_export || 0;
+  if (exports) parts.push(`${exports} export${exports === 1 ? '' : 's'}`);
+
+  const cached = featureCounts.ppt_image_cache_hit || 0;
+  if (cached) parts.push(`${cached} cached`);
+
+  // Any unexpected ppt_* keys
+  Object.entries(featureCounts).forEach(([feature, count]) => {
+    if (PPT_FEATURE_BREAKDOWN_LABELS[feature] || !count) return;
+    parts.push(`${count}× ${feature.replace(/^ppt_/, '').replace(/_/g, ' ')}`);
+  });
+
+  return parts.join(' · ') || null;
+}
+
+function buildGroupedPresentationTransaction(transactions) {
+  const txs = Array.isArray(transactions) ? transactions.filter(Boolean) : [];
+  if (!txs.length) return null;
+  if (txs.length === 1) return txs[0];
+
+  const sorted = [...txs].sort(
+    (a, b) => (getCreditTransactionTimestamp(b) || 0) - (getCreditTransactionTimestamp(a) || 0)
+  );
+  const latest = sorted[0];
+  const amount = txs.reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+
+  const featureCounts = {};
+  let presentationName = null;
+  let deckId = null;
+  let projectId = null;
+
+  for (const tx of txs) {
+    const detail = tx.usageDetail || {};
+    const metadata = tx.metadata || {};
+    const feature = String(detail.feature || metadata.feature || '').toLowerCase();
+    if (feature) featureCounts[feature] = (featureCounts[feature] || 0) + 1;
+
+    presentationName = presentationName || resolvePresentationNameFromTx(tx);
+    deckId = deckId || detail.deckId || metadata.deckId || null;
+    projectId = projectId || detail.projectId || metadata.projectId || null;
+  }
+
+  const title = presentationName
+    ? `Presentation — "${presentationName}"`
+    : 'Presentation generation';
+  const where = buildPresentationBreakdown(featureCounts);
+
+  return {
+    ...latest,
+    id: `ppt-group:${deckId || projectId || latest.id}`,
+    amount,
+    createdAt: latest.createdAt ?? latest.created_at ?? latest.timestamp,
+    type: 'usage',
+    usageDetail: {
+      feature: 'ppt_generation',
+      kind: 'ppt_generation',
+      label: title,
+      displayName: title,
+      presentationName,
+      deckId,
+      projectId,
+      grouped: true,
+      groupCount: txs.length,
+      featureCounts,
+      where,
+      credits: Math.abs(amount),
+    },
+    metadata: {
+      ...(latest.metadata || {}),
+      feature: 'ppt_generation',
+      deckId,
+      projectId,
+      grouped: true,
+      groupCount: txs.length,
+    },
+  };
+}
+
+/**
+ * Collapse per-slide / per-image PPT ledger rows into one row per presentation (deck).
+ * Non-PPT transactions stay in place; group rows appear at the first member's position.
+ */
+export function collapsePresentationCreditTransactions(transactions = []) {
+  const list = Array.isArray(transactions) ? transactions : [];
+  if (!list.length) return [];
+
+  const groups = new Map();
+  const order = [];
+
+  for (const tx of list) {
+    const key = getPresentationGroupKey(tx);
+    if (!key) {
+      order.push({ kind: 'single', tx });
+      continue;
+    }
+    if (!groups.has(key)) {
+      groups.set(key, []);
+      order.push({ kind: 'group', key });
+    }
+    groups.get(key).push(tx);
+  }
+
+  return order
+    .map((entry) => {
+      if (entry.kind === 'single') return entry.tx;
+      return buildGroupedPresentationTransaction(groups.get(entry.key));
+    })
+    .filter(Boolean);
 }

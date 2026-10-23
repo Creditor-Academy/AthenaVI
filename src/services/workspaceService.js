@@ -654,12 +654,19 @@ class WorkspaceService {
     };
   }
 
-  async listProjects(workspaceId, folderId = null) {
+  async listProjects(workspaceId, folderIdOrOptions = null) {
     try {
-      let endpoint = `/api/workspaces/${workspaceId}/projects`;
-      if (folderId) {
-        endpoint += `?folderId=${encodeURIComponent(folderId)}`;
-      }
+      const options =
+        folderIdOrOptions && typeof folderIdOrOptions === 'object'
+          ? folderIdOrOptions
+          : { folderId: folderIdOrOptions };
+
+      const params = new URLSearchParams();
+      if (options.folderId) params.set('folderId', options.folderId);
+      if (options.type) params.set('type', String(options.type).toUpperCase());
+
+      const query = params.toString();
+      const endpoint = `/api/workspaces/${workspaceId}/projects${query ? `?${query}` : ''}`;
       const response = await fetch(buildUrl(endpoint), {
         method: 'GET',
         headers: getAuthHeaders(),
@@ -675,6 +682,59 @@ class WorkspaceService {
       return projects.map((p) => this.normalizeId(p));
     } catch (error) {
       console.error('Error in listProjects:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Workspace library — preferred API for Videos / Presentations / Images tabs.
+   * - No category → { categories: [{ id, label, projectType?, count }] }
+   * - With category → { category, items: [...] }
+   */
+  async getLibrary(workspaceId, { category, folderId, take, skip, mode } = {}) {
+    try {
+      const params = new URLSearchParams();
+      if (category) params.set('category', category);
+      if (folderId) params.set('folderId', folderId);
+      if (take != null) params.set('take', String(take));
+      if (skip != null) params.set('skip', String(skip));
+      if (mode) params.set('mode', mode);
+
+      const query = params.toString();
+      const endpoint =
+        (typeof API_CONFIG.ENDPOINTS.WORKSPACE_LIBRARY === 'function'
+          ? API_CONFIG.ENDPOINTS.WORKSPACE_LIBRARY(workspaceId)
+          : `/api/workspaces/${workspaceId}/library`) + (query ? `?${query}` : '');
+
+      const response = await fetch(buildUrl(endpoint), {
+        method: 'GET',
+        headers: getAuthHeaders(),
+        cache: 'no-store'
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          await this.readErrorMessage(response, `Failed to fetch workspace library: ${response.status}`)
+        );
+      }
+
+      const data = await response.json();
+      const payload = data.data || data;
+
+      if (!category) {
+        return {
+          categories: Array.isArray(payload.categories) ? payload.categories : [],
+        };
+      }
+
+      return {
+        category: payload.category || category,
+        items: Array.isArray(payload.items)
+          ? payload.items.map((item) => this.normalizeId(item))
+          : [],
+      };
+    } catch (error) {
+      console.error('Error in getLibrary:', error);
       throw error;
     }
   }
@@ -720,6 +780,56 @@ class WorkspaceService {
       return this.normalizeId(data.data?.project || data.project);
     } catch (error) {
       console.error('Error in updateProject:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Assign / reassign / unassign a whole project (video or presentation).
+   * OWNER/ADMIN only — MEMBER gets 403; PRIVATE workspaces get 400. `assigneeId: null` unassigns.
+   */
+  async updateProjectAssignee(workspaceId, projectId, assigneeId) {
+    try {
+      const response = await fetch(
+        buildUrl(API_CONFIG.ENDPOINTS.PROJECTS.ASSIGNEE(workspaceId, projectId)),
+        {
+          method: 'PATCH',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ assigneeId }),
+        }
+      );
+      if (!response.ok) {
+        throw new Error(await this.readErrorMessage(response, `Failed to update assignee: ${response.status}`));
+      }
+      const data = await response.json();
+      return this.normalizeId(data.data?.project || data.project);
+    } catch (error) {
+      console.error('Error in updateProjectAssignee:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Assign / reassign / unassign one scene (video project's per-scene sibling of
+   * updateProjectAssignee). OWNER/ADMIN only. `assigneeId: null` unassigns.
+   */
+  async updateSceneAssignee(workspaceId, projectId, sceneId, assigneeId) {
+    try {
+      const response = await fetch(
+        buildUrl(API_CONFIG.ENDPOINTS.PROJECTS.SCENE_ASSIGNEE(workspaceId, projectId, sceneId)),
+        {
+          method: 'PATCH',
+          headers: getAuthHeaders(),
+          body: JSON.stringify({ assigneeId }),
+        }
+      );
+      if (!response.ok) {
+        throw new Error(await this.readErrorMessage(response, `Failed to update scene assignee: ${response.status}`));
+      }
+      const data = await response.json();
+      return this.normalizeId(data.data?.scene || data.scene);
+    } catch (error) {
+      console.error('Error in updateSceneAssignee:', error);
       throw error;
     }
   }

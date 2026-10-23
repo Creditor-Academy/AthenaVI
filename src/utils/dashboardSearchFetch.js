@@ -61,7 +61,7 @@ export async function fetchDynamicSearchIndex() {
         id: `video-export-${video.id}`,
         category: 'videos',
         title: video.title,
-        location: 'My videos',
+        location: 'My work',
         keywords: [video.workspaceName, video.title],
         action: {
           type: 'editVideo',

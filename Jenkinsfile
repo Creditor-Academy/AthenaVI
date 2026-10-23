@@ -49,6 +49,15 @@ VITE_ENV=${env.VITE_ENV}
             }
         }
 
+        stage('Unit Tests') {
+            steps {
+                sh '''
+                set -e
+                npm test
+                '''
+            }
+        }
+
         stage('Build React App') {
             steps {
                 sh '''

@@ -193,5 +193,13 @@ export function resolveUserDisplayName(userRef, lookup, currentUserId, authUser)
     return userRef;
   }
 
+  if (typeof userRef === 'string' && UUID_RE.test(userRef)) {
+    return 'Athena AI';
+  }
+
+  if (userId && UUID_RE.test(userId) && !lookup?.get(userId)) {
+    return 'Athena AI';
+  }
+
   return 'Unknown';
 }

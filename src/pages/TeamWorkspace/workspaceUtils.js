@@ -5,6 +5,12 @@ import {
   pickUserRef,
   resolveUserDisplayName
 } from '../../utils/workspaceUsers.js';
+import {
+  projectTypeForKind,
+  resolveLibraryKind,
+  resolvePresentationThumbnailUrl,
+  resolveVideoThumbnailUrl,
+} from '../../utils/workspaceLibrary.js';
 import workspaceService from '../../services/workspaceService.js';
 
 // ---------------------------------------------------------------------------
@@ -168,17 +174,40 @@ export function normalizeVideo(video, currentUserId, authUser, userLookup) {
     video.updatedAt || video.lastModifiedAt || video.modifiedAt || video.updated_at || createdAt || null;
   const sizeBytes = getProjectBytes(video);
 
+  const kind = resolveLibraryKind(video);
+  const defaultName =
+    kind === 'presentation'
+      ? 'Untitled Presentation'
+      : kind === 'canvas'
+        ? 'Untitled Design'
+        : kind === 'image'
+          ? 'Untitled Image'
+          : 'Untitled Video';
+
+  const thumb =
+    kind === 'presentation'
+      ? resolvePresentationThumbnailUrl(video)
+      : kind === 'image' || kind === 'canvas'
+        ? video.thumbnail || video.thumbnailUrl || video.url || null
+        : resolveVideoThumbnailUrl(video)
+
   return {
     ...video,
     id: video.id || video._id,
-    name: video.name || video.title || 'Untitled Video',
+    name: video.name || video.title || defaultName,
+    title: video.title || video.name || defaultName,
+    type: video.type || video.projectType || projectTypeForKind(kind, video.type),
+    kind,
+    category: kind,
     createdBy,
     createdAt,
     lastModifiedBy,
     lastModifiedAt: updatedAt,
     lastEditedBy: lastModifiedBy,
     lastEditedAt: updatedAt,
-    sizeBytes: sizeBytes ?? video.sizeBytes ?? null
+    sizeBytes: sizeBytes ?? video.sizeBytes ?? null,
+    thumbnail: thumb || video.thumbnail || video.thumbnailUrl || video.url || null,
+    thumbnailUrl: thumb || video.thumbnailUrl || video.thumbnail || video.url || null,
   };
 }
 
@@ -231,4 +260,76 @@ export function workspaceCanEdit(workspace) {
 export function workspaceCanManageContributors(workspace) {
   const role = String(workspace?.userRole || '').toUpperCase();
   return workspace?.type === 'workspace' && (role === 'OWNER' || role === 'ADMIN');
+}
+
+// ---------------------------------------------------------------------------
+// Name uniqueness helpers (create + rename)
+// ---------------------------------------------------------------------------
+
+export function normalizeItemName(name) {
+  return String(name || '').trim().toLowerCase();
+}
+
+export function getAllWorkspaceNames(workspaces = []) {
+  return (workspaces || [])
+    .map((workspace) => workspace.name)
+    .filter(Boolean);
+}
+
+export function getTeamWorkspaceNames(workspaces = []) {
+  return getAllWorkspaceNames(workspaces);
+}
+
+export function hasConflictingName(name, existingNames = [], { excludeName = null } = {}) {
+  const normalized = normalizeItemName(name);
+  if (!normalized) return false;
+  const excluded = excludeName != null ? normalizeItemName(excludeName) : null;
+  return (existingNames || []).some((existing) => {
+    const candidate = normalizeItemName(existing);
+    return candidate && candidate !== excluded && candidate === normalized;
+  });
+}
+
+export function findVideoLocation(workspaces = [], videoId) {
+  for (const workspace of workspaces) {
+    for (const folder of workspace.folders || []) {
+      if ((folder.videos || []).some((video) => String(video.id) === String(videoId))) {
+        return { workspace, folder, videos: folder.videos || [] };
+      }
+    }
+    if ((workspace.videos || []).some((video) => String(video.id) === String(videoId))) {
+      return { workspace, folder: null, videos: workspace.videos || [] };
+    }
+  }
+  return null;
+}
+
+export function getRenameSiblingNames(workspaces = [], renameTarget) {
+  if (!renameTarget) return [];
+
+  const { type, id, name: currentName } = renameTarget;
+
+  if (type === 'workspace') {
+    return workspaces
+      .filter((workspace) => String(workspace.id) !== String(id))
+      .map((workspace) => workspace.name);
+  }
+
+  if (type === 'folder') {
+    const parentWorkspace = workspaces.find((workspace) =>
+      (workspace.folders || []).some((folder) => String(folder.id) === String(id))
+    );
+    return (parentWorkspace?.folders || [])
+      .filter((folder) => String(folder.id) !== String(id))
+      .map((folder) => folder.name);
+  }
+
+  if (type === 'video') {
+    const location = findVideoLocation(workspaces, id);
+    return (location?.videos || [])
+      .filter((video) => String(video.id) !== String(id))
+      .map((video) => video.name || video.title);
+  }
+
+  return [currentName].filter(Boolean);
 }

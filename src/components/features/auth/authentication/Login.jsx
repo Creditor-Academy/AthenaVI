@@ -130,7 +130,7 @@ function Login({
             clearInputValidity(event.target)
           }}
           readOnly={Boolean(lockedEmail)}
-          disabled={loading || Boolean(lockedEmail)}
+          disabled={loading}
         />
       </div>
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { createPortal } from 'react-dom'
 import Home from '../Home/Home.jsx'
-import Videos from '../Videos/Videos.jsx'
+import MyWork from '../MyWork/MyWork.jsx'
 import Avatars from '../Avatars/Avatars.jsx'
 import CreateAvatar from '../Avatars/CreateAvatar.jsx'
 import CreateAvatarLook from '../Avatars/CreateAvatarLook.jsx'
@@ -15,6 +16,7 @@ import Help from '../UserHelp/Help.jsx'
 import BrandKits from '../BrandKits/BrandKits.jsx'
 import TeamWorkspace from '../TeamWorkspace/TeamWorkspace.jsx'
 import AdminPortal from '../AdminPortal/AdminPortal.jsx'
+import Referrals from '../Referrals/Referrals.jsx'
 import DashboardTopbar from '../../components/layout/DashboardTopbar/DashboardTopbar.jsx'
 import DashboardSidebar from '../../components/layout/DashboardSidebar/DashboardSidebar.jsx'
 import AdminPortalSidebar from '../../components/layout/AdminPortalSidebar/AdminPortalSidebar.jsx'
@@ -25,11 +27,22 @@ import ImportPowerPointModal from '../../components/ui/ImportPowerPointModal/Imp
 import TranslateVideoModal from '../../components/ui/TranslateVideoModal/TranslateVideoModal.jsx'
 import CreateVideoModal from '../../components/ui/CreateVideoModal/CreateVideoModal.jsx'
 import CreateAvatarModal from '../../components/ui/CreateAvatarModal/CreateAvatarModal.jsx'
+import CreateMenuModal from '../../components/ui/CreateMenuModal/CreateMenuModal.jsx'
+import CreateLocationModal from '../../components/ui/CreateLocationModal/CreateLocationModal.jsx'
+import AIPptGenerator from '../Slides/AIPptGenerator.jsx'
+import PptBuilder from '../Slides/PptBuilder/PptBuilder.jsx'
+import AIImageStudio from '../Slides/AIStudio/AIImageGenerationUpdate.jsx'
+import AIPptEditor from '../Slides/AIPptComponents/AIPptEditor.jsx'
+import PptDeckOpenBoot from '../Slides/AIPptComponents/PptDeckOpenBoot.jsx'
+import CanvasBuilder from '../CanvasEditor/CanvasBuilder.jsx'
+import CanvasEditor from '../CanvasEditor/CanvasEditor.jsx'
 import { getAvatarTypeOption } from '../Avatars/avatarTypeOptions.js'
 import NotificationsQuickModal from '../../components/ui/NotificationsQuickModal/NotificationsQuickModal.jsx'
+import AdminAlertsQuickModal from '../../components/ui/AdminAlertsQuickModal/AdminAlertsQuickModal.jsx'
 import CreditsQuickModal from '../../components/ui/CreditsQuickModal/CreditsQuickModal.jsx'
 import { useInboxUnreadCount } from '../../hooks/useInboxUnreadCount.js'
 import userService from '../../services/userService.js'
+import superadminService from '../../services/superadminService.js'
 import { useAuth } from '../../contexts/AuthContext'
 import { bundleToDetailsTemplate } from '../../utils/fetchTemplateBundles.js'
 import {
@@ -40,16 +53,36 @@ import {
   saveAvatarsActiveSection,
 } from '../../utils/avatarsNavigationStorage.js'
 import { clearWorkspaceNavigation } from '../../utils/workspaceNavigationStorage.js'
+import { persistWorkspaceFolderNavigation } from '../../utils/navigateToWorkspaceFolder.js'
 import {
   dashboardPathForSection,
   resolveDashboardSectionFromPath,
   resolveSettingsTabFromSearch,
 } from '../../utils/dashboardRouting.js'
+import {
+  clearPresentationEditorSession,
+  loadPresentationEditorSession,
+  savePresentationEditorSession,
+} from '../../utils/presentationEditorSession.js'
+import {
+  clearCanvasEditorSession,
+  loadCanvasEditorSession,
+  saveCanvasEditorSession,
+} from '../../utils/canvasEditorSession.js'
 import useDashboardSearch from '../../hooks/useDashboardSearch.js'
 import { applySearchResult } from '../../utils/dashboardSearchNavigate.js'
 import './Dashboard.css'
 
 const AVATAR_FLOW_SECTIONS = new Set(['avatars', 'create-avatar-look', 'create-avatar'])
+const CANVAS_FLOW_SECTIONS = new Set(['canvas-editor', 'image-editor'])
+
+/** /dashboard/canvas-editor without a canvas to open — send the user back to the workspace. */
+function CanvasEditorMissing({ onBack }) {
+  useEffect(() => {
+    onBack()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  return null
+}
 
 
 function Dashboard({ onCreate, initialSection }) {
@@ -64,6 +97,34 @@ function Dashboard({ onCreate, initialSection }) {
   const [selectedVoice, setSelectedVoice] = useState(null)
   const [showAIAssistant, setShowAIAssistant] = useState(false)
   const [showCreateVideoModal, setShowCreateVideoModal] = useState(false)
+  const [showCreateMenu, setShowCreateMenu] = useState(false)
+  const [showCreateLocationModal, setShowCreateLocationModal] = useState(false)
+  const [pendingCreateOptionId, setPendingCreateOptionId] = useState(null)
+  const [createLocationContext, setCreateLocationContext] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem('athena.createLocationContext')
+      return stored ? JSON.parse(stored) : null
+    } catch {
+      return null
+    }
+  })
+  const [createLocationInitial, setCreateLocationInitial] = useState({
+    workspaceId: '',
+    folderId: '',
+  })
+  const [createMenuContext, setCreateMenuContext] = useState(null)
+  const [presentationCreateContext, setPresentationCreateContext] = useState(null)
+  const [editorData, setEditorData] = useState(() => loadPresentationEditorSession())
+  const [canvasEditorContext, setCanvasEditorContext] = useState(() =>
+    resolveDashboardSectionFromPath() === 'canvas-editor' ? loadCanvasEditorSession() : null
+  )
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try {
+      return window.localStorage.getItem('athena.dashboard.sidebarCollapsed') === '1'
+    } catch {
+      return false
+    }
+  })
   const [showImportModal, setShowImportModal] = useState(false)
   const [showTranslateModal, setShowTranslateModal] = useState(false)
   const [showProcessingModal, setShowProcessingModal] = useState(false)
@@ -73,30 +134,63 @@ function Dashboard({ onCreate, initialSection }) {
   const [pendingSection, setPendingSection] = useState(null)
   const [selectedTemplateForDetails, setSelectedTemplateForDetails] = useState(null)
   const [topbarMobileOpen, setTopbarMobileOpen] = useState(false)
+
+  useEffect(() => {
+    if (createLocationContext) {
+      sessionStorage.setItem('athena.createLocationContext', JSON.stringify(createLocationContext))
+    } else {
+      sessionStorage.removeItem('athena.createLocationContext')
+    }
+  }, [createLocationContext])
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false)
   const [lastVoiceCreated, setLastVoiceCreated] = useState(false)
   const [avatarLookContext, setAvatarLookContext] = useState(() => loadAvatarLookContext())
   const [avatarCreateTypeId, setAvatarCreateTypeId] = useState(null)
   const [adminTab, setAdminTab] = useState(() => {
     const saved = localStorage.getItem('adminPortalTab')
-    const valid = ['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'platform-actions', 'heygen', 'broadcast', 'early-access']
+    const valid = ['overview', 'users', 'workspaces', 'storage-requests', 'reports', 'platform-actions', 'heygen', 'broadcast', 'templates', 'graphics', 'ai-template', 'settings']
     return valid.includes(saved) ? saved : 'overview'
   })
   const [settingsInitialTab, setSettingsInitialTab] = useState(() => resolveSettingsTabFromSearch())
+  const [showAdminAlertsModal, setShowAdminAlertsModal] = useState(false)
+  const [adminAlertsCount, setAdminAlertsCount] = useState(0)
 
   const cartCount = 2
   const { unreadCount: notificationCount, refresh: refreshInboxUnread, setUnreadCount: setInboxUnreadCount } =
     useInboxUnreadCount()
+
+  const refreshAdminAlerts = useCallback(() => {
+    if (!canAccessSuperadminPortal) return
+    superadminService.getAlertsSummary()
+      .then((data) => {
+        if (!data) return
+        const unread = Number(data.unreadPlatformCount ?? 0)
+        const lowHeygen = data.heygenWallet?.isLow ? 1 : 0
+        const pendingStorage = Number(data.pendingStorageCount ?? data.pendingStorageRequestsCount ?? 0)
+        const total = unread + lowHeygen + pendingStorage
+        setAdminAlertsCount(total)
+      })
+      .catch(() => {})
+  }, [canAccessSuperadminPortal])
+
+  useEffect(() => {
+    if (canAccessSuperadminPortal) {
+      refreshAdminAlerts()
+    }
+  }, [canAccessSuperadminPortal, refreshAdminAlerts, section])
 
   const dashboardSearch = useDashboardSearch()
 
   const noPaddingSections = ['templates', 'template-details']
   const workspaceConsistentSections = [
     'home',
+    'my-work',
     'videos',
     'workspace',
     'library',
     'brandkits',
+    'image-ai',
+    'image-editor',
     'avatars',
     'create-avatar',
     'create-avatar-look',
@@ -112,6 +206,11 @@ function Dashboard({ onCreate, initialSection }) {
     if (id === 'admin-portal' && !canAccessSuperadminPortal) {
       id = 'home'
     }
+    // Outside the canvas flows, drop the canvas session so a later "create" never inherits it.
+    if (!CANVAS_FLOW_SECTIONS.has(id)) {
+      clearCanvasEditorSession()
+      setCanvasEditorContext(null)
+    }
     setTopbarMobileOpen(false)
     setSidebarMobileOpen(false)
     setSection((current) => {
@@ -122,6 +221,18 @@ function Dashboard({ onCreate, initialSection }) {
       return id
     })
   }, [canAccessSuperadminPortal])
+
+  const toggleSidebarCollapsed = useCallback(() => {
+    setSidebarCollapsed((prev) => {
+      const next = !prev
+      try {
+        window.localStorage.setItem('athena.dashboard.sidebarCollapsed', next ? '1' : '0')
+      } catch {
+        /* ignore storage failures */
+      }
+      return next
+    })
+  }, [])
 
   const openCreateAvatarLook = useCallback((ctx) => {
     saveAvatarLookContext(ctx)
@@ -173,6 +284,31 @@ function Dashboard({ onCreate, initialSection }) {
     setShowCreateVideoModal(true)
   }, [])
 
+  const handleOpenCreateLocationModal = useCallback((optionId, context = null) => {
+    if (!optionId || optionId === 'avatar-video') return
+    setPendingCreateOptionId(optionId)
+    setCreateLocationInitial({
+      workspaceId: context?.workspaceId || context?.initialWorkspaceId || '',
+      folderId: context?.folderId || context?.initialFolderId || '',
+    })
+    setShowCreateLocationModal(true)
+  }, [])
+
+  const handleConfirmCreateLocation = useCallback(({ optionId, workspaceId, folderId }) => {
+    const location = { optionId, workspaceId, folderId }
+    setCreateLocationContext(location)
+    if (optionId === 'ppt-ai' || optionId === 'ppt-builder') {
+      setPresentationCreateContext({
+        ...location,
+        initialWorkspaceId: workspaceId,
+        initialFolderId: folderId,
+      })
+    }
+    setShowCreateLocationModal(false)
+    setPendingCreateOptionId(null)
+    goToSection(optionId)
+  }, [goToSection])
+
   const handleCreateVideo = useCallback((config) => {
     setShowCreateVideoModal(false)
     setCreateVideoModalContext(null)
@@ -181,20 +317,74 @@ function Dashboard({ onCreate, initialSection }) {
     }
   }, [onCreate])
 
-  const handleEditVideo = useCallback((video) => {
-    if (onCreate) {
-      // Reuse the onCreate navigation logic
-      onCreate({
-        videoId: video.id || video._id,
-        workspaceId: video.workspaceId,
-        folderId: video.folderId || (video.folder && (video.folder.id || video.folder._id)) || null,
-        workspace: video.workspace || video.workspaceName || '',
-        folder: video.folder?.name || video.folderName || video.folder || '',
-        name: video.title || video.name,
-        videoData: video
-      })
-    }
-  }, [onCreate])
+  const openPresentationEditor = useCallback(
+    (data) => {
+      setEditorData(data)
+      savePresentationEditorSession(data)
+      goToSection('editor')
+    },
+    [goToSection]
+  )
+
+  const openCanvasEditor = useCallback(
+    (ctx) => {
+      setCanvasEditorContext(ctx)
+      saveCanvasEditorSession(ctx)
+      goToSection('canvas-editor')
+    },
+    [goToSection]
+  )
+
+  const handleEditVideo = useCallback(
+    (video) => {
+      const kind = String(video?.kind || video?.category || '').toLowerCase()
+      const projectType = String(video?.type || video?.projectType || '').toUpperCase()
+      const folderId =
+        video?.folderId || (video?.folder && (video.folder.id || video.folder._id)) || null
+
+      // Design canvases have their own editor — never the video editor at /create.
+      if (kind === 'canvas' || projectType === 'CANVAS') {
+        openCanvasEditor({
+          workspaceId: video.workspaceId,
+          canvasId: video.id || video._id,
+          folderId,
+          workspaceName: video.workspaceName || (typeof video.workspace === 'string' ? video.workspace : ''),
+          folderName: typeof video.folder === 'string' ? video.folder : video.folder?.name || video.folderName || '',
+        })
+        return
+      }
+
+      if (kind === 'presentation' || projectType === 'PRESENTATION') {
+        openPresentationEditor({
+          outline: [],
+          config: {
+            title: video.title || video.name || 'Untitled Presentation',
+            theme: video.themeId || 'petrol',
+            workspaceId: video.workspaceId,
+            presentationId: video.id || video._id,
+          },
+          workspaceId: video.workspaceId,
+          presentationId: video.id || video._id,
+          folderId:
+            video.folderId || (video.folder && (video.folder.id || video.folder._id)) || null,
+        })
+        return
+      }
+
+      if (onCreate) {
+        onCreate({
+          videoId: video.id || video._id,
+          workspaceId: video.workspaceId,
+          folderId: video.folderId || (video.folder && (video.folder.id || video.folder._id)) || null,
+          workspace: video.workspace || video.workspaceName || '',
+          folder: video.folder?.name || video.folderName || video.folder || '',
+          name: video.title || video.name,
+          videoData: video,
+        })
+      }
+    },
+    [onCreate, openPresentationEditor, openCanvasEditor]
+  )
 
   const notificationNavigateHandlers = useMemo(() => ({
     onOpenEditor: (config) => {
@@ -253,14 +443,38 @@ function Dashboard({ onCreate, initialSection }) {
     setSection((current) => (current === sectionFromUrl ? current : sectionFromUrl))
   }, [])
 
-  // Update URL when section changes
+  // Restore PPT editor session when landing on /dashboard/editor after refresh
   useEffect(() => {
-    const newPath = dashboardPathForSection(section)
+    if (section !== 'editor') return
+    if (editorData?.workspaceId && editorData?.presentationId) {
+      savePresentationEditorSession(editorData)
+      return
+    }
+    const restored = loadPresentationEditorSession()
+    if (restored?.workspaceId && restored?.presentationId) {
+      setEditorData(restored)
+    }
+  }, [section]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Update URL when section changes (preserve editor query params)
+  useEffect(() => {
+    if (section === 'editor') {
+      if (editorData?.workspaceId && editorData?.presentationId) {
+        savePresentationEditorSession(editorData)
+      }
+      return
+    }
+    const canvasIsSaved =
+      section === 'image-editor' && canvasEditorContext?.canvasId
+    if (section === 'canvas-editor' || canvasIsSaved) {
+      if (canvasEditorContext) saveCanvasEditorSession(canvasEditorContext)
+      return
+    }
+    const newPath = dashboardPathForSection(section)
     if (window.location.pathname !== newPath) {
       window.history.pushState({ section }, '', newPath)
     }
-  }, [section])
+  }, [section, editorData, canvasEditorContext])
 
   // Handle browser back/forward for dashboard sections
   useEffect(() => {
@@ -270,6 +484,16 @@ function Dashboard({ onCreate, initialSection }) {
         setSection(sectionFromUrl)
         if (sectionFromUrl === 'settings') {
           setSettingsInitialTab(resolveSettingsTabFromSearch())
+        }
+        if (sectionFromUrl === 'editor') {
+          const restored = loadPresentationEditorSession()
+          if (restored) setEditorData(restored)
+        }
+        if (sectionFromUrl === 'canvas-editor') {
+          setCanvasEditorContext(loadCanvasEditorSession())
+        } else if (!CANVAS_FLOW_SECTIONS.has(sectionFromUrl)) {
+          clearCanvasEditorSession()
+          setCanvasEditorContext(null)
         }
       }
     }
@@ -284,8 +508,15 @@ function Dashboard({ onCreate, initialSection }) {
     }
   }, [section])
 
+  // Keep folder drill-down when moving into create/editor flows so Exit can return there.
   useEffect(() => {
-    if (section !== 'workspace') {
+    const preserveNav =
+      section === 'workspace' ||
+      section === 'editor' ||
+      section === 'ppt-ai' ||
+      section === 'ppt-builder' ||
+      section === 'image-ai'
+    if (!preserveNav) {
       clearWorkspaceNavigation()
     }
   }, [section])
@@ -310,6 +541,13 @@ function Dashboard({ onCreate, initialSection }) {
     }
   }, [section, selectedTemplateForDetails, goToSection])
 
+  useEffect(() => {
+    if (!createLocationContext) return
+    if (section !== createLocationContext.optionId) {
+      setCreateLocationContext(null)
+    }
+  }, [section, createLocationContext])
+
   // Eagerly fetch and sync user profile on dashboard mount
   useEffect(() => {
     const syncProfile = async () => {
@@ -325,9 +563,127 @@ function Dashboard({ onCreate, initialSection }) {
     syncProfile()
   }, [updateUser])
 
+  if (section === 'ppt-ai') {
+    return (
+      <AIPptGenerator
+        initialWorkspaceId={presentationCreateContext?.initialWorkspaceId}
+        initialFolderId={presentationCreateContext?.initialFolderId}
+        onBack={() => {
+          setPresentationCreateContext(null)
+          goToSection(presentationCreateContext ? 'workspace' : 'home')
+        }}
+        onComplete={(data) => {
+          openPresentationEditor(data)
+        }}
+        onOpenPresentation={openPresentationEditor}
+        createContext={
+          createLocationContext?.optionId === 'ppt-ai' ? createLocationContext : null
+        }
+      />
+    )
+  }
+
+  if (section === 'ppt-builder') {
+    return (
+      <PptBuilder
+        initialWorkspaceId={presentationCreateContext?.initialWorkspaceId}
+        initialFolderId={presentationCreateContext?.initialFolderId}
+        createContext={
+          createLocationContext?.optionId === 'ppt-builder' ? createLocationContext : null
+        }
+        onBack={() => {
+          setPresentationCreateContext(null)
+          goToSection(presentationCreateContext ? 'workspace' : 'home')
+        }}
+        onOpenEditor={(data) => {
+          openPresentationEditor(data)
+        }}
+      />
+    )
+  }
+
+  if (section === 'canvas-editor') {
+    const exitCanvasEditor = () => {
+      persistWorkspaceFolderNavigation({
+        workspaceId: canvasEditorContext?.workspaceId,
+        folderId: canvasEditorContext?.folderId || null,
+        workspace: canvasEditorContext?.workspaceName || '',
+        folder: canvasEditorContext?.folderName || '',
+      })
+      try {
+        sessionStorage.setItem('workspaceActiveRootTab', 'workspace')
+      } catch {
+        /* ignore */
+      }
+      clearCanvasEditorSession()
+      setCanvasEditorContext(null)
+      goToSection('workspace')
+    }
+
+    if (!canvasEditorContext?.workspaceId || !canvasEditorContext?.canvasId) {
+      return <CanvasEditorMissing onBack={exitCanvasEditor} />
+    }
+
+    return (
+      <CanvasEditor
+        key={canvasEditorContext.canvasId}
+        workspaceId={canvasEditorContext.workspaceId}
+        folderId={canvasEditorContext.folderId}
+        canvasId={canvasEditorContext.canvasId}
+        onBack={exitCanvasEditor}
+      />
+    )
+  }
+
+  if (section === 'editor') {
+    if (!editorData?.workspaceId || !editorData?.presentationId) {
+      return <PptDeckOpenBoot title={editorData?.config?.title || editorData?.title || ''} />
+    }
+    return (
+      <AIPptEditor
+        outline={editorData?.outline || []}
+        config={editorData?.config || {}}
+        workspaceId={editorData.workspaceId}
+        presentationId={editorData.presentationId}
+        onBack={() => {
+          setPresentationCreateContext(null)
+          const session = loadPresentationEditorSession()
+          persistWorkspaceFolderNavigation({
+            workspaceId:
+              editorData.workspaceId ||
+              session?.workspaceId ||
+              editorData.config?.workspaceId,
+            folderId:
+              editorData.folderId ||
+              session?.folderId ||
+              editorData.config?.folderId ||
+              null,
+            workspace:
+              editorData.workspaceName ||
+              editorData.config?.workspace ||
+              editorData.config?.workspaceName ||
+              '',
+            folder:
+              editorData.folderName ||
+              editorData.config?.folder ||
+              editorData.config?.folderName ||
+              '',
+          })
+          try {
+            sessionStorage.setItem('workspaceActiveRootTab', 'workspace')
+          } catch {
+            /* ignore */
+          }
+          clearPresentationEditorSession()
+          goToSection('workspace')
+        }}
+      />
+    )
+  }
+
   return (
     <div
-      className={`dashboard-shell ${sidebarMobileOpen ? 'dashboard-shell--sidebar-open' : ''} ${isAdminPortal ? 'dashboard-shell--admin-portal' : ''}`}
+      className={`dashboard-app-viewport ${sidebarMobileOpen ? 'dashboard-shell--sidebar-open' : ''} ${isAdminPortal ? 'dashboard-shell--admin-portal' : ''} ${sidebarCollapsed ? 'dashboard-shell--sidebar-collapsed' : ''}`}
     >
       {sidebarMobileOpen && (
         <button
@@ -338,86 +694,85 @@ function Dashboard({ onCreate, initialSection }) {
         />
       )}
 
-      <div className="dashboard-sidebar-column">
-        <div className="dashboard-sidebar-header">
-          <button
-            type="button"
-            className="dashboard-sidebar-brand"
-            onClick={() => (isAdminPortal ? handlePortalToggle() : goToSection('home'))}
-            aria-label={isAdminPortal ? 'Back to platform' : 'Virtual Studio, go to home'}
-          >
-            <span className="dashboard-sidebar-brand-logo" aria-hidden>
-              V
-            </span>
-            <span className="dashboard-sidebar-brand-name">Virtual Studio</span>
-          </button>
+      <DashboardTopbar
+        sidebarMobileOpen={sidebarMobileOpen}
+        setSidebarMobileOpen={setSidebarMobileOpen}
+        topbarMobileOpen={topbarMobileOpen}
+        setTopbarMobileOpen={setTopbarMobileOpen}
+        onCreate={() => {
+          setCreateMenuContext(null)
+          setShowCreateMenu(true)
+        }}
+        notificationCount={isAdminPortal ? adminAlertsCount : notificationCount}
+        cartCount={cartCount}
+        goToSection={handleNavigationWithModal}
+        onNotificationClick={() => {
+          if (isAdminPortal) {
+            setShowAdminAlertsModal(true)
+          } else {
+            setShowNotificationsModal(true)
+          }
+        }}
+        onCartClick={() => setShowCreditsModal(true)}
+        isAdminPortal={isAdminPortal}
+        searchQuery={dashboardSearch.query}
+        onSearchQueryChange={dashboardSearch.setQuery}
+        searchInputRef={dashboardSearch.inputRef}
+        searchIsOpen={dashboardSearch.isOpen}
+        onSearchFocus={dashboardSearch.handleFocus}
+        onSearchClose={dashboardSearch.handleClose}
+        onSearchSelect={handleSearchResultSelect}
+        searchIsIndexing={dashboardSearch.isIndexing}
+        searchIndexError={dashboardSearch.indexError}
+        searchResultsByCategory={dashboardSearch.resultsByCategory}
+        searchFlatResults={dashboardSearch.flatResults}
+        searchCategoryLabels={dashboardSearch.categoryLabels}
+        searchActiveIndex={dashboardSearch.activeIndex}
+        onSearchActiveIndexChange={dashboardSearch.setActiveIndex}
+        onSearchMoveActive={dashboardSearch.moveActive}
+        onBrandClick={() => (isAdminPortal ? handlePortalToggle() : goToSection('home'))}
+        onToggleSuperadmin={handlePortalToggle}
+      />
 
-          {canAccessSuperadminPortal && (
-            <PortalModeSwitcher
-              mode={isAdminPortal ? 'admin' : 'main'}
-              onSelectMain={handlePortalToggle}
-              onSelectAdmin={() => goToSection('admin-portal')}
+      <div className="dashboard-body">
+        <div className="dashboard-sidebar-column">
+          {isAdminPortal ? (
+            <AdminPortalSidebar
+              activeTab={adminTab}
+              onTabChange={handleAdminTabChange}
+              onNavigateHelp={() => goToSection('help')}
               onCloseMobile={() => setSidebarMobileOpen(false)}
+              collapsed={sidebarCollapsed}
+              onToggleCollapse={toggleSidebarCollapsed}
+            />
+          ) : (
+            <DashboardSidebar
+              section={section}
+              onNavigate={(targetSection) => {
+                if (targetSection === 'ppt-ai' || targetSection === 'ppt-builder') {
+                  setPresentationCreateContext(null)
+                }
+                goToSection(targetSection)
+              }}
+              onOpenTranslate={() => setShowTranslateModal(true)}
+              onOpenAI={() => setShowAIAssistant(true)}
+              onCloseMobile={() => setSidebarMobileOpen(false)}
+              collapsed={sidebarCollapsed}
+              onToggleCollapse={toggleSidebarCollapsed}
             />
           )}
         </div>
 
-        {isAdminPortal ? (
-          <AdminPortalSidebar
-            activeTab={adminTab}
-            onTabChange={handleAdminTabChange}
-            onNavigateHelp={() => goToSection('help')}
-            onCloseMobile={() => setSidebarMobileOpen(false)}
-          />
-        ) : (
-          <DashboardSidebar
-            section={section}
-            onNavigate={goToSection}
-            onOpenTranslate={() => setShowTranslateModal(true)}
-            onOpenAI={() => setShowAIAssistant(true)}
-            onCloseMobile={() => setSidebarMobileOpen(false)}
-          />
-        )}
-      </div>
-
-      <div className="dashboard-main-column">
-        <DashboardTopbar
-          sidebarMobileOpen={sidebarMobileOpen}
-          setSidebarMobileOpen={setSidebarMobileOpen}
-          topbarMobileOpen={topbarMobileOpen}
-          setTopbarMobileOpen={setTopbarMobileOpen}
-          onCreate={handleOpenCreateVideoModal}
-          notificationCount={notificationCount}
-          cartCount={cartCount}
-          goToSection={handleNavigationWithModal}
-          onNotificationClick={() => setShowNotificationsModal(true)}
-          onCartClick={() => setShowCreditsModal(true)}
-          isAdminPortal={isAdminPortal}
-          searchQuery={dashboardSearch.query}
-          onSearchQueryChange={dashboardSearch.setQuery}
-          searchInputRef={dashboardSearch.inputRef}
-          searchIsOpen={dashboardSearch.isOpen}
-          onSearchFocus={dashboardSearch.handleFocus}
-          onSearchClose={dashboardSearch.handleClose}
-          onSearchSelect={handleSearchResultSelect}
-          searchIsIndexing={dashboardSearch.isIndexing}
-          searchIndexError={dashboardSearch.indexError}
-          searchResultsByCategory={dashboardSearch.resultsByCategory}
-          searchFlatResults={dashboardSearch.flatResults}
-          searchCategoryLabels={dashboardSearch.categoryLabels}
-          searchActiveIndex={dashboardSearch.activeIndex}
-          onSearchActiveIndexChange={dashboardSearch.setActiveIndex}
-          onSearchMoveActive={dashboardSearch.moveActive}
-        />
-
-        <main
-          className={`content ${!noPaddingSections.includes(section) ? 'with-padding' : ''} ${section === 'home' ? 'content--home' : ''} ${workspaceConsistentSections.includes(section) ? 'content--workspace-consistent' : ''} ${isAdminPortal ? 'content--superadmin' : ''}`}
-        >
+        <div className="dashboard-page-card">
+          <main
+            className={`dashboard-main-content content ${!noPaddingSections.includes(section) ? 'with-padding' : ''} ${section === 'home' ? 'content--home' : ''} ${workspaceConsistentSections.includes(section) ? 'content--workspace-consistent' : ''} ${isAdminPortal ? 'content--superadmin' : ''}`}
+          >
           {section === 'home' && (
             <Home
               onCreate={handleOpenCreateVideoModal}
               onEdit={handleEditVideo}
               onNavigate={goToSection}
+              onCreateWithLocation={handleOpenCreateLocationModal}
               onShowAIAssistant={() => setShowAIAssistant(true)}
               onBrowseTemplates={() => goToSection('templates')}
               onSelectTemplate={(bundle) => {
@@ -426,7 +781,23 @@ function Dashboard({ onCreate, initialSection }) {
               }}
             />
           )}
-          {section === 'videos' && <Videos onCreate={handleOpenCreateVideoModal} onEdit={handleEditVideo} />}
+          {(section === 'my-work' || section === 'videos') && (
+            <MyWork
+              onCreate={handleOpenCreateVideoModal}
+              onEdit={handleEditVideo}
+              onOpenImage={(item) => {
+                const workspaceId = item?.workspaceId
+                if (!workspaceId) return
+                setCreateLocationContext({
+                  optionId: 'image-ai',
+                  workspaceId,
+                  folderId: item.folderId || null,
+                  threadId: item.threadId || item.id || null,
+                })
+                goToSection('image-ai')
+              }}
+            />
+          )}
           {section === 'avatars' && (
             <Avatars
               onCreate={handleOpenCreateVideoModal}
@@ -504,7 +875,77 @@ function Dashboard({ onCreate, initialSection }) {
               }}
             />
           )}
-          {section === 'workspace' && <TeamWorkspace onCreate={handleOpenCreateVideoModal} onEdit={handleEditVideo} />}
+          {section === 'workspace' && (
+            <TeamWorkspace
+              onCreate={(context = {}) => {
+                const preferred = context.preferredCreateOption
+                const workspaceId = context.workspaceId || context.initialWorkspaceId || ''
+                const folderId = context.folderId || context.initialFolderId || ''
+
+                if (preferred === 'image-ai' && workspaceId) {
+                  setCreateLocationContext({
+                    optionId: 'image-ai',
+                    workspaceId,
+                    folderId,
+                  })
+                  goToSection('image-ai')
+                  return
+                }
+
+                if (preferred === 'image-editor' && workspaceId) {
+                  // Canvases are saved into a folder — ask for one when created from the workspace root.
+                  if (!folderId) {
+                    handleOpenCreateLocationModal('image-editor', { workspaceId })
+                    return
+                  }
+                  setCreateLocationContext({
+                    optionId: 'image-editor',
+                    workspaceId,
+                    folderId,
+                  })
+                  goToSection('image-editor')
+                  return
+                }
+
+                if ((preferred === 'ppt-ai' || preferred === 'ppt-builder') && workspaceId) {
+                  setPresentationCreateContext({
+                    ...context,
+                    initialWorkspaceId: workspaceId,
+                    initialFolderId: folderId,
+                    workspaceId,
+                    folderId,
+                  })
+                  setCreateLocationContext({
+                    optionId: preferred,
+                    workspaceId,
+                    folderId,
+                  })
+                  goToSection(preferred)
+                  return
+                }
+
+                if (preferred === 'avatar-video') {
+                  handleOpenCreateVideoModal(context)
+                  return
+                }
+
+                setCreateMenuContext(context)
+                setShowCreateMenu(true)
+              }}
+              onEdit={handleEditVideo}
+              onOpenImage={(item) => {
+                const workspaceId = item?.workspaceId
+                if (!workspaceId) return
+                setCreateLocationContext({
+                  optionId: 'image-ai',
+                  workspaceId,
+                  folderId: item.folderId || null,
+                  threadId: item.threadId || item.id || null,
+                })
+                goToSection('image-ai')
+              }}
+            />
+          )}
           {section === 'admin-portal' && canAccessSuperadminPortal && (
             <AdminPortal
               activeTab={adminTab}
@@ -513,7 +954,41 @@ function Dashboard({ onCreate, initialSection }) {
             />
           )}
           {section === 'brandkits' && <BrandKits />}
+          {section === 'image-editor' && (
+            createPortal(
+              <CanvasBuilder
+                initialWorkspaceId={createLocationContext?.workspaceId}
+                initialFolderId={createLocationContext?.folderId}
+                createContext={
+                  createLocationContext?.optionId === 'image-editor'
+                    ? createLocationContext
+                    : null
+                }
+                initialSize={createLocationContext?.canvasSize || null}
+                onCanvasCreated={(canvas) => {
+                  // Point the URL at the saved canvas so a refresh reopens it
+                  // in the canvas editor instead of creating another one.
+                  const ctx = {
+                    workspaceId: createLocationContext?.workspaceId,
+                    folderId: createLocationContext?.folderId || canvas?.folderId || null,
+                    canvasId: canvas?.id,
+                    folderName: canvas?.folder?.name || '',
+                  }
+                  setCanvasEditorContext(ctx)
+                  saveCanvasEditorSession(ctx)
+                }}
+                onBack={() => {
+                  persistWorkspaceFolderNavigation(createLocationContext)
+                  clearCanvasEditorSession()
+                  setCanvasEditorContext(null)
+                  goToSection('workspace')
+                }}
+              />,
+              document.body
+            )
+          )}
           {section === 'credits' && <Settings onBack={() => goToSection('home')} initialTab="billing" />}
+          {section === 'referrals' && <Referrals />}
           {section === 'profile' && <Profile onBack={() => goToSection('home')} />}
           {section === 'settings' && (
             <Settings
@@ -524,9 +999,58 @@ function Dashboard({ onCreate, initialSection }) {
           {section === 'help' && (
             <Help embedded onOpenBilling={() => goToSection('credits')} />
           )}
-        </main>
+          </main>
+        </div>
       </div>
 
+      {section === 'image-ai' && createPortal(
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, isolation: 'isolate' }}>
+          <AIImageStudio
+            onBack={() => goToSection('home')}
+            onOpenBilling={() => goToSection('credits')}
+            onNavigateLibrary={() => goToSection('library')}
+            createContext={
+              createLocationContext?.optionId === 'image-ai' ? createLocationContext : null
+            }
+          />
+        </div>,
+        document.body
+      )}
+
+      <CreateMenuModal
+        isOpen={showCreateMenu}
+        projectOnly={Boolean(createMenuContext?.initialFolderId)}
+        onClose={() => {
+          setShowCreateMenu(false)
+          setCreateMenuContext(null)
+        }}
+        onSelectAvatarVideo={() => {
+          setShowCreateMenu(false)
+          handleOpenCreateVideoModal(createMenuContext)
+          setCreateMenuContext(null)
+        }}
+        onNavigateSection={(id) => {
+          const ctx = createMenuContext
+          setShowCreateMenu(false)
+          setCreateMenuContext(null)
+          if (id === 'ppt-ai' || id === 'ppt-builder') {
+            setPresentationCreateContext(ctx)
+          }
+          handleOpenCreateLocationModal(id, ctx)
+        }}
+      />
+
+      <CreateLocationModal
+        isOpen={showCreateLocationModal}
+        onClose={() => {
+          setShowCreateLocationModal(false)
+          setPendingCreateOptionId(null)
+        }}
+        optionId={pendingCreateOptionId}
+        initialWorkspaceId={createLocationInitial.workspaceId}
+        initialFolderId={createLocationInitial.folderId}
+        onConfirm={handleConfirmCreateLocation}
+      />
 
       {showAIAssistant && (
         <AIVideoAssistant
@@ -570,7 +1094,24 @@ function Dashboard({ onCreate, initialSection }) {
           }}
         />
       ) : null}
-      {showImportModal && <ImportPowerPointModal onClose={() => setShowImportModal(false)} />}
+      {showImportModal && (
+        <ImportPowerPointModal
+          workspaceId={
+            editorData?.workspaceId ||
+            createLocationContext?.workspaceId ||
+            createLocationInitial.workspaceId ||
+            presentationCreateContext?.workspaceId
+          }
+          onClose={() => setShowImportModal(false)}
+          onImported={({ presentationId, workspaceId, title }) => {
+            setShowImportModal(false)
+            if (presentationId && workspaceId) {
+              setEditorData({ workspaceId, presentationId, title })
+              goToSection('editor')
+            }
+          }}
+        />
+      )}
       {showTranslateModal && <TranslateVideoModal onClose={() => setShowTranslateModal(true)} />}
 
       {/* Navigation Processing Modal */}
@@ -600,6 +1141,20 @@ function Dashboard({ onCreate, initialSection }) {
             goToSection('settings')
           }}
           onNavigate={notificationNavigateHandlers}
+        />
+      )}
+
+      {/* Admin Platform Alerts Modal Overlay */}
+      {showAdminAlertsModal && (
+        <AdminAlertsQuickModal
+          onClose={() => {
+            setShowAdminAlertsModal(false)
+            refreshAdminAlerts()
+          }}
+          onNavigateTab={(tabId) => {
+            handleAdminTabChange(tabId)
+            setShowAdminAlertsModal(false)
+          }}
         />
       )}
 

@@ -622,14 +622,27 @@ const EditorTopbar = ({
                         </div>
                         <div className="shortcuts-grid">
                             {[
-                                { key: 'Space', action: 'Play / Pause' },
-                                { key: 'Esc', action: 'Close panel' },
-                                { key: 'Delete', action: 'Delete selection' },
+                                { key: '← ↑ → ↓', action: 'Nudge selection 1px' },
+                                { key: 'Shift + Arrows', action: 'Nudge selection 10px' },
                                 { key: 'Ctrl + Z', action: 'Undo' },
                                 { key: 'Ctrl + Y', action: 'Redo' },
+                                { key: 'Ctrl + Shift + Z', action: 'Redo' },
+                                { key: 'Ctrl + C', action: 'Copy' },
+                                { key: 'Ctrl + X', action: 'Cut' },
+                                { key: 'Ctrl + V', action: 'Paste' },
+                                { key: 'Ctrl + D', action: 'Duplicate' },
+                                { key: 'Ctrl + A', action: 'Select all layers' },
+                                { key: 'Ctrl + G', action: 'Group' },
+                                { key: 'Ctrl + Shift + G', action: 'Ungroup' },
+                                { key: 'Ctrl + L', action: 'Lock / unlock' },
+                                { key: ']  /  [', action: 'Bring forward / Send backward' },
+                                { key: 'Ctrl + Shift + ] / [', action: 'Bring to front / Send to back' },
+                                { key: 'Delete', action: 'Delete selection' },
+                                { key: 'Space', action: 'Play / Pause' },
+                                { key: 'Esc', action: 'Clear selection' },
                                 { key: 'Ctrl + S', action: 'Save project' },
                                 { key: 'Ctrl + E', action: 'Export video' },
-                                { key: '← →', action: 'Step frame' },
+                                { key: '← →', action: 'Step timeline (no selection)' },
                             ].map(({ key, action }) => (
                                 <div className="shortcut-row" key={key}>
                                     <span className="shortcut-action">{action}</span>

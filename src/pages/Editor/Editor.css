@@ -2042,6 +2042,51 @@ kbd.shortcut-key {
     transform-origin: center center;
 }
 
+/* Canva-style video stage: clipped frame + unclipped elements/chrome */
+.video-live-canvas {
+    overflow: visible;
+}
+
+.video-live-composition {
+    overflow: visible;
+}
+
+.video-live-stage-clip {
+    overflow: hidden !important;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.video-live-stage-elements {
+    overflow: visible;
+    z-index: 1;
+}
+
+.video-clip-overflow-paint {
+    pointer-events: none;
+    /* Transform + overflow mask live here so rotation matches PPT behavior */
+}
+
+.video-clip-overflow-paint > * {
+    pointer-events: auto;
+}
+
+.video-clip-chrome-layer {
+    pointer-events: none;
+}
+
+.video-clip-chrome-layer .sel-handle,
+.video-clip-chrome-layer .sel-overlay__move,
+.video-clip-chrome-layer .sel-overlay__rotate-handle,
+.video-clip-chrome-layer .ppt-text-selection-overlay button,
+.video-clip-chrome-layer button {
+    pointer-events: auto;
+}
+
+.video-clip-overflow-paint > * {
+    pointer-events: auto;
+}
+
 
 .tool-panel-beside {
     width: 280px;
@@ -5000,14 +5045,24 @@ kbd.shortcut-key {
     position: absolute;
     top: 6px;
     left: 6px;
-    padding: 2px 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 7px;
     border-radius: 999px;
     background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     color: #fff;
     font-size: 9px;
     font-weight: 800;
+    line-height: 1;
     letter-spacing: 0.03em;
     text-transform: uppercase;
+    white-space: nowrap;
+    box-sizing: border-box;
+    pointer-events: none;
 }
 
 .upload-insert-panel__rename,

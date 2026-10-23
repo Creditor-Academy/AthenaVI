@@ -245,7 +245,7 @@ const DigitalTwinSection = () => {
         <div className="dt-showcase-title-block">
           {/* <span className="dt-showcase-eyebrow">Advanced AI Cloning</span> */}
           <h2 id="dt-showcase-heading" className="dt-showcase-heading">
-            Scale Your Presence with <span>Digital Twin</span>
+            Create Your Own Avatar <span>from Images</span>
           </h2>
         </div>
 
@@ -258,9 +258,9 @@ const DigitalTwinSection = () => {
                 <div className="dt-panel-number">01</div>
                 <div className="dt-panel-icon-wrapper"><FiVideo size={16} /></div>
               </div>
-              <h3 className="dt-panel-title">Cinematic Digital Twin</h3>
+              <h3 className="dt-panel-title">Photo to Avatar</h3>
               <p className="dt-panel-desc">
-                Generate a photorealistic AI avatar with one click. Replicates your micro‑expressions, gestures, and body language in stunning HD quality.
+                Transform a single static photo into a fully animated, lifelike AI avatar with one click. Ready to use in any video.
               </p>
             </div>
 
@@ -269,9 +269,9 @@ const DigitalTwinSection = () => {
                 <div className="dt-panel-number">02</div>
                 <div className="dt-panel-icon-wrapper"><FiCpu size={16} /></div>
               </div>
-              <h3 className="dt-panel-title">Studio‑Grade Lip‑Sync</h3>
+              <h3 className="dt-panel-title">Custom Styling & Outfits</h3>
               <p className="dt-panel-desc">
-                Achieve perfect audiovisual alignment. Matches lip movements, jaw extensions, and facial muscles to any narration script with sub‑frame accuracy.
+                Dress your avatar for any occasion. Easily swap out outfits, hairstyles, and accessories to match your brand's look and feel.
               </p>
             </div>
           </div>
@@ -283,9 +283,9 @@ const DigitalTwinSection = () => {
                 <div className="dt-panel-number">03</div>
                 <div className="dt-panel-icon-wrapper"><FiMic size={16} /></div>
               </div>
-              <h3 className="dt-panel-title">Perfect Voice Cloning</h3>
+              <h3 className="dt-panel-title">Expression Control</h3>
               <p className="dt-panel-desc">
-                Clone your speech signature in seconds. Replicates your native accent, vocal tone, emotional inflections, and unique cadence from a short sample.
+                Fine-tune how your avatar emotes. Adjust subtle facial expressions, smiles, and micro-movements to convey the perfect emotion.
               </p>
             </div>
 
@@ -294,9 +294,9 @@ const DigitalTwinSection = () => {
                 <div className="dt-panel-number">04</div>
                 <div className="dt-panel-icon-wrapper"><FiGlobe size={16} /></div>
               </div>
-              <h3 className="dt-panel-title">80+ Fluent Languages</h3>
+              <h3 className="dt-panel-title">Studio-Grade Lip Sync</h3>
               <p className="dt-panel-desc">
-                Go global instantly. Speak over 80 languages and dialects fluently while retaining your unique cloned voice and speech patterns.
+                Achieve perfect audiovisual alignment. Your avatar matches lip movements and facial muscles to any narration script seamlessly.
               </p>
             </div>
 
@@ -305,9 +305,9 @@ const DigitalTwinSection = () => {
                 <div className="dt-panel-number">05</div>
                 <div className="dt-panel-icon-wrapper"><FiShield size={16} /></div>
               </div>
-              <h3 className="dt-panel-title">Likeness Protection</h3>
+              <h3 className="dt-panel-title">Instant Export</h3>
               <p className="dt-panel-desc">
-                Enterprise‑grade security shield. Mandatory biometric consent verification prevents unauthorized likeness generations and safeguards your digital identity.
+                Drop your custom avatar directly into the video canvas, or export it in stunning HD quality for use across all your marketing channels.
               </p>
             </div>
           </div>

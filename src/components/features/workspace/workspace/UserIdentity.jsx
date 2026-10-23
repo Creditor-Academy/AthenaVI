@@ -10,14 +10,18 @@ const UserIdentity = ({
   avatarSize,
 }) => {
   const [imageFailed, setImageFailed] = useState(false);
-  const isEmpty = !name || name === '-';
+  const resolvedName =
+    typeof name === 'string' || typeof name === 'number'
+      ? String(name)
+      : name?.name || name?.fullName || name?.displayName || name?.email || name?.username || '';
+  const isEmpty = !resolvedName || resolvedName === '-';
 
   useEffect(() => {
     setImageFailed(false);
   }, [profileImage]);
-  const displayName = isEmpty ? '-' : name;
-  const initials = getNameInitials(isEmpty ? '' : name);
-  const avatarColor = getAvatarColorForName(isEmpty ? '' : name);
+  const displayName = isEmpty ? '-' : resolvedName;
+  const initials = getNameInitials(isEmpty ? '' : resolvedName);
+  const avatarColor = getAvatarColorForName(isEmpty ? '' : resolvedName);
   const showPhoto = Boolean(profileImage) && !imageFailed;
 
   return (

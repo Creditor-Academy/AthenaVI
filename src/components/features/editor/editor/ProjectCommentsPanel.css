@@ -7,6 +7,73 @@
   min-height: 0;
 }
 
+.project-comments--thread {
+  gap: 10px;
+  padding: 12px 14px 18px;
+}
+
+.project-comments--thread .ppt-cmt-shell {
+  flex: 1;
+  min-height: 0;
+}
+
+.project-comments--thread .ppt-cmt-list {
+  max-height: none;
+  flex: 1;
+  gap: 16px;
+}
+
+.project-comments__toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.project-comments--thread .ppt-cmt-name,
+.project-comments--thread .ppt-cmt-body,
+.project-comments--thread .ppt-cmt-empty p {
+  color: var(--text-main);
+}
+
+.project-comments--thread .ppt-cmt-time,
+.project-comments--thread .ppt-cmt-empty span,
+.project-comments--thread .ppt-cmt-action {
+  color: var(--text-muted);
+}
+
+.project-comments--thread .ppt-cmt-composer {
+  background: var(--bg-card, var(--bg-main));
+  border-color: var(--border-color);
+}
+
+.project-comments--thread .ppt-cmt-composer textarea,
+.project-comments--thread .mention-autocomplete {
+  flex: 1;
+  min-width: 0;
+}
+
+.project-comments--thread .mention-autocomplete__input {
+  min-height: 38px;
+  border: 0;
+  background: transparent;
+  padding: 6px 0;
+  box-shadow: none;
+  color: var(--text-main);
+}
+
+.project-comments--thread .mention-autocomplete__input:focus {
+  box-shadow: none;
+}
+
+.project-comments--thread .ppt-cmt-replies {
+  border-left-color: var(--border-color);
+}
+
+.project-comments--thread .ppt-cmt-thread.is-highlighted {
+  border-radius: 12px;
+  padding: 8px;
+  background: rgba(var(--primary-rgb), 0.08);
+}
+
 .project-comments__header {
   display: flex;
   align-items: flex-start;

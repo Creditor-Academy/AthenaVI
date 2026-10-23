@@ -1,0 +1,318 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=DM+Serif+Display&family=Inter:wght@400;500;600&display=swap');
+
+.shared-gen-container {
+  min-height: 100vh;
+  background-color: #fafafa;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23f1f5f9' fill-opacity='1' d='M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,213.3C672,224,768,224,864,208C960,192,1056,160,1152,149.3C1248,139,1344,149,1392,154.7L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+  background-position: bottom;
+  background-repeat: no-repeat;
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #1a1a1a;
+  -webkit-font-smoothing: antialiased;
+}
+
+.shared-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 40px;
+  background: transparent;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.shared-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.shared-brand img {
+  height: 24px;
+}
+
+.shared-brand span {
+  font-weight: 500;
+  font-size: 18px;
+  color: #1a1a1a;
+  letter-spacing: -0.2px;
+}
+
+.shared-try-btn {
+  background: transparent;
+  color: #1a1a1a;
+  padding: 10px 0;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  transition: opacity 0.2s ease;
+}
+
+.shared-try-btn:hover {
+  opacity: 0.7;
+}
+
+.shared-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 64px 24px 120px;
+}
+
+.shared-content-wrapper {
+  max-width: 800px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+.shared-content-wrapper.split-view {
+  max-width: 1100px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.split-left {
+  display: flex;
+  justify-content: center;
+}
+
+.split-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+/* Editorial Headline */
+.editorial-hero {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.editorial-headline {
+  font-family: 'DM Serif Display', serif;
+  font-size: 40px;
+  line-height: 1.1;
+  color: #111;
+  margin: 0 0 16px 0;
+  font-weight: 400;
+}
+
+.editorial-subheadline {
+  font-size: 18px;
+  color: #555;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Image Container */
+.shared-image-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.shared-image-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #888;
+}
+
+.shared-image-frame {
+  max-width: 100%;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 12px;
+  padding: 12px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+}
+
+.shared-image {
+  max-width: 100%;
+  max-height: 60vh;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+/* Prompt Idea Area */
+.editorial-idea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin: 24px 0 48px;
+  padding: 0 24px;
+}
+
+.idea-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #888;
+  margin-bottom: 24px;
+}
+
+.idea-prompt {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-style: italic;
+  color: #222;
+  line-height: 1.4;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* CTA Area */
+.editorial-cta-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-top: 64px;
+  padding-top: 64px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.cta-headline {
+  font-family: 'DM Serif Display', serif;
+  font-size: 36px;
+  color: #111;
+  margin: 0 0 12px 0;
+  font-weight: 400;
+}
+
+.cta-support {
+  font-size: 16px;
+  color: #555;
+  margin: 0 0 32px 0;
+}
+
+.editorial-cta-btn {
+  background: #111;
+  color: #fff;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 40px;
+  font-size: 15px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.editorial-cta-btn:hover {
+  background: #333;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Override centering for split-view */
+.split-right .editorial-hero,
+.split-right .editorial-idea,
+.split-right .editorial-cta-section {
+  text-align: left;
+  align-items: flex-start;
+  margin-left: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.split-right .editorial-cta-section {
+  margin-top: 48px;
+  padding-top: 48px;
+}
+
+.split-right .idea-label,
+.split-right .editorial-sequence {
+  margin-left: 0;
+}
+.editorial-sequence {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 48px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #999;
+  letter-spacing: 1.5px;
+}
+
+.sequence-arrow {
+  font-weight: 300;
+  color: #ccc;
+}
+
+@media (max-width: 768px) {
+  .editorial-headline {
+    font-size: 36px;
+  }
+  .idea-prompt {
+    font-size: 24px;
+  }
+  .cta-headline {
+    font-size: 28px;
+  }
+  .shared-header {
+    padding: 20px 24px;
+  }
+}
+
+.shared-gen-loader, .shared-gen-error {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.shared-gen-loader {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.spinning-sparkle {
+  animation: spin 3s linear infinite;
+  color: #3b82f6;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
+}
+
+.shared-gen-error h2 {
+  margin: 0;
+  font-size: 24px;
+  color: #1e293b;
+}
+
+.shared-gen-error p {
+  color: #64748b;
+  margin: 0 0 16px 0;
+}

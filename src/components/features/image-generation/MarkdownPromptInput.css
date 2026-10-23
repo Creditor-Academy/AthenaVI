@@ -1,0 +1,82 @@
+.aig-md-field {
+  position: relative;
+  min-width: 0;
+  flex: 1;
+}
+
+.aig-md-editor {
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  border: none;
+  outline: none;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: inherit;
+  font-size: 1.05rem;
+  line-height: 1.5;
+  min-height: 28px;
+  max-height: 148px;
+  padding: 8px 6px 8px 2px;
+  background: transparent;
+  color: var(--aig-ink);
+  caret-color: var(--aig-cobalt);
+  scrollbar-width: thin;
+}
+
+.aig-md-placeholder {
+  position: absolute;
+  inset: 8px 6px 8px 2px;
+  pointer-events: none;
+  color: var(--aig-ink-muted);
+  font-size: 1.05rem;
+  line-height: 1.5;
+  z-index: 0;
+}
+
+.aig-md-strong,
+.aig-md-editor strong {
+  font-weight: 700;
+  color: var(--aig-ink);
+}
+
+.aig-md-em,
+.aig-md-editor em {
+  font-style: italic;
+}
+
+.aig-md-strike,
+.aig-md-editor s {
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in oklab, var(--aig-ink) 45%, transparent);
+}
+
+.aig-md-code,
+.aig-md-editor code {
+  font-family: inherit;
+  background: color-mix(in oklab, var(--aig-cobalt) 12%, transparent);
+  border-radius: 4px;
+}
+
+.aig-md-link {
+  color: var(--aig-cobalt);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.aig-md-h {
+  font-weight: 700;
+}
+
+.aig-md-quote {
+  color: color-mix(in oklab, var(--aig-ink) 78%, var(--aig-ink-muted));
+}
+
+.aig-md-bullet {
+  color: color-mix(in oklab, var(--aig-cobalt) 55%, var(--aig-ink-muted));
+  font-weight: 600;
+}

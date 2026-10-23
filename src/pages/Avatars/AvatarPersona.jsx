@@ -12,7 +12,7 @@ import {
 import { getAvatarDeleteMessage } from '../../utils/heygenDelete'
 import AvatarPersonaLookCard from './AvatarPersonaLookCard'
 import '../../components/features/workspace/workspace/WorkspaceStyles.css'
-import '../Videos/Videos.css'
+import '../MyWork/MyWork.css'
 import './Avatars.css'
 
 function AvatarPersona({

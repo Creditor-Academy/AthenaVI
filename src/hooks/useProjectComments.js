@@ -84,9 +84,8 @@ export function useProjectComments(workspaceId, projectId, { enabled = true } = 
       setSubmitting(true);
       setError(null);
       try {
-        const comment = await commentService.createComment(workspaceId, projectId, payload);
-        setComments((prev) => [comment, ...prev]);
-        return comment;
+        await commentService.createComment(workspaceId, projectId, payload);
+        await loadComments();
       } catch (err) {
         setError(err?.message || 'Failed to post comment');
         throw err;
@@ -95,7 +94,7 @@ export function useProjectComments(workspaceId, projectId, { enabled = true } = 
         setSubmitting(false);
       }
     },
-    [canFetch, workspaceId, projectId]
+    [canFetch, workspaceId, projectId, loadComments]
   );
 
   const updateComment = useCallback(
@@ -130,19 +129,37 @@ export function useProjectComments(workspaceId, projectId, { enabled = true } = 
       setError(null);
       try {
         await commentService.deleteComment(workspaceId, projectId, commentId);
-        setComments((prev) => prev.filter((c) => c.id !== commentId));
+        await loadComments();
         return true;
       } catch (err) {
         setError(err?.message || 'Failed to delete comment');
         throw err;
       }
     },
-    [canFetch, workspaceId, projectId]
+    [canFetch, workspaceId, projectId, loadComments]
+  );
+
+  const resolveComment = useCallback(
+    async (commentId, resolve = true) => {
+      if (!canFetch) throw new Error('Comments unavailable');
+      setError(null);
+      try {
+        await commentService.resolveComment(workspaceId, projectId, commentId, resolve);
+        await loadComments();
+      } catch (err) {
+        setError(err?.message || 'Failed to update thread');
+        throw err;
+      }
+    },
+    [canFetch, workspaceId, projectId, loadComments]
   );
 
   return {
     comments,
-    commentCount: comments.length,
+    commentCount: comments.reduce(
+      (total, comment) => total + 1 + (Array.isArray(comment.replies) ? comment.replies.length : 0),
+      0
+    ),
     nextCursor,
     loading,
     loadingMore,
@@ -155,6 +172,7 @@ export function useProjectComments(workspaceId, projectId, { enabled = true } = 
     createComment,
     updateComment,
     deleteComment,
+    resolveComment,
   };
 }
 

@@ -5,7 +5,7 @@ import { helpCategories, helpArticles } from '../pages/UserHelp/helpContent.js';
 
 export const SEARCH_CATEGORIES = [
   { id: 'pages', label: 'Pages' },
-  { id: 'videos', label: 'Videos' },
+  { id: 'videos', label: 'Work' },
   { id: 'workspaces', label: 'Workspaces' },
   { id: 'avatars', label: 'Avatars' },
   { id: 'voices', label: 'Voices' },
@@ -132,7 +132,7 @@ export function buildDefaultSuggestions(staticIndex = []) {
   const pages = staticIndex.filter((r) => r.category === 'pages');
   const home = pages.find((p) => p.action?.section === 'home');
   const workspace = pages.find((p) => p.action?.section === 'workspace');
-  const videos = pages.find((p) => p.action?.section === 'videos');
+  const myWork = pages.find((p) => p.action?.section === 'my-work' || p.action?.section === 'videos');
   const help = pages.find((p) => p.action?.section === 'help');
 
   const popularHelp = staticIndex.filter(
@@ -140,7 +140,7 @@ export function buildDefaultSuggestions(staticIndex = []) {
   );
 
   const seen = new Set();
-  const ordered = [home, workspace, videos, help, ...popularHelp].filter(Boolean);
+  const ordered = [home, workspace, myWork, help, ...popularHelp].filter(Boolean);
   return ordered.filter((r) => {
     if (seen.has(r.id)) return false;
     seen.add(r.id);

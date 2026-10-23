@@ -1,0 +1,99 @@
+/* ==========================================================================
+   Admin Users Panel Styles (UsersModule & UsersList)
+   Toolbar, search filters, action buttons, and user management tables.
+   ========================================================================== */
+
+.user-management-header {
+  margin-bottom: 24px;
+}
+
+.user-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.user-action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.user-toolbar .search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  flex: 1;
+  max-width: 380px;
+  min-width: 240px;
+  transition: all 0.2s ease;
+}
+
+.user-toolbar .search-bar:focus-within {
+  border-color: var(--primary);
+  background: var(--bg-card);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12);
+}
+
+.user-toolbar .search-bar svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+.user-toolbar .search-bar input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--text-main);
+  font-size: 0.875rem;
+  font-family: inherit;
+}
+
+.user-toolbar .search-bar input::placeholder {
+  color: var(--text-muted);
+}
+
+.table-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.user-action-btn {
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: all 0.18s ease;
+}
+
+.user-action-btn.icon-only {
+  padding: 0;
+  width: 34px;
+  height: 34px;
+  justify-content: center;
+}
+
+.user-action-btn:hover {
+  background: color-mix(in srgb, var(--primary) 10%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border-color));
+  color: var(--text-main);
+  transform: translateY(-1px);
+}

@@ -9,6 +9,7 @@ import {
   buildInvitationHeadline,
   savePendingInvitation,
   savePendingInvitationPreview,
+  clearPendingInvitation,
 } from '../../utils/inviteNavigation.js'
 import './InviteAcceptance.css'
 
@@ -51,6 +52,7 @@ const InviteAcceptance = () => {
       savePendingInvitationPreview(preview)
       setPageMode('ready')
     } catch (err) {
+      clearPendingInvitation()
       setInvitation(null)
       setError(err.message || 'This invitation is no longer valid')
       setPageMode('invalid')
@@ -98,8 +100,7 @@ const InviteAcceptance = () => {
         setPageMode('wrongAccount')
         return
       }
-      const authPath = '/login'
-      window.location.assign(authPath)
+      window.location.assign(invitation.requiresRegistration ? '/signup' : '/login')
       return
     }
 
@@ -134,6 +135,7 @@ const InviteAcceptance = () => {
   }
 
   const handleDecline = () => {
+    clearPendingInvitation()
     window.location.href = '/'
   }
 

@@ -8,9 +8,11 @@ import {
   MdPlayArrow,
   MdAnimation,
   MdContentCopy,
+  MdPersonOutline,
 } from 'react-icons/md';
 import SidebarSceneThumb from './SidebarSceneThumb';
 import SceneTransitionPicker from './SceneTransitionPicker';
+import SceneAssigneePicker from './SceneAssigneePicker';
 import AllSequencesPanel from './AllSequencesPanel';
 import {
   getSceneTransitionCatalogValue,
@@ -68,23 +70,41 @@ const EditorSidebar = ({
   setShowTemplateModal,
   onAddSceneAfter,
   updateScene,
+  isTeamWorkspace = false,
+  canManageAssignee = false,
+  workspaceMembers = [],
+  membersLoading = false,
+  assigneeBusy = false,
+  onLoadAssigneeMembers,
+  onAssignScene,
 }) => {
   const [transitionPickerSceneId, setTransitionPickerSceneId] = useState(null);
+  const [assigneeSceneId, setAssigneeSceneId] = useState(null);
   const [showAllSequences, setShowAllSequences] = useState(false);
   const [scrollActive, setScrollActive] = useState(false);
   const sidebarRef = useRef(null);
 
   const pickerScene = scenes.find((s) => s.id === transitionPickerSceneId);
+  const assigneeScene = scenes.find((s) => s.id === assigneeSceneId);
 
   const trackMode = transitionPickerSceneId
     ? 'picker'
-    : showAllSequences
-      ? 'sequences'
-      : 'scenes';
+    : assigneeSceneId
+      ? 'assignee'
+      : showAllSequences
+        ? 'sequences'
+        : 'scenes';
 
   const closeOverlay = () => {
     setTransitionPickerSceneId(null);
+    setAssigneeSceneId(null);
     setShowAllSequences(false);
+  };
+
+  const openAssigneePicker = (sceneId) => {
+    setShowAllSequences(false);
+    setAssigneeSceneId(sceneId);
+    if (canManageAssignee) onLoadAssigneeMembers?.();
   };
 
   const handleSelectTransition = (value) => {
@@ -121,9 +141,11 @@ const EditorSidebar = ({
             <MdGridView size={17} />
             {transitionPickerSceneId
               ? 'Transitions'
-              : showAllSequences
-                ? 'All Sequences'
-                : 'Scenes'}
+              : assigneeSceneId
+                ? 'Assignee'
+                : showAllSequences
+                  ? 'All Sequences'
+                  : 'Scenes'}
           </span>
           {trackMode !== 'scenes' ? (
             <button
@@ -202,6 +224,23 @@ const EditorSidebar = ({
                             {scene.title || `Scene ${index + 1}`}
                           </span>
                           <div className="scene-list-card__actions">
+                            {isTeamWorkspace && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openAssigneePicker(scene.id);
+                                }}
+                                className="scene-list-card__action-btn"
+                                title={
+                                  scene.assignee
+                                    ? `Assigned to ${scene.assignee.name || scene.assignee.email}`
+                                    : 'Assignee'
+                                }
+                              >
+                                <MdPersonOutline size={14} />
+                              </button>
+                            )}
                             {onDuplicateScene && (
                               <button
                                 type="button"
@@ -255,6 +294,19 @@ const EditorSidebar = ({
                 <SceneTransitionPicker
                   activeValue={getSceneTransitionCatalogValue(pickerScene)}
                   onSelect={handleSelectTransition}
+                />
+              ) : null}
+            </div>
+
+            <div className="scenes-sidebar__pane">
+              {assigneeSceneId ? (
+                <SceneAssigneePicker
+                  canManage={canManageAssignee}
+                  assignee={assigneeScene?.assignee || null}
+                  members={workspaceMembers}
+                  membersLoading={membersLoading}
+                  busy={assigneeBusy}
+                  onAssign={(userId) => onAssignScene?.(assigneeSceneId, userId)}
                 />
               ) : null}
             </div>

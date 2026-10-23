@@ -1,0 +1,796 @@
+import presentationService from '../services/presentationService'
+import {
+  compileDeckLayoutToElements,
+  buildThemeCompileOptions,
+  hasOverlappingTextPlacements,
+  isTextLayoutRole,
+} from './compileDeckLayoutToElements'
+import { buildContentBySlotIdFromSlideContent, mergeContentBySlotId } from './contentSlotMapping'
+import { isCatalogPlaceholderText } from './catalogPlaceholder'
+import {
+  rebindSlideContent,
+  rebindAndFinalizeSlideElements,
+  slideContentHasStructuredCopy,
+  countPlaceholderHeavyTextSlots,
+} from './rebindSlideContent.js'
+import {
+  buildLayoutSchemaMap,
+  getDeckLayoutSchema,
+  listDeckLayoutIds,
+  normalizeLayoutId,
+  resolveLayoutSchemaById,
+} from './deckLayoutRegistry'
+import { parseRegion } from './layoutPreviewUtils'
+import { resolveSmartLayoutState } from './smartLayoutState'
+import { buildCanvasDoc, resolveCanvasSize } from './presentationHelpers'
+import { layoutSchemaHasCanvasElements, resolveLayoutCanvasElementsDoc } from './videoTemplateToCanvasElements'
+import {
+  isTitleCenteredLayout,
+  isTitleMinimalLayout,
+  isTitleImageLogoLayout,
+  isTitleHeroLeftBlobLayout,
+  isTitleHeroLeftFadeLayout,
+  isTitleHeroRightOvalLayout,
+  isTitleHeroRightFadeLayout,
+  isTitleFullbleedLayout,
+  isTitleFullbleedOverlayLayout,
+} from './titleCentered'
+
+function isTitleCustomLayout(layoutId, schema) {
+  return (
+    isTitleCenteredLayout(layoutId, schema) ||
+    isTitleMinimalLayout(layoutId, schema) ||
+    isTitleImageLogoLayout(layoutId, schema) ||
+    isTitleHeroLeftBlobLayout(layoutId, schema) ||
+    isTitleHeroLeftFadeLayout(layoutId, schema) ||
+    isTitleHeroRightOvalLayout(layoutId, schema) ||
+    isTitleHeroRightFadeLayout(layoutId, schema) ||
+    isTitleFullbleedLayout(layoutId, schema) ||
+    isTitleFullbleedOverlayLayout(layoutId, schema)
+  )
+}
+
+function unwrapTemplateList(payload) {
+  if (Array.isArray(payload)) return payload
+  return payload?.items || payload?.templates || payload?.data || []
+}
+
+export function buildLayoutSchemaMapFromTemplates(templates = []) {
+  const map = buildLayoutSchemaMap(
+    templates
+      .filter(
+        (template) =>
+          template?.schema?.slots?.length
+          || template?.schema?.layout_id
+          || layoutSchemaHasCanvasElements(template?.schema)
+      )
+      .map((template) => ({ schema: template.schema }))
+  )
+
+  for (const template of templates) {
+    const layoutId = String(template?.schema?.layout_id || '').trim()
+    if (!layoutId || map[layoutId]) continue
+    const registered = getDeckLayoutSchema(layoutId)
+    if (registered) map[layoutId] = registered
+  }
+
+  // Code catalog is source of truth for shipped layouts — override stale DB schemas.
+  for (const layoutId of listDeckLayoutIds()) {
+    const registered = getDeckLayoutSchema(layoutId)
+    if (registered?.slots?.length) map[layoutId] = registered
+  }
+
+  // Retired ids always resolve to the current catalog schema.
+  map.process_linear_v1 = getDeckLayoutSchema('process_linner_horti_v1') || map.process_linear_v1
+
+  return map
+}
+
+export function resolveLayoutTemplateRecord(templateId, layoutTemplates = []) {
+  const key = String(templateId || '').trim()
+  if (!key) return null
+  return (
+    layoutTemplates.find(
+      (template) =>
+        String(template.id || template.templateId || '') === key ||
+        String(template.templateId || '') === key
+    ) || null
+  )
+}
+
+export async function fetchLayoutSchemaMap(workspaceId) {
+  if (!workspaceId) return {}
+  try {
+    const payload = await presentationService.listTemplates(workspaceId)
+    const templates = unwrapTemplateList(payload).filter(
+      (template) =>
+        template?.type === 'DECK_LAYOUT' ||
+        template?.schema?.layout_id ||
+        String(template?.contentType || '').toLowerCase() === 'layout'
+    )
+    return buildLayoutSchemaMapFromTemplates(templates)
+  } catch {
+    return {}
+  }
+}
+
+export async function resolveLayoutSchema({
+  workspaceId,
+  templateId,
+  layoutId,
+  schema,
+  layoutSchemaMap = {},
+}) {
+  // Prefer code catalog whenever layout_id is known — avoids stale DB templates.
+  const key = normalizeLayoutId(layoutId || schema?.layout_id || '')
+  if (key) {
+    const registered = getDeckLayoutSchema(key)
+    if (registered?.slots?.length || layoutSchemaHasCanvasElements(registered)) return registered
+  }
+
+  if (schema?.slots?.length || layoutSchemaHasCanvasElements(schema)) return schema
+
+  if (key) {
+    const fromMap = resolveLayoutSchemaById(key, layoutSchemaMap)
+    if (fromMap?.slots?.length || layoutSchemaHasCanvasElements(fromMap)) return fromMap
+  }
+
+  if (templateId && workspaceId) {
+    try {
+      const row = await presentationService.getTemplate(workspaceId, templateId)
+      const resolved = row?.schema || row?.data?.schema || row?.template?.schema
+      const resolvedId = normalizeLayoutId(resolved?.layout_id || '')
+      if (resolvedId) {
+        const registered = getDeckLayoutSchema(resolvedId)
+        if (registered?.slots?.length || layoutSchemaHasCanvasElements(registered)) return registered
+      }
+      if (resolved?.slots?.length || layoutSchemaHasCanvasElements(resolved)) return resolved
+    } catch {
+      // fall through
+    }
+  }
+
+  return null
+}
+
+function sortSlotsByPosition(slots) {
+  return [...slots].sort((a, b) => {
+    const ra = parseRegion(a.region)
+    const rb = parseRegion(b.region)
+    if (!ra && !rb) return 0
+    if (!ra) return 1
+    if (!rb) return -1
+    if (ra.r1 !== rb.r1) return ra.r1 - rb.r1
+    if (ra.c1 !== rb.c1) return ra.c1 - rb.c1
+    return String(a.id).localeCompare(String(b.id))
+  })
+}
+
+/** Pull slot text from existing canvas elements (e.g. after broken apply-layout or AI generate). */
+const SLOT_ROLE_ALIASES = {
+  heading: ['heading', 'title', 'headline'],
+  title: ['heading', 'title', 'headline'],
+  headline: ['heading', 'title', 'headline'],
+  subtitle: ['subtitle', 'subheading', 'tagline'],
+  subheading: ['subtitle', 'subheading', 'tagline'],
+  body: ['body', 'paragraph', 'text'],
+  caption: ['caption', 'label'],
+  image: ['image', 'background'],
+  background: ['image', 'background'],
+}
+
+function rolesCompatible(a, b) {
+  const left = String(a || '').toLowerCase()
+  const right = String(b || '').toLowerCase()
+  if (!left || !right) return false
+  if (left === right) return true
+  if ((SLOT_ROLE_ALIASES[left] || []).includes(right)) return true
+  if (/heading|title|headline/.test(left) && ['heading', 'title', 'headline'].includes(right)) return true
+  if (/subtitle|subheading|tagline/.test(left) && ['subtitle', 'subheading', 'tagline'].includes(right)) return true
+  if (/(^|_)(image|hero|background)/.test(left) && (right === 'image' || right === 'background')) return true
+  return false
+}
+
+export function extractContentBySlotFromElements(elements = [], schema) {
+  const slots = Array.isArray(schema?.slots) ? schema.slots : []
+  const bySlotId = {}
+  const used = new Set()
+  const newSlotIds = new Set(slots.map((s) => String(s.id || '')))
+
+  for (const el of elements) {
+    const slotId = el?.slotId || el?.meta?.slotId || el?.content?.slotId
+    if (!slotId) continue
+    if (el.type === 'text' && el.content?.text != null) {
+      const text = String(el.content.text).trim()
+      if (text && !isCatalogPlaceholderText(text)) {
+        bySlotId[slotId] = text
+        if (newSlotIds.has(String(slotId))) used.add(el)
+      }
+    }
+    if (el.type === 'image' && (el.content?.url || el.content?.src)) {
+      bySlotId[`${slotId}__url`] = el.content.url || el.content.src
+      if (newSlotIds.has(String(slotId))) used.add(el)
+    }
+    if (el.type === 'chart' && el.content) {
+      bySlotId[`${slotId}__chart`] = el.content
+      if (newSlotIds.has(String(slotId))) used.add(el)
+    }
+  }
+
+  for (const slot of slots) {
+    const slotId = String(slot.id || '')
+    const role = String(slot.role || '').toLowerCase()
+    const wantsImage = role === 'image' || role === 'background'
+    if (wantsImage) {
+      if (bySlotId[`${slotId}__url`]) continue
+      const match = elements.find(
+        (el) =>
+          !used.has(el) &&
+          el.type === 'image' &&
+          (el.content?.url || el.content?.src) &&
+          rolesCompatible(el.role || el.slotId, role)
+      )
+      if (match) {
+        bySlotId[`${slotId}__url`] = match.content.url || match.content.src
+        used.add(match)
+      }
+      continue
+    }
+    if (bySlotId[slotId] || !isTextLayoutRole(role)) continue
+    const match = elements.find((el) => {
+      if (used.has(el) || el.type !== 'text') return false
+      const text = String(el.content?.text || '').trim()
+      if (!text || isCatalogPlaceholderText(text)) return false
+      return rolesCompatible(el.role, role) || rolesCompatible(el.slotId, role)
+    })
+    if (match) {
+      bySlotId[slotId] = String(match.content.text).trim()
+      used.add(match)
+    }
+  }
+
+  if (Object.keys(bySlotId).length) return bySlotId
+
+  const textSlots = sortSlotsByPosition(slots.filter((slot) => isTextLayoutRole(slot.role)))
+  const textEls = elements
+    .filter((el) => el.type === 'text' && String(el.content?.text || '').trim())
+    .sort((a, b) => {
+      const ay = a.placement?.y ?? 0
+      const by = b.placement?.y ?? 0
+      if (ay !== by) return ay - by
+      return (a.placement?.x ?? 0) - (b.placement?.x ?? 0)
+    })
+
+  if (!textSlots.length || !textEls.length) return bySlotId
+
+  const uniqueTexts = new Set(textEls.map((el) => String(el.content.text).trim()))
+  if (uniqueTexts.size <= 1 && textEls.length > 2) return bySlotId
+
+  textSlots.forEach((slot, index) => {
+    const el = textEls[index]
+    if (el?.content?.text == null) return
+    const text = String(el.content.text).trim()
+    if (!text) return
+    const uniqueCount = new Set(textEls.map((item) => String(item.content?.text || '').trim())).size
+    if (uniqueCount <= 1 && textEls.length > 2) return
+    if (/insights chart|grid insights/i.test(text) && slot.role === 'caption') return
+    bySlotId[slot.id] = text
+  })
+
+  for (const el of elements) {
+    if (el.type !== 'image') continue
+    const url = el.content?.url || el.content?.src
+    if (!url) continue
+    const imageSlots = slots.filter((slot) => slot.role === 'image')
+    const match = imageSlots.find((slot) => {
+      const reg = parseRegion(slot.region)
+      if (!reg || !el.placement) return false
+      const ex = el.placement.x ?? 0
+      const ey = el.placement.y ?? 0
+      return Math.abs(ex - reg.c1 * 160) < 200 && Math.abs(ey - reg.r1 * 108) < 200
+    })
+    if (match) bySlotId[`${match.id}__url`] = url
+  }
+
+  return bySlotId
+}
+
+/** A canvas with zero elements is never a hand-made layout — rebuild it when the slide has copy. */
+function slideHasCopy(slide) {
+  const content = slide?.content && typeof slide.content === 'object' ? slide.content : {}
+  return Boolean(
+    String(slide?.title || content.title || content.body || content.subtitle || '').trim() ||
+      (Array.isArray(content.bullets) && content.bullets.length) ||
+      (Array.isArray(content.columns) && content.columns.length) ||
+      (Array.isArray(content.diagram?.cells) && content.diagram.cells.length) ||
+      (Array.isArray(content.plans) && content.plans.length >= 2)
+  )
+}
+
+function isWeakPricingEditorText(text) {
+  const t = String(text || '').trim().toLowerCase()
+  return !t || t === 'double-click to edit' || t === 'double click to edit'
+}
+
+function isPricingLayoutSchema(schema, layoutId) {
+  const id = String(layoutId || schema?.layout_id || '')
+  const ct = String(schema?.content_type || '').toLowerCase()
+  return ct === 'pricing' || /^pricing_/i.test(id)
+}
+
+function hasWeakPricingPlanElements(elements = []) {
+  return elements.some((el) => {
+    if (el.type !== 'text' && el.type !== 'textbox') return false
+    const sid = String(el.slotId || el.id || '').toUpperCase()
+    if (!/^PLAN_\d+_(LABEL|NAME|PRICE|ITEM_|PERIOD|CTA)/.test(sid)) return false
+    return isWeakPricingEditorText(el.content?.text)
+  })
+}
+
+function needsPricingPlansRehydrate(slide, elements = [], schema = null) {
+  const layoutId = slide?.layoutId || slide?.layout_id
+  if (!isPricingLayoutSchema(schema, layoutId)) return false
+  const plans = slide?.content?.plans
+  if (!Array.isArray(plans) || plans.length < 2) return false
+  return hasWeakPricingPlanElements(elements)
+}
+
+export function needsStructuralCanvasRepair(slide, elements = [], schema = null, opts = {}) {
+  const list = Array.isArray(elements) ? elements : []
+  if (slide?.manuallyEdited && list.length > 0) return false
+
+  const layoutId = slide?.layoutId || slide?.layout_id || schema?.layout_id
+  const slots = Array.isArray(schema?.slots) ? schema.slots : []
+
+  if (slots.length && !list.length) return true
+  if (!list.length) return false
+  if (isTitleCustomLayout(layoutId, schema)) return false
+  if (schemaCanvasSlotMismatch(list, schema)) return true
+  if (processLinnerCanvasMismatch(list, schema)) return true
+  if (needsLegacyBrokenLayout(list, slide?.title)) return true
+
+  if (opts?.deckPackId) {
+    const { placeholders, filled } = countPlaceholderHeavyTextSlots(list, schema)
+    if (placeholders > filled && slideContentHasStructuredCopy(slide?.content)) return false
+    if (hasOverlappingTextPlacements(list) && needsLegacyBrokenLayout(list, slide?.title)) return true
+    return false
+  }
+
+  if (
+    hasOverlappingTextPlacements(list) &&
+    !list.some((el) =>
+      /^TEAM_(FOUR|FIVE|SIX)_(CARD|PHOTO_BG)_|^TEAM_DEPT_(BAR|PILL|RING)_|^TEAM_LEAD_(BAND|CURVE|PANEL|RING|DOT)_|^TEAM_ORG_(HALO|RING|LINE)_/i.test(
+        String(el.slotId || '')
+      )
+    ) &&
+    needsLegacyBrokenLayout(list, slide?.title)
+  ) {
+    return true
+  }
+
+  return false
+}
+
+export function needsLayoutCanvasRepair(slide, elements = [], schema = null, opts = {}) {
+  const list = Array.isArray(elements) ? elements : []
+  // Generation can leave a slide with an empty canvas (flagged manuallyEdited by a later save);
+  // that must still be rebuilt from its layout or the editor shows bare text / nothing.
+  if (slide?.manuallyEdited && (list.length > 0 || !slideHasCopy(slide))) return false
+
+  const layoutId = slide?.layoutId || slide?.layout_id || schema?.layout_id
+  if (needsPricingPlansRehydrate(slide, list, schema)) return true
+
+  if (needsStructuralCanvasRepair(slide, list, schema, opts)) return true
+  if (needsContentHydration(slide, list)) return true
+
+  return false
+}
+
+/** Detect stale canvas structure vs current layout schema (e.g. old masonry with 3 images). */
+function schemaCanvasSlotMismatch(elements = [], schema = null) {
+  const slots = Array.isArray(schema?.slots) ? schema.slots : []
+  if (!slots.length || !elements.length) return false
+
+  const expected = new Set(
+    slots
+      .filter((slot) => {
+        const id = String(slot?.id || '')
+        if (slot?.aiOnly && !/^METRIC_CARD_\d+_BG$/i.test(id)) return false
+        return Boolean(id)
+      })
+      .map((slot) => String(slot.id))
+  )
+  const onCanvas = new Set(
+    elements.map((el) => String(el.slotId || '')).filter(Boolean)
+  )
+
+  for (const id of onCanvas) {
+    if (
+      !expected.has(id) &&
+      /^(METRIC_IMAGE|STAT_|METRIC_TITLE|METRIC_BODY|METRIC_CARD)/i.test(id)
+    ) {
+      return true
+    }
+  }
+
+  for (const id of expected) {
+    if (
+      /^(METRIC_IMAGE|STAT_\d+_VALUE|METRIC_TITLE|HEADING)$/i.test(id) &&
+      !onCanvas.has(id)
+    ) {
+      return true
+    }
+  }
+
+  return false
+}
+
+function processLinnerCanvasMismatch(elements = [], schema = null) {
+  const layoutId = normalizeLayoutId(schema?.layout_id || '')
+  if (!/^process_linner_/i.test(layoutId)) return false
+
+  const list = Array.isArray(elements) ? elements : []
+  const hasLegacyFlowChrome = list.some(
+    (el) =>
+      /^TIMELINE_(ARROW|SEG|NODE)/i.test(String(el.slotId || '')) ||
+      /^STEP_\d+_CIRCLE$/i.test(String(el.slotId || ''))
+  )
+
+  if (/^process_linner_horti/i.test(layoutId)) {
+    const hasStepTitles = list.some((el) => /^STEP_\d+_TITLE$/i.test(String(el.slotId || '')))
+    const hasSpine = list.some((el) => String(el.slotId || '') === 'PROCESS_LINNER_SPINE')
+    if (!hasStepTitles) return false
+    return hasLegacyFlowChrome || !hasSpine
+  }
+
+  if (/^process_linner_numeric/i.test(layoutId)) {
+    const hasNumbers = list.some((el) => /^STEP_\d+_NUMBER$/i.test(String(el.slotId || '')))
+    const hasSlotLine = list.some((el) => /^STEP_\d+_NUMBER_SLOT$/i.test(String(el.slotId || '')))
+    if (!hasNumbers) return false
+    return hasLegacyFlowChrome || !hasSlotLine
+  }
+
+  return false
+}
+
+function isEmptyCanvasText(text) {
+  const t = String(text || '').trim()
+  if (!t) return true
+  return isCatalogPlaceholderText(t) || /^double-?click to edit$/i.test(t)
+}
+
+function needsContentHydration(slide, elements = []) {
+  const content = slide?.content && typeof slide.content === 'object' ? slide.content : {}
+  const hasCopy = slideContentHasStructuredCopy(content)
+  if (hasCopy) {
+    const emptyText = elements.some(
+      (el) =>
+        (el.type === 'text' || el.type === 'textbox') &&
+        isEmptyCanvasText(el.content?.text) &&
+        !/heading|title/i.test(String(el.role || el.slotId || ''))
+    )
+    if (emptyText) return true
+  }
+
+  const hasImageSource = Boolean(
+    slide?.imageRef?.url ||
+      content.imageRef?.url ||
+      content.imageUrl ||
+      (content.slotImageUrls && Object.values(content.slotImageUrls).some(Boolean)) ||
+      (Array.isArray(content.imageUrls) && content.imageUrls.some(Boolean))
+  )
+  if (hasImageSource) {
+    const missingImage = elements.some(
+      (el) => el.type === 'image' && !el.content?.url && !el.content?.src
+    )
+    if (missingImage) return true
+  }
+
+  if (content.chart && typeof content.chart === 'object') {
+    const chartEl = elements.find((el) => el.type === 'chart')
+    const values =
+      chartEl?.content?.data?.series?.[0]?.values ||
+      chartEl?.content?.series?.[0]?.values ||
+      chartEl?.content?.values ||
+      []
+    if (chartEl && (!Array.isArray(values) || !values.length)) return true
+    if (!chartEl) return true
+  }
+
+  return false
+}
+
+function needsLegacyBrokenLayout(list, slideTitle = '') {
+  const textEls = list.filter((el) => el.type === 'text')
+  if (textEls.length < 2) return false
+
+  const titleNorm = String(slideTitle || '').trim().toLowerCase()
+  if (titleNorm) {
+    const dupTitleCount = textEls.filter(
+      (el) => String(el.content?.text || '').trim().toLowerCase() === titleNorm
+    ).length
+    if (dupTitleCount >= 2) return true
+  }
+
+  const buckets = new Map()
+  for (const el of textEls) {
+    const x = Math.round((el.placement?.x ?? 0) / 40)
+    const y = Math.round((el.placement?.y ?? 0) / 40)
+    const key = `${x},${y}`
+    buckets.set(key, (buckets.get(key) || 0) + 1)
+  }
+  if ([...buckets.values()].some((count) => count >= 3)) return true
+
+  const tinyText = textEls.filter(
+    (el) => (el.placement?.width ?? 0) < 80 || (el.placement?.height ?? 0) < 20
+  )
+  if (tinyText.length >= Math.ceil(textEls.length / 2)) return true
+
+  return false
+}
+
+export async function applyCompiledLayoutToSlide({
+  workspaceId,
+  presentationId,
+  slideId,
+  templateId,
+  layoutId,
+  schema,
+  layoutSchemaMap = {},
+  aspectRatio = '16:9',
+  palette = null,
+  themeTokens = null,
+  fonts = null,
+  typeScale = null,
+  slideTitle = '',
+  slideContent = null,
+  mergeFromElements = [],
+  skipSave = false,
+  skipContentValidation = false,
+}) {
+  if (!workspaceId || !presentationId || !slideId) return null
+
+  const resolvedSchema = await resolveLayoutSchema({
+    workspaceId,
+    templateId,
+    layoutId,
+    schema,
+    layoutSchemaMap,
+  })
+  if (layoutSchemaHasCanvasElements(resolvedSchema) && !resolvedSchema?.slots?.length) {
+    const elementsDoc = resolveLayoutCanvasElementsDoc(resolvedSchema)
+    const canvasDoc = buildCanvasDoc(
+      { elements: elementsDoc },
+      {
+        aspectRatio,
+        elements: elementsDoc.elements || [],
+      }
+    )
+    if (skipSave) return canvasDoc
+
+    const result = await presentationService.saveCanvas(
+      workspaceId,
+      presentationId,
+      slideId,
+      canvasDoc
+    )
+    return result
+  }
+
+  if (!resolvedSchema?.slots?.length) return null
+
+  const canvas = resolveCanvasSize(null, aspectRatio)
+  const content = {
+    ...(slideContent && typeof slideContent === 'object' ? slideContent : {}),
+    ...(slideTitle && !(slideContent && slideContent.title) ? { title: slideTitle } : {}),
+  }
+  if (!content.title && slideTitle) content.title = slideTitle
+
+  const smartSchema = resolveSmartLayoutState(resolvedSchema, content)
+
+  if (skipContentValidation !== true) {
+    const { validateContentForLayout } = await import('./contentContract.js')
+    validateContentForLayout(content, smartSchema)
+  }
+
+  const extracted = extractContentBySlotFromElements(mergeFromElements, smartSchema)
+  const contentBySlotId = mergeContentBySlotId(
+    buildContentBySlotIdFromSlideContent(content, smartSchema),
+    extracted
+  )
+  const compileOptions = buildThemeCompileOptions(themeTokens, {
+    palette,
+    fonts,
+    typeScale,
+  })
+
+  const existingElements = Array.isArray(mergeFromElements) ? mergeFromElements : []
+  const slideStub = { content, title: content.title || slideTitle, manuallyEdited: false }
+  const structural = needsStructuralCanvasRepair(slideStub, existingElements, smartSchema)
+  const canRebind =
+    existingElements.length > 0 &&
+    !structural &&
+    slideContentHasStructuredCopy(content)
+
+  let elements
+  if (canRebind) {
+    elements = await rebindAndFinalizeSlideElements(existingElements, content, smartSchema, {
+      palette: compileOptions.palette || palette || {},
+      canvas,
+    })
+  } else {
+    elements = compileDeckLayoutToElements(smartSchema, {
+      canvas,
+      ...compileOptions,
+      contentBySlotId,
+      content,
+      skipContentValidation: skipContentValidation === true,
+      debugGeometry: import.meta.env?.DEV === true,
+    })
+  }
+
+  const canvasDoc = buildCanvasDoc(null, {
+    aspectRatio,
+    elements,
+    backgroundColor: compileOptions.palette?.bg || palette?.bg || null,
+  })
+  if (skipSave) return canvasDoc
+
+  const result = await presentationService.saveCanvas(
+    workspaceId,
+    presentationId,
+    slideId,
+    canvasDoc
+  )
+  return result
+}
+
+export async function repairPresentationLayoutSlides({
+  workspaceId,
+  presentationId,
+  slides = [],
+  layoutSchemaMap = {},
+  aspectRatio = '16:9',
+  palette = null,
+  themeTokens = null,
+  deckPackId = null,
+}) {
+  const repairs = []
+
+  for (const slide of slides) {
+    const layoutId = slide?.layoutId || slide?.layout_id
+    if (!layoutId) continue
+
+    const elements = slide?.elements?.elements || []
+    const schema = await resolveLayoutSchema({
+      workspaceId,
+      layoutId,
+      layoutSchemaMap,
+    })
+    if (!schema?.slots?.length) continue
+    if (!needsLayoutCanvasRepair(slide, elements, schema, { deckPackId })) continue
+
+    repairs.push(
+      applyCompiledLayoutToSlide({
+        workspaceId,
+        presentationId,
+        slideId: slide.id,
+        layoutId,
+        schema,
+        layoutSchemaMap,
+        aspectRatio,
+        palette,
+        themeTokens,
+        slideTitle: slide.title,
+        slideContent: {
+          ...(slide.content || slide.placeholder || {}),
+          imageRef: slide.imageRef || slide.content?.imageRef || null,
+        },
+        mergeFromElements: elements,
+        // Repair is best-effort: render whatever content exists instead of leaving the canvas broken.
+        skipContentValidation: true,
+      })
+    )
+  }
+
+  if (!repairs.length) return false
+  const results = await Promise.allSettled(repairs)
+  results.forEach((r) => {
+    if (r.status === 'rejected') console.warn('[layoutCanvasService] slide repair failed', r.reason)
+  })
+  return results.some((r) => r.status === 'fulfilled' && r.value)
+}
+
+/** In-editor sync: rebind text only (geometry already finalized from backend). */
+export function rebindSlideContentLocally(slide, schema, { aspectRatio = '16:9', themeTokens = null, palette = null } = {}) {
+  const elements = slide?.elements?.elements || []
+  if (!schema?.slots?.length) return slide
+
+  const content = {
+    ...(slide.content && typeof slide.content === 'object' ? slide.content : {}),
+    ...(slide.title && !(slide.content && slide.content.title) ? { title: slide.title } : {}),
+  }
+  if (!slideContentHasStructuredCopy(content)) return slide
+
+  const { placeholders, filled } = countPlaceholderHeavyTextSlots(elements, schema)
+  const needsRebind =
+    needsPricingPlansRehydrate(slide, elements, schema) ||
+    (placeholders > 0 && placeholders >= filled) ||
+    needsContentHydration(slide, elements)
+  if (!needsRebind) return slide
+
+  const canvas = resolveCanvasSize(null, aspectRatio)
+  const smartSchema = resolveSmartLayoutState(schema, content)
+  const compileOptions = buildThemeCompileOptions(themeTokens, { palette })
+  const structural = needsStructuralCanvasRepair(slide, elements, smartSchema)
+  if (structural || !elements.length) return slide
+
+  const nextElements = rebindSlideContent(elements, content, smartSchema, {
+    palette: compileOptions.palette || palette || {},
+    canvas,
+  })
+  const canvasDoc = buildCanvasDoc(null, {
+    aspectRatio,
+    elements: nextElements,
+    backgroundColor: compileOptions.palette?.bg || palette?.bg || slide?.backgroundColor || null,
+  })
+  return { ...slide, elements: canvasDoc }
+}
+
+/** In-editor: rebind slide.content onto canvas when copy is missing but geometry is OK. */
+export async function rebindOrRepairSlideLocally(
+  slide,
+  schema,
+  { aspectRatio = '16:9', themeTokens = null, palette = null } = {}
+) {
+  const elements = slide?.elements?.elements || []
+  if (!schema?.slots?.length) return slide
+
+  const content = {
+    ...(slide.content && typeof slide.content === 'object' ? slide.content : {}),
+    ...(slide.title && !(slide.content && slide.content.title) ? { title: slide.title } : {}),
+  }
+  if (!slideContentHasStructuredCopy(content)) return slide
+
+  const { placeholders, filled } = countPlaceholderHeavyTextSlots(elements, schema)
+  const pricingRehydrate = needsPricingPlansRehydrate(slide, elements, schema)
+  const needsRebind =
+    pricingRehydrate ||
+    (placeholders > 0 && placeholders >= filled) ||
+    needsContentHydration(slide, elements)
+
+  if (!needsRebind) return slide
+
+  const canvas = resolveCanvasSize(null, aspectRatio)
+  const smartSchema = resolveSmartLayoutState(schema, content)
+  const compileOptions = buildThemeCompileOptions(themeTokens, { palette })
+  const structural = needsStructuralCanvasRepair(slide, elements, smartSchema)
+
+  let nextElements
+  if (!structural && elements.length) {
+    nextElements = await rebindAndFinalizeSlideElements(elements, content, smartSchema, {
+      palette: compileOptions.palette || palette || {},
+      canvas,
+    })
+  } else {
+    nextElements = compileDeckLayoutToElements(smartSchema, {
+      canvas,
+      ...compileOptions,
+      content,
+      contentBySlotId: buildContentBySlotIdFromSlideContent(content, smartSchema),
+      skipContentValidation: true,
+    })
+  }
+
+  const canvasDoc = buildCanvasDoc(null, {
+    aspectRatio,
+    elements: nextElements,
+    backgroundColor: compileOptions.palette?.bg || palette?.bg || slide?.backgroundColor || null,
+  })
+  return { ...slide, elements: canvasDoc }
+}
+
+/** @deprecated Use rebindOrRepairSlideLocally */
+export function rehydratePricingSlideElementsLocally(slide, schema, opts = {}) {
+  return rebindOrRepairSlideLocally(slide, schema, opts)
+}

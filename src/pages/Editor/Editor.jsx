@@ -27,6 +27,9 @@ import { extractCreditsUsed } from '../../utils/creditTransactions.js'
 import avatar1 from '../../assets/Avatarr1.png'
 import projectTemplate from '../../constants/projectTemplate.json'
 import workspaceService from '../../services/workspaceService'
+import { useAuth } from '../../contexts/AuthContext'
+import { normalizeWorkspace, extractUserId } from '../TeamWorkspace/workspaceUtils'
+import { canManageAssignment, executeAssignScene } from '../../utils/assignmentFlow'
 import {
   applyPresenterSeedToScene,
   buildHeygenAvatarContent,
@@ -40,7 +43,7 @@ import {
   resolveVideoAvatarEngine,
   finalizeVideoCreatePayload,
 } from '../../utils/heygenAvatars'
-import { buildClipTextContent, isTextLayer } from '../../utils/textClip'
+import { buildClipTextContent } from '../../utils/textClip'
 import {
   fromBackendProjectData,
   rehydrateSceneVideos,
@@ -72,13 +75,14 @@ import { useEditorUx } from '../../hooks/useEditorUx'
 import useTextCanvasInteraction from '../../hooks/useTextCanvasInteraction'
 import { findSceneMusicClip, resolveAudioClipSrc } from '../../utils/audioClipUtils'
 import { probeAudioDuration } from '../../utils/audioDuration'
-import { normalizeClipStack, normalizeClipsToScene, getLayerNudgeStep } from '../../utils/editorLayerUtils'
+import { normalizeClipStack, normalizeClipsToScene, getLayerNudgeStep, isBackgroundClip, isCanvasNudgeableClip } from '../../utils/editorLayerUtils'
+import { getDefaultClipPlacement, COMPOSITION_W, COMPOSITION_H } from '../../utils/editorPlacementUtils'
+import { clampPlacementOverflow } from '../../utils/canvasOverflowUtils'
 import {
   findTopFrameAtPoint,
   resolveDropAssetId,
   resolveDropImageSrc,
 } from '../../utils/editorDragDrop'
-import { getDefaultClipPlacement } from '../../utils/editorPlacementUtils'
 import { rehydrateSceneAssetUrls } from '../../utils/assetClipUtils'
 import { normalizeSceneClips } from '../../utils/clipLayout'
 import { prepareTemplateSceneForEditor } from '../../utils/templateSceneUtils'
@@ -338,6 +342,14 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
   const [timelineScope, setTimelineScope] = useState('all')
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
+
+  // Per-scene assignee — TEAM workspaces only, OWNER/ADMIN can set (mirrors the
+  // PPT editor's per-slide assignee).
+  const { user: authUser } = useAuth()
+  const [sceneWorkspaceInfo, setSceneWorkspaceInfo] = useState(null)
+  const [sceneWorkspaceMembers, setSceneWorkspaceMembers] = useState([])
+  const [sceneMembersLoading, setSceneMembersLoading] = useState(false)
+  const [sceneAssigneeBusy, setSceneAssigneeBusy] = useState(false)
 
   const pausePlayback = useCallback(() => {
     if (!isPlaying) return
@@ -998,17 +1010,26 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
         if (s.id !== activeSceneId) return s
         return {
           ...s,
-          clips: s.clips.map(c =>
-            c.id === layerId
-              ? {
-                  ...c,
-                  position: { x: px, y: py },
-                  size: { width: w, height: h },
-                  _userPlaced: true,
-                  _coordsNormalized: true,
-                }
-              : c
-          )
+          clips: s.clips.map(c => {
+            if (c.id !== layerId) return c
+            if (isBackgroundClip(c)) {
+              return {
+                ...c,
+                position: { x: px, y: py },
+                size: { width: w, height: h },
+                _userPlaced: true,
+                _coordsNormalized: true,
+              }
+            }
+            const placed = clampPlacementOverflow(px, py, w, h, COMPOSITION_W, COMPOSITION_H)
+            return {
+              ...c,
+              position: { x: Math.round(placed.x), y: Math.round(placed.y) },
+              size: { width: Math.round(placed.width), height: Math.round(placed.height) },
+              _userPlaced: true,
+              _coordsNormalized: true,
+            }
+          })
         }
       })
     }))
@@ -1381,7 +1402,7 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
     return { scene: scenes[scenes.length - 1] || scenes[0], frameInScene: 0 }
   }
 
-  // Global Keyboard Shortcuts
+  // Global Keyboard Shortcuts (Canva-style canvas + editor controls)
   useEffect(() => {
     const handleKeyDown = (e) => {
       const activeEl = document.activeElement
@@ -1416,6 +1437,15 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
         return
       }
 
+      const mod = e.metaKey || e.ctrlKey
+      const layerIds =
+        selectedLayerIds.length > 0
+          ? selectedLayerIds
+          : selectedLayerId
+            ? [selectedLayerId]
+            : []
+      const primaryLayerId = layerIds[0] || null
+
       // Space: Play/Pause
       if (e.code === 'Space') {
         e.preventDefault()
@@ -1425,6 +1455,7 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
           window.speechSynthesis?.cancel()
           playerRef.current?.play()
         }
+        return
       }
 
       // Escape: exit edit or clear selection
@@ -1435,11 +1466,12 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
         } else {
           handleClearSelection()
         }
+        return
       }
 
       // Delete: remove selected layers, or active scene if none selected
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (selectedLayerIds.length > 0) {
+        if (layerIds.length > 0) {
           e.preventDefault()
           deleteSelectedLayers()
           return
@@ -1449,23 +1481,42 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
             deleteScene(activeSceneId)
           }
         }
+        return
+      }
+
+      // Layer order: ] / [ (also Ctrl+], Ctrl+[); Ctrl+Shift / Ctrl+Alt = front / back
+      if (
+        primaryLayerId &&
+        (e.code === 'BracketRight' || e.code === 'BracketLeft' || e.key === ']' || e.key === '[')
+      ) {
+        const toFrontOrBack = (mod && e.shiftKey) || (mod && e.altKey)
+        const forward = e.code === 'BracketRight' || e.key === ']'
+        e.preventDefault()
+        if (toFrontOrBack) {
+          moveLayerOrder(primaryLayerId, forward ? 'toFront' : 'toBack')
+        } else {
+          moveLayerOrder(primaryLayerId, forward ? 'forward' : 'backward')
+        }
+        return
       }
 
       // Meta/Ctrl Shortcuts
-      if (e.metaKey || e.ctrlKey) {
+      if (mod) {
         switch (e.key.toLowerCase()) {
-          case 'a':
-            if (!textEditClipId) {
-              const scene = scenes.find((s) => s.id === activeSceneId)
-              const textIds = (scene?.clips || []).filter(isTextLayer).map((c) => c.id)
-              if (textIds.length) {
-                e.preventDefault()
-                setSelectedLayerIds(textIds)
-                setSelectedLayerId(textIds[0])
-                setIsRightSidebarOpen(true)
-              }
+          case 'a': {
+            if (textEditClipId) break
+            const scene = scenes.find((s) => s.id === activeSceneId)
+            const selectable = (scene?.clips || [])
+              .filter((c) => isCanvasNudgeableClip(c))
+              .map((c) => c.id)
+            if (selectable.length) {
+              e.preventDefault()
+              setSelectedLayerIds(selectable)
+              setSelectedLayerId(selectable[0])
+              setIsRightSidebarOpen(true)
             }
             break
+          }
           case 's':
             e.preventDefault()
             saveProject(true)
@@ -1490,6 +1541,13 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
             e.preventDefault()
             copySelectedLayers()
             break
+          case 'x':
+            e.preventDefault()
+            if (layerIds.length) {
+              copySelectedLayers()
+              deleteSelectedLayers()
+            }
+            break
           case 'v':
             e.preventDefault()
             pasteLayers()
@@ -1506,19 +1564,24 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
               groupSelectedLayers()
             }
             break
+          case 'l': {
+            if (!primaryLayerId) break
+            e.preventDefault()
+            const scene = scenes.find((s) => s.id === activeSceneId)
+            const clip = scene?.clips?.find((c) => c.id === primaryLayerId)
+            if (clip) toggleLayerLock(primaryLayerId, !clip.locked)
+            break
+          }
+          default:
+            break
         }
+        return
       }
 
       // Arrow keys: nudge selected canvas layers, or step the timeline when nothing is selected
+      // Shift+Arrow = larger step (10px, or 5× grid when snap is on)
       const arrowKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown']
       if (arrowKeys.includes(e.key)) {
-        const layerIds =
-          selectedLayerIds.length > 0
-            ? selectedLayerIds
-            : selectedLayerId
-              ? [selectedLayerId]
-              : []
-
         if (layerIds.length > 0) {
           e.preventDefault()
           pausePlayback()
@@ -1542,7 +1605,7 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isPlaying, activeSceneId, scenes, currentTime, totalDurationInFrames, saveProject, selectedLayerIds, selectedLayerId, editorView, pausePlayback, nudgeSelectedLayers, undo, redo, copySelectedLayers, pasteLayers, duplicateSelectedLayers, deleteSelectedLayers, groupSelectedLayers, ungroupSelectedLayer, handleClearSelection, showToast, textEditClipId, exitEditMode])
+  }, [isPlaying, activeSceneId, scenes, currentTime, totalDurationInFrames, saveProject, selectedLayerIds, selectedLayerId, editorView, pausePlayback, nudgeSelectedLayers, undo, redo, copySelectedLayers, pasteLayers, duplicateSelectedLayers, deleteSelectedLayers, groupSelectedLayers, ungroupSelectedLayer, moveLayerOrder, toggleLayerLock, handleClearSelection, showToast, textEditClipId, exitEditMode])
 
   const addScene = () => {
     insertAfterIndexRef.current = null
@@ -1767,6 +1830,61 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
 
   const updateScene = (id, updates) => {
     uxUpdateScene(id, updates, { history: true })
+  }
+
+  const sceneAssigneeWorkspaceId = project.workspaceId || project.createConfig?.workspaceId
+
+  useEffect(() => {
+    if (!sceneAssigneeWorkspaceId) {
+      setSceneWorkspaceInfo(null)
+      return undefined
+    }
+    let cancelled = false
+    workspaceService
+      .getWorkspace(sceneAssigneeWorkspaceId)
+      .then((raw) => {
+        if (cancelled || !raw) return
+        setSceneWorkspaceInfo(normalizeWorkspace(raw, extractUserId(authUser), authUser))
+      })
+      .catch(() => {
+        if (!cancelled) setSceneWorkspaceInfo(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [sceneAssigneeWorkspaceId, authUser])
+
+  const isTeamWorkspace = sceneWorkspaceInfo?.type === 'workspace'
+  const canManageSceneAssignee = canManageAssignment(sceneWorkspaceInfo)
+
+  const loadSceneAssigneeMembers = () => {
+    if (!canManageSceneAssignee || sceneWorkspaceMembers.length || sceneMembersLoading) return
+    setSceneMembersLoading(true)
+    workspaceService
+      .listWorkspaceMembers(sceneAssigneeWorkspaceId)
+      .then((list) => setSceneWorkspaceMembers(list || []))
+      .catch(() => setSceneWorkspaceMembers([]))
+      .finally(() => setSceneMembersLoading(false))
+  }
+
+  const handleAssignScene = async (sceneId, userId) => {
+    const projectId = project.id || project.createConfig?.videoId
+    if (!sceneAssigneeWorkspaceId || !projectId || !sceneId || sceneAssigneeBusy) return
+    setSceneAssigneeBusy(true)
+    try {
+      const patch = await executeAssignScene({
+        updateSceneAssignee: (...args) => workspaceService.updateSceneAssignee(...args),
+        workspaceId: sceneAssigneeWorkspaceId,
+        projectId,
+        sceneId,
+        assigneeId: userId,
+      })
+      updateScene(sceneId, patch)
+    } catch (err) {
+      showToast(err.message || 'Failed to update scene assignee', 'error')
+    } finally {
+      setSceneAssigneeBusy(false)
+    }
   }
 
   const exportVideo = () => {
@@ -2921,6 +3039,13 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
                 showToast('Scene duplicated', 'success')
               }
             }}
+            isTeamWorkspace={isTeamWorkspace}
+            canManageAssignee={canManageSceneAssignee}
+            workspaceMembers={sceneWorkspaceMembers}
+            membersLoading={sceneMembersLoading}
+            assigneeBusy={sceneAssigneeBusy}
+            onLoadAssigneeMembers={loadSceneAssigneeMembers}
+            onAssignScene={handleAssignScene}
           />
         </div>
 

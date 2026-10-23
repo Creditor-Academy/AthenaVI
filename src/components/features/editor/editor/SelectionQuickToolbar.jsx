@@ -1,5 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import {
+import { useLayoutEffect, useRef, useState } from 'react';import {
   MdFormatBold,
   MdFormatItalic,
   MdFormatUnderlined,
@@ -17,15 +16,14 @@ import {
   MdPalette,
   MdBorderColor,
   MdOpacity,
-  MdExpandMore,
-  MdCheck,
 } from 'react-icons/md';
 import {
   isTextLayer,
-  FONT_FAMILIES,
   parseFontSize,
   resolveFontFamilyValue,
 } from '../../../../utils/textClip';
+import { ensureGoogleFontLoaded } from '../../../../utils/googleFonts';
+import FontPicker from '../../../shared/fonts/FontPicker';
 import { buildLayerBorderPatch, parseLayerBorder } from '../../../../utils/layerBorderUtils';
 import {
   COMPOSITION_H,
@@ -33,7 +31,6 @@ import {
   resolveClipRect,
 } from '../../../../utils/clipLayout';
 import './SelectionQuickToolbar.css';
-
 const TOOLBAR_GAP = 12;
 const CANVAS_MARGIN = 8;
 
@@ -312,18 +309,13 @@ const SelectionQuickToolbar = ({
   onOpenCrop,
 }) => {
   const fileInputRef = useRef(null);
-  const fontMenuRef = useRef(null);
   const toolbarRef = useRef(null);
-  const fontListRef = useRef(null);
-  const [fontMenuOpen, setFontMenuOpen] = useState(false);
   const [toolbarPlacement, setToolbarPlacement] = useState({
     below: true,
     mediaRight: true,
     shiftX: 0,
     shiftY: 0,
   });
-  const [fontListUpward, setFontListUpward] = useState(false);
-  const [fontListShiftX, setFontListShiftX] = useState(0);
 
   const isText = clip?.type === 'text' || (clip ? isTextLayer(clip) : false);
   const isMedia =
@@ -404,7 +396,6 @@ const SelectionQuickToolbar = ({
     clipSizeW,
     clipSizeH,
     mediaLeftLayout,
-    fontMenuOpen,
     compositionWidth,
     compositionHeight,
     displayScale,
@@ -425,33 +416,6 @@ const SelectionQuickToolbar = ({
     }
     e.target.value = '';
   };
-
-  useEffect(() => {
-    if (!fontMenuOpen) return undefined;
-    const onDocPointerDown = (e) => {
-      if (fontMenuRef.current && !fontMenuRef.current.contains(e.target)) {
-        setFontMenuOpen(false);
-      }
-    };
-    window.addEventListener('pointerdown', onDocPointerDown);
-    return () => window.removeEventListener('pointerdown', onDocPointerDown);
-  }, [fontMenuOpen]);
-
-  useLayoutEffect(() => {
-    if (!fontMenuOpen || !fontListRef.current) return undefined;
-    const list = fontListRef.current;
-    const margin = 8;
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const rect = list.getBoundingClientRect();
-
-    setFontListUpward(rect.bottom > vh - margin && rect.top > margin);
-
-    let shiftX = 0;
-    if (rect.left < margin) shiftX += margin - rect.left;
-    if (rect.right > vw - margin) shiftX -= rect.right - (vw - margin);
-    setFontListShiftX(Math.round(shiftX));
-  }, [fontMenuOpen]);
 
   if (!clip) return null;
 
@@ -489,47 +453,18 @@ const SelectionQuickToolbar = ({
     >
       {isText && (
         <>
-          <div className="sq-font-menu" ref={fontMenuRef}>
-            <button
-              type="button"
-              className={`sq-toolbar__select sq-toolbar__select--font sq-font-menu__trigger ${fontMenuOpen ? 'sq-font-menu__trigger--open' : ''}`}
-              title="Font family"
-              style={{ fontFamily: resolvedFont }}
-              onClick={() => setFontMenuOpen((v) => !v)}
-            >
-              <span className="sq-font-menu__label">
-                {(FONT_FAMILIES.find((f) => f.value === resolvedFont)?.label) || 'Font'}
-              </span>
-              <MdExpandMore size={16} />
-            </button>
-            {fontMenuOpen && (
-              <div
-                ref={fontListRef}
-                className={`sq-font-menu__list ${fontListUpward ? 'sq-font-menu__list--up' : ''}`}
-                style={{ '--sq-font-list-shift-x': `${fontListShiftX}px` }}
-                role="listbox"
-                aria-label="Font family"
-              >
-                {FONT_FAMILIES.map((f) => {
-                  const active = f.value === resolvedFont;
-                  return (
-                    <button
-                      key={f.value}
-                      type="button"
-                      className={`sq-font-menu__item ${active ? 'sq-font-menu__item--active' : ''}`}
-                      style={{ fontFamily: f.value }}
-                      onClick={() => {
-                        onUpdateStyle?.({ fontFamily: f.value });
-                        setFontMenuOpen(false);
-                      }}
-                    >
-                      <span>{f.label}</span>
-                      {active ? <MdCheck size={14} /> : null}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
+          <div className="sq-font-menu sq-font-menu--picker">
+            <FontPicker
+              label=""
+              value={resolvedFont}
+              compact
+              className="sq-toolbar__font-picker"
+              menuLabel="Font family"
+              onChange={(family) => {
+                ensureGoogleFontLoaded(family)
+                onUpdateStyle?.({ fontFamily: family })
+              }}
+            />
           </div>
           <div className="sq-toolbar__stepper">
             <button type="button" onClick={() => onUpdateStyle?.({ fontSize: Math.max(8, fontSize - 2) })}>−</button>

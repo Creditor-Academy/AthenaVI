@@ -1,0 +1,761 @@
+/* =============================================================================
+   Superadmin Graphics Library — Portal Component Styles
+   Seamlessly integrates with SuperadminBase.css and Admin Portal tokens
+   ============================================================================= */
+
+/* ── Gallery Cards Grid ── */
+.sg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.sg-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  background: var(--bg-card);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.sg-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border-color));
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.sg-card-preview {
+  position: relative;
+  height: 152px;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: color-mix(in srgb, var(--text-muted) 5%, var(--bg-surface));
+  border-bottom: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
+}
+
+.sg-card-preview--icon {
+  padding: 24px;
+  background: color-mix(in srgb, var(--primary) 3%, var(--bg-surface));
+}
+
+.sg-preview-img {
+  max-width: 100%;
+  max-height: 110px;
+  object-fit: contain;
+  display: block;
+}
+
+.sg-preview-img--icon {
+  width: 64px;
+  height: 64px;
+  max-width: 64px;
+  max-height: 64px;
+  object-fit: contain;
+}
+
+.sg-preview-empty {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* ── Card Badges ── */
+.sg-card-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  backdrop-filter: blur(8px);
+  z-index: 1;
+}
+
+.sg-card-badge--published {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.sg-card-badge--draft {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.sg-card-badge--archived {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-muted);
+  border: 1px solid color-mix(in srgb, var(--text-muted) 30%, transparent);
+}
+
+/* ── Card Body & Actions ── */
+.sg-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px 6px;
+}
+
+.sg-card-body strong {
+  font-size: 0.875rem;
+  font-weight: 650;
+  color: var(--text-main);
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sg-card-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.sg-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px 12px;
+  margin-top: auto;
+}
+
+/* ── Empty Hero Dropzone ── */
+.sg-hero-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: min(440px, calc(100vh - 320px));
+  padding: 40px 24px;
+  border: 1.5px dashed color-mix(in srgb, var(--primary) 40%, var(--border-color));
+  border-radius: 16px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 2%, var(--bg-card)), color-mix(in srgb, var(--primary) 5%, var(--bg-surface)));
+  text-align: center;
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+
+.sg-hero-empty.is-over {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.15);
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-card));
+}
+
+.sg-hero-art {
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 16px;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--primary) 12%, var(--bg-card));
+  color: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, var(--border-color));
+}
+
+.sg-hero-empty h3 {
+  margin: 0 0 6px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+.sg-hero-empty p {
+  margin: 0 0 20px;
+  max-width: 44ch;
+  font-size: 0.845rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.sg-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* ── Add / Edit Modal ── */
+.sg-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  display: grid;
+  place-items: center;
+  padding: 20px 14px;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+}
+
+.sg-modal {
+  width: min(640px, 100%);
+  max-height: min(90vh, 880px);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.sg-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px 14px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+}
+
+.sg-modal-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+}
+
+.sg-modal-header p {
+  margin: 4px 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.sg-modal-close {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sg-modal-close:hover {
+  background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+  color: var(--text-main);
+}
+
+.sg-modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sg-modal-section {
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sg-modal-section:last-child {
+  border-bottom: none;
+}
+
+.sg-section-label {
+  margin: 0 0 10px;
+  font-size: 0.6875rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.sg-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 22px;
+  border-top: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--bg-card) 60%, var(--bg-surface));
+  flex-shrink: 0;
+}
+
+.sg-modal-error {
+  margin: 12px 22px 0;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  font-size: 0.8125rem;
+}
+
+/* ── Modal Upload Zone ── */
+.sg-upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 160px;
+  padding: 22px 18px;
+  border: 1.5px dashed color-mix(in srgb, var(--primary) 40%, var(--border-color));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--primary) 4%, var(--bg-card));
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sg-upload-zone:hover,
+.sg-upload-zone.is-over {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 8%, var(--bg-card));
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12);
+}
+
+.sg-upload-zone.has-file {
+  min-height: 180px;
+  padding: 14px;
+  cursor: default;
+}
+
+.sg-upload-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 2px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 15%, var(--bg-card));
+  color: var(--primary);
+}
+
+.sg-upload-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.sg-upload-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.sg-upload-hint button {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--primary);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.sg-upload-meta {
+  margin: 6px 0 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.sg-upload-preview {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.sg-upload-preview-art {
+  width: 100%;
+  height: 130px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--text-muted) 6%, var(--bg-surface));
+}
+
+.sg-upload-preview-art--icon {
+  background: transparent;
+}
+
+.sg-upload-preview-art--icon .sg-preview-img--icon {
+  width: 76px;
+  height: 76px;
+  max-width: 76px;
+  max-height: 76px;
+}
+
+.sg-upload-preview-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Modal Form Fields ── */
+.sg-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 14px;
+}
+
+.sg-form-grid .sg-field--full {
+  grid-column: 1 / -1;
+}
+
+.sg-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.sg-field-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-main);
+}
+
+.sg-req {
+  color: #ef4444;
+}
+
+.sg-field input,
+.sg-field select,
+.sg-field textarea {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-main);
+  font: inherit;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sg-field textarea {
+  height: auto;
+  min-height: 64px;
+  padding: 8px 12px;
+  resize: vertical;
+}
+
+.sg-field input:focus,
+.sg-field select:focus,
+.sg-field textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.14);
+}
+
+.sg-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 5px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-card);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sg-tags:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.14);
+}
+
+.sg-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 15%, var(--bg-card));
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 650;
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border-color));
+}
+
+.sg-tag button {
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.sg-tags input {
+  flex: 1;
+  min-width: 90px;
+  height: auto !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 2px 4px !important;
+  background: transparent !important;
+  font-size: 0.8125rem;
+}
+
+.sg-choice-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.sg-choice-group:last-child {
+  margin-bottom: 0;
+}
+
+.sg-choice-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.sg-choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.sg-radio,
+.sg-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  color: var(--text-main);
+  cursor: pointer;
+  user-select: none;
+}
+
+.sg-radio input,
+.sg-check input {
+  accent-color: var(--primary);
+  width: 15px;
+  height: 15px;
+  margin: 0;
+}
+
+.sg-usage-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sg-usage-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sg-usage-chip:hover {
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border-color));
+  color: var(--text-main);
+}
+
+.sg-usage-chip.is-on {
+  border-color: color-mix(in srgb, var(--primary) 50%, var(--border-color));
+  background: color-mix(in srgb, var(--primary) 14%, var(--bg-card));
+  color: var(--primary);
+  font-weight: 650;
+}
+
+.sg-usage-chip input {
+  accent-color: var(--primary);
+  margin: 0;
+}
+
+/* ── GetIllustrations Free Browse ── */
+.sg-gi-layout {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  gap: 16px;
+  min-height: 480px;
+}
+
+.sg-gi-cats {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--border-color) 40%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--text-muted) 3%, var(--bg-card));
+  overflow-y: auto;
+  max-height: calc(100vh - 300px);
+}
+
+.sg-gi-cats-title {
+  margin: 0 0 6px;
+  padding: 0 6px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.sg-gi-cat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-main);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sg-gi-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sg-gi-cat-row .sg-gi-cat {
+  flex: 1;
+  min-width: 0;
+}
+
+.sg-gi-cat-save {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.sg-gi-cat:hover {
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: var(--text-main);
+}
+
+.sg-gi-cat.is-active,
+.sg-gi-cat-row.is-active .sg-gi-cat {
+  background: color-mix(in srgb, var(--primary) 16%, var(--bg-card));
+  color: var(--primary);
+  font-weight: 650;
+}
+
+.sg-gi-cat em {
+  font-style: normal;
+  font-size: 0.6875rem;
+  font-weight: 650;
+  color: var(--text-muted);
+}
+
+.sg-gi-cat.is-active em {
+  color: var(--primary);
+}
+
+.sg-gi-main {
+  min-width: 0;
+  min-height: 0;
+}
+
+.sg-gi-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding-bottom: 8px;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+/* ── Responsive Refinements ── */
+@media (max-width: 1024px) {
+  .sg-grid {
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (max-width: 840px) {
+  .sg-gi-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sg-gi-cats {
+    max-height: 200px;
+  }
+}
+
+@media (max-width: 640px) {
+  .sg-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+  }
+
+  .sg-card-preview {
+    height: 125px;
+    padding: 12px;
+  }
+
+  .sg-preview-img {
+    max-height: 85px;
+  }
+
+  .sg-card-body {
+    padding: 10px 10px 4px;
+  }
+
+  .sg-card-body strong {
+    font-size: 0.8125rem;
+  }
+
+  .sg-card-actions {
+    padding: 6px 8px 10px;
+    gap: 4px;
+  }
+
+  .sg-card-actions .sa-btn--sm {
+    height: 26px;
+    padding: 0 7px;
+    font-size: 0.7rem;
+  }
+
+  .sg-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

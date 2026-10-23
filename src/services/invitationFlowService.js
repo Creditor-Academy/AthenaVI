@@ -38,9 +38,11 @@ const invitationFlowService = {
       clearPendingInvitation()
       return workspace
     } catch (error) {
+      // A failed accept must not linger: a stale pending invite would be retried
+      // (and fail) on every later login. The invite page re-saves it on retry.
+      clearPendingInvitation()
       if (isAlreadyMemberError(error.message)) {
         await cleanupInvitationNotification(pending.notificationId, dismissNotification)
-        clearPendingInvitation()
         if (pending.workspaceId) {
           return { id: pending.workspaceId, name: pending.workspaceName || 'Workspace' }
         }

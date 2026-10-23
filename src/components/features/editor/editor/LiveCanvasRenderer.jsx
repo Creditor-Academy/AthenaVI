@@ -24,6 +24,10 @@ import {
 } from '../../../../utils/editorDragDrop'
 import { clientToComposition, compositionToClient } from '../../../../utils/editorPlacementUtils'
 import { getClipTransformCenter } from '../../../../utils/canvasTransformUtils'
+import {
+  clampPlacementOverflow,
+  overflowPaintStyle,
+} from '../../../../utils/canvasOverflowUtils'
 import CanvasGuidesOverlay from './CanvasGuidesOverlay'
 import SelectionOverlay from './SelectionOverlay'
 import TextSelectionOverlay from './TextSelectionOverlay'
@@ -84,11 +88,16 @@ const clipInnerShell = (style = {}) => ({
   ...style,
 })
 
+/**
+ * Layout box (untransformed) + paint layer (transform + canvas overflow clip/mask)
+ * + chrome layer (same transform, never masked). Matches PPT Canva-style overflow.
+ */
 const ClipTransformShell = ({
   clip,
   onSelect,
   outerStyle,
   innerStyle,
+  overflowStyle = null,
   selectionChrome,
   children,
   className,
@@ -96,22 +105,66 @@ const ClipTransformShell = ({
   onDragLeave,
   onDrop,
   clickOnly = false,
-}) => (
-  <div
-    className={className}
-    onMouseDown={clickOnly ? undefined : (e) => { e.stopPropagation(); onSelect(clip.id, e) }}
-    onClick={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
-    onDragOver={onDragOver}
-    onDragLeave={onDragLeave}
-    onDrop={onDrop}
-    style={{ ...outerStyle, overflow: 'visible' }}
-  >
-    {selectionChrome}
-    <div style={clipInnerShell(innerStyle)}>
-      {children}
+}) => {
+  const {
+    transform,
+    transformOrigin,
+    overflow: _ignoredOverflow,
+    clipPath: _ignoredClipPath,
+    WebkitClipPath: _ignoredWebkitClipPath,
+    maskImage: _ignoredMask,
+    WebkitMaskImage: _ignoredWebkitMask,
+    ...layoutStyle
+  } = outerStyle || {}
+
+  const transformStyle = {
+    position: 'absolute',
+    inset: 0,
+    width: '100%',
+    height: '100%',
+    boxSizing: 'border-box',
+    transform,
+    transformOrigin: transformOrigin || 'center center',
+  }
+
+  return (
+    <div
+      className={className}
+      onMouseDown={clickOnly ? undefined : (e) => { e.stopPropagation(); onSelect(clip.id, e) }}
+      onClick={(e) => { e.stopPropagation(); onSelect(clip.id, e) }}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      style={{ ...layoutStyle, overflow: 'visible', transform: undefined, transformOrigin: undefined }}
+    >
+      {/* Transform + canvas overflow paint (rotation-aware clip/mask) */}
+      <div
+        className="video-clip-overflow-paint"
+        style={{
+          ...transformStyle,
+          ...(overflowStyle || {}),
+        }}
+      >
+        <div style={clipInnerShell(innerStyle)}>
+          {children}
+        </div>
+      </div>
+      {/* Selection chrome shares rotation but is never clipped/masked */}
+      {selectionChrome ? (
+        <div
+          className="video-clip-chrome-layer"
+          style={{
+            ...transformStyle,
+            pointerEvents: 'none',
+            zIndex: 2,
+          }}
+        >
+          {selectionChrome}
+        </div>
+      ) : null}
     </div>
-  </div>
-)
+  )
+}
 
 const clipBase = (clip, isSelected) => {
   const { position, size } = resolveClipRect(clip)
@@ -149,6 +202,49 @@ const applyEphemeralStyle = (base, clip, ephemeral) => {
     next.transformOrigin = transformOrigin
   }
   return next
+}
+
+/** Canva-style overflow clip/mask for clip content (not selection chrome). */
+const getClipOverflowPaint = (
+  clip,
+  isSelected,
+  compositionWidth,
+  compositionHeight,
+  { editing = false, ephemeral = null, animRotation = 0 } = {}
+) => {
+  const clear = {
+    maskImage: 'none',
+    WebkitMaskImage: 'none',
+    clipPath: 'none',
+    WebkitClipPath: 'none',
+  }
+  if (isBackgroundClip(clip)) return clear
+
+  const layout = resolveClipRect(clip)
+  let x = layout.position.x
+  let y = layout.position.y
+  let width = Number(layout.size.width) || 1
+  let height = Number(layout.size.height) || 1
+  let rotation = (Number(clip.rotation) || 0) + (Number(animRotation) || 0)
+  if (ephemeral && ephemeral.clipId === clip.id) {
+    if (ephemeral.x != null) x = ephemeral.x
+    if (ephemeral.y != null) y = ephemeral.y
+    if (ephemeral.width != null) width = ephemeral.width
+    if (ephemeral.height != null) height = ephemeral.height
+    if (ephemeral.rotation != null) rotation = ephemeral.rotation + (Number(animRotation) || 0)
+  }
+  return overflowPaintStyle({
+    x,
+    y,
+    width,
+    height,
+    rotation,
+    canvasW: compositionWidth,
+    canvasH: compositionHeight,
+    selected: isSelected,
+    editing,
+    outsideAlpha: 0.45,
+  })
 }
 
 const TextClip = React.memo(({
@@ -216,6 +312,17 @@ const TextClip = React.memo(({
       clip={clip}
       onSelect={onSelect}
       outerStyle={outerBase}
+      overflowStyle={getClipOverflowPaint(
+        clip,
+        isSelected,
+        compositionWidth,
+        compositionHeight,
+        {
+          editing: isEditing,
+          ephemeral: ephemeralTransform,
+          animRotation: animState?.rotation || 0,
+        }
+      )}
       innerStyle={{
         display: 'flex',
         flexDirection: 'column',
@@ -324,7 +431,21 @@ const buildCssFilter = (cf = {}) => {
   return parts.length > 0 ? parts.join(' ') : undefined
 }
 
-const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition, onUpdateSize, onUpdateBounds, onUpdateRotation, onCommit, getRotationPivotClient, overlayMode = false }) => {
+const ImageClip = ({
+  clip,
+  isSelected,
+  onSelect,
+  displayScale,
+  onUpdatePosition,
+  onUpdateSize,
+  onUpdateBounds,
+  onUpdateRotation,
+  onCommit,
+  getRotationPivotClient,
+  overlayMode = false,
+  compositionWidth = 1920,
+  compositionHeight = 1080,
+}) => {
   const s   = clip.style || {}
   const cf  = clip.cssFilters || {}
   const { animState } = useComputedEntranceState(clip)
@@ -337,11 +458,7 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
   const animatedOuter = buildLiveAnimStyle(clipBase(clip, isSelected), clip, animState, {
     cssFilter,
     overlayMode,
-    overflow: 'hidden',
-    borderRadius: s.borderRadius || '12px',
-    border: borderStyle,
-    boxShadow: s.boxShadow || 'none',
-    clipPath: s.clipPath || undefined,
+    // Decorative chrome stays on innerStyle so canvas overflow clip/mask can hang off-frame
     background: overlayMode ? 'transparent' : (src ? 'transparent' : (s.backgroundColor || s.background || 'rgba(0,0,0,0.04)')),
   })
 
@@ -364,6 +481,9 @@ const ImageClip = ({ clip, isSelected, onSelect, displayScale, onUpdatePosition,
       clip={clip}
       onSelect={onSelect}
       outerStyle={animatedOuter}
+      overflowStyle={getClipOverflowPaint(clip, isSelected, compositionWidth, compositionHeight, {
+        animRotation: animState?.rotation || 0,
+      })}
       innerStyle={{
         borderRadius: s.borderRadius || '12px',
         border: borderStyle,
@@ -423,7 +543,22 @@ const PausedVideoPreview = ({ src, style }) => {
   )
 }
 
-const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePosition, onUpdateSize, onUpdateBounds, onUpdateRotation, onCommit, getRotationPivotClient, overlayMode = false }) => {
+const AvatarClip = ({
+  clip,
+  isSelected,
+  onSelect,
+  scene,
+  displayScale,
+  onUpdatePosition,
+  onUpdateSize,
+  onUpdateBounds,
+  onUpdateRotation,
+  onCommit,
+  getRotationPivotClient,
+  overlayMode = false,
+  compositionWidth = 1920,
+  compositionHeight = 1080,
+}) => {
   const playbackSrc = resolveClipMediaSrc(clip, scene)
   const displaySrc = playbackSrc || resolveAvatarDisplaySrc(clip, scene)
   const isVideo = isVideoMedia(clip, playbackSrc)
@@ -471,6 +606,9 @@ const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdateP
       onSelect={onSelect}
       clickOnly
       outerStyle={animatedOuter}
+      overflowStyle={getClipOverflowPaint(clip, isSelected, compositionWidth, compositionHeight, {
+        animRotation: animState?.rotation || 0,
+      })}
       innerStyle={{
         borderRadius: isBg ? '0' : (s.borderRadius || '50%'),
         border: borderStyle,
@@ -527,7 +665,22 @@ const AvatarClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdateP
   )
 }
 
-const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePosition, onUpdateSize, onUpdateBounds, onUpdateRotation, onCommit, getRotationPivotClient, overlayMode = false }) => {
+const VideoClip = ({
+  clip,
+  isSelected,
+  onSelect,
+  scene,
+  displayScale,
+  onUpdatePosition,
+  onUpdateSize,
+  onUpdateBounds,
+  onUpdateRotation,
+  onCommit,
+  getRotationPivotClient,
+  overlayMode = false,
+  compositionWidth = 1920,
+  compositionHeight = 1080,
+}) => {
   const src = resolveClipMediaSrc(clip, scene)
   const isVideo = isVideoMedia(clip, src)
   const isAvatarLike = clip.role === 'avatar' || clip.type === 'avatar'
@@ -576,6 +729,9 @@ const VideoClip = ({ clip, isSelected, onSelect, scene, displayScale, onUpdatePo
       clip={clip}
       onSelect={onSelect}
       outerStyle={animatedOuter}
+      overflowStyle={getClipOverflowPaint(clip, isSelected, compositionWidth, compositionHeight, {
+        animRotation: animState?.rotation || 0,
+      })}
       innerStyle={{
         borderRadius: isBg ? '0' : (s.borderRadius || (clip.role === 'avatar' ? '50%' : '16px')),
         border: borderStyle,
@@ -655,6 +811,8 @@ const ShapeClip = ({
   onFillShape,
   getRotationPivotClient,
   overlayMode = false,
+  compositionWidth = 1920,
+  compositionHeight = 1080,
 }) => {
   const [isDropTarget, setIsDropTarget] = useState(false)
   const { animState } = useComputedEntranceState(clip)
@@ -728,6 +886,9 @@ const ShapeClip = ({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       outerStyle={animatedOuter}
+      overflowStyle={getClipOverflowPaint(clip, isSelected, compositionWidth, compositionHeight, {
+        animRotation: animState?.rotation || 0,
+      })}
       innerStyle={{
         background: overlayMode
           ? 'transparent'
@@ -865,6 +1026,8 @@ const GroupClip = ({
   onCommit,
   getRotationPivotClient,
   overlayMode = false,
+  compositionWidth = 1920,
+  compositionHeight = 1080,
 }) => {
   const children = getGroupChildren(allClips, clip)
   const { animState } = useComputedEntranceState(clip)
@@ -889,6 +1052,9 @@ const GroupClip = ({
       clip={clip}
       onSelect={onSelect}
       outerStyle={animatedOuter}
+      overflowStyle={getClipOverflowPaint(clip, isSelected, compositionWidth, compositionHeight, {
+        animRotation: animState?.rotation || 0,
+      })}
       innerStyle={{ position: 'relative', width: '100%', height: '100%', overflow: 'visible' }}
       selectionChrome={selectionChrome}
     >
@@ -1027,16 +1193,56 @@ const LiveCanvasRenderer = ({
   })()
 
   const handleUpdatePosition = useCallback((clipId, x, y) => {
-    if (onUpdateLayerPosition) onUpdateLayerPosition(clipId, x, y)
-  }, [onUpdateLayerPosition])
+    if (!onUpdateLayerPosition) return
+    const clip = (clips || []).find((c) => c.id === clipId)
+    if (!clip || isBackgroundClip(clip)) {
+      onUpdateLayerPosition(clipId, x, y)
+      return
+    }
+    const layout = resolveClipRect(clip)
+    const placed = clampPlacementOverflow(
+      x,
+      y,
+      layout.size.width,
+      layout.size.height,
+      compositionWidth,
+      compositionHeight
+    )
+    onUpdateLayerPosition(clipId, placed.x, placed.y)
+  }, [onUpdateLayerPosition, clips, compositionWidth, compositionHeight])
 
   const handleUpdateSize = useCallback((clipId, w, h) => {
-    if (onUpdateLayerSize) onUpdateLayerSize(clipId, w, h)
-  }, [onUpdateLayerSize])
+    const clip = (clips || []).find((c) => c.id === clipId)
+    if (!clip || isBackgroundClip(clip)) {
+      if (onUpdateLayerSize) onUpdateLayerSize(clipId, w, h)
+      return
+    }
+    const layout = resolveClipRect(clip)
+    const placed = clampPlacementOverflow(
+      layout.position.x,
+      layout.position.y,
+      w,
+      h,
+      compositionWidth,
+      compositionHeight
+    )
+    if (onUpdateLayerBounds) {
+      onUpdateLayerBounds(clipId, placed.x, placed.y, placed.width, placed.height)
+    } else if (onUpdateLayerSize) {
+      onUpdateLayerSize(clipId, placed.width, placed.height)
+    }
+  }, [onUpdateLayerSize, onUpdateLayerBounds, clips, compositionWidth, compositionHeight])
 
   const handleUpdateBounds = useCallback((clipId, x, y, w, h) => {
-    if (onUpdateLayerBounds) onUpdateLayerBounds(clipId, x, y, w, h)
-  }, [onUpdateLayerBounds])
+    if (!onUpdateLayerBounds) return
+    const clip = (clips || []).find((c) => c.id === clipId)
+    if (!clip || isBackgroundClip(clip)) {
+      onUpdateLayerBounds(clipId, x, y, w, h)
+      return
+    }
+    const placed = clampPlacementOverflow(x, y, w, h, compositionWidth, compositionHeight)
+    onUpdateLayerBounds(clipId, placed.x, placed.y, placed.width, placed.height)
+  }, [onUpdateLayerBounds, clips, compositionWidth, compositionHeight])
 
   const handleUpdateRotation = useCallback((clipId, rotation) => {
     if (onUpdateLayerRotation) onUpdateLayerRotation(clipId, rotation)
@@ -1095,6 +1301,7 @@ const LiveCanvasRenderer = ({
     <PreviewModeProvider staticEntrance={staticPreview}>
     <div
       ref={containerRef}
+      className="video-live-canvas"
       onClick={() => {
         if (textEditClipId && onEnterTextEdit) {
           onEnterTextEdit(null)
@@ -1105,15 +1312,17 @@ const LiveCanvasRenderer = ({
         position: 'relative',
         width: '100%',
         height: '100%',
-        overflow: 'hidden',
+        overflow: 'visible',
         fontFamily: 'Inter, system-ui, sans-serif',
         boxSizing: 'border-box',
+        // Letterbox fill; composition stage-clip also paints the framed area
         ...backgroundStyle,
       }}
     >
       {/* Fixed composition virtual canvas, scaled to fit or cover */}
       <div
         ref={compositionRef}
+        className="video-live-composition"
         onDragOver={handleCompositionDragOver}
         onDrop={handleCompositionDrop}
         style={{
@@ -1124,8 +1333,24 @@ const LiveCanvasRenderer = ({
           left: 0,
           transform: `translate(${displayOffset.x}px, ${displayOffset.y}px) scale(${displayScale})`,
           transformOrigin: 'top left',
+          overflow: 'visible',
         }}
       >
+        {/* Hard-clipped stage background (export-style cut-off for artwork underlay) */}
+        <div
+          className="video-live-stage-clip"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            overflow: 'hidden',
+            borderRadius: 0,
+            ...backgroundStyle,
+            pointerEvents: 'none',
+          }}
+        />
+        <div className="video-live-stage-elements" style={{ position: 'absolute', inset: 0, overflow: 'visible' }}>
         {(showGuides || showPageGrid || showSafeZone) && (
           <CanvasGuidesOverlay
             width={compositionWidth}
@@ -1189,6 +1414,8 @@ const LiveCanvasRenderer = ({
             isSelected,
             onSelect: (id, e) => onSelectClip && onSelectClip(id, e),
             displayScale,
+            compositionWidth,
+            compositionHeight,
             // Avatar backgrounds can be resized in-place; position + rotation remain locked
             onUpdatePosition: isLocked || isBackgroundClip(clip) ? () => {} : handleUpdatePosition,
             onUpdateSize: isLocked ? () => {} : (isResizableBg || !isBackgroundClip(clip)) ? handleUpdateSize : () => {},
@@ -1270,6 +1497,7 @@ const LiveCanvasRenderer = ({
             getRotationPivotClient={handleGetRotationPivotClient}
           />
         )}
+        </div>
       </div>
 
       {/* Empty state */}

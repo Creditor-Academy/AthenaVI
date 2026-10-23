@@ -10,14 +10,14 @@ import {
   MdColorLens,
 } from 'react-icons/md';
 import {
-  FONT_FAMILIES,
   FONT_WEIGHT_OPTIONS,
   TEXT_TRANSFORM_OPTIONS,
   getClipTextContent,
   parseFontSize,
   resolveFontFamilyValue,
 } from '../../../../utils/textClip';
-
+import { ensureGoogleFontLoaded } from '../../../../utils/googleFonts';
+import FontPicker from '../../../shared/fonts/FontPicker';
 const SectionHeader = ({ icon, label }) => (
   <div className="scp-section-header">
     <div className="scp-section-header__icon">{icon}</div>
@@ -257,13 +257,17 @@ const TextLayerPropertiesPanel = ({
 
       <SectionHeader icon={<MdColorLens size={14} />} label="Typography & Style" />
       <Card>
-        <SelectRow
-          label="Font family"
-          value={resolveFontFamilyValue(activeLayer.style?.fontFamily)}
-          options={FONT_FAMILIES}
-          onChange={(v) => updateStyle({ fontFamily: v })}
-          selectStyle={{ fontFamily: resolveFontFamilyValue(activeLayer.style?.fontFamily) }}
-        />
+        <div className="scp-row" style={{ padding: '6px 0', width: '100%', minWidth: 0 }}>
+          <FontPicker
+            label="Font family"
+            value={resolveFontFamilyValue(activeLayer.style?.fontFamily)}
+            compact
+            onChange={(family) => {
+              ensureGoogleFontLoaded(family)
+              updateStyle({ fontFamily: family })
+            }}
+          />
+        </div>
 
         <Row label="Font size" column={false}>
           <NumberInput

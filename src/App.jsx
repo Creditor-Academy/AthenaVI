@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import invitationFlowService from './services/invitationFlowService.js'
@@ -7,7 +7,7 @@ import Landing from './pages/Landing/Landing.jsx'
 import AuthPage from './pages/Auth/AuthPage.jsx'
 import ResetPassword from './components/features/auth/authentication/ResetPassword.jsx'
 import { persistWorkspaceFolderNavigation } from './utils/navigateToWorkspaceFolder.js'
-import { isOAuthCallbackPath, resolveViewFromLocation } from './utils/authRouting.js'
+import { isOAuthCallbackPath, isPublicPresentationPath, resolveViewFromLocation } from './utils/authRouting.js'
 import {
   dashboardPathForSection,
   isDashboardClientPath,
@@ -15,6 +15,15 @@ import {
   resolveDashboardSectionFromPath,
 } from './utils/dashboardRouting.js'
 import { parseProjectCommentsDeepLink } from './utils/inboxNotifications.js'
+import SessionExpiredModal from './components/ui/SessionExpiredModal/SessionExpiredModal.jsx'
+import PptDeckOpenBoot from './pages/Slides/AIPptComponents/PptDeckOpenBoot.jsx'
+import SharedGeneration from './pages/SharedGeneration/SharedGeneration.jsx'
+
+function isPptEditorBootPath() {
+  const path = readClientPath()
+  if (isPublicPresentationPath(path)) return false
+  return resolveDashboardSectionFromPath(path) === 'editor'
+}
 
 function mergeCreateConfigFromDeepLink(prev) {
   const deepLink = parseProjectCommentsDeepLink()
@@ -50,12 +59,15 @@ const AIAvatarsVideos = lazy(() => import('./pages/AIAvatarsVideos/AIAvatarsVide
 const AIVideos = lazy(() => import('./pages/AIVideos/AIVideos.jsx'))
 const NotFound = lazy(() => import('./pages/NotFound/NotFound.jsx'))
 const RenderDownload = lazy(() => import('./pages/Download/RenderDownload.jsx'))
-const EarlyAccessPage = lazy(() => import('./pages/EarlyAccess/EarlyAccessPage.jsx'))
 const GoogleCallback = lazy(() => import('./components/features/auth/GoogleCallback.jsx'))
+const PublicPresentation = lazy(() => import('./pages/Slides/PublicPresentation/PublicPresentation.jsx'))
 const PATH_TO_VIEW_MAP = {
   '/': 'landing',
+  '/hub': 'dashboard',
+  '/products/choose': 'dashboard',
   '/dashboard': 'dashboard',
   '/dashboard/home': 'dashboard',
+  '/dashboard/my-work': 'dashboard',
   '/dashboard/videos': 'dashboard',
   '/dashboard/avatars': 'dashboard',
   '/dashboard/create-avatar': 'dashboard',
@@ -71,7 +83,25 @@ const PATH_TO_VIEW_MAP = {
   '/dashboard/brandkits': 'dashboard',
   '/dashboard/credits': 'dashboard',
   '/dashboard/help': 'dashboard',
+  '/dashboard/ppt-ai': 'dashboard',
+  '/dashboard/ppt-builder': 'dashboard',
+  '/dashboard/editor': 'dashboard',
+  '/dashboard/image-ai': 'dashboard',
+  '/dashboard/image-editor': 'dashboard',
+  '/dashboard/canvas-editor': 'dashboard',
   '/profile': 'dashboard',
+  '/slides': 'dashboard',
+  '/slides/home': 'dashboard',
+  '/slides/ppt-ai': 'dashboard',
+  '/slides/ppt-builder': 'dashboard',
+  '/slides/image-ai': 'dashboard',
+  '/slides/image-editor': 'dashboard',
+  '/slides/ppt-normal': 'dashboard',
+  '/slides/image-normal': 'dashboard',
+  '/slides/ppt-generator': 'dashboard',
+  '/slides/image-generator': 'dashboard',
+  '/slides/settings': 'dashboard',
+  '/slides/help': 'dashboard',
   '/create': 'create',
   '/products': 'products',
   '/about-us': 'about-us-blog',
@@ -96,21 +126,22 @@ const PATH_TO_VIEW_MAP = {
   '/auth/google/callback': 'google-callback',
   '/auth/callback': 'google-callback',
   '/oauth/callback': 'google-callback',
-  '/early-access': 'early-access',
+  '/early-access': 'login', // legacy waitlist URL -> sign-up
 }
 
 // Protected Route Component
 const ProtectedRoute = ({ children, setView }) => {
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated, isSessionExpired, loading } = useAuth()
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
+    if (!loading && !isAuthenticated && !isSessionExpired) {
       // Redirect to landing page if not authenticated
       setView('landing')
     }
-  }, [isAuthenticated, loading, setView])
+  }, [isAuthenticated, isSessionExpired, loading, setView])
 
   if (loading) {
+    if (isPptEditorBootPath()) return <PptDeckOpenBoot />
     return (
       <div style={{
         display: 'flex',
@@ -159,26 +190,42 @@ const ProtectedRoute = ({ children, setView }) => {
     )
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !isSessionExpired) {
     return null // Will redirect in useEffect
   }
 
   return children
 }
 
-const PageFallback = () => (
-  <div style={{
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: '#f8fafc',
-    color: '#64748b',
-    fontSize: '15px'
-  }}>
-    Loading page...
-  </div>
-)
+const SessionExpiredModalContainer = ({ setView }) => {
+  const { isSessionExpired, handleSessionExpiredLogout } = useAuth()
+
+  if (!isSessionExpired) return null
+
+  return (
+    <SessionExpiredModal
+      isOpen={isSessionExpired}
+      onLogoutAndLogin={() => handleSessionExpiredLogout(setView)}
+    />
+  )
+}
+
+const PageFallback = () => {
+  if (isPptEditorBootPath()) return <PptDeckOpenBoot />
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: '#f8fafc',
+      color: '#64748b',
+      fontSize: '15px'
+    }}>
+      Loading page...
+    </div>
+  )
+}
 
 // App Component with Auth Protection
 function App() {
@@ -249,7 +296,7 @@ function App() {
 
   // Save view to localStorage whenever it changes
   useEffect(() => {
-    if (view === 'not-found' || view === 'google-callback') return
+    if (view === 'not-found' || view === 'google-callback' || view === 'public-presentation') return
 
     window.localStorage.setItem('athenavi:view', view)
     
@@ -277,7 +324,6 @@ function App() {
       'help': '/dashboard/help',
       'download': '/download',
       'login': '/login',
-      'early-access': '/early-access',
     }
     
     const newUrl = urlMap[view] || '/'
@@ -287,9 +333,13 @@ function App() {
     const onProtectedPath = currentPath.includes('/invitations/accept') ||
       currentPath.includes('/invite/accept') ||
       currentPath.includes('/reset-password') ||
+      currentPath.startsWith('/p/') ||
+      currentPath.startsWith('/share/') ||
       isOAuthCallbackPath(currentPath)
     const isDashboardSubPath = isDashboardClientPath()
-    const targetUrl = (view === 'dashboard' && isDashboardSubPath) ? currentPath : newUrl
+    const targetUrl =
+      (view === 'dashboard' && isDashboardSubPath) ? currentPath
+      : newUrl
     try {
       if (!onProtectedPath && currentPath !== targetUrl) {
         window.history.pushState({ view }, '', targetUrl)
@@ -302,9 +352,19 @@ function App() {
     }
   }, [view])
 
-  const handleAuthComplete = useCallback(async () => {
+  const acceptingInviteRef = useRef(false)
+
+  const handleAuthComplete = useCallback(async ({ workspaceId } = {}) => {
     const pending = getPendingInvitation()
+    // Google OAuth already accepted the invite server-side; just land in the workspace.
+    if (workspaceId) {
+      invitationFlowService.finishInviteWithWorkspace({ id: workspaceId, name: pending?.workspaceName })
+      return
+    }
     if (pending?.token) {
+      // The OAuth-complete event can fire twice; never accept the same invite concurrently.
+      if (acceptingInviteRef.current) return
+      acceptingInviteRef.current = true
       try {
         const workspace = await invitationFlowService.completePendingInvitation()
         invitationFlowService.redirectAfterInvite(
@@ -314,6 +374,8 @@ function App() {
       } catch (err) {
         console.error('Failed to complete workspace invitation:', err)
         localStorage.setItem('authError', err.message || 'Failed to accept workspace invitation')
+      } finally {
+        acceptingInviteRef.current = false
       }
     }
     setView('dashboard')
@@ -324,9 +386,9 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [view])
 
-  // After Google OAuth completes, switch from callback spinner to dashboard
+  // After Google OAuth completes, switch from callback spinner to product chooser
   useEffect(() => {
-    const onOAuthComplete = () => { handleAuthComplete() }
+    const onOAuthComplete = (event) => { handleAuthComplete({ workspaceId: event?.detail?.workspaceId }) }
     const onOAuthError = () => setView('login')
     window.addEventListener('auth:oauth-complete', onOAuthComplete)
     window.addEventListener('auth:oauth-error', onOAuthError)
@@ -346,9 +408,26 @@ function App() {
     const handleNavigation = (event) => {
       const path = event?.detail?.path || readClientPath()
 
+      if (isPublicPresentationPath(path)) {
+        setView('public-presentation')
+        return
+      }
+
       if (path.startsWith('/create')) {
         setView('create')
         setCreateVideoConfig((prev) => mergeCreateConfigFromDeepLink(prev))
+        return
+      }
+
+      if (path === '/hub' || path === '/products/choose' || path === '/slides' || path.startsWith('/slides/')) {
+        const homePath = dashboardPathForSection('home')
+        if (window.location.pathname !== homePath) {
+          window.history.pushState({ view: 'dashboard', section: 'home' }, '', homePath)
+        }
+        setView('dashboard')
+        window.dispatchEvent(
+          new CustomEvent('athena:dashboard-navigate', { detail: { section: 'home' } })
+        )
         return
       }
 
@@ -432,6 +511,7 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <SessionExpiredModalContainer setView={setView} />
         <Suspense fallback={<PageFallback />}>
         {/* Reset Password Page - Standalone */}
       {window.location.pathname.includes('/reset-password') && (
@@ -465,6 +545,10 @@ function App() {
 
       {/* Invite Acceptance Page - Standalone */}
       {isInviteAcceptancePath && <InviteAcceptance />}
+
+      {view === 'public-presentation' && <PublicPresentation />}
+      
+      {view === 'share' && <SharedGeneration />}
 
       {/* Protected Routes */}
       {view === 'create' && (
@@ -511,6 +595,7 @@ function App() {
           />
         </ProtectedRoute>
       )}
+
       {view === 'ai-videos' && (
         <>
           <AIVideos 
@@ -858,14 +943,10 @@ function App() {
 
       {view === 'login' && (
         <AuthPage
-          initialMode={window.location.pathname === '/signup' ? 'signup' : 'login'}
+          initialMode={['/signup', '/early-access'].includes(window.location.pathname) ? 'signup' : 'login'}
           onAuthComplete={handleAuthComplete}
           onBack={() => setView('landing')}
         />
-      )}
-
-      {view === 'early-access' && (
-        <EarlyAccessPage onBack={() => setView('landing')} />
       )}
 
       {view === 'landing' && !isHomeReady && (
@@ -926,7 +1007,7 @@ function App() {
         <NotFound setView={setView} />
       )}
 
-      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'login', 'early-access', 'google-callback', 'not-found'].includes(view) && (
+      {!['create', 'dashboard', 'products', 'about-us-blog', 'news', 'resources', 'help-center', 'privacy-policy', 'technology', 'ethics', 'marketing-suite', 'sales-suite', 'use-cases', 'customer-experience', 'learning-development', 'ai-videos', 'ai-avatars-videos', 'settings', 'login', 'google-callback', 'not-found', 'public-presentation', 'share'].includes(view) && (
         <>
           <Landing 
             onLoginClick={handleLoginClick}

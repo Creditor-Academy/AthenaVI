@@ -14,7 +14,9 @@ import {
   MdRemoveCircleOutline, 
   MdAdd 
 } from 'react-icons/md';
-import '../../../pages/AdminPortal/AdminPortal.css';
+import '../../../pages/AdminPortal/styles/AdminBase.css';
+import '../../../pages/AdminPortal/styles/AdminUsers.css';
+import '../../../pages/AdminPortal/styles/AdminWorkspaces.css';
 import './UserProfileModal.css';
 
 const DeleteConfirmationModal = ({ workspaceName, onConfirm, onCancel }) => {

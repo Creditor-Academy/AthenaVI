@@ -10,23 +10,49 @@ class SuperadminApiError extends Error {
 }
 
 async function superadminRequest(path, options = {}) {
-  const response = await fetch(buildUrl(path), {
-    credentials: 'include',
-    ...options,
-    headers: {
-      ...getAuthHeaders(),
-      ...options.headers,
-    },
-  })
+  // For multipart/form-data (FormData body), do NOT set Content-Type —
+  // the browser must set it with the correct boundary automatically.
+  const isMultipart = options.body instanceof FormData
+  const authHeaders = getAuthHeaders()
 
-  const body = await response.json().catch(() => ({}))
+  const baseHeaders = isMultipart
+    ? (authHeaders['Authorization']
+        ? { Authorization: authHeaders['Authorization'] }
+        : {})
+    : authHeaders
+
+  const headers = {
+    ...baseHeaders,
+    ...options.headers,
+  }
+
+  const doFetch = (cacheMode) =>
+    fetch(buildUrl(path), {
+      credentials: 'include',
+      ...options,
+      cache: cacheMode,
+      headers,
+    })
+
+  let response = await doFetch(options.cache ?? 'default')
+  let body = await response.json().catch(() => ({}))
+
+  // Express ETag 304s can arrive with an empty body in fetch; retry once uncached.
+  if (!body.success && (response.status === 304 || (response.ok && body.success === undefined))) {
+    response = await doFetch('no-store')
+    body = await response.json().catch(() => ({}))
+  }
 
   if (!body.success) {
-    throw new SuperadminApiError(
-      body.message || 'Request failed',
-      response.status,
-      body.errors || []
-    )
+    const errors = body.errors || []
+    let message = body.message || 'Request failed'
+    if (
+      errors.length &&
+      (!message || message === 'Validation error' || message === 'Request failed')
+    ) {
+      message = errors.map(String).join(' ')
+    }
+    throw new SuperadminApiError(message, response.status, errors)
   }
 
   return body.data
@@ -46,6 +72,40 @@ function toQuery(params = {}) {
 const superadminService = {
   listUsers({ page = 1, limit = 20, search } = {}) {
     return superadminRequest(`/api/superadmin/users${toQuery({ page, limit, search })}`)
+  },
+
+  /** Admin-provisioned account. Resolves to { user, welcomeEmailSent }. */
+  createUser({ name, email, password, sendWelcomeEmail }) {
+    return superadminRequest('/api/superadmin/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, sendWelcomeEmail }),
+    })
+  },
+
+  pauseUser(userId, { reason } = {}) {
+    return superadminRequest(`/api/superadmin/users/${userId}/pause`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: reason || undefined }),
+    })
+  },
+
+  resumeUser(userId) {
+    return superadminRequest(`/api/superadmin/users/${userId}/resume`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+  },
+
+  /** Permanent. `confirmEmail` must equal the user's email. */
+  deleteUser(userId, { confirmEmail }) {
+    return superadminRequest(`/api/superadmin/users/${userId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ confirmEmail }),
+    })
   },
 
   updateUserPlatformAccess(userId, { isPlatformSuperadmin }) {
@@ -184,38 +244,6 @@ const superadminService = {
     })
   },
 
-  listEarlyAccessRequests({ page = 1, limit = 20, status } = {}) {
-    return superadminRequest(
-      `/api/superadmin/early-access/requests${toQuery({ page, limit, status })}`
-    )
-  },
-
-  getEarlyAccessRequest(requestId) {
-    return superadminRequest(`/api/superadmin/early-access/requests/${requestId}`)
-  },
-
-  updateEarlyAccessStatus(requestId, { status }) {
-    return superadminRequest(`/api/superadmin/early-access/requests/${requestId}/status`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    })
-  },
-
-  approveEarlyAccessRequest(requestId) {
-    return superadminRequest(`/api/superadmin/early-access/requests/${requestId}/approve`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    })
-  },
-
-  rejectEarlyAccessRequest(requestId) {
-    return superadminRequest(`/api/superadmin/early-access/requests/${requestId}/reject`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    })
-  },
-
   listProductEmailBroadcasts({ page = 1, limit = 20 } = {}) {
     return superadminRequest(
       `/api/superadmin/broadcasts/product-email${toQuery({ page, limit })}`
@@ -230,6 +258,209 @@ const superadminService = {
     return superadminRequest(
       `/api/superadmin/broadcasts/product-email/${broadcastId}/recipients${toQuery({ page, limit, status })}`
     )
+  },
+
+  resendProductEmailBroadcast(broadcastId, { emails } = {}) {
+    return superadminRequest(`/api/superadmin/broadcasts/product-email/${broadcastId}/resend`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ emails, confirm: 'send' }),
+    })
+  },
+
+  // ── Email Templates (CRM style) ───────────────────────────────────────────
+  listEmailTemplates({ page = 1, limit = 50, search, type } = {}) {
+    return superadminRequest(
+      `/api/superadmin/email-templates${toQuery({ page, limit, search, type })}`
+    )
+  },
+
+  getEmailTemplate(templateId) {
+    return superadminRequest(`/api/superadmin/email-templates/${templateId}`)
+  },
+
+  createEmailTemplate({ name, subject, htmlBody, textBody, type }) {
+    return superadminRequest('/api/superadmin/email-templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, subject, htmlBody, textBody, type }),
+    })
+  },
+
+  updateEmailTemplate(templateId, { name, subject, htmlBody, textBody, type }) {
+    return superadminRequest(`/api/superadmin/email-templates/${templateId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, subject, htmlBody, textBody, type }),
+    })
+  },
+
+  deleteEmailTemplate(templateId) {
+    return superadminRequest(`/api/superadmin/email-templates/${templateId}`, {
+      method: 'DELETE',
+    })
+  },
+
+  // ── Templates ────────────────────────────────────────────────────────────
+  listTemplates({ type, isActive } = {}) {
+    return superadminRequest(`/api/superadmin/templates${toQuery({ type, isActive })}`)
+  },
+
+  getTemplate(templateId) {
+    return superadminRequest(`/api/superadmin/templates/${templateId}`)
+  },
+
+  createTemplate({ type, name, contentType, variant, isActive, schema }) {
+    return superadminRequest('/api/superadmin/templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, name, contentType, variant, isActive, schema }),
+    })
+  },
+
+  updateTemplate(templateId, { name, contentType, variant, isActive, schema }) {
+    return superadminRequest(`/api/superadmin/templates/${templateId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, contentType, variant, isActive, schema }),
+    })
+  },
+
+  /**
+   * Publish a canvas-authored presentation as a DECK_PACK template.
+   * POST /api/superadmin/presentations/:presentationId/publish-as-pack
+   * @param {string} presentationId
+   * @param {{ name: string, packId: string, themeId?: string, variant?: string, isActive?: boolean }} opts
+   */
+  publishPresentationAsPack(presentationId, { name, packId, themeId, variant, isActive = true }) {
+    return superadminRequest(`/api/superadmin/presentations/${presentationId}/publish-as-pack`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, packId, themeId, variant, isActive }),
+    })
+  },
+
+  /**
+   * Publish one video scene → VIDEO_SCENE template.
+   * POST /api/superadmin/projects/:projectId/scenes/:sceneId/publish-as-template
+   */
+  publishSceneAsTemplate(projectId, sceneId, { name, variant, isActive = true }) {
+    return superadminRequest(`/api/superadmin/projects/${projectId}/scenes/${sceneId}/publish-as-template`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, variant, isActive }),
+    })
+  },
+
+  /**
+   * Publish all video scenes of a project → VIDEO_PACK template.
+   * POST /api/superadmin/projects/:projectId/publish-as-video-pack
+   */
+  publishProjectAsVideoPack(projectId, { name, packId, isActive = true, variant }) {
+    return superadminRequest(`/api/superadmin/projects/${projectId}/publish-as-video-pack`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, packId, isActive, variant }),
+    })
+  },
+
+  // ── Template media (Canva-like baked photos for pack clone) ──────────────
+  listTemplateMedia(templateId) {
+    return superadminRequest(`/api/superadmin/templates/${templateId}/media`)
+  },
+
+  /**
+   * Upload a media item to a template.
+   * @param {string} templateId
+   * @param {{ file: File, kind: 'photo'|'preview'|'graphic', slotHint?: string, name?: string }} opts
+   */
+  uploadTemplateMedia(templateId, { file, kind, slotHint, name }) {
+    const form = new FormData()
+    form.append('file', file)
+    form.append('kind', kind)
+    if (slotHint) form.append('slotHint', slotHint)
+    if (name)     form.append('name', name)
+    return superadminRequest(`/api/superadmin/templates/${templateId}/media`, {
+      method: 'POST',
+      body: form,
+      // no Content-Type header — browser sets multipart boundary automatically
+    })
+  },
+
+  deleteTemplateMedia(templateId, mediaId) {
+    return superadminRequest(`/api/superadmin/templates/${templateId}/media/${mediaId}`, {
+      method: 'DELETE',
+    })
+  },
+
+  listGraphics(params = {}) {
+    const qs = new URLSearchParams()
+    Object.entries(params).forEach(([k, v]) => {
+      if (v != null && v !== '') qs.set(k, String(v))
+    })
+    const suffix = qs.toString() ? `?${qs}` : ''
+    return superadminRequest(`/api/superadmin/graphics${suffix}`)
+  },
+
+  getGetIllustrationsMeta() {
+    return superadminRequest('/api/superadmin/graphics/getillustrations/meta')
+  },
+
+  listGetIllustrationsFree(params = {}) {
+    const qs = new URLSearchParams()
+    Object.entries(params).forEach(([k, v]) => {
+      if (v != null && v !== '') qs.set(k, String(v))
+    })
+    const suffix = qs.toString() ? `?${qs}` : ''
+    return superadminRequest(`/api/superadmin/graphics/getillustrations/free${suffix}`)
+  },
+
+  saveGetIllustrationsIconPack(packId, body = {}) {
+    return superadminRequest(
+      `/api/superadmin/graphics/getillustrations/icon-packs/${encodeURIComponent(packId)}/save`,
+      {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }
+    )
+  },
+
+  getGraphic(id) {
+    return superadminRequest(`/api/superadmin/graphics/${id}`)
+  },
+
+  uploadGraphic(fields) {
+    const form = new FormData()
+    Object.entries(fields || {}).forEach(([key, value]) => {
+      if (value == null || value === '') return
+      if (key === 'file') form.append('file', value)
+      else if (Array.isArray(value)) form.append(key, value.join(','))
+      else form.append(key, String(value))
+    })
+    return superadminRequest('/api/superadmin/graphics', { method: 'POST', body: form })
+  },
+
+  updateGraphic(id, body) {
+    return superadminRequest(`/api/superadmin/graphics/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    })
+  },
+
+  publishGraphic(id) {
+    return superadminRequest(`/api/superadmin/graphics/${id}/publish`, { method: 'POST' })
+  },
+
+  unpublishGraphic(id) {
+    return superadminRequest(`/api/superadmin/graphics/${id}/unpublish`, { method: 'POST' })
+  },
+
+  archiveGraphic(id) {
+    return superadminRequest(`/api/superadmin/graphics/${id}/archive`, { method: 'POST' })
+  },
+
+  deleteGraphic(id) {
+    return superadminRequest(`/api/superadmin/graphics/${id}`, { method: 'DELETE' })
   },
 }
 

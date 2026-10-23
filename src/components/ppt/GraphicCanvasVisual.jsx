@@ -1,0 +1,112 @@
+import { useMemo } from 'react'
+import useGraphicSvg, { resolveGraphicThemeColor } from '../../hooks/useGraphicSvg'
+import { isThemedColorMode } from '../../utils/graphicTheme.js'
+import { sanitizeSvgMarkup } from '../../utils/sanitizeSvg.js'
+
+/** Hit-test painted strokes/fills only so empty SVG boxes don't steal clicks. */
+function svgWithPaintHits(markup, { hitThrough = false } = {}) {
+  if (typeof markup !== 'string' || !markup.includes('<svg')) return markup
+  let next = markup.replace(/<svg\b([^>]*)>/i, (_, attrs = '') => {
+    let a = attrs
+    if (!/pointer-events=/i.test(a)) a += ' pointer-events="none"'
+    if (!/style=/i.test(a)) a += ' style="width:100%;height:100%;display:block"'
+    return `<svg${a}>`
+  })
+  if (hitThrough) return next
+  next = next.replace(/<(path|circle|polygon|rect|ellipse|line|polyline)\b(?![^>]*pointer-events=)/gi, '<$1 pointer-events="visiblePainted"')
+  return next
+}
+
+/**
+ * Render a catalog SVG graphic on the PPT canvas / insert panel.
+ *
+ * - fixed: always show the real SVG via <img>
+ * - recolorable: only tint when the SVG uses currentColor (inline);
+ *   otherwise show the original multi-color artwork (never CSS mask silhouettes)
+ */
+export default function GraphicCanvasVisual({
+  content = {},
+  palette = {},
+  colorRoles = null,
+  style = {},
+  hitThrough = false,
+}) {
+  const rawSrc = content.src || content.url || content.previewUrl
+  // content.svg is stored element data (AI output / any workspace member) — sanitize before innerHTML.
+  const inlineMarkup = useMemo(
+    () => (typeof content.svg === 'string' && content.svg.includes('<svg') ? sanitizeSvgMarkup(content.svg) : null),
+    [content.svg]
+  )
+  const colorMode = content.colorMode || 'fixed'
+  const wantRecolor = isThemedColorMode(colorMode) || colorMode === 'recolorable'
+  const { imgSrc, inlineSvg } = useGraphicSvg(rawSrc, { preferInline: wantRecolor })
+  const roles = colorRoles || palette?.colorRoles || content?.colorRoles || null
+  const themeColor = resolveGraphicThemeColor(content, palette, roles)
+
+  const boxStyle = {
+    ...style,
+    width: style.width || '100%',
+    height: style.height || '100%',
+    background: 'transparent',
+  }
+
+  if (inlineMarkup) {
+    const tintInline = wantRecolor || isThemedColorMode(colorMode)
+    return (
+      <div
+        style={{
+          ...boxStyle,
+          color: tintInline ? themeColor : undefined,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          pointerEvents: 'none',
+        }}
+        role="img"
+        aria-label={content.alt || 'Graphic'}
+        dangerouslySetInnerHTML={{
+          __html: svgWithPaintHits(inlineMarkup, { hitThrough }),
+        }}
+      />
+    )
+  }
+
+  if (!rawSrc) {
+    return <div style={boxStyle} aria-hidden />
+  }
+
+  if (wantRecolor && inlineSvg) {
+    return (
+      <div
+        style={{
+          ...boxStyle,
+          color: themeColor,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          pointerEvents: 'none',
+        }}
+        role="img"
+        aria-label={content.alt || 'Graphic'}
+        dangerouslySetInnerHTML={{ __html: svgWithPaintHits(inlineSvg, { hitThrough }) }}
+      />
+    )
+  }
+
+  if (!imgSrc) {
+    return <div style={boxStyle} aria-hidden />
+  }
+
+  return (
+    <img
+      src={imgSrc}
+      alt={content.alt || ''}
+      draggable={false}
+      style={{
+        ...boxStyle,
+        objectFit: content.fit || 'contain',
+        display: 'block',
+      }}
+    />
+  )
+}

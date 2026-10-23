@@ -120,23 +120,36 @@ export function normalizeFontFamilyKey(fontFamily) {
     .toLowerCase();
 }
 
-/** Map stored font stacks (e.g. "Inter, sans-serif") to a FONT_FAMILIES option value. */
+/** Extract bare family from stored value or CSS stack (legacy stacks supported). */
 export function resolveFontFamilyValue(stored, families = FONT_FAMILIES) {
-  if (!families.length) return stored || '';
-  if (!stored) return families[0].value;
+  if (!stored) {
+    if (families.length) {
+      const first = families[0]
+      return first.label || extractBareFamily(first.value) || 'Inter'
+    }
+    return 'Inter'
+  }
 
-  const exact = families.find((family) => family.value === stored);
-  if (exact) return exact.value;
+  const bare = extractBareFamily(stored)
+  if (!bare) return 'Inter'
 
-  const storedKey = normalizeFontFamilyKey(stored);
   const match = families.find(
     (family) =>
-      normalizeFontFamilyKey(family.value) === storedKey ||
-      family.label.toLowerCase() === storedKey
-  );
-  return match?.value ?? families[0].value;
+      normalizeFontFamilyKey(family.value) === bare.toLowerCase() ||
+      family.label.toLowerCase() === bare.toLowerCase()
+  )
+  return match?.label || bare
 }
 
+function extractBareFamily(stored) {
+  if (!stored) return ''
+  return String(stored)
+    .split(',')[0]
+    .trim()
+    .replace(/^["']|["']$/g, '')
+}
+
+/** @deprecated Prefer catalog FontPicker; kept for legacy stack labels. */
 export const FONT_FAMILIES = [
   { label: 'Inter', value: 'Inter, system-ui, sans-serif' },
   { label: 'Arial', value: 'Arial, Helvetica, sans-serif' },

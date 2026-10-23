@@ -3,6 +3,7 @@ import { Search, ShoppingBag, Bell, Menu, X, PanelLeft } from 'lucide-react'
 import ProfileDropdown from '../../ui/ProfileDropdown/ProfileDropdown.jsx'
 import DashboardSearchPanel from '../DashboardSearch/DashboardSearchPanel.jsx'
 import '../DashboardSearch/DashboardSearchPanel.css'
+import LogoImg from '../../../assets/herologo.png'
 
 function DashboardTopbar({
     sidebarMobileOpen,
@@ -16,6 +17,7 @@ function DashboardTopbar({
     onNotificationClick,
     onCartClick,
     isAdminPortal = false,
+    onToggleSuperadmin,
     searchQuery = '',
     onSearchQueryChange,
     searchInputRef,
@@ -31,6 +33,7 @@ function DashboardTopbar({
     searchActiveIndex = 0,
     onSearchActiveIndexChange,
     onSearchMoveActive,
+    onBrandClick,
 }) {
     const wrapRef = useRef(null)
 
@@ -88,6 +91,14 @@ function DashboardTopbar({
                 <div className="topbar-main-lead">
                     <button
                         type="button"
+                        className="topbar-brand-btn"
+                        onClick={onBrandClick}
+                        aria-label="Virtual Studio, go to home"
+                    >
+                        <img src={LogoImg} alt="Virtual Studio" className="topbar-brand-img" />
+                    </button>
+                    <button
+                        type="button"
                         className="topbar-sidebar-toggle"
                         onClick={() => setSidebarMobileOpen((o) => !o)}
                         aria-expanded={sidebarMobileOpen}
@@ -140,27 +151,37 @@ function DashboardTopbar({
                     <div className="topbar-icon-group topbar-icon-group--desktop">
                         <button 
                             type="button" 
-                            className="topbar-icon-btn" 
-                            aria-label="Notifications"
+                            className={`topbar-icon-btn ${isAdminPortal ? 'topbar-icon-btn--admin' : ''}`} 
+                            aria-label={isAdminPortal ? 'Platform Alerts' : 'Notifications'}
+                            title={isAdminPortal ? 'Platform Alerts' : 'Notifications'}
                             onClick={onNotificationClick}
                         >
                             <span className="topbar-icon-badge-wrap">
                                 <Bell size={18} strokeWidth={1.75} aria-hidden />
                                 {notificationCount > 0 && (
-                                    <span className="topbar-badge">{notificationCount > 9 ? '9+' : notificationCount}</span>
+                                    <span className={`topbar-badge ${isAdminPortal ? 'topbar-badge--admin' : ''}`}>
+                                        {notificationCount > 9 ? '9+' : notificationCount}
+                                    </span>
                                 )}
                             </span>
                         </button>
-                        <button 
-                            type="button" 
-                            className="topbar-icon-btn" 
-                            aria-label={`Cart, ${cartCount} items`}
-                            onClick={onCartClick}
-                        >
-                            <ShoppingBag size={18} strokeWidth={1.75} aria-hidden />
-                        </button>
+                        {!isAdminPortal && (
+                            <button 
+                                type="button" 
+                                className="topbar-icon-btn" 
+                                aria-label={`Cart, ${cartCount} items`}
+                                onClick={onCartClick}
+                            >
+                                <ShoppingBag size={18} strokeWidth={1.75} aria-hidden />
+                            </button>
+                        )}
                     </div>
-                    <ProfileDropdown compact onProfileClick={() => goToSection('profile')} />
+                    <ProfileDropdown
+                        compact
+                        onProfileClick={() => goToSection('profile')}
+                        isAdminPortal={isAdminPortal}
+                        onToggleSuperadmin={onToggleSuperadmin}
+                    />
 
                     <button
                         type="button"
@@ -197,25 +218,30 @@ function DashboardTopbar({
                     <div className="topbar-mobile-icons">
                         <button 
                             type="button" 
-                            className="topbar-icon-btn" 
-                            aria-label="Notifications"
+                            className={`topbar-icon-btn ${isAdminPortal ? 'topbar-icon-btn--admin' : ''}`} 
+                            aria-label={isAdminPortal ? 'Platform Alerts' : 'Notifications'}
+                            title={isAdminPortal ? 'Platform Alerts' : 'Notifications'}
                             onClick={onNotificationClick}
                         >
                             <span className="topbar-icon-badge-wrap">
                                 <Bell size={18} strokeWidth={1.75} aria-hidden />
                                 {notificationCount > 0 && (
-                                    <span className="topbar-badge">{notificationCount > 9 ? '9+' : notificationCount}</span>
+                                    <span className={`topbar-badge ${isAdminPortal ? 'topbar-badge--admin' : ''}`}>
+                                        {notificationCount > 9 ? '9+' : notificationCount}
+                                    </span>
                                 )}
                             </span>
                         </button>
-                        <button 
-                            type="button" 
-                            className="topbar-icon-btn" 
-                            aria-label={`Cart, ${cartCount} items`}
-                            onClick={onCartClick}
-                        >
-                            <ShoppingBag size={18} strokeWidth={1.75} aria-hidden />
-                        </button>
+                        {!isAdminPortal && (
+                            <button 
+                                type="button" 
+                                className="topbar-icon-btn" 
+                                aria-label={`Cart, ${cartCount} items`}
+                                onClick={onCartClick}
+                            >
+                                <ShoppingBag size={18} strokeWidth={1.75} aria-hidden />
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
