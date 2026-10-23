@@ -13,7 +13,6 @@ import LogoImg from '../../../assets/herologo.png';
 import InfographicAnimatedBackground from './InfographicAnimatedBackground.jsx';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import ImageGenCreditsGate from '../../../components/features/image-generation/ImageGenCreditsGate.jsx';
-import ImageGenContextAttach from '../../../components/features/image-generation/ImageGenContextAttach.jsx';
 import { checkImageGenCredits } from '../../../utils/imageGenCreditsCheck.js';
 import MarkdownPromptInput from '../../../components/features/image-generation/MarkdownPromptInput.jsx';
 import { highlightMarkdownSource } from '../../../utils/markdownPrompt.jsx';
@@ -1569,52 +1568,39 @@ export default function AIConversationalStudio({
               ))}
             </div>
           )}
-          <ImageGenContextAttach
-            workspaceId={workspaceId}
-            context={imageContext}
-            onContextChange={setImageContext}
-            compact
-            plusMenu
-            disabled={isGenerating}
-          >
-            {({ thumbs, trigger, composerBind, isDragOver }) => (
-              <div className={`conv-composer-attach${isDragOver ? ' is-file-over' : ''}`} {...composerBind}>
-                {thumbs}
-                <div className="conv-composer-input-row">
-                  {trigger}
-                  <MarkdownPromptInput
-                    ref={composerInputRef}
-                    className="conv-composer-textarea"
-                    placeholder={
-                      mode === 'printable'
-                        ? "Change the date, add a phone number, or make the background darker..."
-                        : mode === 'infographic'
-                          ? "Make the infographic more minimal and use larger typography..."
-                          : "Make the colors softer and add warmer lighting..."
-                    }
-                    value={chatInput}
-                    onPaste={composerBind.onPaste}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendPrompt();
-                      }
-                    }}
-                    aria-label="Follow-up prompt"
-                  />
-                  <button
-                    className="conv-send-btn"
-                    disabled={isGenerating || imageContext?.attaching || !chatInput.trim()}
-                    onClick={handleSendPrompt}
-                  >
-                    <span>Send</span>
-                    <Send size={14} />
-                  </button>
-                </div>
-              </div>
-            )}
-          </ImageGenContextAttach>
+          <div className="conv-composer-input-row">
+            <span className="conv-tweak-icon" title="Tweak this image" aria-hidden>
+              <Wand2 size={18} />
+            </span>
+            <MarkdownPromptInput
+              ref={composerInputRef}
+              className="conv-composer-textarea"
+              placeholder={
+                mode === 'printable'
+                  ? "Change the date, add a phone number, or make the background darker..."
+                  : mode === 'infographic'
+                    ? "Make the infographic more minimal and use larger typography..."
+                    : "Make the colors softer and add warmer lighting..."
+              }
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendPrompt();
+                }
+              }}
+              aria-label="Follow-up prompt"
+            />
+            <button
+              className="conv-send-btn"
+              disabled={isGenerating || !chatInput.trim()}
+              onClick={handleSendPrompt}
+            >
+              <span>Send</span>
+              <Send size={14} />
+            </button>
+          </div>
         </div>
       </footer>
       )}

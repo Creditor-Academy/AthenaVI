@@ -1159,6 +1159,20 @@
   gap: 12px;
 }
 
+.conv-tweak-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: var(--text-secondary, #94a3b8);
+  background: color-mix(in srgb, var(--primary, #2563eb) 8%, var(--bg-surface, #f8fafc));
+  pointer-events: none;
+  user-select: none;
+}
+
 .conv-composer-textarea {
   flex: 1;
   min-width: 0;
