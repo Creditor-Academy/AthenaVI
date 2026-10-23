@@ -243,38 +243,13 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
     fetchGenerations();
   }, [workspaceId, libraryView === 'trash']);
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%' }}>
-        <Loader2 className="spinning" size={28} style={{ color: 'var(--primary, #2563eb)' }} />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%', color: 'var(--text-secondary, #a0a0a0)' }}>
-        <div style={{ padding: '16px 24px', background: 'var(--bg-surface, #f9fafb)', borderRadius: '16px', fontSize: '14px' }}>
-          {error}
-        </div>
-      </div>
-    );
-  }
-
-  if (generations.length === 0) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%', color: 'var(--text-secondary, #a0a0a0)' }}>
-        <div style={{ 
-          width: '64px', height: '64px', borderRadius: '50%', background: 'color-mix(in srgb, var(--primary, #2563eb) 10%, transparent)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px'
-        }}>
-          <Sparkles size={28} style={{ color: 'var(--primary, #2563eb)' }} />
-        </div>
-        <div style={{ fontSize: '18px', fontWeight: '500', color: 'var(--text-main, #111827)', marginBottom: '8px' }}>It's quiet in here</div>
-        <div style={{ fontSize: '14px', maxWidth: '250px', textAlign: 'center', lineHeight: '1.5' }}>Images you generate in this workspace will magically appear here.</div>
-      </div>
-    );
-  }
+  const filteredGenerations = generations.filter((gen) => {
+    if (libraryView === 'liked' && gen.feedback !== 'LIKE') return false;
+    if (libraryView === 'library' && category !== 'all' && String(gen.mode || 'image').toLowerCase() !== category) return false;
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return `${gen.prompt || ''} ${gen.title || ''}`.toLowerCase().includes(q);
+  });
 
   return (
     <div className="workspace-library-container" style={{ padding: '40px 48px', height: '100%', overflowY: 'auto', width: '100%', boxSizing: 'border-box' }}>
@@ -1088,157 +1063,266 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
         </div>
       </div>}
 
-      <div
-        className={`library-grid${layout === 'list' ? ' is-list' : ''}`}
-        style={{
-          columnCount: layout === 'list' ? 1 : 'auto',
-          columnWidth: layout === 'list' ? 'auto' : '240px',
-          columnGap: '28px',
-        }}
-      >
-        {generations.filter((gen) => {
-          if (libraryView === 'liked' && gen.feedback !== 'LIKE') return false;
-          if (libraryView === 'library' && category !== 'all' && String(gen.mode || 'image').toLowerCase() !== category) return false;
-          const q = query.trim().toLowerCase();
-          if (!q) return true;
-          return `${gen.prompt || ''} ${gen.title || ''}`.toLowerCase().includes(q);
-        }).map((gen) => {
-          const idx = generations.indexOf(gen);
-          const imgUrl = gen.url || gen.resultUrl;
-          if (!imgUrl) return null;
-          const imageName = String(gen.prompt || gen.title || 'Untitled')
-            .replace(/[*#_`]/g, '')
-            .replace(/\s+/g, ' ')
-            .trim()
-            .split(/[.\n]/)[0]
-            .slice(0, 80) || 'Untitled';
-          const isSelected = selectedIds.includes(gen.id || idx);
-          
-          return (
-            <div 
-              key={gen.id || idx} 
-              className={`cute-library-card${isSelected ? ' is-selected' : ''}${libraryView === 'trash' ? ' is-trash' : ''}`}
-              onClick={() => libraryView !== 'trash' && onImageClick && gen.threadId && onImageClick(gen.threadId)}
-              style={{ cursor: gen.threadId ? 'pointer' : 'default' }}
+      {loading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '320px', width: '100%' }}>
+          <Loader2 className="spinning" size={28} style={{ color: 'var(--primary, #2563eb)' }} />
+        </div>
+      ) : error ? (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '320px', width: '100%', color: 'var(--text-secondary, #a0a0a0)' }}>
+          <div style={{ padding: '16px 24px', background: 'var(--bg-surface, #f9fafb)', borderRadius: '16px', fontSize: '14px' }}>
+            {error}
+          </div>
+        </div>
+      ) : filteredGenerations.length === 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '340px', padding: '40px 0', width: '100%', color: 'var(--text-secondary, #a0a0a0)' }}>
+          <div style={{ 
+            width: '64px', height: '64px', borderRadius: '50%', background: 'color-mix(in srgb, var(--primary, #2563eb) 10%, transparent)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px'
+          }}>
+            {libraryView === 'trash' ? (
+              <Trash2 size={28} style={{ color: 'var(--primary, #2563eb)' }} />
+            ) : libraryView === 'liked' ? (
+              <Heart size={28} style={{ color: 'var(--primary, #2563eb)' }} />
+            ) : query.trim() ? (
+              <Search size={28} style={{ color: 'var(--primary, #2563eb)' }} />
+            ) : (
+              <Sparkles size={28} style={{ color: 'var(--primary, #2563eb)' }} />
+            )}
+          </div>
+          <div style={{ fontSize: '18px', fontWeight: '500', color: 'var(--text-main, #111827)', marginBottom: '8px' }}>
+            {libraryView === 'trash'
+              ? 'Trash is empty'
+              : libraryView === 'liked'
+              ? 'No liked images yet'
+              : query.trim()
+              ? 'No matching images'
+              : category !== 'all'
+              ? `No ${LIBRARY_CATEGORIES.find((c) => c.id === category)?.label || 'images'} yet`
+              : "It's quiet in here"}
+          </div>
+          <div style={{ fontSize: '14px', maxWidth: '320px', textAlign: 'center', lineHeight: '1.5' }}>
+            {libraryView === 'trash'
+              ? 'Images you delete will show up here for 30 days before being permanently removed.'
+              : libraryView === 'liked'
+              ? 'Images you like will appear here.'
+              : query.trim()
+              ? 'Try searching with different keywords.'
+              : category !== 'all'
+              ? `Images in the ${LIBRARY_CATEGORIES.find((c) => c.id === category)?.label || ''} category will appear here.`
+              : 'Images you generate in this workspace will magically appear here.'}
+          </div>
+          {libraryView !== 'library' ? (
+            <button
+              type="button"
+              onClick={() => {
+                setLibraryView('library');
+                clearSelection();
+              }}
+              style={{
+                marginTop: '16px',
+                padding: '8px 18px',
+                borderRadius: '999px',
+                border: '1px solid #e2e8f0',
+                background: '#fff',
+                color: 'var(--text-main, #111827)',
+                fontSize: '13px',
+                fontWeight: '550',
+                cursor: 'pointer',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                transition: 'all 0.2s',
+              }}
             >
-              {layout === 'list' && (
-                <button
-                  type="button"
-                  className={`library-list-check${isSelected ? ' is-on' : ''}`}
-                  aria-label={isSelected ? 'Unselect image' : 'Select image'}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleSelected(gen.id || idx);
-                  }}
-                >
-                  <Check size={13} />
-                </button>
-              )}
-              <div className="cute-library-card-img-wrapper">
-                <img 
-                  src={imgUrl} 
-                  alt={gen.prompt || "Generated image"} 
-                  className="cute-library-card-img"
-                  loading="lazy"
-                />
-                {libraryView === 'trash' && (
-                  <span className="library-days-left">
-                    {(() => {
-                      const deleted = gen.deletedAt ? new Date(gen.deletedAt).getTime() : Date.now();
-                      const left = Math.max(0, Math.ceil((deleted + 30 * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000)));
-                      return left === 1 ? '1 day left' : `${left} days left`;
-                    })()}
-                  </span>
-                )}
-                {libraryView === 'trash' ? (
-                  <div className="library-more-wrap library-trash-menu">
-                    <button
-                      type="button"
-                      className="library-more-btn"
-                      aria-label="Image actions"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setTrashMenuId((current) => (current === (gen.id || idx) ? null : (gen.id || idx)));
-                      }}
-                    >
-                      <MoreHorizontal size={16} />
-                    </button>
-                    {trashMenuId === (gen.id || idx) && (
-                      <div className="library-trash-pop" role="menu">
-                        <button type="button" onClick={(e) => { e.stopPropagation(); restoreSelected([gen.id]); }}>
-                          <RotateCcw size={15} /> Restore
-                        </button>
-                        <button type="button" className="is-danger" onClick={(e) => { e.stopPropagation(); setConfirmPurge([gen.id]); setTrashMenuId(null); }}>
-                          <Trash2 size={15} /> Permanently delete
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                <div className="cute-library-card-actions">
-                  <button 
-                    className="library-action-btn"
-                    onClick={(e) => handleDownload(e, gen, idx)}
-                    disabled={downloadingId === (gen.id || idx)}
-                    title="Download Image"
-                  >
-                    <Download size={16} />
-                  </button>
-                  <button 
-                    className="library-action-btn"
+              Back to Library
+            </button>
+          ) : query.trim() ? (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              style={{
+                marginTop: '16px',
+                padding: '8px 18px',
+                borderRadius: '999px',
+                border: '1px solid #e2e8f0',
+                background: '#fff',
+                color: 'var(--text-main, #111827)',
+                fontSize: '13px',
+                fontWeight: '550',
+                cursor: 'pointer',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                transition: 'all 0.2s',
+              }}
+            >
+              Clear search
+            </button>
+          ) : category !== 'all' ? (
+            <button
+              type="button"
+              onClick={() => setCategory('all')}
+              style={{
+                marginTop: '16px',
+                padding: '8px 18px',
+                borderRadius: '999px',
+                border: '1px solid #e2e8f0',
+                background: '#fff',
+                color: 'var(--text-main, #111827)',
+                fontSize: '13px',
+                fontWeight: '550',
+                cursor: 'pointer',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                transition: 'all 0.2s',
+              }}
+            >
+              Show all images
+            </button>
+          ) : null}
+        </div>
+      ) : (
+        <div
+          className={`library-grid${layout === 'list' ? ' is-list' : ''}`}
+          style={{
+            columnCount: layout === 'list' ? 1 : 'auto',
+            columnWidth: layout === 'list' ? 'auto' : '240px',
+            columnGap: '28px',
+          }}
+        >
+          {filteredGenerations.map((gen) => {
+            const idx = generations.indexOf(gen);
+            const imgUrl = gen.url || gen.resultUrl;
+            if (!imgUrl) return null;
+            const imageName = String(gen.prompt || gen.title || 'Untitled')
+              .replace(/[*#_`]/g, '')
+              .replace(/\s+/g, ' ')
+              .trim()
+              .split(/[.\n]/)[0]
+              .slice(0, 80) || 'Untitled';
+            const isSelected = selectedIds.includes(gen.id || idx);
+            
+            return (
+              <div 
+                key={gen.id || idx} 
+                className={`cute-library-card${isSelected ? ' is-selected' : ''}${libraryView === 'trash' ? ' is-trash' : ''}`}
+                onClick={() => libraryView !== 'trash' && onImageClick && gen.threadId && onImageClick(gen.threadId)}
+                style={{ cursor: gen.threadId ? 'pointer' : 'default' }}
+              >
+                {layout === 'list' && (
+                  <button
+                    type="button"
+                    className={`library-list-check${isSelected ? ' is-on' : ''}`}
+                    aria-label={isSelected ? 'Unselect image' : 'Select image'}
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigator.clipboard.writeText(imgUrl);
+                      toggleSelected(gen.id || idx);
                     }}
-                    title="Copy Image URL"
                   >
-                    <Copy size={16} />
+                    <Check size={13} />
                   </button>
-                </div>
                 )}
-                <button
-                  type="button"
-                  className={`library-select-box${selectedIds.includes(gen.id || idx) ? ' is-on' : ''}`}
-                  aria-label={selectedIds.includes(gen.id || idx) ? 'Unselect image' : 'Select image'}
-                  aria-pressed={selectedIds.includes(gen.id || idx)}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleSelected(gen.id || idx);
-                  }}
-                >
-                  <Check size={14} />
-                </button>
-              </div>
-              {layout === 'list' && (
-                <>
-                  <div className="library-list-name" title={imageName}>{imageName}</div>
-                  {libraryView !== 'trash' && <div className="library-list-actions">
-                    <button
-                      type="button"
+                <div className="cute-library-card-img-wrapper">
+                  <img 
+                    src={imgUrl} 
+                    alt={gen.prompt || "Generated image"} 
+                    className="cute-library-card-img"
+                    loading="lazy"
+                  />
+                  {libraryView === 'trash' && (
+                    <span className="library-days-left">
+                      {(() => {
+                        const deleted = gen.deletedAt ? new Date(gen.deletedAt).getTime() : Date.now();
+                        const left = Math.max(0, Math.ceil((deleted + 30 * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000)));
+                        return left === 1 ? '1 day left' : `${left} days left`;
+                      })()}
+                    </span>
+                  )}
+                  {libraryView === 'trash' ? (
+                    <div className="library-more-wrap library-trash-menu">
+                      <button
+                        type="button"
+                        className="library-more-btn"
+                        aria-label="Image actions"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTrashMenuId((current) => (current === (gen.id || idx) ? null : (gen.id || idx)));
+                        }}
+                      >
+                        <MoreHorizontal size={16} />
+                      </button>
+                      {trashMenuId === (gen.id || idx) && (
+                        <div className="library-trash-pop" role="menu">
+                          <button type="button" onClick={(e) => { e.stopPropagation(); restoreSelected([gen.id]); }}>
+                            <RotateCcw size={15} /> Restore
+                          </button>
+                          <button type="button" className="is-danger" onClick={(e) => { e.stopPropagation(); setConfirmPurge([gen.id]); setTrashMenuId(null); }}>
+                            <Trash2 size={15} /> Permanently delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                  <div className="cute-library-card-actions">
+                    <button 
                       className="library-action-btn"
-                      title="Download"
                       onClick={(e) => handleDownload(e, gen, idx)}
+                      disabled={downloadingId === (gen.id || idx)}
+                      title="Download Image"
                     >
-                      <Download size={15} />
+                      <Download size={16} />
                     </button>
-                    <button
-                      type="button"
+                    <button 
                       className="library-action-btn"
-                      title="Copy image URL"
                       onClick={(e) => {
                         e.stopPropagation();
                         navigator.clipboard.writeText(imgUrl);
                       }}
+                      title="Copy Image URL"
                     >
-                      <Copy size={15} />
+                      <Copy size={16} />
                     </button>
-                  </div>}
-                </>
-              )}
-            </div>
-          );
-        })}
-      </div>
+                  </div>
+                  )}
+                  <button
+                    type="button"
+                    className={`library-select-box${selectedIds.includes(gen.id || idx) ? ' is-on' : ''}`}
+                    aria-label={selectedIds.includes(gen.id || idx) ? 'Unselect image' : 'Select image'}
+                    aria-pressed={selectedIds.includes(gen.id || idx)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleSelected(gen.id || idx);
+                    }}
+                  >
+                    <Check size={14} />
+                  </button>
+                </div>
+                {layout === 'list' && (
+                  <>
+                    <div className="library-list-name" title={imageName}>{imageName}</div>
+                    {libraryView !== 'trash' && <div className="library-list-actions">
+                      <button
+                        type="button"
+                        className="library-action-btn"
+                        title="Download"
+                        onClick={(e) => handleDownload(e, gen, idx)}
+                      >
+                        <Download size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        className="library-action-btn"
+                        title="Copy image URL"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigator.clipboard.writeText(imgUrl);
+                        }}
+                      >
+                        <Copy size={15} />
+                      </button>
+                    </div>}
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
       {Array.isArray(downloadProgress) && downloadProgress.length > 0 && (
         <div className="library-download-progress" role="status">
           Downloading
