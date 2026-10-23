@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Plus, Search, Image as ImageIcon,
-  ChevronDown, Mic, Sparkles, X, Lightbulb,
+  ChevronDown, Mic, Sparkles, X, Lightbulb, LogOut,
   ListOrdered, Clock, Columns2, BarChart3, Network, List, RefreshCw, Hexagon, Library,
   Share2, Printer, CreditCard, Mail, Check
 } from 'lucide-react';
@@ -1066,6 +1066,13 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
              }}
            >
              <Plus size={16}/> New chat
+           </button>
+           <button
+             type="button"
+             className="studio-exit-btn"
+             onClick={() => onBack?.()}
+           >
+             <LogOut size={16}/> Exit
            </button>
         </div>
       </aside>

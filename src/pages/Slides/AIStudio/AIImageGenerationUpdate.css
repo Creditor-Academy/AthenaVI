@@ -105,6 +105,29 @@
 }
 .new-chat-btn:hover { background: color-mix(in srgb, var(--primary, #2563eb) 85%, black); }
 
+.studio-exit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 10px 16px 0;
+  width: calc(100% - 32px);
+  height: 42px;
+  border-radius: 100px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  background: color-mix(in srgb, var(--bg-surface, #ffffff) 70%, transparent);
+  color: var(--text-secondary, #64748b);
+  border: 1px solid var(--border-color, #e5e7eb);
+}
+
+.studio-exit-btn:hover {
+  color: var(--text-main, #0f172a);
+  background: color-mix(in srgb, var(--primary, #2563eb) 6%, var(--bg-surface, #ffffff));
+  border-color: color-mix(in srgb, var(--primary, #2563eb) 28%, var(--border-color, #e5e7eb));
+}
+
 .sidebar-footer {
   flex-shrink: 0;
   margin-top: auto;
