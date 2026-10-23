@@ -223,17 +223,17 @@ export default function ImageGenContextAttach({
     })
   }, [context])
 
-  const filePreviewUrls = useMemo(() => {
-    return pendingFiles.map((file) => (isImageFile(file) ? URL.createObjectURL(file) : null))
-  }, [pendingFiles])
+  const [filePreviewUrls, setFilePreviewUrls] = useState([])
 
   useEffect(() => {
+    const urls = pendingFiles.map((file) => (isImageFile(file) ? URL.createObjectURL(file) : null))
+    setFilePreviewUrls(urls)
     return () => {
-      filePreviewUrls.forEach((url) => {
+      urls.forEach((url) => {
         if (url) URL.revokeObjectURL(url)
       })
     }
-  }, [filePreviewUrls])
+  }, [pendingFiles])
 
   const composerThumbs = useMemo(() => {
     const thumbs = []
@@ -450,6 +450,7 @@ export default function ImageGenContextAttach({
     setAttaching(true)
     setError('')
     setNotice('')
+    onContextChange?.({ ...(context || {}), attaching: true })
     try {
       if (context?.id && !context.pinnedAt) {
         try {
@@ -479,12 +480,15 @@ export default function ImageGenContextAttach({
         })
       }
       onContextChange?.({ ...created, localImages })
+      setPendingFiles([])
+      setPendingAssets([])
       setDirtyAfterAttach(false)
       setModalOpen(false)
       setTab('library')
       setDragOver(null)
     } catch (err) {
       setError(friendlyContextError(err))
+      onContextChange?.({ ...(context || {}), attaching: false })
     } finally {
       setAttaching(false)
     }
@@ -621,13 +625,13 @@ export default function ImageGenContextAttach({
             <button
               type="button"
               className="igc-thumb-open"
-              disabled={disabled || context?.attaching}
+              disabled={disabled || attaching || context?.attaching}
               onClick={() => setExpandedThumb(thumb)}
               aria-label={`Expand ${thumb.name}`}
-              title={context?.attaching ? 'Adding image' : 'Click to expand'}
+              title={attaching || context?.attaching ? 'Adding image' : 'Click to expand'}
             >
               <img src={thumb.src} alt={thumb.name} />
-              {context?.attaching && (
+              {(attaching || context?.attaching) && (
                 <span className="igc-thumb-loading" aria-hidden>
                   <Loader2 size={16} className="spinning" />
                 </span>
@@ -705,8 +709,9 @@ export default function ImageGenContextAttach({
         onChange={(e) => {
           const fromPlus = uploadFromPlusRef.current
           uploadFromPlusRef.current = false
-          const files = e.target.files
+          const files = Array.from(e.target.files || [])
           e.target.value = ''
+          if (!files.length) return
           if (fromPlus) ingestComposerFiles(files)
           else addFiles(files, 'image')
         }}

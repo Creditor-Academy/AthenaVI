@@ -890,6 +890,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
           setLaunchStudio(false);
           setActiveThreadId(null);
           setPrompt('');
+          setImageContext(null);
         }}
         onOpenLibrary={() => {
           setLaunchStudio(false);
@@ -916,7 +917,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
         selectedStyle={selectedStyle}
         activeThreadId={activeThreadId}
         key={activeThreadId || 'new-studio'}
-        initialContext={imageContext}
+        initialContext={activeThreadId ? null : imageContext}
       />
     );
   }
