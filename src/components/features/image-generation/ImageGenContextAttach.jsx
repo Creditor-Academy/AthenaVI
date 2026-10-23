@@ -346,7 +346,7 @@ export default function ImageGenContextAttach({
     }
     if (!next.length) return
     setPendingFiles((prev) => {
-      const room = Math.max(0, MAX_CONTEXT_ITEMS - (prev.length + pendingAssets.length))
+      const room = Math.max(0, MAX_CONTEXT_ITEMS - (prev.length + pendingAssets.length + alreadyAttachedCount))
       if (room <= 0) {
         setError('Too many context files or assets (max 5).')
         return prev
@@ -428,7 +428,7 @@ export default function ImageGenContextAttach({
         markDirty()
         return prev.filter((a) => a.id !== asset.id)
       }
-      if (prev.length + pendingFiles.length >= MAX_CONTEXT_ITEMS) {
+      if (prev.length + pendingFiles.length + alreadyAttachedCount >= MAX_CONTEXT_ITEMS) {
         setError('Too many context files or assets (max 5).')
         return prev
       }
@@ -438,12 +438,14 @@ export default function ImageGenContextAttach({
     })
   }
 
+  const alreadyAttachedCount = (context?.localImages || []).filter((img) => img?.src || img?.assetId).length
+
   const handleAttach = async (override = null) => {
     const files = override?.files ?? pendingFiles
     const assets = override?.assets ?? pendingAssets
     const text = override?.text ?? inlineText
     if (!workspaceId || attaching || disabled) return
-    if (!files.length && !assets.length && !String(text || '').trim()) {
+    if (!files.length && !assets.length && !String(text || '').trim() && !alreadyAttachedCount) {
       setError('Add a file, library image, or pasted note first.')
       return
     }
@@ -452,6 +454,46 @@ export default function ImageGenContextAttach({
     setNotice('')
     onContextChange?.({ ...(context || {}), attaching: true })
     try {
+      const priorAssetIds = [
+        ...(context?.localImages || []).map((img) => img?.assetId).filter(Boolean),
+        ...(context?.previews?.assetRefs || []).map((ref) => ref?.assetId).filter(Boolean),
+      ]
+      const priorUploadFiles = []
+      for (const img of context?.localImages || []) {
+        if (img?.assetId || img?.source === 'asset') continue
+        const src = String(img?.src || '')
+        if (!src.startsWith('data:image/')) continue
+        priorUploadFiles.push(await fileFromImageUrl(src))
+      }
+      const seenAssets = new Set()
+      const mergedAssets = []
+      for (const asset of assets) {
+        if (!asset?.id || seenAssets.has(asset.id)) continue
+        seenAssets.add(asset.id)
+        mergedAssets.push(asset)
+      }
+      const priorLibrary = (context?.localImages || []).filter(
+        (img) => img?.src && !img?.assetId && !String(img.src).startsWith('data:')
+      )
+      let priorLibraryIndex = 0
+      for (const assetId of priorAssetIds) {
+        if (seenAssets.has(assetId)) continue
+        seenAssets.add(assetId)
+        const known =
+          (context?.localImages || []).find((img) => img?.assetId === assetId) ||
+          priorLibrary[priorLibraryIndex++]
+        mergedAssets.push({
+          id: assetId,
+          url: known?.src,
+          name: known?.name || 'Library image',
+        })
+      }
+      const mergedFiles = [...priorUploadFiles, ...files]
+      if (mergedFiles.length + mergedAssets.length > MAX_CONTEXT_ITEMS) {
+        setError('Too many context files or assets (max 5).')
+        onContextChange?.({ ...(context || {}), attaching: false })
+        return
+      }
       if (context?.id && !context.pinnedAt) {
         try {
           await imageGenService.deleteContext(workspaceId, context.id)
@@ -460,23 +502,26 @@ export default function ImageGenContextAttach({
         }
       }
       const created = await imageGenService.createContext(workspaceId, {
-        files,
+        files: mergedFiles,
         inlineText: text,
-        assetIds: assets.map((a) => a.id),
+        assetIds: mergedAssets.map((a) => a.id),
       })
       const localImages = []
-      for (const file of files) {
+      for (const file of mergedFiles) {
         if (!isImageFile(file)) continue
         localImages.push({
           name: file.name || 'Image',
           src: await fileToDataUrl(file),
+          source: 'upload',
         })
       }
-      for (const asset of assets) {
-        if (!asset?.url) continue
+      for (const asset of mergedAssets) {
+        if (!asset?.url && !asset?.id) continue
         localImages.push({
           name: asset.name || 'Library image',
           src: asset.url,
+          source: 'asset',
+          assetId: asset.id,
         })
       }
       onContextChange?.({ ...created, localImages })
@@ -504,7 +549,7 @@ export default function ImageGenContextAttach({
       }
       accepted.push(file)
     }
-    const room = Math.max(0, MAX_CONTEXT_ITEMS - (pendingFiles.length + pendingAssets.length))
+    const room = Math.max(0, MAX_CONTEXT_ITEMS - (pendingFiles.length + pendingAssets.length + alreadyAttachedCount))
     if (!accepted.length) return []
     if (room <= 0) {
       setError('Too many context files or assets (max 5).')
@@ -631,7 +676,7 @@ export default function ImageGenContextAttach({
               title={attaching || context?.attaching ? 'Adding image' : 'Click to expand'}
             >
               <img src={thumb.src} alt={thumb.name} />
-              {(attaching || context?.attaching) && (
+              {thumb.kind !== 'local' && (attaching || context?.attaching) && (
                 <span className="igc-thumb-loading" aria-hidden>
                   <Loader2 size={16} className="spinning" />
                 </span>
