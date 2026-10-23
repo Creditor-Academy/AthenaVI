@@ -642,7 +642,7 @@ export default function AIConversationalStudio({
   // Conversational Re-Prompt / Tweak
   const handleSendPrompt = async (preset, fromGen) => {
     const text = (typeof preset === 'string' ? preset : chatInput).trim();
-    if (!text || isGenerating) return;
+    if (!text || isGenerating || imageContext?.attaching) return;
     const activeWs = workspaceId || createContext?.workspaceId;
     if (!activeWs) {
       setErrorMsg('Workspace connection failed. Please refresh the page or log in again.');
@@ -1400,7 +1400,7 @@ export default function AIConversationalStudio({
           ))}
 
           {/* Pending Generation Block */}
-          {isGenerating && (
+          {(isGenerating || (!threadId && generations.length === 0 && Boolean(basePrompt.trim()) && !errorMsg)) && (
             <React.Fragment>
               <div className="conv-chat-row user-row">
                 <div className="conv-user-bubble-container">
@@ -1420,7 +1420,7 @@ export default function AIConversationalStudio({
                         ))}
                       </div>
                     )}
-                    <span className="conv-user-bubble-text aig-md-preview">{highlightMarkdownSource(pendingPrompt)}</span>
+                    <span className="conv-user-bubble-text aig-md-preview">{highlightMarkdownSource(isGenerating ? pendingPrompt : basePrompt)}</span>
                   </div>
                 </div>
                 <div className="conv-chat-avatar user-avatar">
@@ -1444,8 +1444,11 @@ export default function AIConversationalStudio({
                     </div>
                   </div>
                   
-                  <div className="conv-unified-frame slide-in-left" style={aspectStyle}>
-                    <div style={{ width: '100%', height: '100%', background: 'var(--bg-surface, #ffffff)', position: 'relative', overflow: 'hidden' }}>
+                  <div
+                    className="conv-unified-frame conv-gen-skeleton slide-in-left"
+                    style={aspectStyle}
+                  >
+                    <div className="conv-gen-skeleton-body">
                       <div className="conv-gen-shimmer-sweep" />
                     </div>
                   </div>
@@ -1602,7 +1605,7 @@ export default function AIConversationalStudio({
                   />
                   <button
                     className="conv-send-btn"
-                    disabled={isGenerating || !chatInput.trim()}
+                    disabled={isGenerating || imageContext?.attaching || !chatInput.trim()}
                     onClick={handleSendPrompt}
                   >
                     <span>Send</span>

@@ -450,6 +450,7 @@ export default function ImageGenContextAttach({
     setAttaching(true)
     setError('')
     setNotice('')
+    onContextChange?.({ ...(context || {}), attaching: true })
     try {
       if (context?.id && !context.pinnedAt) {
         try {
@@ -487,6 +488,7 @@ export default function ImageGenContextAttach({
       setDragOver(null)
     } catch (err) {
       setError(friendlyContextError(err))
+      onContextChange?.({ ...(context || {}), attaching: false })
     } finally {
       setAttaching(false)
     }
