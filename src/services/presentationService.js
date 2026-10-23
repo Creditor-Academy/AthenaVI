@@ -670,7 +670,7 @@ class PresentationService {
     workspaceId,
     presentationId,
     exportId,
-    { intervalMs = 2000, timeoutMs = 5 * 60 * 1000, onProgress } = {}
+    { intervalMs = 2000, timeoutMs = 10 * 60 * 1000, onProgress } = {}
   ) {
     const started = Date.now()
     while (Date.now() - started < timeoutMs) {
@@ -680,11 +680,14 @@ class PresentationService {
       const state = String(status?.status || status?.exportStatus || '').toUpperCase()
       if (state === 'READY') return status
       if (state === 'FAILED') {
-        throw new Error(status?.message || status?.error || 'Export failed')
+        throw new Error(status?.error || status?.message || 'Export failed')
       }
       await sleep(intervalMs)
     }
-    throw new Error('Timed out waiting for export')
+    const minutes = Math.round(timeoutMs / 60000)
+    throw new Error(
+      `Timed out waiting for export (${minutes} min). Large decks can take longer — try PowerPoint (PPTX) or retry.`
+    )
   }
 
   // ── Import / share / duplicate ─────────────────────────────────────
