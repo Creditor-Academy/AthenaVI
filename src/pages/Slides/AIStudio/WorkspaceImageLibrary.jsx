@@ -45,28 +45,64 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
   const [confirmPurge, setConfirmPurge] = useState(false);
 
   const handleDownload = async (event, gen, idx) => {
-    event.stopPropagation();
-    const key = gen.id || idx;
+    event?.stopPropagation?.();
+    const key = gen?.id || idx;
     if (downloadingId === key) return;
     setDownloadingId(key);
+
+    const imgSrc = gen?.url || gen?.resultUrl || gen?.asset?.url || gen?.imageUrl || (Array.isArray(gen?.images) && gen?.images[0]?.url) || '';
+
+    const singleItem = {
+      id: key,
+      src: imgSrc,
+      status: 'downloading',
+    };
+    setDownloadProgress([singleItem]);
+    const startTime = Date.now();
+
     try {
-      if (workspaceId && gen.id) {
-        await imageGenService.downloadAndSave(workspaceId, gen.id, 'png');
-        return;
+      if (workspaceId && gen?.id) {
+        const { blob, filename } = await imageGenService.download(workspaceId, gen.id, 'png');
+        const safeName = /\.png$/i.test(filename) ? filename : `athena-image-${key}.png`;
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = safeName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 15000);
+      } else if (imgSrc) {
+        const response = await fetch(imgSrc);
+        if (!response.ok) throw new Error('Download failed');
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = `generation_${key}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 15000);
+      } else {
+        throw new Error('No valid image URL found');
       }
-      const response = await fetch(gen.url || gen.resultUrl);
-      if (!response.ok) throw new Error('Download failed');
-      const blob = await response.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = objectUrl;
-      a.download = `generation_${gen.id || idx}.png`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(objectUrl);
+
+      // Ensure progress indicator is visible for at least 700ms so the user sees the download starting
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 700) {
+        await new Promise((resolve) => setTimeout(resolve, 700 - elapsed));
+      }
+
+      setDownloadProgress([{ ...singleItem, status: 'done' }]);
+      setTimeout(() => {
+        setDownloadProgress((curr) => (Array.isArray(curr) && curr.length === 1 && curr[0].id === key ? null : curr));
+      }, 2200);
     } catch (err) {
       console.error('Library download failed:', err);
+      setDownloadProgress(null);
+      setDownloadNotice('Download failed');
+      setTimeout(() => setDownloadNotice(''), 2500);
     } finally {
       setDownloadingId(null);
     }
@@ -91,17 +127,17 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
     const withIds = selected.filter((gen) => gen.id);
     const queue = (workspaceId && withIds.length ? withIds : selected).map((gen, i) => ({
       id: gen.id || i,
-      src: gen.url || gen.resultUrl,
+      src: gen.url || gen.resultUrl || gen.asset?.url || gen.imageUrl || '',
       status: 'waiting',
     }));
-    if (queue.length > 1) setDownloadProgress(queue);
+    setDownloadProgress(queue);
     const mark = (index, status) => {
       setDownloadProgress((rows) => (Array.isArray(rows) ? rows.map((row, i) => (i === index ? { ...row, status } : row)) : rows));
     };
     try {
       if (workspaceId && withIds.length) {
         for (let i = 0; i < withIds.length; i += 1) {
-          if (withIds.length > 1) mark(i, 'downloading');
+          mark(i, 'downloading');
           const { blob, filename } = await imageGenService.download(workspaceId, withIds[i].id, 'png');
           const safeName = /\.png$/i.test(filename) ? filename : `athena-image-${i + 1}.png`;
           const objectUrl = URL.createObjectURL(blob);
@@ -112,20 +148,21 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           a.click();
           a.remove();
           setTimeout(() => URL.revokeObjectURL(objectUrl), 15000);
-          if (withIds.length > 1) mark(i, 'done');
+          mark(i, 'done');
           if (i < withIds.length - 1) {
             await new Promise((resolve) => setTimeout(resolve, 400));
           }
         }
-        setDownloadProgress(null);
-        setDownloadNotice('Downloaded');
-        setTimeout(() => setDownloadNotice(''), 2500);
+        setTimeout(() => {
+          setDownloadProgress(null);
+        }, 2200);
         return;
       }
       for (let i = 0; i < selected.length; i += 1) {
         const gen = selected[i];
-        if (selected.length > 1) mark(i, 'downloading');
-        const response = await fetch(gen.url || gen.resultUrl);
+        mark(i, 'downloading');
+        const imgUrl = gen.url || gen.resultUrl || gen.asset?.url || gen.imageUrl || '';
+        const response = await fetch(imgUrl);
         if (!response.ok) continue;
         const blob = await response.blob();
         const objectUrl = URL.createObjectURL(blob);
@@ -136,16 +173,15 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
         a.click();
         a.remove();
         setTimeout(() => URL.revokeObjectURL(objectUrl), 2000);
-        if (selected.length > 1) mark(i, 'done');
+        mark(i, 'done');
       }
-      setDownloadProgress(null);
-      setDownloadNotice('Downloaded');
-      setTimeout(() => setDownloadNotice(''), 2500);
+      setTimeout(() => {
+        setDownloadProgress(null);
+      }, 2200);
     } catch (err) {
       console.error('Library bulk download failed:', err);
     } finally {
       setDownloadingSelection(false);
-      setDownloadProgress(null);
     }
   };
 
@@ -1096,17 +1132,18 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           position: fixed;
           right: 24px;
           bottom: 24px;
-          z-index: 40;
-          width: 280px;
+          z-index: 10000001;
+          width: 300px;
           margin: 0;
           padding: 16px 18px;
           border-radius: 16px;
-          background: var(--bg-surface, #fff);
+          background: #ffffff;
           color: var(--text-main, #111827);
-          border: 1px solid var(--border-color, #e5e7eb);
-          box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
+          border: 1px solid rgba(226, 232, 240, 0.95);
+          box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04);
           font-size: 15px;
           font-weight: 700;
+          animation: library-pop-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .library-download-toast {
           width: fit-content;
@@ -1114,12 +1151,47 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           color: #166534;
           border-color: #86efac;
         }
-        .library-download-progress span {
-          display: block;
+        .library-download-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 8px;
+        }
+        .library-download-header-content {
+          flex: 1;
+          min-width: 0;
+        }
+        .library-download-title {
+          font-size: 15px;
+          font-weight: 700;
+          color: #0f172a;
+          line-height: 1.25;
+        }
+        .library-download-subtitle {
           margin-top: 4px;
           font-size: 13px;
           font-weight: 550;
-          color: var(--text-secondary, #64748b);
+          color: #64748b;
+          line-height: 1.2;
+        }
+        .library-download-close {
+          width: 24px;
+          height: 24px;
+          border: none;
+          background: transparent;
+          border-radius: 6px;
+          color: #94a3b8;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: background 0.15s ease, color 0.15s ease;
+          padding: 0;
+          flex-shrink: 0;
+        }
+        .library-download-close:hover {
+          background: #f1f5f9;
+          color: #334155;
         }
         .library-download-track {
           margin-top: 12px;
@@ -1613,26 +1685,55 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           })}
         </div>
       )}
-      {Array.isArray(downloadProgress) && downloadProgress.length > 0 && (
+      {Array.isArray(downloadProgress) && downloadProgress.length > 0 && typeof document !== 'undefined' && createPortal(
         <div className="library-download-progress" role="status">
-          Downloading
-          <span>{downloadProgress.filter((item) => item.status === 'done').length} of {downloadProgress.length} downloaded</span>
-          <div className="library-dl-list">
-            {downloadProgress.map((item) => (
-              <div className="library-dl-row" key={item.id}>
-                <img className="library-dl-thumb" src={item.src} alt="" />
-                <div className="library-dl-meta">
-                  <strong>{item.status === 'done' ? 'Downloaded' : item.status === 'downloading' ? 'Downloading' : 'Waiting'}</strong>
-                  <div className={`library-dl-track${item.status === 'done' ? ' is-done' : ''}`} aria-hidden>
-                    <i />
+          {(() => {
+            const doneCount = downloadProgress.filter((item) => item.status === 'done').length;
+            const isAllDone = doneCount === downloadProgress.length;
+            return (
+              <>
+                <div className="library-download-header">
+                  <div className="library-download-header-content">
+                    <div className="library-download-title">{isAllDone ? 'Downloaded' : 'Downloading'}</div>
+                    <div className="library-download-subtitle">
+                      {doneCount} of {downloadProgress.length} downloaded
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    className="library-download-close"
+                    title="Dismiss"
+                    aria-label="Dismiss download progress"
+                    onClick={() => setDownloadProgress(null)}
+                  >
+                    <X size={15} />
+                  </button>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
+                <div className="library-dl-list">
+                  {downloadProgress.map((item) => (
+                    <div className="library-dl-row" key={item.id}>
+                      <img className="library-dl-thumb" src={item.src} alt="" />
+                      <div className="library-dl-meta">
+                        <strong style={{ color: item.status === 'done' ? '#16a34a' : '#1e293b' }}>
+                          {item.status === 'done' ? 'Downloaded' : item.status === 'downloading' ? 'Downloading' : 'Waiting'}
+                        </strong>
+                        <div className={`library-dl-track${item.status === 'done' ? ' is-done' : ''}`} aria-hidden>
+                          <i />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
+        </div>,
+        document.body
       )}
-      {!downloadProgress && downloadNotice && <div className="library-download-toast" role="status">{downloadNotice}</div>}
+      {!downloadProgress && downloadNotice && typeof document !== 'undefined' && createPortal(
+        <div className="library-download-toast" role="status">{downloadNotice}</div>,
+        document.body
+      )}
       {selected.length > 0 && libraryView === 'trash' && (
         <div className="library-selection-bar" role="toolbar" aria-label="Selected trash images">
           <span className="library-selection-count">{selected.length} selected</span>
@@ -1758,7 +1859,7 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
             type="button"
             role="menuitem"
             onClick={(e) => {
-              handleDownload(e, cardMenu.gen, cardMenu.idx);
+              handleDownload(e, { ...cardMenu.gen, url: cardMenu.gen?.url || cardMenu.imgUrl }, cardMenu.idx);
               setCardMenu(null);
             }}
             disabled={downloadingId === cardMenu.id}
