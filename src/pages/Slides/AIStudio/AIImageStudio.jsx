@@ -610,9 +610,9 @@ function friendlyError(err) {
 
 function getFriendlyModelName(model) {
   const nameMap = {
-    'gpt-image-1': 'Standard Quality',
-    'gpt-image-1-hd': 'High Quality (HD)',
-    'dall-e-3': 'DALL-E 3 (Legacy)',
+    'gpt-image-1': 'GPT Image 2.5',
+    'gpt-image-1-hd': 'GPT Image 2.5 HD',
+    'dall-e-3': 'DALL·E 3 (Legacy)',
     'gemini-3-pro-image': 'Nano Banana Pro',
     'gemini-3.1-flash-image': 'Nano Banana 2',
     'gemini-3.1-flash-lite-image': 'Nano Banana 2 Lite',
@@ -647,7 +647,7 @@ function groupModelsByProvider(models = []) {
 
 function isRecommendedModel(model, mode) {
   if (mode === 'infographic') return model.id === 'gpt-image-1-hd'
-  return model.id === 'gpt-image-1' || Boolean(model.recommended)
+  return model.id === 'gpt-image-1-hd' || Boolean(model.recommended)
 }
 
 function LayoutSchematic({ layoutId, size = 'thumb' }) {
@@ -1261,7 +1261,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
 
   const [formatId, setFormatId] = useState('square')
   const [canvasPicked, setCanvasPicked] = useState(false)
-  const [modelId, setModelId] = useState('gpt-image-1')
+  const [modelId, setModelId] = useState('gpt-image-1-hd')
   const [styleId, setStyleId] = useState('cinematic')
   const [estimateAc, setEstimateAc] = useState(null)
   const [creditBalance, setCreditBalance] = useState(null)

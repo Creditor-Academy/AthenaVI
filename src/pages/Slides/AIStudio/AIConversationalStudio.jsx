@@ -21,6 +21,7 @@ import './AIConversationalStudio.css';
 import RecentChatMenu from './RecentChatMenu.jsx';
 import WorkspaceImageLibrary from './WorkspaceImageLibrary.jsx';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
+import { formatModelDisplayName } from '../../../utils/imageGenDefaults.js';
 
 const GENERATION_STEPS = [
   "Drafting vision...",
@@ -170,7 +171,7 @@ export default function AIConversationalStudio({
   createContext = null,
   initialPrompt = '',
   activeMode = 'image',
-  selectedModel = 'gpt-image-1',
+  selectedModel = 'gpt-image-1-hd',
   selectedFormat = 'square',
   selectedStyle = null,
   activeThreadId: propThreadId = null,
@@ -187,7 +188,7 @@ export default function AIConversationalStudio({
   // Prompt & Config (Persisted)
   const [basePrompt, setBasePrompt] = useState(initialPrompt || '');
   const [mode, setMode] = useState(activeMode || 'image');
-  const [modelId, setModelId] = useState(selectedModel || 'gpt-image-1');
+  const [modelId, setModelId] = useState(selectedModel || 'gpt-image-1-hd');
   const [formatId, setFormatId] = useState(selectedFormat || (activeMode === 'infographic' ? 'landscape' : 'square'));
   const [styleId, setStyleId] = useState(selectedStyle || null);
   const [imageContext, setImageContext] = useState(initialContext || null);
@@ -275,7 +276,9 @@ export default function AIConversationalStudio({
   // Format aspect ratio / specs display
   const specLabel = useMemo(() => {
     const parts = [];
-    const modelName = modelId.includes('gemini') ? 'Gemini Pro' : 'GPT Image';
+    const modelName = modelId.includes('gemini')
+      ? 'Gemini Pro'
+      : formatModelDisplayName(modelId, 'GPT Image 2.5 HD');
     parts.push(modelName);
 
     if (formatId === 'square') parts.push('1:1');
@@ -690,7 +693,7 @@ export default function AIConversationalStudio({
         const fallbackBody = {
           mode: mode || 'image',
           folderId,
-          modelId: modelId || 'gpt-image-1',
+          modelId: modelId || (mode === 'image' ? 'gpt-image-1-hd' : 'gemini-3-pro-image'),
           formatId: formatId || (mode === 'infographic' ? 'landscape' : 'square'),
           prompt: mode === 'infographic' ? `${basePrompt}. Modification: ${text}, clean minimalist layout, no text, no words` : `${basePrompt}. Modification: ${text}`
         };

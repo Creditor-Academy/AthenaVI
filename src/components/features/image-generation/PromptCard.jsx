@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { Wand2, X, ChevronDown, Sparkles, Layers, Star, ImageIcon } from 'lucide-react'
 import StyleReferenceModal from './StyleReferenceModal'
 
-const MODELS    = ['Nano Banana', 'Seedream', 'Flux', 'Ideogram', 'GPT Image', 'Stable Diffusion']
+const MODELS    = ['Nano Banana', 'Seedream', 'Flux', 'Ideogram', 'GPT Image 2.5', 'Stable Diffusion']
 const RATIOS    = ['1:1', '16:9', '9:16', '4:5', '3:2']
 const QUALITIES = ['Standard', 'Premium', 'Ultra']
 

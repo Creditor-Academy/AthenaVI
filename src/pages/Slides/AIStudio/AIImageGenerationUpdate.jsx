@@ -29,8 +29,7 @@ import MarkdownPromptInput from '../../../components/features/image-generation/M
 import RecentChatMenu from './RecentChatMenu.jsx';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
 import '../../../components/features/image-generation/MarkdownPromptInput.css';
-import { checkImageGenCredits } from '../../../utils/imageGenCreditsCheck.js';
-import { defaultImageGenModelId, modelsForImageGenMode, isDraftQualityModel } from '../../../utils/imageGenDefaults.js';
+import { defaultImageGenModelId, modelsForImageGenMode, isDraftQualityModel, formatModelDisplayName } from '../../../utils/imageGenDefaults.js';
 
 import style3dImg from '../../../assets/slides_icons/style_3d.jpg';
 import styleBauhausImg from '../../../assets/slides_icons/style_bauhaus.jpg';
@@ -1383,7 +1382,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                       setShowFormatDropdown(false);
                     }}>
                       {getModelIcon(selectedModel)}
-                      <span>{selectedModelObj?.name || selectedModel || "GPT Image"}</span>
+                      <span>{formatModelDisplayName(selectedModelObj || selectedModel, "GPT Image 2.5 HD")}</span>
                       <ChevronDown size={14}/>
                     </button>
                     {showModelDropdown && (
@@ -1403,7 +1402,26 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                           return groups.map(g => (
                             <div key={g.id} className="model-group">
                               <div className="model-group-title">{g.label}</div>
-                              {g.models.map(m => (
+                              {g.models.map(m => {
+                                const isGptHd = m.id === 'gpt-image-1-hd';
+                                const isGptStd = m.id === 'gpt-image-1';
+                                const isDalle3 = m.id === 'dall-e-3';
+
+                                let displayName = formatModelDisplayName(m, m.name || m.id);
+                                if (isGptHd) displayName = 'GPT Image 2.5 HD';
+                                else if (isGptStd) displayName = 'GPT Image 2.5';
+                                else if (isDalle3) displayName = 'DALL·E 3 (Legacy)';
+
+                                let qualityLabel = m.quality === 'high' ? 'High quality' : 'Medium quality';
+                                if (isGptHd || isDalle3) {
+                                  qualityLabel = 'High quality • 12 AC';
+                                } else if (isGptStd) {
+                                  qualityLabel = 'Standard quality • 6 AC';
+                                }
+
+                                const isRec = (m.recommended || isGptHd) && activeMode === 'image';
+
+                                return (
                                 <div 
                                   key={m.id} 
                                   className={`model-card ${selectedModel === m.id ? 'active' : ''}`}
@@ -1411,19 +1429,26 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                                 >
                                   <div className="model-card-top">
                                     <div className="model-name">
-                                      {getModelIcon(m.id)} {m.name || m.id}
+                                      {getModelIcon(m.id)} {displayName}
                                     </div>
-                                    {m.recommended && activeMode === 'image' && <span className="recommended-badge">Recommended</span>}
+                                    {isRec && <span className="recommended-badge">Recommended</span>}
                                     {isDraftQualityModel(m) && <span className="recommended-badge">Draft quality</span>}
                                   </div>
-                                  <div className="model-desc">{m.description || "High performance AI image generation model."}</div>
+                                  <div className="model-desc">
+                                    {isGptHd 
+                                      ? "Default for Image mode. High performance AI image generation." 
+                                      : isDalle3 
+                                        ? "Legacy OpenAI model preserved for compatibility." 
+                                        : (m.description || "High performance AI image generation model.")}
+                                  </div>
                                   <div className="model-meta">
                                     {m.maxImageSize && <span>{m.maxImageSize} • </span>}
-                                    <span>{m.quality === 'high' ? 'High quality' : 'Medium quality'}</span>
+                                    <span>{qualityLabel}</span>
                                     {selectedModel === m.id && <span className="selected-text">✓ Selected</span>}
                                   </div>
                                 </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           ));
                         })()}
