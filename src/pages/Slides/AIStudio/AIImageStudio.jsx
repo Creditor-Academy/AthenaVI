@@ -610,9 +610,9 @@ function friendlyError(err) {
 
 function getFriendlyModelName(model) {
   const nameMap = {
-    'gpt-image-1': 'GPT Image 2.5',
-    'gpt-image-1-hd': 'GPT Image 2.5 HD',
-    'dall-e-3': 'DALL·E 3 (Legacy)',
+    'gpt-image-1': 'Standard',
+    'gpt-image-1-hd': 'Pro',
+    'dall-e-3': 'Classic',
     'gemini-3-pro-image': 'Nano Banana Pro',
     'gemini-3.1-flash-image': 'Nano Banana 2',
     'gemini-3.1-flash-lite-image': 'Nano Banana 2 Lite',

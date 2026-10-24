@@ -14,21 +14,21 @@ export function isDraftQualityModel(model) {
 }
 
 export const OVERRIDDEN_MODEL_NAMES = {
-  'gpt-image-1-hd': 'GPT Image 2.5 HD',
-  'gpt-image-1': 'GPT Image 2.5',
-  'dall-e-3': 'DALL·E 3 (Legacy)',
+  'gpt-image-1-hd': 'Pro',
+  'gpt-image-1': 'Standard',
+  'dall-e-3': 'Classic',
 }
 
-export function formatModelDisplayName(modelOrId, fallback = 'GPT Image 2.5 HD') {
+export function formatModelDisplayName(modelOrId, fallback = 'Pro') {
   if (!modelOrId) return fallback
   const id = typeof modelOrId === 'string' ? modelOrId : modelOrId?.id
-  if (id === 'gpt-image-1-hd') return 'GPT Image 2.5 HD'
-  if (id === 'gpt-image-1') return 'GPT Image 2.5'
-  if (id === 'dall-e-3') return 'DALL·E 3 (Legacy)'
+  if (id === 'gpt-image-1-hd') return 'Pro'
+  if (id === 'gpt-image-1') return 'Standard'
+  if (id === 'dall-e-3') return 'Classic'
   if (typeof modelOrId === 'object' && modelOrId?.name) {
-    if (modelOrId.name === 'GPT Image HD') return 'GPT Image 2.5 HD'
-    if (modelOrId.name === 'GPT Image') return 'GPT Image 2.5'
-    if (modelOrId.name === 'DALL·E 3' || modelOrId.name === 'DALL-E 3' || modelOrId.name?.toLowerCase().includes('legacy')) return 'DALL·E 3 (Legacy)'
+    if (modelOrId.name === 'GPT Image HD' || modelOrId.name === 'GPT Image 2.5 HD') return 'Pro'
+    if (modelOrId.name === 'GPT Image' || modelOrId.name === 'GPT Image 2.5') return 'Standard'
+    if (modelOrId.name === 'DALL·E 3' || modelOrId.name === 'DALL-E 3' || modelOrId.name?.toLowerCase().includes('legacy')) return 'Classic'
     return modelOrId.name
   }
   return id || fallback

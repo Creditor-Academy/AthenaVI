@@ -1382,7 +1382,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                       setShowFormatDropdown(false);
                     }}>
                       {getModelIcon(selectedModel)}
-                      <span>{formatModelDisplayName(selectedModelObj || selectedModel, "GPT Image 2.5 HD")}</span>
+                      <span>{formatModelDisplayName(selectedModelObj || selectedModel, "Pro")}</span>
                       <ChevronDown size={14}/>
                     </button>
                     {showModelDropdown && (
@@ -1408,15 +1408,15 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                                 const isDalle3 = m.id === 'dall-e-3';
 
                                 let displayName = formatModelDisplayName(m, m.name || m.id);
-                                if (isGptHd) displayName = 'GPT Image 2.5 HD';
-                                else if (isGptStd) displayName = 'GPT Image 2.5';
-                                else if (isDalle3) displayName = 'DALL·E 3 (Legacy)';
+                                if (isGptHd) displayName = 'Pro';
+                                else if (isGptStd) displayName = 'Standard';
+                                else if (isDalle3) displayName = 'Classic';
 
                                 let qualityLabel = m.quality === 'high' ? 'High quality' : 'Medium quality';
                                 if (isGptHd || isDalle3) {
-                                  qualityLabel = 'High quality • 12 AC';
+                                  qualityLabel = 'High quality · 12 AC';
                                 } else if (isGptStd) {
-                                  qualityLabel = 'Standard quality • 6 AC';
+                                  qualityLabel = 'Standard quality · 6 AC';
                                 }
 
                                 const isRec = m.recommended || isGptHd;
@@ -1436,10 +1436,12 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                                   </div>
                                   <div className="model-desc">
                                     {isGptHd 
-                                      ? "Default recommended model. High performance AI image generation." 
-                                      : isDalle3 
-                                        ? "Legacy OpenAI model preserved for compatibility." 
-                                        : (m.description || "High performance AI image generation model.")}
+                                      ? "High-quality, detailed image generation." 
+                                      : isGptStd
+                                        ? "Fast, cost-effective image generation."
+                                        : isDalle3 
+                                          ? "Previous-generation option retained for compatibility." 
+                                          : (m.description || "High performance AI image generation model.")}
                                   </div>
                                   <div className="model-meta">
                                     {m.maxImageSize && <span>{m.maxImageSize} • </span>}

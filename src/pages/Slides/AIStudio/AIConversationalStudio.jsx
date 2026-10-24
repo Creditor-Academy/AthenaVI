@@ -278,7 +278,7 @@ export default function AIConversationalStudio({
     const parts = [];
     const modelName = modelId.includes('gemini')
       ? 'Gemini Pro'
-      : formatModelDisplayName(modelId, 'GPT Image 2.5 HD');
+      : formatModelDisplayName(modelId, 'Pro');
     parts.push(modelName);
 
     if (formatId === 'square') parts.push('1:1');
