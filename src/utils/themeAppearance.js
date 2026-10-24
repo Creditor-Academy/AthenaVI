@@ -36,11 +36,38 @@ export function relativeLuminanceHex(hex) {
   return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
 }
 
-function inkMatchesAppearance(hex, appearance) {
+export function inkMatchesAppearance(hex, appearance) {
   const lum = relativeLuminanceHex(hex)
   if (lum == null) return true
   if (appearance === 'dark') return lum >= APPEARANCE_LUM_THRESHOLD
   return lum < APPEARANCE_LUM_THRESHOLD
+}
+
+/** Light vs dark slide from explicit appearance or canvas background. */
+export function resolveSlideAppearance(palette = {}) {
+  if (palette.appearance === 'light' || palette.appearance === 'dark') return palette.appearance
+  return appearanceFromThemeBg(palette.bg || palette.surface || palette.background || '#FFFFFF')
+}
+
+/**
+ * Remap ink that clashes with deck appearance (e.g. white on light slides).
+ * Returns null when caller should try a theme token (accent/primary).
+ */
+export function coerceInkHexForAppearance(hex, appearance, { colorRole } = {}) {
+  if (!hex || (appearance !== 'light' && appearance !== 'dark')) return hex
+  if (inkMatchesAppearance(hex, appearance)) return hex
+  const safe = SAFE_INK_BY_APPEARANCE[appearance] || SAFE_INK_BY_APPEARANCE.light
+  const role = String(colorRole || '').toLowerCase()
+  if (/muted|textonimagemuted/.test(role)) return safe.muted
+  if (/accent|primary|secondary/.test(role)) return null
+  if (/textonimage|onimage/.test(role) && appearance === 'light') return safe.text
+  return safe.text
+}
+
+export function safeInkHexForAppearance(appearance, role = 'text') {
+  const safe = SAFE_INK_BY_APPEARANCE[appearance] || SAFE_INK_BY_APPEARANCE.light
+  if (/muted/.test(String(role).toLowerCase())) return safe.muted
+  return safe.text
 }
 
 function luminanceMatchesAppearance(hex, appearance) {

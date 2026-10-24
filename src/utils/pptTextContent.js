@@ -1,4 +1,9 @@
 import { resolveFillCss, resolveThemeColor } from './presentationHelpers'
+import {
+  coerceInkHexForAppearance,
+  resolveSlideAppearance,
+  safeInkHexForAppearance,
+} from './themeAppearance'
 
 /** Safe plain text for canvas rendering — never return objects (invalid React children). */
 export function coercePlainText(value) {
@@ -150,6 +155,56 @@ export function runFill(run, fallbackFill) {
   return fallbackFill || null
 }
 
+/** Map run.fontRole to editor theme CSS vars when fontFamily is not stored. */
+export function fontFamilyForRunRole(run, baseStyle = {}) {
+  if (run?.fontFamily) return run.fontFamily
+  const role = String(run?.fontRole || 'heading').toLowerCase()
+  if (role === 'body') return 'var(--ppt-font-body, inherit)'
+  if (baseStyle.fontFamily) return baseStyle.fontFamily
+  return 'var(--ppt-font-heading, inherit)'
+}
+
+/** Fallback fill for run painting — matches seedEditableNode / edit mode. */
+export function contentFallbackFill(content, palette) {
+  const c = content || {}
+  const hex = resolveTextHex(c, palette)
+  return normalizeFillValue(c.fill || c.color || hex)
+}
+
+/** CSS style for a single run in canvas/present display (palette-aware). */
+export function runDisplayStyle(run, content, palette, baseStyle = {}) {
+  const fallback = contentFallbackFill(content, palette)
+  const fill = runFill(run, fallback) || fallback
+  const fallbackHex = resolveTextHex(content, palette)
+  const paint = adjustTextPaintForSlideBackground(
+    textPaintStyle(fill, palette, fallbackHex),
+    fill,
+    palette,
+    run
+  )
+  return {
+    ...paint,
+    fontWeight: run?.fontWeight ?? (run?.bold ? 700 : baseStyle.fontWeight),
+    fontStyle: run?.italic ? 'italic' : baseStyle.fontStyle,
+    fontFamily: fontFamilyForRunRole(run, baseStyle),
+  }
+}
+
+/** Split merged runs into per-line run arrays (newline boundaries). */
+export function splitRunsByLines(runs) {
+  const lines = [[]]
+  for (const run of runs || []) {
+    const text = coercePlainText(run?.text)
+    if (!text) continue
+    const segments = text.split('\n')
+    segments.forEach((seg, i) => {
+      if (i > 0) lines.push([])
+      if (seg) lines[lines.length - 1].push({ ...run, text: seg })
+    })
+  }
+  return lines.map((line) => mergeAdjacentRuns(line))
+}
+
 function styleKey(run) {
   const fill = run?.fill
   const fillKey = isGradientFill(fill)
@@ -161,6 +216,7 @@ function styleKey(run) {
     run?.bold ? '1' : '',
     run?.italic ? '1' : '',
     run?.fontFamily || '',
+    run?.fontRole || '',
   ].join('|')
 }
 
@@ -173,6 +229,7 @@ function cloneRunStyle(run) {
   if (run?.bold) next.bold = run.bold
   if (run?.italic) next.italic = run.italic
   if (run?.fontFamily) next.fontFamily = run.fontFamily
+  if (run?.fontRole) next.fontRole = run.fontRole
   return next
 }
 
@@ -438,8 +495,18 @@ export function seedEditableNode(node, content, palette) {
   for (const run of runs) {
     const span = document.createElement('span')
     const fill = runFill(run, fallback) || fallback
-    const paint = textPaintStyle(fill, palette, fallback.color || '#0F172A')
-    Object.assign(span.style, paint)
+    const paint = adjustTextPaintForSlideBackground(
+      textPaintStyle(fill, palette, fallback.color || '#0F172A'),
+      fill,
+      palette,
+      run
+    )
+    Object.assign(span.style, {
+      ...paint,
+      fontWeight: run?.fontWeight ?? (run?.bold ? 700 : undefined),
+      fontStyle: run?.italic ? 'italic' : undefined,
+      fontFamily: fontFamilyForRunRole(run, {}),
+    })
     try {
       span.dataset.fill = JSON.stringify(fill)
     } catch {
@@ -547,23 +614,54 @@ function contrastRatioHex(fg, bg) {
 }
 
 function readableInkOnBackground(palette, bgHex) {
-  const onLight = (contrastRatioHex('#0F172A', bgHex) ?? 0) >= 4.5
+  const appearance = resolveSlideAppearance(palette)
+  const onLight = appearance === 'light' || (contrastRatioHex('#0F172A', bgHex) ?? 0) >= 4.5
   const candidates = onLight
     ? [
         { hex: palette?.text || '#0F172A', role: 'text' },
         { hex: palette?.muted || '#64748B', role: 'muted' },
-        { hex: '#0F172A', role: 'text' },
+        { hex: safeInkHexForAppearance('light', 'text'), role: 'text' },
       ]
     : [
         { hex: palette?.text || '#F8FAFC', role: 'text' },
         { hex: palette?.muted || '#94A3B8', role: 'muted' },
-        { hex: '#F8FAFC', role: 'text' },
+        { hex: safeInkHexForAppearance('dark', 'text'), role: 'text' },
       ]
   const scored = candidates
     .map((c) => ({ ...c, ratio: contrastRatioHex(c.hex, bgHex) }))
     .filter((c) => c.ratio != null && c.ratio >= 4.5)
     .sort((x, y) => y.ratio - x.ratio)
   return scored[0]?.hex || candidates[0].hex
+}
+
+/** Solid text paint only — keeps gradients; enforces light/dark deck ink rules. */
+export function adjustTextPaintForSlideBackground(paint, fill, palette, run) {
+  if (!paint || paint.WebkitTextFillColor === 'transparent') return paint
+  const appearance = resolveSlideAppearance(palette)
+  const bgHex = cssColorToHex(palette?.bg || palette?.surface || '#FFFFFF', '#FFFFFF')
+  const colorRole = run?.colorRole || fill?.colorRole || (typeof fill?.color === 'string' ? fill.color : '')
+  let hex = cssColorToHex(paint.color || paint.WebkitTextFillColor, '#0F172A')
+
+  let coerced = coerceInkHexForAppearance(hex, appearance, { colorRole })
+  if (coerced == null) {
+    const token = resolveThemeColor(String(colorRole || 'primary'), palette, undefined)
+    coerced = cssColorToHex(token, hex)
+    coerced =
+      coerceInkHexForAppearance(coerced, appearance, { colorRole: 'text' }) ||
+      safeInkHexForAppearance(appearance, 'text')
+  }
+  hex = coerced || hex
+
+  const ratio = contrastRatioHex(hex, bgHex)
+  if (ratio != null && ratio < 4.5) {
+    hex = cssColorToHex(readableInkOnBackground(palette, bgHex), hex)
+  }
+
+  return {
+    ...paint,
+    color: hex,
+    WebkitTextFillColor: hex,
+  }
 }
 
 export function resolveTextHex(content, palette, fallback = '#0F172A') {
@@ -586,6 +684,16 @@ export function resolveTextHex(content, palette, fallback = '#0F172A') {
     resolveThemeColor('textOnImage', palette, fallback) ||
     fallback
   resolved = cssColorToHex(resolved, fallback)
+  const appearance = resolveSlideAppearance(palette)
+  const inkRole = c.colorRole || run?.colorRole
+  let appearanceInk = coerceInkHexForAppearance(resolved, appearance, { colorRole: inkRole })
+  if (appearanceInk == null) {
+    const token = resolveThemeColor(String(inkRole || 'primary'), palette, resolved)
+    appearanceInk =
+      coerceInkHexForAppearance(cssColorToHex(token, resolved), appearance, { colorRole: 'text' }) ||
+      safeInkHexForAppearance(appearance, /muted/i.test(String(inkRole)) ? 'muted' : 'text')
+  }
+  resolved = appearanceInk || resolved
   const slideBg = palette?.bg || palette?.surface
   if (slideBg) {
     const ratio = contrastRatioHex(resolved, slideBg)
