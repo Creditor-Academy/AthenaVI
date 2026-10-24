@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Loader2, Sparkles, Image as ImageIcon, Download, Copy, Check, MessageSquare, Trash2, X, BarChart3, Share2, Printer, Plus, Search, LayoutGrid, List, Heart, ChevronDown, SlidersHorizontal, MoreHorizontal, RotateCcw } from 'lucide-react';
 import imageGenService from '../../../services/imageGenService.js';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
+import LogoImg from '../../../assets/herologo.png';
 
 const START_CHAT_MODES = [
   { id: 'image', label: 'Image', Icon: ImageIcon },
@@ -36,6 +38,10 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
   const [newMenuOpen, setNewMenuOpen] = useState(false);
   const [manageMenuOpen, setManageMenuOpen] = useState(false);
   const [trashMenuId, setTrashMenuId] = useState(null);
+  const [cardMenu, setCardMenu] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
+  const [maximizeGen, setMaximizeGen] = useState(null);
+  const [confirmDeleteSingle, setConfirmDeleteSingle] = useState(null);
   const [confirmPurge, setConfirmPurge] = useState(false);
 
   const handleDownload = async (event, gen, idx) => {
@@ -171,6 +177,20 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
     clearSelection();
   };
 
+  const deleteSingleImage = async (gen, idx) => {
+    const key = gen.id || idx;
+    if (workspaceId && gen.id) {
+      try {
+        await imageGenService.hideGenerations(workspaceId, [gen.id]);
+      } catch (err) {
+        console.error('Library hide single image failed:', err);
+        return;
+      }
+    }
+    setGenerations((rows) => rows.filter((row, i) => (row.id ? row.id !== gen.id : i !== idx)));
+    setSelectedIds((prev) => prev.filter((id) => id !== key));
+  };
+
   const selectedTrashIds = () => selected.map((gen) => gen.id).filter(Boolean);
 
   const restoreSelected = async (ids) => {
@@ -204,18 +224,64 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
     clearSelection();
   };
 
+  const toggleCardMenu = (e, gen, idx, imgUrl) => {
+    e.stopPropagation();
+    const id = gen.id || idx;
+    if (cardMenu && cardMenu.id === id) {
+      setCardMenu(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    const menuWidth = 170;
+    const menuHeight = 185;
+    let left = rect.right - menuWidth;
+    if (left < 10) left = 10;
+    if (left + menuWidth > window.innerWidth - 10) {
+      left = window.innerWidth - menuWidth - 10;
+    }
+    let top = rect.bottom + 6;
+    if (top + menuHeight > window.innerHeight - 10) {
+      top = Math.max(10, rect.top - menuHeight - 6);
+    }
+    setCardMenu({ id, gen, idx, imgUrl, top, left });
+  };
+
   useEffect(() => {
-    if (!newMenuOpen && !modeMenuOpen && !manageMenuOpen && !trashMenuId) return undefined;
+    if (!newMenuOpen && !modeMenuOpen && !manageMenuOpen && !trashMenuId && !cardMenu) return undefined;
     const close = (event) => {
-      if (event.target.closest('.library-new-wrap') || event.target.closest('.library-start-wrap') || event.target.closest('.library-manage-wrap') || event.target.closest('.library-trash-menu')) return;
+      if (
+        event.target.closest('.library-new-wrap') || 
+        event.target.closest('.library-start-wrap') || 
+        event.target.closest('.library-manage-wrap') || 
+        event.target.closest('.library-trash-menu') ||
+        event.target.closest('.library-card-more-btn') ||
+        event.target.closest('.library-card-dropdown')
+      ) return;
       setNewMenuOpen(false);
       setModeMenuOpen(false);
       setManageMenuOpen(false);
       setTrashMenuId(null);
+      setCardMenu(null);
     };
+    const onScrollOrResize = () => setCardMenu(null);
     document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
-  }, [newMenuOpen, modeMenuOpen, manageMenuOpen, trashMenuId]);
+    window.addEventListener('scroll', onScrollOrResize, true);
+    window.addEventListener('resize', onScrollOrResize);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      window.removeEventListener('scroll', onScrollOrResize, true);
+      window.removeEventListener('resize', onScrollOrResize);
+    };
+  }, [newMenuOpen, modeMenuOpen, manageMenuOpen, trashMenuId, cardMenu]);
+
+  useEffect(() => {
+    if (!maximizeGen) return undefined;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setMaximizeGen(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [maximizeGen]);
 
   useEffect(() => {
     if (!workspaceId) {
@@ -262,7 +328,7 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
           display: flex;
           flex-direction: column;
-          cursor: pointer;
+          cursor: default;
           break-inside: avoid;
           margin-bottom: 28px;
           position: relative;
@@ -276,6 +342,7 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           width: 100%;
           overflow: hidden;
           background: var(--bg-surface, #f3f4f6);
+          cursor: zoom-in;
         }
         .cute-library-card-img {
           width: 100%;
@@ -296,9 +363,213 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           gap: 8px;
           opacity: 0;
           transition: opacity 0.2s ease;
+          z-index: 4;
         }
-        .cute-library-card:hover .cute-library-card-actions {
+        .cute-library-card:hover .cute-library-card-actions,
+        .cute-library-card-actions.has-menu-open {
           opacity: 1;
+        }
+        .library-card-menu-wrap {
+          position: relative;
+          display: inline-flex;
+        }
+        .library-card-dropdown {
+          width: 172px;
+          box-sizing: border-box;
+          padding: 6px;
+          border-radius: 14px;
+          background: #ffffff;
+          border: 1px solid rgba(226, 232, 240, 0.95);
+          box-shadow: 0 16px 36px -6px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04);
+          z-index: 50;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          transform-origin: top right;
+          animation: library-pop-in 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .library-card-dropdown.is-portal {
+          right: auto;
+          width: 172px;
+        }
+        @keyframes library-pop-in {
+          from { opacity: 0; transform: translateY(-5px) scale(0.96); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .library-card-dropdown button {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          border: none;
+          background: transparent;
+          color: #1e293b;
+          border-radius: 9px;
+          padding: 8px 12px;
+          font-size: 13.5px;
+          font-weight: 550;
+          cursor: pointer;
+          text-align: left;
+          transition: background 0.15s ease, color 0.15s ease;
+        }
+        .library-card-dropdown button:hover {
+          background: #f1f5f9;
+          color: var(--primary, #2563eb);
+        }
+        .library-card-dropdown button svg {
+          color: #64748b;
+          flex-shrink: 0;
+          transition: color 0.15s ease;
+        }
+        .library-card-dropdown button:hover svg {
+          color: var(--primary, #2563eb);
+        }
+        .library-menu-divider {
+          height: 1px;
+          background: #f1f5f9;
+          margin: 4px 6px;
+        }
+        .library-card-dropdown button.is-danger {
+          color: #ef4444;
+        }
+        .library-card-dropdown button.is-danger svg {
+          color: #ef4444;
+        }
+        .library-card-dropdown button.is-danger:hover {
+          background: #fef2f2;
+          color: #dc2626;
+        }
+        .library-card-dropdown button.is-danger:hover svg {
+          color: #dc2626;
+        }
+        .library-fullscreen-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 9999999;
+          background: rgba(8, 12, 22, 0.92);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          display: flex;
+          flex-direction: column;
+          animation: library-fade-in 0.2s ease-out;
+        }
+        @keyframes library-fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .library-fullscreen-topbar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 16px 24px;
+          gap: 16px;
+          background: linear-gradient(180deg, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0) 100%);
+        }
+        .library-fullscreen-meta {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .library-fullscreen-brand {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border-radius: 9px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          flex-shrink: 0;
+        }
+        .library-fullscreen-logo {
+          width: 20px;
+          height: 20px;
+          object-fit: contain;
+        }
+        .library-fullscreen-divider {
+          width: 1px;
+          height: 18px;
+          background: rgba(255, 255, 255, 0.18);
+          flex-shrink: 0;
+        }
+        .library-fullscreen-title {
+          color: rgba(255, 255, 255, 0.92);
+          font-size: 14px;
+          font-weight: 550;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: inline-block;
+          max-width: 50vw;
+          letter-spacing: -0.01em;
+        }
+        .library-fullscreen-actions {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .library-fullscreen-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          padding: 8px 14px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.12);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          color: #ffffff;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          transition: background 0.15s ease, transform 0.15s ease;
+        }
+        .library-fullscreen-btn:hover {
+          background: rgba(255, 255, 255, 0.22);
+          transform: translateY(-1px);
+        }
+        .library-fullscreen-close {
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.12);
+          color: #ffffff;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          transition: background 0.15s ease, transform 0.15s ease;
+        }
+        .library-fullscreen-close:hover {
+          background: rgba(255, 255, 255, 0.25);
+          transform: scale(1.05);
+        }
+        .library-fullscreen-body {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px 32px 36px;
+          overflow: hidden;
+        }
+        .library-fullscreen-img {
+          max-width: 94vw;
+          max-height: 84vh;
+          object-fit: contain;
+          border-radius: 14px;
+          box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1);
+          animation: library-zoom-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes library-zoom-in {
+          from { opacity: 0; transform: scale(0.94); }
+          to { opacity: 1; transform: scale(1); }
         }
         .library-action-btn {
           background: rgba(255, 255, 255, 0.9);
@@ -795,7 +1066,8 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
         .library-grid.is-list .cute-library-card:hover .library-list-check,
         .library-grid.is-list .cute-library-card:hover .library-list-actions,
         .library-list-check.is-on,
-        .library-grid.is-list .cute-library-card.is-selected .library-list-actions {
+        .library-grid.is-list .cute-library-card.is-selected .library-list-actions,
+        .library-grid.is-list .library-list-actions.has-menu-open {
           opacity: 1;
         }
         .library-list-check {
@@ -1201,8 +1473,6 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
               <div 
                 key={gen.id || idx} 
                 className={`cute-library-card${isSelected ? ' is-selected' : ''}${libraryView === 'trash' ? ' is-trash' : ''}`}
-                onClick={() => libraryView !== 'trash' && onImageClick && gen.threadId && onImageClick(gen.threadId)}
-                style={{ cursor: gen.threadId ? 'pointer' : 'default' }}
               >
                 {layout === 'list' && (
                   <button
@@ -1217,7 +1487,7 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
                     <Check size={13} />
                   </button>
                 )}
-                <div className="cute-library-card-img-wrapper">
+                <div className="cute-library-card-img-wrapper" onClick={() => setMaximizeGen(gen)}>
                   <img 
                     src={imgUrl} 
                     alt={gen.prompt || "Generated image"} 
@@ -1258,24 +1528,30 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
                       )}
                     </div>
                   ) : (
-                  <div className="cute-library-card-actions">
+                  <div className={`cute-library-card-actions${cardMenu?.id === (gen.id || idx) ? ' has-menu-open' : ''}`}>
                     <button 
-                      className="library-action-btn"
-                      onClick={(e) => handleDownload(e, gen, idx)}
-                      disabled={downloadingId === (gen.id || idx)}
-                      title="Download Image"
-                    >
-                      <Download size={16} />
-                    </button>
-                    <button 
+                      type="button"
                       className="library-action-btn"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigator.clipboard.writeText(imgUrl);
+                        const targetChatId = gen.threadId || gen.id;
+                        if (onImageClick && targetChatId) {
+                          onImageClick(targetChatId);
+                        }
                       }}
-                      title="Copy Image URL"
+                      title="Open in chat"
+                      aria-label="Open in chat"
                     >
-                      <Copy size={16} />
+                      <MessageSquare size={16} />
+                    </button>
+                    <button 
+                      type="button"
+                      className="library-action-btn library-card-more-btn"
+                      onClick={(e) => toggleCardMenu(e, gen, idx, imgUrl)}
+                      title="More options"
+                      aria-label="More options"
+                    >
+                      <MoreHorizontal size={16} />
                     </button>
                   </div>
                   )}
@@ -1294,28 +1570,42 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
                 </div>
                 {layout === 'list' && (
                   <>
-                    <div className="library-list-name" title={imageName}>{imageName}</div>
-                    {libraryView !== 'trash' && <div className="library-list-actions">
-                      <button
-                        type="button"
-                        className="library-action-btn"
-                        title="Download"
-                        onClick={(e) => handleDownload(e, gen, idx)}
-                      >
-                        <Download size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        className="library-action-btn"
-                        title="Copy image URL"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigator.clipboard.writeText(imgUrl);
-                        }}
-                      >
-                        <Copy size={15} />
-                      </button>
-                    </div>}
+                    <div 
+                      className="library-list-name" 
+                      title={imageName}
+                      onClick={() => setMaximizeGen(gen)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {imageName}
+                    </div>
+                    {libraryView !== 'trash' && (
+                      <div className={`library-list-actions${cardMenu?.id === (gen.id || idx) ? ' has-menu-open' : ''}`}>
+                        <button
+                          type="button"
+                          className="library-action-btn"
+                          title="Open in chat"
+                          aria-label="Open in chat"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const targetChatId = gen.threadId || gen.id;
+                            if (onImageClick && targetChatId) {
+                              onImageClick(targetChatId);
+                            }
+                          }}
+                        >
+                          <MessageSquare size={15} />
+                        </button>
+                        <button
+                          type="button"
+                          className="library-action-btn library-card-more-btn"
+                          title="More options"
+                          aria-label="More options"
+                          onClick={(e) => toggleCardMenu(e, gen, idx, imgUrl)}
+                        >
+                          <MoreHorizontal size={15} />
+                        </button>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -1422,6 +1712,169 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
         } : null}
         onCancel={() => setConfirmPurge(false)}
       />
+      <ConfirmDialog
+        dialog={confirmDeleteSingle ? {
+          title: 'Delete this image?',
+          message: 'It will be moved to Trash. You can restore it from there. It is permanently deleted after 30 days.',
+          confirmLabel: 'Delete',
+          cancelLabel: 'Cancel',
+          variant: 'danger',
+          onConfirm: () => {
+            deleteSingleImage(confirmDeleteSingle.gen, confirmDeleteSingle.idx);
+            setConfirmDeleteSingle(null);
+          },
+        } : null}
+        onCancel={() => setConfirmDeleteSingle(null)}
+      />
+      {cardMenu && typeof document !== 'undefined' && createPortal(
+        <div 
+          className="library-card-dropdown is-portal" 
+          role="menu"
+          style={{
+            position: 'fixed',
+            top: cardMenu.top,
+            left: cardMenu.left,
+            width: 172,
+            right: 'auto',
+            zIndex: 999999,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigator.clipboard.writeText(cardMenu.imgUrl);
+              setCopiedId(cardMenu.id);
+              setTimeout(() => setCopiedId(null), 2000);
+              setCardMenu(null);
+            }}
+          >
+            {copiedId === cardMenu.id ? <Check size={14} style={{ color: '#16a34a' }} /> : <Copy size={14} />}
+            <span>{copiedId === cardMenu.id ? 'Copied URL!' : 'Copy'}</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={(e) => {
+              handleDownload(e, cardMenu.gen, cardMenu.idx);
+              setCardMenu(null);
+            }}
+            disabled={downloadingId === cardMenu.id}
+          >
+            <Download size={14} />
+            <span>Download</span>
+          </button>
+          {onStartChat && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={(e) => {
+                e.stopPropagation();
+                const target = cardMenu.gen;
+                const url = cardMenu.imgUrl;
+                setCardMenu(null);
+                onStartChat({
+                  mode: target.mode || 'image',
+                  images: [{ src: url, assetId: target.assetId || null }],
+                });
+              }}
+            >
+              <Plus size={14} />
+              <span>Add to chat</span>
+            </button>
+          )}
+          <div className="library-menu-divider" />
+          <button
+            type="button"
+            role="menuitem"
+            className="is-danger"
+            onClick={(e) => {
+              e.stopPropagation();
+              const { gen, idx } = cardMenu;
+              setCardMenu(null);
+              setConfirmDeleteSingle({ gen, idx });
+            }}
+          >
+            <Trash2 size={14} />
+            <span>Delete</span>
+          </button>
+        </div>,
+        document.body
+      )}
+      {maximizeGen && typeof document !== 'undefined' && createPortal(
+        <div 
+          className="library-fullscreen-overlay"
+          onClick={() => setMaximizeGen(null)}
+        >
+          <div className="library-fullscreen-topbar" onClick={(e) => e.stopPropagation()}>
+            <div className="library-fullscreen-meta">
+              <div className="library-fullscreen-brand" title="Athena Virtual Instructor">
+                <img src={LogoImg} alt="Athena" className="library-fullscreen-logo" />
+              </div>
+              <div className="library-fullscreen-divider" />
+              <span 
+                className="library-fullscreen-title"
+                title={maximizeGen.prompt || 'Generated image'}
+              >
+                {(() => {
+                  const clean = String(maximizeGen.prompt || maximizeGen.title || 'Generated image')
+                    .replace(/[*#_`]/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                  const words = clean.split(' ').filter(Boolean);
+                  return words.length <= 3 ? clean : `${words.slice(0, 3).join(' ')}...`;
+                })()}
+              </span>
+            </div>
+            <div className="library-fullscreen-actions">
+              {maximizeGen.threadId && onImageClick && (
+                <button
+                  type="button"
+                  className="library-fullscreen-btn"
+                  title="Open in chat"
+                  onClick={() => {
+                    const tid = maximizeGen.threadId;
+                    setMaximizeGen(null);
+                    onImageClick(tid);
+                  }}
+                >
+                  <MessageSquare size={15} />
+                  <span>Open in chat</span>
+                </button>
+              )}
+              <button
+                type="button"
+                className="library-fullscreen-btn"
+                title="Download"
+                onClick={(e) => handleDownload(e, maximizeGen, 0)}
+              >
+                <Download size={15} />
+                <span>Download</span>
+              </button>
+              <button
+                type="button"
+                className="library-fullscreen-close"
+                title="Close (Esc)"
+                aria-label="Close fullscreen"
+                onClick={() => setMaximizeGen(null)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </div>
+          <div className="library-fullscreen-body" onClick={() => setMaximizeGen(null)}>
+            <img
+              src={maximizeGen.url || maximizeGen.resultUrl}
+              alt={maximizeGen.prompt || 'Maximized image'}
+              className="library-fullscreen-img"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
