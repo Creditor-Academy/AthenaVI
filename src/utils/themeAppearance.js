@@ -44,9 +44,10 @@ export function inkMatchesAppearance(hex, appearance) {
 }
 
 /** Light vs dark slide from explicit appearance or canvas background. */
-export function resolveSlideAppearance(palette = {}) {
-  if (palette.appearance === 'light' || palette.appearance === 'dark') return palette.appearance
-  return appearanceFromThemeBg(palette.bg || palette.surface || palette.background || '#FFFFFF')
+export function resolveSlideAppearance(palette) {
+  const p = palette ?? {}
+  if (p.appearance === 'light' || p.appearance === 'dark') return p.appearance
+  return appearanceFromThemeBg(p.bg || p.surface || p.background || '#FFFFFF')
 }
 
 /**
