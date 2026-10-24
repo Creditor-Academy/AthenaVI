@@ -253,7 +253,7 @@
 }
 
 .ppt-rich-text > span {
-  display: inline-block;
+  display: inline;
   white-space: inherit;
 }
 

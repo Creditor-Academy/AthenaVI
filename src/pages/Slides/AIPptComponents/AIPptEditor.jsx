@@ -333,7 +333,10 @@ function resolveThemeVisual(themeId, themeTokens) {
     const text = palette.text || (enforced?.appearance === 'dark' ? '#F8FAFC' : '#0F172A')
     const muted = palette.muted || '#64748B'
     const colorRoles = themeTokens?.colorRoles || palette?.colorRoles || null
-    const paletteWithRoles = colorRoles ? { ...palette, colorRoles } : palette
+    const paletteWithRoles = {
+      ...(colorRoles ? { ...palette, colorRoles } : palette),
+      appearance: enforced?.appearance,
+    }
     return {
       id: 'themeTokens',
       name: themeTokens?.brand?.name || 'Brand Kit',

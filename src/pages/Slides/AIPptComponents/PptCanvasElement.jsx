@@ -23,8 +23,9 @@ import {
   getTextOffsetsInNode,
   isGradientFill,
   resolveTextHex,
-  runFill,
+  runDisplayStyle,
   seedEditableNode,
+  splitRunsByLines,
   serializeEditableRuns,
   setPptTextSelection,
   setTextOffsetsInNode,
@@ -59,40 +60,46 @@ function TextListDisplay({ text, listType }) {
   )
 }
 
-function runPaintStyle(run, palette, fallbackColor) {
-  const fill = runFill(run, null)
-  if (fill && isGradientFill(fill)) {
-    const paint = textPaintStyle(fill, palette, fallbackColor)
-    return {
-      ...paint,
-      fontWeight: run.fontWeight ?? (run.bold ? 700 : undefined),
-      fontStyle: run.italic ? 'italic' : undefined,
-      fontFamily: run.fontFamily,
-    }
-  }
-  return {
-    color: run.color || undefined,
-    WebkitTextFillColor: run.color || undefined,
-    fontWeight: run.fontWeight ?? (run.bold ? 700 : undefined),
-    fontStyle: run.italic ? 'italic' : undefined,
-    fontFamily: run.fontFamily,
-  }
-}
-
-function RichTextDisplay({ runs, palette, baseStyle = {} }) {
+function RichTextDisplay({ runs, content, palette, baseStyle = {} }) {
   if (!Array.isArray(runs) || !runs.length) return null
-  const fallback = baseStyle.color || '#0F172A'
   return (
     <span className="ppt-rich-text">
       {runs.map((run, i) => {
         const text = typeof run?.text === 'string' || typeof run?.text === 'number' ? run.text : ''
         return (
-          <span key={i} style={runPaintStyle(run, palette, fallback)}>
+          <span key={i} style={runDisplayStyle(run, content, palette, baseStyle)}>
             {text}
           </span>
         )
       })}
     </span>
+  )
+}
+
+function TextListRunsDisplay({ runs, content, listType, palette, baseStyle }) {
+  const lineRuns = splitRunsByLines(runs)
+  if (!listType || !lineRuns.length) return null
+
+  return (
+    <div className="ppt-text-list">
+      {lineRuns.map((line, index) => (
+        <div key={index} className="ppt-text-list-item">
+          <span
+            className={`ppt-text-list-marker ppt-text-list-marker--${listType}`}
+            aria-hidden
+          >
+            {getListMarker(listType, index)}
+          </span>
+          <span className="ppt-text-list-line">
+            {line.length ? (
+              <RichTextDisplay runs={line} content={content} palette={palette} baseStyle={baseStyle} />
+            ) : (
+              '\u00A0'
+            )}
+          </span>
+        </div>
+      ))}
+    </div>
   )
 }
 
@@ -337,11 +344,20 @@ function EditableText({
     if (!node || !wrap) return undefined
     const base = fontSize
     const noWrap = c.wrap === 'nowrap'
+    let rafRetries = 0
+    let cancelled = false
     const fit = () => {
+      if (cancelled || !node || !wrap) return
       node.style.fontSize = `${base}px`
       const boxH = wrap.clientHeight
       const boxW = wrap.clientWidth
-      if (!boxH || !boxW) return
+      if (!boxH || !boxW) {
+        if (rafRetries < 3) {
+          rafRetries += 1
+          requestAnimationFrame(fit)
+        }
+        return
+      }
       const slotKey = String(el?.slotId || '').toLowerCase()
       const isCardTitle = /^(card|col|row|feature|bullet|item)_\d+_title$/.test(slotKey)
       // Deck-harmonized headings must stay (near) identical across slides.
@@ -356,11 +372,21 @@ function EditableText({
       }
     }
     fit()
-    if (typeof ResizeObserver === 'undefined') return undefined
+    document.fonts?.ready?.then(() => {
+      if (!cancelled) fit()
+    })
+    if (typeof ResizeObserver === 'undefined') {
+      return () => {
+        cancelled = true
+      }
+    }
     const observer = new ResizeObserver(fit)
     observer.observe(wrap)
-    return () => observer.disconnect()
-  }, [editing, fitToBox, fontSize, plainText, runsSig, c.lineHeight, c.letterSpacing, c.padding, c.paddingX, c.listType, c.wrap, c.deckHeading, c.deckTier])
+    return () => {
+      cancelled = true
+      observer.disconnect()
+    }
+  }, [editing, fitToBox, fontSize, plainText, runsSig, c.lineHeight, c.letterSpacing, c.padding, c.paddingX, c.listType, c.wrap, c.deckHeading, c.deckTier, el?.slotId])
 
   const color = resolveTextHex(c, palette)
   const weight = c.fontWeight || (c.bold ? 700 : 400)
@@ -559,10 +585,18 @@ function EditableText({
             align={c.align || 'center'}
             palette={palette}
           />
+        ) : c.listType && usesRuns ? (
+          <TextListRunsDisplay
+            runs={paintRuns}
+            content={c}
+            listType={c.listType}
+            palette={palette}
+            baseStyle={textStyle}
+          />
         ) : c.listType && (c.text || plainText) ? (
           <TextListDisplay text={plainText || c.text} listType={c.listType} />
         ) : usesRuns ? (
-          <RichTextDisplay runs={paintRuns} palette={palette} baseStyle={textStyle} />
+          <RichTextDisplay runs={paintRuns} content={c} palette={palette} baseStyle={textStyle} />
         ) : (
           displayText
         )}
