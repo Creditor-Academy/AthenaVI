@@ -155,6 +155,15 @@ export function runFill(run, fallbackFill) {
   return fallbackFill || null
 }
 
+/** Map run.fontRole to editor theme CSS vars when fontFamily is not stored. */
+export function fontFamilyForRunRole(run, baseStyle = {}) {
+  if (run?.fontFamily) return run.fontFamily
+  const role = String(run?.fontRole || 'heading').toLowerCase()
+  if (role === 'body') return 'var(--ppt-font-body, inherit)'
+  if (baseStyle.fontFamily) return baseStyle.fontFamily
+  return 'var(--ppt-font-heading, inherit)'
+}
+
 /** Fallback fill for run painting — matches seedEditableNode / edit mode. */
 export function contentFallbackFill(content, palette) {
   const c = content || {}
@@ -177,7 +186,7 @@ export function runDisplayStyle(run, content, palette, baseStyle = {}) {
     ...paint,
     fontWeight: run?.fontWeight ?? (run?.bold ? 700 : baseStyle.fontWeight),
     fontStyle: run?.italic ? 'italic' : baseStyle.fontStyle,
-    fontFamily: run?.fontFamily || baseStyle.fontFamily,
+    fontFamily: fontFamilyForRunRole(run, baseStyle),
   }
 }
 
@@ -207,6 +216,7 @@ function styleKey(run) {
     run?.bold ? '1' : '',
     run?.italic ? '1' : '',
     run?.fontFamily || '',
+    run?.fontRole || '',
   ].join('|')
 }
 
@@ -219,6 +229,7 @@ function cloneRunStyle(run) {
   if (run?.bold) next.bold = run.bold
   if (run?.italic) next.italic = run.italic
   if (run?.fontFamily) next.fontFamily = run.fontFamily
+  if (run?.fontRole) next.fontRole = run.fontRole
   return next
 }
 
@@ -490,7 +501,12 @@ export function seedEditableNode(node, content, palette) {
       palette,
       run
     )
-    Object.assign(span.style, paint)
+    Object.assign(span.style, {
+      ...paint,
+      fontWeight: run?.fontWeight ?? (run?.bold ? 700 : undefined),
+      fontStyle: run?.italic ? 'italic' : undefined,
+      fontFamily: fontFamilyForRunRole(run, {}),
+    })
     try {
       span.dataset.fill = JSON.stringify(fill)
     } catch {

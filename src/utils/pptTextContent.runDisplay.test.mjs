@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { runDisplayStyle, splitRunsByLines } from './pptTextContent.js'
+import { runDisplayStyle, splitRunsByLines, fontFamilyForRunRole } from './pptTextContent.js'
 import { coerceInkHexForAppearance } from './themeAppearance.js'
 
 describe('runDisplayStyle', () => {
@@ -30,6 +30,28 @@ describe('runDisplayStyle', () => {
     const content = { text: 'Title' }
     const style = runDisplayStyle({ text: 'Title', color: '#0F172A', colorRole: 'text' }, content, palette, {})
     assert.equal(style.color, '#F8FAFC')
+  })
+})
+
+describe('fontFamilyForRunRole', () => {
+  it('maps body and heading fontRole to CSS theme vars', () => {
+    assert.equal(fontFamilyForRunRole({ fontRole: 'body' }), 'var(--ppt-font-body, inherit)')
+    assert.equal(fontFamilyForRunRole({ fontRole: 'heading' }), 'var(--ppt-font-heading, inherit)')
+  })
+
+  it('runDisplayStyle applies body fontRole on dual-style title runs', () => {
+    const palette = { bg: '#FFFFFF', primary: '#4F46E5', accent: '#4F46E5', appearance: 'light' }
+    const content = { text: 'Hello world', color: '#0F172A' }
+    const lead = runDisplayStyle({ text: 'Hello ', colorRole: 'text', fontRole: 'body' }, content, palette, {})
+    const punch = runDisplayStyle(
+      { text: 'world', colorRole: 'accent', fontWeight: 700, fontRole: 'heading' },
+      content,
+      palette,
+      { fontFamily: 'var(--ppt-font-heading, inherit)' }
+    )
+    assert.equal(lead.fontFamily, 'var(--ppt-font-body, inherit)')
+    assert.equal(punch.fontFamily, 'var(--ppt-font-heading, inherit)')
+    assert.equal(punch.fontWeight, 700)
   })
 })
 
