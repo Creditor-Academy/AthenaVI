@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   ArrowLeft, RotateCcw, Sparkles, Edit3, Wand2, Download, 
   X, Send, AlertCircle, CheckCircle2, ChevronRight, Copy, Share2, User, ThumbsUp, ThumbsDown, Loader2,
@@ -228,6 +229,7 @@ export default function AIConversationalStudio({
   const railFlyoutRef = useRef(null);
   const [editMode, setEditMode] = useState('auto');
   const [downloadMenuFor, setDownloadMenuFor] = useState(null);
+  const [downloadProgress, setDownloadProgress] = useState(null);
   const [dismissedWarnings, setDismissedWarnings] = useState({});
 
   // UI Modals
@@ -304,6 +306,23 @@ export default function AIConversationalStudio({
     document.addEventListener('mousedown', close);
     return () => document.removeEventListener('mousedown', close);
   }, [recentMenuId]);
+
+  useEffect(() => {
+    if (!downloadMenuFor) return undefined;
+    const close = (e) => {
+      if (e.target.closest('.conv-download-wrap') || e.target.closest('.conv-download-menu')) return;
+      setDownloadMenuFor(null);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') setDownloadMenuFor(null);
+    };
+    document.addEventListener('mousedown', close);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [downloadMenuFor]);
 
   useEffect(() => {
     if (!railFlyout) return undefined;
@@ -830,10 +849,35 @@ export default function AIConversationalStudio({
     const gen = targetGen || activeGeneration;
     if (!gen?.id || !workspaceId) return;
     setDownloadMenuFor(null);
+
+    const formatLabel = bleed ? 'PDF for print' : format.toUpperCase();
+    const imgSrc = gen.url || gen.resultUrl || (Array.isArray(gen.images) && gen.images[0]?.url) || '';
+
+    const singleItem = {
+      id: gen.id,
+      src: imgSrc,
+      formatLabel,
+      status: 'downloading',
+    };
+    setDownloadProgress([singleItem]);
+    const startTime = Date.now();
+
     try {
       await imageGenService.downloadAndSave(workspaceId, gen.id, format, { bleed });
+
+      // Keep progress animation visible for at least 700ms so the user sees download starting
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 700) {
+        await new Promise((resolve) => setTimeout(resolve, 700 - elapsed));
+      }
+
+      setDownloadProgress([{ ...singleItem, status: 'done' }]);
+      setTimeout(() => {
+        setDownloadProgress((curr) => (Array.isArray(curr) && curr.length === 1 && curr[0].id === gen.id ? null : curr));
+      }, 2200);
     } catch (err) {
       console.error("Download failed:", err);
+      setDownloadProgress(null);
       setErrorMsg(err?.data?.message || err.message || 'Download failed.');
       if (!bleed && format === 'png' && gen.url) {
         const a = document.createElement('a');
@@ -1677,6 +1721,58 @@ export default function AIConversationalStudio({
             onClick={(e) => e.stopPropagation()}
           />
         </div>
+      )}
+
+      {Array.isArray(downloadProgress) && downloadProgress.length > 0 && typeof document !== 'undefined' && createPortal(
+        <div className="conv-download-progress" role="status">
+          {(() => {
+            const doneCount = downloadProgress.filter((item) => item.status === 'done').length;
+            const isAllDone = doneCount === downloadProgress.length;
+            return (
+              <>
+                <div className="conv-download-header">
+                  <div className="conv-download-header-content">
+                    <div className="conv-download-title">{isAllDone ? 'Downloaded' : 'Downloading'}</div>
+                    <div className="conv-download-subtitle">
+                      {doneCount} of {downloadProgress.length} downloaded
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="conv-download-close"
+                    title="Dismiss"
+                    aria-label="Dismiss download progress"
+                    onClick={() => setDownloadProgress(null)}
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+                <div className="conv-dl-list">
+                  {downloadProgress.map((item) => (
+                    <div className="conv-dl-row" key={item.id}>
+                      {item.src ? (
+                        <img className="conv-dl-thumb" src={item.src} alt="" />
+                      ) : (
+                        <div className="conv-dl-thumb" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Download size={18} color="#94a3b8" />
+                        </div>
+                      )}
+                      <div className="conv-dl-meta">
+                        <strong style={{ color: item.status === 'done' ? '#16a34a' : '#1e293b' }}>
+                          {item.status === 'done' ? `Downloaded ${item.formatLabel || ''}` : `Downloading ${item.formatLabel || ''}`}
+                        </strong>
+                        <div className={`conv-dl-track${item.status === 'done' ? ' is-done' : ''}`} aria-hidden>
+                          <i />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
+        </div>,
+        document.body
       )}
 
       </div>
