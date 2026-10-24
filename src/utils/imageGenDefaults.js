@@ -1,8 +1,5 @@
 export function defaultImageGenModelId(mode, catalogs = {}) {
-  const fromApi = catalogs?.defaults?.[mode]?.modelId
-  if (fromApi) return fromApi
-  if (mode === 'image') return 'gpt-image-1-hd'
-  return 'gemini-3-pro-image'
+  return 'gpt-image-1-hd'
 }
 
 export function modelsForImageGenMode(models = [], mode = 'image') {

@@ -548,7 +548,7 @@ export default function AIConversationalStudio({
 
     try {
       const check = await checkImageGenCredits(activeWs, {
-        modelId: modelId || (mode === 'image' ? 'gpt-image-1-hd' : 'gemini-3-pro-image'),
+        modelId: modelId || 'gpt-image-1-hd',
         mode: mode || 'image',
       });
       if (!check.ok) {
@@ -577,7 +577,7 @@ export default function AIConversationalStudio({
       const payload = {
         mode: mode || 'image',
         folderId: activeFld,
-        modelId: modelId || (mode === 'image' ? 'gpt-image-1-hd' : 'gemini-3-pro-image'),
+        modelId: modelId || 'gpt-image-1-hd',
         formatId: formatForMode,
         prompt: mode === 'infographic' ? `${promptText.trim()}, clean minimalist layout, no text, no words, empty placeholders` : promptText.trim()
       };
@@ -693,7 +693,7 @@ export default function AIConversationalStudio({
         const fallbackBody = {
           mode: mode || 'image',
           folderId,
-          modelId: modelId || (mode === 'image' ? 'gpt-image-1-hd' : 'gemini-3-pro-image'),
+          modelId: modelId || 'gpt-image-1-hd',
           formatId: formatId || (mode === 'infographic' ? 'landscape' : 'square'),
           prompt: mode === 'infographic' ? `${basePrompt}. Modification: ${text}, clean minimalist layout, no text, no words` : `${basePrompt}. Modification: ${text}`
         };

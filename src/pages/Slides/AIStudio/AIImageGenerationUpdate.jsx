@@ -1419,7 +1419,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                                   qualityLabel = 'Standard quality • 6 AC';
                                 }
 
-                                const isRec = (m.recommended || isGptHd) && activeMode === 'image';
+                                const isRec = m.recommended || isGptHd;
 
                                 return (
                                 <div 
@@ -1436,7 +1436,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                                   </div>
                                   <div className="model-desc">
                                     {isGptHd 
-                                      ? "Default for Image mode. High performance AI image generation." 
+                                      ? "Default recommended model. High performance AI image generation." 
                                       : isDalle3 
                                         ? "Legacy OpenAI model preserved for compatibility." 
                                         : (m.description || "High performance AI image generation model.")}
