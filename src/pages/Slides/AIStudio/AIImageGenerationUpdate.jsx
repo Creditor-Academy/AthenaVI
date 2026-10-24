@@ -1225,18 +1225,26 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
           <section className="styles-grid-container" style={{ position: 'relative', zIndex: 1 }}>
             <div className="styles-grid-title">Choose a style</div>
             <div className="styles-grid">
-              {catalogs.styles.map(style => (
-                <div 
-                  className={`style-card ${selectedStyle === style.id ? 'selected' : ''}`} 
-                  key={style.id} 
-                  onClick={() => setSelectedStyle(style.id)}
-                  style={{ backgroundImage: `url(${getStyleImage(style.id)})` }}
-                >
-                  <div className="style-card-overlay">
-                    <span>{style.label || style.id}</span>
+              {catalogs.styles.map(style => {
+                const isSelected = selectedStyle === style.id;
+                return (
+                  <div 
+                    className={`style-card ${isSelected ? 'selected' : ''}`} 
+                    key={style.id} 
+                    onClick={() => setSelectedStyle(isSelected ? null : style.id)}
+                    style={{ backgroundImage: `url(${getStyleImage(style.id)})` }}
+                  >
+                    {isSelected && (
+                      <div className="style-card-check">
+                        <Check size={13} strokeWidth={3} />
+                      </div>
+                    )}
+                    <div className="style-card-overlay">
+                      <span>{style.label || style.id}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}

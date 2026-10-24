@@ -550,35 +550,66 @@
 }
 .style-card {
   padding-bottom: 56.25%; /* 16:9 aspect ratio foolproof trick */
-  border-radius: 12px;
+  border-radius: 14px;
   background-size: cover;
   background-position: center;
   position: relative;
   overflow: hidden;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border: 2px solid transparent;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 2.5px solid transparent;
 }
 .style-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(0,0,0,0.1);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
 }
 .style-card.selected {
-  border-color: var(--text-main, #111827);
-  box-shadow: 0 0 0 2px rgba(17, 24, 39, 0.1);
+  border-color: var(--primary, #2563eb);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary, #2563eb) 35%, transparent), 0 8px 24px rgba(37, 99, 235, 0.28);
+  transform: translateY(-2px);
+}
+.style-card-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--primary, #2563eb);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  z-index: 3;
+  animation: styleCheckPop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes styleCheckPop {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 .style-card-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 60%);
+  background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0) 60%);
   display: flex;
   align-items: flex-end;
   padding: 12px;
+  transition: background 0.2s ease;
+}
+.style-card.selected .style-card-overlay {
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, rgba(37, 99, 235, 0.18) 50%, rgba(0,0,0,0) 80%);
 }
 .style-card-overlay span {
   font-size: 13px;
   font-weight: 500;
   color: #fff;
+  transition: all 0.2s ease;
+}
+.style-card.selected .style-card-overlay span {
+  font-weight: 700;
+  color: #ffffff;
 }
 /* --- ARCHETYPES LIST (INFOGRAPHICS) --- */
 /* --- INFOGRAPHIC CONTROLS --- */
