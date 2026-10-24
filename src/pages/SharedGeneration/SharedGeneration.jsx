@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BsStars } from 'react-icons/bs';
 import { MdArrowForward } from 'react-icons/md';
 import axios from 'axios';
+import { buildUrl } from '../../config/api.js';
 import LogoImg from '../../assets/herologo.png';
 import './SharedGeneration.css';
 
@@ -29,8 +30,13 @@ export default function SharedGeneration() {
     if (!token) return;
     async function fetchShared() {
       try {
-        const response = await axios.get(`/api/image-gen/public/share/${token}`);
-        setGeneration(response.data);
+        const response = await axios.get(buildUrl(`/api/image-gen/public/share/${token}`));
+        const payload = response.data?.data || response.data;
+        if (payload && typeof payload === 'object') {
+          setGeneration(payload);
+        } else {
+          setError('This shared image is no longer available or the link is invalid.');
+        }
       } catch (err) {
         setError('This shared image is no longer available or the link is invalid.');
       } finally {
