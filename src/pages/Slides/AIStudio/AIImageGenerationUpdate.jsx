@@ -884,6 +884,8 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
         onBack={() => {
           setLaunchStudio(false);
           setActiveThreadId(null);
+          setPrompt('');
+          setImageContext(null);
         }}
         onNewChat={() => {
           setLaunchStudio(false);
@@ -894,6 +896,8 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
         onOpenLibrary={() => {
           setLaunchStudio(false);
           setActiveThreadId(null);
+          setPrompt('');
+          setImageContext(null);
           setActiveMode('library');
         }}
         onStartChatFromLibrary={startChatFromLibrary}

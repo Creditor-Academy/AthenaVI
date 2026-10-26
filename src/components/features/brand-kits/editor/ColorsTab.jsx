@@ -1,8 +1,32 @@
 import { MdAutoAwesome, MdAdd, MdContentCopy, MdClose, MdCheck, MdEdit } from 'react-icons/md'
 import { hexToHsl, hexToRgb } from '../utils/brandKitUtils'
+import { colorRoleLabels } from '../../../../utils/brandKitHelpers'
+import ColorContrastPanel from '../ColorContrastPanel'
+
+const ROLE_DESCRIPTIONS = {
+  Primary: 'Main brand color for buttons, links, and highlights.',
+  Secondary: 'Secondary brand tone for supporting UI and charts.',
+  Accent: 'Accent tone for emphasis, surfaces, and charts.',
+  Muted: 'Muted tone for captions and secondary text.',
+  Background: 'Slide and page background in light mode.',
+  Text: 'Heading and body text color in light mode.',
+  'Dark Primary': 'Primary accent for dark theme buttons and highlights.',
+  'Dark Background': 'Slide and page background in dark mode.',
+  'Dark Text': 'Heading and body text color in dark mode.',
+}
+
+function roleInfo(colorRoles, colorId) {
+  const labels = colorRoleLabels(colorRoles, colorId)
+  return {
+    tag: labels.length ? labels.join(' · ') : 'Supporting Tone',
+    desc: ROLE_DESCRIPTIONS[labels[0]] || 'Supporting tone for charts, accents, and secondary UI.',
+  }
+}
 
 export default function ColorsTab(props) {
   const {
+    kitData,
+    setKitData,
     canWrite,
     copiedHex,
     handleCopyHex,
@@ -57,7 +81,7 @@ export default function ColorsTab(props) {
                       const hex = color.hex || '#0F172A'
                       const rgb = hexToRgb(hex)
                       const [h, s, l] = hexToHsl(hex)
-                      const roleName = index === 0 ? 'Primary Color (Light Mode)' : 'Background Color (Light Mode)'
+                      const role = roleInfo(kitData?.colorRoles, color.id)
 
                       return (
                         <div className="bk-color-card" key={color.id || index}>
@@ -99,7 +123,7 @@ export default function ColorsTab(props) {
                                   onChange={(e) => updateColor(index, { name: e.target.value })}
                                   placeholder="Color Name"
                                 />
-                                <span className="bk-card-role-tag">{roleName}</span>
+                                <span className="bk-card-role-tag">{role.tag}</span>
                               </div>
                               <div className="bk-card-hex-box">
                                 <label
@@ -146,11 +170,7 @@ export default function ColorsTab(props) {
                                 <span className="bk-tech-val">{h}°, {s}%, {l}%</span>
                               </div>
                             </div>
-                            <p className="bk-card-desc">
-                              {index === 0
-                                ? 'Primary accent color for Light Theme buttons and navigational elements.'
-                                : 'Light, crisp background surface tone for Light Theme.'}
-                            </p>
+                            <p className="bk-card-desc">{role.desc}</p>
                           </div>
                         </div>
                       )
@@ -181,14 +201,7 @@ export default function ColorsTab(props) {
                         const hex = color.hex || '#0F172A'
                         const rgb = hexToRgb(hex)
                         const [h, s, l] = hexToHsl(hex)
-                        const roleName =
-                          idx === 0
-                            ? 'Primary Color (Dark Mode)'
-                            : idx === 1
-                              ? 'Background Color (Dark Mode)'
-                              : idx === 2
-                                ? 'Text / Accent Tone'
-                                : 'Secondary Tone'
+                        const role = roleInfo(kitData?.colorRoles, color.id)
 
                         return (
                           <div className="bk-color-card" key={color.id || actualIndex}>
@@ -232,7 +245,7 @@ export default function ColorsTab(props) {
                                     }
                                     placeholder="Color Name"
                                   />
-                                  <span className="bk-card-role-tag">{roleName}</span>
+                                  <span className="bk-card-role-tag">{role.tag}</span>
                                 </div>
                                 <div className="bk-card-hex-box">
                                   <label
@@ -291,13 +304,7 @@ export default function ColorsTab(props) {
                                   </span>
                                 </div>
                               </div>
-                              <p className="bk-card-desc">
-                                {idx === 0
-                                  ? 'Primary accent for dark theme buttons and highlights.'
-                                  : idx === 1
-                                    ? 'Dark surface / background tone for night mode layouts.'
-                                    : 'Supporting tone for charts, accents, and secondary UI.'}
-                              </p>
+                              <p className="bk-card-desc">{role.desc}</p>
                             </div>
                           </div>
                         )
@@ -305,6 +312,10 @@ export default function ColorsTab(props) {
                     </div>
                   )}
                 </section>
+
+                <div style={{ marginTop: 28 }}>
+                  <ColorContrastPanel kitData={kitData} setKitData={setKitData} canWrite={canWrite} />
+                </div>
               </div>
             </div>
   )

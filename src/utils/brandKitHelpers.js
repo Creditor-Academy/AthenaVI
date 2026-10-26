@@ -106,6 +106,77 @@ export function isValidHex(hex) {
   return HEX_RE.test(String(hex || '').trim())
 }
 
+/** WCAG AA minimum for normal text; backend theme.service enforces the same on bg/text. */
+export const AA_CONTRAST_RATIO = 4.5
+
+function relativeLuminance(hex) {
+  if (!isValidHex(hex)) return null
+  const raw = String(hex).trim().replace('#', '')
+  const full = raw.length === 3 ? raw.split('').map((c) => c + c).join('') : raw
+  const num = Number.parseInt(full, 16)
+  const [r, g, b] = [(num >> 16) & 255, (num >> 8) & 255, num & 255].map((v) => {
+    const c = v / 255
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4
+  })
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+
+export function contrastRatio(hexA, hexB) {
+  const l1 = relativeLuminance(hexA)
+  const l2 = relativeLuminance(hexB)
+  if (l1 == null || l2 == null) return null
+  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)
+}
+
+const COLOR_ROLE_LABELS = {
+  primary: 'Primary',
+  secondary: 'Secondary',
+  accent: 'Accent',
+  muted: 'Muted',
+  bg: 'Background',
+  text: 'Text',
+  primaryDark: 'Dark Primary',
+  bgDark: 'Dark Background',
+  textDark: 'Dark Text',
+}
+
+/** Role names a color currently fills, e.g. ['Background', 'Dark Text']. */
+export function colorRoleLabels(colorRoles, colorId) {
+  return Object.entries(COLOR_ROLE_LABELS)
+    .filter(([key]) => colorId && colorRoles?.[key] === colorId)
+    .map(([, label]) => label)
+}
+
+/**
+ * Text-on-background pairs the backend enforces on save: light always,
+ * dark once both bgDark and textDark are set.
+ */
+export function getContrastChecks(data) {
+  const colors = data?.colors || []
+  const roles = data?.colorRoles || {}
+  const find = (id) => colors.find((c) => c.id === id) || null
+  return [
+    { mode: 'light', bgKey: 'bg', textKey: 'text' },
+    { mode: 'dark', bgKey: 'bgDark', textKey: 'textDark' },
+  ].map((pair) => {
+    const bg = find(roles[pair.bgKey])
+    const text = find(roles[pair.textKey])
+    const ratio = contrastRatio(text?.hex, bg?.hex)
+    return {
+      ...pair,
+      bg,
+      text,
+      ratio,
+      enforced: pair.mode === 'light' || Boolean(roles.bgDark && roles.textDark),
+      passes: ratio != null && ratio >= AA_CONTRAST_RATIO,
+    }
+  })
+}
+
+export function hasReadableContrast(data) {
+  return getContrastChecks(data).every((c) => !c.enforced || c.passes)
+}
+
 export function newColorId(existing = []) {
   const used = new Set((existing || []).map((c) => c.id))
   let i = 1
@@ -401,6 +472,7 @@ export function toBrandKitApiData(data) {
       tagline: normalized.meta?.tagline || '',
       industry: normalized.meta?.industry ?? null,
       guidelineProjectId: normalized.meta?.guidelineProjectId || null,
+      guidelineTemplateId: normalized.meta?.guidelineTemplateId || null,
     },
     colors: (normalized.colors || []).map((c) => ({
       id: c.id,
@@ -462,6 +534,14 @@ export function validateBrandKitData(data) {
     if (roles[key] && !seen.has(roles[key])) {
       return `Color role "${key}" must reference a color in the kit`
     }
+  }
+  const failing = getContrastChecks(data).find((c) => c.enforced && c.ratio != null && !c.passes)
+  if (failing) {
+    return (
+      `${failing.mode === 'dark' ? 'Dark' : 'Light'} mode text "${failing.text.name}" on background ` +
+      `"${failing.bg.name}" has ${failing.ratio.toFixed(2)}:1 contrast (needs ${AA_CONTRAST_RATIO}:1). ` +
+      'Pick a different text or background color under Text readability in Brand Colors.'
+    )
   }
   return null
 }

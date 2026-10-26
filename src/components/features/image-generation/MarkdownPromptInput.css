@@ -80,3 +80,7 @@
   color: color-mix(in oklab, var(--aig-cobalt) 55%, var(--aig-ink-muted));
   font-weight: 600;
 }
+
+.aig-md-editor img {
+  display: none !important;
+}
