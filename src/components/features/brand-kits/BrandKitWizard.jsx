@@ -27,6 +27,12 @@ import {
   ensureGoogleFontLoaded,
   fontsFromPairing,
 } from './utils/brandKitUtils'
+import {
+  colorRoleLabels,
+  hasReadableContrast,
+  normalizeBrandKitData,
+} from '../../../utils/brandKitHelpers'
+import ColorContrastPanel from './ColorContrastPanel'
 import { FONT_WEIGHT_OPTIONS } from './utils/brandKitConstants'
 import FontPicker from '../../shared/fonts/FontPicker'
 import customFloat1 from '../../../assets/Template_Image/custom_float_1.png'
@@ -61,53 +67,107 @@ const COLOR_PRESETS = [
     name: 'Executive Navy',
     desc: 'Professional slate & vibrant royal with deep midnight dark mode',
     colors: [
-      { id: 'c1', name: 'Primary Slate', hex: '#1E293B' },
-      { id: 'c2', name: 'Royal Accent', hex: '#2563EB' },
-      { id: 'c3', name: 'Dark Slate Surface', hex: '#0F172A' },
-      { id: 'c4', name: 'Deep Obsidian Void', hex: '#020617' },
+      { id: 'c1', name: 'Primary Slate', hex: '#1E293B', mode: 'light' },
+      { id: 'c2', name: 'Royal Accent', hex: '#2563EB', mode: 'light' },
+      { id: 'c3', name: 'Dark Slate Surface', hex: '#0F172A', mode: 'dark' },
+      { id: 'c4', name: 'Deep Obsidian Void', hex: '#020617', mode: 'dark' },
+      { id: 'c5', name: 'Cloud Surface', hex: '#F8FAFC', mode: 'light' },
     ],
   },
   {
     name: 'Emerald Tech',
     desc: 'Vibrant mint & green with dark forest midnight dark mode',
     colors: [
-      { id: 'c1', name: 'Emerald Primary', hex: '#059669' },
-      { id: 'c2', name: 'Vibrant Mint', hex: '#10B981' },
-      { id: 'c3', name: 'Dark Emerald Night', hex: '#064E3B' },
-      { id: 'c4', name: 'Deep Forest Void', hex: '#022C22' },
+      { id: 'c1', name: 'Emerald Primary', hex: '#059669', mode: 'light' },
+      { id: 'c2', name: 'Vibrant Mint', hex: '#10B981', mode: 'light' },
+      { id: 'c3', name: 'Dark Emerald Night', hex: '#064E3B', mode: 'dark' },
+      { id: 'c4', name: 'Deep Forest Void', hex: '#022C22', mode: 'dark' },
+      { id: 'c5', name: 'Mint Mist Surface', hex: '#ECFDF5', mode: 'light' },
     ],
   },
   {
     name: 'Royal Amethyst',
     desc: 'Electric purple & violet with midnight amethyst dark mode',
     colors: [
-      { id: 'c1', name: 'Royal Violet', hex: '#7C3AED' },
-      { id: 'c2', name: 'Electric Purple', hex: '#8B5CF6' },
-      { id: 'c3', name: 'Midnight Amethyst', hex: '#2E1065' },
-      { id: 'c4', name: 'Deep Violet Void', hex: '#1E1035' },
+      { id: 'c1', name: 'Royal Violet', hex: '#7C3AED', mode: 'light' },
+      { id: 'c2', name: 'Electric Purple', hex: '#8B5CF6', mode: 'light' },
+      { id: 'c3', name: 'Midnight Amethyst', hex: '#2E1065', mode: 'dark' },
+      { id: 'c4', name: 'Deep Violet Void', hex: '#1E1035', mode: 'dark' },
+      { id: 'c5', name: 'Lavender Mist Surface', hex: '#F5F3FF', mode: 'light' },
     ],
   },
   {
     name: 'Sunset Flame',
     desc: 'Warm coral & amber with dark mahogany midnight dark mode',
     colors: [
-      { id: 'c1', name: 'Coral Flame', hex: '#EA580C' },
-      { id: 'c2', name: 'Warm Amber', hex: '#F59E0B' },
-      { id: 'c3', name: 'Dark Mahogany Surface', hex: '#451A03' },
-      { id: 'c4', name: 'Deep Espresso Night', hex: '#1C0A00' },
+      { id: 'c1', name: 'Coral Flame', hex: '#EA580C', mode: 'light' },
+      { id: 'c2', name: 'Warm Amber', hex: '#F59E0B', mode: 'light' },
+      { id: 'c3', name: 'Dark Mahogany Surface', hex: '#451A03', mode: 'dark' },
+      { id: 'c4', name: 'Deep Espresso Night', hex: '#1C0A00', mode: 'dark' },
+      { id: 'c5', name: 'Cream Surface', hex: '#FFF7ED', mode: 'light' },
     ],
   },
   {
     name: 'Cyber Neon',
     desc: 'Electric cyan & rose with obsidian dark mode',
     colors: [
-      { id: 'c1', name: 'Electric Cyan', hex: '#0EA5E9' },
-      { id: 'c2', name: 'Neon Rose', hex: '#F43F5E' },
-      { id: 'c3', name: 'Dark Cyber Slate', hex: '#0F172A' },
-      { id: 'c4', name: 'Obsidian Void', hex: '#030712' },
+      { id: 'c1', name: 'Electric Cyan', hex: '#0EA5E9', mode: 'light' },
+      { id: 'c2', name: 'Neon Rose', hex: '#F43F5E', mode: 'light' },
+      { id: 'c3', name: 'Dark Cyber Slate', hex: '#0F172A', mode: 'dark' },
+      { id: 'c4', name: 'Obsidian Void', hex: '#030712', mode: 'dark' },
+      { id: 'c5', name: 'Frost Surface', hex: '#F8FAFC', mode: 'light' },
     ],
   },
 ]
+
+// Every preset shares this layout: c1/c2 brand shades, c3 deep ink (light-mode text),
+// c4 dark-mode background, c5 light surface (light bg + dark-mode text).
+// Roles must be set with the colors; the backend rejects text/bg pairs under 4.5:1.
+/** Card tag text from the roles a color actually fills, not its position in the list. */
+function roleTagText(colorRoles, colorId) {
+  const labels = colorRoleLabels(colorRoles, colorId)
+  if (!labels.length) return 'UNASSIGNED'
+  const shown = labels.slice(0, 2).join(' · ')
+  return (labels.length > 2 ? `${shown} +${labels.length - 2}` : shown).toUpperCase()
+}
+
+const PRESET_COLOR_ROLES = {
+  primary: 'c1',
+  secondary: 'c2',
+  accent: 'c2',
+  muted: 'c3',
+  bg: 'c5',
+  text: 'c3',
+  bgDark: 'c4',
+  textDark: 'c5',
+  primaryDark: 'c2',
+}
+
+function applyColorPreset(prev, preset) {
+  const withPresetInk = (role) => role && { ...role, lightTextColorId: 'c3', darkTextColorId: 'c5' }
+  return normalizeBrandKitData({
+    ...prev,
+    colors: preset.colors,
+    colorRoles: PRESET_COLOR_ROLES,
+    chartStyles: { colorIds: ['c1', 'c2'] },
+    fonts: {
+      ...prev.fonts,
+      heading: withPresetInk(prev.fonts?.heading),
+      subheading: withPresetInk(prev.fonts?.subheading),
+      body: withPresetInk(prev.fonts?.body),
+    },
+    wordmarks: { ...prev.wordmarks, lightTextColorId: 'c3', darkTextColorId: 'c5' },
+    buttons: {
+      primary: { ...prev.buttons?.primary, backgroundColorId: 'c1', textColorId: null },
+      secondary: {
+        ...prev.buttons?.secondary,
+        backgroundColorId: 'c5',
+        textColorId: 'c1',
+        borderColorId: 'c1',
+      },
+    },
+  })
+}
 
 function contrastInk(hex) {
   const raw = String(hex || '#000000').replace('#', '')
@@ -458,6 +518,7 @@ export default function BrandKitWizard(props) {
             }))
             const lightColors = allColors.filter((c) => c.effectiveMode === 'light')
             const darkColors = allColors.filter((c) => c.effectiveMode === 'dark')
+            const contrastOk = hasReadableContrast(kitData)
 
             return (
               <div className="bk-wizard-body">
@@ -501,7 +562,7 @@ export default function BrandKitWizard(props) {
                           key={preset.name}
                           type="button"
                           className={`bk-preset-card ${isSelected ? 'is-selected' : ''}`}
-                          onClick={() => setKitData((prev) => ({ ...prev, colors: preset.colors }))}
+                          onClick={() => setKitData((prev) => applyColorPreset(prev, preset))}
                         >
                           <div className="bk-preset-card-head">
                             <span className="bk-preset-card-name">{preset.name}</span>
@@ -548,7 +609,7 @@ export default function BrandKitWizard(props) {
                   </div>
 
                   <div className="bk-color-cards-grid">
-                    {lightColors.map((color, subIndex) => {
+                    {lightColors.map((color) => {
                       const index = color.originalIndex
                       const hex = color.hex || '#0F172A'
                       const rgb = hexToRgb(hex)
@@ -600,7 +661,7 @@ export default function BrandKitWizard(props) {
                                   onClick={() => updateColor(index, { mode: 'dark' })}
                                   title="Click to toggle to Dark Mode"
                                 >
-                                  <MdLightMode size={12} /> LIGHT MODE {subIndex === 0 ? 'PRIMARY' : 'ACCENT'} ⇄
+                                  <MdLightMode size={12} /> {roleTagText(kitData.colorRoles, color.id)} ⇄
                                 </button>
                               </div>
                               <div className="bk-card-hex-box">
@@ -678,7 +739,7 @@ export default function BrandKitWizard(props) {
                   </div>
 
                   <div className="bk-color-cards-grid">
-                    {darkColors.map((color, subIndex) => {
+                    {darkColors.map((color) => {
                       const index = color.originalIndex
                       const hex = color.hex || '#0F172A'
                       const rgb = hexToRgb(hex)
@@ -730,7 +791,7 @@ export default function BrandKitWizard(props) {
                                   onClick={() => updateColor(index, { mode: 'light' })}
                                   title="Click to toggle to Light Mode"
                                 >
-                                  <MdDarkMode size={12} /> DARK MODE {subIndex === 0 ? 'SURFACE' : 'VOID'} ⇄
+                                  <MdDarkMode size={12} /> {roleTagText(kitData.colorRoles, color.id)} ⇄
                                 </button>
                               </div>
                               <div className="bk-card-hex-box">
@@ -794,11 +855,23 @@ export default function BrandKitWizard(props) {
                   </button>
                 </div>
 
+                <ColorContrastPanel kitData={kitData} setKitData={setKitData} canWrite={canWrite} />
+
                 <div className="bk-wizard-actions">
                   <button type="button" className="ghost-btn" onClick={() => setWizardStep(1)}>
                     <MdArrowBack size={16} /> Back
                   </button>
-                  <button type="button" className="create-btn" onClick={() => setWizardStep(3)}>
+                  {!contrastOk && (
+                    <span className="bk-contrast-gate-hint" role="alert">
+                      Fix text readability above to continue
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    className="create-btn"
+                    disabled={!contrastOk}
+                    onClick={() => setWizardStep(3)}
+                  >
                     Next: Typography <MdArrowForward size={16} />
                   </button>
                 </div>

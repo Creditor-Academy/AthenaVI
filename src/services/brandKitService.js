@@ -22,7 +22,8 @@ function formatValidationMessage(payload) {
       return `${field}: ${text}`
     })
   }
-  details = details.filter(Boolean)
+  // Backend echoes `message` into `errors` for single AppErrors; don't repeat it.
+  details = details.filter((d) => d && d !== base)
   if (!details.length) return base
   return base ? `${base} — ${details.join('; ')}` : details.join('; ')
 }
@@ -377,6 +378,15 @@ class BrandKitService {
     return data?.guideline || data
   }
 
+  /** Unsaved, uncharged guideline slides for a template: { templateId, themeTokens, slides }. */
+  async previewGuidelines(workspaceId, brandKitId, templateId) {
+    const query = templateId ? `?templateId=${encodeURIComponent(templateId)}` : ''
+    const data = await this.request(
+      `${API_CONFIG.ENDPOINTS.BRAND_KITS.GUIDELINES_PREVIEW(workspaceId, brandKitId)}${query}`
+    )
+    return data?.preview || data
+  }
+
   /**
    * Download printable brand guideline PDF (style-sheet layout with logo variants).
    * Returns { blob, filename }.
@@ -422,13 +432,13 @@ class BrandKitService {
     URL.revokeObjectURL(url)
   }
 
-  async generateGuidelines(workspaceId, brandKitId, { folderId } = {}) {
+  async generateGuidelines(workspaceId, brandKitId, { folderId, templateId } = {}) {
     if (!folderId) throw new Error('folderId is required to generate brand guidelines')
     const data = await this.request(
       API_CONFIG.ENDPOINTS.BRAND_KITS.GUIDELINES_GENERATE(workspaceId, brandKitId),
       {
         method: 'POST',
-        body: JSON.stringify({ folderId }),
+        body: JSON.stringify(templateId ? { folderId, templateId } : { folderId }),
       }
     )
     return data?.guideline || data

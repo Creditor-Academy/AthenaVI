@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Plus, Search, Image as ImageIcon,
-  ChevronDown, Mic, Sparkles, X, Lightbulb,
+  ChevronDown, Mic, Sparkles, X, Lightbulb, LogOut,
   ListOrdered, Clock, Columns2, BarChart3, Network, List, RefreshCw, Hexagon, Library,
   Share2, Printer, CreditCard, Mail, Check
 } from 'lucide-react';
@@ -29,8 +29,7 @@ import MarkdownPromptInput from '../../../components/features/image-generation/M
 import RecentChatMenu from './RecentChatMenu.jsx';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
 import '../../../components/features/image-generation/MarkdownPromptInput.css';
-import { checkImageGenCredits } from '../../../utils/imageGenCreditsCheck.js';
-import { defaultImageGenModelId, modelsForImageGenMode, isDraftQualityModel } from '../../../utils/imageGenDefaults.js';
+import { defaultImageGenModelId, modelsForImageGenMode, isDraftQualityModel, formatModelDisplayName } from '../../../utils/imageGenDefaults.js';
 
 import style3dImg from '../../../assets/slides_icons/style_3d.jpg';
 import styleBauhausImg from '../../../assets/slides_icons/style_bauhaus.jpg';
@@ -885,6 +884,8 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
         onBack={() => {
           setLaunchStudio(false);
           setActiveThreadId(null);
+          setPrompt('');
+          setImageContext(null);
         }}
         onNewChat={() => {
           setLaunchStudio(false);
@@ -895,6 +896,8 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
         onOpenLibrary={() => {
           setLaunchStudio(false);
           setActiveThreadId(null);
+          setPrompt('');
+          setImageContext(null);
           setActiveMode('library');
         }}
         onStartChatFromLibrary={startChatFromLibrary}
@@ -1067,6 +1070,13 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
            >
              <Plus size={16}/> New chat
            </button>
+           <button
+             type="button"
+             className="studio-exit-btn"
+             onClick={() => onBack?.()}
+           >
+             <LogOut size={16}/> Exit
+           </button>
         </div>
       </aside>
 
@@ -1218,18 +1228,26 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
           <section className="styles-grid-container" style={{ position: 'relative', zIndex: 1 }}>
             <div className="styles-grid-title">Choose a style</div>
             <div className="styles-grid">
-              {catalogs.styles.map(style => (
-                <div 
-                  className={`style-card ${selectedStyle === style.id ? 'selected' : ''}`} 
-                  key={style.id} 
-                  onClick={() => setSelectedStyle(style.id)}
-                  style={{ backgroundImage: `url(${getStyleImage(style.id)})` }}
-                >
-                  <div className="style-card-overlay">
-                    <span>{style.label || style.id}</span>
+              {catalogs.styles.map(style => {
+                const isSelected = selectedStyle === style.id;
+                return (
+                  <div 
+                    className={`style-card ${isSelected ? 'selected' : ''}`} 
+                    key={style.id} 
+                    onClick={() => setSelectedStyle(isSelected ? null : style.id)}
+                    style={{ backgroundImage: `url(${getStyleImage(style.id)})` }}
+                  >
+                    {isSelected && (
+                      <div className="style-card-check">
+                        <Check size={13} strokeWidth={3} />
+                      </div>
+                    )}
+                    <div className="style-card-overlay">
+                      <span>{style.label || style.id}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
@@ -1368,7 +1386,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                       setShowFormatDropdown(false);
                     }}>
                       {getModelIcon(selectedModel)}
-                      <span>{selectedModelObj?.name || selectedModel || "GPT Image"}</span>
+                      <span>{formatModelDisplayName(selectedModelObj || selectedModel, "Pro")}</span>
                       <ChevronDown size={14}/>
                     </button>
                     {showModelDropdown && (
@@ -1388,7 +1406,26 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                           return groups.map(g => (
                             <div key={g.id} className="model-group">
                               <div className="model-group-title">{g.label}</div>
-                              {g.models.map(m => (
+                              {g.models.map(m => {
+                                const isGptHd = m.id === 'gpt-image-1-hd';
+                                const isGptStd = m.id === 'gpt-image-1';
+                                const isDalle3 = m.id === 'dall-e-3';
+
+                                let displayName = formatModelDisplayName(m, m.name || m.id);
+                                if (isGptHd) displayName = 'Pro';
+                                else if (isGptStd) displayName = 'Standard';
+                                else if (isDalle3) displayName = 'Classic';
+
+                                let qualityLabel = m.quality === 'high' ? 'High quality' : 'Medium quality';
+                                if (isGptHd || isDalle3) {
+                                  qualityLabel = 'High quality · 12 AC';
+                                } else if (isGptStd) {
+                                  qualityLabel = 'Standard quality · 6 AC';
+                                }
+
+                                const isRec = m.recommended || isGptHd;
+
+                                return (
                                 <div 
                                   key={m.id} 
                                   className={`model-card ${selectedModel === m.id ? 'active' : ''}`}
@@ -1396,19 +1433,28 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
                                 >
                                   <div className="model-card-top">
                                     <div className="model-name">
-                                      {getModelIcon(m.id)} {m.name || m.id}
+                                      {getModelIcon(m.id)} {displayName}
                                     </div>
-                                    {m.recommended && activeMode === 'image' && <span className="recommended-badge">Recommended</span>}
+                                    {isRec && <span className="recommended-badge">Recommended</span>}
                                     {isDraftQualityModel(m) && <span className="recommended-badge">Draft quality</span>}
                                   </div>
-                                  <div className="model-desc">{m.description || "High performance AI image generation model."}</div>
+                                  <div className="model-desc">
+                                    {isGptHd 
+                                      ? "High-quality, detailed image generation." 
+                                      : isGptStd
+                                        ? "Fast, cost-effective image generation."
+                                        : isDalle3 
+                                          ? "Previous-generation option retained for compatibility." 
+                                          : (m.description || "High performance AI image generation model.")}
+                                  </div>
                                   <div className="model-meta">
                                     {m.maxImageSize && <span>{m.maxImageSize} • </span>}
-                                    <span>{m.quality === 'high' ? 'High quality' : 'Medium quality'}</span>
+                                    <span>{qualityLabel}</span>
                                     {selectedModel === m.id && <span className="selected-text">✓ Selected</span>}
                                   </div>
                                 </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           ));
                         })()}

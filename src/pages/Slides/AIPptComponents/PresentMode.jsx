@@ -22,7 +22,7 @@ import {
   contentUsesFullRuns,
   isGradientFill,
   resolveTextHex,
-  runFill,
+  runDisplayStyle,
   textPaintStyle,
 } from '../../../utils/pptTextContent'
 import { PPT_SLIDE_TRANSITIONS } from '../../../constants/pptSlideEditorOptions'
@@ -97,19 +97,10 @@ function PresentElement({ el, palette, canvasW, canvasH, focused, dimmed, select
       >
         {usesRuns
           ? c.runs.map((run, i) => {
-              const fill = runFill(run, { type: 'solid', color })
               const text =
                 typeof run?.text === 'string' || typeof run?.text === 'number' ? run.text : ''
               return (
-                <span
-                  key={i}
-                  style={{
-                    ...textPaintStyle(fill, palette, color),
-                    fontWeight: run.fontWeight ?? (run.bold ? 700 : baseStyle.fontWeight),
-                    fontStyle: run.italic ? 'italic' : baseStyle.fontStyle,
-                    fontFamily: run.fontFamily || baseStyle.fontFamily,
-                  }}
-                >
+                <span key={i} style={runDisplayStyle(run, c, palette, baseStyle)}>
                   {text}
                 </span>
               )

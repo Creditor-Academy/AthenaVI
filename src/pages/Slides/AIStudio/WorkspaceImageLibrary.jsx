@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Loader2, Sparkles, Image as ImageIcon, Download, Copy, Check, MessageSquare, Trash2, X, BarChart3, Share2, Printer, Plus, Search, LayoutGrid, List, Heart, ChevronDown, SlidersHorizontal, MoreHorizontal, RotateCcw } from 'lucide-react';
 import imageGenService from '../../../services/imageGenService.js';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
+import LogoImg from '../../../assets/herologo.png';
 
 const START_CHAT_MODES = [
   { id: 'image', label: 'Image', Icon: ImageIcon },
@@ -36,31 +38,71 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
   const [newMenuOpen, setNewMenuOpen] = useState(false);
   const [manageMenuOpen, setManageMenuOpen] = useState(false);
   const [trashMenuId, setTrashMenuId] = useState(null);
+  const [cardMenu, setCardMenu] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
+  const [maximizeGen, setMaximizeGen] = useState(null);
+  const [confirmDeleteSingle, setConfirmDeleteSingle] = useState(null);
   const [confirmPurge, setConfirmPurge] = useState(false);
 
   const handleDownload = async (event, gen, idx) => {
-    event.stopPropagation();
-    const key = gen.id || idx;
+    event?.stopPropagation?.();
+    const key = gen?.id || idx;
     if (downloadingId === key) return;
     setDownloadingId(key);
+
+    const imgSrc = gen?.url || gen?.resultUrl || gen?.asset?.url || gen?.imageUrl || (Array.isArray(gen?.images) && gen?.images[0]?.url) || '';
+
+    const singleItem = {
+      id: key,
+      src: imgSrc,
+      status: 'downloading',
+    };
+    setDownloadProgress([singleItem]);
+    const startTime = Date.now();
+
     try {
-      if (workspaceId && gen.id) {
-        await imageGenService.downloadAndSave(workspaceId, gen.id, 'png');
-        return;
+      if (workspaceId && gen?.id) {
+        const { blob, filename } = await imageGenService.download(workspaceId, gen.id, 'png');
+        const safeName = /\.png$/i.test(filename) ? filename : `athena-image-${key}.png`;
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = safeName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 15000);
+      } else if (imgSrc) {
+        const response = await fetch(imgSrc);
+        if (!response.ok) throw new Error('Download failed');
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = objectUrl;
+        a.download = `generation_${key}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 15000);
+      } else {
+        throw new Error('No valid image URL found');
       }
-      const response = await fetch(gen.url || gen.resultUrl);
-      if (!response.ok) throw new Error('Download failed');
-      const blob = await response.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = objectUrl;
-      a.download = `generation_${gen.id || idx}.png`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(objectUrl);
+
+      // Ensure progress indicator is visible for at least 700ms so the user sees the download starting
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 700) {
+        await new Promise((resolve) => setTimeout(resolve, 700 - elapsed));
+      }
+
+      setDownloadProgress([{ ...singleItem, status: 'done' }]);
+      setTimeout(() => {
+        setDownloadProgress((curr) => (Array.isArray(curr) && curr.length === 1 && curr[0].id === key ? null : curr));
+      }, 2200);
     } catch (err) {
       console.error('Library download failed:', err);
+      setDownloadProgress(null);
+      setDownloadNotice('Download failed');
+      setTimeout(() => setDownloadNotice(''), 2500);
     } finally {
       setDownloadingId(null);
     }
@@ -85,17 +127,17 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
     const withIds = selected.filter((gen) => gen.id);
     const queue = (workspaceId && withIds.length ? withIds : selected).map((gen, i) => ({
       id: gen.id || i,
-      src: gen.url || gen.resultUrl,
+      src: gen.url || gen.resultUrl || gen.asset?.url || gen.imageUrl || '',
       status: 'waiting',
     }));
-    if (queue.length > 1) setDownloadProgress(queue);
+    setDownloadProgress(queue);
     const mark = (index, status) => {
       setDownloadProgress((rows) => (Array.isArray(rows) ? rows.map((row, i) => (i === index ? { ...row, status } : row)) : rows));
     };
     try {
       if (workspaceId && withIds.length) {
         for (let i = 0; i < withIds.length; i += 1) {
-          if (withIds.length > 1) mark(i, 'downloading');
+          mark(i, 'downloading');
           const { blob, filename } = await imageGenService.download(workspaceId, withIds[i].id, 'png');
           const safeName = /\.png$/i.test(filename) ? filename : `athena-image-${i + 1}.png`;
           const objectUrl = URL.createObjectURL(blob);
@@ -106,20 +148,21 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           a.click();
           a.remove();
           setTimeout(() => URL.revokeObjectURL(objectUrl), 15000);
-          if (withIds.length > 1) mark(i, 'done');
+          mark(i, 'done');
           if (i < withIds.length - 1) {
             await new Promise((resolve) => setTimeout(resolve, 400));
           }
         }
-        setDownloadProgress(null);
-        setDownloadNotice('Downloaded');
-        setTimeout(() => setDownloadNotice(''), 2500);
+        setTimeout(() => {
+          setDownloadProgress(null);
+        }, 2200);
         return;
       }
       for (let i = 0; i < selected.length; i += 1) {
         const gen = selected[i];
-        if (selected.length > 1) mark(i, 'downloading');
-        const response = await fetch(gen.url || gen.resultUrl);
+        mark(i, 'downloading');
+        const imgUrl = gen.url || gen.resultUrl || gen.asset?.url || gen.imageUrl || '';
+        const response = await fetch(imgUrl);
         if (!response.ok) continue;
         const blob = await response.blob();
         const objectUrl = URL.createObjectURL(blob);
@@ -130,16 +173,15 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
         a.click();
         a.remove();
         setTimeout(() => URL.revokeObjectURL(objectUrl), 2000);
-        if (selected.length > 1) mark(i, 'done');
+        mark(i, 'done');
       }
-      setDownloadProgress(null);
-      setDownloadNotice('Downloaded');
-      setTimeout(() => setDownloadNotice(''), 2500);
+      setTimeout(() => {
+        setDownloadProgress(null);
+      }, 2200);
     } catch (err) {
       console.error('Library bulk download failed:', err);
     } finally {
       setDownloadingSelection(false);
-      setDownloadProgress(null);
     }
   };
 
@@ -169,6 +211,20 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
     }
     setGenerations((rows) => rows.filter((gen, idx) => !drop.has(gen.id || idx)));
     clearSelection();
+  };
+
+  const deleteSingleImage = async (gen, idx) => {
+    const key = gen.id || idx;
+    if (workspaceId && gen.id) {
+      try {
+        await imageGenService.hideGenerations(workspaceId, [gen.id]);
+      } catch (err) {
+        console.error('Library hide single image failed:', err);
+        return;
+      }
+    }
+    setGenerations((rows) => rows.filter((row, i) => (row.id ? row.id !== gen.id : i !== idx)));
+    setSelectedIds((prev) => prev.filter((id) => id !== key));
   };
 
   const selectedTrashIds = () => selected.map((gen) => gen.id).filter(Boolean);
@@ -204,18 +260,64 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
     clearSelection();
   };
 
+  const toggleCardMenu = (e, gen, idx, imgUrl) => {
+    e.stopPropagation();
+    const id = gen.id || idx;
+    if (cardMenu && cardMenu.id === id) {
+      setCardMenu(null);
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    const menuWidth = 170;
+    const menuHeight = 185;
+    let left = rect.right - menuWidth;
+    if (left < 10) left = 10;
+    if (left + menuWidth > window.innerWidth - 10) {
+      left = window.innerWidth - menuWidth - 10;
+    }
+    let top = rect.bottom + 6;
+    if (top + menuHeight > window.innerHeight - 10) {
+      top = Math.max(10, rect.top - menuHeight - 6);
+    }
+    setCardMenu({ id, gen, idx, imgUrl, top, left });
+  };
+
   useEffect(() => {
-    if (!newMenuOpen && !modeMenuOpen && !manageMenuOpen && !trashMenuId) return undefined;
+    if (!newMenuOpen && !modeMenuOpen && !manageMenuOpen && !trashMenuId && !cardMenu) return undefined;
     const close = (event) => {
-      if (event.target.closest('.library-new-wrap') || event.target.closest('.library-start-wrap') || event.target.closest('.library-manage-wrap') || event.target.closest('.library-trash-menu')) return;
+      if (
+        event.target.closest('.library-new-wrap') || 
+        event.target.closest('.library-start-wrap') || 
+        event.target.closest('.library-manage-wrap') || 
+        event.target.closest('.library-trash-menu') ||
+        event.target.closest('.library-card-more-btn') ||
+        event.target.closest('.library-card-dropdown')
+      ) return;
       setNewMenuOpen(false);
       setModeMenuOpen(false);
       setManageMenuOpen(false);
       setTrashMenuId(null);
+      setCardMenu(null);
     };
+    const onScrollOrResize = () => setCardMenu(null);
     document.addEventListener('mousedown', close);
-    return () => document.removeEventListener('mousedown', close);
-  }, [newMenuOpen, modeMenuOpen, manageMenuOpen, trashMenuId]);
+    window.addEventListener('scroll', onScrollOrResize, true);
+    window.addEventListener('resize', onScrollOrResize);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      window.removeEventListener('scroll', onScrollOrResize, true);
+      window.removeEventListener('resize', onScrollOrResize);
+    };
+  }, [newMenuOpen, modeMenuOpen, manageMenuOpen, trashMenuId, cardMenu]);
+
+  useEffect(() => {
+    if (!maximizeGen) return undefined;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setMaximizeGen(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [maximizeGen]);
 
   useEffect(() => {
     if (!workspaceId) {
@@ -243,38 +345,13 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
     fetchGenerations();
   }, [workspaceId, libraryView === 'trash']);
 
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%' }}>
-        <Loader2 className="spinning" size={28} style={{ color: 'var(--primary, #2563eb)' }} />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%', color: 'var(--text-secondary, #a0a0a0)' }}>
-        <div style={{ padding: '16px 24px', background: 'var(--bg-surface, #f9fafb)', borderRadius: '16px', fontSize: '14px' }}>
-          {error}
-        </div>
-      </div>
-    );
-  }
-
-  if (generations.length === 0) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%', width: '100%', color: 'var(--text-secondary, #a0a0a0)' }}>
-        <div style={{ 
-          width: '64px', height: '64px', borderRadius: '50%', background: 'color-mix(in srgb, var(--primary, #2563eb) 10%, transparent)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px'
-        }}>
-          <Sparkles size={28} style={{ color: 'var(--primary, #2563eb)' }} />
-        </div>
-        <div style={{ fontSize: '18px', fontWeight: '500', color: 'var(--text-main, #111827)', marginBottom: '8px' }}>It's quiet in here</div>
-        <div style={{ fontSize: '14px', maxWidth: '250px', textAlign: 'center', lineHeight: '1.5' }}>Images you generate in this workspace will magically appear here.</div>
-      </div>
-    );
-  }
+  const filteredGenerations = generations.filter((gen) => {
+    if (libraryView === 'liked' && gen.feedback !== 'LIKE') return false;
+    if (libraryView === 'library' && category !== 'all' && String(gen.mode || 'image').toLowerCase() !== category) return false;
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return `${gen.prompt || ''} ${gen.title || ''}`.toLowerCase().includes(q);
+  });
 
   return (
     <div className="workspace-library-container" style={{ padding: '40px 48px', height: '100%', overflowY: 'auto', width: '100%', boxSizing: 'border-box' }}>
@@ -287,7 +364,7 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
           display: flex;
           flex-direction: column;
-          cursor: pointer;
+          cursor: default;
           break-inside: avoid;
           margin-bottom: 28px;
           position: relative;
@@ -301,6 +378,7 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           width: 100%;
           overflow: hidden;
           background: var(--bg-surface, #f3f4f6);
+          cursor: zoom-in;
         }
         .cute-library-card-img {
           width: 100%;
@@ -321,9 +399,213 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           gap: 8px;
           opacity: 0;
           transition: opacity 0.2s ease;
+          z-index: 4;
         }
-        .cute-library-card:hover .cute-library-card-actions {
+        .cute-library-card:hover .cute-library-card-actions,
+        .cute-library-card-actions.has-menu-open {
           opacity: 1;
+        }
+        .library-card-menu-wrap {
+          position: relative;
+          display: inline-flex;
+        }
+        .library-card-dropdown {
+          width: 172px;
+          box-sizing: border-box;
+          padding: 6px;
+          border-radius: 14px;
+          background: #ffffff;
+          border: 1px solid rgba(226, 232, 240, 0.95);
+          box-shadow: 0 16px 36px -6px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04);
+          z-index: 50;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          transform-origin: top right;
+          animation: library-pop-in 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .library-card-dropdown.is-portal {
+          right: auto;
+          width: 172px;
+        }
+        @keyframes library-pop-in {
+          from { opacity: 0; transform: translateY(-5px) scale(0.96); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .library-card-dropdown button {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          border: none;
+          background: transparent;
+          color: #1e293b;
+          border-radius: 9px;
+          padding: 8px 12px;
+          font-size: 13.5px;
+          font-weight: 550;
+          cursor: pointer;
+          text-align: left;
+          transition: background 0.15s ease, color 0.15s ease;
+        }
+        .library-card-dropdown button:hover {
+          background: #f1f5f9;
+          color: var(--primary, #2563eb);
+        }
+        .library-card-dropdown button svg {
+          color: #64748b;
+          flex-shrink: 0;
+          transition: color 0.15s ease;
+        }
+        .library-card-dropdown button:hover svg {
+          color: var(--primary, #2563eb);
+        }
+        .library-menu-divider {
+          height: 1px;
+          background: #f1f5f9;
+          margin: 4px 6px;
+        }
+        .library-card-dropdown button.is-danger {
+          color: #ef4444;
+        }
+        .library-card-dropdown button.is-danger svg {
+          color: #ef4444;
+        }
+        .library-card-dropdown button.is-danger:hover {
+          background: #fef2f2;
+          color: #dc2626;
+        }
+        .library-card-dropdown button.is-danger:hover svg {
+          color: #dc2626;
+        }
+        .library-fullscreen-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 9999999;
+          background: rgba(8, 12, 22, 0.92);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
+          display: flex;
+          flex-direction: column;
+          animation: library-fade-in 0.2s ease-out;
+        }
+        @keyframes library-fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        .library-fullscreen-topbar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 16px 24px;
+          gap: 16px;
+          background: linear-gradient(180deg, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0) 100%);
+        }
+        .library-fullscreen-meta {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .library-fullscreen-brand {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border-radius: 9px;
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.16);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          flex-shrink: 0;
+        }
+        .library-fullscreen-logo {
+          width: 20px;
+          height: 20px;
+          object-fit: contain;
+        }
+        .library-fullscreen-divider {
+          width: 1px;
+          height: 18px;
+          background: rgba(255, 255, 255, 0.18);
+          flex-shrink: 0;
+        }
+        .library-fullscreen-title {
+          color: rgba(255, 255, 255, 0.92);
+          font-size: 14px;
+          font-weight: 550;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: inline-block;
+          max-width: 50vw;
+          letter-spacing: -0.01em;
+        }
+        .library-fullscreen-actions {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .library-fullscreen-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          padding: 8px 14px;
+          border-radius: 999px;
+          background: rgba(255, 255, 255, 0.12);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          color: #ffffff;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          transition: background 0.15s ease, transform 0.15s ease;
+        }
+        .library-fullscreen-btn:hover {
+          background: rgba(255, 255, 255, 0.22);
+          transform: translateY(-1px);
+        }
+        .library-fullscreen-close {
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.12);
+          color: #ffffff;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          transition: background 0.15s ease, transform 0.15s ease;
+        }
+        .library-fullscreen-close:hover {
+          background: rgba(255, 255, 255, 0.25);
+          transform: scale(1.05);
+        }
+        .library-fullscreen-body {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px 32px 36px;
+          overflow: hidden;
+        }
+        .library-fullscreen-img {
+          max-width: 94vw;
+          max-height: 84vh;
+          object-fit: contain;
+          border-radius: 14px;
+          box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1);
+          animation: library-zoom-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes library-zoom-in {
+          from { opacity: 0; transform: scale(0.94); }
+          to { opacity: 1; transform: scale(1); }
         }
         .library-action-btn {
           background: rgba(255, 255, 255, 0.9);
@@ -820,7 +1102,8 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
         .library-grid.is-list .cute-library-card:hover .library-list-check,
         .library-grid.is-list .cute-library-card:hover .library-list-actions,
         .library-list-check.is-on,
-        .library-grid.is-list .cute-library-card.is-selected .library-list-actions {
+        .library-grid.is-list .cute-library-card.is-selected .library-list-actions,
+        .library-grid.is-list .library-list-actions.has-menu-open {
           opacity: 1;
         }
         .library-list-check {
@@ -849,17 +1132,18 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           position: fixed;
           right: 24px;
           bottom: 24px;
-          z-index: 40;
-          width: 280px;
+          z-index: 10000001;
+          width: 300px;
           margin: 0;
           padding: 16px 18px;
           border-radius: 16px;
-          background: var(--bg-surface, #fff);
+          background: #ffffff;
           color: var(--text-main, #111827);
-          border: 1px solid var(--border-color, #e5e7eb);
-          box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
+          border: 1px solid rgba(226, 232, 240, 0.95);
+          box-shadow: 0 16px 40px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04);
           font-size: 15px;
           font-weight: 700;
+          animation: library-pop-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .library-download-toast {
           width: fit-content;
@@ -867,12 +1151,47 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           color: #166534;
           border-color: #86efac;
         }
-        .library-download-progress span {
-          display: block;
+        .library-download-header {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          gap: 8px;
+        }
+        .library-download-header-content {
+          flex: 1;
+          min-width: 0;
+        }
+        .library-download-title {
+          font-size: 15px;
+          font-weight: 700;
+          color: #0f172a;
+          line-height: 1.25;
+        }
+        .library-download-subtitle {
           margin-top: 4px;
           font-size: 13px;
           font-weight: 550;
-          color: var(--text-secondary, #64748b);
+          color: #64748b;
+          line-height: 1.2;
+        }
+        .library-download-close {
+          width: 24px;
+          height: 24px;
+          border: none;
+          background: transparent;
+          border-radius: 6px;
+          color: #94a3b8;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: background 0.15s ease, color 0.15s ease;
+          padding: 0;
+          flex-shrink: 0;
+        }
+        .library-download-close:hover {
+          background: #f1f5f9;
+          color: #334155;
         }
         .library-download-track {
           margin-top: 12px;
@@ -1088,177 +1407,333 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
         </div>
       </div>}
 
-      <div
-        className={`library-grid${layout === 'list' ? ' is-list' : ''}`}
-        style={{
-          columnCount: layout === 'list' ? 1 : 'auto',
-          columnWidth: layout === 'list' ? 'auto' : '240px',
-          columnGap: '28px',
-        }}
-      >
-        {generations.filter((gen) => {
-          if (libraryView === 'liked' && gen.feedback !== 'LIKE') return false;
-          if (libraryView === 'library' && category !== 'all' && String(gen.mode || 'image').toLowerCase() !== category) return false;
-          const q = query.trim().toLowerCase();
-          if (!q) return true;
-          return `${gen.prompt || ''} ${gen.title || ''}`.toLowerCase().includes(q);
-        }).map((gen) => {
-          const idx = generations.indexOf(gen);
-          const imgUrl = gen.url || gen.resultUrl;
-          if (!imgUrl) return null;
-          const imageName = String(gen.prompt || gen.title || 'Untitled')
-            .replace(/[*#_`]/g, '')
-            .replace(/\s+/g, ' ')
-            .trim()
-            .split(/[.\n]/)[0]
-            .slice(0, 80) || 'Untitled';
-          const isSelected = selectedIds.includes(gen.id || idx);
-          
-          return (
-            <div 
-              key={gen.id || idx} 
-              className={`cute-library-card${isSelected ? ' is-selected' : ''}${libraryView === 'trash' ? ' is-trash' : ''}`}
-              onClick={() => libraryView !== 'trash' && onImageClick && gen.threadId && onImageClick(gen.threadId)}
-              style={{ cursor: gen.threadId ? 'pointer' : 'default' }}
+      {loading ? (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '320px', width: '100%' }}>
+          <Loader2 className="spinning" size={28} style={{ color: 'var(--primary, #2563eb)' }} />
+        </div>
+      ) : error ? (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '320px', width: '100%', color: 'var(--text-secondary, #a0a0a0)' }}>
+          <div style={{ padding: '16px 24px', background: 'var(--bg-surface, #f9fafb)', borderRadius: '16px', fontSize: '14px' }}>
+            {error}
+          </div>
+        </div>
+      ) : filteredGenerations.length === 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '340px', padding: '40px 0', width: '100%', color: 'var(--text-secondary, #a0a0a0)' }}>
+          <div style={{ 
+            width: '64px', height: '64px', borderRadius: '50%', background: 'color-mix(in srgb, var(--primary, #2563eb) 10%, transparent)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '20px'
+          }}>
+            {libraryView === 'trash' ? (
+              <Trash2 size={28} style={{ color: 'var(--primary, #2563eb)' }} />
+            ) : libraryView === 'liked' ? (
+              <Heart size={28} style={{ color: 'var(--primary, #2563eb)' }} />
+            ) : query.trim() ? (
+              <Search size={28} style={{ color: 'var(--primary, #2563eb)' }} />
+            ) : (
+              <Sparkles size={28} style={{ color: 'var(--primary, #2563eb)' }} />
+            )}
+          </div>
+          <div style={{ fontSize: '18px', fontWeight: '500', color: 'var(--text-main, #111827)', marginBottom: '8px' }}>
+            {libraryView === 'trash'
+              ? 'Trash is empty'
+              : libraryView === 'liked'
+              ? 'No liked images yet'
+              : query.trim()
+              ? 'No matching images'
+              : category !== 'all'
+              ? `No ${LIBRARY_CATEGORIES.find((c) => c.id === category)?.label || 'images'} yet`
+              : "It's quiet in here"}
+          </div>
+          <div style={{ fontSize: '14px', maxWidth: '320px', textAlign: 'center', lineHeight: '1.5' }}>
+            {libraryView === 'trash'
+              ? 'Images you delete will show up here for 30 days before being permanently removed.'
+              : libraryView === 'liked'
+              ? 'Images you like will appear here.'
+              : query.trim()
+              ? 'Try searching with different keywords.'
+              : category !== 'all'
+              ? `Images in the ${LIBRARY_CATEGORIES.find((c) => c.id === category)?.label || ''} category will appear here.`
+              : 'Images you generate in this workspace will magically appear here.'}
+          </div>
+          {libraryView !== 'library' ? (
+            <button
+              type="button"
+              onClick={() => {
+                setLibraryView('library');
+                clearSelection();
+              }}
+              style={{
+                marginTop: '16px',
+                padding: '8px 18px',
+                borderRadius: '999px',
+                border: '1px solid #e2e8f0',
+                background: '#fff',
+                color: 'var(--text-main, #111827)',
+                fontSize: '13px',
+                fontWeight: '550',
+                cursor: 'pointer',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                transition: 'all 0.2s',
+              }}
             >
-              {layout === 'list' && (
-                <button
-                  type="button"
-                  className={`library-list-check${isSelected ? ' is-on' : ''}`}
-                  aria-label={isSelected ? 'Unselect image' : 'Select image'}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleSelected(gen.id || idx);
-                  }}
-                >
-                  <Check size={13} />
-                </button>
-              )}
-              <div className="cute-library-card-img-wrapper">
-                <img 
-                  src={imgUrl} 
-                  alt={gen.prompt || "Generated image"} 
-                  className="cute-library-card-img"
-                  loading="lazy"
-                />
-                {libraryView === 'trash' && (
-                  <span className="library-days-left">
-                    {(() => {
-                      const deleted = gen.deletedAt ? new Date(gen.deletedAt).getTime() : Date.now();
-                      const left = Math.max(0, Math.ceil((deleted + 30 * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000)));
-                      return left === 1 ? '1 day left' : `${left} days left`;
-                    })()}
-                  </span>
+              Back to Library
+            </button>
+          ) : query.trim() ? (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              style={{
+                marginTop: '16px',
+                padding: '8px 18px',
+                borderRadius: '999px',
+                border: '1px solid #e2e8f0',
+                background: '#fff',
+                color: 'var(--text-main, #111827)',
+                fontSize: '13px',
+                fontWeight: '550',
+                cursor: 'pointer',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                transition: 'all 0.2s',
+              }}
+            >
+              Clear search
+            </button>
+          ) : category !== 'all' ? (
+            <button
+              type="button"
+              onClick={() => setCategory('all')}
+              style={{
+                marginTop: '16px',
+                padding: '8px 18px',
+                borderRadius: '999px',
+                border: '1px solid #e2e8f0',
+                background: '#fff',
+                color: 'var(--text-main, #111827)',
+                fontSize: '13px',
+                fontWeight: '550',
+                cursor: 'pointer',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                transition: 'all 0.2s',
+              }}
+            >
+              Show all images
+            </button>
+          ) : null}
+        </div>
+      ) : (
+        <div
+          className={`library-grid${layout === 'list' ? ' is-list' : ''}`}
+          style={{
+            columnCount: layout === 'list' ? 1 : 'auto',
+            columnWidth: layout === 'list' ? 'auto' : '240px',
+            columnGap: '28px',
+          }}
+        >
+          {filteredGenerations.map((gen) => {
+            const idx = generations.indexOf(gen);
+            const imgUrl = gen.url || gen.resultUrl;
+            if (!imgUrl) return null;
+            const imageName = String(gen.prompt || gen.title || 'Untitled')
+              .replace(/[*#_`]/g, '')
+              .replace(/\s+/g, ' ')
+              .trim()
+              .split(/[.\n]/)[0]
+              .slice(0, 80) || 'Untitled';
+            const isSelected = selectedIds.includes(gen.id || idx);
+            
+            return (
+              <div 
+                key={gen.id || idx} 
+                className={`cute-library-card${isSelected ? ' is-selected' : ''}${libraryView === 'trash' ? ' is-trash' : ''}`}
+              >
+                {layout === 'list' && (
+                  <button
+                    type="button"
+                    className={`library-list-check${isSelected ? ' is-on' : ''}`}
+                    aria-label={isSelected ? 'Unselect image' : 'Select image'}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleSelected(gen.id || idx);
+                    }}
+                  >
+                    <Check size={13} />
+                  </button>
                 )}
-                {libraryView === 'trash' ? (
-                  <div className="library-more-wrap library-trash-menu">
-                    <button
+                <div className="cute-library-card-img-wrapper" onClick={() => setMaximizeGen(gen)}>
+                  <img 
+                    src={imgUrl} 
+                    alt={gen.prompt || "Generated image"} 
+                    className="cute-library-card-img"
+                    loading="lazy"
+                  />
+                  {libraryView === 'trash' && (
+                    <span className="library-days-left">
+                      {(() => {
+                        const deleted = gen.deletedAt ? new Date(gen.deletedAt).getTime() : Date.now();
+                        const left = Math.max(0, Math.ceil((deleted + 30 * 24 * 60 * 60 * 1000 - Date.now()) / (24 * 60 * 60 * 1000)));
+                        return left === 1 ? '1 day left' : `${left} days left`;
+                      })()}
+                    </span>
+                  )}
+                  {libraryView === 'trash' ? (
+                    <div className="library-more-wrap library-trash-menu">
+                      <button
+                        type="button"
+                        className="library-more-btn"
+                        aria-label="Image actions"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTrashMenuId((current) => (current === (gen.id || idx) ? null : (gen.id || idx)));
+                        }}
+                      >
+                        <MoreHorizontal size={16} />
+                      </button>
+                      {trashMenuId === (gen.id || idx) && (
+                        <div className="library-trash-pop" role="menu">
+                          <button type="button" onClick={(e) => { e.stopPropagation(); restoreSelected([gen.id]); }}>
+                            <RotateCcw size={15} /> Restore
+                          </button>
+                          <button type="button" className="is-danger" onClick={(e) => { e.stopPropagation(); setConfirmPurge([gen.id]); setTrashMenuId(null); }}>
+                            <Trash2 size={15} /> Permanently delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                  <div className={`cute-library-card-actions${cardMenu?.id === (gen.id || idx) ? ' has-menu-open' : ''}`}>
+                    <button 
                       type="button"
-                      className="library-more-btn"
-                      aria-label="Image actions"
+                      className="library-action-btn"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setTrashMenuId((current) => (current === (gen.id || idx) ? null : (gen.id || idx)));
+                        const targetChatId = gen.threadId || gen.id;
+                        if (onImageClick && targetChatId) {
+                          onImageClick(targetChatId);
+                        }
                       }}
+                      title="Open in chat"
+                      aria-label="Open in chat"
+                    >
+                      <MessageSquare size={16} />
+                    </button>
+                    <button 
+                      type="button"
+                      className="library-action-btn library-card-more-btn"
+                      onClick={(e) => toggleCardMenu(e, gen, idx, imgUrl)}
+                      title="More options"
+                      aria-label="More options"
                     >
                       <MoreHorizontal size={16} />
                     </button>
-                    {trashMenuId === (gen.id || idx) && (
-                      <div className="library-trash-pop" role="menu">
-                        <button type="button" onClick={(e) => { e.stopPropagation(); restoreSelected([gen.id]); }}>
-                          <RotateCcw size={15} /> Restore
+                  </div>
+                  )}
+                  <button
+                    type="button"
+                    className={`library-select-box${selectedIds.includes(gen.id || idx) ? ' is-on' : ''}`}
+                    aria-label={selectedIds.includes(gen.id || idx) ? 'Unselect image' : 'Select image'}
+                    aria-pressed={selectedIds.includes(gen.id || idx)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleSelected(gen.id || idx);
+                    }}
+                  >
+                    <Check size={14} />
+                  </button>
+                </div>
+                {layout === 'list' && (
+                  <>
+                    <div 
+                      className="library-list-name" 
+                      title={imageName}
+                      onClick={() => setMaximizeGen(gen)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {imageName}
+                    </div>
+                    {libraryView !== 'trash' && (
+                      <div className={`library-list-actions${cardMenu?.id === (gen.id || idx) ? ' has-menu-open' : ''}`}>
+                        <button
+                          type="button"
+                          className="library-action-btn"
+                          title="Open in chat"
+                          aria-label="Open in chat"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const targetChatId = gen.threadId || gen.id;
+                            if (onImageClick && targetChatId) {
+                              onImageClick(targetChatId);
+                            }
+                          }}
+                        >
+                          <MessageSquare size={15} />
                         </button>
-                        <button type="button" className="is-danger" onClick={(e) => { e.stopPropagation(); setConfirmPurge([gen.id]); setTrashMenuId(null); }}>
-                          <Trash2 size={15} /> Permanently delete
+                        <button
+                          type="button"
+                          className="library-action-btn library-card-more-btn"
+                          title="More options"
+                          aria-label="More options"
+                          onClick={(e) => toggleCardMenu(e, gen, idx, imgUrl)}
+                        >
+                          <MoreHorizontal size={15} />
                         </button>
                       </div>
                     )}
-                  </div>
-                ) : (
-                <div className="cute-library-card-actions">
-                  <button 
-                    className="library-action-btn"
-                    onClick={(e) => handleDownload(e, gen, idx)}
-                    disabled={downloadingId === (gen.id || idx)}
-                    title="Download Image"
-                  >
-                    <Download size={16} />
-                  </button>
-                  <button 
-                    className="library-action-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      navigator.clipboard.writeText(imgUrl);
-                    }}
-                    title="Copy Image URL"
-                  >
-                    <Copy size={16} />
-                  </button>
-                </div>
+                  </>
                 )}
-                <button
-                  type="button"
-                  className={`library-select-box${selectedIds.includes(gen.id || idx) ? ' is-on' : ''}`}
-                  aria-label={selectedIds.includes(gen.id || idx) ? 'Unselect image' : 'Select image'}
-                  aria-pressed={selectedIds.includes(gen.id || idx)}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleSelected(gen.id || idx);
-                  }}
-                >
-                  <Check size={14} />
-                </button>
               </div>
-              {layout === 'list' && (
-                <>
-                  <div className="library-list-name" title={imageName}>{imageName}</div>
-                  {libraryView !== 'trash' && <div className="library-list-actions">
-                    <button
-                      type="button"
-                      className="library-action-btn"
-                      title="Download"
-                      onClick={(e) => handleDownload(e, gen, idx)}
-                    >
-                      <Download size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      className="library-action-btn"
-                      title="Copy image URL"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigator.clipboard.writeText(imgUrl);
-                      }}
-                    >
-                      <Copy size={15} />
-                    </button>
-                  </div>}
-                </>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      {Array.isArray(downloadProgress) && downloadProgress.length > 0 && (
-        <div className="library-download-progress" role="status">
-          Downloading
-          <span>{downloadProgress.filter((item) => item.status === 'done').length} of {downloadProgress.length} downloaded</span>
-          <div className="library-dl-list">
-            {downloadProgress.map((item) => (
-              <div className="library-dl-row" key={item.id}>
-                <img className="library-dl-thumb" src={item.src} alt="" />
-                <div className="library-dl-meta">
-                  <strong>{item.status === 'done' ? 'Downloaded' : item.status === 'downloading' ? 'Downloading' : 'Waiting'}</strong>
-                  <div className={`library-dl-track${item.status === 'done' ? ' is-done' : ''}`} aria-hidden>
-                    <i />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       )}
-      {!downloadProgress && downloadNotice && <div className="library-download-toast" role="status">{downloadNotice}</div>}
+      {Array.isArray(downloadProgress) && downloadProgress.length > 0 && typeof document !== 'undefined' && createPortal(
+        <div className="library-download-progress" role="status">
+          {(() => {
+            const doneCount = downloadProgress.filter((item) => item.status === 'done').length;
+            const isAllDone = doneCount === downloadProgress.length;
+            return (
+              <>
+                <div className="library-download-header">
+                  <div className="library-download-header-content">
+                    <div className="library-download-title">{isAllDone ? 'Downloaded' : 'Downloading'}</div>
+                    <div className="library-download-subtitle">
+                      {doneCount} of {downloadProgress.length} downloaded
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="library-download-close"
+                    title="Dismiss"
+                    aria-label="Dismiss download progress"
+                    onClick={() => setDownloadProgress(null)}
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+                <div className="library-dl-list">
+                  {downloadProgress.map((item) => (
+                    <div className="library-dl-row" key={item.id}>
+                      <img className="library-dl-thumb" src={item.src} alt="" />
+                      <div className="library-dl-meta">
+                        <strong style={{ color: item.status === 'done' ? '#16a34a' : '#1e293b' }}>
+                          {item.status === 'done' ? 'Downloaded' : item.status === 'downloading' ? 'Downloading' : 'Waiting'}
+                        </strong>
+                        <div className={`library-dl-track${item.status === 'done' ? ' is-done' : ''}`} aria-hidden>
+                          <i />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
+        </div>,
+        document.body
+      )}
+      {!downloadProgress && downloadNotice && typeof document !== 'undefined' && createPortal(
+        <div className="library-download-toast" role="status">{downloadNotice}</div>,
+        document.body
+      )}
       {selected.length > 0 && libraryView === 'trash' && (
         <div className="library-selection-bar" role="toolbar" aria-label="Selected trash images">
           <span className="library-selection-count">{selected.length} selected</span>
@@ -1338,6 +1813,169 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
         } : null}
         onCancel={() => setConfirmPurge(false)}
       />
+      <ConfirmDialog
+        dialog={confirmDeleteSingle ? {
+          title: 'Delete this image?',
+          message: 'It will be moved to Trash. You can restore it from there. It is permanently deleted after 30 days.',
+          confirmLabel: 'Delete',
+          cancelLabel: 'Cancel',
+          variant: 'danger',
+          onConfirm: () => {
+            deleteSingleImage(confirmDeleteSingle.gen, confirmDeleteSingle.idx);
+            setConfirmDeleteSingle(null);
+          },
+        } : null}
+        onCancel={() => setConfirmDeleteSingle(null)}
+      />
+      {cardMenu && typeof document !== 'undefined' && createPortal(
+        <div 
+          className="library-card-dropdown is-portal" 
+          role="menu"
+          style={{
+            position: 'fixed',
+            top: cardMenu.top,
+            left: cardMenu.left,
+            width: 172,
+            right: 'auto',
+            zIndex: 999999,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigator.clipboard.writeText(cardMenu.imgUrl);
+              setCopiedId(cardMenu.id);
+              setTimeout(() => setCopiedId(null), 2000);
+              setCardMenu(null);
+            }}
+          >
+            {copiedId === cardMenu.id ? <Check size={14} style={{ color: '#16a34a' }} /> : <Copy size={14} />}
+            <span>{copiedId === cardMenu.id ? 'Copied URL!' : 'Copy'}</span>
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={(e) => {
+              handleDownload(e, { ...cardMenu.gen, url: cardMenu.gen?.url || cardMenu.imgUrl }, cardMenu.idx);
+              setCardMenu(null);
+            }}
+            disabled={downloadingId === cardMenu.id}
+          >
+            <Download size={14} />
+            <span>Download</span>
+          </button>
+          {onStartChat && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={(e) => {
+                e.stopPropagation();
+                const target = cardMenu.gen;
+                const url = cardMenu.imgUrl;
+                setCardMenu(null);
+                onStartChat({
+                  mode: target.mode || 'image',
+                  images: [{ src: url, assetId: target.assetId || null }],
+                });
+              }}
+            >
+              <Plus size={14} />
+              <span>Add to chat</span>
+            </button>
+          )}
+          <div className="library-menu-divider" />
+          <button
+            type="button"
+            role="menuitem"
+            className="is-danger"
+            onClick={(e) => {
+              e.stopPropagation();
+              const { gen, idx } = cardMenu;
+              setCardMenu(null);
+              setConfirmDeleteSingle({ gen, idx });
+            }}
+          >
+            <Trash2 size={14} />
+            <span>Delete</span>
+          </button>
+        </div>,
+        document.body
+      )}
+      {maximizeGen && typeof document !== 'undefined' && createPortal(
+        <div 
+          className="library-fullscreen-overlay"
+          onClick={() => setMaximizeGen(null)}
+        >
+          <div className="library-fullscreen-topbar" onClick={(e) => e.stopPropagation()}>
+            <div className="library-fullscreen-meta">
+              <div className="library-fullscreen-brand" title="Athena Virtual Instructor">
+                <img src={LogoImg} alt="Athena" className="library-fullscreen-logo" />
+              </div>
+              <div className="library-fullscreen-divider" />
+              <span 
+                className="library-fullscreen-title"
+                title={maximizeGen.prompt || 'Generated image'}
+              >
+                {(() => {
+                  const clean = String(maximizeGen.prompt || maximizeGen.title || 'Generated image')
+                    .replace(/[*#_`]/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                  const words = clean.split(' ').filter(Boolean);
+                  return words.length <= 3 ? clean : `${words.slice(0, 3).join(' ')}...`;
+                })()}
+              </span>
+            </div>
+            <div className="library-fullscreen-actions">
+              {maximizeGen.threadId && onImageClick && (
+                <button
+                  type="button"
+                  className="library-fullscreen-btn"
+                  title="Open in chat"
+                  onClick={() => {
+                    const tid = maximizeGen.threadId;
+                    setMaximizeGen(null);
+                    onImageClick(tid);
+                  }}
+                >
+                  <MessageSquare size={15} />
+                  <span>Open in chat</span>
+                </button>
+              )}
+              <button
+                type="button"
+                className="library-fullscreen-btn"
+                title="Download"
+                onClick={(e) => handleDownload(e, maximizeGen, 0)}
+              >
+                <Download size={15} />
+                <span>Download</span>
+              </button>
+              <button
+                type="button"
+                className="library-fullscreen-close"
+                title="Close (Esc)"
+                aria-label="Close fullscreen"
+                onClick={() => setMaximizeGen(null)}
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </div>
+          <div className="library-fullscreen-body" onClick={() => setMaximizeGen(null)}>
+            <img
+              src={maximizeGen.url || maximizeGen.resultUrl}
+              alt={maximizeGen.prompt || 'Maximized image'}
+              className="library-fullscreen-img"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

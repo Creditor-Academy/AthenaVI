@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   ArrowLeft, RotateCcw, Sparkles, Edit3, Wand2, Download, 
   X, Send, AlertCircle, CheckCircle2, ChevronRight, Copy, Share2, User, ThumbsUp, ThumbsDown, Loader2,
@@ -13,7 +14,6 @@ import LogoImg from '../../../assets/herologo.png';
 import InfographicAnimatedBackground from './InfographicAnimatedBackground.jsx';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import ImageGenCreditsGate from '../../../components/features/image-generation/ImageGenCreditsGate.jsx';
-import ImageGenContextAttach from '../../../components/features/image-generation/ImageGenContextAttach.jsx';
 import { checkImageGenCredits } from '../../../utils/imageGenCreditsCheck.js';
 import MarkdownPromptInput from '../../../components/features/image-generation/MarkdownPromptInput.jsx';
 import { highlightMarkdownSource } from '../../../utils/markdownPrompt.jsx';
@@ -22,6 +22,7 @@ import './AIConversationalStudio.css';
 import RecentChatMenu from './RecentChatMenu.jsx';
 import WorkspaceImageLibrary from './WorkspaceImageLibrary.jsx';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
+import { formatModelDisplayName } from '../../../utils/imageGenDefaults.js';
 
 const GENERATION_STEPS = [
   "Drafting vision...",
@@ -171,7 +172,7 @@ export default function AIConversationalStudio({
   createContext = null,
   initialPrompt = '',
   activeMode = 'image',
-  selectedModel = 'gpt-image-1',
+  selectedModel = 'gpt-image-1-hd',
   selectedFormat = 'square',
   selectedStyle = null,
   activeThreadId: propThreadId = null,
@@ -188,7 +189,7 @@ export default function AIConversationalStudio({
   // Prompt & Config (Persisted)
   const [basePrompt, setBasePrompt] = useState(initialPrompt || '');
   const [mode, setMode] = useState(activeMode || 'image');
-  const [modelId, setModelId] = useState(selectedModel || 'gpt-image-1');
+  const [modelId, setModelId] = useState(selectedModel || 'gpt-image-1-hd');
   const [formatId, setFormatId] = useState(selectedFormat || (activeMode === 'infographic' ? 'landscape' : 'square'));
   const [styleId, setStyleId] = useState(selectedStyle || null);
   const [imageContext, setImageContext] = useState(initialContext || null);
@@ -228,6 +229,7 @@ export default function AIConversationalStudio({
   const railFlyoutRef = useRef(null);
   const [editMode, setEditMode] = useState('auto');
   const [downloadMenuFor, setDownloadMenuFor] = useState(null);
+  const [downloadProgress, setDownloadProgress] = useState(null);
   const [dismissedWarnings, setDismissedWarnings] = useState({});
 
   // UI Modals
@@ -276,7 +278,9 @@ export default function AIConversationalStudio({
   // Format aspect ratio / specs display
   const specLabel = useMemo(() => {
     const parts = [];
-    const modelName = modelId.includes('gemini') ? 'Gemini Pro' : 'GPT Image';
+    const modelName = modelId.includes('gemini')
+      ? 'Gemini Pro'
+      : formatModelDisplayName(modelId, 'Pro');
     parts.push(modelName);
 
     if (formatId === 'square') parts.push('1:1');
@@ -302,6 +306,23 @@ export default function AIConversationalStudio({
     document.addEventListener('mousedown', close);
     return () => document.removeEventListener('mousedown', close);
   }, [recentMenuId]);
+
+  useEffect(() => {
+    if (!downloadMenuFor) return undefined;
+    const close = (e) => {
+      if (e.target.closest('.conv-download-wrap') || e.target.closest('.conv-download-menu')) return;
+      setDownloadMenuFor(null);
+    };
+    const onKey = (e) => {
+      if (e.key === 'Escape') setDownloadMenuFor(null);
+    };
+    document.addEventListener('mousedown', close);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [downloadMenuFor]);
 
   useEffect(() => {
     if (!railFlyout) return undefined;
@@ -546,7 +567,7 @@ export default function AIConversationalStudio({
 
     try {
       const check = await checkImageGenCredits(activeWs, {
-        modelId: modelId || (mode === 'image' ? 'gpt-image-1-hd' : 'gemini-3-pro-image'),
+        modelId: modelId || 'gpt-image-1-hd',
         mode: mode || 'image',
       });
       if (!check.ok) {
@@ -575,7 +596,7 @@ export default function AIConversationalStudio({
       const payload = {
         mode: mode || 'image',
         folderId: activeFld,
-        modelId: modelId || (mode === 'image' ? 'gpt-image-1-hd' : 'gemini-3-pro-image'),
+        modelId: modelId || 'gpt-image-1-hd',
         formatId: formatForMode,
         prompt: mode === 'infographic' ? `${promptText.trim()}, clean minimalist layout, no text, no words, empty placeholders` : promptText.trim()
       };
@@ -691,7 +712,7 @@ export default function AIConversationalStudio({
         const fallbackBody = {
           mode: mode || 'image',
           folderId,
-          modelId: modelId || 'gpt-image-1',
+          modelId: modelId || 'gpt-image-1-hd',
           formatId: formatId || (mode === 'infographic' ? 'landscape' : 'square'),
           prompt: mode === 'infographic' ? `${basePrompt}. Modification: ${text}, clean minimalist layout, no text, no words` : `${basePrompt}. Modification: ${text}`
         };
@@ -828,10 +849,35 @@ export default function AIConversationalStudio({
     const gen = targetGen || activeGeneration;
     if (!gen?.id || !workspaceId) return;
     setDownloadMenuFor(null);
+
+    const formatLabel = bleed ? 'PDF for print' : format.toUpperCase();
+    const imgSrc = gen.url || gen.resultUrl || (Array.isArray(gen.images) && gen.images[0]?.url) || '';
+
+    const singleItem = {
+      id: gen.id,
+      src: imgSrc,
+      formatLabel,
+      status: 'downloading',
+    };
+    setDownloadProgress([singleItem]);
+    const startTime = Date.now();
+
     try {
       await imageGenService.downloadAndSave(workspaceId, gen.id, format, { bleed });
+
+      // Keep progress animation visible for at least 700ms so the user sees download starting
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 700) {
+        await new Promise((resolve) => setTimeout(resolve, 700 - elapsed));
+      }
+
+      setDownloadProgress([{ ...singleItem, status: 'done' }]);
+      setTimeout(() => {
+        setDownloadProgress((curr) => (Array.isArray(curr) && curr.length === 1 && curr[0].id === gen.id ? null : curr));
+      }, 2200);
     } catch (err) {
       console.error("Download failed:", err);
+      setDownloadProgress(null);
       setErrorMsg(err?.data?.message || err.message || 'Download failed.');
       if (!bleed && format === 'png' && gen.url) {
         const a = document.createElement('a');
@@ -1569,52 +1615,39 @@ export default function AIConversationalStudio({
               ))}
             </div>
           )}
-          <ImageGenContextAttach
-            workspaceId={workspaceId}
-            context={imageContext}
-            onContextChange={setImageContext}
-            compact
-            plusMenu
-            disabled={isGenerating}
-          >
-            {({ thumbs, trigger, composerBind, isDragOver }) => (
-              <div className={`conv-composer-attach${isDragOver ? ' is-file-over' : ''}`} {...composerBind}>
-                {thumbs}
-                <div className="conv-composer-input-row">
-                  {trigger}
-                  <MarkdownPromptInput
-                    ref={composerInputRef}
-                    className="conv-composer-textarea"
-                    placeholder={
-                      mode === 'printable'
-                        ? "Change the date, add a phone number, or make the background darker..."
-                        : mode === 'infographic'
-                          ? "Make the infographic more minimal and use larger typography..."
-                          : "Make the colors softer and add warmer lighting..."
-                    }
-                    value={chatInput}
-                    onPaste={composerBind.onPaste}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendPrompt();
-                      }
-                    }}
-                    aria-label="Follow-up prompt"
-                  />
-                  <button
-                    className="conv-send-btn"
-                    disabled={isGenerating || imageContext?.attaching || !chatInput.trim()}
-                    onClick={handleSendPrompt}
-                  >
-                    <span>Send</span>
-                    <Send size={14} />
-                  </button>
-                </div>
-              </div>
-            )}
-          </ImageGenContextAttach>
+          <div className="conv-composer-input-row">
+            <span className="conv-tweak-icon" title="Tweak this image" aria-hidden>
+              <Wand2 size={18} />
+            </span>
+            <MarkdownPromptInput
+              ref={composerInputRef}
+              className="conv-composer-textarea"
+              placeholder={
+                mode === 'printable'
+                  ? "Change the date, add a phone number, or make the background darker..."
+                  : mode === 'infographic'
+                    ? "Make the infographic more minimal and use larger typography..."
+                    : "Make the colors softer and add warmer lighting..."
+              }
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendPrompt();
+                }
+              }}
+              aria-label="Follow-up prompt"
+            />
+            <button
+              className="conv-send-btn"
+              disabled={isGenerating || !chatInput.trim()}
+              onClick={handleSendPrompt}
+            >
+              <span>Send</span>
+              <Send size={14} />
+            </button>
+          </div>
         </div>
       </footer>
       )}
@@ -1688,6 +1721,58 @@ export default function AIConversationalStudio({
             onClick={(e) => e.stopPropagation()}
           />
         </div>
+      )}
+
+      {Array.isArray(downloadProgress) && downloadProgress.length > 0 && typeof document !== 'undefined' && createPortal(
+        <div className="conv-download-progress" role="status">
+          {(() => {
+            const doneCount = downloadProgress.filter((item) => item.status === 'done').length;
+            const isAllDone = doneCount === downloadProgress.length;
+            return (
+              <>
+                <div className="conv-download-header">
+                  <div className="conv-download-header-content">
+                    <div className="conv-download-title">{isAllDone ? 'Downloaded' : 'Downloading'}</div>
+                    <div className="conv-download-subtitle">
+                      {doneCount} of {downloadProgress.length} downloaded
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="conv-download-close"
+                    title="Dismiss"
+                    aria-label="Dismiss download progress"
+                    onClick={() => setDownloadProgress(null)}
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+                <div className="conv-dl-list">
+                  {downloadProgress.map((item) => (
+                    <div className="conv-dl-row" key={item.id}>
+                      {item.src ? (
+                        <img className="conv-dl-thumb" src={item.src} alt="" />
+                      ) : (
+                        <div className="conv-dl-thumb" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <Download size={18} color="#94a3b8" />
+                        </div>
+                      )}
+                      <div className="conv-dl-meta">
+                        <strong style={{ color: item.status === 'done' ? '#16a34a' : '#1e293b' }}>
+                          {item.status === 'done' ? `Downloaded ${item.formatLabel || ''}` : `Downloading ${item.formatLabel || ''}`}
+                        </strong>
+                        <div className={`conv-dl-track${item.status === 'done' ? ' is-done' : ''}`} aria-hidden>
+                          <i />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
+        </div>,
+        document.body
       )}
 
       </div>

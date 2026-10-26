@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BsStars } from 'react-icons/bs';
 import { MdArrowForward } from 'react-icons/md';
 import axios from 'axios';
+import { buildUrl } from '../../config/api.js';
 import LogoImg from '../../assets/herologo.png';
 import './SharedGeneration.css';
 
@@ -10,7 +11,6 @@ export default function SharedGeneration() {
   const [generation, setGeneration] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [showFullPrompt, setShowFullPrompt] = useState(false);
 
   useEffect(() => {
     // Extract token from /share/:token safely
@@ -29,8 +29,13 @@ export default function SharedGeneration() {
     if (!token) return;
     async function fetchShared() {
       try {
-        const response = await axios.get(`/api/image-gen/public/share/${token}`);
-        setGeneration(response.data);
+        const response = await axios.get(buildUrl(`/api/image-gen/public/share/${token}`));
+        const payload = response.data?.data || response.data;
+        if (payload && typeof payload === 'object') {
+          setGeneration(payload);
+        } else {
+          setError('This shared image is no longer available or the link is invalid.');
+        }
       } catch (err) {
         setError('This shared image is no longer available or the link is invalid.');
       } finally {
@@ -66,10 +71,10 @@ export default function SharedGeneration() {
     );
   }
 
-  const isLongPrompt = generation.prompt && generation.prompt.length > 120;
-  const displayPrompt = (!showFullPrompt && isLongPrompt) 
-    ? generation.prompt.substring(0, 120).trim() + '...'
-    : generation.prompt;
+  const cleanPrompt = (generation?.prompt || '').replace(/\*\*/g, '').trim();
+  const displayPrompt = cleanPrompt.length > 130
+    ? cleanPrompt.substring(0, 130).trim() + '...'
+    : cleanPrompt;
 
   return (
     <div className="shared-gen-container">
@@ -90,7 +95,7 @@ export default function SharedGeneration() {
             <div className="shared-image-wrapper">
               <span className="shared-image-label">Created with Virtual Studio</span>
               <div className="shared-image-frame">
-                <img src={generation.url} alt={generation.prompt} className="shared-image" />
+                <img src={generation.url} alt={cleanPrompt} className="shared-image" />
               </div>
             </div>
           </div>
@@ -104,14 +109,6 @@ export default function SharedGeneration() {
             <div className="editorial-idea">
               <span className="idea-label">The Idea</span>
               <p className="idea-prompt">"{displayPrompt}"</p>
-              {isLongPrompt && !showFullPrompt && (
-                <button 
-                  onClick={() => setShowFullPrompt(true)}
-                  style={{ background: 'none', border: 'none', color: '#666', fontSize: '13px', marginTop: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                >
-                  View full prompt <MdArrowForward size={14} />
-                </button>
-              )}
             </div>
             
             <div className="editorial-cta-section">
