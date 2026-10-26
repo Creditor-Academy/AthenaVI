@@ -28,6 +28,7 @@ function CanvasElementsPreview({
   fallbackBg = '#ffffff',
   palette = null,
   fill = false,
+  stageWidth = null,
   className,
   style,
 }) {
@@ -35,6 +36,10 @@ function CanvasElementsPreview({
   const [transform, setTransform] = useState({ scale: 1, x: 0, y: 0 })
 
   const canvas = resolveCanvasSize(slide, aspectRatio)
+  // Elements are placed in %, but fontSize/borderRadius are px at the editor stage width.
+  // Pass stageWidth (e.g. 900) to lay out at that width so text matches the editor's proportions.
+  const stageW = stageWidth || canvas.width
+  const stageH = (stageW * canvas.height) / canvas.width
   const resolvedPalette = palette || themeVisual?.palette || null
   const slideBgStyle = resolveSlideStageBackground(slide, fallbackBg, resolvedPalette)
   const elementsDoc = slide?.elements || {}
@@ -51,9 +56,9 @@ function CanvasElementsPreview({
     const update = () => {
       const width = node.clientWidth || 1
       const height = node.clientHeight || 1
-      const scale = Math.min(width / canvas.width, height / canvas.height)
-      const scaledW = canvas.width * scale
-      const scaledH = canvas.height * scale
+      const scale = Math.min(width / stageW, height / stageH)
+      const scaledW = stageW * scale
+      const scaledH = stageH * scale
       setTransform({
         scale,
         x: Math.max(0, (width - scaledW) / 2),
@@ -65,7 +70,7 @@ function CanvasElementsPreview({
     const observer = new ResizeObserver(update)
     observer.observe(node)
     return () => observer.disconnect()
-  }, [canvas.width, canvas.height])
+  }, [stageW, stageH])
 
   if (!elements.length) return null
 
@@ -89,8 +94,8 @@ function CanvasElementsPreview({
           position: 'absolute',
           left: transform.x,
           top: transform.y,
-          width: canvas.width,
-          height: canvas.height,
+          width: stageW,
+          height: stageH,
           transform: `scale(${transform.scale})`,
           transformOrigin: 'top left',
           containerType: 'inline-size',

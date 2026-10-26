@@ -21,7 +21,8 @@ function formatValidationMessage(payload) {
     })
   }
 
-  details = details.filter(Boolean)
+  // Backend echoes `message` into `errors` for single AppErrors; don't repeat it.
+  details = details.filter((d) => d && d !== base)
   if (!details.length) return base
   return base ? `${base} — ${details.join('; ')}` : details.join('; ')
 }

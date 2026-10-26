@@ -1366,7 +1366,7 @@ function BrandKits() {
     [downloadLogoPng]
   )
 
-  const generateBrandGuidelines = async () => {
+  const generateBrandGuidelines = async (templateId) => {
     if (!canWrite || !editingKitId) {
       setError('Save the brand kit first before generating guidelines.')
       return
@@ -1390,6 +1390,7 @@ function BrandKits() {
     try {
       const guideline = await brandKitService.generateGuidelines(workspaceId, editingKitId, {
         folderId: targetFolderId,
+        templateId,
       })
       setGuidelineLink(guideline)
       const detail = await brandKitService.get(workspaceId, editingKitId)
@@ -1587,6 +1588,7 @@ function BrandKits() {
         kitData={kitData}
         setKitData={setKitData}
         kitMedia={kitMedia}
+        isDirty={isDirty}
         mediaByKind={mediaByKind}
         logoPreviewUrl={logoPreviewUrl}
         copiedHex={copiedHex}

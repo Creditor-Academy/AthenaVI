@@ -1,5 +1,29 @@
 /** Shared Brand Kit constants */
 
+/** Guideline deck templates — ids must match backend brandKit.guidelineTemplates.js. */
+export const GUIDELINE_TEMPLATES = [
+  {
+    id: 'minimal',
+    name: 'Minimal',
+    description: 'Clean white pages, flat sections, and generous whitespace.',
+    appearance: 'light',
+  },
+  {
+    id: 'corporate',
+    name: 'Corporate',
+    description: 'Brand side rail, content cards, and a footer band.',
+    appearance: 'light',
+  },
+  {
+    id: 'midnight',
+    name: 'Midnight',
+    description: 'Dark, high-contrast deck on your dark-mode palette.',
+    appearance: 'dark',
+  },
+]
+
+export const DEFAULT_GUIDELINE_TEMPLATE_ID = 'minimal'
+
 export const FONT_WEIGHT_OPTIONS = [
   { value: '300', label: '300 Light' },
   { value: '400', label: '400 Regular' },
