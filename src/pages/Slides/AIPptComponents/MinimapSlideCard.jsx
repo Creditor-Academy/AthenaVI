@@ -6,6 +6,7 @@ import {
   FiCopy,
   FiMoreHorizontal,
   FiPlus,
+  FiRefreshCw,
   FiTrash2,
 } from 'react-icons/fi'
 import { BsStars } from 'react-icons/bs'
@@ -48,6 +49,8 @@ export default function MinimapSlideCard({
   onMoveUp,
   onMoveDown,
   onEditAi,
+  onRegenerate,
+  regenerating = false,
   onChangeStatus,
   onDragStart,
   onDragEnd,
@@ -213,6 +216,18 @@ export default function MinimapSlideCard({
               <BsStars size={15} />
               Edit with AI
             </button>
+            {onRegenerate && (
+              <button
+                type="button"
+                role="menuitem"
+                className="aig-minimap-slide-menu-item"
+                disabled={disabled || regenerating}
+                onClick={run(onRegenerate)}
+              >
+                <FiRefreshCw size={15} />
+                {regenerating ? 'Regenerating…' : 'Regenerate slide'}
+              </button>
+            )}
             <div className="aig-minimap-slide-menu-sep" />
             <button
               type="button"

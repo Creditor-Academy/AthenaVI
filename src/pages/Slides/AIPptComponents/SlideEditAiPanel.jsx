@@ -12,6 +12,7 @@ import {
   FiImage,
   FiBarChart2,
   FiGrid,
+  FiRefreshCw,
   FiX,
 } from 'react-icons/fi'
 import { BsStars } from 'react-icons/bs'
@@ -119,6 +120,7 @@ export default function SlideEditAiPanel({
   busy = false,
   onClose,
   onSubmit,
+  onRegenerate,
 }) {
   const [prompt, setPrompt] = useState('')
   const textareaRef = useRef(null)
@@ -246,6 +248,18 @@ export default function SlideEditAiPanel({
           <MdOutlineAutoAwesome size={14} />
           Try new layout
         </button>
+
+        {onRegenerate && (
+          <button
+            type="button"
+            className="ppt-slide-ai-primary-action"
+            disabled={disabled || busy}
+            onClick={() => onRegenerate()}
+          >
+            <FiRefreshCw size={14} />
+            Regenerate slide
+          </button>
+        )}
 
         <div className="ppt-slide-ai-section">
           <div className="ppt-slide-ai-section-label">Writing</div>
