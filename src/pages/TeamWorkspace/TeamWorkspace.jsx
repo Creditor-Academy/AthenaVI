@@ -260,7 +260,8 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
     inviteSending,
     handleChangeMemberRole,
     handleRemoveMember,
-    handleMoveProject: handleMoveProjectAction
+    handleMoveProject: handleMoveProjectAction,
+    handleDuplicateCanvas,
   } = useWorkspaceActions({
     workspaces,
     setWorkspaces,
@@ -476,6 +477,48 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
     if (onCreate) onCreate(context);
   };
 
+  const renameLibraryItem = useCallback(
+    (item, workspace, folder = null) => {
+      const kind = resolveLibraryKind(item);
+      if (kind === 'image') {
+        setRenameTarget({
+          type: 'image-thread',
+          id: item.id,
+          name: item.name || item.title || '',
+        });
+        return;
+      }
+      if (kind === 'canvas') {
+        setRenameTarget({
+          type: 'canvas',
+          id: item.id,
+          name: item.name || item.title || '',
+          workspaceId: workspace.id,
+          folderId: item.folderId || folder?.id || null,
+        });
+        return;
+      }
+      renameItem('video', item.id, workspace);
+    },
+    [renameItem]
+  );
+
+  const deleteLibraryItem = useCallback(
+    (item, workspace) => {
+      const kind = resolveLibraryKind(item);
+      if (kind === 'image') {
+        deleteItem('image-thread', item.id, workspace);
+        return;
+      }
+      if (kind === 'canvas') {
+        deleteItem('canvas', item.id, workspace);
+        return;
+      }
+      deleteItem('video', item.id, workspace);
+    },
+    [deleteItem]
+  );
+
   const openLibraryItem = useCallback(
     (item, workspace, folder = null) => {
       const kind = resolveLibraryKind(item);
@@ -552,28 +595,13 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
             item,
           })
         }
-        onRename={(item) => {
-          if (resolveLibraryKind(item) === 'image') {
-            setRenameTarget({
-              type: 'image-thread',
-              id: item.id,
-              name: item.name || item.title || '',
-            });
-            return;
-          }
-          renameItem('video', item.id, workspace);
-        }}
+        onRename={(item) => renameLibraryItem(item, workspace, folder)}
         onMove={(item) => {
           setMoveTargetVideo(item);
           setMoveTargetWorkspace(workspace);
         }}
-        onDelete={(item) => {
-          if (resolveLibraryKind(item) === 'image') {
-            deleteItem('image-thread', item.id, workspace);
-            return;
-          }
-          deleteItem('video', item.id, workspace);
-        }}
+        onDuplicate={(item) => handleDuplicateCanvas(item, workspace)}
+        onDelete={(item) => deleteLibraryItem(item, workspace)}
         onAssign={(item) => {
           setAssignTargetItem(item);
           setAssignTargetWorkspace(workspace);
@@ -751,11 +779,15 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
         }
         contextProps={{
           onDetails: () => setDetailsTarget({ type: 'video', item: video }),
-          onRename: workspaceCanEdit(workspace) ? () => renameItem('video', video.id, workspace) : null,
+          onRename: workspaceCanEdit(workspace) ? () => renameLibraryItem(video, workspace, folder) : null,
           onMove: workspaceCanEdit(workspace)
             ? () => { setMoveTargetVideo(video); setMoveTargetWorkspace(workspace); }
             : null,
-          onDelete: workspaceCanEdit(workspace) ? () => deleteItem('video', video.id, workspace) : null,
+          onDuplicate:
+            workspaceCanEdit(workspace) && resolveLibraryKind(video) === 'canvas'
+              ? () => handleDuplicateCanvas(video, workspace)
+              : null,
+          onDelete: workspaceCanEdit(workspace) ? () => deleteLibraryItem(video, workspace) : null,
           onAssign: workspaceCanManageContributors(workspace)
             ? () => { setAssignTargetItem(video); setAssignTargetWorkspace(workspace); }
             : null
@@ -1104,6 +1136,7 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
           null
         }
         videoTitle={moveTargetVideo?.name || moveTargetVideo?.title || ''}
+        itemKind={moveTargetVideo?.kind || moveTargetVideo?.category || 'video'}
       />
 
       <AssignProjectModal

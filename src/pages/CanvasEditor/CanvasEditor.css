@@ -224,6 +224,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  max-width: min(360px, 40vw);
   padding: 3px 9px;
   border-radius: 12px;
   background: rgba(16, 185, 129, 0.12);
@@ -241,9 +242,27 @@
   animation: canva-header-spin 0.8s linear infinite;
 }
 
+.canva-header-save-badge span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .canva-header-save-badge--error {
   background: rgba(239, 68, 68, 0.12);
   color: #ef4444;
+}
+
+button.canva-header-save-badge--action {
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+button.canva-header-save-badge--action:hover,
+button.canva-header-save-badge--action:focus-visible {
+  background: rgba(239, 68, 68, 0.2);
+  outline: none;
 }
 
 @keyframes canva-header-spin {
@@ -3199,6 +3218,45 @@ body > .ppt-fill-picker-pop {
   cursor: pointer;
 }
 
+.canvas-export-range {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--text-main, #0f172a);
+}
+
+.canvas-export-range label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.canvas-export-range input {
+  width: 72px;
+  padding: 6px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font: inherit;
+}
+
+.canvas-export-note {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.canvas-export-error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 /* ==========================================================================
    CONTEXT MENU STYLING & PORTAL Z-INDEX
    ========================================================================== */
@@ -3627,6 +3685,44 @@ body > .ppt-fill-picker-pop {
   to { transform: rotate(360deg); }
 }
 
+.canvas-editor-loading-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* ── Notice (caps reached, failed uploads) ── */
+.canvas-editor-notice {
+  position: fixed;
+  left: 50%;
+  bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 10px 12px 10px 16px;
+  border-radius: 10px;
+  background: #1e293b;
+  color: #f8fafc;
+  font-size: 13px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.3);
+  transform: translateX(-50%);
+}
+
+.canvas-editor-notice button {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.canvas-editor-notice button:hover {
+  opacity: 1;
+}
+
 /* ── Name step (before choosing a canvas size) ── */
 .canvas-size-modal.canvas-name-modal {
   width: min(520px, 94vw);
@@ -3663,4 +3759,73 @@ body > .ppt-fill-picker-pop {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+}
+
+.canva-page-card-thumb img,
+.canva-page-static-cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.canva-page-static-cover {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.canvas-shortcut-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 4px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: min(60vh, 520px);
+  overflow: auto;
+}
+
+.canvas-shortcut-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: baseline;
+  font-size: 14px;
+}
+
+.canvas-shortcut-list kbd {
+  font-family: inherit;
+  font-size: 13px;
+  color: #172033;
+}
+
+.canvas-shortcut-list span {
+  color: #475569;
+  text-align: right;
+}
+
+.canvas-crop-dialog-scope {
+  display: contents;
+}
+
+.canvas-narrow-notice {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: #f8fafc;
+  color: #172033;
+  text-align: center;
+}
+
+.canvas-narrow-notice p {
+  max-width: 28rem;
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  font-weight: 600;
 }

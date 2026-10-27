@@ -22,6 +22,7 @@ import {
   normalizeLibraryItem,
   normalizeLibraryCategories,
   normalizeLibraryCategoryId,
+  resolveLibraryKind,
 } from '../../utils/workspaceLibrary.js'
 import '../../components/features/workspace/workspace/WorkspaceStyles.css'
 import MyWorkSkeleton from '../page-skeleton/MyWorkSkeleton'
@@ -337,7 +338,7 @@ function MyWork({ onCreate, onEdit, onOpenImage }) {
   }
 
   const handleOpenProject = (item) => {
-    const kind = normalizeWorkCategoryId(item.category || item.kind)
+    const kind = resolveLibraryKind(item)
     if (kind === 'image') {
       onOpenImage?.(item)
       return
@@ -349,7 +350,10 @@ function MyWork({ onCreate, onEdit, onOpenImage }) {
       workspaceId: item.workspaceId,
       folderId: item.folderId,
       title: item.title || item.name,
-      type: item.type || (kind === 'presentation' ? 'PRESENTATION' : 'VIDEO'),
+      type:
+        item.type ||
+        item.projectType ||
+        (kind === 'presentation' ? 'PRESENTATION' : kind === 'canvas' ? 'CANVAS' : 'VIDEO'),
       kind,
       category: kind,
     })

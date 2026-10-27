@@ -2,7 +2,7 @@
 /** Run: node --test src/pages/Slides/AIPptComponents/pptGenerateHappyPath.test.mjs */
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { runPptGenerateHappyPath } from './pptGenerateHappyPath.js'
+import { pollPptUntilReady, runPptGenerateHappyPath, submitPptWizard } from './pptGenerateHappyPath.js'
 
 function mockPptApi() {
   const calls = []
@@ -94,5 +94,54 @@ describe('PPT generate happy path', () => {
     assert.equal(result.slides.length, 5)
     assert.equal(result.slides[0].title, 'Title')
     assert.equal(result.outlineCards.length, 5)
+  })
+
+  it('throws when generate reports FAILED', async () => {
+    await assert.rejects(
+      () =>
+        pollPptUntilReady({
+          getStatus: async () => ({ status: 'FAILED', message: 'Layout engine error' }),
+          workspaceId: 'ws_1',
+          presentationId: 'ppt_1',
+          intervalMs: 0,
+          sleep: async () => {},
+        }),
+      /Layout engine error/
+    )
+  })
+
+  it('throws when generate never becomes READY', async () => {
+    await assert.rejects(
+      () =>
+        pollPptUntilReady({
+          getStatus: async () => ({ status: 'GENERATING' }),
+          workspaceId: 'ws_1',
+          presentationId: 'ppt_1',
+          intervalMs: 0,
+          timeoutMs: 5,
+          sleep: async () => {},
+        }),
+      /Timed out waiting for presentation generation/
+    )
+  })
+
+  it('throws when the outline API returns no slides', async () => {
+    await assert.rejects(
+      () =>
+        submitPptWizard({
+          api: {
+            async createPresentation() {
+              return { id: 'ppt_1' }
+            },
+            async createOutline() {
+              return { outline: { slides: [] } }
+            },
+          },
+          workspaceId: 'ws_1',
+          folderId: 'folder_1',
+          prompt: 'Anything',
+        }),
+      /Outline API returned no slides/
+    )
   })
 })

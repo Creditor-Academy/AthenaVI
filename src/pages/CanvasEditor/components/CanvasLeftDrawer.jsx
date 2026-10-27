@@ -10,6 +10,7 @@ import ColorFillPicker from '../../Slides/AIPptComponents/insert/ColorFillPicker
 import CanvasEditImagePanel from './CanvasEditImagePanel'
 import { resolveFillCss } from '../../../utils/presentationHelpers'
 import { normalizeFillValue } from '../../../utils/pptTextContent'
+import { pageCoverDataUrl } from '../canvasThumbnail'
 import '../../Slides/AIPptComponents/insert/insertPanels.css'
 
 const TAB_TITLES = {
@@ -82,7 +83,9 @@ export default function CanvasLeftDrawer({
           <div className="canva-drawer-section">
             <label className="canva-drawer-label">Pages Overview</label>
             <div className="canva-pages-list">
-              {canvases.map((c, index) => (
+              {canvases.map((c, index) => {
+                const cover = pageCoverDataUrl(c)
+                return (
                 <div
                   key={c.id}
                   className={`canva-page-card ${index === activeCanvasIndex ? 'is-active' : ''}`}
@@ -97,7 +100,7 @@ export default function CanvasLeftDrawer({
                           : c.background || '#ffffff',
                     }}
                   >
-                    <small>Page {index + 1}</small>
+                    {cover ? <img src={cover} alt="" /> : <small>Page {index + 1}</small>}
                   </div>
                   <div className="canva-page-card-info">
                     <strong>Page {index + 1}</strong>
@@ -128,7 +131,8 @@ export default function CanvasLeftDrawer({
                     )}
                   </div>
                 </div>
-              ))}
+                )
+              })}
             </div>
 
             <button type="button" className="canva-add-page-btn" onClick={onAddCanvas}>

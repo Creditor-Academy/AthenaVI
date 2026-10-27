@@ -11,14 +11,20 @@ import {
   FiAlertCircle,
   FiLoader,
   FiSliders,
+  FiCloudOff,
 } from 'react-icons/fi'
 
 const SAVE_BADGE_BY_STATE = {
   saving: { icon: FiLoader, label: 'Saving…', className: 'canva-header-save-badge--saving' },
   loading: { icon: FiLoader, label: 'Loading…', className: 'canva-header-save-badge--saving' },
   saved: { icon: FiCheck, label: 'Saved', className: '' },
-  error: { icon: FiAlertCircle, label: 'Save failed', className: 'canva-header-save-badge--error' },
+  retrying: { icon: FiCloudOff, label: 'Not saved, retrying…', className: 'canva-header-save-badge--error' },
+  error: { icon: FiAlertCircle, label: 'Not saved', className: 'canva-header-save-badge--error' },
+  conflict: { icon: FiAlertCircle, label: 'Out of sync', className: 'canva-header-save-badge--error' },
 }
+
+/** States where clicking the badge does something (retry, or reopen the decision dialog). */
+const ACTIONABLE_SAVE_STATES = new Set(['retrying', 'error', 'conflict'])
 
 export default function CanvasHeader({
   docTitle,
@@ -32,12 +38,16 @@ export default function CanvasHeader({
   onOpenExportModal,
   activeCanvas,
   saveState = null,
+  saveMessage = '',
+  onSaveBadgeClick = null,
   inspectorOpen = false,
   onToggleInspector = null,
+  onOpenShortcuts = null,
 }) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const badge = (saveState && SAVE_BADGE_BY_STATE[saveState]) || SAVE_BADGE_BY_STATE.saved
   const BadgeIcon = badge.icon
+  const badgeText = saveMessage || badge.label
 
   return (
     <header className="canva-header">
@@ -78,10 +88,27 @@ export default function CanvasHeader({
             </button>
           )}
 
-          <div className={`canva-header-save-badge ${badge.className}`.trim()}>
-            <BadgeIcon className="canva-header-check-icon" />
-            <span>{badge.label}</span>
-          </div>
+          {onSaveBadgeClick && ACTIONABLE_SAVE_STATES.has(saveState) ? (
+            <button
+              type="button"
+              className={`canva-header-save-badge canva-header-save-badge--action ${badge.className}`.trim()}
+              onClick={onSaveBadgeClick}
+              title={saveMessage ? `${saveMessage} Click to try again.` : 'Click to try again.'}
+              aria-live="polite"
+            >
+              <BadgeIcon className="canva-header-check-icon" />
+              <span>{badgeText}</span>
+            </button>
+          ) : (
+            <div
+              className={`canva-header-save-badge ${badge.className}`.trim()}
+              title={saveMessage || undefined}
+              aria-live="polite"
+            >
+              <BadgeIcon className="canva-header-check-icon" />
+              <span>{badgeText}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -132,6 +159,18 @@ export default function CanvasHeader({
           >
             <FiSliders />
             <span>Inspector</span>
+          </button>
+        )}
+
+        {onOpenShortcuts && (
+          <button
+            type="button"
+            className="canva-header-secondary-btn"
+            onClick={onOpenShortcuts}
+            title="Keyboard shortcuts (?)"
+            aria-label="Keyboard shortcuts"
+          >
+            ?
           </button>
         )}
 

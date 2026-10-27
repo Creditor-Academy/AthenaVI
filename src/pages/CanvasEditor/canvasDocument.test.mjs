@@ -9,9 +9,11 @@ import {
   addPage,
   duplicatePage,
   deletePage,
+  activeIndexAfterPageDelete,
   movePage,
   resizeDocument,
   insertElements,
+  cloneElementsWithOffset,
   collectIds,
   isLocalUrl,
   replaceUrlInDocument,
@@ -90,6 +92,14 @@ describe('pages', () => {
     assert.deepEqual(deletePage(two, two[0].id), [two[1]])
   })
 
+  it('activeIndexAfterPageDelete keeps the page the user was on', () => {
+    const doc = addPage(addPage(createDocument(SIZE), SIZE), SIZE)
+    assert.equal(activeIndexAfterPageDelete(doc, 2, doc[0].id), 1)
+    assert.equal(activeIndexAfterPageDelete(doc, 1, doc[1].id), 1)
+    assert.equal(activeIndexAfterPageDelete(doc, 0, doc[2].id), 0)
+    assert.equal(activeIndexAfterPageDelete(doc, 0, doc[0].id), 0)
+  })
+
   it('movePage reorders and ignores out-of-range moves', () => {
     const doc = addPage(addPage(createDocument(SIZE), SIZE), SIZE)
     const moved = movePage(doc, 0, 2)
@@ -117,6 +127,19 @@ describe('elements', () => {
     const full = Array.from({ length: MAX_ELEMENTS_PER_PAGE }, (_, i) => textElement(`e${i}`))
     const doc = [{ ...createDocument(SIZE)[0], elements: full }]
     assert.equal(insertElements(doc, doc[0].id, [textElement('extra')]), doc)
+  })
+
+  it('cloneElementsWithOffset remaps ids and shifts placement', () => {
+    const group = { ...textElement('g1'), type: 'group', childIds: ['a'] }
+    const child = { ...textElement('a'), groupId: 'g1', placement: { x: 10, y: 20, width: 100, height: 40 } }
+    const [copyGroup, copyChild] = cloneElementsWithOffset([group, child], 4)
+    assert.notEqual(copyGroup.id, 'g1')
+    assert.notEqual(copyChild.id, 'a')
+    assert.deepEqual(copyGroup.childIds, [copyChild.id])
+    assert.equal(copyChild.groupId, copyGroup.id)
+    assert.equal(copyChild.placement.x, 34)
+    assert.equal(copyChild.placement.y, 44)
+    assert.equal(copyGroup.layer, 5)
   })
 
   it('collectIds lists page and element ids', () => {
@@ -202,6 +225,29 @@ describe('save and load', () => {
     assert.equal(loaded.canvases[0].elements[0].content.url, null)
   })
 
+  it('add, delete, and reorder pages survive save and reload', () => {
+    let canvases = addPage(addPage(createDocument(SIZE), SIZE), { width: 800, height: 600 })
+    canvases = insertElements(canvases, canvases[1].id, [textElement('on-page-2')])
+    canvases = deletePage(canvases, canvases[0].id)
+    canvases = movePage(canvases, 0, 1)
+    const payload = serializeForSave({ canvases, docTitle: 'Multi page', size: SIZE })
+    const loaded = hydrateFromServer({ name: 'Multi page', data: payload })
+    assert.deepEqual(
+      loaded.canvases.map((page) => page.id),
+      canvases.map((page) => page.id)
+    )
+    assert.equal(loaded.canvases[1].elements[0].id, 'on-page-2')
+    assert.equal(loaded.canvases[0].width, 800)
+    assert.equal(loaded.docTitle, 'Multi page')
+  })
+
+  it('an empty stored design opens as one blank page, not a load error', () => {
+    const loaded = hydrateFromServer({ name: 'Empty', data: { canvases: [] } }, SIZE, 'Empty')
+    assert.equal(loaded.canvases.length, 1)
+    assert.deepEqual(loaded.canvases[0].elements, [])
+    assert.equal(loaded.docTitle, 'Empty')
+  })
+
   it('validateForSave mirrors the server caps and flags pending uploads', () => {
     assert.equal(validateForSave({ canvases: createDocument(SIZE) }).ok, true)
     const full = Array.from({ length: MAX_ELEMENTS_PER_PAGE + 1 }, (_, i) => textElement(`e${i}`))
@@ -271,5 +317,22 @@ describe('history', () => {
     history = mapHistory(history, (entry) => replaceUrlInDocument(entry, 'blob:x', 'https://cdn/a.png'))
     assert.equal(history.stack[0], doc, 'entries without the URL keep identity')
     assert.equal(currentEntry(history)[0].elements[0].content.url, 'https://cdn/a.png')
+  })
+})
+
+describe('createElement', () => {
+  it('centres the catalogue placement on the page and fills content defaults', async () => {
+    const { createElement } = await import('./canvasDocument.js')
+    const page = createDocument(SIZE)[0]
+    const text = createElement({ type: 'text', content: { text: 'Hi' } }, page, 2, { id: 't1' })
+    assert.equal(text.id, 't1')
+    assert.equal(text.layer, 3)
+    assert.equal(text.content.color, '#172033')
+    assert.equal(text.placement.x, Math.round((page.width - text.placement.width) / 2))
+    assert.equal(text.placement.y, Math.round((page.height - text.placement.height) / 2))
+
+    const image = createElement({ type: 'image', content: { src: 'https://cdn/a.png' } }, page, 0)
+    assert.equal(image.content.url, 'https://cdn/a.png')
+    assert.equal(image.content.strokeWidth, 0)
   })
 })

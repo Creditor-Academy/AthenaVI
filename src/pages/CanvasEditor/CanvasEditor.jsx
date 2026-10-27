@@ -1,7 +1,12 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import canvasService from '../../services/canvasService'
+import assetService from '../../services/assetService'
 import CanvasHeader from './components/CanvasHeader'
 import CanvasLeaveDialog from './components/CanvasLeaveDialog'
+import CanvasShortcutHelp from './components/CanvasShortcutHelp'
+import CanvasNarrowNotice from './components/CanvasNarrowNotice'
+import CanvasCropDialog from './components/CanvasCropDialog'
+import CanvasRecoveryDialog from './components/CanvasRecoveryDialog'
 import CanvasLeftDock from './components/CanvasLeftDock'
 import CanvasLeftDrawer from './components/CanvasLeftDrawer'
 import CanvasStage from './components/CanvasStage'
@@ -12,8 +17,62 @@ import CanvasExportModal from './CanvasExportModal'
 import PptElementContextMenu from '../Slides/AIPptComponents/PptElementContextMenu'
 import PptQuickMenu from '../Slides/AIPptComponents/PptQuickMenu'
 import ImageCropModal from '../Slides/AIPptComponents/ImageCropModal'
-import { PPT_DEFAULT_PLACEMENTS } from '../../constants/pptInsertCatalog'
-import { normalizeElementPlacement } from '../../utils/presentationHelpers'
+import { isShortcutHelpKey } from './canvasShortcuts'
+import {
+  DEFAULT_SIZE,
+  MAX_ELEMENTS_PER_PAGE,
+  MAX_PAGES,
+  createDocument,
+  createElement,
+  canAddElements,
+  canAddPages,
+  addPage,
+  duplicatePage,
+  deletePage,
+  activeIndexAfterPageDelete,
+  movePage,
+  resizeDocument,
+  insertElements,
+  cloneElementsWithOffset,
+  collectIds,
+  isLocalUrl,
+  replaceUrlInDocument,
+  serializeForSave,
+  hydrateFromServer,
+  readRevision,
+} from './canvasDocument'
+import {
+  createHistory,
+  currentEntry,
+  pushHistory,
+  undoHistory,
+  redoHistory,
+  canUndo,
+  canRedo,
+  mapHistory,
+} from './canvasHistory'
+import {
+  SAVE_ERROR,
+  classifySaveError,
+  describeSaveError,
+  haltsAutosave,
+  isRetryable,
+  retryDelayMs,
+} from './canvasSaveErrors'
+import {
+  writeLocalDraft,
+  readLocalDraft,
+  clearLocalDraft,
+  shouldOfferDraftRestore,
+} from './canvasLocalDraft'
+import {
+  canOpenCanvasEditor,
+  flushCanvasSave,
+  FOLDER_REQUIRED_MESSAGE,
+  describeLoadFailure,
+  resolveCanvasLoadView,
+} from './canvasPersist'
+import { nextThumbnail, previewSignature } from './canvasThumbnail'
 import {
   canPptGroup,
   canPptUngroup,
@@ -39,79 +98,24 @@ import '../Slides/AIPptComponents/pptEditorExtras.css'
 import '../Slides/AIPptGenerator.css'
 import './CanvasEditor.css'
 
-const DEFAULT_SIZE = { width: 1080, height: 1080 }
+const AUTOSAVE_DEBOUNCE_MS = 1000
+const DRAFT_DEBOUNCE_MS = 300
+const NOTICE_MS = 6000
+/** Browsers cap keepalive request bodies at 64 KB; stay under it. */
+const KEEPALIVE_MAX_CHARS = 60000
+const ELEMENT_CAP_NOTICE = `A page can hold at most ${MAX_ELEMENTS_PER_PAGE} elements. Add a new page for more.`
+const PAGE_CAP_NOTICE = `A design can have at most ${MAX_PAGES} pages.`
+const MISSING_LOCATION_MESSAGE = FOLDER_REQUIRED_MESSAGE
 
 function isCanvasElementLocked(el) {
   return Boolean(el?.locked || el?.placement?.locked)
 }
 
-function createCanvas(size = DEFAULT_SIZE) {
-  return {
-    id: `canvas-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    width: size.width,
-    height: size.height,
-    background: '#FFFFFF',
-    elements: [],
+function clearTimerRef(ref) {
+  if (ref.current) {
+    clearTimeout(ref.current)
+    ref.current = null
   }
-}
-
-function createElement(payload, canvas, index) {
-  const type = payload?.type || 'text'
-  const raw = normalizeElementPlacement(
-    payload?.placement || payload?.defaultPlacement || PPT_DEFAULT_PLACEMENTS[type] || PPT_DEFAULT_PLACEMENTS.text,
-    canvas
-  )
-  // Center the element on the canvas instead of placing at top-left
-  const placement = {
-    ...raw,
-    x: Math.round((canvas.width - raw.width) / 2),
-    y: Math.round((canvas.height - raw.height) / 2),
-  }
-  const content = { ...(payload?.content || {}) }
-  if (type === 'text' && !content.color && !content.colorRole) content.color = '#172033'
-  if (['image', 'icon', 'graphic'].includes(type)) {
-    if (!content.url && content.src) content.url = content.src
-    if (content.url && !content.src) content.src = content.url
-    if (content.strokeWidth == null) content.strokeWidth = 0
-  }
-  return {
-    id: `element-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    type,
-    content,
-    placement,
-    layer: index + 1,
-    ...(payload?.presetId ? { presetId: payload.presetId } : {}),
-  }
-}
-
-/** Clone elements with an offset for paste / duplicate operations. */
-function cloneElementsWithOffset(sources, layerStart) {
-  const stamp = Date.now()
-  const idMap = new Map()
-  const clones = sources.map((source, index) => {
-    const id = `element-${stamp}-${index}-${Math.random().toString(36).slice(2, 6)}`
-    idMap.set(source.id, id)
-    return {
-      ...source,
-      id,
-      placement: {
-        ...source.placement,
-        x: (source.placement?.x || 0) + 24,
-        y: (source.placement?.y || 0) + 24,
-      },
-      layer: layerStart + 1 + index,
-    }
-  })
-  return clones.map((clone) => {
-    const next = { ...clone }
-    if (Array.isArray(clone.childIds)) {
-      next.childIds = clone.childIds.map((cid) => idMap.get(cid) || cid)
-    }
-    if (clone.groupId && idMap.has(clone.groupId)) {
-      next.groupId = idMap.get(clone.groupId)
-    }
-    return next
-  })
 }
 
 export default function CanvasEditor({
@@ -127,7 +131,7 @@ export default function CanvasEditor({
   const startingSize = initialSize || DEFAULT_SIZE
   const [docTitle, setDocTitle] = useState(title || initialTitle)
   const [size, setSize] = useState(startingSize)
-  const [canvases, setCanvases] = useState(() => [createCanvas(startingSize)])
+  const [canvases, setCanvases] = useState(() => createDocument(startingSize))
   const [activeCanvasIndex, setActiveCanvasIndex] = useState(0)
 
   // Selection & Edit State
@@ -189,25 +193,58 @@ export default function CanvasEditor({
   const [contextMenu, setContextMenu] = useState(null)
   const [quickMenuOpen, setQuickMenuOpen] = useState(false)
   const [cropModalOpen, setCropModalOpen] = useState(false)
+  const [shortcutHelp, setShortcutHelp] = useState(false)
 
-  // State History Stack (Undo/Redo)
-  const [history, setHistory] = useState(() => [[createCanvas(startingSize)]])
-  const [historyIndex, setHistoryIndex] = useState(0)
-  const isHistoryUpdating = useRef(false)
+  // ── Undo / redo history ─────────────────────────────────────────────────
+  // Kept in a ref, not state: most mutation handlers are memoised with empty deps, and a
+  // state copy would be stale inside them. Seeded with the same array as `canvases`, so
+  // undoing back to the start never swaps the page for one with a different id.
+  const historyRef = useRef(null)
+  if (historyRef.current === null) historyRef.current = createHistory(canvases)
+  const [historyFlags, setHistoryFlags] = useState({ canUndo: false, canRedo: false })
+  const syncHistoryFlags = useCallback(() => {
+    const undoable = canUndo(historyRef.current)
+    const redoable = canRedo(historyRef.current)
+    setHistoryFlags((prev) =>
+      prev.canUndo === undoable && prev.canRedo === redoable ? prev : { canUndo: undoable, canRedo: redoable }
+    )
+  }, [])
 
   // Clipboard
   const clipboardRef = useRef([])
 
+  // Short message for things the user needs to know about (caps reached, failed uploads).
+  const [notice, setNotice] = useState(null)
+  const noticeTimerRef = useRef(null)
+  const showNotice = useCallback((message) => {
+    if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current)
+    setNotice(message)
+    noticeTimerRef.current = setTimeout(() => setNotice(null), NOTICE_MS)
+  }, [])
+
   // ── Backend persistence (save within the workspace folder the canvas was created in) ──
+  // A design is always stored in a workspace folder; without one there is nowhere to save it,
+  // so the editor refuses to open rather than letting the user work on something that will vanish.
+  // New designs are refused without a folder. Reopen only needs workspace + canvas id.
+  const missingLocation = !canOpenCanvasEditor({
+    workspaceId,
+    folderId,
+    canvasId: initialCanvasId,
+  })
+  const canPersist = !missingLocation
   const [canvasId, setCanvasId] = useState(initialCanvasId)
-  const [saveState, setSaveState] = useState('idle') // idle | loading | saving | saved | error
-  const canPersist = Boolean(workspaceId)
+  // idle | loading | saving | saved | retrying | error | conflict
+  const [saveState, setSaveState] = useState('idle')
+  const [saveError, setSaveError] = useState(null) // { kind, message } of the last failed save
+  // null | { kind: 'draft', draft } | { kind: SAVE_ERROR.CONFLICT | AUTH | NOT_FOUND }
+  const [recovery, setRecovery] = useState(null)
   const canvasIdRef = useRef(canvasId)
   useEffect(() => { canvasIdRef.current = canvasId }, [canvasId])
   const hydratedRef = useRef(false)
   // Reopening an existing canvas: show a loading screen instead of the 1080x1080 default.
   const [hydrating, setHydrating] = useState(Boolean(initialCanvasId && workspaceId))
-  const [loadError, setLoadError] = useState('')
+  const [loadError, setLoadError] = useState(missingLocation ? MISSING_LOCATION_MESSAGE : '')
+  const [loadCanRetry, setLoadCanRetry] = useState(false)
   // Refs survive React StrictMode's dev-only mount/unmount/mount, so the load/create runs once.
   const hydrateStartedRef = useRef(false)
   const mountedRef = useRef(true)
@@ -218,6 +255,21 @@ export default function CanvasEditor({
   const saveTimerRef = useRef(null)
   const savingRef = useRef(false)
   const pendingSaveRef = useRef(false)
+  // Server revision this editor last loaded or saved. Sent with every save so the server
+  // refuses (409) instead of overwriting a newer save from another tab or person.
+  const revisionRef = useRef(0)
+  // Cover of the first page last stored on the project. Null until a thumbnail lands.
+  const thumbSigRef = useRef(null)
+  const thumbGenRef = useRef(0)
+  const thumbFlightSigRef = useRef(null)
+  const thumbPromiseRef = useRef(null)
+  const commitThumbnailRef = useRef(async () => null)
+  const retryTimerRef = useRef(null)
+  const retryAttemptRef = useRef(0)
+  // Conflict, deleted design or expired session: autosave stays off until the user picks a way out.
+  const saveHaltedRef = useRef(false)
+  // blob: URL → upload promise, for images dropped from the desktop that aren't stored yet.
+  const pendingUploadsRef = useRef(new Map())
 
   // Keep refs in sync for keyboard handler closure
   const multiSelectIdsRef = useRef([])
@@ -234,6 +286,31 @@ export default function CanvasEditor({
 
   const editingRef = useRef(editing)
   useEffect(() => { editingRef.current = editing }, [editing])
+  const heldSaveRef = useRef(null)
+
+  const publishSaveStatus = useCallback((state, error, touchError = false) => {
+    if (editingRef.current?.elementId) {
+      const previous = heldSaveRef.current
+      heldSaveRef.current = {
+        state,
+        error: touchError ? error : previous?.error,
+        touchError: touchError || Boolean(previous?.touchError),
+      }
+      return
+    }
+    heldSaveRef.current = null
+    if (touchError) setSaveError(error)
+    setSaveState(state)
+  }, [])
+
+  useEffect(() => {
+    if (editing.elementId) return
+    const held = heldSaveRef.current
+    if (!held) return
+    heldSaveRef.current = null
+    if (held.touchError) setSaveError(held.error ?? null)
+    setSaveState(held.state)
+  }, [editing.elementId])
 
   const activeCanvas = canvases[activeCanvasIndex] || canvases[0]
 
@@ -250,20 +327,87 @@ export default function CanvasEditor({
   const isDirty = useCallback(() => {
     const saved = savedSnapshotRef.current
     return (
+      pendingUploadsRef.current.size > 0 ||
+      docTitleRef.current !== lastSyncedTitleRef.current ||
       canvasesRef.current !== saved.canvases ||
       docTitleRef.current !== saved.docTitle ||
       sizeRef.current !== saved.size
     )
   }, [])
 
+  const persistRef = useRef(null)
+  const createRef = useRef(null)
+  const creatingRef = useRef(null)
+
+  /**
+   * Store a first-page cover when the page looks different from the last one we saved.
+   * Failures stay off the document-save path: the design is already stored, and the
+   * next edit or leave-flush tries the cover again.
+   */
+  const commitThumbnail = useCallback((canvases) => {
+    const id = canvasIdRef.current
+    if (!workspaceId || !id) return Promise.resolve(null)
+    const plan = nextThumbnail(canvases, thumbSigRef.current)
+    if (!plan.changed || !plan.url) return thumbPromiseRef.current || Promise.resolve(null)
+    if (thumbFlightSigRef.current === plan.signature && thumbPromiseRef.current) {
+      return thumbPromiseRef.current
+    }
+    const gen = ++thumbGenRef.current
+    thumbFlightSigRef.current = plan.signature
+    const job = canvasService
+      .updateCanvasMeta(workspaceId, id, { thumbnail: plan.url })
+      .then(() => {
+        if (thumbGenRef.current === gen) thumbSigRef.current = plan.signature
+        return plan.url
+      })
+      .catch((error) => {
+        console.error('Failed to update canvas thumbnail:', error)
+        return null
+      })
+      .finally(() => {
+        if (thumbFlightSigRef.current === plan.signature) thumbFlightSigRef.current = null
+      })
+    thumbPromiseRef.current = job
+    return job
+  }, [workspaceId])
+  commitThumbnailRef.current = commitThumbnail
+
+  const handleSaveFailure = useCallback((error) => {
+    const kind = classifySaveError(error)
+    console.error('Failed to save canvas:', error)
+    const saveErrorValue = { kind, message: describeSaveError(kind, error) }
+    if (haltsAutosave(kind)) {
+      saveHaltedRef.current = true
+      pendingSaveRef.current = false
+      publishSaveStatus(kind === SAVE_ERROR.CONFLICT ? 'conflict' : 'error', saveErrorValue, true)
+      setRecovery({ kind })
+    } else if (isRetryable(kind)) {
+      publishSaveStatus('retrying', saveErrorValue, true)
+      const delay = retryDelayMs(retryAttemptRef.current)
+      retryAttemptRef.current += 1
+      retryTimerRef.current = setTimeout(() => {
+        retryTimerRef.current = null
+        persistRef.current?.()
+      }, delay)
+    } else {
+      // The server refused this document; sending it again would fail the same way.
+      // The next edit tries again (e.g. after the user removes elements over the cap).
+      publishSaveStatus('error', saveErrorValue, true)
+    }
+  }, [publishSaveStatus])
+
   const persistCanvasData = useCallback(() => {
-    if (!canPersist || !canvasIdRef.current) return Promise.resolve()
+    if (!canPersist || saveHaltedRef.current) return Promise.resolve()
+    // The create request failed earlier: retrying a save means retrying the create.
+    if (!canvasIdRef.current) return hydratedRef.current ? createRef.current?.() : Promise.resolve()
     if (savingRef.current) {
       pendingSaveRef.current = true
       return currentSaveRef.current
     }
+    clearTimerRef(retryTimerRef)
     savingRef.current = true
-    setSaveState('saving')
+    publishSaveStatus('saving')
+    const id = canvasIdRef.current
     const snapshot = {
       canvases: canvasesRef.current,
       docTitle: docTitleRef.current,
@@ -272,29 +416,29 @@ export default function CanvasEditor({
 
     const run = (async () => {
       try {
-        await canvasService.saveCanvasData(workspaceId, canvasIdRef.current, {
-          version: 1,
-          docTitle: snapshot.docTitle,
-          size: snapshot.size,
-          canvases: snapshot.canvases,
+        const saved = await canvasService.saveCanvasData(workspaceId, id, serializeForSave(snapshot), {
+          baseRevision: revisionRef.current,
         })
+        revisionRef.current = readRevision(saved?.data) || revisionRef.current + 1
         savedSnapshotRef.current = snapshot
+        // Library cards show the project name, so keep it in step with the header title.
+        // Only marked synced once the server confirms; a failure is retried with the next save.
         if (snapshot.docTitle !== lastSyncedTitleRef.current) {
+          await canvasService.updateCanvasMeta(workspaceId, id, {
+            name: snapshot.docTitle || 'Untitled Design',
+          })
           lastSyncedTitleRef.current = snapshot.docTitle
-          canvasService
-            .updateCanvasMeta(workspaceId, canvasIdRef.current, {
-              name: snapshot.docTitle || 'Untitled Design',
-            })
-            .catch((error) => console.error('Failed to rename canvas:', error))
         }
-        setSaveState('saved')
+        retryAttemptRef.current = 0
+        publishSaveStatus('saved', null, true)
+        if (!isDirty()) clearLocalDraft(id)
+        void commitThumbnailRef.current?.(snapshot.canvases)
       } catch (error) {
-        console.error('Failed to save canvas:', error)
-        setSaveState('error')
+        handleSaveFailure(error)
       } finally {
         savingRef.current = false
       }
-      if (pendingSaveRef.current) {
+      if (pendingSaveRef.current && !saveHaltedRef.current) {
         pendingSaveRef.current = false
         await persistCanvasData()
       }
@@ -302,24 +446,159 @@ export default function CanvasEditor({
 
     currentSaveRef.current = run
     return run
-  }, [workspaceId, canPersist])
+  }, [workspaceId, canPersist, isDirty, handleSaveFailure, publishSaveStatus])
+  persistRef.current = persistCanvasData
 
   /** Save anything not yet on the server right now. Resolves true when nothing is left unsaved. */
   const flushPendingSave = useCallback(async () => {
-    if (saveTimerRef.current) {
-      clearTimeout(saveTimerRef.current)
-      saveTimerRef.current = null
-    }
-    if (hydratePromiseRef.current) await hydratePromiseRef.current
-    if (currentSaveRef.current) await currentSaveRef.current
-    if (isDirty()) await persistCanvasData()
-    return !isDirty()
+    const saved = await flushCanvasSave({
+      clearDebounce: () => {
+        if (saveTimerRef.current) {
+          clearTimeout(saveTimerRef.current)
+          saveTimerRef.current = null
+        }
+      },
+      awaitHydrate: () => hydratePromiseRef.current,
+      // Uploads swap their blob: URL for the stored one, which is itself an edit to save.
+      awaitUploads: () =>
+        pendingUploadsRef.current.size
+          ? Promise.allSettled([...pendingUploadsRef.current.values()])
+          : null,
+      awaitInFlight: () => currentSaveRef.current,
+      isDirty,
+      persist: () => persistCanvasData(),
+    })
+    // Cover follows the document. A failed cover must not trap the user in the editor.
+    if (saved) await commitThumbnailRef.current?.(canvasesRef.current)
+    return saved && !isDirty()
   }, [isDirty, persistCanvasData])
+
+  /** Header retry / "Try again": start a fresh save now. */
+  const resumeSaving = useCallback(() => {
+    clearTimerRef(retryTimerRef)
+    retryAttemptRef.current = 0
+    saveHaltedRef.current = false
+    setRecovery(null)
+    return persistCanvasData()
+  }, [persistCanvasData])
+
+  /** Replace the editor state with a document fetched from the server. */
+  const applyServerDocument = useCallback((project) => {
+    const loaded = hydrateFromServer(project, startingSize, initialTitle)
+    savedSnapshotRef.current = { canvases: loaded.canvases, docTitle: loaded.docTitle, size: loaded.size }
+    canvasesRef.current = loaded.canvases
+    docTitleRef.current = loaded.docTitle
+    sizeRef.current = loaded.size
+    lastSyncedTitleRef.current = loaded.docTitle
+    revisionRef.current = loaded.revision
+    historyRef.current = createHistory(loaded.canvases)
+    syncHistoryFlags()
+    setDocTitle(loaded.docTitle)
+    setSize(loaded.size)
+    setCanvases(loaded.canvases)
+    setActiveCanvasIndex(0)
+    setSelected({ canvasId: null, elementId: null })
+    setEditing({ canvasId: null, elementId: null })
+    setMultiSelectIds([])
+    return loaded
+    // startingSize/initialTitle are only fallbacks for an empty stored document.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [syncHistoryFlags])
+
+  /** Fetch the stored design, and offer this device's unsaved copy if the server never got it. */
+  const loadStoredDesign = useCallback(async () => {
+    const id = canvasIdRef.current || initialCanvasId
+    const project = await canvasService.getCanvas(workspaceId, id)
+    if (!mountedRef.current) return
+    const loaded = applyServerDocument(project)
+    canvasIdRef.current = project.id
+    setCanvasId(project.id)
+    thumbSigRef.current = project.thumbnail ? previewSignature(loaded.canvases) : null
+    if (!project.thumbnail) void commitThumbnailRef.current?.(loaded.canvases)
+    const draft = readLocalDraft(project.id)
+    if (draft && shouldOfferDraftRestore(draft, loaded.revision)) {
+      setRecovery({ kind: 'draft', draft })
+    } else if (draft) {
+      clearLocalDraft(project.id)
+    }
+  }, [workspaceId, initialCanvasId, applyServerDocument])
+
+  /** Initial open, and the Retry button on the load-error screen. */
+  const openStoredDesign = useCallback(async () => {
+    setLoadError('')
+    setLoadCanRetry(false)
+    setHydrating(true)
+    setSaveState('loading')
+    try {
+      await loadStoredDesign()
+      if (mountedRef.current) setSaveState('saved')
+    } catch (error) {
+      console.error('Failed to load canvas:', error)
+      if (mountedRef.current) {
+        const failure = describeLoadFailure(classifySaveError(error), error)
+        setSaveState('error')
+        setLoadError(failure.message)
+        setLoadCanRetry(failure.canRetry)
+      }
+    } finally {
+      hydratedRef.current = true
+      if (mountedRef.current) setHydrating(false)
+    }
+  }, [loadStoredDesign])
+
+  /** Create the backend record for a new design in the folder it was launched from. */
+  const createStoredDesign = useCallback(() => {
+    if (creatingRef.current) return creatingRef.current
+    const run = (async () => {
+      publishSaveStatus('saving')
+      try {
+        const sentCanvases = canvasesRef.current
+        const sentTitle = docTitleRef.current || initialTitle
+        const sentSize = sizeRef.current
+        const cover = nextThumbnail(sentCanvases, null)
+        const created = await canvasService.createCanvas(workspaceId, {
+          name: sentTitle,
+          folderId,
+          data: serializeForSave({ canvases: sentCanvases, docTitle: sentTitle, size: sentSize }),
+          thumbnail: cover.url || undefined,
+        })
+        if (!mountedRef.current) return
+        const createdName = created.name || created.title || sentTitle
+        // Keep a title typed while the request was in flight; otherwise adopt the
+        // (possibly de-duplicated) name the server stored.
+        if (docTitleRef.current === sentTitle) {
+          setDocTitle(createdName)
+          docTitleRef.current = createdName
+        }
+        savedSnapshotRef.current = { canvases: sentCanvases, docTitle: createdName, size: sentSize }
+        lastSyncedTitleRef.current = createdName
+        revisionRef.current = readRevision(created.data) || 1
+        if (cover.url) thumbSigRef.current = cover.signature
+        canvasIdRef.current = created.id
+        setCanvasId(created.id)
+        retryAttemptRef.current = 0
+        publishSaveStatus('saved', null, true)
+        onCanvasCreated?.(created)
+        // Edits made while the create request was in flight haven't been saved yet.
+        if (isDirty()) await persistRef.current?.()
+      } catch (error) {
+        if (mountedRef.current) handleSaveFailure(error)
+      } finally {
+        hydratedRef.current = true
+        creatingRef.current = null
+      }
+    })()
+    creatingRef.current = run
+    return run
+    // initialTitle / folderId / onCanvasCreated are fixed for the life of this editor.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workspaceId, isDirty, handleSaveFailure, publishSaveStatus])
+  createRef.current = createStoredDesign
 
   // Load an existing canvas (reopen), or create the backend record for a brand-new one
   // in the folder it was launched from, so it's saved where the user created it.
   useEffect(() => {
-    if (!canPersist) {
+    if (missingLocation) {
       hydratedRef.current = true
       return undefined
     }
@@ -329,71 +608,7 @@ export default function CanvasEditor({
     if (hydrateStartedRef.current) return undefined
     hydrateStartedRef.current = true
 
-    const isCancelled = () => !mountedRef.current
-
-    async function hydrate() {
-      setSaveState('loading')
-      try {
-        if (initialCanvasId) {
-          const doc = await canvasService.getCanvas(workspaceId, initialCanvasId)
-          if (isCancelled()) return
-          const data = doc?.data || {}
-          const loadedCanvases =
-            Array.isArray(data.canvases) && data.canvases.length > 0
-              ? data.canvases
-              : [createCanvas(startingSize)]
-          const loadedTitle = doc?.name || data.docTitle || initialTitle
-          const loadedSize = data.size || startingSize
-          savedSnapshotRef.current = {
-            canvases: loadedCanvases,
-            docTitle: loadedTitle,
-            size: loadedSize,
-          }
-          setDocTitle(loadedTitle)
-          lastSyncedTitleRef.current = loadedTitle
-          setSize(loadedSize)
-          setCanvases(loadedCanvases)
-          setHistory([loadedCanvases])
-          setHistoryIndex(0)
-          setCanvasId(doc.id)
-          setSaveState('saved')
-        } else if (folderId) {
-          const sentCanvases = canvasesRef.current
-          const sentTitle = docTitleRef.current || initialTitle
-          const sentSize = sizeRef.current
-          const created = await canvasService.createCanvas(workspaceId, {
-            name: sentTitle,
-            folderId,
-            data: { version: 1, docTitle: sentTitle, size: sentSize, canvases: sentCanvases },
-          })
-          if (isCancelled()) return
-          const createdName = created.name || created.title || sentTitle
-          setDocTitle(createdName)
-          docTitleRef.current = createdName
-          savedSnapshotRef.current = { canvases: sentCanvases, docTitle: createdName, size: sentSize }
-          lastSyncedTitleRef.current = createdName
-          canvasIdRef.current = created.id
-          setCanvasId(created.id)
-          setSaveState('saved')
-          onCanvasCreated?.(created)
-          // Edits made while the create request was in flight haven't been saved yet.
-          if (isDirty()) await persistCanvasData()
-        } else {
-          setSaveState('idle')
-        }
-      } catch (error) {
-        console.error('Failed to load/create canvas:', error)
-        if (!isCancelled()) {
-          setSaveState('error')
-          if (initialCanvasId) setLoadError(error?.message || 'Failed to load this design.')
-        }
-      } finally {
-        hydratedRef.current = true
-        if (!isCancelled()) setHydrating(false)
-      }
-    }
-
-    hydratePromiseRef.current = hydrate().finally(() => {
+    hydratePromiseRef.current = (initialCanvasId ? openStoredDesign() : createStoredDesign()).finally(() => {
       hydratePromiseRef.current = null
     })
     return undefined
@@ -401,7 +616,8 @@ export default function CanvasEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Debounced autosave whenever the document changes, once it's hydrated/created.
+  // Debounced autosave whenever the document changes, once it's hydrated/created, plus a
+  // local recovery copy so a crash or closed tab never loses more than the debounce window.
   useEffect(() => {
     if (!canPersist || !hydratedRef.current || !canvasIdRef.current) return undefined
     // Nothing new since the last server save (e.g. the document we just loaded).
@@ -410,15 +626,72 @@ export default function CanvasEditor({
       return undefined
     }
 
+    const draftTimer = setTimeout(() => {
+      writeLocalDraft(canvasIdRef.current, serializeForSave({ canvases, docTitle, size }), {
+        baseRevision: revisionRef.current,
+      })
+    }, DRAFT_DEBOUNCE_MS)
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     saveTimerRef.current = setTimeout(() => {
       persistCanvasData()
-    }, 1000)
+    }, AUTOSAVE_DEBOUNCE_MS)
 
     return () => {
+      clearTimeout(draftTimer)
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     }
   }, [canvases, docTitle, size, canPersist, persistCanvasData])
+
+  // Back online: don't wait out the backoff.
+  useEffect(() => {
+    const onOnline = () => {
+      if (!retryTimerRef.current) return
+      clearTimerRef(retryTimerRef)
+      retryAttemptRef.current = 0
+      persistRef.current?.()
+    }
+    window.addEventListener('online', onOnline)
+    return () => window.removeEventListener('online', onOnline)
+  }, [])
+
+  /**
+   * Last-chance save when the editor goes away without the Back button (tab close, refresh,
+   * browser back, another dashboard section): keep a local copy and fire a keepalive request.
+   */
+  const flushOnExit = useCallback(() => {
+    if (!canPersist || !canvasIdRef.current || saveHaltedRef.current || !isDirty()) return
+    const id = canvasIdRef.current
+    const payload = serializeForSave({
+      canvases: canvasesRef.current,
+      docTitle: docTitleRef.current,
+      size: sizeRef.current,
+    })
+    writeLocalDraft(id, payload, { baseRevision: revisionRef.current })
+    // With a save in flight its revision isn't known yet. This payload is newer, so let it
+    // win either way rather than have one of the two refused.
+    const baseRevision = savingRef.current ? undefined : revisionRef.current
+    if (JSON.stringify({ data: payload, baseRevision }).length > KEEPALIVE_MAX_CHARS) return
+    canvasService
+      .saveCanvasData(workspaceId, id, payload, { baseRevision, keepalive: true })
+      .catch(() => {
+        // Nothing can be shown any more; the local copy is offered on next open.
+      })
+  }, [workspaceId, canPersist, isDirty])
+  const flushOnExitRef = useRef(flushOnExit)
+  flushOnExitRef.current = flushOnExit
+
+  useEffect(() => {
+    const onPageHide = () => flushOnExitRef.current()
+    window.addEventListener('pagehide', onPageHide)
+    return () => window.removeEventListener('pagehide', onPageHide)
+  }, [])
+
+  // Unmount (StrictMode's dev remount included: nothing is dirty then, so it's a no-op).
+  useEffect(() => () => {
+    flushOnExitRef.current()
+    clearTimerRef(retryTimerRef)
+    if (noticeTimerRef.current) clearTimeout(noticeTimerRef.current)
+  }, [])
 
   // ── Leaving the editor ───────────────────────────────────────────────────
   const [leavePrompt, setLeavePrompt] = useState(null) // null | 'ask' | 'saving' | 'failed'
@@ -435,6 +708,11 @@ export default function CanvasEditor({
   }, [isDirty])
 
   const handleBack = async () => {
+    // Saving is stopped until the user resolves the conflict / session / deleted-design dialog.
+    if (saveHaltedRef.current && saveError) {
+      setRecovery({ kind: saveError.kind })
+      return
+    }
     // An autosave already on its way counts as saved — just let it land.
     if (savingRef.current && currentSaveRef.current) await currentSaveRef.current
     if (!isDirty()) {
@@ -460,15 +738,67 @@ export default function CanvasEditor({
       clearTimeout(saveTimerRef.current)
       saveTimerRef.current = null
     }
+    clearTimerRef(retryTimerRef)
     pendingSaveRef.current = false
-    // Mark as clean so the beforeunload guard doesn't fire on the way out.
+    // Mark as clean so neither the beforeunload guard nor the exit flush fires on the way out.
     savedSnapshotRef.current = {
       canvases: canvasesRef.current,
       docTitle: docTitleRef.current,
       size: sizeRef.current,
     }
+    lastSyncedTitleRef.current = docTitleRef.current
+    pendingUploadsRef.current.clear()
+    clearLocalDraft(canvasIdRef.current)
     setLeavePrompt(null)
+    setRecovery(null)
     onBack?.()
+  }
+
+  // ── Save problems that need a decision ───────────────────────────────────
+  /** Conflict: drop local changes and load what the server has. */
+  const handleLoadLatest = async () => {
+    clearTimerRef(retryTimerRef)
+    pendingSaveRef.current = false
+    try {
+      await loadStoredDesign()
+      clearLocalDraft(canvasIdRef.current)
+      saveHaltedRef.current = false
+      setRecovery(null)
+      setSaveError(null)
+      setSaveState('saved')
+    } catch (error) {
+      showNotice(`Couldn't load the latest version: ${error?.message || 'request failed'}`)
+    }
+  }
+
+  /** Conflict: overwrite the server copy with this editor's document. */
+  const handleKeepMine = async () => {
+    try {
+      const latest = await canvasService.getCanvas(workspaceId, canvasIdRef.current)
+      revisionRef.current = readRevision(latest?.data)
+    } catch (error) {
+      showNotice(`Couldn't reach the server: ${error?.message || 'request failed'}`)
+      return
+    }
+    await resumeSaving()
+  }
+
+  const handleRestoreDraft = () => {
+    const doc = recovery?.draft?.doc
+    setRecovery(null)
+    if (!doc?.canvases?.length) return
+    canvasesRef.current = doc.canvases
+    setCanvases(doc.canvases)
+    historyRef.current = pushHistory(historyRef.current, doc.canvases)
+    syncHistoryFlags()
+    if (doc.docTitle) setDocTitle(doc.docTitle)
+    if (doc.size) setSize(doc.size)
+    setActiveCanvasIndex(0)
+  }
+
+  const handleDiscardDraft = () => {
+    clearLocalDraft(canvasIdRef.current)
+    setRecovery(null)
   }
 
   // Derived: effective selection ids (multi-select or single)
@@ -477,77 +807,123 @@ export default function CanvasEditor({
     : [selected.elementId].filter(Boolean)
 
   // ── History ──────────────────────────────────────────────────────────────
-  const updateCanvasesWithHistory = (nextCanvases) => {
+  const updateCanvasesWithHistory = useCallback((nextCanvases) => {
+    if (nextCanvases === canvasesRef.current) return
+    canvasesRef.current = nextCanvases
     setCanvases(nextCanvases)
-    if (isHistoryUpdating.current) return
-    const newHistory = history.slice(0, historyIndex + 1)
-    newHistory.push(nextCanvases)
-    if (newHistory.length > 30) newHistory.shift()
-    setHistory(newHistory)
-    setHistoryIndex(newHistory.length - 1)
-  }
+    historyRef.current = pushHistory(historyRef.current, nextCanvases)
+    syncHistoryFlags()
+  }, [syncHistoryFlags])
 
-  const undo = useCallback(() => {
-    setHistory((prevHistory) => {
-      setHistoryIndex((prevIdx) => {
-        if (prevIdx > 0) {
-          isHistoryUpdating.current = true
-          const prev = prevHistory[prevIdx - 1]
-          setCanvases(prev)
-          setTimeout(() => { isHistoryUpdating.current = false }, 50)
-          return prevIdx - 1
-        }
-        return prevIdx
-      })
-      return prevHistory
+  const restoreHistory = useCallback((nextHistory) => {
+    if (nextHistory === historyRef.current) return
+    historyRef.current = nextHistory
+    const doc = currentEntry(nextHistory)
+    canvasesRef.current = doc
+    setCanvases(doc)
+    syncHistoryFlags()
+    // Pages and elements that no longer exist can't stay selected or open for editing.
+    const { pageIds, elementIds } = collectIds(doc)
+    setActiveCanvasIndex((index) => Math.min(index, doc.length - 1))
+    setSelected((prev) =>
+      (prev.canvasId && !pageIds.has(prev.canvasId)) || (prev.elementId && !elementIds.has(prev.elementId))
+        ? { canvasId: null, elementId: null }
+        : prev
+    )
+    setEditing((prev) =>
+      prev.elementId && !elementIds.has(prev.elementId) ? { canvasId: null, elementId: null } : prev
+    )
+    setMultiSelectIds((prev) => {
+      const next = prev.filter((id) => elementIds.has(id))
+      return next.length === prev.length ? prev : next
     })
-  }, [])
+    // Resizing is undoable, so keep the document size in step with the pages.
+    const first = doc[0]
+    if (first) {
+      setSize((prev) =>
+        prev.width === first.width && prev.height === first.height
+          ? prev
+          : { width: first.width, height: first.height }
+      )
+    }
+  }, [syncHistoryFlags])
 
-  const redo = useCallback(() => {
-    setHistory((prevHistory) => {
-      setHistoryIndex((prevIdx) => {
-        if (prevIdx < prevHistory.length - 1) {
-          isHistoryUpdating.current = true
-          const next = prevHistory[prevIdx + 1]
-          setCanvases(next)
-          setTimeout(() => { isHistoryUpdating.current = false }, 50)
-          return prevIdx + 1
-        }
-        return prevIdx
-      })
-      return prevHistory
-    })
-  }, [])
+  const undo = useCallback(() => restoreHistory(undoHistory(historyRef.current)), [restoreHistory])
+  const redo = useCallback(() => restoreHistory(redoHistory(historyRef.current)), [restoreHistory])
+
+  /**
+   * Store an image dropped from the desktop. It shows straight away from a blob: URL; once
+   * uploaded, that URL is swapped for the stored one everywhere, undo history included, so
+   * neither a save nor an undo can bring back a URL that dies with this tab.
+   */
+  const uploadLocalImage = useCallback((file, localUrl) => {
+    const swap = (toUrl, contentPatch = null) => {
+      const wasCurrent = canvasesRef.current === currentEntry(historyRef.current)
+      historyRef.current = mapHistory(historyRef.current, (snapshot) =>
+        replaceUrlInDocument(snapshot, localUrl, toUrl, contentPatch)
+      )
+      const next = wasCurrent
+        ? currentEntry(historyRef.current)
+        : replaceUrlInDocument(canvasesRef.current, localUrl, toUrl, contentPatch)
+      if (next !== canvasesRef.current) {
+        canvasesRef.current = next
+        setCanvases(next)
+      }
+    }
+
+    const task = (async () => {
+      try {
+        const asset = await assetService.uploadAsset(workspaceId, file)
+        const storedUrl = assetService.resolveAssetUrl(asset)
+        if (!storedUrl) throw new Error('the upload finished without a file URL')
+        const assetId = asset?.id || asset?._id
+        swap(storedUrl, assetId ? { assetId } : null)
+      } catch (error) {
+        swap(null)
+        showNotice(`Couldn't upload ${file?.name || 'that image'}: ${error?.message || 'upload failed'}`)
+      } finally {
+        pendingUploadsRef.current.delete(localUrl)
+        URL.revokeObjectURL(localUrl)
+      }
+    })()
+    pendingUploadsRef.current.set(localUrl, task)
+    return task
+  }, [workspaceId, showNotice])
+  const uploadLocalImageRef = useRef(uploadLocalImage)
+  uploadLocalImageRef.current = uploadLocalImage
 
   // ── Canvas & Element CRUD ───────────────────────────────────────────────
   const applyCanvasSize = (nextSize) => {
     const targetSize = nextSize || size
     setSize(targetSize)
-    updateCanvasesWithHistory(
-      canvases.map((c) => ({ ...c, width: targetSize.width, height: targetSize.height }))
-    )
+    updateCanvasesWithHistory(resizeDocument(canvases, targetSize))
   }
 
   const addElement = (payload) => {
     const canvasId = selected.canvasId || activeCanvas.id
-    let insertedId = null
-    const updated = canvases.map((canvas) => {
-      if (canvas.id !== canvasId) return canvas
-      const next = createElement(payload, canvas, canvas.elements.length)
-      insertedId = next.id
-      return { ...canvas, elements: [...canvas.elements, next] }
-    })
-    updateCanvasesWithHistory(updated)
-    setSelected({ canvasId, elementId: insertedId })
+    const page = canvases.find((canvas) => canvas.id === canvasId)
+    if (!page) return
+    if (!canAddElements(page)) {
+      showNotice(ELEMENT_CAP_NOTICE)
+      return
+    }
+    const element = createElement(payload, page, page.elements.length)
+    updateCanvasesWithHistory(insertElements(canvases, canvasId, [element]))
+    setSelected({ canvasId, elementId: element.id })
     setMultiSelectIds([])
   }
 
   // New pages always go below the last page, matching the size of the page they came from.
   const addCanvas = (source = activeCanvas) => {
-    const next = createCanvas(
+    if (!canAddPages(canvases)) {
+      showNotice(PAGE_CAP_NOTICE)
+      return
+    }
+    const nextCanvases = addPage(
+      canvases,
       source ? { width: source.width || size.width, height: source.height || size.height } : size
     )
-    const nextCanvases = [...canvases, next]
+    const next = nextCanvases[nextCanvases.length - 1]
     updateCanvasesWithHistory(nextCanvases)
     setActiveCanvasIndex(nextCanvases.length - 1)
     setSelected({ canvasId: next.id, elementId: null })
@@ -556,52 +932,34 @@ export default function CanvasEditor({
 
   // The copy goes directly below the page it was copied from.
   const duplicateCanvas = (source) => {
-    const stamp = Date.now()
-    const idMap = new Map(
-      source.elements.map((element, i) => [
-        element.id,
-        `element-${stamp}-${i}-${Math.random().toString(36).slice(2, 7)}`,
-      ])
-    )
-    const copy = {
-      ...source,
-      id: `canvas-${stamp}-${Math.random().toString(36).slice(2, 7)}`,
-      elements: source.elements.map((element) => ({
-        ...element,
-        id: idMap.get(element.id),
-        ...(element.groupId ? { groupId: idMap.get(element.groupId) || element.groupId } : {}),
-        ...(Array.isArray(element.childIds)
-          ? { childIds: element.childIds.map((cid) => idMap.get(cid) || cid) }
-          : {}),
-      })),
+    const { canvases: nextCanvases, page: copy } = duplicatePage(canvases, source.id)
+    if (!copy) {
+      if (!canAddPages(canvases)) showNotice(PAGE_CAP_NOTICE)
+      return
     }
-    const index = canvases.findIndex((canvas) => canvas.id === source.id)
-    const nextCanvases = [...canvases]
-    nextCanvases.splice(index + 1, 0, copy)
     updateCanvasesWithHistory(nextCanvases)
-    setActiveCanvasIndex(index + 1)
+    setActiveCanvasIndex(nextCanvases.indexOf(copy))
     setSelected({ canvasId: copy.id, elementId: null })
     setMultiSelectIds([])
   }
 
   const deleteCanvas = (canvasId) => {
-    if (canvases.length <= 1) return
-    const updated = canvases.filter((c) => c.id !== canvasId)
+    const updated = deletePage(canvases, canvasId)
+    if (updated === canvases) return
+    const nextIndex = activeIndexAfterPageDelete(canvases, activeCanvasIndex, canvasId)
     updateCanvasesWithHistory(updated)
-    setActiveCanvasIndex((prev) => Math.max(0, prev - 1))
+    setActiveCanvasIndex(nextIndex)
     setSelected({ canvasId: null, elementId: null })
     setMultiSelectIds([])
   }
 
   const moveCanvas = (fromIndex, direction) => {
     const toIndex = fromIndex + direction
-    if (toIndex < 0 || toIndex >= canvases.length || fromIndex === toIndex) return
-    const nextCanvases = [...canvases]
-    const [moved] = nextCanvases.splice(fromIndex, 1)
-    nextCanvases.splice(toIndex, 0, moved)
+    const nextCanvases = movePage(canvases, fromIndex, toIndex)
+    if (nextCanvases === canvases) return
     updateCanvasesWithHistory(nextCanvases)
     setActiveCanvasIndex(toIndex)
-    setSelected({ canvasId: moved.id, elementId: null })
+    setSelected({ canvasId: nextCanvases[toIndex].id, elementId: null })
   }
 
   const handlePlacementLive = (patches) => {
@@ -644,23 +1002,6 @@ export default function CanvasEditor({
             ...canvas,
             elements: canvas.elements.map((element) =>
               element.id === elementId ? { ...element, placement: { ...element.placement, ...patch } } : element
-            ),
-          }
-    )
-    updateCanvasesWithHistory(updated)
-  }
-
-  /** Batch-update placements for multiple element IDs by the same delta. */
-  const batchUpdatePlacements = (elementIds, patchFn) => {
-    const canvasId = activeCanvas.id
-    const idSet = new Set(elementIds)
-    const updated = canvases.map((canvas) =>
-      canvas.id !== canvasId
-        ? canvas
-        : {
-            ...canvas,
-            elements: canvas.elements.map((el) =>
-              idSet.has(el.id) ? { ...el, placement: { ...el.placement, ...patchFn(el) } } : el
             ),
           }
     )
@@ -718,14 +1059,6 @@ export default function CanvasEditor({
     setMultiSelectIds([])
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const deleteSelected = useCallback((canvasId) => {
-    const ids = multiSelectIdsRef.current.length
-      ? multiSelectIdsRef.current
-      : [selectedRef.current.elementId].filter(Boolean)
-    if (!ids.length) return
-    deleteElements(ids)
-  }, [deleteElements])
-
   // ── Clipboard ───────────────────────────────────────────────────────────
   const copySelection = useCallback((ids) => {
     const canvas = canvasesRef.current[activeCanvasIndexRef.current] || canvasesRef.current[0]
@@ -741,6 +1074,10 @@ export default function CanvasEditor({
     if (!clipboardRef.current?.length) return
     const canvas = canvasesRef.current[activeCanvasIndexRef.current] || canvasesRef.current[0]
     if (!canvas) return
+    if (!canAddElements(canvas, clipboardRef.current.length)) {
+      showNotice(ELEMENT_CAP_NOTICE)
+      return
+    }
     const clones = cloneElementsWithOffset(clipboardRef.current, canvas.elements.length)
     const updated = canvasesRef.current.map((c) =>
       c.id !== canvas.id ? c : { ...c, elements: [...c.elements, ...clones] }
@@ -757,6 +1094,10 @@ export default function CanvasEditor({
     const expanded = expandPptSelectionIds(canvas.elements, ids)
     const sources = canvas.elements.filter((el) => expanded.includes(el.id))
     if (!sources.length) return
+    if (!canAddElements(canvas, sources.length)) {
+      showNotice(ELEMENT_CAP_NOTICE)
+      return
+    }
     const clones = cloneElementsWithOffset(sources, canvas.elements.length)
     const updated = canvasesRef.current.map((c) =>
       c.id !== canvas.id ? c : { ...c, elements: [...c.elements, ...clones] }
@@ -953,7 +1294,12 @@ export default function CanvasEditor({
     const el = canvas?.elements?.find((item) => item.id === elementId)
     if (!el) return
     let url = payload.url || payload.src || ''
-    if (!url && payload.file) url = URL.createObjectURL(payload.file)
+    // A file dropped from the desktop: show it now from a blob: URL, store it in the background.
+    let localUrl = null
+    if (payload.file && (!url || isLocalUrl(url))) {
+      localUrl = url || URL.createObjectURL(payload.file)
+      url = localUrl
+    }
     if (!url) return
 
     if (isPptDeviceFrameElement(el)) {
@@ -971,6 +1317,7 @@ export default function CanvasEditor({
       )
       updateCanvasesWithHistory(updated)
       setSelected({ canvasId: canvas.id, elementId })
+      if (localUrl) uploadLocalImageRef.current(payload.file, localUrl)
       return
     }
 
@@ -998,6 +1345,7 @@ export default function CanvasEditor({
     )
     updateCanvasesWithHistory(updated)
     setSelected({ canvasId: canvas.id, elementId })
+    if (localUrl) uploadLocalImageRef.current(payload.file, localUrl)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleClearDeviceFrameScreen = useCallback(() => {
@@ -1105,7 +1453,6 @@ export default function CanvasEditor({
 
   // ── Quick Action (from floating bar / legacy) ───────────────────────────
   const handleQuickAction = (action, elementId) => {
-    const canvasId = activeCanvas.id
     const element = activeCanvas.elements.find((el) => el.id === elementId)
     if (!element) return
 
@@ -1235,6 +1582,15 @@ export default function CanvasEditor({
       }
 
       const typing = inFormField || inCanvasTextEdit
+      if (!typing && isShortcutHelpKey(e)) {
+        const modal = document.querySelector('[role="dialog"][aria-modal="true"]')
+        if (modal && !modal.querySelector('#canvas-shortcuts-title')) return
+        e.preventDefault()
+        setShortcutHelp((open) => !open)
+        return
+      }
+      if (document.querySelector('[role="dialog"][aria-modal="true"]')) return
+
       if (typing) {
         if (e.key === 'Escape' && editingRef.current.elementId) {
           e.preventDefault()
@@ -1352,7 +1708,7 @@ export default function CanvasEditor({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [undo, redo, copySelection, cutSelection, pasteClipboard, duplicateSelection, deleteElements, groupSelection, ungroupSelection, toggleLock, bringForward, sendBackward, bringToFront, sendToBack])
+  }, [undo, redo, copySelection, cutSelection, pasteClipboard, duplicateSelection, deleteElements, groupSelection, ungroupSelection, toggleLock, bringForward, sendBackward, bringToFront, sendToBack, updateCanvasesWithHistory])
 
   const handleQuickCommand = useCallback((cmd) => {
     const ids = multiSelectIdsRef.current.length
@@ -1448,21 +1804,34 @@ export default function CanvasEditor({
   }, [canvases])
 
   // Don't flash the empty 1080x1080 default while the saved design is still being fetched.
-  if (hydrating || loadError) {
+  // An empty stored document still opens as one blank page (`ready`), not this screen.
+  const loadView = resolveCanvasLoadView({ hydrating, loadError, canRetry: loadCanRetry })
+  if (loadView.screen !== 'ready') {
     return (
-      <div className="canvas-editor-page canvas-editor-loading" role="status" aria-live="polite">
-        {loadError ? (
+      <div
+        className="canvas-editor-page canvas-editor-loading"
+        role={loadView.screen === 'error' ? 'alert' : 'status'}
+        aria-live="polite"
+      >
+        {loadView.screen === 'error' ? (
           <div className="canvas-editor-loading-card">
-            <p className="canvas-editor-loading-title">Couldn&apos;t open this design</p>
-            <p className="canvas-editor-loading-sub">{loadError}</p>
-            <button type="button" className="canva-header-primary-btn" onClick={onBack}>
-              Go back
-            </button>
+            <p className="canvas-editor-loading-title">{loadView.title}</p>
+            <p className="canvas-editor-loading-sub">{loadView.message}</p>
+            <div className="canvas-editor-loading-actions">
+              {loadView.canRetry && (
+                <button type="button" className="canva-header-secondary-btn" onClick={openStoredDesign}>
+                  Try again
+                </button>
+              )}
+              <button type="button" className="canva-header-primary-btn" onClick={onBack}>
+                Go back
+              </button>
+            </div>
           </div>
         ) : (
           <div className="canvas-editor-loading-card">
             <span className="canvas-editor-spinner" aria-hidden="true" />
-            <p className="canvas-editor-loading-title">Loading your design…</p>
+            <p className="canvas-editor-loading-title">{loadView.title}</p>
           </div>
         )}
       </div>
@@ -1475,10 +1844,32 @@ export default function CanvasEditor({
       <CanvasLeaveDialog
         status={leavePrompt}
         canSave={canPersist}
+        failureMessage={saveError?.message || ''}
         onSave={handleSaveAndLeave}
         onDiscard={handleLeaveWithoutSaving}
         onCancel={() => setLeavePrompt(null)}
       />
+
+      <CanvasRecoveryDialog
+        kind={recovery?.kind || null}
+        draftSavedAt={recovery?.draft?.savedAt}
+        onLoadLatest={handleLoadLatest}
+        onKeepMine={handleKeepMine}
+        onRetry={resumeSaving}
+        onLeave={handleLeaveWithoutSaving}
+        onRestoreDraft={handleRestoreDraft}
+        onDiscardDraft={handleDiscardDraft}
+        onClose={() => setRecovery(null)}
+      />
+
+      {notice && (
+        <div className="canvas-editor-notice" role="status" aria-live="polite">
+          <span>{notice}</span>
+          <button type="button" onClick={() => setNotice(null)} aria-label="Dismiss">
+            ×
+          </button>
+        </div>
+      )}
 
       <CanvasHeader
         docTitle={docTitle}
@@ -1486,15 +1877,22 @@ export default function CanvasEditor({
         onBack={handleBack}
         undo={undo}
         redo={redo}
-        canUndo={historyIndex > 0}
-        canRedo={historyIndex < history.length - 1}
+        canUndo={historyFlags.canUndo}
+        canRedo={historyFlags.canRedo}
         onOpenSizeModal={() => setShowSizeModal(true)}
         onOpenExportModal={() => setShowExportModal(true)}
         activeCanvas={activeCanvas}
         saveState={canPersist ? saveState : null}
+        saveMessage={saveError?.message || ''}
+        onSaveBadgeClick={() => {
+          if (saveHaltedRef.current && saveError) setRecovery({ kind: saveError.kind })
+          else if (saveState === 'error' || saveState === 'retrying') resumeSaving()
+        }}
         inspectorOpen={inspectorOpen}
         onToggleInspector={() => setInspectorOpen((prev) => !prev)}
+        onOpenShortcuts={() => setShortcutHelp(true)}
       />
+      <CanvasNarrowNotice />
 
       {/* 2. Studio Layout Body */}
       <div className="canvas-editor-studio-body">
@@ -1636,18 +2034,24 @@ export default function CanvasEditor({
       {showExportModal && (
         <CanvasExportModal
           canvas={activeCanvas}
+          canvases={canvases}
+          activeIndex={activeCanvasIndex}
           title={docTitle}
           onClose={() => setShowExportModal(false)}
         />
       )}
 
       {cropModalOpen && selectedElement && (
-        <ImageCropModal
-          imageUrl={selectedElement.content?.url || selectedElement.content?.src}
-          onApply={handleCropApply}
-          onClose={() => setCropModalOpen(false)}
-        />
+        <CanvasCropDialog onClose={() => setCropModalOpen(false)}>
+          <ImageCropModal
+            imageUrl={selectedElement.content?.url || selectedElement.content?.src}
+            onApply={handleCropApply}
+            onClose={() => setCropModalOpen(false)}
+          />
+        </CanvasCropDialog>
       )}
+
+      {shortcutHelp && <CanvasShortcutHelp onClose={() => setShortcutHelp(false)} />}
 
       <PptQuickMenu
         open={quickMenuOpen}

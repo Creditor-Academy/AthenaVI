@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
+import { useCanvasDialogFocus } from './canvasDialogFocus'
 import { FiCheck, FiArrowRight, FiX, FiRepeat } from 'react-icons/fi'
 import {
   CANVAS_SIZE_PRESETS,
@@ -90,6 +91,9 @@ export default function CanvasSizeModal({
       ? CANVAS_SIZE_PRESETS
       : CANVAS_SIZE_PRESETS.filter((preset) => preset.group === activeGroup)
 
+  const dialogRef = useRef(null)
+  useCanvasDialogFocus(dialogRef, { onEscape: onCancel })
+
   const handleCreate = () => {
     onCreate(normalizeCanvasSize(selected || customSize))
   }
@@ -100,6 +104,7 @@ export default function CanvasSizeModal({
   return (
     <div className="canvas-size-modal-backdrop" onClick={onCancel}>
       <section
+        ref={dialogRef}
         className="canvas-size-modal"
         role="dialog"
         aria-modal="true"
