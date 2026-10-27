@@ -51,7 +51,7 @@ export default function ResendBroadcastModal({ broadcast, onResendSuccess, onClo
 
   return createPortal(
     <div className="sa-broadcast-backdrop" onClick={onClose}>
-      <div className="sa-broadcast-modal sa-broadcast-modal--md" style={{ padding: '28px' }} onClick={(e) => e.stopPropagation()}>
+      <div className="sa-broadcast-modal sa-broadcast-modal--md sa-broadcast-modal--scroll" style={{ padding: '28px' }} onClick={(e) => e.stopPropagation()}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span className="sa-broadcast-modal-header-icon" style={{ width: 40, height: 40 }}>

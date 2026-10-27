@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Search, ChevronLeft, ChevronRight, X, Building2, Users, Coins, Sparkles, TrendingUp, Layers, CheckCircle2 } from 'lucide-react'
 import superadminService, { SuperadminApiError } from '../../../../services/superadminService'
 import { formatAc, formatDate, txTypeLabel } from './superadminUtils'
@@ -71,7 +72,7 @@ function WorkspaceDrawer({
     if (open) setActiveTab('overview')
   }, [open, workspace?.workspaceId])
 
-  return (
+  return createPortal(
     <>
       {open && (
         <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200 }} aria-hidden />
@@ -81,7 +82,8 @@ function WorkspaceDrawer({
           position: 'fixed', top: '50%', left: '50%',
           transform: open ? 'translate(-50%, -50%)' : 'translate(-50%, -48%)',
           width: 600, maxWidth: '94vw',
-          height: '80vh', minHeight: '500px',
+          // A fixed 500px minimum overflowed short windows and clipped the top and bottom.
+          height: '80vh', minHeight: 'min(500px, calc(100vh - 32px))', maxHeight: 'calc(100vh - 32px)',
           background: 'var(--bg-surface)', border: '1px solid var(--border-color)',
           borderRadius: 16,
           boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', zIndex: 201,
@@ -169,8 +171,9 @@ function WorkspaceDrawer({
               ))}
             </div>
 
-            <div style={{ 
-              flex: 1, 
+            <div style={{
+              flex: 1,
+              minHeight: 0,
               overflowY: 'auto',
               borderBottomLeftRadius: 16,
               borderBottomRightRadius: 16,
@@ -396,7 +399,8 @@ function WorkspaceDrawer({
           </>
         )}
       </div>
-    </>
+    </>,
+    document.body
   )
 }
 

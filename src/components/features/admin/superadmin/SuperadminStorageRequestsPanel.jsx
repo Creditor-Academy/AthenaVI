@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { HardDrive, ChevronLeft, ChevronRight, X, Check, Database, Clock, CheckCircle2, XCircle, Sparkles, Search, Filter } from 'lucide-react'
 import superadminService from '../../../../services/superadminService'
 import { formatBytes, formatDate, storageStatusLabel } from './superadminUtils'
@@ -36,7 +37,7 @@ function GrantModal({ request, onClose, onGranted }) {
     }
   }
 
-  return (
+  return createPortal(
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 300 }} aria-hidden />
       <div
@@ -55,6 +56,8 @@ function GrantModal({ request, onClose, onGranted }) {
           boxShadow: '0 24px 64px rgba(0,0,0,0.25)',
           zIndex: 301,
           padding: '22px 24px',
+          maxHeight: 'calc(100vh - 32px)',
+          overflowY: 'auto',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -99,7 +102,8 @@ function GrantModal({ request, onClose, onGranted }) {
           </div>
         </form>
       </div>
-    </>
+    </>,
+    document.body
   )
 }
 
@@ -125,7 +129,7 @@ function RejectModal({ request, onClose, onRejected }) {
     }
   }
 
-  return (
+  return createPortal(
     <>
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 300 }} aria-hidden />
       <div
@@ -144,6 +148,8 @@ function RejectModal({ request, onClose, onRejected }) {
           boxShadow: '0 24px 64px rgba(0,0,0,0.25)',
           zIndex: 301,
           padding: '22px 24px',
+          maxHeight: 'calc(100vh - 32px)',
+          overflowY: 'auto',
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -181,7 +187,8 @@ function RejectModal({ request, onClose, onRejected }) {
           </div>
         </form>
       </div>
-    </>
+    </>,
+    document.body
   )
 }
 
