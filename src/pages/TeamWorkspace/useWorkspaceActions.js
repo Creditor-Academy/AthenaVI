@@ -695,13 +695,21 @@ export function useWorkspaceActions({
     openConfirmDialog('Remove this member from workspace?', async () => {
       try {
         await workspaceService.removeMember(contributorsPanel.workspace.id, memberId);
+        // Keep the workspace card's member count in step without a full reload.
+        setWorkspaces((prev) =>
+          prev.map((workspace) =>
+            String(workspace.id) === String(contributorsPanel.workspace.id) && workspace.memberCount != null
+              ? { ...workspace, memberCount: Math.max(1, Number(workspace.memberCount) - 1) }
+              : workspace
+          )
+        );
         await loadContributorsForWorkspace(contributorsPanel.workspace);
         showToast('Member removed successfully', 'success');
       } catch (error) {
         showToast(error.message || 'Failed to remove member', 'error');
       }
     });
-  }, [contributorsPanel, loadContributorsForWorkspace, showToast, openConfirmDialog]);
+  }, [contributorsPanel, loadContributorsForWorkspace, showToast, openConfirmDialog, setWorkspaces]);
 
   // ------------------------------------------------------------------
   // Move project
