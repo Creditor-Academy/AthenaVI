@@ -32,6 +32,7 @@ export default function GuidelineDeckViewer({
   templateId,
   generating,
   isDirty,
+  kitData,
   activeSlideIndex,
   setActiveSlideIndex,
 }) {
@@ -41,6 +42,13 @@ export default function GuidelineDeckViewer({
   const [error, setError] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
   const requestRef = useRef(0)
+  // Built previews per template, so flipping between templates doesn't rebuild each time.
+  // Any kit change (edit or save) drops them; the real deck is always fetched fresh.
+  const previewCacheRef = useRef(new Map())
+
+  useEffect(() => {
+    previewCacheRef.current.clear()
+  }, [brandKitId, kitData])
 
   const linkedTemplateId = guidelineLink?.templateId || DEFAULT_GUIDELINE_TEMPLATE_ID
   const showDeck = Boolean(
@@ -56,9 +64,16 @@ export default function GuidelineDeckViewer({
     setError('')
     ;(async () => {
       try {
-        const data = showDeck
-          ? await presentationService.getPresentation(workspaceId, guidelineLink.presentationId)
-          : await brandKitService.previewGuidelines(workspaceId, brandKitId, templateId)
+        let data
+        if (showDeck) {
+          data = await presentationService.getPresentation(workspaceId, guidelineLink.presentationId)
+        } else {
+          data = previewCacheRef.current.get(templateId)
+          if (!data) {
+            data = await brandKitService.previewGuidelines(workspaceId, brandKitId, templateId)
+            previewCacheRef.current.set(templateId, data)
+          }
+        }
         if (cancelled || requestId !== requestRef.current) return
         setSlides(extractSlidesFromPresentation(data))
         setThemeTokens(deckTokensFrom(data))

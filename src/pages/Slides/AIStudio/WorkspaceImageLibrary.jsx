@@ -414,9 +414,9 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           box-sizing: border-box;
           padding: 6px;
           border-radius: 14px;
-          background: #ffffff;
-          border: 1px solid rgba(226, 232, 240, 0.95);
-          box-shadow: 0 16px 36px -6px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.04);
+          background: var(--bg-card, #ffffff);
+          border: 1px solid var(--border-color, rgba(226, 232, 240, 0.95));
+          box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.35);
           z-index: 50;
           display: flex;
           flex-direction: column;
@@ -439,7 +439,7 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           gap: 10px;
           border: none;
           background: transparent;
-          color: #1e293b;
+          color: var(--text-main, #1e293b);
           border-radius: 9px;
           padding: 8px 12px;
           font-size: 13.5px;
@@ -449,11 +449,11 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           transition: background 0.15s ease, color 0.15s ease;
         }
         .library-card-dropdown button:hover {
-          background: #f1f5f9;
+          background: color-mix(in srgb, var(--primary, #2563eb) 10%, transparent);
           color: var(--primary, #2563eb);
         }
         .library-card-dropdown button svg {
-          color: #64748b;
+          color: var(--text-muted, #64748b);
           flex-shrink: 0;
           transition: color 0.15s ease;
         }
@@ -462,7 +462,7 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
         }
         .library-menu-divider {
           height: 1px;
-          background: #f1f5f9;
+          background: var(--border-color, #f1f5f9);
           margin: 4px 6px;
         }
         .library-card-dropdown button.is-danger {
@@ -671,10 +671,10 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           margin: 0;
           padding: 12px 14px 12px 20px;
           border-radius: 999px;
-          background: #ffffff;
-          color: #111827;
-          border: 1px solid #e5e7eb;
-          box-shadow: 0 18px 50px rgba(15, 23, 42, 0.22);
+          background: var(--bg-card, #ffffff);
+          color: var(--text-main, #111827);
+          border: 1px solid var(--border-color, #e5e7eb);
+          box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
         }
         .library-selection-count {
           font-size: 15px;
@@ -686,9 +686,9 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          border: none;
-          background: #f3f4f6;
-          color: #111827;
+          border: 1px solid var(--border-color, transparent);
+          background: var(--bg-surface, #f3f4f6);
+          color: var(--text-main, #111827);
           border-radius: 999px;
           padding: 10px 16px;
           font-size: 15px;
@@ -696,7 +696,7 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           cursor: pointer;
         }
         .library-selection-btn:hover {
-          background: color-mix(in srgb, var(--primary, #2563eb) 10%, var(--bg-card, #f3f4f6));
+          background: color-mix(in srgb, var(--primary, #2563eb) 12%, var(--bg-surface, #f3f4f6));
         }
         .library-selection-btn.is-danger {
           background: #dc2626;
@@ -773,19 +773,20 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           border-radius: 0;
         }
         .library-category {
-          border: 1px solid #e6ebf2;
-          background: #fff;
-          color: #475569;
+          border: 1px solid var(--border-color, #e6ebf2);
+          background: var(--bg-card, #fff);
+          color: var(--text-muted, #475569);
           font-size: 14px;
           font-weight: 650;
           height: 40px;
           padding: 0 16px;
           border-radius: 999px;
           cursor: pointer;
+          transition: all 0.15s ease;
         }
         .library-category:hover {
-          border-color: #cbd5e1;
-          color: #111827;
+          border-color: color-mix(in srgb, var(--primary, #2563eb) 35%, var(--border-color, #cbd5e1));
+          color: var(--text-main, #111827);
         }
         .library-category.is-on {
           background: var(--primary, #2563eb);
@@ -805,19 +806,23 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           height: 40px;
           padding: 0;
           border-radius: 999px;
-          border: 1px solid #e6ebf2;
-          background: #fff;
-          color: #475569;
+          border: 1px solid var(--border-color, #e6ebf2);
+          background: var(--bg-card, #fff);
+          color: var(--text-muted, #475569);
           cursor: pointer;
+          transition: all 0.15s ease;
         }
         .library-manage-btn:hover,
         .library-manage-btn.is-on {
-          background: #f8fafc;
+          background: color-mix(in srgb, var(--primary, #2563eb) 12%, var(--bg-card, #fff));
           color: var(--primary, #2563eb);
-          border-color: #dbe4f0;
+          border-color: color-mix(in srgb, var(--primary, #2563eb) 40%, var(--border-color, #dbe4f0));
         }
         .library-manage-menu button.is-on {
-          background: #f1f5f9;
+          background: color-mix(in srgb, var(--primary, #2563eb) 14%, var(--bg-card, #1e293b));
+          color: var(--primary, #2563eb);
+        }
+        .library-manage-menu button.is-on svg {
           color: var(--primary, #2563eb);
         }
         .library-crumb {
@@ -827,29 +832,30 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           margin: 4px 0 14px;
           font-size: 18px;
           font-weight: 650;
-          color: #0f172a;
+          color: var(--text-main, #0f172a);
         }
         .library-crumb button {
           border: none;
           background: none;
           padding: 0;
           font: inherit;
-          color: #64748b;
+          color: var(--text-muted, #64748b);
           cursor: pointer;
         }
         .library-crumb button:hover {
-          color: #0f172a;
+          color: var(--text-main, #0f172a);
         }
         .library-crumb span {
-          color: #cbd5e1;
+          color: var(--text-muted, #cbd5e1);
           font-weight: 500;
         }
         .library-trash-note {
           margin: 0 0 18px;
           padding: 14px 16px;
           border-radius: 12px;
-          background: #f4f7fb;
-          color: #475569;
+          background: color-mix(in srgb, var(--bg-card, #1e293b) 80%, transparent);
+          border: 1px solid var(--border-color, #e2e8f0);
+          color: var(--text-muted, #475569);
           font-size: 14px;
         }
         .library-days-left {
@@ -890,9 +896,9 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           min-width: 190px;
           padding: 6px;
           border-radius: 12px;
-          background: #fff;
-          border: 1px solid #e6ebf2;
-          box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+          background: var(--bg-card, #fff);
+          border: 1px solid var(--border-color, #e6ebf2);
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
           z-index: 5;
         }
         .library-trash-pop button {
@@ -905,14 +911,18 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           border-radius: 8px;
           padding: 9px 10px;
           font-size: 14px;
-          color: #1e293b;
+          color: var(--text-main, #1e293b);
           cursor: pointer;
         }
         .library-trash-pop button:hover {
-          background: #f8fafc;
+          background: color-mix(in srgb, var(--primary, #2563eb) 10%, transparent);
+          color: var(--primary, #2563eb);
         }
         .library-trash-pop button.is-danger {
-          color: #dc2626;
+          color: var(--delete-red, #dc2626);
+        }
+        .library-trash-pop button.is-danger:hover {
+          background: color-mix(in srgb, var(--delete-red, #dc2626) 12%, transparent);
         }
         .library-head {
           position: relative;
@@ -961,9 +971,9 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           height: 40px;
           padding: 0 14px;
           border-radius: 999px;
-          border: 1px solid #e6ebf2;
-          background: #f4f7fb;
-          color: #94a3b8;
+          border: 1px solid var(--border-color, #e6ebf2);
+          background: var(--bg-surface, #f4f7fb);
+          color: var(--text-muted, #94a3b8);
         }
         .library-search input {
           flex: 1;
@@ -980,9 +990,9 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           gap: 2px;
           height: 40px;
           padding: 4px;
-          border: 1px solid #e6ebf2;
+          border: 1px solid var(--border-color, #e6ebf2);
           border-radius: 999px;
-          background: #f4f7fb;
+          background: var(--bg-surface, #f4f7fb);
         }
         .library-view-toggle button {
           width: 32px;
@@ -990,16 +1000,16 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           border: none;
           border-radius: 999px;
           background: transparent;
-          color: #64748b;
+          color: var(--text-muted, #64748b);
           display: inline-flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
         }
         .library-view-toggle button.is-on {
-          background: #fff;
+          background: var(--bg-card, #fff);
           color: var(--primary, #2563eb);
-          box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
         }
         .library-new-wrap {
           position: relative;
@@ -1023,13 +1033,15 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           min-width: 220px;
           padding: 8px;
           border-radius: 16px;
-          box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
+          background: var(--bg-card, #ffffff);
+          border: 1px solid var(--border-color, #e5e7eb);
+          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
         }
         .library-new-menu-label {
           padding: 8px 10px 6px;
           font-size: 12px;
           font-weight: 600;
-          color: #94a3b8;
+          color: var(--text-muted, #94a3b8);
         }
         .library-new-menu button {
           gap: 12px;
@@ -1037,13 +1049,17 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           border-radius: 10px;
           font-size: 15px;
           font-weight: 550;
-          color: #1e293b;
+          color: var(--text-main, #1e293b);
         }
         .library-new-menu button svg {
-          color: #64748b;
+          color: var(--text-muted, #64748b);
         }
         .library-new-menu button:hover {
-          background: #f1f5f9;
+          background: color-mix(in srgb, var(--primary, #2563eb) 12%, transparent);
+          color: var(--primary, #2563eb);
+        }
+        .library-new-menu button:hover svg {
+          color: var(--primary, #2563eb);
         }
         .library-grid.is-list {
           column-count: 1;
@@ -1262,6 +1278,24 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           0% { transform: translateX(-120%); }
           100% { transform: translateX(320%); }
         }
+        .library-empty-action-btn {
+          margin-top: 16px;
+          padding: 8px 18px;
+          border-radius: 999px;
+          border: 1px solid var(--border-color, #e2e8f0);
+          background: var(--bg-card, #fff);
+          color: var(--text-main, #111827);
+          font-size: 13px;
+          font-weight: 550;
+          cursor: pointer;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+          transition: all 0.2s ease;
+        }
+        .library-empty-action-btn:hover {
+          border-color: color-mix(in srgb, var(--primary, #2563eb) 40%, var(--border-color, #e2e8f0));
+          background: color-mix(in srgb, var(--primary, #2563eb) 8%, var(--bg-card, #fff));
+          color: var(--primary, #2563eb);
+        }
       `}</style>
       
       <div className="library-head">
@@ -1458,22 +1492,10 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           {libraryView !== 'library' ? (
             <button
               type="button"
+              className="library-empty-action-btn"
               onClick={() => {
                 setLibraryView('library');
                 clearSelection();
-              }}
-              style={{
-                marginTop: '16px',
-                padding: '8px 18px',
-                borderRadius: '999px',
-                border: '1px solid #e2e8f0',
-                background: '#fff',
-                color: 'var(--text-main, #111827)',
-                fontSize: '13px',
-                fontWeight: '550',
-                cursor: 'pointer',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                transition: 'all 0.2s',
               }}
             >
               Back to Library
@@ -1481,40 +1503,16 @@ export default function WorkspaceImageLibrary({ workspaceId, onImageClick, onSta
           ) : query.trim() ? (
             <button
               type="button"
+              className="library-empty-action-btn"
               onClick={() => setQuery('')}
-              style={{
-                marginTop: '16px',
-                padding: '8px 18px',
-                borderRadius: '999px',
-                border: '1px solid #e2e8f0',
-                background: '#fff',
-                color: 'var(--text-main, #111827)',
-                fontSize: '13px',
-                fontWeight: '550',
-                cursor: 'pointer',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                transition: 'all 0.2s',
-              }}
             >
               Clear search
             </button>
           ) : category !== 'all' ? (
             <button
               type="button"
+              className="library-empty-action-btn"
               onClick={() => setCategory('all')}
-              style={{
-                marginTop: '16px',
-                padding: '8px 18px',
-                borderRadius: '999px',
-                border: '1px solid #e2e8f0',
-                background: '#fff',
-                color: 'var(--text-main, #111827)',
-                fontSize: '13px',
-                fontWeight: '550',
-                cursor: 'pointer',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                transition: 'all 0.2s',
-              }}
             >
               Show all images
             </button>

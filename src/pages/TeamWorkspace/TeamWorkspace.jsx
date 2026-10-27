@@ -1013,6 +1013,12 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
         onInviteClick={() => setShowNotifications(true)}
         totalCredits={totalAvailableCredits}
         creditsLoading={personalCredits === null}
+        workspaceCredits={
+          activeWorkspace?.type === 'workspace' ? Number(activeWorkspace.workspaceCredits ?? 0) : null
+        }
+        onWorkspaceCreditsClick={
+          activeWorkspace?.type === 'workspace' ? () => handleOpenAllocateCredits(activeWorkspace) : undefined
+        }
         showBack={currentLevel.type !== 'root'}
         onBack={handleNavigateBack}
         backLabel={
@@ -1154,6 +1160,8 @@ const TeamWorkspace = ({ onCreate, onEdit, onOpenImage }) => {
       <AllocateCreditsModal
         isOpen={!!allocateCreditsWorkspace}
         workspace={allocateCreditsWorkspace}
+        overallCredits={personalCredits === null ? null : totalAvailableCredits}
+        canTransfer={isOwnedTeamWorkspace(allocateCreditsWorkspace)}
         onClose={() => setAllocateCreditsWorkspace(null)}
         onSuccess={({ workspaceId, amount, mode, personalCredits: nextPersonal }) => {
           const workspaceName = allocateCreditsWorkspace?.name || 'workspace'

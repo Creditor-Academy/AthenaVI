@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useRef, Fragment } from 'react'
 import {
+  MdApps,
   MdBrush,
   MdImage,
   MdMovieCreation,
@@ -29,14 +30,22 @@ import { VideoRow } from './ViewRows.jsx'
 import { SkeletonItemCard, SkeletonListRow } from '../../../../pages/page-skeleton/SkeletonPrimitives.jsx'
 
 const CATEGORY_ICONS = {
+  all: MdApps,
   video: MdVideoLibrary,
   presentation: MdSlideshow,
   canvas: MdBrush,
   image: MdImage,
 }
 
-/** Per-tab create button + empty-state copy. */
+/** Per-tab create button + empty-state copy. "All" has no create action — pick a type tab. */
 const CATEGORY_CREATE = {
+  all: {
+    label: null,
+    icon: MdApps,
+    emptyMessage: 'Nothing here yet',
+    emptyActionLabel: null,
+    emptyIcon: MdApps,
+  },
   video: {
     label: 'New Video',
     icon: MdMovieCreation,
@@ -100,7 +109,7 @@ export default function WorkspaceLibrary({
   const currentUserId = extractUserId(authUser)
 
   const [categories, setCategories] = useState(FALLBACK_CATEGORIES)
-  const [activeCategory, setActiveCategory] = useState('video')
+  const [activeCategory, setActiveCategory] = useState('all')
   const [items, setItems] = useState([])
   const [loadingCategories, setLoadingCategories] = useState(true)
   const [loadingItems, setLoadingItems] = useState(false)
@@ -126,8 +135,8 @@ export default function WorkspaceLibrary({
       const next = normalizeLibraryCategories(data.categories)
       setCategories(next)
       setActiveCategory((prev) => {
-        if (next.some((c) => c.id === prev)) return prev
-        return next[0]?.id || 'video'
+        if (prev === 'all' || next.some((c) => c.id === prev)) return prev
+        return 'all'
       })
     } catch (err) {
       console.error('Failed to load workspace library categories:', err)
@@ -159,8 +168,9 @@ export default function WorkspaceLibrary({
       setItems(normalized)
 
       // Keep folder-scoped video/PPT badge counts aligned with the filtered list.
-      // Image counts stay from categories (paginated list length is not total).
-      if (activeCategory !== 'image') {
+      // Image counts stay from categories (paginated list length is not total);
+      // "All" is the sum of the other tabs.
+      if (activeCategory !== 'image' && activeCategory !== 'all') {
         setCategories((prev) =>
           prev.map((cat) =>
             cat.id === activeCategory ? { ...cat, count: normalized.length } : cat
@@ -184,15 +194,27 @@ export default function WorkspaceLibrary({
     loadItems()
   }, [loadItems])
 
+  const tabs = useMemo(
+    () => [
+      {
+        id: 'all',
+        label: 'All',
+        count: categories.reduce((sum, cat) => sum + (Number(cat.count) || 0), 0),
+      },
+      ...categories,
+    ],
+    [categories]
+  )
+
   const activeMeta = useMemo(() => {
     return (
-      categories.find((c) => c.id === activeCategory) || {
+      tabs.find((c) => c.id === activeCategory) || {
         id: activeCategory,
         label: activeCategory,
         count: items.length,
       }
     )
-  }, [categories, activeCategory, items.length])
+  }, [tabs, activeCategory, items.length])
 
   const sortedItems = useMemo(() => sortItems(items), [items, sortItems])
   const visibleSortedItems = useMemo(
@@ -225,6 +247,7 @@ export default function WorkspaceLibrary({
   }, [hasMore, sortedItems.length])
 
   const createMeta = CATEGORY_CREATE[activeCategory] || CATEGORY_CREATE.video
+  const canCreateHere = canEdit && Boolean(createMeta.label)
 
   const handleCreate = () => {
     if (activeCategory === 'presentation') onCreatePresentation?.()
@@ -264,7 +287,7 @@ export default function WorkspaceLibrary({
         )
       : null
 
-    if (viewMode === 'tile' && canEdit) {
+    if (viewMode === 'tile' && canCreateHere) {
       return (
         <Fragment>
           <CreateVideoCard
@@ -298,7 +321,7 @@ export default function WorkspaceLibrary({
         aria-label="Workspace content categories"
       >
         <div className="workspace-root-tabs">
-          {categories.map((cat) => {
+          {tabs.map((cat) => {
             const Icon = CATEGORY_ICONS[cat.id] || MdVideoLibrary
             const isActive = activeCategory === cat.id
             return (
@@ -353,11 +376,11 @@ export default function WorkspaceLibrary({
         listClassName="project-list-view"
         emptyMessage={loadingItems ? 'Loading…' : createMeta.emptyMessage}
         emptyIcon={createMeta.emptyIcon}
-        emptyActionLabel={canEdit ? createMeta.emptyActionLabel : null}
+        emptyActionLabel={canCreateHere ? createMeta.emptyActionLabel : null}
         emptyActionIcon={createMeta.icon}
         emptyActionClass="workspace-create-action-btn"
-        onEmptyAction={canEdit && !loadingItems ? handleCreate : null}
-        showCreateButton={canEdit && viewMode === 'list' && !loadingItems}
+        onEmptyAction={canCreateHere && !loadingItems ? handleCreate : null}
+        showCreateButton={canCreateHere && viewMode === 'list' && !loadingItems}
         createButtonLabel={createMeta.label}
         createButtonIcon={createMeta.icon}
         createButtonClass="workspace-create-action-btn"
