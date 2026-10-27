@@ -7,6 +7,15 @@ import { filterProjectsInFolder, resolveProjectFolderId, findDuplicateProjectNam
 class WorkspaceService {
   constructor() {
     this.baseURL = ''; // Not used anymore as we use buildUrl
+    // Bumped when the user's set of workspaces changes (create / delete / leave / join),
+    // so caches built on the workspace list (brand kit lists) know to refetch.
+    this.membershipEpoch = 0;
+    this.inflightWorkspaceList = null;
+  }
+
+  invalidateWorkspaceList() {
+    this.membershipEpoch += 1;
+    this.inflightWorkspaceList = null;
   }
 
   normalizeId(item) {
@@ -74,8 +83,19 @@ class WorkspaceService {
     return fallbackMessage;
   }
 
-  // List all workspaces for the current user
-  async listWorkspaces() {
+  // List all workspaces for the current user. Simultaneous callers (several screens and
+  // helpers resolve the workspace list on mount) share one in-flight request.
+  listWorkspaces() {
+    if (!this.inflightWorkspaceList) {
+      const request = this.fetchWorkspaces().finally(() => {
+        if (this.inflightWorkspaceList === request) this.inflightWorkspaceList = null;
+      });
+      this.inflightWorkspaceList = request;
+    }
+    return this.inflightWorkspaceList;
+  }
+
+  async fetchWorkspaces() {
     try {
       const response = await fetch(buildUrl('/api/workspaces'), {
         method: 'GET',
@@ -123,6 +143,7 @@ class WorkspaceService {
 
   // Create new team workspace
   async createWorkspace(name) {
+    this.invalidateWorkspaceList();
     try {
       const response = await fetch(buildUrl('/api/workspaces'), {
         method: 'POST',
@@ -144,6 +165,8 @@ class WorkspaceService {
     } catch (error) {
       console.error('Error in createWorkspace:', error);
       throw error;
+    } finally {
+      this.invalidateWorkspaceList();
     }
   }
 
@@ -247,7 +270,12 @@ class WorkspaceService {
 
   // Delete workspace (TEAM only)
   async deleteWorkspace(workspaceId) {
-    return this.deleteResource(`/api/workspaces/${workspaceId}`, 'workspace');
+    this.invalidateWorkspaceList();
+    try {
+      return await this.deleteResource(`/api/workspaces/${workspaceId}`, 'workspace');
+    } finally {
+      this.invalidateWorkspaceList();
+    }
   }
 
   // Get workspace members
@@ -352,6 +380,7 @@ class WorkspaceService {
 
   // Accept workspace invitation
   async acceptInvitation(token) {
+    this.invalidateWorkspaceList();
     try {
       const response = await fetch(buildUrl('/api/workspaces/invitations/accept'), {
         method: 'POST',
@@ -372,6 +401,8 @@ class WorkspaceService {
     } catch (error) {
       console.error('Error accepting invitation:', error);
       throw error;
+    } finally {
+      this.invalidateWorkspaceList();
     }
   }
   // Change member role (OWNER only)
@@ -440,6 +471,7 @@ class WorkspaceService {
 
   // Leave workspace (remove self). Members can't call DELETE /members/:id, so use /leave.
   async leaveWorkspace(workspaceOrId) {
+    this.invalidateWorkspaceList();
     try {
       const workspace = typeof workspaceOrId === 'object' && workspaceOrId !== null ? workspaceOrId : null;
       const workspaceId = workspace?.id || workspace?._id || workspaceOrId;
@@ -466,6 +498,8 @@ class WorkspaceService {
     } catch (error) {
       console.error('Error in leaveWorkspace:', error);
       throw error;
+    } finally {
+      this.invalidateWorkspaceList();
     }
   }
 
