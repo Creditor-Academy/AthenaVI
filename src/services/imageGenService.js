@@ -227,6 +227,16 @@ class ImageGenService {
         )
       }
 
+      if (response.status === 413) {
+        const payload = await this.readPayload(response).catch(() => ({}))
+        const err = new Error(
+          payload?.message || 'File size limit exceeded. Please upload a smaller image (max 10 MB).'
+        )
+        err.status = 413
+        err.data = payload
+        throw err
+      }
+
       if (!response.ok) {
         const payload = await this.readPayload(response)
         const err = new Error(payload.message || `Image Gen request failed: ${response.status}`)
