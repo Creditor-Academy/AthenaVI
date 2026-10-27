@@ -4,10 +4,7 @@ import brandKitService, { BrandKitPermissionError } from '../../services/brandKi
 import { InsufficientCreditsError } from '../../services/creditsService'
 import presentationService from '../../services/presentationService'
 import { resolvePresentationWorkspaceContext } from '../../utils/presentationContext'
-import {
-  listBrandKitWorkspaces,
-  resolveBrandKitsWorkspaceContext,
-} from '../../utils/brandKitWorkspace'
+import { listBrandKitWorkspaces } from '../../utils/brandKitWorkspace'
 import {
   canWriteBrandKits,
   dedupeBrandKitList,
@@ -128,6 +125,8 @@ function BrandKits() {
   const pendingUploadRole = useRef('primary')
   const savedSnapshotRef = useRef(null)
   const toastTimeoutRef = useRef(null)
+  const kitsByWorkspaceRef = useRef(new Map())
+  const mockupsLoadedForRef = useRef(null)
 
   const canWrite = canWriteBrandKits(workspaceRole)
 
@@ -240,39 +239,49 @@ function BrandKits() {
     menuRefs.current[id] = el
   }, [])
 
+  /**
+   * Refresh kit lists and rebuild the cross-workspace view. Pass `allWorkspaces` to load
+   * every workspace (initial load); otherwise only `wsId` is refetched and the other
+   * workspaces' lists are reused — saves/uploads used to re-list every workspace.
+   */
   const loadKits = useCallback(async (wsId, allWorkspaces = []) => {
-    const wsTargets =
-      allWorkspaces.length > 0
-        ? allWorkspaces
-        : workspacesRef.current.length > 0
-        ? workspacesRef.current
-        : wsId
-        ? [{ id: wsId }]
-        : []
+    const kitsByWorkspace = kitsByWorkspaceRef.current
+    const wsTargets = allWorkspaces.length > 0 ? allWorkspaces : wsId ? [{ id: wsId }] : []
 
-    const seen = new Set()
-    const merged = []
-
-    const results = await Promise.allSettled(
+    await Promise.allSettled(
       wsTargets.map(async (ws) => {
-        if (!ws?.id) return []
+        if (!ws?.id) return
         const list = await brandKitService.list(ws.id, { includePersonal: false })
-        return (list || []).map((kit) => ({
-          ...kit,
-          workspaceId: ws.id,
-          originWorkspaceId: kit.workspaceId || ws.id,
-        }))
+        kitsByWorkspace.set(
+          String(ws.id),
+          (list || []).map((kit) => ({
+            ...kit,
+            workspaceId: ws.id,
+            originWorkspaceId: kit.workspaceId || ws.id,
+          }))
+        )
       })
     )
+    if (allWorkspaces.length > 0) {
+      const keep = new Set(allWorkspaces.map((ws) => String(ws?.id)))
+      for (const id of [...kitsByWorkspace.keys()]) {
+        if (!keep.has(id)) kitsByWorkspace.delete(id)
+      }
+    }
 
-    for (const res of results) {
-      if (res.status === 'fulfilled' && Array.isArray(res.value)) {
-        for (const kit of res.value) {
-          const id = String(kit?.id || '')
-          if (!id || seen.has(id)) continue
-          seen.add(id)
-          merged.push(kit)
-        }
+    // Stable order: known workspaces first (as listed), then any others we hold lists for.
+    const order = [
+      ...workspacesRef.current.map((ws) => String(ws.id)),
+      ...kitsByWorkspace.keys(),
+    ]
+    const seen = new Set()
+    const merged = []
+    for (const id of order) {
+      for (const kit of kitsByWorkspace.get(id) || []) {
+        const kitId = String(kit?.id || '')
+        if (!kitId || seen.has(kitId)) continue
+        seen.add(kitId)
+        merged.push(kit)
       }
     }
 
@@ -311,22 +320,18 @@ function BrandKits() {
       setLoading(true)
       setError('')
       try {
-        const [wsList, ctx] = await Promise.all([
-          listBrandKitWorkspaces(),
-          resolveBrandKitsWorkspaceContext(),
-        ])
+        // Personal workspace first, as before. The presentation folder is resolved lazily
+        // when a guideline deck is generated — resolving it here cost a second workspace
+        // list + a folder list, and could create a "Presentations" folder just by visiting.
+        const wsList = await listBrandKitWorkspaces()
         if (cancelled) return
+        if (!wsList.length) throw new Error('No workspace found.')
         updateWorkspaces(wsList)
-        const selected =
-          wsList.find((ws) => String(ws.id) === String(ctx.workspaceId)) ||
-          wsList.find((ws) => ws.isPersonal) ||
-          wsList[0] ||
-          null
-        const wsId = selected?.id || ctx.workspaceId
-        setWorkspaceId(wsId)
-        setWorkspaceRole(selected?.role || ctx.workspace?.role || 'OWNER')
-        setFolderId(ctx.folderId || null)
-        await loadKits(wsId, wsList)
+        const selected = wsList.find((ws) => ws.isPersonal) || wsList[0]
+        setWorkspaceId(selected.id)
+        setWorkspaceRole(selected.role || 'OWNER')
+        setFolderId(null)
+        await loadKits(selected.id, wsList)
       } catch (err) {
         if (!cancelled) setError(err.message || 'Failed to load brand kits')
       } finally {
@@ -350,11 +355,9 @@ function BrandKits() {
       setError('')
       setLoading(true)
       try {
-        const ctx = await resolvePresentationWorkspaceContext({
-          preferredWorkspaceId: nextWorkspaceId,
-        })
-        setFolderId(ctx.folderId || null)
-        await loadKits(nextWorkspaceId, workspacesRef.current)
+        // Folder resolves lazily at guideline generation; other workspaces' lists are reused.
+        setFolderId(null)
+        await loadKits(nextWorkspaceId)
       } catch (err) {
         setError(err.message || 'Failed to load brand kits for this workspace')
         setBrandKits([])
@@ -446,6 +449,7 @@ function BrandKits() {
     setMockupSaved([])
     setMockupPreviews({})
     setMockupGeneratingId(null)
+    mockupsLoadedForRef.current = null
     setLeaveModalOpen(false)
     setShowEditor(true)
     setEditingKitId(kit.id)
@@ -1197,8 +1201,13 @@ function BrandKits() {
     return (kitMedia || []).some((m) => String(m.kind || m.type || '').toLowerCase() === 'logo')
   }, [kitMedia])
 
-  const loadMockups = useCallback(async () => {
+  const loadMockups = useCallback(async ({ force = false } = {}) => {
     if (!workspaceId || !editingKitId) return
+    // The Imagery tab calls this on every mount; the catalog and saved mockups only need
+    // loading once per kit (generate/delete keep the saved list in sync themselves).
+    const loadKey = `${workspaceId}:${editingKitId}`
+    if (!force && mockupsLoadedForRef.current === loadKey) return
+    mockupsLoadedForRef.current = loadKey
     setMockupLoading(true)
     try {
       const [catalog, listed] = await Promise.all([
@@ -1218,6 +1227,7 @@ function BrandKits() {
         )
       }
     } catch (err) {
+      mockupsLoadedForRef.current = null
       handleApiError(err, 'Failed to load logo mockups')
     } finally {
       setMockupLoading(false)

@@ -77,16 +77,17 @@ export function normalizeWorkspace(rawWorkspace, currentUserId, authUser) {
     rawWorkspace.creator?._id
   );
 
-  const role = readRole(rawWorkspace);
-
-  const ownerInMembers = Array.isArray(rawWorkspace.members)
-    ? rawWorkspace.members.some((member) => {
-      const memberId = normalizeId(
-        member.userId || member.user?.id || member.user?._id || member.user || member.id || member._id
-      );
-      return memberId === currentUserId && String(member.role || '').toUpperCase() === 'OWNER';
+  // The caller's own membership row (the list API returns it with userId) is the
+  // most direct source of their role; readRole falls back to MEMBER when nothing matches.
+  const ownMembership = Array.isArray(rawWorkspace.members) && currentUserId
+    ? rawWorkspace.members.find((member) => {
+      const memberUserId = normalizeId(member.userId || member.user?.id || member.user?._id || member.user);
+      return memberUserId === currentUserId;
     })
-    : false;
+    : null;
+  const role = ownMembership?.role ? String(ownMembership.role).toUpperCase() : readRole(rawWorkspace);
+
+  const ownerInMembers = role === 'OWNER' && Boolean(ownMembership);
 
   const isOwner =
     isPersonal ||

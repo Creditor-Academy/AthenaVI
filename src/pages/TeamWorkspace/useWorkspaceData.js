@@ -114,82 +114,13 @@ export function useWorkspaceData({ currentUserId, authUser, authLoading }) {
         })
       );
 
-      // Read localAdditions fresh from state via callback to avoid stale closure
-      setLocalAdditions((currentLocalAdditions) => {
-        let merged = withCredits.map((workspace) => {
-          const localWorkspaceMeta = currentLocalAdditions.workspaces.find(
-            (localWorkspace) =>
-              String(localWorkspace.id) === String(workspace.id) && localWorkspace.createdByCurrentUser
-          );
-          if (!localWorkspaceMeta) return workspace;
-          return {
-            ...workspace,
-            name: localWorkspaceMeta.name || workspace.name,
-            type: 'workspace',
-            userRole: 'OWNER',
-            ownerId: currentUserId || workspace.ownerId,
-            ownerName: authUser?.name || 'You'
-          };
-        });
-
-        if (!merged.some((workspace) => workspace.type === 'personal')) {
-          merged.unshift({
-            id: 'personal-default',
-            name: 'Personal Workspace',
-            type: 'personal',
-            ownerId: currentUserId || 'self',
-            ownerName: authUser?.name || 'You',
-            members: [],
-            folders: [],
-            userRole: 'OWNER'
-          });
-        }
-
-        currentLocalAdditions.workspaces.forEach((localWorkspace) => {
-          if (!merged.some((workspace) => String(workspace.id) === String(localWorkspace.id))) {
-            merged.push({
-              ...localWorkspace,
-              userRole: 'OWNER',
-              type: localWorkspace.type === 'personal' ? 'personal' : 'workspace',
-              folders: localWorkspace.folders || []
-            });
-          }
-        });
-
-        merged = merged.map((workspace) => {
-          const localFolders = currentLocalAdditions.folders[workspace.id] || [];
-          const mergedFolders = [...(workspace.folders || [])];
-
-          localFolders.forEach((localFolder) => {
-            if (!mergedFolders.some((existing) => String(existing.id) === String(localFolder.id))) {
-              mergedFolders.push(localFolder);
-            }
-          });
-
-          const foldersWithLocalVideos = mergedFolders.map((folder) => {
-            const localVideos = currentLocalAdditions.videos[folder.id] || [];
-            const mergedVideos = [...(folder.videos || [])];
-
-            localVideos.forEach((localVideo) => {
-              if (!mergedVideos.some((video) => String(video.id) === String(localVideo.id))) {
-                mergedVideos.push(localVideo);
-              }
-            });
-
-            return { ...folder, videos: mergedVideos };
-          });
-
-          return { ...workspace, folders: foldersWithLocalVideos };
-        });
-
-        setWorkspaces(merged);
-        return currentLocalAdditions; // unchanged
-      });
-    } catch (error) {
-      console.error('Failed to load workspaces:', error);
-      setWorkspaces([
-        {
-          id: 'personal-fallback',
+      // The server list is authoritative after a full load. Local additions only bridged the
+      // gap before it existed; re-adding entries the server no longer returns resurrected
+      // deleted items, and forcing OWNER on them hid real role changes.
+      const merged = [...withCredits];
+      if (!merged.some((workspace) => workspace.type === 'personal')) {
+        merged.unshift({
+          id: 'personal-default',
           name: 'Personal Workspace',
           type: 'personal',
           ownerId: currentUserId || 'self',
@@ -197,8 +128,29 @@ export function useWorkspaceData({ currentUserId, authUser, authLoading }) {
           members: [],
           folders: [],
           userRole: 'OWNER'
-        }
-      ]);
+        });
+      }
+      setWorkspaces(merged);
+      setLocalAdditions({ workspaces: [], folders: {}, videos: {} });
+    } catch (error) {
+      console.error('Failed to load workspaces:', error);
+      // Keep what's on screen — a failed refresh (e.g. after a delete) must not wipe the list.
+      setWorkspaces((prev) =>
+        prev.length
+          ? prev
+          : [
+            {
+              id: 'personal-fallback',
+              name: 'Personal Workspace',
+              type: 'personal',
+              ownerId: currentUserId || 'self',
+              ownerName: authUser?.name || 'You',
+              members: [],
+              folders: [],
+              userRole: 'OWNER'
+            }
+          ]
+      );
     } finally {
       setLoading(false);
     }

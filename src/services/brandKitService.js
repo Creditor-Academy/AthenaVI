@@ -38,7 +38,21 @@ export class BrandKitPermissionError extends Error {
   }
 }
 
+/** How long a fetched kit detail is reused by concurrent / back-to-back callers. */
+const DETAIL_CACHE_TTL_MS = 15_000
+
 class BrandKitService {
+  constructor() {
+    // Bumped on every write so cached reads (here and in brandKitWorkspace) go stale at once.
+    this.cacheEpoch = 0
+    this.detailCache = new Map()
+  }
+
+  invalidateCaches() {
+    this.cacheEpoch += 1
+    this.detailCache.clear()
+  }
+
   unwrap(json) {
     return json?.data ?? json
   }
@@ -48,6 +62,17 @@ class BrandKitService {
   }
 
   async request(endpoint, options = {}) {
+    const isWrite = String(options.method || 'GET').toUpperCase() !== 'GET'
+    if (isWrite) this.invalidateCaches()
+    try {
+      return await this.sendRequest(endpoint, options)
+    } finally {
+      // Again after the write lands, so reads that raced it aren't kept.
+      if (isWrite) this.invalidateCaches()
+    }
+  }
+
+  async sendRequest(endpoint, options = {}) {
     const headers = {
       ...getAuthHeaders(),
       ...(options.headers || {}),
@@ -119,9 +144,24 @@ class BrandKitService {
     }
   }
 
+  /**
+   * Kit detail. Concurrent and back-to-back callers (editor, media panel, vibe step)
+   * share one request; any brand kit write invalidates it.
+   */
   async get(workspaceId, brandKitId) {
-    const data = await this.request(API_CONFIG.ENDPOINTS.BRAND_KITS.ONE(workspaceId, brandKitId))
-    return normalizeBrandKitDetail(data)
+    const key = `${workspaceId}:${brandKitId}`
+    const cached = this.detailCache.get(key)
+    if (cached && cached.epoch === this.cacheEpoch && Date.now() - cached.at < DETAIL_CACHE_TTL_MS) {
+      return cached.promise
+    }
+    const promise = this.request(API_CONFIG.ENDPOINTS.BRAND_KITS.ONE(workspaceId, brandKitId))
+      .then((data) => normalizeBrandKitDetail(data))
+    const entry = { epoch: this.cacheEpoch, at: Date.now(), promise }
+    this.detailCache.set(key, entry)
+    promise.catch(() => {
+      if (this.detailCache.get(key) === entry) this.detailCache.delete(key)
+    })
+    return promise
   }
 
   create(workspaceId, { name, isDefault = false, data } = {}) {
