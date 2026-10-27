@@ -5,6 +5,7 @@ import { normalizeSceneClips } from '../../../../utils/clipLayout';
 import { normalizeClipsToScene } from '../../../../utils/editorLayerUtils';
 import LiveCanvasRenderer from '../../editor/editor/LiveCanvasRenderer';
 import DefaultProjectThumbnail from './DefaultProjectThumbnail.jsx';
+import { resolveLibraryKind } from '../../../../utils/workspaceLibrary.js';
 
 const scenePreviewCache = new Map();
 
@@ -27,11 +28,17 @@ const ProjectSceneThumbnail = ({ video }) => {
   const workspaceId = video?.workspaceId;
   const projectId = video?.id || video?._id;
   const cacheKey = workspaceId && projectId ? `${workspaceId}:${projectId}` : '';
+  const kind = resolveLibraryKind(video);
+  const storedThumb = video?.thumbnailUrl || video?.thumbnail || '';
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadPreview() {
+      if (kind === 'canvas') {
+        setLoading(false);
+        return;
+      }
       if (!workspaceId || !projectId) {
         setLoading(false);
         return;
@@ -77,7 +84,27 @@ const ProjectSceneThumbnail = ({ video }) => {
     return () => {
       cancelled = true;
     };
-  }, [workspaceId, projectId, cacheKey, video?.data]);
+  }, [workspaceId, projectId, cacheKey, video?.data, kind]);
+
+  if (kind === 'canvas') {
+    if (storedThumb) {
+      return (
+        <img
+          src={storedThumb}
+          alt={video?.name || video?.title || ''}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          draggable={false}
+        />
+      );
+    }
+    return (
+      <DefaultProjectThumbnail
+        title={video?.name || video?.title || video?.id}
+        category="canvas"
+        showLabel={false}
+      />
+    );
+  }
 
   if (!previewScene) {
     return <DefaultProjectThumbnail title={video?.name || video?.title || video?.id} category={video?.category || 'video'} />;

@@ -71,6 +71,7 @@ import {
 } from '../../utils/canvasEditorSession.js'
 import useDashboardSearch from '../../hooks/useDashboardSearch.js'
 import { applySearchResult } from '../../utils/dashboardSearchNavigate.js'
+import { createSurfaceForOption, editorSurfaceForLibraryItem } from '../../utils/editorSurface.js'
 import './Dashboard.css'
 
 const AVATAR_FLOW_SECTIONS = new Set(['avatars', 'create-avatar-look', 'create-avatar'])
@@ -337,13 +338,12 @@ function Dashboard({ onCreate, initialSection }) {
 
   const handleEditVideo = useCallback(
     (video) => {
-      const kind = String(video?.kind || video?.category || '').toLowerCase()
-      const projectType = String(video?.type || video?.projectType || '').toUpperCase()
+      const surface = editorSurfaceForLibraryItem(video)
       const folderId =
         video?.folderId || (video?.folder && (video.folder.id || video.folder._id)) || null
 
-      // Design canvases have their own editor — never the video editor at /create.
-      if (kind === 'canvas' || projectType === 'CANVAS') {
+      // Design canvases have their own editor — never AIPptEditor or the video editor.
+      if (surface === 'canvas') {
         openCanvasEditor({
           workspaceId: video.workspaceId,
           canvasId: video.id || video._id,
@@ -354,7 +354,7 @@ function Dashboard({ onCreate, initialSection }) {
         return
       }
 
-      if (kind === 'presentation' || projectType === 'PRESENTATION') {
+      if (surface === 'presentation') {
         openPresentationEditor({
           outline: [],
           config: {
@@ -379,6 +379,8 @@ function Dashboard({ onCreate, initialSection }) {
           workspace: video.workspace || video.workspaceName || '',
           folder: video.folder?.name || video.folderName || video.folder || '',
           name: video.title || video.name,
+          openComments: video.openComments,
+          highlightCommentId: video.highlightCommentId,
           videoData: video,
         })
       }
@@ -388,9 +390,24 @@ function Dashboard({ onCreate, initialSection }) {
 
   const notificationNavigateHandlers = useMemo(() => ({
     onOpenEditor: (config) => {
-      if (onCreate) {
-        onCreate(config || null)
+      const id = config?.videoId || config?.id
+      if (!id) {
+        onCreate?.(config || null)
+        return
       }
+      handleEditVideo({
+        ...config,
+        id,
+        workspaceId: config.workspaceId,
+        folderId: config.folderId || null,
+        type: config.type || config.projectType,
+        projectType: config.projectType || config.type,
+        kind: config.kind,
+        name: config.name || config.title,
+        title: config.title || config.name,
+        openComments: config.openComments,
+        highlightCommentId: config.highlightCommentId,
+      })
     },
     onGoToSection: (targetSection, options = {}) => {
       if (options.settingsTab) {
@@ -398,7 +415,7 @@ function Dashboard({ onCreate, initialSection }) {
       }
       goToSection(targetSection)
     },
-  }), [onCreate, goToSection])
+  }), [onCreate, goToSection, handleEditVideo])
 
   useEffect(() => {
     const handleDashboardNavigate = (event) => {
@@ -892,7 +909,7 @@ function Dashboard({ onCreate, initialSection }) {
                   return
                 }
 
-                if (preferred === 'image-editor' && workspaceId) {
+                if (createSurfaceForOption(preferred) === 'canvas' && workspaceId) {
                   // Canvases are saved into a folder — ask for one when created from the workspace root.
                   if (!folderId) {
                     handleOpenCreateLocationModal('image-editor', { workspaceId })

@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import workspaceService from '../../services/workspaceService.js';
+import canvasService from '../../services/canvasService.js';
 import imageGenService from '../../services/imageGenService.js';
 import invitationFlowService from '../../services/invitationFlowService.js';
 import inboxService from '../../services/inboxService.js';
@@ -14,12 +15,14 @@ import {
   hasConflictingName,
   findVideoLocation,
   getAllWorkspaceNames,
+  relocateProjectInWorkspaces,
 } from './workspaceUtils.js';
 import {
   DUPLICATE_PROJECT_NAME_MESSAGE,
   findDuplicateProjectName,
   getProjectDisplayName,
 } from '../../utils/projectNameValidation.js';
+import { libraryItemRequiresFolder, libraryMoveLabel } from '../../utils/workspaceLibrary.js';
 
 /**
  * All user-triggered mutation handlers for the workspace page.
@@ -339,6 +342,26 @@ export function useWorkspaceActions({
       return;
     }
 
+    if (type === 'canvas') {
+      const workspaceId = renameTarget.workspaceId || activeWorkspace?.id;
+      const parentWorkspace =
+        workspaces.find((workspace) => String(workspace.id) === String(workspaceId)) || activeWorkspace;
+      if (!parentWorkspace || !workspaceCanEdit(parentWorkspace)) {
+        throw new Error('You do not have permission to rename this design.');
+      }
+      if (renameTarget.folderId) {
+        const projects = await workspaceService.listProjectsInFolder(parentWorkspace.id, renameTarget.folderId);
+        const duplicate = findDuplicateProjectName(newName, projects, { excludeProjectId: id });
+        if (duplicate) {
+          throw new Error(`A project named "${newName}" already exists in this folder.`);
+        }
+      }
+      await canvasService.updateCanvasMeta(parentWorkspace.id, id, { name: newName });
+      onLibraryChange?.();
+      showToast('Design renamed', 'success');
+      return;
+    }
+
     if (type === 'video') {
       const videoLocation = findVideoLocation(workspaces, id);
       const parentWorkspace = videoLocation?.workspace || activeWorkspace;
@@ -355,6 +378,7 @@ export function useWorkspaceActions({
       }
 
       await workspaceService.updateProject(parentWorkspace.id, id, { name: newName });
+      const renamed = (videoLocation?.videos || []).find((video) => String(video.id) === String(id));
       setWorkspaces((prev) =>
         prev.map((workspace) => ({
           ...workspace,
@@ -375,7 +399,8 @@ export function useWorkspaceActions({
           }))
         }))
       );
-      showToast('Video renamed successfully', 'success');
+      onLibraryChange?.();
+      showToast(`${libraryMoveLabel(renamed)} renamed`, 'success');
     }
   }, [workspaces, activeWorkspace, authUser, setWorkspaces, setLocalAdditions, setCurrentLevel, showToast, onLibraryChange]);
 
@@ -540,6 +565,24 @@ export function useWorkspaceActions({
             success: 'Chat removed',
             failure: "Couldn't remove this chat. Please try again.",
           })
+      );
+      return;
+    }
+
+    if (type === 'canvas') {
+      const parentWorkspace = workspaceContext || activeWorkspace;
+      if (!parentWorkspace || !workspaceCanEdit(parentWorkspace)) {
+        showToast('You do not have permission to delete this design.', 'error');
+        return;
+      }
+      openConfirmDialog('Delete this design? This cannot be undone.', () =>
+        runRemoval(`canvas:${id}`, {
+          request: () => canvasService.deleteCanvas(parentWorkspace.id, id),
+          onRemoved: () => onLibraryChange?.(),
+          pending: 'Deleting design…',
+          success: 'Design deleted',
+          failure: "Couldn't delete this design. Please try again.",
+        })
       );
       return;
     }
@@ -717,10 +760,15 @@ export function useWorkspaceActions({
   const handleMoveProject = useCallback(async (targetFolderId, moveTargetVideo, moveTargetWorkspace) => {
     if (!moveTargetVideo || !moveTargetWorkspace) return;
     try {
+      if (libraryItemRequiresFolder(moveTargetVideo) && !targetFolderId) {
+        throw new Error(
+          libraryMoveLabel(moveTargetVideo) === 'Design'
+            ? 'A design has to live in a folder.'
+            : 'Image chats must live in a folder.'
+        );
+      }
+
       if (moveTargetVideo.kind === 'image' || moveTargetVideo.category === 'image') {
-        if (!targetFolderId) {
-          throw new Error('Image chats must live in a folder.');
-        }
         await imageGenService.moveThread(moveTargetWorkspace.id, moveTargetVideo.id, targetFolderId);
         showToast('Chat moved', 'success');
         setMoveTargetVideo(null);
@@ -744,47 +792,37 @@ export function useWorkspaceActions({
       await workspaceService.moveProjectFolder(moveTargetWorkspace.id, moveTargetVideo.id, targetFolderId);
 
       setWorkspaces((prev) =>
-        prev.map((workspace) => {
-          if (String(workspace.id) !== String(moveTargetWorkspace.id)) return workspace;
-
-          const updatedFolders = workspace.folders.map((folder) => ({
-            ...folder,
-            videos: (folder.videos || []).filter((v) => String(v.id) !== String(moveTargetVideo.id))
-          }));
-
-          const updatedFoldersWithAdded = updatedFolders.map((folder) => {
-            if (String(folder.id) !== String(targetFolderId)) return folder;
-            const alreadyExists = (folder.videos || []).some((v) => String(v.id) === String(moveTargetVideo.id));
-            const updatedVideo = { ...moveTargetVideo, folderId: targetFolderId };
-            return {
-              ...folder,
-              videos: alreadyExists ? folder.videos : [...(folder.videos || []), updatedVideo]
-            };
-          });
-
-          let updatedRootVideos = (workspace.videos || []).filter((v) => String(v.id) !== String(moveTargetVideo.id));
-          if (!targetFolderId) {
-            const alreadyExists = updatedRootVideos.some((v) => String(v.id) === String(moveTargetVideo.id));
-            const updatedVideo = { ...moveTargetVideo, folderId: null };
-            updatedRootVideos = alreadyExists ? updatedRootVideos : [...updatedRootVideos, updatedVideo];
-          }
-
-          return {
-            ...workspace,
-            folders: updatedFoldersWithAdded,
-            videos: updatedRootVideos
-          };
+        relocateProjectInWorkspaces(prev, {
+          workspaceId: moveTargetWorkspace.id,
+          project: moveTargetVideo,
+          targetFolderId,
         })
       );
 
-      showToast('Video moved successfully', 'success');
+      showToast(`${libraryMoveLabel(moveTargetVideo)} moved`, 'success');
       setMoveTargetVideo(null);
       setMoveTargetWorkspace(null);
+      onLibraryChange?.();
     } catch (err) {
       showToast(err.message || 'Failed to move video', 'error');
       throw err;
     }
-  }, [setWorkspaces, showToast, setMoveTargetVideo, setMoveTargetWorkspace]);
+  }, [setWorkspaces, showToast, setMoveTargetVideo, setMoveTargetWorkspace, onLibraryChange]);
+
+  const handleDuplicateCanvas = useCallback(async (item, workspace) => {
+    const parentWorkspace = workspace || activeWorkspace;
+    if (!parentWorkspace || !workspaceCanEdit(parentWorkspace)) {
+      showToast('You do not have permission to duplicate this design.', 'error');
+      return;
+    }
+    try {
+      await canvasService.duplicateCanvas(parentWorkspace.id, item.id);
+      onLibraryChange?.();
+      showToast('Design duplicated', 'success');
+    } catch (error) {
+      showToast(error.message || 'Failed to duplicate design', 'error');
+    }
+  }, [activeWorkspace, showToast, onLibraryChange]);
 
   return {
     handleCreateWorkspace,
@@ -803,6 +841,7 @@ export function useWorkspaceActions({
     inviteSending,
     handleChangeMemberRole,
     handleRemoveMember,
-    handleMoveProject
+    handleMoveProject,
+    handleDuplicateCanvas,
   };
 }

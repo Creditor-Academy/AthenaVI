@@ -19,6 +19,9 @@ export {
   mapHistory,
 } from './canvasHistory.js'
 
+import { PPT_DEFAULT_PLACEMENTS } from '../../constants/pptInsertCatalog.js'
+import { normalizeElementPlacement } from '../../utils/presentationHelpers.js'
+
 export const CANVAS_DOC_VERSION = 1
 export const DEFAULT_SIZE = { width: 1080, height: 1080 }
 
@@ -103,6 +106,20 @@ export function deletePage(canvases, pageId) {
   return next.length === canvases.length ? canvases : next
 }
 
+/**
+ * Which page stays selected after a delete.
+ * Deleting a page above the selection shifts the index; deleting the selection
+ * lands on the page that slides into that slot.
+ */
+export function activeIndexAfterPageDelete(canvases, activeIndex, removedId) {
+  const removedIndex = canvases.findIndex((page) => page.id === removedId)
+  if (removedIndex < 0 || canvases.length <= 1) return Math.max(0, activeIndex)
+  const nextLength = canvases.length - 1
+  if (activeIndex > removedIndex) return activeIndex - 1
+  if (activeIndex === removedIndex) return Math.min(removedIndex, nextLength - 1)
+  return activeIndex
+}
+
 export function movePage(canvases, fromIndex, toIndex) {
   if (
     fromIndex === toIndex ||
@@ -132,6 +149,38 @@ export function insertElements(canvases, pageId, elements) {
   return canvases.map((item) =>
     item.id === pageId ? { ...item, elements: [...item.elements, ...elements] } : item
   )
+}
+
+/**
+ * Build an element from an insert payload: catalogue placement for its type, centred on
+ * the page, with the content defaults the stage renderers expect.
+ */
+export function createElement(payload, page, index, { id } = {}) {
+  const type = payload?.type || 'text'
+  const raw = normalizeElementPlacement(
+    payload?.placement || payload?.defaultPlacement || PPT_DEFAULT_PLACEMENTS[type] || PPT_DEFAULT_PLACEMENTS.text,
+    page
+  )
+  const placement = {
+    ...raw,
+    x: Math.round((page.width - raw.width) / 2),
+    y: Math.round((page.height - raw.height) / 2),
+  }
+  const content = { ...(payload?.content || {}) }
+  if (type === 'text' && !content.color && !content.colorRole) content.color = '#172033'
+  if (['image', 'icon', 'graphic'].includes(type)) {
+    if (!content.url && content.src) content.url = content.src
+    if (content.url && !content.src) content.src = content.url
+    if (content.strokeWidth == null) content.strokeWidth = 0
+  }
+  return {
+    id: id || makeId('element'),
+    type,
+    content,
+    placement,
+    layer: index + 1,
+    ...(payload?.presetId ? { presetId: payload.presetId } : {}),
+  }
 }
 
 /** Clone elements with an offset for paste / duplicate operations. */

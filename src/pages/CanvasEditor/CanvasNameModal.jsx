@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useCanvasDialogFocus } from './canvasDialogFocus'
 import { FiArrowRight, FiX } from 'react-icons/fi'
 import { DUPLICATE_PROJECT_NAME_MESSAGE } from '../../utils/projectNameValidation.js'
 import { MAX_DESIGN_NAME_LENGTH, evaluateDesignName } from './canvasNameStep'
@@ -23,8 +24,13 @@ export default function CanvasNameModal({
   const [verifying, setVerifying] = useState(false)
   const [error, setError] = useState('')
   const inputRef = useRef(null)
+  const dialogRef = useRef(null)
   const verifyingRef = useRef(false)
   const editedRef = useRef(false)
+  useCanvasDialogFocus(dialogRef, {
+    onEscape: verifying ? undefined : onCancel,
+    initialFocusRef: inputRef,
+  })
 
   // The default depends on the folder's existing names, which arrive after the modal opens.
   useEffect(() => {
@@ -70,6 +76,7 @@ export default function CanvasNameModal({
   return (
     <div className="canvas-size-modal-backdrop" onClick={onCancel}>
       <section
+        ref={dialogRef}
         className="canvas-size-modal canvas-name-modal"
         role="dialog"
         aria-modal="true"

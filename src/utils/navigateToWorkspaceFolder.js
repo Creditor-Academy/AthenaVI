@@ -35,12 +35,37 @@ export function resolveProjectFolderContext(config) {
 }
 
 /**
+ * TeamWorkspace level to open after leaving an editor.
+ * A design with a folder opens that folder, so the card is on screen.
+ */
+export function workspaceFolderLevel(config) {
+  const context = resolveProjectFolderContext(config);
+  if (!context?.workspaceId) return null;
+
+  if (context.folderId) {
+    return {
+      type: 'folder',
+      id: context.folderId,
+      ws: { id: context.workspaceId, name: context.workspaceName },
+      folder: { id: context.folderId, name: context.folderName },
+    };
+  }
+
+  return {
+    type: 'workspace',
+    id: context.workspaceId,
+    ws: { id: context.workspaceId, name: context.workspaceName },
+    folder: null,
+  };
+}
+
+/**
  * Persist TeamWorkspace navigation and return the dashboard path to open.
  */
 export function persistWorkspaceFolderNavigation(config) {
-  const context = resolveProjectFolderContext(config);
+  const payload = workspaceFolderLevel(config);
 
-  if (!context?.workspaceId) {
+  if (!payload) {
     try {
       sessionStorage.removeItem('workspaceCurrentLevel');
     } catch {
@@ -48,20 +73,6 @@ export function persistWorkspaceFolderNavigation(config) {
     }
     return '/dashboard/home';
   }
-
-  const payload = context.folderId
-    ? {
-        type: 'folder',
-        id: context.folderId,
-        ws: { id: context.workspaceId, name: context.workspaceName },
-        folder: { id: context.folderId, name: context.folderName }
-      }
-    : {
-        type: 'workspace',
-        id: context.workspaceId,
-        ws: { id: context.workspaceId, name: context.workspaceName },
-        folder: null
-      };
 
   try {
     sessionStorage.setItem('workspaceCurrentLevel', JSON.stringify(payload));

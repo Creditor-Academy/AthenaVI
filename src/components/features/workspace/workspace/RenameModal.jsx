@@ -42,7 +42,12 @@ const RenameModal = ({ isOpen, onClose, onRename, currentName, itemType, existin
         }
     };
 
-    const label = itemType === 'workspace' ? 'Workspace' : itemType === 'folder' ? 'Folder' : 'Video';
+    const label =
+      itemType === 'workspace' ? 'Workspace'
+      : itemType === 'folder' ? 'Folder'
+      : itemType === 'canvas' ? 'Design'
+      : itemType === 'image-thread' ? 'Chat'
+      : 'Video';
     const duplicateMessage =
       itemType === 'workspace'
         ? 'This workspace name already exists'

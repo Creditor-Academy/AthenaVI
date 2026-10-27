@@ -194,10 +194,14 @@ function buildEditorConfigFromMeta(meta = {}, overrides = {}) {
 
   if (!projectId && !openComments) return null;
 
+  const projectType = readNotificationMetaValue(meta, 'projectType', 'type', 'project_type');
+
   return {
     videoId: projectId || undefined,
     workspaceId: workspaceId || undefined,
     folderId: folderId || undefined,
+    type: projectType || undefined,
+    projectType: projectType || undefined,
     openComments,
     highlightCommentId: commentId || null,
     ...overrides,
