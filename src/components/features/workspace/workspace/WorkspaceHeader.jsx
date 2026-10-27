@@ -21,6 +21,8 @@ const WorkspaceHeader = ({
     onInviteClick,
     totalCredits = 0,
     creditsLoading = false,
+    workspaceCredits = null,
+    onWorkspaceCreditsClick,
     showBack = false,
     onBack,
     backLabel = 'Back',
@@ -65,27 +67,48 @@ const WorkspaceHeader = ({
             </div>
 
             <div className="workspace-header-actions">
-                <div
-                    className="workspace-header-control workspace-header-control--primary"
-                    title="Total credits available"
-                    role="status"
-                    aria-label="Total credits available"
-                    aria-busy={creditsLoading}
-                >
-                    <span className="workspace-header-control__icon" aria-hidden>
-                        <MdMonetizationOn size={16} />
-                    </span>
-                    <span className="workspace-header-control__body">
-                        <span className="workspace-header-control__label">Credits</span>
-                        <span className="workspace-header-control__value">
-                            {creditsLoading ? (
-                                <LoadingDots size="sm" variant="onPrimary" />
-                            ) : (
-                                Number(totalCredits).toLocaleString()
-                            )}
+                {workspaceCredits != null && onWorkspaceCreditsClick ? (
+                    // Inside a team workspace: its own balance, opening the credits modal.
+                    <button
+                        type="button"
+                        className="workspace-header-control workspace-header-control--primary workspace-header-control--interactive"
+                        onClick={onWorkspaceCreditsClick}
+                        title="View and transfer this workspace's credits"
+                        aria-label={`Workspace credits: ${Number(workspaceCredits).toLocaleString()}. View and transfer`}
+                    >
+                        <span className="workspace-header-control__icon" aria-hidden>
+                            <MdMonetizationOn size={16} />
                         </span>
-                    </span>
-                </div>
+                        <span className="workspace-header-control__body">
+                            <span className="workspace-header-control__label">Workspace credits</span>
+                            <span className="workspace-header-control__value">
+                                {Number(workspaceCredits).toLocaleString()}
+                            </span>
+                        </span>
+                    </button>
+                ) : (
+                    <div
+                        className="workspace-header-control workspace-header-control--primary"
+                        title="Total credits available"
+                        role="status"
+                        aria-label="Total credits available"
+                        aria-busy={creditsLoading}
+                    >
+                        <span className="workspace-header-control__icon" aria-hidden>
+                            <MdMonetizationOn size={16} />
+                        </span>
+                        <span className="workspace-header-control__body">
+                            <span className="workspace-header-control__label">Credits</span>
+                            <span className="workspace-header-control__value">
+                                {creditsLoading ? (
+                                    <LoadingDots size="sm" variant="onPrimary" />
+                                ) : (
+                                    Number(totalCredits).toLocaleString()
+                                )}
+                            </span>
+                        </span>
+                    </div>
+                )}
 
                 <div className="view-toggle" role="group" aria-label="View mode">
                     <button
