@@ -1,6 +1,7 @@
 /**
- * `npm test`: run every `src/**\/*.test.mjs` with `node --test`.
- * Collects files itself so it doesn't depend on `node --test` glob support (Node 21+).
+ * `npm test`: run every src test file plus @athena/contracts unit tests
+ * (except FE/BE parity, which needs the backend layout catalog).
+ * Collects files itself so it doesn't depend on node --test glob support (Node 21+).
  */
 import { spawnSync } from 'node:child_process'
 import { readdirSync } from 'node:fs'
@@ -20,7 +21,16 @@ function collect(dir) {
   return found
 }
 
-const files = process.argv.length > 2 ? process.argv.slice(2) : collect(path.join(root, 'src')).sort()
+function collectDefault() {
+  const src = collect(path.join(root, 'src'))
+  const contractsDir = path.join(root, 'packages', 'athena-contracts', 'test')
+  const contracts = collect(contractsDir).filter(
+    (file) => !file.replaceAll('\\', '/').endsWith('content-contract-parity.test.mjs')
+  )
+  return [...src, ...contracts].sort()
+}
+
+const files = process.argv.length > 2 ? process.argv.slice(2) : collectDefault()
 
 const result = spawnSync(
   process.execPath,

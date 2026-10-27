@@ -1,89 +1,158 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
+import { useCanvasDialogFocus } from './canvasDialogFocus'
 import { FiDownload, FiCheck, FiX } from 'react-icons/fi'
+import CanvasExportFrame from './CanvasExportFrame'
+import {
+  EXPORT_FORMATS,
+  EXPORT_SCALES,
+  buildDesignPdf,
+  describeExportError,
+  exportFileName,
+  imageLabelsOnPage,
+  pagesForExport,
+  slugTitle,
+  zipStoredFiles,
+} from './canvasExport'
+import { assertPageIsExportable, captureExportNode } from './canvasExportCapture'
 import './CanvasEditor.css'
 
-const EXPORT_FORMATS = [
-  { id: 'png', name: 'PNG Image', desc: 'Best for web & graphic design with sharp details', mime: 'image/png', ext: '.png' },
-  { id: 'jpeg', name: 'JPEG Image', desc: 'Standard image format with compact file size', mime: 'image/jpeg', ext: '.jpg' },
-  { id: 'webp', name: 'WebP Image', desc: 'Modern high-compression web image format', mime: 'image/webp', ext: '.webp' },
-  { id: 'svg', name: 'SVG Vector', desc: 'Scalable vector graphic format for print & editing', mime: 'image/svg+xml', ext: '.svg' },
-]
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 1500)
+}
 
-export default function CanvasExportModal({ canvas, title = 'Untitled Design', onClose }) {
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = () => reject(reader.error || new Error('Could not read the exported page.'))
+    reader.readAsDataURL(blob)
+  })
+}
+
+function pageBackground(page) {
+  const background = page?.background
+  if (background && typeof background === 'object') return '#ffffff'
+  return background || '#ffffff'
+}
+
+export default function CanvasExportModal({
+  canvas,
+  canvases,
+  activeIndex = 0,
+  title = 'Untitled Design',
+  onClose,
+}) {
+  const pages = Array.isArray(canvases) && canvases.length ? canvases : canvas ? [canvas] : []
   const [format, setFormat] = useState('png')
-  const [scale, setScale] = useState(2) // 1x, 2x, 4x
+  const [scale, setScale] = useState(2)
+  const [scope, setScope] = useState('current')
+  const [rangeStart, setRangeStart] = useState(1)
+  const [rangeEnd, setRangeEnd] = useState(pages.length || 1)
   const [transparentBg, setTransparentBg] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [downloadSuccess, setDownloadSuccess] = useState(false)
+  const [error, setError] = useState('')
+  const [capturePage, setCapturePage] = useState(null)
+  const frameRef = useRef(null)
+  const pendingFrame = useRef(null)
+  const dialogRef = useRef(null)
+  useCanvasDialogFocus(dialogRef, { onEscape: isExporting ? undefined : onClose })
+
+  useLayoutEffect(() => {
+    if (!capturePage || !frameRef.current || !pendingFrame.current) return
+    const resolve = pendingFrame.current
+    pendingFrame.current = null
+    resolve(frameRef.current)
+  }, [capturePage])
+
+  const allowTransparent = format === 'png' || format === 'webp'
+  const selectedFormat = EXPORT_FORMATS.find((item) => item.id === format) || EXPORT_FORMATS[0]
+
+  const waitForFrame = (page) =>
+    new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        pendingFrame.current = null
+        reject(new Error('The page did not render for export.'))
+      }, 4000)
+      pendingFrame.current = (node) => {
+        clearTimeout(timer)
+        resolve(node)
+      }
+      setCapturePage(page)
+    })
 
   const handleExport = async () => {
+    setError('')
+    const selection = pagesForExport(pages, { scope, activeIndex, rangeStart, rangeEnd })
+    if (selection.error) {
+      setError(selection.error)
+      return
+    }
+
     setIsExporting(true)
+    let lastPage = null
     try {
-      const surfaceEl = document.querySelector('.canvas-editor-surface')
-      const targetCanvasWidth = (canvas?.width || 1200) * scale
-      const targetCanvasHeight = (canvas?.height || 800) * scale
+      const rasterFormat = format === 'pdf' ? 'png' : format
+      const rasterScale = format === 'pdf' ? 1 : scale
+      const captured = []
 
-      const exportCanvas = document.createElement('canvas')
-      exportCanvas.width = targetCanvasWidth
-      exportCanvas.height = targetCanvasHeight
-      const ctx = exportCanvas.getContext('2d')
-
-      if (!transparentBg) {
-        ctx.fillStyle = canvas?.background || '#FFFFFF'
-        ctx.fillRect(0, 0, targetCanvasWidth, targetCanvasHeight)
-      } else {
-        ctx.clearRect(0, 0, targetCanvasWidth, targetCanvasHeight)
-      }
-
-      if (surfaceEl) {
-        const selectedFills = surfaceEl.querySelectorAll('.is-selected')
-        selectedFills.forEach((el) => el.classList.remove('is-selected'))
-
-        const svgData = `
-          <svg xmlns="http://www.w3.org/2000/svg" width="${canvas.width}" height="${canvas.height}">
-            <foreignObject width="100%" height="100%">
-              <div xmlns="http://www.w3.org/1999/xhtml">
-                ${surfaceEl.outerHTML}
-              </div>
-            </foreignObject>
-          </svg>
-        `
-
-        const img = new Image()
-        const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' })
-        const url = URL.createObjectURL(svgBlob)
-
-        await new Promise((resolve) => {
-          img.onload = () => {
-            ctx.drawImage(img, 0, 0, targetCanvasWidth, targetCanvasHeight)
-            URL.revokeObjectURL(url)
-            resolve()
-          }
-          img.onerror = () => {
-            URL.revokeObjectURL(url)
-            resolve()
-          }
-          img.src = url
+      for (let index = 0; index < selection.pages.length; index += 1) {
+        const page = selection.pages[index]
+        lastPage = page
+        const node = await waitForFrame(page)
+        await assertPageIsExportable(page)
+        const blob = await captureExportNode(node, {
+          format: rasterFormat,
+          scale: rasterScale,
+          background: pageBackground(page),
+          transparent: allowTransparent && transparentBg,
         })
+        captured.push({ page, blob, number: pages.indexOf(page) + 1 })
       }
 
-      const selectedFormat = EXPORT_FORMATS.find((f) => f.id === format) || EXPORT_FORMATS[0]
-      const mime = selectedFormat.mime
-      const filename = `${(title || 'canvas').toLowerCase().replace(/\s+/g, '-')}-${canvas.width}x${canvas.height}${selectedFormat.ext}`
-
-      if (format === 'svg') {
-        const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="${targetCanvasWidth}" height="${targetCanvasHeight}" viewBox="0 0 ${canvas.width} ${canvas.height}"><rect width="100%" height="100%" fill="${transparentBg ? 'none' : canvas.background || '#ffffff'}" /></svg>`
-        const blob = new Blob([svgString], { type: 'image/svg+xml' })
-        const link = document.createElement('a')
-        link.href = URL.createObjectURL(blob)
-        link.download = filename
-        link.click()
+      if (format === 'pdf') {
+        const pdfPages = []
+        for (const item of captured) {
+          pdfPages.push({
+            width: item.page.width,
+            height: item.page.height,
+            dataUrl: await blobToDataUrl(item.blob),
+          })
+        }
+        const pdf = await buildDesignPdf(pdfPages)
+        downloadBlob(pdf, exportFileName(title, { ext: '.pdf' }))
+      } else if (captured.length === 1) {
+        const item = captured[0]
+        downloadBlob(
+          item.blob,
+          exportFileName(title, {
+            ext: selectedFormat.ext,
+            width: item.page.width,
+            height: item.page.height,
+          })
+        )
       } else {
-        const dataUrl = exportCanvas.toDataURL(mime, 0.95)
-        const link = document.createElement('a')
-        link.href = dataUrl
-        link.download = filename
-        link.click()
+        const files = await Promise.all(
+          captured.map(async (item) => ({
+            name: exportFileName(title, {
+              ext: selectedFormat.ext,
+              width: item.page.width,
+              height: item.page.height,
+              pageNumber: item.number,
+              pageCount: captured.length,
+            }),
+            bytes: new Uint8Array(await item.blob.arrayBuffer()),
+          }))
+        )
+        const zip = zipStoredFiles(files)
+        downloadBlob(new Blob([zip], { type: 'application/zip' }), `${slugTitle(title)}.zip`)
       }
 
       setDownloadSuccess(true)
@@ -92,26 +161,27 @@ export default function CanvasExportModal({ canvas, title = 'Untitled Design', o
         onClose()
       }, 1200)
     } catch (err) {
-      console.error('Export failed:', err)
+      setError(describeExportError(err, imageLabelsOnPage(lastPage)))
     } finally {
+      setCapturePage(null)
       setIsExporting(false)
     }
   }
 
   return (
-    <div className="canvas-size-modal-backdrop" onClick={onClose}>
-      <div className="canvas-export-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+    <div className="canvas-size-modal-backdrop" onClick={isExporting ? undefined : onClose}>
+      <div ref={dialogRef} className="canvas-export-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="canvas-export-title">
         <header className="canvas-export-header">
           <div>
             <p className="canvas-editor-kicker">Export design</p>
-            <h2>Download your canvas</h2>
+            <h2 id="canvas-export-title">Download your canvas</h2>
           </div>
-          <button type="button" className="canvas-size-close" onClick={onClose} aria-label="Close"><FiX /></button>
+          <button type="button" className="canvas-size-close" onClick={onClose} aria-label="Close" disabled={isExporting}><FiX /></button>
         </header>
 
         <div className="canvas-export-body">
           <div className="canvas-export-section">
-            <label className="canvas-export-label">File Format</label>
+            <label className="canvas-export-label">File format</label>
             <div className="canvas-export-format-grid">
               {EXPORT_FORMATS.map((item) => (
                 <button
@@ -131,55 +201,115 @@ export default function CanvasExportModal({ canvas, title = 'Untitled Design', o
           </div>
 
           <div className="canvas-export-section">
-            <label className="canvas-export-label">Resolution Scale</label>
+            <label className="canvas-export-label">Pages</label>
             <div className="canvas-export-scale-pills">
               {[
-                { multiplier: 1, label: '1x (Standard)' },
-                { multiplier: 2, label: '2x (High Res HD)' },
-                { multiplier: 4, label: '4x (Ultra HD Print)' },
-              ].map((s) => (
+                { id: 'current', label: 'This page' },
+                { id: 'all', label: 'All pages' },
+                { id: 'range', label: 'Range' },
+              ].map((item) => (
                 <button
                   type="button"
-                  key={s.multiplier}
-                  className={`canvas-export-scale-btn ${scale === s.multiplier ? 'is-selected' : ''}`}
-                  onClick={() => setScale(s.multiplier)}
+                  key={item.id}
+                  className={`canvas-export-scale-btn ${scope === item.id ? 'is-selected' : ''}`}
+                  onClick={() => setScope(item.id)}
                 >
-                  {s.label}
+                  {item.label}
                 </button>
               ))}
             </div>
+            {scope === 'range' && (
+              <div className="canvas-export-range">
+                <label>
+                  From
+                  <input
+                    type="number"
+                    min={1}
+                    max={pages.length}
+                    value={rangeStart}
+                    onChange={(event) => setRangeStart(Number(event.target.value))}
+                  />
+                </label>
+                <label>
+                  to
+                  <input
+                    type="number"
+                    min={1}
+                    max={pages.length}
+                    value={rangeEnd}
+                    onChange={(event) => setRangeEnd(Number(event.target.value))}
+                  />
+                </label>
+                <span>of {pages.length}</span>
+              </div>
+            )}
           </div>
 
-          <div className="canvas-export-section">
-            <label className="canvas-export-checkbox-label">
-              <input
-                type="checkbox"
-                checked={transparentBg}
-                onChange={(e) => setTransparentBg(e.target.checked)}
-              />
-              <span>Transparent Background (PNG / WebP / SVG)</span>
-            </label>
-          </div>
+          {format === 'pdf' ? (
+            <p className="canvas-export-note">PDF uses each page’s pixel size. Resolution scale applies to images only.</p>
+          ) : (
+            <div className="canvas-export-section">
+              <label className="canvas-export-label">Resolution scale</label>
+              <div className="canvas-export-scale-pills">
+                {EXPORT_SCALES.map((multiplier) => (
+                  <button
+                    type="button"
+                    key={multiplier}
+                    className={`canvas-export-scale-btn ${scale === multiplier ? 'is-selected' : ''}`}
+                    onClick={() => setScale(multiplier)}
+                  >
+                    {multiplier}×
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {allowTransparent && (
+            <div className="canvas-export-section">
+              <label className="canvas-export-checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={transparentBg}
+                  onChange={(event) => setTransparentBg(event.target.checked)}
+                />
+                <span>Transparent background</span>
+              </label>
+            </div>
+          )}
+
+          {scope !== 'current' && format !== 'pdf' && (
+            <p className="canvas-export-note">Several pages download as one .zip.</p>
+          )}
+
+          {error && (
+            <p className="canvas-export-error" role="alert">{error}</p>
+          )}
         </div>
 
         <footer className="canvas-export-footer">
-          <button type="button" className="canvas-size-cancel" onClick={onClose}>Cancel</button>
+          <button type="button" className="canvas-size-cancel" onClick={onClose} disabled={isExporting}>Cancel</button>
           <button
             type="button"
             className="canvas-size-create"
             onClick={handleExport}
-            disabled={isExporting}
+            disabled={isExporting || !pages.length}
           >
             {downloadSuccess ? (
-              <><FiCheck /> Exported Successfully!</>
+              <><FiCheck /> Exported</>
             ) : isExporting ? (
               'Exporting...'
             ) : (
-              <><FiDownload /> Download Design</>
+              <><FiDownload /> Download design</>
             )}
           </button>
         </footer>
       </div>
+      <CanvasExportFrame
+        page={capturePage}
+        transparent={allowTransparent && transparentBg}
+        frameRef={frameRef}
+      />
     </div>
   )
 }

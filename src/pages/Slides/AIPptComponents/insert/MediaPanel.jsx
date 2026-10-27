@@ -279,7 +279,11 @@ export default function MediaPanel({
     setError('')
     try {
       if (canFillElement && file.type?.startsWith('image/')) {
-        fillWithImage({ file, alt: file.name })
+        // Filling needs a stored URL: fillWithImage ignores a bare file, so upload first.
+        const asset = await assetService.uploadAsset(workspaceId, file)
+        const url = assetUrl(asset)
+        if (!url) throw new Error('Upload succeeded but no URL returned')
+        fillWithImage({ url, src: url, alt: asset.name || file.name, assetId: asset.id || asset._id })
         return
       }
 

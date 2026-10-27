@@ -1,4 +1,5 @@
 import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api.js'
+import { canvasDuplicateRequest } from '../utils/canvasLibrary.js'
 import { generateUniqueProjectName } from '../utils/projectNameValidation.js'
 import workspaceService from './workspaceService.js'
 
@@ -7,9 +8,13 @@ function normalizeId(item) {
   return { ...item, id: item.id || item._id }
 }
 
-async function readErrorMessage(response, fallbackMessage) {
+/** Error carrying the HTTP `status` and the server's `errors` list as `details`. */
+async function toApiError(response, fallbackMessage) {
   const errorData = await response.json().catch(() => ({}))
-  return errorData.message || fallbackMessage
+  const error = new Error(errorData.message || fallbackMessage)
+  error.status = response.status
+  error.details = Array.isArray(errorData.errors) ? errorData.errors : []
+  return error
 }
 
 class CanvasService {
@@ -35,7 +40,7 @@ class CanvasService {
     })
 
     if (!response.ok) {
-      throw new Error(await readErrorMessage(response, `Failed to create canvas: ${response.status}`))
+      throw await toApiError(response, `Failed to create canvas: ${response.status}`)
     }
 
     const json = await response.json()
@@ -50,7 +55,7 @@ class CanvasService {
     )
 
     if (!response.ok) {
-      throw new Error(await readErrorMessage(response, `Failed to list canvases: ${response.status}`))
+      throw await toApiError(response, `Failed to list canvases: ${response.status}`)
     }
 
     const json = await response.json()
@@ -65,7 +70,7 @@ class CanvasService {
     )
 
     if (!response.ok) {
-      throw new Error(await readErrorMessage(response, `Failed to fetch canvas: ${response.status}`))
+      throw await toApiError(response, `Failed to fetch canvas: ${response.status}`)
     }
 
     const json = await response.json()
@@ -83,28 +88,33 @@ class CanvasService {
     )
 
     if (!response.ok) {
-      throw new Error(await readErrorMessage(response, `Failed to update canvas: ${response.status}`))
+      throw await toApiError(response, `Failed to update canvas: ${response.status}`)
     }
 
     const json = await response.json()
     return normalizeId(json.data?.canvas || json.canvas)
   }
 
-  /** Persist the full canvas document (autosave). */
-  async saveCanvasData(workspaceId, canvasId, data) {
+  /**
+   * Persist the full canvas document (autosave).
+   * `baseRevision` makes the server refuse (409) if someone saved since that revision.
+   * `keepalive` lets the request outlive the page (tab close); browsers cap those bodies at 64 KB.
+   */
+  async saveCanvasData(workspaceId, canvasId, data, { baseRevision, keepalive = false } = {}) {
     const response = await fetch(
       buildUrl(API_CONFIG.ENDPOINTS.CANVASES.DATA(workspaceId, canvasId)),
       {
         method: 'PATCH',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ data }),
+        body: JSON.stringify(
+          Number.isInteger(baseRevision) ? { data, baseRevision } : { data }
+        ),
+        keepalive,
       }
     )
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      const details = errorData.errors ? ` — ${JSON.stringify(errorData.errors)}` : ''
-      throw new Error((errorData.message || `Failed to save canvas: ${response.status}`) + details)
+      throw await toApiError(response, `Failed to save canvas: ${response.status}`)
     }
 
     const json = await response.json()
@@ -122,11 +132,21 @@ class CanvasService {
     )
 
     if (!response.ok) {
-      throw new Error(await readErrorMessage(response, `Failed to move canvas: ${response.status}`))
+      throw await toApiError(response, `Failed to move canvas: ${response.status}`)
     }
 
     const json = await response.json()
     return normalizeId(json.data?.canvas || json.canvas)
+  }
+
+  /** New design in the same folder, with the same document and cover. */
+  async duplicateCanvas(workspaceId, canvasId) {
+    const source = await this.getCanvas(workspaceId, canvasId)
+    const request = canvasDuplicateRequest(source)
+    if (!request.folderId) {
+      throw new Error('A design has to live in a folder.')
+    }
+    return this.createCanvas(workspaceId, request)
   }
 
   async deleteCanvas(workspaceId, canvasId) {
@@ -136,7 +156,7 @@ class CanvasService {
     )
 
     if (!response.ok) {
-      throw new Error(await readErrorMessage(response, `Failed to delete canvas: ${response.status}`))
+      throw await toApiError(response, `Failed to delete canvas: ${response.status}`)
     }
 
     return true
