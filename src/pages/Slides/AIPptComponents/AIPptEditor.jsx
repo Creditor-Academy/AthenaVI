@@ -4524,14 +4524,24 @@ function AIPptEditor({
                     <div
                       className="aig-slide-regenerating-overlay"
                       role="status"
+                      aria-label="Regenerating slide"
                       style={{
                         position: 'absolute', inset: 0, zIndex: 6,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         background: 'rgba(255, 255, 255, 0.6)', backdropFilter: 'blur(2px)',
-                        fontSize: 13, fontWeight: 600, color: '#334155', borderRadius: 8,
+                        color: '#334155', borderRadius: 8,
                       }}
                     >
-                      Regenerating slide…
+                      {/* Circular arrow spinning a full 360° while the slide regenerates. */}
+                      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <g>
+                          <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+                          <polyline points="21 3 21 9 15 9" />
+                          <animateTransform attributeName="transform" type="rotate"
+                            from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite" />
+                        </g>
+                      </svg>
                     </div>
                   )}
 
