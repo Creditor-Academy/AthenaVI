@@ -137,6 +137,11 @@ export function normalizeWorkspace(rawWorkspace, currentUserId, authUser) {
 export async function enrichWorkspaceMembers(workspace) {
   if (!workspace || workspace.type === 'personal') return workspace;
 
+  // GET /members is owner/admin-only; for plain members it always 403s (one failed
+  // request + console error per workspace on every load). Their card uses memberCount.
+  const role = String(workspace.userRole || '').toUpperCase();
+  if (role !== 'OWNER' && role !== 'ADMIN') return workspace;
+
   const membersHaveNames = (workspace.members || []).some(
     (member) => member.user?.name || member.user?.email || member.name || member.email
   );
