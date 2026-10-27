@@ -37,6 +37,36 @@ class WorkspaceService {
     return errorData.message || fallbackMessage;
   }
 
+  /** fetch() rejects with a bare "Failed to fetch" on network/CORS failures — say what happened. */
+  networkError() {
+    const error = new Error("Couldn't reach the server. Check your connection and try again.");
+    error.status = 0;
+    return error;
+  }
+
+  /**
+   * DELETE with user-facing errors. A 404 means it's already gone (e.g. a repeat click),
+   * which callers treat as done: resolves { alreadyDeleted: true }.
+   */
+  async deleteResource(path, noun) {
+    let response;
+    try {
+      response = await fetch(buildUrl(path), { method: 'DELETE', headers: getAuthHeaders() });
+    } catch {
+      throw this.networkError();
+    }
+    if (response.ok || response.status === 404) {
+      return { alreadyDeleted: response.status === 404 };
+    }
+    const fallback =
+      response.status === 403
+        ? `You don't have permission to delete this ${noun}.`
+        : `Couldn't delete this ${noun}. Please try again.`;
+    const error = new Error(await this.readErrorMessage(response, fallback));
+    error.status = response.status;
+    throw error;
+  }
+
   projectConflictMessage(response, fallbackMessage) {
     if (response.status === 409) {
       return 'A project with this name already exists in this folder';
@@ -187,21 +217,7 @@ class WorkspaceService {
 
   // Delete a folder
   async deleteFolder(workspaceId, folderId) {
-    try {
-      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/folders/${folderId}`), {
-        method: 'DELETE',
-        headers: getAuthHeaders()
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to delete folder: ${response.status}`);
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error in deleteFolder:', error);
-      throw error;
-    }
+    return this.deleteResource(`/api/workspaces/${workspaceId}/folders/${folderId}`, 'folder');
   }
 
   // Update workspace
@@ -231,21 +247,7 @@ class WorkspaceService {
 
   // Delete workspace (TEAM only)
   async deleteWorkspace(workspaceId) {
-    try {
-      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}`), {
-        method: 'DELETE',
-        headers: getAuthHeaders()
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to delete workspace: ${response.status}`);
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error in deleteWorkspace:', error);
-      throw error;
-    }
+    return this.deleteResource(`/api/workspaces/${workspaceId}`, 'workspace');
   }
 
   // Get workspace members
@@ -389,7 +391,7 @@ class WorkspaceService {
           throw new Error(errorData.message || 'Cannot change role');
         }
         if (response.status === 403) {
-          throw new Error('Only workspace owners can change member roles');
+          throw new Error(errorData.message || 'Only the workspace owner can change member roles');
         }
         if (response.status === 404) {
           throw new Error('Member not found');
@@ -420,7 +422,7 @@ class WorkspaceService {
           throw new Error(errorData.message || 'Cannot remove member');
         }
         if (response.status === 403) {
-          throw new Error('You do not have permission to remove this member');
+          throw new Error(errorData.message || 'You do not have permission to remove this member');
         }
         if (response.status === 404) {
           throw new Error('Member not found');
@@ -436,43 +438,28 @@ class WorkspaceService {
     }
   }
 
-  // Leave workspace (remove self). Uses documented self-removal route when possible.
+  // Leave workspace (remove self). Members can't call DELETE /members/:id, so use /leave.
   async leaveWorkspace(workspaceOrId) {
     try {
       const workspace = typeof workspaceOrId === 'object' && workspaceOrId !== null ? workspaceOrId : null;
       const workspaceId = workspace?.id || workspace?._id || workspaceOrId;
-      const currentUserId = this.getCurrentUserId();
 
-      let memberId = '';
-      if (workspace && Array.isArray(workspace.members) && currentUserId) {
-        const ownMember = workspace.members.find((member) => {
-          const memberUserId = String(member.userId || member.user?.id || member.user?._id || '');
-          return memberUserId && memberUserId === currentUserId;
+      let response;
+      try {
+        response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/leave`), {
+          method: 'POST',
+          headers: getAuthHeaders()
         });
-        memberId = String(ownMember?.id || ownMember?._id || ownMember?.memberId || '');
+      } catch {
+        throw this.networkError();
       }
 
-      const headers = getAuthHeaders();
-
-      if (workspaceId && memberId) {
-        const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/members/${memberId}`), {
-          method: 'DELETE',
-          headers
-        });
-
-        if (response.ok) {
-          return true;
-        }
-      }
-
-      // Compatibility fallback for older backend implementations.
-      const fallbackResponse = await fetch(buildUrl(`/api/workspaces/${workspaceId}/leave`), {
-        method: 'POST',
-        headers
-      });
-
-      if (!fallbackResponse.ok) {
-        throw new Error(await this.readErrorMessage(fallbackResponse, `Failed to leave workspace: ${fallbackResponse.status}`));
+      if (!response.ok) {
+        const error = new Error(
+          await this.readErrorMessage(response, "Couldn't leave this workspace. Please try again.")
+        );
+        error.status = response.status;
+        throw error;
       }
 
       return true;
@@ -889,21 +876,7 @@ class WorkspaceService {
   }
 
   async deleteProject(workspaceId, projectId) {
-    try {
-      const response = await fetch(buildUrl(`/api/workspaces/${workspaceId}/projects/${projectId}`), {
-        method: 'DELETE',
-        headers: getAuthHeaders()
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to delete project: ${response.status}`);
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error in deleteProject:', error);
-      throw error;
-    }
+    return this.deleteResource(`/api/workspaces/${workspaceId}/projects/${projectId}`, 'project');
   }
 
   // --- Render Management ---

@@ -253,8 +253,9 @@
   background: linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #115e59 100%);
 }
 
-/* Card 5: Canvas Editor - Premium Orange/Amber Gradient */
-.home-quickcreate-card.option-image-editor {
+/* Card 5: Canvas Editor (hidden for now) / Brand Kit - Premium Orange/Amber Gradient */
+.home-quickcreate-card.option-image-editor,
+.home-quickcreate-card.option-brand-kit {
   background: linear-gradient(135deg, #ea580c 0%, #c2410c 50%, #9a3412 100%);
 }
 
