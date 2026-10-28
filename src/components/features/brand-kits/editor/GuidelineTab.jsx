@@ -153,6 +153,7 @@ export default function GuidelineTab(props) {
                     templateId={templateId}
                     generating={generatingGuideline}
                     isDirty={isDirty}
+                    kitData={kitData}
                     activeSlideIndex={activeSlideIndex}
                     setActiveSlideIndex={setActiveSlideIndex}
                   />

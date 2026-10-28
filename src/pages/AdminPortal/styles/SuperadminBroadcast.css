@@ -162,6 +162,19 @@
   overflow: hidden;
   box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
   animation: saModalScale 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  /* Never taller than the viewport (backdrop has 20px padding). */
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+}
+
+/* Modals whose content sits directly in the modal (no header/body split) scroll as a whole —
+   their children keep natural height so they overflow and scroll instead of squashing. */
+.sa-broadcast-modal--scroll {
+  overflow-y: auto;
+}
+
+.sa-broadcast-modal--scroll > * {
+  flex-shrink: 0;
 }
 
 .sa-broadcast-modal--sm {
@@ -527,8 +540,11 @@
 .sa-editing-exp-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  align-content: start;
   gap: 20px;
   padding: 12px 28px 28px;
+  /* Cards stack on narrow screens and outgrow the fixed-height modal — scroll them. */
+  overflow-y: auto;
 }
 
 @media (max-width: 860px) {

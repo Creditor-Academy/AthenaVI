@@ -1,26 +1,34 @@
+import { useRef } from 'react'
 import { MdWarning } from 'react-icons/md'
+import { useCanvasDialogFocus } from '../canvasDialogFocus'
 import '../../../components/ui/ConfirmDialog/ConfirmDialog.css'
 
 /**
  * Shown when leaving the canvas editor with changes the autosave hasn't stored yet.
  * status: 'ask' | 'saving' | 'failed'
  */
-export default function CanvasLeaveDialog({ status, canSave, onSave, onDiscard, onCancel }) {
-  if (!status) return null
-
+export default function CanvasLeaveDialog({ status, canSave, failureMessage = '', onSave, onDiscard, onCancel }) {
+  const dialogRef = useRef(null)
   const saving = status === 'saving'
+  useCanvasDialogFocus(dialogRef, {
+    active: Boolean(status),
+    onEscape: saving ? undefined : onCancel,
+  })
+
+  if (!status) return null
   const failed = status === 'failed'
 
   const title = failed ? "Couldn't save your changes" : 'Save changes before leaving?'
   const message = !canSave
     ? "This design isn't saved to a workspace folder, so your changes will be lost if you leave."
     : failed
-      ? 'Check your connection and try again, or leave without saving your latest changes.'
+      ? `${failureMessage || 'Check your connection and try again.'} You can also leave without saving your latest changes.`
       : "Your latest changes haven't been saved yet."
 
   return (
     <div className="confirm-dialog-overlay" onClick={saving ? undefined : onCancel} role="presentation">
       <div
+        ref={dialogRef}
         className="confirm-dialog"
         role="dialog"
         aria-modal="true"

@@ -77,16 +77,17 @@ export function normalizeWorkspace(rawWorkspace, currentUserId, authUser) {
     rawWorkspace.creator?._id
   );
 
-  const role = readRole(rawWorkspace);
-
-  const ownerInMembers = Array.isArray(rawWorkspace.members)
-    ? rawWorkspace.members.some((member) => {
-      const memberId = normalizeId(
-        member.userId || member.user?.id || member.user?._id || member.user || member.id || member._id
-      );
-      return memberId === currentUserId && String(member.role || '').toUpperCase() === 'OWNER';
+  // The caller's own membership row (the list API returns it with userId) is the
+  // most direct source of their role; readRole falls back to MEMBER when nothing matches.
+  const ownMembership = Array.isArray(rawWorkspace.members) && currentUserId
+    ? rawWorkspace.members.find((member) => {
+      const memberUserId = normalizeId(member.userId || member.user?.id || member.user?._id || member.user);
+      return memberUserId === currentUserId;
     })
-    : false;
+    : null;
+  const role = ownMembership?.role ? String(ownMembership.role).toUpperCase() : readRole(rawWorkspace);
+
+  const ownerInMembers = role === 'OWNER' && Boolean(ownMembership);
 
   const isOwner =
     isPersonal ||
@@ -135,6 +136,11 @@ export function normalizeWorkspace(rawWorkspace, currentUserId, authUser) {
 
 export async function enrichWorkspaceMembers(workspace) {
   if (!workspace || workspace.type === 'personal') return workspace;
+
+  // GET /members is owner/admin-only; for plain members it always 403s (one failed
+  // request + console error per workspace on every load). Their card uses memberCount.
+  const role = String(workspace.userRole || '').toUpperCase();
+  if (role !== 'OWNER' && role !== 'ADMIN') return workspace;
 
   const membersHaveNames = (workspace.members || []).some(
     (member) => member.user?.name || member.user?.email || member.name || member.email
@@ -324,7 +330,7 @@ export function getRenameSiblingNames(workspaces = [], renameTarget) {
       .map((folder) => folder.name);
   }
 
-  if (type === 'video') {
+  if (type === 'video' || type === 'canvas') {
     const location = findVideoLocation(workspaces, id);
     return (location?.videos || [])
       .filter((video) => String(video.id) !== String(id))
@@ -332,4 +338,39 @@ export function getRenameSiblingNames(workspaces = [], renameTarget) {
   }
 
   return [currentName].filter(Boolean);
+}
+
+/**
+ * Move a library project between folders in the workspace list the dashboard is showing.
+ * The project leaves its old folder and shows up in the destination with the same document.
+ */
+export function relocateProjectInWorkspaces(workspaces, { workspaceId, project, targetFolderId }) {
+  const projectId = project?.id;
+  return (workspaces || []).map((workspace) => {
+    if (String(workspace.id) !== String(workspaceId)) return workspace;
+
+    const cleared = (workspace.folders || []).map((folder) => ({
+      ...folder,
+      videos: (folder.videos || []).filter((item) => String(item.id) !== String(projectId)),
+    }));
+
+    const folders = cleared.map((folder) => {
+      if (String(folder.id) !== String(targetFolderId)) return folder;
+      const already = (folder.videos || []).some((item) => String(item.id) === String(projectId));
+      const updated = { ...project, folderId: targetFolderId };
+      return {
+        ...folder,
+        videos: already ? folder.videos : [...(folder.videos || []), updated],
+      };
+    });
+
+    let videos = (workspace.videos || []).filter((item) => String(item.id) !== String(projectId));
+    if (!targetFolderId) {
+      const already = videos.some((item) => String(item.id) === String(projectId));
+      const updated = { ...project, folderId: null };
+      videos = already ? videos : [...videos, updated];
+    }
+
+    return { ...workspace, folders, videos };
+  });
 }

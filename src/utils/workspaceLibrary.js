@@ -32,6 +32,20 @@ export function resolveLibraryKind(item) {
   return 'video'
 }
 
+/** Canvas designs and image chats are stored in a folder; the API rejects a null folder. */
+export function libraryItemRequiresFolder(item) {
+  const kind = resolveLibraryKind(item)
+  return kind === 'canvas' || kind === 'image'
+}
+
+export function libraryMoveLabel(item) {
+  const kind = resolveLibraryKind(item)
+  if (kind === 'canvas') return 'Design'
+  if (kind === 'presentation') return 'Presentation'
+  if (kind === 'image') return 'Chat'
+  return 'Video'
+}
+
 /** Project type (VIDEO / PRESENTATION / CANVAS) for a library kind. */
 export function projectTypeForKind(kind, fallback) {
   if (kind === 'presentation') return 'PRESENTATION'

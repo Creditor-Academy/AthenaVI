@@ -1,5 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import workspaceService from '../../services/workspaceService.js';
+import canvasService from '../../services/canvasService.js';
 import imageGenService from '../../services/imageGenService.js';
 import invitationFlowService from '../../services/invitationFlowService.js';
 import inboxService from '../../services/inboxService.js';
@@ -14,12 +15,14 @@ import {
   hasConflictingName,
   findVideoLocation,
   getAllWorkspaceNames,
+  relocateProjectInWorkspaces,
 } from './workspaceUtils.js';
 import {
   DUPLICATE_PROJECT_NAME_MESSAGE,
   findDuplicateProjectName,
   getProjectDisplayName,
 } from '../../utils/projectNameValidation.js';
+import { libraryItemRequiresFolder, libraryMoveLabel } from '../../utils/workspaceLibrary.js';
 
 /**
  * All user-triggered mutation handlers for the workspace page.
@@ -35,8 +38,6 @@ export function useWorkspaceActions({
   currentUserId,
   authUser,
   activeWorkspace,
-  activeFolder,
-  currentLevel,
   setCurrentLevel,
   setRenameTarget,
   contributorsPanel,
@@ -341,6 +342,26 @@ export function useWorkspaceActions({
       return;
     }
 
+    if (type === 'canvas') {
+      const workspaceId = renameTarget.workspaceId || activeWorkspace?.id;
+      const parentWorkspace =
+        workspaces.find((workspace) => String(workspace.id) === String(workspaceId)) || activeWorkspace;
+      if (!parentWorkspace || !workspaceCanEdit(parentWorkspace)) {
+        throw new Error('You do not have permission to rename this design.');
+      }
+      if (renameTarget.folderId) {
+        const projects = await workspaceService.listProjectsInFolder(parentWorkspace.id, renameTarget.folderId);
+        const duplicate = findDuplicateProjectName(newName, projects, { excludeProjectId: id });
+        if (duplicate) {
+          throw new Error(`A project named "${newName}" already exists in this folder.`);
+        }
+      }
+      await canvasService.updateCanvasMeta(parentWorkspace.id, id, { name: newName });
+      onLibraryChange?.();
+      showToast('Design renamed', 'success');
+      return;
+    }
+
     if (type === 'video') {
       const videoLocation = findVideoLocation(workspaces, id);
       const parentWorkspace = videoLocation?.workspace || activeWorkspace;
@@ -357,6 +378,7 @@ export function useWorkspaceActions({
       }
 
       await workspaceService.updateProject(parentWorkspace.id, id, { name: newName });
+      const renamed = (videoLocation?.videos || []).find((video) => String(video.id) === String(id));
       setWorkspaces((prev) =>
         prev.map((workspace) => ({
           ...workspace,
@@ -377,7 +399,8 @@ export function useWorkspaceActions({
           }))
         }))
       );
-      showToast('Video renamed successfully', 'success');
+      onLibraryChange?.();
+      showToast(`${libraryMoveLabel(renamed)} renamed`, 'success');
     }
   }, [workspaces, activeWorkspace, authUser, setWorkspaces, setLocalAdditions, setCurrentLevel, showToast, onLibraryChange]);
 
@@ -390,53 +413,90 @@ export function useWorkspaceActions({
     }
   }, [loadWorkspaces]);
 
+  // Removals in flight, keyed `${kind}:${id}` — repeat clicks while one runs are ignored.
+  const pendingRemovalsRef = useRef(new Set());
+
+  /**
+   * Shared delete/leave flow: one request per item at a time, immediate "in progress"
+   * feedback, the success toast as soon as the server confirms, and a background refresh
+   * that can't turn a successful delete into a "Failed to …" toast.
+   */
+  const runRemoval = useCallback(async (key, { request, onRemoved, pending, success, alreadyGone, failure }) => {
+    if (pendingRemovalsRef.current.has(key)) return;
+    pendingRemovalsRef.current.add(key);
+    showToast(pending, 'info');
+    let removed = false;
+    try {
+      const result = await request();
+      onRemoved();
+      removed = true;
+      showToast(result?.alreadyDeleted && alreadyGone ? alreadyGone : success, 'success');
+    } catch (error) {
+      showToast(error?.message || failure, 'error');
+    } finally {
+      pendingRemovalsRef.current.delete(key);
+    }
+    if (removed) {
+      refreshWorkspaceData().catch((error) => console.warn('Workspace refresh after removal failed:', error));
+    }
+  }, [showToast, refreshWorkspaceData]);
+
+  const removeWorkspaceFromView = useCallback((workspaceId) => {
+    const isGone = (item) => String(item.id) === String(workspaceId);
+    setWorkspaces((prev) => prev.filter((item) => !isGone(item)));
+    setLocalAdditions((prev) => ({
+      ...prev,
+      workspaces: (prev.workspaces || []).filter((item) => !isGone(item)),
+    }));
+    setCurrentLevel((prev) =>
+      String(prev?.id) === String(workspaceId) || String(prev?.ws?.id) === String(workspaceId)
+        ? { type: 'root', id: null }
+        : prev
+    );
+  }, [setWorkspaces, setLocalAdditions, setCurrentLevel]);
+
+  const confirmLeaveWorkspace = useCallback((workspace, message) => {
+    openConfirmDialog(message, () =>
+      runRemoval(`workspace:${workspace.id}`, {
+        request: () => workspaceService.leaveWorkspace(workspace),
+        onRemoved: () => removeWorkspaceFromView(workspace.id),
+        pending: 'Leaving workspace…',
+        success: `You left "${workspace.name}"`,
+        failure: "Couldn't leave this workspace. Please try again.",
+      })
+    );
+  }, [openConfirmDialog, runRemoval, removeWorkspaceFromView]);
+
   const deleteItem = useCallback((type, id, workspaceContext = null) => {
     if (type === 'workspace') {
       const workspace = workspaces.find((item) => String(item.id) === String(id));
       if (!workspace) return;
 
       if (workspace.type === 'personal') {
-        showToast('Personal Workspace cannot be deleted.', 'error');
+        showToast('Your personal workspace cannot be deleted.', 'error');
         return;
       }
 
       if (String(workspace.userRole || '').toUpperCase() !== 'OWNER') {
-        openConfirmDialog('You are not the owner of this workspace. Do you want to leave it?', async () => {
-          try {
-            await workspaceService.leaveWorkspace(workspace);
-            setWorkspaces((prev) => prev.filter((item) => String(item.id) !== String(workspace.id)));
-            setLocalAdditions((prev) => ({
-              ...prev,
-              workspaces: prev.workspaces.filter((item) => String(item.id) !== String(workspace.id))
-            }));
-            if (String(currentLevel.id) === String(workspace.id)) {
-              setCurrentLevel({ type: 'root', id: null });
-            }
-            await refreshWorkspaceData();
-            showToast('Left workspace successfully', 'success');
-          } catch (error) {
-            showToast(error.message || 'Failed to leave workspace', 'error');
-          }
-        });
-      } else {
-        openConfirmDialog('This will permanently delete all folders and videos inside. This cannot be undone.', async () => {
-          try {
-            await workspaceService.deleteWorkspace(workspace.id);
-            setWorkspaces((prev) => prev.filter((item) => String(item.id) !== String(workspace.id)));
-            setLocalAdditions((prev) => ({
-              ...prev,
-              workspaces: prev.workspaces.filter((item) => String(item.id) !== String(workspace.id))
-            }));
-            if (String(currentLevel.id) === String(workspace.id)) {
-              setCurrentLevel({ type: 'root', id: null });
-            }
-            await refreshWorkspaceData();
-            showToast('Workspace deleted successfully', 'success');
-          } catch (error) {
-            showToast(error.message || 'Failed to delete workspace', 'error');
-          }
-        });
+        confirmLeaveWorkspace(
+          workspace,
+          'Only the owner can delete this workspace. Do you want to leave it instead?'
+        );
+        return;
       }
+
+      openConfirmDialog(
+        `Delete "${workspace.name}"? All folders and projects inside it will be permanently deleted. This cannot be undone.`,
+        () =>
+          runRemoval(`workspace:${workspace.id}`, {
+            request: () => workspaceService.deleteWorkspace(workspace.id),
+            onRemoved: () => removeWorkspaceFromView(workspace.id),
+            pending: 'Deleting workspace…',
+            success: `Workspace "${workspace.name}" deleted`,
+            alreadyGone: 'This workspace was already deleted',
+            failure: "Couldn't delete this workspace. Please try again.",
+          })
+      );
       return;
     }
 
@@ -444,125 +504,144 @@ export function useWorkspaceActions({
       const parentWorkspace =
         workspaceContext ||
         activeWorkspace ||
-        workspaces.find((workspace) => workspace.folders.some((folder) => String(folder.id) === String(id)));
+        workspaces.find((workspace) => (workspace.folders || []).some((folder) => String(folder.id) === String(id)));
 
-      if (!workspaceCanEdit(parentWorkspace)) {
-        showToast('You do not have permission to delete this folder.', 'error');
+      if (!parentWorkspace || !workspaceCanEdit(parentWorkspace)) {
+        showToast("You don't have permission to delete this folder.", 'error');
         return;
       }
 
-      openConfirmDialog('Delete this folder and all videos inside it?', async () => {
-        try {
-          await workspaceService.deleteFolder(parentWorkspace.id, id);
-          setWorkspaces((prev) =>
-            prev.map((workspace) =>
-              String(workspace.id) === String(parentWorkspace.id)
-                ? { ...workspace, folders: workspace.folders.filter((folder) => String(folder.id) !== String(id)) }
-                : workspace
-            )
-          );
-          setLocalAdditions((prev) => ({
-            ...prev,
-            folders: {
-              ...prev.folders,
-              [parentWorkspace.id]: (prev.folders[parentWorkspace.id] || []).filter(
-                (folder) => String(folder.id) !== String(id)
-              )
-            }
-          }));
-          if (String(currentLevel.id) === String(id)) {
-            setCurrentLevel({ type: 'workspace', id: parentWorkspace.id, ws: parentWorkspace });
-          }
-          await refreshWorkspaceData();
-          showToast('Folder deleted successfully', 'success');
-        } catch (error) {
-          showToast(error.message || 'Failed to delete folder', 'error');
-        }
-      });
+      const folderName = (parentWorkspace.folders || []).find((folder) => String(folder.id) === String(id))?.name;
+      openConfirmDialog(
+        `Delete ${folderName ? `"${folderName}"` : 'this folder'} and everything inside it? This cannot be undone.`,
+        () =>
+          runRemoval(`folder:${id}`, {
+            request: () => workspaceService.deleteFolder(parentWorkspace.id, id),
+            onRemoved: () => {
+              const keep = (folder) => String(folder.id) !== String(id);
+              setWorkspaces((prev) =>
+                prev.map((workspace) =>
+                  String(workspace.id) === String(parentWorkspace.id)
+                    ? { ...workspace, folders: (workspace.folders || []).filter(keep) }
+                    : workspace
+                )
+              );
+              setLocalAdditions((prev) => ({
+                ...prev,
+                folders: {
+                  ...prev.folders,
+                  [parentWorkspace.id]: (prev.folders?.[parentWorkspace.id] || []).filter(keep),
+                },
+              }));
+              setCurrentLevel((prev) =>
+                String(prev?.id) === String(id)
+                  ? { type: 'workspace', id: parentWorkspace.id, ws: parentWorkspace }
+                  : prev
+              );
+              onLibraryChange?.();
+            },
+            pending: 'Deleting folder…',
+            success: folderName ? `Folder "${folderName}" deleted` : 'Folder deleted',
+            alreadyGone: 'This folder was already deleted',
+            failure: "Couldn't delete this folder. Please try again.",
+          })
+      );
       return;
     }
 
     if (type === 'image-thread') {
       const parentWorkspace = workspaceContext || activeWorkspace;
-      if (!workspaceCanEdit(parentWorkspace)) {
-        showToast('You do not have permission to delete this chat.', 'error');
+      if (!parentWorkspace || !workspaceCanEdit(parentWorkspace)) {
+        showToast("You don't have permission to delete this chat.", 'error');
         return;
       }
       openConfirmDialog(
         'Remove this image chat from the folder? Generated images stay in your assets.',
-        async () => {
-          try {
-            await imageGenService.deleteThread(parentWorkspace.id, id);
-            await refreshWorkspaceData();
-            onLibraryChange?.();
-            showToast('Chat removed', 'success');
-          } catch (error) {
-            showToast(error.message || 'Failed to delete chat', 'error');
-          }
-        }
+        () =>
+          runRemoval(`image-thread:${id}`, {
+            request: () => imageGenService.deleteThread(parentWorkspace.id, id),
+            onRemoved: () => onLibraryChange?.(),
+            pending: 'Removing chat…',
+            success: 'Chat removed',
+            failure: "Couldn't remove this chat. Please try again.",
+          })
+      );
+      return;
+    }
+
+    if (type === 'canvas') {
+      const parentWorkspace = workspaceContext || activeWorkspace;
+      if (!parentWorkspace || !workspaceCanEdit(parentWorkspace)) {
+        showToast('You do not have permission to delete this design.', 'error');
+        return;
+      }
+      openConfirmDialog('Delete this design? This cannot be undone.', () =>
+        runRemoval(`canvas:${id}`, {
+          request: () => canvasService.deleteCanvas(parentWorkspace.id, id),
+          onRemoved: () => onLibraryChange?.(),
+          pending: 'Deleting design…',
+          success: 'Design deleted',
+          failure: "Couldn't delete this design. Please try again.",
+        })
       );
       return;
     }
 
     if (type === 'video') {
-      const parentWorkspace = activeWorkspace;
-      const parentFolder = activeFolder;
-      if (!workspaceCanEdit(parentWorkspace)) {
-        showToast('You do not have permission to delete this project.', 'error');
+      // Resolve where the project actually lives — callers pass the workspace, and the
+      // project may sit outside any folder (activeFolder is null then).
+      const location = findVideoLocation(workspaces, id);
+      const parentWorkspace = location?.workspace || workspaceContext || activeWorkspace;
+      if (!parentWorkspace || !workspaceCanEdit(parentWorkspace)) {
+        showToast("You don't have permission to delete this project.", 'error');
         return;
       }
 
-      openConfirmDialog('Delete this project?', async () => {
-        try {
-          await workspaceService.deleteProject(parentWorkspace.id, id);
-          setWorkspaces((prev) =>
-            prev.map((workspace) =>
-              String(workspace.id) === String(parentWorkspace.id)
-                ? {
-                  ...workspace,
-                  folders: workspace.folders.map((folder) =>
-                    String(folder.id) === String(parentFolder.id)
-                      ? { ...folder, videos: (folder.videos || []).filter((video) => String(video.id) !== String(id)) }
-                      : folder
-                  )
-                }
-                : workspace
-            )
-          );
-          setLocalAdditions((prev) => ({
-            ...prev,
-            videos: {
-              ...prev.videos,
-              [parentFolder.id]: (prev.videos[parentFolder.id] || []).filter((video) => String(video.id) !== String(id))
-            }
-          }));
-          await refreshWorkspaceData();
-          showToast('Video deleted successfully', 'success');
-        } catch (error) {
-          showToast(error.message || 'Failed to delete video', 'error');
-        }
-      });
+      const projectName = (location?.videos || []).find((video) => String(video.id) === String(id))?.name;
+      openConfirmDialog(
+        `Delete ${projectName ? `"${projectName}"` : 'this project'}? This cannot be undone.`,
+        () =>
+          runRemoval(`video:${id}`, {
+            request: () => workspaceService.deleteProject(parentWorkspace.id, id),
+            onRemoved: () => {
+              const without = (list) => (list || []).filter((video) => String(video.id) !== String(id));
+              setWorkspaces((prev) =>
+                prev.map((workspace) =>
+                  String(workspace.id) === String(parentWorkspace.id)
+                    ? {
+                      ...workspace,
+                      videos: without(workspace.videos),
+                      folders: (workspace.folders || []).map((folder) => ({ ...folder, videos: without(folder.videos) })),
+                    }
+                    : workspace
+                )
+              );
+              setLocalAdditions((prev) => ({
+                ...prev,
+                videos: Object.fromEntries(
+                  Object.entries(prev.videos || {}).map(([folderId, list]) => [folderId, without(list)])
+                ),
+              }));
+              onLibraryChange?.();
+            },
+            pending: 'Deleting project…',
+            success: projectName ? `"${projectName}" deleted` : 'Project deleted',
+            alreadyGone: 'This project was already deleted',
+            failure: "Couldn't delete this project. Please try again.",
+          })
+      );
     }
-  }, [workspaces, activeWorkspace, activeFolder, currentLevel, setWorkspaces, setLocalAdditions, setCurrentLevel, showToast, openConfirmDialog, refreshWorkspaceData]);
+  }, [workspaces, activeWorkspace, setWorkspaces, setLocalAdditions, setCurrentLevel, showToast, openConfirmDialog, runRemoval, removeWorkspaceFromView, confirmLeaveWorkspace, onLibraryChange]);
 
   // ------------------------------------------------------------------
   // Leave shared workspace
   // ------------------------------------------------------------------
   const handleLeaveSharedWorkspace = useCallback((workspace) => {
-    openConfirmDialog(`Leave workspace "${workspace.name}"?`, async () => {
-      try {
-        await workspaceService.leaveWorkspace(workspace);
-        setWorkspaces((prev) => prev.filter((item) => String(item.id) !== String(workspace.id)));
-        if (String(currentLevel.id) === String(workspace.id)) {
-          setCurrentLevel({ type: 'root', id: null });
-        }
-        await refreshWorkspaceData();
-        showToast('Left workspace successfully', 'success');
-      } catch (error) {
-        showToast(error.message || 'Failed to leave workspace', 'error');
-      }
-    });
-  }, [currentLevel, setWorkspaces, setCurrentLevel, showToast, openConfirmDialog, refreshWorkspaceData]);
+    confirmLeaveWorkspace(
+      workspace,
+      `Leave "${workspace.name}"? You'll lose access to its folders and projects.`
+    );
+  }, [confirmLeaveWorkspace]);
 
   // ------------------------------------------------------------------
   // Manage workspace contributors
@@ -647,7 +726,8 @@ export function useWorkspaceActions({
     try {
       await workspaceService.changeMemberRole(contributorsPanel.workspace.id, memberId, role);
       await loadContributorsForWorkspace(contributorsPanel.workspace);
-      showToast('Member role updated', 'success');
+      const roleLabel = { OWNER: 'Owner', ADMIN: 'Admin', MEMBER: 'Member' }[String(role).toUpperCase()] || role;
+      showToast(`Role changed to ${roleLabel}`, 'success');
     } catch (error) {
       showToast(error.message || 'Failed to change role', 'error');
     }
@@ -658,13 +738,21 @@ export function useWorkspaceActions({
     openConfirmDialog('Remove this member from workspace?', async () => {
       try {
         await workspaceService.removeMember(contributorsPanel.workspace.id, memberId);
+        // Keep the workspace card's member count in step without a full reload.
+        setWorkspaces((prev) =>
+          prev.map((workspace) =>
+            String(workspace.id) === String(contributorsPanel.workspace.id) && workspace.memberCount != null
+              ? { ...workspace, memberCount: Math.max(1, Number(workspace.memberCount) - 1) }
+              : workspace
+          )
+        );
         await loadContributorsForWorkspace(contributorsPanel.workspace);
         showToast('Member removed successfully', 'success');
       } catch (error) {
         showToast(error.message || 'Failed to remove member', 'error');
       }
     });
-  }, [contributorsPanel, loadContributorsForWorkspace, showToast, openConfirmDialog]);
+  }, [contributorsPanel, loadContributorsForWorkspace, showToast, openConfirmDialog, setWorkspaces]);
 
   // ------------------------------------------------------------------
   // Move project
@@ -672,10 +760,15 @@ export function useWorkspaceActions({
   const handleMoveProject = useCallback(async (targetFolderId, moveTargetVideo, moveTargetWorkspace) => {
     if (!moveTargetVideo || !moveTargetWorkspace) return;
     try {
+      if (libraryItemRequiresFolder(moveTargetVideo) && !targetFolderId) {
+        throw new Error(
+          libraryMoveLabel(moveTargetVideo) === 'Design'
+            ? 'A design has to live in a folder.'
+            : 'Image chats must live in a folder.'
+        );
+      }
+
       if (moveTargetVideo.kind === 'image' || moveTargetVideo.category === 'image') {
-        if (!targetFolderId) {
-          throw new Error('Image chats must live in a folder.');
-        }
         await imageGenService.moveThread(moveTargetWorkspace.id, moveTargetVideo.id, targetFolderId);
         showToast('Chat moved', 'success');
         setMoveTargetVideo(null);
@@ -699,47 +792,37 @@ export function useWorkspaceActions({
       await workspaceService.moveProjectFolder(moveTargetWorkspace.id, moveTargetVideo.id, targetFolderId);
 
       setWorkspaces((prev) =>
-        prev.map((workspace) => {
-          if (String(workspace.id) !== String(moveTargetWorkspace.id)) return workspace;
-
-          const updatedFolders = workspace.folders.map((folder) => ({
-            ...folder,
-            videos: (folder.videos || []).filter((v) => String(v.id) !== String(moveTargetVideo.id))
-          }));
-
-          const updatedFoldersWithAdded = updatedFolders.map((folder) => {
-            if (String(folder.id) !== String(targetFolderId)) return folder;
-            const alreadyExists = (folder.videos || []).some((v) => String(v.id) === String(moveTargetVideo.id));
-            const updatedVideo = { ...moveTargetVideo, folderId: targetFolderId };
-            return {
-              ...folder,
-              videos: alreadyExists ? folder.videos : [...(folder.videos || []), updatedVideo]
-            };
-          });
-
-          let updatedRootVideos = (workspace.videos || []).filter((v) => String(v.id) !== String(moveTargetVideo.id));
-          if (!targetFolderId) {
-            const alreadyExists = updatedRootVideos.some((v) => String(v.id) === String(moveTargetVideo.id));
-            const updatedVideo = { ...moveTargetVideo, folderId: null };
-            updatedRootVideos = alreadyExists ? updatedRootVideos : [...updatedRootVideos, updatedVideo];
-          }
-
-          return {
-            ...workspace,
-            folders: updatedFoldersWithAdded,
-            videos: updatedRootVideos
-          };
+        relocateProjectInWorkspaces(prev, {
+          workspaceId: moveTargetWorkspace.id,
+          project: moveTargetVideo,
+          targetFolderId,
         })
       );
 
-      showToast('Video moved successfully', 'success');
+      showToast(`${libraryMoveLabel(moveTargetVideo)} moved`, 'success');
       setMoveTargetVideo(null);
       setMoveTargetWorkspace(null);
+      onLibraryChange?.();
     } catch (err) {
       showToast(err.message || 'Failed to move video', 'error');
       throw err;
     }
-  }, [setWorkspaces, showToast, setMoveTargetVideo, setMoveTargetWorkspace]);
+  }, [setWorkspaces, showToast, setMoveTargetVideo, setMoveTargetWorkspace, onLibraryChange]);
+
+  const handleDuplicateCanvas = useCallback(async (item, workspace) => {
+    const parentWorkspace = workspace || activeWorkspace;
+    if (!parentWorkspace || !workspaceCanEdit(parentWorkspace)) {
+      showToast('You do not have permission to duplicate this design.', 'error');
+      return;
+    }
+    try {
+      await canvasService.duplicateCanvas(parentWorkspace.id, item.id);
+      onLibraryChange?.();
+      showToast('Design duplicated', 'success');
+    } catch (error) {
+      showToast(error.message || 'Failed to duplicate design', 'error');
+    }
+  }, [activeWorkspace, showToast, onLibraryChange]);
 
   return {
     handleCreateWorkspace,
@@ -758,6 +841,7 @@ export function useWorkspaceActions({
     inviteSending,
     handleChangeMemberRole,
     handleRemoveMember,
-    handleMoveProject
+    handleMoveProject,
+    handleDuplicateCanvas,
   };
 }

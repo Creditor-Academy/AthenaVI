@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Search, ChevronLeft, ChevronRight, X, Shield, Users, Coins, Sparkles, UserCheck, ArrowUpRight, Filter, UserPlus } from 'lucide-react'
 import superadminService, { SuperadminApiError } from '../../../../services/superadminService'
 import { formatAc, formatDate, formatShortDate, txTypeLabel, formatBytes, storageTxTypeLabel, STORAGE_UNITS, parseStorageToBytes } from './superadminUtils'
@@ -246,7 +247,7 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
 
 
 
-  return (
+  return createPortal(
     <>
       {/* backdrop */}
       {open && (
@@ -266,7 +267,9 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
         width: 600,
         maxWidth: '94vw',
         height: '80vh',
-        minHeight: '500px',
+        // A fixed 500px minimum overflowed short windows and clipped the top and bottom.
+        minHeight: 'min(500px, calc(100vh - 32px))',
+        maxHeight: 'calc(100vh - 32px)',
         background: 'var(--bg-surface)',
         border: '1px solid var(--border-color)',
         borderRadius: 16,
@@ -353,9 +356,10 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
             </div>
 
             {/* Tab content — scrollable */}
-            <div className="sa-scroll" style={{ 
-              flex: 1, 
-              overflowY: 'auto', 
+            <div className="sa-scroll" style={{
+              flex: 1,
+              minHeight: 0,
+              overflowY: 'auto',
               background: 'var(--bg-surface)',
               borderBottomLeftRadius: 16,
               borderBottomRightRadius: 16,
@@ -702,7 +706,8 @@ function UserDrawer({ open, user, detail, history, historyPagination, historyPag
           </>
         )}
       </div>
-    </>
+    </>,
+    document.body
   )
 }
 

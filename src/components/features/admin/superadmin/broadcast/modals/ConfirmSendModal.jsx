@@ -8,7 +8,7 @@ export default function ConfirmSendModal({ subject, onConfirm, onCancel, sending
 
   return createPortal(
     <div className="sa-broadcast-backdrop">
-      <div className="sa-broadcast-modal sa-broadcast-modal--sm" style={{ padding: '32px', textAlign: 'center', alignItems: 'center', gap: 16 }}>
+      <div className="sa-broadcast-modal sa-broadcast-modal--sm sa-broadcast-modal--scroll" style={{ padding: '32px', textAlign: 'center', alignItems: 'center', gap: 16 }}>
         <div style={{
           width: 52, height: 52, borderRadius: 14,
           background: 'color-mix(in srgb, var(--primary) 12%, var(--bg-card))',

@@ -32,12 +32,20 @@ import megaphoneImage from '../../assets/home_quickcreate/megaphone.png'
 import bowlingPinsImage from '../../assets/home_quickcreate/bowling_pins.png'
 import canvasToolsImage from '../../assets/home_quickcreate/canvas_tools.png'
 
+// Canvas Editor is hidden from Quick Create for now; the Brand Kit tile takes its slot.
+// Restore by uncommenting the 'image-editor' entries and dropping the filter below.
+const QUICK_CREATE_OPTIONS = [
+    ...CREATE_OPTIONS.filter((option) => option.id !== 'image-editor'),
+    { id: 'brand-kit', title: 'Brand Kit', description: 'Manage brand colors, logos, and fonts' },
+]
+
 const QUICK_CREATE_IMAGES = {
     'avatar-video': notebookImage,
     'ppt-ai': paintBucketImage,
     'ppt-builder': megaphoneImage,
     'image-ai': bowlingPinsImage,
-    'image-editor': canvasToolsImage,
+    // 'image-editor': canvasToolsImage,
+    'brand-kit': canvasToolsImage,
 }
 
 const QUICK_CREATE_LABELS = {
@@ -45,7 +53,8 @@ const QUICK_CREATE_LABELS = {
     'ppt-ai': ['AI Presentation', 'Generation'],
     'ppt-builder': ['Presentation', 'Design'],
     'image-ai': ['AI Image', 'Generation'],
-    'image-editor': ['Canvas', 'Editing'],
+    // 'image-editor': ['Canvas', 'Editing'],
+    'brand-kit': ['Brand', 'Kit'],
 }
 
 function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigate, onCreateWithLocation }) {
@@ -259,7 +268,9 @@ function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigat
     const featuredTemplates = templateBundles.slice(0, 6)
 
     const handleQuickCreate = (id) => {
-        if (id === 'avatar-video') {
+        if (id === 'brand-kit') {
+            onNavigate?.('brandkits')
+        } else if (id === 'avatar-video') {
             onCreate?.()
         } else if (onCreateWithLocation) {
             onCreateWithLocation(id)
@@ -301,7 +312,7 @@ function Home({ onCreate, onEdit, onBrowseTemplates, onSelectTemplate, onNavigat
                     <h2>Quick Create</h2>
                 </div>
                 <div className="home-quickcreate-grid" role="list">
-                    {CREATE_OPTIONS.map((option) => {
+                    {QUICK_CREATE_OPTIONS.map((option) => {
                         const labels = QUICK_CREATE_LABELS[option.id] || [option.title, '']
                         const [primaryLabel, secondaryLabel] = labels
                         return (

@@ -59,36 +59,66 @@ function tagKits(kits, workspace, { inheritDefault = true } = {}) {
   }))
 }
 
+/** How long the cross-workspace kit lists are shared between callers. */
+const KIT_LISTS_TTL_MS = 30_000
+let kitListsCache = null
+
+function kitListsCacheKey() {
+  return `${brandKitService.cacheEpoch}:${workspaceService.membershipEpoch}`
+}
+
+/**
+ * Every workspace's kit list, fetched in parallel and shared for a short window — the AI
+ * presentation wizard, editor, vibe step and template picker all ask for it on mount, and
+ * each call used to fan out to 1 + N requests. Any brand kit write or workspace
+ * membership change invalidates it.
+ */
+function loadKitListsByWorkspace() {
+  const key = kitListsCacheKey()
+  if (kitListsCache && kitListsCache.key === key && Date.now() - kitListsCache.at < KIT_LISTS_TTL_MS) {
+    return kitListsCache.promise
+  }
+  const promise = (async () => {
+    const workspaces = await listBrandKitWorkspaces()
+    return Promise.all(
+      workspaces.map(async (workspace) => {
+        try {
+          return { workspace, kits: await brandKitService.list(workspace.id, { includePersonal: false }) }
+        } catch {
+          return { workspace, kits: [] } // skip workspaces user cannot read
+        }
+      })
+    )
+  })()
+  const entry = { key, at: Date.now(), promise }
+  kitListsCache = entry
+  promise.catch(() => {
+    if (kitListsCache === entry) kitListsCache = null
+  })
+  return promise
+}
+
 /**
  * Kits usable when creating or editing a presentation.
  * Returns ALL brand kits accessible across all workspaces so any brand kit
  * can be used anywhere in any workspace.
  */
 export async function listBrandKitsUsableInWorkspace(workspaceId = null) {
-  const workspaces = await listBrandKitWorkspaces()
+  const lists = await loadKitListsByWorkspace()
   const seen = new Set()
   const merged = []
 
-  const targetWs = workspaceId
-    ? workspaces.find((ws) => String(ws.id) === String(workspaceId))
+  const target = workspaceId
+    ? lists.find((entry) => String(entry.workspace.id) === String(workspaceId))
     : null
+  const ordered = target ? [target, ...lists.filter((entry) => entry !== target)] : lists
 
-  const orderedWorkspaces = targetWs
-    ? [targetWs, ...workspaces.filter((ws) => String(ws.id) !== String(workspaceId))]
-    : workspaces
-
-  for (const ws of orderedWorkspaces) {
-    if (!ws?.id) continue
-    try {
-      const kits = await brandKitService.list(ws.id, { includePersonal: false })
-      for (const kit of tagKits(kits, ws)) {
-        const id = String(kit?.id || '')
-        if (!id || seen.has(id)) continue
-        seen.add(id)
-        merged.push(kit)
-      }
-    } catch {
-      // skip workspaces user cannot read
+  for (const { workspace, kits } of ordered) {
+    for (const kit of tagKits(kits, workspace)) {
+      const id = String(kit?.id || '')
+      if (!id || seen.has(id)) continue
+      seen.add(id)
+      merged.push(kit)
     }
   }
 
@@ -137,11 +167,7 @@ export async function ensureBrandKitInWorkspace(
     if (inSource?.id) return String(inSource.id)
   }
 
-  const workspaces = await listBrandKitWorkspaces()
-  for (const ws of workspaces) {
-    const found = await tryGet(ws.id)
-    if (found?.id) return String(found.id)
-  }
-
+  // No per-workspace GET sweep here: it cost a request per workspace, and the backend
+  // clones a kit into any workspace it's fetched from — the id is the best answer left.
   return String(brandKitId)
 }

@@ -14,6 +14,7 @@ import {
   MdOutlineBolt,
   MdSwapHoriz,
   MdAssignmentInd,
+  MdContentCopy,
 } from 'react-icons/md';
 
 const ContextMenu = ({
@@ -25,6 +26,7 @@ const ContextMenu = ({
   onDelete,
   onMembers,
   onMove,
+  onDuplicate,
   onDetails,
   onAssign,
   onCreditsTransfer,
@@ -140,6 +142,11 @@ const ContextMenu = ({
           {onMove && (
             <button className="menu-item" onClick={(e) => handleAction(e, onMove)}>
               <MdFolder size={16} /> Move to Folder
+            </button>
+          )}
+          {onDuplicate && (
+            <button className="menu-item" onClick={(e) => handleAction(e, onDuplicate)}>
+              <MdContentCopy size={16} /> Duplicate
             </button>
           )}
           {type === 'video' && onAssign && (

@@ -12,6 +12,7 @@ import {
   FiZoomOut,
   FiExternalLink,
   FiCheck,
+  FiRefreshCw,
 } from 'react-icons/fi'
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { MdDragIndicator, MdOutlineColorLens, MdRotateRight } from 'react-icons/md'
@@ -1193,6 +1194,9 @@ function AIPptEditor({
   const [shareToken, setShareToken] = useState(() => presenceToken || '')
   const [quickMenuOpen, setQuickMenuOpen] = useState(false)
   const [slideAiEditId, setSlideAiEditId] = useState(null)
+  // Slides with a regenerate in flight — only these are locked; the rest stay editable.
+  const [regeneratingSlideIds, setRegeneratingSlideIds] = useState(() => new Set())
+  const regeneratingSlideIdsRef = useRef(regeneratingSlideIds)
   const [cropModalOpen, setCropModalOpen] = useState(false)
   const [deleteSlideId, setDeleteSlideId] = useState(null)
   const [slideStyles, setSlideStyles] = useState({
@@ -1823,6 +1827,7 @@ function AIPptEditor({
   const queueCanvasSave = useCallback(
     (slideId, _canvasDoc) => {
       if (!workspaceId || !presentationId || !slideId || isGenerating || viewOnly) return
+      if (regeneratingSlideIdsRef.current.has(slideId)) return
       if (canvasSaveTimers.current[slideId]) {
         clearTimeout(canvasSaveTimers.current[slideId])
       }
@@ -1880,15 +1885,25 @@ function AIPptEditor({
     return current
   }, [])
 
-  const flushPendingCanvasSaves = useCallback(async () => {
+  const flushPendingCanvasSaves = useCallback(async ({ onlySlideId = null } = {}) => {
     if (!workspaceId || !presentationId || viewOnly || isGenerating) return
     const timers = canvasSaveTimers.current
-    Object.keys(timers).forEach((slideId) => {
-      clearTimeout(timers[slideId])
-      delete timers[slideId]
-    })
+    if (onlySlideId) {
+      // Single slide: only save if an edit is actually pending.
+      if (!timers[onlySlideId]) return
+      clearTimeout(timers[onlySlideId])
+      delete timers[onlySlideId]
+    } else {
+      Object.keys(timers).forEach((slideId) => {
+        clearTimeout(timers[slideId])
+        delete timers[slideId]
+      })
+    }
     const slides = localSlidesRef.current || []
     const saves = slides
+      .filter((s) => (onlySlideId ? s?.id === onlySlideId : true))
+      // Regenerating slides are server-owned until they settle (canvas PUT returns 409).
+      .filter((s) => !regeneratingSlideIdsRef.current.has(s?.id))
       .filter((s) => s?.id && s?.elements && !isOptimisticSlideId(s.id))
       .map((s) => {
         const id = resolvePersistedSlideId(s.id)
@@ -3145,8 +3160,20 @@ function AIPptEditor({
     [persistSlideOrder, pushHistorySnapshot]
   )
 
+  const setSlideRegenerating = (slideId, on) => {
+    setRegeneratingSlideIds((prev) => {
+      const next = new Set(prev)
+      if (on) next.add(slideId)
+      else next.delete(slideId)
+      regeneratingSlideIdsRef.current = next
+      return next
+    })
+  }
+
+  // Regenerate (no prompt) or AI-edit (prompt + actionId) one slide; other slides stay editable.
   const handleSlideAiEdit = async (slide, { prompt, actionId, target = 'full' } = {}) => {
     if (!workspaceId || !presentationId || isGenerating) return
+    if (regeneratingSlideIdsRef.current.has(slide.id)) return
     let overwriteManualEdits = false
     if (slide.manuallyEdited) {
       const ok = window.confirm(
@@ -3155,7 +3182,14 @@ function AIPptEditor({
       if (!ok) return
       overwriteManualEdits = true
     }
-    setBusy(true)
+    try {
+      // Persist this slide's pending edit first so the server works from the latest state.
+      await flushPendingCanvasSaves({ onlySlideId: slide.id })
+    } catch {
+      // Overwrite is confirmed above; a failed flush shouldn't block the regenerate.
+    }
+    setSlideRegenerating(slide.id, true)
+    setSlideAiEditId((prev) => (prev === slide.id ? null : prev))
     try {
       await presentationService.regenerateSlide(workspaceId, presentationId, slide.id, {
         target,
@@ -3166,12 +3200,12 @@ function AIPptEditor({
       await presentationService.pollSlideUntilSettled(workspaceId, presentationId, slide.id, {
         intervalMs: 2000,
       })
-      await reloadPresentation()
-      setSlideAiEditId(null)
+      // Swap in just this slide so unsaved work on other slides is untouched.
+      await refreshSlide(slide.id)
     } catch (err) {
       if (err?.status === 'FAILED') {
-        // Reload so the slide shows its failed state + Regenerate action instead of stale content.
-        await reloadPresentation().catch(() => {})
+        // Refresh so the slide shows its failed state + Regenerate action instead of stale content.
+        await refreshSlide(slide.id).catch(() => {})
         setError('Slide regeneration failed — try again.')
       } else if (err instanceof PresentationConflictError) {
         setError('Cannot overwrite — confirm overwrite or wait for generation to finish.')
@@ -3181,7 +3215,7 @@ function AIPptEditor({
         setError(err.message || 'AI edit failed')
       }
     } finally {
-      setBusy(false)
+      setSlideRegenerating(slide.id, false)
     }
   }
 
@@ -4453,6 +4487,22 @@ function AIPptEditor({
                     </button>
                     <button
                       className="aig-slide-action-btn"
+                      title="Regenerate slide"
+                      type="button"
+                      disabled={!viewOnly && (busy || isGenerating || regeneratingSlideIds.has(slide.id))}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (viewOnly) {
+                          askOwner()
+                          return
+                        }
+                        handleSlideAiEdit(slide, { target: 'full' })
+                      }}
+                    >
+                      <FiRefreshCw size={15} />
+                    </button>
+                    <button
+                      className="aig-slide-action-btn"
                       title="Duplicate"
                       type="button"
                       disabled={!viewOnly && (busy || isGenerating || atDeckCap)}
@@ -4470,7 +4520,32 @@ function AIPptEditor({
                   </div>
                   )}
 
-                  {slide.status === 'FAILED' && (
+                  {regeneratingSlideIds.has(slide.id) && (
+                    <div
+                      className="aig-slide-regenerating-overlay"
+                      role="status"
+                      aria-label="Regenerating slide"
+                      style={{
+                        position: 'absolute', inset: 0, zIndex: 6,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: 'rgba(255, 255, 255, 0.6)', backdropFilter: 'blur(2px)',
+                        color: '#334155', borderRadius: 8,
+                      }}
+                    >
+                      {/* Circular arrow spinning a full 360° while the slide regenerates. */}
+                      <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <g>
+                          <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+                          <polyline points="21 3 21 9 15 9" />
+                          <animateTransform attributeName="transform" type="rotate"
+                            from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite" />
+                        </g>
+                      </svg>
+                    </div>
+                  )}
+
+                  {slide.status === 'FAILED' && !regeneratingSlideIds.has(slide.id) && (
                     <div
                       className="aig-slide-failed-banner"
                       style={{
@@ -4510,7 +4585,13 @@ function AIPptEditor({
                       slide={slide}
                       themeVisual={themeVisual}
                       aspectRatio={aspectRatio}
-                      editable={!viewOnly && !isGenerating && !busy && selectedSlideId === slide.id}
+                      editable={
+                        !viewOnly &&
+                        !isGenerating &&
+                        !busy &&
+                        !regeneratingSlideIds.has(slide.id) &&
+                        selectedSlideId === slide.id
+                      }
                       // Edit hint only on the slide being edited — other slides render empty boxes blank.
                       showEmptyTextHint={!viewOnly && !isGenerating && selectedSlideId === slide.id}
                       selectedElementId={
@@ -4557,9 +4638,10 @@ function AIPptEditor({
                       coercePlainText(slide.title || slide.content?.title) || `Slide ${idx + 1}`
                     }
                     disabled={viewOnly || isGenerating || busy}
-                    busy={busy && slideAiEditId === slide.id}
+                    busy={regeneratingSlideIds.has(slide.id)}
                     onClose={() => setSlideAiEditId(null)}
                     onSubmit={(payload) => handleSlideAiEdit(slide, payload)}
+                    onRegenerate={() => handleSlideAiEdit(slide, { target: 'full' })}
                   />
                 </div>
 
@@ -4820,6 +4902,8 @@ function AIPptEditor({
                           setEditingTextId(null)
                           setSlideAiEditId((prev) => (prev === slide.id ? null : slide.id))
                         }}
+                        onRegenerate={() => handleSlideAiEdit(slide, { target: 'full' })}
+                        regenerating={regeneratingSlideIds.has(slide.id)}
                         onChangeStatus={(id, status) => handleChangeSlideStatus(status, id)}
                         onDragStart={(id) => {
                           minimapDragIdRef.current = id

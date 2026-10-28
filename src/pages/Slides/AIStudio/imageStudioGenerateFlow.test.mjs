@@ -97,4 +97,38 @@ describe('Image Studio generate then tweak', () => {
     assert.equal(body.prompt, 'hello')
     assert.equal(body.style, 'flat')
   })
+
+  it('throws when generate returns no generation', async () => {
+    await assert.rejects(
+      () =>
+        runGenerateThenTweak({
+          api: {
+            async generate() {
+              return { thread: { id: 't1' } }
+            },
+          },
+          workspaceId: 'ws_1',
+          generateInput: { folderId: 'f1', prompt: 'A lake' },
+          tweakInstruction: 'warmer',
+        }),
+      /Generate returned no generation/
+    )
+  })
+
+  it('throws when the generate API fails', async () => {
+    await assert.rejects(
+      () =>
+        runGenerateThenTweak({
+          api: {
+            async generate() {
+              throw new Error('quota exceeded')
+            },
+          },
+          workspaceId: 'ws_1',
+          generateInput: { folderId: 'f1', prompt: 'A lake' },
+          tweakInstruction: 'warmer',
+        }),
+      /quota exceeded/
+    )
+  })
 })

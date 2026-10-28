@@ -105,6 +105,10 @@ function getWorkspacePeople(workspace) {
 }
 
 function getWorkspaceMemberCount(workspace) {
+    // Server total — `members` only holds the caller's own row for plain members.
+    if (Number.isFinite(Number(workspace.memberCount)) && workspace.memberCount != null) {
+        return Number(workspace.memberCount);
+    }
     if (Array.isArray(workspace.members)) {
         const hasOwner = workspace.members.some(
             (member) => String(member.role || '').toUpperCase() === 'OWNER'

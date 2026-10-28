@@ -8,6 +8,11 @@ import { resolveLibraryKind } from '../../../../utils/workspaceLibrary.js';
 
 const formatSize = (item) => {
     if (!item) return '-';
+    // Server total — `members` only holds the caller's own row for plain members.
+    if (item.memberCount != null && Number.isFinite(Number(item.memberCount))) {
+        const total = Number(item.memberCount);
+        return `${total} ${total === 1 ? 'member' : 'members'}`;
+    }
     if (Array.isArray(item.members)) {
         const hasOwner = item.members.some(m => String(m.role || '').toUpperCase() === 'OWNER');
         const count = item.members.length;

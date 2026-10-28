@@ -1,5 +1,5 @@
 import React from 'react'
-import { MdDownload, MdImage, MdOpenInNew, MdSlideshow, MdMovieCreation, MdSchedule } from 'react-icons/md'
+import { MdDownload, MdImage, MdOpenInNew, MdSlideshow, MdMovieCreation, MdSchedule, MdBrush } from 'react-icons/md'
 import DefaultProjectThumbnail from '../../components/features/workspace/workspace/DefaultProjectThumbnail.jsx'
 import UserIdentity from '../../components/features/workspace/workspace/UserIdentity.jsx'
 import { formatBytes } from '../../utils/formatSize.js'
@@ -58,6 +58,13 @@ function KindBadge({ kind }) {
       </span>
     )
   }
+  if (kind === 'canvas') {
+    return (
+      <span className="wsc-kind-badge wsc-kind-badge--canvas">
+        <MdBrush size={12} /> Design
+      </span>
+    )
+  }
   return (
     <span className="wsc-kind-badge wsc-kind-badge--video">
       <MdMovieCreation size={12} /> Video
@@ -91,7 +98,9 @@ function ExportMyWorkCard({
       ? 'Preview Deck'
       : category === 'image'
         ? 'View Image'
-        : 'Open Video'
+        : category === 'canvas'
+          ? 'Open Design'
+          : 'Open Video'
 
   const detailTag =
     category === 'presentation' && workItem.slideCount
