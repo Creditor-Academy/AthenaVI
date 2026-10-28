@@ -402,6 +402,13 @@ const CreateVideoModal = ({
   }
 
   useEffect(() => {
+    if (isOpen) {
+      if (initialWorkspaceId) setWorkspaceId(initialWorkspaceId);
+      if (initialFolderId) setFolderId(initialFolderId);
+    }
+  }, [isOpen, initialWorkspaceId, initialFolderId]);
+
+  useEffect(() => {
     if (!isOpen) return;
     loadWorkspaces();
     // eslint-disable-next-line react-hooks/exhaustive-deps

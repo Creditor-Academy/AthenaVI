@@ -5,17 +5,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 16px;
   background: rgba(2, 6, 23, 0.62);
   backdrop-filter: blur(6px);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .create-video-modal {
   position: relative;
-  width: 900px;
-  height: 600px;
+  width: min(900px, 100%);
   max-width: 900px;
-  max-height: 600px;
+  height: min(600px, calc(100dvh - 32px));
+  max-height: min(600px, calc(100dvh - 32px));
+  margin: auto;
   display: grid;
   grid-template-columns: 220px 1fr;
   border-radius: 12px;
@@ -123,6 +126,7 @@
   grid-template-rows: auto 1fr auto;
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
 }
 
 .create-video-wizard-header {
@@ -796,6 +800,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  flex-shrink: 0;
+  background: var(--bg-card);
 }
 
 .create-video-footer-actions {
@@ -1048,5 +1054,100 @@
   .create-video-footer-actions .create-video-btn,
   .create-video-footer > .create-video-btn {
     flex: 1;
+  }
+}
+
+@media (max-height: 720px) {
+  .create-video-modal {
+    height: min(560px, calc(100dvh - 24px));
+    max-height: min(560px, calc(100dvh - 24px));
+  }
+
+  .create-video-wizard-sidebar {
+    padding: 14px 12px;
+    gap: 12px;
+  }
+
+  .create-video-logo-block {
+    margin-bottom: 0;
+  }
+
+  .create-video-step-list {
+    gap: 8px;
+  }
+
+  .create-video-step-dot {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+  }
+
+  .create-video-step-label {
+    font-size: 12px;
+  }
+
+  .create-video-wizard-header {
+    padding: 12px 18px 10px;
+  }
+
+  .create-video-wizard-header h2 {
+    font-size: 18px;
+  }
+
+  .create-video-wizard-header p {
+    margin: 4px 0 0;
+    font-size: 11px;
+  }
+
+  .create-video-wizard-body {
+    padding: 12px 18px;
+    gap: 10px;
+  }
+
+  .create-video-size-card {
+    height: 130px;
+    gap: 8px;
+  }
+
+  .create-video-footer {
+    padding: 10px 18px;
+  }
+}
+
+@media (max-height: 620px) {
+  .create-video-modal-overlay {
+    padding: 8px;
+  }
+
+  .create-video-modal {
+    height: calc(100dvh - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+
+  .create-video-wizard-header {
+    padding: 8px 14px 6px;
+  }
+
+  .create-video-wizard-header h2 {
+    font-size: 16px;
+  }
+
+  .create-video-wizard-header p {
+    display: none;
+  }
+
+  .create-video-wizard-body {
+    padding: 8px 14px;
+    gap: 8px;
+  }
+
+  .create-video-footer {
+    padding: 8px 14px;
+  }
+
+  .create-video-btn {
+    height: 32px;
+    font-size: 12px;
+    padding: 0 12px;
   }
 }
