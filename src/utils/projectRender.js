@@ -135,7 +135,7 @@ export function getExportReadinessIssues(projectState) {
 }
 
 export async function pollRenderUntilReady(workspaceService, workspaceId, projectId, renderId, options = {}) {
-  const { intervalMs = 2500, timeoutMs = 25 * 60 * 1000, onPoll } = options;
+  const { intervalMs = 2500, timeoutMs = 2 * 60 * 60 * 1000, onPoll } = options;
   const started = Date.now();
   let lastRender = null;
 

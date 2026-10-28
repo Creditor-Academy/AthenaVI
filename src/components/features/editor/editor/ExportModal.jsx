@@ -34,6 +34,7 @@ const ExportModal = ({
   downloading = false,
   onStartExport,
   onDownload,
+  onReconfigure,
   progress = 0,
 }) => {
   const [filename, setFilename] = useState(projectTitle)
@@ -266,6 +267,11 @@ const ExportModal = ({
               <button type="button" className="btn-secondary" onClick={onClose}>
                 Close
               </button>
+              {onReconfigure && (
+                <button type="button" className="btn-secondary" onClick={onReconfigure}>
+                  New export
+                </button>
+              )}
               <button
                 type="button"
                 className="btn-primary"
