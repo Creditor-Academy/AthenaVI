@@ -5,17 +5,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 16px;
   background: rgba(15, 23, 42, 0.48);
   backdrop-filter: blur(12px);
+  overflow-y: auto;
+  overflow-x: hidden;
   animation: createMenuFadeIn 0.22s ease-out;
 }
 
 .create-menu-modal-container {
-  width: min(820px, 100%);
-  max-height: min(92vh, 720px);
+  width: min(840px, calc(100vw - 32px));
+  max-height: min(94vh, 720px);
+  margin: auto;
   overflow: auto;
-  padding: 28px;
+  padding: 24px 28px;
   border-radius: 22px;
   border: 1px solid color-mix(in srgb, var(--border-color) 70%, var(--text-muted) 18%);
   background: var(--bg-card);
@@ -233,6 +236,53 @@
 
   .create-menu-modal-header h3 {
     font-size: 22px;
+  }
+}
+
+@media (max-height: 740px) {
+  .create-menu-modal-container {
+    padding: 18px 22px;
+    max-height: min(94vh, 600px);
+  }
+
+  .create-menu-modal-header {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+  }
+
+  .create-menu-modal-header h3 {
+    font-size: 22px;
+  }
+
+  .create-menu-modal-subtitle {
+    font-size: 12px;
+    margin-top: 4px;
+  }
+
+  .create-menu-modal-grid {
+    gap: 10px;
+  }
+
+  .create-menu-card {
+    padding: 12px 14px;
+    gap: 10px;
+    border-radius: 14px;
+  }
+
+  .create-menu-card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+  }
+
+  .create-menu-card-text h4 {
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+
+  .create-menu-card-text p {
+    font-size: 11px;
+    line-height: 1.35;
   }
 }
 

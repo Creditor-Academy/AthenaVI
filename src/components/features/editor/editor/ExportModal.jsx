@@ -34,6 +34,7 @@ const ExportModal = ({
   downloading = false,
   onStartExport,
   onDownload,
+  onReconfigure,
   progress = 0,
 }) => {
   const [filename, setFilename] = useState(projectTitle)
@@ -65,7 +66,12 @@ const ExportModal = ({
     activeStep = 3
   } else if (statusLower.includes('rendering')) {
     activeStep = 2
-  } else if (statusLower.includes('starting full video render') || statusLower.includes('queued') || statusLower.includes('starting')) {
+  } else if (
+    statusLower.includes('starting full video render') ||
+    statusLower.includes('queued') ||
+    statusLower.includes('starting') ||
+    statusLower.includes('waiting for another export')
+  ) {
     activeStep = 1
   } else {
     activeStep = 0
@@ -261,6 +267,11 @@ const ExportModal = ({
               <button type="button" className="btn-secondary" onClick={onClose}>
                 Close
               </button>
+              {onReconfigure && (
+                <button type="button" className="btn-secondary" onClick={onReconfigure}>
+                  New export
+                </button>
+              )}
               <button
                 type="button"
                 className="btn-primary"

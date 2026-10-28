@@ -135,22 +135,47 @@ export function getExportReadinessIssues(projectState) {
 }
 
 export async function pollRenderUntilReady(workspaceService, workspaceId, projectId, renderId, options = {}) {
-  const { intervalMs = 2500, timeoutMs = 15 * 60 * 1000, onPoll } = options;
+  const { intervalMs = 2500, timeoutMs = 2 * 60 * 60 * 1000, onPoll } = options;
   const started = Date.now();
+  let lastRender = null;
 
   while (Date.now() - started < timeoutMs) {
-    const render = await workspaceService.getRender(workspaceId, projectId, renderId);
-    onPoll?.(render);
+    let render = null;
+    try {
+      render = await workspaceService.getRender(workspaceId, projectId, renderId);
+    } catch (err) {
+      console.warn('[Export] Transient error polling render status:', err);
+    }
 
-    if (isRenderComplete(render)) return render;
-    if (isRenderFailed(render)) {
-      throw new Error(render?.error || render?.message || 'Video render failed');
+    if (render?.notModified) {
+      // 304: nothing changed on server since last poll, continue with last state
+      if (lastRender) {
+        onPoll?.(lastRender);
+      }
+    } else if (render) {
+      lastRender = render;
+      onPoll?.(render);
+
+      if (isRenderComplete(render)) return render;
+      if (isRenderFailed(render)) {
+        throw new Error(render?.error || render?.message || 'Video render failed');
+      }
     }
 
     await sleep(intervalMs);
   }
 
-  throw new Error('Video render timed out. Try again in a few minutes.');
+  // If still rendering after the long cap, don't report as a failure — video is still rendering in Chrome
+  const stillRendering = lastRender && !isRenderFailed(lastRender);
+  if (stillRendering) {
+    const error = new Error('Your video is still rendering in the background. You will receive an inbox notification once complete.');
+    error.isBackgroundRender = true;
+    error.renderId = renderId;
+    error.lastRender = lastRender;
+    throw error;
+  }
+
+  throw new Error('Video render timed out. Check your inbox for updates.');
 }
 
 /** Trigger a browser file save for a remote URL (e.g. presigned S3). */
@@ -303,7 +328,18 @@ export async function exportFullProjectVideo({
             ? (r.percent <= 1 ? Math.round(r.percent * 100) : Math.round(r.percent))
             : parseInt(r.percent, 10) || 0;
         }
-        onStatus?.(`Rendering… (${formatRenderStatus(r)})`, pct);
+
+        const status = getRenderStatus(r);
+        let statusText = 'Rendering…';
+        if (status === 'queued') {
+          statusText = 'Waiting for another export…';
+        } else if (status === 'processing') {
+          statusText = pct > 0 ? `Rendering… (${pct}%)` : 'Rendering…';
+        } else {
+          statusText = `Rendering… (${formatRenderStatus(r)})`;
+        }
+
+        onStatus?.(statusText, pct);
       },
     });
   }

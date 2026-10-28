@@ -23,7 +23,8 @@ import { isInsufficientCreditsError } from '../../../services/creditsService.js'
 import './ImageGenContextAttach.css'
 
 const MAX_CONTEXT_ITEMS = 5
-const MAX_FILE_BYTES = 20 * 1024 * 1024
+const MAX_FILE_BYTES = 10 * 1024 * 1024
+const MAX_TOTAL_BYTES = 20 * 1024 * 1024
 const ACCEPTED_EXT = /\.(pdf|docx|md|txt|png|jpe?g|webp)$/i
 const ACCEPTED_MIME = new Set([
   'application/pdf',
@@ -36,6 +37,20 @@ const ACCEPTED_MIME = new Set([
   'image/jpg',
   'image/webp',
 ])
+
+function estimateImageBytes(imgOrFile) {
+  if (!imgOrFile) return 0
+  if (imgOrFile instanceof File || typeof imgOrFile.size === 'number') {
+    return imgOrFile.size || 0
+  }
+  const src = String(imgOrFile.src || imgOrFile.url || '')
+  if (src.startsWith('data:')) {
+    const commaIdx = src.indexOf(',')
+    const base64Len = commaIdx >= 0 ? src.length - commaIdx - 1 : src.length
+    return Math.round(base64Len * 0.75)
+  }
+  return 0
+}
 
 function isAllowedFile(file) {
   if (!file) return false
@@ -161,16 +176,48 @@ export function contextPreviewBadge(generation) {
   return formatContextBadge(preview)
 }
 
-function friendlyContextError(err) {
+function friendlyContextError(err, hasFiles = false) {
   if (isInsufficientCreditsError(err)) return 'Not enough credits for this action.'
-  if (err instanceof ImageGenRateLimitError) {
-    return err.message || 'Image generation context rate limit exceeded. Try again later.'
-  }
   if (err instanceof ImageGenProviderError) {
     return err.message || 'Couldn’t process the brief right now. Try again.'
   }
   if (err instanceof ImageGenContextPinnedError) return err.message
   if (err?.status === 404) return 'Context unavailable — please re-attach.'
+
+  const msg = String(err?.message || '').toLowerCase()
+  const status = Number(err?.status || err?.statusCode || 0)
+
+  if (
+    err instanceof ImageGenRateLimitError ||
+    status === 429 ||
+    msg.includes('rate limit') ||
+    msg.includes('too many')
+  ) {
+    return 'You’ve reached the hourly limit for uploading reference images. Please try again in a little while.'
+  }
+
+  const isSizeLimit =
+    status === 413 ||
+    msg.includes('413') ||
+    msg.includes('too large') ||
+    msg.includes('payload too large') ||
+    msg.includes('entity too large') ||
+    msg.includes('file size') ||
+    msg.includes('limit exceeded')
+
+  if (isSizeLimit) {
+    return 'File size limit exceeded. Please upload a smaller image (max 10 MB per image, 20 MB total).'
+  }
+
+  // When files are being uploaded and browser fetch fails (net::ERR_FAILED 413 or proxy reset)
+  if (hasFiles && (msg.includes('failed to fetch') || msg.includes('network') || msg.includes('load failed'))) {
+    return 'File size limit exceeded. Please upload a smaller image (max 10 MB per image, 20 MB total).'
+  }
+
+  if (msg.includes('failed to fetch')) {
+    return 'Network connection issue. Please check your connection and try again.'
+  }
+
   return err?.message || 'Couldn’t attach context. Please try again.'
 }
 
@@ -213,6 +260,9 @@ export default function ImageGenContextAttach({
   const slotsLeft = Math.max(0, MAX_CONTEXT_ITEMS - pendingCount)
   const hasPending = pendingCount > 0 || Boolean(String(inlineText || '').trim())
   const isReady = Boolean(context?.id) && !dirtyAfterAttach
+
+  const isAttaching = attaching || Boolean(context?.attaching)
+  const isPlusDisabled = disabled || isAttaching
 
   const readyLabel = useMemo(() => {
     if (!context?.id) return null
@@ -307,6 +357,10 @@ export default function ImageGenContextAttach({
     }
   }, [plusMenuOpen])
 
+  useEffect(() => {
+    if (isAttaching) setPlusMenuOpen(false)
+  }, [isAttaching])
+
   const closeModal = () => {
     setModalOpen(false)
     setTab('library')
@@ -322,6 +376,10 @@ export default function ImageGenContextAttach({
     const incoming = Array.from(fileList || [])
     if (!incoming.length) return
     setError('')
+    let currentBytes = 0
+    for (const f of pendingFiles) currentBytes += f.size || 0
+    for (const img of context?.localImages || []) currentBytes += estimateImageBytes(img)
+
     const next = []
     for (const file of incoming) {
       const image = isImageFile(file)
@@ -339,9 +397,14 @@ export default function ImageGenContextAttach({
         continue
       }
       if (file.size > MAX_FILE_BYTES) {
-        setError(`“${file.name}” is over 20 MB.`)
+        setError(`“${file.name}” exceeds the 10 MB size limit. Please choose a smaller image.`)
         continue
       }
+      if (currentBytes + file.size > MAX_TOTAL_BYTES) {
+        setError('Total attached images exceed 20 MB. Please remove an image or choose a smaller one.')
+        continue
+      }
+      currentBytes += file.size
       next.push(file)
     }
     if (!next.length) return
@@ -379,8 +442,10 @@ export default function ImageGenContextAttach({
   }
 
   const openLibrary = async () => {
-    if (!workspaceId || disabled) {
-      setError(workspaceId ? '' : 'Choose a save location first, then pick from the library.')
+    if (!workspaceId || disabled || isAttaching) {
+      if (!workspaceId && !disabled && !isAttaching) {
+        setError('Choose a save location first, then pick from the library.')
+      }
       return
     }
     setModalOpen(true)
@@ -453,6 +518,12 @@ export default function ImageGenContextAttach({
     setError('')
     setNotice('')
     onContextChange?.({ ...(context || {}), attaching: true })
+
+    const hadPriorUploads = (context?.localImages || []).some(
+      (img) => !img?.assetId && img?.source !== 'asset' && String(img?.src || '').startsWith('data:image/')
+    )
+    const hasFiles = Boolean(files.length || hadPriorUploads)
+
     try {
       const priorAssetIds = [
         ...(context?.localImages || []).map((img) => img?.assetId).filter(Boolean),
@@ -489,8 +560,20 @@ export default function ImageGenContextAttach({
         })
       }
       const mergedFiles = [...priorUploadFiles, ...files]
+      const totalMergedBytes = mergedFiles.reduce((sum, f) => sum + (f?.size || 0), 0)
+      if (totalMergedBytes > MAX_TOTAL_BYTES) {
+        setError('Total attached images exceed 20 MB. Please remove an image or choose smaller ones.')
+        if (override && 'rollbackFiles' in override) {
+          setPendingFiles(override.rollbackFiles)
+        }
+        onContextChange?.({ ...(context || {}), attaching: false })
+        return
+      }
       if (mergedFiles.length + mergedAssets.length > MAX_CONTEXT_ITEMS) {
         setError('Too many context files or assets (max 5).')
+        if (override && 'rollbackFiles' in override) {
+          setPendingFiles(override.rollbackFiles)
+        }
         onContextChange?.({ ...(context || {}), attaching: false })
         return
       }
@@ -532,7 +615,12 @@ export default function ImageGenContextAttach({
       setTab('library')
       setDragOver(null)
     } catch (err) {
-      setError(friendlyContextError(err))
+      setError(friendlyContextError(err, hasFiles))
+      if (override && 'rollbackFiles' in override) {
+        setPendingFiles(override.rollbackFiles)
+      } else {
+        setPendingFiles([])
+      }
       onContextChange?.({ ...(context || {}), attaching: false })
     } finally {
       setAttaching(false)
@@ -540,13 +628,22 @@ export default function ImageGenContextAttach({
   }
 
   const collectIncomingFiles = (incoming) => {
+    let currentBytes = 0
+    for (const f of pendingFiles) currentBytes += f.size || 0
+    for (const img of context?.localImages || []) currentBytes += estimateImageBytes(img)
+
     const accepted = []
     for (const file of incoming || []) {
       if (!isAllowedFile(file) && !isImageFile(file)) continue
       if (file.size > MAX_FILE_BYTES) {
-        setError(`“${file.name}” is over 20 MB.`)
+        setError(`“${file.name}” exceeds the 10 MB size limit. Please choose a smaller image.`)
         continue
       }
+      if (currentBytes + file.size > MAX_TOTAL_BYTES) {
+        setError('Total attached images exceed 20 MB. Please remove an image or choose a smaller one.')
+        continue
+      }
+      currentBytes += file.size
       accepted.push(file)
     }
     const room = Math.max(0, MAX_CONTEXT_ITEMS - (pendingFiles.length + pendingAssets.length + alreadyAttachedCount))
@@ -560,19 +657,26 @@ export default function ImageGenContextAttach({
   }
 
   const ingestComposerFiles = async (incoming) => {
+    if (disabled || isAttaching) return false
+    const prevFiles = pendingFiles
     const added = collectIncomingFiles(incoming)
     if (!added.length) return false
     const nextFiles = [...pendingFiles, ...added]
     setPendingFiles(nextFiles)
     markDirty()
     setError('')
-    await handleAttach({ files: nextFiles, assets: pendingAssets, text: inlineText })
+    await handleAttach({
+      files: nextFiles,
+      assets: pendingAssets,
+      text: inlineText,
+      rollbackFiles: prevFiles,
+    })
     return true
   }
 
   const composerBind = {
     onDragOver: (e) => {
-      if (disabled || !isImageLikeDrag(e.dataTransfer)) return
+      if (disabled || isAttaching || !isImageLikeDrag(e.dataTransfer)) return
       e.preventDefault()
       e.stopPropagation()
       e.dataTransfer.dropEffect = 'copy'
@@ -583,7 +687,7 @@ export default function ImageGenContextAttach({
       setComposerDragOver(false)
     },
     onDrop: async (e) => {
-      if (disabled) return
+      if (disabled || isAttaching) return
       if (!isImageLikeDrag(e.dataTransfer)) return
       e.preventDefault()
       e.stopPropagation()
@@ -608,7 +712,7 @@ export default function ImageGenContextAttach({
       }
     },
     onPaste: async (e) => {
-      if (disabled) return
+      if (disabled || isAttaching) return
       const imageFiles = clipboardImageFiles(e.clipboardData)
       if (!imageFiles.length) return
       e.preventDefault()
@@ -699,7 +803,7 @@ export default function ImageGenContextAttach({
 
   const pickFromUpload = () => {
     setPlusMenuOpen(false)
-    if (disabled) return
+    if (disabled || isAttaching) return
     if (!workspaceId) {
       setError('Choose a save location first, then upload a reference.')
       return
@@ -713,29 +817,31 @@ export default function ImageGenContextAttach({
       <button
         type="button"
         className={`igc-plus ${compact ? 'igc-plus--compact' : ''} ${modalOpen || plusMenuOpen ? 'is-on' : ''} ${isReady ? 'is-ready' : ''}`}
-        disabled={disabled}
+        disabled={isPlusDisabled}
         aria-label="Attach references"
         aria-haspopup={plusMenu ? 'menu' : undefined}
         aria-expanded={plusMenu ? plusMenuOpen : undefined}
-        title="Upload or choose from library"
+        title={isAttaching ? 'Attaching image…' : 'Upload or choose from library'}
         onClick={() => {
-          if (disabled) return
+          if (isPlusDisabled) return
           if (plusMenu) setPlusMenuOpen((open) => !open)
           else openLibrary()
         }}
       >
         <Plus size={18} strokeWidth={2.25} />
       </button>
-      {plusMenu && plusMenuOpen && (
+      {plusMenu && plusMenuOpen && !isPlusDisabled && (
         <div className="igc-plus-menu" role="menu">
-          <button type="button" role="menuitem" onClick={pickFromUpload}>
+          <button type="button" role="menuitem" disabled={isPlusDisabled} onClick={pickFromUpload}>
             <Upload size={15} strokeWidth={2} />
             Upload
           </button>
           <button
             type="button"
             role="menuitem"
+            disabled={isPlusDisabled}
             onClick={() => {
+              if (isPlusDisabled) return
               setPlusMenuOpen(false)
               openLibrary()
             }}
@@ -751,7 +857,9 @@ export default function ImageGenContextAttach({
         multiple
         accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp"
         hidden
+        disabled={isPlusDisabled}
         onChange={(e) => {
+          if (isPlusDisabled) return
           const fromPlus = uploadFromPlusRef.current
           uploadFromPlusRef.current = false
           const files = Array.from(e.target.files || [])
@@ -776,7 +884,7 @@ export default function ImageGenContextAttach({
             <button
               type="button"
               className="igc-ready-chip"
-              disabled={disabled}
+              disabled={isPlusDisabled}
               onClick={() => openLibrary()}
             >
               <Paperclip size={12} />
@@ -790,7 +898,7 @@ export default function ImageGenContextAttach({
             <button
               type="button"
               className="igc-dirty-chip"
-              disabled={disabled}
+              disabled={isPlusDisabled}
               onClick={() => openLibrary()}
             >
               <AlertTriangle size={11} />
@@ -800,7 +908,7 @@ export default function ImageGenContextAttach({
             <button
               type="button"
               className="igc-hint-btn"
-              disabled={disabled}
+              disabled={isPlusDisabled}
               onClick={() => openLibrary()}
             >
               {composerThumbs.length > 0
@@ -811,7 +919,7 @@ export default function ImageGenContextAttach({
             <button
               type="button"
               className="igc-hint-btn"
-              disabled={disabled}
+              disabled={isPlusDisabled}
               onClick={() => openLibrary()}
             >
               References

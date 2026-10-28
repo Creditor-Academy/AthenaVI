@@ -1531,7 +1531,7 @@ function CreateModal({ onClose, onCreated, defaultType, prefill, layoutSchemaMap
     : (Array.isArray(previewSchema?.slides) ? previewSchema.slides.length : 0)
   const supportsCreateMedia = type === 'DECK_PACK' || type === 'VIDEO_PACK'
 
-  return (
+  return createPortal(
     <div style={{
       position: 'fixed', inset: 0, zIndex: 1000,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -1841,7 +1841,8 @@ function CreateModal({ onClose, onCreated, defaultType, prefill, layoutSchemaMap
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   )
 }
 

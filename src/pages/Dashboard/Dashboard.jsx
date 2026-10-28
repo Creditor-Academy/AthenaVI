@@ -199,6 +199,7 @@ function Dashboard({ onCreate, initialSection }) {
     'admin-portal',
     'settings',
     'help',
+    'referrals',
   ]
 
   const isAdminPortal = section === 'admin-portal'
@@ -1036,7 +1037,7 @@ function Dashboard({ onCreate, initialSection }) {
 
       <CreateMenuModal
         isOpen={showCreateMenu}
-        projectOnly={Boolean(createMenuContext?.initialFolderId)}
+        projectOnly={false}
         onClose={() => {
           setShowCreateMenu(false)
           setCreateMenuContext(null)
@@ -1090,8 +1091,8 @@ function Dashboard({ onCreate, initialSection }) {
             setCreateVideoModalContext(null)
             setShowImportModal(true)
           }}
-          initialWorkspaceId={createVideoModalContext?.initialWorkspaceId || ''}
-          initialFolderId={createVideoModalContext?.initialFolderId || ''}
+          initialWorkspaceId={createVideoModalContext?.initialWorkspaceId || createVideoModalContext?.workspaceId || ''}
+          initialFolderId={createVideoModalContext?.initialFolderId || createVideoModalContext?.folderId || ''}
           presenterSeed={createVideoModalContext?.presenterSeed || null}
           templateSeed={createVideoModalContext?.templateSeed || null}
           onCreateVideo={handleCreateVideo}

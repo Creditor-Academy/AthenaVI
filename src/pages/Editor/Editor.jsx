@@ -61,7 +61,13 @@ import {
   nextHeygenSceneId,
   pollUntilHeygenPlaybackReady,
 } from '../../utils/heygenVideo'
-import { downloadFinalRenderStream, exportFullProjectVideo } from '../../utils/projectRender'
+import {
+  downloadFinalRenderStream,
+  exportFullProjectVideo,
+  formatRenderStatus,
+  getRenderStatus,
+  pollRenderUntilReady,
+} from '../../utils/projectRender'
 import {
   applyDurationToSceneClips,
   buildSceneDurationPatch,
@@ -1887,7 +1893,7 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
     }
   }
 
-  const exportVideo = () => {
+  const exportVideo = async () => {
     const workspaceId = project.workspaceId || project.createConfig?.workspaceId
     const projectId = project.id || project.createConfig?.videoId
 
@@ -1899,6 +1905,89 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
     if (!project.scenes?.length) {
       showToast('Add at least one scene before downloading.', 'error')
       return
+    }
+
+    try {
+      const renders = await workspaceService.listRenders(workspaceId, projectId)
+      const latest = renders?.[0]
+      if (latest && (latest.status === 'completed' || latest.status === 'complete' || latest.status === 'ready')) {
+        const renderTime = new Date(latest.completedAt || latest.createdAt).getTime()
+        const projectUpdateTime = new Date(project.updatedAt || 0).getTime()
+
+        // If project was not updated after this render finished (with 10s grace window)
+        if (!project.updatedAt || renderTime >= projectUpdateTime - 10000) {
+          setExportPhase('success')
+          setExportReady({
+            workspaceId,
+            projectId,
+            renderId: latest.id,
+            filename: `${projectRef.current?.title || project.title || 'video'}.mp4`,
+          })
+          setShowExportModal(true)
+          return
+        }
+      } else if (latest && (latest.status === 'queued' || latest.status === 'processing')) {
+        setExportPhase('loading')
+        setExportStatus(latest.status === 'queued' ? 'Waiting for another export…' : `Rendering… (${latest.progress || 0}%)`)
+        setExportProgress(latest.progress || 0)
+        setIsExporting(true)
+        setShowExportModal(true)
+
+        ;(async () => {
+          try {
+            const readyRender = await pollRenderUntilReady(workspaceService, workspaceId, projectId, latest.id, {
+              onPoll: (r) => {
+                let pct = 0
+                if (r && r.progress !== undefined) {
+                  pct = typeof r.progress === 'number'
+                    ? (r.progress <= 1 ? Math.round(r.progress * 100) : Math.round(r.progress))
+                    : parseInt(r.progress, 10) || 0
+                } else if (r && r.percent !== undefined) {
+                  pct = typeof r.percent === 'number'
+                    ? (r.percent <= 1 ? Math.round(r.percent * 100) : Math.round(r.percent))
+                    : parseInt(r.percent, 10) || 0
+                }
+                const status = getRenderStatus(r)
+                let statusText = 'Rendering…'
+                if (status === 'queued') {
+                  statusText = 'Waiting for another export…'
+                } else if (status === 'processing') {
+                  statusText = pct > 0 ? `Rendering… (${pct}%)` : 'Rendering…'
+                } else {
+                  statusText = `Rendering… (${formatRenderStatus(r)})`
+                }
+                setExportStatus(statusText)
+                setExportProgress(pct)
+              },
+            })
+
+            setExportPhase('success')
+            setExportReady({
+              workspaceId,
+              projectId,
+              renderId: readyRender?.id || latest.id,
+              filename: `${projectRef.current?.title || project.title || 'video'}.mp4`,
+            })
+            notifyEditorToast('Export successful', 'success')
+            bumpCreditsRefresh()
+          } catch (err) {
+            console.error('[Export] Re-attached render poll failed:', err)
+            if (err?.isBackgroundRender) {
+              showToast(err.message, 'info')
+              setShowExportModal(false)
+            } else {
+              setExportErrorObject(err)
+              setExportError(err?.message || 'Download failed.')
+              setExportPhase('error')
+            }
+          } finally {
+            setIsExporting(false)
+          }
+        })()
+        return
+      }
+    } catch (e) {
+      console.warn('[Export] Could not check existing renders:', e)
     }
 
     setExportPhase('configure')
@@ -1956,9 +2045,14 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
       bumpCreditsRefresh()
     } catch (err) {
       console.error('[Export] Full render download failed:', err)
-      setExportErrorObject(err)
-      setExportError(err?.message || 'Download failed. The video may still be rendering.')
-      setExportPhase('error')
+      if (err?.isBackgroundRender) {
+        showToast(err.message, 'info')
+        setShowExportModal(false)
+      } else {
+        setExportErrorObject(err)
+        setExportError(err?.message || 'Download failed. The video may still be rendering.')
+        setExportPhase('error')
+      }
     } finally {
       setIsExporting(false)
     }
@@ -2977,6 +3071,7 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
         errorObject={exportErrorObject}
         onStartExport={handleStartExport}
         onDownload={exportPhase === 'success' ? handleDownloadExport : undefined}
+        onReconfigure={() => setExportPhase('configure')}
         readyFilename={exportReady?.filename || ''}
         downloading={isDownloadingExport}
       />

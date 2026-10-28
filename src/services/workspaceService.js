@@ -966,6 +966,10 @@ class WorkspaceService {
         cache: 'no-store'
       });
 
+      if (response.status === 304) {
+        return { notModified: true };
+      }
+
       if (!response.ok) {
         throw new Error(`Failed to get render: ${response.status}`);
       }

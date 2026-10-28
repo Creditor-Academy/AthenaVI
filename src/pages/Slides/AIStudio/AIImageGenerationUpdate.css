@@ -782,6 +782,11 @@
   top: calc(100% + 8px);
   bottom: auto;
 }
+.chatbox-container .igc-plus:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 .attach-btn, .mic-btn, .inspire-btn {
   background: transparent;
   border: none;

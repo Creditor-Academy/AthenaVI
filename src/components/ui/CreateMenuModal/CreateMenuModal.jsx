@@ -29,11 +29,7 @@ function CreateMenuModal({
 
   if (!isOpen) return null
 
-  const options = projectOnly
-    ? CREATE_OPTIONS.filter((option) =>
-        ['avatar-video', 'ppt-ai', 'ppt-builder'].includes(option.id)
-      )
-    : CREATE_OPTIONS
+  const options = CREATE_OPTIONS
 
   const handleSelect = (id) => {
     if (id === 'avatar-video') {
