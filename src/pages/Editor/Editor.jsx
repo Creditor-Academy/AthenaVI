@@ -1956,9 +1956,14 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
       bumpCreditsRefresh()
     } catch (err) {
       console.error('[Export] Full render download failed:', err)
-      setExportErrorObject(err)
-      setExportError(err?.message || 'Download failed. The video may still be rendering.')
-      setExportPhase('error')
+      if (err?.isBackgroundRender) {
+        showToast(err.message, 'info')
+        setShowExportModal(false)
+      } else {
+        setExportErrorObject(err)
+        setExportError(err?.message || 'Download failed. The video may still be rendering.')
+        setExportPhase('error')
+      }
     } finally {
       setIsExporting(false)
     }

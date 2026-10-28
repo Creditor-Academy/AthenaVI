@@ -65,7 +65,12 @@ const ExportModal = ({
     activeStep = 3
   } else if (statusLower.includes('rendering')) {
     activeStep = 2
-  } else if (statusLower.includes('starting full video render') || statusLower.includes('queued') || statusLower.includes('starting')) {
+  } else if (
+    statusLower.includes('starting full video render') ||
+    statusLower.includes('queued') ||
+    statusLower.includes('starting') ||
+    statusLower.includes('waiting for another export')
+  ) {
     activeStep = 1
   } else {
     activeStep = 0
