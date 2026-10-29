@@ -17,6 +17,9 @@ const PREVIEW_ICONS = {
   'any-link': FiLink,
 }
 
+// Embeds are switched off for now: every provider is faded and unselectable.
+const EMBED_UNAVAILABLE = true
+
 function EmbedPreviewArt({ providerId }) {
   const meta = BRAND_ICON_META[providerId] || BRAND_ICON_META['any-link']
   const PreviewIcon = PREVIEW_ICONS[providerId] || FiLink
@@ -71,7 +74,8 @@ function EmbedPreviewArt({ providerId }) {
   )
 }
 
-export default function EmbedPanel({ onInsert, disabled }) {
+export default function EmbedPanel({ onInsert, disabled: disabledProp }) {
+  const disabled = disabledProp || EMBED_UNAVAILABLE
   const [providerId, setProviderId] = useState('youtube')
   const [url, setUrl] = useState('')
   const [error, setError] = useState('')
@@ -89,6 +93,8 @@ export default function EmbedPanel({ onInsert, disabled }) {
           id: p.id,
           label: p.label,
           icon: <RailBrandIcon id={p.id} />,
+          disabled: EMBED_UNAVAILABLE,
+          badge: EMBED_UNAVAILABLE ? 'Soon' : undefined,
         })),
       },
     ],
@@ -96,6 +102,7 @@ export default function EmbedPanel({ onInsert, disabled }) {
   )
 
   const handleAdd = () => {
+    if (disabled) return
     const trimmed = url.trim()
     if (!isValidHttpUrl(trimmed)) {
       setError('Enter a valid http(s) URL')
@@ -124,7 +131,7 @@ export default function EmbedPanel({ onInsert, disabled }) {
     <InsertPanelShell
       title="Embed"
       rail={rail}
-      activeRailId={providerId}
+      activeRailId={EMBED_UNAVAILABLE ? null : providerId}
       onSelectRail={(id) => {
         setProviderId(id)
         setError('')
@@ -164,6 +171,9 @@ export default function EmbedPanel({ onInsert, disabled }) {
             Add
           </button>
         </div>
+        {EMBED_UNAVAILABLE && (
+          <div className="ppt-insert-main-sub">Embeds are currently unavailable.</div>
+        )}
         {error && <div className="ppt-insert-error">{error}</div>}
       </div>
     </InsertPanelShell>
