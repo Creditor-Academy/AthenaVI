@@ -6,15 +6,6 @@ import heygenService from '../../services/heygenService'
 import { extractHeygenList, mapAvatarGroup } from '../../utils/heygenAvatars'
 
 import { LANDING_DARK, LANDING_FONT } from '../../styles/landingTypography'
-import avatarNoah from '../../assets/Avatarr1.png'
-import avatarLiam from '../../assets/Avatarr2.png'
-import avatarLucas from '../../assets/Avatarr3.png'
-import avatarMia from '../../assets/avatar1.png'
-import avatarZara from '../../assets/avatar3.png'
-import avatarAva from '../../assets/avatar2.png'
-import avatarEthan from '../../assets/Avatarr5.png'
-import avatarOliver from '../../assets/Avatarr6.png'
-import avatarOlivia from '../../assets/avatar4.png'
 
 
 const styles = `
@@ -342,16 +333,16 @@ const styles = `
 function Hero({ onContactSalesClick }) {
   const [avatarsList] = useState([
     /* ── Target avatars in sequence (1 → 7) ── */
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target.mp4', name: 'Noah', role: 'Technical Expert', poster: avatarNoah },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(1).mp4', name: 'Liam', role: 'Virtual Studio', poster: avatarLiam },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(2).mp4', name: 'Lucas', role: 'Product Presenter', poster: avatarLucas },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(6).mp4', name: 'Mia', role: 'Brand Storyteller', poster: avatarMia },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(7).mp4', name: 'Zara', role: 'Sales Presenter', poster: avatarZara },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target.mp4', name: 'Noah', role: 'Technical Expert' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(1).mp4', name: 'Liam', role: 'Virtual Studio' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(2).mp4', name: 'Lucas', role: 'Product Presenter' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(6).mp4', name: 'Mia', role: 'Brand Storyteller' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(7).mp4', name: 'Zara', role: 'Sales Presenter' },
     /* ── Talk avatars ── */
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_1.mp4', name: 'Ava', role: 'Digital Assistant', poster: avatarAva },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_2.mp4', name: 'Ethan', role: 'AI Video Assistant', poster: avatarEthan },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_2+(1).mp4', name: 'Oliver', role: 'Digital Host', poster: avatarOliver },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_3.mp4', name: 'Olivia', role: 'Language Coach', poster: avatarOlivia },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_1.mp4', name: 'Ava', role: 'Digital Assistant' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_2.mp4', name: 'Ethan', role: 'AI Video Assistant' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_2+(1).mp4', name: 'Oliver', role: 'Digital Host' },
+    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_3.mp4', name: 'Olivia', role: 'Language Coach' },
   ])
 
   return (
