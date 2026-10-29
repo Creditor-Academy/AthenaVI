@@ -8,6 +8,8 @@ import { extractPresentationId, toApiThemeId } from '../../../utils/presentation
 import './PptBuilder.css'
 import '../AIPptGenerator.css'
 
+const DEFAULT_LIGHT_THEME_ID = 'clean_light'
+
 export default function PptBuilder({
   onBack,
   onOpenEditor,
@@ -77,6 +79,12 @@ export default function PptBuilder({
       if (isPack && template.themeId) {
         body.themeId = toApiThemeId(template.themeId)
       }
+      // Without a theme the backend falls back to its near-black default (midnight_blue), so
+      // layouts and blank decks opened as black slides. Match the light layout previews instead;
+      // a selected brand kit still takes precedence on the backend.
+      if (!isPack && !body.themeId) {
+        body.themeId = DEFAULT_LIGHT_THEME_ID
+      }
 
       const created = await presentationService.createPresentation(ctx.workspaceId, body)
       const presentationId = extractPresentationId(created)
@@ -99,7 +107,7 @@ export default function PptBuilder({
         presentationId,
         config: {
           title: presentationTitle,
-          theme: toApiThemeId(template.themeId || template.id) || 'petrol',
+          theme: body.themeId || toApiThemeId(template.themeId) || DEFAULT_LIGHT_THEME_ID,
           workspaceId: ctx.workspaceId,
           presentationId,
           brandKitId,

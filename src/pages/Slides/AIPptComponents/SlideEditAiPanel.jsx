@@ -14,6 +14,7 @@ import {
   FiGrid,
   FiRefreshCw,
   FiX,
+  FiFileText,
 } from 'react-icons/fi'
 import { BsStars } from 'react-icons/bs'
 import { MdOutlineAutoAwesome } from 'react-icons/md'
@@ -78,6 +79,20 @@ export const SLIDE_AI_ACTIONS = {
   },
 }
 
+// Backend caps the slide AI prompt (slideAiPromptField) at 2000 characters.
+const MAX_PROMPT_LENGTH = 2000
+const CONTEXT_HEADER = '\n\nAdditional context:\n'
+const CONTEXT_ONLY_PROMPT = 'Update this slide using the additional context below.'
+const CONTEXT_FILE_ACCEPT = '.txt,.md,.markdown,.csv,.json,text/plain,text/markdown,text/csv,application/json'
+
+function buildPromptWithContext(prompt, context) {
+  const base = prompt || CONTEXT_ONLY_PROMPT
+  if (!context?.text) return base
+  const room = MAX_PROMPT_LENGTH - base.length - CONTEXT_HEADER.length
+  if (room <= 0) return base.slice(0, MAX_PROMPT_LENGTH)
+  return `${base}${CONTEXT_HEADER}${context.text.slice(0, room)}`
+}
+
 const WRITING_ACTIONS = [
   { id: 'improve-writing', Icon: FiEdit3 },
   { id: 'fix-spelling', Icon: FiCheckCircle },
@@ -123,11 +138,16 @@ export default function SlideEditAiPanel({
   onRegenerate,
 }) {
   const [prompt, setPrompt] = useState('')
+  const [context, setContext] = useState(null)
+  const [contextError, setContextError] = useState('')
   const textareaRef = useRef(null)
+  const contextInputRef = useRef(null)
 
   useEffect(() => {
     if (!open) {
       setPrompt('')
+      setContext(null)
+      setContextError('')
       return undefined
     }
     const onKey = (e) => {
@@ -143,7 +163,12 @@ export default function SlideEditAiPanel({
 
   if (!open) return null
 
-  const canSend = prompt.trim().length > 0 && !disabled && !busy
+  const canSend = (prompt.trim().length > 0 || Boolean(context)) && !disabled && !busy
+  const contextTrimmed = Boolean(
+    context &&
+      (prompt.trim() || CONTEXT_ONLY_PROMPT).length + CONTEXT_HEADER.length + context.text.length >
+        MAX_PROMPT_LENGTH
+  )
 
   const runAction = (actionId) => {
     if (disabled || busy) return
@@ -151,7 +176,7 @@ export default function SlideEditAiPanel({
     if (!action) return
     onSubmit?.({
       actionId,
-      prompt: action.prompt,
+      prompt: buildPromptWithContext(action.prompt, context),
       target: action.target || 'full',
     })
   }
@@ -160,9 +185,27 @@ export default function SlideEditAiPanel({
     if (!canSend) return
     onSubmit?.({
       actionId: 'custom',
-      prompt: prompt.trim(),
+      prompt: buildPromptWithContext(prompt.trim(), context),
       target: 'full',
     })
+  }
+
+  const handleContextFile = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setContextError('')
+    try {
+      const text = (await file.text()).replace(/\s+\n/g, '\n').trim()
+      if (!text) {
+        setContextError('That file has no readable text.')
+        return
+      }
+      setContext({ name: file.name, text })
+      textareaRef.current?.focus()
+    } catch {
+      setContextError('Could not read that file. Use a .txt, .md, .csv or .json file.')
+    }
   }
 
   const stopBubble = (e) => {
@@ -220,12 +263,20 @@ export default function SlideEditAiPanel({
             <button
               type="button"
               className="ppt-slide-ai-icon-btn"
-              title="Add context"
+              title="Add context from a text file"
               disabled={disabled || busy}
               aria-label="Add context"
+              onClick={() => contextInputRef.current?.click()}
             >
               <FiPlus size={14} />
             </button>
+            <input
+              ref={contextInputRef}
+              type="file"
+              accept={CONTEXT_FILE_ACCEPT}
+              hidden
+              onChange={handleContextFile}
+            />
             <button
               type="button"
               className={`ppt-slide-ai-send-btn ${canSend ? 'is-ready' : ''}`}
@@ -238,6 +289,26 @@ export default function SlideEditAiPanel({
             </button>
           </div>
         </div>
+
+        {context && (
+          <div className="ppt-slide-ai-context">
+            <FiFileText size={13} aria-hidden />
+            <span className="ppt-slide-ai-context-name" title={context.name}>
+              {context.name}
+            </span>
+            {contextTrimmed ? <span className="ppt-slide-ai-context-note">trimmed to fit</span> : null}
+            <button
+              type="button"
+              className="ppt-slide-ai-context-remove"
+              aria-label="Remove context"
+              disabled={busy}
+              onClick={() => setContext(null)}
+            >
+              <FiX size={12} />
+            </button>
+          </div>
+        )}
+        {contextError && <p className="ppt-slide-ai-context-error">{contextError}</p>}
 
         <button
           type="button"

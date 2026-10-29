@@ -1078,7 +1078,12 @@ function SlideStage({
                     const rawH = Math.round(
                       cssPxToCanvas(cssHeight, stageRef.current, canvas.height)
                     )
-                    const slotMaxH = el.content?.slotMaxHeight || el.placement?.height || curH
+                    // Layout-bound text keeps its slot height (it shrinks its font instead).
+                    // User-made boxes grow with their text up to the slide bottom; capping them
+                    // at the current height left extra lines clipped once editing ended.
+                    const slotMaxH =
+                      el.content?.slotMaxHeight ||
+                      (el.slotId ? el.placement?.height || curH : canvas.height)
                     const maxH = Math.max(
                       TEXT_MIN_HEIGHT,
                       Math.min(slotMaxH, canvas.height - y + minOverlapPx(curH) * 8)
@@ -2053,6 +2058,8 @@ function AIPptEditor({
         { content: nextContent },
         { history: false }
       )
+      // Lets the text element know the edit was kept (undo deliberately drops it).
+      return true
     },
     [elementMutations, selectedSlide]
   )
@@ -3752,6 +3759,55 @@ function AIPptEditor({
     [viewOnly, isGenerating, workspaceId, elementMutations]
   )
 
+  const replaceImageInputRef = useRef(null)
+  const replaceImageTargetRef = useRef(null)
+
+  const handleReplaceImage = useCallback(() => {
+    if (!selectedElementId || viewOnly || isGenerating) return
+    replaceImageTargetRef.current = {
+      id: selectedElementId,
+      deviceFrame: isPptDeviceFrameElement(selectedElement),
+    }
+    replaceImageInputRef.current?.click()
+  }, [selectedElementId, selectedElement, viewOnly, isGenerating])
+
+  const handleReplaceImageFile = useCallback(
+    async (event) => {
+      const file = event.target.files?.[0]
+      event.target.value = ''
+      const target = replaceImageTargetRef.current
+      replaceImageTargetRef.current = null
+      if (!file || !target?.id) return
+      if (!file.type?.startsWith('image/')) {
+        setError('Choose an image file to replace this image.')
+        return
+      }
+      if (!workspaceId) {
+        setError('Workspace required to upload')
+        return
+      }
+      setError('')
+      setBusy(true)
+      try {
+        // Upload first: the fill handlers would otherwise persist a temporary blob URL.
+        const asset = await assetService.uploadAsset(workspaceId, file)
+        const url = asset?.url || asset?.cdnUrl || asset?.src || asset?.downloadUrl || ''
+        if (!url) throw new Error('Upload succeeded but no URL returned')
+        const payload = { url, src: url, alt: asset?.name || file.name, assetId: asset?.id || asset?._id }
+        if (target.deviceFrame) {
+          await handleFillDeviceFrame(target.id, payload)
+        } else {
+          await handleFillImage(target.id, payload)
+        }
+      } catch (err) {
+        setError(err.message || 'Failed to replace image')
+      } finally {
+        setBusy(false)
+      }
+    },
+    [workspaceId, handleFillDeviceFrame, handleFillImage]
+  )
+
   const handleClearDeviceFrameScreen = useCallback(() => {
     if (!selectedElementId || !isPptDeviceFrameElement(selectedElement)) return
     elementMutations.patchElement(selectedElementId, {
@@ -4154,6 +4210,13 @@ function AIPptEditor({
   return (
     <EditorErrorBoundary label="PPT editor">
     <div className="aig-editor-container fade-in">
+      <input
+        ref={replaceImageInputRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={handleReplaceImageFile}
+      />
       {isGenerating && (
         <div className="aig-generating-lock" role="status">
           {viewOnly
@@ -4719,13 +4782,7 @@ function AIPptEditor({
           layoutSchemaMap={layoutSchemaMap}
           aspectRatio={aspectRatio || '16:9'}
           onToggleElementLock={() => elementMutations.toggleLock(canvasSelectionIds)}
-          onReplaceImage={() =>
-            setError(
-              isPptDeviceFrameElement(selectedElement)
-                ? 'Open Media and click or drag an image onto the selected device frame.'
-                : 'Use Media panel with a selected image to replace.'
-            )
-          }
+          onReplaceImage={handleReplaceImage}
           onClearDeviceFrameScreen={handleClearDeviceFrameScreen}
           onCropImage={() => setCropModalOpen(true)}
           onToggleImageAsBackground={handleToggleImageAsBackground}
