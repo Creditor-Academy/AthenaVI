@@ -809,6 +809,12 @@
   box-shadow: 0 8px 16px rgba(0,0,0,0.08);
 }
 
+/* The button surface follows --bg-card (dark in dark mode) while --slides-ink stays dark, so
+   the label vanished; use the theme's text colour instead. */
+[data-mode='dark'] .aig-btn-secondary {
+  color: var(--text-main, #ffffff);
+}
+
 .aig-btn-primary {
   background: var(--primary);
   border: none;

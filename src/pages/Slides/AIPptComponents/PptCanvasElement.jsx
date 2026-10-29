@@ -244,6 +244,11 @@ function EditableText({
   const wasEditingRef = useRef(false)
   const selRef = useRef(null)
   const restoringSelRef = useRef(false)
+  const lastHeightRef = useRef(null)
+  const latestPropsRef = useRef({})
+  useLayoutEffect(() => {
+    latestPropsRef.current = { onEndEdit, onHeightChange, listType: content?.listType }
+  })
   const c = content || {}
   const fontSize = Number(c.fontSize) > 0 ? Number(c.fontSize) : 22
   const plainText = contentPlainText(c)
@@ -258,6 +263,7 @@ function EditableText({
       if (!ref.current || !onHeightChange) return
       const measured = measureTextContentSize(ref.current, { paddingX: 0, paddingY: 4 })
       if (!measured) return
+      lastHeightRef.current = measured.height
       onHeightChange(measured.height, { commit, allowShrink })
     },
     [onHeightChange]
@@ -279,6 +285,7 @@ function EditableText({
       liveTextRef.current = plainText
       liveRunsRef.current = null
       selRef.current = null
+      lastHeightRef.current = null
     }
     const seedText = justStarted ? plainText : (liveTextRef.current ?? plainText)
     seedEditableNode(
@@ -328,6 +335,26 @@ function EditableText({
     document.addEventListener('selectionchange', onSel)
     return () => document.removeEventListener('selectionchange', onSel)
   }, [editing, elementId])
+
+  // Editing can also be ended from outside without finishEdit, e.g. a press-and-drag that
+  // starts inside the text and releases on the slide clears the selection. Commit what was
+  // typed from the live refs (the editable node is already gone) instead of dropping it.
+  useEffect(() => {
+    if (!editing) return undefined
+    return () => {
+      if (endedRef.current || !typedRef.current) return
+      endedRef.current = true
+      const { onEndEdit: endEdit, onHeightChange: heightChange, listType } = latestPropsRef.current
+      let text = liveTextRef.current ?? ''
+      if (listType) text = stripLeadingListMarkers(text)
+      if (!String(text).trim() && String(startTextRef.current).trim()) text = startTextRef.current
+      const runs = collapseDuplicatedRuns({ text, runs: liveRunsRef.current })
+      const kept = endEdit?.(text, runs)
+      if (kept && lastHeightRef.current && heightChange) {
+        heightChange(lastHeightRef.current, { commit: true, allowShrink: true })
+      }
+    }
+  }, [editing])
 
   useEffect(() => {
     return () => cancelAnimationFrame(measureRaf.current)
