@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import authService from '../services/authService.js'
+import userService from '../services/userService.js'
 import {
   clearOAuthParamsFromUrl,
   getOAuthAccessTokenFromUrl,
@@ -31,8 +32,7 @@ export const AuthProvider = ({ children }) => {
 
     setCapabilitiesLoading(true)
     try {
-      const { default: userService } = await import('../services/userService.js')
-      const caps = await userService.getUserCapabilities()
+            const caps = await userService.getUserCapabilities()
       setCapabilities(caps)
       return caps
     } catch (error) {
@@ -78,8 +78,7 @@ export const AuthProvider = ({ children }) => {
       clearOAuthParamsFromUrl()
 
       try {
-        const { default: userService } = await import('../services/userService.js')
-        const profile = await userService.getUserProfile()
+                const profile = await userService.getUserProfile()
         const profileId = profile?.id || profile?._id || profile?.userId
         const userData = { ...profile, id: profileId }
         localStorage.setItem('user', JSON.stringify(userData))
@@ -130,8 +129,7 @@ export const AuthProvider = ({ children }) => {
               console.log('User ID missing from stored data, fetching profile...')
               try {
                 // Import userService dynamically to avoid circular dependencies if any
-                const { default: userService } = await import('../services/userService.js')
-                const profile = await userService.getUserProfile()
+                                const profile = await userService.getUserProfile()
                 const profileId = profile?.id || profile?._id || profile?.userId
                 if (profile && profileId) {
                   userData = { ...userData, ...profile, id: profileId }
@@ -277,8 +275,7 @@ export const AuthProvider = ({ children }) => {
       const invitedWorkspaceId = new URLSearchParams((window.location.hash || '').slice(1)).get('workspace_id')
       localStorage.setItem('accessToken', accessToken)
       clearOAuthParamsFromUrl()
-      const { default: userService } = await import('../services/userService.js')
-      const profile = await userService.getUserProfile()
+            const profile = await userService.getUserProfile()
       const profileId = profile?.id || profile?._id || profile?.userId
       const userData = { ...profile, id: profileId }
       localStorage.setItem('user', JSON.stringify(userData))

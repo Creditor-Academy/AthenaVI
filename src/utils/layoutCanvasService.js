@@ -1,3 +1,4 @@
+import { validateContentForLayout } from './contentContract.js'
 import presentationService from '../services/presentationService'
 import {
   compileDeckLayoutToElements,
@@ -589,8 +590,7 @@ export async function applyCompiledLayoutToSlide({
   const smartSchema = resolveSmartLayoutState(resolvedSchema, content)
 
   if (skipContentValidation !== true) {
-    const { validateContentForLayout } = await import('./contentContract.js')
-    validateContentForLayout(content, smartSchema)
+        validateContentForLayout(content, smartSchema)
   }
 
   const extracted = extractContentBySlotFromElements(mergeFromElements, smartSchema)
