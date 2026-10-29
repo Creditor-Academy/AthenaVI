@@ -1,3 +1,6 @@
+import { finalizeTimelineShapes } from './timelineShapeFinalize.js'
+import { finalizeChartShapes } from './chartShapeFinalize.js'
+import { preserveDeckHeadingSize, preserveDeckTierSizes } from './deckHeadingSize.js'
 /**
  * Rebind slide.content onto existing canvas elements (geometry preserved).
  */
@@ -88,12 +91,9 @@ export async function rebindAndFinalizeSlideElements(
     height: canvas.height || 1080,
     slideContent: content,
   }
-  const { finalizeTimelineShapes } = await import('./timelineShapeFinalize.js')
-  const { finalizeChartShapes } = await import('./chartShapeFinalize.js')
   next = finalizeTimelineShapes(next, layoutSchema, palette, canvasBox)
   next = finalizeChartShapes(next, layoutSchema, palette, canvasBox)
   // Diagram finalizers rebuild the heading at their hardcoded size — keep the deck heading size.
-  const { preserveDeckHeadingSize, preserveDeckTierSizes } = await import('./deckHeadingSize.js')
   return preserveDeckTierSizes(elements, preserveDeckHeadingSize(elements, next))
 }
 

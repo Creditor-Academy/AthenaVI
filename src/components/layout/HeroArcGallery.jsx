@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useMemo } from 'react'
+import { useRef, useEffect, useState, useMemo, useCallback } from 'react'
 import { useAnimationFrame } from 'framer-motion'
 
 const SCROLL_DURATION_DESKTOP = 35
@@ -48,6 +48,10 @@ const styles = `
   will-change: transform;
 }
 
+.hero-arc-gallery:hover .hero-arc-track {
+  animation-play-state: paused;
+}
+
 @keyframes hero-arc-scroll {
   from {
     transform: translate3d(0, 0, 0);
@@ -67,6 +71,8 @@ const styles = `
   backface-visibility: hidden;
   transform-style: preserve-3d;
   margin: 0 -10px;
+  position: relative;
+  background: #0f172a;
 }
 
 .hero-arc-gallery--full .hero-arc-tile {
@@ -84,6 +90,17 @@ const styles = `
   display: block;
   pointer-events: none;
   user-select: none;
+}
+
+.hero-arc-tile video {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.hero-arc-tile video.is-ready {
+  opacity: 1;
 }
 
 .hero-arc-labels {
@@ -159,8 +176,11 @@ const styles = `
 function HeroArcGallery({ avatars = [], fullWidth = false, pillarLabels = [] }) {
   const galleryRef = useRef(null)
   const tileRefs = useRef([])
+  const videoRefs = useRef([])
+  const [readyVideos, setReadyVideos] = useState({})
   const [scrollDistance, setScrollDistance] = useState(0)
   const [scrollDuration, setScrollDuration] = useState(SCROLL_DURATION_DESKTOP)
+
   const trackStyle = scrollDistance > 0
     ? {
         ['--scroll-distance']: `${scrollDistance}px`,
@@ -172,6 +192,25 @@ function HeroArcGallery({ avatars = [], fullWidth = false, pillarLabels = [] }) 
     () => [...avatars, ...avatars, ...avatars],
     [avatars]
   )
+
+  const handleVideoReady = useCallback((index) => {
+    setReadyVideos((prev) => {
+      if (prev[index]) return prev
+      return { ...prev, [index]: true }
+    })
+  }, [])
+
+  const handleVideoError = useCallback((index) => {
+    const vid = videoRefs.current[index]
+    if (vid) {
+      setTimeout(() => {
+        try {
+          vid.load()
+          vid.play().catch(() => {})
+        } catch (_) {}
+      }, 2500)
+    }
+  }, [])
 
   useEffect(() => {
     const measure = () => {
@@ -208,6 +247,7 @@ function HeroArcGallery({ avatars = [], fullWidth = false, pillarLabels = [] }) 
     }
   }, [avatars.length, tiles.length])
 
+  // Batched animation frame: eliminates layout thrashing & dynamically gates video decoders
   useAnimationFrame(() => {
     const gallery = galleryRef.current
     if (!gallery) return
@@ -215,16 +255,41 @@ function HeroArcGallery({ avatars = [], fullWidth = false, pillarLabels = [] }) 
     const galleryRect = gallery.getBoundingClientRect()
     const centerX = galleryRect.left + galleryRect.width / 2
     const normalizer = galleryRect.width / (fullWidth ? 3.8 : 4)
+    const len = tileRefs.current.length
+    const winWidth = typeof window !== 'undefined' ? window.innerWidth : 1920
 
-    tileRefs.current.forEach((tile) => {
-      if (!tile) return
+    // Phase 1: Batch READ (no writes to avoid layout thrashing)
+    const items = []
+    for (let i = 0; i < len; i++) {
+      const tile = tileRefs.current[i]
+      if (!tile) continue
       const rect = tile.getBoundingClientRect()
       const tileCenterX = rect.left + rect.width / 2
       const offset = (tileCenterX - centerX) / normalizer
+      const isVisible = rect.right > -200 && rect.left < winWidth + 200
+      items.push({ tile, offset, isVisible, index: i })
+    }
+
+    // Phase 2: Batch WRITE (transforms + decoder-conscious play/pause)
+    for (let i = 0; i < items.length; i++) {
+      const { tile, offset, isVisible, index } = items[i]
       const { rotateY, scale, translateZ, zIndex } = computeArcTransform(offset, fullWidth)
       tile.style.transform = `rotateY(${rotateY}deg) scale(${scale}) translateZ(${translateZ}px)`
       tile.style.zIndex = String(zIndex)
-    })
+
+      const video = videoRefs.current[index]
+      if (video) {
+        if (isVisible) {
+          if (video.paused) {
+            video.play().catch(() => {})
+          }
+        } else {
+          if (!video.paused) {
+            video.pause()
+          }
+        }
+      }
+    }
   })
 
   const galleryClass = fullWidth ? 'hero-arc-gallery hero-arc-gallery--full' : 'hero-arc-gallery'
@@ -234,25 +299,41 @@ function HeroArcGallery({ avatars = [], fullWidth = false, pillarLabels = [] }) 
       <style>{styles}</style>
       <div className={galleryClass} ref={galleryRef} aria-hidden="true">
         <div className="hero-arc-track" style={trackStyle}>
-          {tiles.map((avatar, i) => (
-            <div
-              key={`${avatar.name}-${i}`}
-              ref={(el) => {
-                tileRefs.current[i] = el
-              }}
-              className="hero-arc-tile"
-            >
-              <video
-                src={avatar.src}
-                muted
-                autoPlay
-                loop
-                playsInline
-                webkit-playsinline="true"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            </div>
-          ))}
+          {tiles.map((avatar, i) => {
+            const isFirstSet = i < avatars.length
+            return (
+              <div
+                key={`${avatar.name}-${i}`}
+                ref={(el) => {
+                  tileRefs.current[i] = el
+                }}
+                className="hero-arc-tile"
+              >
+                {avatar.poster && (
+                  <img
+                    src={avatar.poster}
+                    alt={avatar.name}
+                    loading={isFirstSet ? 'eager' : 'lazy'}
+                  />
+                )}
+                <video
+                  ref={(el) => {
+                    videoRefs.current[i] = el
+                  }}
+                  src={avatar.src}
+                  muted
+                  loop
+                  playsInline
+                  webkit-playsinline="true"
+                  preload="metadata"
+                  onCanPlay={() => handleVideoReady(i)}
+                  onLoadedData={() => handleVideoReady(i)}
+                  onError={() => handleVideoError(i)}
+                  className={readyVideos[i] ? 'is-ready' : ''}
+                />
+              </div>
+            )
+          })}
         </div>
       </div>
       {fullWidth && pillarLabels.length > 0 && (
