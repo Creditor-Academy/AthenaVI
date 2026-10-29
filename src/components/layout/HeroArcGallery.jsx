@@ -71,7 +71,6 @@ const styles = `
   backface-visibility: hidden;
   transform-style: preserve-3d;
   margin: 0 -10px;
-  position: relative;
   background: #0f172a;
 }
 
@@ -82,7 +81,6 @@ const styles = `
   margin: 0 -30px;
 }
 
-.hero-arc-tile img,
 .hero-arc-tile video {
   width: 100%;
   height: 100%;
@@ -90,17 +88,6 @@ const styles = `
   display: block;
   pointer-events: none;
   user-select: none;
-}
-
-.hero-arc-tile video {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-
-.hero-arc-tile video.is-ready {
-  opacity: 1;
 }
 
 .hero-arc-labels {
@@ -177,7 +164,6 @@ function HeroArcGallery({ avatars = [], fullWidth = false, pillarLabels = [] }) 
   const galleryRef = useRef(null)
   const tileRefs = useRef([])
   const videoRefs = useRef([])
-  const [readyVideos, setReadyVideos] = useState({})
   const [scrollDistance, setScrollDistance] = useState(0)
   const [scrollDuration, setScrollDuration] = useState(SCROLL_DURATION_DESKTOP)
 
@@ -192,13 +178,6 @@ function HeroArcGallery({ avatars = [], fullWidth = false, pillarLabels = [] }) 
     () => [...avatars, ...avatars, ...avatars],
     [avatars]
   )
-
-  const handleVideoReady = useCallback((index) => {
-    setReadyVideos((prev) => {
-      if (prev[index]) return prev
-      return { ...prev, [index]: true }
-    })
-  }, [])
 
   const handleVideoError = useCallback((index) => {
     const vid = videoRefs.current[index]
@@ -299,41 +278,28 @@ function HeroArcGallery({ avatars = [], fullWidth = false, pillarLabels = [] }) 
       <style>{styles}</style>
       <div className={galleryClass} ref={galleryRef} aria-hidden="true">
         <div className="hero-arc-track" style={trackStyle}>
-          {tiles.map((avatar, i) => {
-            const isFirstSet = i < avatars.length
-            return (
-              <div
-                key={`${avatar.name}-${i}`}
+          {tiles.map((avatar, i) => (
+            <div
+              key={`${avatar.name}-${i}`}
+              ref={(el) => {
+                tileRefs.current[i] = el
+              }}
+              className="hero-arc-tile"
+            >
+              <video
                 ref={(el) => {
-                  tileRefs.current[i] = el
+                  videoRefs.current[i] = el
                 }}
-                className="hero-arc-tile"
-              >
-                {avatar.poster && (
-                  <img
-                    src={avatar.poster}
-                    alt={avatar.name}
-                    loading={isFirstSet ? 'eager' : 'lazy'}
-                  />
-                )}
-                <video
-                  ref={(el) => {
-                    videoRefs.current[i] = el
-                  }}
-                  src={avatar.src}
-                  muted
-                  loop
-                  playsInline
-                  webkit-playsinline="true"
-                  preload="metadata"
-                  onCanPlay={() => handleVideoReady(i)}
-                  onLoadedData={() => handleVideoReady(i)}
-                  onError={() => handleVideoError(i)}
-                  className={readyVideos[i] ? 'is-ready' : ''}
-                />
-              </div>
-            )
-          })}
+                src={avatar.src}
+                muted
+                autoPlay
+                loop
+                playsInline
+                webkit-playsinline="true"
+                onError={() => handleVideoError(i)}
+              />
+            </div>
+          ))}
         </div>
       </div>
       {fullWidth && pillarLabels.length > 0 && (
