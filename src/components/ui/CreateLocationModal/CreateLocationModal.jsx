@@ -8,36 +8,37 @@ import {
 import { CREATE_OPTIONS } from '../../../constants/createOptions.js'
 import workspaceService from '../../../services/workspaceService.js'
 import ModalSelect from '../ModalSelect/ModalSelect.jsx'
-import paintBucketImage from '../../../assets/home_quickcreate/paint_bucket.png'
-import megaphoneImage from '../../../assets/home_quickcreate/megaphone.png'
-import bowlingPinsImage from '../../../assets/home_quickcreate/bowling_pins.png'
-import canvasToolsImage from '../../../assets/home_quickcreate/canvas_tools.png'
+import aiPresentationImage from '../../../assets/modal_visuals/modal_ai_presentation.jpg'
+import presentationDesignImage from '../../../assets/modal_visuals/modal_presentation_design.jpg'
+import aiImageGenImage from '../../../assets/modal_visuals/modal_ai_image_gen.jpg'
+import canvasEditorImage from '../../../assets/modal_visuals/modal_canvas_editor.jpg'
+import defaultProjectImage from '../../../assets/modal_visuals/modal_default_project.jpg'
 import './CreateLocationModal.css'
 
 const OPTION_VISUALS = {
   'ppt-ai': {
-    image: paintBucketImage,
+    image: aiPresentationImage,
     accent: 'pink',
     eyebrow: 'AI Presentation',
     subtitle: 'Choose where this deck should be saved. You’ll name the project on the next screen.',
     caption: 'Keep presentations organized in the right workspace from the start.',
   },
   'ppt-builder': {
-    image: megaphoneImage,
+    image: presentationDesignImage,
     accent: 'lavender',
     eyebrow: 'Presentation Design',
     subtitle: 'Choose where this presentation should be saved. You’ll name it on the next screen.',
     caption: 'Your slides stay with the right team folder as you build.',
   },
   'image-ai': {
-    image: bowlingPinsImage,
+    image: aiImageGenImage,
     accent: 'cyan',
     eyebrow: 'AI Image',
     subtitle: 'Choose where this image project should be saved. You’ll name it on the next screen.',
     caption: 'Generated visuals land in a clear, shared location.',
   },
   'image-editor': {
-    image: canvasToolsImage,
+    image: canvasEditorImage,
     accent: 'orange',
     eyebrow: 'Canvas Editor',
     subtitle: 'Choose where this canvas project should be saved. Next you’ll pick the canvas size.',
@@ -74,7 +75,7 @@ function CreateLocationModal({
     [optionId]
   )
   const visual = OPTION_VISUALS[optionId] || {
-    image: megaphoneImage,
+    image: defaultProjectImage,
     accent: 'lavender',
     eyebrow: 'New project',
     subtitle: 'Pick the workspace and folder for this project. You’ll name it on the next screen.',
@@ -475,13 +476,10 @@ function CreateLocationModal({
           </div>
 
           <aside className={`create-location-modal-visual accent-${visual.accent}`} aria-hidden="true">
-            <div className="create-location-modal-visual-orb create-location-modal-visual-orb--1" />
-            <div className="create-location-modal-visual-orb create-location-modal-visual-orb--2" />
-            <div className="create-location-modal-visual-frame">
-              <img src={visual.image} alt="" className="create-location-modal-visual-image" />
-            </div>
+            <img src={visual.image} alt="" className="create-location-modal-visual-bg" />
+            <div className="create-location-modal-visual-overlay" />
             <div className="create-location-modal-visual-copy">
-              <p className="create-location-modal-visual-title">Organized from the start</p>
+              <p className="create-location-modal-visual-title">{visual.title || 'Organized from the start'}</p>
               <p className="create-location-modal-visual-caption">{visual.caption}</p>
             </div>
           </aside>
