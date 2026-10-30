@@ -20,15 +20,24 @@ pipeline {
                 sh 'npm run build'
             }
         }
+
+        stage('Nginx Reload') {
+            steps {
+                sh '''
+                    sudo nginx -t
+                    sudo systemctl reload nginx
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo 'Frontend build completed successfully.'
+            echo 'Frontend build and Nginx reload completed successfully.'
         }
 
         failure {
-            echo 'Frontend build failed.'
+            echo 'Frontend pipeline failed.'
         }
     }
 }
