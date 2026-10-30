@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { buildScriptParagraphs, buildFullScriptText } from './digitalTwinScript';
 import { downloadDigitalTwinScriptPdf } from './digitalTwinScriptPdf';
+import { notify } from '../../../utils/appDialog';
 
 const MIN_RECOMMENDED_SECONDS = 120;
 const MAX_RECORD_SECONDS = 300;
@@ -159,7 +160,7 @@ function DigitalTwinVideoInput({ speakerName = '', previewUrl, onVideoReady, onC
     const file = event.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('video/')) {
-      alert('Please choose a video file.');
+      notify('Please choose a video file.');
       return;
     }
     onVideoReady?.({ file, previewUrl: URL.createObjectURL(file) });

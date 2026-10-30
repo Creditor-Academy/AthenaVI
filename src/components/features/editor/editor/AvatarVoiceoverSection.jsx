@@ -18,6 +18,7 @@ import {
   hasScenePresenterSetup,
 } from '../../../../utils/heygenAvatars';
 import './SceneSettingsPanel.css';
+import { notify } from '../../../../utils/appDialog';
 
 const displayName = (name, emptyLabel = 'Not selected') => {
   const trimmed = (name || '').trim();
@@ -129,7 +130,7 @@ const AvatarVoiceoverSection = ({
                     })
                   );
                 } else {
-                  alert('Video URL not found. It might still be processing.');
+                  notify('Video URL not found. It might still be processing.');
                 }
               }}
             >

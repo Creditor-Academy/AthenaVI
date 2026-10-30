@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+import AppDialogHost from './components/ui/AppDialogHost/AppDialogHost'
 import invitationFlowService from './services/invitationFlowService.js'
 import { getPendingInvitation } from './utils/inviteNavigation.js'
 import Landing from './pages/Landing/Landing.jsx'
@@ -512,6 +513,7 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <SessionExpiredModalContainer setView={setView} />
+        <AppDialogHost />
         <Suspense fallback={<PageFallback />}>
         {/* Reset Password Page - Standalone */}
       {window.location.pathname.includes('/reset-password') && (

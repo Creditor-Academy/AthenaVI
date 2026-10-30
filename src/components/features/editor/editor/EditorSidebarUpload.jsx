@@ -15,6 +15,7 @@ import { canManageAsset } from '../../../../utils/assetPermissions';
 import { assertUploadFits, dispatchStorageRefresh, formatStorageLimitMessage, isStorageLimitError } from '../../../../utils/storageQuota';
 import { setCanvasDragData } from '../../../../utils/editorDragDrop';
 import { createAudioBlobPreview, isAudioFile } from '../../../../utils/audioDuration';
+import { promptDialog } from '../../../../utils/appDialog';
 
 const SOURCE_TABS = [
   { id: 'all', label: 'All' },
@@ -170,7 +171,11 @@ const EditorSidebarUpload = ({ addLayer, onAddAudio, workspaceId, onUploadError,
     event?.preventDefault();
     if (!workspaceId || !asset?.id || renamingId) return;
 
-    const nextName = window.prompt('Rename asset', asset.name);
+    const nextName = await promptDialog('Rename asset', asset.name, {
+      title: 'Rename asset',
+      confirmLabel: 'Rename',
+      maxLength: 255,
+    });
     if (nextName == null) return;
     const trimmed = nextName.trim();
     if (!trimmed || trimmed === asset.name) return;

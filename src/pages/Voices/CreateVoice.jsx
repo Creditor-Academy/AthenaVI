@@ -19,6 +19,7 @@ import '../MyWork/MyWork.css'
 import '../Avatars/Avatars.css'
 import './Voices.css'
 
+import { notify } from '../../utils/appDialog'
 function CreateVoice({ onBack }) {
   const [creationType, setCreationType] = useState('clone') // 'clone' or 'semantic'
   const [creationName, setCreationName] = useState('')
@@ -89,7 +90,7 @@ function CreateVoice({ onBack }) {
       }, 1000);
     } catch (err) {
       console.error('Recording failed:', err);
-      alert('Microphone access denied or not available.');
+      notify('Microphone access denied or not available.');
     }
   };
 
@@ -140,7 +141,7 @@ function CreateVoice({ onBack }) {
     } catch (err) {
       console.error('Suggestion preview failed:', err)
       if (isInsufficientCreditsError(err)) {
-        alert(getSanitizedErrorMessage(err, 'Insufficient credits for voice preview.'))
+        notify(getSanitizedErrorMessage(err, 'Insufficient credits for voice preview.'))
       } else if (suggestionPreviewNoticeTimerRef.current) {
         clearTimeout(suggestionPreviewNoticeTimerRef.current)
       }
@@ -156,17 +157,17 @@ function CreateVoice({ onBack }) {
   const handleCreateVoice = async () => {
     if (creationType === 'clone') {
       if (!creationName || creationName.trim().length === 0) {
-        alert('Please provide a name for your custom voice.');
+        notify('Please provide a name for your custom voice.');
         return;
       }
 
       if (!selectedFile) {
-        alert('Please select an audio sample to clone.');
+        notify('Please select an audio sample to clone.');
         return;
       }
 
       if (selectedFile.size > HEYGEN_VOICE_MAX_BYTES) {
-        alert('Audio sample must be under 100 MB.');
+        notify('Audio sample must be under 100 MB.');
         return;
       }
 
@@ -216,7 +217,7 @@ function CreateVoice({ onBack }) {
       }
     } else {
       if (!creationPrompt) {
-        alert('Please provide a prompt to design the voice.');
+        notify('Please provide a prompt to design the voice.');
         return;
       }
 
@@ -532,7 +533,7 @@ function CreateVoice({ onBack }) {
                                   try {
                                     const vId = voice.voice_id || voice.id;
                                     if (!vId) {
-                                      alert('Error: Could not identify the voice ID. Please try regenerating.');
+                                      notify('Error: Could not identify the voice ID. Please try regenerating.');
                                       return;
                                     }
                                     console.log('Virtual Studio: Selecting voice...', vId, voice);

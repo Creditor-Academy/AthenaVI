@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { MdClose, MdCheckCircle, MdOpenInNew, MdPlayArrow, MdMic, MdCloudUpload, MdPerson, MdTextFields, MdKeyboardArrowDown, MdPause, MdSpeed, MdEdit } from 'react-icons/md'
 import { probeAudioDuration } from '../../../utils/audioDuration'
 
+import { notify } from '../../../utils/appDialog'
 const styles = `
 .voice-panel-overlay {
   position: fixed;
@@ -1069,19 +1070,19 @@ function VoiceCreatePanel({ voice, onClose, onNext }) {
 
   const handleNext = () => {
     if (currentStep === 2 && !selectedOption) {
-      alert('Please select an option to continue')
+      notify('Please select an option to continue')
       return
     }
     if (currentStep === 2 && !audioUrl) {
       if (selectedOption === 'record') {
-        alert('Please record your voice first')
+        notify('Please record your voice first')
       } else {
-        alert('Please upload an audio file first')
+        notify('Please upload an audio file first')
       }
       return
     }
     if (currentStep === 2 && (!selectedGender || !selectedLanguage)) {
-      alert('Please select both gender and language')
+      notify('Please select both gender and language')
       return
     }
     if (currentStep < steps.length) {
@@ -1125,7 +1126,7 @@ function VoiceCreatePanel({ voice, onClose, onNext }) {
       }, 1000)
     } catch (error) {
       console.error('Error accessing microphone:', error)
-      alert('Could not access microphone. Please check your permissions.')
+      notify('Could not access microphone. Please check your permissions.')
     }
   }
 
@@ -1146,12 +1147,12 @@ function VoiceCreatePanel({ voice, onClose, onNext }) {
       // Validate file type
       const validTypes = ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/webm', 'audio/ogg']
       if (!validTypes.includes(file.type)) {
-        alert('Please upload a valid audio file (MP3, WAV, OGG, or WebM)')
+        notify('Please upload a valid audio file (MP3, WAV, OGG, or WebM)')
         return
       }
       // Validate file size (max 50MB)
       if (file.size > 50 * 1024 * 1024) {
-        alert('File size must be less than 50MB')
+        notify('File size must be less than 50MB')
         return
       }
       setUploadedFile(file)
@@ -1181,11 +1182,11 @@ function VoiceCreatePanel({ voice, onClose, onNext }) {
     if (file) {
       const validTypes = ['audio/mpeg', 'audio/wav', 'audio/mp3', 'audio/webm', 'audio/ogg']
       if (!validTypes.includes(file.type)) {
-        alert('Please upload a valid audio file (MP3, WAV, OGG, or WebM)')
+        notify('Please upload a valid audio file (MP3, WAV, OGG, or WebM)')
         return
       }
       if (file.size > 50 * 1024 * 1024) {
-        alert('File size must be less than 50MB')
+        notify('File size must be less than 50MB')
         return
       }
       setUploadedFile(file)
@@ -1409,7 +1410,7 @@ function VoiceCreatePanel({ voice, onClose, onNext }) {
       }, 1000)
     } catch (error) {
       console.error('Error accessing microphone:', error)
-      alert('Could not access microphone. Please check your permissions.')
+      notify('Could not access microphone. Please check your permissions.')
     }
   }
 

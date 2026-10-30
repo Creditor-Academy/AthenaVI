@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { FiSearch, FiStar, FiClock } from 'react-icons/fi'
 import InsertPanelShell from './InsertPanelShell'
 import graphicsService from '../../../../services/graphicsService'
@@ -27,7 +27,11 @@ function readRecent() {
 
 function pushRecent(id) {
   const next = [String(id), ...readRecent().filter((x) => x !== String(id))].slice(0, 24)
-  localStorage.setItem(RECENT_KEY, JSON.stringify(next))
+  try {
+    localStorage.setItem(RECENT_KEY, JSON.stringify(next))
+  } catch {
+    // Storage blocked or full: Recent just won't remember this pick.
+  }
 }
 
 export default function GraphicsPanel({ onInsert, disabled }) {
@@ -38,29 +42,39 @@ export default function GraphicsPanel({ onInsert, disabled }) {
   const [error, setError] = useState('')
   const [recentIds, setRecentIds] = useState(() => readRecent())
 
+  const requestRef = useRef(0)
+
   const load = useCallback(async () => {
+    const request = (requestRef.current += 1)
     setLoading(true)
     setError('')
     try {
       if (activeId === 'recommended') {
+        // The ranked search returns at most 8 (the API rejects a larger maxCount).
         const data = await graphicsService.search({
           keywords: q ? [q] : ['accent', 'decor'],
           usage: 'editor',
           preferredType: 'decorative',
-          maxCount: 24,
+          maxCount: 8,
         })
-        setItems(data.items || [])
+        let found = data.items || []
+        if (!found.length) {
+          // Nothing ranked for this query: show the catalogue instead of an empty tab.
+          found = (await graphicsService.list({ q, limit: 24 })).items || []
+        }
+        if (request === requestRef.current) setItems(found)
       } else {
         const params = { q, limit: 60 }
         if (activeId !== 'all' && activeId !== 'recent') params.category = activeId
         const data = await graphicsService.list(params)
-        setItems(data.items || [])
+        if (request === requestRef.current) setItems(data.items || [])
       }
     } catch (err) {
+      if (request !== requestRef.current) return
       setError(err.message || 'Failed to load graphics')
       setItems([])
     } finally {
-      setLoading(false)
+      if (request === requestRef.current) setLoading(false)
     }
   }, [activeId, q])
 
@@ -73,26 +87,37 @@ export default function GraphicsPanel({ onInsert, disabled }) {
   const recentItems = useMemo(() => {
     if (activeId !== 'recent') return []
     const byId = new Map(items.map((i) => [i.id, i]))
-    return recentIds.map((id) => byId.get(id)).filter(Boolean)
-  }, [activeId, recentIds, items])
+    const needle = q.trim().toLowerCase()
+    return recentIds
+      .map((id) => byId.get(id))
+      .filter((g) => g && (!needle || String(g.name || '').toLowerCase().includes(needle)))
+  }, [activeId, recentIds, items, q])
 
   useEffect(() => {
-    if (activeId !== 'recent') return
+    if (activeId !== 'recent') return undefined
     let cancelled = false
-    ;(async () => {
-      setLoading(true)
-      try {
-        const data = await graphicsService.list({ limit: 80 })
-        if (!cancelled) setItems(data.items || [])
-      } catch (err) {
-        if (!cancelled) setError(err.message || 'Failed to load')
-      } finally {
+    requestRef.current += 1 // drop any catalogue request still in flight
+    setError('')
+    if (!recentIds.length) {
+      setItems([])
+      setLoading(false)
+      return undefined
+    }
+    setLoading(true)
+    // Load each saved graphic by id so older ones still show, and skip any that were removed.
+    Promise.allSettled(recentIds.map((id) => graphicsService.get(id)))
+      .then((results) => {
+        if (cancelled) return
+        setItems(results.filter((r) => r.status === 'fulfilled' && r.value?.graphic).map((r) => r.value.graphic))
+      })
+      .finally(() => {
         if (!cancelled) setLoading(false)
-      }
-    })()
+      })
     return () => {
       cancelled = true
     }
+    // Reloads when the tab opens, not on every pick (a pick would reorder the list under the cursor).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeId])
 
   const rail = useMemo(
@@ -181,7 +206,11 @@ export default function GraphicsPanel({ onInsert, disabled }) {
               </button>
             )
           })}
-          {!visible.length && <div className="ppt-insert-empty">No published graphics yet</div>}
+          {!visible.length && !error && (
+            <div className="ppt-insert-empty">
+              {activeId === 'recent' ? 'Graphics you add will show up here.' : 'No published graphics yet'}
+            </div>
+          )}
         </div>
       )}
     </InsertPanelShell>

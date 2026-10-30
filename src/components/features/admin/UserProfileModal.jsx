@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { MdClose, MdSecurity, MdAttachMoney, MdOutlineVpnKey, MdDeleteForever, MdOutlineFolderShared, MdAdd, MdRemoveCircleOutline } from 'react-icons/md';
 import './UserProfileModal.css';
+import { confirmDialog } from '../../../utils/appDialog';
 
 const roleOptions = ['Owner', 'Admin', 'Editor', 'Viewer', 'Super Admin', 'Workspace Admin', 'Member'];
 const workspaceOptions = ['Global', 'Forge Studio', 'Pulse CRM', 'Beacon Media', 'Astra Ventures'];
@@ -114,10 +115,12 @@ const UserProfileModal = ({ user, onClose, onUpdateUser, onDeleteUser }) => {
     }
   };
 
-  const handleDelete = () => {
-    if (window.confirm(`Are you sure you want to permanently delete ${user.name}? This cannot be undone.`)) {
-      onDeleteUser(user.id);
-    }
+  const handleDelete = async () => {
+    const confirmed = await confirmDialog(
+      `Are you sure you want to permanently delete ${user.name}? This cannot be undone.`,
+      { title: 'Delete user', confirmLabel: 'Delete', variant: 'danger' }
+    );
+    if (confirmed) onDeleteUser(user.id);
   };
 
   const handleChangePassword = () => {

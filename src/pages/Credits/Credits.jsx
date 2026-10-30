@@ -11,6 +11,7 @@ import {
   MdArrowBack,
 } from 'react-icons/md'
 
+import { notify } from '../../utils/appDialog'
 const styles = `
 .credits-container {
   padding: 40px 48px;
@@ -614,7 +615,7 @@ function Credits({ onBack, asSection = false }) {
     if (plan) {
       setCredits((prev) => prev + plan.credits)
       setSelectedPlan(null)
-      alert(`Successfully purchased ${plan.credits} credits!`)
+      notify(`Successfully purchased ${plan.credits} credits!`)
     }
   }
 

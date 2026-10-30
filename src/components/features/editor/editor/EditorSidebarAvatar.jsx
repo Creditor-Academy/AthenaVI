@@ -39,6 +39,7 @@ import {
 } from '../../../../utils/heygenAvatars';
 import { getSanitizedErrorMessage } from '../../../../utils/userFacingMessage';
 import { invalidateHeygenSceneVideo } from '../../../../utils/heygenVideo';
+import { notify } from '../../../../utils/appDialog';
 
 const EditorSidebarAvatar = ({
   activeScene,
@@ -385,7 +386,7 @@ const EditorSidebarAvatar = ({
           const { newScene } = autoCreateScene();
           assign(newScene.id, newScene.clips || []);
         } else {
-          alert('Please add a scene or template first!');
+          notify('Please add a scene or template first!');
           if (setShowTemplateModal) setShowTemplateModal(true);
         }
         return;

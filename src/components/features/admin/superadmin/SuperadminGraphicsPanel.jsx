@@ -23,6 +23,7 @@ import superadminService, { SuperadminApiError } from '../../../../services/supe
 import '../../../../pages/AdminPortal/styles/SuperadminBase.css'
 import '../../../../pages/AdminPortal/SuperadminGraphicsPortal.css'
 
+import { confirmDialog } from '../../../../utils/appDialog'
 const TYPES = [
   { id: 'decorative', label: 'Decorative' },
   { id: 'illustration', label: 'Illustration' },
@@ -891,8 +892,13 @@ export default function SuperadminGraphicsPanel() {
                         type="button"
                         className="sa-btn sa-btn--sm sa-btn--danger"
                         disabled={busyId === row.id}
-                        onClick={() => {
-                          if (!window.confirm(`Delete “${row.name}”?`)) return
+                        onClick={async () => {
+                          const confirmed = await confirmDialog(`Delete “${row.name}”?`, {
+                            title: 'Delete graphic',
+                            confirmLabel: 'Delete',
+                            variant: 'danger',
+                          })
+                          if (!confirmed) return
                           runAction(row.id, () => superadminService.deleteGraphic(row.id))
                         }}
                         title="Delete graphic"
