@@ -24,7 +24,9 @@ import AIConversationalStudio from './AIConversationalStudio.jsx';
 import WorkspaceImageLibrary from './WorkspaceImageLibrary.jsx';
 import ImageGenStudioSettings from '../../../components/features/image-generation/ImageGenStudioSettings.jsx';
 import ImageGenCreditsGate from '../../../components/features/image-generation/ImageGenCreditsGate.jsx';
-import ImageGenContextAttach from '../../../components/features/image-generation/ImageGenContextAttach.jsx';
+import ImageGenContextAttach, {
+  friendlyContextError,
+} from '../../../components/features/image-generation/ImageGenContextAttach.jsx';
 import MarkdownPromptInput from '../../../components/features/image-generation/MarkdownPromptInput.jsx';
 import RecentChatMenu from './RecentChatMenu.jsx';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
@@ -470,6 +472,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef(null);
   const [imageContext, setImageContext] = useState(null);
+  const [libraryAttachError, setLibraryAttachError] = useState('');
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -818,10 +821,12 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
     setActiveThreadId(null);
     setLaunchStudio(false);
     setPrompt('');
+    setLibraryAttachError('');
     if (!localImages.length) {
       setImageContext(null);
       return;
     }
+    const previousContext = imageContext;
     setImageContext({ localImages, attaching: true });
     const assetIds = (images || []).map((img) => img.assetId).filter(Boolean).slice(0, 5);
     if (saveWorkspaceId && assetIds.length) {
@@ -831,6 +836,11 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
         return;
       } catch (err) {
         console.error('Could not attach library images', err);
+        setLibraryAttachError(friendlyContextError(err));
+        if (Number(err?.status) === 429 && previousContext?.id) {
+          setImageContext({ ...previousContext, attaching: false });
+          return;
+        }
       }
     }
     setImageContext({ localImages, attaching: false });
@@ -1327,15 +1337,21 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
             <ImageGenContextAttach
               workspaceId={saveWorkspaceId}
               context={imageContext}
-              onContextChange={setImageContext}
+              onContextChange={(next) => {
+                setLibraryAttachError('');
+                setImageContext(next);
+              }}
               compact
               plusMenu
             >
-              {({ thumbs, trigger, composerBind, isDragOver, error: contextError }) => (
+              {({ thumbs, trigger, composerBind, isDragOver, error: contextError, quotaLabel }) => (
                 <>
                   {thumbs}
-                  {contextError && (
-                    <p className="chatbox-context-error">{contextError}</p>
+                  {(contextError || libraryAttachError) && (
+                    <p className="chatbox-context-error">{contextError || libraryAttachError}</p>
+                  )}
+                  {quotaLabel && (
+                    <p className="igc-quota">Uploads this hour: {quotaLabel}</p>
                   )}
                   <div
                     className={`chatbox-input${isDragOver ? ' is-file-over' : ''}`}

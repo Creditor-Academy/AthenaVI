@@ -15,16 +15,35 @@ import {
 } from 'lucide-react'
 import assetService from '../../../services/assetService.js'
 import imageGenService, {
+  CONTEXT_MAX_FILE_BYTES,
+  CONTEXT_MAX_REQUEST_BYTES,
+  CONTEXT_SIZE_LIMIT_MESSAGE,
   ImageGenContextPinnedError,
   ImageGenRateLimitError,
   ImageGenProviderError,
+  contextRateLimitMessage,
+  readRateLimit,
 } from '../../../services/imageGenService.js'
 import { isInsufficientCreditsError } from '../../../services/creditsService.js'
 import './ImageGenContextAttach.css'
 
 const MAX_CONTEXT_ITEMS = 5
-const MAX_FILE_BYTES = 10 * 1024 * 1024
-const MAX_TOTAL_BYTES = 20 * 1024 * 1024
+const MAX_FILE_BYTES = CONTEXT_MAX_FILE_BYTES
+const MAX_TOTAL_BYTES = CONTEXT_MAX_REQUEST_BYTES
+const FILE_TOO_LARGE = (name) => `“${name}” is over 1 GB. Choose a smaller file.`
+const UPLOAD_TOO_LARGE = 'This upload is over 1 GB. Remove a file or choose smaller ones.'
+
+/** "16 / 20 left · Resets at …" from a context-quota object. */
+export function formatContextQuota(quota) {
+  if (!quota || quota.limit == null) return ''
+  const remaining = Math.max(0, Number(quota.remaining) || 0)
+  const parts = [`${remaining} / ${quota.limit} left`]
+  const resetAt = quota.resetAt ? new Date(quota.resetAt) : null
+  if (resetAt && !Number.isNaN(resetAt.getTime())) {
+    parts.push(`Resets at ${resetAt.toLocaleString()}`)
+  }
+  return parts.join(' · ')
+}
 const ACCEPTED_EXT = /\.(pdf|docx|md|txt|png|jpe?g|webp)$/i
 const ACCEPTED_MIME = new Set([
   'application/pdf',
@@ -176,13 +195,16 @@ export function contextPreviewBadge(generation) {
   return formatContextBadge(preview)
 }
 
-function friendlyContextError(err, hasFiles = false) {
+export function friendlyContextError(err, hasFiles = false) {
   if (isInsufficientCreditsError(err)) return 'Not enough credits for this action.'
   if (err instanceof ImageGenProviderError) {
     return err.message || 'Couldn’t process the brief right now. Try again.'
   }
   if (err instanceof ImageGenContextPinnedError) return err.message
-  if (err?.status === 404) return 'Context unavailable — please re-attach.'
+  if (err?.status === 404) {
+    return 'This brief is no longer available. Attach it again only if you still need the reference images.'
+  }
+  if (err?.isUploadTimeout) return err.message
 
   const msg = String(err?.message || '').toLowerCase()
   const status = Number(err?.status || err?.statusCode || 0)
@@ -193,7 +215,7 @@ function friendlyContextError(err, hasFiles = false) {
     msg.includes('rate limit') ||
     msg.includes('too many')
   ) {
-    return 'You’ve reached the hourly limit for uploading reference images. Please try again in a little while.'
+    return contextRateLimitMessage(err)
   }
 
   const isSizeLimit =
@@ -205,13 +227,10 @@ function friendlyContextError(err, hasFiles = false) {
     msg.includes('file size') ||
     msg.includes('limit exceeded')
 
-  if (isSizeLimit) {
-    return 'File size limit exceeded. Please upload a smaller image (max 10 MB per image, 20 MB total).'
-  }
+  if (isSizeLimit) return CONTEXT_SIZE_LIMIT_MESSAGE
 
-  // When files are being uploaded and browser fetch fails (net::ERR_FAILED 413 or proxy reset)
   if (hasFiles && (msg.includes('failed to fetch') || msg.includes('network') || msg.includes('load failed'))) {
-    return 'File size limit exceeded. Please upload a smaller image (max 10 MB per image, 20 MB total).'
+    return 'Couldn’t upload these files. Check your connection and try again.'
   }
 
   if (msg.includes('failed to fetch')) {
@@ -255,6 +274,28 @@ export default function ImageGenContextAttach({
   const [libraryQuery, setLibraryQuery] = useState('')
   const [libraryError, setLibraryError] = useState('')
   const [expandedThumb, setExpandedThumb] = useState(null)
+  const [quota, setQuota] = useState(null)
+
+  useEffect(() => {
+    if (!workspaceId) {
+      setQuota(null)
+      return undefined
+    }
+    let cancelled = false
+    imageGenService
+      .getContextQuota(workspaceId)
+      .then((next) => {
+        if (!cancelled) setQuota(next)
+      })
+      .catch(() => {
+        if (!cancelled) setQuota(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [workspaceId])
+
+  const quotaLabel = formatContextQuota(quota)
 
   const pendingCount = pendingFiles.length + pendingAssets.length
   const slotsLeft = Math.max(0, MAX_CONTEXT_ITEMS - pendingCount)
@@ -397,11 +438,11 @@ export default function ImageGenContextAttach({
         continue
       }
       if (file.size > MAX_FILE_BYTES) {
-        setError(`“${file.name}” exceeds the 10 MB size limit. Please choose a smaller image.`)
+        setError(FILE_TOO_LARGE(file.name))
         continue
       }
       if (currentBytes + file.size > MAX_TOTAL_BYTES) {
-        setError('Total attached images exceed 20 MB. Please remove an image or choose a smaller one.')
+        setError(UPLOAD_TOO_LARGE)
         continue
       }
       currentBytes += file.size
@@ -562,7 +603,7 @@ export default function ImageGenContextAttach({
       const mergedFiles = [...priorUploadFiles, ...files]
       const totalMergedBytes = mergedFiles.reduce((sum, f) => sum + (f?.size || 0), 0)
       if (totalMergedBytes > MAX_TOTAL_BYTES) {
-        setError('Total attached images exceed 20 MB. Please remove an image or choose smaller ones.')
+        setError(UPLOAD_TOO_LARGE)
         if (override && 'rollbackFiles' in override) {
           setPendingFiles(override.rollbackFiles)
         }
@@ -577,18 +618,24 @@ export default function ImageGenContextAttach({
         onContextChange?.({ ...(context || {}), attaching: false })
         return
       }
-      if (context?.id && !context.pinnedAt) {
-        try {
-          await imageGenService.deleteContext(workspaceId, context.id)
-        } catch {
-          /* replace still ok */
-        }
-      }
+      const previousId = context?.id && !context.pinnedAt ? context.id : null
       const created = await imageGenService.createContext(workspaceId, {
         files: mergedFiles,
         inlineText: text,
         assetIds: mergedAssets.map((a) => a.id),
       })
+      if (created?.rateLimit) {
+        setQuota(created.rateLimit)
+      } else {
+        imageGenService.getContextQuota(workspaceId).then(setQuota).catch(() => {})
+      }
+      if (previousId && previousId !== created?.id) {
+        try {
+          await imageGenService.deleteContext(workspaceId, previousId)
+        } catch {
+          /* replace still ok */
+        }
+      }
       const localImages = []
       for (const file of mergedFiles) {
         if (!isImageFile(file)) continue
@@ -615,6 +662,15 @@ export default function ImageGenContextAttach({
       setTab('library')
       setDragOver(null)
     } catch (err) {
+      if (err instanceof ImageGenRateLimitError || Number(err?.status) === 429) {
+        const rl = readRateLimit(err?.data)
+        setQuota((prev) => ({
+          ...(prev || {}),
+          ...(rl || {}),
+          limit: rl?.limit ?? prev?.limit ?? 20,
+          remaining: 0,
+        }))
+      }
       setError(friendlyContextError(err, hasFiles))
       if (override && 'rollbackFiles' in override) {
         setPendingFiles(override.rollbackFiles)
@@ -636,11 +692,11 @@ export default function ImageGenContextAttach({
     for (const file of incoming || []) {
       if (!isAllowedFile(file) && !isImageFile(file)) continue
       if (file.size > MAX_FILE_BYTES) {
-        setError(`“${file.name}” exceeds the 10 MB size limit. Please choose a smaller image.`)
+        setError(FILE_TOO_LARGE(file.name))
         continue
       }
       if (currentBytes + file.size > MAX_TOTAL_BYTES) {
-        setError('Total attached images exceed 20 MB. Please remove an image or choose a smaller one.')
+        setError(UPLOAD_TOO_LARGE)
         continue
       }
       currentBytes += file.size
@@ -821,7 +877,13 @@ export default function ImageGenContextAttach({
         aria-label="Attach references"
         aria-haspopup={plusMenu ? 'menu' : undefined}
         aria-expanded={plusMenu ? plusMenuOpen : undefined}
-        title={isAttaching ? 'Attaching image…' : 'Upload or choose from library'}
+        title={
+          isAttaching
+            ? 'Attaching image…'
+            : quotaLabel
+              ? `Upload or choose from library (${quotaLabel})`
+              : 'Upload or choose from library'
+        }
         onClick={() => {
           if (isPlusDisabled) return
           if (plusMenu) setPlusMenuOpen((open) => !open)
@@ -942,6 +1004,7 @@ export default function ImageGenContextAttach({
       </div>
 
       {notice && !modalOpen && <p className="igc-notice">{notice}</p>}
+      {quotaLabel && <p className="igc-quota">Uploads this hour: {quotaLabel}</p>}
     </div>
   )
 
@@ -992,6 +1055,7 @@ export default function ImageGenContextAttach({
             <div>
               <h3>Choose from library</h3>
               <p>Pick up to {MAX_CONTEXT_ITEMS} images to use as references.</p>
+              {quotaLabel && <p className="igc-quota">Uploads this hour: {quotaLabel}</p>}
             </div>
             <button type="button" onClick={closeModal} aria-label="Close">
               <X size={16} />
@@ -1115,6 +1179,7 @@ export default function ImageGenContextAttach({
           composerBind,
           isDragOver: composerDragOver,
           error,
+          quotaLabel,
         })}
         {portals}
       </>

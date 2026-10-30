@@ -34,6 +34,8 @@ import {
 import imageGenService, {
   ImageGenRateLimitError,
   ImageGenProviderError,
+  contextRateLimitMessage,
+  isContextRateLimitError,
 } from '../../../services/imageGenService.js'
 import creditsService, { isInsufficientCreditsError } from '../../../services/creditsService.js'
 import AllocateCreditsModal from '../../../components/features/workspace/workspace/AllocateCreditsModal.jsx'
@@ -69,6 +71,10 @@ import {
   buildImageGenerateBody,
   applyGenerationToThread,
   nextThreadIdFromResult,
+  resolveContextId,
+  isRejectedRequest,
+  TWEAK_REJECTED_MESSAGE,
+  GENERATE_REJECTED_MESSAGE,
 } from './imageStudioGenerateFlow.js'
 
 // Image Gen backend is Mode 1 (image) only. Infographic/social UI is parked below, not deleted.
@@ -580,12 +586,17 @@ function collectApiErrorDetails(err) {
   return texts.filter((text) => text && text !== 'Validation error')
 }
 
-function friendlyError(err) {
+/** @param {'generate' | 'tweak' | 'other'} source */
+function friendlyError(err, source = 'other') {
   if (isInsufficientCreditsError(err)) {
     return 'Not enough credits for this generation. Top up or pick a lighter model.'
   }
+  if (isContextRateLimitError(err)) return contextRateLimitMessage(err)
   if (err instanceof ImageGenRateLimitError) {
     return err.message || 'Too many requests — wait a moment and try again.'
+  }
+  if ((source === 'generate' || source === 'tweak') && isRejectedRequest(err)) {
+    return source === 'tweak' ? TWEAK_REJECTED_MESSAGE : GENERATE_REJECTED_MESSAGE
   }
   if (err instanceof ImageGenProviderError) {
     if (err.status === 504) {
@@ -603,7 +614,7 @@ function friendlyError(err) {
   }
   if (err?.message && err.message !== 'Validation error') return err.message
   if (err?.status === 400) {
-    return 'Couldn’t structure this as an infographic. Try a clearer prompt with steps, a comparison, or stats, then generate again.'
+    return 'That request wasn’t accepted. Check it and try again.'
   }
   return 'Something went wrong. Please try again.'
 }
@@ -1596,9 +1607,11 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
       contextId: imageContext?.id,
     })
 
-  const buildRegenerateBody = () => {
+  const buildRegenerateBody = (fromGeneration = activeGeneration) => {
     const full = buildGenerateBody()
     const { folderId: _folderId, ...rest } = full
+    const contextId = resolveContextId(imageContext, fromGeneration)
+    if (contextId) rest.contextId = contextId
     return rest
   }
 
@@ -1713,17 +1726,20 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
       if (turn.kind === 'tweak') {
         const instruction = String(turn.text || '').trim()
         if (!instruction) throw new Error('Nothing to retry.')
+        const contextId = resolveContextId(imageContext, parent) || undefined
         data = activeThreadId
           ? await imageGenService.sendThreadMessage(workspaceId, activeThreadId, instruction, {
               editMode: mode === 'infographic' && editMode !== 'auto' ? editMode : undefined,
+              contextId,
               ...requestTimeoutOpts,
             })
           : await imageGenService.tweak(workspaceId, parent.id, instruction, {
               editMode: mode === 'infographic' && editMode !== 'auto' ? editMode : undefined,
+              contextId,
               ...requestTimeoutOpts,
             })
       } else {
-        data = await imageGenService.regenerate(workspaceId, parent.id, buildRegenerateBody())
+        data = await imageGenService.regenerate(workspaceId, parent.id, buildRegenerateBody(parent))
       }
       applyResult(data, turn.id)
     } catch (err) {
@@ -1733,7 +1749,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
         failTurn(turn.id, 'Not enough credits.', { errorKind: 'credits' })
         return
       }
-      failTurn(turn.id, friendlyError(err))
+      failTurn(turn.id, friendlyError(err, 'tweak'))
     } finally {
       setIsGenerating(false)
       setBusyAction('')
@@ -1829,7 +1845,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
         openCreditsGate(snapshot, estimateAc)
         return
       }
-      const msg = friendlyError(err)
+      const msg = friendlyError(err, 'generate')
       setActionError(msg)
       failTurn(turnId, msg)
     } finally {
@@ -1859,7 +1875,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
       const data = await imageGenService.regenerate(
         workspaceId,
         fromGeneration.id,
-        buildRegenerateBody()
+        buildRegenerateBody(fromGeneration)
       )
       applyResult(data, turnId)
     } catch (err) {
@@ -1869,7 +1885,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
         failTurn(turnId, 'Not enough credits for this generation.', { errorKind: 'credits' })
         return
       }
-      const msg = friendlyError(err)
+      const msg = friendlyError(err, 'tweak')
       setActionError(msg)
       failTurn(turnId, msg)
     } finally {
@@ -1909,14 +1925,17 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
       },
     ])
     try {
+      const contextId = resolveContextId(imageContext, activeGeneration) || undefined
       const data = activeThreadId
         ? await imageGenService.sendThreadMessage(workspaceId, activeThreadId, instruction, {
             fromGenerationId: activeGeneration.id,
             editMode: mode === 'infographic' && editMode !== 'auto' ? editMode : undefined,
+            contextId,
             ...requestTimeoutOpts,
           })
         : await imageGenService.tweak(workspaceId, activeGeneration.id, instruction, {
             editMode: mode === 'infographic' && editMode !== 'auto' ? editMode : undefined,
+            contextId,
             ...requestTimeoutOpts,
           })
       applyResult(data, turnId)
@@ -1927,7 +1946,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
         failTurn(turnId, 'Not enough credits for this tweak.', { errorKind: 'credits' })
         return
       }
-      const msg = friendlyError(err)
+      const msg = friendlyError(err, 'tweak')
       setActionError(msg)
       failTurn(turnId, msg)
     } finally {
@@ -2204,7 +2223,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                   onContextChange={handleContextChange}
                   compact
                 >
-                  {({ thumbs, trigger, composerBind, isDragOver, error: contextError }) => (
+                  {({ thumbs, trigger, composerBind, isDragOver, error: contextError, quotaLabel }) => (
                     <form
                       className="aig-prompt-form"
                       onSubmit={(e) => {
@@ -2269,6 +2288,9 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                         <p className="aig-prompt-drop-error" role="alert">
                           {contextError}
                         </p>
+                      )}
+                      {quotaLabel && (
+                        <p className="igc-quota">Uploads this hour: {quotaLabel}</p>
                       )}
                     </form>
                   )}
@@ -2856,7 +2878,9 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                             <span>
                               {heroTurn.errorKind === 'credits'
                                 ? 'Out of workspace credits'
-                                : 'Couldn’t generate'}
+                                : heroTurn.kind === 'tweak'
+                                  ? 'Couldn’t apply that change'
+                                  : 'Couldn’t generate'}
                             </span>
                             {heroTurn.error && <em>{heroTurn.error}</em>}
                             <button
