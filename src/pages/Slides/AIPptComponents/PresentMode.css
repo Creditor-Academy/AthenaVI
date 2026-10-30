@@ -188,19 +188,19 @@
 }
 
 .ppt-present-stage--slide-left {
-  animation: pptPresentSlideLeft 0.32s ease;
+  animation: pptPresentSlideLeft 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .ppt-present-stage--slide-right {
-  animation: pptPresentSlideRight 0.32s ease;
+  animation: pptPresentSlideRight 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .ppt-present-stage--slide-up {
-  animation: pptPresentSlideUp 0.32s ease;
+  animation: pptPresentSlideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .ppt-present-stage--slide-down {
-  animation: pptPresentSlideDown 0.32s ease;
+  animation: pptPresentSlideDown 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @keyframes pptPresentFade {
@@ -213,23 +213,28 @@
   to { opacity: 1; transform: scale(1); }
 }
 
+/* Direction: --ppt-dir is 1 going forward, -1 going back (the motion reverses). */
+.ppt-present-stage { --ppt-dir: 1; }
+.ppt-present-stage.is-reverse { --ppt-dir: -1; }
+
+/* "Slide left": the new slide arrives from the right; "Slide right": from the left. */
 @keyframes pptPresentSlideLeft {
-  from { opacity: 0.6; transform: translateX(6%); }
+  from { opacity: 0.4; transform: translateX(calc(var(--ppt-dir) * 12%)); }
   to { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes pptPresentSlideRight {
-  from { opacity: 0.6; transform: translateX(-6%); }
+  from { opacity: 0.4; transform: translateX(calc(var(--ppt-dir) * -12%)); }
   to { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes pptPresentSlideUp {
-  from { opacity: 0.6; transform: translateY(6%); }
+  from { opacity: 0.4; transform: translateY(calc(var(--ppt-dir) * 12%)); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes pptPresentSlideDown {
-  from { opacity: 0.6; transform: translateY(-6%); }
+  from { opacity: 0.4; transform: translateY(calc(var(--ppt-dir) * -12%)); }
   to { opacity: 1; transform: translateY(0); }
 }
 
