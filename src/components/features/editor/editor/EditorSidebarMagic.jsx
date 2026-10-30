@@ -17,6 +17,7 @@ import VoicePreviewUnavailableNotice, {
   showVoicePreviewUnavailableNotice,
 } from '../../../ui/VoicePreviewNotice/VoicePreviewNotice';
 import { estimateHeygenSceneDuration } from '../../../../utils/sceneDuration';
+import { notify } from '../../../../utils/appDialog';
 
 const POPULAR_VOICES = [
   { id: '21a66feb30cc4a799c235cf65db72023', name: 'Adam (US Male)', language: 'English' },
@@ -113,12 +114,12 @@ const EditorSidebarMagic = ({ onGenerateStoryboard }) => {
 
   const handleGenerate = (mode) => {
     if (!script.trim()) {
-      alert('Please enter or paste your video script first.');
+      notify('Please enter or paste your video script first.');
       return;
     }
 
     if (!onGenerateStoryboard) {
-      alert('Storyboard generator is not hooked up properly.');
+      notify('Storyboard generator is not hooked up properly.');
       return;
     }
 
@@ -129,7 +130,7 @@ const EditorSidebarMagic = ({ onGenerateStoryboard }) => {
       .filter(p => p.length > 0);
 
     if (paragraphs.length === 0) {
-      alert('Please add at least one paragraph block to generate scenes.');
+      notify('Please add at least one paragraph block to generate scenes.');
       return;
     }
 

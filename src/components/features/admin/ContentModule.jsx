@@ -3,6 +3,7 @@ import ContentModeration from './ContentModeration';
 import { MdVideoLibrary, MdReport, MdPerson } from 'react-icons/md';
 import '../../../pages/AdminPortal/styles/AdminBase.css';
 import '../../../pages/AdminPortal/styles/AdminPlatform.css';
+import { notify } from '../../../utils/appDialog';
 
 const ContentModule = () => {
   const [activeSubTab, setActiveSubTab] = useState('videos');
@@ -81,10 +82,10 @@ const ContentModule = () => {
                       </td>
                       <td>
                         <div className="table-action-group">
-                          <button className="user-action-btn" onClick={() => alert(`Approve: ${item.id}`)}>
+                          <button className="user-action-btn" onClick={() => notify(`Approve: ${item.id}`)}>
                             Approve
                           </button>
-                          <button className="user-action-btn" style={{ color: '#ef4444' }} onClick={() => alert(`Reject: ${item.id}`)}>
+                          <button className="user-action-btn" style={{ color: '#ef4444' }} onClick={() => notify(`Reject: ${item.id}`)}>
                             Reject
                           </button>
                         </div>

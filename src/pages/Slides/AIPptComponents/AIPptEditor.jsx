@@ -156,6 +156,7 @@ import {
 import './pptEditorExtras.css'
 import '../AIPptGenerator.css'
 
+import { confirmDialog, promptDialog } from '../../../utils/appDialog'
 const CANVAS_SAVE_DEBOUNCE_MS = 600
 
 function isOptimisticSlideId(id) {
@@ -3183,8 +3184,9 @@ function AIPptEditor({
     if (regeneratingSlideIdsRef.current.has(slide.id)) return
     let overwriteManualEdits = false
     if (slide.manuallyEdited) {
-      const ok = window.confirm(
-        'This slide was edited manually. Regenerate and overwrite your changes?'
+      const ok = await confirmDialog(
+        'This slide was edited manually. Regenerate and overwrite your changes?',
+        { title: 'Overwrite manual edits?', confirmLabel: 'Overwrite', variant: 'danger' }
       )
       if (!ok) return
       overwriteManualEdits = true
@@ -4164,12 +4166,16 @@ function AIPptEditor({
       .catch(() => {})
   }
 
-  const handleRename = () => {
+  const handleRename = async () => {
     if (viewOnly) {
       askOwner()
       return
     }
-    const next = window.prompt('Rename presentation', deckTitle || 'Untitled Presentation')
+    const next = await promptDialog('Rename presentation', deckTitle || 'Untitled Presentation', {
+      title: 'Rename presentation',
+      confirmLabel: 'Rename',
+      maxLength: 255,
+    })
     if (next == null) return
     const trimmed = next.trim().slice(0, 255)
     if (!trimmed) return

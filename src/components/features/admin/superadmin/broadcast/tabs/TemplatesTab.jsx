@@ -10,6 +10,7 @@ import PreviewModal from '../modals/PreviewModal'
 import CreateTemplateChooserModal from '../modals/CreateTemplateChooserModal'
 import TemplateEditorModal from '../modals/TemplateEditorModal'
 
+import { notify, confirmDialog } from '../../../../../../utils/appDialog'
 // Pre-existing templates built into Virtual Studio
 const BUILT_IN_TEMPLATES = EMAIL_TEMPLATES
   .filter((t) => t.id !== 'custom')
@@ -75,14 +76,19 @@ export default function TemplatesTab({ onUseInCompose, onTemplatesUpdated }) {
 
   const handleDelete = async (id, e) => {
     e.stopPropagation()
-    if (!window.confirm('Are you sure you want to delete this email template?')) return
+    const confirmed = await confirmDialog('Are you sure you want to delete this email template?', {
+      title: 'Delete template',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    })
+    if (!confirmed) return
     setDeletingId(id)
     try {
       await superadminService.deleteEmailTemplate(id)
       setDbTemplates((prev) => prev.filter((t) => t.id !== id))
       onTemplatesUpdated?.()
     } catch (err) {
-      alert(err.message || 'Failed to delete template')
+      notify(err.message || 'Failed to delete template')
     } finally {
       setDeletingId(null)
     }

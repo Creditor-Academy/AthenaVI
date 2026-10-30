@@ -62,6 +62,7 @@ import VoicePreviewUnavailableNotice, {
   showVoicePreviewUnavailableNotice,
 } from '../../../ui/VoicePreviewNotice/VoicePreviewNotice';
 import './QuickCreateModal.css';
+import { notify } from '../../../../utils/appDialog';
 
 const AVATAR_DISPLAY_PAGE = 10;
 const TOTAL_STEPS = 5;
@@ -726,11 +727,11 @@ const QuickCreateModal = ({
 
   const handleGenerate = () => {
     if (!selectedAvatar?.id || !script.trim()) {
-      alert('Please select a presenter look and provide a script.');
+      notify('Please select a presenter look and provide a script.');
       return;
     }
     if (!skipVoice && !selectedVoice) {
-      alert('Please select a voice or choose Skip voice for now.');
+      notify('Please select a voice or choose Skip voice for now.');
       return;
     }
     const payload = buildGeneratePayload();

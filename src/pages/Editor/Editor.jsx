@@ -101,6 +101,7 @@ import {
   writeStoredPanelSize,
 } from '../../hooks/useDragResize'
 
+import { notify, confirmDialog } from '../../utils/appDialog'
 function projectHasPreExistingScenes(scenes) {
   return Array.isArray(scenes) && scenes.length > 0
 }
@@ -541,11 +542,15 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
     [project.id, project.updatedAt]
   )
 
-  const handleRestoreVersion = useCallback(() => {
+  const handleRestoreVersion = useCallback(async () => {
     if (!project.id || !versionSnapshots.length) return
     const data = loadVersionSnapshot(project.id, 0)
     if (!data) return
-    if (!window.confirm('Restore the most recent local version? Unsaved changes will be lost.')) return
+    const confirmed = await confirmDialog('Restore the most recent local version? Unsaved changes will be lost.', {
+      title: 'Restore version',
+      confirmLabel: 'Restore',
+    })
+    if (!confirmed) return
     setProject(
       (prev) => ({
         ...prev,
@@ -1483,9 +1488,13 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
           return
         }
         if (activeSceneId && scenes.length > 1) {
-          if (window.confirm('Delete this scene?')) {
-            deleteScene(activeSceneId)
-          }
+          confirmDialog('Delete this scene?', {
+            title: 'Delete scene',
+            confirmLabel: 'Delete',
+            variant: 'danger',
+          }).then((confirmed) => {
+            if (confirmed) deleteScene(activeSceneId)
+          })
         }
         return
       }
@@ -2140,18 +2149,18 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
     });
 
     if (!avatarLookId || !voiceId || !script) {
-      alert('Please select an avatar look, a voice, and enter a script first.');
+      notify('Please select an avatar look, a voice, and enter a script first.');
       return;
     }
 
     if (String(avatarLookId).startsWith('ag_')) {
-      alert('Please pick a look (not a character group) before generating video.');
+      notify('Please pick a look (not a character group) before generating video.');
       return;
     }
 
     if (!workspaceId || !projectId) {
       console.error('[HeyGen] Missing identifiers:', { workspaceId, projectId, project });
-      alert('Missing workspace or project ID. Please ensure this project is saved in a folder.');
+      notify('Missing workspace or project ID. Please ensure this project is saved in a folder.');
       return;
     }
 
@@ -2435,9 +2444,9 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
       updateScene(sceneId, { heygenStatus: 'failed' });
       if (isInsufficientCreditsError(error)) {
         bumpCreditsRefresh();
-        alert('Not enough workspace credits to generate this avatar video. Allocate credits in Settings → Billing or ask your workspace owner.');
+        notify('Not enough workspace credits to generate this avatar video. Allocate credits in Settings → Billing or ask your workspace owner.');
       } else {
-        alert('Failed to start video generation: ' + getSanitizedErrorMessage(error));
+        notify('Failed to start video generation: ' + getSanitizedErrorMessage(error));
       }
       window.dispatchEvent(new CustomEvent('generation-failed'));
     }

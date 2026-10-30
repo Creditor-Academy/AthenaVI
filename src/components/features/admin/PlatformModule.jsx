@@ -3,6 +3,7 @@ import PlatformConfig from './PlatformConfig';
 import { MdCreditCard, MdExtension, MdLock } from 'react-icons/md';
 import '../../../pages/AdminPortal/styles/AdminBase.css';
 import '../../../pages/AdminPortal/styles/AdminPlatform.css';
+import { notify } from '../../../utils/appDialog';
 
 const PlatformModule = () => {
   const [activeSubTab, setActiveSubTab] = useState('plans');
@@ -89,7 +90,7 @@ const PlatformModule = () => {
                       </td>
                       <td>{integration.lastSync}</td>
                       <td>
-                        <button className="user-action-btn" onClick={() => alert(`Configure: ${integration.name}`)}>
+                        <button className="user-action-btn" onClick={() => notify(`Configure: ${integration.name}`)}>
                           Configure
                         </button>
                       </td>
@@ -138,7 +139,7 @@ const PlatformModule = () => {
                         </div>
                       </td>
                       <td>
-                        <button className="user-action-btn" onClick={() => alert(`Edit role: ${perm.role}`)}>
+                        <button className="user-action-btn" onClick={() => notify(`Edit role: ${perm.role}`)}>
                           Edit
                         </button>
                       </td>

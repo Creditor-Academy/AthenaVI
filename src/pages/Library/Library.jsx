@@ -32,6 +32,7 @@ import { SkeletonListRow } from '../page-skeleton/SkeletonPrimitives'
 import '../page-skeleton/skeleton.css'
 import './Library.css'
 
+import { promptDialog } from '../../utils/appDialog'
 const MASONRY_SKELETON_HEIGHTS = [168, 224, 192, 256, 180, 240, 200, 272, 176, 208, 232, 188]
 
 const CATEGORY_CARDS = [
@@ -303,7 +304,11 @@ function Library() {
 
   const handleRenameAsset = async (asset) => {
     if (!workspaceId || !asset?.id || renamingId) return
-    const nextName = window.prompt('Rename asset', asset.name)
+    const nextName = await promptDialog('Rename asset', asset.name, {
+      title: 'Rename asset',
+      confirmLabel: 'Rename',
+      maxLength: 255,
+    })
     if (nextName == null) return
     const trimmed = nextName.trim()
     if (!trimmed || trimmed === asset.name) return

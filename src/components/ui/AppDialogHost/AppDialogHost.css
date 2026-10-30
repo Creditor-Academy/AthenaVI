@@ -1,0 +1,75 @@
+/* Above page modals (up to ~10100) so a confirm is never hidden, but below toasts (99999). */
+.app-dialog-overlay {
+  z-index: 99990;
+}
+
+.app-dialog-input {
+  width: 100%;
+  margin-top: 14px;
+  padding: 10px 12px;
+  box-sizing: border-box;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-main, var(--bg-card));
+  color: var(--text-main);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.app-dialog-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
+}
+
+/* Self-contained buttons: the shared .btn-* classes only load with the workspace screens. */
+.app-dialog-btn {
+  min-width: 96px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.app-dialog-btn:active {
+  transform: scale(0.98);
+}
+
+.app-dialog-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.app-dialog-btn--secondary {
+  background: var(--bg-surface, var(--bg-card));
+  color: var(--text-main);
+  border-color: var(--border-color);
+  font-weight: 600;
+}
+
+.app-dialog-btn--secondary:hover {
+  border-color: var(--text-muted);
+}
+
+.app-dialog-btn--primary {
+  background: var(--primary);
+  color: var(--primary-contrast, #fff);
+}
+
+.app-dialog-btn--primary:hover {
+  background: var(--primary-hover, var(--primary));
+}
+
+.app-dialog-btn--danger {
+  background: #ef4444;
+  color: #fff;
+}
+
+.app-dialog-btn--danger:hover {
+  background: #dc2626;
+}

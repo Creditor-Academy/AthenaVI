@@ -284,6 +284,7 @@ function SocialPlatformIcon({ platform, size = 16 }) {
 
 import './AIImageGenerationUpdate.css';
 import InfographicAnimatedBackground from './InfographicAnimatedBackground.jsx';
+import { notify } from '../../../utils/appDialog';
 
 const RANDOM_PROMPTS = [
   "A square brand poster for an artisanal coffee shop. One ceramic cup of latte with a clear fern latte-art pattern, sitting on pale oak, warm beige and mocha palette. Soft window light from the left, shallow depth of field, a few coffee beans scattered, no people. Clean empty space at the top for a short shop name. Photoreal, quiet, premium, not a collage.",
@@ -501,7 +502,7 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
   }, []);
 
   const toggleMic = () => {
-    if (!recognitionRef.current) return alert('Speech recognition not supported in this browser.');
+    if (!recognitionRef.current) return notify('Speech recognition not supported in this browser.');
     if (isListening) {
       recognitionRef.current.stop();
     } else {

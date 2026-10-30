@@ -47,6 +47,7 @@ import '../../components/features/workspace/workspace/WorkspaceStyles.css'
 import '../MyWork/MyWork.css'
 import './BrandKits.css'
 
+import { confirmDialog } from '../../utils/appDialog'
 function serializeBrandKitDraft({ kitName, slogan, isDefault, logoFile, kitData }) {
   return JSON.stringify({
     kitName: String(kitName || '').trim(),
@@ -576,13 +577,11 @@ function BrandKits() {
 
   const handleDelete = async (kitId) => {
     if (!canWrite || !workspaceId) return
-    if (
-      !window.confirm(
-        'Delete this brand kit and its media? Existing decks keep their snapshotted theme.'
-      )
-    ) {
-      return
-    }
+    const confirmed = await confirmDialog(
+      'Delete this brand kit and its media? Existing decks keep their snapshotted theme.',
+      { title: 'Delete brand kit', confirmLabel: 'Delete', variant: 'danger' }
+    )
+    if (!confirmed) return
     setError('')
     try {
       await brandKitService.remove(workspaceId, kitId)

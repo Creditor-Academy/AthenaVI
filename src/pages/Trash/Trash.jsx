@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import './Trash.css'
 
+import { confirmDialog } from '../../utils/appDialog'
 const thumbnailUrl = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600'
 const folderThumbUrl = 'https://images.unsplash.com/photo-1626544823126-bb96239bc569?auto=format&fit=crop&q=80&w=600'
 
@@ -82,14 +83,24 @@ function Trash() {
     closeRestoreDrawer()
   }
 
-  const handleDeletePermanent = (type, asset) => {
-    if (window.confirm(`Are you sure you want to permanently delete "${asset.title}"?`)) {
+  const handleDeletePermanent = async (type, asset) => {
+    const confirmed = await confirmDialog(`Are you sure you want to permanently delete "${asset.title}"?`, {
+      title: 'Delete permanently',
+      confirmLabel: 'Delete',
+      variant: 'danger',
+    })
+    if (confirmed) {
       console.log('Permanently deleting:', asset)
     }
   }
 
-  const emptyTrash = () => {
-    if (window.confirm('This will permanently delete all items in the trash. Continue?')) {
+  const emptyTrash = async () => {
+    const confirmed = await confirmDialog('This will permanently delete all items in the trash. Continue?', {
+      title: 'Empty trash',
+      confirmLabel: 'Empty trash',
+      variant: 'danger',
+    })
+    if (confirmed) {
       console.log('Emptying trash')
     }
   }

@@ -26,6 +26,7 @@ import DigitalTwinProgressPanel from './DigitalTwinProgressPanel';
 import '../AvatarConsentStep/AvatarConsentStep.css';
 import '../../../pages/Avatars/Avatars.css';
 import './CreateAvatarModal.css';
+import { notify } from '../../../utils/appDialog';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -322,22 +323,22 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
 
   const handleCreateAvatar = async () => {
     if (!creationName) {
-      alert('Please provide a name for your avatar.');
+      notify('Please provide a name for your avatar.');
       return;
     }
 
     if (creationType === 'prompt' && !creationPrompt) {
-      alert('Please provide a prompt for your avatar.');
+      notify('Please provide a prompt for your avatar.');
       return;
     }
 
     if (creationType === 'prompt' && promptWordCount > 150) {
-      alert('Please decrease your prompt to 150 words or less.');
+      notify('Please decrease your prompt to 150 words or less.');
       return;
     }
 
     if (creationType !== 'prompt' && !selectedFile) {
-      alert('Please select a file (image or video) for your avatar.');
+      notify('Please select a file (image or video) for your avatar.');
       return;
     }
 

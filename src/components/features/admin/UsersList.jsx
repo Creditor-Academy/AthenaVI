@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { MdSync, MdSearch, MdFilterList, MdAdd, MdEdit, MdPowerSettingsNew, MdDeleteForever, MdRestore, MdOutlineFolderShared } from 'react-icons/md';
 import UserProfileModal from './UserProfileModal';
 import './UserProfileModal.css';
+import { notify } from '../../../utils/appDialog';
 
 const roleOptions = ['Owner', 'Admin', 'Editor', 'Viewer', 'Super Admin', 'Workspace Admin', 'Member'];
 const workspaceOptions = ['Global', 'Forge Studio', 'Pulse CRM', 'Beacon Media', 'Astra Ventures'];
@@ -36,7 +37,7 @@ const AddUserModal = ({ isOpen, onClose, onCreate }) => {
   const handleSubmit = (event) => {
     event.preventDefault();
     if (!formValues.name || !formValues.email) {
-      alert('Please add a user name and email.');
+      notify('Please add a user name and email.');
       return;
     }
     onCreate(formValues);

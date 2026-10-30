@@ -1,5 +1,6 @@
 import React from 'react';
 import RenderPipelineMonitor from './RenderPipelineMonitor';
+import { notify } from '../../../utils/appDialog';
 
 const RenderingModule = () => {
   const subTabs = [
@@ -158,7 +159,7 @@ const RenderingModule = () => {
                       <td>{job.timestamp}</td>
                       <td>{job.retryCount}</td>
                       <td>
-                        <button className="user-action-btn" onClick={() => alert(`Retry job: ${job.id}`)}>
+                        <button className="user-action-btn" onClick={() => notify(`Retry job: ${job.id}`)}>
                           Retry
                         </button>
                       </td>
