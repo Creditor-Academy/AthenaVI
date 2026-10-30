@@ -111,7 +111,6 @@ function canvasSurfaceStyle(canvas, zoom) {
     height: `${canvas.height * zoom}px`,
     aspectRatio: `${canvas.width} / ${canvas.height}`,
     backgroundColor: isGradient ? 'transparent' : fillCss,
-    background: !canvas.backgroundImage && isGradient ? fillCss : undefined,
     backgroundImage: canvas.backgroundImage
       ? isGradient
         ? `url(${canvas.backgroundImage}), ${fillCss}`

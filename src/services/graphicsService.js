@@ -14,7 +14,10 @@ async function graphicsRequest(path, options = {}) {
   })
   const body = await response.json().catch(() => ({}))
   if (!body.success) {
-    const err = new Error(body.message || 'Graphics request failed')
+    // "Validation error" alone says nothing; the API lists which field it refused.
+    const details = Array.isArray(body.errors) ? body.errors.filter((e) => e && e !== body.message) : []
+    const message = body.message || 'Graphics request failed'
+    const err = new Error(details.length ? `${message}: ${details.join(', ')}` : message)
     err.status = response.status
     throw err
   }

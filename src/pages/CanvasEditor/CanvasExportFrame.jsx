@@ -19,7 +19,6 @@ function pageFill(page, transparent) {
   const isGradient = typeof fillCss === 'string' && fillCss.includes('gradient(')
   return {
     backgroundColor: isGradient ? 'transparent' : fillCss,
-    background: !page?.backgroundImage && isGradient ? fillCss : undefined,
     backgroundImage: page?.backgroundImage
       ? isGradient
         ? `url(${page.backgroundImage}), ${fillCss}`
