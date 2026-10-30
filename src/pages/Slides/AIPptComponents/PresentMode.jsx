@@ -282,7 +282,8 @@ export default function PresentMode({
 }) {
   const [index, setIndex] = useState(initialSlideIndex)
   const [focusElementId, setFocusElementId] = useState(null)
-  const [transitioning, setTransitioning] = useState(false)
+  // `reverse` flips the slide direction when stepping back; `tick` restarts the animation.
+  const [motion, setMotion] = useState({ id: 'none', reverse: false, tick: 0 })
   // Guests always follow the live presenter by default; a member only follows
   // once someone else already holds the lock (never steal the cursor).
   const [following, setFollowing] = useState(chrome === 'audience')
@@ -324,8 +325,9 @@ export default function PresentMode({
       !isSlideBackgroundElement(el, slide) &&
       shouldPaintElement(el, slide, canvas.width, canvas.height)
   )
-  const transition =
-    slide?.transition || slide?.elements?.transition || 'none'
+  // A transition belongs to the slide it leads into (the editor stores it on the next slide).
+  const slideTransition = (s) => s?.transition || s?.elements?.transition || 'none'
+  const transition = slideTransition(slide)
   const palette = themeVisual?.palette || null
   const hasElements = elements.length > 0
   const fallbackImage = hasElements ? null : getSlideImage(slide).url
@@ -337,16 +339,35 @@ export default function PresentMode({
 
   const go = useCallback(
     (delta) => {
+      const target = Math.max(0, Math.min(slides.length - 1, index + delta))
+      if (target === index) return
       setFollowing(false)
-      setTransitioning(true)
       setFocusElementId(null)
-      setTimeout(() => {
-        setIndex((i) => Math.max(0, Math.min(slides.length - 1, i + delta)))
-        setTransitioning(false)
-      }, transition === 'none' ? 0 : 280)
+      // Going forward plays the destination's transition; going back replays the one that
+      // led into the current slide, in the opposite direction.
+      const leadsIn = delta > 0 ? slides[target] : slides[index]
+      setMotion((m) => ({ id: slideTransition(leadsIn), reverse: delta < 0, tick: m.tick + 1 }))
+      setIndex(target)
     },
-    [slides.length, transition]
+    [slides, index]
   )
+
+  const touchStartRef = useRef(null)
+  const onTouchStart = (e) => {
+    const t = e.touches?.[0]
+    touchStartRef.current = t ? { x: t.clientX, y: t.clientY } : null
+  }
+  // Swipe left = next slide, swipe right = previous (ignore mostly-vertical drags).
+  const onTouchEnd = (e) => {
+    const start = touchStartRef.current
+    touchStartRef.current = null
+    const t = e.changedTouches?.[0]
+    if (!start || !t) return
+    const dx = t.clientX - start.x
+    const dy = t.clientY - start.y
+    if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return
+    go(dx < 0 ? 1 : -1)
+  }
 
   const jumpToPresenter = useCallback(() => {
     if (!presenter) return
@@ -394,9 +415,10 @@ export default function PresentMode({
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose, go, cycleFocus, focusElementId])
 
-  const transitionClass = transitioning
-    ? `ppt-present-stage--${transition}`
-    : ''
+  const transitionClass =
+    motion.tick > 0 && motion.id !== 'none'
+      ? `ppt-present-stage--${motion.id}${motion.reverse ? ' is-reverse' : ''}`
+      : ''
 
   const transitionLabel = PPT_SLIDE_TRANSITIONS.find((t) => t.id === transition)?.label
 
@@ -458,7 +480,12 @@ export default function PresentMode({
         </div>
       )}
 
-      <div className={`ppt-present-stage ${transitionClass} ${focusElementId ? 'is-focused' : ''}`}>
+      <div
+        key={motion.tick}
+        className={`ppt-present-stage ${transitionClass} ${focusElementId ? 'is-focused' : ''}`}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
         <div
           className="ppt-present-slide"
           style={{

@@ -71,7 +71,7 @@ export async function captureExportNode(node, { format = 'png', scale = 1, backg
   if (document.fonts?.ready) await document.fonts.ready
   await waitForImages(node)
 
-  const { toPng, toJpeg, toBlob } = await import('html-to-image')
+  const { toPng, toJpeg, toCanvas } = await import('html-to-image')
   const pixelRatio = scale === 4 ? 4 : scale === 2 ? 2 : 1
   const common = { pixelRatio, cacheBust: true, skipFonts: false }
 
@@ -85,12 +85,12 @@ export async function captureExportNode(node, { format = 'png', scale = 1, backg
   }
 
   if (format === 'webp') {
-    const blob = await toBlob(node, {
+    // html-to-image's toBlob ignores `type` and always returns a PNG, so encode the canvas here.
+    const canvas = await toCanvas(node, {
       ...common,
-      type: 'image/webp',
-      quality: 0.92,
       backgroundColor: transparent ? undefined : background || '#ffffff',
     })
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', 0.92))
     if (!blob) throw new Error('This browser could not build a WebP file.')
     if (blob.type && blob.type !== 'image/webp') {
       throw new Error('This browser cannot export WebP.')
