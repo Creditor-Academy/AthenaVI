@@ -7,7 +7,17 @@ import {
   PanelLeft, Plus, Library, Search, Clock, LogOut, Image as ImageIcon, BarChart3, Printer, Check
 } from 'lucide-react';
 import { FaInstagram, FaFacebookF, FaYoutube, FaLinkedinIn, FaXTwitter } from 'react-icons/fa6';
-import imageGenService, { ImageGenProviderError } from '../../../services/imageGenService.js';
+import imageGenService, {
+  ImageGenProviderError,
+  contextRateLimitMessage,
+  isContextRateLimitError,
+} from '../../../services/imageGenService.js';
+import {
+  GENERATE_REJECTED_MESSAGE,
+  TWEAK_REJECTED_MESSAGE,
+  isRejectedRequest,
+  resolveContextId,
+} from './imageStudioGenerateFlow.js';
 import creditsService, { isInsufficientCreditsError } from '../../../services/creditsService.js';
 import { resolvePresentationWorkspaceContext } from '../../../utils/presentationContext.js';
 import LogoImg from '../../../assets/herologo.png';
@@ -147,6 +157,15 @@ function refsFromContext(ctx) {
   return [...fromImages, ...fromAssets].filter((img) => img.src);
 }
 
+/** User-facing text for a failed generate / tweak / regenerate. */
+function studioErrorMessage(err, kind, fallback) {
+  if (isContextRateLimitError(err)) return contextRateLimitMessage(err);
+  if (isRejectedRequest(err)) {
+    return kind === 'generate' ? GENERATE_REJECTED_MESSAGE : TWEAK_REJECTED_MESSAGE;
+  }
+  return err?.data?.message || err?.message || fallback;
+}
+
 async function resolveContextImages(workspaceId, ctx, generation) {
   const fromCtx = refsFromContext(ctx);
   if (fromCtx.length) return fromCtx;
@@ -199,6 +218,7 @@ export default function AIConversationalStudio({
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeStepIdx, setActiveStepIdx] = useState(0);
   const [errorMsg, setErrorMsg] = useState('');
+  const failedActionRef = useRef(null);
 
   // Versions & History
   const [generations, setGenerations] = useState([]);
@@ -450,6 +470,7 @@ export default function AIConversationalStudio({
     if (!activeWs || !tId) return;
     setIsGenerating(true);
     setErrorMsg('');
+    failedActionRef.current = null;
     try {
       const data = await imageGenService.getThread(activeWs, tId);
       const msgs = data?.messages || [];
@@ -582,6 +603,7 @@ export default function AIConversationalStudio({
     setPendingPrompt(promptText);
     setPendingRefs(refsFromContext(imageContext));
     setErrorMsg('');
+    failedActionRef.current = null;
 
     try {
       const formatForMode =
@@ -652,8 +674,8 @@ export default function AIConversationalStudio({
       } else if (err instanceof ImageGenProviderError || err.status === 503) {
         setErrorMsg(err.message || 'Gemini isn’t available on this server. Switch to an OpenAI model.');
       } else {
-        const msg = err?.data?.message || err.message || "Image generation failed. Please try again.";
-        setErrorMsg(msg);
+        failedActionRef.current = () => executeGenerate(promptText, wsId, fldId);
+        setErrorMsg(studioErrorMessage(err, 'generate', 'Image generation failed. Please try again.'));
       }
     } finally {
       setIsGenerating(false);
@@ -687,12 +709,14 @@ export default function AIConversationalStudio({
     setPendingPrompt(text);
     setPendingRefs(refsFromContext(imageContext));
     setErrorMsg('');
+    failedActionRef.current = null;
 
     try {
       let res;
       const parentGen = fromGen || activeGeneration || generations[generations.length - 1];
 
       const tweakText = mode === 'infographic' ? `${text}, maintain clean minimalist layout, no text, no words` : text;
+      const contextId = resolveContextId(imageContext, parentGen) || undefined;
 
       if (threadId) {
         res = await imageGenService.sendThreadMessage(activeWs, threadId, tweakText, {
@@ -700,12 +724,14 @@ export default function AIConversationalStudio({
           mode,
           modelId,
           editMode: (mode === 'printable' || mode === 'social' || mode === 'infographic') && editMode !== 'auto' ? editMode : undefined,
+          contextId,
         });
       } else if (parentGen?.id) {
         res = await imageGenService.tweak(activeWs, parentGen.id, tweakText, {
           mode,
           modelId,
           editMode: (mode === 'printable' || mode === 'social' || mode === 'infographic') && editMode !== 'auto' ? editMode : undefined,
+          contextId,
         });
       } else {
         // Fallback to fresh generate with combined prompt
@@ -768,8 +794,16 @@ export default function AIConversationalStudio({
         setChatInput(text);
         await showCreditsGate(() => handleSendPrompt(text, fromGen));
       } else {
-        const msg = err?.data?.message || err.message || "Failed to refine image. Please try again.";
-        setErrorMsg(msg);
+        const parentForRetry = fromGen || activeGeneration || generations[generations.length - 1];
+        const isFirstHop = !threadId && !parentForRetry?.id;
+        failedActionRef.current = () => handleSendPrompt(text, fromGen);
+        setErrorMsg(
+          studioErrorMessage(
+            err,
+            isFirstHop ? 'generate' : 'tweak',
+            'Failed to refine image. Please try again.'
+          )
+        );
       }
     } finally {
       setIsGenerating(false);
@@ -787,6 +821,7 @@ export default function AIConversationalStudio({
     setPendingPrompt("Regenerate alternative");
     setPendingRefs(parentGen.contextImages || []);
     setErrorMsg('');
+    failedActionRef.current = null;
 
     try {
       const regenBody = {
@@ -803,6 +838,8 @@ export default function AIConversationalStudio({
           regenBody.archetypeHint = styleId;
         }
       }
+      const contextId = resolveContextId(imageContext, parentGen);
+      if (contextId) regenBody.contextId = contextId;
 
       const res = await imageGenService.regenerate(workspaceId, parentGen.id, regenBody);
 
@@ -837,7 +874,8 @@ export default function AIConversationalStudio({
       if (isInsufficientCreditsError(err)) {
         await showCreditsGate(() => handleRegenerate(targetGen));
       } else {
-        setErrorMsg(err?.data?.message || err.message || "Regeneration failed.");
+        failedActionRef.current = () => handleRegenerate(targetGen);
+        setErrorMsg(studioErrorMessage(err, 'tweak', 'Regeneration failed.'));
       }
     } finally {
       setIsGenerating(false);
@@ -1534,7 +1572,12 @@ export default function AIConversationalStudio({
               <span>{errorMsg}</span>
               <button
                 className="conv-error-retry-btn"
-                onClick={() => executeGenerate(pendingPrompt || basePrompt, workspaceId, folderId)}
+                onClick={() => {
+                  const retry = failedActionRef.current;
+                  failedActionRef.current = null;
+                  if (typeof retry === 'function') retry();
+                  else executeGenerate(pendingPrompt || basePrompt, workspaceId, folderId);
+                }}
               >
                 Retry
               </button>

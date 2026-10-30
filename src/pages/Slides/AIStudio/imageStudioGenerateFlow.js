@@ -1,6 +1,18 @@
 /** Pure Image Studio generate → tweak flow. Used by AIImageStudio; mock the API in tests. */
 
-export const TWEAK_INSTRUCTION_MAX = 4000
+export const TWEAK_INSTRUCTION_MAX = 16000
+
+export const TWEAK_REJECTED_MESSAGE =
+  'Couldn’t apply that change. Use Retry on this message. Your reference images stay on this chat.'
+export const GENERATE_REJECTED_MESSAGE =
+  'Couldn’t generate from that prompt. Edit it and try again here. Don’t upload the references again.'
+
+/** True for a 400 or a bare "Validation error" with no detail. */
+export function isRejectedRequest(err) {
+  if (Number(err?.status) === 400) return true
+  const msg = String(err?.data?.message || err?.message || '').trim()
+  return msg === 'Validation error'
+}
 
 export function canStartGenerate({ workspaceId, folderId, prompt, isGenerating } = {}) {
   if (!workspaceId || isGenerating) return { ok: false }
@@ -68,6 +80,18 @@ export function buildImageGenerateBody({
   }
   if (contextId) body.contextId = contextId
   return body
+}
+
+/** Live attach id, else the id saved on the generation (or its raw API row). */
+export function resolveContextId(liveContext, generation) {
+  return (
+    liveContext?.id ||
+    generation?.contextId ||
+    generation?.request?.contextId ||
+    generation?.raw?.contextId ||
+    generation?.raw?.request?.contextId ||
+    null
+  )
 }
 
 export function createPendingTurn({ id, kind, text }) {

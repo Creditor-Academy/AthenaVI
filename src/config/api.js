@@ -198,6 +198,7 @@ const API_CONFIG = {
       ARCHETYPES: '/api/image-gen/archetypes',
       ESTIMATE: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/estimate`,
       CONTEXT: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/context`,
+      CONTEXT_QUOTA: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/context-quota`,
       CONTEXT_ONE: (workspaceId, contextId) =>
         `/api/image-gen/workspaces/${workspaceId}/context/${contextId}`,
       GENERATE: (workspaceId) => `/api/image-gen/workspaces/${workspaceId}/generate`,

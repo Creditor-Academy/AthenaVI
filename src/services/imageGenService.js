@@ -36,7 +36,45 @@ const INFOGRAPHIC_GENERATE_TIMEOUT_MS = 120_000
 const TWEAK_TIMEOUT_MS = 90_000
 const INFOGRAPHIC_TWEAK_TIMEOUT_MS = 120_000
 const GEMINI_TIMEOUT_MS = 300_000
-const CONTEXT_TIMEOUT_MS = 90_000
+const CONTEXT_TIMEOUT_MS = 20 * 60 * 1000
+
+export const CONTEXT_MAX_FILE_BYTES = 1024 ** 3
+export const CONTEXT_MAX_REQUEST_BYTES = 1024 ** 3
+export const CONTEXT_SIZE_LIMIT_MESSAGE =
+  'Each file can be up to 1 GB, and one upload must stay within 1 GB.'
+export const CONTEXT_UPLOAD_TIMEOUT_MESSAGE =
+  'The upload timed out. Try again, or use a smaller file.'
+
+/** Rate-limit fields from a 429 body (`data`) or a quota payload. */
+export function readRateLimit(source) {
+  if (!source || typeof source !== 'object') return null
+  const inner = source.data && typeof source.data === 'object' ? source.data : null
+  const pick = inner && ('resetAt' in inner || 'remaining' in inner) ? inner : source
+  if (!('resetAt' in pick) && !('remaining' in pick) && !('retryAfterSec' in pick)) return null
+  return pick
+}
+
+export function isContextRateLimitError(err) {
+  if (!(err instanceof ImageGenRateLimitError) && Number(err?.status) !== 429) return false
+  const msg = String(err?.message || err?.data?.message || '').toLowerCase()
+  if (msg.includes('context rate limit')) return true
+  return Boolean(readRateLimit(err?.data)?.resetAt)
+}
+
+/** "You can upload again at …" for a context-create 429. */
+export function contextRateLimitMessage(err) {
+  const rl = readRateLimit(err?.data) || {}
+  const resetAt = rl.resetAt ? new Date(rl.resetAt) : null
+  if (resetAt && !Number.isNaN(resetAt.getTime())) {
+    return `You can upload again at ${resetAt.toLocaleString()}.`
+  }
+  const sec = Number(rl.retryAfterSec ?? err?.retryAfterSec)
+  if (Number.isFinite(sec) && sec > 0) {
+    const mins = Math.ceil(sec / 60)
+    return `You can upload again in ${mins} minute${mins === 1 ? '' : 's'}.`
+  }
+  return 'You’ve used this hour’s uploads. You can upload again when the hour resets.'
+}
 
 function isGeminiRequest({ provider, modelId } = {}) {
   if (provider === 'gemini') return true
@@ -186,8 +224,14 @@ class ImageGenService {
   }
 
   async request(endpoint, options = {}) {
-    const { timeoutMs, signal, headers: extraHeaders, skipJsonContentType, ...fetchOptions } =
-      options
+    const {
+      timeoutMs,
+      timeoutMessage,
+      signal,
+      headers: extraHeaders,
+      skipJsonContentType,
+      ...fetchOptions
+    } = options
     const baseHeaders = skipJsonContentType ? this.authOnlyHeaders() : getAuthHeaders()
     const headers = {
       ...baseHeaders,
@@ -212,7 +256,10 @@ class ImageGenService {
 
       if (response.status === 429) {
         const payload = await this.readPayload(response)
-        throw new ImageGenRateLimitError(payload.message || 'Rate limited', payload)
+        const err = new ImageGenRateLimitError(payload.message || 'Rate limited', payload)
+        const headerSec = Number(response.headers.get('Retry-After'))
+        if (Number.isFinite(headerSec) && headerSec > 0) err.retryAfterSec = headerSec
+        throw err
       }
 
       if (response.status === 502 || response.status === 503 || response.status === 504) {
@@ -229,9 +276,7 @@ class ImageGenService {
 
       if (response.status === 413) {
         const payload = await this.readPayload(response).catch(() => ({}))
-        const err = new Error(
-          payload?.message || 'File size limit exceeded. Please upload a smaller image (max 10 MB).'
-        )
+        const err = new Error(payload?.message || CONTEXT_SIZE_LIMIT_MESSAGE)
         err.status = 413
         err.data = payload
         throw err
@@ -251,9 +296,11 @@ class ImageGenService {
     } catch (error) {
       if (error?.name === 'AbortError') {
         const err = new Error(
-          'Generation timed out. Gemini Pro can take several minutes — try Flash, Flash Lite, or retry.'
+          timeoutMessage ||
+            'Generation timed out. Gemini Pro can take several minutes — try Flash, Flash Lite, or retry.'
         )
         err.status = 408
+        if (timeoutMessage) err.isUploadTimeout = true
         throw err
       }
       throw error
@@ -328,8 +375,19 @@ class ImageGenService {
       body: form,
       skipJsonContentType: true,
       timeoutMs: CONTEXT_TIMEOUT_MS,
+      timeoutMessage: CONTEXT_UPLOAD_TIMEOUT_MESSAGE,
     })
-    return data?.context || data
+    const context = data?.context || data
+    if (data?.rateLimit && context && typeof context === 'object') {
+      return { ...context, rateLimit: data.rateLimit }
+    }
+    return context
+  }
+
+  /** Hourly context-create quota: { limit, used, remaining, resetAt, retryAfterSec }. */
+  async getContextQuota(workspaceId) {
+    const data = await this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.CONTEXT_QUOTA(workspaceId))
+    return data?.rateLimit || null
   }
 
   async getContext(workspaceId, contextId) {
@@ -416,8 +474,14 @@ class ImageGenService {
     })
   }
 
-  async tweak(workspaceId, generationId, instruction, { editMode, mode, modelId, provider } = {}) {
+  async tweak(
+    workspaceId,
+    generationId,
+    instruction,
+    { editMode, mode, modelId, provider, contextId } = {}
+  ) {
     const payload = { instruction }
+    if (contextId) payload.contextId = contextId
     if (editMode === 'spec' || editMode === 'pixel') payload.editMode = editMode
     return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.TWEAK(workspaceId, generationId), {
       method: 'POST',
@@ -478,10 +542,11 @@ class ImageGenService {
     workspaceId,
     threadId,
     content,
-    { fromGenerationId, editMode, mode, modelId, provider } = {}
+    { fromGenerationId, editMode, mode, modelId, provider, contextId } = {}
   ) {
     const body = { content }
     if (fromGenerationId) body.fromGenerationId = fromGenerationId
+    if (contextId) body.contextId = contextId
     if (editMode === 'spec' || editMode === 'pixel') body.editMode = editMode
     return this.request(API_CONFIG.ENDPOINTS.IMAGE_GEN.THREAD_MESSAGES(workspaceId, threadId), {
       method: 'POST',
