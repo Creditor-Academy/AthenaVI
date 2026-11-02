@@ -1,22 +1,25 @@
-import { useState, useEffect, useRef } from 'react'
-import { useAuth } from '../../contexts/AuthContext'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  MdEdit,
-  MdEmail,
-  MdPhone,
-  MdSave,
-  MdClose,
-  MdPerson,
-  MdVerifiedUser,
-  MdNotifications,
-  MdVideoLibrary,
-  MdGeneratingTokens,
-  MdDelete,
-  MdPhotoCamera,
   MdCardMembership,
-  MdExpandMore,
+  MdCheckCircle,
+  MdClose,
+  MdCloudQueue,
+  MdCreditCard,
+  MdDashboard,
+  MdEdit,
+  MdErrorOutline,
+  MdFolderShared,
+  MdGeneratingTokens,
+  MdHistory,
+  MdGroups,
+  MdNotifications,
+  MdOutlineBolt,
+  MdPerson,
+  MdSettings,
+  MdVideoLibrary,
 } from 'react-icons/md'
+import { useAuth } from '../../contexts/AuthContext'
 import userService from '../../services/userService.js'
 import creditsService from '../../services/creditsService.js'
 import storageService from '../../services/storageService.js'
@@ -28,1516 +31,524 @@ import {
   formatCreditTransactionSubtitle,
   formatCreditTransactionType,
   collapsePresentationCreditTransactions,
+  isTeamWorkspaceType,
 } from '../../utils/creditTransactions.js'
+import { formatCredits, formatCreditsCompact } from '../../utils/formatCredits.js'
 import LoadingDots from '../../components/ui/LoadingDots/LoadingDots.jsx'
+import ProfileHero from './components/ProfileHero'
+import ProfileSidePanel from './components/ProfileSidePanel'
+import ProfileDetails from './components/ProfileDetails'
+import { formatDate, formatRelativeTime } from './profileUtils'
+import './Profile.css'
 
-// ─── Country dial-code data ───────────────────────────────────────────────────
-// digits: [min, max] for the subscriber number (after the dial code)
-const COUNTRIES = [
-  { code: 'US', name: 'United States',    dial: '1',   flag: '🇺🇸', digits: [10, 10] },
-  { code: 'CA', name: 'Canada',           dial: '1',   flag: '🇨🇦', digits: [10, 10] },
-  { code: 'GB', name: 'United Kingdom',   dial: '44',  flag: '🇬🇧', digits: [10, 10] },
-  { code: 'AU', name: 'Australia',        dial: '61',  flag: '🇦🇺', digits: [9,  9]  },
-  { code: 'IN', name: 'India',            dial: '91',  flag: '🇮🇳', digits: [10, 10] },
-  { code: 'DE', name: 'Germany',          dial: '49',  flag: '🇩🇪', digits: [10, 11] },
-  { code: 'FR', name: 'France',           dial: '33',  flag: '🇫🇷', digits: [9,  9]  },
-  { code: 'JP', name: 'Japan',            dial: '81',  flag: '🇯🇵', digits: [10, 10] },
-  { code: 'CN', name: 'China',            dial: '86',  flag: '🇨🇳', digits: [11, 11] },
-  { code: 'BR', name: 'Brazil',           dial: '55',  flag: '🇧🇷', digits: [10, 11] },
-  { code: 'MX', name: 'Mexico',           dial: '52',  flag: '🇲🇽', digits: [10, 10] },
-  { code: 'ZA', name: 'South Africa',     dial: '27',  flag: '🇿🇦', digits: [9,  9]  },
-  { code: 'NG', name: 'Nigeria',          dial: '234', flag: '🇳🇬', digits: [10, 10] },
-  { code: 'PK', name: 'Pakistan',         dial: '92',  flag: '🇵🇰', digits: [10, 10] },
-  { code: 'BD', name: 'Bangladesh',       dial: '880', flag: '🇧🇩', digits: [10, 10] },
-  { code: 'ID', name: 'Indonesia',        dial: '62',  flag: '🇮🇩', digits: [9,  12] },
-  { code: 'RU', name: 'Russia',           dial: '7',   flag: '🇷🇺', digits: [10, 10] },
-  { code: 'KR', name: 'South Korea',      dial: '82',  flag: '🇰🇷', digits: [9,  10] },
-  { code: 'IT', name: 'Italy',            dial: '39',  flag: '🇮🇹', digits: [9,  10] },
-  { code: 'ES', name: 'Spain',            dial: '34',  flag: '🇪🇸', digits: [9,  9]  },
-  { code: 'TR', name: 'Turkey',           dial: '90',  flag: '🇹🇷', digits: [10, 10] },
-  { code: 'SA', name: 'Saudi Arabia',     dial: '966', flag: '🇸🇦', digits: [9,  9]  },
-  { code: 'AE', name: 'UAE',              dial: '971', flag: '🇦🇪', digits: [9,  9]  },
-  { code: 'EG', name: 'Egypt',            dial: '20',  flag: '🇪🇬', digits: [10, 10] },
-  { code: 'AR', name: 'Argentina',        dial: '54',  flag: '🇦🇷', digits: [10, 10] },
-  { code: 'CO', name: 'Colombia',         dial: '57',  flag: '🇨🇴', digits: [10, 10] },
-  { code: 'PH', name: 'Philippines',      dial: '63',  flag: '🇵🇭', digits: [10, 10] },
-  { code: 'MY', name: 'Malaysia',         dial: '60',  flag: '🇲🇾', digits: [9,  10] },
-  { code: 'SG', name: 'Singapore',        dial: '65',  flag: '🇸🇬', digits: [8,  8]  },
-  { code: 'NZ', name: 'New Zealand',      dial: '64',  flag: '🇳🇿', digits: [8,  9]  },
-  { code: 'NL', name: 'Netherlands',      dial: '31',  flag: '🇳🇱', digits: [9,  9]  },
-  { code: 'SE', name: 'Sweden',           dial: '46',  flag: '🇸🇪', digits: [7,  9]  },
-  { code: 'NO', name: 'Norway',           dial: '47',  flag: '🇳🇴', digits: [8,  8]  },
-  { code: 'CH', name: 'Switzerland',      dial: '41',  flag: '🇨🇭', digits: [9,  9]  },
-  { code: 'PL', name: 'Poland',           dial: '48',  flag: '🇵🇱', digits: [9,  9]  },
-  { code: 'PT', name: 'Portugal',         dial: '351', flag: '🇵🇹', digits: [9,  9]  },
-  { code: 'GR', name: 'Greece',           dial: '30',  flag: '🇬🇷', digits: [10, 10] },
-  { code: 'IL', name: 'Israel',           dial: '972', flag: '🇮🇱', digits: [9,  9]  },
-  { code: 'TH', name: 'Thailand',         dial: '66',  flag: '🇹🇭', digits: [9,  9]  },
-  { code: 'VN', name: 'Vietnam',          dial: '84',  flag: '🇻🇳', digits: [9,  10] },
-  { code: 'UA', name: 'Ukraine',          dial: '380', flag: '🇺🇦', digits: [9,  9]  },
-]
-
-const DEFAULT_COUNTRY = COUNTRIES[0] // US
-
-/** Try to parse a stored value like "+11234567890" into { country, number } */
-function parseStoredPhone(stored) {
-  if (!stored) return { country: DEFAULT_COUNTRY, number: '' }
-  const digits = stored.replace(/^\+/, '')
-  // Try longest dial code first to avoid false matches
-  const sorted = [...COUNTRIES].sort((a, b) => b.dial.length - a.dial.length)
-  for (const c of sorted) {
-    if (digits.startsWith(c.dial)) {
-      return { country: c, number: digits.slice(c.dial.length) }
-    }
-  }
-  return { country: DEFAULT_COUNTRY, number: digits }
-}
-
-function formatRelativeTime(iso) {
-  if (!iso) return ''
-  const diff = Date.now() - new Date(iso).getTime()
-  if (!Number.isFinite(diff) || diff < 0) return ''
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'Just now'
-  if (mins < 60) return `${mins}m ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  const days = Math.floor(hrs / 24)
-  if (days < 7) return `${days}d ago`
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024
 
 function mapCreditTxToActivity(tx) {
   const type = String(tx?.type || '').toLowerCase()
-  const title = formatCreditTransactionTitle(tx)
-  const subtitle =
-    formatCreditTransactionSubtitle(tx) || formatCreditTransactionType(tx.type)
-
-  let notifType = 'info'
-  let icon = <MdGeneratingTokens />
-
+  let tone = 'info'
+  let Icon = MdGeneratingTokens
   if (type === 'usage') {
-    notifType = 'success'
-    icon = <MdVideoLibrary />
+    tone = 'success'
+    Icon = MdVideoLibrary
   } else if (type === 'platform_grant' || type === 'refund') {
-    notifType = 'success'
+    tone = 'success'
   } else if (type === 'platform_revoke') {
-    notifType = 'warning'
+    tone = 'warning'
   } else if (type === 'allocation' || type === 'deallocation') {
-    icon = <MdCardMembership />
+    Icon = MdCardMembership
   }
-
   return {
     id: tx.id,
-    title,
-    desc: subtitle,
+    title: formatCreditTransactionTitle(tx),
+    desc: formatCreditTransactionSubtitle(tx) || formatCreditTransactionType(tx.type),
     time: formatRelativeTime(tx.createdAt),
-    type: notifType,
-    icon,
+    tone,
+    Icon,
   }
 }
 
-const Profile = () => {
-  const { user, isAuthenticated, updateUser } = useAuth()
-  const [profile, setProfile] = useState({
-    name: '',
-    email: '',
-    phoneNumber: '',
-    profileImage: null
-  })
-  const [editing, setEditing] = useState(null)
-  const [editValue, setEditValue] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [imageLoading, setImageLoading] = useState(true)
-  const [error, setError] = useState('')
+const scrollToSection = (id) =>
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 
-  // Phone number country-code state
-  const [selectedCountry, setSelectedCountry] = useState(DEFAULT_COUNTRY)
-  const [phoneNumber, setPhoneNumber] = useState('')
-  const [countryDropdownOpen, setCountryDropdownOpen] = useState(false)
-  const [countrySearch, setCountrySearch] = useState('')
-  const countryDropdownRef = useRef(null)
+const NAV_ITEMS = [
+  { id: 'overview', label: 'Overview', target: 'prf-overview', icon: MdDashboard },
+  { id: 'credits', label: 'Credits', target: 'prf-credits', icon: MdGeneratingTokens },
+  { id: 'details', label: 'Personal details', target: 'prf-details', icon: MdPerson },
+  { id: 'activity', label: 'Recent activity', target: 'prf-activity', icon: MdHistory },
+]
+
+const Profile = ({ onNavigate }) => {
+  const { isAuthenticated, updateUser } = useAuth()
+  const [profile, setProfile] = useState({ name: '', email: '', phoneNumber: '', profileImage: null, createdAt: null })
+  const [pageLoading, setPageLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [imageBusy, setImageBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [personalCredits, setPersonalCredits] = useState(null)
   const [storageQuota, setStorageQuota] = useState(null)
   const [videosExported, setVideosExported] = useState(null)
   const [workspaceCount, setWorkspaceCount] = useState(null)
+  // Team workspace pools, as in the credits pop-up; null until loaded.
+  const [workspaceBalances, setWorkspaceBalances] = useState(null)
   const [recentActivity, setRecentActivity] = useState([])
-  const [statsLoading, setStatsLoading] = useState(true)
-  const fileInputRef = useRef(null)
+  const [editTick, setEditTick] = useState(0)
 
-  // Load user profile on component mount
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadUserProfile()
-    } else {
-      setError('User not authenticated')
+  // Loaded after the page renders so one slow workspace never blocks the profile.
+  // A workspace whose balance can't be read is left out rather than failing all.
+  const loadWorkspaceBalances = useCallback(async (workspaceList) => {
+    const teams = workspaceList.filter((ws) => isTeamWorkspaceType(ws.type))
+    if (!teams.length) {
+      setWorkspaceBalances([])
+      return
     }
-  }, [isAuthenticated])
-
-  // Close country dropdown on outside click
-  useEffect(() => {
-    const handleOutsideClick = (e) => {
-      if (countryDropdownRef.current && !countryDropdownRef.current.contains(e.target)) {
-        setCountryDropdownOpen(false)
-        setCountrySearch('')
-      }
-    }
-    document.addEventListener('mousedown', handleOutsideClick)
-    return () => document.removeEventListener('mousedown', handleOutsideClick)
+    const balances = await Promise.all(
+      teams.map((ws) =>
+        creditsService
+          .getWorkspaceBalance(ws.id)
+          .then((b) => ({ id: ws.id, name: ws.name || 'Workspace', credits: Number(b.workspaceCredits ?? 0) }))
+          .catch(() => null)
+      )
+    )
+    setWorkspaceBalances(balances.filter(Boolean).sort((a, b) => a.name.localeCompare(b.name)))
   }, [])
 
-  const loadUserProfile = async () => {
+  const loadUserProfile = useCallback(async () => {
+    setPageLoading(true)
+    setError('')
     try {
-      setLoading(true)
-      setStatsLoading(true)
-      setImageLoading(true)
-      setError('')
+      const [userData, creditsResult, storageResult, videosResult, historyResult, workspaceList] =
+        await Promise.all([
+          userService.getUserProfile(),
+          creditsService.getPersonalBalance().catch(() => null),
+          storageService.getPersonalQuota().catch(() => null),
+          videoLibraryService.listUserVideos({ take: 1, skip: 0, status: 'completed' }).catch(() => null),
+          creditsService.getPersonalHistory({ page: 1, limit: 40 }).catch(() => null),
+          workspaceService.listWorkspaces().catch(() => []),
+        ])
 
-      const [
-        userData,
-        creditsResult,
-        storageResult,
-        videosResult,
-        historyResult,
-        workspaceList,
-      ] = await Promise.all([
-        userService.getUserProfile(),
-        creditsService.getPersonalBalance().catch(() => null),
-        storageService.getPersonalQuota().catch(() => null),
-        videoLibraryService.listUserVideos({ take: 1, skip: 0, status: 'completed' }).catch(() => null),
-        creditsService.getPersonalHistory({ page: 1, limit: 40 }).catch(() => null),
-        workspaceService.listWorkspaces().catch(() => []),
-      ])
-
-      const newProfile = {
+      const nextProfile = {
         name: userData?.name || '',
         email: userData?.email || '',
         phoneNumber: userData?.phoneNumber || '',
         profileImage: userData?.profileImage || null,
+        createdAt: userData?.createdAt || null,
       }
-      setProfile(newProfile)
-      updateUser(newProfile)
+      setProfile(nextProfile)
+      updateUser({
+        name: nextProfile.name,
+        email: nextProfile.email,
+        phoneNumber: nextProfile.phoneNumber,
+        profileImage: nextProfile.profileImage,
+      })
 
-      if (creditsResult) {
-        setPersonalCredits(creditsResult.personalCredits)
-      }
-      if (storageResult) {
-        setStorageQuota(storageResult)
-      }
+      if (creditsResult) setPersonalCredits(creditsResult.personalCredits)
+      if (storageResult) setStorageQuota(storageResult)
       if (videosResult) {
         setVideosExported(videosResult.pagination?.total ?? videosResult.videos?.length ?? 0)
       }
-      if (historyResult?.transactions) {
-        setRecentActivity(
-          collapsePresentationCreditTransactions(historyResult.transactions)
-            .slice(0, 5)
-            .map(mapCreditTxToActivity)
-        )
-      } else {
-        setRecentActivity([])
-      }
+      setRecentActivity(
+        historyResult?.transactions
+          ? collapsePresentationCreditTransactions(historyResult.transactions).slice(0, 5).map(mapCreditTxToActivity)
+          : []
+      )
       setWorkspaceCount(Array.isArray(workspaceList) ? workspaceList.length : 0)
-
-      setImageLoading(false)
+      loadWorkspaceBalances(Array.isArray(workspaceList) ? workspaceList : [])
     } catch (err) {
       console.error('Error loading profile:', err)
-      setError(err.message)
-      setImageLoading(false)
+      setError(err.message || 'Could not load your profile')
     } finally {
-      setLoading(false)
-      setStatsLoading(false)
+      setPageLoading(false)
     }
+  }, [updateUser, loadWorkspaceBalances])
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadUserProfile()
+    } else {
+      setPageLoading(false)
+      setError('User not authenticated')
+    }
+    // Load once per sign-in; updateUser identity changes must not refetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated])
+
+  useEffect(() => {
+    if (!success) return undefined
+    const t = setTimeout(() => setSuccess(''), 3000)
+    return () => clearTimeout(t)
+  }, [success])
+
+  const applyProfile = (patch) => {
+    setProfile((prev) => {
+      const next = { ...prev, ...patch }
+      updateUser({
+        name: next.name,
+        email: next.email,
+        phoneNumber: next.phoneNumber,
+        profileImage: next.profileImage,
+      })
+      return next
+    })
   }
 
-  const handleEdit = (field, value) => {
-    setEditing(field)
-    setEditValue(value)
-    if (field === 'phoneNumber') {
-      const parsed = parseStoredPhone(value)
-      setSelectedCountry(parsed.country)
-      setPhoneNumber(parsed.number)
-      setCountrySearch('')
-      setCountryDropdownOpen(false)
-    }
-  }
-
-  const handleSave = async (field) => {
+  const handleSaveField = async (field, value) => {
+    setSaving(true)
+    setError('')
     try {
-      setLoading(true)
-      setError('')
-
-      let valueToSave = editValue
-
-      if (field === 'phoneNumber') {
-        const digits = phoneNumber.replace(/\D/g, '')
-        const [minD, maxD] = selectedCountry.digits
-        if (digits) {
-          if (digits.length < minD || digits.length > maxD) {
-            const rangeMsg = minD === maxD ? `${minD}` : `${minD}–${maxD}`
-            setError(`${selectedCountry.name} phone numbers must be ${rangeMsg} digits.`)
-            setLoading(false)
-            return
-          }
-          valueToSave = `+${selectedCountry.dial}${digits}`
-        } else {
-          valueToSave = ''
-        }
-      }
-
-      const updatedProfile = { ...profile, [field]: valueToSave }
-      await userService.updateUserProfile(updatedProfile)
-
-      setProfile(updatedProfile)
-      updateUser(updatedProfile)
-      setEditing(null)
-      setEditValue('')
-      setPhoneNumber('')
+      await userService.updateUserProfile({ ...profile, [field]: value })
+      applyProfile({ [field]: value })
+      setSuccess(field === 'name' ? 'Name updated' : 'Phone number updated')
+      return true
     } catch (err) {
-      setError(err.message)
+      setError(err.message || 'Could not save your changes')
+      return false
     } finally {
-      setLoading(false)
+      setSaving(false)
     }
   }
 
-  const handleCancel = () => {
-    setEditing(null)
-    setEditValue('')
-    setPhoneNumber('')
-    setCountryDropdownOpen(false)
-    setCountrySearch('')
-  }
-
-  const handleFileChange = async (e) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
-      if (!allowedTypes.includes(file.type)) {
-        setError('Please select a JPEG, PNG, or WebP image file')
-        return
-      }
-      
-      if (file.size > 2 * 1024 * 1024) {
-        setError('Image size should be less than 2MB')
-        return
-      }
-
-      try {
-        setLoading(true)
-        setError('')
-        setImageLoading(true)
-        
-        const result = await userService.uploadProfileImage(file)
-        
-        const newProfileImageUrl = result.data?.profile?.profileImage || result.profileImage
-        
-        if (newProfileImageUrl) {
-          const updatedProfile = { ...profile, profileImage: newProfileImageUrl }
-          setProfile(updatedProfile)
-          updateUser(updatedProfile)
-        } else {
-          console.error('No profile image URL found in response')
-          setError('Profile image uploaded but URL not found in response')
-        }
-      } catch (err) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
-        setImageLoading(false)
-      }
+  const handleUploadImage = async (file) => {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      setError('Please select a JPEG, PNG, or WebP image file')
+      return
     }
-  }
-
-  const handleDeleteImage = async () => {
+    if (file.size > MAX_IMAGE_BYTES) {
+      setError('Image size should be less than 2MB')
+      return
+    }
+    setImageBusy(true)
+    setError('')
     try {
-      setLoading(true)
-      setError('')
-      setImageLoading(true)
-      
+      const result = await userService.uploadProfileImage(file)
+      const url = result.data?.profile?.profileImage || result.profileImage
+      if (!url) throw new Error('Profile image uploaded but URL not found in response')
+      applyProfile({ profileImage: url })
+      setSuccess('Profile photo updated')
+    } catch (err) {
+      setError(err.message || 'Could not upload your photo')
+    } finally {
+      setImageBusy(false)
+    }
+  }
+
+  const handleRemoveImage = async () => {
+    setImageBusy(true)
+    setError('')
+    try {
       await userService.deleteProfileImage()
-      
-      const updatedProfile = { ...profile, profileImage: null }
-      setProfile(updatedProfile)
-      updateUser(updatedProfile)
+      applyProfile({ profileImage: null })
+      setSuccess('Profile photo removed')
     } catch (err) {
-      console.error('Error deleting profile image:', err)
       setError(err.message || 'Failed to remove profile image')
     } finally {
-      setLoading(false)
-      setImageLoading(false)
+      setImageBusy(false)
     }
   }
 
-  const getUserInitial = () => {
-    if (profile.name) {
-      return profile.name.charAt(0).toUpperCase()
-    }
-    if (profile.email) {
-      return profile.email.charAt(0).toUpperCase()
-    }
-    return 'U'
-  }
-
-  const planLabel = storageQuota?.tier?.label || 'Your plan'
+  const planLabel = storageQuota?.tier?.label || 'Free'
   const storagePercent = Math.min(100, Math.round(Number(storageQuota?.percentUsed) || 0))
   const storageUsedLabel = storageQuota
-    ? `${formatBytes(storageQuota.usedBytes)} / ${formatBytes(storageQuota.limitBytes)}`
-    : null
-
-  const styles = `
-    .profile-page {
-      max-width: 1150px;
-      margin: 0 auto;
-      padding: 16px 24px 40px;
-      font-family: var(--font-family, 'Inter', sans-serif);
-      color: var(--text-main);
-    }
-
-    .profile-header-new {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 28px;
-    }
-
-    .profile-header-new h1 {
-      font-family: var(--font-family);
-      font-size: 32px;
-      font-weight: 800;
-      color: var(--text-main);
-      margin: 0;
-      letter-spacing: -0.03em;
-    }
-
-    .profile-header-desc {
-      font-size: 14px;
-      color: var(--text-muted);
-      margin-top: 6px;
-      margin-bottom: 0;
-    }
-
-    .profile-loader {
-      display: flex;
-      align-items: center;
-    }
-
-    .profile-hero-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 24px;
-      padding: 32px;
-      display: flex;
-      align-items: center;
-      gap: 32px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-      margin-bottom: 32px;
-      position: relative;
-      overflow: hidden;
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .profile-hero-card:hover {
-      border-color: rgba(var(--primary-rgb), 0.25);
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.06);
-    }
-
-    .profile-hero-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.08) 0%, transparent 70%);
-      z-index: 0;
-      pointer-events: none;
-    }
-
-    .profile-hero-avatar-area {
-      position: relative;
-      z-index: 1;
-      flex-shrink: 0;
-    }
-
-    .profile-avatar-wrapper {
-      position: relative;
-    }
-
-    .profile-avatar-large {
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 4px solid var(--bg-card);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease;
-    }
-
-    .profile-avatar-large.initials-avatar {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover, var(--primary)) 100%);
-      color: white;
-      font-size: 48px;
-      font-weight: 800;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-    }
-
-    .profile-avatar-wrapper:hover .profile-avatar-large {
-      transform: scale(1.03);
-      border-color: var(--primary);
-    }
-
-    .profile-avatar-large.loading-avatar {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--bg-surface);
-      color: var(--text-muted);
-    }
-
-    .avatar-loading-spinner {
-      width: 24px;
-      height: 24px;
-      border: 3px solid rgba(var(--primary-rgb), 0.2);
-      border-top: 3px solid var(--primary);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .profile-avatar-actions {
-      position: absolute;
-      bottom: -6px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 6px;
-      background: var(--bg-card);
-      padding: 4px 6px;
-      border-radius: 20px;
-      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
-      border: 1px solid var(--border-color);
-      z-index: 2;
-    }
-
-    .profile-avatar-btn-small {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--bg-surface);
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      border: 1px solid var(--border-color);
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      font-family: inherit;
-    }
-
-    .profile-avatar-btn-small:hover {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
-      transform: scale(1.1);
-    }
-
-    .profile-avatar-btn-small.delete:hover {
-      background: var(--delete-red, #ef4444);
-      color: white;
-      border-color: var(--delete-red, #ef4444);
-    }
-
-    .profile-hero-info {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 6px;
-      z-index: 1;
-    }
-
-    .profile-hero-name {
-      font-size: 26px;
-      font-weight: 800;
-      color: var(--text-main);
-      margin: 0;
-      letter-spacing: -0.02em;
-    }
-
-    .profile-hero-email {
-      font-size: 15px;
-      color: var(--text-muted);
-      margin: 0 0 6px 0;
-      word-break: break-all;
-    }
-
-    .plan-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover, var(--primary)) 100%);
-      color: white;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 13px;
-      font-weight: 700;
-      box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.25);
-      border: none;
-      font-family: inherit;
-    }
-
-    .profile-layout-grid {
-      display: grid;
-      grid-template-columns: 1fr 1.3fr;
-      gap: 28px;
-    }
-
-    .profile-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 24px;
-      padding: 32px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .profile-card:hover {
-      border-color: rgba(var(--primary-rgb), 0.25);
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.06);
-    }
-
-    .profile-section-title {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--text-main);
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      letter-spacing: -0.01em;
-    }
-
-    .profile-section-title svg {
-      color: var(--primary);
-    }
-
-    .stat-row {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    .stat-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .stat-title {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--text-main);
-    }
-
-    .stat-value {
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    .progress-bar-bg {
-      width: 100%;
-      height: 8px;
-      background: var(--border-color);
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--primary) 0%, var(--primary-light, var(--primary)) 100%);
-      border-radius: 4px;
-      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .credits-count-container {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: rgba(var(--primary-rgb), 0.06);
-      border: 1px dashed rgba(var(--primary-rgb), 0.25);
-      padding: 16px;
-      border-radius: 16px;
-      margin-top: 24px;
-    }
-
-    .credits-label {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .credits-label svg {
-      font-size: 18px;
-      color: var(--primary);
-    }
-
-    .credits-value {
-      font-size: 18px;
-      font-weight: 800;
-      color: var(--primary);
-    }
-
-    .profile-detail-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 20px;
-      border-radius: 16px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-color);
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      margin-bottom: 12px;
-    }
-
-    .profile-detail-item:last-child {
-      margin-bottom: 0;
-    }
-
-    .profile-detail-item:hover {
-      background: var(--bg-card);
-      border-color: var(--primary);
-      box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.06);
-      transform: translateY(-2px);
-    }
-
-    .profile-detail-left {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      flex: 1;
-      min-width: 0;
-    }
-
-    .profile-detail-icon {
-      width: 44px;
-      height: 44px;
-      background: rgba(var(--primary-rgb), 0.08);
-      color: var(--primary);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      flex-shrink: 0;
-      transition: background 0.2s, color 0.2s;
-    }
-
-    .profile-detail-item:hover .profile-detail-icon {
-      background: var(--primary);
-      color: white;
-    }
-
-    .profile-detail-info {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-
-    .profile-detail-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 2px;
-    }
-
-    .profile-detail-value {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text-main);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .profile-detail-edit-btn {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      background: var(--bg-surface);
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      border: 1px solid var(--border-color);
-      transition: all 0.2s;
-      flex-shrink: 0;
-      font-family: inherit;
-    }
-
-    .profile-detail-edit-btn:hover {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
-    }
-
-    .profile-input-wrapper {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      width: 100%;
-    }
-
-    .profile-input-row {
-      display: flex;
-      gap: 12px;
-      width: 100%;
-    }
-
-    .profile-edit-input {
-      flex: 1;
-      padding: 10px 16px;
-      border: 2px solid var(--border-color);
-      border-radius: 12px;
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text-main);
-      outline: none;
-      background: var(--bg-surface);
-      transition: all 0.2s;
-      font-family: inherit;
-    }
-
-    .profile-edit-input:focus {
-      border-color: var(--primary);
-      background: var(--bg-card);
-      box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.15);
-    }
-
-    .profile-edit-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .profile-action-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      border: none;
-      transition: all 0.2s;
-      font-family: inherit;
-    }
-
-    .profile-btn-save-new {
-      background: var(--primary);
-      color: white;
-      box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.25);
-    }
-
-    .profile-btn-save-new:hover {
-      background: var(--primary-hover, var(--primary));
-      transform: translateY(-2px);
-    }
-
-    .profile-btn-cancel-new {
-      background: var(--bg-surface);
-      color: var(--text-muted);
-      border: 1px solid var(--border-color);
-    }
-
-    .profile-btn-cancel-new:hover {
-      background: var(--bg-main);
-      color: var(--text-main);
-    }
-
-    .error-toast {
-      position: fixed;
-      bottom: 40px;
-      right: 40px;
-      background: var(--bg-card);
-      border-left: 4px solid var(--delete-red, #ef4444);
-      color: var(--text-main);
-      padding: 16px 24px;
-      border-radius: 12px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-      border-top: 1px solid var(--border-color);
-      border-right: 1px solid var(--border-color);
-      border-bottom: 1px solid var(--border-color);
-      z-index: 1000;
-    }
-
-    .loading-pulse {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      background: var(--primary);
-      border-radius: 50%;
-      margin: 0 4px;
-      animation: pulse 1s infinite alternate;
-    }
-
-    @keyframes pulse {
-      from { transform: scale(0.8); opacity: 0.5; }
-      to { transform: scale(1.2); opacity: 1; }
-    }
-
-    .notif-item-rich {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      padding: 16px 20px;
-      border-radius: 16px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border-color);
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      margin-bottom: 12px;
-    }
-
-    .notif-item-rich:last-child {
-      margin-bottom: 0;
-    }
-
-    .notif-item-rich:hover {
-      background: var(--bg-card);
-      border-color: rgba(var(--primary-rgb), 0.25);
-      transform: translateX(4px);
-    }
-
-    .notif-icon-box {
-      width: 44px;
-      height: 44px;
-      background: rgba(var(--primary-rgb), 0.08);
-      color: var(--primary);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      flex-shrink: 0;
-    }
-
-    .notif-icon-box.success { background: rgba(16, 185, 129, 0.1); color: var(--success-green, #10b981); }
-    .notif-icon-box.warning { background: rgba(245, 158, 11, 0.1); color: var(--warning-amber, #f59e0b); }
-    .notif-icon-box.info { background: rgba(var(--primary-rgb), 0.08); color: var(--primary); }
-
-    .notif-main {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .notif-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 4px;
-      gap: 8px;
-    }
-
-    .notif-title-text {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text-main);
-    }
-
-    .notif-time-tag {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .notif-body-text {
-      font-size: 13px;
-      color: var(--text-muted);
-      line-height: 1.5;
-      margin: 0;
-    }
-
-    @media (max-width: 850px) {
-      .profile-hero-card {
-        flex-direction: column;
-        text-align: center;
-        align-items: center;
-        padding: 40px 24px;
-      }
-      .profile-hero-info {
-        align-items: center;
-      }
-      .profile-layout-grid {
-        grid-template-columns: 1fr;
-        gap: 24px;
-      }
-    }
-
-    /* ── Phone number country-code picker ────────────────────────── */
-    .phone-input-group {
-      display: flex;
-      gap: 8px;
-      flex: 1;
-      min-width: 0;
-      position: relative;
-    }
-
-    .country-selector {
-      position: relative;
-      flex-shrink: 0;
-    }
-
-    .country-trigger {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 10px 10px;
-      height: 44px;
-      border: 2px solid var(--border-color);
-      border-radius: 12px;
-      background: var(--bg-surface);
-      color: var(--text-main);
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      font-family: inherit;
-      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
-      white-space: nowrap;
-      user-select: none;
-    }
-
-    .country-trigger:hover,
-    .country-trigger.open {
-      border-color: var(--primary);
-      background: var(--bg-card);
-      box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.12);
-    }
-
-    .country-trigger .flag {
-      font-size: 18px;
-      line-height: 1;
-    }
-
-    .country-trigger .dial {
-      color: var(--text-muted);
-      font-size: 13px;
-    }
-
-    .country-dropdown {
-      position: absolute;
-      top: calc(100% + 6px);
-      left: 0;
-      z-index: 9999;
-      width: 260px;
-      max-height: 260px;
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 14px;
-      box-shadow: 0 16px 40px rgba(0,0,0,0.18);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .country-search {
-      padding: 10px 12px 8px;
-      border-bottom: 1px solid var(--border-color);
-      flex-shrink: 0;
-    }
-
-    .country-search input {
-      width: 100%;
-      padding: 7px 10px;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      background: var(--bg-surface);
-      color: var(--text-main);
-      font-size: 13px;
-      font-family: inherit;
-      outline: none;
-    }
-
-    .country-search input:focus {
-      border-color: var(--primary);
-    }
-
-    .country-list {
-      overflow-y: auto;
-      flex: 1;
-      padding: 4px 0;
-      scrollbar-width: thin;
-      scrollbar-color: var(--primary) transparent;
-    }
-
-    .country-list::-webkit-scrollbar { width: 3px; }
-    .country-list::-webkit-scrollbar-track { background: transparent; }
-    .country-list::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 6px; }
-
-    .country-option {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 14px;
-      cursor: pointer;
-      font-size: 13px;
-      color: var(--text-main);
-      transition: background 0.12s;
-    }
-
-    .country-option:hover {
-      background: rgba(var(--primary-rgb), 0.08);
-    }
-
-    .country-option.selected {
-      background: rgba(var(--primary-rgb), 0.12);
-      font-weight: 700;
-      color: var(--primary);
-    }
-
-    .country-option .flag { font-size: 16px; }
-    .country-option .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .country-option .dial-code { color: var(--text-muted); font-size: 12px; flex-shrink: 0; }
-
-    .phone-digits-input {
-      flex: 1;
-      padding: 10px 16px;
-      height: 44px;
-      border: 2px solid var(--border-color);
-      border-radius: 12px;
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text-main);
-      outline: none;
-      background: var(--bg-surface);
-      transition: all 0.2s;
-      font-family: inherit;
-      min-width: 0;
-    }
-
-    .phone-digits-input:focus {
-      border-color: var(--primary);
-      background: var(--bg-card);
-      box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.15);
-    }
-
-    .phone-hint {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 4px;
-      padding-left: 2px;
-    }
-  `
+    ? `${formatBytes(storageQuota.usedBytes)} of ${formatBytes(storageQuota.limitBytes)}`
+    : '—'
+  const teamCredits = (workspaceBalances || []).reduce((sum, ws) => sum + ws.credits, 0)
+  const hasTeamPools = Boolean(workspaceBalances?.length)
+  const creditsReady = personalCredits != null && workspaceBalances != null
+  const totalCredits = Number(personalCredits ?? 0) + teamCredits
+  const creditsBreakdown = hasTeamPools
+    ? `${formatCredits(personalCredits)} personal · ${formatCredits(teamCredits)} across ${workspaceBalances.length} workspace${workspaceBalances.length === 1 ? '' : 's'}`
+    : 'Personal pool · voice clones, avatars, private workspace'
+  const go = (section) => (onNavigate ? () => onNavigate(section) : undefined)
+
+  const heroStats = [
+    {
+      id: 'credits',
+      icon: MdGeneratingTokens,
+      value: creditsReady ? formatCreditsCompact(totalCredits) : '—',
+      label: 'Credits',
+      hint: creditsReady ? `${formatCredits(totalCredits)} total — ${creditsBreakdown}` : 'Credits',
+      onClick: () => scrollToSection('prf-credits'),
+    },
+    {
+      id: 'videos',
+      icon: MdVideoLibrary,
+      value: videosExported == null ? '—' : Number(videosExported).toLocaleString(),
+      label: 'Videos',
+      hint: 'Completed exports',
+      onClick: go('my-work'),
+    },
+    {
+      id: 'workspaces',
+      icon: MdFolderShared,
+      value: workspaceCount == null ? '—' : String(workspaceCount),
+      label: 'Workspaces',
+      hint: 'Your workspaces',
+      onClick: go('workspace'),
+    },
+    {
+      id: 'storage',
+      icon: MdCloudQueue,
+      value: storageQuota ? `${storagePercent}%` : '—',
+      label: 'Storage',
+      hint: storageUsedLabel,
+      onClick: () => scrollToSection('prf-overview'),
+    },
+  ]
+
+  const quickActions = useMemo(() => {
+    const list = [
+      {
+        id: 'edit',
+        label: 'Edit details',
+        icon: MdEdit,
+        onClick: () => {
+          scrollToSection('prf-details')
+          setEditTick((t) => t + 1)
+        },
+      },
+    ]
+    if (onNavigate) {
+      list.push(
+        { id: 'billing', label: 'Billing & credits', icon: MdCreditCard, onClick: () => onNavigate('credits') },
+        { id: 'workspaces', label: 'Workspaces', icon: MdFolderShared, onClick: () => onNavigate('workspace') },
+        { id: 'settings', label: 'Account settings', icon: MdSettings, onClick: () => onNavigate('settings') }
+      )
+    }
+    return list
+  }, [onNavigate])
+
+  const aboutRows = [
+    ['Member since', formatDate(profile.createdAt)],
+    ['Email', profile.email || '—'],
+    ['Phone', profile.phoneNumber || 'Not added'],
+    ['Plan', planLabel],
+    ['Workspaces', workspaceCount == null ? '—' : String(workspaceCount)],
+  ]
 
   return (
-    <motion.div 
-      className="profile-page"
-      initial={{ opacity: 0, y: 15 }}
+    <motion.div
+      className="prf-page"
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, cubicBezier: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
     >
-      <style>{styles}</style>
-      
-      <header className="profile-header-new">
-        <div>
-          <h1>Profile Settings</h1>
-          <p className="profile-header-desc">Manage your personal information, subscription plan, and workspace limits.</p>
-        </div>
-        {loading && (
-          <div className="profile-loader">
-            <div className="loading-pulse" />
-            <div className="loading-pulse" style={{ animationDelay: '0.2s' }} />
-            <div className="loading-pulse" style={{ animationDelay: '0.4s' }} />
-          </div>
-        )}
-      </header>
+      <div className="prf-workspace">
+        <ProfileSidePanel items={NAV_ITEMS} actions={quickActions} />
 
-      <div className="profile-hero-card">
-        <div className="profile-hero-avatar-area">
-          <div className="profile-avatar-wrapper">
-            {profile.profileImage ? (
-              imageLoading ? (
-                <div className="profile-avatar-large loading-avatar">
-                  <div className="avatar-loading-spinner"></div>
+        <div className="prf-main">
+          <ProfileHero
+            loading={pageLoading}
+            profile={profile}
+            planLabel={planLabel}
+            stats={heroStats}
+            imageBusy={imageBusy}
+            onUploadImage={handleUploadImage}
+            onRemoveImage={handleRemoveImage}
+          />
+
+          <section id="prf-overview" className="prf-overview">
+            <article className="prf-block">
+              <header className="prf-block-head">
+                <h2>About</h2>
+              </header>
+              {pageLoading ? (
+                <div className="prf-skel-stack">
+                  {[70, 55, 80, 45, 60].map((w) => (
+                    <div key={w} className="prf-skel prf-skel-line" style={{ width: `${w}%` }} />
+                  ))}
                 </div>
               ) : (
-                <img 
-                  src={profile.profileImage}
-                  alt="Profile" 
-                  className="profile-avatar-large"
-                  onLoad={() => setImageLoading(false)}
-                  onError={() => setImageLoading(false)}
-                />
-              )
-            ) : (
-              <div className="profile-avatar-large initials-avatar">
-                {getUserInitial()}
+                <dl className="prf-about">
+                  {aboutRows.map(([label, value]) => (
+                    <div key={label} className="prf-about-row">
+                      <dt>{label}</dt>
+                      <dd title={value}>{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </article>
+
+            <article className="prf-block">
+              <header className="prf-block-head">
+                <h2>Usage</h2>
+                <p>Storage and exports on your personal account.</p>
+              </header>
+              <div className="prf-progress" aria-label={`${storagePercent}% of storage used`}>
+                <div className="prf-progress-meta">
+                  <span>Storage used</span>
+                  <span>{pageLoading ? <LoadingDots size="sm" /> : storageUsedLabel}</span>
+                </div>
+                <div className="prf-progress-track">
+                  <div
+                    className={`prf-progress-fill${storagePercent >= 90 ? ' is-high' : ''}`}
+                    style={{ width: pageLoading ? '0%' : `${storagePercent}%` }}
+                  />
+                </div>
               </div>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              style={{ display: 'none' }}
-              onChange={handleFileChange}
-            />
-            <div className="profile-avatar-actions">
-              <button 
-                className="profile-avatar-btn-small"
-                onClick={() => fileInputRef.current?.click()}
-                title="Upload Profile Photo"
-              >
-                <MdPhotoCamera size={16} />
-              </button>
-              {profile.profileImage && (
-                <button 
-                  className="profile-avatar-btn-small delete"
-                  onClick={handleDeleteImage}
-                  title="Remove Profile Photo"
-                >
-                  <MdDelete size={16} />
+              <div className="prf-usage-grid">
+                <div className="prf-usage-stat">
+                  <span>Videos exported</span>
+                  <strong>{pageLoading ? <LoadingDots size="sm" /> : videosExported == null ? '—' : Number(videosExported).toLocaleString()}</strong>
+                </div>
+                <div className="prf-usage-stat">
+                  <span>Plan</span>
+                  <strong>{pageLoading ? <LoadingDots size="sm" /> : planLabel}</strong>
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <section id="prf-credits" className="prf-block prf-section">
+            <header className="prf-block-head prf-block-head--row">
+              <div>
+                <h2>Credits</h2>
+                <p>Personal credits cover voices, avatars and your private workspace. Team pools cover workspace videos and exports.</p>
+              </div>
+              {onNavigate ? (
+                <button type="button" className="prf-link-btn" onClick={() => onNavigate('credits')}>
+                  Manage billing
                 </button>
-              )}
-            </div>
-          </div>
-        </div>
-        
-        <div className="profile-hero-info">
-          <h2 className="profile-hero-name">{profile.name || 'Your Name'}</h2>
-          <p className="profile-hero-email">{profile.email}</p>
-          <div className="plan-badge">
-            <MdCardMembership size={16} />
-            <span>{planLabel}</span>
-          </div>
-          {workspaceCount != null && workspaceCount > 0 && (
-            <p className="profile-hero-email" style={{ margin: 0, fontSize: '13px' }}>
-              {workspaceCount} workspace{workspaceCount === 1 ? '' : 's'}
-            </p>
-          )}
-        </div>
-      </div>
+              ) : null}
+            </header>
 
-      <div className="profile-layout-grid">
-        <section className="profile-card">
-          <h3 className="profile-section-title">
-            <MdVideoLibrary size={22} />
-            Resource Usage
-          </h3>
-          
-          <div className="stat-row">
-            <div className="stat-header">
-              <span className="stat-title">Storage Used</span>
-              <span className="stat-value">
-                {statsLoading ? (
-                  <LoadingDots size="sm" />
-                ) : storageUsedLabel ? (
-                  storageUsedLabel
-                ) : (
-                  '—'
-                )}
-              </span>
-            </div>
-            <div className="progress-bar-bg">
-              <div
-                className="progress-bar-fill"
-                style={{ width: statsLoading ? '0%' : `${storagePercent}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="stat-row">
-            <div className="stat-header">
-              <span className="stat-title">Videos Exported</span>
-              <span className="stat-value">
-                {statsLoading ? (
-                  <LoadingDots size="sm" />
-                ) : videosExported == null ? (
-                  '—'
-                ) : (
-                  `${Number(videosExported).toLocaleString()} completed`
-                )}
-              </span>
-            </div>
-          </div>
-
-          <div className="credits-count-container">
-            <span className="credits-label">
-              <MdGeneratingTokens />
-              Personal Credits
-            </span>
-            <span className="credits-value">
-              {statsLoading || personalCredits == null ? (
-                <LoadingDots size="sm" />
-              ) : (
-                Number(personalCredits).toLocaleString()
-              )}
-            </span>
-          </div>
-        </section>
-
-        <section className="profile-card">
-          <h3 className="profile-section-title">
-            <MdPerson size={22} />
-            Personal Details
-          </h3>
-          
-          <div className="profile-detail-item">
-            <div className="profile-detail-left">
-              <div className="profile-detail-icon">
-                <MdEmail />
+            {!creditsReady ? (
+              <div className="prf-skel-stack">
+                <div className="prf-skel prf-skel-box" style={{ height: 84 }} />
+                <div className="prf-skel prf-skel-box" />
               </div>
-              <div className="profile-detail-info">
-                <span className="profile-detail-label">Email Address</span>
-                <span className="profile-detail-value">{profile.email}</span>
-              </div>
-            </div>
-            <MdVerifiedUser style={{ color: 'var(--success-green, #10b981)', flexShrink: 0 }} size={20} title="Verified" />
-          </div>
-
-          <div className="profile-detail-item">
-            <div className="profile-detail-left">
-              <div className="profile-detail-icon">
-                <MdPerson />
-              </div>
-              {editing === 'name' ? (
-                <div className="profile-input-wrapper">
-                  <span className="profile-detail-label">Full Name</span>
-                  <div className="profile-input-row">
-                    <input
-                      className="profile-edit-input"
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      autoFocus
-                      placeholder="Enter your name"
-                    />
-                    <div className="profile-edit-actions">
-                      <button 
-                        className="profile-action-btn profile-btn-save-new" 
-                        onClick={() => handleSave('name')}
-                        title="Save"
-                      >
-                        <MdSave size={18} />
-                      </button>
-                      <button 
-                        className="profile-action-btn profile-btn-cancel-new" 
-                        onClick={handleCancel}
-                        title="Cancel"
-                      >
-                        <MdClose size={18} />
-                      </button>
-                    </div>
-                  </div>
+            ) : (
+              <>
+                <div className="prf-credits-total">
+                  <span className="prf-credits-total-label">Total available</span>
+                  <strong title={formatCredits(totalCredits)}>{formatCredits(totalCredits)}</strong>
+                  <span className="prf-credits-total-meta">{creditsBreakdown}</span>
                 </div>
-              ) : (
-                <div className="profile-detail-info">
-                  <span className="profile-detail-label">Full Name</span>
-                  <span className="profile-detail-value">{profile.name || 'Add your name'}</span>
-                </div>
-              )}
-            </div>
-            {editing !== 'name' && (
-              <button 
-                className="profile-detail-edit-btn"
-                onClick={() => handleEdit('name', profile.name)}
-                title="Edit Name"
-              >
-                <MdEdit size={16} />
-              </button>
-            )}
-          </div>
 
-          <div className="profile-detail-item">
-            <div className="profile-detail-left">
-              <div className="profile-detail-icon">
-                <MdPhone />
-              </div>
-              {editing === 'phoneNumber' ? (
-                <div className="profile-input-wrapper">
-                  <span className="profile-detail-label">Phone Number</span>
-                  <div className="profile-input-row">
-                    <div className="phone-input-group">
-                      {/* Country selector */}
-                      <div className="country-selector" ref={countryDropdownRef}>
-                        <button
-                          type="button"
-                          className={`country-trigger${countryDropdownOpen ? ' open' : ''}`}
-                          onClick={() => {
-                            setCountryDropdownOpen((o) => !o)
-                            setCountrySearch('')
-                          }}
-                          title="Select country code"
-                        >
-                          <span className="flag" style={{ fontSize: '13px', fontWeight: 700, letterSpacing: '0.03em' }}>{selectedCountry.code}</span>
-                          <span className="dial">+{selectedCountry.dial}</span>
-                          <MdExpandMore size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-                        </button>
-
-                        {countryDropdownOpen && (
-                          <div className="country-dropdown">
-                            <div className="country-search">
-                              <input
-                                autoFocus
-                                type="text"
-                                placeholder="Search country…"
-                                value={countrySearch}
-                                onChange={(e) => setCountrySearch(e.target.value)}
-                              />
-                            </div>
-                            <div className="country-list">
-                              {COUNTRIES.filter((c) =>
-                                c.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
-                                c.dial.includes(countrySearch.replace(/^\+/, ''))
-                              ).map((c) => (
-                                <div
-                                  key={c.code}
-                                  className={`country-option${c.code === selectedCountry.code ? ' selected' : ''}`}
-                                  onClick={() => {
-                                    setSelectedCountry(c)
-                                    setPhoneNumber('')
-                                    setCountryDropdownOpen(false)
-                                    setCountrySearch('')
-                                  }}
-                                >
-                                  <span className="flag">{c.flag}</span>
-                                  <span className="name">{c.name}</span>
-                                  <span className="dial-code">+{c.dial}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Digits input */}
-                      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                        <input
-                          className="phone-digits-input"
-                          value={phoneNumber}
-                          onChange={(e) => {
-                            const raw = e.target.value.replace(/\D/g, '')
-                            setPhoneNumber(raw.slice(0, selectedCountry.digits[1]))
-                          }}
-                          autoFocus
-                          placeholder={`${selectedCountry.digits[0]}–${selectedCountry.digits[1] === selectedCountry.digits[0] ? selectedCountry.digits[0] : selectedCountry.digits[1]} digits`}
-                          maxLength={selectedCountry.digits[1]}
-                          type="tel"
-                          inputMode="numeric"
-                        />
-                        <span className="phone-hint">
-                          {selectedCountry.name} · +{selectedCountry.dial} · {
-                            selectedCountry.digits[0] === selectedCountry.digits[1]
-                              ? `${selectedCountry.digits[0]} digits`
-                              : `${selectedCountry.digits[0]}–${selectedCountry.digits[1]} digits`
-                          }
+                {/* With no team pools the total *is* the personal pool — no duplicate card. */}
+                {hasTeamPools ? (
+                  <div className="prf-pools">
+                    <div className="prf-pool is-personal">
+                      <div className="prf-pool-head">
+                        <span className="prf-pool-ico" aria-hidden>
+                          <MdPerson />
                         </span>
+                        <span>Personal pool</span>
                       </div>
+                      <strong className="prf-pool-value" title={formatCredits(personalCredits)}>
+                        {formatCredits(personalCredits)}
+                      </strong>
+                      <span className="prf-pool-hint">Voice clones, avatars, private workspace</span>
                     </div>
 
-                    <div className="profile-edit-actions">
-                      <button
-                        className="profile-action-btn profile-btn-save-new"
-                        onClick={() => handleSave('phoneNumber')}
-                        title="Save"
-                      >
-                        <MdSave size={18} />
-                      </button>
-                      <button
-                        className="profile-action-btn profile-btn-cancel-new"
-                        onClick={handleCancel}
-                        title="Cancel"
-                      >
-                        <MdClose size={18} />
-                      </button>
+                    <div className="prf-pool">
+                      <div className="prf-pool-head">
+                        <span className="prf-pool-ico" aria-hidden>
+                          <MdGroups />
+                        </span>
+                        <span>Team workspaces</span>
+                        <em title={formatCredits(teamCredits)}>{formatCreditsCompact(teamCredits)} total</em>
+                      </div>
+                      <ul className="prf-pool-list">
+                        {workspaceBalances.map((ws) => (
+                          <li key={ws.id}>
+                            <MdOutlineBolt aria-hidden />
+                            <span className="prf-pool-name" title={ws.name}>{ws.name}</span>
+                            <strong>{formatCredits(ws.credits)}</strong>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="profile-detail-info">
-                  <span className="profile-detail-label">Phone Number</span>
-                  <span className="profile-detail-value">{profile.phoneNumber || 'Add phone number'}</span>
-                </div>
-              )}
-            </div>
-            {editing !== 'phoneNumber' && (
-              <button 
-                className="profile-detail-edit-btn"
-                onClick={() => handleEdit('phoneNumber', profile.phoneNumber)}
-                title="Edit Phone Number"
-              >
-                <MdEdit size={16} />
-              </button>
+                ) : null}
+              </>
             )}
-          </div>
-        </section>
-      </div>
+          </section>
 
-      <section className="profile-card" style={{ marginTop: '28px' }}>
-        <h3 className="profile-section-title">
-          <MdNotifications size={22} />
-          Recent Activity
-        </h3>
-        
-        <div className="notifications-list-rich">
-          {statsLoading ? (
-            <p className="profile-header-desc" style={{ margin: 0, padding: '8px 0' }}>
-              <LoadingDots size="sm" /> Loading activity…
-            </p>
-          ) : recentActivity.length === 0 ? (
-            <p className="profile-header-desc" style={{ margin: 0, padding: '8px 0' }}>
-              No recent credit or usage activity yet.
-            </p>
-          ) : (
-            recentActivity.map((notif) => (
-              <div key={notif.id} className="notif-item-rich">
-                <div className={`notif-icon-box ${notif.type}`}>
-                  {notif.icon}
-                </div>
-                <div className="notif-main">
-                  <div className="notif-header-row">
-                    <span className="notif-title-text">{notif.title}</span>
-                    <span className="notif-time-tag">{notif.time}</span>
-                  </div>
-                  <p className="notif-body-text">{notif.desc}</p>
-                </div>
+          <section id="prf-details" className="prf-block prf-section">
+            <header className="prf-block-head">
+              <h2>Personal details</h2>
+              <p>Keep your name and phone number up to date.</p>
+            </header>
+            <ProfileDetails
+              profile={profile}
+              saving={saving}
+              editTick={editTick}
+              onSave={handleSaveField}
+              onError={setError}
+            />
+          </section>
+
+          <section id="prf-activity" className="prf-block prf-section">
+            <header className="prf-block-head">
+              <h2>Recent activity</h2>
+              <p>Your latest credit and usage events.</p>
+            </header>
+            {pageLoading ? (
+              <div className="prf-skel-stack">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="prf-skel prf-skel-box" />
+                ))}
               </div>
-            ))
-          )}
+            ) : recentActivity.length === 0 ? (
+              <div className="prf-empty">
+                <MdNotifications aria-hidden />
+                <p>No recent credit or usage activity yet.</p>
+              </div>
+            ) : (
+              <ul className="prf-activity">
+                {recentActivity.map((item) => {
+                  const ItemIcon = item.Icon
+                  return (
+                    <li key={item.id} className="prf-activity-item">
+                      <span className={`prf-activity-ico is-${item.tone}`} aria-hidden>
+                        <ItemIcon />
+                      </span>
+                      <div className="prf-activity-body">
+                        <div className="prf-activity-head">
+                          <strong>{item.title}</strong>
+                          <time>{item.time}</time>
+                        </div>
+                        {item.desc && item.desc !== item.title ? <p>{item.desc}</p> : null}
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </section>
         </div>
-      </section>
+      </div>
 
       <AnimatePresence>
-        {error && (
-          <motion.div 
-            className="error-toast"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
+        {success && (
+          <motion.div
+            key="ok"
+            className="prf-toast is-success"
+            role="status"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
           >
-            <MdClose size={20} style={{ cursor: 'pointer', marginRight: '4px', flexShrink: 0 }} onClick={() => setError('')} />
+            <MdCheckCircle aria-hidden />
+            <span>{success}</span>
+          </motion.div>
+        )}
+        {error && (
+          <motion.div
+            key="err"
+            className="prf-toast is-error"
+            role="alert"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+          >
+            <MdErrorOutline aria-hidden />
             <span>{error}</span>
+            <button type="button" className="prf-toast-close" onClick={() => setError('')} aria-label="Dismiss">
+              <MdClose />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1546,5 +557,3 @@ const Profile = () => {
 }
 
 export default Profile
-
-
