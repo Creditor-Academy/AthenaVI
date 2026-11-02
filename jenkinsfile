@@ -21,9 +21,10 @@ pipeline {
             }
         }
 
-        stage('Nginx Reload') {
+        stage('Deploy') {
             steps {
                 sh '''
+                    sudo rsync -a --delete dist/ /var/www/AthenaVI/dist/
                     sudo nginx -t
                     sudo systemctl reload nginx
                 '''
