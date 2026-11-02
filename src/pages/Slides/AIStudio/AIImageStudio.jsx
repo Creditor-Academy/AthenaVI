@@ -2223,7 +2223,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                   onContextChange={handleContextChange}
                   compact
                 >
-                  {({ thumbs, trigger, composerBind, isDragOver, error: contextError, quotaLabel }) => (
+                  {({ thumbs, trigger, composerBind, isDragOver, error: contextError, quotaNote }) => (
                     <form
                       className="aig-prompt-form"
                       onSubmit={(e) => {
@@ -2289,9 +2289,7 @@ export default function AIImageStudio({ onBack, createContext = null, onOpenBill
                           {contextError}
                         </p>
                       )}
-                      {quotaLabel && (
-                        <p className="igc-quota">Uploads this hour: {quotaLabel}</p>
-                      )}
+                      {quotaNote}
                     </form>
                   )}
                 </ImageGenContextAttach>
