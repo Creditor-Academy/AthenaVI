@@ -22,6 +22,11 @@ import {
 } from '../../../utils/canvasOverflowUtils'
 import { exceedsDragThreshold } from '../../../utils/pointerDrag'
 import {
+  createTextHeightFloor,
+  keepTextBoxTallEnough,
+  textBoxShrinksToFit,
+} from '../../../utils/textBoxEditing'
+import {
   pointerAngleFromCenter,
   snapAngleStep,
   normalizeAngle,
@@ -332,6 +337,16 @@ function InteractiveCanvasElementShell({
       } else if (drag.mode === 'resize') {
         const minH = isText ? TEXT_MIN_HEIGHT : RESIZE_MIN_HEIGHT
         next = applyResizeFromHandle(drag.handle, start, dx, dy, canvasW, canvasH, minH)
+        if (drag.textFloor) {
+          // Never crop text: the box stops at (or grows to) the height its text needs.
+          const fitted = keepTextBoxTallEnough(next, start, drag.handle, drag.textFloor(next.width))
+          if (fitted !== next) {
+            next = {
+              ...fitted,
+              ...clampPlacementOverflow(fitted.x, fitted.y, fitted.width, fitted.height, canvasW, canvasH),
+            }
+          }
+        }
       } else if (drag.mode === 'rotate') {
         const pointerAngle = pointerAngleFromCenter(e.clientX, e.clientY, drag.centerX, drag.centerY)
         const raw = (start.rotation || 0) + (pointerAngle - drag.startPointerAngle)
@@ -519,6 +534,10 @@ function InteractiveCanvasElementShell({
       centerX,
       centerY,
       startPointerAngle: pointerAngleFromCenter(e.clientX, e.clientY, centerX, centerY),
+      textFloor:
+        mode === 'resize' && isText && !textBoxShrinksToFit(el)
+          ? createTextHeightFloor(shellRef.current, startPlacement.width)
+          : null,
     }
   }
 
@@ -944,8 +963,12 @@ export default function CanvasStage({
                           const rawH = Math.round(
                             cssPxToCanvas(cssHeight, surfaceRef.current, canvas.height)
                           )
+                          // Layout-bound text keeps its slot height (it shrinks its font instead).
+                          // User-made boxes grow with their text down to the page bottom; capping
+                          // them at the current height clipped every pasted/typed line past the box.
                           const slotMaxH =
-                            element.content?.slotMaxHeight || element.placement?.height || curH
+                            element.content?.slotMaxHeight ||
+                            (element.slotId ? element.placement?.height || curH : canvas.height)
                           const maxH = Math.max(
                             TEXT_MIN_HEIGHT,
                             Math.min(slotMaxH, canvas.height - y + minOverlapPx(curH) * 8)

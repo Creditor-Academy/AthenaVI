@@ -12,27 +12,8 @@ import creditsService from '../../../services/creditsService.js'
 import workspaceService from '../../../services/workspaceService.js'
 import { isTeamWorkspaceType } from '../../../utils/creditTransactions.js'
 import { getSanitizedErrorMessage } from '../../../utils/userFacingMessage.js'
+import { formatCredits, formatCreditsCompact } from '../../../utils/formatCredits.js'
 import './CreditsQuickModal.css'
-
-const NUMBER_LOCALE = 'en-US'
-
-function formatCredits(value) {
-  const num = Number(value ?? 0)
-  if (!Number.isFinite(num)) return '0'
-  return num.toLocaleString(NUMBER_LOCALE)
-}
-
-function formatCreditsCompact(value) {
-  const num = Number(value ?? 0)
-  if (!Number.isFinite(num)) return '0'
-  if (Math.abs(num) >= 10_000) {
-    return new Intl.NumberFormat(NUMBER_LOCALE, {
-      notation: 'compact',
-      maximumFractionDigits: 2,
-    }).format(num)
-  }
-  return num.toLocaleString(NUMBER_LOCALE)
-}
 
 const USAGE_ITEMS = [
   {

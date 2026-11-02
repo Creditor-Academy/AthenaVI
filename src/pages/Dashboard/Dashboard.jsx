@@ -198,6 +198,8 @@ function Dashboard({ onCreate, initialSection }) {
     'voices',
     'admin-portal',
     'settings',
+    // Billing (Profile, Help, credits pop-up, /credits) renders Settings too — same frame.
+    'credits',
     'help',
     'referrals',
   ]
@@ -1007,7 +1009,7 @@ function Dashboard({ onCreate, initialSection }) {
           )}
           {section === 'credits' && <Settings onBack={() => goToSection('home')} initialTab="billing" />}
           {section === 'referrals' && <Referrals />}
-          {section === 'profile' && <Profile onBack={() => goToSection('home')} />}
+          {section === 'profile' && <Profile onBack={() => goToSection('home')} onNavigate={goToSection} />}
           {section === 'settings' && (
             <Settings
               onBack={() => goToSection('home')}

@@ -15,10 +15,12 @@ import {
 } from '../../../utils/presentationHelpers'
 import { getListMarker, splitTextLines, stripLeadingListMarkers } from '../../../utils/textListUtils'
 import { measureTextContentSize } from '../../../utils/canvasTransformUtils'
+import { handlePlainTextPaste } from '../../../utils/textBoxEditing'
 import {
   collapseDuplicatedRuns,
   contentPlainText,
   contentUsesFullRuns,
+  editableNodeText,
   getPptTextSelection,
   getTextOffsetsInNode,
   isGradientFill,
@@ -104,7 +106,7 @@ function TextListRunsDisplay({ runs, content, listType, palette, baseStyle }) {
 }
 
 function readEditableText(node, listType, fallback = '') {
-  let text = node?.innerText ?? fallback
+  let text = node ? editableNodeText(node) : fallback
   if (listType) text = stripLeadingListMarkers(text)
   return text
 }
@@ -533,12 +535,15 @@ function EditableText({
           suppressContentEditableWarning
           style={textStyle}
           onPointerDown={(e) => editable && e.stopPropagation()}
+          // Native paste drops the source's HTML in (paragraph margins, font sizes, newline
+          // text nodes that render as blank lines under pre-wrap) — paste plain text instead.
+          onPaste={handlePlainTextPaste}
           onInput={(e) => {
             const inputType = e.nativeEvent?.inputType
             if (inputType === 'historyUndo' || inputType === 'historyRedo') return
             typedRef.current = true
-            liveTextRef.current = e.currentTarget.innerText ?? ''
             liveRunsRef.current = serializeEditableRuns(e.currentTarget)
+            liveTextRef.current = liveRunsRef.current.map((run) => run.text).join('')
             cancelAnimationFrame(measureRaf.current)
             measureRaf.current = requestAnimationFrame(() => {
               syncHeight({ commit: false, allowShrink: true })

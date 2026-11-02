@@ -393,7 +393,7 @@ export function applyElementTextFill(element, fill) {
       if (liveRuns.length) {
         base = {
           ...content,
-          text: editable.innerText ?? contentPlainText(content),
+          text: editableNodeText(editable) || contentPlainText(content),
           runs: liveRuns,
         }
       }
@@ -458,6 +458,11 @@ function runFromFill(fill) {
   return { color: fill.color }
 }
 
+// Line-starting elements a contentEditable can hold (Enter makes DIVs; dropped HTML may add others).
+const EDITABLE_BLOCK_TAGS = new Set([
+  'DIV', 'P', 'LI', 'UL', 'OL', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'PRE', 'TR',
+])
+
 export function serializeEditableRuns(node) {
   if (!node) return []
   const runs = []
@@ -473,7 +478,7 @@ export function serializeEditableRuns(node) {
       runs.push({ text: '\n', ...runFromFill(inherited) })
       return
     }
-    if (n !== node && n.tagName === 'DIV' && runs.length) {
+    if (n !== node && EDITABLE_BLOCK_TAGS.has(n.tagName) && runs.length) {
       const last = runs[runs.length - 1]
       if (last && !String(last.text).endsWith('\n')) {
         runs.push({ text: '\n', ...runFromFill(inherited) })
@@ -484,6 +489,17 @@ export function serializeEditableRuns(node) {
   }
   walk(node, null)
   return mergeAdjacentRuns(runs)
+}
+
+/**
+ * Text of a contentEditable text box, read from its structure the same way as its runs.
+ * `innerText` adds a line for every empty `<div><br></div>` (each blank line typed or pasted),
+ * so the saved text came back taller than what was on screen and the box clipped it.
+ */
+export function editableNodeText(node) {
+  return serializeEditableRuns(node)
+    .map((run) => run.text)
+    .join('')
 }
 
 export function seedEditableNode(node, content, palette) {

@@ -64,15 +64,47 @@ function elementFrameStyle(element, page) {
 }
 
 /**
- * One page, off the live stage: no selection, guides, or grid.
- * html-to-image needs the node in the document, so it sits off-screen.
+ * One page at its native pixel size: no selection, guides, or grid.
+ * Shared by export (off-screen capture) and the full-screen preview, so a
+ * preview shows exactly what an export produces.
  */
-export default function CanvasExportFrame({ page, transparent = false, frameRef }) {
+export function CanvasPageRender({ page, transparent = false, frameRef }) {
   if (!page) return null
   const width = page.width || 1080
   const height = page.height || 1080
   const elements = [...(page.elements || [])].sort((a, b) => (a.layer || 0) - (b.layer || 0))
 
+  return (
+    <div
+      ref={frameRef}
+      style={{
+        position: 'relative',
+        width,
+        height,
+        overflow: 'hidden',
+        ...pageFill(page, transparent),
+      }}
+    >
+      {elements.map((element) => (
+        <div key={element.id} style={elementFrameStyle(element, page)}>
+          <PptCanvasElement
+            el={element}
+            palette={PALETTE}
+            canvasW={width}
+            selected={false}
+            editable={false}
+            editingText={false}
+            showEmptyTextHint={false}
+          />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** html-to-image needs the node in the document, so the capture copy sits off-screen. */
+export default function CanvasExportFrame({ page, transparent = false, frameRef }) {
+  if (!page) return null
   return (
     <div
       className="canvas-export-frame"
@@ -81,36 +113,13 @@ export default function CanvasExportFrame({ page, transparent = false, frameRef 
         position: 'fixed',
         left: -100000,
         top: 0,
-        width,
-        height,
+        width: page.width || 1080,
+        height: page.height || 1080,
         pointerEvents: 'none',
         overflow: 'hidden',
       }}
     >
-      <div
-        ref={frameRef}
-        style={{
-          position: 'relative',
-          width,
-          height,
-          overflow: 'hidden',
-          ...pageFill(page, transparent),
-        }}
-      >
-        {elements.map((element) => (
-          <div key={element.id} style={elementFrameStyle(element, page)}>
-            <PptCanvasElement
-              el={element}
-              palette={PALETTE}
-              canvasW={width}
-              selected={false}
-              editable={false}
-              editingText={false}
-              showEmptyTextHint={false}
-            />
-          </div>
-        ))}
-      </div>
+      <CanvasPageRender page={page} transparent={transparent} frameRef={frameRef} />
     </div>
   )
 }
