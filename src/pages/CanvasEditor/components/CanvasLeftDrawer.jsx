@@ -8,6 +8,7 @@ import TablePopover from '../../Slides/AIPptComponents/insert/TablePopover'
 import EmbedPanel from '../../Slides/AIPptComponents/insert/EmbedPanel'
 import ColorFillPicker from '../../Slides/AIPptComponents/insert/ColorFillPicker'
 import CanvasEditImagePanel from './CanvasEditImagePanel'
+import PageColorSwatches from './PageColorSwatches'
 import { resolveFillCss } from '../../../utils/presentationHelpers'
 import { normalizeFillValue } from '../../../utils/pptTextContent'
 import { pageCoverDataUrl } from '../canvasThumbnail'
@@ -140,6 +141,10 @@ export default function CanvasLeftDrawer({
             </button>
 
             <label className="canva-drawer-label" style={{ marginTop: 18 }}>Canvas background</label>
+            <PageColorSwatches
+              background={activeCanvas?.background}
+              onPick={(color) => onUpdateBackground({ type: 'solid', color })}
+            />
             <ColorFillPicker
               value={normalizeFillValue(activeCanvas?.background, '#FFFFFF')}
               palette={{ bg: '#FFF', surface: '#FFF', text: '#000', title: '#000', accent: '#2563EB' }}
