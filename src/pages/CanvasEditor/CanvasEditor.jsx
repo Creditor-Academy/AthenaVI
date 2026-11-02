@@ -142,6 +142,8 @@ export default function CanvasEditor({
   // Layout & Dock States
   const [drawerOpen, setDrawerOpen] = useState(true)
   const [inspectorOpen, setInspectorOpen] = useState(false)
+  // Bumped when the page itself is clicked, so the inspector jumps to the page settings.
+  const [pageFocusTick, setPageFocusTick] = useState(0)
   const [activeTab, setActiveTab] = useState('text')
 
   // Calculate zoom that fits the canvas inside the available unobstructed viewport
@@ -1959,6 +1961,10 @@ export default function CanvasEditor({
             editingId={editing.canvasId === activeCanvas.id ? editing.elementId : null}
             multiSelectIds={multiSelectIds}
             onSelect={handleSelect}
+            onSelectPage={() => {
+              setInspectorOpen(true)
+              setPageFocusTick((tick) => tick + 1)
+            }}
             onEdit={(elementId) => setEditing({ canvasId: activeCanvas.id, elementId })}
             onPlacementLive={handlePlacementLive}
             onPlacementCommit={handlePlacementCommit}
@@ -1997,6 +2003,7 @@ export default function CanvasEditor({
           <CanvasRightInspector
             selectedElement={selectedElement}
             activeCanvas={activeCanvas}
+            pageFocusTick={pageFocusTick}
             elements={activeCanvas?.elements || []}
             usedFontFamilies={usedFontFamilies}
             onClose={() => setInspectorOpen(false)}
