@@ -1096,19 +1096,28 @@
   color: #f59e0b;
 }
 
+.prf-activity-ico.is-accent {
+  background: rgba(var(--prf-accent-rgb), 0.14);
+  color: var(--prf-accent);
+}
+
+.prf-activity-ico.is-info {
+  background: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+}
+
+.prf-activity-ico.is-neutral {
+  background: rgba(100, 116, 139, 0.12);
+  color: var(--prf-muted);
+}
+
 .prf-activity-body {
   flex: 1;
   min-width: 0;
 }
 
-.prf-activity-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 10px;
-}
-
-.prf-activity-head strong {
+.prf-activity-action {
+  display: block;
   font-size: 14.5px;
   font-weight: 700;
   overflow: hidden;
@@ -1116,13 +1125,21 @@
   white-space: nowrap;
 }
 
-.prf-activity-head time {
+.prf-activity-side {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.prf-activity-side time {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--prf-muted);
+  white-space: nowrap;
 }
 
 .prf-activity-body p {
@@ -1130,6 +1147,44 @@
   font-size: 13px;
   line-height: 1.45;
   color: var(--prf-muted);
+}
+
+/* What the action did — the workspace name, the credits moved. */
+.prf-activity-body p.prf-activity-detail {
+  margin-top: 2px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--prf-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.prf-activity-body p.prf-activity-meta {
+  font-size: 12px;
+}
+
+.prf-activity-amount {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.prf-activity-amount.is-in {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.prf-activity-amount.is-out {
+  background: rgba(100, 116, 139, 0.12);
+  color: var(--prf-ink);
+}
+
+[data-mode='dark'] .prf-activity-amount.is-in {
+  color: #34d399;
 }
 
 .prf-empty {

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  MdCardMembership,
   MdCheckCircle,
   MdClose,
   MdCloudQueue,
@@ -12,12 +11,20 @@ import {
   MdFolderShared,
   MdGeneratingTokens,
   MdHistory,
+  MdGroupAdd,
   MdGroups,
   MdNotifications,
   MdOutlineBolt,
+  MdRemoveCircleOutline,
+  MdReplay,
+  MdAddCircleOutline,
+  MdCallMade,
+  MdCallReceived,
+  MdTune,
   MdPerson,
   MdSettings,
   MdVideoLibrary,
+  MdWorkspaces,
 } from 'react-icons/md'
 import { useAuth } from '../../contexts/AuthContext'
 import userService from '../../services/userService.js'
@@ -26,47 +33,33 @@ import storageService from '../../services/storageService.js'
 import videoLibraryService from '../../services/videoLibraryService.js'
 import workspaceService from '../../services/workspaceService.js'
 import { formatBytes } from '../../utils/formatSize.js'
-import {
-  formatCreditTransactionTitle,
-  formatCreditTransactionSubtitle,
-  formatCreditTransactionType,
-  collapsePresentationCreditTransactions,
-  isTeamWorkspaceType,
-} from '../../utils/creditTransactions.js'
+import { isTeamWorkspaceType } from '../../utils/creditTransactions.js'
 import { formatCredits, formatCreditsCompact } from '../../utils/formatCredits.js'
 import LoadingDots from '../../components/ui/LoadingDots/LoadingDots.jsx'
 import ProfileHero from './components/ProfileHero'
 import ProfileSidePanel from './components/ProfileSidePanel'
 import ProfileDetails from './components/ProfileDetails'
 import { formatDate, formatRelativeTime } from './profileUtils'
+import { buildProfileActivity } from './profileActivity.js'
 import './Profile.css'
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024
 
-function mapCreditTxToActivity(tx) {
-  const type = String(tx?.type || '').toLowerCase()
-  let tone = 'info'
-  let Icon = MdGeneratingTokens
-  if (type === 'usage') {
-    tone = 'success'
-    Icon = MdVideoLibrary
-  } else if (type === 'platform_grant' || type === 'refund') {
-    tone = 'success'
-  } else if (type === 'platform_revoke') {
-    tone = 'warning'
-  } else if (type === 'allocation' || type === 'deallocation') {
-    Icon = MdCardMembership
-  }
-  return {
-    id: tx.id,
-    title: formatCreditTransactionTitle(tx),
-    desc: formatCreditTransactionSubtitle(tx) || formatCreditTransactionType(tx.type),
-    time: formatRelativeTime(tx.createdAt),
-    tone,
-    Icon,
-  }
+// Icon + tone per activity kind (see profileActivity.js for the wording).
+const ACTIVITY_LOOK = {
+  workspace_created: { Icon: MdWorkspaces, tone: 'accent' },
+  workspace_joined: { Icon: MdGroupAdd, tone: 'accent' },
+  allocation: { Icon: MdCallMade, tone: 'info' },
+  deallocation: { Icon: MdCallReceived, tone: 'info' },
+  usage: { Icon: MdVideoLibrary, tone: 'neutral' },
+  platform_grant: { Icon: MdAddCircleOutline, tone: 'success' },
+  purchase: { Icon: MdAddCircleOutline, tone: 'success' },
+  refund: { Icon: MdReplay, tone: 'success' },
+  platform_revoke: { Icon: MdRemoveCircleOutline, tone: 'warning' },
+  admin_adjustment: { Icon: MdTune, tone: 'neutral' },
 }
+const DEFAULT_ACTIVITY_LOOK = { Icon: MdGeneratingTokens, tone: 'neutral' }
 
 const scrollToSection = (id) =>
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -149,9 +142,11 @@ const Profile = ({ onNavigate }) => {
         setVideosExported(videosResult.pagination?.total ?? videosResult.videos?.length ?? 0)
       }
       setRecentActivity(
-        historyResult?.transactions
-          ? collapsePresentationCreditTransactions(historyResult.transactions).slice(0, 5).map(mapCreditTxToActivity)
-          : []
+        buildProfileActivity({
+          transactions: historyResult?.transactions || [],
+          workspaces: Array.isArray(workspaceList) ? workspaceList : [],
+          limit: 8,
+        })
       )
       setWorkspaceCount(Array.isArray(workspaceList) ? workspaceList.length : 0)
       loadWorkspaceBalances(Array.isArray(workspaceList) ? workspaceList : [])
@@ -483,7 +478,7 @@ const Profile = ({ onNavigate }) => {
           <section id="prf-activity" className="prf-block prf-section">
             <header className="prf-block-head">
               <h2>Recent activity</h2>
-              <p>Your latest credit and usage events.</p>
+              <p>Workspaces you created or joined, and every credit movement on your account.</p>
             </header>
             {pageLoading ? (
               <div className="prf-skel-stack">
@@ -494,23 +489,34 @@ const Profile = ({ onNavigate }) => {
             ) : recentActivity.length === 0 ? (
               <div className="prf-empty">
                 <MdNotifications aria-hidden />
-                <p>No recent credit or usage activity yet.</p>
+                <p>Nothing here yet. Creating a workspace or using credits will show up here.</p>
               </div>
             ) : (
               <ul className="prf-activity">
                 {recentActivity.map((item) => {
-                  const ItemIcon = item.Icon
+                  const look = ACTIVITY_LOOK[item.kind] || DEFAULT_ACTIVITY_LOOK
+                  const ItemIcon = look.Icon
                   return (
                     <li key={item.id} className="prf-activity-item">
-                      <span className={`prf-activity-ico is-${item.tone}`} aria-hidden>
+                      <span className={`prf-activity-ico is-${look.tone}`} aria-hidden>
                         <ItemIcon />
                       </span>
                       <div className="prf-activity-body">
-                        <div className="prf-activity-head">
-                          <strong>{item.title}</strong>
-                          <time>{item.time}</time>
-                        </div>
-                        {item.desc && item.desc !== item.title ? <p>{item.desc}</p> : null}
+                        <strong className="prf-activity-action">{item.action}</strong>
+                        <p className="prf-activity-detail" title={item.detail}>{item.detail}</p>
+                        {item.meta ? <p className="prf-activity-meta">{item.meta}</p> : null}
+                      </div>
+                      {/* Amount over time in one right-aligned column so every row's edge lines up. */}
+                      <div className="prf-activity-side">
+                        {item.amount != null && item.amount !== 0 ? (
+                          <span className={`prf-activity-amount ${item.amount > 0 ? 'is-in' : 'is-out'}`}>
+                            {item.amount > 0 ? '+' : '−'}
+                            {formatCredits(Math.abs(item.amount))}
+                          </span>
+                        ) : null}
+                        <time dateTime={item.at} title={new Date(item.at).toLocaleString()}>
+                          {formatRelativeTime(item.at)}
+                        </time>
                       </div>
                     </li>
                   )
