@@ -860,6 +860,9 @@
   font-size: 0.82rem;
   color: #b42318;
 }
+.aig-prompt-form .igc-quota {
+  margin: 8px 4px 0;
+}
 
 .aig-prompt-composer {
   display: flex;
