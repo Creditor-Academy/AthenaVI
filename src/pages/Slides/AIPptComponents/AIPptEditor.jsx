@@ -10,6 +10,7 @@ import {
   FiImage,
   FiZoomIn,
   FiZoomOut,
+  FiShield,
   FiExternalLink,
   FiCheck,
   FiRefreshCw,
@@ -25,6 +26,7 @@ import AddSlideModal from './insert/AddSlideModal'
 import PptCanvasElement from './PptCanvasElement'
 import PptCanvasGuidesOverlay from './PptCanvasGuidesOverlay'
 import PptCanvasTextSafeAreaOverlay from './PptCanvasTextSafeAreaOverlay'
+import { textElementsInDangerZone } from '../../../utils/slideTextSafeArea.js'
 import PresentMode from './PresentMode'
 import SharePresentationModal from './SharePresentationModal'
 import ExportPresentationModal from './ExportPresentationModal'
@@ -874,6 +876,24 @@ function InteractiveElementShell({
   )
 }
 
+const DANGER_ZONE_PREF_KEY = 'athena:ppt-show-danger-zone'
+
+function readDangerZonePref() {
+  try {
+    return localStorage.getItem(DANGER_ZONE_PREF_KEY) !== '0'
+  } catch {
+    return true
+  }
+}
+
+function writeDangerZonePref(on) {
+  try {
+    localStorage.setItem(DANGER_ZONE_PREF_KEY, on ? '1' : '0')
+  } catch {
+    /* private mode / blocked storage — the toggle still works for this session */
+  }
+}
+
 function SlideStage({
   slide,
   themeVisual,
@@ -895,6 +915,7 @@ function SlideStage({
   onFillDeviceFrame,
   onFillImage,
   showEmptyTextHint = false,
+  showDangerZone = false,
 }) {
   const stageRef = useRef(null)
   const [chromeHost, setChromeHost] = useState(null)
@@ -1020,7 +1041,13 @@ function SlideStage({
       {/* Elements live outside the hard clip so selected overflow can paint
           immediately (per-element clip/mask — no ghost remount on select). */}
       <div className="aig-slide-stage-elements" style={{ color: themeVisual.body }}>
-        <PptCanvasTextSafeAreaOverlay canvasW={canvas.width} canvasH={canvas.height} />
+        {showDangerZone ? (
+          <PptCanvasTextSafeAreaOverlay
+            canvasW={canvas.width}
+            canvasH={canvas.height}
+            warnCount={textElementsInDangerZone(elements, canvas.width, canvas.height).length}
+          />
+        ) : null}
         <PptCanvasGuidesOverlay guides={smartGuides} canvasW={canvas.width} canvasH={canvas.height} />
         {hasElements
           ? elements.map((el, i) => (
@@ -1192,6 +1219,15 @@ function AIPptEditor({
   const [minimapDragId, setMinimapDragId] = useState(null)
   const [minimapDropIndex, setMinimapDropIndex] = useState(null)
   const [canvasZoom, setCanvasZoom] = useState(100)
+  // Editor-only margin guide; a per-user preference, never saved into the deck.
+  const [showDangerZone, setShowDangerZone] = useState(readDangerZonePref)
+  const toggleDangerZone = useCallback(() => {
+    setShowDangerZone((on) => {
+      const next = !on
+      writeDangerZonePref(next)
+      return next
+    })
+  }, [])
   const [smartGuides, setSmartGuides] = useState([])
   const [editingTextId, setEditingTextId] = useState(null)
   const [presentOpen, setPresentOpen] = useState(false)
@@ -4663,6 +4699,14 @@ function AIPptEditor({
                       }
                       // Edit hint only on the slide being edited — other slides render empty boxes blank.
                       showEmptyTextHint={!viewOnly && !isGenerating && selectedSlideId === slide.id}
+                      // Only the person editing sees it, and only on the slide they're working on.
+                      showDangerZone={
+                        showDangerZone &&
+                        !viewOnly &&
+                        !presentOpen &&
+                        !isGenerating &&
+                        selectedSlideId === slide.id
+                      }
                       selectedElementId={
                         selectedSlideId === slide.id ? selectedElementId : null
                       }
@@ -4751,6 +4795,25 @@ function AIPptEditor({
           <button className="aig-canvas-ctrl-btn" type="button" onClick={() => setCanvasZoom(100)}>
             Fit
           </button>
+          {!viewOnly && (
+            <>
+              <div className="aig-canvas-ctrl-divider"></div>
+              <button
+                className={`aig-canvas-ctrl-btn aig-canvas-ctrl-btn--toggle${showDangerZone ? ' is-active' : ''}`}
+                type="button"
+                aria-pressed={showDangerZone}
+                aria-label={showDangerZone ? 'Hide danger zone' : 'Show danger zone'}
+                title={
+                  showDangerZone
+                    ? 'Hide danger zone (only you see this guide)'
+                    : 'Show danger zone — margins where text may get cut off'
+                }
+                onClick={toggleDangerZone}
+              >
+                <FiShield size={14} />
+              </button>
+            </>
+          )}
         </div>
 
         <EditorRightRail

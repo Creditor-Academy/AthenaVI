@@ -90,17 +90,6 @@
   }
 }
 
-@keyframes canvaHeaderFloatIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @keyframes canvaDrawerFloatIn {
   from {
     opacity: 0;
@@ -135,28 +124,24 @@
 }
 
 /* ==========================================================================
-   1. FLOATING TOP HEADER NAVBAR
+   1. TOP HEADER BAR (docked, full width)
    ========================================================================== */
 
 .canva-header {
   position: absolute;
-  top: 14px;
-  left: 16px;
-  right: 16px;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 60;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  height: 52px;
+  height: 56px;
   padding: 0 16px;
-  border-radius: 16px;
-  background: var(--canva-glass-bg);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid var(--canva-border);
-  box-shadow: var(--canva-glass-shadow);
-  animation: canvaHeaderFloatIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--canva-surface);
+  border-bottom: 1px solid var(--canva-border);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
 }
 
 .canva-header-left,
@@ -427,7 +412,7 @@ button.canva-header-save-badge--action:focus-visible {
 
 .canva-dock {
   position: absolute;
-  top: 76px;
+  top: 72px;
   bottom: 16px;
   left: 16px;
   width: 68px;
@@ -545,7 +530,7 @@ button.canva-header-save-badge--action:focus-visible {
 
 .canva-drawer {
   position: absolute;
-  top: 76px;
+  top: 72px;
   bottom: 16px;
   left: 94px;
   width: min(420px, calc(100vw - 110px));
@@ -1661,7 +1646,7 @@ button.canva-header-save-badge--action:focus-visible {
 
 .canva-context-bar {
   position: absolute;
-  top: 76px;
+  top: 72px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 55;
@@ -2007,7 +1992,7 @@ body > .ppt-fill-picker-pop {
 
 .canva-inspector {
   position: absolute;
-  top: 76px;
+  top: 72px;
   bottom: 16px;
   right: 16px;
   width: 320px;
@@ -3361,34 +3346,32 @@ body > .ppt-fill-picker-pop {
 
 @media (max-width: 768px) {
   .canva-header {
-    top: 8px;
-    left: 8px;
-    right: 8px;
+    height: 52px;
     padding: 0 10px;
   }
   .canva-header-title-text {
     max-width: 120px;
   }
   .canva-dock {
-    top: 68px;
+    top: 60px;
     left: 8px;
     bottom: 10px;
     width: 58px;
   }
   .canva-drawer {
-    top: 68px;
+    top: 60px;
     left: 72px;
     bottom: 10px;
     width: calc(100vw - 84px);
   }
   .canva-inspector {
-    top: 68px;
+    top: 60px;
     right: 8px;
     bottom: 10px;
     width: calc(100vw - 16px);
   }
   .canva-context-bar {
-    top: 68px;
+    top: 60px;
     max-width: calc(100vw - 16px);
   }
   .canva-bottom-bar {

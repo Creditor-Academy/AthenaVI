@@ -5,12 +5,87 @@
   z-index: 998;
 }
 
+/* Danger zone — editor-only margin guide. Subtle by default, louder when text
+   reaches into it. Never part of preview, share, present or export output. */
+.ppt-canvas-text-safe-area {
+  --ppt-danger-rgb: 239, 68, 68;
+  animation: ppt-danger-zone-in 0.18s ease-out;
+}
+
+.ppt-danger-band {
+  position: absolute;
+  background-color: rgba(var(--ppt-danger-rgb), 0.05);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(var(--ppt-danger-rgb), 0.1) 0 1px,
+    transparent 1px 8px
+  );
+  transition: background-color 0.18s ease;
+}
+
 .ppt-canvas-text-safe-area__rect {
   position: absolute;
   box-sizing: border-box;
-  border: 1px dashed rgba(100, 116, 139, 0.55);
+  border: 1px dashed rgba(var(--ppt-danger-rgb), 0.45);
   border-radius: 2px;
   background: transparent;
+  transition: border-color 0.18s ease;
+}
+
+/* Sits on the bottom-right corner of the safe rect (right/bottom set inline). */
+.ppt-danger-zone-label {
+  position: absolute;
+  transform: translateY(50%);
+  max-width: 70%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font: 600 10px/1.4 Inter, system-ui, sans-serif;
+  letter-spacing: 0.01em;
+  color: rgb(185, 28, 28);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(var(--ppt-danger-rgb), 0.3);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+  opacity: 0.85;
+}
+
+.ppt-canvas-text-safe-area.is-warning .ppt-danger-band {
+  background-color: rgba(var(--ppt-danger-rgb), 0.12);
+}
+
+.ppt-canvas-text-safe-area.is-warning .ppt-canvas-text-safe-area__rect {
+  border-style: solid;
+  border-color: rgba(var(--ppt-danger-rgb), 0.75);
+}
+
+.ppt-canvas-text-safe-area.is-warning .ppt-danger-zone-label {
+  opacity: 1;
+  color: #fff;
+  background: rgb(220, 38, 38);
+  border-color: rgb(220, 38, 38);
+}
+
+@keyframes ppt-danger-zone-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ppt-canvas-text-safe-area {
+    animation: none;
+  }
+}
+
+@media print {
+  .ppt-canvas-text-safe-area {
+    display: none !important;
+  }
 }
 
 .ppt-canvas-guides-overlay {
@@ -1591,4 +1666,18 @@
 .ppt-el-ctx-sub:hover:not(.is-disabled) .ppt-el-ctx-sub-panel,
 .ppt-el-ctx-sub:focus-within:not(.is-disabled) .ppt-el-ctx-sub-panel {
   display: block;
+}
+
+/* Danger zone toggle in the canvas zoom pill */
+.aig-canvas-ctrl-btn.aig-canvas-ctrl-btn--toggle {
+  padding: 6px 10px;
+}
+
+.aig-canvas-ctrl-btn.aig-canvas-ctrl-btn--toggle.is-active {
+  color: var(--primary, #2563eb);
+  background: rgba(var(--primary-rgb, 37, 99, 235), 0.1);
+}
+
+.aig-canvas-ctrl-btn.aig-canvas-ctrl-btn--toggle.is-active:hover {
+  background: rgba(var(--primary-rgb, 37, 99, 235), 0.16);
 }
