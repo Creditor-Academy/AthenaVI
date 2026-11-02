@@ -1345,15 +1345,13 @@ export default function AIImageGenerationUpdate({ onBack, onOpenBilling, onNavig
               compact
               plusMenu
             >
-              {({ thumbs, trigger, composerBind, isDragOver, error: contextError, quotaLabel }) => (
+              {({ thumbs, trigger, composerBind, isDragOver, error: contextError, quotaNote }) => (
                 <>
                   {thumbs}
                   {(contextError || libraryAttachError) && (
                     <p className="chatbox-context-error">{contextError || libraryAttachError}</p>
                   )}
-                  {quotaLabel && (
-                    <p className="igc-quota">Uploads this hour: {quotaLabel}</p>
-                  )}
+                  {quotaNote}
                   <div
                     className={`chatbox-input${isDragOver ? ' is-file-over' : ''}`}
                     {...composerBind}

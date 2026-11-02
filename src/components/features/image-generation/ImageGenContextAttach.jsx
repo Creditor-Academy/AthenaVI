@@ -6,6 +6,7 @@ import {
   Check,
   FolderOpen,
   Image as ImageIcon,
+  Info,
   Loader2,
   Paperclip,
   Plus,
@@ -44,6 +45,25 @@ export function formatContextQuota(quota) {
   }
   return parts.join(' · ')
 }
+
+const QUOTA_SCOPE_HINT =
+  'This is your personal hourly limit. It is shared across all your workspaces, and teammates have their own.'
+
+/** Hourly upload quota line with a visible personal-limit hint. */
+export function ContextQuotaNote({ quota, className = '' }) {
+  const label = formatContextQuota(quota)
+  if (!label) return null
+  const exhausted = Number(quota.remaining) <= 0
+  const classes = ['igc-quota', exhausted && 'is-exhausted', className].filter(Boolean).join(' ')
+  return (
+    <p className={classes} title={QUOTA_SCOPE_HINT} role="status">
+      <Info size={12} className="igc-quota-icon" aria-hidden="true" />
+      <span className="igc-quota-text">Your uploads this hour: {label}</span>
+      <span className="igc-quota-scope">Personal limit · all workspaces</span>
+    </p>
+  )
+}
+
 const ACCEPTED_EXT = /\.(pdf|docx|md|txt|png|jpe?g|webp)$/i
 const ACCEPTED_MIME = new Set([
   'application/pdf',
@@ -881,7 +901,7 @@ export default function ImageGenContextAttach({
           isAttaching
             ? 'Attaching image…'
             : quotaLabel
-              ? `Upload or choose from library (${quotaLabel})`
+              ? `Upload or choose from library (${quotaLabel}, personal limit across all workspaces)`
               : 'Upload or choose from library'
         }
         onClick={() => {
@@ -1004,7 +1024,7 @@ export default function ImageGenContextAttach({
       </div>
 
       {notice && !modalOpen && <p className="igc-notice">{notice}</p>}
-      {quotaLabel && <p className="igc-quota">Uploads this hour: {quotaLabel}</p>}
+      <ContextQuotaNote quota={quota} />
     </div>
   )
 
@@ -1055,7 +1075,7 @@ export default function ImageGenContextAttach({
             <div>
               <h3>Choose from library</h3>
               <p>Pick up to {MAX_CONTEXT_ITEMS} images to use as references.</p>
-              {quotaLabel && <p className="igc-quota">Uploads this hour: {quotaLabel}</p>}
+              <ContextQuotaNote quota={quota} />
             </div>
             <button type="button" onClick={closeModal} aria-label="Close">
               <X size={16} />
@@ -1180,6 +1200,7 @@ export default function ImageGenContextAttach({
           isDragOver: composerDragOver,
           error,
           quotaLabel,
+          quotaNote: <ContextQuotaNote quota={quota} />,
         })}
         {portals}
       </>
