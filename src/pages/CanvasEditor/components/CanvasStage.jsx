@@ -640,7 +640,7 @@ function InteractiveCanvasElementShell({
           style={{
             position: 'absolute',
             inset: 0,
-            border: locked ? '1.5px dashed #94a3b8' : '2px solid #3b82f6',
+            border: locked ? '1.5px dashed #94a3b8' : '2px solid var(--primary, #3b82f6)',
             borderRadius: p.borderRadius ? `${p.borderRadius}px` : '0px',
             pointerEvents: 'none',
             zIndex: 3,

@@ -14,6 +14,7 @@ import { CANVAS_SIZE_PRESETS } from '../../../constants/canvasSizePresets'
 import { normalizeFillValue } from '../../../utils/pptTextContent'
 import CanvasEditImagePanel from './CanvasEditImagePanel'
 import TextEffectsPanel from '../../Slides/AIPptComponents/insert/TextEffectsPanel'
+import PageColorSwatches from './PageColorSwatches'
 
 const DEFAULT_PALETTE = {
   bg: '#FFFFFF',
@@ -41,25 +42,6 @@ function layerLabel(el) {
     return name.trim().slice(0, 28)
   }
   return type.charAt(0).toUpperCase() + type.slice(1)
-}
-
-// One-click page colours, like Canva's background row; the picker beside them has the rest.
-const PAGE_COLOR_SWATCHES = [
-  '#FFFFFF',
-  '#F8FAFC',
-  '#F1F5F9',
-  '#FEF3C7',
-  '#DCFCE7',
-  '#DBEAFE',
-  '#FCE7F3',
-  '#1E293B',
-  '#000000',
-]
-
-function pageSolidHex(background) {
-  if (background == null || background === '') return '#FFFFFF'
-  if (typeof background === 'string') return background.toUpperCase()
-  return background?.type === 'gradient' ? null : String(background?.color || '').toUpperCase()
 }
 
 const SIZE_PRESETS_SHORT = (CANVAS_SIZE_PRESETS || []).slice(0, 8)
@@ -411,19 +393,10 @@ export default function CanvasRightInspector({
           <div className="canva-inspector-stack">
             <div className="canva-inspector-group">
               <label className="canva-inspector-group-title">Canvas background</label>
-              <div className="canva-page-swatches" role="group" aria-label="Page colour">
-                {PAGE_COLOR_SWATCHES.map((color) => (
-                  <button
-                    type="button"
-                    key={color}
-                    className={`canva-page-swatch ${pageSolidHex(activeCanvas?.background) === color ? 'is-active' : ''}`}
-                    style={{ backgroundColor: color }}
-                    title={color}
-                    aria-label={`Page colour ${color}`}
-                    onClick={() => onUpdateBackground({ type: 'solid', color })}
-                  />
-                ))}
-              </div>
+              <PageColorSwatches
+                background={activeCanvas?.background}
+                onPick={(color) => onUpdateBackground({ type: 'solid', color })}
+              />
               <ColorFillPicker
                 value={normalizeFillValue(activeCanvas?.background, '#FFFFFF')}
                 palette={DEFAULT_PALETTE}

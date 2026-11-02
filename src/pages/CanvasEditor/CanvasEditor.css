@@ -3,11 +3,32 @@
    ========================================================================== */
 
 .canvas-editor-page {
-  --canva-bg: var(--bg-main, #0b0f19);
+  /* Two layers: the workspace around the pages follows light/dark mode, while the floating
+     panels (top bar, drawer, inspector, toolbars, dialogs) are always light, like the PPT
+     editor whose insert panels they share. The app's mode tokens are pinned to their light
+     values here so shared widgets (font picker, fill picker, toggles) match those panels, and
+     so page content never picks up dark-mode colours. Workspace colours are set per mode below. */
+  --bg-main: #ffffff;
+  --bg-surface: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-panel: #f8fafc;
+  --bg-input: #ffffff;
+  --bg-elevated: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-inverse: #ffffff;
+  --border-color: #e2e8f0;
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shape-preview-fill: #64748b;
+  --topbar-panel-hover: rgba(var(--primary-rgb), 0.08);
+  --canva-workspace: #eef1f6;
+  --canva-workspace-text: #0f172a;
+  --canva-workspace-muted: #64748b;
+  --canva-bg: #f8fafc;
   --canva-bg-subtle: #0f172a;
-  --canva-surface: var(--bg-surface, #ffffff);
+  --canva-surface: #ffffff;
   --canva-surface-solid: #ffffff;
-  --canva-card: var(--bg-card, #ffffff);
+  --canva-card: #ffffff;
   --canva-border: rgba(226, 232, 240, 0.85);
   --canva-border-subtle: rgba(226, 232, 240, 0.5);
   --canva-glass-bg: rgba(255, 255, 255, 0.9);
@@ -17,7 +38,8 @@
   --canva-muted: #64748b;
   --canva-accent: var(--primary, #2563eb);
   --canva-accent-hover: var(--primary-hover, #1d4ed8);
-  --canva-accent-soft: rgba(37, 99, 235, 0.1);
+  --canva-accent-soft: rgba(var(--primary-rgb, 37, 99, 235), 0.1);
+  --canva-on-accent: var(--primary-contrast, #ffffff);
   --canva-dock-bg: rgba(15, 23, 42, 0.94);
   --canva-dock-border: rgba(255, 255, 255, 0.12);
   --canva-dock-text: #94a3b8;
@@ -32,12 +54,18 @@
   width: 100vw;
   overflow: hidden;
   background:
-    radial-gradient(ellipse 75% 45% at 50% -10%, rgba(37, 99, 235, 0.1), transparent 70%),
+    radial-gradient(ellipse 75% 45% at 50% -10%, rgba(var(--primary-rgb), 0.1), transparent 70%),
     radial-gradient(ellipse 55% 35% at 90% 90%, rgba(139, 92, 246, 0.08), transparent 60%),
-    var(--canva-bg);
+    var(--canva-workspace);
   color: var(--canva-text);
   font-family: var(--font-family, Inter, system-ui, -apple-system, sans-serif);
   user-select: none;
+}
+
+[data-mode='dark'] .canvas-editor-page {
+  --canva-workspace: #090e1a;
+  --canva-workspace-text: #ffffff;
+  --canva-workspace-muted: #94a3b8;
 }
 
 /* :where() keeps this reset at zero specificity so component classes (e.g. white text on
@@ -362,7 +390,7 @@ button.canva-header-save-badge--action:focus-visible {
   border: none;
   border-radius: 10px;
   background: var(--canva-accent);
-  color: #ffffff;
+  color: var(--canva-on-accent);
   font-size: 12.5px;
   font-weight: 750;
   cursor: pointer;
@@ -473,10 +501,10 @@ button.canva-header-save-badge--action:focus-visible {
 
 .canva-dock-tab.is-active {
   background: var(--canva-accent);
-  color: #ffffff;
+  color: var(--canva-on-accent);
   font-weight: 750;
   border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);
+  box-shadow: 0 4px 14px rgba(var(--primary-rgb), 0.45);
 }
 
 .canva-dock-tab.is-active .canva-dock-tab-icon,
@@ -646,9 +674,12 @@ button.canva-header-save-badge--action:focus-visible {
   gap: 6px !important;
   overflow-x: auto !important;
   width: 100% !important;
+  min-width: 0 !important;
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
   padding-bottom: 2px !important;
+  /* Fade the clipped end so a cut-off chip reads as "scroll for more". */
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
 }
 
 .canva-drawer .ppt-insert-rail-scroll::-webkit-scrollbar {
@@ -685,7 +716,7 @@ button.canva-header-save-badge--action:focus-visible {
   width: auto !important;
 }
 
-.canva-drawer .ppt-insert-rail-item:hover:not(:disabled) {
+.canva-drawer .ppt-insert-rail-item:hover:not(:disabled):not(.is-active) {
   border-color: #cbd5e1 !important;
   color: #0f172a !important;
   background: #f1f5f9 !important;
@@ -693,15 +724,17 @@ button.canva-header-save-badge--action:focus-visible {
 
 .canva-drawer .ppt-insert-rail-item.is-active {
   background: var(--primary, var(--canva-accent, #2563eb)) !important;
-  color: #ffffff !important;
+  color: var(--canva-on-accent) !important;
   border-color: var(--primary, var(--canva-accent, #2563eb)) !important;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.28) !important;
+  box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.28) !important;
   font-weight: 700 !important;
 }
 
 .canva-drawer .ppt-insert-rail-item.is-active .ppt-insert-rail-icon,
-.canva-drawer .ppt-insert-rail-item.is-active .ppt-insert-rail-label {
-  color: #ffffff !important;
+.canva-drawer .ppt-insert-rail-item.is-active .ppt-insert-rail-label,
+.canva-drawer .ppt-insert-rail-item.is-active .ppt-rail-icon-only {
+  /* The category icons carry their own colour inline; on the accent fill they follow the text. */
+  color: var(--canva-on-accent) !important;
 }
 
 .canva-drawer .ppt-insert-rail-icon {
@@ -710,8 +743,13 @@ button.canva-header-save-badge--action:focus-visible {
   font-size: 14px !important;
 }
 
+.canva-drawer .ppt-insert-rail:has(.ppt-insert-rail-footer) {
+  flex-wrap: wrap !important;
+}
+
+/* Its own row: beside the chips it covered the active one (Media opens on Unsplash). */
 .canva-drawer .ppt-insert-rail-footer {
-  flex-shrink: 0 !important;
+  flex: 1 0 100% !important;
   margin: 0 !important;
   padding: 0 !important;
   display: flex !important;
@@ -726,12 +764,12 @@ button.canva-header-save-badge--action:focus-visible {
   border: none !important;
   border-radius: 999px !important;
   background: var(--primary, var(--canva-accent, #2563eb)) !important;
-  color: #ffffff !important;
+  color: var(--canva-on-accent) !important;
   font-size: 12px !important;
   font-weight: 700 !important;
   white-space: nowrap !important;
   cursor: pointer !important;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
+  box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.3) !important;
   transition: all 140ms ease !important;
 }
 
@@ -790,7 +828,7 @@ button.canva-header-save-badge--action:focus-visible {
 .canva-drawer .ppt-insert-search:focus {
   border-color: var(--primary, #2563eb) !important;
   background: #ffffff !important;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.12) !important;
 }
 
 .canva-drawer .ppt-insert-search-go {
@@ -872,14 +910,14 @@ button.canva-header-save-badge--action:focus-visible {
   transition: all 130ms ease !important;
 }
 
-.canva-drawer .ppt-insert-chip:hover {
+.canva-drawer .ppt-insert-chip:hover:not(.is-active) {
   background: #f1f5f9 !important;
   color: #0f172a !important;
 }
 
 .canva-drawer .ppt-insert-chip.is-active {
   background: var(--primary, #2563eb) !important;
-  color: #ffffff !important;
+  color: var(--canva-on-accent) !important;
   border-color: var(--primary, #2563eb) !important;
 }
 
@@ -980,7 +1018,7 @@ button.canva-header-save-badge--action:focus-visible {
   border-color: var(--canva-accent);
   background: #ffffff;
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 4px 14px rgba(var(--primary-rgb), 0.1);
 }
 
 .canva-text-preset-card.heading strong {
@@ -1028,7 +1066,7 @@ button.canva-header-save-badge--action:focus-visible {
   background: #ffffff;
   color: var(--canva-accent);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.1);
 }
 
 .canva-shape-icon {
@@ -1157,12 +1195,12 @@ button.canva-header-save-badge--action:focus-visible {
 .canva-page-card:hover {
   border-color: var(--canva-accent);
   background: #ffffff;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+  box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.08);
 }
 
 .canva-page-card.is-active {
   border-color: var(--canva-accent);
-  background: #eff6ff;
+  background: var(--canva-accent-soft);
   box-shadow: 0 0 0 1px var(--canva-accent);
 }
 
@@ -1239,7 +1277,7 @@ button.canva-header-save-badge--action:focus-visible {
 
 .canva-add-page-btn:hover {
   border-color: var(--primary, #2563eb);
-  color: #ffffff;
+  color: var(--canva-on-accent);
   background: var(--primary, #2563eb);
   box-shadow: 0 4px 14px color-mix(in srgb, var(--primary, #2563eb) 30%, transparent);
 }
@@ -1256,7 +1294,7 @@ button.canva-header-save-badge--action:focus-visible {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background-color: var(--canva-bg);
+  background-color: var(--canva-workspace);
   background-image: radial-gradient(rgba(148, 163, 184, 0.14) 1px, transparent 1px);
   background-size: 24px 24px;
   z-index: 10;
@@ -1306,14 +1344,14 @@ button.canva-header-save-badge--action:focus-visible {
 .canva-page-meta-label {
   font-size: 12.5px;
   font-weight: 750;
-  color: var(--text-main, #0f172a); /* sits on the workspace, which follows the theme */
+  color: var(--canva-workspace-text);
   letter-spacing: -0.01em;
 }
 
 .canva-page-meta-dim {
   font-size: 11.5px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--canva-workspace-muted);
 }
 
 .canva-page-action-row {
@@ -1335,15 +1373,15 @@ button.canva-header-save-badge--action:focus-visible {
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: #475569;
+  color: var(--canva-workspace-muted);
   cursor: pointer;
   transition: all 130ms ease;
   box-shadow: none;
 }
 
 .canva-page-action-btn:hover:not(:disabled) {
-  color: #0f172a;
-  background: rgba(0, 0, 0, 0.06);
+  color: var(--canva-workspace-text);
+  background: color-mix(in srgb, var(--canva-workspace-text) 10%, transparent);
 }
 
 .canva-page-action-btn:disabled {
@@ -1400,7 +1438,7 @@ button.canva-header-save-badge--action:focus-visible {
 .ppt-canvas-el-selection-box {
   position: absolute;
   inset: 0;
-  border: 2px solid #3b82f6;
+  border: 2px solid var(--canva-accent);
   pointer-events: none;
   z-index: 3;
   box-sizing: border-box;
@@ -1450,8 +1488,8 @@ button.canva-header-save-badge--action:focus-visible {
 }
 
 .canva-page-activate-overlay:hover {
-  background: rgba(59, 130, 246, 0.06);
-  box-shadow: inset 0 0 0 2px rgba(59, 130, 246, 0.45);
+  background: rgba(var(--primary-rgb), 0.06);
+  box-shadow: inset 0 0 0 2px rgba(var(--primary-rgb), 0.45);
 }
 
 .canva-add-page-footer {
@@ -1469,7 +1507,7 @@ button.canva-header-save-badge--action:focus-visible {
   border: none;
   border-radius: 999px;
   background: var(--primary, var(--canva-accent, #2563eb));
-  color: #ffffff !important;
+  color: var(--canva-on-accent) !important;
   font-size: 13.5px;
   font-weight: 750;
   cursor: pointer;
@@ -1481,7 +1519,7 @@ button.canva-header-save-badge--action:focus-visible {
 
 .canva-add-page-pill-btn:hover {
   background: var(--primary-hover, var(--canva-accent-hover, #1d4ed8));
-  color: #ffffff !important;
+  color: var(--canva-on-accent) !important;
   transform: translateY(-2px);
   box-shadow:
     0 8px 26px color-mix(in srgb, var(--primary, #2563eb) 50%, transparent),
@@ -1570,7 +1608,7 @@ button.canva-header-save-badge--action:focus-visible {
 
 .canva-bottom-icon-btn.is-active {
   border-color: var(--canva-accent, #2563eb);
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(var(--primary-rgb), 0.1);
   color: var(--canva-accent, #2563eb);
 }
 
@@ -1966,14 +2004,6 @@ body > .ppt-fill-picker-pop {
 /* ==========================================================================
    8. FLOATING RIGHT INSPECTOR SIDEBAR (CANVA / FIGMA STYLE)
    ========================================================================== */
-
-/* These panels stay light in dark mode, so their inner controls use a light fill too;
-   otherwise --canva-bg (the dark workspace) puts dark buttons under dark text. */
-.canva-drawer,
-.canva-context-bar,
-.canva-inspector {
-  --canva-bg: #f8fafc;
-}
 
 .canva-inspector {
   position: absolute;
@@ -2752,8 +2782,8 @@ body > .ppt-fill-picker-pop {
 .canvas-size-tab.is-active {
   border-color: var(--primary, #2563eb);
   background: var(--primary, #2563eb);
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.28);
+  color: var(--canva-on-accent);
+  box-shadow: 0 4px 14px rgba(var(--primary-rgb), 0.28);
 }
 
 .canvas-size-tab-count {
@@ -2831,10 +2861,10 @@ body > .ppt-fill-picker-pop {
 
 .canvas-size-preset.is-selected {
   border-color: var(--primary, #2563eb);
-  background: rgba(37, 99, 235, 0.03);
+  background: rgba(var(--primary-rgb), 0.03);
   box-shadow:
     0 0 0 1px var(--primary, #2563eb),
-    0 14px 32px -4px rgba(37, 99, 235, 0.22);
+    0 14px 32px -4px rgba(var(--primary-rgb), 0.22);
 }
 
 .canvas-size-thumb-wrapper {
@@ -2869,7 +2899,7 @@ body > .ppt-fill-picker-pop {
 .canvas-size-preset.is-selected .canvas-size-thumb-box {
   transform: scale(1.03);
   box-shadow:
-    0 6px 18px rgba(37, 99, 235, 0.25),
+    0 6px 18px rgba(var(--primary-rgb), 0.25),
     0 0 0 1.5px var(--primary, #2563eb);
 }
 
@@ -2941,9 +2971,9 @@ body > .ppt-fill-picker-pop {
   height: 22px;
   border-radius: 50%;
   background: var(--primary, #2563eb);
-  color: #ffffff;
+  color: var(--canva-on-accent);
   box-shadow:
-    0 2px 8px rgba(37, 99, 235, 0.4),
+    0 2px 8px rgba(var(--primary-rgb), 0.4),
     0 0 0 2px #ffffff;
 }
 
@@ -3034,7 +3064,7 @@ body > .ppt-fill-picker-pop {
 
 .canvas-size-input-wrapper input:focus {
   border-color: var(--primary, #2563eb);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
 }
 
 .canvas-size-swap-btn {
@@ -3078,7 +3108,7 @@ body > .ppt-fill-picker-pop {
 
 .canvas-size-unit-selector select:focus {
   border-color: var(--primary, #2563eb);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
 }
 
 /* Modal Footers */
@@ -3122,18 +3152,18 @@ body > .ppt-fill-picker-pop {
   border: none;
   border-radius: 12px;
   background: var(--primary, #2563eb);
-  color: #ffffff;
+  color: var(--canva-on-accent);
   font-size: 13.5px;
   font-weight: 750;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
+  box-shadow: 0 4px 16px rgba(var(--primary-rgb), 0.35);
   transition: all 160ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .canvas-size-create:hover {
   background: var(--primary-hover, #1d4ed8);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+  box-shadow: 0 6px 20px rgba(var(--primary-rgb), 0.45);
 }
 
 /* Export Modal Specific Styles */
@@ -3811,7 +3841,7 @@ body > .ppt-fill-picker-pop {
 .canvas-shortcut-list {
   list-style: none;
   margin: 0;
-  padding: 0 4px 8px;
+  padding: 16px 28px 24px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -3823,14 +3853,21 @@ body > .ppt-fill-picker-pop {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  align-items: baseline;
+  align-items: center;
   font-size: 14px;
 }
 
 .canvas-shortcut-list kbd {
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 650;
   color: #172033;
+  padding: 3px 8px;
+  border: 1px solid #e2e8f0;
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  background: #f8fafc;
+  white-space: nowrap;
 }
 
 .canvas-shortcut-list span {
@@ -3861,4 +3898,9 @@ body > .ppt-fill-picker-pop {
   font-size: 1.25rem;
   line-height: 1.5;
   font-weight: 600;
+}
+
+/* The PPT editor's toggles are black; here they follow the accent like the rest of the editor. */
+.canvas-editor-page .ppt-toggle-switch.is-on {
+  background: var(--canva-accent);
 }
