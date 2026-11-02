@@ -1306,7 +1306,7 @@ button.canva-header-save-badge--action:focus-visible {
 .canva-page-meta-label {
   font-size: 12.5px;
   font-weight: 750;
-  color: #0f172a;
+  color: var(--text-main, #0f172a); /* sits on the workspace, which follows the theme */
   letter-spacing: -0.01em;
 }
 
@@ -1967,6 +1967,14 @@ body > .ppt-fill-picker-pop {
    8. FLOATING RIGHT INSPECTOR SIDEBAR (CANVA / FIGMA STYLE)
    ========================================================================== */
 
+/* These panels stay light in dark mode, so their inner controls use a light fill too;
+   otherwise --canva-bg (the dark workspace) puts dark buttons under dark text. */
+.canva-drawer,
+.canva-context-bar,
+.canva-inspector {
+  --canva-bg: #f8fafc;
+}
+
 .canva-inspector {
   position: absolute;
   top: 76px;
@@ -2194,6 +2202,31 @@ body > .ppt-fill-picker-pop {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--canva-muted);
+}
+
+.canva-page-swatches {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 6px;
+}
+
+.canva-page-swatch {
+  aspect-ratio: 1;
+  width: 100%;
+  padding: 0;
+  border-radius: 6px;
+  /* A ring that shows on both white and dark swatches, in either theme. */
+  border: 1px solid rgba(100, 116, 139, 0.45);
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.canva-page-swatch:hover {
+  transform: scale(1.08);
+}
+
+.canva-page-swatch.is-active {
+  box-shadow: 0 0 0 2px var(--canva-card), 0 0 0 4px var(--canva-accent);
 }
 
 .canva-inspector-textarea {

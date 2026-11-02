@@ -700,6 +700,7 @@ export default function CanvasStage({
   editingId,
   multiSelectIds = [],
   onSelect,
+  onSelectPage,
   onEdit,
   onPlacementLive,
   onPlacementCommit,
@@ -878,6 +879,8 @@ export default function CanvasStage({
                     return
                   }
                   onSelect(null)
+                  // Clicking the bare page selects the page itself, like Canva: its settings open.
+                  onSelectPage?.()
                 }}
                 onContextMenu={(e) => {
                   if (!isCurrent) return
@@ -999,6 +1002,7 @@ export default function CanvasStage({
                     onClick={(e) => {
                       e.stopPropagation()
                       setActiveCanvasIndex(index)
+                      onSelectPage?.()
                     }}
                   />
                 )}

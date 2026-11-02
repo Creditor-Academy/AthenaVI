@@ -43,11 +43,31 @@ function layerLabel(el) {
   return type.charAt(0).toUpperCase() + type.slice(1)
 }
 
+// One-click page colours, like Canva's background row; the picker beside them has the rest.
+const PAGE_COLOR_SWATCHES = [
+  '#FFFFFF',
+  '#F8FAFC',
+  '#F1F5F9',
+  '#FEF3C7',
+  '#DCFCE7',
+  '#DBEAFE',
+  '#FCE7F3',
+  '#1E293B',
+  '#000000',
+]
+
+function pageSolidHex(background) {
+  if (background == null || background === '') return '#FFFFFF'
+  if (typeof background === 'string') return background.toUpperCase()
+  return background?.type === 'gradient' ? null : String(background?.color || '').toUpperCase()
+}
+
 const SIZE_PRESETS_SHORT = (CANVAS_SIZE_PRESETS || []).slice(0, 8)
 
 export default function CanvasRightInspector({
   selectedElement,
   activeCanvas,
+  pageFocusTick = 0,
   elements = [],
   usedFontFamilies = [],
   onClose = null,
@@ -69,6 +89,13 @@ export default function CanvasRightInspector({
   onToggleImageAsBackground,
 }) {
   const [activeTab, setActiveTab] = useState('style')
+
+  // The page was clicked: show its settings, whichever tab was open before.
+  const [seenPageFocus, setSeenPageFocus] = useState(pageFocusTick)
+  if (seenPageFocus !== pageFocusTick) {
+    setSeenPageFocus(pageFocusTick)
+    setActiveTab('style')
+  }
   const p = selectedElement?.placement || {}
   const locked = isLocked(selectedElement)
   const type = selectedElement?.type || 'text'
@@ -88,7 +115,9 @@ export default function CanvasRightInspector({
     onUpdateContent(selectedElement.id, patch)
   }
   const currentTab =
-    (activeTab === 'edit' && !isImage) || (activeTab === 'effects' && !isText)
+    (!selectedElement && activeTab !== 'layers') ||
+    (activeTab === 'edit' && !isImage) ||
+    (activeTab === 'effects' && !isText)
       ? 'style'
       : activeTab
 
@@ -382,6 +411,19 @@ export default function CanvasRightInspector({
           <div className="canva-inspector-stack">
             <div className="canva-inspector-group">
               <label className="canva-inspector-group-title">Canvas background</label>
+              <div className="canva-page-swatches" role="group" aria-label="Page colour">
+                {PAGE_COLOR_SWATCHES.map((color) => (
+                  <button
+                    type="button"
+                    key={color}
+                    className={`canva-page-swatch ${pageSolidHex(activeCanvas?.background) === color ? 'is-active' : ''}`}
+                    style={{ backgroundColor: color }}
+                    title={color}
+                    aria-label={`Page colour ${color}`}
+                    onClick={() => onUpdateBackground({ type: 'solid', color })}
+                  />
+                ))}
+              </div>
               <ColorFillPicker
                 value={normalizeFillValue(activeCanvas?.background, '#FFFFFF')}
                 palette={DEFAULT_PALETTE}
