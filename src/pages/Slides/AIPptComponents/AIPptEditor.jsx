@@ -102,6 +102,11 @@ import {
 } from '../../../utils/presentationHelpers'
 import { enforceAppearancePalette } from '../../../utils/themeAppearance'
 import { coercePlainText } from '../../../utils/pptTextContent'
+import {
+  createTextHeightFloor,
+  keepTextBoxTallEnough,
+  textBoxShrinksToFit,
+} from '../../../utils/textBoxEditing'
 import { compileDeckLayoutToElements, buildThemeCompileOptions } from '../../../utils/compileDeckLayoutToElements'
 import { finalizeChartShapes } from '../../../utils/chartShapeFinalize'
 import { resolveLayoutSchemaById } from '../../../utils/deckLayoutRegistry'
@@ -494,6 +499,16 @@ function InteractiveElementShell({
       } else if (drag.mode === 'resize') {
         const minH = isText ? TEXT_MIN_HEIGHT : RESIZE_MIN_HEIGHT
         next = applyResizeFromHandle(drag.handle, start, dx, dy, canvasW, canvasH, minH)
+        if (drag.textFloor) {
+          // Never crop text: the box stops at (or grows to) the height its text needs.
+          const fitted = keepTextBoxTallEnough(next, start, drag.handle, drag.textFloor(next.width))
+          if (fitted !== next) {
+            next = {
+              ...fitted,
+              ...clampPlacementOverflow(fitted.x, fitted.y, fitted.width, fitted.height, canvasW, canvasH),
+            }
+          }
+        }
       } else if (drag.mode === 'rotate') {
         const pointerAngle = pointerAngleFromCenter(e.clientX, e.clientY, drag.centerX, drag.centerY)
         const raw = (start.rotation || 0) + (pointerAngle - drag.startPointerAngle)
@@ -627,6 +642,10 @@ function InteractiveElementShell({
       centerX,
       centerY,
       startPointerAngle: pointerAngleFromCenter(e.clientX, e.clientY, centerX, centerY),
+      textFloor:
+        mode === 'resize' && isText && !textBoxShrinksToFit(el)
+          ? createTextHeightFloor(shellRef.current, startPlacement.width)
+          : null,
     }
   }
 

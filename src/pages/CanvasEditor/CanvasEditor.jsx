@@ -12,6 +12,7 @@ import CanvasLeftDrawer from './components/CanvasLeftDrawer'
 import CanvasStage from './components/CanvasStage'
 import CanvasRightInspector from './components/CanvasRightInspector'
 import CanvasBottomBar from './components/CanvasBottomBar'
+import CanvasPreview from './components/CanvasPreview'
 import CanvasSizeModal from './CanvasSizeModal'
 import CanvasExportModal from './CanvasExportModal'
 import PptElementContextMenu from '../Slides/AIPptComponents/PptElementContextMenu'
@@ -196,6 +197,8 @@ export default function CanvasEditor({
   const [quickMenuOpen, setQuickMenuOpen] = useState(false)
   const [cropModalOpen, setCropModalOpen] = useState(false)
   const [shortcutHelp, setShortcutHelp] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [copying, setCopying] = useState(false)
 
   // ── Undo / redo history ─────────────────────────────────────────────────
   // Kept in a ref, not state: most mutation handlers are memoised with empty deps, and a
@@ -483,6 +486,40 @@ export default function CanvasEditor({
     setRecovery(null)
     return persistCanvasData()
   }, [persistCanvasData])
+
+  /** File → Save now / Ctrl+S: push pending edits immediately instead of waiting for autosave. */
+  const saveNowRef = useRef(null)
+  const handleSaveNow = useCallback(async () => {
+    if (!canPersist) return
+    // A halted save needs the user's decision (conflict, session, deleted design).
+    if (saveHaltedRef.current && saveError) {
+      setRecovery({ kind: saveError.kind })
+      return
+    }
+    const saved = await flushPendingSave()
+    if (!saved) showNotice("Couldn't save right now. Your changes are kept and will retry.")
+  }, [canPersist, saveError, flushPendingSave, showNotice])
+  saveNowRef.current = handleSaveNow
+
+  /** File → Make a copy: save first so the copy has the latest edits, then duplicate on the server. */
+  const handleMakeCopy = useCallback(async () => {
+    if (!canPersist || copying) return
+    setCopying(true)
+    try {
+      const saved = await flushPendingSave()
+      if (!saved || !canvasIdRef.current) {
+        showNotice('Save your changes first, then make a copy.')
+        return
+      }
+      const copy = await canvasService.duplicateCanvas(workspaceId, canvasIdRef.current)
+      const name = copy?.name || copy?.project?.name || 'a copy'
+      showNotice(`Saved a copy as "${name}" in this folder.`)
+    } catch (error) {
+      showNotice(`Couldn't make a copy: ${error?.message || 'request failed'}`)
+    } finally {
+      setCopying(false)
+    }
+  }, [canPersist, copying, flushPendingSave, showNotice, workspaceId])
 
   /** Replace the editor state with a document fetched from the server. */
   const applyServerDocument = useCallback((project) => {
@@ -1012,7 +1049,9 @@ export default function CanvasEditor({
 
   const updateElementContent = (elementId, contentPatch) => {
     const canvasId = activeCanvas.id
-    const updated = canvases.map((canvas) =>
+    // Read the latest document, not this render's copy: finishing a text edit commits the
+    // grown box height first, and mapping a stale copy here threw that height away.
+    const updated = canvasesRef.current.map((canvas) =>
       canvas.id !== canvasId
         ? canvas
         : {
@@ -1566,6 +1605,13 @@ export default function CanvasEditor({
         return
       }
 
+      if (ctrl && key === 's') {
+        // Always swallow it: the browser's "Save page" is never what's wanted here.
+        e.preventDefault()
+        if (!shift) saveNowRef.current?.()
+        return
+      }
+
       if (ctrl && key === 'k') {
         e.preventDefault()
         setQuickMenuOpen(true)
@@ -1893,7 +1939,25 @@ export default function CanvasEditor({
         inspectorOpen={inspectorOpen}
         onToggleInspector={() => setInspectorOpen((prev) => !prev)}
         onOpenShortcuts={() => setShortcutHelp(true)}
+        pageCount={canvases.length}
+        showGrid={showGrid}
+        onToggleGrid={() => setShowGrid((on) => !on)}
+        onPreview={() => {
+          setEditing({ canvasId: null, elementId: null })
+          setPreviewOpen(true)
+        }}
+        onSaveNow={canPersist ? handleSaveNow : null}
+        onMakeCopy={canPersist ? handleMakeCopy : null}
+        copying={copying}
       />
+      {previewOpen && (
+        <CanvasPreview
+          pages={canvases}
+          startIndex={activeCanvasIndex}
+          title={docTitle}
+          onClose={() => setPreviewOpen(false)}
+        />
+      )}
       <CanvasNarrowNotice />
 
       {/* 2. Studio Layout Body */}

@@ -6,6 +6,7 @@ export const CANVAS_SHORTCUTS = [
   { keys: '?', label: 'Show or hide these shortcuts' },
   { keys: 'Ctrl/Cmd + Z', label: 'Undo' },
   { keys: 'Ctrl/Cmd + Shift + Z, Ctrl/Cmd + Y', label: 'Redo' },
+  { keys: 'Ctrl/Cmd + S', label: 'Save now' },
   { keys: 'Ctrl/Cmd + K', label: 'Quick menu' },
   { keys: 'Ctrl/Cmd + = or +', label: 'Zoom in' },
   { keys: 'Ctrl/Cmd + -', label: 'Zoom out' },
