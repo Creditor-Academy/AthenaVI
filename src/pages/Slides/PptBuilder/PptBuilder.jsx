@@ -28,6 +28,22 @@ export default function PptBuilder({
   const [error, setError] = useState('')
   const [session, setSession] = useState(null)
 
+  const themesCacheRef = React.useRef(null)
+  const paletteThemeTokens = async (workspaceId, template) => {
+    try {
+      if (!themesCacheRef.current) {
+        const payload = await presentationService.listThemes(workspaceId)
+        themesCacheRef.current =
+          payload?.themes || payload?.items || (Array.isArray(payload) ? payload : [])
+      }
+      const base = themesCacheRef.current.find((t) => t.id === template.baseThemeId)?.themeTokens
+      if (!base?.palette) return null
+      return { ...base, palette: { ...base.palette, ...template.palette } }
+    } catch {
+      return null // the base theme id alone still gives the right light/dark look
+    }
+  }
+
   const handleSelect = async (template) => {
     setCreating(true)
     setError('')
@@ -78,6 +94,14 @@ export default function PptBuilder({
       }
       if (isPack && template.themeId) {
         body.themeId = toApiThemeId(template.themeId)
+      }
+      // Local colour-scheme cards (brown, blue, teal…): send their palette on top of the closest
+      // catalog theme so the deck keeps the chosen colours. Previously the id was dropped and the
+      // deck fell back to the default theme (near-black, later plain white).
+      if (isBlank && template.baseThemeId && !template.fromCatalog) {
+        body.themeId = template.baseThemeId
+        const tokens = await paletteThemeTokens(ctx.workspaceId, template)
+        if (tokens) body.themeTokens = tokens
       }
       // Without a theme the backend falls back to its near-black default (midnight_blue), so
       // layouts and blank decks opened as black slides. Match the light layout previews instead;

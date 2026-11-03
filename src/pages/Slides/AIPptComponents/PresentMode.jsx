@@ -283,7 +283,13 @@ export default function PresentMode({
   const [index, setIndex] = useState(initialSlideIndex)
   const [focusElementId, setFocusElementId] = useState(null)
   // `reverse` flips the slide direction when stepping back; `tick` restarts the animation.
-  const [motion, setMotion] = useState({ id: 'none', reverse: false, tick: 0 })
+  // Opening on a slide plays the transition that leads into it, so a transition just applied
+  // to the selected slide is visible straight away (Present starts on that slide).
+  const [motion, setMotion] = useState(() => {
+    const first = slides[initialSlideIndex]
+    const id = first?.transition || first?.elements?.transition || 'none'
+    return { id, reverse: false, tick: id !== 'none' ? 1 : 0 }
+  })
   // Guests always follow the live presenter by default; a member only follows
   // once someone else already holds the lock (never steal the cursor).
   const [following, setFollowing] = useState(chrome === 'audience')

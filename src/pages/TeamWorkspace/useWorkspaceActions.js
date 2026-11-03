@@ -421,7 +421,7 @@ export function useWorkspaceActions({
    * feedback, the success toast as soon as the server confirms, and a background refresh
    * that can't turn a successful delete into a "Failed to …" toast.
    */
-  const runRemoval = useCallback(async (key, { request, onRemoved, pending, success, alreadyGone, failure }) => {
+  const runRemoval = useCallback(async (key, { request, onRemoved, pending, success, alreadyGone, failure, refreshAll = true }) => {
     if (pendingRemovalsRef.current.has(key)) return;
     pendingRemovalsRef.current.add(key);
     showToast(pending, 'info');
@@ -436,7 +436,9 @@ export function useWorkspaceActions({
     } finally {
       pendingRemovalsRef.current.delete(key);
     }
-    if (removed) {
+    // A full refresh re-requests every workspace's folders, projects and credits (4 calls per
+    // workspace). Removals whose local update is already complete skip it.
+    if (removed && refreshAll) {
       refreshWorkspaceData().catch((error) => console.warn('Workspace refresh after removal failed:', error));
     }
   }, [showToast, refreshWorkspaceData]);
@@ -542,6 +544,9 @@ export function useWorkspaceActions({
             },
             pending: 'Deleting folder…',
             success: folderName ? `Folder "${folderName}" deleted` : 'Folder deleted',
+            // The folder (and the projects inside it) is already removed from view above;
+            // reloading every workspace here was the burst of repeated API calls on delete.
+            refreshAll: false,
             alreadyGone: 'This folder was already deleted',
             failure: "Couldn't delete this folder. Please try again.",
           })

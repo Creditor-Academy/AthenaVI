@@ -36,6 +36,14 @@ const FALLBACK_TEMPLATES = [
     hex3: '#94a3b8',
     createMode: 'blank',
     themeId: 'petrol',
+    // These cards are local previews, not backend themes: the deck is created from the closest
+    // catalog theme (same light/dark appearance) re-coloured with the card's own palette, so
+    // the slides match the preview instead of opening black/white.
+    baseThemeId: 'deep_ocean',
+    palette: {
+      bg: '#10272C', surface: '#173740', primary: '#2DD4BF', secondary: '#5EEAD4', accent: '#14B8A6',
+      text: '#F0FDFA', muted: '#9FBDBD', gradientStart: '#10272C', gradientEnd: '#173740',
+    },
   },
   {
     id: 'stardust',
@@ -47,6 +55,8 @@ const FALLBACK_TEMPLATES = [
     hex3: '#f1f5f9',
     createMode: 'blank',
     themeId: 'stardust',
+    baseThemeId: 'violet_noir',
+    palette: { primary: '#8B5CF6', accent: '#A78BFA' },
   },
   {
     id: 'chocolate',
@@ -58,6 +68,12 @@ const FALLBACK_TEMPLATES = [
     hex3: '#a1887f',
     createMode: 'blank',
     themeId: 'chocolate',
+    baseThemeId: 'warm_sand',
+    palette: {
+      bg: '#F5EEDC', surface: '#EFE4CF', primary: '#6D4C41', secondary: '#A1887F', accent: '#B08968',
+      text: '#3E2723', muted: '#6D5A50', divider: 'rgba(62,39,35,0.12)', cardBg: 'rgba(62,39,35,0.05)',
+      gradientStart: '#F5EEDC', gradientEnd: '#E9DCC3',
+    },
   },
   {
     id: 'moss',
@@ -69,6 +85,11 @@ const FALLBACK_TEMPLATES = [
     hex3: '#c8e6c9',
     createMode: 'blank',
     themeId: 'moss',
+    baseThemeId: 'forest_slate',
+    palette: {
+      bg: '#2E4430', surface: '#3A5240', primary: '#A5D6A7', secondary: '#C8E6C9', accent: '#81C784',
+      text: '#F1F8F1', muted: '#C3D3C4', gradientStart: '#2E4430', gradientEnd: '#3A5240',
+    },
   },
   {
     id: 'blue_steel',
@@ -80,6 +101,11 @@ const FALLBACK_TEMPLATES = [
     hex3: '#eceff1',
     createMode: 'blank',
     themeId: 'blue_steel',
+    baseThemeId: 'slate_light',
+    palette: {
+      bg: '#FFFFFF', surface: '#F1F4F8', primary: '#1E3A5F', secondary: '#4A6FA5', accent: '#3B5B8C',
+      text: '#0F1E33', muted: '#4B5B70', gradientStart: '#FFFFFF', gradientEnd: '#E8EDF4',
+    },
   },
 ]
 
