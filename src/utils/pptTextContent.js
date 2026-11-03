@@ -217,6 +217,7 @@ function styleKey(run) {
     run?.italic ? '1' : '',
     run?.fontFamily || '',
     run?.fontRole || '',
+    run?.userColor ? 'u' : '',
   ].join('|')
 }
 
@@ -230,6 +231,7 @@ function cloneRunStyle(run) {
   if (run?.italic) next.italic = run.italic
   if (run?.fontFamily) next.fontFamily = run.fontFamily
   if (run?.fontRole) next.fontRole = run.fontRole
+  if (run?.userColor) next.userColor = true
   return next
 }
 
@@ -306,9 +308,12 @@ function applyFillToRun(run, fill) {
   if (isGradientFill(fill)) {
     next.fill = fill
     delete next.color
+    delete next.userColor
   } else {
     next.color = fill?.color || fill
     delete next.fill
+    // Picked by the user: shown exactly as chosen, never swapped for a "more readable" ink.
+    next.userColor = true
   }
   return next
 }
@@ -341,9 +346,11 @@ export function applyFillToWholeContent(content, fill) {
   if (isGradientFill(fill)) {
     next.fill = fill
     next.color = null
+    next.userColor = false
   } else {
     next.color = fill?.color || fill
     next.fill = null
+    next.userColor = true
   }
   return next
 }
@@ -466,28 +473,33 @@ const EDITABLE_BLOCK_TAGS = new Set([
 export function serializeEditableRuns(node) {
   if (!node) return []
   const runs = []
-  const walk = (n, inherited) => {
+  const style = (fill, user) => {
+    const paint = runFromFill(fill)
+    return user && paint.color ? { ...paint, userColor: true } : paint
+  }
+  const walk = (n, inherited, user) => {
     if (!n) return
     if (n.nodeType === Node.TEXT_NODE) {
       const text = n.nodeValue || ''
-      if (text) runs.push({ text, ...runFromFill(inherited) })
+      if (text) runs.push({ text, ...style(inherited, user) })
       return
     }
     if (n.nodeType !== Node.ELEMENT_NODE) return
     if (n.tagName === 'BR') {
-      runs.push({ text: '\n', ...runFromFill(inherited) })
+      runs.push({ text: '\n', ...style(inherited, user) })
       return
     }
     if (n !== node && EDITABLE_BLOCK_TAGS.has(n.tagName) && runs.length) {
       const last = runs[runs.length - 1]
       if (last && !String(last.text).endsWith('\n')) {
-        runs.push({ text: '\n', ...runFromFill(inherited) })
+        runs.push({ text: '\n', ...style(inherited, user) })
       }
     }
     const next = fillFromDataset(n, inherited)
-    n.childNodes.forEach((child) => walk(child, next))
+    const nextUser = n.dataset?.userColor != null ? n.dataset.userColor === '1' : user
+    n.childNodes.forEach((child) => walk(child, next, nextUser))
   }
-  walk(node, null)
+  walk(node, null, false)
   return mergeAdjacentRuns(runs)
 }
 
@@ -528,6 +540,7 @@ export function seedEditableNode(node, content, palette) {
     } catch {
       /* ignore */
     }
+    if (run?.userColor) span.dataset.userColor = '1'
     span.textContent = run.text || ''
     node.appendChild(span)
   }
@@ -653,6 +666,9 @@ function readableInkOnBackground(palette, bgHex) {
 /** Solid text paint only — keeps gradients; enforces light/dark deck ink rules. */
 export function adjustTextPaintForSlideBackground(paint, fill, palette, run) {
   if (!paint || paint.WebkitTextFillColor === 'transparent') return paint
+  // A colour the user picked is shown as chosen. The readability fix-ups below are for
+  // generated/theme colours; applying them here made e.g. red on white render dark navy.
+  if (run?.userColor) return paint
   const appearance = resolveSlideAppearance(palette)
   const bgHex = cssColorToHex(palette?.bg || palette?.surface || '#FFFFFF', '#FFFFFF')
   const colorRole = run?.colorRole || fill?.colorRole || (typeof fill?.color === 'string' ? fill.color : '')
@@ -682,6 +698,9 @@ export function adjustTextPaintForSlideBackground(paint, fill, palette, run) {
 
 export function resolveTextHex(content, palette, fallback = '#0F172A') {
   const c = content || {}
+  if (c.userColor && typeof c.color === 'string' && c.color && !isGradientFill(c.color)) {
+    return cssColorToHex(c.color, fallback)
+  }
   const run = Array.isArray(c.runs)
     ? c.runs.find(
         (item) => item?.color || item?.fill || (item?.colorRole && !/muted/i.test(String(item.colorRole)))

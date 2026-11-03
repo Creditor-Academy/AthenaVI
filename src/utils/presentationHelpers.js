@@ -1121,9 +1121,13 @@ export function normalizeSlideForEditor(slide, index = 0, aspectRatio = '16:9') 
     backgroundGradientStops:
       slide?.backgroundGradientStops || elementsDoc?.backgroundGradientStops,
     backgroundFill: slide?.backgroundFill || elementsDoc?.backgroundFill,
-    backgroundImage: slide?.backgroundImage,
-    backgroundImageFit: slide?.backgroundImageFit || 'cover',
-    backgroundImageElementId: slide?.backgroundImageElementId,
+    // The server keeps background keys inside the elements doc (like the gradient keys above);
+    // reading only the slide row lost a background image on reload and the next save dropped it.
+    backgroundImage: slide?.backgroundImage || elementsDoc?.backgroundImage,
+    backgroundImageFit:
+      slide?.backgroundImageFit || elementsDoc?.backgroundImageFit || 'cover',
+    backgroundImageElementId:
+      slide?.backgroundImageElementId || elementsDoc?.backgroundImageElementId,
     elements: {
       version: elementsDoc?.version || 1,
       canvas,

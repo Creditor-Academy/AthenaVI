@@ -79,23 +79,50 @@ class AssetService {
     const validationError = this.validateUploadFile(file);
     if (validationError) throw new Error(validationError);
 
-    const formData = new FormData();
-    formData.append('file', file);
+    const send = () => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return fetch(buildUrl(API_CONFIG.ENDPOINTS.ASSETS.UPLOAD(workspaceId)), {
+        method: 'POST',
+        headers: {
+          Authorization: getAuthHeaders().Authorization || '',
+        },
+        body: formData,
+      });
+    };
 
-    const response = await fetch(buildUrl(API_CONFIG.ENDPOINTS.ASSETS.UPLOAD(workspaceId)), {
-      method: 'POST',
-      headers: {
-        Authorization: getAuthHeaders().Authorization || '',
-      },
-      body: formData,
-    });
+    // One retry for failures that happen before the server handles the upload (gateway /
+    // service unavailable, dropped connection) — these made identical uploads "sometimes"
+    // fail. A 504 is not retried: the upload may have completed, and a retry would duplicate it.
+    let response;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        response = await send();
+      } catch {
+        if (attempt === 1) {
+          throw new Error('Upload failed: the connection dropped. Check your network and try again.');
+        }
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        continue;
+      }
+      if ((response.status === 502 || response.status === 503) && attempt === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        continue;
+      }
+      break;
+    }
 
     if (!response.ok) {
       const err = await this.readErrorPayload(response);
-      if (response.status === 400) {
-        throw new StorageLimitError(err.message || 'Storage limit exceeded', err);
+      // Only a real quota error is a storage error; other 400s (file type, validation) used to be
+      // reported as "storage limit exceeded", hiding the actual reason the upload failed.
+      if (response.status === 400 && /storage limit/i.test(String(err.message || ''))) {
+        throw new StorageLimitError(err.message, err);
       }
-      throw new Error(err.message || `Upload failed: ${response.status}`);
+      if (response.status === 413) {
+        throw new Error('This file is too large for the server to accept. Try a smaller image.');
+      }
+      throw new Error(err.message || `Upload failed (${response.status}). Please try again.`);
     }
 
     const data = await response.json();
