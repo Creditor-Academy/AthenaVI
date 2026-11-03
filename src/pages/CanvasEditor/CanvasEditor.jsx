@@ -18,6 +18,7 @@ import CanvasExportModal from './CanvasExportModal'
 import PptElementContextMenu from '../Slides/AIPptComponents/PptElementContextMenu'
 import PptQuickMenu from '../Slides/AIPptComponents/PptQuickMenu'
 import ImageCropModal from '../Slides/AIPptComponents/ImageCropModal'
+import { cropChanged, placementForCrop, withImageCrop } from '../../utils/imageCrop'
 import { isShortcutHelpKey } from './canvasShortcuts'
 import {
   DEFAULT_SIZE,
@@ -1371,14 +1372,18 @@ export default function CanvasEditor({
               item.id === elementId
                 ? {
                     ...item,
-                    content: {
-                      ...item.content,
-                      url,
-                      src: url,
-                      fit: item.content?.fit || 'cover',
-                      ...(payload.assetId ? { assetId: payload.assetId } : {}),
-                      ...(payload.alt != null ? { alt: payload.alt } : {}),
-                    },
+                    // A crop region belongs to the previous picture; a new image starts uncropped.
+                    content: withImageCrop(
+                      {
+                        ...item.content,
+                        url,
+                        src: url,
+                        fit: item.content?.fit || 'cover',
+                        ...(payload.assetId ? { assetId: payload.assetId } : {}),
+                        ...(payload.alt != null ? { alt: payload.alt } : {}),
+                      },
+                      item.content?.url === url ? item.content?.crop : null
+                    ),
                   }
                 : item
             ),
@@ -1439,7 +1444,7 @@ export default function CanvasEditor({
     updateCanvasesWithHistory(updated)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleCropApply = useCallback(({ fit, opacity }) => {
+  const handleCropApply = useCallback(({ crop, fit, opacity, naturalWidth, naturalHeight }) => {
     const canvas = canvasesRef.current[activeCanvasIndexRef.current] || canvasesRef.current[0]
     const elementId = selectedRef.current.elementId
     const el = canvas?.elements?.find((item) => item.id === elementId)
@@ -1453,8 +1458,11 @@ export default function CanvasEditor({
               item.id === elementId
                 ? {
                     ...item,
-                    content: { ...item.content, fit, opacity },
-                    placement: { ...item.placement, opacity: opacity ?? item.placement?.opacity },
+                    // Opacity lives on the image only; also writing it to the frame made 50% render as 25%.
+                    content: withImageCrop({ ...item.content, fit, opacity }, crop),
+                    placement: cropChanged(item.content?.crop, crop)
+                      ? placementForCrop(item.placement, crop, naturalWidth, naturalHeight)
+                      : item.placement,
                   }
                 : item
             ),
@@ -2116,6 +2124,9 @@ export default function CanvasEditor({
         <CanvasCropDialog onClose={() => setCropModalOpen(false)}>
           <ImageCropModal
             imageUrl={selectedElement.content?.url || selectedElement.content?.src}
+            initialCrop={selectedElement.content?.crop}
+            initialFit={selectedElement.content?.fit}
+            initialOpacity={selectedElement.content?.opacity}
             onApply={handleCropApply}
             onClose={() => setCropModalOpen(false)}
           />

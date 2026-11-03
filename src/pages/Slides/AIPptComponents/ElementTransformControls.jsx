@@ -25,6 +25,8 @@ export default function ElementTransformControls({
   placement = {},
   content = {},
   showFlip = false,
+  /** When set, Flip is shown disabled with this explanation (e.g. empty image slot). */
+  flipDisabledReason = null,
   disabled = false,
   onChangePlacement,
   onChangeContent,
@@ -142,9 +144,9 @@ export default function ElementTransformControls({
             <button
               type="button"
               className={`ppt-transform-flip-btn ${flipH ? 'is-active' : ''}`}
-              disabled={disabled}
+              disabled={disabled || Boolean(flipDisabledReason)}
               onClick={() => toggleFlip('h')}
-              title="Flip horizontal"
+              title={flipDisabledReason || 'Flip horizontal'}
               aria-pressed={flipH}
             >
               <MdFlip size={15} />
@@ -153,9 +155,9 @@ export default function ElementTransformControls({
             <button
               type="button"
               className={`ppt-transform-flip-btn ${flipV ? 'is-active' : ''}`}
-              disabled={disabled}
+              disabled={disabled || Boolean(flipDisabledReason)}
               onClick={() => toggleFlip('v')}
-              title="Flip vertical"
+              title={flipDisabledReason || 'Flip vertical'}
               aria-pressed={flipV}
             >
               <span className="ppt-transform-flip-icon-v" aria-hidden>

@@ -36,6 +36,66 @@ function blobToDataUrl(blob) {
   })
 }
 
+/**
+ * Page number field with always-visible − / + buttons. The value is clamped to [min, max] so
+ * what the field shows is always exactly the page that will be exported; typing is allowed
+ * and settles to the nearest valid page on blur / Enter.
+ */
+function PageStepper({ label, value, min, max, onChange }) {
+  const [draft, setDraft] = useState(null)
+  const commit = (raw) => {
+    const n = Math.round(Number(raw))
+    onChange(Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : value)
+    setDraft(null)
+  }
+  return (
+    <div className="canvas-export-stepper" role="group" aria-label={`${label} page`}>
+      <span className="canvas-export-stepper-label">{label}</span>
+      <button
+        type="button"
+        className="canvas-export-stepper-btn"
+        onClick={() => onChange(Math.max(min, value - 1))}
+        disabled={value <= min}
+        aria-label={`${label} page: previous`}
+      >
+        −
+      </button>
+      <input
+        type="text"
+        inputMode="numeric"
+        className="canvas-export-stepper-input"
+        value={draft ?? String(value)}
+        aria-label={`${label} page`}
+        onChange={(event) => setDraft(event.target.value.replace(/[^0-9]/g, ''))}
+        onBlur={(event) => commit(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault()
+            commit(event.currentTarget.value)
+          } else if (event.key === 'ArrowUp') {
+            event.preventDefault()
+            onChange(Math.min(max, value + 1))
+            setDraft(null)
+          } else if (event.key === 'ArrowDown') {
+            event.preventDefault()
+            onChange(Math.max(min, value - 1))
+            setDraft(null)
+          }
+        }}
+      />
+      <button
+        type="button"
+        className="canvas-export-stepper-btn"
+        onClick={() => onChange(Math.min(max, value + 1))}
+        disabled={value >= max}
+        aria-label={`${label} page: next`}
+      >
+        +
+      </button>
+    </div>
+  )
+}
+
 function pageBackground(page) {
   const background = page?.background
   if (background && typeof background === 'object') return '#ffffff'
@@ -220,27 +280,25 @@ export default function CanvasExportModal({
             </div>
             {scope === 'range' && (
               <div className="canvas-export-range">
-                <label>
-                  From
-                  <input
-                    type="number"
-                    min={1}
-                    max={pages.length}
-                    value={rangeStart}
-                    onChange={(event) => setRangeStart(Number(event.target.value))}
-                  />
-                </label>
-                <label>
-                  to
-                  <input
-                    type="number"
-                    min={1}
-                    max={pages.length}
-                    value={rangeEnd}
-                    onChange={(event) => setRangeEnd(Number(event.target.value))}
-                  />
-                </label>
-                <span>of {pages.length}</span>
+                <PageStepper
+                  label="From"
+                  value={rangeStart}
+                  min={1}
+                  max={rangeEnd}
+                  onChange={setRangeStart}
+                />
+                <PageStepper
+                  label="To"
+                  value={rangeEnd}
+                  min={rangeStart}
+                  max={pages.length}
+                  onChange={setRangeEnd}
+                />
+                <span className="canvas-export-range-summary" aria-live="polite">
+                  {rangeStart === rangeEnd
+                    ? `Page ${rangeStart} of ${pages.length}`
+                    : `Pages ${rangeStart}–${rangeEnd} of ${pages.length} (${rangeEnd - rangeStart + 1} pages)`}
+                </span>
               </div>
             )}
           </div>

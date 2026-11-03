@@ -11,6 +11,7 @@ import {
 } from 'react-icons/fi'
 import { MdRotateRight } from 'react-icons/md'
 import { pageCoverDataUrl } from '../canvasThumbnail'
+import { CanvasPageRender } from '../CanvasExportFrame'
 import PptCanvasElement from '../../Slides/AIPptComponents/PptCanvasElement'
 import PptCanvasGuidesOverlay from '../../Slides/AIPptComponents/PptCanvasGuidesOverlay'
 import { computePptSmartGuides } from '../../../utils/pptSmartGuides'
@@ -45,6 +46,39 @@ const InactivePageCover = memo(function InactivePageCover({ page }) {
   const src = useMemo(() => pageCoverDataUrl(page), [page])
   if (!src) return null
   return <img className="canva-page-static-cover" alt="" src={src} />
+})
+
+/**
+ * Pages other than the one being edited, drawn read-only with their real content (images,
+ * text, shapes) — the same renderer as export/preview. The lightweight SVG cover (images as
+ * grey blocks) is only a stand-in until the page scrolls near the viewport, so long documents
+ * stay fast but nothing looks missing when the user actually sees it.
+ */
+const InactivePage = memo(function InactivePage({ page, zoom }) {
+  const hostRef = useRef(null)
+  const [near, setNear] = useState(() => typeof IntersectionObserver === 'undefined')
+  useEffect(() => {
+    if (near || !hostRef.current) return undefined
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) setNear(true)
+      },
+      { rootMargin: '800px 0px' }
+    )
+    observer.observe(hostRef.current)
+    return () => observer.disconnect()
+  }, [near])
+  return (
+    <div ref={hostRef} className="canva-page-readonly" aria-hidden>
+      {near ? (
+        <div style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}>
+          <CanvasPageRender page={page} transparent />
+        </div>
+      ) : (
+        <InactivePageCover page={page} />
+      )}
+    </div>
+  )
 })
 
 const DEFAULT_PALETTE = {
@@ -535,9 +569,9 @@ function InteractiveCanvasElementShell({
       centerY,
       startPointerAngle: pointerAngleFromCenter(e.clientX, e.clientY, centerX, centerY),
       textFloor:
-        mode === 'resize' && isText && !textBoxShrinksToFit(el)
-          ? createTextHeightFloor(shellRef.current, startPlacement.width)
-          : null,
+        // Every text box, including layout text that shrinks to fit, stops at the height its
+        // text needs at its current size — resizing never crops lines away.
+        mode === 'resize' && isText ? createTextHeightFloor(shellRef.current, startPlacement.width) : null,
     }
   }
 
@@ -614,7 +648,8 @@ function InteractiveCanvasElementShell({
         if (!editable || locked || editing) return
         if (e.target.closest?.('.ppt-canvas-el-resize, .ppt-text-drag, .ppt-canvas-el-rotate')) return
         if (e.target.closest?.('.ppt-table-cell-input, .ppt-text-editable')) return
-        if (isText) return
+        // Text moves from its body once selected (see EditableText); never from other parts.
+        if (isText && !e.target.closest?.('.ppt-text-display')) return
         if (!selected) {
           onSelect?.(el.id, e)
         }
@@ -966,9 +1001,9 @@ export default function CanvasStage({
                           // Layout-bound text keeps its slot height (it shrinks its font instead).
                           // User-made boxes grow with their text down to the page bottom; capping
                           // them at the current height clipped every pasted/typed line past the box.
-                          const slotMaxH =
-                            element.content?.slotMaxHeight ||
-                            (element.slotId ? element.placement?.height || curH : canvas.height)
+                          const slotMaxH = textBoxShrinksToFit(element)
+                            ? element.content?.slotMaxHeight || element.placement?.height || curH
+                            : canvas.height
                           const maxH = Math.max(
                             TEXT_MIN_HEIGHT,
                             Math.min(slotMaxH, canvas.height - y + minOverlapPx(curH) * 8)
@@ -1000,7 +1035,7 @@ export default function CanvasStage({
                     </InteractiveCanvasElementShell>
                   )
                 }) : (
-                  <InactivePageCover page={canvas} />
+                  <InactivePage page={canvas} zoom={zoom} />
                 )}
 
                 {isCurrent && (

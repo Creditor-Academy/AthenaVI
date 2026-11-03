@@ -102,6 +102,7 @@ import {
 } from '../../../utils/presentationHelpers'
 import { enforceAppearancePalette } from '../../../utils/themeAppearance'
 import { coercePlainText } from '../../../utils/pptTextContent'
+import { cropChanged, normalizeCrop, placementForCrop } from '../../../utils/imageCrop'
 import {
   createTextHeightFloor,
   keepTextBoxTallEnough,
@@ -200,6 +201,23 @@ function normalizePlacementPatches(elementIdOrPatches, placement) {
 
 const TEXT_BORDER_DRAG_PX = 8
 const TEXT_MIN_HEIGHT = 24
+
+// Slide background keys to clear when another background kind is chosen. The full-canvas save
+// replaces the stored doc, so it must be built from the slide *without* these, or the old
+// image / gradient is written back and returns on reload.
+const NO_BACKGROUND_IMAGE = {
+  backgroundImage: undefined,
+  backgroundImageFit: undefined,
+  backgroundImageElementId: undefined,
+}
+const NO_BACKGROUND_GRADIENT = {
+  backgroundGradientStart: undefined,
+  backgroundGradientEnd: undefined,
+  backgroundGradientAngle: undefined,
+  backgroundGradientKind: undefined,
+  backgroundGradientStops: undefined,
+  backgroundFill: undefined,
+}
 const RESIZE_MIN_WIDTH = 40
 const RESIZE_MIN_HEIGHT = 40
 
@@ -228,6 +246,26 @@ function unlockDragCursor() {
   const root = document.documentElement
   root.classList.remove('ppt-drag-cursor-lock')
   root.style.removeProperty('--ppt-drag-cursor')
+}
+
+/**
+ * Layout device frames are chrome-only (`layoutSurface`): the screen picture is a separate
+ * image element placed inside the frame. Returns that element so Replace / drop fill it.
+ */
+function findDeviceFrameScreenImage(frame, elements = []) {
+  if (!frame?.content?.layoutSurface) return null
+  const p = frame.placement || {}
+  const inside = (el) => {
+    const q = el.placement || {}
+    const cx = (q.x || 0) + (q.width || 0) / 2
+    const cy = (q.y || 0) + (q.height || 0) / 2
+    return cx >= (p.x || 0) && cx <= (p.x || 0) + (p.width || 0) && cy >= (p.y || 0) && cy <= (p.y || 0) + (p.height || 0)
+  }
+  return (
+    elements
+      .filter((el) => el.id !== frame.id && el.type === 'image' && inside(el))
+      .sort((a, b) => (b.layer || 0) - (a.layer || 0))[0] || null
+  )
 }
 
 function isTextElement(el) {
@@ -643,9 +681,9 @@ function InteractiveElementShell({
       centerY,
       startPointerAngle: pointerAngleFromCenter(e.clientX, e.clientY, centerX, centerY),
       textFloor:
-        mode === 'resize' && isText && !textBoxShrinksToFit(el)
-          ? createTextHeightFloor(shellRef.current, startPlacement.width)
-          : null,
+        // Every text box, including layout text that shrinks to fit, stops at the height its
+        // text needs at its current size — resizing never crops lines away.
+        mode === 'resize' && isText ? createTextHeightFloor(shellRef.current, startPlacement.width) : null,
     }
   }
 
@@ -818,7 +856,8 @@ function InteractiveElementShell({
         if (e.button === 2) return
         if (!editable || !selected || editing) return
         if (e.target.closest?.('.ppt-canvas-el-resize, .ppt-text-drag, .ppt-canvas-el-rotate')) return
-        if (isText) return
+        // Text moves from its body once selected (see EditableText); never from other parts.
+        if (isText && !e.target.closest?.('.ppt-text-display')) return
         if (e.target.closest?.('.ppt-table-cell-input')) return
         beginDrag(e, 'move')
       }}
@@ -1128,9 +1167,11 @@ function SlideStage({
                     // Layout-bound text keeps its slot height (it shrinks its font instead).
                     // User-made boxes grow with their text up to the slide bottom; capping them
                     // at the current height left extra lines clipped once editing ended.
-                    const slotMaxH =
-                      el.content?.slotMaxHeight ||
-                      (el.slotId ? el.placement?.height || curH : canvas.height)
+                    // Only text that still shrinks its font to fit is capped at its slot; once the
+                    // user sets a font size (fit: false) it grows like any other box.
+                    const slotMaxH = textBoxShrinksToFit(el)
+                      ? el.content?.slotMaxHeight || el.placement?.height || curH
+                      : canvas.height
                     const maxH = Math.max(
                       TEXT_MIN_HEIGHT,
                       Math.min(slotMaxH, canvas.height - y + minOverlapPx(curH) * 8)
@@ -1236,7 +1277,14 @@ function AIPptEditor({
   const [minimapTransitionAfterIndex, setMinimapTransitionAfterIndex] = useState(null)
   const [minimapMenuSlideId, setMinimapMenuSlideId] = useState(null)
   const [minimapDragId, setMinimapDragId] = useState(null)
-  const [minimapDropIndex, setMinimapDropIndex] = useState(null)
+  const [minimapDropIndex, setMinimapDropIndexState] = useState(null)
+  // Mirrors the state so a drop never acts on a value from an older render.
+  const minimapDropIndexRef = useRef(null)
+  const setMinimapDropIndex = useCallback((next) => {
+    const value = typeof next === 'function' ? next(minimapDropIndexRef.current) : next
+    minimapDropIndexRef.current = value
+    setMinimapDropIndexState(value)
+  }, [])
   const [canvasZoom, setCanvasZoom] = useState(100)
   // Editor-only margin guide; a per-user preference, never saved into the deck.
   const [showDangerZone, setShowDangerZone] = useState(readDangerZonePref)
@@ -2225,14 +2273,16 @@ function AIPptEditor({
   )
 
   const handleCropApply = useCallback(
-    ({ fit, opacity }) => {
+    ({ crop, fit, opacity, naturalWidth, naturalHeight }) => {
       if (!selectedElementId || !selectedElement) return
+      const nextCrop = normalizeCrop(crop)
+      // patchElement merges content, so a removed crop must be sent as null.
+      // Opacity stays on the image only (also writing it to the frame squared it: 50% → 25%).
       elementMutations.patchElement(selectedElementId, {
-        content: { ...selectedElement.content, fit, opacity },
-        placement: {
-          ...selectedElement.placement,
-          opacity: opacity ?? selectedElement.placement?.opacity,
-        },
+        content: { ...selectedElement.content, fit, opacity, crop: nextCrop },
+        placement: cropChanged(selectedElement.content?.crop, nextCrop)
+          ? placementForCrop(selectedElement.placement, nextCrop, naturalWidth, naturalHeight)
+          : selectedElement.placement,
       })
     },
     [selectedElementId, selectedElement, elementMutations]
@@ -2261,7 +2311,7 @@ function AIPptEditor({
       setLocalSlides((prev) =>
         prev.map((s) => {
           if (s.id !== slideId) return s
-          const next = { ...s, ...patch }
+          const next = { ...s, ...NO_BACKGROUND_IMAGE, ...patch }
           next.elements = buildCanvasDoc(next, {
             aspectRatio,
             elements: s.elements?.elements,
@@ -2272,7 +2322,7 @@ function AIPptEditor({
       if (workspaceId && presentationId) {
         const slide = localSlides.find((s) => s.id === slideId)
         const nextDoc = buildCanvasDoc(
-          { ...slide, ...patch },
+          { ...slide, ...NO_BACKGROUND_IMAGE, ...patch },
           { aspectRatio, elements: slide?.elements?.elements }
         )
         presentationService
@@ -2302,17 +2352,10 @@ function AIPptEditor({
             ? {
                 ...s,
                 backgroundColor: color,
-                backgroundGradientStart: undefined,
-                backgroundGradientEnd: undefined,
-                backgroundGradientAngle: undefined,
-                backgroundGradientKind: undefined,
-                backgroundGradientStops: undefined,
-                backgroundFill: undefined,
-                backgroundImage: undefined,
-                backgroundImageFit: undefined,
-                backgroundImageElementId: undefined,
+                ...NO_BACKGROUND_GRADIENT,
+                ...NO_BACKGROUND_IMAGE,
                 elements: buildCanvasDoc(
-                  { ...s, backgroundColor: color },
+                  { ...s, ...NO_BACKGROUND_GRADIENT, ...NO_BACKGROUND_IMAGE, backgroundColor: color },
                   {
                     aspectRatio,
                     backgroundColor: color,
@@ -2330,7 +2373,7 @@ function AIPptEditor({
       if (workspaceId && presentationId) {
         const slide = localSlides.find((s) => s.id === slideId)
         const nextDoc = buildCanvasDoc(
-          { ...slide, backgroundColor: color },
+          { ...slide, ...NO_BACKGROUND_GRADIENT, ...NO_BACKGROUND_IMAGE, backgroundColor: color },
           {
             aspectRatio,
             backgroundColor: color,
@@ -2389,23 +2432,18 @@ function AIPptEditor({
         }
         return item
       })
-      const nextDoc = buildCanvasDoc(slide, { aspectRatio, elements: nextElements })
-
       const slidePatch = enabled
         ? {
+            ...NO_BACKGROUND_GRADIENT,
             backgroundImage: imageUrl,
             backgroundImageFit: el.content?.fit || 'cover',
             backgroundImageElementId: elementId,
-            backgroundGradientStart: undefined,
-            backgroundGradientEnd: undefined,
           }
         : slide?.backgroundImageElementId === elementId
-          ? {
-              backgroundImage: undefined,
-              backgroundImageFit: undefined,
-              backgroundImageElementId: undefined,
-            }
+          ? NO_BACKGROUND_IMAGE
           : {}
+      // Built from the patched slide: the canvas save replaces the stored doc wholesale.
+      const nextDoc = buildCanvasDoc({ ...slide, ...slidePatch }, { aspectRatio, elements: nextElements })
 
       setLocalSlides((prev) =>
         prev.map((s) =>
@@ -2424,6 +2462,10 @@ function AIPptEditor({
                 backgroundImageElementId: elementId,
                 backgroundGradientStart: null,
                 backgroundGradientEnd: null,
+                backgroundGradientAngle: null,
+                backgroundGradientKind: null,
+                backgroundGradientStops: null,
+                backgroundFill: null,
               }
             : slide?.backgroundImageElementId === elementId
               ? {
@@ -3254,22 +3296,50 @@ function AIPptEditor({
     }
     setSlideRegenerating(slide.id, true)
     setSlideAiEditId((prev) => (prev === slide.id ? null : prev))
-    try {
-      await presentationService.regenerateSlide(workspaceId, presentationId, slide.id, {
+    // A slide added in this session may still be known by its temporary id locally.
+    const serverSlideId = resolvePersistedSlideId(slide.id)
+    // Server limit; longer prompts were rejected outright (400) instead of being processed.
+    const promptText = prompt ? String(prompt).slice(0, 2000) : ''
+    const requestRegenerate = (overwrite) =>
+      presentationService.regenerateSlide(workspaceId, presentationId, serverSlideId, {
         target,
-        overwriteManualEdits,
-        ...(prompt ? { prompt } : {}),
+        overwriteManualEdits: overwrite,
+        ...(promptText ? { prompt: promptText } : {}),
         ...(actionId ? { action: actionId } : {}),
       })
-      await presentationService.pollSlideUntilSettled(workspaceId, presentationId, slide.id, {
+    try {
+      try {
+        await requestRegenerate(overwriteManualEdits)
+      } catch (err) {
+        // The local "manually edited" flag is only read at load, but every edit in this
+        // session marks the slide as edited on the server, which then refuses with 409.
+        // Ask now (as we would have up front) and retry instead of failing silently.
+        if (
+          overwriteManualEdits ||
+          !(err instanceof PresentationConflictError) ||
+          !/manual edit/i.test(String(err.message || ''))
+        ) {
+          throw err
+        }
+        const ok = await confirmDialog(
+          'This slide was edited manually. Regenerate and overwrite your changes?',
+          { title: 'Overwrite manual edits?', confirmLabel: 'Overwrite', variant: 'danger' }
+        )
+        if (!ok) return
+        setLocalSlides((prev) =>
+          prev.map((s) => (s.id === slide.id ? { ...s, manuallyEdited: true } : s))
+        )
+        await requestRegenerate(true)
+      }
+      await presentationService.pollSlideUntilSettled(workspaceId, presentationId, serverSlideId, {
         intervalMs: 2000,
       })
       // Swap in just this slide so unsaved work on other slides is untouched.
-      await refreshSlide(slide.id)
+      await refreshSlide(serverSlideId)
     } catch (err) {
       if (err?.status === 'FAILED') {
         // Refresh so the slide shows its failed state + Regenerate action instead of stale content.
-        await refreshSlide(slide.id).catch(() => {})
+        await refreshSlide(serverSlideId).catch(() => {})
         setError('Slide regeneration failed — try again.')
       } else if (err instanceof PresentationConflictError) {
         setError('Cannot overwrite — confirm overwrite or wait for generation to finish.')
@@ -3767,6 +3837,31 @@ function AIPptEditor({
         }
       }
 
+      const frameSlide = localSlidesRef.current.find((sl) =>
+        (sl.elements?.elements || []).some((el) => el.id === elementId)
+      )
+      const frameElements = frameSlide?.elements?.elements || []
+      const screen = findDeviceFrameScreenImage(
+        frameElements.find((el) => el.id === elementId),
+        frameElements
+      )
+      if (screen && url) {
+        // Layout frames only draw chrome; the picture belongs on their screen image element.
+        await elementMutations.patchElement(screen.id, {
+          content: {
+            url,
+            src: url,
+            s3Key: imagePayload.s3Key || imagePayload.key || null,
+            crop: null,
+            fit: 'cover',
+            ...(assetId ? { assetId } : {}),
+            ...(imagePayload.alt != null ? { alt: imagePayload.alt } : {}),
+          },
+        })
+        setSelectedElementId(screen.id)
+        return
+      }
+
       const patch = buildDeviceFrameScreenPatch(url, {
         assetId,
         alt: imagePayload.alt,
@@ -3784,6 +3879,7 @@ function AIPptEditor({
       if (!elementId || viewOnly || isGenerating) return
       let url = imagePayload.url || imagePayload.src || ''
       let assetId = imagePayload.assetId || undefined
+      let s3Key = imagePayload.s3Key || imagePayload.key || null
 
       if (imagePayload.file && workspaceId) {
         try {
@@ -3795,6 +3891,7 @@ function AIPptEditor({
             asset?.downloadUrl ||
             url
           assetId = asset?.id || asset?._id || assetId
+          s3Key = asset?.key || asset?.s3Key || s3Key
         } catch {
           // Keep blob/preview URL if upload fails
         }
@@ -3805,6 +3902,11 @@ function AIPptEditor({
         content: {
           url,
           src: url,
+          // The previous image's key must not survive: the server signs `s3Key` before `url`,
+          // so a stale key brought the old picture back on reload/export. null = derive from url.
+          s3Key,
+          // A crop belongs to the old picture.
+          crop: null,
           fit: 'cover',
           ...(assetId ? { assetId } : {}),
           ...(imagePayload.alt != null ? { alt: imagePayload.alt } : {}),
@@ -3821,12 +3923,12 @@ function AIPptEditor({
 
   const handleReplaceImage = useCallback(() => {
     if (!selectedElementId || viewOnly || isGenerating) return
-    replaceImageTargetRef.current = {
-      id: selectedElementId,
-      deviceFrame: isPptDeviceFrameElement(selectedElement),
-    }
+    const screen = findDeviceFrameScreenImage(selectedElement, selectedSlide?.elements?.elements || [])
+    replaceImageTargetRef.current = screen
+      ? { id: screen.id, deviceFrame: false }
+      : { id: selectedElementId, deviceFrame: isPptDeviceFrameElement(selectedElement) }
     replaceImageInputRef.current?.click()
-  }, [selectedElementId, selectedElement, viewOnly, isGenerating])
+  }, [selectedElementId, selectedElement, selectedSlide, viewOnly, isGenerating])
 
   const handleReplaceImageFile = useCallback(
     async (event) => {
@@ -3850,7 +3952,13 @@ function AIPptEditor({
         const asset = await assetService.uploadAsset(workspaceId, file)
         const url = asset?.url || asset?.cdnUrl || asset?.src || asset?.downloadUrl || ''
         if (!url) throw new Error('Upload succeeded but no URL returned')
-        const payload = { url, src: url, alt: asset?.name || file.name, assetId: asset?.id || asset?._id }
+        const payload = {
+          url,
+          src: url,
+          alt: asset?.name || file.name,
+          assetId: asset?.id || asset?._id,
+          s3Key: asset?.key || asset?.s3Key || null,
+        }
         if (target.deviceFrame) {
           await handleFillDeviceFrame(target.id, payload)
         } else {
@@ -4260,9 +4368,78 @@ function AIPptEditor({
     }
   }
 
-  const openMediaForBackground = () => {
-    setError('Use Media panel to insert images, or select an image and use Replace media.')
-  }
+  // Slide design → Background → Add image: pick a file, upload it, and use it as this
+  // slide's background (it replaces any colour/gradient background).
+  const backgroundImageInputRef = useRef(null)
+  const backgroundImageSlideRef = useRef(null)
+  const openMediaForBackground = useCallback(() => {
+    if (viewOnly || isGenerating) return
+    backgroundImageSlideRef.current = selectedSlideId || localSlides[0]?.id || null
+    backgroundImageInputRef.current?.click()
+  }, [viewOnly, isGenerating, selectedSlideId, localSlides])
+
+  const handleBackgroundImageFile = useCallback(
+    async (event) => {
+      const file = event.target.files?.[0]
+      event.target.value = ''
+      const slideId = backgroundImageSlideRef.current
+      backgroundImageSlideRef.current = null
+      if (!file || !slideId) return
+      if (!file.type?.startsWith('image/')) {
+        setError('Choose an image file for the slide background.')
+        return
+      }
+      if (!workspaceId) {
+        setError('Workspace required to upload')
+        return
+      }
+      setError('')
+      setBusy(true)
+      try {
+        const asset = await assetService.uploadAsset(workspaceId, file)
+        const url = asset?.url || asset?.cdnUrl || asset?.src || asset?.downloadUrl || ''
+        if (!url) throw new Error('Upload succeeded but no URL returned')
+        const slide = localSlidesRef.current.find((s) => s.id === slideId)
+        if (!slide) return
+        const slidePatch = {
+          ...NO_BACKGROUND_GRADIENT,
+          backgroundImage: url,
+          backgroundImageFit: 'cover',
+          backgroundImageElementId: undefined,
+        }
+        // An image element previously used as the background stops being one.
+        const nextElements = (slide.elements?.elements || []).map((el) =>
+          el.content?.useAsBackground ? { ...el, content: { ...el.content, useAsBackground: false } } : el
+        )
+        const nextDoc = buildCanvasDoc({ ...slide, ...slidePatch }, { aspectRatio, elements: nextElements })
+        pushHistorySnapshot()
+        setLocalSlides((prev) =>
+          prev.map((s) => (s.id === slideId ? { ...s, ...slidePatch, elements: nextDoc } : s))
+        )
+        if (presentationId) {
+          presentationService
+            .patchSlide(workspaceId, presentationId, slideId, {
+              backgroundImage: url,
+              backgroundImageFit: 'cover',
+              backgroundImageElementId: null,
+              backgroundGradientStart: null,
+              backgroundGradientEnd: null,
+              backgroundGradientAngle: null,
+              backgroundGradientKind: null,
+              backgroundGradientStops: null,
+              backgroundFill: null,
+            })
+            .catch(() => {})
+          queueCanvasSave(slideId, nextDoc)
+        }
+      } catch (err) {
+        setError(err.message || 'Could not set the background image')
+      } finally {
+        setBusy(false)
+      }
+    },
+    [workspaceId, presentationId, aspectRatio, queueCanvasSave, pushHistorySnapshot]
+  )
 
   if (loading) {
     return <PptDeckOpenBoot title={deckTitle} />
@@ -4277,6 +4454,13 @@ function AIPptEditor({
         accept="image/*"
         hidden
         onChange={handleReplaceImageFile}
+      />
+      <input
+        ref={backgroundImageInputRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={handleBackgroundImageFile}
       />
       {isGenerating && (
         <div className="aig-generating-lock" role="status">
@@ -4969,14 +5153,24 @@ function AIPptEditor({
                   e.preventDefault()
                   e.dataTransfer.dropEffect = 'move'
                   const items = [...e.currentTarget.querySelectorAll('[data-minimap-slide]')]
-                  let nextIndex = items.length
+                  const fromIndex = localSlidesRef.current.findIndex((s) => s.id === minimapDragIdRef.current)
+                  // The card under the pointer is the target: the dragged slide takes its place
+                  // (after it when moving down, before it when moving up). Previously only the
+                  // lower half of the next card counted, so most drops were silently no-ops.
+                  let overIndex = items.length - 1
                   for (let i = 0; i < items.length; i += 1) {
                     const rect = items[i].getBoundingClientRect()
-                    if (e.clientY < rect.top + rect.height / 2) {
-                      nextIndex = i
+                    if (e.clientY < rect.bottom) {
+                      overIndex = i
                       break
                     }
                   }
+                  const nextIndex =
+                    fromIndex < 0 || overIndex === fromIndex
+                      ? null
+                      : overIndex > fromIndex
+                        ? overIndex + 1
+                        : overIndex
                   setMinimapDropIndex((prev) => (prev === nextIndex ? prev : nextIndex))
                 }}
                 onDrop={(e) => {
@@ -4986,7 +5180,7 @@ function AIPptEditor({
                     e.dataTransfer.getData('application/x-athena-slide') ||
                     e.dataTransfer.getData('text/plain')
                   const fromIndex = localSlidesRef.current.findIndex((s) => s.id === fromId)
-                  handleReorderSlides(fromIndex, minimapDropIndex)
+                  handleReorderSlides(fromIndex, minimapDropIndexRef.current)
                   minimapDragIdRef.current = null
                   setMinimapDragId(null)
                   setMinimapDropIndex(null)
@@ -5230,6 +5424,9 @@ function AIPptEditor({
       {cropModalOpen && selectedElement && (
         <ImageCropModal
           imageUrl={selectedElement.content?.url || selectedElement.content?.src}
+          initialCrop={selectedElement.content?.crop}
+          initialFit={selectedElement.content?.fit}
+          initialOpacity={selectedElement.content?.opacity}
           onApply={handleCropApply}
           onClose={() => setCropModalOpen(false)}
         />
