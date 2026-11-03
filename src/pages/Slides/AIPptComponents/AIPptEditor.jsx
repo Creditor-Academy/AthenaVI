@@ -45,8 +45,16 @@ import { computePptSmartGuides } from '../../../utils/pptSmartGuides'
 import {
   canPptGroup,
   canPptUngroup,
+  applyPptElementPatch,
   collectPptMoveIds,
+  expandPptSelectionIds,
   isPptGroup,
+  groupScaleForResize,
+  placementPatchesChangeContent,
+  resizePptGroupPatches,
+  setPptGroupScaling,
+  startPptGroupResize,
+  syncPptGroupBounds,
 } from '../../../utils/pptGroupUtils'
 import { isPptHitThroughElement } from '../../../utils/pptHitThrough'
 import { exceedsDragThreshold } from '../../../utils/pointerDrag'
@@ -104,7 +112,19 @@ import { enforceAppearancePalette } from '../../../utils/themeAppearance'
 import { coercePlainText } from '../../../utils/pptTextContent'
 import { cropChanged, normalizeCrop, placementForCrop } from '../../../utils/imageCrop'
 import {
+  imageFilesFromDataTransfer,
+  imagePlacementForPage,
+  isImageFile,
+  readImageSize,
+} from '../../../utils/imageUploadFormat'
+import {
+  copiedElementsText,
+  useBlockStrayFileDrops,
+  useEditorClipboard,
+} from '../../../hooks/useEditorClipboard'
+import {
   createTextHeightFloor,
+  findSiblingShell,
   keepTextBoxTallEnough,
   textBoxShrinksToFit,
 } from '../../../utils/textBoxEditing'
@@ -561,8 +581,18 @@ function InteractiveElementShell({
         })
       }
 
+      const patches =
+        drag.mode === 'resize' && drag.groupResize
+          ? resizePptGroupPatches(
+              drag.groupResize,
+              el.id,
+              start,
+              groupScaleForResize(drag.handle, start, next),
+              drag.handle
+            )
+          : { [el.id]: next }
+      next = patches[el.id]
       lastPlacementRef.current = next
-      const patches = { [el.id]: next }
       if (drag.mode === 'move' && drag.moveIds?.length) {
         const primaryStart = drag.startPlacement
         const totalDx = next.x - (primaryStart.x || 0)
@@ -592,6 +622,7 @@ function InteractiveElementShell({
       const drag = dragRef.current
       if (!drag) return
       dragRef.current = null
+      if (drag.groupResize) setPptGroupScaling(false)
       unlockDragCursor()
       try {
         if (e?.pointerId != null && drag.captureTarget?.hasPointerCapture?.(e.pointerId)) {
@@ -684,8 +715,27 @@ function InteractiveElementShell({
         // Every text box, including layout text that shrinks to fit, stops at the height its
         // text needs at its current size — resizing never crops lines away.
         mode === 'resize' && isText ? createTextHeightFloor(shellRef.current, startPlacement.width) : null,
+      // Resizing a group resizes its children with it (text never shorter than its text).
+      groupResize:
+        mode === 'resize' && isPptGroup(el)
+          ? startPptGroupResize(el, allElements || [], {
+              minHeightFor: (child, start) =>
+                isTextElement(child)
+                  ? createTextHeightFloor(findSiblingShell(shellRef.current, child.id), start.width)?.(start.width)
+                  : null,
+            })
+          : null,
     }
+    if (dragRef.current.groupResize) setPptGroupScaling(true)
   }
+
+  // A shell removed mid-resize (undo, page switch) must not leave the group-scaling flag on.
+  useEffect(
+    () => () => {
+      if (dragRef.current?.groupResize) setPptGroupScaling(false)
+    },
+    []
+  )
 
   const handleDragOver = (e) => {
     if (!acceptsImageFill) return
@@ -730,7 +780,7 @@ function InteractiveElementShell({
     }
 
     const file = e.dataTransfer.files?.[0]
-    if (file?.type?.startsWith('image/')) {
+    if (isImageFile(file)) {
       const blobUrl = URL.createObjectURL(file)
       applyDroppedImage({
         url: blobUrl,
@@ -972,6 +1022,7 @@ function SlideStage({
   onImageAuthError,
   onFillDeviceFrame,
   onFillImage,
+  onDropImageFiles,
   showEmptyTextHint = false,
   showDangerZone = false,
 }) {
@@ -984,7 +1035,7 @@ function SlideStage({
       : selectedElementId
         ? [selectedElementId]
         : []
-  const rawElements = (slide?.elements?.elements || []).filter(
+  const rawElements = syncPptGroupBounds(slide?.elements?.elements || []).filter(
     (el) =>
       !isSlideBackgroundElement(el, slide) &&
       shouldPaintElement(el, slide, canvas.width, canvas.height)
@@ -1044,6 +1095,25 @@ function SlideStage({
       onContextMenu={(e) => {
         if (e.target.closest?.('[data-element-id]')) return
         e.preventDefault()
+      }}
+      // Image files dropped on the slide (not on an image box, which takes the picture itself)
+      // are added as new images where they were dropped.
+      onDragOver={(e) => {
+        if (!editable || !onDropImageFiles) return
+        const types = Array.from(e.dataTransfer?.types || [])
+        if (!types.includes('Files') || types.includes('application/json')) return
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'copy'
+      }}
+      onDrop={(e) => {
+        if (!editable || !onDropImageFiles) return
+        const files = imageFilesFromDataTransfer(e.dataTransfer)
+        if (!files.length) return
+        e.preventDefault()
+        const point = stageRef.current
+          ? pointerToCanvas(e.clientX, e.clientY, stageRef.current, canvas.width, canvas.height)
+          : null
+        onDropImageFiles(files, point)
       }}
     >
       <div className="aig-slide-stage-clip" style={slideBgStyle}>
@@ -2119,6 +2189,27 @@ function AIPptEditor({
   })
   elementMutationsRef.current = elementMutations
 
+  const insertImageFilesRef = useRef(null)
+  const editorClipboard = useEditorClipboard({
+    enabled: !viewOnly && !isGenerating,
+    hasElements: () => Boolean(elementMutationsRef.current?.hasClipboard?.()),
+    onPasteElements: () => elementMutationsRef.current?.pasteClipboard?.(),
+    onPasteImages: (files) => insertImageFilesRef.current?.(files),
+  })
+  useBlockStrayFileDrops(true)
+  /** Plain text of the copied elements, for pasting into other apps. */
+  const selectionClipboardText = useCallback(
+    (ids) => {
+      const slide =
+        localSlidesRef.current.find((s) => s.id === selectedSlideIdRef.current) ||
+        localSlidesRef.current.find((s) => s.id === selectedSlideId)
+      const els = slide?.elements?.elements || []
+      const expanded = expandPptSelectionIds(els, ids)
+      return copiedElementsText(els.filter((el) => expanded.includes(el.id)))
+    },
+    [selectedSlideId]
+  )
+
   const handleUndo = useCallback(() => {
     restoreHistorySnapshot(history.undo(currentHistorySnapshot()))
   }, [history, currentHistorySnapshot, restoreHistorySnapshot])
@@ -2210,7 +2301,7 @@ function AIPptEditor({
           break
         case 'copy':
           if (viewOnly) { askOwner(); break }
-          elementMutations.copySelection(ids)
+          if (elementMutations.copySelection(ids)) editorClipboard.copyFromMenu(selectionClipboardText(ids))
           break
         case 'paste':
           if (viewOnly) { askOwner(); break }
@@ -2269,7 +2360,7 @@ function AIPptEditor({
           break
       }
     },
-    [handleUndo, handleRedo, elementMutations, multiSelectIds, selectedElementId, selectedSlide, viewOnly, askOwner]
+    [handleUndo, handleRedo, elementMutations, multiSelectIds, selectedElementId, selectedSlide, viewOnly, askOwner, editorClipboard, selectionClipboardText]
   )
 
   const handleCropApply = useCallback(
@@ -2531,9 +2622,7 @@ function AIPptEditor({
       setLocalSlides((prev) => {
         const next = prev.map((s) => {
           if (s.id !== slideId) return s
-          const elements = (s.elements?.elements || []).map((el) =>
-            patches[el.id] ? { ...el, placement: { ...el.placement, ...patches[el.id] } } : el
-          )
+          const elements = (s.elements?.elements || []).map((el) => applyPptElementPatch(el, patches[el.id]))
           return { ...s, elements: buildCanvasDoc(s, { aspectRatio, elements }) }
         })
         localSlidesRef.current = next
@@ -2550,6 +2639,13 @@ function AIPptEditor({
       if (!ids.length) return
       placementHistoryArmedRef.current = true
       if (!workspaceId || !presentationId || isGenerating || viewOnly) return
+
+      // A group resize also scales its children's fonts: save the whole slide, not just placements.
+      if (placementPatchesChangeContent(patches)) {
+        const slide = localSlidesRef.current.find((s) => s.id === slideId)
+        if (slide?.elements) queueCanvasSave(slideId, slide.elements)
+        return
+      }
 
       if (ids.length > 1) {
         for (const elementId of ids) {
@@ -3466,6 +3562,61 @@ function AIPptEditor({
     void persistInserted()
   }
 
+  const insertElementRef = useRef(null)
+  insertElementRef.current = handleInsertElement
+
+  /** Images pasted from the clipboard or dropped on the slide: uploaded, then added as new images. */
+  const insertImageFiles = useCallback(
+    async (files, { center = null } = {}) => {
+      if (viewOnly || isGenerating || !files?.length) return
+      if (!workspaceId) {
+        setError('Workspace required to upload')
+        return
+      }
+      const slide = localSlidesRef.current.find((s) => s.id === selectedSlideId) || localSlidesRef.current[0]
+      if (!slide) return
+      const page = resolveCanvasSize(slide, aspectRatio)
+      setError('')
+      setBusy(true)
+      try {
+        for (const [i, file] of files.slice(0, 10).entries()) {
+          const size = await readImageSize(file)
+          let asset
+          try {
+            asset = await assetService.uploadAsset(workspaceId, file)
+          } catch (err) {
+            setError(`Couldn't add ${file.name || 'that image'}: ${err?.message || 'upload failed'}`)
+            continue
+          }
+          const url = asset?.url || asset?.cdnUrl || asset?.src || asset?.downloadUrl || ''
+          if (!url) {
+            setError(`Couldn't add ${file.name || 'that image'}: the upload returned no file URL`)
+            continue
+          }
+          const step = i * 24
+          const at = center ? { x: center.x + step, y: center.y + step } : step ? { x: page.width / 2 + step, y: page.height / 2 + step } : null
+          const s3Key = asset?.key || asset?.s3Key
+          await insertElementRef.current?.({
+            type: 'image',
+            placement: imagePlacementForPage(size, page, at),
+            content: {
+              url,
+              src: url,
+              alt: asset?.name || file.name || '',
+              fit: 'cover',
+              ...(asset?.id || asset?._id ? { assetId: asset.id || asset._id } : {}),
+              ...(s3Key ? { s3Key } : {}),
+            },
+          })
+        }
+      } finally {
+        setBusy(false)
+      }
+    },
+    [viewOnly, isGenerating, workspaceId, selectedSlideId, aspectRatio]
+  )
+  insertImageFilesRef.current = insertImageFiles
+
   const handleDeleteElement = useCallback(async (elementIdArg) => {
     const slideId = selectedSlideId || localSlides[0]?.id
     const requested = Array.isArray(elementIdArg)
@@ -3822,7 +3973,11 @@ function AIPptEditor({
       let url = imagePayload.url || imagePayload.src || ''
       let assetId = imagePayload.assetId || undefined
 
-      if (imagePayload.file && workspaceId) {
+      if (imagePayload.file) {
+        if (!workspaceId) {
+          setError('Workspace required to upload')
+          return
+        }
         try {
           const asset = await assetService.uploadAsset(workspaceId, imagePayload.file)
           url =
@@ -3832,8 +3987,10 @@ function AIPptEditor({
             asset?.downloadUrl ||
             url
           assetId = asset?.id || asset?._id || assetId
-        } catch {
-          // Keep blob/preview URL if upload fails
+        } catch (err) {
+          // Saving the temporary blob: preview made the picture vanish after a reload.
+          setError(`Couldn't upload ${imagePayload.file.name || 'that image'}: ${err?.message || 'upload failed'}`)
+          return
         }
       }
 
@@ -3881,7 +4038,11 @@ function AIPptEditor({
       let assetId = imagePayload.assetId || undefined
       let s3Key = imagePayload.s3Key || imagePayload.key || null
 
-      if (imagePayload.file && workspaceId) {
+      if (imagePayload.file) {
+        if (!workspaceId) {
+          setError('Workspace required to upload')
+          return
+        }
         try {
           const asset = await assetService.uploadAsset(workspaceId, imagePayload.file)
           url =
@@ -3892,8 +4053,10 @@ function AIPptEditor({
             url
           assetId = asset?.id || asset?._id || assetId
           s3Key = asset?.key || asset?.s3Key || s3Key
-        } catch {
-          // Keep blob/preview URL if upload fails
+        } catch (err) {
+          // Saving the temporary blob: preview made the picture vanish after a reload.
+          setError(`Couldn't upload ${imagePayload.file.name || 'that image'}: ${err?.message || 'upload failed'}`)
+          return
         }
       }
 
@@ -4065,6 +4228,8 @@ function AIPptEditor({
     handleReorderSelected,
     nudgeSelectedElements,
     elementMutations,
+    editorClipboard,
+    selectionClipboardText,
   }
 
   useEffect(() => {
@@ -4188,19 +4353,23 @@ function AIPptEditor({
         ctx.elementMutations.duplicateElement(selectionIds)
         return
       }
+      // Copy/cut/paste go through the browser's clipboard events (see useEditorClipboard), so
+      // an image copied in another app can be pasted, and copied elements still paste here.
       if (mod && key === 'c') {
-        e.preventDefault()
-        ctx.elementMutations.copySelection(selectionIds)
+        if (ctx.elementMutations.copySelection(selectionIds)) {
+          ctx.editorClipboard.noteElementCopy(ctx.selectionClipboardText(selectionIds))
+        }
         return
       }
       if (mod && key === 'x') {
-        e.preventDefault()
-        ctx.elementMutations.cutSelection(selectionIds, ctx.handleDeleteElement)
+        if (selectionIds.length) {
+          ctx.editorClipboard.noteElementCopy(ctx.selectionClipboardText(selectionIds))
+          ctx.elementMutations.cutSelection(selectionIds, ctx.handleDeleteElement)
+        }
         return
       }
       if (mod && key === 'v') {
-        e.preventDefault()
-        ctx.elementMutations.pasteClipboard()
+        ctx.editorClipboard.expectPaste()
         return
       }
       if (mod && key === 'g' && !e.shiftKey) {
@@ -4695,11 +4864,15 @@ function AIPptEditor({
           hasSelection={canvasSelectionIds.length > 0}
           onClose={() => setElementContextMenu(null)}
           onCut={() => {
+            const text = selectionClipboardText(canvasSelectionIds)
             elementMutations.cutSelection(canvasSelectionIds, handleDeleteElement)
+            editorClipboard.copyFromMenu(text)
             setElementContextMenu(null)
           }}
           onCopy={() => {
-            elementMutations.copySelection(canvasSelectionIds)
+            if (elementMutations.copySelection(canvasSelectionIds)) {
+              editorClipboard.copyFromMenu(selectionClipboardText(canvasSelectionIds))
+            }
             setElementContextMenu(null)
           }}
           onPaste={() => {
@@ -4945,6 +5118,11 @@ function AIPptEditor({
                       onImageAuthError={handleImageAuthError}
                       onFillDeviceFrame={handleFillDeviceFrame}
                       onFillImage={handleFillImage}
+                      onDropImageFiles={
+                        selectedSlideId === slide.id
+                          ? (files, point) => insertImageFiles(files, { center: point })
+                          : undefined
+                      }
                     />
                   </SlideContentGate>
 

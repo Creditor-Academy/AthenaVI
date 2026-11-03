@@ -1,5 +1,6 @@
 import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api';
 import { StorageLimitError } from '../utils/storageQuota';
+import { prepareImageForUpload } from '../utils/imageUploadFormat';
 
 export class AssetInUseError extends Error {
   constructor(message, data = {}) {
@@ -75,7 +76,9 @@ class AssetService {
     return null;
   }
 
-  async uploadAsset(workspaceId, file) {
+  async uploadAsset(workspaceId, sourceFile) {
+    // GIF/AVIF/BMP/SVG/.jfif… (typical downloads) become WebP/PNG/JPEG the server accepts.
+    const file = await prepareImageForUpload(sourceFile);
     const validationError = this.validateUploadFile(file);
     if (validationError) throw new Error(validationError);
 

@@ -325,21 +325,12 @@ export function usePptElementMutations({
       const slide = getSlide()
       if (!slide || !canPptGroup(slide.elements?.elements || [], selectedIds)) return
       pushHistory?.({ slides: localSlides, selectedSlideId, selectedElementId })
-      let createdId = null
-      updateElements(
-        slide.id,
-        (els) => {
-          const next = createPptGroup(els, selectedIds)
-          const created = next.find((el) => el.type === 'group' && !els.some((o) => o.id === el.id))
-          createdId = created?.id || null
-          return next
-        },
-        { history: false }
-      )
-      if (createdId) {
-        setSelectedElementId(null)
-        setMultiSelectIds?.([])
-      }
+      // The id is decided here: the updater runs later, so reading an id back from it always
+      // missed and the new group was never selected (the handles stayed on one child).
+      const groupId = `group_${Date.now()}`
+      updateElements(slide.id, (els) => createPptGroup(els, selectedIds, groupId), { history: false })
+      setSelectedElementId(groupId)
+      setMultiSelectIds?.([groupId])
     },
     [
       getSlide,

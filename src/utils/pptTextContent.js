@@ -470,6 +470,26 @@ const EDITABLE_BLOCK_TAGS = new Set([
   'DIV', 'P', 'LI', 'UL', 'OL', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'PRE', 'TR',
 ])
 
+function numericFontWeight(value) {
+  if (value == null || value === '') return null
+  if (value === 'bold' || value === 'bolder') return 700
+  if (value === 'normal' || value === 'lighter') return 400
+  const n = Number.parseInt(value, 10)
+  return Number.isFinite(n) ? n : null
+}
+
+const isItalicStyle = (value) => value === 'italic' || String(value || '').startsWith('oblique')
+
+function runPropsFromDataset(el, inherited) {
+  if (!el?.dataset?.run) return inherited
+  try {
+    const parsed = JSON.parse(el.dataset.run)
+    return parsed && typeof parsed === 'object' ? { ...inherited, ...parsed } : inherited
+  } catch {
+    return inherited
+  }
+}
+
 export function serializeEditableRuns(node) {
   if (!node) return []
   const runs = []
@@ -477,11 +497,35 @@ export function serializeEditableRuns(node) {
     const paint = runFromFill(fill)
     return user && paint.color ? { ...paint, userColor: true } : paint
   }
-  const walk = (n, inherited, user) => {
+  // Per-word bold / italic: whatever differs from the box itself — seeded run styles, or the
+  // browser's own <b>/<i>/styled spans. Only colour used to be kept, so editing a box with a
+  // bold lead-in ("Key point: …") saved it as plain text. Box-level formatting stays on the box.
+  const measure =
+    typeof window !== 'undefined' && typeof window.getComputedStyle === 'function' && node.isConnected
+  const computed = new Map()
+  const styleOf = (el) => {
+    if (!computed.has(el)) computed.set(el, window.getComputedStyle(el))
+    return computed.get(el)
+  }
+  const base = measure ? styleOf(node) : null
+  const baseWeight = base ? numericFontWeight(base.fontWeight) : null
+  const baseItalic = base ? isItalicStyle(base.fontStyle) : false
+  const format = (el, runProps) => {
+    const out = {}
+    if (runProps?.fontFamily) out.fontFamily = runProps.fontFamily
+    if (runProps?.fontRole) out.fontRole = runProps.fontRole
+    if (!base || !el || el === node) return out
+    const cs = styleOf(el)
+    const weight = numericFontWeight(cs.fontWeight)
+    if (weight != null && baseWeight != null && weight !== baseWeight) out.fontWeight = weight
+    if (isItalicStyle(cs.fontStyle) && !baseItalic) out.italic = true
+    return out
+  }
+  const walk = (n, inherited, user, runProps) => {
     if (!n) return
     if (n.nodeType === Node.TEXT_NODE) {
       const text = n.nodeValue || ''
-      if (text) runs.push({ text, ...style(inherited, user) })
+      if (text) runs.push({ text, ...style(inherited, user), ...format(n.parentElement, runProps) })
       return
     }
     if (n.nodeType !== Node.ELEMENT_NODE) return
@@ -497,9 +541,10 @@ export function serializeEditableRuns(node) {
     }
     const next = fillFromDataset(n, inherited)
     const nextUser = n.dataset?.userColor != null ? n.dataset.userColor === '1' : user
-    n.childNodes.forEach((child) => walk(child, next, nextUser))
+    const nextProps = runPropsFromDataset(n, runProps)
+    n.childNodes.forEach((child) => walk(child, next, nextUser, nextProps))
   }
-  walk(node, null, false)
+  walk(node, null, false, null)
   return mergeAdjacentRuns(runs)
 }
 
@@ -541,6 +586,13 @@ export function seedEditableNode(node, content, palette) {
       /* ignore */
     }
     if (run?.userColor) span.dataset.userColor = '1'
+    // Font choices that computed style can't tell apart from the box's own (theme role vars).
+    if (run?.fontFamily || run?.fontRole) {
+      span.dataset.run = JSON.stringify({
+        ...(run.fontFamily ? { fontFamily: run.fontFamily } : {}),
+        ...(run.fontRole ? { fontRole: run.fontRole } : {}),
+      })
+    }
     span.textContent = run.text || ''
     node.appendChild(span)
   }

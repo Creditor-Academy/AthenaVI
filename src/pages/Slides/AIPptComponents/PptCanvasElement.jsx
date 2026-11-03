@@ -15,7 +15,7 @@ import {
 } from '../../../utils/presentationHelpers'
 import { getListMarker, splitTextLines, stripLeadingListMarkers } from '../../../utils/textListUtils'
 import { measureTextContentSize } from '../../../utils/canvasTransformUtils'
-import { handlePlainTextPaste } from '../../../utils/textBoxEditing'
+import { handlePlainTextPaste, measureNeededTextHeight } from '../../../utils/textBoxEditing'
 import { croppedImageStyle } from '../../../utils/imageCrop'
 import {
   collapseDuplicatedRuns,
@@ -39,6 +39,7 @@ import EmptyImagePlaceholder, { DeviceScreenPlaceholder } from '../../../compone
 import ClipShapeSvg from '../../../components/ppt/ClipShapeSvg'
 import GraphicCanvasVisual from '../../../components/ppt/GraphicCanvasVisual'
 import { isPptHitThroughElement } from '../../../utils/pptHitThrough'
+import { isPptGroupScaling } from '../../../utils/pptGroupUtils'
 import { parsePolygonClipPath } from '../../../utils/shapeClipSvg'
 import { buildTextEffectStyle, computeCurvedTextSvgPath } from '../../../utils/textEffectsUtils'
 
@@ -446,10 +447,13 @@ function EditableText({
     if (prevLayoutSigRef.current === layoutSig) return
     prevLayoutSigRef.current = layoutSig
     if (editing || fitToBox || !selected || !onHeightChange || !ref.current) return
-    // Clipped boxes report their full content height via scrollHeight.
-    const measured = measureTextContentSize(ref.current, { paddingX: 0, paddingY: 4 })
-    if (measured) onHeightChange(measured.height, { commit: true, allowShrink: false })
-  }, [layoutSig, editing, fitToBox, selected, onHeightChange])
+    // A grouped box is sized by the group (resizing a group scales its text and sizes each box);
+    // growing it here as well fought that resize, and in the canvas editor looped.
+    if (el?.groupId || isPptGroupScaling()) return
+    // The text's own height — not the box's — so a box that already fits is left alone.
+    const needed = measureNeededTextHeight(ref.current)
+    if (needed) onHeightChange(needed + 4, { commit: true, allowShrink: false })
+  }, [layoutSig, editing, fitToBox, selected, onHeightChange, el?.groupId])
 
   const color = resolveTextHex(c, palette)
   const weight = c.fontWeight || (c.bold ? 700 : 400)

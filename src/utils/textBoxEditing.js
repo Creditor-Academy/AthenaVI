@@ -106,13 +106,65 @@ export function insertPlainTextAtCaret(root, text) {
   root.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertFromPaste' }))
 }
 
-/** paste handler for the text box editor: always plain text, never images or foreign markup. */
+/** True when the selection covers all of `root`'s text (Ctrl+A), or the box is empty. */
+export function selectionCoversWholeBox(root) {
+  if (!root) return false
+  const total = (root.textContent || '').length
+  if (!total) return true
+  const sel = window.getSelection()
+  if (!sel || !sel.rangeCount) return false
+  const range = sel.getRangeAt(0)
+  if (!root.contains(range.commonAncestorContainer) && range.commonAncestorContainer !== root) return false
+  const before = document.createRange()
+  before.selectNodeContents(root)
+  before.setEnd(range.startContainer, range.startOffset)
+  return before.toString().length === 0 && range.toString().length >= total
+}
+
+const RUN_FORMAT_STYLES = ['fontWeight', 'fontStyle', 'fontFamily', 'textDecoration', 'textDecorationLine']
+
+/**
+ * Replace everything in the box with `text` in the box's own style. The browser's insertText
+ * would carry over the formatting of the first replaced character, so text pasted over a box
+ * that starts with a bold word came out bold. The colour of that first character is kept —
+ * a box coloured as a whole keeps its colour.
+ */
+export function replaceBoxWithPlainText(root, text) {
+  if (!root) return
+  const first = root.querySelector('span')
+  const span = first ? first.cloneNode(false) : document.createElement('span')
+  for (const prop of RUN_FORMAT_STYLES) span.style[prop] = ''
+  delete span.dataset.run
+  span.textContent = text
+  root.replaceChildren(span)
+  const sel = window.getSelection()
+  if (sel) {
+    const range = document.createRange()
+    range.selectNodeContents(root)
+    range.collapse(false)
+    sel.removeAllRanges()
+    sel.addRange(range)
+  }
+  root.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertFromPaste' }))
+}
+
+/**
+ * paste handler for the text box editor: always plain text, never images or foreign markup.
+ * Pasting over the whole box gives normal text in the box's style; pasting inside the text
+ * takes the style of the text around the caret, like any editor.
+ */
 export function handlePlainTextPaste(event) {
   const data = event?.clipboardData
   if (!data) return
   event.preventDefault()
   const text = clipboardPlainText(data)
-  if (text) insertPlainTextAtCaret(event.currentTarget, text)
+  if (!text) return
+  const root = event.currentTarget
+  if (selectionCoversWholeBox(root)) {
+    replaceBoxWithPlainText(root, text)
+    return
+  }
+  insertPlainTextAtCaret(root, text)
 }
 
 /**
@@ -163,6 +215,44 @@ export function createTextHeightFloor(shell, startWidth, { paddingPx = 4 } = {})
     cache.set(key, min)
     return min
   }
+}
+
+/**
+ * Height (CSS px) the text of a rendered text node needs at its current width, measured on a
+ * hidden copy laid out with `height: auto`. The node's own scrollHeight can't be used: a box
+ * taller than its text reports the box height, so "grow to fit" grew it a little every time.
+ */
+export function measureNeededTextHeight(node) {
+  const host = node?.parentNode
+  if (!node || !host || !node.offsetWidth) return null
+  const probe = node.cloneNode(true)
+  Object.assign(probe.style, {
+    position: 'absolute',
+    left: '0px',
+    top: '0px',
+    width: `${node.offsetWidth}px`,
+    maxWidth: 'none',
+    height: 'auto',
+    minHeight: '0px',
+    overflow: 'visible',
+    visibility: 'hidden',
+    pointerEvents: 'none',
+  })
+  probe.setAttribute('aria-hidden', 'true')
+  host.appendChild(probe)
+  const needed = probe.scrollHeight
+  probe.remove()
+  return needed > 0 ? needed : null
+}
+
+/** Another element's shell rendered next to `shell` (same page/slide layer), by element id. */
+export function findSiblingShell(shell, id) {
+  const host = shell?.parentElement
+  if (!host || !id) return null
+  for (const node of host.children) {
+    if (node.dataset?.elementId === id) return node
+  }
+  return null
 }
 
 /**

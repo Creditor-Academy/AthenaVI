@@ -76,6 +76,7 @@ import {
 } from './canvasPersist'
 import { nextThumbnail, previewSignature } from './canvasThumbnail'
 import {
+  applyPptElementPatch,
   canPptGroup,
   canPptUngroup,
   createPptGroup,
@@ -91,6 +92,8 @@ import {
   findSmartSwapTarget,
 } from '../../utils/pptSmartFormat'
 import { contentWithSyncedText } from '../../utils/pptTextContent'
+import { imagePlacementForPage, prepareImageForUpload, readImageSize } from '../../utils/imageUploadFormat'
+import { copiedElementsText, useBlockStrayFileDrops, useEditorClipboard } from '../../hooks/useEditorClipboard'
 import {
   isPptDeviceFrameElement,
   buildDeviceFrameScreenPatch,
@@ -1004,18 +1007,17 @@ export default function CanvasEditor({
 
   const handlePlacementLive = (patches) => {
     const canvasId = activeCanvas.id
-    setCanvases((prevCanvases) =>
-      prevCanvases.map((c) => {
-        if (c.id !== canvasId) return c
-        return {
-          ...c,
-          elements: c.elements.map((el) => {
-            const patch = patches[el.id]
-            return patch ? { ...el, placement: { ...el.placement, ...patch } } : el
-          }),
-        }
-      })
-    )
+    // Keep the ref in step: a commit made before the next render (e.g. a text box growing to fit)
+    // builds on canvasesRef, and a stale ref put back the previous frame's sizes and fonts.
+    const next = canvasesRef.current.map((c) => {
+      if (c.id !== canvasId) return c
+      return {
+        ...c,
+        elements: c.elements.map((el) => applyPptElementPatch(el, patches[el.id])),
+      }
+    })
+    canvasesRef.current = next
+    setCanvases(next)
   }
 
   const handlePlacementCommit = (patches) => {
@@ -1024,10 +1026,7 @@ export default function CanvasEditor({
       if (c.id !== canvasId) return c
       return {
         ...c,
-        elements: c.elements.map((el) => {
-          const patch = patches[el.id]
-          return patch ? { ...el, placement: { ...el.placement, ...patch } } : el
-        }),
+        elements: c.elements.map((el) => applyPptElementPatch(el, patches[el.id])),
       }
     })
     updateCanvasesWithHistory(updated)
@@ -1155,17 +1154,85 @@ export default function CanvasEditor({
     deleteElements(ids)
   }, [copySelection, deleteElements])
 
+  /** Plain text of the copied elements, for pasting into other apps. */
+  const selectionClipboardText = useCallback((ids) => {
+    const canvas = canvasesRef.current[activeCanvasIndexRef.current] || canvasesRef.current[0]
+    const els = canvas?.elements || []
+    const expanded = expandPptSelectionIds(els, ids)
+    return copiedElementsText(els.filter((el) => expanded.includes(el.id)))
+  }, [])
+
+  /**
+   * Images pasted from the clipboard or dropped on a page: shown at once from a blob: URL at
+   * their natural aspect ratio, and stored in the background (see uploadLocalImage).
+   */
+  const insertImageFiles = useCallback(async (files, { canvasId = null, center = null } = {}) => {
+    const page =
+      (canvasId && canvasesRef.current.find((c) => c.id === canvasId)) ||
+      canvasesRef.current[activeCanvasIndexRef.current] ||
+      canvasesRef.current[0]
+    if (!page || !files?.length) return
+    const room = Math.max(0, MAX_ELEMENTS_PER_PAGE - (page.elements?.length || 0))
+    if (!room) {
+      showNotice(ELEMENT_CAP_NOTICE)
+      return
+    }
+    const added = []
+    for (const file of files.slice(0, Math.min(10, room))) {
+      let upload
+      try {
+        upload = await prepareImageForUpload(file)
+      } catch (error) {
+        showNotice(`Couldn't add ${file?.name || 'that image'}: ${error?.message || 'unsupported image'}`)
+        continue
+      }
+      const size = await readImageSize(upload)
+      const localUrl = URL.createObjectURL(upload)
+      const step = added.length * 24
+      const at = center
+        ? { x: center.x + step, y: center.y + step }
+        : step
+          ? { x: page.width / 2 + step, y: page.height / 2 + step }
+          : null
+      const element = createElement(
+        { type: 'image', content: { url: localUrl, src: localUrl, alt: file?.name || '', fit: 'cover' } },
+        page,
+        (page.elements?.length || 0) + added.length
+      )
+      element.placement = { ...element.placement, ...imagePlacementForPage(size, page, at) }
+      added.push({ element, upload, localUrl })
+    }
+    if (!added.length) return
+    const latestPage = canvasesRef.current.find((c) => c.id === page.id)
+    if (!latestPage) return
+    updateCanvasesWithHistory(insertElements(canvasesRef.current, page.id, added.map((a) => a.element)))
+    const ids = added.map((a) => a.element.id)
+    setSelected({ canvasId: page.id, elementId: ids[ids.length - 1] })
+    setMultiSelectIds(ids)
+    for (const item of added) uploadLocalImageRef.current(item.upload, item.localUrl)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const editorClipboard = useEditorClipboard({
+    enabled: true,
+    hasElements: () => clipboardRef.current.length > 0,
+    onPasteElements: () => pasteClipboard(),
+    onPasteImages: (files) => insertImageFiles(files),
+  })
+  useBlockStrayFileDrops(true)
+
   // ── Group / Ungroup ─────────────────────────────────────────────────────
   const groupSelection = useCallback((ids) => {
     const canvas = canvasesRef.current[activeCanvasIndexRef.current] || canvasesRef.current[0]
     if (!canvas || !canPptGroup(canvas.elements, ids)) return
-    const nextElements = createPptGroup(canvas.elements, ids)
+    const groupId = `group_${Date.now()}`
+    const nextElements = createPptGroup(canvas.elements, ids, groupId)
     const updated = canvasesRef.current.map((c) =>
       c.id !== canvas.id ? c : { ...c, elements: nextElements }
     )
     updateCanvasesWithHistory(updated)
-    setSelected({ canvasId: canvas.id, elementId: null })
-    setMultiSelectIds([])
+    // Select the new group, so its handles resize the whole group — not one of its children.
+    setSelected({ canvasId: canvas.id, elementId: groupId })
+    setMultiSelectIds([groupId])
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const ungroupSelection = useCallback((ids) => {
@@ -1665,19 +1732,21 @@ export default function CanvasEditor({
         return
       }
 
-      if (ctrl && e.key === 'c') {
-        e.preventDefault()
-        if (ids.length) copySelection(ids)
+      // Copy/cut/paste go through the browser's clipboard events (see useEditorClipboard), so
+      // an image copied in another app can be pasted, and copied elements still paste here.
+      if (ctrl && key === 'c') {
+        if (ids.length && copySelection(ids)) editorClipboard.noteElementCopy(selectionClipboardText(ids))
         return
       }
-      if (ctrl && e.key === 'x') {
-        e.preventDefault()
-        if (ids.length) cutSelection(ids)
+      if (ctrl && key === 'x') {
+        if (ids.length) {
+          editorClipboard.noteElementCopy(selectionClipboardText(ids))
+          cutSelection(ids)
+        }
         return
       }
-      if (ctrl && e.key === 'v') {
-        e.preventDefault()
-        pasteClipboard()
+      if (ctrl && key === 'v') {
+        editorClipboard.expectPaste()
         return
       }
       if (ctrl && e.key === 'd') {
@@ -1764,7 +1833,7 @@ export default function CanvasEditor({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [undo, redo, copySelection, cutSelection, pasteClipboard, duplicateSelection, deleteElements, groupSelection, ungroupSelection, toggleLock, bringForward, sendBackward, bringToFront, sendToBack, updateCanvasesWithHistory])
+  }, [undo, redo, copySelection, cutSelection, pasteClipboard, duplicateSelection, deleteElements, groupSelection, ungroupSelection, toggleLock, bringForward, sendBackward, bringToFront, sendToBack, updateCanvasesWithHistory, editorClipboard, selectionClipboardText])
 
   const handleQuickCommand = useCallback((cmd) => {
     const ids = multiSelectIdsRef.current.length
@@ -1781,7 +1850,7 @@ export default function CanvasEditor({
         if (ids.length) duplicateSelection(ids)
         break
       case 'copy':
-        if (ids.length) copySelection(ids)
+        if (ids.length && copySelection(ids)) editorClipboard.copyFromMenu(selectionClipboardText(ids))
         break
       case 'paste':
         pasteClipboard()
@@ -1838,7 +1907,7 @@ export default function CanvasEditor({
       default:
         break
     }
-  }, [undo, redo, duplicateSelection, copySelection, pasteClipboard, groupSelection, ungroupSelection, toggleLock, smartTidy, smartSwap, bringForward, sendBackward, bringToFront, sendToBack, calculateFitZoom])
+  }, [undo, redo, duplicateSelection, copySelection, pasteClipboard, groupSelection, ungroupSelection, toggleLock, smartTidy, smartSwap, bringForward, sendBackward, bringToFront, sendToBack, calculateFitZoom, editorClipboard, selectionClipboardText])
 
   // ── Derived state for context menu ──────────────────────────────────────
   const selectedElement = activeCanvas?.elements?.find((el) => el.id === selected.elementId)
@@ -2049,6 +2118,7 @@ export default function CanvasEditor({
             }}
             onTableCellChange={handleTableCellChange}
             onFillImage={handleFillImage}
+            onDropImageFiles={(canvasId, files, point) => insertImageFiles(files, { canvasId, center: point })}
             onFillDeviceFrame={handleFillImage}
             onQuickAction={handleQuickAction}
             onContextMenu={handleContextMenu}
@@ -2152,11 +2222,15 @@ export default function CanvasEditor({
           hasSelection={canvasSelectionIds.length > 0}
           onClose={() => setContextMenu(null)}
           onCut={() => {
+            const text = selectionClipboardText(canvasSelectionIds)
             cutSelection(canvasSelectionIds)
+            editorClipboard.copyFromMenu(text)
             setContextMenu(null)
           }}
           onCopy={() => {
-            copySelection(canvasSelectionIds)
+            if (copySelection(canvasSelectionIds)) {
+              editorClipboard.copyFromMenu(selectionClipboardText(canvasSelectionIds))
+            }
             setContextMenu(null)
           }}
           onPaste={() => {

@@ -3,6 +3,7 @@ import { InsufficientCreditsError } from './creditsService.js'
 import { PPT_TITLE_MAX, sleep } from '../utils/presentationHelpers.js'
 import { generateUniqueProjectName } from '../utils/projectNameValidation.js'
 import workspaceService from './workspaceService.js'
+import { prepareImageForUpload } from '../utils/imageUploadFormat.js'
 
 /** Turn a { message, errors } envelope into one readable line for the UI. */
 function formatValidationMessage(payload) {
@@ -621,7 +622,9 @@ class PresentationService {
   }
 
   /** Multipart image upload → canvas image element (optional elementId to replace). */
-  uploadSlideMedia(workspaceId, presentationId, slideId, file, { elementId } = {}) {
+  async uploadSlideMedia(workspaceId, presentationId, slideId, sourceFile, { elementId } = {}) {
+    // Same accepted types as asset uploads: convert GIF/AVIF/BMP/SVG/.jfif first.
+    const file = await prepareImageForUpload(sourceFile)
     const form = new FormData()
     form.append('file', file)
     if (elementId) form.append('elementId', elementId)

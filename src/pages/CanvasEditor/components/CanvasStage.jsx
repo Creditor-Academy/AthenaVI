@@ -15,15 +15,25 @@ import { CanvasPageRender } from '../CanvasExportFrame'
 import PptCanvasElement from '../../Slides/AIPptComponents/PptCanvasElement'
 import PptCanvasGuidesOverlay from '../../Slides/AIPptComponents/PptCanvasGuidesOverlay'
 import { computePptSmartGuides } from '../../../utils/pptSmartGuides'
-import { collectPptMoveIds } from '../../../utils/pptGroupUtils'
+import {
+  collectPptMoveIds,
+  isPptGroup,
+  groupScaleForResize,
+  resizePptGroupPatches,
+  setPptGroupScaling,
+  startPptGroupResize,
+  syncPptGroupBounds,
+} from '../../../utils/pptGroupUtils'
 import {
   overflowPaintStyle,
   clampPlacementOverflow,
   contentUsesInnerClipOrMask,
 } from '../../../utils/canvasOverflowUtils'
 import { exceedsDragThreshold } from '../../../utils/pointerDrag'
+import { imageFilesFromDataTransfer, isImageFile } from '../../../utils/imageUploadFormat'
 import {
   createTextHeightFloor,
+  findSiblingShell,
   keepTextBoxTallEnough,
   textBoxShrinksToFit,
 } from '../../../utils/textBoxEditing'
@@ -395,8 +405,18 @@ function InteractiveCanvasElementShell({
         })
       }
 
+      const patches =
+        drag.mode === 'resize' && drag.groupResize
+          ? resizePptGroupPatches(
+              drag.groupResize,
+              el.id,
+              start,
+              groupScaleForResize(drag.handle, start, next),
+              drag.handle
+            )
+          : { [el.id]: next }
+      next = patches[el.id]
       lastPlacementRef.current = next
-      const patches = { [el.id]: next }
       if (drag.mode === 'move' && drag.moveIds?.length) {
         const primaryStart = drag.startPlacement
         const totalDx = next.x - (primaryStart.x || 0)
@@ -426,6 +446,7 @@ function InteractiveCanvasElementShell({
       const drag = dragRef.current
       if (!drag) return
       dragRef.current = null
+      if (drag.groupResize) setPptGroupScaling(false)
       unlockDragCursor()
       try {
         if (e?.pointerId != null && drag.captureTarget?.hasPointerCapture?.(e.pointerId)) {
@@ -494,7 +515,7 @@ function InteractiveCanvasElementShell({
     }
 
     const file = e.dataTransfer.files?.[0]
-    if (file?.type?.startsWith('image/')) {
+    if (isImageFile(file)) {
       const blobUrl = URL.createObjectURL(file)
       applyDroppedImage({
         url: blobUrl,
@@ -572,8 +593,27 @@ function InteractiveCanvasElementShell({
         // Every text box, including layout text that shrinks to fit, stops at the height its
         // text needs at its current size — resizing never crops lines away.
         mode === 'resize' && isText ? createTextHeightFloor(shellRef.current, startPlacement.width) : null,
+      // Resizing a group resizes its children with it (text never shorter than its text).
+      groupResize:
+        mode === 'resize' && isPptGroup(el)
+          ? startPptGroupResize(el, allElements || [], {
+              minHeightFor: (child, start) =>
+                isTextElement(child)
+                  ? createTextHeightFloor(findSiblingShell(shellRef.current, child.id), start.width)?.(start.width)
+                  : null,
+            })
+          : null,
     }
+    if (dragRef.current.groupResize) setPptGroupScaling(true)
   }
+
+  // A shell removed mid-resize (undo, page switch) must not leave the group-scaling flag on.
+  useEffect(
+    () => () => {
+      if (dragRef.current?.groupResize) setPptGroupScaling(false)
+    },
+    []
+  )
 
   const frameStyle = {
     ...placementFrameStyle(p, canvasW, canvasH, {
@@ -762,6 +802,7 @@ export default function CanvasStage({
   onTableCellChange,
   onFillImage,
   onFillDeviceFrame,
+  onDropImageFiles,
   onQuickAction,
   onContextMenu,
   onAddCanvas,
@@ -818,6 +859,8 @@ export default function CanvasStage({
         const surfaceRef = getSurfaceRef(canvas.id)
         const pageSelectedIds = isCurrent ? selectedIds : []
         const isCopied = copiedPageId === canvas.id
+        // A group's outline is the box around its children, even after a child grew on its own.
+        const pageElements = isCurrent ? syncPptGroupBounds(canvas.elements || []) : canvas.elements
 
         return (
           <div
@@ -943,8 +986,27 @@ export default function CanvasStage({
                   e.stopPropagation()
                   onContextMenu?.(e, null)
                 }}
+                // Image files dropped on the page (not on an image box, which takes the picture
+                // itself) are added as new images where they were dropped.
+                onDragOver={(e) => {
+                  if (!onDropImageFiles) return
+                  const types = Array.from(e.dataTransfer?.types || [])
+                  if (!types.includes('Files') || types.includes('application/json')) return
+                  e.preventDefault()
+                  e.dataTransfer.dropEffect = 'copy'
+                }}
+                onDrop={(e) => {
+                  if (!onDropImageFiles) return
+                  const files = imageFilesFromDataTransfer(e.dataTransfer)
+                  if (!files.length) return
+                  e.preventDefault()
+                  const point = surfaceRef.current
+                    ? pointerToCanvas(e.clientX, e.clientY, surfaceRef.current, canvas.width, canvas.height)
+                    : null
+                  onDropImageFiles(canvas.id, files, point)
+                }}
               >
-                {isCurrent ? canvas.elements.map((element, elIdx) => {
+                {isCurrent ? pageElements.map((element, elIdx) => {
                   const isSelected =
                     pageSelectedIds.includes(element.id) ||
                     Boolean(element.groupId && pageSelectedIds.includes(element.groupId))
@@ -963,7 +1025,7 @@ export default function CanvasStage({
                       locked={!isCurrent || isCanvasElementLocked(element)}
                       editing={isCurrent && editingId === element.id}
                       stageRef={surfaceRef}
-                      allElements={canvas.elements}
+                      allElements={pageElements}
                       onSelect={onSelect}
                       onContextMenu={onContextMenu}
                       onPlacementLive={onPlacementLive}

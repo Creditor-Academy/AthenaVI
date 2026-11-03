@@ -15,6 +15,7 @@ import {
   pickRandomStockBrowseQuery,
 } from '../../../../constants/pptInsertCatalog'
 import { setCanvasDragData } from '../../../../utils/editorDragDrop'
+import { isImageFile } from '../../../../utils/imageUploadFormat'
 
 function stockImageUrl(item) {
   return (
@@ -278,7 +279,7 @@ export default function MediaPanel({
     setLoading(true)
     setError('')
     try {
-      if (canFillElement && file.type?.startsWith('image/')) {
+      if (canFillElement && isImageFile(file)) {
         // Filling needs a stored URL: fillWithImage ignores a bare file, so upload first.
         const asset = await assetService.uploadAsset(workspaceId, file)
         const url = assetUrl(asset)
@@ -530,7 +531,8 @@ export default function MediaPanel({
       <input
         ref={fileRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,video/mp4"
+        // Any image: GIF/AVIF/BMP/SVG… are converted before upload (imageUploadFormat).
+        accept="image/*,video/mp4"
         hidden
         onChange={handleUpload}
       />
