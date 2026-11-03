@@ -273,6 +273,9 @@ function SlideDesignSection({
             disabled={disabled}
             compact
           />
+          <p className="ppt-transition-hint">
+            Plays when this slide appears in Present — moving forward onto it, or back past it.
+          </p>
         </div>
       </section>
     </div>
@@ -831,7 +834,8 @@ function ImageDesignSection({
                 <button
                   type="button"
                   className="ppt-props-action-btn"
-                  disabled={disabled}
+                  disabled={disabled || !(c.url || c.src)}
+                  title={c.url || c.src ? 'Crop image' : 'Add an image first, then crop it'}
                   onClick={onCropImage}
                 >
                   <FiCrop size={15} aria-hidden />
@@ -951,6 +955,7 @@ function ImageDesignSection({
                 placement={p}
                 content={c}
                 showFlip
+                flipDisabledReason={c.url || c.src ? null : 'Add an image first, then flip it'}
                 disabled={disabled}
                 onChangePlacement={onChangePlacement}
                 onChangeContent={onChangeContent}

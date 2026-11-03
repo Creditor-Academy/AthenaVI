@@ -40,7 +40,10 @@ export default function TextEffectsPanel({
     } else if (nextShape === 'circle') {
       patch({ shapeEffect: 'circle', textShape: 'circle', curveAmount: 100 })
     } else {
-      const amt = c.curveAmount && Number(c.curveAmount) !== 0 ? Number(c.curveAmount) : 50
+      // Keep an existing curve, but an amount of ±95 or more draws a full circle — coming from
+      // Circle (100) that meant "Curve" changed nothing. Fall back to a real curve, same direction.
+      const raw = Number(c.curveAmount) || 0
+      const amt = raw !== 0 && Math.abs(raw) < 95 ? raw : raw < 0 ? -50 : 50
       patch({ shapeEffect: 'curve', textShape: 'curve', curveAmount: amt })
     }
   }
@@ -49,7 +52,9 @@ export default function TextEffectsPanel({
     patch({ textEffect: nextEffect })
   }
 
-  const curveAmount = c.curveAmount != null ? Number(c.curveAmount) : 50
+  // Unset amount follows the shape: plain text is 0 (previously 50, which showed "Curve" as active).
+  const curveAmount =
+    c.curveAmount != null ? Number(c.curveAmount) : shape === 'circle' ? 100 : shape === 'curve' ? 50 : 0
 
   return (
     <div className="ppt-text-effects-panel">

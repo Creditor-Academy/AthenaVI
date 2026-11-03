@@ -16,6 +16,7 @@ import {
 import { getListMarker, splitTextLines, stripLeadingListMarkers } from '../../../utils/textListUtils'
 import { measureTextContentSize } from '../../../utils/canvasTransformUtils'
 import { handlePlainTextPaste } from '../../../utils/textBoxEditing'
+import { croppedImageStyle } from '../../../utils/imageCrop'
 import {
   collapseDuplicatedRuns,
   contentPlainText,
@@ -290,12 +291,16 @@ function EditableText({
       lastHeightRef.current = null
     }
     const seedText = justStarted ? plainText : (liveTextRef.current ?? plainText)
+    // A formatting change made while editing (e.g. text colour) arrives as new content built
+    // from the live text. Seed from it; re-seeding from the old DOM runs threw the change away,
+    // and newly typed text kept the previous colour.
+    const freshRuns = !justStarted && plainText === seedText ? collapseDuplicatedRuns(c) : null
     seedEditableNode(
       node,
       {
         ...c,
         text: seedText,
-        runs: justStarted ? collapseDuplicatedRuns(c) : liveRunsRef.current || c.runs,
+        runs: justStarted ? collapseDuplicatedRuns(c) : freshRuns || liveRunsRef.current || c.runs,
       },
       palette
     )
@@ -416,6 +421,35 @@ function EditableText({
       observer.disconnect()
     }
   }, [editing, fitToBox, fontSize, plainText, runsSig, c.lineHeight, c.letterSpacing, c.padding, c.paddingX, c.listType, c.wrap, c.deckHeading, c.deckTier, el?.slotId])
+
+  // A user-made box whose text gets bigger from a formatting change (font size, line height,
+  // font, spacing, list style…) grows to fit instead of spilling over its neighbours. Only on a
+  // change after mount — opening a document never rewrites saved heights — and only grows, so
+  // a box the user made taller on purpose keeps its height.
+  const layoutSig = JSON.stringify([
+    fontSize,
+    c.lineHeight,
+    c.letterSpacing,
+    c.fontFamily,
+    c.fontWeight,
+    c.bold,
+    c.italic,
+    c.textTransform,
+    c.listType,
+    c.padding,
+    c.paddingX,
+    c.wrap,
+    runsSig,
+  ])
+  const prevLayoutSigRef = useRef(layoutSig)
+  useLayoutEffect(() => {
+    if (prevLayoutSigRef.current === layoutSig) return
+    prevLayoutSigRef.current = layoutSig
+    if (editing || fitToBox || !selected || !onHeightChange || !ref.current) return
+    // Clipped boxes report their full content height via scrollHeight.
+    const measured = measureTextContentSize(ref.current, { paddingX: 0, paddingY: 4 })
+    if (measured) onHeightChange(measured.height, { commit: true, allowShrink: false })
+  }, [layoutSig, editing, fitToBox, selected, onHeightChange])
 
   const color = resolveTextHex(c, palette)
   const weight = c.fontWeight || (c.bold ? 700 : 400)
@@ -587,7 +621,10 @@ function EditableText({
         ref={ref}
         className={className}
         style={textStyle}
-        onPointerDown={(e) => editable && e.stopPropagation()}
+        // Once selected, a press on the text body reaches the element shell so the box can be
+        // dragged from anywhere (not only its thin border strips, where the edge resize handles
+        // sit and a "move" turned into a resize that cropped the text).
+        onPointerDown={(e) => editable && !selected && e.stopPropagation()}
         onDoubleClick={(e) => {
           if (editable) {
             e.stopPropagation()
@@ -914,6 +951,7 @@ export default function PptCanvasElement({
     const borderProp = hasBorder
       ? `${strokeWidth}px ${borderStyle} ${isGradientStroke ? 'transparent' : strokeCss}`
       : undefined
+    const cropStyle = el.type === 'image' ? croppedImageStyle(c.crop) : null
 
     return (
       <div
@@ -927,6 +965,39 @@ export default function PptCanvasElement({
           ...(clipPath ? { clipPath, WebkitClipPath: clipPath } : {}),
         }}
       >
+        {cropStyle ? (
+          // Cropped: the frame shows only the chosen region. Flip/opacity/filters sit on a
+          // wrapper so a flip mirrors the visible region instead of moving the crop window.
+          <div
+            className="ppt-media-flip"
+            style={{
+              position: 'relative',
+              width: '100%',
+              height: '100%',
+              overflow: 'hidden',
+              opacity: c.opacity != null ? c.opacity : 1,
+              filter: cssPaintString(c.cssFilter) || cssPaintString(c.filter),
+              transform: mediaFlipTransform(c),
+              transformOrigin: 'center center',
+              ...(edgeFadeMask
+                ? {
+                    WebkitMaskImage: edgeFadeMask,
+                    maskImage: edgeFadeMask,
+                    WebkitMaskSize: '100% 100%',
+                    maskSize: '100% 100%',
+                  }
+                : {}),
+            }}
+          >
+            <img
+              src={url}
+              alt={c.alt || c.icon || ''}
+              draggable={false}
+              style={{ ...cropStyle, display: 'block' }}
+              onError={() => onImageAuthError?.(el.id)}
+            />
+          </div>
+        ) : (
         <img
           src={url}
           alt={c.alt || c.icon || ''}
@@ -954,6 +1025,7 @@ export default function PptCanvasElement({
           }}
           onError={() => onImageAuthError?.(el.id)}
         />
+        )}
       </div>
     )
   }

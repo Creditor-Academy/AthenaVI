@@ -63,7 +63,9 @@ export default function ElementToolbar({
 
   const adjustSize = (delta) => {
     const current = Number(c.fontSize) || 22
-    patch({ fontSize: Math.max(8, Math.min(200, current + delta)) })
+    // An explicit size means "use this size": layout text stops auto-shrinking to its slot
+    // (fit: false) so the box grows instead of the font being shrunk straight back.
+    patch({ fontSize: Math.max(8, Math.min(200, current + delta)), fit: false })
   }
 
   const toggleList = (listType) => {
@@ -106,7 +108,8 @@ export default function ElementToolbar({
         min={8}
         max={200}
         disabled={disabled}
-        onChange={(e) => patch({ fontSize: Number(e.target.value) || 22 })}
+        // Same 200px ceiling as the −/+ buttons; `max` alone isn't enforced while typing.
+        onChange={(e) => patch({ fontSize: Math.min(200, Number(e.target.value) || 22), fit: false })}
       />
       <button type="button" disabled={disabled} onClick={() => adjustSize(1)} title="Increase size">
         <FiPlus size={14} />
