@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { FiUpload, FiSearch, FiCamera, FiPackage } from 'react-icons/fi'
+import { FiUpload, FiSearch, FiCamera, FiPackage, FiFilm, FiX } from 'react-icons/fi'
 import InsertPanelShell from './InsertPanelShell'
 import { RailBrandIcon } from './insertBrandIcons'
 import stockService from '../../../../services/stockService'
@@ -16,6 +16,25 @@ import {
 } from '../../../../constants/pptInsertCatalog'
 import { setCanvasDragData } from '../../../../utils/editorDragDrop'
 import { isImageFile } from '../../../../utils/imageUploadFormat'
+
+const isVideoFile = (file) =>
+  String(file?.type || '').toLowerCase() === 'video/mp4' || /\.mp4$/i.test(String(file?.name || ''))
+
+/** Wait for an uploaded picture to load, so it appears at once when placed (bounded wait). */
+function preloadImage(url, timeoutMs = 12000) {
+  return new Promise((resolve) => {
+    if (!url || typeof Image === 'undefined') return resolve()
+    const img = new Image()
+    const done = () => {
+      clearTimeout(timer)
+      resolve()
+    }
+    const timer = setTimeout(done, timeoutMs)
+    img.onload = done
+    img.onerror = done
+    img.src = url
+  })
+}
 
 function stockImageUrl(item) {
   return (
@@ -99,7 +118,9 @@ export default function MediaPanel({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [iconCategory, setIconCategory] = useState('all')
+  const [uploads, setUploads] = useState([])
   const fileRef = useRef(null)
+  const activeKindRef = useRef(null)
 
   const active = useMemo(
     () =>
@@ -220,6 +241,8 @@ export default function MediaPanel({
     }
   }, [workspaceId, brandKits])
 
+  activeKindRef.current = active.kind
+
   useEffect(() => {
     if (active.kind === 'library-images' || active.kind === 'library-videos') {
       loadLibrary()
@@ -269,62 +292,95 @@ export default function MediaPanel({
     })
   }
 
-  const handleUpload = async (e) => {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file || !workspaceId) {
-      setError(workspaceId ? 'No file selected' : 'Workspace required to upload')
-      return
-    }
-    setLoading(true)
-    setError('')
-    try {
-      if (canFillElement && isImageFile(file)) {
-        // Filling needs a stored URL: fillWithImage ignores a bare file, so upload first.
-        const asset = await assetService.uploadAsset(workspaceId, file)
-        const url = assetUrl(asset)
-        if (!url) throw new Error('Upload succeeded but no URL returned')
-        fillWithImage({ url, src: url, alt: asset.name || file.name, assetId: asset.id || asset._id })
-        return
-      }
+  const patchUpload = (id, patch) =>
+    setUploads((prev) => prev.map((u) => (u.id === id ? { ...u, ...patch } : u)))
+  const dropUpload = (id) =>
+    setUploads((prev) => {
+      const gone = prev.find((u) => u.id === id)
+      if (gone?.previewUrl) URL.revokeObjectURL(gone.previewUrl)
+      return prev.filter((u) => u.id !== id)
+    })
 
-      if (canUseSlideMedia) {
-        const result = await presentationService.uploadSlideMedia(
-          workspaceId,
-          presentationId,
-          slideId,
-          file,
-          { elementId: targetElementId || undefined }
-        )
+  /** Put an uploaded image where it belongs: the selected frame, the slide (server), or the page. */
+  const placeUploadedImage = async (asset, file) => {
+    const url = assetUrl(asset)
+    const assetId = asset.id || asset._id
+    const alt = asset.name || file.name
+    if (fillWithImage({ url, src: url, alt, assetId })) return
+    if (canUseSlideMedia && assetId) {
+      try {
+        const result = await presentationService.attachSlideAsset(workspaceId, presentationId, slideId, {
+          assetId,
+          elementId: targetElementId || undefined,
+        })
         if (onMediaAttached) {
           await onMediaAttached(result)
-        } else {
-          onInsert({ type: 'image', presetId: 'image' })
+          return
         }
-        return
+      } catch {
+        // Fall back to adding it as a new image below.
       }
+    }
+    onInsert({ type: 'image', content: { url, src: url, alt, fit: 'cover', assetId } })
+  }
 
-      const asset = await assetService.uploadAsset(workspaceId, file)
+  /**
+   * Upload with a progress tile in the Images / Videos section. The picture is placed once it
+   * has loaded, so it shows straight away instead of an empty frame while it downloads.
+   */
+  const uploadOne = async (file) => {
+    const video = isVideoFile(file)
+    if (!video && !isImageFile(file)) {
+      setError(`"${file.name}" isn't an image or MP4 video.`)
+      return
+    }
+    const id = `up-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    setUploads((prev) => [
+      ...prev,
+      {
+        id,
+        name: file.name,
+        kind: video ? 'video' : 'image',
+        progress: 0,
+        status: 'uploading',
+        previewUrl: video ? null : URL.createObjectURL(file),
+      },
+    ])
+    setActiveId(video ? 'library-videos' : 'library-images')
+    try {
+      const asset = await assetService.uploadAsset(workspaceId, file, {
+        // This panel shows its own progress tile.
+        track: false,
+        onProgress: (progress) => patchUpload(id, { progress }),
+      })
       const url = assetUrl(asset)
       if (!url) throw new Error('Upload succeeded but no URL returned')
-      if (fillWithImage({ url, src: url, alt: asset.name || file.name, assetId: asset.id || asset._id })) {
-        return
+      patchUpload(id, { progress: 1, status: 'finishing' })
+      if (!video) await preloadImage(url)
+      const listKind = video ? 'library-videos' : 'library-images'
+      if (activeKindRef.current === listKind) {
+        setItems((prev) => [asset, ...prev.filter((item) => (item.id || item._id) !== (asset.id || asset._id))])
       }
-      onInsert({
-        type: 'image',
-        content: {
-          url,
-          src: url,
-          alt: asset.name || file.name,
-          fit: 'cover',
-          assetId: asset.id || asset._id,
-        },
-      })
+      if (!video) await placeUploadedImage(asset, file)
+      if (asset.uploadedSmallerCopy) {
+        setError(`"${file.name}" was too large for the server, so a smaller copy was uploaded.`)
+      }
+      dropUpload(id)
     } catch (err) {
-      setError(err.message || 'Upload failed')
-    } finally {
-      setLoading(false)
+      patchUpload(id, { status: 'error', error: err?.message || 'Upload failed' })
     }
+  }
+
+  const handleUpload = (e) => {
+    const files = Array.from(e.target.files || [])
+    e.target.value = ''
+    if (!files.length) return
+    if (!workspaceId) {
+      setError('Workspace required to upload')
+      return
+    }
+    setError('')
+    for (const file of files.slice(0, 10)) void uploadOne(file)
   }
 
   const attachLibraryAsset = async (item) => {
@@ -521,23 +577,82 @@ export default function MediaPanel({
   }
 
   const footer = (
-    <button
-      type="button"
-      className="ppt-insert-upload-btn"
-      disabled={disabled || !workspaceId}
-      onClick={() => fileRef.current?.click()}
-    >
-      <FiUpload size={16} /> Upload media
+    <>
+      <button
+        type="button"
+        className="ppt-insert-upload-btn"
+        disabled={disabled || !workspaceId}
+        title={workspaceId ? undefined : 'Save to a workspace to upload media'}
+        onClick={() => fileRef.current?.click()}
+      >
+        <FiUpload size={16} /> Upload media
+      </button>
       <input
         ref={fileRef}
         type="file"
+        multiple
         // Any image: GIF/AVIF/BMP/SVG… are converted before upload (imageUploadFormat).
         accept="image/*,video/mp4"
         hidden
         onChange={handleUpload}
       />
-    </button>
+    </>
   )
+
+  const uploadTiles = uploads.length ? (
+    <div className="ppt-upload-list" aria-live="polite">
+      {uploads.map((u) => {
+        const pct = Math.round((u.progress || 0) * 100)
+        // Until the browser reports progress, show a moving bar rather than a stuck 0%.
+        const indeterminate = u.status === 'uploading' && pct === 0
+        return (
+          <div key={u.id} className={`ppt-upload-tile${u.status === 'error' ? ' is-error' : ''}`}>
+            <div className="ppt-upload-thumb">
+              {u.previewUrl ? <img src={u.previewUrl} alt="" /> : <FiFilm size={20} />}
+            </div>
+            <div className="ppt-upload-body">
+              <div className="ppt-upload-name" title={u.name}>{u.name}</div>
+              {u.status === 'error' ? (
+                <div className="ppt-upload-error">{u.error}</div>
+              ) : (
+                <>
+                  <div
+                    className={`ppt-upload-bar${indeterminate ? ' is-indeterminate' : ''}`}
+                    role="progressbar"
+                    aria-label={`Uploading ${u.name}`}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={indeterminate ? undefined : pct}
+                  >
+                    <span style={indeterminate ? undefined : { width: `${u.status === 'finishing' ? 100 : pct}%` }} />
+                  </div>
+                  <div className="ppt-upload-meta">
+                    {u.status === 'finishing'
+                      ? u.kind === 'video'
+                        ? 'Saving to your library…'
+                        : 'Almost done…'
+                      : indeterminate
+                        ? 'Uploading…'
+                        : `Uploading… ${pct}%`}
+                  </div>
+                </>
+              )}
+            </div>
+            {u.status === 'error' ? (
+              <button
+                type="button"
+                className="ppt-upload-dismiss"
+                aria-label="Dismiss"
+                onClick={() => dropUpload(u.id)}
+              >
+                <FiX size={14} />
+              </button>
+            ) : null}
+          </div>
+        )
+      })}
+    </div>
+  ) : null
 
   const filteredIcons =
     iconCategory === 'all'
@@ -609,6 +724,7 @@ export default function MediaPanel({
         </div>
       )}
 
+      {uploadTiles}
       {error && <div className="ppt-insert-error">{error}</div>}
       {loading && (
         <div className="ppt-insert-loading">
@@ -724,7 +840,9 @@ export default function MediaPanel({
                       }
                     }}
                   >
-                    {url ? (
+                    {url && active.kind === 'library-videos' && isVideoAsset(item) ? (
+                      <video src={url} muted playsInline preload="metadata" />
+                    ) : url ? (
                       <img
                         src={url}
                         alt=""

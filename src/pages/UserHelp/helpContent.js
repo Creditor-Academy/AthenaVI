@@ -98,7 +98,7 @@ Add layers with **Insert** — images, video, text, graphics, or uploads. Drag i
       tag: 'Beginner',
       body: `Use **Insert → Upload** to add files from your device. Uploads are saved to the **workspace** when the project is tied to one.
 
-Supported types: JPEG, PNG, WebP, MP4, MP3 (max **50 MB** per file). The editor stores **asset IDs** in project JSON — not raw S3 URLs — so assets stay linked after save.`,
+Supported types: JPEG, PNG, WebP, MP4, MP3 (max **1 GB** per file). The editor stores **asset IDs** in project JSON — not raw S3 URLs — so assets stay linked after save.`,
     },
     {
       title: 'AI presenters',
@@ -242,7 +242,7 @@ export const helpFaqs = [
   },
   {
     q: 'What file types can I upload?',
-    a: 'JPEG, PNG, WebP, MP4, and MP3 up to 50 MB per file in the Library and editor upload flows.',
+    a: 'JPEG, PNG, WebP, MP4, and MP3 up to 1 GB per file in the Library and editor upload flows.',
   },
   {
     q: 'How do I get more credits or storage?',

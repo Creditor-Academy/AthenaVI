@@ -1,6 +1,13 @@
 import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api';
 import { StorageLimitError } from '../utils/storageQuota';
-import { prepareImageForUpload } from '../utils/imageUploadFormat';
+import { prepareImageForUpload, shrinkImageForUpload } from '../utils/imageUploadFormat';
+import { formatBytes, sendUpload } from '../utils/uploadRequest';
+import {
+  failTrackedUpload,
+  finishTrackedUpload,
+  setTrackedProgress,
+  startTrackedUpload,
+} from './uploadTracker';
 
 export class AssetInUseError extends Error {
   constructor(message, data = {}) {
@@ -51,7 +58,8 @@ const ALLOWED_MIME_TYPES = new Set([
   'audio/mp3',
 ]);
 
-const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
+// Workspace media library limit (matches the server: uploadLibraryAsset).
+export const MAX_UPLOAD_BYTES = 1024 * 1024 * 1024;
 
 class AssetService {
   constructor() {
@@ -64,7 +72,7 @@ class AssetService {
 
   validateUploadFile(file) {
     if (!file) return 'No file selected';
-    if (file.size > MAX_UPLOAD_BYTES) return 'File exceeds the 50 MB limit';
+    if (file.size > MAX_UPLOAD_BYTES) return `"${file.name}" is larger than the 1 GB upload limit`;
     const mime = file.type || '';
     const name = String(file.name || '').toLowerCase();
     const allowedByExtension =
@@ -76,60 +84,109 @@ class AssetService {
     return null;
   }
 
-  async uploadAsset(workspaceId, sourceFile) {
+  /**
+   * Upload a file to the workspace library. `onProgress(fraction)` reports upload progress.
+   * Every upload shows in the app-wide upload panel (UploadProgressHost) unless `track: false`
+   * (callers with their own progress UI, or silent background saves).
+   * The returned asset has `uploadedSmallerCopy: true` when the original was refused as too
+   * large and a smaller copy of the image was stored instead.
+   */
+  async uploadAsset(workspaceId, sourceFile, { onProgress, track = true } = {}) {
+    const trackId = track ? startTrackedUpload(sourceFile) : null;
+    try {
+      const asset = await this.sendAssetUpload(workspaceId, sourceFile, {
+        onProgress: (fraction) => {
+          if (trackId) setTrackedProgress(trackId, fraction);
+          onProgress?.(fraction);
+        },
+      });
+      if (trackId) {
+        finishTrackedUpload(trackId, {
+          note: asset?.uploadedSmallerCopy
+            ? 'Uploaded a smaller copy — the original was too large for the server'
+            : '',
+        });
+      }
+      return asset;
+    } catch (error) {
+      if (trackId) failTrackedUpload(trackId, error?.message || 'Upload failed');
+      throw error;
+    }
+  }
+
+  async sendAssetUpload(workspaceId, sourceFile, { onProgress } = {}) {
     // GIF/AVIF/BMP/SVG/.jfif… (typical downloads) become WebP/PNG/JPEG the server accepts.
     const file = await prepareImageForUpload(sourceFile);
     const validationError = this.validateUploadFile(file);
     if (validationError) throw new Error(validationError);
 
-    const send = () => {
+    const url = buildUrl(API_CONFIG.ENDPOINTS.ASSETS.UPLOAD(workspaceId));
+    const send = (upload) => {
       const formData = new FormData();
-      formData.append('file', file);
-      return fetch(buildUrl(API_CONFIG.ENDPOINTS.ASSETS.UPLOAD(workspaceId)), {
-        method: 'POST',
-        headers: {
-          Authorization: getAuthHeaders().Authorization || '',
-        },
-        body: formData,
+      formData.append('file', upload);
+      onProgress?.(0);
+      return sendUpload(url, formData, {
+        headers: { Authorization: getAuthHeaders().Authorization || '' },
+        onProgress,
       });
     };
+    const isLarge = (upload) => upload.size > 1024 * 1024;
 
     // One retry for failures that happen before the server handles the upload (gateway /
     // service unavailable, dropped connection) — these made identical uploads "sometimes"
     // fail. A 504 is not retried: the upload may have completed, and a retry would duplicate it.
-    let response;
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      try {
-        response = await send();
-      } catch {
-        if (attempt === 1) {
-          throw new Error('Upload failed: the connection dropped. Check your network and try again.');
-        }
+    // A large file that got no answer is not resent as-is: that is a size refusal (below).
+    const sendWithRetry = async (upload) => {
+      let result = await send(upload);
+      const transient =
+        result.status === 502 || result.status === 503 || (result.status === 0 && !isLarge(upload));
+      if (transient) {
         await new Promise((resolve) => setTimeout(resolve, 800));
-        continue;
+        result = await send(upload);
       }
-      if ((response.status === 502 || response.status === 503) && attempt === 0) {
-        await new Promise((resolve) => setTimeout(resolve, 800));
-        continue;
+      return result;
+    };
+
+    let uploaded = file;
+    let result = await sendWithRetry(file);
+    // A proxy in front of the API may refuse large uploads: with 413, or with no usable answer
+    // at all (its error page has no CORS headers, so the browser only says "Failed to fetch").
+    // Real photos hit this while small images went through. Store a smaller copy instead.
+    if (result.status === 413 || (result.status === 0 && isLarge(file))) {
+      const smaller = await shrinkImageForUpload(file);
+      if (smaller) {
+        uploaded = smaller;
+        result = await sendWithRetry(smaller);
       }
-      break;
     }
 
-    if (!response.ok) {
-      const err = await this.readErrorPayload(response);
+    if (result.status === 0) {
+      throw new Error(
+        isLarge(uploaded)
+          ? `Couldn't upload "${file.name}" (${formatBytes(uploaded.size)}): the server didn't respond. ` +
+              'Smaller files upload fine, so this file is likely over the server\'s upload size limit.'
+          : 'Upload failed: the connection dropped. Check your network and try again.'
+      );
+    }
+    const payload = result.payload || {};
+    if (result.status < 200 || result.status >= 300) {
       // Only a real quota error is a storage error; other 400s (file type, validation) used to be
       // reported as "storage limit exceeded", hiding the actual reason the upload failed.
-      if (response.status === 400 && /storage limit/i.test(String(err.message || ''))) {
-        throw new StorageLimitError(err.message, err);
+      if (result.status === 400 && /storage limit/i.test(String(payload.message || ''))) {
+        throw new StorageLimitError(payload.message, payload);
       }
-      if (response.status === 413) {
-        throw new Error('This file is too large for the server to accept. Try a smaller image.');
+      if (result.status === 413) {
+        throw new Error(
+          `"${file.name}" (${formatBytes(uploaded.size)}) is too large for the server to accept. Try a smaller file.`
+        );
       }
-      throw new Error(err.message || `Upload failed (${response.status}). Please try again.`);
+      throw new Error(payload.message || `Upload failed (${result.status}). Please try again.`);
     }
 
-    const data = await response.json();
-    return data.data?.asset || data.asset || data.data || data;
+    onProgress?.(1);
+    const asset = payload.data?.asset || payload.asset || payload.data || payload;
+    if (uploaded !== file && asset && typeof asset === 'object') asset.uploadedSmallerCopy = true;
+    return asset;
   }
 
   async listAssets(workspaceId, { take = 50, skip = 0, source = 'all' } = {}) {

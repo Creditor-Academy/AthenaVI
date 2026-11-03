@@ -942,17 +942,21 @@ export default function CanvasEditor({
     updateCanvasesWithHistory(resizeDocument(canvases, targetSize))
   }
 
+  // Reads the latest document: inserts can arrive after an upload finishes, and building on the
+  // render this function came from would undo edits made while the file was uploading.
   const addElement = (payload) => {
-    const canvasId = selected.canvasId || activeCanvas.id
-    const page = canvases.find((canvas) => canvas.id === canvasId)
+    const latest = canvasesRef.current
+    const current = latest[activeCanvasIndexRef.current] || latest[0]
+    const canvasId = selectedRef.current.canvasId || current?.id
+    const page = latest.find((canvas) => canvas.id === canvasId) || current
     if (!page) return
     if (!canAddElements(page)) {
       showNotice(ELEMENT_CAP_NOTICE)
       return
     }
     const element = createElement(payload, page, page.elements.length)
-    updateCanvasesWithHistory(insertElements(canvases, canvasId, [element]))
-    setSelected({ canvasId, elementId: element.id })
+    updateCanvasesWithHistory(insertElements(latest, page.id, [element]))
+    setSelected({ canvasId: page.id, elementId: element.id })
     setMultiSelectIds([])
   }
 

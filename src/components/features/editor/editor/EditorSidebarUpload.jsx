@@ -296,10 +296,10 @@ const EditorSidebarUpload = ({ addLayer, onAddAudio, workspaceId, onUploadError,
         </span>
         <span className="upload-insert-panel__hint">
           {mediaTypeTab === 'videos'
-            ? 'MP4 · max 50 MB · '
+            ? 'MP4 · max 1 GB · '
             : mediaTypeTab === 'music'
-              ? 'MP3 · max 50 MB · '
-              : 'JPEG, PNG, WebP · max 50 MB · '}
+              ? 'MP3 · max 1 GB · '
+              : 'JPEG, PNG, WebP · max 1 GB · '}
           {workspaceId ? 'Saved to your workspace' : 'Local preview only until project is saved'}
         </span>
       </button>

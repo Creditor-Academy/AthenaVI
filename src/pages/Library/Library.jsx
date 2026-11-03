@@ -910,7 +910,7 @@ function Library() {
                 <MdClose />
               </button>
             </div>
-            <p className="upload-modal-hint">JPEG, PNG, WebP, MP4, or MP3 · max 50 MB</p>
+            <p className="upload-modal-hint">JPEG, PNG, WebP, MP4, or MP3 · max 1 GB</p>
             <div className="upload-options">
               <button
                 type="button"

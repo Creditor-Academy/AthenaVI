@@ -226,7 +226,8 @@ export async function persistExternalSceneAssets(scenes = [], workspaceId, { onP
     );
 
     const file = await urlToUploadFile(url, buildUploadName(clip, url));
-    const uploaded = await assetService.uploadAsset(workspaceId, file);
+    // Background save with its own progress messages: not shown in the upload panel.
+    const uploaded = await assetService.uploadAsset(workspaceId, file, { track: false });
     uploadCount += 1;
     urlCache.set(url, uploaded);
     return uploaded;
@@ -258,7 +259,7 @@ export async function persistExternalSceneAssets(scenes = [], workspaceId, { onP
                       ? 'Uploading template images to workspace…'
                       : `Uploading template images (${uploadCount + 1})…`
                   );
-                  const asset = await assetService.uploadAsset(workspaceId, file);
+                  const asset = await assetService.uploadAsset(workspaceId, file, { track: false });
                   uploadCount += 1;
                   urlCache.set(src, asset);
                 }

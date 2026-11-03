@@ -3450,10 +3450,13 @@ function AIPptEditor({
   }
 
   const handleInsertElement = async (payload) => {
-    const slideId = selectedSlideId || localSlides[0]?.id
+    // Latest slides, not this render's: inserts can arrive after an upload finishes, and a stale
+    // copy would drop edits made while the file was uploading.
+    const latestSlides = localSlidesRef.current
+    const slideId = selectedSlideIdRef.current || selectedSlideId || latestSlides[0]?.id
     if (!slideId || isGenerating) return
 
-    const slide = localSlides.find((s) => s.id === slideId)
+    const slide = latestSlides.find((s) => s.id === slideId)
     const existing = slide?.elements?.elements || []
     if (existing.length >= PPT_CAPS.ELEMENTS_PER_SLIDE) {
       setError(`Max ${PPT_CAPS.ELEMENTS_PER_SLIDE} elements per slide`)

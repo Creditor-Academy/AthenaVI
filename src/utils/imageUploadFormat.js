@@ -137,6 +137,51 @@ export async function prepareImageForUpload(file) {
   return convertImageFile(file)
 }
 
+const SHRINK_STEPS = [
+  { side: 2560, quality: 0.86 },
+  { side: 1920, quality: 0.8 },
+  { side: 1600, quality: 0.75 },
+]
+
+/**
+ * A smaller copy of a JPEG/PNG/WebP image, used when the server (or a proxy in front of it)
+ * refuses the original as too large. Steps down until it fits `maxBytes`; null when the
+ * image can't be read or made smaller.
+ */
+export async function shrinkImageForUpload(file, { maxBytes = 950 * 1024 } = {}) {
+  if (!file || typeof document === 'undefined' || typeof URL?.createObjectURL !== 'function') return null
+  if (!UPLOADABLE_TYPES.has(String(file.type || '').toLowerCase())) return null
+  const url = URL.createObjectURL(file)
+  try {
+    const img = await loadImage(url)
+    const width = img.naturalWidth || 0
+    const height = img.naturalHeight || 0
+    if (!width || !height) return null
+    let best = null
+    for (const step of SHRINK_STEPS) {
+      const scale = Math.min(1, step.side / Math.max(width, height))
+      const canvas = document.createElement('canvas')
+      canvas.width = Math.max(1, Math.round(width * scale))
+      canvas.height = Math.max(1, Math.round(height * scale))
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return null
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+      let blob = await canvasToBlob(canvas, 'image/webp', step.quality)
+      if (!blob || !UPLOADABLE_TYPES.has(blob.type)) blob = await canvasToBlob(canvas, 'image/jpeg', step.quality)
+      if (!blob) continue
+      best = blob
+      if (blob.size <= maxBytes) break
+    }
+    if (!best || best.size >= file.size) return null
+    const ext = best.type === 'image/webp' ? 'webp' : 'jpg'
+    return new File([best], `${baseName(file.name)}.${ext}`, { type: best.type, lastModified: file.lastModified })
+  } catch {
+    return null
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
 /** Natural size of an image file (for placing it), or null when it can't be read. */
 export async function readImageSize(file) {
   if (!file || typeof URL?.createObjectURL !== 'function') return null
