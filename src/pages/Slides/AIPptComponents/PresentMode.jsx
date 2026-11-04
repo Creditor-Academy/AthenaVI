@@ -1,33 +1,23 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FiChevronLeft, FiChevronRight, FiMaximize2, FiRadio, FiX } from 'react-icons/fi'
-import PptChartRenderer, { getEmbedIframeUrl } from './PptChartRenderer'
+import { getEmbedIframeUrl } from './PptChartRenderer'
 import ExternalLinkHoverLayer from './ExternalLinkHoverLayer'
+import PptCanvasElement from './PptCanvasElement'
 import {
   getSlideImage,
-  isSlideBackgroundElement,
-  buildCanvasShapeStyle,
-  buildNativeShapeBoxStyle,
-  shapeElementUsesNativeStyle,
   resolveCanvasSize,
   resolveSlideStageBackground,
-  mediaFlipTransform,
 } from '../../../utils/presentationHelpers'
-import DeviceFrameVisual, { resolveDeviceFrameColor } from '../../../components/ppt/DeviceFrameVisual'
-import ClipShapeSvg from '../../../components/ppt/ClipShapeSvg'
-import GraphicCanvasVisual from '../../../components/ppt/GraphicCanvasVisual'
-import { parsePolygonClipPath } from '../../../utils/shapeClipSvg'
-import { shouldPaintElement } from '../../../utils/canvasRenderDebug'
-import {
-  coercePlainText,
-  contentUsesFullRuns,
-  isGradientFill,
-  resolveTextHex,
-  runDisplayStyle,
-  textPaintStyle,
-} from '../../../utils/pptTextContent'
+import { EDITOR_STAGE_WIDTH, resolveStageElements } from '../../../utils/slideStageElements'
 import { PPT_SLIDE_TRANSITIONS } from '../../../constants/pptSlideEditorOptions'
 import './PresentMode.css'
 
+/**
+ * One element of the slide, drawn by the editor's own renderer (PptCanvasElement) inside the
+ * same %-positioned frame the editor uses. Present used to have a separate, simplified renderer
+ * (text at fontSize × 0.55px whatever the screen size, no padding / effects / crops…), so the
+ * presented slide looked different from — and misaligned against — the slide that was edited.
+ */
 function PresentElement({ el, palette, canvasW, canvasH, focused, dimmed, selectable, onSelect }) {
   // Only wired once focus mode is already active (a block is focused) — lets
   // the presenter jump straight to a different block instead of cycling with F.
@@ -67,86 +57,7 @@ function PresentElement({ el, palette, canvasW, canvasH, focused, dimmed, select
     borderRadius: focused ? 6 : undefined,
   }
 
-  if (el.type === 'text' || el.type === 'textbox') {
-    const c = el.content || {}
-    const color = resolveTextHex(c, palette, palette?.text || '#0F172A')
-    const usesRuns = contentUsesFullRuns(c)
-    const boxPaint =
-      !usesRuns && isGradientFill(c.fill) ? textPaintStyle(c.fill, palette, color) : { color }
-    const baseStyle = {
-      fontSize: c.fontSize ? `${Math.max(10, c.fontSize * 0.55)}px` : '18px',
-      fontWeight: c.bold ? 700 : 400,
-      fontStyle: c.italic ? 'italic' : 'normal',
-      fontFamily: c.fontFamily || undefined,
-    }
-    return (
-      <div
-        {...interactive}
-        style={{
-          ...style,
-          ...boxPaint,
-          ...baseStyle,
-          textDecoration: [c.underline && 'underline', c.strikethrough && 'line-through']
-            .filter(Boolean)
-            .join(' ') || undefined,
-          textAlign: c.textAlign || c.align || 'left',
-          textTransform: c.textTransform || undefined,
-          whiteSpace: 'pre-wrap',
-          lineHeight: c.lineHeight ?? 1.25,
-        }}
-      >
-        {usesRuns
-          ? c.runs.map((run, i) => {
-              const text =
-                typeof run?.text === 'string' || typeof run?.text === 'number' ? run.text : ''
-              return (
-                <span key={i} style={runDisplayStyle(run, c, palette, baseStyle)}>
-                  {text}
-                </span>
-              )
-            })
-          : coercePlainText(c.text)}
-      </div>
-    )
-  }
-
-  if (el.type === 'graphic') {
-    return (
-      <div {...interactive} style={style}>
-        <GraphicCanvasVisual content={el.content || {}} palette={palette} />
-      </div>
-    )
-  }
-
-  if (el.type === 'image' || el.type === 'icon') {
-    const c = el.content || {}
-    const url = c.url || c.src
-    if (!url) return null
-    return (
-      <img
-        {...interactive}
-        src={url}
-        alt={c.alt || ''}
-        style={{
-          ...style,
-          objectFit: c.fit || 'cover',
-          borderRadius: c.borderRadius != null ? c.borderRadius : undefined,
-          boxShadow: c.boxShadow || c.shadow || undefined,
-          transform: [style.transform, mediaFlipTransform(c)].filter(Boolean).join(' ') || undefined,
-          transformOrigin: 'center center',
-        }}
-      />
-    )
-  }
-
-  if (el.type === 'chart') {
-    return (
-      <div {...interactive} style={style}>
-        <PptChartRenderer content={el.content || {}} palette={palette} style={{ width: '100%', height: '100%' }} />
-      </div>
-    )
-  }
-
+  // Embeds play in Present (the editor only shows a card for them).
   if (el.type === 'embed' || el.type === 'link') {
     const c = el.content || {}
     const iframeUrl = getEmbedIframeUrl(c)
@@ -163,109 +74,62 @@ function PresentElement({ el, palette, canvasW, canvasH, focused, dimmed, select
         </ExternalLinkHoverLayer>
       )
     }
-    return (
-      <ExternalLinkHoverLayer content={c} style={style}>
-        <div
-          style={{
-            width: '100%',
-            height: '100%',
-            display: 'grid',
-            placeItems: 'center',
-            background: '#F1F5F9',
-            borderRadius: 8,
-          }}
-        >
-          <span style={{ color: '#475569', fontSize: 14 }}>{c.title || c.url}</span>
-        </div>
-      </ExternalLinkHoverLayer>
-    )
   }
 
-  if (el.type === 'shape') {
-    const c = el.content || {}
-    const deviceKind = c.deviceFrame || (c.shape === 'device-frame' ? 'phone' : null)
-    if (deviceKind) {
-      const screenSrc = c.screenUrl || c.url || c.src || c.thumbnailUrl || c.previewUrl
-      const frameColor = resolveDeviceFrameColor(c, palette)
-      return (
-        <div {...interactive} style={style}>
-          <DeviceFrameVisual
-            kind={deviceKind}
-            src={c.layoutSurface ? undefined : screenSrc}
-            chromeOnly={Boolean(c.layoutSurface)}
-            frameColor={frameColor}
-          />
-        </div>
-      )
-    }
-    if (shapeElementUsesNativeStyle(el)) {
-      return (
-        <div {...interactive} style={{ ...style, ...buildNativeShapeBoxStyle(el.nativeStyle) }} />
-      )
-    }
-    const rendered = buildCanvasShapeStyle(c, palette)
-    if (rendered.kind === 'line') {
-      return (
-        <div
-          {...interactive}
-          style={{
-            ...style,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <div style={{ ...rendered.style, width: '100%' }} />
-        </div>
-      )
-    }
-    if (rendered.kind === 'clip' && rendered.clipPath) {
-      const svgFill = rendered.outlined
-        ? 'none'
-        : rendered.fill || rendered.style?.background || '#475569'
-      if (parsePolygonClipPath(rendered.clipPath)) {
-        return (
-          <div {...interactive} style={{ ...style, position: 'relative' }}>
-            <ClipShapeSvg
-              clipPath={rendered.clipPath}
-              fill={typeof svgFill === 'string' ? svgFill : '#475569'}
-              stroke={
-                rendered.strokeWidth > 0
-                  ? (rendered.stroke || '#475569')
-                  : 'none'
-              }
-              strokeWidth={rendered.strokeWidth || 0}
-              strokeDasharray={rendered.strokeDasharray}
-              outlined={Boolean(rendered.outlined)}
-            />
-          </div>
-        )
-      }
-    }
-    return <div {...interactive} style={{ ...style, ...rendered.style }} />
-  }
+  return (
+    <div {...interactive} style={style}>
+      <PptCanvasElement
+        el={el}
+        palette={palette}
+        editable={false}
+        showEmptyTextHint={false}
+        canvasW={canvasW}
+      />
+    </div>
+  )
+}
 
-  if (el.type === 'table') {
-    const c = el.content || {}
-    const cells = c.cells || c.rows || []
-    return (
-      <div {...interactive} style={{ ...style, overflow: 'auto' }}>
-        <table className="ppt-present-table">
-          <tbody>
-            {cells.map((row, ri) => (
-              <tr key={ri}>
-                {(row || []).map((cell, ci) => (
-                  <td key={ci}>{coercePlainText(cell)}</td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+/**
+ * Lays the slide out at the editor's stage width and scales it to the presentation size as one
+ * piece, so every font, padding and position keeps exactly the proportions it has in the editor.
+ */
+function PresentSlideStage({ canvas, stageStyle, children }) {
+  const hostRef = useRef(null)
+  const [scale, setScale] = useState(0)
+  const stageHeight = (EDITOR_STAGE_WIDTH * canvas.height) / canvas.width
+
+  useEffect(() => {
+    const node = hostRef.current
+    if (!node) return undefined
+    const update = () => {
+      const width = node.clientWidth || 0
+      const height = node.clientHeight || 0
+      if (!width || !height) return
+      setScale(Math.min(width / EDITOR_STAGE_WIDTH, height / stageHeight))
+    }
+    update()
+    if (typeof ResizeObserver === 'undefined') return undefined
+    const observer = new ResizeObserver(update)
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [stageHeight])
+
+  return (
+    <div ref={hostRef} className="ppt-present-stage-host">
+      <div
+        className="ppt-present-stage-plane"
+        style={{
+          ...stageStyle,
+          width: EDITOR_STAGE_WIDTH,
+          height: stageHeight,
+          transform: `scale(${scale || 0.0001})`,
+          visibility: scale ? 'visible' : 'hidden',
+        }}
+      >
+        {children}
       </div>
-    )
-  }
-
-  return null
+    </div>
+  )
 }
 
 export default function PresentMode({
@@ -279,6 +143,8 @@ export default function PresentMode({
   // { presenter, isPresenting, conflict, canPresent, onStartPresenting, onStopPresenting } | null
   presence = null,
   onIndexChange,
+  // CSS variables for the deck's theme fonts (--ppt-font-heading / --ppt-font-body).
+  fontVars = null,
 }) {
   const [index, setIndex] = useState(initialSlideIndex)
   const [focusElementId, setFocusElementId] = useState(null)
@@ -326,15 +192,12 @@ export default function PresentMode({
 
   const slide = slides[index]
   const canvas = resolveCanvasSize(slide, aspectRatio)
-  const elements = (slide?.elements?.elements || []).filter(
-    (el) =>
-      !isSlideBackgroundElement(el, slide) &&
-      shouldPaintElement(el, slide, canvas.width, canvas.height)
-  )
+  const palette = themeVisual?.palette || null
+  // Same elements as the editor stage; groups only frame their children and draw nothing.
+  const elements = resolveStageElements(slide, canvas, palette).filter((el) => el.type !== 'group')
   // A transition belongs to the slide it leads into (the editor stores it on the next slide).
   const slideTransition = (s) => s?.transition || s?.elements?.transition || 'none'
   const transition = slideTransition(slide)
-  const palette = themeVisual?.palette || null
   const hasElements = elements.length > 0
   const fallbackImage = hasElements ? null : getSlideImage(slide).url
   const slideBgStyle = resolveSlideStageBackground(
@@ -497,25 +360,33 @@ export default function PresentMode({
           style={{
             ...slideBgStyle,
             aspectRatio: `${canvas.width} / ${canvas.height}`,
+            // Width from the screen's height too, so the box always keeps the slide's shape
+            // (a fixed width with a max-height squashed slides on shorter screens).
+            '--ppt-present-ratio': canvas.width / canvas.height,
           }}
           onClick={() => {
             if (focusElementId) setFocusElementId(null)
           }}
         >
           {hasElements ? (
-            elements.map((el) => (
-              <PresentElement
-                key={el.id}
-                el={el}
-                palette={palette}
-                canvasW={canvas.width}
-                canvasH={canvas.height}
-                focused={focusElementId === el.id}
-                dimmed={Boolean(focusElementId) && focusElementId !== el.id}
-                selectable={Boolean(focusElementId)}
-                onSelect={selectFocusTarget}
-              />
-            ))
+            <PresentSlideStage
+              canvas={canvas}
+              stageStyle={{ ...fontVars, color: themeVisual?.body }}
+            >
+              {elements.map((el) => (
+                <PresentElement
+                  key={el.id}
+                  el={el}
+                  palette={palette}
+                  canvasW={canvas.width}
+                  canvasH={canvas.height}
+                  focused={focusElementId === el.id}
+                  dimmed={Boolean(focusElementId) && focusElementId !== el.id}
+                  selectable={Boolean(focusElementId)}
+                  onSelect={selectFocusTarget}
+                />
+              ))}
+            </PresentSlideStage>
           ) : (
             <div className="ppt-present-fallback">
               <h1 style={{ color: themeVisual?.title }}>{slide?.title}</h1>

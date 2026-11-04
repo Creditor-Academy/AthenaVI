@@ -77,6 +77,8 @@ import {
 import { nextThumbnail, previewSignature } from './canvasThumbnail'
 import {
   applyPptElementPatch,
+  groupPlacementChildPatches,
+  reorderPptElements,
   canPptGroup,
   canPptUngroup,
   createPptGroup,
@@ -1038,13 +1040,23 @@ export default function CanvasEditor({
 
   const updateElementPlacement = (elementId, patch) => {
     const canvasId = activeCanvas.id
-    const updated = canvases.map((canvas) =>
+    const latest = canvasesRef.current
+    const page = latest.find((canvas) => canvas.id === canvasId)
+    const target = page?.elements?.find((element) => element.id === elementId)
+    // A group draws nothing itself: turning it or changing its transparency must reach the
+    // elements inside, or only the empty frame changes.
+    const childPatches = isPptGroup(target) ? groupPlacementChildPatches(page.elements, target, patch) : {}
+    const updated = latest.map((canvas) =>
       canvas.id !== canvasId
         ? canvas
         : {
             ...canvas,
             elements: canvas.elements.map((element) =>
-              element.id === elementId ? { ...element, placement: { ...element.placement, ...patch } } : element
+              element.id === elementId
+                ? { ...element, placement: { ...element.placement, ...patch } }
+                : childPatches[element.id]
+                  ? { ...element, placement: { ...element.placement, ...childPatches[element.id] } }
+                  : element
             ),
           }
     )
@@ -1298,74 +1310,32 @@ export default function CanvasEditor({
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Layer ordering ──────────────────────────────────────────────────────
-  const bringForward = useCallback((ids) => {
+  // Moves the selection one step / to the end of the stacking order and renumbers layers.
+  // A group moves with its children (moving only the group, which draws nothing, did nothing),
+  // and the relative order inside the moved block is kept.
+  const restack = useCallback((ids, direction) => {
     const canvas = canvasesRef.current[activeCanvasIndexRef.current] || canvasesRef.current[0]
-    if (!canvas) return
-    const idSet = new Set(ids)
+    const selection = (ids || []).filter(Boolean)
+    if (!canvas || !selection.length) return
+    const byLayer = canvas.elements
+      .map((el, index) => ({ el, index }))
+      .sort((a, b) => (a.el.layer || 0) - (b.el.layer || 0) || a.index - b.index)
+      .map(({ el }) => el)
+    const next = reorderPptElements(byLayer, selection, direction)
+    if (!next) return
+    const layerOf = new Map(next.map((el, i) => [el.id, i + 1]))
     const updated = canvasesRef.current.map((c) =>
       c.id !== canvas.id
         ? c
-        : {
-            ...c,
-            elements: c.elements.map((el) =>
-              idSet.has(el.id) ? { ...el, layer: (el.layer || 1) + 1 } : el
-            ),
-          }
+        : { ...c, elements: c.elements.map((el) => ({ ...el, layer: layerOf.get(el.id) ?? el.layer })) }
     )
     updateCanvasesWithHistory(updated)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const sendBackward = useCallback((ids) => {
-    const canvas = canvasesRef.current[activeCanvasIndexRef.current] || canvasesRef.current[0]
-    if (!canvas) return
-    const idSet = new Set(ids)
-    const updated = canvasesRef.current.map((c) =>
-      c.id !== canvas.id
-        ? c
-        : {
-            ...c,
-            elements: c.elements.map((el) =>
-              idSet.has(el.id) ? { ...el, layer: Math.max(1, (el.layer || 1) - 1) } : el
-            ),
-          }
-    )
-    updateCanvasesWithHistory(updated)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const bringToFront = useCallback((ids) => {
-    const canvas = canvasesRef.current[activeCanvasIndexRef.current] || canvasesRef.current[0]
-    if (!canvas) return
-    const maxLayer = Math.max(...canvas.elements.map((el) => el.layer || 1), 0)
-    const idSet = new Set(ids)
-    const updated = canvasesRef.current.map((c) =>
-      c.id !== canvas.id
-        ? c
-        : {
-            ...c,
-            elements: c.elements.map((el) =>
-              idSet.has(el.id) ? { ...el, layer: maxLayer + 1 } : el
-            ),
-          }
-    )
-    updateCanvasesWithHistory(updated)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const sendToBack = useCallback((ids) => {
-    const canvas = canvasesRef.current[activeCanvasIndexRef.current] || canvasesRef.current[0]
-    if (!canvas) return
-    const idSet = new Set(ids)
-    const updated = canvasesRef.current.map((c) =>
-      c.id !== canvas.id
-        ? c
-        : {
-            ...c,
-            elements: c.elements.map((el) =>
-              idSet.has(el.id) ? { ...el, layer: 1 } : el
-            ),
-          }
-    )
-    updateCanvasesWithHistory(updated)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const bringForward = useCallback((ids) => restack(ids, 'forward'), [restack])
+  const sendBackward = useCallback((ids) => restack(ids, 'back'), [restack])
+  const bringToFront = useCallback((ids) => restack(ids, 'toFront'), [restack])
+  const sendToBack = useCallback((ids) => restack(ids, 'toBack'), [restack])
 
   const handleTableCellChange = useCallback((elementId, rowIndex, colIndex, value) => {
     const canvas = canvasesRef.current[activeCanvasIndexRef.current] || canvasesRef.current[0]

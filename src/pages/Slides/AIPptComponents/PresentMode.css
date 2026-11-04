@@ -239,10 +239,12 @@
 }
 
 .ppt-present-slide {
+  --ppt-present-max-h: 76vh;
   position: relative;
-  width: min(92vw, 1200px);
+  /* Width also limited by the available height × the slide's ratio, so the box always keeps
+     the slide's shape; a max-height on a fixed width squashed slides on shorter screens. */
+  width: min(92vw, 1200px, calc(var(--ppt-present-max-h) * var(--ppt-present-ratio, 1.7778)));
   max-width: 100%;
-  max-height: 76vh;
   border-radius: 10px;
   overflow: hidden;
   box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
@@ -409,8 +411,8 @@
   }
 
   .ppt-present-slide {
-    width: 100%;
-    max-height: 64dvh;
+    --ppt-present-max-h: 64dvh;
+    width: min(100%, calc(var(--ppt-present-max-h) * var(--ppt-present-ratio, 1.7778)));
     border-radius: 4px;
   }
 
@@ -436,4 +438,19 @@
   .ppt-present-hints {
     display: none;
   }
+}
+
+/* Slide laid out at the editor stage width, scaled to the presentation box. */
+.ppt-present-stage-host {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.ppt-present-stage-plane {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: top left;
+  container-type: inline-size;
 }

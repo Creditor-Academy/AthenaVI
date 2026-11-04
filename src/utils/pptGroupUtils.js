@@ -59,6 +59,33 @@ export function collectPptMoveIds(elements = [], selectedIds = [], draggedId) {
   })
 }
 
+/** Corners of a placement as drawn (rotated about its centre). */
+function placementCorners(p) {
+  const x = p.x || 0
+  const y = p.y || 0
+  const w = p.width || 100
+  const h = p.height || 40
+  const rotation = Number(p.rotation) || 0
+  if (!rotation) {
+    return [
+      [x, y],
+      [x + w, y + h],
+    ]
+  }
+  const cx = x + w / 2
+  const cy = y + h / 2
+  const rad = (rotation * Math.PI) / 180
+  const cos = Math.cos(rad)
+  const sin = Math.sin(rad)
+  return [
+    [-w / 2, -h / 2],
+    [w / 2, -h / 2],
+    [w / 2, h / 2],
+    [-w / 2, h / 2],
+  ].map(([dx, dy]) => [cx + dx * cos - dy * sin, cy + dx * sin + dy * cos])
+}
+
+/** Box around the elements as drawn — rotated elements count with their rotated corners. */
 export function getPptUnionBounds(elements) {
   let minX = Infinity
   let minY = Infinity
@@ -66,15 +93,12 @@ export function getPptUnionBounds(elements) {
   let maxY = -Infinity
 
   for (const el of elements) {
-    const p = el.placement || {}
-    const x = p.x || 0
-    const y = p.y || 0
-    const w = p.width || 100
-    const h = p.height || 40
-    minX = Math.min(minX, x)
-    minY = Math.min(minY, y)
-    maxX = Math.max(maxX, x + w)
-    maxY = Math.max(maxY, y + h)
+    for (const [px, py] of placementCorners(el.placement || {})) {
+      minX = Math.min(minX, px)
+      minY = Math.min(minY, py)
+      maxX = Math.max(maxX, px)
+      maxY = Math.max(maxY, py)
+    }
   }
 
   if (!Number.isFinite(minX)) {
@@ -269,6 +293,101 @@ export function setPptGroupScaling(active) {
 
 export function isPptGroupScaling() {
   return typeof document !== 'undefined' && document.documentElement.dataset[GROUP_SCALING_FLAG] === '1'
+}
+
+/**
+ * New stacking order (back → front) after moving the selection (an id or a list of ids) one
+ * step forward/back or to the front/back, as one block. A group moves together with its
+ * children — moving only the group entry, which draws nothing, left its contents where they
+ * were. Returns null when nothing changes.
+ */
+export function reorderPptElements(elements = [], selection, direction) {
+  const ids = (Array.isArray(selection) ? selection : [selection]).filter(Boolean)
+  const blockIds = new Set(expandPptSelectionIds(elements, ids))
+  if (!elements.some((el) => blockIds.has(el.id))) return null
+  const block = elements.filter((el) => blockIds.has(el.id))
+  const rest = elements.filter((el) => !blockIds.has(el.id))
+  const firstIndex = elements.findIndex((el) => blockIds.has(el.id))
+  const current = elements.slice(0, firstIndex).filter((el) => !blockIds.has(el.id)).length
+  const target =
+    direction === 'toFront'
+      ? rest.length
+      : direction === 'toBack'
+        ? 0
+        : direction === 'forward'
+          ? Math.min(rest.length, current + 1)
+          : Math.max(0, current - 1)
+  const next = [...rest.slice(0, target), ...block, ...rest.slice(target)]
+  return next.every((el, i) => el === elements[i]) ? null : next
+}
+
+export function normalizeRotation(deg) {
+  const r = (((Number(deg) || 0) % 360) + 360) % 360
+  return Math.round(r * 100) / 100 || 0
+}
+
+/**
+ * Patches for a group turned by `delta` degrees about the centre of `start` (its frame):
+ * every child moves around that centre and turns by the same amount, so the group rotates as
+ * one piece. The group itself only records its angle (shown in the Design panel); its frame
+ * stays axis-aligned around the rotated children. Previously only the empty frame turned.
+ */
+export function rotatePptGroupPatches(state, groupId, start, delta) {
+  const d = Number(delta) || 0
+  const cx = start.x + start.width / 2
+  const cy = start.y + start.height / 2
+  const rad = (d * Math.PI) / 180
+  const cos = Math.cos(rad)
+  const sin = Math.sin(rad)
+  const patches = {}
+  for (const [id, p] of Object.entries(state?.starts || {})) {
+    const ox = p.x + p.width / 2 - cx
+    const oy = p.y + p.height / 2 - cy
+    const nx = cx + ox * cos - oy * sin
+    const ny = cy + ox * sin + oy * cos
+    patches[id] = {
+      ...p,
+      x: Math.round(nx - p.width / 2) || 0,
+      y: Math.round(ny - p.height / 2) || 0,
+      rotation: normalizeRotation((Number(p.rotation) || 0) + d),
+    }
+  }
+  const children = Object.values(patches).map((placement) => ({ placement }))
+  const bounds = children.length ? getPptUnionBounds(children) : start
+  patches[groupId] = {
+    ...start,
+    rotation: normalizeRotation((Number(start.rotation) || 0) + d),
+    x: Math.round(bounds.x) || 0,
+    y: Math.round(bounds.y) || 0,
+    width: Math.round(bounds.width),
+    height: Math.round(bounds.height),
+  }
+  return patches
+}
+
+/**
+ * Child placement patches for a change made to a group in the Design panel: a new angle turns
+ * the children with it, a new transparency applies to every child. The group draws nothing
+ * itself, so these changes had no visible effect before.
+ */
+export function groupPlacementChildPatches(elements = [], group, patch = {}) {
+  if (!isPptGroup(group) || !patch) return {}
+  const state = startPptGroupResize(group, elements)
+  if (!state) return {}
+  const out = {}
+  const current = group.placement || {}
+  if (patch.rotation != null && Number(patch.rotation) !== (Number(current.rotation) || 0)) {
+    const delta = Number(patch.rotation) - (Number(current.rotation) || 0)
+    const frame = getPptUnionBounds(Object.values(state.starts).map((placement) => ({ placement })))
+    const rotated = rotatePptGroupPatches(state, group.id, { ...frame, rotation: current.rotation || 0 }, delta)
+    for (const id of Object.keys(state.starts)) out[id] = rotated[id]
+  }
+  if (patch.opacity != null && Number.isFinite(Number(patch.opacity))) {
+    for (const id of Object.keys(state.starts)) {
+      out[id] = { ...(out[id] || state.starts[id]), opacity: Number(patch.opacity) }
+    }
+  }
+  return out
 }
 
 /** Apply a placement patch from a drag/resize; `__content` (group scaling) goes to content. */

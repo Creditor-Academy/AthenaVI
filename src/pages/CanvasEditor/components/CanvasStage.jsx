@@ -20,6 +20,7 @@ import {
   isPptGroup,
   groupScaleForResize,
   resizePptGroupPatches,
+  rotatePptGroupPatches,
   setPptGroupScaling,
   startPptGroupResize,
   syncPptGroupBounds,
@@ -414,7 +415,10 @@ function InteractiveCanvasElementShell({
               groupScaleForResize(drag.handle, start, next),
               drag.handle
             )
-          : { [el.id]: next }
+          : drag.mode === 'rotate' && drag.groupResize
+            ? // Turning a group turns its children about the group's centre (not just the frame).
+              rotatePptGroupPatches(drag.groupResize, el.id, start, (next.rotation || 0) - (start.rotation || 0))
+            : { [el.id]: next }
       next = patches[el.id]
       lastPlacementRef.current = next
       if (drag.mode === 'move' && drag.moveIds?.length) {
@@ -595,10 +599,10 @@ function InteractiveCanvasElementShell({
         mode === 'resize' && isText ? createTextHeightFloor(shellRef.current, startPlacement.width) : null,
       // Resizing a group resizes its children with it (text never shorter than its text).
       groupResize:
-        mode === 'resize' && isPptGroup(el)
+        (mode === 'resize' || mode === 'rotate') && isPptGroup(el)
           ? startPptGroupResize(el, allElements || [], {
               minHeightFor: (child, start) =>
-                isTextElement(child)
+                mode === 'resize' && isTextElement(child)
                   ? createTextHeightFloor(findSiblingShell(shellRef.current, child.id), start.width)?.(start.width)
                   : null,
             })
@@ -615,10 +619,12 @@ function InteractiveCanvasElementShell({
     []
   )
 
+  // A group's angle lives on its children; its frame stays axis-aligned around them.
+  const frameRotation = el.type === 'group' ? 0 : p.rotation
   const frameStyle = {
     ...placementFrameStyle(p, canvasW, canvasH, {
       layer: el.layer,
-      rotation: p.rotation,
+      rotation: frameRotation,
       opacity: p.opacity,
     }),
     ...overflowPaintStyle({
@@ -626,7 +632,7 @@ function InteractiveCanvasElementShell({
       y: p.y,
       width: p.width,
       height: p.height,
-      rotation: p.rotation,
+      rotation: frameRotation,
       canvasW,
       canvasH,
       selected,

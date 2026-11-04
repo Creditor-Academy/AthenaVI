@@ -48,13 +48,15 @@ import {
   applyPptElementPatch,
   collectPptMoveIds,
   expandPptSelectionIds,
+  groupPlacementChildPatches,
   isPptGroup,
+  reorderPptElements,
   groupScaleForResize,
   placementPatchesChangeContent,
   resizePptGroupPatches,
+  rotatePptGroupPatches,
   setPptGroupScaling,
   startPptGroupResize,
-  syncPptGroupBounds,
 } from '../../../utils/pptGroupUtils'
 import { isPptHitThroughElement } from '../../../utils/pptHitThrough'
 import { exceedsDragThreshold } from '../../../utils/pointerDrag'
@@ -96,7 +98,6 @@ import {
   extractAppliedBrandKitId,
   extractGenerationPrompt,
   getSlideImage,
-  isSlideBackgroundElement,
   normalizeElementPresets,
   normalizeApiShape,
   normalizeElementPlacement,
@@ -129,7 +130,7 @@ import {
   textBoxShrinksToFit,
 } from '../../../utils/textBoxEditing'
 import { compileDeckLayoutToElements, buildThemeCompileOptions } from '../../../utils/compileDeckLayoutToElements'
-import { finalizeChartShapes } from '../../../utils/chartShapeFinalize'
+import { resolveStageElements } from '../../../utils/slideStageElements'
 import { resolveLayoutSchemaById } from '../../../utils/deckLayoutRegistry'
 import {
   layoutSchemaHasCanvasElements,
@@ -152,10 +153,7 @@ import {
   themeFontFamilies,
   uniqueFontFamilies,
 } from '../../../utils/googleFonts'
-import {
-  logCanvasGreySuspects,
-  shouldPaintElement,
-} from '../../../utils/canvasRenderDebug'
+import { logCanvasGreySuspects } from '../../../utils/canvasRenderDebug'
 import { hydrateSlidesGraphicElements } from '../../../utils/hydrateGraphicElements'
 import { resetSlideLoadQueue } from '../../../utils/slideLoadQueue'
 import { takePreviewHandoff } from '../../../utils/deckPreviewCapture'
@@ -590,7 +588,10 @@ function InteractiveElementShell({
               groupScaleForResize(drag.handle, start, next),
               drag.handle
             )
-          : { [el.id]: next }
+          : drag.mode === 'rotate' && drag.groupResize
+            ? // Turning a group turns its children about the group's centre (not just the frame).
+              rotatePptGroupPatches(drag.groupResize, el.id, start, (next.rotation || 0) - (start.rotation || 0))
+            : { [el.id]: next }
       next = patches[el.id]
       lastPlacementRef.current = next
       if (drag.mode === 'move' && drag.moveIds?.length) {
@@ -717,10 +718,10 @@ function InteractiveElementShell({
         mode === 'resize' && isText ? createTextHeightFloor(shellRef.current, startPlacement.width) : null,
       // Resizing a group resizes its children with it (text never shorter than its text).
       groupResize:
-        mode === 'resize' && isPptGroup(el)
+        (mode === 'resize' || mode === 'rotate') && isPptGroup(el)
           ? startPptGroupResize(el, allElements || [], {
               minHeightFor: (child, start) =>
-                isTextElement(child)
+                mode === 'resize' && isTextElement(child)
                   ? createTextHeightFloor(findSiblingShell(shellRef.current, child.id), start.width)?.(start.width)
                   : null,
             })
@@ -795,10 +796,12 @@ function InteractiveElementShell({
     el.type === 'graphic' && typeof el.content?.svg === 'string' && el.content.svg.includes('<svg')
   const hitThrough = isPptHitThroughElement(el)
 
+  // A group's angle lives on its children; its frame stays axis-aligned around them.
+  const frameRotation = el.type === 'group' ? 0 : p.rotation
   const frameStyle = {
     ...placementFrameStyle(p, canvasW, canvasH, {
       layer: el.layer,
-      rotation: p.rotation,
+      rotation: frameRotation,
       opacity: p.opacity,
     }),
     ...overflowPaintStyle({
@@ -806,7 +809,7 @@ function InteractiveElementShell({
       y: p.y,
       width: p.width,
       height: p.height,
-      rotation: p.rotation,
+      rotation: frameRotation,
       canvasW,
       canvasH,
       selected,
@@ -832,7 +835,7 @@ function InteractiveElementShell({
   const chromeFrameStyle = {
     ...placementFrameStyle(p, canvasW, canvasH, {
       layer: (el.layer || 0) + 1000,
-      rotation: p.rotation,
+      rotation: frameRotation,
       opacity: 1,
     }),
     outline: isPrimary && !locked ? '2px solid #3B82F6' : '2px solid #93c5fd',
@@ -1035,33 +1038,9 @@ function SlideStage({
       : selectedElementId
         ? [selectedElementId]
         : []
-  const rawElements = syncPptGroupBounds(slide?.elements?.elements || []).filter(
-    (el) =>
-      !isSlideBackgroundElement(el, slide) &&
-      shouldPaintElement(el, slide, canvas.width, canvas.height)
-  )
-  const layoutKey = String(slide?.layoutId || slide?.layout_id || '').toLowerCase()
-  const isCustomChart =
-    layoutKey.includes('chart_exponential_desc') ||
-    layoutKey.includes('chart_with_description') ||
-    layoutKey.includes('chart_donut_context') ||
-    rawElements.some(
-      (e) =>
-        e.slotId === 'EXPO_CARD_BG' ||
-        e.slotId === 'CHART_CARD_BG' ||
-        e.slotId === 'LINE_CHART' ||
-        e.slotId === 'EXPO_STAT' ||
-        String(e.slotId || '').startsWith('CDC_')
-    )
   const palette = themeVisual?.palette || null
-  const elements = isCustomChart
-    ? finalizeChartShapes(
-        rawElements,
-        { layout_id: slide?.layoutId || slide?.layout_id || (layoutKey.includes('with_description') ? 'chart_with_description_v1' : layoutKey.includes('donut_context') ? 'chart_donut_context_v1' : 'chart_exponential_desc_v1') },
-        palette,
-        canvas
-      )
-    : rawElements
+  // Same preparation Present uses (resolveStageElements), so both show the same slide.
+  const elements = resolveStageElements(slide, canvas, palette)
   const hasElements = elements.length > 0
   const fallbackImage = hasElements ? null : getSlideImage(slide).url
   const slideBgStyle = resolveSlideStageBackground(
@@ -2224,8 +2203,27 @@ function AIPptEditor({
   )
 
   const handleChangeElementPlacement = useCallback(
-    (elementId, placement) => elementMutations.patchElement(elementId, { placement }),
-    [elementMutations]
+    (elementId, placement) => {
+      const slide =
+        localSlidesRef.current.find((s) => s.id === selectedSlideIdRef.current) ||
+        localSlidesRef.current.find((s) => s.id === selectedSlideId)
+      const elements = slide?.elements?.elements || []
+      const el = elements.find((item) => item.id === elementId)
+      // A group draws nothing itself: turning it or changing its transparency must reach the
+      // elements inside, or only the empty frame changes.
+      const childPatches = isPptGroup(el) ? groupPlacementChildPatches(elements, el, placement) : {}
+      const childIds = Object.keys(childPatches)
+      if (!childIds.length) {
+        elementMutations.patchElement(elementId, { placement })
+        return
+      }
+      pushHistorySnapshot()
+      elementMutations.patchElement(elementId, { placement }, { history: false })
+      for (const id of childIds) {
+        elementMutations.patchElement(id, { placement: childPatches[id] }, { history: false })
+      }
+    },
+    [elementMutations, pushHistorySnapshot, selectedSlideId]
   )
 
   const handleStartTextEdit = useCallback(
@@ -2283,6 +2281,7 @@ function AIPptEditor({
     [selectedSlide, elementMutations]
   )
 
+  const reorderSelectedRef = useRef(null)
   const handleQuickCommand = useCallback(
     (cmd) => {
       const ids = multiSelectIds.length ? multiSelectIds : [selectedElementId].filter(Boolean)
@@ -2306,6 +2305,16 @@ function AIPptEditor({
         case 'paste':
           if (viewOnly) { askOwner(); break }
           elementMutations.pasteClipboard()
+          break
+        case 'bring-forward':
+        case 'send-backward':
+        case 'bring-front':
+        case 'send-back':
+          if (viewOnly) { askOwner(); break }
+          // Defined further down this component; reached through a ref.
+          reorderSelectedRef.current?.(
+            { 'bring-forward': 'forward', 'send-backward': 'back', 'bring-front': 'toFront', 'send-back': 'toBack' }[cmd]
+          )
           break
         case 'select-all': {
           if (viewOnly) { askOwner(); break }
@@ -3898,26 +3907,8 @@ function AIPptEditor({
 
       const slide = localSlides.find((s) => s.id === slideId)
       const existing = [...(slide?.elements?.elements || [])]
-      const idx = existing.findIndex((el) => el.id === elementId)
-      if (idx < 0) return
-
-      let next = existing
-      if (direction === 'toFront') {
-        if (idx >= existing.length - 1) return
-        const [item] = existing.splice(idx, 1)
-        existing.push(item)
-        next = existing
-      } else if (direction === 'toBack') {
-        if (idx <= 0) return
-        const [item] = existing.splice(idx, 1)
-        existing.unshift(item)
-        next = existing
-      } else {
-        const swapWith = direction === 'forward' ? idx + 1 : idx - 1
-        if (swapWith < 0 || swapWith >= existing.length) return
-        ;[existing[idx], existing[swapWith]] = [existing[swapWith], existing[idx]]
-        next = existing
-      }
+      const next = reorderPptElements(existing, elementId, direction)
+      if (!next) return
 
       await persistElementOrder(slideId, next)
     },
@@ -3929,6 +3920,8 @@ function AIPptEditor({
       persistElementOrder,
     ]
   )
+
+  reorderSelectedRef.current = handleReorderSelected
 
   const handleReorderLayers = useCallback(
     (frontToBackIds) => {
@@ -4906,6 +4899,22 @@ function AIPptEditor({
             elementMutations.alignSelection(canvasSelectionIds, alignment)
             setElementContextMenu(null)
           }}
+          onBringForward={() => {
+            handleReorderSelected('forward')
+            setElementContextMenu(null)
+          }}
+          onSendBackward={() => {
+            handleReorderSelected('back')
+            setElementContextMenu(null)
+          }}
+          onBringToFront={() => {
+            handleReorderSelected('toFront')
+            setElementContextMenu(null)
+          }}
+          onSendToBack={() => {
+            handleReorderSelected('toBack')
+            setElementContextMenu(null)
+          }}
         />
       ) : null}
 
@@ -5530,6 +5539,11 @@ function AIPptEditor({
           presence={presentPresence}
           onIndexChange={(i) => {
             presentIndexRef.current = i
+          }}
+          // Present is mounted outside the workspace that sets the deck's theme fonts.
+          fontVars={{
+            '--ppt-font-heading': slideStyles?.headerFont ? `"${slideStyles.headerFont}", sans-serif` : undefined,
+            '--ppt-font-body': slideStyles?.bodyFont ? `"${slideStyles.bodyFont}", sans-serif` : undefined,
           }}
         />
       )}
