@@ -1,6 +1,7 @@
 import axios from 'axios'
 import API_CONFIG, { buildUrl } from '../config/api.js'
 import { getOAuthAccessTokenFromUrl } from '../utils/authRouting.js'
+import { refreshAccessToken } from '../utils/authRefresh.js'
 import {
   shouldSkipTokenRefresh,
   getApiError,
@@ -39,18 +40,24 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401 && !shouldSkipTokenRefresh(error)) {
-      try {
-        const response = await api.post('/api/auth/refresh', {})
-        const { accessToken } = response.data.data
-        localStorage.setItem('accessToken', accessToken)
-        window.dispatchEvent(new CustomEvent('auth:token-refreshed'))
-
-        error.config.headers.Authorization = `Bearer ${accessToken}`
-        return api.request(error.config)
-      } catch {
+    const config = error.config
+    if (
+      error.response?.status === 401 &&
+      config &&
+      !config._authRetried &&
+      !shouldSkipTokenRefresh(error) &&
+      !String(config.url || '').includes('/api/auth/refresh')
+    ) {
+      // Shared with fetch() calls, so simultaneous 401s renew the token once.
+      const stale = String(config.headers?.Authorization || '').replace(/^Bearer\s+/i, '') || null
+      const accessToken = await refreshAccessToken({ staleToken: stale })
+      if (!accessToken) {
         triggerSessionExpired()
+        return Promise.reject(error)
       }
+      config._authRetried = true
+      config.headers.Authorization = `Bearer ${accessToken}`
+      return api.request(config)
     }
     return Promise.reject(error)
   }

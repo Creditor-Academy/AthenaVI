@@ -1,5 +1,6 @@
 import assetService from '../services/assetService';
 import workspaceService from '../services/workspaceService';
+import { renewAfter401, shouldRenewFor } from './authRefresh.js';
 
 export const HEYGEN_SOURCE_MAX_BYTES = 900 * 1024 * 1024;
 export const HEYGEN_VOICE_MAX_BYTES = 100 * 1024 * 1024;
@@ -97,7 +98,20 @@ export function normalizeHeygenUploadFile(file, fallbackName = 'upload') {
  * Multipart upload with upload progress (fetch cannot report upload %).
  * @param {{ url: string, formData: FormData, headers?: Record<string, string>, onProgress?: (p: { loaded: number, total: number, percent: number }) => void }} opts
  */
-export function uploadFormDataWithProgress({ url, formData, headers = {}, onProgress }) {
+export async function uploadFormDataWithProgress({ url, formData, headers = {}, onProgress }) {
+  try {
+    return await uploadOnce({ url, formData, headers, onProgress });
+  } catch (error) {
+    // Access token ran out: renew it and send the upload once more.
+    const stale = /^Bearer\s+(.+)$/i.exec(String(headers.Authorization || ''))?.[1];
+    if (error?.status !== 401 || !stale || !shouldRenewFor(url)) throw error;
+    const token = await renewAfter401(stale);
+    if (!token) throw error;
+    return uploadOnce({ url, formData, headers: { ...headers, Authorization: `Bearer ${token}` }, onProgress });
+  }
+}
+
+function uploadOnce({ url, formData, headers = {}, onProgress }) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', url);

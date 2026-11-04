@@ -179,6 +179,9 @@ export default function ExportPresentationModal({
       setPhase('pick')
       if (isInsufficientCreditsError(err)) {
         setError(err.message || 'Insufficient credits to export')
+      } else if (err?.status === 401) {
+        // Only reached when the session could not be renewed (the sign-in prompt is showing).
+        setError('Your session has expired. Sign in again, then export.')
       } else {
         setError(err.message || 'Export failed. Try again in a moment.')
       }
