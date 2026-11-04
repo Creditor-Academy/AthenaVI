@@ -17,6 +17,7 @@ import { applyElementTextFill, contentFillValue, contentPlainText, contentWithSy
 import { ensureGoogleFontLoaded } from '../../../../utils/googleFonts'
 import FontPicker from '../../../../components/shared/fonts/FontPicker'
 import ColorFillPicker from './ColorFillPicker'
+import TextLinkControl from './TextLinkControl'
 import './insertPanels.css'
 
 const LIST_STYLE_OPTIONS = [
@@ -155,6 +156,7 @@ export default function ElementToolbar({
       >
         <MdStrikethroughS size={16} />
       </button>
+      <TextLinkControl element={element} disabled={disabled} onChange={onChange} />
     </>
   )
 

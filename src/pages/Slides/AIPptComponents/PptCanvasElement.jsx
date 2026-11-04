@@ -34,6 +34,7 @@ import {
   setTextOffsetsInNode,
   textPaintStyle,
 } from '../../../utils/pptTextContent'
+import { linkedRuns, splitTextLinks } from '../../../utils/textLinks'
 import DeviceFrameVisual, { resolveDeviceFrameColor } from '../../../components/ppt/DeviceFrameVisual'
 import EmptyImagePlaceholder, { DeviceScreenPlaceholder } from '../../../components/ppt/EmptyImagePlaceholder'
 import ClipShapeSvg from '../../../components/ppt/ClipShapeSvg'
@@ -43,7 +44,80 @@ import { isPptGroupScaling } from '../../../utils/pptGroupUtils'
 import { parsePolygonClipPath } from '../../../utils/shapeClipSvg'
 import { buildTextEffectStyle, computeCurvedTextSvgPath } from '../../../utils/textEffectsUtils'
 
-function TextListDisplay({ text, listType }) {
+const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent || '')
+
+/**
+ * A linked piece of text.
+ * - 'follow' (Present): a click opens the link.
+ * - 'modifier' (editors): Ctrl/⌘+click opens it; a plain click still selects / drags the box.
+ * - 'none' (thumbnails, previews, exports): looks like a link but isn't one.
+ */
+function TextLink({ href, linkMode, style, children }) {
+  const linkStyle = {
+    ...style,
+    textDecoration: 'underline',
+    textDecorationThickness: '0.06em',
+    textUnderlineOffset: '0.12em',
+    cursor: linkMode === 'follow' ? 'pointer' : undefined,
+  }
+  if (linkMode !== 'follow' && linkMode !== 'modifier') {
+    return (
+      <span className="ppt-text-link" style={linkStyle}>
+        {children}
+      </span>
+    )
+  }
+  const modifier = linkMode === 'modifier'
+  const wantsOpen = (e) => !modifier || e.ctrlKey || e.metaKey
+  return (
+    <a
+      className={`ppt-text-link ${modifier ? 'ppt-text-link--modifier' : ''}`}
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      draggable={false}
+      title={modifier ? `${href}\n${isMac ? '⌘' : 'Ctrl'}+click to open link` : href}
+      style={linkStyle}
+      // Opening a link mustn't also select / drag the element, or (in Present) change focus.
+      onPointerDown={(e) => {
+        if (wantsOpen(e)) e.stopPropagation()
+      }}
+      onMouseDown={(e) => {
+        if (wantsOpen(e)) e.stopPropagation()
+      }}
+      onClick={(e) => {
+        if (!wantsOpen(e)) {
+          e.preventDefault()
+          return
+        }
+        e.stopPropagation()
+      }}
+      onDoubleClick={(e) => {
+        // Double-clicking a link in the editor edits the text, like any other words.
+        if (modifier) e.preventDefault()
+      }}
+    >
+      {children}
+    </a>
+  )
+}
+
+/** Plain text with the web addresses in it drawn as links. */
+function LinkedText({ text, linkMode }) {
+  const pieces = splitTextLinks(text)
+  if (!pieces.some((piece) => piece.href)) return text || null
+  return pieces.map((piece, i) =>
+    piece.href ? (
+      <TextLink key={i} href={piece.href} linkMode={linkMode}>
+        {piece.text}
+      </TextLink>
+    ) : (
+      piece.text
+    )
+  )
+}
+
+function TextListDisplay({ text, listType, linkMode }) {
   const lines = splitTextLines(text)
   if (!listType || !lines.length) return text || null
 
@@ -57,22 +131,28 @@ function TextListDisplay({ text, listType }) {
           >
             {getListMarker(listType, index)}
           </span>
-          <span className="ppt-text-list-line">{line || '\u00A0'}</span>
+          <span className="ppt-text-list-line">
+            {line ? <LinkedText text={line} linkMode={linkMode} /> : '\u00A0'}
+          </span>
         </div>
       ))}
     </div>
   )
 }
 
-function RichTextDisplay({ runs, content, palette, baseStyle = {} }) {
+function RichTextDisplay({ runs, content, palette, baseStyle = {}, linkMode }) {
   if (!Array.isArray(runs) || !runs.length) return null
   return (
     <span className="ppt-rich-text">
-      {runs.map((run, i) => {
-        const text = typeof run?.text === 'string' || typeof run?.text === 'number' ? run.text : ''
-        return (
-          <span key={i} style={runDisplayStyle(run, content, palette, baseStyle)}>
-            {text}
+      {linkedRuns(runs).map((run, i) => {
+        const style = runDisplayStyle(run, content, palette, baseStyle)
+        return run.href ? (
+          <TextLink key={i} href={run.href} linkMode={linkMode} style={style}>
+            {run.text}
+          </TextLink>
+        ) : (
+          <span key={i} style={style}>
+            {run.text}
           </span>
         )
       })}
@@ -80,7 +160,7 @@ function RichTextDisplay({ runs, content, palette, baseStyle = {} }) {
   )
 }
 
-function TextListRunsDisplay({ runs, content, listType, palette, baseStyle }) {
+function TextListRunsDisplay({ runs, content, listType, palette, baseStyle, linkMode }) {
   const lineRuns = splitRunsByLines(runs)
   if (!listType || !lineRuns.length) return null
 
@@ -96,7 +176,13 @@ function TextListRunsDisplay({ runs, content, listType, palette, baseStyle }) {
           </span>
           <span className="ppt-text-list-line">
             {line.length ? (
-              <RichTextDisplay runs={line} content={content} palette={palette} baseStyle={baseStyle} />
+              <RichTextDisplay
+                runs={line}
+                content={content}
+                palette={palette}
+                baseStyle={baseStyle}
+                linkMode={linkMode}
+              />
             ) : (
               '\u00A0'
             )}
@@ -105,6 +191,20 @@ function TextListRunsDisplay({ runs, content, listType, palette, baseStyle }) {
       ))}
     </div>
   )
+}
+
+/** Drops the link from a span of a text box being edited, keeping its other formatting. */
+function unlinkEditableSpan(span) {
+  delete span.dataset.link
+  span.style.textDecoration = ''
+  try {
+    const { href: _href, ...rest } = JSON.parse(span.dataset.run || '{}')
+    if (Object.keys(rest).length) span.dataset.run = JSON.stringify(rest)
+    else delete span.dataset.run
+  } catch {
+    delete span.dataset.run
+  }
+  return span
 }
 
 function readEditableText(node, listType, fallback = '') {
@@ -235,6 +335,7 @@ function EditableText({
   onEndEdit,
   onHeightChange,
   showEmptyHint = false,
+  linkMode = 'none',
   style,
 }) {
   const ref = useRef(null)
@@ -367,6 +468,46 @@ function EditableText({
   useEffect(() => {
     return () => cancelAnimationFrame(measureRaf.current)
   }, [])
+
+  // Typing right after a link carries on as ordinary text: the browser would otherwise put the
+  // new characters inside the link's span and extend the link with them.
+  useEffect(() => {
+    const node = ref.current
+    if (!editing || !node) return undefined
+    const onBeforeInput = (e) => {
+      if (e.inputType !== 'insertText' || !e.data) return
+      const sel = window.getSelection()
+      if (!sel?.isCollapsed || !sel.rangeCount) return
+      const { anchorNode, anchorOffset } = sel
+      const host = anchorNode?.nodeType === Node.TEXT_NODE ? anchorNode.parentElement : anchorNode
+      const link = host?.closest?.('[data-link]')
+      if (!link || !node.contains(link)) return
+      // An empty copy of the link (Enter at its end copies the span onto the new line).
+      if (!link.textContent) {
+        unlinkEditableSpan(link)
+        return
+      }
+      if (anchorNode.nodeType !== Node.TEXT_NODE || anchorOffset !== anchorNode.nodeValue.length) return
+      const walker = document.createTreeWalker(link, NodeFilter.SHOW_TEXT)
+      let last = null
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) if (n.nodeValue) last = n
+      if (last !== anchorNode) return
+      e.preventDefault()
+      // Same look as the link's words (colour, weight, font), without the link.
+      const plain = unlinkEditableSpan(link.cloneNode(false))
+      plain.textContent = e.data
+      link.after(plain)
+      const range = document.createRange()
+      range.setStart(plain.firstChild, e.data.length)
+      range.collapse(true)
+      sel.removeAllRanges()
+      sel.addRange(range)
+      // preventDefault skips the input event, so record the typing the same way onInput does.
+      node.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: e.data }))
+    }
+    node.addEventListener('beforeinput', onBeforeInput)
+    return () => node.removeEventListener('beforeinput', onBeforeInput)
+  }, [editing])
 
   // Layout-bound text (generated slides) must stay inside its box: shrink the rendered
   // font until the content fits instead of spilling over neighbouring elements.
@@ -551,7 +692,7 @@ function EditableText({
       if (ref.current?.contains(e.target)) return
       if (
         e.target.closest?.(
-          '.ppt-fill-picker, .ppt-fill-picker-pop, .ppt-element-toolbar, .ppt-design-toolbar-panel, .ppt-element-props-grid, .ppt-element-props-color'
+          '.ppt-fill-picker, .ppt-fill-picker-pop, .ppt-link-pop, .ppt-element-toolbar, .ppt-design-toolbar-panel, .ppt-element-props-grid, .ppt-element-props-color'
         )
       ) {
         return
@@ -665,11 +806,20 @@ function EditableText({
             listType={c.listType}
             palette={palette}
             baseStyle={textStyle}
+            linkMode={linkMode}
           />
         ) : c.listType && (c.text || plainText) ? (
-          <TextListDisplay text={plainText || c.text} listType={c.listType} />
+          <TextListDisplay text={plainText || c.text} listType={c.listType} linkMode={linkMode} />
         ) : usesRuns ? (
-          <RichTextDisplay runs={paintRuns} content={c} palette={palette} baseStyle={textStyle} />
+          <RichTextDisplay
+            runs={paintRuns}
+            content={c}
+            palette={palette}
+            baseStyle={textStyle}
+            linkMode={linkMode}
+          />
+        ) : plainText ? (
+          <LinkedText text={displayText} linkMode={linkMode} />
         ) : (
           displayText
         )}
@@ -744,6 +894,8 @@ export default function PptCanvasElement({
   onTableCellChange,
   onTableActivate,
   onImageAuthError,
+  // Present: a click on a link in a text box opens it (elsewhere read-only links don't react).
+  followLinks = false,
 }) {
   const fillStyle = {
     width: '100%',
@@ -765,6 +917,7 @@ export default function PptCanvasElement({
         onEndEdit={onEndTextEdit}
         elementId={el.id}
         onHeightChange={onHeightChange}
+        linkMode={editable ? 'modifier' : followLinks ? 'follow' : 'none'}
         style={{ width: '100%', maxWidth: '100%', minHeight: '1em', height: '100%' }}
       />
     )

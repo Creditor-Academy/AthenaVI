@@ -1,4 +1,5 @@
 import { resolveFillCss, resolveThemeColor } from './presentationHelpers'
+import { safeLinkHref } from './textLinks'
 import {
   coerceInkHexForAppearance,
   resolveSlideAppearance,
@@ -218,6 +219,7 @@ function styleKey(run) {
     run?.fontFamily || '',
     run?.fontRole || '',
     run?.userColor ? 'u' : '',
+    run?.href || '',
   ].join('|')
 }
 
@@ -232,6 +234,7 @@ function cloneRunStyle(run) {
   if (run?.fontFamily) next.fontFamily = run.fontFamily
   if (run?.fontRole) next.fontRole = run.fontRole
   if (run?.userColor) next.userColor = true
+  if (run?.href) next.href = run.href
   return next
 }
 
@@ -386,29 +389,104 @@ export function applyTextFill(content, fill, range) {
   return applyFillToWholeContent(content, fill)
 }
 
-/** Apply a solid/gradient fill to the live selection, or the whole text box. */
-export function applyElementTextFill(element, fill) {
+/** The element's content, taken from the text box being edited when there is one (unsaved typing). */
+function liveElementContent(element) {
   const content = element?.content || {}
   const id = element?.id
-  let base = content
-  if (typeof document !== 'undefined' && id) {
-    const editable = document.querySelector(
-      `[data-element-id="${id}"] .ppt-text-editable`
-    )
-    if (editable) {
-      const liveRuns = serializeEditableRuns(editable)
-      if (liveRuns.length) {
-        base = {
-          ...content,
-          text: editableNodeText(editable) || contentPlainText(content),
-          runs: liveRuns,
-        }
-      }
-    }
+  if (typeof document === 'undefined' || !id) return content
+  const editable = document.querySelector(`[data-element-id="${id}"] .ppt-text-editable`)
+  if (!editable) return content
+  const liveRuns = serializeEditableRuns(editable)
+  if (!liveRuns.length) return content
+  return {
+    ...content,
+    text: editableNodeText(editable) || contentPlainText(content),
+    runs: liveRuns,
   }
+}
+
+/** The selected text range of this element while it is being edited, else null. */
+function liveElementRange(element) {
   const range = getPptTextSelection()
-  const scoped = range && range.elementId === id ? range : null
-  return applyTextFill(base, fill, scoped)
+  if (!range || range.elementId !== element?.id || !(range.end > range.start)) return null
+  if (typeof document === 'undefined') return range
+  // A range left over from an earlier edit of this box doesn't count once editing has ended.
+  return document.querySelector(`[data-element-id="${element.id}"] .ppt-text-editable`) ? range : null
+}
+
+/** Apply a solid/gradient fill to the live selection, or the whole text box. */
+export function applyElementTextFill(element, fill) {
+  const range = getPptTextSelection()
+  const scoped = range && range.elementId === element?.id ? range : null
+  return applyTextFill(liveElementContent(element), fill, scoped)
+}
+
+/**
+ * Links (or with an empty href, unlinks) the text from `start` to `end`; the whole text when the
+ * range is empty. The href is expected to be normalized already (see normalizeLinkHref).
+ */
+export function applyLinkToTextRange(content, start, end, href) {
+  const c = content || {}
+  const text = contentPlainText(c)
+  if (!text) return c
+  let a = Math.max(0, Math.min(Number(start) || 0, Number(end) || 0, text.length))
+  let b = Math.min(text.length, Math.max(Number(start) || 0, Number(end) || 0))
+  if (a === b) {
+    a = 0
+    b = text.length
+  }
+  const link = safeLinkHref(href)
+  const pieces = splitRunsByOffsets(expandRuns(c), a, b).map(({ _hit, ...run }) => {
+    if (!_hit) return run
+    const next = { ...run }
+    if (link) next.href = link
+    else delete next.href
+    return next
+  })
+  return { ...c, text, runs: mergeAdjacentRuns(pieces) }
+}
+
+/** Link or unlink the selected words of a text box (or all its text when nothing is selected). */
+export function applyElementTextLink(element, href) {
+  const range = liveElementRange(element)
+  return applyLinkToTextRange(liveElementContent(element), range?.start, range?.end, href)
+}
+
+/** Stored links in the current selection (or the whole box): `{ href, linked }`. */
+function elementTextLinkState(element) {
+  const content = liveElementContent(element)
+  const text = contentPlainText(content)
+  if (!text) return { href: '', linked: false }
+  const range = liveElementRange(element)
+  const a = range ? range.start : 0
+  const b = range ? range.end : text.length
+  const hrefs = new Set()
+  let cursor = 0
+  for (const run of expandRuns(content)) {
+    const len = coercePlainText(run?.text).length
+    const runStart = cursor
+    cursor += len
+    if (!len || cursor <= a || runStart >= b) continue
+    if (!run.text.trim()) continue
+    hrefs.add(run?.href || '')
+  }
+  return {
+    href: hrefs.size === 1 ? [...hrefs][0] : '',
+    linked: [...hrefs].some(Boolean),
+  }
+}
+
+/**
+ * The link the Link control should show for the current selection (or the whole box): the
+ * stored href when all of that text shares one, else ''.
+ */
+export function elementTextLink(element) {
+  return elementTextLinkState(element).href
+}
+
+/** Whether any of the selected text (or the box, with nothing selected) has a stored link. */
+export function elementTextHasLink(element) {
+  return elementTextLinkState(element).linked
 }
 
 export function remapRunsToText(runs, oldText, newText) {
@@ -514,6 +592,7 @@ export function serializeEditableRuns(node) {
     const out = {}
     if (runProps?.fontFamily) out.fontFamily = runProps.fontFamily
     if (runProps?.fontRole) out.fontRole = runProps.fontRole
+    if (runProps?.href) out.href = runProps.href
     if (!base || !el || el === node) return out
     const cs = styleOf(el)
     const weight = numericFontWeight(cs.fontWeight)
@@ -586,11 +665,19 @@ export function seedEditableNode(node, content, palette) {
       /* ignore */
     }
     if (run?.userColor) span.dataset.userColor = '1'
-    // Font choices that computed style can't tell apart from the box's own (theme role vars).
-    if (run?.fontFamily || run?.fontRole) {
+    const href = run?.href ? safeLinkHref(run.href) : null
+    if (href) {
+      // Linked words stay underlined while editing, so it is clear which text the link covers.
+      span.style.textDecoration = 'underline'
+      span.dataset.link = '1'
+    }
+    // Font choices that computed style can't tell apart from the box's own (theme role vars),
+    // and the link, which the DOM doesn't carry otherwise.
+    if (run?.fontFamily || run?.fontRole || href) {
       span.dataset.run = JSON.stringify({
         ...(run.fontFamily ? { fontFamily: run.fontFamily } : {}),
         ...(run.fontRole ? { fontRole: run.fontRole } : {}),
+        ...(href ? { href } : {}),
       })
     }
     span.textContent = run.text || ''

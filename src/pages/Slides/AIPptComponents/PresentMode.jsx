@@ -84,6 +84,7 @@ function PresentElement({ el, palette, canvasW, canvasH, focused, dimmed, select
         editable={false}
         showEmptyTextHint={false}
         canvasW={canvasW}
+        followLinks
       />
     </div>
   )
