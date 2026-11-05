@@ -86,6 +86,13 @@ export default defineConfig(({ mode }) => {
       commonjsOptions: {
         include: [/node_modules/, /packages[\\/]athena-contracts/],
       },
+      rollupOptions: {
+        input: {
+          main: path.resolve(rootDir, 'index.html'),
+          // Headless page the backend uses to export presentations with the editor's renderer.
+          exportRender: path.resolve(rootDir, 'export-render.html'),
+        },
+      },
     },
     optimizeDeps: {
       // ESM shims import CJS siblings; without pre-bundle, Vite serves raw `require()` to the browser.

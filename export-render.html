@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex" />
+    <title>Export renderer</title>
+  </head>
+  <body>
+    <!--
+      Headless page used by the backend to export presentations (PDF / PNG / JPEG and PPTX
+      text measurement). The backend injects the deck with window.__athenaExport.render().
+      It makes no API calls and needs no sign-in.
+    -->
+    <div id="root"></div>
+    <script type="module" src="/src/export-render/main.jsx"></script>
+  </body>
+</html>

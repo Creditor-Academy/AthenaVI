@@ -1,0 +1,76 @@
+/* Export renderer page: slides stacked top to bottom, one printed page each. */
+
+html,
+body,
+#root {
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  background: transparent;
+}
+
+body {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* No motion: exports capture the final frame. */
+*,
+*::before,
+*::after {
+  animation: none !important;
+  transition: none !important;
+  caret-color: transparent !important;
+}
+
+.export-slide {
+  position: relative;
+  overflow: hidden;
+  break-after: page;
+  page-break-after: always;
+  break-inside: avoid;
+}
+
+/* Capturing one element / one slide background as a picture (PPTX). */
+.export-isolating .export-slide:not([data-isolated]) {
+  display: none;
+}
+
+.export-isolating [data-export-el]:not([data-isolated]) {
+  visibility: hidden;
+}
+
+.export-isolating--element .export-slide[data-isolated] {
+  background: none !important;
+}
+
+.export-slide:last-child {
+  break-after: auto;
+  page-break-after: auto;
+}
+
+.export-slide-fallback {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 7%;
+  display: flex;
+  flex-direction: column;
+  gap: 4%;
+}
+
+.export-slide-fallback h1 {
+  font-size: 34px;
+  line-height: 1.2;
+  letter-spacing: 0;
+  margin: 0;
+}
+
+.export-slide-fallback img {
+  flex: 1;
+  min-height: 0;
+  max-width: 100%;
+  object-fit: contain;
+}

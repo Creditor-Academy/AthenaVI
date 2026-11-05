@@ -108,9 +108,8 @@ import {
   resolveThemeColor,
   patchFromBackgroundFill,
   toApiThemeId,
-  buildWizardThemeTokens,
 } from '../../../utils/presentationHelpers'
-import { enforceAppearancePalette } from '../../../utils/themeAppearance'
+import { resolveThemeVisual } from '../../../utils/pptThemeVisual'
 import { coercePlainText } from '../../../utils/pptTextContent'
 import { cropChanged, normalizeCrop, placementForCrop } from '../../../utils/imageCrop'
 import {
@@ -388,49 +387,6 @@ function cssPxToCanvas(cssPx, stageEl, canvasSize) {
 
 const DEFAULT_SLIDE_BG = '#FFFFFF'
 const DEFAULT_TEXT_COLOR = '#0F172A'
-
-function resolveThemeVisual(themeId, themeTokens) {
-  const enforced = themeTokens?.palette ? enforceAppearancePalette(themeTokens) : themeTokens
-  const palette = enforced?.palette
-  if (palette?.bg || palette?.primary || palette?.text) {
-    const bg = palette.bg || palette.surface || DEFAULT_SLIDE_BG
-    const primary = palette.primary || '#3B82F6'
-    const secondary = palette.secondary || primary
-    const text = palette.text || (enforced?.appearance === 'dark' ? '#F8FAFC' : '#0F172A')
-    const muted = palette.muted || '#64748B'
-    const colorRoles = themeTokens?.colorRoles || palette?.colorRoles || null
-    const paletteWithRoles = {
-      ...(colorRoles ? { ...palette, colorRoles } : palette),
-      appearance: enforced?.appearance,
-    }
-    return {
-      id: 'themeTokens',
-      name: themeTokens?.brand?.name || 'Brand Kit',
-      outer: bg,
-      inner: bg,
-      title: text,
-      body: muted,
-      primary,
-      secondary,
-      accent: palette.accent || secondary,
-      background: bg,
-      palette: paletteWithRoles,
-      appearance: enforced?.appearance,
-    }
-  }
-  const id = String(themeTokens?.wizardColorThemeId || themeId || '')
-  const fallback = THEMES.find((t) => t.id === id || toApiThemeId(t.id) === id) || THEMES[0]
-  const builtTokens = buildWizardThemeTokens(fallback.id, THEMES)
-  const fallbackPalette = builtTokens?.palette || null
-  const bg = fallback.background || fallbackPalette?.bg || DEFAULT_SLIDE_BG
-  return {
-    ...fallback,
-    outer: bg,
-    inner: bg,
-    background: bg,
-    palette: fallbackPalette,
-  }
-}
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))

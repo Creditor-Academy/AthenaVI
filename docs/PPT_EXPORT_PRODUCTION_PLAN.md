@@ -236,7 +236,24 @@ Small, safe fixes that ship immediately, before the larger rework.
 
 ---
 
-### Phase 3: One renderer for PDF and server-side images (M–L)
+### Phase 3: One renderer for PDF and server-side images (M–L) — code done 2026-11-05, staging check pending
+
+**Done:**
+- **The page.** `export-render.html` → `src/export-render/` draws slides like Present does:
+  - on the 900px editor stage, with `resolveStageElements` and `PptCanvasElement`;
+  - with the editor's palette (`resolveThemeVisual`, moved to `utils/pptThemeVisual.js`), theme fonts and slide normalisation.
+
+  It waits for stylesheets, fonts, images (`<img>`, SVG `<image>`, CSS backgrounds) and for fit-to-box sizes to stop changing. It exposes `render`, `measure` (fitted size and drawn colour), and `isolate` / `release` (for PPTX pictures). Vite builds it as a second page.
+- **Backend** (`exportRenderer.service.js`):
+  - the page URL is `EXPORT_RENDER_URL`, else `${FRONTEND_URL}/export-render.html`;
+  - requests are filtered (scripts and API calls only from the page's own origin, no frames, no cloud metadata);
+  - the page's version is checked.
+
+  PDF is `page.pdf()`: vector text, one 13.333 × 7.5in page per slide. PNG/JPEG are exact 1920 × 1080 clips.
+- **Fallback:** if the page can't be reached, export logs `export_renderer_unavailable` and uses the old `slideHtml.js` renderer. `PPT_EXPORT_RENDERER=legacy` forces that.
+- **Also fixed:** the image zip had every CRC32 set to 0. Strict unzip tools reject that.
+
+**Deploy order:** frontend first (it ships `export-render.html`), then backend. The backend uses `FRONTEND_URL`, so no new env var is needed unless the page lives elsewhere.
 
 **Frontend**
 - [ ] **3.1** Add a Vite entry for `export-render.html` → `src/export-render/main.jsx`. It:
@@ -273,9 +290,36 @@ Small, safe fixes that ship immediately, before the larger rework.
 
 ---
 
-### Phase 4: PPTX fidelity for PowerPoint and Google Slides (L)
+### Phase 4: PPTX fidelity for PowerPoint and Google Slides (L) — 4A, 4G and part of 4B/4C done 2026-11-05
 
 Work through the table in section 5 one row at a time. Each row gets a unit test that checks the XML, and a slide in the kitchen-sink golden deck.
+
+**Done (`pptxText.js`, `pptxCapability.js`, `exportRenderer.capturePptxAssets`):**
+- **4A text:**
+  - zero insets (or the element's padding);
+  - the **fitted font size and drawn colour measured on the render page**;
+  - exact CSS line height;
+  - bullet / numbered / check / dash lists;
+  - uppercase / lowercase / capitalise;
+  - underline, strike and italic, also per run;
+  - letter spacing (px or em);
+  - links;
+  - no autofit.
+- **4G pictures:** anything PowerPoint can't draw natively is captured from the render page as a transparent PNG (1.5× resolution), at its exact box and layer, including shadows. This covers:
+  - clip-path shapes and gradient fills;
+  - device frames and dashed borders;
+  - image masks, filters, rounded corners and edge fade;
+  - empty image slots (the editor's placeholder artwork);
+  - curved / effect / gradient text;
+  - icons, graphics and embeds;
+  - non-native effects.
+
+  Image and gradient slide backgrounds are captured as JPEG. Text, plain shapes, photos, charts and tables stay native.
+- **Fixed:** pptxgenjs ignores `addSlide({ background })`, so **every slide's background colour was dropped** (all slides came out white). It is now set with `slide.background`.
+- Native chart labels and gridlines are readable on dark slides.
+- If the capture fails, PPTX still builds with stored sizes and native shapes only.
+
+**Not done yet:** native gradients (4.10; they are pictures for now), the full preset-shape map (4.9; clip-path shapes are pictures), table styling (4.16), chart styling (4.17), fonts (Phase 5).
 
 **4A. Layout and text (fixes P1, P2, P3)**
 - [ ] **4.1** Set explicit insets from `padding`/`paddingX` (default 0) on every text box: `margin: [t, r, b, l]` in pptxgenjs, written to `bodyPr` as `lIns`/`tIns`/`rIns`/`bIns`.
