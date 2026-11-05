@@ -2541,3 +2541,16 @@
   line-height: 1.4;
   color: #64748b;
 }
+
+/* Element effects (shapes, images, charts…): tiles preview the effect on a small shape. */
+.ppt-effect-thumb--element {
+  overflow: visible;
+}
+
+.ppt-effect-thumb-shape {
+  display: block;
+  width: 22px;
+  height: 18px;
+  border-radius: 5px;
+  background: #2563eb;
+}

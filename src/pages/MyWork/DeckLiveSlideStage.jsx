@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import PptCanvasElement from '../Slides/AIPptComponents/PptCanvasElement'
+import { EDITOR_STAGE_WIDTH } from '../../utils/slideStageElements'
 import {
   DEFAULT_SLIDE_BG,
   getSlideImage,
@@ -168,6 +169,7 @@ export default function DeckLiveSlideStage({
                   editable={false}
                   showEmptyTextHint={false}
                   canvasW={canvas.width}
+                  effectScale={canvas.width / EDITOR_STAGE_WIDTH}
                 />
               </div>
             )

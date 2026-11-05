@@ -43,6 +43,7 @@ import { isPptHitThroughElement } from '../../../utils/pptHitThrough'
 import { isPptGroupScaling } from '../../../utils/pptGroupUtils'
 import { parsePolygonClipPath } from '../../../utils/shapeClipSvg'
 import { buildTextEffectStyle, computeCurvedTextSvgPath } from '../../../utils/textEffectsUtils'
+import { elementEffectFilter } from '../../../utils/elementEffects'
 
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent || '')
 
@@ -881,7 +882,29 @@ function EditableTable({ content, editable, onCellChange, onActivate, style }) {
   )
 }
 
-export default function PptCanvasElement({
+/**
+ * One slide element. An element effect (shadow, glow, outline…) is a CSS filter on a wrapper,
+ * so it follows the element's outline and can spill past its box.
+ */
+export default function PptCanvasElement(props) {
+  const { el, palette, effectScale = 1 } = props
+  // A group frame draws nothing: its effect is drawn by the elements inside it.
+  const filter =
+    el?.type === 'group' ? undefined : elementEffectFilter(el?.content, { palette, scale: effectScale })
+  const body = <PptCanvasElementBody {...props} />
+  if (!filter) return body
+  return (
+    <div
+      className="ppt-el-effect"
+      data-effect={el.content.effect.type}
+      style={{ width: '100%', height: '100%', filter }}
+    >
+      {body}
+    </div>
+  )
+}
+
+function PptCanvasElementBody({
   el,
   palette,
   editable = false,

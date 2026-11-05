@@ -1,5 +1,6 @@
 import { memo, useEffect, useRef, useState } from 'react'
 import PptCanvasElement from '../../pages/Slides/AIPptComponents/PptCanvasElement'
+import { EDITOR_STAGE_WIDTH } from '../../utils/slideStageElements'
 import {
   isSlideBackgroundElement,
   resolveCanvasSize,
@@ -118,6 +119,7 @@ function CanvasElementsPreview({
                 palette={resolvedPalette}
                 editable={false}
                 canvasW={canvas.width}
+                effectScale={stageW / EDITOR_STAGE_WIDTH}
               />
             </div>
           )

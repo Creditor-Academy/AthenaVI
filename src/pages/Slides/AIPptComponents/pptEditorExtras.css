@@ -568,6 +568,20 @@
   overflow: visible !important;
 }
 
+/* An element effect (shadow, glow, outline…) paints past the element's box: the effect layer
+   does the clipping instead, and its filter draws outside it. */
+.ppt-canvas-el-body:has(> .ppt-el-effect) {
+  overflow: visible;
+}
+
+.ppt-canvas-el-body:not(.ppt-canvas-el-body--no-clip):not(.ppt-canvas-el-body--device-frame) > .ppt-el-effect {
+  overflow: hidden;
+}
+
+.is-editing-text .ppt-canvas-el-body > .ppt-el-effect {
+  overflow: visible;
+}
+
 .is-editing-text,
 .is-editing-text .ppt-canvas-el-body {
   overflow: visible;

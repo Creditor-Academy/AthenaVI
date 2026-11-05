@@ -14,6 +14,7 @@ import { CANVAS_SIZE_PRESETS } from '../../../constants/canvasSizePresets'
 import { normalizeFillValue } from '../../../utils/pptTextContent'
 import CanvasEditImagePanel from './CanvasEditImagePanel'
 import TextEffectsPanel from '../../Slides/AIPptComponents/insert/TextEffectsPanel'
+import ElementEffectsPanel from '../../Slides/AIPptComponents/insert/ElementEffectsPanel'
 import PageColorSwatches from './PageColorSwatches'
 
 const DEFAULT_PALETTE = {
@@ -98,8 +99,7 @@ export default function CanvasRightInspector({
   }
   const currentTab =
     (!selectedElement && activeTab !== 'layers') ||
-    (activeTab === 'edit' && !isImage) ||
-    (activeTab === 'effects' && !isText)
+    (activeTab === 'edit' && !isImage)
       ? 'style'
       : activeTab
 
@@ -156,7 +156,7 @@ export default function CanvasRightInspector({
               Edit
             </button>
           )}
-          {selectedElement && isText && (
+          {selectedElement && (
             <button
               type="button"
               className={`canva-inspector-nav-tab ${currentTab === 'effects' ? 'is-active' : ''}`}
@@ -229,6 +229,13 @@ export default function CanvasRightInspector({
               />
             ) : currentTab === 'effects' && isText ? (
               <TextEffectsPanel
+                element={selectedElement}
+                palette={DEFAULT_PALETTE}
+                disabled={locked}
+                onChange={patchContent}
+              />
+            ) : currentTab === 'effects' ? (
+              <ElementEffectsPanel
                 element={selectedElement}
                 palette={DEFAULT_PALETTE}
                 disabled={locked}

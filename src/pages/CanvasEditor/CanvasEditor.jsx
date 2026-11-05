@@ -87,6 +87,7 @@ import {
   collectPptMoveIds,
   isPptGroup,
 } from '../../utils/pptGroupUtils'
+import { groupEffectChildPatches } from '../../utils/elementEffects'
 import { alignPptElements } from '../../utils/pptAlignUtils'
 import {
   smartTidyElements,
@@ -1067,16 +1068,24 @@ export default function CanvasEditor({
     const canvasId = activeCanvas.id
     // Read the latest document, not this render's copy: finishing a text edit commits the
     // grown box height first, and mapping a stale copy here threw that height away.
-    const updated = canvasesRef.current.map((canvas) =>
-      canvas.id !== canvasId
-        ? canvas
-        : {
-            ...canvas,
-            elements: canvas.elements.map((element) =>
-              element.id === elementId ? { ...element, content: { ...element.content, ...contentPatch } } : element
-            ),
-          }
-    )
+    const updated = canvasesRef.current.map((canvas) => {
+      if (canvas.id !== canvasId) return canvas
+      const target = canvas.elements.find((element) => element.id === elementId)
+      // An effect on a group (which draws nothing) is drawn by the elements inside it.
+      const childContent = target
+        ? groupEffectChildPatches(canvas.elements, target, { ...target.content, ...contentPatch })
+        : {}
+      return {
+        ...canvas,
+        elements: canvas.elements.map((element) =>
+          element.id === elementId
+            ? { ...element, content: { ...element.content, ...contentPatch } }
+            : childContent[element.id]
+              ? { ...element, content: childContent[element.id] }
+              : element
+        ),
+      }
+    })
     updateCanvasesWithHistory(updated)
   }
 

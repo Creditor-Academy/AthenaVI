@@ -58,6 +58,7 @@ import {
   setPptGroupScaling,
   startPptGroupResize,
 } from '../../../utils/pptGroupUtils'
+import { groupEffectChildPatches } from '../../../utils/elementEffects'
 import { isPptHitThroughElement } from '../../../utils/pptHitThrough'
 import { exceedsDragThreshold } from '../../../utils/pointerDrag'
 import {
@@ -2198,8 +2199,26 @@ function AIPptEditor({
   }, [history, currentHistorySnapshot, restoreHistorySnapshot])
 
   const handleChangeElementContent = useCallback(
-    (elementId, content) => elementMutations.patchElement(elementId, { content }),
-    [elementMutations]
+    (elementId, content) => {
+      const slide =
+        localSlidesRef.current.find((s) => s.id === selectedSlideIdRef.current) ||
+        localSlidesRef.current.find((s) => s.id === selectedSlideId)
+      const elements = slide?.elements?.elements || []
+      const el = elements.find((item) => item.id === elementId)
+      // An effect on a group (which draws nothing) is drawn by the elements inside it.
+      const childPatches = isPptGroup(el) ? groupEffectChildPatches(elements, el, content) : {}
+      const childIds = Object.keys(childPatches)
+      if (!childIds.length) {
+        elementMutations.patchElement(elementId, { content })
+        return
+      }
+      pushHistorySnapshot()
+      elementMutations.patchElement(elementId, { content }, { history: false })
+      for (const id of childIds) {
+        elementMutations.patchElement(id, { content: childPatches[id] }, { history: false })
+      }
+    },
+    [elementMutations, pushHistorySnapshot, selectedSlideId]
   )
 
   const handleChangeElementPlacement = useCallback(

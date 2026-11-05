@@ -1,6 +1,7 @@
 import { memo, useEffect, useRef, useState } from 'react'
 import PackSlidePreview from '../../../components/ppt/PackSlidePreview'
 import PptCanvasElement from './PptCanvasElement'
+import { EDITOR_STAGE_WIDTH } from '../../../utils/slideStageElements'
 import { resolveLayoutSchemaById } from '../../../utils/deckLayoutRegistry'
 import {
   getSlideImage,
@@ -178,6 +179,7 @@ function MinimapSlidePreview({
                     editable={false}
                     showEmptyTextHint={false}
                     canvasW={canvas.width}
+                    effectScale={canvas.width / EDITOR_STAGE_WIDTH}
                   />
               </div>
             )

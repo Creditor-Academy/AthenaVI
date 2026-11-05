@@ -10,6 +10,7 @@ import { measureTextContentSize } from '../../../../utils/canvasTransformUtils'
 import { ensureGoogleFontLoaded } from '../../../../utils/googleFonts'
 import CanvasEditImagePanel from '../../../CanvasEditor/components/CanvasEditImagePanel'
 import TextEffectsPanel from './TextEffectsPanel'
+import ElementEffectsPanel from './ElementEffectsPanel'
 import {
   mediaFlipTransform,
   cssPaintString,
@@ -791,10 +792,26 @@ function ImageDesignSection({
           >
             Edit &amp; Filters
           </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeTab === 'effects'}
+            className={`ppt-image-tab-btn ${activeTab === 'effects' ? 'is-active' : ''}`}
+            onClick={() => setActiveTab('effects')}
+          >
+            Effects
+          </button>
         </div>
       )}
 
-      {!hideNestedTabs && activeTab === 'edit' ? (
+      {!hideNestedTabs && activeTab === 'effects' ? (
+        <ElementEffectsPanel
+          element={element}
+          palette={palette}
+          disabled={disabled}
+          onChange={onChangeContent}
+        />
+      ) : !hideNestedTabs && activeTab === 'edit' ? (
         <CanvasEditImagePanel
           element={element}
           disabled={disabled}
@@ -1136,6 +1153,46 @@ function TextDesignSection({
   )
 }
 
+/**
+ * Format | Effects tabs around an element's design section (shapes, charts, tables, groups…).
+ * The Canvas editor has its own tabs (hideNestedTabs) and shows ElementEffectsPanel itself.
+ */
+function WithEffectsTab({ element, palette, disabled, onChangeContent, hideNestedTabs, children }) {
+  const [activeTab, setActiveTab] = useState('format')
+  if (hideNestedTabs) return children
+  return (
+    <div className="ppt-props-stack ppt-element-effects-tabs">
+      <div className="ppt-image-tabs-nav" role="tablist">
+        {[
+          ['format', 'Format'],
+          ['effects', 'Effects'],
+        ].map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === id}
+            className={`ppt-image-tab-btn ${activeTab === id ? 'is-active' : ''}`}
+            onClick={() => setActiveTab(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {activeTab === 'effects' ? (
+        <ElementEffectsPanel
+          element={element}
+          palette={palette}
+          disabled={disabled}
+          onChange={onChangeContent}
+        />
+      ) : (
+        children
+      )}
+    </div>
+  )
+}
+
 const PANEL_TITLES = {
   slide: 'Slide design',
   text: 'Text',
@@ -1236,47 +1293,56 @@ export default function DesignContextPanel({
       )}
 
       {(focus === 'shape' || focus === 'embed' || focus === 'graphic') && element && (
-        <ShapeDesignSection
-          element={element}
-          palette={palette}
-          disabled={disabled}
-          onChangeContent={onChangeElementContent}
-          onChangePlacement={onChangeElementPlacement}
-          onToggleLock={onToggleElementLock}
-          onReplaceImage={onReplaceImage}
-          onClearDeviceFrameScreen={onClearDeviceFrameScreen}
-        />
+        <WithEffectsTab element={element} palette={palette} disabled={disabled} onChangeContent={onChangeElementContent} hideNestedTabs={hideNestedTabs}>
+          <ShapeDesignSection
+            element={element}
+            palette={palette}
+            disabled={disabled}
+            onChangeContent={onChangeElementContent}
+            onChangePlacement={onChangeElementPlacement}
+            onToggleLock={onToggleElementLock}
+            onReplaceImage={onReplaceImage}
+            onClearDeviceFrameScreen={onClearDeviceFrameScreen}
+          />
+        </WithEffectsTab>
       )}
 
       {focus === 'chart' && element && (
-        <ChartDesignSection
-          element={element}
-          palette={palette}
-          onChangeContent={onChangeElementContent}
-          disabled={disabled}
-        />
+        <WithEffectsTab element={element} palette={palette} disabled={disabled} onChangeContent={onChangeElementContent} hideNestedTabs={hideNestedTabs}>
+          <ChartDesignSection
+            element={element}
+            palette={palette}
+            onChangeContent={onChangeElementContent}
+            disabled={disabled}
+          />
+        </WithEffectsTab>
       )}
 
       {focus === 'table' && element && (
-        <TableDesignSection
-          element={element}
-          onChangeContent={onChangeElementContent}
-          disabled={disabled}
-        />
+        <WithEffectsTab element={element} palette={palette} disabled={disabled} onChangeContent={onChangeElementContent} hideNestedTabs={hideNestedTabs}>
+          <TableDesignSection
+            element={element}
+            onChangeContent={onChangeElementContent}
+            disabled={disabled}
+          />
+        </WithEffectsTab>
       )}
 
       {!['slide', 'text', 'textbox', 'image', 'icon', 'chart', 'table', 'shape', 'embed'].includes(focus) && element && (
-        <ElementPropertiesPanel
-          element={element}
-          palette={palette}
-          disabled={disabled}
-          onChangeContent={onChangeElementContent}
-          onChangePlacement={onChangeElementPlacement}
-          onToggleLock={onToggleElementLock}
-          onReplaceImage={onReplaceImage}
-          onClearDeviceFrameScreen={onClearDeviceFrameScreen}
-          onCropImage={onCropImage}
-        />
+        // A graphic also gets the shape section above, which already has the Effects tab.
+        <WithEffectsTab element={element} palette={palette} disabled={disabled} onChangeContent={onChangeElementContent} hideNestedTabs={hideNestedTabs || focus === 'graphic'}>
+          <ElementPropertiesPanel
+            element={element}
+            palette={palette}
+            disabled={disabled}
+            onChangeContent={onChangeElementContent}
+            onChangePlacement={onChangeElementPlacement}
+            onToggleLock={onToggleElementLock}
+            onReplaceImage={onReplaceImage}
+            onClearDeviceFrameScreen={onClearDeviceFrameScreen}
+            onCropImage={onCropImage}
+          />
+        </WithEffectsTab>
       )}
     </div>
   )
