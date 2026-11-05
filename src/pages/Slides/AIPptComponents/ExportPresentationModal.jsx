@@ -97,6 +97,7 @@ export default function ExportPresentationModal({
   presentationId,
   title = 'Presentation',
   slideCount = null,
+  onBeforeExport,
   onClose,
 }) {
   const [selected, setSelected] = useState('PPTX')
@@ -143,9 +144,24 @@ export default function ExportPresentationModal({
     setPhase('working')
     setError('')
     setDownloadUrl('')
-    setStatusText(`Preparing ${selected}…`)
 
     try {
+      if (onBeforeExport) {
+        // The export is built from the saved deck: save the latest edits first.
+        setStatusText('Saving your latest changes…')
+        try {
+          await onBeforeExport()
+        } catch (saveErr) {
+          const wrapped = new Error(
+            `Your latest changes couldn't be saved, so the export didn't start. ${
+              saveErr?.message || 'Check your connection and try again.'
+            }`
+          )
+          wrapped.status = saveErr?.status
+          throw wrapped
+        }
+      }
+      setStatusText(`Preparing ${selected}…`)
       const started = await presentationService.startExport(workspaceId, presentationId, {
         format: selected,
         slideId: null,
@@ -187,7 +203,7 @@ export default function ExportPresentationModal({
       }
       setStatusText('')
     }
-  }, [workspaceId, presentationId, selected, meta.label, exportTimeoutMs])
+  }, [workspaceId, presentationId, selected, meta.label, exportTimeoutMs, onBeforeExport])
 
   const canExport = Boolean(workspaceId && presentationId)
 

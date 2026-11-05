@@ -2044,9 +2044,17 @@ function AIPptEditor({
     return current
   }, [])
 
-  const flushPendingCanvasSaves = useCallback(async ({ onlySlideId = null } = {}) => {
+  const flushPendingCanvasSaves = useCallback(async ({
+    onlySlideId = null,
+    editedOnly = false,
+    alsoSlideIds = [],
+  } = {}) => {
     if (!workspaceId || !presentationId || viewOnly || isGenerating) return
     const timers = canvasSaveTimers.current
+    // Slides with a save timer (pending, or already fired) were edited in this session.
+    const edited = new Set(
+      [...Object.keys(timers), ...alsoSlideIds].flatMap((id) => [id, resolvePersistedSlideId(id)])
+    )
     if (onlySlideId) {
       // Single slide: only save if an edit is actually pending.
       if (!timers[onlySlideId]) return
@@ -2061,6 +2069,7 @@ function AIPptEditor({
     const slides = localSlidesRef.current || []
     const saves = slides
       .filter((s) => (onlySlideId ? s?.id === onlySlideId : true))
+      .filter((s) => !editedOnly || edited.has(s?.id) || edited.has(resolvePersistedSlideId(s?.id)))
       // Regenerating slides are server-owned until they settle (canvas PUT returns 409).
       .filter((s) => !regeneratingSlideIdsRef.current.has(s?.id))
       .filter((s) => s?.id && s?.elements && !isOptimisticSlideId(s.id))
@@ -2072,6 +2081,28 @@ function AIPptEditor({
       .filter(Boolean)
     if (saves.length) await Promise.all(saves)
   }, [workspaceId, presentationId, viewOnly, isGenerating, resolvePersistedSlideId])
+
+  // Export reads the saved deck, so every edit must be on the server first:
+  // 1. element edits still waiting on their debounce are cancelled — their slides get a full
+  //    canvas save below, which carries the same (latest) state;
+  // 2. writes already on their way finish, so none can land after the save;
+  // 3. queued slide changes (add / reorder / delete) finish;
+  // 4. every slide edited in this session is saved with its latest canvas.
+  const saveBeforeExport = useCallback(async () => {
+    const waitingSlideIds = new Set(elementMutationsRef.current?.pendingPatchSlideIds?.() || [])
+    elementMutationsRef.current?.cancelPendingPatches?.()
+    Object.keys(elementPatchTimers.current).forEach((key) => {
+      clearTimeout(elementPatchTimers.current[key])
+      waitingSlideIds.add(key.slice(0, key.indexOf(':')))
+    })
+    elementPatchTimers.current = {}
+    pendingPlacementRef.current = {}
+
+    await presentationService.waitForPendingWrites()
+    await slidePersistQueueRef.current
+    await flushPendingCanvasSaves({ editedOnly: true, alsoSlideIds: [...waitingSlideIds] })
+    await presentationService.waitForPendingWrites()
+  }, [flushPendingCanvasSaves])
 
   const handleOpenConvertTemplate = useCallback(() => {
     if (viewOnly) {
@@ -5616,6 +5647,7 @@ function AIPptEditor({
           presentationId={presentationId}
           title={deckTitle}
           slideCount={localSlides.length}
+          onBeforeExport={saveBeforeExport}
           onClose={() => setExportModalOpen(false)}
         />
       )}

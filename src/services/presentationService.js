@@ -59,7 +59,20 @@ export class PresentationRateLimitError extends Error {
 
 const sharePresenceRoute = new Map()
 
+/** Write requests (anything but GET) still waiting for the server's answer. */
+const pendingWrites = new Set()
+
 class PresentationService {
+  /**
+   * Resolve once every write sent so far has been answered (success or failure). Export
+   * waits on this so an edit still on its way can't land after the export reads the deck.
+   */
+  async waitForPendingWrites() {
+    while (pendingWrites.size) {
+      await Promise.allSettled([...pendingWrites])
+    }
+  }
+
   unwrap(json) {
     return json?.data ?? json
   }
@@ -89,10 +102,20 @@ class PresentationService {
       delete headers['Content-Type']
     }
 
-    const response = await fetch(buildUrl(endpoint), {
+    const sent = fetch(buildUrl(endpoint), {
       ...fetchOptions,
       headers,
     })
+    const method = String(fetchOptions.method || 'GET').toUpperCase()
+    if (method !== 'GET' && method !== 'HEAD') {
+      const settled = sent.then(
+        () => {},
+        () => {}
+      )
+      pendingWrites.add(settled)
+      settled.then(() => pendingWrites.delete(settled))
+    }
+    const response = await sent
 
     if (response.status === 402) {
       const payload = await this.readPayload(response)

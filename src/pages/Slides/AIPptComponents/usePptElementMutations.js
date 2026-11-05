@@ -466,5 +466,8 @@ export function usePptElementMutations({
     /** True while a debounced element PATCH is waiting or in-flight for this slide. */
     hasPendingPatchesForSlide: (slideId) =>
       Object.keys(pendingPatchRef.current).some((k) => k.startsWith(`${slideId}:`)),
+    /** Slides with a debounced element PATCH not sent yet (keys are `slideId:elementId`). */
+    pendingPatchSlideIds: () =>
+      [...new Set(Object.keys(pendingPatchRef.current).map((k) => k.slice(0, k.indexOf(':'))))],
   }
 }
