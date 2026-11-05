@@ -1,7 +1,8 @@
-import { useMemo } from 'react'
+import { useId, useMemo } from 'react'
 import useGraphicSvg, { resolveGraphicThemeColor } from '../../hooks/useGraphicSvg'
 import { isThemedColorMode } from '../../utils/graphicTheme.js'
 import { sanitizeSvgMarkup } from '../../utils/sanitizeSvg.js'
+import { scopeSvgIds } from '../../utils/scopeSvgIds.js'
 
 /** Hit-test painted strokes/fills only so empty SVG boxes don't steal clicks. */
 function svgWithPaintHits(markup, { hitThrough = false } = {}) {
@@ -32,10 +33,16 @@ export default function GraphicCanvasVisual({
   hitThrough = false,
 }) {
   const rawSrc = content.src || content.url || content.previewUrl
+  // Inline SVGs share the page's id space: give this one's ids (filters, clip paths,
+  // gradients) a per-element prefix so another slide's copy can't shadow them.
+  const idPrefix = `g${useId()}`
   // content.svg is stored element data (AI output / any workspace member) — sanitize before innerHTML.
   const inlineMarkup = useMemo(
-    () => (typeof content.svg === 'string' && content.svg.includes('<svg') ? sanitizeSvgMarkup(content.svg) : null),
-    [content.svg]
+    () =>
+      typeof content.svg === 'string' && content.svg.includes('<svg')
+        ? scopeSvgIds(sanitizeSvgMarkup(content.svg), idPrefix)
+        : null,
+    [content.svg, idPrefix]
   )
   const colorMode = content.colorMode || 'fixed'
   const wantRecolor = isThemedColorMode(colorMode) || colorMode === 'recolorable'
@@ -88,7 +95,7 @@ export default function GraphicCanvasVisual({
         }}
         role="img"
         aria-label={content.alt || 'Graphic'}
-        dangerouslySetInnerHTML={{ __html: svgWithPaintHits(inlineSvg, { hitThrough }) }}
+        dangerouslySetInnerHTML={{ __html: svgWithPaintHits(scopeSvgIds(inlineSvg, idPrefix), { hitThrough }) }}
       />
     )
   }

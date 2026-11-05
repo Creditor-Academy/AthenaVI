@@ -2,7 +2,18 @@
 
 **Scope:** PPT editor export to PPTX, PDF, PNG and JPEG.
 **Repos:** `AthenaVI` (frontend) and `AthenaVI_backend` (backend).
-**Status:** Plan. Nothing in this document is implemented yet.
+**Status:** In progress. ✅ = done, 🟡 = partly done. Nothing has been checked on staging yet.
+
+| Phase | What | Status |
+|---|---|---|
+| 0 | Baseline and measurement (test decks, fidelity harness) | ✅ Done · production failure data still to pull (0.1) |
+| 1 | Hotfixes: Chrome and fonts in Docker, heartbeat, zip name, limit on exports running at once, save before export | ✅ Code done · staging check pending |
+| 2 | Canva-style slide picker and image download options | Not started |
+| 3 | One renderer: PDF and images drawn by the editor's own page | ✅ Code done (except 3.4 and part of 3.8) · staging check pending |
+| 4 | PPTX that matches the editor in PowerPoint and Google Slides | 🟡 Text, pictures and backgrounds done; tables, charts, native gradients and shapes to do |
+| 5 | Fonts in PowerPoint | Not started |
+| 6 | Job queue, progress, cancel | Not started |
+| 7 | QA, rollout, docs | Not started |
 
 ---
 
@@ -116,26 +127,33 @@ Each phase ends with a **checkpoint**: what must be true before moving on. Sizes
 
 ---
 
-### Phase 0: Baseline and measurement (S)
+### Phase 0: Baseline and measurement (S) — done 2026-11-05 (0.1 still needs a production run)
 
 The goal is to see the real production error and to have decks and a harness that measure fidelity before any change.
 
-- [ ] **0.1** Pull the `error` column of recent FAILED rows from the exports table in production, plus the matching `processExport failed` log lines. Confirm F1 (Chrome not found) or record the real error.
-- [ ] **0.2** Build a set of **golden decks** as JSON fixtures in `AthenaVI_backend/src/modules/presentation/test/fixtures/export/`:
+- [ ] **0.1** Pull the `error` column of recent FAILED rows from the exports table in production, plus the matching `processExport failed` log lines. Confirm F1 (Chrome not found) or record the real error. *(script ready: `npm run eval:export-failures -- --days 30`, run it inside the production container. On the **development** database it shows **5 of 5 PDF exports failed with `Navigation timeout of 60000 ms exceeded`** and 2 of 2 PPTX succeeded: see F8 below.)*
+- [x] **0.2** Build a set of **golden decks** as JSON fixtures in `AthenaVI_backend/src/modules/presentation/test/fixtures/export/`: *(done: `npm run eval:golden-decks` builds them; 6 decks, 83 slides, about 1,200 elements. The AI decks are 30 real seed layouts compiled the way generation does, with three themes. The kitchen sink covers all 70 library shapes (filled and outlined), every mask, filter, element effect, text effect and chart type, a table, a group, an embed, a background photo and a gradient background. Pictures are S3 keys served from `fixtures/export/assets`, plus one external URL. `goldenDecks.test.js` keeps them valid.)*
   - 3 AI-generated decks covering the different layout families (title, cards, timeline, comparison, chart, gallery, quote);
   - 1 "kitchen sink" user deck: every element type, every shape kind, every text style (lists, uppercase, underline, runs, links), image masks, filters and crops, a table with a header, each chart type, gradients, element effects and text effects, a group, and an embed;
   - one 4:3 deck;
   - one deck with 40 slides.
-- [ ] **0.3** Build a **fidelity harness** by extending `scripts/presentation-eval/export-fidelity.js`. For each golden deck:
+- [x] **0.3** Build a **fidelity harness** by extending `scripts/presentation-eval/export-fidelity.js`. For each golden deck: *(done: `npm run eval:presentation-export`. The reference is the render page. The score is SSIM (structural similarity, 0–1) at 480px, in grayscale, blurred by σ 1. The PDF rasterizer is `pdftoppm`, or Python `pypdfium2`. `--backend <checkout>` measures older code, `--legacy` measures the fallback renderer, and `--compare <scores.json>` shows the change against an earlier run. Output goes to `.eval/export-fidelity/<label>/report.html`. The old smoke script is now `export-smoke.js`.)*
   1. Render the editor reference PNGs (the export render page once it exists; until then, the editor through Puppeteer).
   2. Export PDF → rasterize → compare with the reference.
   3. Export PPTX → convert to PNG with LibreOffice (`soffice --headless --convert-to pdf`, then `pdftoppm`) → compare.
   4. Write an HTML report with the three images side by side and a similarity score per slide.
-- [ ] **0.4** Record the baseline scores in this document (section 7).
+- [x] **0.4** Record the baseline scores in this document (section 7). *(done: before Phase 1, commit `362af52`, compared with the current code. Both score files are kept in `scripts/presentation-eval/baselines/`.)*
+
+**Found while doing Phase 0 (all fixed):**
+- **F8, the real reason PDF export failed:** the old renderer waited for `networkidle0`, which can hang with nothing left loading. Every golden deck's PDF timed out on the old code; so did every PDF export in the dev database. The render page doesn't wait that way, and the fallback renderer now waits for the page's `load` event, fonts and images instead (`setContentAndSettle`). The fallback produces a PDF in about 6 s, at fidelity 0.84–0.90.
+- **F9:** outlined shapes (a transparent fill with a stroke) were exported to PPTX as **solid black** shapes. They now have no fill.
+- **F10:** inline SVG graphics shared ids across slides (for example two slides with the same layout). A card background disappeared from a PPTX picture when the other copy's slide was hidden. Ids are now unique per element (`scopeSvgIds`); this also protects the editor.
+- **F11:** PPTX rasterized full-slide graphics at 3840 × 2160, about 25 s each. They are capped at 2048 px, which makes PPTX builds about 6× faster (40 slides: about 90 s → 13 s).
+- `imageMask` is stored as `{ type }`; the PPTX picture rule now reads it that way.
 
 **Checkpoint 0**
-- [ ] The production failure cause is known and recorded.
-- [ ] The golden decks and the harness run locally with one command, and the baseline report exists.
+- [ ] The production failure cause is known and recorded. *(in dev: F8, the networkidle0 timeout; in the Docker image, F1 by reading the code. Confirm with the 0.1 script in production.)*
+- [x] The golden decks and the harness run locally with one command, and the baseline report exists.
 
 ---
 
@@ -256,37 +274,37 @@ Small, safe fixes that ship immediately, before the larger rework.
 **Deploy order:** frontend first (it ships `export-render.html`), then backend. The backend uses `FRONTEND_URL`, so no new env var is needed unless the page lives elsewhere.
 
 **Frontend**
-- [ ] **3.1** Add a Vite entry for `export-render.html` → `src/export-render/main.jsx`. It:
+- [x] **3.1** Add a Vite entry for `export-render.html` → `src/export-render/main.jsx`. It: *(done: `export-render.html` + `src/export-render/`)*
   - exposes `window.__athenaExport.render(deck, { slideIds, scale })`;
   - draws every slide at its canvas size with `PptCanvasElement` (no editing UI, no API calls);
   - sets the theme font CSS variables and loads the theme's Google Fonts;
   - waits for `document.fonts.ready`, image decodes, and fit-to-box to settle (two quiet animation frames), then sets `window.__athenaExport.ready = true`.
-- [ ] **3.2** Add `window.__athenaExport.measure()`, which returns, for every element on every slide:
+- [x] **3.2** Add `window.__athenaExport.measure()`, which returns, for every element on every slide: *(done: fitted size, overflow and the drawn colour; drawn box and line count are not needed yet)*
   - its drawn box;
   - **the fitted font size**;
   - the line count;
   - whether the text overflows.
 
   PPTX uses this in Phase 4.
-- [ ] **3.3** Add `window.__athenaExport.snapshot(elementId, scale)`, which returns a transparent PNG of a single element, for PPTX's picture fallback.
-- [ ] **3.4** The page has a strict CSP: scripts only from its own origin; images only from the S3/CDN and data:; fonts only from Google Fonts.
+- [x] **3.3** Add `window.__athenaExport.snapshot(elementId, scale)`, which returns a transparent PNG of a single element, for PPTX's picture fallback. *(done as `isolate()` / `release()` on the page + a screenshot from the backend)*
+- [ ] **3.4** The page has a strict CSP: scripts only from its own origin; images only from the S3/CDN and data:; fonts only from Google Fonts. *(to do: requests are already filtered by the backend (3.5); a CSP on the page itself is not added yet)*
 
 **Backend**
-- [ ] **3.5** Add `exportRenderer.service.js`. It opens `EXPORT_RENDER_URL`, injects the deck with presigned media, and waits for `ready` (with a timeout). It also uses request interception to allow only the frontend origin, S3/CDN media and Google Fonts.
-- [ ] **3.6** PDF = `page.pdf()` from the render page. PNG/JPEG = a screenshot per slide (`clip` set to the slide, `deviceScaleFactor` = scale).
-- [ ] **3.7** Keep `slideHtml.js` only for legacy slides that have no elements, and as an emergency fallback behind an env flag (`PPT_EXPORT_RENDERER=legacy`). Remove its element renderer once Phase 3 is stable.
-- [ ] **3.8** Versioning: the render page reports `rendererVersion`. The backend logs it with each export and refuses to run against a version below the minimum it supports.
+- [x] **3.5** Add `exportRenderer.service.js`. It opens `EXPORT_RENDER_URL`, injects the deck with presigned media, and waits for `ready` (with a timeout). It also uses request interception to allow only the frontend origin, S3/CDN media and Google Fonts. *(done: `exportRenderer.service.js`; URL from `EXPORT_RENDER_URL`, else `FRONTEND_URL`)*
+- [x] **3.6** PDF = `page.pdf()` from the render page. PNG/JPEG = a screenshot per slide (`clip` set to the slide, `deviceScaleFactor` = scale). *(done: PDF is vector, one 13.333 × 7.5in page per slide; images are exactly 1920 × 1080)*
+- [x] **3.7** Keep `slideHtml.js` only for legacy slides that have no elements, and as an emergency fallback behind an env flag (`PPT_EXPORT_RENDERER=legacy`). Remove its element renderer once Phase 3 is stable. *(done: automatic fallback when the page can't be reached, and `PPT_EXPORT_RENDERER=legacy`; removing the old element renderer comes later)*
+- [ ] **3.8** Versioning: the render page reports `rendererVersion`. The backend logs it with each export and refuses to run against a version below the minimum it supports. *(partly: an older page is refused; the version isn't logged with each export yet)*
 
 **Tests**
-- [ ] Every golden deck → PDF → rasterize → compared with the editor reference: score ≥ 0.98 per slide.
-- [ ] The PDF has selectable text (`pdftotext` returns the slide text) and clickable links.
-- [ ] Tables, every chart type, all shapes, masks, filters, text effects and element effects appear in the PDF (by visual diff).
-- [ ] A 40-slide PDF finishes in under 3 minutes on staging.
+- [ ] Every golden deck → PDF → rasterize → compared with the editor reference: score ≥ 0.98 per slide. *(partly: every deck's average is ≥ 0.984, but 11 of 83 slides score 0.962–0.979, mostly thin outlines and photo edges; see section 7)*
+- [ ] The PDF has selectable text (`pdftotext` returns the slide text) and clickable links. *(selectable text checked by hand; links not checked yet)*
+- [ ] Tables, every chart type, all shapes, masks, filters, text effects and element effects appear in the PDF (by visual diff). *(checked by hand on a test deck and 4 real layouts: tables, bar and donut charts, hexagon, star, gradient, shadow; not every chart type yet)*
+- [ ] A 40-slide PDF finishes in under 3 minutes on staging. *(staging)*
 
 **Checkpoint 3**
-- [ ] PDF and server-side images are drawn by the editor's renderer.
-- [ ] Every golden deck passes the visual diff threshold.
-- [ ] `PPT_EXPORT_RENDERER=legacy` still works as a rollback.
+- [ ] PDF and server-side images are drawn by the editor's renderer. *(done in code; confirm on staging)*
+- [ ] Every golden deck passes the visual diff threshold. *(averages pass; 11 of 83 slides are between 0.962 and 0.979)*
+- [x] `PPT_EXPORT_RENDERER=legacy` still works as a rollback. *(covered by `exportRenderer.test.js`)*
 
 ---
 
@@ -322,52 +340,52 @@ Work through the table in section 5 one row at a time. Each row gets a unit test
 **Not done yet:** native gradients (4.10; they are pictures for now), the full preset-shape map (4.9; clip-path shapes are pictures), table styling (4.16), chart styling (4.17), fonts (Phase 5).
 
 **4A. Layout and text (fixes P1, P2, P3)**
-- [ ] **4.1** Set explicit insets from `padding`/`paddingX` (default 0) on every text box: `margin: [t, r, b, l]` in pptxgenjs, written to `bodyPr` as `lIns`/`tIns`/`rIns`/`bIns`.
-- [ ] **4.2** Font size = the **fitted size from the render page measurement** (Phase 3.2). When there is no measurement, fall back to the backend's `textFit.util` estimate. Set `autoFit` off (`<a:noAutofit/>`) so PowerPoint doesn't resize the text again.
-- [ ] **4.3** Line height: use `lineSpacingMultiple` (a percentage) instead of exact points, so the spacing holds when PowerPoint uses a different font.
-- [ ] **4.4** Lists: each line in a `listType` text box becomes its own paragraph, with `bullet: true` or `bullet: { type: 'number' }`, and an indent matching the editor's marker.
-- [ ] **4.5** `textTransform: uppercase/lowercase/capitalize`: uppercase uses the native `cap="all"` (it stays editable); the others are applied to the text itself.
-- [ ] **4.6** Underline, strikethrough, italic, `fontWeight` and size **for each run**, plus `letterSpacing` and `align: justify`.
-- [ ] **4.7** Vertical alignment and the `nowrap` setting are kept. The text box height comes from the measured box, not the stored placement, when they differ.
-- [ ] **4.8** Text gradient fill: native `gradFill` on the run (XML patch). Google Slides shows the first colour; that is acceptable.
+- [x] **4.1** Set explicit insets from `padding`/`paddingX` (default 0) on every text box: `margin: [t, r, b, l]` in pptxgenjs, written to `bodyPr` as `lIns`/`tIns`/`rIns`/`bIns`.
+- [x] **4.2** Font size = the **fitted size from the render page measurement** (Phase 3.2). When there is no measurement, fall back to the backend's `textFit.util` estimate. Set `autoFit` off (`<a:noAutofit/>`) so PowerPoint doesn't resize the text again. *(done; without a measurement the stored size is used, not the `textFit.util` estimate)*
+- [x] **4.3** Line height: use `lineSpacingMultiple` (a percentage) instead of exact points, so the spacing holds when PowerPoint uses a different font. *(done differently: exact spacing (`lineSpacing` in points), which matches CSS line-height exactly)*
+- [x] **4.4** Lists: each line in a `listType` text box becomes its own paragraph, with `bullet: true` or `bullet: { type: 'number' }`, and an indent matching the editor's marker. *(done: bullet, numbered, check, dash and star lists)*
+- [x] **4.5** `textTransform: uppercase/lowercase/capitalize`: uppercase uses the native `cap="all"` (it stays editable); the others are applied to the text itself. *(done differently: applied to the text itself; pptxgenjs has no `cap="all"` option)*
+- [x] **4.6** Underline, strikethrough, italic, `fontWeight` and size **for each run**, plus `letterSpacing` and `align: justify`. *(done, except a separate font size per run)*
+- [ ] **4.7** Vertical alignment and the `nowrap` setting are kept. The text box height comes from the measured box, not the stored placement, when they differ. *(partly: vertical alignment and `nowrap` are kept; the height from the measured box is not done)*
+- [ ] **4.8** Text gradient fill: native `gradFill` on the run (XML patch). Google Slides shows the first colour; that is acceptable. *(gradient text is exported as a picture for now)*
 
 **4B. Shapes (fixes P4, P5)**
-- [ ] **4.9** Map every `SHAPE_LIBRARY` id (`src/constants/shapeLibrary.js`) in one table: PowerPoint preset where it matches (triangle, rtTriangle, hexagon, octagon, pentagon, parallelogram, trapezoid, star4/5/6/8, chevron, rightArrow, leftRightArrow, wedgeRectCallout, cloudCallout, plus, donut, arc, blockArc…). Everything else → **custom geometry** from the `clipPath` polygon (pptxgenjs custGeom `points`; check this on 4.0.1).
-- [ ] **4.10** Gradients: write a JSZip post-processing step (`pptxXmlPatches.js`) that swaps the `solidFill` for `gradFill` (stops, angle, linear or radial) on elements tagged during the build. It also covers gradient slide backgrounds and text gradients.
-- [ ] **4.11** Stroke dash styles (`borderStyle`: dashed, dotted), stroke transparency, and line shapes with arrowheads (`line-arrow`).
+- [ ] **4.9** Map every `SHAPE_LIBRARY` id (`src/constants/shapeLibrary.js`) in one table: PowerPoint preset where it matches (triangle, rtTriangle, hexagon, octagon, pentagon, parallelogram, trapezoid, star4/5/6/8, chevron, rightArrow, leftRightArrow, wedgeRectCallout, cloudCallout, plus, donut, arc, blockArc…). Everything else → **custom geometry** from the `clipPath` polygon (pptxgenjs custGeom `points`; check this on 4.0.1). *(clip-path shapes are exported as pictures (they look right but can't be edited); the preset / custom-geometry map is still to do)*
+- [ ] **4.10** Gradients: write a JSZip post-processing step (`pptxXmlPatches.js`) that swaps the `solidFill` for `gradFill` (stops, angle, linear or radial) on elements tagged during the build. It also covers gradient slide backgrounds and text gradients. *(gradient shapes and backgrounds are pictures for now)*
+- [ ] **4.11** Stroke dash styles (`borderStyle`: dashed, dotted), stroke transparency, and line shapes with arrowheads (`line-arrow`). *(dashed / dotted borders are pictures for now)*
 - [ ] **4.12** Element opacity → `transparency` on shapes **and** images.
 
 **4C. Images (fixes P6)**
-- [ ] **4.13** Circle and rounded masks → native picture geometry (`ellipse` / `roundRect`) where possible. Any other mask, filters, edge fade or device frame → bake into the PNG with sharp (or use the render page's element snapshot) and place it at the exact box.
+- [x] **4.13** Circle and rounded masks → native picture geometry (`ellipse` / `roundRect`) where possible. Any other mask, filters, edge fade or device frame → bake into the PNG with sharp (or use the render page's element snapshot) and place it at the exact box. *(done as pictures from the render page (masks, filters, rounded corners, edge fade, device frames); native picture geometry not used)*
 - [ ] **4.14** Keep native cropping for plain crops (`srcRect`) so the user can re-crop in PowerPoint.
-- [ ] **4.15** `useAsBackground` images → the slide background image.
+- [x] **4.15** `useAsBackground` images → the slide background image. *(done: slide background images and gradients are captured as the slide background)*
 
 **4D. Tables (fixes P7)**
 - [ ] **4.16** Column widths, row heights, header fill and text colour, cell fills, borders on every side in the editor's colours, the theme fonts, the editor's font size, padding and alignment.
 
 **4E. Charts (fixes P8)**
-- [ ] **4.17** For each chart type, match the editor: legend on or off and its position, data labels, axis label colour and font, gridlines, donut hole size, the series colours, and the number format.
+- [ ] **4.17** For each chart type, match the editor: legend on or off and its position, data labels, axis label colour and font, gridlines, donut hole size, the series colours, and the number format. *(partly: labels and gridlines are readable on dark slides)*
 - [ ] **4.18** A chart that can't be built natively → a picture from the render page, never an empty "Chart" box.
 
 **4F. Effects, embeds and groups (fixes P9, P11)**
-- [ ] **4.19** Text effects: shadow → `<a:outerShdw>` on the text, outline → `<a:ln>` on the run, glow → `<a:glow>` (XML patch). Curved, glitch and other complex text effects → a picture, with the plain text added to the speaker notes so it isn't lost. (See open question Q3.)
-- [ ] **4.20** Element effects: add `<a:glow>` (PowerPoint has a real glow) and `<a:softEdge>` for blur. Keep the shadow mapping from the effects work. Outline and glitch → picture.
-- [ ] **4.21** Embeds and video → the thumbnail image plus a hyperlink to the URL, with a small play badge for video.
+- [ ] **4.19** Text effects: shadow → `<a:outerShdw>` on the text, outline → `<a:ln>` on the run, glow → `<a:glow>` (XML patch). Curved, glitch and other complex text effects → a picture, with the plain text added to the speaker notes so it isn't lost. (See open question Q3.) *(text with effects is exported as a picture; native shadow / outline / glow and putting the text in the notes are to do)*
+- [ ] **4.20** Element effects: add `<a:glow>` (PowerPoint has a real glow) and `<a:softEdge>` for blur. Keep the shadow mapping from the effects work. Outline and glitch → picture. *(outline, glitch and blur are pictures; native glow / soft edge are to do)*
+- [ ] **4.21** Embeds and video → the thumbnail image plus a hyperlink to the URL, with a small play badge for video. *(partly: the embed card is a picture; the hyperlink and play badge are to do)*
 - [ ] **4.22** Groups → native PowerPoint groups (`grpSp`, XML patch), so they move together in PowerPoint. Optional; do it only if time allows.
 
 **4G. Fallback layer**
-- [ ] **4.23** In `pptxCapability.js`, decide for each element whether it is `native`, `native+patch` or `raster`, based on its features. Raster elements are cut from the render page (Phase 3.3) at 2× and placed at their exact box and layer.
-- [ ] **4.24** Add an export report (logged, and optionally shown in the dialog): "3 elements were exported as pictures because PowerPoint can't draw them."
+- [x] **4.23** In `pptxCapability.js`, decide for each element whether it is `native`, `native+patch` or `raster`, based on its features. Raster elements are cut from the render page (Phase 3.3) at 2× and placed at their exact box and layer. *(done: `pptxCapability.js`, captured at 1.5×; empty image slots and icons are included too)*
+- [ ] **4.24** Add an export report (logged, and optionally shown in the dialog): "3 elements were exported as pictures because PowerPoint can't draw them." *(the reason for each picture is recorded but not logged or shown yet)*
 
 **Tests**
-- [ ] For each mapping: a unit test on the XML (`lIns="0"`, `gradFill`, `prstGeom prst="hexagon"`, `custGeom`, `buChar`, `cap="all"`, table `tcPr` fills, chart legend…).
-- [ ] Harness: the LibreOffice rendering of the PPTX scores ≥ 0.95 against the editor for every golden slide. LibreOffice is a stand-in for PowerPoint.
+- [ ] For each mapping: a unit test on the XML (`lIns="0"`, `gradFill`, `prstGeom prst="hexagon"`, `custGeom`, `buChar`, `cap="all"`, table `tcPr` fills, chart legend…). *(done for insets, bullets, caps, size, colour, backgrounds and pictures (`pptxText.test.js`, `exportRenderer.test.js`); still to do for the mappings not built yet)*
+- [ ] Harness: the LibreOffice rendering of the PPTX scores ≥ 0.95 against the editor for every golden slide. LibreOffice is a stand-in for PowerPoint. *(now measured: deck averages are 0.885–0.927, up from 0.577–0.882. The lowest slides are charts (0.66–0.72) and text set in fonts LibreOffice doesn't have; see section 7)*
 - [ ] Manual check: the golden decks opened in **PowerPoint for Windows, PowerPoint for Mac, PowerPoint on the web and Google Slides** (import) → fill in the matrix in section 6.
 
 **Checkpoint 4**
-- [ ] No text overflows its box in PowerPoint or Google Slides on any golden slide.
-- [ ] Every shape kind keeps its outline; gradients show in PowerPoint.
-- [ ] No element disappears or turns into a grey placeholder.
+- [ ] No text overflows its box in PowerPoint or Google Slides on any golden slide. *(fixed in LibreOffice for the test decks; fonts (Phase 5) still change wrapping)*
+- [ ] Every shape kind keeps its outline; gradients show in PowerPoint. *(outlines are kept (as pictures); gradients are pictures, not native)*
+- [ ] No element disappears or turns into a grey placeholder. *(done in code for every element type we know of; confirm in PowerPoint / Google Slides)*
 - [ ] Section 6 matrix: every row is ✅ or a documented ⚠️.
 
 ---
@@ -423,40 +441,42 @@ The same font must be used in the editor, the PDF, PowerPoint and Google Slides,
 
 ---
 
-## 5. PPTX feature table (target)
+## 5. PPTX feature table
+
+✅ = matches the target (or looks right as a picture where that is the target) · 🟡 = looks right now, but as a picture instead of the editable target.
 
 `native` = editable PowerPoint object · `patch` = native, added by editing the XML after pptxgenjs writes it · `raster` = picture cut from the editor renderer.
 
-| Feature | Today | Target | Google Slides note |
-|---|---|---|---|
-| Text box insets | PowerPoint defaults (wrong) | native, exact | ✓ |
-| Fit-to-box font size | stored size (overflows) | native, measured size | ✓ |
-| Bullets / numbered lists | lost | native | ✓ |
-| Uppercase | lost | native `cap="all"` | ✓ |
-| Underline / strikethrough / italic runs | partly | native | ✓ |
-| Hyperlinks | native | native | ✓ |
-| Text gradient | first colour | patch `gradFill` | shows the first colour |
-| Text shadow / outline / glow | lost | patch | shadow ✓, glow ✗ (ignored) |
-| Curved text, glitch text | lost | raster, with the text in the notes | ✓ (as a picture) |
-| Preset shapes (~30) | ~10 mapped, others rect | native preset | ✓ |
-| Other library shapes | rect | native custGeom | ✓ |
-| Shape gradient | solid | patch `gradFill` | **solid in Slides**: decide in Q2 |
-| Dashed / dotted stroke | solid | native | ✓ |
-| Element opacity | shapes only | native, shapes and images | ✓ |
-| Element shadow / lift / neon / echo | native shadow | native shadow | ✓ |
-| Element glow | shadow look-alike | patch `<a:glow>` | ✗ ignored |
-| Element blur / outline / glitch | lost | raster | ✓ (as a picture) |
-| Image crop | baked | native `srcRect` | ✓ |
-| Image circle / rounded mask | lost | native picture geometry | ✓ |
-| Image other masks / filters / edge fade / device frame | lost | raster | ✓ |
-| Background image | as an element | slide background | ✓ |
-| Gradient background | solid | patch | solid in Slides: Q2 |
-| Table styling | plain | native, styled | ✓ |
-| Charts | basic | native, styled | Slides converts charts to pictures on import (known limitation) |
-| Embed / video | grey card | thumbnail + link | ✓ |
-| Groups | separate elements | patch `grpSp` (optional) | ✓ |
-| Speaker notes | native | native | ✓ |
-| Theme fonts | named only | embedded or safe swap (Phase 5) | Google Fonts by name ✓ |
+| Feature | Before | Now (2026-11-05) | Target | Google Slides note |
+|---|---|---|---|---|
+| Text box insets | PowerPoint defaults (wrong) | ✅ native, exact | native, exact | ✓ |
+| Fit-to-box font size | stored size (overflows) | ✅ native, measured size | native, measured size | ✓ |
+| Bullets / numbered lists | lost | ✅ native | native | ✓ |
+| Uppercase | lost | ✅ native (applied to the text) | native `cap="all"` | ✓ |
+| Underline / strikethrough / italic runs | partly | ✅ native | native | ✓ |
+| Hyperlinks | native | ✅ native | native | ✓ |
+| Text gradient | first colour | 🟡 raster | patch `gradFill` | shows the first colour |
+| Text shadow / outline / glow | lost | 🟡 raster | patch | shadow ✓, glow ✗ (ignored) |
+| Curved text, glitch text | lost | 🟡 raster (text not in the notes yet) | raster, with the text in the notes | ✓ (as a picture) |
+| Preset shapes (~30) | ~10 mapped, others rect | 🟡 plain shapes native, the rest raster | native preset | ✓ |
+| Other library shapes | rect | 🟡 raster | native custGeom | ✓ |
+| Shape gradient | solid | 🟡 raster | patch `gradFill` | **solid in Slides**: decide in Q2 |
+| Dashed / dotted stroke | solid | 🟡 raster | native | ✓ |
+| Element opacity | shapes only | shapes only | native, shapes and images | ✓ |
+| Element shadow / lift / neon / echo | native shadow | ✅ native shadow | native shadow | ✓ |
+| Element glow | shadow look-alike | shadow look-alike | patch `<a:glow>` | ✗ ignored |
+| Element blur / outline / glitch | lost | ✅ raster | raster | ✓ (as a picture) |
+| Image crop | baked | baked | native `srcRect` | ✓ |
+| Image circle / rounded mask | lost | 🟡 raster | native picture geometry | ✓ |
+| Image other masks / filters / edge fade / device frame | lost | ✅ raster | raster | ✓ |
+| Background image | as an element | ✅ slide background (picture) | slide background | ✓ |
+| Gradient background | solid | 🟡 slide background (picture) | patch | solid in Slides: Q2 |
+| Table styling | plain | plain | native, styled | ✓ |
+| Charts | basic | basic; labels readable on dark slides | native, styled | Slides converts charts to pictures on import (known limitation) |
+| Embed / video | grey card | 🟡 raster card, no link yet | thumbnail + link | ✓ |
+| Groups | separate elements | separate elements | patch `grpSp` (optional) | ✓ |
+| Speaker notes | native | ✅ native | native | ✓ |
+| Theme fonts | named only | named only | embedded or safe swap (Phase 5) | Google Fonts by name ✓ |
 
 ---
 
@@ -475,11 +495,23 @@ Use ✅ (matches the editor) · ⚠️ (known, documented difference) · ❌ (bu
 
 ---
 
-## 7. Baseline and progress scores (fill in)
+## 7. Baseline and progress scores
 
-| Date | Phase | Deck | PDF score | PPTX (LibreOffice) score | Notes |
+SSIM against the editor's own rendering (1 = identical), measured by `export-fidelity.js` on 2026-11-05. "Before" is commit `362af52`, before Phase 1; "Now" is after Phases 1, 3, 4A and the Phase 0 fixes. PPTX is drawn by LibreOffice with the fonts on the dev machine, so missing theme fonts lower the PPTX scores. Targets: PDF ≥ 0.98, PPTX ≥ 0.95. Score files are in `AthenaVI_backend/scripts/presentation-eval/baselines/`.
+
+| Deck | Slides | PDF before | PDF now (lowest slide) | PPTX before (lowest) | PPTX now (lowest) |
 |---|---|---|---|---|---|
-| | 0 (baseline) | | | | |
+| ai-light | 10 | ❌ times out | **0.992** (0.981) | 0.850 (0.728) | **0.903** (0.834) |
+| ai-dark | 10 | ❌ times out | **0.988** (0.978) | 0.622 (0.231) | **0.885** (0.692) |
+| ai-editorial | 10 | ❌ times out | **0.990** (0.970) | 0.882 (0.808) | **0.927** (0.869) |
+| kitchen-sink | 8 | 0.761 | **0.984** (0.963) | 0.602 (0.430) | **0.889** (0.657) |
+| four-three (4:3) | 5 | ❌ times out | **0.997** (0.993) | 0.801 (0.617) | **0.887** (0.718) |
+| forty-slides | 40 | ❌ times out | **0.988** (0.962) | 0.577 (0.116) | **0.914** (0.688) |
+
+**Where PPTX is still furthest from the editor** (the next work, in order):
+1. **Charts:** 0.66–0.72 (`chart_two_v1`, `chart_with_description_v1`, the kitchen-sink chart slide). Native charts are styled differently from the editor's (4.17).
+2. **Text in theme fonts** (kitchen-sink text slide 0.73; headings across all decks). LibreOffice / PowerPoint without the fonts substitute wider fonts, so text wraps differently (Phase 5).
+3. **Tables, pricing, metrics, cards:** 0.83–0.87 (4.16, plus the fonts above).
 
 ---
 

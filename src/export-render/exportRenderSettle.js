@@ -133,7 +133,21 @@ export function releaseCapture(root) {
  * @param {{ slideId: string, elementId?: string, margin?: number }} target  margin: stage px
  *   added around an element (room for shadows / glows drawn past its box)
  */
-export function isolateForCapture(root, { slideId, elementId = null, margin = 0 } = {}) {
+export async function isolateForCapture(root, target = {}) {
+  const area = isolateNow(root, target)
+  if (!area) return null
+  // Showing a slide again (other slides are display:none while isolating) makes Chrome decode
+  // its images again, asynchronously: without waiting, a filtered SVG card background
+  // captured blank on slide 33 of a 40-slide deck.
+  const slideNode = findSlide(root, target.slideId)
+  await Promise.all(
+    [...slideNode.querySelectorAll('img')].map((img) => (img.decode ? img.decode().catch(() => {}) : null))
+  )
+  await frames(2)
+  return area
+}
+
+function isolateNow(root, { slideId, elementId = null, margin = 0 } = {}) {
   releaseCapture(root)
   const slideNode = findSlide(root, slideId)
   if (!slideNode) return null
