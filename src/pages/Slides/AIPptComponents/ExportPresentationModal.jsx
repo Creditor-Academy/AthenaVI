@@ -92,6 +92,51 @@ const EXPORT_STATUS_LABEL = {
   FAILED: 'Failed',
 };
 
+function triggerFileDownload(url, filename) {
+  if (!url) return false
+  try {
+    const link = document.createElement('a')
+    link.href = url
+    if (filename) {
+      link.download = filename
+      link.setAttribute('download', filename)
+    }
+    link.rel = 'noopener noreferrer'
+    link.style.display = 'none'
+    document.body.appendChild(link)
+    link.click()
+    setTimeout(() => {
+      try {
+        document.body.removeChild(link)
+      } catch {
+        /* ignore */
+      }
+    }, 300)
+    return true
+  } catch (err) {
+    console.warn('Failed to trigger download via anchor:', err)
+  }
+
+  try {
+    const iframe = document.createElement('iframe')
+    iframe.style.display = 'none'
+    iframe.src = url
+    document.body.appendChild(iframe)
+    setTimeout(() => {
+      try {
+        document.body.removeChild(iframe)
+      } catch {
+        /* ignore */
+      }
+    }, 60000)
+    return true
+  } catch (err) {
+    console.warn('Failed to trigger download via iframe:', err)
+  }
+
+  return false
+}
+
 export default function ExportPresentationModal({
   workspaceId,
   presentationId,
@@ -109,6 +154,7 @@ export default function ExportPresentationModal({
   const [statusText, setStatusText] = useState('')
   const [error, setError] = useState('')
   const [downloadUrl, setDownloadUrl] = useState('')
+  const [downloadFilename, setDownloadFilename] = useState('')
 
   const formats = useMemo(() => {
     const allowed = new Set(PPT_EXPORT_FORMATS)
@@ -191,10 +237,24 @@ export default function ExportPresentationModal({
       const url = ready?.presignedUrl || ready?.url || ready?.downloadUrl
       if (!url) throw new Error('Export finished but no download link was returned')
 
+      const resolvedExt = String(selected || 'pptx').toLowerCase()
+      const ext = resolvedExt === 'jpeg' ? 'jpg' : resolvedExt
+      const rawTitle = title || ready?.filename || 'Presentation'
+      const baseName =
+        String(rawTitle)
+          .replace(/\.[a-z0-9]{2,5}$/i, '')
+          .replace(/[^\w\s.-]/g, '')
+          .trim() || 'Presentation'
+      const resolvedFilename =
+        ready?.filename && !ready.filename.toLowerCase().startsWith('untitled')
+          ? ready.filename
+          : `${baseName}.${ext}`
+
       setDownloadUrl(url)
+      setDownloadFilename(resolvedFilename)
       setStatusText(`${meta.label} is ready`)
       setPhase('done')
-      window.open(url, '_blank', 'noopener,noreferrer')
+      triggerFileDownload(url, resolvedFilename)
     } catch (err) {
       setPhase('pick')
       if (isInsufficientCreditsError(err)) {
@@ -251,7 +311,7 @@ export default function ExportPresentationModal({
               <strong>
                 <FiCheckCircle size={16} /> {statusText}
               </strong>
-              <p>If the download did not start, use the button below.</p>
+              <p>Your download should start automatically. If it didn't, click Download below.</p>
             </div>
           </div>
         ) : busy ? (
@@ -369,10 +429,14 @@ export default function ExportPresentationModal({
             <a
               className="ppt-editor-modal-btn ppt-editor-modal-btn--primary"
               href={downloadUrl}
+              download={downloadFilename || undefined}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => {
+                triggerFileDownload(downloadUrl, downloadFilename)
+              }}
             >
-              <FiDownload size={16} /> Download again
+              <FiDownload size={16} /> Download
             </a>
           ) : (
             <button

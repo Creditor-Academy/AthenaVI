@@ -52,14 +52,26 @@ export default function PptBuilder({
         preferredWorkspaceId,
         preferredFolderId,
       })
-      const isBlank = template.id === 'blank' || template.createMode === 'blank'
+      const isBlank = template.id === 'blank'
+      const isBlankMode = template.id === 'blank' || template.createMode === 'blank'
       const isPack = template.createMode === 'pack'
       const brandKitId = template.brandKitId || null
+
+      const resolveDeckName = (tmpl, fallback = 'Untitled Presentation') => {
+        const raw = String(tmpl?.name || '').trim()
+        if (!raw || raw.toLowerCase() === 'blank' || raw.toLowerCase() === 'blank presentation') {
+          return fallback
+        }
+        if (/\b(deck|presentation)\b/i.test(raw)) {
+          return raw
+        }
+        return `${raw} Deck`
+      }
 
       let body
       if (isPack) {
         body = {
-          title: `${template.name || 'Pack'} Deck`,
+          title: resolveDeckName(template, 'Pack Deck'),
           folderId: ctx.folderId,
           locale: 'en',
           aspectRatio: template.aspectRatio || '16:9',
@@ -78,18 +90,18 @@ export default function PptBuilder({
         }
       } else {
         body = {
-          title: `${template.name || 'Template'} Deck`,
+          title: resolveDeckName(template, 'Template Deck'),
           folderId: ctx.folderId,
           locale: 'en',
           aspectRatio: '16:9',
-          createMode: 'template',
+          createMode: template.createMode || 'template',
           templateId: template.id || template.templateId,
           ...(brandKitId ? { brandKitId } : {}),
         }
       }
 
       // Local preview ids are not backend catalog theme ids, so only forward verified ones.
-      if (isBlank && template.themeId && template.fromCatalog) {
+      if (isBlankMode && template.themeId && template.fromCatalog) {
         body.themeId = toApiThemeId(template.themeId)
       }
       if (isPack && template.themeId) {
@@ -98,7 +110,7 @@ export default function PptBuilder({
       // Local colour-scheme cards (brown, blue, teal…): send their palette on top of the closest
       // catalog theme so the deck keeps the chosen colours. Previously the id was dropped and the
       // deck fell back to the default theme (near-black, later plain white).
-      if (isBlank && template.baseThemeId && !template.fromCatalog) {
+      if (isBlankMode && template.baseThemeId && !template.fromCatalog) {
         body.themeId = template.baseThemeId
         const tokens = await paletteThemeTokens(ctx.workspaceId, template)
         if (tokens) body.themeTokens = tokens

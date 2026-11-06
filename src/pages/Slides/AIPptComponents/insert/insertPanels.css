@@ -1328,6 +1328,8 @@
 }
 
 .ppt-file-menu-title {
+  display: block;
+  font-family: inherit;
   font-size: 15px;
   font-weight: 700;
   color: #0f172a;
@@ -1335,6 +1337,22 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: min(280px, 42vw);
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 0.15s ease;
+}
+
+.ppt-file-menu-title:hover:not(:disabled) {
+  color: #2563eb;
+}
+
+.ppt-file-menu-title:disabled {
+  cursor: default;
 }
 
 .ppt-file-menu-privacy {

@@ -2038,12 +2038,32 @@ function AIPptEditor({
     if (saves.length) await Promise.all(saves)
   }, [workspaceId, presentationId, viewOnly, isGenerating, resolvePersistedSlideId])
 
+  // Helper to extract title text from slide 1 if deckTitle is still default
+  function extractFirstSlideTitle(slides) {
+    if (!Array.isArray(slides) || slides.length === 0) return null
+    const firstSlide = slides[0]
+    const elements = firstSlide?.elements || firstSlide?.canvas?.elements || []
+    const titleEl = elements.find(
+      (el) =>
+        el?.role === 'title' ||
+        el?.role === 'heading' ||
+        String(el?.slotId || '').toUpperCase().includes('TITLE') ||
+        String(el?.slotId || '').toUpperCase().includes('HEADING')
+    )
+    const text = String(titleEl?.content?.text || '').trim()
+    if (!text || text.toLowerCase() === 'untitled presentation' || text.toLowerCase() === 'untitled') {
+      return null
+    }
+    return text.slice(0, 255)
+  }
+
   // Export reads the saved deck, so every edit must be on the server first:
   // 1. element edits still waiting on their debounce are cancelled — their slides get a full
   //    canvas save below, which carries the same (latest) state;
   // 2. writes already on their way finish, so none can land after the save;
   // 3. queued slide changes (add / reorder / delete) finish;
   // 4. every slide edited in this session is saved with its latest canvas.
+  // 5. the presentation's title is synced with the backend so export filenames match.
   const saveBeforeExport = useCallback(async () => {
     const waitingSlideIds = new Set(elementMutationsRef.current?.pendingPatchSlideIds?.() || [])
     elementMutationsRef.current?.cancelPendingPatches?.()
@@ -2054,11 +2074,28 @@ function AIPptEditor({
     elementPatchTimers.current = {}
     pendingPlacementRef.current = {}
 
+    let effectiveTitle = deckTitle
+    if (!effectiveTitle || effectiveTitle === 'Untitled Presentation') {
+      const slideTitle = extractFirstSlideTitle(localSlidesRef.current || localSlides)
+      if (slideTitle) {
+        effectiveTitle = slideTitle
+        setDeckTitle(slideTitle)
+      }
+    }
+
+    if (workspaceId && presentationId && effectiveTitle) {
+      try {
+        await workspaceService.updateProject(workspaceId, presentationId, { name: effectiveTitle })
+      } catch (err) {
+        console.error('Failed to sync presentation title before export:', err)
+      }
+    }
+
     await presentationService.waitForPendingWrites()
     await slidePersistQueueRef.current
     await flushPendingCanvasSaves({ editedOnly: true, alsoSlideIds: [...waitingSlideIds] })
     await presentationService.waitForPendingWrites()
-  }, [flushPendingCanvasSaves])
+  }, [flushPendingCanvasSaves, deckTitle, workspaceId, presentationId, localSlides])
 
   const handleOpenConvertTemplate = useCallback(() => {
     if (viewOnly) {
@@ -4514,6 +4551,13 @@ function AIPptEditor({
     const trimmed = next.trim().slice(0, 255)
     if (!trimmed) return
     setDeckTitle(trimmed)
+    if (workspaceId && presentationId) {
+      try {
+        await workspaceService.updateProject(workspaceId, presentationId, { name: trimmed })
+      } catch (err) {
+        console.error('Failed to persist presentation rename:', err)
+      }
+    }
   }
 
   const handleDuplicateDeck = async () => {
@@ -5601,7 +5645,7 @@ function AIPptEditor({
         <ExportPresentationModal
           workspaceId={workspaceId}
           presentationId={presentationId}
-          title={deckTitle}
+          title={deckTitle || extractFirstSlideTitle(localSlides) || 'Presentation'}
           slideCount={localSlides.length}
           onBeforeExport={saveBeforeExport}
           onClose={() => setExportModalOpen(false)}

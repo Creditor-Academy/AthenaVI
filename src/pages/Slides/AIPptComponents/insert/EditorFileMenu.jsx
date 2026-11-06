@@ -115,7 +115,15 @@ export default function EditorFileMenu({
         <FiMenu size={18} />
       </button>
       <div className="ppt-file-menu-meta">
-        <div className="ppt-file-menu-title">{title}</div>
+        <button
+          type="button"
+          className="ppt-file-menu-title"
+          onClick={onRename}
+          disabled={viewOnly || !onRename}
+          title={viewOnly ? title : 'Click to rename presentation'}
+        >
+          {title}
+        </button>
         <div className="ppt-file-menu-privacy">{privacy}</div>
       </div>
 
