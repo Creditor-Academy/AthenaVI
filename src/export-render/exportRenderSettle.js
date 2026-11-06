@@ -215,6 +215,16 @@ export function measureTextElements(root) {
         // The ink the editor drew (after theme / contrast adjustments), as #RRGGBB.
         color: rgbToHex(style.color),
         overflow: text.scrollHeight > frame.clientHeight + 1,
+        // Rich text: each run as drawn (its own colour is contrast-adjusted by the editor too).
+        runs: [...text.querySelectorAll('.ppt-rich-text > span, .ppt-rich-text > a')].map((node) => {
+          const s = getComputedStyle(node)
+          return {
+            text: node.textContent || '',
+            color: rgbToHex(s.color),
+            bold: Number(s.fontWeight) >= 600,
+            italic: s.fontStyle === 'italic',
+          }
+        }),
       }
     })
     out[slideNode.dataset.slideId] = elements

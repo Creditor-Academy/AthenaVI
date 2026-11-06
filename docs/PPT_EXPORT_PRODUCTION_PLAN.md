@@ -10,7 +10,7 @@
 | 1 | Hotfixes: Chrome and fonts in Docker, heartbeat, zip name, limit on exports running at once, save before export | ✅ Code done · staging check pending |
 | 2 | Canva-style slide picker and image download options | Not started |
 | 3 | One renderer: PDF and images drawn by the editor's own page | ✅ Code done (except 3.4 and part of 3.8) · staging check pending |
-| 4 | PPTX that matches the editor in PowerPoint and Google Slides | ✅ Code done (22 of 24; groups and the dialog report are optional) · check in real PowerPoint / Google Slides pending |
+| 4 | PPTX that matches the editor in PowerPoint and Google Slides | ✅ Code done (22 of 24; groups and the dialog report are optional), plus fixes F13–F21 from real decks · F22–F23 open · check in real PowerPoint / Google Slides pending |
 | 5 | Fonts in PowerPoint | Not started |
 | 6 | Job queue, progress, cancel | Not started |
 | 7 | QA, rollout, docs | Not started |
@@ -391,6 +391,22 @@ Work through the table in section 5 one row at a time. Each row gets a unit test
 **Found in Phase 4:**
 - **F12, an editor bug:** the editor's bar chart draws **every bar the same height**, whatever its value. In `pptEditorExtras.css`, `.ppt-chart-bar { flex: 1 }` makes each bar fill its column and overrides the inline `height: <value>%`. The PPTX chart shows the real values, so it scores lower against the editor on chart slides. The fix is `flex: 0 0 auto` on the bars; it changes how charts look in the editor, so it's left for a product decision.
 - The kitchen-sink deck used two text-effect names the editor doesn't have (`drop`, `glow`); it now uses the editor's own names.
+
+**Found after Phase 4: reported on real decks (2026-11-06).** Reports: "in AI decks some text changes colour after export" and "in manual decks the structure is messy and unaligned". Reproduced by exporting real dev decks through the production path and comparing each slide with the editor (AI: `cmvm1kt7`, `cmv6c4iq`; manual: `cmsn4gr6`, 25 slides). None of these were in the plan.
+
+- [x] **F13: run colours were not the drawn ones** (the text colour reported in AI decks). The editor contrast-adjusts each run's colour against the slide (`runDisplayStyle`); the export used the stored colour, so some title runs came out white or nearly invisible. The render page now measures each drawn run (`measureTextElements` → `runs`), and `pptxText` uses those colours by character position (`drawnRunColors`).
+- [x] **F14: colours that weren't 6-digit hex turned black.** pptxgenjs paints anything else black: `#RRGGBBAA`, `#RGB`, `rgb()` / `rgba()` (including the space syntax), `hsl()`, and names like `white`. New `pptxColor.parseColor` handles all of them; alpha is blended onto the slide background where PowerPoint has no alpha.
+- [x] **F15: the export drew the saved elements, not the ones the editor draws** (the main cause of "messy"). The editor normalises slides, re-themes graphics, finishes custom layouts (`finalizeChartShapes` adds chart cards, eyebrows, stat blocks and headers) and skips elements it doesn't paint. The PPTX is now built from the render page's stage elements (`__athenaExport.stageSlides()` → `withStageElements`). Before this, chart cards, eyebrows and stats were missing or misplaced.
+- [x] **F16: stage element ids changed on every computation.** Layout finishing mints new ids each run, so measurements and pictures were keyed to ids that didn't match the elements handed to PPTX. Generated elements lost their drawn colour (a pink "PERFORMANCE METRICS" and "16.6x" where the editor draws them dark). The render page now resolves each slide's stage once per job and uses it for drawing, measuring and `stageSlides()`.
+- [x] **F17: a plain `fill` was used as the text colour.** The editor only uses a text element's `fill` when it is a gradient; plain fills are ignored. Eyebrows and stats came out in the fill colour.
+- [x] **F18: duplicated or partial runs.** Some saved runs repeat the text, or cover only part of it. The export now applies the editor's rules (`collapseDuplicatedRuns`, `contentUsesFullRuns` → `pptxText.editorRuns`), so titles are no longer doubled or cut short.
+- [x] **F19: pictures that can't be loaded became grey "image" boxes** over the content. The editor shows nothing there, so the export now skips them (logged as `pptx_image_unavailable`, counted as `missing` in the report).
+- [x] **F20: rounded rectangles came out square.** AI layouts store `shape: 'rect'` plus `borderRadius`. The editor rounds them, but PowerPoint ignores `rectRadius` on a plain rect. They are now `roundRect`.
+- [x] **F21: area charts were a flat fill.** The editor draws a smooth line with dots over a soft fill. They are now a native combo chart: an area series under a line series with markers.
+- [ ] **F22: text that overflows its box.** The editor clips it (some list slides show 5 of 7 bullets); PowerPoint shows every line past the box. Decide whether to drop the hidden lines (risky while fonts differ) or leave it. Re-check after Phase 5.
+- [ ] **F23: a slide with no elements.** The render page and the PPTX each draw a fallback title from `content.title`, in slightly different styles. Rare, but the two should match.
+- Still open from these decks: **fonts (Phase 5).** Outfit, Roboto, Inter, Playfair Display and Merriweather are substituted when they aren't installed, so headings wrap onto extra lines (`Agend/a`) and italic text gets uneven spacing. This is now the biggest remaining difference.
+- Tests: `test/pptxEditorMatch.test.js` (colour forms, run rules and drawn colours, stage elements, fill vs ink, measured colour, rounded rect, area combo, missing image).
 
 **Checkpoint 4**
 - [ ] No text overflows its box in PowerPoint or Google Slides on any golden slide. *(fixed in LibreOffice for the test decks; fonts (Phase 5) still change wrapping)*

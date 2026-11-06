@@ -64,14 +64,23 @@ function ExportElement({ el, palette, canvas }) {
 }
 
 /**
+ * The elements the editor draws on a slide: after slide normalisation, re-theming, layout
+ * finishing (custom chart layouts), and without the ones it doesn't paint (background
+ * elements, ghost rings, stray scrims). Groups draw nothing themselves.
+ */
+function stageElementsOf(slide, aspectRatio, palette) {
+  const canvas = resolveCanvasSize(slide, aspectRatio)
+  return { canvas, elements: resolveStageElements(slide, canvas, palette).filter((el) => el.type !== 'group') }
+}
+
+/**
  * One slide at the editor's stage width (900px), exactly as the editor and Present lay it out,
  * so fit-to-box text shrinks to the same size it has in the editor.
  */
-function ExportSlide({ slide, aspectRatio, themeVisual, fontVars }) {
-  const canvas = resolveCanvasSize(slide, aspectRatio)
-  const stageHeight = (EDITOR_STAGE_WIDTH * canvas.height) / canvas.width
+function ExportSlide({ slide, stage, themeVisual, fontVars }) {
   const palette = themeVisual?.palette || null
-  const elements = resolveStageElements(slide, canvas, palette).filter((el) => el.type !== 'group')
+  const { canvas, elements } = stage
+  const stageHeight = (EDITOR_STAGE_WIDTH * canvas.height) / canvas.width
   const background = resolveSlideStageBackground(slide, themeVisual?.inner || '#fff', palette)
   const fallbackImage = elements.length ? null : getSlideImage(slide).url
 
@@ -111,9 +120,14 @@ function prepareDeck(payload) {
   if (wanted) slides = slides.filter((s) => wanted.has(s.id))
   const themeVisual = resolveThemeVisual(themeTokens?.wizardColorThemeId || deck.theme, themeTokens)
   const { headerFont, bodyFont } = themeFontFamilies(themeTokens)
+  // Resolved once per job: layout finishing mints new element ids on every run, so the slides
+  // drawn, measured and handed to the backend (stageSlides) must all share this one result.
+  const palette = themeVisual?.palette || null
+  const stages = Object.fromEntries(slides.map((slide) => [slide.id, stageElementsOf(slide, aspectRatio, palette)]))
   return {
     aspectRatio,
     slides,
+    stages,
     themeTokens,
     fontCssUrl: deck.fontCssUrl || null,
     themeVisual,
@@ -128,6 +142,10 @@ export default function ExportRenderApp() {
   const [job, setJob] = useState(null)
   const pendingRef = useRef(null)
   const rootRef = useRef(null)
+  const jobRef = useRef(null)
+  useEffect(() => {
+    jobRef.current = job
+  }, [job])
 
   useEffect(() => {
     window.__athenaExport = {
@@ -152,6 +170,20 @@ export default function ExportRenderApp() {
       /** Fitted font size (editor stage px), colour and overflow of every text element, by slide. */
       measure() {
         return measureTextElements(rootRef.current)
+      },
+      /**
+       * The elements drawn on each slide (canvas px placements, content as rendered), so PPTX is
+       * built from what the editor shows rather than the raw saved elements.
+       */
+      stageSlides() {
+        const current = jobRef.current
+        if (!current) return {}
+        const out = {}
+        for (const slide of current.slides) {
+          const { canvas, elements } = current.stages[slide.id]
+          out[slide.id] = JSON.parse(JSON.stringify({ canvas, elements }))
+        }
+        return out
       },
       /** Tables as drawn (cells, sizes, colours, borders), by slide — for native PPTX tables. */
       measureTables() {
@@ -208,7 +240,7 @@ export default function ExportRenderApp() {
         <ExportSlide
           key={slide.id}
           slide={slide}
-          aspectRatio={job.aspectRatio}
+          stage={job.stages[slide.id]}
           themeVisual={job.themeVisual}
           fontVars={job.fontVars}
         />
