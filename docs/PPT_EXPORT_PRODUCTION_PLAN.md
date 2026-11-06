@@ -11,7 +11,7 @@
 | 2 | Canva-style slide picker and image download options | Not started |
 | 3 | One renderer: PDF and images drawn by the editor's own page | ✅ Code done (except 3.4 and part of 3.8) · staging check pending |
 | 4 | PPTX that matches the editor in PowerPoint and Google Slides | ✅ Code done (22 of 24; groups and the dialog report are optional), plus fixes F13–F21 from real decks · F22–F23 open · check in real PowerPoint / Google Slides pending |
-| 5 | Fonts in PowerPoint | Not started |
+| 5 | Fonts in PowerPoint | ✅ Code done 2026-11-06: fonts embedded in the PPTX, the font the editor drew, the editor's font rule, theme fonts · check in real PowerPoint (Windows / Mac) pending |
 | 6 | Job queue, progress, cancel | Not started |
 | 7 | QA, rollout, docs | Not started |
 
@@ -403,9 +403,9 @@ Work through the table in section 5 one row at a time. Each row gets a unit test
 - [x] **F19: pictures that can't be loaded became grey "image" boxes** over the content. The editor shows nothing there, so the export now skips them (logged as `pptx_image_unavailable`, counted as `missing` in the report).
 - [x] **F20: rounded rectangles came out square.** AI layouts store `shape: 'rect'` plus `borderRadius`. The editor rounds them, but PowerPoint ignores `rectRadius` on a plain rect. They are now `roundRect`.
 - [x] **F21: area charts were a flat fill.** The editor draws a smooth line with dots over a soft fill. They are now a native combo chart: an area series under a line series with markers.
-- [ ] **F22: text that overflows its box.** The editor clips it (some list slides show 5 of 7 bullets); PowerPoint shows every line past the box. Decide whether to drop the hidden lines (risky while fonts differ) or leave it. Re-check after Phase 5.
+- [ ] **F22: text that overflows its box.** The editor clips it (some list slides show 5 of 7 bullets); PowerPoint shows every line past the box. Re-checked after Phase 5: the fonts now match, so the hidden lines are the same lines in both, and dropping them (measured on the render page) is now safe. Still a product decision: the PPTX would lose text the deck contains but the editor hides.
 - [ ] **F23: a slide with no elements.** The render page and the PPTX each draw a fallback title from `content.title`, in slightly different styles. Rare, but the two should match.
-- Still open from these decks: **fonts (Phase 5).** Outfit, Roboto, Inter, Playfair Display and Merriweather are substituted when they aren't installed, so headings wrap onto extra lines (`Agend/a`) and italic text gets uneven spacing. This is now the biggest remaining difference.
+- ~~Still open from these decks: **fonts (Phase 5).**~~ Done in Phase 5: Outfit, Roboto, Inter, Playfair Display and Merriweather were substituted when they weren't installed, so headings wrapped onto extra lines (`Agend/a`) and italic text got uneven spacing. They are now embedded in the file.
 - Tests: `test/pptxEditorMatch.test.js` (colour forms, run rules and drawn colours, stage elements, fill vs ink, measured colour, rounded rect, area combo, missing image).
 
 **Checkpoint 4**
@@ -416,18 +416,26 @@ Work through the table in section 5 one row at a time. Each row gets a unit test
 
 ---
 
-### Phase 5: Fonts (M; investigation first)
+### Phase 5: Fonts (M; investigation first) — code done 2026-11-06, real PowerPoint check pending
 
 The same font must be used in the editor, the PDF, PowerPoint and Google Slides, or the line widths will never match.
 
-- [ ] **5.1** List the fonts every theme uses (`fontPairing.service.js`, the themes). For each one, record whether it is a Google Font (works in Google Slides by name), comes with Office, or is neither.
-- [ ] **5.2 PDF and images:** Phase 3 loads Google Fonts in the render page; the fonts from 1.2 cover the fallback. Nothing more to do here.
-- [ ] **5.3 PowerPoint, investigation:** embed the fonts the deck uses in the PPTX (`p:embeddedFontLst` plus obfuscated `.fntdata` parts, ECMA-376). Check that PowerPoint for Windows and Mac display them, and check licensing: Google Fonts are OFL, which allows embedding.
-- [ ] **5.4** If embedding works, do it by default and download the font files once into a server cache. If it doesn't, add a "**PowerPoint-safe fonts**" option to the export dialog that swaps each theme font for the nearest Office font with similar widths, and re-measure the text (Phase 3.2) with the swapped fonts so the boxes still fit.
-- [ ] **5.5** Google Slides: write the exact Google Fonts family name in `latin` / `ea` / `cs` so Slides picks the font up.
+**What was wrong (found while doing this phase):**
+- **F24: the PPTX named a different font than the editor drew.** The backend gave `subtitle` the subheading font and `stat_value` the heading font; the editor draws both in the body font. It ignored `HEADING` / `TITLE` slots, which the editor draws in the heading font. With no theme fonts it named none (PowerPoint used Calibri), while the editor uses Inter. Run fonts were passed as CSS stacks (`"Inter, sans-serif"`), which PowerPoint can't resolve.
+- **F25: no fonts in the file.** Every theme font is a Google Font, which Office doesn't ship, so PowerPoint always substituted it.
+
+- [x] **5.1** List the fonts every theme uses (`fontPairing.service.js`, the themes). For each one, record whether it is a Google Font (works in Google Slides by name), comes with Office, or is neither. *(done: of the 83 catalog families (`FEATURED_FAMILIES`), 82 are Google Fonts served as TrueType. The exception is **Clash Display**, which is not on Google Fonts: the editor can't load it either and draws a fallback. Arial, Georgia, Times New Roman, Courier New and Helvetica are system fonts and are never embedded.)*
+- [x] **5.2 PDF and images:** Phase 3 loads Google Fonts in the render page; the fonts from 1.2 cover the fallback. Nothing more to do here.
+- [x] **5.3 PowerPoint, investigation:** embed the fonts the deck uses in the PPTX (`p:embeddedFontLst` plus `.fntdata` parts, ECMA-376). Check that PowerPoint for Windows and Mac display them, and check licensing: Google Fonts are OFL, which allows embedding. *(done: `pptxFonts.js`. A `.fntdata` part is an EOT file (version 0x00020001, no compression or XOR: a header built from the font's OS/2, head and name tables, then the TrueType data). The Google fonts checked are RIBBI-named ("Outfit" / "Bold") with fsType 0 (installable). Fonts with a restricted fsType, and CFF fonts, are never embedded. Verified in **LibreOffice**, which reads the embedded fonts: on a machine without them, Pacifico, Playfair italic and Outfit bold draw correctly. **PowerPoint for Windows and Mac: not yet checked.**)*
+- [x] **5.4** If embedding works, do it by default and download the font files once into a server cache. *(done: on for "Made for: PowerPoint" exports. The faces the editor loads are embedded: regular 400, bold 700 and italic 400, each only when a run uses it. Bold italic is left to PowerPoint's synthetic bold, as the editor does. Files are cached in memory and on disk (`PPTX_FONT_CACHE_DIR`, default `<tmp>/athena-pptx-fonts`); a failed download is retried after 10 minutes. Limits: 4 MB per face, 20 MB per file. A font that can't be fetched is left out and listed as `fonts.unavailable` in `pptx_export_report`; the export never fails over a font. `PPTX_EMBED_FONTS=0` turns embedding off. The "PowerPoint-safe fonts" fallback was not needed.)*
+- [x] **5.5** Google Slides: write the exact Google Fonts family name in `latin` / `ea` / `cs` so Slides picks the font up. *(done: pptxgenjs writes all three for every run, and the name is now the single family the editor drew. "Made for: Google Slides" exports skip embedding, since Slides ignores embedded fonts.)*
+- [x] **5.6 (F24)** The font is the one the editor drew: the render page measures each text element's and each run's computed family (`measure()` → `fontFamily`). Without a measurement, the export uses the editor's own rule: the element's font, else heading for `title` / `heading` roles and `HEADING` / `TITLE` slots, else body, with Inter as the default. The PPTX theme's major and minor fonts are the deck's heading and body fonts, so text added in PowerPoint matches.
+- Tests: `test/pptxFonts.test.js` (family names, the editor's font rule, run fonts, the EOT header, font usage, embedding parts and relationships). The fidelity harness embeds fonts by default (`--no-fonts` to compare without).
+- Real decks (LibreOffice, fonts not installed): manual deck `cmsn4gr6` embeds Roboto, Outfit and Inter (1.4 MB). "History as a Record of the Past" now fits on one line, and "Sources of Historical Knowledge" takes two lines (not three over the bullets), as in the editor. AI decks `cmvm1kt7` (Playfair Display, Lato, Merriweather; 2.2 MB) and `cmv6c4iq` (Outfit, Inter, Space Grotesk; 0.8 MB) now wrap their titles and card text like the editor.
+- Note: PowerPoint's bold is the 700 face; text the editor draws at 600 is slightly wider in PowerPoint.
 
 **Checkpoint 5**
-- [ ] The kitchen-sink deck opened on a clean Windows PC with Office and no extra fonts shows the theme fonts (or the safe-font option keeps every box intact).
+- [ ] The kitchen-sink deck opened on a clean Windows PC with Office and no extra fonts shows the theme fonts. *(LibreOffice on a PC without the fonts: ✅. PowerPoint: to check.)*
 - [ ] Google Slides shows the theme fonts.
 
 ---
@@ -502,7 +510,7 @@ The same font must be used in the editor, the PDF, PowerPoint and Google Slides,
 | Embed / video | grey card | ✅ picture + link | thumbnail + link | ✓ |
 | Groups | separate elements | separate elements | patch `grpSp` (optional) | ✓ |
 | Speaker notes | native | ✅ native | native | ✓ |
-| Theme fonts | named only | named only | embedded or safe swap (Phase 5) | Google Fonts by name ✓ |
+| Theme fonts | named only | ✅ embedded (EOT), the font the editor drew | embedded or safe swap (Phase 5) | Google Fonts by name ✓ |
 
 ---
 

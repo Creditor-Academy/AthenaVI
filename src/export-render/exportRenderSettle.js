@@ -195,10 +195,21 @@ export function rgbToHex(value) {
   return `#${[m[1], m[2], m[3]].map((n) => Number(n).toString(16).padStart(2, '0')).join('').toUpperCase()}`
 }
 
+/** The first family of a computed `font-family` list, unquoted (null for generic families). */
+export function primaryFontFamily(value) {
+  const name = String(value || '')
+    .split(',')[0]
+    .replace(/["']/g, '')
+    .trim()
+  if (!name || /^(serif|sans-serif|monospace|cursive|fantasy|system-ui|inherit)$/i.test(name)) return null
+  return name
+}
+
 /**
  * Text as the editor drew it: the fitted font size (editor stage px, the unit of
- * content.fontSize) and whether it still overflows its box.
- * @returns {Record<string, Record<string, { fontSize: number, overflow: boolean }>>}
+ * content.fontSize), its colour and font family (the theme font for its role once CSS
+ * variables resolve), and whether it still overflows its box.
+ * @returns {Record<string, Record<string, { fontSize: number, color: string, fontFamily: string|null, overflow: boolean, runs: object[] }>>}
  */
 export function measureTextElements(root) {
   const out = {}
@@ -214,6 +225,8 @@ export function measureTextElements(root) {
         fontSize: Math.round(fontSize * 100) / 100,
         // The ink the editor drew (after theme / contrast adjustments), as #RRGGBB.
         color: rgbToHex(style.color),
+        // The font it was drawn in, so PowerPoint gets the same one (and it is embedded).
+        fontFamily: primaryFontFamily(style.fontFamily),
         overflow: text.scrollHeight > frame.clientHeight + 1,
         // Rich text: each run as drawn (its own colour is contrast-adjusted by the editor too).
         runs: [...text.querySelectorAll('.ppt-rich-text > span, .ppt-rich-text > a')].map((node) => {
@@ -221,6 +234,7 @@ export function measureTextElements(root) {
           return {
             text: node.textContent || '',
             color: rgbToHex(s.color),
+            fontFamily: primaryFontFamily(s.fontFamily),
             bold: Number(s.fontWeight) >= 600,
             italic: s.fontStyle === 'italic',
           }
