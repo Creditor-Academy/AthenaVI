@@ -1309,6 +1309,25 @@
   gap: 8px;
 }
 
+/* PPTX: which app the file is made for */
+.ppt-export-target {
+  display: grid;
+  gap: 6px;
+}
+
+.ppt-export-target-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.ppt-export-target-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #64748b;
+}
+
 .ppt-export-choice {
   display: grid;
   grid-template-columns: 22px minmax(0, 1fr);

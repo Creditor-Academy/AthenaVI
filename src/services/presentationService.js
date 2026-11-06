@@ -679,11 +679,16 @@ class PresentationService {
 
   // ── Export ─────────────────────────────────────────────────────────
 
-  startExport(workspaceId, presentationId, { format = 'PPTX', slideId = null } = {}) {
+  startExport(workspaceId, presentationId, { format = 'PPTX', slideId = null, pptxTarget = null } = {}) {
     return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.EXPORT(workspaceId, presentationId), {
       method: 'POST',
       // Omit slideId for whole-deck exports (backend treats missing/null as all slides).
-      body: JSON.stringify(slideId ? { format, slideId } : { format }),
+      body: JSON.stringify({
+        format,
+        ...(slideId ? { slideId } : {}),
+        // PPTX: 'powerpoint' | 'google-slides'
+        ...(format === 'PPTX' && pptxTarget ? { pptxTarget } : {}),
+      }),
     })
   }
 

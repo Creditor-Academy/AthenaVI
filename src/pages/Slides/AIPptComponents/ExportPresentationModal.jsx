@@ -101,6 +101,9 @@ export default function ExportPresentationModal({
   onClose,
 }) {
   const [selected, setSelected] = useState('PPTX')
+  // PPTX only: the app the file is made for. Google Slides can't show gradients or glow, so
+  // for it those are exported as pictures.
+  const [pptxTarget, setPptxTarget] = useState('powerpoint')
   const [group, setGroup] = useState('file')
   const [phase, setPhase] = useState('pick')
   const [statusText, setStatusText] = useState('')
@@ -165,6 +168,7 @@ export default function ExportPresentationModal({
       const started = await presentationService.startExport(workspaceId, presentationId, {
         format: selected,
         slideId: null,
+        ...(selected === 'PPTX' ? { pptxTarget } : {}),
       })
       const exportId =
         started?.exportId || started?.id || started?.export?.id || started?._id
@@ -203,7 +207,7 @@ export default function ExportPresentationModal({
       }
       setStatusText('')
     }
-  }, [workspaceId, presentationId, selected, meta.label, exportTimeoutMs, onBeforeExport])
+  }, [workspaceId, presentationId, selected, meta.label, exportTimeoutMs, onBeforeExport, pptxTarget])
 
   const canExport = Boolean(workspaceId && presentationId)
 
@@ -314,6 +318,37 @@ export default function ExportPresentationModal({
                 )
               })}
             </div>
+
+            {selected === 'PPTX' ? (
+              <div className="ppt-export-target">
+                <span className="ppt-export-target-label" id="ppt-export-target-label">
+                  Made for
+                </span>
+                <div className="ppt-export-tabs" role="radiogroup" aria-labelledby="ppt-export-target-label">
+                  {[
+                    { id: 'powerpoint', label: 'PowerPoint' },
+                    { id: 'google-slides', label: 'Google Slides' },
+                  ].map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={pptxTarget === item.id}
+                      className={`ppt-export-tab ${pptxTarget === item.id ? 'is-active' : ''}`}
+                      disabled={!canExport}
+                      onClick={() => setPptxTarget(item.id)}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="ppt-export-target-hint">
+                  {pptxTarget === 'google-slides'
+                    ? 'Gradients and glow are kept as pictures, which Google Slides shows correctly.'
+                    : 'Gradients, glow and text effects stay editable in PowerPoint.'}
+                </p>
+              </div>
+            ) : null}
           </div>
         )}
 

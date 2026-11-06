@@ -18,6 +18,7 @@ import {
 } from '../utils/googleFonts'
 import {
   isolateForCapture,
+  measureTables,
   measureTextElements,
   releaseCapture,
   settleExportPage,
@@ -151,6 +152,10 @@ export default function ExportRenderApp() {
       /** Fitted font size (editor stage px), colour and overflow of every text element, by slide. */
       measure() {
         return measureTextElements(rootRef.current)
+      },
+      /** Tables as drawn (cells, sizes, colours, borders), by slide — for native PPTX tables. */
+      measureTables() {
+        return measureTables(rootRef.current)
       },
       /** Show only one element, or only a slide's background, for a picture capture. */
       isolate(target) {

@@ -221,3 +221,80 @@ export function measureTextElements(root) {
   })
   return out
 }
+
+function alphaOf(value) {
+  const m = /rgba?\(\s*\d+[,\s]+\d+[,\s]+\d+(?:[,\s/]+([\d.]+%?))?/i.exec(String(value || ''))
+  if (!m) return 0
+  if (m[1] == null) return 1
+  return m[1].endsWith('%') ? parseFloat(m[1]) / 100 : parseFloat(m[1])
+}
+
+/** A solid colour with some opacity, as #RRGGBB; null for transparent. */
+function paintedHex(value) {
+  return alphaOf(value) > 0.05 ? rgbToHex(value) : null
+}
+
+const round2 = (n) => Math.round(n * 100) / 100
+
+/**
+ * Tables as the editor drew them (sizes in editor stage px), so PPTX can rebuild them as
+ * native tables that look the same: the table box inside the element, column widths, row
+ * heights, and each cell's text, fill, ink, font, alignment, padding and borders.
+ */
+export function measureTables(root) {
+  const out = {}
+  root?.querySelectorAll('.export-slide').forEach((slideNode) => {
+    const tables = {}
+    slideNode.querySelectorAll('[data-export-el]').forEach((frame) => {
+      const table = frame.querySelector('table')
+      if (!table) return
+      const f = frame.getBoundingClientRect()
+      const t = table.getBoundingClientRect()
+      const rows = [...table.rows]
+      if (!rows.length) return
+      const tableBg = paintedHex(getComputedStyle(table).backgroundColor)
+      // The card the editor draws the table on (background, border, rounded corners).
+      const wrap = table.closest('.aig-canvas-table')
+      const ws = wrap ? getComputedStyle(wrap) : null
+      tables[frame.dataset.exportEl] = {
+        card: ws
+          ? {
+              bg: paintedHex(ws.backgroundColor),
+              alpha: round2(alphaOf(ws.backgroundColor)),
+              border: { w: round2(parseFloat(ws.borderTopWidth) || 0), color: ws.borderTopStyle === 'none' ? null : paintedHex(ws.borderTopColor), alpha: round2(alphaOf(ws.borderTopColor)) },
+              radius: round2(parseFloat(ws.borderTopLeftRadius) || 0),
+            }
+          : null,
+        table: { x: round2(t.left - f.left), y: round2(t.top - f.top), w: round2(t.width), h: round2(t.height) },
+        cols: [...rows[0].cells].map((cell) => round2(cell.getBoundingClientRect().width)),
+        rows: rows.map((row) => round2(row.getBoundingClientRect().height)),
+        cells: rows.map((row) => {
+          const rowBg = paintedHex(getComputedStyle(row).backgroundColor)
+          return [...row.cells].map((cell) => {
+            const s = getComputedStyle(cell)
+            const side = (name) => ({
+              w: round2(parseFloat(s[`border${name}Width`]) || 0),
+              color: s[`border${name}Style`] === 'none' ? null : paintedHex(s[`border${name}Color`]),
+            })
+            return {
+              text: cell.textContent || '',
+              colSpan: cell.colSpan || 1,
+              bg: paintedHex(s.backgroundColor) || rowBg || tableBg,
+              color: rgbToHex(s.color),
+              fontSize: round2(parseFloat(s.fontSize) || 12),
+              fontWeight: Number(s.fontWeight) || 400,
+              italic: s.fontStyle === 'italic',
+              fontFamily: String(s.fontFamily || '').split(',')[0].replace(/["']/g, '').trim() || null,
+              align: s.textAlign === 'start' ? 'left' : s.textAlign === 'end' ? 'right' : s.textAlign,
+              valign: s.verticalAlign,
+              pad: [s.paddingTop, s.paddingRight, s.paddingBottom, s.paddingLeft].map((v) => round2(parseFloat(v) || 0)),
+              border: [side('Top'), side('Right'), side('Bottom'), side('Left')],
+            }
+          })
+        }),
+      }
+    })
+    out[slideNode.dataset.slideId] = tables
+  })
+  return out
+}
