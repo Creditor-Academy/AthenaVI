@@ -1649,6 +1649,15 @@
   background: #e2e8f0;
 }
 
+.ppt-el-ctx-label {
+  padding: 6px 14px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
 .ppt-el-ctx-sub {
   position: relative;
 }
@@ -1675,6 +1684,16 @@
   border-radius: 12px;
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16);
   z-index: 120010;
+}
+
+/* Bridges the gap to the trigger so the submenu stays open while the pointer crosses it. */
+.ppt-el-ctx-sub-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -8px;
+  width: 8px;
 }
 
 .ppt-el-ctx-sub:hover:not(.is-disabled) .ppt-el-ctx-sub-panel,

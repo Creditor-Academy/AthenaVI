@@ -16,6 +16,7 @@ import {
 } from 'react-icons/fi'
 import { MdDragIndicator, MdOutlineDesignServices, MdOutlineAnimation } from 'react-icons/md'
 import { attachPointerDrag, exceedsDragThreshold } from '../../../../utils/pointerDrag'
+import { pptStackOrder } from '../../../../utils/pptGroupUtils'
 import { BsStars } from 'react-icons/bs'
 import { HiOutlineClipboard } from 'react-icons/hi'
 import DesignContextPanel from './DesignContextPanel'
@@ -131,6 +132,7 @@ function LayersPanel({
   onSelectElement,
   onDeleteElement,
   onReorderLayers,
+  onLayerContextMenu,
 }) {
   const listRef = useRef(null)
   const ghostRef = useRef(null)
@@ -141,11 +143,9 @@ function LayersPanel({
   const [lineTop, setLineTop] = useState(0)
   const [ghost, setGhost] = useState(null)
 
-  const sourceLayers = useMemo(
-    () =>
-      [...(slide?.elements?.elements || [])].sort((a, b) => (b.layer || 0) - (a.layer || 0)),
-    [slide]
-  )
+  // Front first, in the order the slide draws them (equal layers: later in the list is in front;
+  // sorting by layer alone listed those upside down).
+  const sourceLayers = useMemo(() => pptStackOrder(slide?.elements?.elements || []).reverse(), [slide])
   const sourceIds = useMemo(() => sourceLayers.map((el) => el.id), [sourceLayers])
   const layers = sourceLayers
   const idsKey = sourceIds.join('|')
@@ -243,7 +243,7 @@ function LayersPanel({
         })
         prevRectsRef.current = map
       }
-      onReorderLayers?.(orderFromDropSlot(sourceIds, id, slot))
+      onReorderLayers?.(orderFromDropSlot(sourceIds, id, slot), id)
     })
   }
 
@@ -275,6 +275,12 @@ function LayersPanel({
                 aria-label={`${layerLabel(el)}, layer ${layers.length - i}`}
                 aria-pressed={selected}
                 onPointerDown={(e) => beginRowDrag(e, el.id)}
+                onContextMenu={(e) => {
+                  // Right-click a layer: select it and open the element menu (layer order, …).
+                  if (disabled || !onLayerContextMenu) return
+                  e.preventDefault()
+                  onLayerContextMenu(el.id, e)
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault()
@@ -367,6 +373,7 @@ export default function EditorRightRail({
   onSendBackward,
   onDeleteElement,
   onReorderLayers,
+  onLayerContextMenu,
   onApplyLayout,
   onResetBackground,
   onAddBackgroundImage,
@@ -630,6 +637,7 @@ export default function EditorRightRail({
               onSelectElement={onSelectElement}
               onDeleteElement={onDeleteElement}
               onReorderLayers={onReorderLayers}
+              onLayerContextMenu={onLayerContextMenu}
             />
           )}
 

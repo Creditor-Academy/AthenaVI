@@ -296,6 +296,51 @@ export function isPptGroupScaling() {
 }
 
 /**
+ * Elements in the order the slide stacks them, back → front: by `layer` (the z-index the canvas
+ * paints with), and for equal layers by their place in the list (later is painted on top).
+ * Layer controls must work on this order: the saved list order often differs from it on
+ * generated slides, so moving by list position jumped several layers or did nothing.
+ */
+export function pptStackOrder(elements = []) {
+  return elements
+    .map((el, index) => ({ el, index }))
+    .sort((a, b) => (Number(a.el?.layer) || 0) - (Number(b.el?.layer) || 0) || a.index - b.index)
+    .map(({ el }) => el)
+}
+
+/** A layer above every element on the slide (new and pasted elements go on top). */
+export function nextPptLayer(elements = []) {
+  return elements.reduce((max, el) => Math.max(max, Number(el?.layer) || 0), 0) + 1
+}
+
+/**
+ * Stacking order (back → front) after the Layers panel moved one entry. `frontToBackIds` is the
+ * panel's new order, top = front. A moved group takes its children with it, just below it, so
+ * its contents move as one piece. Elements missing from the list stay at the back.
+ */
+export function pptOrderFromLayerList(elements = [], frontToBackIds = [], movedId = null) {
+  const byId = new Map(elements.map((el) => [el.id, el]))
+  let order = [...frontToBackIds]
+    .reverse()
+    .map((id) => byId.get(id))
+    .filter(Boolean)
+  const listed = new Set(order.map((el) => el.id))
+  const missing = pptStackOrder(elements).filter((el) => !listed.has(el.id))
+  order = [...missing, ...order]
+  const moved = movedId ? byId.get(movedId) : null
+  if (moved && isPptGroup(moved)) {
+    const childIds = new Set(expandPptSelectionIds(elements, [movedId]).filter((id) => id !== movedId))
+    if (childIds.size) {
+      const children = pptStackOrder(elements).filter((el) => childIds.has(el.id))
+      order = order.filter((el) => !childIds.has(el.id))
+      const at = order.findIndex((el) => el.id === movedId)
+      order.splice(at, 0, ...children)
+    }
+  }
+  return order
+}
+
+/**
  * New stacking order (back → front) after moving the selection (an id or a list of ids) one
  * step forward/back or to the front/back, as one block. A group moves together with its
  * children — moving only the group entry, which draws nothing, left its contents where they

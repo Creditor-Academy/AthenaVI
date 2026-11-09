@@ -50,6 +50,9 @@ import {
   expandPptSelectionIds,
   groupPlacementChildPatches,
   isPptGroup,
+  nextPptLayer,
+  pptOrderFromLayerList,
+  pptStackOrder,
   reorderPptElements,
   groupScaleForResize,
   placementPatchesChangeContent,
@@ -1602,12 +1605,13 @@ function AIPptEditor({
     setEditingTextId((prev) => (prev === targetId ? prev : null))
   }, [viewOnly])
 
-  const openElementContextMenu = useCallback((slideId, id, event) => {
+  // `exact`: act on that element itself (a row in the Layers panel), not the group it is in.
+  const openElementContextMenu = useCallback((slideId, id, event, { exact = false } = {}) => {
     if (viewOnly || !id || !event) return
     const els =
       (localSlidesRef.current.find((s) => s.id === slideId)?.elements?.elements || [])
     const clicked = els.find((e) => e.id === id)
-    const targetId = clicked?.groupId ? clicked.groupId : id
+    const targetId = clicked?.groupId && !exact ? clicked.groupId : id
     const current = multiSelectIdsRef.current.length
       ? multiSelectIdsRef.current
       : [selectedElementIdRef.current].filter(Boolean)
@@ -3538,7 +3542,8 @@ function AIPptEditor({
       type,
       content,
       placement,
-      layer: existing.length + 1,
+      // On top of everything on the slide ("count + 1" put it behind higher generated layers).
+      layer: nextPptLayer(existing),
       ...(payload.presetId ? { presetId: payload.presetId } : {}),
       ...(payload.role ? { role: payload.role } : type === 'graphic' ? { role: 'decoration' } : {}),
     }
@@ -3572,7 +3577,7 @@ function AIPptEditor({
                 type,
                 placement,
                 content,
-                layer: existing.length + 1,
+                layer: nextPptLayer(existing),
                 ...(payload.presetId ? { presetId: payload.presetId } : {}),
                 ...(payload.role ? { role: payload.role } : {}),
               }
@@ -3942,15 +3947,18 @@ function AIPptEditor({
     ]
   )
 
+  // Bring forward / send backward / to front / to back for the whole selection, one step in the
+  // order the slide is drawn (by layer) — not in the saved list order, which on generated slides
+  // differs from it, so one click jumped several layers or seemed to do nothing.
   const handleReorderSelected = useCallback(
     async (direction) => {
       const slideId = selectedSlideId || localSlides[0]?.id
-      const elementId = selectedElementId
-      if (!slideId || !elementId || isGenerating) return
+      const ids = multiSelectIds.length ? multiSelectIds : [selectedElementId].filter(Boolean)
+      if (!slideId || !ids.length || isGenerating) return
 
       const slide = localSlides.find((s) => s.id === slideId)
-      const existing = [...(slide?.elements?.elements || [])]
-      const next = reorderPptElements(existing, elementId, direction)
+      const stacked = pptStackOrder(slide?.elements?.elements || [])
+      const next = reorderPptElements(stacked, ids, direction)
       if (!next) return
 
       await persistElementOrder(slideId, next)
@@ -3958,6 +3966,7 @@ function AIPptEditor({
     [
       selectedSlideId,
       selectedElementId,
+      multiSelectIds,
       localSlides,
       isGenerating,
       persistElementOrder,
@@ -3966,26 +3975,26 @@ function AIPptEditor({
 
   reorderSelectedRef.current = handleReorderSelected
 
+  // A drag in the Layers panel (top = front). A dragged group brings its contents along.
   const handleReorderLayers = useCallback(
-    (frontToBackIds) => {
+    (frontToBackIds, movedId) => {
       const slideId = selectedSlideId || localSlides[0]?.id
       if (!slideId || isGenerating || !frontToBackIds?.length) return
 
       const slide = localSlides.find((s) => s.id === slideId)
       const existing = slide?.elements?.elements || []
-      const byId = new Map(existing.map((el) => [el.id, el]))
-      const backToFront = [...frontToBackIds]
-        .reverse()
-        .map((id) => byId.get(id))
-        .filter(Boolean)
-      const seen = new Set(backToFront.map((el) => el.id))
-      for (const el of existing) {
-        if (!seen.has(el.id)) backToFront.unshift(el)
-      }
-      persistElementOrder(slideId, backToFront)
+      persistElementOrder(slideId, pptOrderFromLayerList(existing, frontToBackIds, movedId))
     },
     [selectedSlideId, localSlides, isGenerating, persistElementOrder]
   )
+
+  // Which layer moves are possible for the selection (greys out "Bring forward" at the top, …).
+  const layerMoves = useMemo(() => {
+    const ids = multiSelectIds.length ? multiSelectIds : [selectedElementId].filter(Boolean)
+    const stacked = pptStackOrder(selectedSlide?.elements?.elements || [])
+    const can = (direction) => ids.length > 0 && reorderPptElements(stacked, ids, direction) != null
+    return { forward: can('forward'), back: can('back') }
+  }, [multiSelectIds, selectedElementId, selectedSlide])
 
   const handleImageAuthError = useCallback(() => {
     // Preview <img> in the design panel can 403 a signed URL on select.
@@ -4965,6 +4974,8 @@ function AIPptEditor({
             handleReorderSelected('toBack')
             setElementContextMenu(null)
           }}
+          canBringForward={layerMoves.forward}
+          canSendBackward={layerMoves.back}
         />
       ) : null}
 
@@ -5284,6 +5295,7 @@ function AIPptEditor({
           onSendBackward={() => handleReorderSelected('back')}
           onDeleteElement={handleDeleteElement}
           onReorderLayers={handleReorderLayers}
+          onLayerContextMenu={(id, e) => openElementContextMenu(selectedSlide?.id, id, e, { exact: true })}
           onApplyLayout={handleApplyLayout}
           onResetBackground={() => handleBackgroundColorChange(DEFAULT_SLIDE_BG)}
           onAddBackgroundImage={openMediaForBackground}

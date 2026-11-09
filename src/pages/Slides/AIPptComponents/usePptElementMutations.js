@@ -5,6 +5,8 @@ import {
   canPptUngroup,
   createPptGroup,
   expandPptSelectionIds,
+  nextPptLayer,
+  pptStackOrder,
   ungroupPptElement,
 } from '../../../utils/pptGroupUtils'
 import { alignPptElements } from '../../../utils/pptAlignUtils'
@@ -186,10 +188,13 @@ export function usePptElementMutations({
     ]
   )
 
-  const cloneElementsWithOffset = (sources, layerStart) => {
+  // Copies go on top of the slide (above its highest layer, not "element count + 1", which put
+  // them behind generated elements), keeping the originals' stacking among themselves.
+  const cloneElementsWithOffset = (sources, slideElements = []) => {
+    const layerStart = nextPptLayer(slideElements) - 1
     const stamp = Date.now()
     const idMap = new Map()
-    const clones = sources.map((source, index) => {
+    const clones = pptStackOrder(sources).map((source, index) => {
       const id = `el-${stamp}-${index}-${Math.random().toString(36).slice(2, 6)}`
       idMap.set(source.id, id)
       return {
@@ -225,7 +230,7 @@ export function usePptElementMutations({
       if (!sources.length) return
 
       pushHistory?.({ slides: localSlidesRef.current, selectedSlideId, selectedElementId })
-      const clones = cloneElementsWithOffset(sources, slide.elements?.elements?.length || 0)
+      const clones = cloneElementsWithOffset(sources, slide.elements?.elements || [])
       updateElements(slide.id, (els) => [...els, ...clones], { history: false })
       const last = clones[clones.length - 1]
       if (last) setSelectedElementId(last.id)
@@ -264,10 +269,7 @@ export function usePptElementMutations({
     const slide = getSlide()
     if (!slide || isGenerating || !clipboardRef.current?.length) return
     pushHistory?.({ slides: localSlidesRef.current, selectedSlideId, selectedElementId })
-    const clones = cloneElementsWithOffset(
-      clipboardRef.current,
-      slide.elements?.elements?.length || 0
-    )
+    const clones = cloneElementsWithOffset(clipboardRef.current, slide.elements?.elements || [])
     updateElements(slide.id, (els) => [...els, ...clones], { history: false })
     const last = clones[clones.length - 1]
     if (last) setSelectedElementId(last.id)

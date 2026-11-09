@@ -6,7 +6,10 @@ import {
   createPptGroup,
   getPptUnionBounds,
   groupPlacementChildPatches,
+  nextPptLayer,
   normalizeRotation,
+  pptOrderFromLayerList,
+  pptStackOrder,
   reorderPptElements,
   rotatePptGroupPatches,
   startPptGroupResize,
@@ -72,5 +75,54 @@ describe('layer order', () => {
 
   it('several selected elements move as one block', () => {
     assert.equal(ids(reorderPptElements(stack, ['bg', 'b'], 'toFront')), 'a,top,bg,b')
+  })
+})
+
+describe('layer order follows what the slide draws (by layer), not the saved list order', () => {
+  const ids = (list) => list.map((x) => x.id).join(',')
+  // Saved list order: title, photo, card, scrim. Drawn (by layer): card(2) < scrim(4) < photo(10) < title(30).
+  const generated = [
+    el('title', 0, 0, 1, 1, { layer: 30 }),
+    el('photo', 0, 0, 1, 1, { layer: 10 }),
+    el('card', 0, 0, 1, 1, { layer: 2 }),
+    el('scrim', 0, 0, 1, 1, { layer: 4 }),
+  ]
+
+  it('stack order is by layer; equal layers keep list order (later is in front)', () => {
+    assert.equal(ids(pptStackOrder(generated)), 'card,scrim,photo,title')
+    const tied = [el('x', 0, 0, 1, 1, { layer: 1 }), el('y', 0, 0, 1, 1, { layer: 1 }), el('z', 0, 0, 1, 1)]
+    assert.equal(ids(pptStackOrder(tied)), 'z,x,y')
+  })
+
+  it('bring forward moves exactly one drawn layer (it used to move by list position)', () => {
+    // On the list order, "scrim forward" did nothing (already last) and "photo back" jumped behind the title only.
+    assert.equal(ids(reorderPptElements(pptStackOrder(generated), 'scrim', 'forward')), 'card,photo,scrim,title')
+    assert.equal(ids(reorderPptElements(pptStackOrder(generated), 'photo', 'back')), 'card,photo,scrim,title')
+    assert.equal(reorderPptElements(pptStackOrder(generated), 'title', 'forward'), null, 'already in front')
+    assert.equal(reorderPptElements(pptStackOrder(generated), 'card', 'back'), null, 'already at the back')
+  })
+
+  it('new elements go above the highest layer, not at "count + 1"', () => {
+    assert.equal(nextPptLayer(generated), 31)
+    assert.equal(nextPptLayer([]), 1)
+  })
+
+  it('Layers panel: a drop gives the new order; a dragged group brings its children', () => {
+    // Panel lists front first. Drag the scrim to the top.
+    assert.equal(ids(pptOrderFromLayerList(generated, ['scrim', 'title', 'photo', 'card'], 'scrim')), 'card,photo,title,scrim')
+    // Elements the panel didn't list stay at the back.
+    assert.equal(ids(pptOrderFromLayerList(generated, ['card', 'title'], 'card')), 'scrim,photo,title,card')
+
+    const grouped = createPptGroup(
+      [el('bg', 0, 0, 1, 1, { layer: 1 }), el('a', 0, 0, 1, 1, { layer: 2 }), el('b', 0, 0, 1, 1, { layer: 3 }), el('top', 0, 0, 1, 1, { layer: 4 })],
+      ['a', 'b'],
+      'g'
+    )
+    const frontFirst = pptStackOrder(grouped).reverse().map((x) => x.id)
+    // Drag the group row to the very top: its children come with it, just below it.
+    const dragged = ['g', ...frontFirst.filter((id) => id !== 'g')]
+    const next = ids(pptOrderFromLayerList(grouped, dragged, 'g'))
+    assert.ok(next.endsWith('a,b,g'), next)
+    assert.ok(next.startsWith('bg,top'), next)
   })
 })

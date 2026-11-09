@@ -8,6 +8,10 @@ import {
   MdAlignVerticalTop,
   MdAlignVerticalCenter,
   MdAlignVerticalBottom,
+  MdFlipToBack,
+  MdFlipToFront,
+  MdVerticalAlignBottom,
+  MdVerticalAlignTop,
 } from 'react-icons/md'
 
 const ALIGN_ITEMS = [
@@ -79,29 +83,34 @@ function AlignSubmenu({ disabled, onAlign }) {
   )
 }
 
-function LayerOrderSubmenu({ disabled, onBringForward, onSendBackward, onBringToFront, onSendToBack }) {
+/**
+ * Layer order, right in the menu (it used to be a hover submenu that closed while the pointer
+ * crossed the gap to it). Moves that can't happen — already at the front or back — are greyed.
+ */
+function LayerOrderItems({
+  disabled,
+  canForward = true,
+  canBack = true,
+  onBringForward,
+  onSendBackward,
+  onBringToFront,
+  onSendToBack,
+}) {
   if (!onBringForward && !onSendBackward && !onBringToFront && !onSendToBack) return null
   return (
-    <div className={`ppt-el-ctx-sub${disabled ? ' is-disabled' : ''}`}>
-      <button
-        type="button"
-        className="ppt-el-ctx-item ppt-el-ctx-sub-trigger"
-        disabled={disabled}
-        onMouseDown={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-        }}
-      >
-        <span>Layer Order</span>
-        <MdChevronRight size={16} />
-      </button>
-      {!disabled ? (
-        <div className="ppt-el-ctx-sub-panel" role="menu">
-          {onBringForward ? <MenuItem label="Bring Forward" shortcut="Ctrl+]" onClick={onBringForward} /> : null}
-          {onSendBackward ? <MenuItem label="Send Backward" shortcut="Ctrl+[" onClick={onSendBackward} /> : null}
-          {onBringToFront ? <MenuItem label="Bring to Front" shortcut="Ctrl+Shift+]" onClick={onBringToFront} /> : null}
-          {onSendToBack ? <MenuItem label="Send to Back" shortcut="Ctrl+Shift+[" onClick={onSendToBack} /> : null}
-        </div>
+    <div role="group" aria-label="Layer order">
+      <div className="ppt-el-ctx-label">Layer</div>
+      {onBringForward ? (
+        <MenuItem label="Bring forward" icon={MdFlipToFront} shortcut="Ctrl+]" disabled={disabled || !canForward} onClick={onBringForward} />
+      ) : null}
+      {onBringToFront ? (
+        <MenuItem label="Bring to front" icon={MdVerticalAlignTop} shortcut="Ctrl+Shift+]" disabled={disabled || !canForward} onClick={onBringToFront} />
+      ) : null}
+      {onSendBackward ? (
+        <MenuItem label="Send backward" icon={MdFlipToBack} shortcut="Ctrl+[" disabled={disabled || !canBack} onClick={onSendBackward} />
+      ) : null}
+      {onSendToBack ? (
+        <MenuItem label="Send to back" icon={MdVerticalAlignBottom} shortcut="Ctrl+Shift+[" disabled={disabled || !canBack} onClick={onSendToBack} />
       ) : null}
     </div>
   )
@@ -129,6 +138,8 @@ export default function PptElementContextMenu({
   onSendBackward,
   onBringToFront,
   onSendToBack,
+  canBringForward = true,
+  canSendBackward = true,
 }) {
   const ref = useRef(null)
 
@@ -202,14 +213,17 @@ export default function PptElementContextMenu({
         disabled={!hasSelection}
         onClick={onToggleLock}
       />
-      <LayerOrderSubmenu
+      <AlignSubmenu disabled={!hasSelection} onAlign={onAlign} />
+      <MenuSep />
+      <LayerOrderItems
         disabled={!hasSelection}
+        canForward={canBringForward}
+        canBack={canSendBackward}
         onBringForward={onBringForward}
         onSendBackward={onSendBackward}
         onBringToFront={onBringToFront}
         onSendToBack={onSendToBack}
       />
-      <AlignSubmenu disabled={!hasSelection} onAlign={onAlign} />
     </div>,
     document.body
   )
