@@ -832,9 +832,6 @@ export default function EditorRightRail({
                   ) : null}
                 </span>
                 <span className="ppt-editor-sidebar-btn-label">Danger zone</span>
-                <span className="ppt-editor-sidebar-switch" aria-hidden>
-                  {showDangerZone ? 'On' : 'Off'}
-                </span>
               </button>
             </>
           ) : null}

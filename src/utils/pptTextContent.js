@@ -186,7 +186,7 @@ export function runDisplayStyle(run, content, palette, baseStyle = {}) {
   return {
     ...paint,
     fontWeight: run?.fontWeight ?? (run?.bold ? 700 : baseStyle.fontWeight),
-    fontStyle: run?.italic ? 'italic' : baseStyle.fontStyle,
+    fontStyle: run?.italic === false ? 'normal' : run?.italic ? 'italic' : baseStyle.fontStyle,
     fontFamily: fontFamilyForRunRole(run, baseStyle),
   }
 }
@@ -214,8 +214,8 @@ function styleKey(run) {
   return [
     fillKey,
     run?.fontWeight ?? '',
-    run?.bold ? '1' : '',
-    run?.italic ? '1' : '',
+    String(run?.bold ?? ''),
+    String(run?.italic ?? ''),
     run?.fontFamily || '',
     run?.fontRole || '',
     run?.userColor ? 'u' : '',
@@ -229,8 +229,8 @@ function cloneRunStyle(run) {
   if (run?.color) next.color = run.color
   if (run?.colorRole) next.colorRole = run.colorRole
   if (run?.fontWeight != null) next.fontWeight = run.fontWeight
-  if (run?.bold) next.bold = run.bold
-  if (run?.italic) next.italic = run.italic
+  if (run?.bold != null) next.bold = run.bold
+  if (run?.italic != null) next.italic = run.italic
   if (run?.fontFamily) next.fontFamily = run.fontFamily
   if (run?.fontRole) next.fontRole = run.fontRole
   if (run?.userColor) next.userColor = true
@@ -452,6 +452,132 @@ export function applyElementTextLink(element, href) {
   return applyLinkToTextRange(liveElementContent(element), range?.start, range?.end, href)
 }
 
+// ── Bold / italic / font ───────────────────────────────────────────────────────────────
+// Every text box works the same, whatever preset it came from. A "Title" preset or a generated
+// heading is saved with a `fontWeight` (800), and words can carry their own weight, italic or
+// font in their runs; both beat the box's `bold` flag, so the Bold button used to do nothing.
+
+/** The weight the box draws with when a run doesn't set its own. */
+export function boxFontWeight(content) {
+  const c = content || {}
+  return numericFontWeight(c.fontWeight) ?? (c.bold ? 700 : 400)
+}
+
+function runFontWeight(run, baseWeight) {
+  const own = numericFontWeight(run?.fontWeight)
+  if (own != null) return own
+  if (run?.bold === true) return 700
+  if (run?.bold === false) return 400
+  return baseWeight
+}
+
+function runIsItalic(run, baseItalic) {
+  if (run?.italic === true) return true
+  if (run?.italic === false) return false
+  return baseItalic
+}
+
+function textRangeBounds(text, range) {
+  if (!range || !(range.end > range.start) || !text) return null
+  const a = Math.max(0, Math.min(Number(range.start) || 0, text.length))
+  const b = Math.min(text.length, Math.max(Number(range.end) || 0, 0))
+  return b > a ? [a, b] : null
+}
+
+// What a whole-box change clears from the words, so the box's own value shows everywhere.
+const RUN_KEYS_FOR = {
+  bold: ['bold', 'fontWeight'],
+  italic: ['italic'],
+  fontFamily: ['fontFamily', 'fontRole'],
+}
+
+function formatRun(run, format) {
+  const next = { ...run }
+  if ('bold' in format) {
+    // Explicit both ways: a plain word inside a bold box stays plain (and exports plain).
+    next.bold = Boolean(format.bold)
+    next.fontWeight = format.bold ? 700 : 400
+  }
+  if ('italic' in format) next.italic = Boolean(format.italic)
+  if ('fontFamily' in format) {
+    if (format.fontFamily) next.fontFamily = format.fontFamily
+    else delete next.fontFamily
+    delete next.fontRole
+  }
+  return next
+}
+
+/**
+ * Bold / italic / font family for the selected words (`range` while editing), or for the whole
+ * box. `format` holds only the keys being changed, e.g. `{ bold: false }`.
+ */
+export function applyTextFormat(content, format = {}, range = null) {
+  const c = content || {}
+  const text = contentPlainText(c)
+  const bounds = textRangeBounds(text, range)
+  if (bounds) {
+    const pieces = splitRunsByOffsets(expandRuns(c), bounds[0], bounds[1]).map(({ _hit, ...run }) =>
+      _hit ? formatRun(run, format) : run
+    )
+    return { ...c, text, runs: mergeAdjacentRuns(pieces) }
+  }
+
+  const next = { ...c }
+  if ('bold' in format) {
+    next.bold = Boolean(format.bold)
+    next.fontWeight = format.bold ? 700 : 400
+  }
+  if ('italic' in format) next.italic = Boolean(format.italic)
+  if ('fontFamily' in format) next.fontFamily = format.fontFamily || null
+  const strip = Object.keys(format).flatMap((key) => RUN_KEYS_FOR[key] || [])
+  if (strip.length && Array.isArray(c.runs) && c.runs.length) {
+    next.runs = mergeAdjacentRuns(
+      c.runs.map((run) => {
+        const clean = { ...run }
+        strip.forEach((key) => delete clean[key])
+        return clean
+      })
+    )
+  }
+  return next
+}
+
+/** Which of bold / italic / font apply to the selected words, or to the whole box. */
+export function textFormatState(content, range = null) {
+  const c = content || {}
+  const baseWeight = boxFontWeight(c)
+  const baseItalic = c.italic === true
+  const text = contentPlainText(c)
+  const [a, b] = textRangeBounds(text, range) || [0, text.length]
+  const covered = []
+  let cursor = 0
+  for (const run of expandRuns(c)) {
+    const runText = coercePlainText(run?.text)
+    const start = cursor
+    cursor += runText.length
+    if (!runText.trim() || cursor <= a || start >= b) continue
+    covered.push(run)
+  }
+  if (!covered.length) {
+    return { bold: baseWeight >= 600, italic: baseItalic, fontFamily: c.fontFamily || '' }
+  }
+  const families = new Set(covered.map((run) => run.fontFamily || c.fontFamily || ''))
+  return {
+    bold: covered.every((run) => runFontWeight(run, baseWeight) >= 600),
+    italic: covered.every((run) => runIsItalic(run, baseItalic)),
+    fontFamily: families.size === 1 ? [...families][0] : c.fontFamily || '',
+  }
+}
+
+/** Format the live selection of a text box being edited, or the whole box. */
+export function applyElementTextFormat(element, format) {
+  return applyTextFormat(liveElementContent(element), format, liveElementRange(element))
+}
+
+export function elementTextFormatState(element) {
+  return textFormatState(liveElementContent(element), liveElementRange(element))
+}
+
 /** Stored links in the current selection (or the whole box): `{ href, linked }`. */
 function elementTextLinkState(element) {
   const content = liveElementContent(element)
@@ -597,7 +723,9 @@ export function serializeEditableRuns(node) {
     const cs = styleOf(el)
     const weight = numericFontWeight(cs.fontWeight)
     if (weight != null && baseWeight != null && weight !== baseWeight) out.fontWeight = weight
-    if (isItalicStyle(cs.fontStyle) && !baseItalic) out.italic = true
+    const italic = isItalicStyle(cs.fontStyle)
+    if (italic && !baseItalic) out.italic = true
+    else if (!italic && baseItalic) out.italic = false
     return out
   }
   const walk = (n, inherited, user, runProps) => {
@@ -656,7 +784,7 @@ export function seedEditableNode(node, content, palette) {
     Object.assign(span.style, {
       ...paint,
       fontWeight: run?.fontWeight ?? (run?.bold ? 700 : undefined),
-      fontStyle: run?.italic ? 'italic' : undefined,
+      fontStyle: run?.italic === false ? 'normal' : run?.italic ? 'italic' : undefined,
       fontFamily: fontFamilyForRunRole(run, {}),
     })
     try {

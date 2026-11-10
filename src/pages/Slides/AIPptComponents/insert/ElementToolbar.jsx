@@ -13,7 +13,14 @@ import {
 } from 'react-icons/fi'
 import { MdFormatListBulleted, MdFormatListNumbered, MdStrikethroughS } from 'react-icons/md'
 import { stripLeadingListMarkers } from '../../../../utils/textListUtils'
-import { applyElementTextFill, contentFillValue, contentPlainText, contentWithSyncedText } from '../../../../utils/pptTextContent'
+import {
+  applyElementTextFill,
+  applyElementTextFormat,
+  contentFillValue,
+  contentPlainText,
+  contentWithSyncedText,
+  elementTextFormatState,
+} from '../../../../utils/pptTextContent'
 import { ensureGoogleFontLoaded } from '../../../../utils/googleFonts'
 import FontPicker from '../../../../components/shared/fonts/FontPicker'
 import ColorFillPicker from './ColorFillPicker'
@@ -62,6 +69,11 @@ export default function ElementToolbar({
     onChange?.({ ...c, ...updates })
   }
 
+  // Bold / italic / font: on the selected words while typing, else the whole box. Works the same
+  // for every preset (a "Title" is saved with fontWeight 800, which the old `bold` flag couldn't undo).
+  const format = elementTextFormatState(element)
+  const applyFormat = (next) => onChange?.(applyElementTextFormat(element, next))
+
   const adjustSize = (delta) => {
     const current = Number(c.fontSize) || 22
     // An explicit size means "use this size": layout text stops auto-shrinking to its slot
@@ -84,14 +96,14 @@ export default function ElementToolbar({
     <div className={`ppt-element-toolbar-font-picker ${isPanel ? 'is-panel' : ''}`}>
       <FontPicker
         label={isPanel ? '' : ''}
-        value={c.fontFamily || 'Inter'}
+        value={format.fontFamily || 'Inter'}
         disabled={disabled}
         compact
         menuLabel="Font family"
         usedFontFamilies={usedFontFamilies}
         onChange={(family) => {
           ensureGoogleFontLoaded(family)
-          patch({ fontFamily: family })
+          applyFormat({ fontFamily: family })
         }}
       />
     </div>
@@ -122,18 +134,22 @@ export default function ElementToolbar({
     <>
       <button
         type="button"
-        className={`ppt-element-toolbar-btn ${c.bold ? 'is-active' : ''}`}
+        className={`ppt-element-toolbar-btn ${format.bold ? 'is-active' : ''}`}
+        aria-pressed={format.bold}
         disabled={disabled}
-        onClick={() => patch({ bold: !c.bold })}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => applyFormat({ bold: !format.bold })}
         title="Bold"
       >
         <FiBold size={15} />
       </button>
       <button
         type="button"
-        className={`ppt-element-toolbar-btn ${c.italic ? 'is-active' : ''}`}
+        className={`ppt-element-toolbar-btn ${format.italic ? 'is-active' : ''}`}
+        aria-pressed={format.italic}
         disabled={disabled}
-        onClick={() => patch({ italic: !c.italic })}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => applyFormat({ italic: !format.italic })}
         title="Italic"
       >
         <FiItalic size={15} />
