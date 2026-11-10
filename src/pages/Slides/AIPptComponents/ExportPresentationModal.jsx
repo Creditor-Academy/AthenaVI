@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { FiCheck, FiCheckCircle, FiDownload, FiLoader, FiX } from 'react-icons/fi'
 import presentationService from '../../../services/presentationService'
 import { isInsufficientCreditsError } from '../../../services/creditsService'
@@ -271,7 +272,8 @@ export default function ExportPresentationModal({
 
   const canExport = Boolean(workspaceId && presentationId)
 
-  return (
+  // Rendered on <body> so the editor's own layout (transforms, overflow) can't clip or shift it.
+  const modal = (
     <div
       className="ppt-editor-modal-overlay"
       onClick={(e) => e.target === e.currentTarget && !busy && onClose?.()}
@@ -460,4 +462,6 @@ export default function ExportPresentationModal({
       </div>
     </div>
   )
+
+  return typeof document === 'undefined' ? modal : createPortal(modal, document.body)
 }

@@ -1041,12 +1041,36 @@
   color: #64748b;
 }
 
+/*
+ * Header and footer stay put; only the middle scrolls. Before, the whole modal clipped with
+ * overflow:hidden, so on shorter screens the footer (and its Export button) was cut off and
+ * nothing could scroll to it.
+ */
 .ppt-editor-modal.ppt-export-modal {
   width: min(480px, 100%);
+  max-height: min(calc(100vh - 32px), 720px);
+  max-height: min(calc(100dvh - 32px), 720px);
+  min-height: 0;
   padding: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.ppt-export-modal > .ppt-export-head,
+.ppt-export-modal > .ppt-editor-modal-alert,
+.ppt-export-modal > .ppt-export-hint,
+.ppt-export-modal > .ppt-export-foot {
+  flex-shrink: 0;
+}
+
+.ppt-export-modal > .ppt-export-body,
+.ppt-export-modal > .ppt-export-working,
+.ppt-export-modal > .ppt-export-done {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .ppt-export-head {
@@ -1106,7 +1130,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 18px 22px 0;
+  padding: 18px 22px;
 }
 
 .ppt-export-tabs {
@@ -1395,7 +1419,7 @@
   grid-template-columns: 88px minmax(0, 1fr);
   gap: 16px;
   align-items: center;
-  margin: 18px 22px 0;
+  margin: 18px 22px;
   padding: 18px 16px;
   border-radius: 18px;
   border: 1px solid #eef2f7;
@@ -1445,7 +1469,7 @@
 }
 
 .ppt-export-hint {
-  margin: 12px 22px 0;
+  margin: 0 22px 12px;
   font-size: 13px;
   color: #64748b;
 }
@@ -1459,13 +1483,78 @@
   justify-content: flex-end;
   align-items: center;
   gap: 8px;
-  padding: 18px 22px 20px;
-  margin-top: 18px;
+  padding: 16px 22px 20px;
   border-top: 1px solid #f1f5f9;
+  background: #fff;
 }
 
 .ppt-export-foot .ppt-editor-modal-btn--primary {
   min-width: 140px;
+}
+
+/* Phones: tighter padding, full-width buttons. */
+@media (max-width: 520px) {
+  .ppt-editor-modal-overlay:has(.ppt-export-modal) {
+    padding: 12px;
+  }
+
+  .ppt-editor-modal.ppt-export-modal {
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+    border-radius: 16px;
+  }
+
+  .ppt-export-head {
+    padding: 16px 16px 0;
+  }
+
+  .ppt-export-modal .ppt-editor-modal-alert {
+    margin: 12px 16px 0;
+  }
+
+  .ppt-export-body {
+    padding: 14px 16px;
+    gap: 12px;
+  }
+
+  .ppt-export-working,
+  .ppt-export-done {
+    margin: 14px 16px;
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .ppt-export-stage {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .ppt-export-preview {
+    width: 64px;
+    height: 56px;
+    transform: scale(0.8);
+  }
+
+  .ppt-export-hint {
+    margin: 0 16px 10px;
+  }
+
+  .ppt-export-foot {
+    padding: 12px 16px 16px;
+  }
+
+  .ppt-export-foot .ppt-editor-modal-btn {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+  }
+}
+
+/* Short windows: drop the decorative preview card so the choices and button fit. */
+@media (max-height: 640px) {
+  .ppt-export-body .ppt-export-stage {
+    display: none;
+  }
 }
 
 @keyframes ppt-spin {
