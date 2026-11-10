@@ -113,6 +113,7 @@ import {
 } from '../../../utils/presentationHelpers'
 import { resolveThemeVisual } from '../../../utils/pptThemeVisual'
 import { coercePlainText } from '../../../utils/pptTextContent'
+import { deckTitleFromSlides, exportDeckTitle, isDefaultDeckTitle } from '../../../utils/deckTitle'
 import { cropChanged, normalizeCrop, placementForCrop } from '../../../utils/imageCrop'
 import {
   imageFilesFromDataTransfer,
@@ -2041,25 +2042,6 @@ function AIPptEditor({
     if (saves.length) await Promise.all(saves)
   }, [workspaceId, presentationId, viewOnly, isGenerating, resolvePersistedSlideId])
 
-  // Helper to extract title text from slide 1 if deckTitle is still default
-  function extractFirstSlideTitle(slides) {
-    if (!Array.isArray(slides) || slides.length === 0) return null
-    const firstSlide = slides[0]
-    const elements = firstSlide?.elements || firstSlide?.canvas?.elements || []
-    const titleEl = elements.find(
-      (el) =>
-        el?.role === 'title' ||
-        el?.role === 'heading' ||
-        String(el?.slotId || '').toUpperCase().includes('TITLE') ||
-        String(el?.slotId || '').toUpperCase().includes('HEADING')
-    )
-    const text = String(titleEl?.content?.text || '').trim()
-    if (!text || text.toLowerCase() === 'untitled presentation' || text.toLowerCase() === 'untitled') {
-      return null
-    }
-    return text.slice(0, 255)
-  }
-
   // Export reads the saved deck, so every edit must be on the server first:
   // 1. element edits still waiting on their debounce are cancelled — their slides get a full
   //    canvas save below, which carries the same (latest) state;
@@ -2077,9 +2059,11 @@ function AIPptEditor({
     elementPatchTimers.current = {}
     pendingPlacementRef.current = {}
 
-    let effectiveTitle = deckTitle
-    if (!effectiveTitle || effectiveTitle === 'Untitled Presentation') {
-      const slideTitle = extractFirstSlideTitle(localSlidesRef.current || localSlides)
+    // An "Untitled" deck is named after its first slide's title (also the export file name).
+    // Naming is a nicety: it must never stop the export (it used to throw on canvas-doc slides).
+    let effectiveTitle = null
+    if (isDefaultDeckTitle(deckTitle)) {
+      const slideTitle = deckTitleFromSlides(localSlidesRef.current || localSlides)
       if (slideTitle) {
         effectiveTitle = slideTitle
         setDeckTitle(slideTitle)
@@ -5647,7 +5631,7 @@ function AIPptEditor({
         <ExportPresentationModal
           workspaceId={workspaceId}
           presentationId={presentationId}
-          title={deckTitle || extractFirstSlideTitle(localSlides) || 'Presentation'}
+          title={exportDeckTitle(deckTitle, localSlides)}
           slideCount={localSlides.length}
           onBeforeExport={saveBeforeExport}
           onClose={() => setExportModalOpen(false)}

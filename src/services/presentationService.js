@@ -705,8 +705,22 @@ class PresentationService {
     { intervalMs = 2000, timeoutMs = 10 * 60 * 1000, onProgress } = {}
   ) {
     const started = Date.now()
+    // The export keeps running on the server while we poll: a dropped connection or a 5xx from
+    // a restarting proxy on one status check must not report the export as failed.
+    let transientFailures = 0
     while (Date.now() - started < timeoutMs) {
-      const status = await this.getExportStatus(workspaceId, presentationId, exportId)
+      let status
+      try {
+        status = await this.getExportStatus(workspaceId, presentationId, exportId)
+        transientFailures = 0
+      } catch (err) {
+        const code = Number(err?.status)
+        const transient = !code || code === 408 || code === 429 || code >= 500
+        transientFailures += 1
+        if (!transient || transientFailures > 5) throw err
+        await sleep(Math.min(intervalMs * 2 ** transientFailures, 15000))
+        continue
+      }
       onProgress?.(status)
 
       const state = String(status?.status || status?.exportStatus || '').toUpperCase()

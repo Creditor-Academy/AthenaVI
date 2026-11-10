@@ -32,7 +32,7 @@ const EXPORT_META = {
     label: 'PNG',
     ext: 'PNG',
     desc: 'Crisp images, one file per slide.',
-    detail: 'Best quality for design, print, and slides.',
+    detail: 'Full HD, one image per slide (several slides come as a .zip).',
     preview: 'png',
     cta: 'Export PNG',
   },
@@ -40,7 +40,7 @@ const EXPORT_META = {
     label: 'JPEG',
     ext: 'JPEG',
     desc: 'Smaller images for web and email.',
-    detail: 'Faster to send, slightly lower quality.',
+    detail: 'Smaller files, one per slide (several slides come as a .zip).',
     preview: 'jpeg',
     cta: 'Export JPEG',
   },
@@ -238,7 +238,9 @@ export default function ExportPresentationModal({
       const url = ready?.presignedUrl || ready?.url || ready?.downloadUrl
       if (!url) throw new Error('Export finished but no download link was returned')
 
-      const resolvedExt = String(selected || 'pptx').toLowerCase()
+      // The server's file decides the extension: PNG / JPEG of several slides is a .zip.
+      const serverExt = String(ready?.filename || ready?.s3Key || '').match(/\.([a-z0-9]{2,5})$/i)?.[1]
+      const resolvedExt = String(serverExt || selected || 'pptx').toLowerCase()
       const ext = resolvedExt === 'jpeg' ? 'jpg' : resolvedExt
       const rawTitle = title || ready?.filename || 'Presentation'
       const baseName =
@@ -268,7 +270,7 @@ export default function ExportPresentationModal({
       }
       setStatusText('')
     }
-  }, [workspaceId, presentationId, selected, meta.label, exportTimeoutMs, onBeforeExport, pptxTarget])
+  }, [workspaceId, presentationId, selected, meta.label, exportTimeoutMs, onBeforeExport, pptxTarget, title])
 
   const canExport = Boolean(workspaceId && presentationId)
 
