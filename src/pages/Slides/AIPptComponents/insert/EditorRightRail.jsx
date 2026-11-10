@@ -13,6 +13,7 @@ import {
   FiSquare,
   FiGrid,
   FiCode,
+  FiShield,
 } from 'react-icons/fi'
 import { MdDragIndicator, MdOutlineDesignServices, MdOutlineAnimation } from 'react-icons/md'
 import { attachPointerDrag, exceedsDragThreshold } from '../../../../utils/pointerDrag'
@@ -43,13 +44,14 @@ const DESIGN_PANEL_TITLES = {
   embed: 'Embed',
 }
 
+// `short` is the name printed under the icon; `label` is the panel title and the accessible name.
 const RAIL_TOOLS = [
-  { id: 'design', label: 'Design', Icon: MdOutlineDesignServices },
-  { id: 'transition', label: 'Slide transition', Icon: MdOutlineAnimation },
-  { id: 'comments', label: 'Comments', Icon: FiMessageCircle },
-  { id: 'status', label: 'Status', Icon: HiOutlineClipboard },
-  { id: 'notes', label: 'Speaker notes', Icon: FiFileText },
-  { id: 'layers', label: 'Layers', Icon: FiLayers },
+  { id: 'design', label: 'Design', short: 'Design', Icon: MdOutlineDesignServices },
+  { id: 'transition', label: 'Slide transition', short: 'Transition', Icon: MdOutlineAnimation },
+  { id: 'comments', label: 'Comments', short: 'Comments', Icon: FiMessageCircle },
+  { id: 'status', label: 'Status', short: 'Status', Icon: HiOutlineClipboard },
+  { id: 'notes', label: 'Speaker notes', short: 'Notes', Icon: FiFileText },
+  { id: 'layers', label: 'Layers', short: 'Layers', Icon: FiLayers },
 ]
 
 function personInitials(name) {
@@ -415,6 +417,9 @@ export default function EditorRightRail({
   membersLoading = false,
   onLoadAssigneeMembers,
   onAssignTo,
+  showDangerZone = false,
+  onToggleDangerZone,
+  dangerZoneCount = 0,
 }) {
   const [active, setActive] = useState(null)
   const [aiOpen, setAiOpen] = useState(false)
@@ -793,9 +798,46 @@ export default function EditorRightRail({
                 onClick={() => toggle(tool.id)}
               >
                 <Icon size={18} />
+                <span className="ppt-editor-sidebar-btn-label">{tool.short}</span>
               </button>
             )
           })}
+
+          {onToggleDangerZone && !viewOnly ? (
+            <>
+              <span className="ppt-editor-sidebar-sep" aria-hidden />
+              <button
+                type="button"
+                className={`ppt-editor-sidebar-btn ppt-editor-sidebar-btn--toggle ${showDangerZone ? 'is-on' : ''}`}
+                role="switch"
+                aria-checked={showDangerZone}
+                aria-label={
+                  dangerZoneCount > 0
+                    ? `Danger zone, ${dangerZoneCount} text ${dangerZoneCount === 1 ? 'box' : 'boxes'} too close to the edge`
+                    : 'Danger zone'
+                }
+                title={
+                  showDangerZone
+                    ? 'Hide the danger zone (only you see this guide)'
+                    : 'Show the danger zone: slide margins where text may get cut off'
+                }
+                onClick={onToggleDangerZone}
+              >
+                <span className="ppt-editor-sidebar-btn-icon">
+                  <FiShield size={18} />
+                  {showDangerZone && dangerZoneCount > 0 ? (
+                    <span className="ppt-editor-sidebar-badge" aria-hidden>
+                      {dangerZoneCount > 9 ? '9+' : dangerZoneCount}
+                    </span>
+                  ) : null}
+                </span>
+                <span className="ppt-editor-sidebar-btn-label">Danger zone</span>
+                <span className="ppt-editor-sidebar-switch" aria-hidden>
+                  {showDangerZone ? 'On' : 'Off'}
+                </span>
+              </button>
+            </>
+          ) : null}
         </div>
 
         <div className="ppt-editor-sidebar-rail-footer">
@@ -826,6 +868,7 @@ export default function EditorRightRail({
               ) : (
                 <FiUserPlus size={18} />
               )}
+              <span className="ppt-editor-sidebar-btn-label">{assignee ? 'Assignee' : 'Assign'}</span>
             </button>
           )}
           <div className="ppt-editor-sidebar-zoom">{Math.round(zoom)}%</div>
@@ -846,6 +889,9 @@ export default function EditorRightRail({
           >
             <BsStars size={18} />
           </button>
+          <span className="ppt-editor-sidebar-btn-label ppt-editor-sidebar-btn-label--ai" aria-hidden>
+            AI prompt
+          </span>
         </div>
       </div>
       {aiOpen &&

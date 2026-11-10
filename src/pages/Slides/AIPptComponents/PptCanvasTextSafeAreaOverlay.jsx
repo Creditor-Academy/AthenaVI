@@ -35,12 +35,7 @@ export default function PptCanvasTextSafeAreaOverlay({ canvasW, canvasH, warnCou
           height: pct(safe.height, canvasH),
         }}
       />
-      {/* Bottom-right edge: titles and headers usually sit top-left. */}
-      <span className="ppt-danger-zone-label" style={{ right, bottom }}>
-        {warning
-          ? `${warnCount} text ${warnCount === 1 ? 'box is' : 'boxes are'} in the danger zone`
-          : 'Danger zone · keep text inside'}
-      </span>
+      {/* No text label on the slide: the count shows on the Danger zone button in the right rail. */}
     </div>
   )
 }

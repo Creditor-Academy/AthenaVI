@@ -4165,7 +4165,7 @@
 }
 
 .aig-editor-main-scroll {
-  --ppt-pad-x: 88px;
+  --ppt-pad-x: 104px; /* room for the labelled right rail (72px wide, 20px from the edge) */
   --ppt-pad-left: 88px;
   flex: 1;
   overflow-y: auto;
@@ -7143,7 +7143,7 @@ html.ppt-drag-cursor-lock * {
 /* ── Presentation editor: fluid canvas + rails ─ */
 @container ppt-editor (max-width: 1280px) {
   .aig-editor-main-scroll {
-    --ppt-pad-x: 72px;
+    --ppt-pad-x: 100px;
     --ppt-pad-left: 80px;
     padding-top: 28px;
     padding-bottom: 96px;
@@ -7164,7 +7164,7 @@ html.ppt-drag-cursor-lock * {
 
 @container ppt-editor (max-width: 1024px) {
   .aig-editor-main-scroll {
-    --ppt-pad-x: 64px;
+    --ppt-pad-x: 88px;
     --ppt-pad-left: 72px;
     padding-top: 20px;
     padding-bottom: 88px;

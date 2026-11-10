@@ -32,25 +32,6 @@
   transition: border-color 0.18s ease;
 }
 
-/* Sits on the bottom-right corner of the safe rect (right/bottom set inline). */
-.ppt-danger-zone-label {
-  position: absolute;
-  transform: translateY(50%);
-  max-width: 70%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font: 600 10px/1.4 Inter, system-ui, sans-serif;
-  letter-spacing: 0.01em;
-  color: rgb(185, 28, 28);
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(var(--ppt-danger-rgb), 0.3);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
-  opacity: 0.85;
-}
-
 .ppt-canvas-text-safe-area.is-warning .ppt-danger-band {
   background-color: rgba(var(--ppt-danger-rgb), 0.12);
 }
@@ -58,13 +39,6 @@
 .ppt-canvas-text-safe-area.is-warning .ppt-canvas-text-safe-area__rect {
   border-style: solid;
   border-color: rgba(var(--ppt-danger-rgb), 0.75);
-}
-
-.ppt-canvas-text-safe-area.is-warning .ppt-danger-zone-label {
-  opacity: 1;
-  color: #fff;
-  background: rgb(220, 38, 38);
-  border-color: rgb(220, 38, 38);
 }
 
 @keyframes ppt-danger-zone-in {
@@ -1595,6 +1569,21 @@
 .aig-editor-canvas--stage {
   padding: 0 !important;
   background: #ffffff !important;
+}
+
+/* Square slide corners, like the exported deck (no rounded edges on the canvas). */
+.aig-editor-canvas.aig-editor-canvas--stage,
+.aig-editor-canvas--stage .aig-slide-stage-clip,
+.aig-editor-canvas--stage .aig-slide-stage,
+.aig-editor-canvas--stage .aig-slide-stage-elements,
+.aig-editor-canvas--stage .aig-slide-stage-chrome,
+.aig-editor-canvas--stage .aig-slide-mock {
+  border-radius: 0;
+}
+
+.aig-editor-canvas--stage .aig-slide-stage-clip {
+  clip-path: inset(0);
+  -webkit-clip-path: inset(0);
 }
 
 .ppt-el-ctx-menu {

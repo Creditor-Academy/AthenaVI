@@ -10,7 +10,6 @@ import {
   FiImage,
   FiZoomIn,
   FiZoomOut,
-  FiShield,
   FiExternalLink,
   FiCheck,
   FiRefreshCw,
@@ -3989,6 +3988,13 @@ function AIPptEditor({
   )
 
   // Which layer moves are possible for the selection (greys out "Bring forward" at the top, …).
+  // Text boxes on the current slide that reach into the danger zone (shown on the rail button).
+  const dangerZoneCount = useMemo(() => {
+    if (!selectedSlide) return 0
+    const canvas = resolveCanvasSize(selectedSlide, aspectRatio)
+    return textElementsInDangerZone(selectedSlide.elements?.elements || [], canvas.width, canvas.height).length
+  }, [selectedSlide, aspectRatio])
+
   const layerMoves = useMemo(() => {
     const ids = multiSelectIds.length ? multiSelectIds : [selectedElementId].filter(Boolean)
     const stacked = pptStackOrder(selectedSlide?.elements?.elements || [])
@@ -5083,7 +5089,7 @@ function AIPptEditor({
                         position: 'absolute', inset: 0, zIndex: 6,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         background: 'rgba(255, 255, 255, 0.6)', backdropFilter: 'blur(2px)',
-                        color: '#334155', borderRadius: 8,
+                        color: '#334155', borderRadius: 0,
                       }}
                     >
                       {/* Circular arrow spinning a full 360° while the slide regenerates. */}
@@ -5249,29 +5255,13 @@ function AIPptEditor({
           <button className="aig-canvas-ctrl-btn" type="button" onClick={() => setCanvasZoom(100)}>
             Fit
           </button>
-          {!viewOnly && (
-            <>
-              <div className="aig-canvas-ctrl-divider"></div>
-              <button
-                className={`aig-canvas-ctrl-btn aig-canvas-ctrl-btn--toggle${showDangerZone ? ' is-active' : ''}`}
-                type="button"
-                aria-pressed={showDangerZone}
-                aria-label={showDangerZone ? 'Hide danger zone' : 'Show danger zone'}
-                title={
-                  showDangerZone
-                    ? 'Hide danger zone (only you see this guide)'
-                    : 'Show danger zone — margins where text may get cut off'
-                }
-                onClick={toggleDangerZone}
-              >
-                <FiShield size={14} />
-              </button>
-            </>
-          )}
         </div>
 
         <EditorRightRail
           zoom={canvasZoom}
+          showDangerZone={showDangerZone}
+          onToggleDangerZone={toggleDangerZone}
+          dangerZoneCount={dangerZoneCount}
           deckStatus={deckStatus}
           generationPrompt={generationPrompt}
           slide={selectedSlide}
