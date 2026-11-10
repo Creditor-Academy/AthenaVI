@@ -13,16 +13,7 @@ import { BsStars } from 'react-icons/bs'
 import { PPT_PROGRESS_STATUSES, resolveSlideProgressStatus, progressStatusLabel, progressStatusDotClass } from '../../../constants/pptSlideEditorOptions'
 import MinimapSlidePreview from './MinimapSlidePreview'
 import { resolveSlideStageBackground, DEFAULT_SLIDE_BG } from '../../../utils/presentationHelpers'
-
-function placeMenu(anchor, cursor) {
-  const width = 212
-  const height = 280
-  let left = cursor?.x ?? (anchor ? anchor.right - 8 : 12)
-  let top = cursor?.y ?? (anchor ? anchor.bottom + 6 : 12)
-  if (left + width > window.innerWidth - 8) left = Math.max(8, window.innerWidth - width - 8)
-  if (top + height > window.innerHeight - 8) top = Math.max(8, window.innerHeight - height - 8)
-  return { top, left }
-}
+import { placeMenu } from '../../../utils/menuPlacement'
 
 export default function MinimapSlideCard({
   slide,
@@ -57,13 +48,23 @@ export default function MinimapSlideCard({
   itemRef,
 }) {
   const moreRef = useRef(null)
+  const menuRef = useRef(null)
   const cursorRef = useRef(null)
-  const [pop, setPop] = useState({ top: 0, left: 0 })
+  const [pop, setPop] = useState({ top: 0, left: 0, maxHeight: undefined })
 
+  // Measure the open menu before paint and keep it fully on screen (flip above the
+  // button for the last slides in the list). Re-place on window resize.
   useLayoutEffect(() => {
-    if (!menuOpen) return
-    setPop(placeMenu(moreRef.current?.getBoundingClientRect?.() || null, cursorRef.current))
-    cursorRef.current = null
+    if (!menuOpen) return undefined
+    const cursor = cursorRef.current
+    const place = () => {
+      const menu = menuRef.current
+      const size = menu ? { width: menu.offsetWidth, height: menu.scrollHeight } : {}
+      setPop(placeMenu(moreRef.current?.getBoundingClientRect?.() || null, cursor, size))
+    }
+    place()
+    window.addEventListener('resize', place)
+    return () => window.removeEventListener('resize', place)
   }, [menuOpen])
 
   useEffect(() => {
@@ -88,9 +89,7 @@ export default function MinimapSlideCard({
     e.preventDefault()
     e.stopPropagation()
     if (viewOnly || disabled) return
-    const rect = moreRef.current?.getBoundingClientRect?.()
     cursorRef.current = cursor || null
-    setPop(placeMenu(rect, cursor))
     onOpenMenu?.(slide.id)
   }
 
@@ -181,8 +180,9 @@ export default function MinimapSlideCard({
       {menuOpen &&
         createPortal(
           <div
+            ref={menuRef}
             className="aig-minimap-slide-menu"
-            style={{ top: pop.top, left: pop.left }}
+            style={{ top: pop.top, left: pop.left, maxHeight: pop.maxHeight }}
             role="menu"
             aria-label={`Slide ${index + 1} options`}
           >
@@ -249,7 +249,6 @@ export default function MinimapSlideCard({
               <FiChevronDown size={15} />
               Move down
             </button>
-            <div className="aig-minimap-slide-menu-sep" />
             {!viewOnly && (
               <>
                 <div className="aig-minimap-slide-menu-sep" />

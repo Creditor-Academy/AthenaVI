@@ -5050,6 +5050,9 @@
   position: fixed;
   z-index: 430;
   min-width: 204px;
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 6px;
   background: #fff;
   border: 1px solid #e2e8f0;
