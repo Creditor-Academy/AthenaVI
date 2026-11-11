@@ -85,11 +85,119 @@ export function imagePixelSize(canvas, scale = 1) {
   return { width: Math.round(width * s), height: Math.round(height * s) }
 }
 
-/**
- * Slide images held in browser memory at once: slide count × scale². 40 = a full 40-slide deck
+/** Slide images held in browser memory at once: slide count × scale². 40 = a full 40-slide deck
  * at 1×, 10 slides at 2×, 4 at 3×. Bigger exports go to the server.
  */
 export const BROWSER_IMAGE_BUDGET = 40
+
+/**
+ * Extract a concise title or heading text from a slide's elements for Canva-style list displays.
+ */
+export function getSlideTitle(slide, index = 0) {
+  if (!slide) return `Slide ${index + 1}`
+  const elements = slide.elements || slide.canvas?.elements || []
+  const titleEl = elements.find(
+    (el) =>
+      el?.role === 'title' ||
+      el?.role === 'heading' ||
+      String(el?.slotId || '').toUpperCase().includes('TITLE') ||
+      String(el?.slotId || '').toUpperCase().includes('HEADING')
+  )
+  const text = String(titleEl?.content?.text || '').trim().replace(/\s+/g, ' ')
+  if (text && text.toLowerCase() !== 'untitled presentation' && text.toLowerCase() !== 'untitled') {
+    return text.slice(0, 50)
+  }
+  return `Slide ${index + 1}`
+}
+
+/**
+ * Parse a human-entered page range string like "1-3, 5, 8" into an array of 1-based page numbers.
+ * @param {string} raw
+ * @param {number} totalCount
+ * @returns {number[]} sorted unique 1-based page numbers
+ */
+export function parsePageRange(raw, totalCount = 0) {
+  const str = String(raw || '').trim().toLowerCase()
+  if (!str) return []
+  if (str === 'all') {
+    return Array.from({ length: totalCount }, (_, i) => i + 1)
+  }
+  const parts = str.split(/[,;\s]+/)
+  const result = new Set()
+  for (const part of parts) {
+    if (!part) continue
+    const rangeMatch = part.match(/^(\d+)\s*[-–—]\s*(\d+)$/)
+    if (rangeMatch) {
+      const start = parseInt(rangeMatch[1], 10)
+      const end = parseInt(rangeMatch[2], 10)
+      if (Number.isFinite(start) && Number.isFinite(end)) {
+        const [low, high] = start <= end ? [start, end] : [end, start]
+        for (let p = Math.max(1, low); p <= Math.min(totalCount || high, high); p += 1) {
+          result.add(p)
+        }
+      }
+    } else {
+      const num = parseInt(part, 10)
+      if (Number.isFinite(num) && num >= 1 && (!totalCount || num <= totalCount)) {
+        result.add(num)
+      }
+    }
+  }
+  return [...result].sort((a, b) => a - b)
+}
+
+/**
+ * Format a list of 1-based page numbers into a compact range string like "1-3, 5, 8".
+ * @param {number[]} pageNumbers
+ * @param {number} totalCount
+ * @returns {string}
+ */
+export function formatPageRange(pageNumbers = [], totalCount = 0) {
+  const sorted = [...new Set(pageNumbers)].filter((n) => Number.isFinite(n) && n >= 1).sort((a, b) => a - b)
+  if (!sorted.length) return ''
+  if (totalCount > 0 && sorted.length === totalCount) return `All pages (1-${totalCount})`
+
+  const ranges = []
+  let rangeStart = sorted[0]
+  let prev = sorted[0]
+
+  for (let i = 1; i < sorted.length; i += 1) {
+    const cur = sorted[i]
+    if (cur === prev + 1) {
+      prev = cur
+    } else {
+      ranges.push(rangeStart === prev ? `${rangeStart}` : `${rangeStart}-${prev}`)
+      rangeStart = cur
+      prev = cur
+    }
+  }
+  ranges.push(rangeStart === prev ? `${rangeStart}` : `${rangeStart}-${prev}`)
+  return ranges.join(', ')
+}
+
+/**
+ * Map slide IDs to 1-based page numbers in deck order.
+ */
+export function pageNumbersFromSlideIds(slides, slideIds) {
+  const set = new Set(slideIds || [])
+  const nums = []
+  ;(slides || []).forEach((s, idx) => {
+    if (s?.id && set.has(s.id)) nums.push(idx + 1)
+  })
+  return nums
+}
+
+/**
+ * Map 1-based page numbers to slide IDs in deck order.
+ */
+export function slideIdsFromPageNumbers(slides, pageNumbers) {
+  const nums = new Set(pageNumbers || [])
+  const ids = []
+  ;(slides || []).forEach((s, idx) => {
+    if (s?.id && nums.has(idx + 1)) ids.push(s.id)
+  })
+  return ids
+}
 
 /** Make these slide images in the browser (true) or on the server (false)? */
 export function shouldCaptureInBrowser({ count, scale = 1 } = {}) {

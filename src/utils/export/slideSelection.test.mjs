@@ -4,11 +4,16 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   exportPrefsKey,
+  formatPageRange,
+  getSlideTitle,
   imagePixelSize,
   loadExportPrefs,
+  pageNumbersFromSlideIds,
+  parsePageRange,
   resolveExportSelection,
   saveExportPrefs,
   shouldCaptureInBrowser,
+  slideIdsFromPageNumbers,
   slideImageFilename,
   toggleSlideSelection,
 } from './slideSelection.js'
@@ -125,5 +130,37 @@ describe('remembered choices per deck', () => {
     const storage = memoryStorage()
     storage.setItem(exportPrefsKey('x'), '{nope')
     assert.deepEqual(loadExportPrefs('x', storage), {})
+  })
+})
+
+describe('Canva-style page range parsing and formatting', () => {
+  it('parses individual numbers and ranges', () => {
+    assert.deepEqual(parsePageRange('1-3, 5', 5), [1, 2, 3, 5])
+    assert.deepEqual(parsePageRange('2, 4', 5), [2, 4])
+    assert.deepEqual(parsePageRange('1 - 2, 4-5', 5), [1, 2, 4, 5])
+    assert.deepEqual(parsePageRange('all', 3), [1, 2, 3])
+    assert.deepEqual(parsePageRange('', 5), [])
+    assert.deepEqual(parsePageRange('10', 5), []) // out of bounds ignored
+    assert.deepEqual(parsePageRange('5-2', 5), [2, 3, 4, 5]) // reversed normalized
+  })
+
+  it('formats page numbers into compact range strings', () => {
+    assert.equal(formatPageRange([1, 2, 3, 5], 5), '1-3, 5')
+    assert.equal(formatPageRange([2, 4], 5), '2, 4')
+    assert.equal(formatPageRange([1, 2, 3, 4, 5], 5), 'All pages (1-5)')
+    assert.equal(formatPageRange([3], 5), '3')
+    assert.equal(formatPageRange([], 5), '')
+  })
+
+  it('maps between slide IDs and 1-based page numbers', () => {
+    assert.deepEqual(pageNumbersFromSlideIds(slides, ['b', 'd']), [2, 4])
+    assert.deepEqual(slideIdsFromPageNumbers(slides, [2, 4]), ['b', 'd'])
+  })
+
+  it('extracts slide titles from elements', () => {
+    const s1 = { elements: [{ role: 'heading', content: { text: 'Market Overview' } }] }
+    const s2 = { elements: [] }
+    assert.equal(getSlideTitle(s1, 0), 'Market Overview')
+    assert.equal(getSlideTitle(s2, 1), 'Slide 2')
   })
 })

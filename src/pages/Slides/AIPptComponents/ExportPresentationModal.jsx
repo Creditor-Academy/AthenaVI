@@ -1,6 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { FiCheck, FiCheckCircle, FiDownload, FiLoader, FiX } from 'react-icons/fi'
+import {
+  FiCheck,
+  FiCheckCircle,
+  FiChevronDown,
+  FiChevronUp,
+  FiDownload,
+  FiImage,
+  FiLayers,
+  FiLoader,
+  FiX,
+} from 'react-icons/fi'
 import presentationService from '../../../services/presentationService'
 import { isInsufficientCreditsError } from '../../../services/creditsService'
 import { PPT_EXPORT_FORMATS, resolveCanvasSize } from '../../../utils/presentationHelpers'
@@ -9,8 +19,11 @@ import {
   DEFAULT_JPEG_QUALITY,
   IMAGE_SCALES,
   exportFileBase,
+  formatPageRange,
+  getSlideTitle,
   imagePixelSize,
   loadExportPrefs,
+  pageNumbersFromSlideIds,
   resolveExportSelection,
   saveExportPrefs,
   shouldCaptureInBrowser,
@@ -175,7 +188,7 @@ function sortedSlides(slides) {
 const SCOPE_TABS = [
   { id: 'all', label: 'All slides' },
   { id: 'current', label: 'Current slide' },
-  { id: 'custom', label: 'Select slides' },
+  { id: 'custom', label: 'Select pages' },
 ]
 
 /**
@@ -220,6 +233,7 @@ export default function ExportPresentationModal({
   const [error, setError] = useState('')
   const [downloadUrl, setDownloadUrl] = useState('')
   const [downloadFilename, setDownloadFilename] = useState('')
+  const [pickerOpen, setPickerOpen] = useState(false)
   const [loadedDeck, setLoadedDeck] = useState(null)
   const objectUrlRef = useRef(null)
   const unmountedRef = useRef(false)
@@ -273,6 +287,67 @@ export default function ExportPresentationModal({
     return resolveExportSelection({ scope, slides: deckSlides, currentSlideId, selectedIds })
   }, [scope, deckSlides, currentSlideId, selectedIds, totalSlides])
 
+  const currentSlideIndex = useMemo(() => {
+    if (!currentSlideId || !deckSlides.length) return 0
+    const idx = deckSlides.findIndex((s) => s.id === currentSlideId)
+    return idx >= 0 ? idx : 0
+  }, [currentSlideId, deckSlides])
+
+  const currentSlideTitle = useMemo(() => {
+    if (!deckSlides.length) return 'Slide 1'
+    return getSlideTitle(deckSlides[currentSlideIndex], currentSlideIndex)
+  }, [deckSlides, currentSlideIndex])
+
+  const pagesSummary = useMemo(() => {
+    if (!deckSlides.length) {
+      return {
+        title: 'Loading slides…',
+        detail: '',
+        singlePageNum: 1,
+      }
+    }
+    if (scope === 'all') {
+      return {
+        title: `All pages (1–${totalSlides})`,
+        detail: `All ${totalSlides} slides will be exported`,
+        singlePageNum: 1,
+      }
+    }
+    if (scope === 'current') {
+      return {
+        title: `Current page (Page ${currentSlideIndex + 1})`,
+        detail: currentSlideTitle,
+        singlePageNum: currentSlideIndex + 1,
+      }
+    }
+    const count = selection.count
+    if (count === 0) {
+      return {
+        title: 'No pages selected',
+        detail: 'Click to select pages to export',
+        singlePageNum: 1,
+      }
+    }
+    if (count === 1) {
+      const singleId = selection.slideIds?.[0]
+      const idx = deckSlides.findIndex((s) => s.id === singleId)
+      const pageNum = idx >= 0 ? idx + 1 : 1
+      const titleText = getSlideTitle(deckSlides[idx >= 0 ? idx : 0], idx >= 0 ? idx : 0)
+      return {
+        title: `Page ${pageNum}`,
+        detail: titleText,
+        singlePageNum: pageNum,
+      }
+    }
+    const pageNums = pageNumbersFromSlideIds(deckSlides, selection.slideIds || selectedIds)
+    const rangeText = formatPageRange(pageNums, totalSlides)
+    return {
+      title: `${count} pages selected`,
+      detail: rangeText ? `Pages: ${rangeText}` : `${count} of ${totalSlides} slides`,
+      singlePageNum: pageNums[0] || 1,
+    }
+  }, [deckSlides, scope, totalSlides, currentSlideIndex, currentSlideTitle, selection.count, selection.slideIds, selectedIds])
+
   const formats = useMemo(() => {
     const allowed = new Set(PPT_EXPORT_FORMATS)
     return (GROUPS.find((g) => g.id === group)?.formats || []).filter((fmt) => allowed.has(fmt))
@@ -301,9 +376,13 @@ export default function ExportPresentationModal({
   const chooseScope = (next) => {
     if (busy) return
     setScope(next)
-    // Opening the picker with nothing ticked: start from the current slide (or all).
-    if (next === 'custom' && !selectedIds.some((id) => deckSlides.some((s) => s.id === id))) {
-      setSelectedIds(currentSlideId ? [currentSlideId] : deckSlides.map((s) => s.id))
+    if (next === 'custom') {
+      setPickerOpen(true)
+      if (!selectedIds.some((id) => deckSlides.some((s) => s.id === id))) {
+        setSelectedIds(currentSlideId ? [currentSlideId] : deckSlides.map((s) => s.id))
+      }
+    } else {
+      setPickerOpen(false)
     }
   }
 
@@ -339,10 +418,29 @@ export default function ExportPresentationModal({
     const resolvedExt = String(serverExt || selected || 'pptx').toLowerCase()
     const ext = resolvedExt === 'jpeg' ? 'jpg' : resolvedExt
     const baseName = exportFileBase(String(title || ready?.filename || 'Presentation').replace(/\.[a-z0-9]{2,5}$/i, ''))
-    const filename =
+    let filename =
       ready?.filename && !ready.filename.toLowerCase().startsWith('untitled') ? ready.filename : `${baseName}.${ext}`
+    if (isImage && selection.count === 1 && totalSlides > 1 && !filename.endsWith('.zip')) {
+      const pos = pagesSummary.singlePageNum || 1
+      filename = slideImageFilename(title, pos, ext)
+    }
     return { url, filename }
-  }, [workspaceId, presentationId, selected, selection.slideIds, pptxTarget, isImage, scale, quality, transparent, exportTimeoutMs, title])
+  }, [
+    workspaceId,
+    presentationId,
+    selected,
+    selection.slideIds,
+    selection.count,
+    pptxTarget,
+    isImage,
+    scale,
+    quality,
+    transparent,
+    exportTimeoutMs,
+    title,
+    totalSlides,
+    pagesSummary.singlePageNum,
+  ])
 
   /**
    * Slide images made in this browser by the export renderer: no server job. Throws
@@ -384,7 +482,8 @@ export default function ExportPresentationModal({
     let filename
     if (images.length === 1) {
       blob = images[0].blob
-      filename = `${exportFileBase(title)}.${ext}`
+      const pos = images[0].position || pagesSummary.singlePageNum || 1
+      filename = totalSlides > 1 ? slideImageFilename(title, pos, ext) : `${exportFileBase(title)}.${ext}`
     } else {
       const files = await Promise.all(
         images.map(async (img) => ({
@@ -398,7 +497,19 @@ export default function ExportPresentationModal({
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current)
     objectUrlRef.current = URL.createObjectURL(blob)
     return { url: objectUrlRef.current, filename }
-  }, [workspaceId, presentationId, selected, selection.slideIds, selection.count, scale, quality, transparent, title])
+  }, [
+    workspaceId,
+    presentationId,
+    selected,
+    selection.slideIds,
+    selection.count,
+    scale,
+    quality,
+    transparent,
+    title,
+    totalSlides,
+    pagesSummary.singlePageNum,
+  ])
 
   const runExport = useCallback(async () => {
     if (!workspaceId || !presentationId) {
@@ -513,7 +624,7 @@ export default function ExportPresentationModal({
       onClick={(e) => e.target === e.currentTarget && !busy && onClose?.()}
     >
       <div
-        className={`ppt-editor-modal ppt-export-modal ${scope === 'custom' && phase === 'pick' ? 'is-picking' : ''}`}
+        className={`ppt-editor-modal ppt-export-modal ${(scope === 'custom' || pickerOpen) && phase === 'pick' ? 'is-picking' : ''}`}
         role="dialog"
         aria-labelledby="ppt-export-title"
       >
@@ -634,7 +745,7 @@ export default function ExportPresentationModal({
 
             <div className="ppt-export-target">
               <span className="ppt-export-target-label" id="ppt-export-scope-label">
-                Slides
+                Select pages
                 {selectionLabel ? <span className="ppt-export-target-value">{selectionLabel}</span> : null}
               </span>
               <div
@@ -656,14 +767,92 @@ export default function ExportPresentationModal({
                   </button>
                 ))}
               </div>
-              {scope === 'custom' ? (
+
+              <button
+                type="button"
+                className={`ppt-export-pages-trigger ${pickerOpen ? 'is-open' : ''}`}
+                onClick={() => setPickerOpen((prev) => !prev)}
+                aria-expanded={pickerOpen}
+                disabled={!canExport}
+              >
+                <span className="ppt-export-pages-trigger-main">
+                  <FiLayers className="ppt-export-pages-icon" size={16} />
+                  <span className="ppt-export-pages-text">
+                    <strong>{pagesSummary.title}</strong>
+                    <em>{pagesSummary.detail}</em>
+                  </span>
+                </span>
+                <span className="ppt-export-pages-toggle">
+                  {pickerOpen ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
+                </span>
+              </button>
+
+              {pickerOpen ? (
                 <ExportSlidePicker
                   deck={pickerDeck}
-                  selectedIds={selectedIds}
-                  onChange={setSelectedIds}
+                  selectedIds={
+                    scope === 'custom'
+                      ? selectedIds
+                      : scope === 'current'
+                        ? [currentSlideId].filter(Boolean)
+                        : deckSlides.map((s) => s.id)
+                  }
+                  onChange={(newIds) => {
+                    setSelectedIds(newIds)
+                    if (scope !== 'custom') setScope('custom')
+                  }}
                   disabled={!canExport}
+                  onDone={() => setPickerOpen(false)}
                 />
               ) : null}
+
+              <div className="ppt-export-download-mode-banner">
+                {isImage ? (
+                  selection.count === 1 ? (
+                    <>
+                      <FiImage size={18} className="ppt-export-mode-icon" />
+                      <div className="ppt-export-mode-text">
+                        <strong>Single image download</strong>
+                        <p>
+                          Page {pagesSummary.singlePageNum} will download directly as a single{' '}
+                          <code>.{selected === 'JPEG' ? 'jpg' : 'png'}</code> image ({pixels.width} × {pixels.height} px).
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <FiLayers size={18} className="ppt-export-mode-icon" />
+                      <div className="ppt-export-mode-text">
+                        <strong>ZIP archive download</strong>
+                        <p>
+                          {selection.count} pages will download as separate{' '}
+                          <code>.{selected === 'JPEG' ? 'jpg' : 'png'}</code> images packaged in a <code>.zip</code> file.
+                        </p>
+                      </div>
+                    </>
+                  )
+                ) : selected === 'PDF' ? (
+                  <>
+                    <FiLayers size={18} className="ppt-export-mode-icon" />
+                    <div className="ppt-export-mode-text">
+                      <strong>Single PDF document</strong>
+                      <p>
+                        {selection.count} {selection.count === 1 ? 'page' : 'pages'} will be combined into a single PDF document.
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <FiLayers size={18} className="ppt-export-mode-icon" />
+                    <div className="ppt-export-mode-text">
+                      <strong>PowerPoint presentation</strong>
+                      <p>
+                        {selection.count} {selection.count === 1 ? 'slide' : 'slides'} will be exported into an editable PowerPoint deck.
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             {selected === 'PPTX' ? (
@@ -797,7 +986,7 @@ export default function ExportPresentationModal({
                 </>
               ) : (
                 <>
-                  <FiDownload size={16} /> {meta.cta}
+                  <FiDownload size={16} /> {selection.count > 0 ? `${meta.cta} (${selection.count})` : meta.cta}
                 </>
               )}
             </button>
