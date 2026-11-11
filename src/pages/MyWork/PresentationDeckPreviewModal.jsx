@@ -667,6 +667,8 @@ export default function PresentationDeckPreviewModal({ item, onClose, onEdit }) 
           workspaceId={workspaceId}
           presentationId={presentationId}
           title={meta?.title || titleFallback}
+          slideCount={slideCount}
+          currentSlideId={activeSlide?.id || null}
           onClose={() => setExportOpen(false)}
         />
       ) : null}

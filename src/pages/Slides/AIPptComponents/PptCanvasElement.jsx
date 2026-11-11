@@ -552,15 +552,25 @@ function EditableText({
     document.fonts?.ready?.then(() => {
       if (!cancelled) fit()
     })
+    // A font can finish loading after `ready` resolved (its stylesheet arrived later): the text
+    // was sized with the fallback font, so fit again with the real one. Without this, slides
+    // drawn on a fresh page (exports) shrank some headings more than the editor shows them.
+    const fonts = typeof document !== 'undefined' ? document.fonts : null
+    const onFontsLoaded = () => {
+      if (!cancelled) fit()
+    }
+    fonts?.addEventListener?.('loadingdone', onFontsLoaded)
     if (typeof ResizeObserver === 'undefined') {
       return () => {
         cancelled = true
+        fonts?.removeEventListener?.('loadingdone', onFontsLoaded)
       }
     }
     const observer = new ResizeObserver(fit)
     observer.observe(wrap)
     return () => {
       cancelled = true
+      fonts?.removeEventListener?.('loadingdone', onFontsLoaded)
       observer.disconnect()
     }
   }, [editing, fitToBox, fontSize, plainText, runsSig, c.lineHeight, c.letterSpacing, c.padding, c.paddingX, c.listType, c.wrap, c.deckHeading, c.deckTier, el?.slotId])

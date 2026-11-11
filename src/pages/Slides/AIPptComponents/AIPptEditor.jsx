@@ -5633,6 +5633,11 @@ function AIPptEditor({
           presentationId={presentationId}
           title={exportDeckTitle(deckTitle, localSlides)}
           slideCount={localSlides.length}
+          slides={localSlides}
+          currentSlideId={selectedSlideId}
+          aspectRatio={aspectRatio}
+          themeTokens={themeTokens}
+          theme={config.theme}
           onBeforeExport={saveBeforeExport}
           onClose={() => setExportModalOpen(false)}
         />
