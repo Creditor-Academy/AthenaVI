@@ -4,6 +4,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   exportPrefsKey,
+  extractSlideElements,
   formatPageRange,
   getSlideTitle,
   imagePixelSize,
@@ -157,10 +158,21 @@ describe('Canva-style page range parsing and formatting', () => {
     assert.deepEqual(slideIdsFromPageNumbers(slides, [2, 4]), ['b', 'd'])
   })
 
-  it('extracts slide titles from elements', () => {
+  it('extracts slide titles from elements in any wrapper format without throwing', () => {
     const s1 = { elements: [{ role: 'heading', content: { text: 'Market Overview' } }] }
     const s2 = { elements: [] }
+    // When elements is an object (e.g. { canvas, elements: [...] }) as used in AIPptEditor
+    const s3 = { elements: { canvas: {}, elements: [{ slotId: 'HEADING', content: { text: 'Roadmap 2026' } }] } }
+    // When elements is an empty object
+    const s4 = { elements: {} }
+    // When slide is null or malformed
+    const s5 = null
+
     assert.equal(getSlideTitle(s1, 0), 'Market Overview')
     assert.equal(getSlideTitle(s2, 1), 'Slide 2')
+    assert.equal(getSlideTitle(s3, 2), 'Roadmap 2026')
+    assert.equal(getSlideTitle(s4, 3), 'Slide 4')
+    assert.equal(getSlideTitle(s5, 4), 'Slide 5')
+    assert.deepEqual(extractSlideElements(s3), [{ slotId: 'HEADING', content: { text: 'Roadmap 2026' } }])
   })
 })

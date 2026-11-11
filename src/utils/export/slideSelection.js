@@ -91,21 +91,60 @@ export function imagePixelSize(canvas, scale = 1) {
 export const BROWSER_IMAGE_BUDGET = 40
 
 /**
+ * Extract the array of elements from a slide regardless of its wrapper format:
+ * - slide.elements: [...]
+ * - slide.elements: { canvas: {...}, elements: [...] }
+ * - slide.canvas: { elements: [...] }
+ * - slide.content: { elements: [...] }
+ */
+export function extractSlideElements(slide) {
+  if (!slide || typeof slide !== 'object') return []
+  if (Array.isArray(slide.elements)) return slide.elements
+  if (Array.isArray(slide.elements?.elements)) return slide.elements.elements
+  if (Array.isArray(slide.canvas?.elements)) return slide.canvas.elements
+  if (Array.isArray(slide.content?.elements)) return slide.content.elements
+  if (slide.elements && typeof slide.elements === 'object') {
+    const vals = Object.values(slide.elements)
+    if (vals.length && typeof vals[0] === 'object' && vals[0]?.type) return vals
+  }
+  return []
+}
+
+/**
  * Extract a concise title or heading text from a slide's elements for Canva-style list displays.
+ * Never throws: falls back gracefully to "Slide N".
  */
 export function getSlideTitle(slide, index = 0) {
-  if (!slide) return `Slide ${index + 1}`
-  const elements = slide.elements || slide.canvas?.elements || []
-  const titleEl = elements.find(
-    (el) =>
-      el?.role === 'title' ||
-      el?.role === 'heading' ||
-      String(el?.slotId || '').toUpperCase().includes('TITLE') ||
-      String(el?.slotId || '').toUpperCase().includes('HEADING')
-  )
-  const text = String(titleEl?.content?.text || '').trim().replace(/\s+/g, ' ')
-  if (text && text.toLowerCase() !== 'untitled presentation' && text.toLowerCase() !== 'untitled') {
-    return text.slice(0, 50)
+  if (!slide || typeof slide !== 'object') return `Slide ${index + 1}`
+  try {
+    if (typeof slide.title === 'string') {
+      const clean = slide.title.trim().replace(/\s+/g, ' ')
+      if (clean && clean.toLowerCase() !== 'untitled presentation' && clean.toLowerCase() !== 'untitled') {
+        return clean.slice(0, 50)
+      }
+    }
+    const elements = extractSlideElements(slide)
+    if (Array.isArray(elements) && elements.length > 0) {
+      const titleEl = elements.find(
+        (el) =>
+          el?.role === 'title' ||
+          el?.role === 'heading' ||
+          String(el?.slotId || '').toUpperCase().includes('TITLE') ||
+          String(el?.slotId || '').toUpperCase().includes('HEADING')
+      )
+      const text =
+        String(titleEl?.content?.text || titleEl?.text || '')
+          .trim()
+          .replace(/\s+/g, ' ') ||
+        (Array.isArray(titleEl?.content?.runs)
+          ? titleEl.content.runs.map((r) => r?.text || '').join('').trim().replace(/\s+/g, ' ')
+          : '')
+      if (text && text.toLowerCase() !== 'untitled presentation' && text.toLowerCase() !== 'untitled') {
+        return text.slice(0, 50)
+      }
+    }
+  } catch (err) {
+    console.warn('getSlideTitle failed safely:', err)
   }
   return `Slide ${index + 1}`
 }
