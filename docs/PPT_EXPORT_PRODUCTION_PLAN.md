@@ -173,7 +173,7 @@ Small, safe fixes that ship immediately, before the larger rework.
   - On boot the server launches the browser once and logs `export_browser_ready` or `export_browser_unavailable`. **`GET /health/export`** reports the result and the export queue; it never launches a browser per request.
 - [x] **1.2 Fonts (F2).** Added `fonts-liberation fonts-noto-core fonts-noto-cjk fonts-noto-color-emoji` and ran `fc-cache -f`.
 - [x] **1.3 Heartbeat (F3).** Every export (all formats) beats every 20s while it renders (`PPT_EXPORT_HEARTBEAT_INTERVAL_MS`), and also while it waits for a browser slot. A waiting job is judged stale by its last beat. The whole-deck PDF timeout grows with the deck size (8s per slide, capped at 15 minutes).
-- [x] **1.4 Zip file name (F4).** The download name comes from the stored file's extension (`Deck.zip`). Files inside are named `<Deck>-slide-03.png`, numbered by position in the deck.
+- [x] **1.4 Zip file name (F4).** The download name comes from the stored file's extension (`Deck.zip`). Files inside are named by page number in the deck, as Canva does: `1.png`, `3.png` (changed from `<Deck>-slide-03.png` on 2026-11-11).
 - [x] **F6 fix.** A fresh page per slide. A slide that fails now **fails the export** (it stops at the first failure) instead of producing a partial or empty zip.
 - [x] **F7 fix.** `s3UrlKey()` gives a key only for S3 URLs; external images keep their own URL, and the hero image is used only for elements with no picture. Image fetches fall back to the URL when the S3 read fails.
 - [x] **1.5 Limit concurrent exports (F5).** At most 2 PDF/PNG/JPEG exports per instance (`PPT_EXPORT_MAX_CONCURRENT_BROWSER`); the rest wait as QUEUED. PPTX isn't limited because it doesn't use the browser.
@@ -223,7 +223,7 @@ Small, safe fixes that ship immediately, before the larger rework.
 **UX: the Export dialog**
 - [x] **2.1** Slide picker for every format: All slides · Current slide · Select slides. *(done: `ExportSlidePicker.jsx`. Thumbnails are drawn by the export renderer itself (`ExportSlide`), so they show what the file will contain; each is drawn when it scrolls into view. "Current slide" appears only where there is one: the selected slide in the editor, the slide on screen in My Work. Opening "Select slides" with nothing ticked starts from the current slide. With nothing ticked, Export is disabled.)*
 - [x] **2.2** Image options: format, size 1× / 2× / 3× with the pixel size, JPEG quality, PNG transparent background. *(done; transparent leaves the slide background out, elements keep their own fills)*
-- [x] **2.3** Downloads: one slide → a single image; several → `<Deck name>.zip`. *(done. Files inside are named `<Deck>-slide-03.png` by deck position, the same names the server already used (Phase 1), not `<Deck>-03.png`.)*
+- [x] **2.3** Downloads: one slide → a single image; several → `<Deck name>.zip`. *(done, with Canva's names (2026-11-11): one page downloads as `<Deck>.png`; several come as `<Deck>.zip` holding `1.png`, `3.png`…, named by page number in the deck. The server and the browser name them the same way.)*
 - [x] **2.4** Remember the last format, size, quality, transparency, scope and selection per deck. *(done: `localStorage` key `athena.pptExport.<deckId>`, read and written inside try/catch, cleaned up on load; slides no longer in the deck are dropped)*
 
 **Client-side capture (D3)**
@@ -241,6 +241,16 @@ Small, safe fixes that ship immediately, before the larger rework.
 - [x] Backend tests: `slideIds` / `scale` / `quality` / `transparent` validation, the browser charge schema, selection order, option clamping, a 404 for an unknown slide, the browser charge (idempotency key, refused when it can't be afforded, PNG/JPEG only), and real renders: slides 2, 4 and 5 at 2× (3 files, 1920 × 1080 from a 960 × 540 canvas, named by position), JPEG quality, PDF and PPTX with a subset. *(`test/exportSelection.test.js` 6 tests, `test/exportValidation.test.js` +3)*
 - [x] Browser test of the dialog (Puppeteer, port 5199, a real deck, API stubbed): 15 checks. They cover the pixel size label; Current slide; the picker starting from it; shift-click range; toggle; Clear disabling Export; save before export; one charge for the right slides; no server job; the downloaded `.zip` and its file names; 1920 × 1080 PNGs; and the remembered choices.
 - [x] Options on a real deck, server and browser: 2× → 3840 × 2160, transparent PNG (corner alpha 0, content kept), JPEG quality, PDF and PPTX subsets.
+
+**Dialog redesign (2026-11-11):** the Export dialog keeps **one size (600 × 680) in every state**: choosing, picking pages (list or grid), working and done. Before, it widened when pages were picked and its height followed the content. The layout follows Canva's download panel:
+- **File type:** four cards (PowerPoint, PDF, PNG, JPG), each with a coloured file icon.
+- **Options:** only the chosen format's own, such as image sizes with their pixels, a quality slider, or a transparent-background switch.
+- **Pages:** All pages / Current page / Choose pages. Choose pages opens the picker in place (list with thumbnails, or grid; a page box like "1-3, 5"; shift-click ranges) and scrolls it into view.
+- **Footer:** says what the download will be ("2 .png images in a .zip · 1920 × 1080").
+- **Phones:** the dialog fills the screen with two file types per row.
+- **Titles:** long slide titles end at a word with "…".
+
+The browser test of the dialog has 27 checks, including the size in every state, Canva file names on real downloads, and phone width.
 
 **Found while doing Phase 2 (all fixed):**
 - **F26: fit-to-box text could be sized for the fallback font, in the editor and in exports.** `PptCanvasElement` refits once on `document.fonts.ready`. When a font's stylesheet arrives after the slide first draws, that promise has nothing to wait for, so the text keeps the size computed with the fallback font. It now also refits on the `loadingdone` font event. On a fresh page (every server export) a heading drew at 9.9px where the loaded font gives 11.9px.

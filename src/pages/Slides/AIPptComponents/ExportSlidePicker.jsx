@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { FiCheck, FiGrid, FiList } from 'react-icons/fi'
+import { FiCheck, FiGrid, FiList, FiMinus } from 'react-icons/fi'
 import ExportSlide from '../../../export-render/ExportSlide'
 import { prepareDeck } from '../../../export-render/exportDeck'
 import { EDITOR_STAGE_WIDTH } from '../../../utils/slideStageElements'
@@ -18,15 +18,11 @@ import {
   toggleSlideSelection,
 } from '../../../utils/export/slideSelection'
 
-const THUMB_WIDTH = 132
-
-/** One slide in grid view, drawn by the export renderer and scaled down. */
-const SlideThumb = memo(function SlideThumb({ slide, stage, prepared, index, checked, onToggle }) {
+/** A slide drawn by the export renderer, scaled to `width`. Drawn once it scrolls into view. */
+const SlideCanvas = memo(function SlideCanvas({ slide, stage, prepared, width }) {
   const hostRef = useRef(null)
   const [visible, setVisible] = useState(() => typeof IntersectionObserver === 'undefined')
-  const scale = THUMB_WIDTH / EDITOR_STAGE_WIDTH
-  const height = Math.round((THUMB_WIDTH * stage.canvas.height) / stage.canvas.width)
-  const title = getSlideTitle(slide, index)
+  const height = Math.round((width * stage.canvas.height) / stage.canvas.width)
 
   useEffect(() => {
     const node = hostRef.current
@@ -45,138 +41,95 @@ const SlideThumb = memo(function SlideThumb({ slide, stage, prepared, index, che
   }, [])
 
   return (
+    <span ref={hostRef} className="ppt-export-canvas" style={{ width, height }} aria-hidden>
+      {visible ? (
+        <span
+          className="ppt-export-canvas-stage"
+          style={{ width: EDITOR_STAGE_WIDTH, transform: `scale(${width / EDITOR_STAGE_WIDTH})` }}
+        >
+          <ExportSlide slide={slide} stage={stage} themeVisual={prepared.themeVisual} fontVars={prepared.fontVars} />
+        </span>
+      ) : null}
+    </span>
+  )
+})
+
+function Check({ on, partial = false }) {
+  return (
+    <span className={`ppt-export-check-box ${on || partial ? 'is-on' : ''}`} aria-hidden>
+      {on ? <FiCheck size={12} strokeWidth={3} /> : partial ? <FiMinus size={12} strokeWidth={3} /> : null}
+    </span>
+  )
+}
+
+/** List row: checkbox, small thumbnail, "Page N" and the slide's title (Canva's page list). */
+const PageRow = memo(function PageRow({ slide, stage, prepared, index, checked, onToggle }) {
+  const title = getSlideTitle(slide, index)
+  return (
     <button
       type="button"
       role="checkbox"
       aria-checked={checked}
-      aria-label={`Slide ${index + 1}: ${title}`}
-      className={`ppt-export-thumb ${checked ? 'is-checked' : ''}`}
+      aria-label={`Page ${index + 1}: ${title}`}
+      className={`ppt-export-page-row ${checked ? 'is-checked' : ''}`}
       onClick={(e) => onToggle(slide.id, e.shiftKey)}
     >
-      <span ref={hostRef} className="ppt-export-thumb-frame" style={{ height }}>
-        {visible ? (
-          <span
-            className="ppt-export-thumb-stage"
-            style={{ width: EDITOR_STAGE_WIDTH, transform: `scale(${scale})` }}
-            aria-hidden
-          >
-            <ExportSlide
-              slide={slide}
-              stage={stage}
-              themeVisual={prepared.themeVisual}
-              fontVars={prepared.fontVars}
-            />
-          </span>
-        ) : null}
-        <span className={`ppt-export-thumb-check ${checked ? 'is-on' : ''}`} aria-hidden>
-          {checked ? <FiCheck size={12} /> : null}
-        </span>
-      </span>
-      <span className="ppt-export-thumb-num">Page {index + 1}</span>
-      <span className="ppt-export-thumb-title" title={title}>
-        {title}
+      <Check on={checked} />
+      <SlideCanvas slide={slide} stage={stage} prepared={prepared} width={64} />
+      <span className="ppt-export-page-text">
+        <strong>Page {index + 1}</strong>
+        <em title={title}>{title}</em>
       </span>
     </button>
   )
 })
 
-/** One slide in list view (Canva style: checkbox + Page N + slide title). */
-const SlideListItem = memo(function SlideListItem({ slide, index, checked, onToggle }) {
+/** Grid tile: thumbnail with a checkbox in the corner, "Page N" under it. */
+const PageTile = memo(function PageTile({ slide, stage, prepared, index, checked, onToggle }) {
   const title = getSlideTitle(slide, index)
   return (
-    <div
+    <button
+      type="button"
       role="checkbox"
       aria-checked={checked}
-      tabIndex={0}
-      className={`ppt-export-list-item ${checked ? 'is-checked' : ''}`}
+      aria-label={`Page ${index + 1}: ${title}`}
+      title={title}
+      className={`ppt-export-page-tile ${checked ? 'is-checked' : ''}`}
       onClick={(e) => onToggle(slide.id, e.shiftKey)}
-      onKeyDown={(e) => {
-        if (e.key === ' ' || e.key === 'Enter') {
-          e.preventDefault()
-          onToggle(slide.id, false)
-        }
-      }}
     >
-      <span className={`ppt-export-item-check ${checked ? 'is-on' : ''}`} aria-hidden>
-        {checked ? <FiCheck size={12} /> : null}
+      <span className="ppt-export-page-tile-frame">
+        <SlideCanvas slide={slide} stage={stage} prepared={prepared} width={160} />
+        <Check on={checked} />
       </span>
-      <span className="ppt-export-item-badge">Page {index + 1}</span>
-      <span className="ppt-export-item-title" title={title}>
-        {title}
-      </span>
-    </div>
+      <span className="ppt-export-page-tile-num">Page {index + 1}</span>
+    </button>
   )
 })
 
 /**
- * Canva-style Page Selector:
- * - Master checkbox: All pages (N)
- * - Page range input: "1-3, 5, 8"
- * - List view (Canva standard) and Grid view with thumbnails
- * - Select all / Clear
- * - Shift-click range selection
+ * Canva-style page picker: "All pages (N)" checkbox, a page range box ("1-3, 5"), and the pages
+ * as a list (thumbnail + title) or a grid. Click toggles a page; shift-click selects a range.
  */
-export default function ExportSlidePicker({
-  deck,
-  selectedIds,
-  onChange,
-  disabled = false,
-  onDone = null,
-}) {
+export default function ExportSlidePicker({ deck, selectedIds, onChange, disabled = false }) {
   const prepared = useMemo(() => (deck?.slides?.length ? prepareDeck({ deck }) : null), [deck])
   const anchorRef = useRef(null)
   const slides = useMemo(() => prepared?.slides || [], [prepared])
   const selected = useMemo(() => new Set(selectedIds || []), [selectedIds])
   const selectedRef = useRef(selectedIds)
   const [viewMode, setViewMode] = useState('list')
-  const [rangeInput, setRangeInput] = useState('')
-  const isTypingRef = useRef(false)
+  // What the user is typing in the page box; null = show the current selection.
+  const [rangeDraft, setRangeDraft] = useState(null)
 
   useEffect(() => {
     selectedRef.current = selectedIds
-    if (!isTypingRef.current && slides.length > 0) {
-      const pageNums = pageNumbersFromSlideIds(slides, selectedIds)
-      setRangeInput(formatPageRange(pageNums, slides.length))
-    }
-  }, [selectedIds, slides])
+  }, [selectedIds])
 
-  const toggle = useCallback(
-    (slideId, range) => {
-      if (disabled) return
-      isTypingRef.current = false
-      onChange(toggleSlideSelection(selectedRef.current, slides, slideId, { range, anchorId: anchorRef.current }))
-      anchorRef.current = slideId
-    },
-    [disabled, onChange, slides]
-  )
-
-  const handleRangeChange = useCallback(
-    (e) => {
-      const val = e.target.value
-      setRangeInput(val)
-      isTypingRef.current = true
-      const parsed = parsePageRange(val, slides.length)
-      const newIds = slideIdsFromPageNumbers(slides, parsed)
-      onChange(newIds)
-    },
-    [onChange, slides]
-  )
-
-  const handleRangeBlur = useCallback(() => {
-    isTypingRef.current = false
-    const pageNums = pageNumbersFromSlideIds(slides, selectedRef.current)
-    setRangeInput(formatPageRange(pageNums, slides.length))
-  }, [slides])
-
-  const handleMasterToggle = useCallback(() => {
-    if (disabled) return
-    isTypingRef.current = false
-    if (selected.size === slides.length) {
-      onChange([])
-    } else {
-      onChange(slides.map((s) => s.id))
-    }
-  }, [disabled, selected.size, slides, onChange])
+  // "1-3, 5" for the selection ("1-12" when every page is picked, which the box can read back).
+  const rangeText = useMemo(() => {
+    const nums = pageNumbersFromSlideIds(slides, selectedIds)
+    if (slides.length && nums.length === slides.length) return `1-${slides.length}`
+    return formatPageRange(nums, slides.length)
+  }, [slides, selectedIds])
 
   useEffect(() => {
     if (!prepared) return
@@ -185,122 +138,105 @@ export default function ExportSlidePicker({
     ensureElementFontsLoaded(collectSlideFontFamilies(prepared.slides))
   }, [prepared])
 
-  if (!prepared) return <p className="ppt-export-picker-empty">Loading slides…</p>
+  // Stable, so a click re-draws only the pages whose checkbox changed.
+  const toggle = useCallback(
+    (slideId, range) => {
+      if (disabled) return
+      onChange(toggleSlideSelection(selectedRef.current, slides, slideId, { range, anchorId: anchorRef.current }))
+      anchorRef.current = slideId
+    },
+    [disabled, onChange, slides]
+  )
+
+  const onRangeChange = (e) => {
+    const value = e.target.value
+    setRangeDraft(value)
+    onChange(slideIdsFromPageNumbers(slides, parsePageRange(value, slides.length)))
+  }
+
+  if (!prepared) return <p className="ppt-export-picker-empty">Loading pages…</p>
 
   const count = slides.filter((s) => selected.has(s.id)).length
-  const allSelected = count === slides.length && slides.length > 0
+  const all = count === slides.length && slides.length > 0
+  const Item = viewMode === 'grid' ? PageTile : PageRow
 
   return (
     <div className="ppt-export-picker">
       <div className="ppt-export-picker-bar">
-        <label className="ppt-export-master-label">
-          <span
-            className={`ppt-export-item-check ${allSelected ? 'is-on' : ''}`}
-            onClick={handleMasterToggle}
-            aria-hidden
-          >
-            {allSelected ? <FiCheck size={12} /> : null}
-          </span>
-          <span className="ppt-export-picker-count" onClick={handleMasterToggle}>
-            All pages ({slides.length})
-          </span>
-        </label>
-
-        <div className="ppt-export-picker-actions">
-          <div className="ppt-export-view-switch" role="group" aria-label="View mode">
-            <button
-              type="button"
-              className={viewMode === 'list' ? 'is-active' : ''}
-              onClick={() => setViewMode('list')}
-              title="List view"
-            >
-              <FiList size={13} /> List
-            </button>
-            <button
-              type="button"
-              className={viewMode === 'grid' ? 'is-active' : ''}
-              onClick={() => setViewMode('grid')}
-              title="Grid view"
-            >
-              <FiGrid size={13} /> Grid
-            </button>
-          </div>
-
-          <button
-            type="button"
-            disabled={disabled || count === slides.length}
-            onClick={() => {
-              isTypingRef.current = false
-              onChange(slides.map((s) => s.id))
-            }}
-          >
-            All
-          </button>
-          <button
-            type="button"
-            disabled={disabled || count === 0}
-            onClick={() => {
-              isTypingRef.current = false
-              onChange([])
-            }}
-          >
-            Clear
-          </button>
-        </div>
-      </div>
-
-      <div className="ppt-export-picker-range-box">
-        <label htmlFor="ppt-export-range-input">Pages:</label>
-        <input
-          id="ppt-export-range-input"
-          type="text"
-          className="ppt-export-picker-range-input"
-          placeholder="e.g. 1-3, 5, 8"
-          value={rangeInput}
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={all ? 'true' : count ? 'mixed' : 'false'}
+          className="ppt-export-picker-all"
           disabled={disabled}
-          onChange={handleRangeChange}
-          onBlur={handleRangeBlur}
-        />
-      </div>
-
-      {viewMode === 'list' ? (
-        <div className="ppt-export-picker-list" role="group" aria-label="Slides to export">
-          {slides.map((slide, index) => (
-            <SlideListItem
-              key={slide.id}
-              slide={slide}
-              index={index}
-              checked={selected.has(slide.id)}
-              onToggle={toggle}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="ppt-export-picker-grid" role="group" aria-label="Slides to export">
-          {slides.map((slide, index) => (
-            <SlideThumb
-              key={slide.id}
-              slide={slide}
-              stage={prepared.stages[slide.id]}
-              prepared={prepared}
-              index={index}
-              checked={selected.has(slide.id)}
-              onToggle={toggle}
-            />
-          ))}
-        </div>
-      )}
-
-      <div className="ppt-export-picker-footer">
-        <p className="ppt-export-picker-tip">
-          {count} of {slides.length} selected. Shift-click to select a range.
-        </p>
-        {onDone ? (
-          <button type="button" className="ppt-export-picker-done-btn" onClick={onDone}>
-            Done
+          onClick={() => {
+            setRangeDraft(null)
+            onChange(all ? [] : slides.map((s) => s.id))
+          }}
+        >
+          <Check on={all} partial={!all && count > 0} />
+          All pages ({slides.length})
+        </button>
+        <div className="ppt-export-view-switch" role="radiogroup" aria-label="Show pages as">
+          <button
+            type="button"
+            role="radio"
+            aria-checked={viewMode === 'list'}
+            className={viewMode === 'list' ? 'is-active' : ''}
+            onClick={() => setViewMode('list')}
+            title="List"
+            aria-label="List"
+          >
+            <FiList size={14} />
           </button>
-        ) : null}
+          <button
+            type="button"
+            role="radio"
+            aria-checked={viewMode === 'grid'}
+            className={viewMode === 'grid' ? 'is-active' : ''}
+            onClick={() => setViewMode('grid')}
+            title="Grid"
+            aria-label="Grid"
+          >
+            <FiGrid size={14} />
+          </button>
+        </div>
       </div>
+
+      <label className="ppt-export-picker-range">
+        <span>Pages</span>
+        <input
+          type="text"
+          inputMode="numeric"
+          spellCheck={false}
+          autoComplete="off"
+          placeholder="e.g. 1-3, 5, 8"
+          value={rangeDraft ?? rangeText}
+          disabled={disabled}
+          onChange={onRangeChange}
+          onBlur={() => setRangeDraft(null)}
+          aria-label="Pages to export, for example 1-3, 5"
+        />
+      </label>
+
+      <div
+        className={viewMode === 'grid' ? 'ppt-export-page-grid' : 'ppt-export-page-list'}
+        role="group"
+        aria-label="Pages to export"
+      >
+        {slides.map((slide, index) => (
+          <Item
+            key={slide.id}
+            slide={slide}
+            stage={prepared.stages[slide.id]}
+            prepared={prepared}
+            index={index}
+            checked={selected.has(slide.id)}
+            onToggle={toggle}
+          />
+        ))}
+      </div>
+      <p className="ppt-export-picker-tip">Shift-click to select a range of pages.</p>
     </div>
   )
 }

@@ -7,6 +7,7 @@ import {
   extractSlideElements,
   formatPageRange,
   getSlideTitle,
+  shortTitle,
   imagePixelSize,
   loadExportPrefs,
   pageNumbersFromSlideIds,
@@ -16,6 +17,8 @@ import {
   shouldCaptureInBrowser,
   slideIdsFromPageNumbers,
   slideImageFilename,
+  exportDownloadName,
+  exportOutputSummary,
   toggleSlideSelection,
 } from './slideSelection.js'
 import { readStoredZip, zipStoredFiles } from './zip.js'
@@ -76,9 +79,23 @@ describe('clicking slides in the picker', () => {
 })
 
 describe('image files', () => {
-  it('names match the server: <Deck>-slide-03.png, by deck position', () => {
-    assert.equal(slideImageFilename('Q3 Review: Final!', 3, 'png'), 'Q3 Review Final-slide-03.png')
-    assert.equal(slideImageFilename('', 12, 'jpg'), 'presentation-slide-12.jpg')
+  it('names follow Canva: pages are 3.png inside Deck.zip; one page is Deck.png', () => {
+    assert.equal(slideImageFilename('Q3 Review: Final!', 3, 'png'), '3.png')
+    assert.equal(slideImageFilename('', 12, 'jpg'), '12.jpg')
+    assert.equal(exportDownloadName('Q3 Review: Final!', 'PNG', 4), 'Q3 Review Final.zip')
+    assert.equal(exportDownloadName('Q3 Review', 'PNG', 1), 'Q3 Review.png')
+    assert.equal(exportDownloadName('Q3 Review', 'JPEG', 1), 'Q3 Review.jpg')
+    assert.equal(exportDownloadName('Q3 Review', 'PDF', 9), 'Q3 Review.pdf')
+    assert.equal(exportDownloadName('', 'PPTX', 9), 'presentation.pptx')
+  })
+
+  it('says what the download will be', () => {
+    const px = { width: 1920, height: 1080 }
+    assert.equal(exportOutputSummary({ format: 'PNG', count: 3, pixels: px }), '3 .png images in a .zip · 1920 × 1080')
+    assert.equal(exportOutputSummary({ format: 'JPEG', count: 1, pixels: px }), '1 .jpg image · 1920 × 1080')
+    assert.equal(exportOutputSummary({ format: 'PDF', count: 1 }), 'One .pdf · 1 page')
+    assert.equal(exportOutputSummary({ format: 'PPTX', count: 5 }), 'Editable .pptx · 5 slides')
+    assert.equal(exportOutputSummary({ format: 'PNG', count: 0 }), 'Choose at least one page')
   })
 
   it('pixel size is the canvas size times the scale', () => {
@@ -98,11 +115,11 @@ describe('image files', () => {
 
   it('a zip built in the browser reads back file for file', () => {
     const files = [
-      { name: 'Deck-slide-01.png', bytes: new Uint8Array([1, 2, 3]) },
-      { name: 'Deck-slide-04.png', bytes: new Uint8Array([9, 8, 7, 6]) },
+      { name: '1.png', bytes: new Uint8Array([1, 2, 3]) },
+      { name: '4.png', bytes: new Uint8Array([9, 8, 7, 6]) },
     ]
     const back = readStoredZip(zipStoredFiles(files))
-    assert.deepEqual(back.map((f) => f.name), ['Deck-slide-01.png', 'Deck-slide-04.png'])
+    assert.deepEqual(back.map((f) => f.name), ['1.png', '4.png'])
     assert.deepEqual([...back[1].bytes], [9, 8, 7, 6])
   })
 })
@@ -174,5 +191,16 @@ describe('Canva-style page range parsing and formatting', () => {
     assert.equal(getSlideTitle(s4, 3), 'Slide 4')
     assert.equal(getSlideTitle(s5, 4), 'Slide 5')
     assert.deepEqual(extractSlideElements(s3), [{ slotId: 'HEADING', content: { text: 'Roadmap 2026' } }])
+  })
+})
+
+describe('page titles in the picker', () => {
+  it('long titles end at a word with an ellipsis, short ones are unchanged', () => {
+    assert.equal(shortTitle('Roadmap 2026'), 'Roadmap 2026')
+    assert.equal(
+      shortTitle('Unraveling the Impossible: Our Journey Through a Frozen World at the Edge of Time'),
+      'Unraveling the Impossible: Our Journey Through a Frozen…'
+    )
+    assert.equal(shortTitle('x'.repeat(80), 10), 'xxxxxxxxxx…')
   })
 })

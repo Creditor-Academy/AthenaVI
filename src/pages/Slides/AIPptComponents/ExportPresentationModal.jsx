@@ -1,16 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import {
-  FiCheck,
-  FiCheckCircle,
-  FiChevronDown,
-  FiChevronUp,
-  FiDownload,
-  FiImage,
-  FiLayers,
-  FiLoader,
-  FiX,
-} from 'react-icons/fi'
+import { FiCheck, FiDownload, FiLoader, FiX } from 'react-icons/fi'
 import presentationService from '../../../services/presentationService'
 import { isInsufficientCreditsError } from '../../../services/creditsService'
 import { PPT_EXPORT_FORMATS, resolveCanvasSize } from '../../../utils/presentationHelpers'
@@ -18,7 +8,9 @@ import { deckFromPresentation } from '../../../export-render/exportDeck'
 import {
   DEFAULT_JPEG_QUALITY,
   IMAGE_SCALES,
+  exportDownloadName,
   exportFileBase,
+  exportOutputSummary,
   formatPageRange,
   getSlideTitle,
   imagePixelSize,
@@ -33,91 +25,30 @@ import { zipStoredFiles } from '../../../utils/export/zip'
 import ExportSlidePicker from './ExportSlidePicker'
 import './pptPanelUi.css'
 
-const GROUPS = [
-  { id: 'file', label: 'File', formats: ['PPTX', 'PDF'] },
-  { id: 'images', label: 'Images', formats: ['PNG', 'JPEG'] },
+/** The four file types, in Canva's order of use. `badge` is the label on the file icon. */
+const FILE_TYPES = [
+  { id: 'PPTX', name: 'PowerPoint', badge: 'PPTX', hint: 'Editable slides' },
+  { id: 'PDF', name: 'PDF', badge: 'PDF', hint: 'Print and share' },
+  { id: 'PNG', name: 'PNG', badge: 'PNG', hint: 'Best image quality' },
+  { id: 'JPEG', name: 'JPG', badge: 'JPG', hint: 'Smaller image files' },
 ]
 
-const EXPORT_META = {
-  PPTX: {
-    label: 'PowerPoint',
-    ext: 'PPTX',
-    desc: 'Keep editing in PowerPoint or Google Slides.',
-    detail: 'One editable .pptx with the slides you choose.',
-    preview: 'pptx',
-    cta: 'Export PPTX',
-  },
-  PDF: {
-    label: 'PDF',
-    ext: 'PDF',
-    desc: 'Print-ready and easy to share.',
-    detail: 'A single document that opens anywhere.',
-    preview: 'pdf',
-    cta: 'Export PDF',
-  },
-  PNG: {
-    label: 'PNG',
-    ext: 'PNG',
-    desc: 'Crisp images, one file per slide.',
-    detail: 'One image per slide (several slides come as a .zip). Can be transparent.',
-    preview: 'png',
-    cta: 'Export PNG',
-  },
-  JPEG: {
-    label: 'JPEG',
-    ext: 'JPEG',
-    desc: 'Smaller images for web and email.',
-    detail: 'Smaller files, one per slide (several slides come as a .zip).',
-    preview: 'jpeg',
-    cta: 'Export JPEG',
-  },
-}
-
-function groupForFormat(format) {
-  return GROUPS.find((g) => g.formats.includes(format))?.id || 'file'
-}
-
-function ExportPreview({ kind }) {
-  return (
-    <div className={`ppt-export-preview ppt-export-preview--${kind}`} aria-hidden>
-      {kind === 'pdf' ? (
-        <>
-          <span className="ppt-export-sheet ppt-export-sheet--back" />
-          <span className="ppt-export-sheet">
-            <i />
-            <i />
-            <i />
-          </span>
-        </>
-      ) : null}
-      {kind === 'pptx' ? (
-        <span className="ppt-export-deck">
-          <span className="ppt-export-deck-bar">
-            <b />
-            <b />
-            <b />
-          </span>
-          <span className="ppt-export-deck-stage">
-            <i />
-            <i />
-          </span>
-        </span>
-      ) : null}
-      {kind === 'png' || kind === 'jpeg' ? (
-        <span className={`ppt-export-photo ${kind === 'jpeg' ? 'is-soft' : ''}`}>
-          <span className="ppt-export-photo-sky" />
-          <span className="ppt-export-photo-hill" />
-        </span>
-      ) : null}
-    </div>
-  )
-}
-
-const EXPORT_STATUS_LABEL = {
+const STATUS_LABEL = {
   QUEUED: 'Queued — starting export…',
-  RENDERING: 'Building file — this can take a few minutes for large decks…',
+  RENDERING: 'Building your file — large decks can take a few minutes…',
   READY: 'Ready',
   FAILED: 'Failed',
+}
+
+/** A small file icon with the format on it (PPTX orange, PDF red, PNG blue, JPG green). */
+function FileBadge({ format, size = 'md' }) {
+  const type = FILE_TYPES.find((t) => t.id === format) || FILE_TYPES[0]
+  return (
+    <span className={`ppt-export-file ppt-export-file--${format.toLowerCase()} ppt-export-file--${size}`} aria-hidden>
+      <span className="ppt-export-file-fold" />
+      <span className="ppt-export-file-label">{type.badge}</span>
+    </span>
+  )
 }
 
 function triggerFileDownload(url, filename) {
@@ -185,17 +116,13 @@ function sortedSlides(slides) {
   return [...(slides || [])].filter((s) => s?.id).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 }
 
-const SCOPE_TABS = [
-  { id: 'all', label: 'All slides' },
-  { id: 'current', label: 'Current slide' },
-  { id: 'custom', label: 'Select pages' },
-]
-
 /**
+ * Export dialog: file type, its options, which pages, then Download. It keeps one size in every
+ * state (choosing, picking pages, working, done), so it never jumps.
  * @param {object} props
  * @param {object[]} [props.slides]  the editor's slides (fresher than the saved deck); loaded
  *   from the API when missing (My Work)
- * @param {string} [props.currentSlideId]  enables "Current slide"
+ * @param {string} [props.currentSlideId]  enables "Current page"
  * @param {string} [props.aspectRatio]
  * @param {object} [props.themeTokens]
  * @param {string} [props.theme]
@@ -219,7 +146,6 @@ export default function ExportPresentationModal({
   // PPTX only: the app the file is made for. Google Slides can't show gradients or glow, so
   // for it those are exported as pictures.
   const [pptxTarget, setPptxTarget] = useState(() => prefs.pptxTarget || 'powerpoint')
-  const [group, setGroup] = useState(() => groupForFormat(prefs.format || 'PPTX'))
   const [scope, setScope] = useState(() =>
     prefs.scope === 'current' && !currentSlideId ? 'all' : prefs.scope || 'all'
   )
@@ -233,12 +159,13 @@ export default function ExportPresentationModal({
   const [error, setError] = useState('')
   const [downloadUrl, setDownloadUrl] = useState('')
   const [downloadFilename, setDownloadFilename] = useState('')
-  const [pickerOpen, setPickerOpen] = useState(false)
   const [loadedDeck, setLoadedDeck] = useState(null)
   const objectUrlRef = useRef(null)
   const unmountedRef = useRef(false)
+  const pagesRef = useRef(null)
+  const revealPagesRef = useRef(false)
 
-  // My Work passes no slides: read the saved deck for the slide list and thumbnails.
+  // My Work passes no slides: read the saved deck for the page list and thumbnails.
   useEffect(() => {
     if (slidesProp || !workspaceId || !presentationId) return undefined
     let cancelled = false
@@ -279,84 +206,36 @@ export default function ExportPresentationModal({
 
   const selection = useMemo(() => {
     if (!deckSlides.length) {
-      // Slides still loading: only "All slides" can be resolved.
+      // Slides still loading: only "All pages" can be resolved.
       return scope === 'all'
         ? { slideIds: null, count: totalSlides, error: null }
-        : { slideIds: null, count: 0, error: 'Loading slides…' }
+        : { slideIds: null, count: 0, error: 'Loading pages…' }
     }
     return resolveExportSelection({ scope, slides: deckSlides, currentSlideId, selectedIds })
   }, [scope, deckSlides, currentSlideId, selectedIds, totalSlides])
 
-  const currentSlideIndex = useMemo(() => {
-    if (!currentSlideId || !deckSlides.length) return 0
+  const currentIndex = useMemo(() => {
     const idx = deckSlides.findIndex((s) => s.id === currentSlideId)
     return idx >= 0 ? idx : 0
   }, [currentSlideId, deckSlides])
 
-  const currentSlideTitle = useMemo(() => {
-    if (!deckSlides.length) return 'Slide 1'
-    return getSlideTitle(deckSlides[currentSlideIndex], currentSlideIndex)
-  }, [deckSlides, currentSlideIndex])
+  /** "Pages 1–3, 5" / "Page 2 · Title" under the page choice. */
+  const pagesLine = useMemo(() => {
+    if (!deckSlides.length) return totalSlides ? `${totalSlides} pages` : 'Loading pages…'
+    if (scope === 'all') return `Pages 1–${totalSlides}`
+    if (scope === 'current') return `Page ${currentIndex + 1} · ${getSlideTitle(deckSlides[currentIndex], currentIndex)}`
+    if (!selection.count) return 'No pages chosen yet'
+    const nums = pageNumbersFromSlideIds(deckSlides, selection.slideIds || deckSlides.map((s) => s.id))
+    if (nums.length === 1) return `Page ${nums[0]} · ${getSlideTitle(deckSlides[nums[0] - 1], nums[0] - 1)}`
+    const range = formatPageRange(nums, totalSlides)
+    return nums.length === totalSlides ? `Pages 1–${totalSlides}` : `Pages ${range}`
+  }, [deckSlides, scope, totalSlides, currentIndex, selection.count, selection.slideIds])
 
-  const pagesSummary = useMemo(() => {
-    if (!deckSlides.length) {
-      return {
-        title: 'Loading slides…',
-        detail: '',
-        singlePageNum: 1,
-      }
-    }
-    if (scope === 'all') {
-      return {
-        title: `All pages (1–${totalSlides})`,
-        detail: `All ${totalSlides} slides will be exported`,
-        singlePageNum: 1,
-      }
-    }
-    if (scope === 'current') {
-      return {
-        title: `Current page (Page ${currentSlideIndex + 1})`,
-        detail: currentSlideTitle,
-        singlePageNum: currentSlideIndex + 1,
-      }
-    }
-    const count = selection.count
-    if (count === 0) {
-      return {
-        title: 'No pages selected',
-        detail: 'Click to select pages to export',
-        singlePageNum: 1,
-      }
-    }
-    if (count === 1) {
-      const singleId = selection.slideIds?.[0]
-      const idx = deckSlides.findIndex((s) => s.id === singleId)
-      const pageNum = idx >= 0 ? idx + 1 : 1
-      const titleText = getSlideTitle(deckSlides[idx >= 0 ? idx : 0], idx >= 0 ? idx : 0)
-      return {
-        title: `Page ${pageNum}`,
-        detail: titleText,
-        singlePageNum: pageNum,
-      }
-    }
-    const pageNums = pageNumbersFromSlideIds(deckSlides, selection.slideIds || selectedIds)
-    const rangeText = formatPageRange(pageNums, totalSlides)
-    return {
-      title: `${count} pages selected`,
-      detail: rangeText ? `Pages: ${rangeText}` : `${count} of ${totalSlides} slides`,
-      singlePageNum: pageNums[0] || 1,
-    }
-  }, [deckSlides, scope, totalSlides, currentSlideIndex, currentSlideTitle, selection.count, selection.slideIds, selectedIds])
-
-  const formats = useMemo(() => {
-    const allowed = new Set(PPT_EXPORT_FORMATS)
-    return (GROUPS.find((g) => g.id === group)?.formats || []).filter((fmt) => allowed.has(fmt))
-  }, [group])
-
-  const meta = EXPORT_META[selected] || EXPORT_META.PDF
   const busy = phase === 'working'
   const isImage = selected === 'PNG' || selected === 'JPEG'
   const pixels = imagePixelSize(canvas, scale)
+  const typeInfo = FILE_TYPES.find((t) => t.id === selected) || FILE_TYPES[0]
+  const fileTypes = FILE_TYPES.filter((t) => PPT_EXPORT_FORMATS.includes(t.id))
 
   useEffect(() => {
     const onKey = (e) => {
@@ -366,25 +245,22 @@ export default function ExportPresentationModal({
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose, busy])
 
-  const selectGroup = (nextGroup) => {
-    if (busy) return
-    setGroup(nextGroup)
-    const nextFormats = GROUPS.find((g) => g.id === nextGroup)?.formats || []
-    if (!nextFormats.includes(selected)) setSelected(nextFormats[0] || 'PPTX')
-  }
-
   const chooseScope = (next) => {
     if (busy) return
     setScope(next)
-    if (next === 'custom') {
-      setPickerOpen(true)
-      if (!selectedIds.some((id) => deckSlides.some((s) => s.id === id))) {
-        setSelectedIds(currentSlideId ? [currentSlideId] : deckSlides.map((s) => s.id))
-      }
-    } else {
-      setPickerOpen(false)
+    if (next === 'custom' && scope !== 'custom') revealPagesRef.current = true
+    // Opening the picker with nothing ticked: start from the current page (or every page).
+    if (next === 'custom' && !selectedIds.some((id) => deckSlides.some((s) => s.id === id))) {
+      setSelectedIds(currentSlideId ? [currentSlideId] : deckSlides.map((s) => s.id))
     }
   }
+
+  // "Choose pages" opens the page list below the options: bring it into view.
+  useEffect(() => {
+    if (scope !== 'custom' || !revealPagesRef.current) return
+    revealPagesRef.current = false
+    pagesRef.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' })
+  }, [scope])
 
   const exportTimeoutMs = useMemo(() => {
     const count = selection.count > 0 ? selection.count : 12
@@ -407,7 +283,7 @@ export default function ExportPresentationModal({
       timeoutMs: exportTimeoutMs,
       onProgress: (s) => {
         const st = String(s?.status || s?.exportStatus || 'PROCESSING').toUpperCase()
-        setStatusText(EXPORT_STATUS_LABEL[st] || `${selected}: ${st.toLowerCase()}…`)
+        setStatusText(STATUS_LABEL[st] || `${selected}: ${st.toLowerCase()}…`)
       },
     })
     const url = ready?.presignedUrl || ready?.url || ready?.downloadUrl
@@ -415,46 +291,24 @@ export default function ExportPresentationModal({
 
     // The server's file decides the extension: PNG / JPEG of several slides is a .zip.
     const serverExt = String(ready?.filename || ready?.s3Key || '').match(/\.([a-z0-9]{2,5})$/i)?.[1]
-    const resolvedExt = String(serverExt || selected || 'pptx').toLowerCase()
-    const ext = resolvedExt === 'jpeg' ? 'jpg' : resolvedExt
-    const baseName = exportFileBase(String(title || ready?.filename || 'Presentation').replace(/\.[a-z0-9]{2,5}$/i, ''))
-    let filename =
-      ready?.filename && !ready.filename.toLowerCase().startsWith('untitled') ? ready.filename : `${baseName}.${ext}`
-    if (isImage && selection.count === 1 && totalSlides > 1 && !filename.endsWith('.zip')) {
-      const pos = pagesSummary.singlePageNum || 1
-      filename = slideImageFilename(title, pos, ext)
-    }
+    const ext = String(serverExt || '').toLowerCase().replace('jpeg', 'jpg')
+    const filename = ext ? `${exportFileBase(title)}.${ext}` : exportDownloadName(title, selected, selection.count)
     return { url, filename }
-  }, [
-    workspaceId,
-    presentationId,
-    selected,
-    selection.slideIds,
-    selection.count,
-    pptxTarget,
-    isImage,
-    scale,
-    quality,
-    transparent,
-    exportTimeoutMs,
-    title,
-    totalSlides,
-    pagesSummary.singlePageNum,
-  ])
+  }, [workspaceId, presentationId, selected, selection.slideIds, selection.count, pptxTarget, isImage, scale, quality, transparent, exportTimeoutMs, title])
 
   /**
    * Slide images made in this browser by the export renderer: no server job. Throws
    * BlockedImageError (or any other error) when the server should do it instead.
    */
   const exportInBrowser = useCallback(async () => {
-    setStatusText('Getting your slides ready…')
+    setStatusText('Getting your pages ready…')
     const data = await presentationService.getPresentation(workspaceId, presentationId)
     const deck = deckFromPresentation(data)
     const { captureSlidesInBrowser } = await import('../../../export-render/browserSlideCapture')
     const format = selected === 'JPEG' ? 'jpeg' : 'png'
     const total = selection.count || sortedSlides(deck.slides).length
     setProgress({ done: 0, total })
-    setStatusText(`Drawing slide 1 of ${total}…`)
+    setStatusText(`Drawing page 1 of ${total}…`)
     const images = await captureSlidesInBrowser({
       deck,
       slideIds: selection.slideIds,
@@ -465,7 +319,7 @@ export default function ExportPresentationModal({
       isCancelled: () => unmountedRef.current,
       onProgress: ({ done, total: all }) => {
         setProgress({ done, total: all })
-        if (done < all) setStatusText(`Drawing slide ${done + 1} of ${all}…`)
+        if (done < all) setStatusText(`Drawing page ${done + 1} of ${all}…`)
       },
     })
 
@@ -477,13 +331,11 @@ export default function ExportPresentationModal({
       downloadId: newDownloadId(),
     })
 
+    // Canva's names: one page is "<Deck>.png"; several are "<Deck>.zip" holding "1.png", "3.png"…
     const ext = format === 'jpeg' ? 'jpg' : 'png'
     let blob
-    let filename
     if (images.length === 1) {
       blob = images[0].blob
-      const pos = images[0].position || pagesSummary.singlePageNum || 1
-      filename = totalSlides > 1 ? slideImageFilename(title, pos, ext) : `${exportFileBase(title)}.${ext}`
     } else {
       const files = await Promise.all(
         images.map(async (img) => ({
@@ -492,24 +344,11 @@ export default function ExportPresentationModal({
         }))
       )
       blob = new Blob([zipStoredFiles(files)], { type: 'application/zip' })
-      filename = `${exportFileBase(title)}.zip`
     }
     if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current)
     objectUrlRef.current = URL.createObjectURL(blob)
-    return { url: objectUrlRef.current, filename }
-  }, [
-    workspaceId,
-    presentationId,
-    selected,
-    selection.slideIds,
-    selection.count,
-    scale,
-    quality,
-    transparent,
-    title,
-    totalSlides,
-    pagesSummary.singlePageNum,
-  ])
+    return { url: objectUrlRef.current, filename: exportDownloadName(title, selected, images.length) }
+  }, [workspaceId, presentationId, selected, selection.slideIds, selection.count, scale, quality, transparent, title])
 
   const runExport = useCallback(async () => {
     if (!workspaceId || !presentationId) {
@@ -520,15 +359,7 @@ export default function ExportPresentationModal({
       setError(selection.error)
       return
     }
-    saveExportPrefs(presentationId, {
-      format: selected,
-      pptxTarget,
-      scope,
-      selectedIds,
-      scale,
-      quality,
-      transparent,
-    })
+    saveExportPrefs(presentationId, { format: selected, pptxTarget, scope, selectedIds, scale, quality, transparent })
     setPhase('working')
     setError('')
     setDownloadUrl('')
@@ -557,25 +388,25 @@ export default function ExportPresentationModal({
           result = await exportInBrowser()
         } catch (browserErr) {
           if (isBlockingChargeError(browserErr) || unmountedRef.current) throw browserErr
-          // A picture the browser can't read (or anything else): the server draws the same slides.
+          // A picture the browser can't read (or anything else): the server draws the same pages.
           console.warn('Export: browser images failed, exporting on the server', browserErr)
           setProgress(null)
           setStatusText(
             browserErr?.name === 'BlockedImageError'
-              ? "Some pictures can't be drawn in your browser, so the server is making the images…"
-              : `Preparing ${selected}…`
+              ? "Some pictures can't be drawn in your browser, so our server is making the images…"
+              : `Preparing your ${typeInfo.name}…`
           )
         }
       }
       if (!result) {
-        if (!isImage) setStatusText(`Preparing ${selected}…`)
+        if (!isImage) setStatusText(`Preparing your ${typeInfo.name}…`)
         result = await exportOnServer()
       }
       if (unmountedRef.current) return
 
       setDownloadUrl(result.url)
       setDownloadFilename(result.filename)
-      setStatusText(`${meta.label} is ready`)
+      setStatusText('Your download is ready')
       setProgress(null)
       setPhase('done')
       triggerFileDownload(result.url, result.filename)
@@ -609,13 +440,17 @@ export default function ExportPresentationModal({
     isImage,
     exportInBrowser,
     exportOnServer,
-    meta.label,
+    typeInfo.name,
   ])
 
   const canExport = Boolean(workspaceId && presentationId)
-  const selectionLabel =
-    selection.count > 0 ? `${selection.count} slide${selection.count === 1 ? '' : 's'}` : null
-  const scopeTabs = SCOPE_TABS.filter((tab) => tab.id !== 'current' || currentSlideId)
+  const scopes = [
+    { id: 'all', label: totalSlides ? `All pages (${totalSlides})` : 'All pages' },
+    ...(currentSlideId ? [{ id: 'current', label: 'Current page' }] : []),
+    { id: 'custom', label: 'Choose pages' },
+  ]
+  const outputLine = exportOutputSummary({ format: selected, count: selection.count, pixels: isImage ? pixels : null })
+  const percent = progress?.total ? Math.round((progress.done / progress.total) * 100) : null
 
   // Rendered on <body> so the editor's own layout (transforms, overflow) can't clip or shift it.
   const modal = (
@@ -623,244 +458,60 @@ export default function ExportPresentationModal({
       className="ppt-editor-modal-overlay"
       onClick={(e) => e.target === e.currentTarget && !busy && onClose?.()}
     >
-      <div
-        className={`ppt-editor-modal ppt-export-modal ${(scope === 'custom' || pickerOpen) && phase === 'pick' ? 'is-picking' : ''}`}
-        role="dialog"
-        aria-labelledby="ppt-export-title"
-      >
+      <div className="ppt-editor-modal ppt-export-modal" role="dialog" aria-modal="true" aria-labelledby="ppt-export-title">
         <header className="ppt-export-head">
-          <div className="ppt-export-head-main">
-            <span className="ppt-export-head-icon" aria-hidden>
-              <FiDownload size={18} />
-            </span>
-            <div className="ppt-export-head-text">
-              <h3 id="ppt-export-title">Export</h3>
-              <p>{title}</p>
-            </div>
+          <div className="ppt-export-head-text">
+            <h3 id="ppt-export-title">Download</h3>
+            <p title={title}>{title}</p>
           </div>
-          <button
-            type="button"
-            className="ppt-editor-modal-close"
-            onClick={onClose}
-            disabled={busy}
-            aria-label="Close"
-          >
+          <button type="button" className="ppt-export-close" onClick={onClose} disabled={busy} aria-label="Close">
             <FiX size={18} />
           </button>
         </header>
 
         {error ? (
-          <div className="ppt-editor-modal-alert ppt-editor-modal-alert--error" role="alert">
+          <div className="ppt-export-alert" role="alert">
             {error}
           </div>
         ) : null}
 
-        {phase === 'done' ? (
-          <div className="ppt-export-done">
-            <ExportPreview kind={meta.preview} />
-            <div>
-              <strong>
-                <FiCheckCircle size={16} /> {statusText}
-              </strong>
-              <p>Your download should start automatically. If it didn't, click Download below.</p>
-            </div>
-          </div>
-        ) : busy ? (
-          <div className="ppt-export-working" role="status">
-            <ExportPreview kind={meta.preview} />
-            <div>
-              <strong>Preparing {meta.label}</strong>
-              <p>{statusText}</p>
-              {progress && progress.total > 0 ? (
-                <span
-                  className="ppt-export-bar is-determinate"
-                  role="progressbar"
-                  aria-valuemin={0}
-                  aria-valuemax={progress.total}
-                  aria-valuenow={progress.done}
-                  aria-label={`Slide ${progress.done} of ${progress.total}`}
-                >
-                  <i style={{ width: `${Math.round((progress.done / progress.total) * 100)}%` }} />
-                </span>
-              ) : (
-                <span className="ppt-export-bar" />
-              )}
-            </div>
-          </div>
-        ) : (
+        {phase === 'pick' ? (
           <div className="ppt-export-body">
-            <div className="ppt-export-tabs" role="tablist" aria-label="Export type">
-              {GROUPS.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={group === item.id}
-                  className={`ppt-export-tab ${group === item.id ? 'is-active' : ''}`}
-                  disabled={!canExport}
-                  onClick={() => selectGroup(item.id)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="ppt-export-stage">
-              <ExportPreview kind={meta.preview} />
-              <div className="ppt-export-stage-copy">
-                <span className="ppt-export-stage-kicker">{meta.ext}</span>
-                <strong>{meta.label}</strong>
-                <p>{meta.detail}</p>
-              </div>
-            </div>
-
-            <div className="ppt-export-choices" role="listbox" aria-label="Format">
-              {formats.map((fmt) => {
-                const item = EXPORT_META[fmt]
-                const active = selected === fmt
-                return (
-                  <button
-                    key={fmt}
-                    type="button"
-                    role="option"
-                    aria-selected={active}
-                    className={`ppt-export-choice ${active ? 'is-active' : ''}`}
-                    disabled={!canExport}
-                    onClick={() => {
-                      setSelected(fmt)
-                      setGroup(groupForFormat(fmt))
-                    }}
-                  >
-                    <span className={`ppt-export-radio ${active ? 'is-on' : ''}`} aria-hidden>
-                      {active ? <FiCheck size={12} /> : null}
-                    </span>
-                    <span>
-                      <strong>{item.label}</strong>
-                      <em>{item.desc}</em>
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-
-            <div className="ppt-export-target">
-              <span className="ppt-export-target-label" id="ppt-export-scope-label">
-                Select pages
-                {selectionLabel ? <span className="ppt-export-target-value">{selectionLabel}</span> : null}
-              </span>
-              <div
-                className={`ppt-export-tabs ppt-export-tabs--${scopeTabs.length}`}
-                role="radiogroup"
-                aria-labelledby="ppt-export-scope-label"
-              >
-                {scopeTabs.map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={scope === tab.id}
-                    className={`ppt-export-tab ${scope === tab.id ? 'is-active' : ''}`}
-                    disabled={!canExport}
-                    onClick={() => chooseScope(tab.id)}
-                  >
-                    {tab.id === 'all' && totalSlides ? `${tab.label} (${totalSlides})` : tab.label}
-                  </button>
-                ))}
-              </div>
-
-              <button
-                type="button"
-                className={`ppt-export-pages-trigger ${pickerOpen ? 'is-open' : ''}`}
-                onClick={() => setPickerOpen((prev) => !prev)}
-                aria-expanded={pickerOpen}
-                disabled={!canExport}
-              >
-                <span className="ppt-export-pages-trigger-main">
-                  <FiLayers className="ppt-export-pages-icon" size={16} />
-                  <span className="ppt-export-pages-text">
-                    <strong>{pagesSummary.title}</strong>
-                    <em>{pagesSummary.detail}</em>
-                  </span>
-                </span>
-                <span className="ppt-export-pages-toggle">
-                  {pickerOpen ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
-                </span>
-              </button>
-
-              {pickerOpen ? (
-                <ExportSlidePicker
-                  deck={pickerDeck}
-                  selectedIds={
-                    scope === 'custom'
-                      ? selectedIds
-                      : scope === 'current'
-                        ? [currentSlideId].filter(Boolean)
-                        : deckSlides.map((s) => s.id)
-                  }
-                  onChange={(newIds) => {
-                    setSelectedIds(newIds)
-                    if (scope !== 'custom') setScope('custom')
-                  }}
-                  disabled={!canExport}
-                  onDone={() => setPickerOpen(false)}
-                />
-              ) : null}
-
-              <div className="ppt-export-download-mode-banner">
-                {isImage ? (
-                  selection.count === 1 ? (
-                    <>
-                      <FiImage size={18} className="ppt-export-mode-icon" />
-                      <div className="ppt-export-mode-text">
-                        <strong>Single image download</strong>
-                        <p>
-                          Page {pagesSummary.singlePageNum} will download directly as a single{' '}
-                          <code>.{selected === 'JPEG' ? 'jpg' : 'png'}</code> image ({pixels.width} × {pixels.height} px).
-                        </p>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <FiLayers size={18} className="ppt-export-mode-icon" />
-                      <div className="ppt-export-mode-text">
-                        <strong>ZIP archive download</strong>
-                        <p>
-                          {selection.count} pages will download as separate{' '}
-                          <code>.{selected === 'JPEG' ? 'jpg' : 'png'}</code> images packaged in a <code>.zip</code> file.
-                        </p>
-                      </div>
-                    </>
+            <section className="ppt-export-section" aria-labelledby="ppt-export-type-label">
+              <h4 id="ppt-export-type-label">File type</h4>
+              <div className="ppt-export-types" role="radiogroup" aria-labelledby="ppt-export-type-label">
+                {fileTypes.map((type) => {
+                  const active = selected === type.id
+                  return (
+                    <button
+                      key={type.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      className={`ppt-export-type ${active ? 'is-active' : ''}`}
+                      disabled={!canExport}
+                      onClick={() => setSelected(type.id)}
+                    >
+                      <FileBadge format={type.id} />
+                      <span className="ppt-export-type-text">
+                        <strong>{type.name}</strong>
+                        <em>{type.hint}</em>
+                      </span>
+                      {active ? (
+                        <span className="ppt-export-type-tick" aria-hidden>
+                          <FiCheck size={11} strokeWidth={3} />
+                        </span>
+                      ) : null}
+                    </button>
                   )
-                ) : selected === 'PDF' ? (
-                  <>
-                    <FiLayers size={18} className="ppt-export-mode-icon" />
-                    <div className="ppt-export-mode-text">
-                      <strong>Single PDF document</strong>
-                      <p>
-                        {selection.count} {selection.count === 1 ? 'page' : 'pages'} will be combined into a single PDF document.
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <FiLayers size={18} className="ppt-export-mode-icon" />
-                    <div className="ppt-export-mode-text">
-                      <strong>PowerPoint presentation</strong>
-                      <p>
-                        {selection.count} {selection.count === 1 ? 'slide' : 'slides'} will be exported into an editable PowerPoint deck.
-                      </p>
-                    </div>
-                  </>
-                )}
+                })}
               </div>
-            </div>
+            </section>
 
             {selected === 'PPTX' ? (
-              <div className="ppt-export-target">
-                <span className="ppt-export-target-label" id="ppt-export-target-label">
-                  Made for
-                </span>
-                <div className="ppt-export-tabs" role="radiogroup" aria-labelledby="ppt-export-target-label">
+              <section className="ppt-export-section" aria-labelledby="ppt-export-target-label">
+                <h4 id="ppt-export-target-label">Made for</h4>
+                <div className="ppt-export-segment" role="radiogroup" aria-labelledby="ppt-export-target-label">
                   {[
                     { id: 'powerpoint', label: 'PowerPoint' },
                     { id: 'google-slides', label: 'Google Slides' },
@@ -870,7 +521,7 @@ export default function ExportPresentationModal({
                       type="button"
                       role="radio"
                       aria-checked={pptxTarget === item.id}
-                      className={`ppt-export-tab ${pptxTarget === item.id ? 'is-active' : ''}`}
+                      className={pptxTarget === item.id ? 'is-active' : ''}
                       disabled={!canExport}
                       onClick={() => setPptxTarget(item.id)}
                     >
@@ -878,43 +529,51 @@ export default function ExportPresentationModal({
                     </button>
                   ))}
                 </div>
-                <p className="ppt-export-target-hint">
+                <p className="ppt-export-note">
                   {pptxTarget === 'google-slides'
                     ? 'Gradients and glow are kept as pictures, which Google Slides shows correctly.'
-                    : 'Gradients, glow and text effects stay editable in PowerPoint.'}
+                    : 'Text, shapes, charts and tables stay editable. Fonts are included.'}
                 </p>
-              </div>
+              </section>
+            ) : null}
+
+            {selected === 'PDF' ? (
+              <section className="ppt-export-section">
+                <h4>PDF</h4>
+                <p className="ppt-export-note">One page per slide. Text stays sharp and searchable, and links keep working.</p>
+              </section>
             ) : null}
 
             {isImage ? (
-              <div className="ppt-export-target">
-                <span className="ppt-export-target-label" id="ppt-export-size-label">
-                  Size
-                  <span className="ppt-export-target-value">
-                    {pixels.width} × {pixels.height} px
-                  </span>
-                </span>
-                <div className="ppt-export-tabs ppt-export-tabs--3" role="radiogroup" aria-labelledby="ppt-export-size-label">
-                  {IMAGE_SCALES.map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      role="radio"
-                      aria-checked={scale === s}
-                      className={`ppt-export-tab ${scale === s ? 'is-active' : ''}`}
-                      disabled={!canExport}
-                      onClick={() => setScale(s)}
-                    >
-                      {s}×
-                    </button>
-                  ))}
+              <section className="ppt-export-section" aria-labelledby="ppt-export-size-label">
+                <h4 id="ppt-export-size-label">Size</h4>
+                <div className="ppt-export-segment ppt-export-segment--sizes" role="radiogroup" aria-labelledby="ppt-export-size-label">
+                  {IMAGE_SCALES.map((s) => {
+                    const px = imagePixelSize(canvas, s)
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        role="radio"
+                        aria-checked={scale === s}
+                        className={scale === s ? 'is-active' : ''}
+                        disabled={!canExport}
+                        onClick={() => setScale(s)}
+                      >
+                        <strong>{s}×</strong>
+                        <em>
+                          {px.width} × {px.height}
+                        </em>
+                      </button>
+                    )
+                  })}
                 </div>
 
                 {selected === 'JPEG' ? (
-                  <label className="ppt-export-range">
-                    <span className="ppt-export-target-label">
+                  <label className="ppt-export-slider">
+                    <span className="ppt-export-slider-head">
                       Quality
-                      <span className="ppt-export-target-value">{quality}</span>
+                      <output>{quality}</output>
                     </span>
                     <input
                       type="range"
@@ -923,74 +582,148 @@ export default function ExportPresentationModal({
                       step={1}
                       value={quality}
                       disabled={!canExport}
+                      style={{ '--fill': `${((quality - 60) / 40) * 100}%` }}
                       onChange={(e) => setQuality(Number(e.target.value))}
                     />
+                    <span className="ppt-export-slider-ends">
+                      <span>Smaller file</span>
+                      <span>Best quality</span>
+                    </span>
                   </label>
                 ) : (
-                  <label className="ppt-export-check">
+                  <label className="ppt-export-switch-row">
+                    <span>
+                      <strong>Transparent background</strong>
+                      <em>Leave the slide background out</em>
+                    </span>
                     <input
                       type="checkbox"
+                      role="switch"
                       checked={transparent}
                       disabled={!canExport}
                       onChange={(e) => setTransparent(e.target.checked)}
                     />
-                    <span>
-                      <strong>Transparent background</strong>
-                      <em>Leaves the slide background out.</em>
-                    </span>
+                    <span className="ppt-export-switch" aria-hidden />
                   </label>
                 )}
-              </div>
+              </section>
             ) : null}
+
+            <section ref={pagesRef} className="ppt-export-section ppt-export-section--pages" aria-labelledby="ppt-export-pages-label">
+              <h4 id="ppt-export-pages-label">
+                Pages
+                <span>{pagesLine}</span>
+              </h4>
+              <div
+                className={`ppt-export-segment ppt-export-segment--${scopes.length}`}
+                role="radiogroup"
+                aria-labelledby="ppt-export-pages-label"
+              >
+                {scopes.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={scope === item.id}
+                    className={scope === item.id ? 'is-active' : ''}
+                    disabled={!canExport}
+                    onClick={() => chooseScope(item.id)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+              {scope === 'custom' ? (
+                <ExportSlidePicker deck={pickerDeck} selectedIds={selectedIds} onChange={setSelectedIds} disabled={!canExport} />
+              ) : null}
+            </section>
+          </div>
+        ) : (
+          <div className="ppt-export-status" role="status">
+            <div className="ppt-export-status-icon">
+              <FileBadge format={selected} size="lg" />
+              {phase === 'done' ? (
+                <span className="ppt-export-status-done" aria-hidden>
+                  <FiCheck size={14} strokeWidth={3} />
+                </span>
+              ) : null}
+            </div>
+            {phase === 'done' ? (
+              <>
+                <strong>{statusText}</strong>
+                <p className="ppt-export-status-file">{downloadFilename}</p>
+                <p>Your download should start by itself. If it didn&apos;t, click Download again.</p>
+              </>
+            ) : (
+              <>
+                <strong>Preparing your {typeInfo.name}</strong>
+                <p>{statusText}</p>
+                {percent != null ? (
+                  <span
+                    className="ppt-export-bar is-determinate"
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={progress.total}
+                    aria-valuenow={progress.done}
+                    aria-label={`Page ${progress.done} of ${progress.total}`}
+                  >
+                    <i style={{ width: `${percent}%` }} />
+                  </span>
+                ) : (
+                  <span className="ppt-export-bar" />
+                )}
+              </>
+            )}
           </div>
         )}
 
-        {!canExport ? (
-          <p className="ppt-export-hint">Save this presentation before exporting.</p>
-        ) : null}
-
         <footer className="ppt-export-foot">
-          <button
-            type="button"
-            className="ppt-editor-modal-btn ppt-editor-modal-btn--ghost"
-            onClick={onClose}
-            disabled={busy}
-          >
-            {phase === 'done' ? 'Close' : 'Cancel'}
-          </button>
-          {phase === 'done' && downloadUrl ? (
-            <a
-              className="ppt-editor-modal-btn ppt-editor-modal-btn--primary"
-              href={downloadUrl}
-              download={downloadFilename || undefined}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => {
-                e.preventDefault()
-                triggerFileDownload(downloadUrl, downloadFilename)
-              }}
-            >
-              <FiDownload size={16} /> Download
-            </a>
-          ) : (
+          <p className="ppt-export-summary">
+            {!canExport ? 'Save this presentation before exporting.' : phase === 'pick' ? outputLine : ''}
+          </p>
+          <div className="ppt-export-actions">
             <button
               type="button"
-              className="ppt-editor-modal-btn ppt-editor-modal-btn--primary"
-              disabled={!canExport || busy || Boolean(selection.error)}
-              title={selection.error || undefined}
-              onClick={runExport}
+              className="ppt-editor-modal-btn ppt-editor-modal-btn--ghost"
+              onClick={onClose}
+              disabled={busy}
             >
-              {busy ? (
-                <>
-                  <FiLoader className="ppt-export-spinner" size={16} /> Exporting…
-                </>
-              ) : (
-                <>
-                  <FiDownload size={16} /> {selection.count > 0 ? `${meta.cta} (${selection.count})` : meta.cta}
-                </>
-              )}
+              {phase === 'done' ? 'Close' : 'Cancel'}
             </button>
-          )}
+            {phase === 'done' && downloadUrl ? (
+              <a
+                className="ppt-editor-modal-btn ppt-editor-modal-btn--primary"
+                href={downloadUrl}
+                download={downloadFilename || undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => {
+                  e.preventDefault()
+                  triggerFileDownload(downloadUrl, downloadFilename)
+                }}
+              >
+                <FiDownload size={16} /> Download
+              </a>
+            ) : (
+              <button
+                type="button"
+                className="ppt-editor-modal-btn ppt-editor-modal-btn--primary"
+                disabled={!canExport || busy || Boolean(selection.error)}
+                title={selection.error || undefined}
+                onClick={runExport}
+              >
+                {busy ? (
+                  <>
+                    <FiLoader className="ppt-export-spinner" size={16} /> Exporting…
+                  </>
+                ) : (
+                  <>
+                    <FiDownload size={16} /> Download
+                  </>
+                )}
+              </button>
+            )}
+          </div>
         </footer>
       </div>
     </div>

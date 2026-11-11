@@ -72,9 +72,35 @@ export function exportFileBase(name) {
   )
 }
 
-/** `<Deck>-slide-03.png`, numbered by the slide's position in the deck (same as the server). */
+/**
+ * A slide image inside a multi-page download, named the way Canva names pages: `3.png`, the
+ * slide's page number in the deck (same as the server). The zip carries the deck name.
+ */
 export function slideImageFilename(deckName, position, ext) {
-  return `${exportFileBase(deckName)}-slide-${String(position).padStart(2, '0')}.${ext}`
+  return `${Math.max(1, Math.round(Number(position)) || 1)}.${ext}`
+}
+
+const FILE_EXT = { PPTX: 'pptx', PDF: 'pdf', PNG: 'png', JPEG: 'jpg' }
+
+/**
+ * The downloaded file's name, as Canva names downloads: the deck name, plus `.zip` when several
+ * slide images come together (`Deck.zip` holding `1.png`, `3.png`…), else the format's extension.
+ */
+export function exportDownloadName(deckName, format, count = 1) {
+  const ext = FILE_EXT[format] || 'pptx'
+  const isImage = format === 'PNG' || format === 'JPEG'
+  return `${exportFileBase(deckName)}.${isImage && count > 1 ? 'zip' : ext}`
+}
+
+/** One line under the export button saying what the download will be. */
+export function exportOutputSummary({ format, count = 0, pixels = null } = {}) {
+  const n = Math.max(0, Number(count) || 0)
+  const size = pixels ? ` · ${pixels.width} × ${pixels.height}` : ''
+  if (!n) return 'Choose at least one page'
+  if (format === 'PPTX') return `Editable .pptx · ${n} slide${n === 1 ? '' : 's'}`
+  if (format === 'PDF') return `One .pdf · ${n} page${n === 1 ? '' : 's'}`
+  const ext = format === 'JPEG' ? 'jpg' : 'png'
+  return n === 1 ? `1 .${ext} image${size}` : `${n} .${ext} images in a .zip${size}`
 }
 
 /** Pixel size of a slide image: the canvas size times the chosen scale. */
@@ -110,6 +136,15 @@ export function extractSlideElements(slide) {
   return []
 }
 
+/** Shorten at a word boundary, with an ellipsis: "Our Journey Through a…" (never mid-word). */
+export function shortTitle(text, max = 60) {
+  const clean = String(text || '').trim().replace(/\s+/g, ' ')
+  if (clean.length <= max) return clean
+  const cut = clean.slice(0, max)
+  const space = cut.lastIndexOf(' ')
+  return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,.;:–—-]+$/, '')}…`
+}
+
 /**
  * Extract a concise title or heading text from a slide's elements for Canva-style list displays.
  * Never throws: falls back gracefully to "Slide N".
@@ -120,7 +155,7 @@ export function getSlideTitle(slide, index = 0) {
     if (typeof slide.title === 'string') {
       const clean = slide.title.trim().replace(/\s+/g, ' ')
       if (clean && clean.toLowerCase() !== 'untitled presentation' && clean.toLowerCase() !== 'untitled') {
-        return clean.slice(0, 50)
+        return shortTitle(clean)
       }
     }
     const elements = extractSlideElements(slide)
@@ -140,7 +175,7 @@ export function getSlideTitle(slide, index = 0) {
           ? titleEl.content.runs.map((r) => r?.text || '').join('').trim().replace(/\s+/g, ' ')
           : '')
       if (text && text.toLowerCase() !== 'untitled presentation' && text.toLowerCase() !== 'untitled') {
-        return text.slice(0, 50)
+        return shortTitle(text)
       }
     }
   } catch (err) {
