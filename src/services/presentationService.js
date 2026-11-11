@@ -679,17 +679,51 @@ class PresentationService {
 
   // ── Export ─────────────────────────────────────────────────────────
 
-  startExport(workspaceId, presentationId, { format = 'PPTX', slideId = null, pptxTarget = null } = {}) {
+  /**
+   * Start a server export.
+   * @param {object} opts
+   * @param {string[] | null} [opts.slideIds]  the slides to export (deck order is kept); null = all
+   * @param {string | null} [opts.slideId]  one slide (older form of slideIds)
+   * @param {'powerpoint' | 'google-slides'} [opts.pptxTarget]  PPTX only
+   * @param {1 | 2 | 3} [opts.scale]  PNG / JPEG size
+   * @param {number} [opts.quality]  JPEG quality, 60–100
+   * @param {boolean} [opts.transparent]  PNG without the slide background
+   */
+  startExport(
+    workspaceId,
+    presentationId,
+    {
+      format = 'PPTX',
+      slideId = null,
+      slideIds = null,
+      pptxTarget = null,
+      scale = null,
+      quality = null,
+      transparent = null,
+    } = {}
+  ) {
+    const isImage = format === 'PNG' || format === 'JPEG'
     return this.request(API_CONFIG.ENDPOINTS.PRESENTATIONS.EXPORT(workspaceId, presentationId), {
       method: 'POST',
-      // Omit slideId for whole-deck exports (backend treats missing/null as all slides).
+      // Omit the selection for whole-deck exports (the backend treats it as all slides).
       body: JSON.stringify({
         format,
-        ...(slideId ? { slideId } : {}),
+        ...(Array.isArray(slideIds) && slideIds.length ? { slideIds } : slideId ? { slideId } : {}),
         // PPTX: 'powerpoint' | 'google-slides'
         ...(format === 'PPTX' && pptxTarget ? { pptxTarget } : {}),
+        ...(isImage && scale ? { scale } : {}),
+        ...(format === 'JPEG' && quality ? { quality } : {}),
+        ...(format === 'PNG' && transparent ? { transparent: true } : {}),
       }),
     })
+  }
+
+  /** Charge the export fee for slide images made in the browser (once per downloadId). */
+  chargeBrowserExport(workspaceId, presentationId, { format, slideIds, downloadId }) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.EXPORT_BROWSER(workspaceId, presentationId),
+      { method: 'POST', body: JSON.stringify({ format, slideIds, downloadId }) }
+    )
   }
 
   getExportStatus(workspaceId, presentationId, exportId) {

@@ -1492,6 +1492,209 @@
   min-width: 140px;
 }
 
+/* Three-way switches (slide scope, image size). */
+.ppt-export-tabs--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.ppt-export-tabs--1 {
+  grid-template-columns: 1fr;
+}
+
+.ppt-export-target-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ppt-export-target-value {
+  font-weight: 500;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Wider while picking slides, so the thumbnails are big enough to recognise. */
+.ppt-editor-modal.ppt-export-modal.is-picking {
+  width: min(560px, 100%);
+}
+
+.ppt-export-picker {
+  display: grid;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.ppt-export-picker-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ppt-export-picker-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  font-variant-numeric: tabular-nums;
+}
+
+.ppt-export-picker-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.ppt-export-picker-actions button {
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ppt-export-picker-actions button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ppt-export-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 10px;
+  max-height: 264px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px;
+}
+
+.ppt-export-thumb {
+  display: grid;
+  gap: 4px;
+  justify-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.ppt-export-thumb-frame {
+  position: relative;
+  display: block;
+  width: 132px;
+  overflow: hidden;
+  border-radius: 0;
+  background: #f1f5f9;
+  outline: 1px solid #e2e8f0;
+  outline-offset: 0;
+}
+
+.ppt-export-thumb.is-checked .ppt-export-thumb-frame {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.ppt-export-thumb:focus-visible .ppt-export-thumb-frame {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+.ppt-export-thumb-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  pointer-events: none;
+}
+
+.ppt-export-thumb-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  border: 1.5px solid #cbd5e1;
+  background: rgba(255, 255, 255, 0.92);
+  color: #fff;
+  z-index: 1;
+}
+
+.ppt-export-thumb-check.is-on {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.ppt-export-thumb-num {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.ppt-export-picker-tip,
+.ppt-export-picker-empty {
+  margin: 0;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.ppt-export-range {
+  display: grid;
+  gap: 6px;
+}
+
+.ppt-export-range input[type='range'] {
+  width: 100%;
+  accent-color: var(--primary);
+}
+
+.ppt-export-check {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  cursor: pointer;
+}
+
+.ppt-export-check input {
+  width: 16px;
+  height: 16px;
+  margin: 2px 0 0;
+  accent-color: var(--primary);
+}
+
+.ppt-export-check strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.ppt-export-check em {
+  display: block;
+  font-style: normal;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* Browser image export: a real percentage. */
+.ppt-export-bar.is-determinate::after {
+  content: none;
+}
+
+.ppt-export-bar.is-determinate > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+  transition: width 0.25s ease;
+}
+
 /* Phones: tighter padding, full-width buttons. */
 @media (max-width: 520px) {
   .ppt-editor-modal-overlay:has(.ppt-export-modal) {
