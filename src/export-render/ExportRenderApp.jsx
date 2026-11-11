@@ -1,21 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import PptCanvasElement from '../pages/Slides/AIPptComponents/PptCanvasElement'
-import { EDITOR_STAGE_WIDTH, resolveStageElements } from '../utils/slideStageElements'
-import {
-  extractSlidesFromPresentation,
-  getSlideImage,
-  resolveCanvasSize,
-  resolveSlideStageBackground,
-} from '../utils/presentationHelpers'
-import { rethemeSlidesGraphicElements } from '../utils/rethemeGraphicElements'
-import { resolveThemeVisual } from '../utils/pptThemeVisual'
 import {
   collectSlideFontFamilies,
   ensureElementFontsLoaded,
   ensureFontCssUrl,
   ensureThemeFontsLoaded,
-  themeFontFamilies,
 } from '../utils/googleFonts'
+import ExportSlide from './ExportSlide'
+import { prepareDeck } from './exportDeck'
 import {
   isolateForCapture,
   measureTables,
@@ -27,116 +18,9 @@ import {
 /**
  * Bumped when the page's contract with the backend changes (payload, measure() output).
  * The backend refuses a renderer older than the version it needs.
+ * 2: `transparent` in the render payload leaves slide backgrounds out (transparent PNG).
  */
-export const EXPORT_RENDERER_VERSION = 1
-
-/**
- * Same frame the editor / Present put around each element: %-positioned on the slide, rotated
- * about its centre, layered by `layer`.
- */
-function ExportElement({ el, palette, canvas }) {
-  const p = el.placement || {}
-  const rotation = Number(p.rotation) || 0
-  return (
-    <div
-      data-export-el={el.id}
-      style={{
-        position: 'absolute',
-        left: `${((p.x || 0) / canvas.width) * 100}%`,
-        top: `${((p.y || 0) / canvas.height) * 100}%`,
-        width: `${((p.width || 100) / canvas.width) * 100}%`,
-        height: `${((p.height || 40) / canvas.height) * 100}%`,
-        opacity: p.opacity != null ? p.opacity : 1,
-        zIndex: el.layer || 0,
-        transform: rotation ? `rotate(${rotation}deg)` : undefined,
-        transformOrigin: 'center center',
-      }}
-    >
-      <PptCanvasElement
-        el={el}
-        palette={palette}
-        editable={false}
-        showEmptyTextHint={false}
-        canvasW={canvas.width}
-      />
-    </div>
-  )
-}
-
-/**
- * The elements the editor draws on a slide: after slide normalisation, re-theming, layout
- * finishing (custom chart layouts), and without the ones it doesn't paint (background
- * elements, ghost rings, stray scrims). Groups draw nothing themselves.
- */
-function stageElementsOf(slide, aspectRatio, palette) {
-  const canvas = resolveCanvasSize(slide, aspectRatio)
-  return { canvas, elements: resolveStageElements(slide, canvas, palette).filter((el) => el.type !== 'group') }
-}
-
-/**
- * One slide at the editor's stage width (900px), exactly as the editor and Present lay it out,
- * so fit-to-box text shrinks to the same size it has in the editor.
- */
-function ExportSlide({ slide, stage, themeVisual, fontVars }) {
-  const palette = themeVisual?.palette || null
-  const { canvas, elements } = stage
-  const stageHeight = (EDITOR_STAGE_WIDTH * canvas.height) / canvas.width
-  const background = resolveSlideStageBackground(slide, themeVisual?.inner || '#fff', palette)
-  const fallbackImage = elements.length ? null : getSlideImage(slide).url
-
-  return (
-    <section
-      className="export-slide"
-      data-slide-id={slide.id}
-      data-canvas-width={canvas.width}
-      data-canvas-height={canvas.height}
-      style={{
-        width: EDITOR_STAGE_WIDTH,
-        height: stageHeight,
-        ...background,
-        ...fontVars,
-        color: themeVisual?.body,
-      }}
-    >
-      {elements.length ? (
-        elements.map((el) => <ExportElement key={el.id} el={el} palette={palette} canvas={canvas} />)
-      ) : (
-        <div className="export-slide-fallback">
-          <h1 style={{ color: themeVisual?.title }}>{slide?.title || slide?.content?.title || ''}</h1>
-          {fallbackImage ? <img src={fallbackImage} alt="" /> : null}
-        </div>
-      )}
-    </section>
-  )
-}
-
-function prepareDeck(payload) {
-  const deck = payload?.deck || {}
-  const aspectRatio = deck.aspectRatio || '16:9'
-  const themeTokens = deck.themeTokens || null
-  let slides = extractSlidesFromPresentation({ deck: { ...deck, aspectRatio } })
-  slides = rethemeSlidesGraphicElements(slides, themeTokens)
-  const wanted = Array.isArray(payload?.slideIds) && payload.slideIds.length ? new Set(payload.slideIds) : null
-  if (wanted) slides = slides.filter((s) => wanted.has(s.id))
-  const themeVisual = resolveThemeVisual(themeTokens?.wizardColorThemeId || deck.theme, themeTokens)
-  const { headerFont, bodyFont } = themeFontFamilies(themeTokens)
-  // Resolved once per job: layout finishing mints new element ids on every run, so the slides
-  // drawn, measured and handed to the backend (stageSlides) must all share this one result.
-  const palette = themeVisual?.palette || null
-  const stages = Object.fromEntries(slides.map((slide) => [slide.id, stageElementsOf(slide, aspectRatio, palette)]))
-  return {
-    aspectRatio,
-    slides,
-    stages,
-    themeTokens,
-    fontCssUrl: deck.fontCssUrl || null,
-    themeVisual,
-    fontVars: {
-      '--ppt-font-heading': `"${headerFont}", sans-serif`,
-      '--ppt-font-body': `"${bodyFont}", sans-serif`,
-    },
-  }
-}
+export const EXPORT_RENDERER_VERSION = 2
 
 export default function ExportRenderApp() {
   const [job, setJob] = useState(null)
@@ -243,6 +127,7 @@ export default function ExportRenderApp() {
           stage={job.stages[slide.id]}
           themeVisual={job.themeVisual}
           fontVars={job.fontVars}
+          transparent={job.transparent}
         />
       ))}
     </div>

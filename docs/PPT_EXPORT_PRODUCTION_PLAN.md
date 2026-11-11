@@ -8,7 +8,7 @@
 |---|---|---|
 | 0 | Baseline and measurement (test decks, fidelity harness) | ✅ Done · production failure data still to pull (0.1) |
 | 1 | Hotfixes: Chrome and fonts in Docker, heartbeat, zip name, limit on exports running at once, save before export | ✅ Code done · staging check pending |
-| 2 | Canva-style slide picker and image download options | Not started |
+| 2 | Canva-style slide picker and image download options | ✅ Code done 2026-11-11: slide picker for every format, image size / quality / transparency, remembered choices, images made in the browser with server fallback, credits per download, F26–F29 · staging check pending |
 | 3 | One renderer: PDF and images drawn by the editor's own page | ✅ Code done (except 3.4 and part of 3.8) · staging check pending |
 | 4 | PPTX that matches the editor in PowerPoint and Google Slides | ✅ Code done (22 of 24; groups and the dialog report are optional), plus fixes F13–F21 from real decks · F22–F23 open · check in real PowerPoint / Google Slides pending |
 | 5 | Fonts in PowerPoint | ✅ Code done 2026-11-06: fonts embedded in the PPTX, the font the editor drew, the editor's font rule, theme fonts · check in real PowerPoint (Windows / Mac) pending |
@@ -216,41 +216,46 @@ Small, safe fixes that ship immediately, before the larger rework.
 
 ---
 
-### Phase 2: Canva-style slide selection and image download (M)
+### Phase 2: Canva-style slide selection and image download (M) — code done 2026-11-11, staging check pending
+
+**What changed for users:** the Export dialog has a **Slides** choice for every format: **All slides**, **Current slide**, or **Select slides**. Select slides shows a grid of thumbnails with a checkbox on each, Select all, Clear, shift-click for a range, and a "3 of 12 slides" count. PNG and JPEG also get a **size** (1×, 2× or 3×, shown in pixels), a **JPEG quality** slider (60–100, default 90) and a **transparent background** option for PNG. The dialog remembers the last choices for each deck. Slide images are made **in the browser** when it can, with a "Drawing slide 3 of 8" progress bar. Otherwise the server makes them, with the same result.
 
 **UX: the Export dialog**
-- [ ] **2.1** Add a slide picker that applies to every format:
-  - **All slides** · **Current slide** · **Select slides**.
-  - "Select slides" opens a grid of slide thumbnails (reuse `MinimapSlidePreview`) with a checkbox on each, plus Select all, Clear and shift-click to select a range. A counter shows, for example, "5 of 12 slides".
-- [ ] **2.2** Add image options:
-  - format PNG / JPEG;
-  - **size** 1× / 2× / 3×, showing the result in pixels, for example 1920×1080;
-  - **JPEG quality** slider (default 90);
-  - **PNG transparent background** (off by default; it hides the slide background).
-- [ ] **2.3** Downloads:
-  - one slide → a single image;
-  - several slides → `<Deck name>.zip` with files named `<Deck>-01.png`, numbered in deck order.
-- [ ] **2.4** Remember the last chosen format, size and selection for each deck (in localStorage, read and written inside try/catch).
+- [x] **2.1** Slide picker for every format: All slides · Current slide · Select slides. *(done: `ExportSlidePicker.jsx`. Thumbnails are drawn by the export renderer itself (`ExportSlide`), so they show what the file will contain; each is drawn when it scrolls into view. "Current slide" appears only where there is one: the selected slide in the editor, the slide on screen in My Work. Opening "Select slides" with nothing ticked starts from the current slide. With nothing ticked, Export is disabled.)*
+- [x] **2.2** Image options: format, size 1× / 2× / 3× with the pixel size, JPEG quality, PNG transparent background. *(done; transparent leaves the slide background out, elements keep their own fills)*
+- [x] **2.3** Downloads: one slide → a single image; several → `<Deck name>.zip`. *(done. Files inside are named `<Deck>-slide-03.png` by deck position, the same names the server already used (Phase 1), not `<Deck>-03.png`.)*
+- [x] **2.4** Remember the last format, size, quality, transparency, scope and selection per deck. *(done: `localStorage` key `athena.pptExport.<deckId>`, read and written inside try/catch, cleaned up on load; slides no longer in the deck are dropped)*
 
 **Client-side capture (D3)**
-- [ ] **2.5** Pull the shared parts out of `src/pages/CanvasEditor/canvasExportCapture.js` and `canvasExport.js` (capture node, wait for images, probe for blocked images, zip) into `src/utils/export/`. The Canvas editor and the PPT editor both use that code.
-- [ ] **2.6** Render the selected slides off-screen at the canvas size with `PptCanvasElement` (the same component as Present), capture each one, and report progress per slide ("Slide 3 of 8").
-- [ ] **2.7** When an image is blocked (tainted canvas), send just those slides to the server job (`slideIds`) and merge the results into the zip.
+- [x] **2.5** Shared export helpers in `src/utils/export/`. *(done: `zip.js` (zip writer, plus a reader), `capture.js` (image probe, wait for images, data URL to Blob), `slideSelection.js` (selection, range select, file names, pixel size, saved choices). The Canvas editor now imports them from there.)*
+- [x] **2.6** Draw the chosen slides off-screen and capture each one, with progress per slide. *(done: `src/export-render/browserSlideCapture.jsx`. Each slide is drawn by `ExportSlide`, the component the server's render page uses (moved out of `ExportRenderApp` into `ExportSlide.jsx` + `exportDeck.js`). The page waits with the render page's own `settleExportPage`, then html-to-image draws it. The deck is fetched fresh after the save, so it is the same deck the server would export.)*
+- [x] **2.7** Blocked pictures fall back to the server. *(done differently: if any picture on any chosen slide can't be read (CORS) or didn't load, the **whole selection** is exported on the server, not just those slides. This gives one file and one charge, and doesn't depend on reading the server's file from S3 in the browser to merge it. Very large image exports also go to the server: slide count × scale² above 40 (a 40-slide deck at 1×, 10 slides at 2×, 4 at 3×) to keep browser memory bounded. Any other browser error falls back to the server too; only "no credits", 401, 403 and 404 stop the export.)*
 
 **Backend**
-- [ ] **2.8** Accept `slideIds: string[]` in `exportDeckSchema`, keeping `slideId` for older clients. `buildPptxBuffer`, `buildPdfBuffer` and `buildRasterExport` filter by the list and keep deck order.
-- [ ] **2.9** Accept `scale` (1–3), `quality` (60–100) and `transparent` for PNG/JPEG; set `deviceScaleFactor` and `omitBackground` from them.
-- [ ] **2.10** Credits: decide whether client-side image downloads cost credits (see the open questions). If they do, add a lightweight "charge" endpoint with an idempotency key.
+- [x] **2.8** `slideIds: string[]` in `exportDeckSchema` (1 to 40, no repeats); `slideId` still works. PPTX, PDF (render page and fallback renderer) and PNG/JPEG keep deck order. *(done: `selectExportSlides` in `export.service.js`; an id not in the deck is a 404 before anything is queued)*
+- [x] **2.9** `scale` (1–3), `quality` (60–100) and `transparent` for PNG/JPEG. *(done: render page `deviceScaleFactor` and `omitBackground`; the page leaves slide backgrounds out (renderer version 2). The fallback renderer honours scale and quality; it ignores transparent.)*
+- [x] **2.10** Credits (Q1). *(decided: the same flat export fee as a server export, charged once per download. `POST /presentations/:id/export/browser` with `{ format, slideIds, downloadId }`; the idempotency key is `ppt:export:browser:<deckId>:<downloadId>`. It checks the slides exist and that the workspace can afford it. When the export falls back to the server, only the server job charges.)*
 
 **Tests**
-- [ ] Unit tests: selection helpers (all / current / chosen, deck order kept, range select) and file names.
-- [ ] Backend tests: `slideIds` validation (unknown id → 404, empty list → 400) and filtering for each format.
-- [ ] Browser test (Puppeteer, port 5199): select slides 2, 4 and 5 → PNG 2× → the zip has 3 files of 3840×2160 that match the editor screenshots.
+- [x] Unit tests: selection (all / current / chosen, deck order, every slide = whole deck), shift-click ranges, file names, pixel sizes, the memory budget, saved choices (bad values, blocked storage, broken JSON), zip round trip. *(`src/utils/export/slideSelection.test.mjs`, 13 tests)*
+- [x] Backend tests: `slideIds` / `scale` / `quality` / `transparent` validation, the browser charge schema, selection order, option clamping, a 404 for an unknown slide, the browser charge (idempotency key, refused when it can't be afforded, PNG/JPEG only), and real renders: slides 2, 4 and 5 at 2× (3 files, 1920 × 1080 from a 960 × 540 canvas, named by position), JPEG quality, PDF and PPTX with a subset. *(`test/exportSelection.test.js` 6 tests, `test/exportValidation.test.js` +3)*
+- [x] Browser test of the dialog (Puppeteer, port 5199, a real deck, API stubbed): 15 checks. They cover the pixel size label; Current slide; the picker starting from it; shift-click range; toggle; Clear disabling Export; save before export; one charge for the right slides; no server job; the downloaded `.zip` and its file names; 1920 × 1080 PNGs; and the remembered choices.
+- [x] Options on a real deck, server and browser: 2× → 3840 × 2160, transparent PNG (corner alpha 0, content kept), JPEG quality, PDF and PPTX subsets.
+
+**Found while doing Phase 2 (all fixed):**
+- **F26: fit-to-box text could be sized for the fallback font, in the editor and in exports.** `PptCanvasElement` refits once on `document.fonts.ready`. When a font's stylesheet arrives after the slide first draws, that promise has nothing to wait for, so the text keeps the size computed with the fallback font. It now also refits on the `loadingdone` font event. On a fresh page (every server export) a heading drew at 9.9px where the loaded font gives 11.9px.
+- **F27: html-to-image rounds every font size down and subtracts 0.1px** when it copies styles (40.32px → 39.9px), which undoes fit-to-box and re-wraps text. The browser capture records each element's exact size and puts it back in the SVG before drawing (`drawNode`).
+- **F28: html-to-image's own font embedding** left out families named in a font stack (a Nunito heading drew in a fallback) and embedded every weight and language subset of others (about 4 MB per slide). `fontEmbed.js` embeds only the families, weights and character subsets a slide draws, and downloads each font file once per export.
+- **F29:** the browser capture lost the deck's font stylesheet (`fontCssUrl`, weights up to 800), so headings drew in the 700 face. It now uses the same stylesheet as the editor.
+- **S3 CORS (deploy note):** the browser can only read pictures from origins listed in the bucket's CORS rules. The dev bucket lists the production and render sites plus `http://localhost:9000`, but not `localhost:5173`, so in local development image exports always fall back to the server. **Keep every app origin in the production bucket's CORS (GET)**, or every image export will run on the server.
+
+**Measured (2026-11-11, dev build, 3 real decks, 22 slides):** browser images against the server's render page: SSIM **0.985–1.000** on every slide. Speed in the dev build: 2–7 s per slide (waiting for pictures and fonts, then drawing), about the same as the server job, but with no queue, no server load and a real progress bar. All formats on the 3 decks still pass (PPTX for both targets, PDF, PNG/JPEG zips, single slides).
 
 **Checkpoint 2**
-- [ ] Any set of slides downloads as PNG or JPEG at 1×, 2× or 3× from both the editor and My Work.
-- [ ] The downloaded images match the editor (harness score ≥ 0.98 per slide).
-- [ ] PDF and PPTX respect the same slide selection.
+- [ ] Any set of slides downloads as PNG or JPEG at 1×, 2× or 3× from both the editor and My Work. *(done in code and in the browser test with a stubbed API; confirm signed in on staging)*
+- [x] The downloaded images match the editor (harness score ≥ 0.98 per slide). *(0.985–1.000 against the render page on 22 real slides)*
+- [x] PDF and PPTX respect the same slide selection.
+- [ ] On staging: a browser image export from the production origin doesn't fall back (S3 CORS allows it), and a fallback export charges once.
 
 ---
 
@@ -560,7 +565,7 @@ Scores for after Phase 4 are in `baselines/2026-11-06-after-phase-4.json`.
 
 | # | Question | Recommendation |
 |---|---|---|
-| Q1 | Should client-side image downloads cost credits like server exports? | Charge the same flat export fee once per download, so the client path isn't a way around it. Free is also reasonable for images, since they cost us nothing to make. This is a product decision. |
+| Q1 | Should client-side image downloads cost credits like server exports? | ✅ **Decided (Phase 2):** the same flat export fee, once per download, so billing is unchanged from server image exports. Easy to change: `chargeBrowserExport` in `export.service.js`. |
 | Q2 | Shape and background gradients show solid in Google Slides. Should they be pictures instead? | ✅ **Decided (Phase 4):** native for PowerPoint; the export dialog's "Made for: Google Slides" makes gradients, glow text and hollow text pictures. |
 | Q3 | Complex text effects (curved, glitch): a picture (looks right, not editable) or plain native text (editable, looks different)? | Picture, with the text kept in the speaker notes, and listed in the export report. |
 | Q4 | Should the export render page be served by the frontend (`EXPORT_RENDER_URL`) or bundled into the backend? | Frontend URL plus a version check: one renderer and one deploy. |

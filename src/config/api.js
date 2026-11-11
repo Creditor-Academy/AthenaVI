@@ -307,6 +307,8 @@ const API_CONFIG = {
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/slides/${slideId}/regenerate`,
       EXPORT: (workspaceId, presentationId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/export`,
+      EXPORT_BROWSER: (workspaceId, presentationId) =>
+        `/api/workspaces/${workspaceId}/presentations/${presentationId}/export/browser`,
       EXPORT_STATUS: (workspaceId, presentationId, exportId) =>
         `/api/workspaces/${workspaceId}/presentations/${presentationId}/export/${exportId}`,
       IMPORT: (workspaceId) => `/api/workspaces/${workspaceId}/presentations/import`,
