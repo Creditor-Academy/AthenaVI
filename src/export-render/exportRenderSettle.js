@@ -228,6 +228,9 @@ export function measureTextElements(root) {
         // The font it was drawn in, so PowerPoint gets the same one (and it is embedded).
         fontFamily: primaryFontFamily(style.fontFamily),
         overflow: text.scrollHeight > frame.clientHeight + 1,
+        // Height of all the text and of its box (stage px): PPTX grows the box to the text.
+        contentHeight: Math.round(text.scrollHeight * 100) / 100,
+        frameHeight: Math.round(frame.clientHeight * 100) / 100,
         // Rich text: each run as drawn (its own colour is contrast-adjusted by the editor too).
         runs: [...text.querySelectorAll('.ppt-rich-text > span, .ppt-rich-text > a')].map((node) => {
           const s = getComputedStyle(node)
@@ -237,6 +240,8 @@ export function measureTextElements(root) {
             fontFamily: primaryFontFamily(s.fontFamily),
             bold: Number(s.fontWeight) >= 600,
             italic: s.fontStyle === 'italic',
+            // Drawn size (stage px): a run can be bigger or smaller than the rest.
+            fontSize: Math.round(parseFloat(s.fontSize) * 100) / 100,
           }
         }),
       }
@@ -319,6 +324,145 @@ export function measureTables(root) {
       }
     })
     out[slideNode.dataset.slideId] = tables
+  })
+  return out
+}
+
+/** A computed corner radius (`12px`, `50%`, `50% 60%`) as [horizontal, vertical] px of a w × h box. */
+function cornerRadius(value, w, h) {
+  const parts = String(value || '0').trim().split(/\s+/)
+  const len = (v, ref) => (String(v).endsWith('%') ? (parseFloat(v) / 100) * ref : parseFloat(v) || 0)
+  return [round2(len(parts[0], w)), round2(len(parts[1] ?? parts[0], h))]
+}
+
+/**
+ * Shapes and picture frames as drawn, for native PPTX geometry: the box size, its corner radii
+ * and border (a CSS border sits inside the box), its clip-path, and for line shapes where the
+ * line runs. Sizes are stage px.
+ * @returns {Record<string, Record<string, object>>} by slide, then element id
+ */
+export function measureShapes(root) {
+  const out = {}
+  root?.querySelectorAll('.export-slide').forEach((slideNode) => {
+    const shapes = {}
+    slideNode.querySelectorAll('[data-export-el]').forEach((frame) => {
+      const node = frame.querySelector('[data-export-shape]')
+      if (!node) return
+      const s = getComputedStyle(node)
+      const w = node.offsetWidth
+      const h = node.offsetHeight
+      const kind = node.dataset.exportShape
+      const entry = {
+        kind,
+        w,
+        h,
+        frameW: frame.offsetWidth,
+        frameH: frame.offsetHeight,
+        borderWidth: round2(parseFloat(s.borderTopWidth) || 0),
+        borderStyle: s.borderTopStyle,
+        borderColor: paintedHex(s.borderTopColor),
+        // The clip-path the editor drew with (library shapes keep it in the library, not the element).
+        clipPath: node.dataset.exportClip || (s.clipPath && s.clipPath !== 'none' ? s.clipPath : null),
+      }
+      if (kind === 'line') {
+        // Where the line runs, in 0–1 of the frame (offsets are layout px, unaffected by rotation).
+        const fh = frame.offsetHeight || 1
+        const fw = frame.offsetWidth || 1
+        let top = 0
+        let left = 0
+        for (let n = node; n && n !== frame; n = n.offsetParent) {
+          top += n.offsetTop
+          left += n.offsetLeft
+        }
+        entry.line = {
+          y: round2((top + entry.borderWidth / 2) / fh),
+          x0: round2(left / fw),
+          x1: round2((left + w) / fw),
+        }
+      } else {
+        entry.radii = [s.borderTopLeftRadius, s.borderTopRightRadius, s.borderBottomRightRadius, s.borderBottomLeftRadius].map(
+          (v) => cornerRadius(v, w, h)
+        )
+      }
+      shapes[frame.dataset.exportEl] = entry
+    })
+    out[slideNode.dataset.slideId] = shapes
+  })
+  return out
+}
+
+/** Opacity of a node including its ancestors up to `stop`. */
+function effectiveOpacity(node, stop) {
+  let alpha = 1
+  for (let n = node; n && n !== stop; n = n.parentElement) alpha *= Number(getComputedStyle(n).opacity)
+  return round2(alpha)
+}
+
+/**
+ * A slide with no elements, as drawn (SlideMockFallback): each part's box in canvas px, and its
+ * text style. PPTX rebuilds it from this so it matches the editor.
+ * @returns {Record<string, object>} by slide id; slides with elements are left out
+ */
+export function measureFallback(root) {
+  const out = {}
+  root?.querySelectorAll('.export-slide').forEach((slideNode) => {
+    const mock = slideNode.querySelector('[data-export-fallback="slide"]')
+    if (!mock) return
+    const slideRect = slideNode.getBoundingClientRect()
+    const toCanvas = Number(slideNode.dataset.canvasWidth) / (slideRect.width || 1)
+    const box = (node) => {
+      const r = node.getBoundingClientRect()
+      return {
+        x: round2((r.left - slideRect.left) * toCanvas),
+        y: round2((r.top - slideRect.top) * toCanvas),
+        width: round2(r.width * toCanvas),
+        height: round2(r.height * toCanvas),
+      }
+    }
+    const text = (node) => {
+      const s = getComputedStyle(node)
+      return {
+        text: (node.textContent || '').trim(),
+        box: box(node),
+        fontSize: round2(parseFloat(s.fontSize)),
+        lineHeight: round2(parseFloat(s.lineHeight) || parseFloat(s.fontSize) * 1.2),
+        bold: Number(s.fontWeight) >= 600,
+        color: rgbToHex(s.color),
+        opacity: effectiveOpacity(node, slideNode),
+        fontFamily: primaryFontFamily(s.fontFamily),
+        marginBottom: round2(parseFloat(s.marginBottom) || 0),
+      }
+    }
+    const part = (name) => mock.querySelector(`[data-export-fallback="${name}"]`)
+    const items = [...mock.querySelectorAll('[data-export-fallback="item"]')]
+    const visual = part('visual')
+    const image = part('image')
+    const visualStyle = visual ? getComputedStyle(visual) : null
+    out[slideNode.dataset.slideId] = {
+      title: part('title') ? text(part('title')) : null,
+      body: part('body') ? text(part('body')) : null,
+      paragraph: part('paragraph') ? text(part('paragraph')) : null,
+      list: items.length
+        ? { box: box(items[0].parentElement), indent: round2(parseFloat(getComputedStyle(items[0].parentElement).paddingLeft) || 0), items: items.map(text) }
+        : null,
+      visual: visual
+        ? {
+            box: box(visual),
+            borderColor: rgbToHex(visualStyle.borderTopColor),
+            borderWidth: round2(parseFloat(visualStyle.borderTopWidth) || 0),
+            borderStyle: visualStyle.borderTopStyle,
+            radius: round2(parseFloat(visualStyle.borderTopLeftRadius) || 0),
+            opacity: effectiveOpacity(visual, slideNode),
+          }
+        : null,
+      image: image
+        ? {
+            box: box(image),
+            radius: round2(parseFloat(getComputedStyle(image).borderTopLeftRadius) || 0),
+            opacity: effectiveOpacity(image, slideNode),
+          }
+        : null,
+    }
   })
   return out
 }

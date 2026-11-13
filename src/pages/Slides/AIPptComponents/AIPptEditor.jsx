@@ -29,6 +29,7 @@ import { textElementsInDangerZone } from '../../../utils/slideTextSafeArea.js'
 import PresentMode from './PresentMode'
 import SharePresentationModal from './SharePresentationModal'
 import ExportPresentationModal from './ExportPresentationModal'
+import SlideMockFallback from './SlideMockFallback'
 import ConvertToTemplateModal from './ConvertToTemplateModal'
 import ImageCropModal from './ImageCropModal'
 import PptQuickMenu from './PptQuickMenu'
@@ -100,7 +101,6 @@ import {
   extractDeckPackId,
   extractAppliedBrandKitId,
   extractGenerationPrompt,
-  getSlideImage,
   normalizeElementPresets,
   normalizeApiShape,
   normalizeElementPlacement,
@@ -1002,7 +1002,6 @@ function SlideStage({
   // Same preparation Present uses (resolveStageElements), so both show the same slide.
   const elements = resolveStageElements(slide, canvas, palette)
   const hasElements = elements.length > 0
-  const fallbackImage = hasElements ? null : getSlideImage(slide).url
   const slideBgStyle = resolveSlideStageBackground(
     slide,
     themeVisual?.palette?.bg || themeVisual?.background || DEFAULT_SLIDE_BG,
@@ -1064,45 +1063,7 @@ function SlideStage({
             color: themeVisual.body,
           }}
         >
-          {!hasElements ? (
-            <div className="aig-slide-mock">
-              <h1 className="aig-slide-mock-title" style={{ color: themeVisual.title }}>
-                {coercePlainText(slide.title || slide.content?.title)}
-              </h1>
-              {(() => {
-                const body = coercePlainText(
-                  slide.subtitle ||
-                    slide.content?.subtitle ||
-                    slide.content?.body ||
-                    (typeof slide.content === 'string' ? slide.content : '')
-                )
-                return body ? <p className="aig-slide-mock-body">{body}</p> : null
-              })()}
-              {Array.isArray(slide.description) && slide.description.length ? (
-                <div className="aig-slide-mock-text" style={{ color: themeVisual.body }}>
-                  <ul style={{ paddingLeft: '32px', margin: 0 }}>
-                    {slide.description.map((pt, i) => {
-                      const line = coercePlainText(pt)
-                      return line ? (
-                        <li key={i} style={{ marginBottom: '12px' }}>
-                          {line}
-                        </li>
-                      ) : null
-                    })}
-                  </ul>
-                </div>
-              ) : coercePlainText(slide.description) ? (
-                <div className="aig-slide-mock-text" style={{ color: themeVisual.body }}>
-                  <p style={{ margin: 0 }}>{coercePlainText(slide.description)}</p>
-                </div>
-              ) : null}
-              {fallbackImage ? (
-                <div className="aig-slide-mock-visual">
-                  <img className="aig-slide-mock-image" src={fallbackImage} alt="" />
-                </div>
-              ) : null}
-            </div>
-          ) : null}
+          {!hasElements ? <SlideMockFallback slide={slide} themeVisual={themeVisual} /> : null}
         </div>
       </div>
       {/* Elements live outside the hard clip so selected overflow can paint

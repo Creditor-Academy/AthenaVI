@@ -9,6 +9,8 @@ import ExportSlide from './ExportSlide'
 import { prepareDeck } from './exportDeck'
 import {
   isolateForCapture,
+  measureFallback,
+  measureShapes,
   measureTables,
   measureTextElements,
   releaseCapture,
@@ -19,8 +21,9 @@ import {
  * Bumped when the page's contract with the backend changes (payload, measure() output).
  * The backend refuses a renderer older than the version it needs.
  * 2: `transparent` in the render payload leaves slide backgrounds out (transparent PNG).
+ * 3: measureShapes() and measureFallback(); measure() adds content height and run sizes.
  */
-export const EXPORT_RENDERER_VERSION = 2
+export const EXPORT_RENDERER_VERSION = 3
 
 export default function ExportRenderApp() {
   const [job, setJob] = useState(null)
@@ -72,6 +75,14 @@ export default function ExportRenderApp() {
       /** Tables as drawn (cells, sizes, colours, borders), by slide — for native PPTX tables. */
       measureTables() {
         return measureTables(rootRef.current)
+      },
+      /** Shapes and picture frames as drawn (radii, border, clip-path), by slide: PPTX geometry. */
+      measureShapes() {
+        return measureShapes(rootRef.current)
+      },
+      /** Slides with no elements, as drawn (title, text, image boxes), by slide. */
+      measureFallback() {
+        return measureFallback(rootRef.current)
       },
       /** Show only one element, or only a slide's background, for a picture capture. */
       isolate(target) {

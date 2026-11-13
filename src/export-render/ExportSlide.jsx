@@ -1,6 +1,7 @@
 import PptCanvasElement from '../pages/Slides/AIPptComponents/PptCanvasElement'
 import { EDITOR_STAGE_WIDTH } from '../utils/slideStageElements'
-import { getSlideImage, resolveSlideStageBackground } from '../utils/presentationHelpers'
+import { resolveSlideStageBackground } from '../utils/presentationHelpers'
+import SlideMockFallback from '../pages/Slides/AIPptComponents/SlideMockFallback'
 import './exportSlide.css'
 
 /**
@@ -46,7 +47,6 @@ export default function ExportSlide({ slide, stage, themeVisual, fontVars, trans
   const { canvas, elements } = stage
   const stageHeight = (EDITOR_STAGE_WIDTH * canvas.height) / canvas.width
   const background = transparent ? {} : resolveSlideStageBackground(slide, themeVisual?.inner || '#fff', palette)
-  const fallbackImage = elements.length ? null : getSlideImage(slide).url
 
   return (
     <section
@@ -65,10 +65,8 @@ export default function ExportSlide({ slide, stage, themeVisual, fontVars, trans
       {elements.length ? (
         elements.map((el) => <ExportElement key={el.id} el={el} palette={palette} canvas={canvas} />)
       ) : (
-        <div className="export-slide-fallback">
-          <h1 style={{ color: themeVisual?.title }}>{slide?.title || slide?.content?.title || ''}</h1>
-          {fallbackImage ? <img src={fallbackImage} alt="" /> : null}
-        </div>
+        // A slide with no elements: the same layout the editor shows.
+        <SlideMockFallback slide={slide} themeVisual={themeVisual} />
       )}
     </section>
   )
