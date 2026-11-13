@@ -1839,6 +1839,53 @@
   white-space: nowrap;
 }
 
+.ppt-export-status {
+  overflow-y: auto;
+  /* Centred, but scrolls from the top when the report makes it taller than the dialog. */
+  justify-content: safe center;
+}
+
+/* PPTX: what's in the file (editable, pictures and why, fonts). */
+.ppt-export-report {
+  display: grid;
+  gap: 6px;
+  width: min(440px, 100%);
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  list-style: none;
+  border: 1px solid var(--x-line);
+  border-radius: 12px;
+  background: var(--x-soft);
+  text-align: left;
+}
+
+.ppt-export-report li {
+  position: relative;
+  padding-left: 18px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--x-ink);
+}
+
+.ppt-export-report li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #16a34a;
+}
+
+.ppt-export-report li.is-info::before {
+  background: #64748b;
+}
+
+.ppt-export-report li.is-warn::before {
+  background: #d97706;
+}
+
 .ppt-export-bar {
   position: relative;
   display: block;

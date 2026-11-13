@@ -1145,6 +1145,7 @@ function PptCanvasElementBody({
 
     return (
       <div
+        data-export-shape="media"
         style={{
           ...fillStyle,
           overflow: 'hidden',
@@ -1324,7 +1325,8 @@ function PptCanvasElementBody({
             justifyContent: 'center',
           }}
         >
-          <div style={rendered.style} />
+          {/* data-export-shape: the export page measures what was drawn (PPTX geometry). */}
+          <div data-export-shape="line" style={rendered.style} />
         </div>
       )
     }
@@ -1339,7 +1341,7 @@ function PptCanvasElementBody({
       if (canSvg) {
         if (isGrad && !rendered.outlined) {
           return (
-            <div style={{ ...fillStyle, position: 'relative' }}>
+            <div data-export-shape="clip" data-export-clip={rendered.clipPath} style={{ ...fillStyle, position: 'relative' }}>
               <div
                 style={{
                   position: 'absolute',
@@ -1367,7 +1369,7 @@ function PptCanvasElementBody({
           )
         }
         return (
-          <div style={{ ...fillStyle, position: 'relative' }}>
+          <div data-export-shape="clip" data-export-clip={rendered.clipPath} style={{ ...fillStyle, position: 'relative' }}>
             <ClipShapeSvg
               clipPath={rendered.clipPath}
               fill={fillColor}
@@ -1385,14 +1387,14 @@ function PptCanvasElementBody({
         )
       }
       return (
-        <div style={{ ...fillStyle, ...rendered.style }}>
+        <div data-export-shape="clip" data-export-clip={rendered.clipPath} style={{ ...fillStyle, ...rendered.style }}>
           {inner}
         </div>
       )
     }
 
     return (
-      <div style={{ ...fillStyle, ...rendered.style }}>
+      <div data-export-shape="box" style={{ ...fillStyle, ...rendered.style }}>
         {inner}
       </div>
     )

@@ -22,6 +22,7 @@ import {
   slideImageFilename,
 } from '../../../utils/export/slideSelection'
 import { zipStoredFiles } from '../../../utils/export/zip'
+import { pptxReportLines } from '../../../utils/export/pptxReport'
 import ExportSlidePicker from './ExportSlidePicker'
 import './pptPanelUi.css'
 
@@ -159,6 +160,8 @@ export default function ExportPresentationModal({
   const [error, setError] = useState('')
   const [downloadUrl, setDownloadUrl] = useState('')
   const [downloadFilename, setDownloadFilename] = useState('')
+  // PPTX: what the file contains (editable, pictures and why, fonts), from the server.
+  const [report, setReport] = useState(null)
   const [loadedDeck, setLoadedDeck] = useState(null)
   const objectUrlRef = useRef(null)
   const unmountedRef = useRef(false)
@@ -293,7 +296,7 @@ export default function ExportPresentationModal({
     const serverExt = String(ready?.filename || ready?.s3Key || '').match(/\.([a-z0-9]{2,5})$/i)?.[1]
     const ext = String(serverExt || '').toLowerCase().replace('jpeg', 'jpg')
     const filename = ext ? `${exportFileBase(title)}.${ext}` : exportDownloadName(title, selected, selection.count)
-    return { url, filename }
+    return { url, filename, report: selected === 'PPTX' ? ready?.report || null : null }
   }, [workspaceId, presentationId, selected, selection.slideIds, selection.count, pptxTarget, isImage, scale, quality, transparent, exportTimeoutMs, title])
 
   /**
@@ -363,6 +366,7 @@ export default function ExportPresentationModal({
     setPhase('working')
     setError('')
     setDownloadUrl('')
+    setReport(null)
     setProgress(null)
 
     try {
@@ -406,6 +410,7 @@ export default function ExportPresentationModal({
 
       setDownloadUrl(result.url)
       setDownloadFilename(result.filename)
+      setReport(result.report || null)
       setStatusText('Your download is ready')
       setProgress(null)
       setPhase('done')
@@ -450,6 +455,7 @@ export default function ExportPresentationModal({
     { id: 'custom', label: 'Choose pages' },
   ]
   const outputLine = exportOutputSummary({ format: selected, count: selection.count, pixels: isImage ? pixels : null })
+  const reportLines = pptxReportLines(report, pptxTarget)
   const percent = progress?.total ? Math.round((progress.done / progress.total) * 100) : null
 
   // Rendered on <body> so the editor's own layout (transforms, overflow) can't clip or shift it.
@@ -653,6 +659,15 @@ export default function ExportPresentationModal({
                 <strong>{statusText}</strong>
                 <p className="ppt-export-status-file">{downloadFilename}</p>
                 <p>Your download should start by itself. If it didn&apos;t, click Download again.</p>
+                {reportLines.length ? (
+                  <ul className="ppt-export-report" aria-label="What's in your file">
+                    {reportLines.map((line) => (
+                      <li key={line.text} className={`is-${line.tone}`}>
+                        {line.text}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </>
             ) : (
               <>
