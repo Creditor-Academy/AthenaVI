@@ -13,6 +13,9 @@ import {
   MdFolderOpen,
   MdAspectRatio,
   MdAutoAwesome,
+  MdClose,
+  MdTimer,
+  MdPlayCircleOutline,
 } from 'react-icons/md';
 import workspaceService from '../../../services/workspaceService.js';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -20,7 +23,6 @@ import {
   fetchEditorTemplateBundles,
   sceneMatchesAspectRatio,
 } from '../../../utils/fetchEditorTemplates.js';
-import TemplateBundlePicker from '../../features/editor/editor/TemplateBundlePicker';
 import TemplateScenePreview from '../../features/editor/editor/TemplateScenePreview';
 import { sanitizeUserFacingMessage } from '../../../utils/userFacingMessage.js';
 import {
@@ -558,6 +560,8 @@ const CreateVideoModal = ({
   }, []);
 
   const daypart = usePptDaypart();
+  // The template whose scenes are open in the right sidebar.
+  const [drawerBundleId, setDrawerBundleId] = useState(null);
   const scrollRef = useRef(null);
   const titleInputRef = useRef(null);
   const escapeRef = useRef(() => {});
@@ -603,6 +607,7 @@ const CreateVideoModal = ({
 
   escapeRef.current = () => {
     if (showDiscardConfirm) setShowDiscardConfirm(false);
+    else if (drawerBundleId) setDrawerBundleId(null);
     else closeWithGuard();
   };
 
@@ -921,33 +926,28 @@ const CreateVideoModal = ({
         : '';
 
   const blankSelected = selectedTemplateId === 'blank';
-  const blankCard = (
-    <button
-      type="button"
-      className={`template-bundle-card cvp-blank-card${blankSelected ? ' template-bundle-card--selected' : ''}`}
-      onClick={() => handleSelectTemplate('blank')}
-      aria-pressed={blankSelected}
-    >
-      <div className="template-bundle-card__preview cvp-blank-card__preview">
-        <span className="cvp-blank-card__plus" aria-hidden>
-          <MdAdd size={30} />
-        </span>
-        {blankSelected ? <div className="template-bundle-card__selected-badge">✓ Selected</div> : null}
-      </div>
-      <div className="template-bundle-card__body">
-        <h4 className={`template-bundle-card__title${blankSelected ? ' template-bundle-card__title--selected' : ''}`}>
-          Blank canvas
-        </h4>
-        <p className="template-bundle-card__desc">Start with an empty scene and build the video your way.</p>
-        <div className="template-bundle-card__meta">
-          <span>
-            <MdLayers size={14} />
-            1 scene
-          </span>
-        </div>
-      </div>
-    </button>
-  );
+  const selectedSceneKey =
+    selectedTemplateId && String(selectedTemplateId).startsWith('scene:')
+      ? String(selectedTemplateId).replace('scene:', '')
+      : null;
+  // The template that holds the current pick (the whole template or one of its scenes).
+  const selectedBundleKey = isBundleSelected
+    ? String(selectedTemplateId).replace('bundle:', '')
+    : selectedSceneKey && selectedTemplate?.bundle
+      ? String(selectedTemplate.bundle.id)
+      : null;
+  const bundleSeconds = (bundle) =>
+    (bundle?.scenes || []).reduce((sum, scene) => sum + (Number(scene.duration) || 8), 0);
+  const drawerBundle = drawerBundleId
+    ? templateBundles.find((bundle) => String(bundle.id) === String(drawerBundleId)) || null
+    : null;
+  const drawerSceneCount = drawerBundle?.scenes?.length || 0;
+  const drawerAllSelected = Boolean(drawerBundle) && selectedBundleKey === String(drawerBundle.id) && isBundleSelected;
+
+  const pickFromDrawer = (templateId) => {
+    handleSelectTemplate(templateId);
+    setDrawerBundleId(null);
+  };
 
   return (
     <div
@@ -1049,8 +1049,8 @@ const CreateVideoModal = ({
           )}
 
           {step === 2 && (
-            <section className="cvp-panel cvp-template-panel" aria-label="Templates">
-              <div className="cvp-template-toolbar">
+            <section className="cvp-tpl" aria-label="Templates">
+              <div className="cvp-tpl-toolbar">
                 <label className="cvp-search" htmlFor="create-video-search-input">
                   <MdSearch size={18} aria-hidden />
                   <input
@@ -1078,34 +1078,108 @@ const CreateVideoModal = ({
                 </div>
               </div>
 
-              <div className="cvp-template-content">
-                {templatesLoading ? (
-                  <div className="tbp-grid">
-                    {Array.from({ length: 6 }).map((_, index) => (
-                      <div key={index} className="tbp-skeleton" />
-                    ))}
-                  </div>
-                ) : (
-                  <TemplateBundlePicker
-                    bundles={filteredBundles}
-                    loading={false}
-                    searchQuery={searchQuery}
-                    activeLayout="All Layouts"
-                    leadingItem={blankCard}
-                    onSelectScene={(scene) => handleSelectTemplate(`scene:${scene.id}`)}
-                    onApplyBundle={(bundle) => handleSelectTemplate(`bundle:${bundle.id}`)}
-                    emptyMessage="No templates match your search or category."
-                    selectedSceneId={
-                      selectedTemplateId && String(selectedTemplateId).startsWith('scene:')
-                        ? String(selectedTemplateId).replace('scene:', '')
-                        : null
-                    }
-                    selectedBundleId={
-                      isBundleSelected ? String(selectedTemplateId).replace('bundle:', '') : null
-                    }
-                  />
-                )}
+              <div className="cvp-tpl-grid">
+                <button
+                  type="button"
+                  className={`cvp-tpl-card cvp-tpl-card--blank${blankSelected ? ' selected' : ''}`}
+                  onClick={() => handleSelectTemplate('blank')}
+                  aria-pressed={blankSelected}
+                >
+                  <span className="cvp-tpl-card__preview">
+                    <span className="cvp-tpl-card__plus" aria-hidden>
+                      <MdAdd size={30} />
+                    </span>
+                    {blankSelected ? (
+                      <span className="cvp-tpl-card__selected">
+                        <MdCheck size={14} aria-hidden />
+                        Selected
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="cvp-tpl-card__body">
+                    <strong>Blank canvas</strong>
+                    <span className="cvp-tpl-card__desc">Start with an empty scene and build the video your way.</span>
+                    <span className="cvp-tpl-card__meta">
+                      <span>
+                        <MdLayers size={14} aria-hidden />
+                        1 scene
+                      </span>
+                    </span>
+                  </span>
+                </button>
+
+                {templatesLoading
+                  ? Array.from({ length: 5 }).map((_, index) => (
+                    <div key={index} className="cvp-tpl-card cvp-tpl-card--skeleton" aria-hidden>
+                      <span className="cvp-tpl-card__preview" />
+                      <span className="cvp-tpl-card__body">
+                        <span className="cvp-skeleton-line" />
+                        <span className="cvp-skeleton-line cvp-skeleton-line--short" />
+                      </span>
+                    </div>
+                  ))
+                  : filteredBundles.map((bundle) => {
+                    const sceneCount = bundle.scenes?.length || bundle.totalSlides || 0;
+                    const isSelected = selectedBundleKey === String(bundle.id);
+                    return (
+                      <button
+                        key={bundle.file || bundle.id}
+                        type="button"
+                        className={`cvp-tpl-card${isSelected ? ' selected' : ''}`}
+                        onClick={() => setDrawerBundleId(bundle.id)}
+                        aria-haspopup="dialog"
+                      >
+                        <span className="cvp-tpl-card__preview">
+                          {bundle.coverScene ? (
+                            <TemplateScenePreview template={bundle.coverScene} compact />
+                          ) : (
+                            <span className="cvp-tpl-card__fallback" />
+                          )}
+                          {bundle.category ? (
+                            <span className="cvp-tpl-card__category">{bundle.category}</span>
+                          ) : null}
+                          {isSelected ? (
+                            <span className="cvp-tpl-card__selected">
+                              <MdCheck size={14} aria-hidden />
+                              Selected
+                            </span>
+                          ) : (
+                            <span className="cvp-tpl-card__count">{sceneCount} scenes</span>
+                          )}
+                          <span className="cvp-tpl-card__view" aria-hidden>
+                            <span>View scenes</span>
+                          </span>
+                        </span>
+                        <span className="cvp-tpl-card__body">
+                          <strong>{bundle.name}</strong>
+                          {bundle.description ? (
+                            <span className="cvp-tpl-card__desc">{bundle.description}</span>
+                          ) : null}
+                          <span className="cvp-tpl-card__meta">
+                            <span>
+                              <MdLayers size={14} aria-hidden />
+                              {sceneCount} scenes
+                            </span>
+                            <span>
+                              <MdTimer size={14} aria-hidden />
+                              ~{bundleSeconds(bundle)}s
+                            </span>
+                          </span>
+                          {isSelected && templateSummary ? (
+                            <span className="cvp-tpl-card__pick">
+                              <MdCheck size={14} aria-hidden />
+                              {templateSummary.detail}
+                            </span>
+                          ) : null}
+                        </span>
+                      </button>
+                    );
+                  })}
               </div>
+
+              {!templatesLoading && filteredBundles.length === 0 ? (
+                <p className="cvp-tpl-empty">No templates match your search or category.</p>
+              ) : null}
             </section>
           )}
 
@@ -1411,6 +1485,92 @@ const CreateVideoModal = ({
           )}
         </div>
       </footer>
+
+      {drawerBundle && (
+        <>
+          <div className="cvp-drawer-backdrop" onClick={() => setDrawerBundleId(null)} aria-hidden />
+          <aside
+            className="cvp-drawer"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cvp-drawer-title"
+          >
+            <header className="cvp-drawer-header">
+              <div className="cvp-drawer-heading">
+                {drawerBundle.category ? (
+                  <span className="cvp-drawer-eyebrow">{drawerBundle.category}</span>
+                ) : null}
+                <h2 id="cvp-drawer-title">{drawerBundle.name}</h2>
+                <p>
+                  {drawerSceneCount} scenes · ~{bundleSeconds(drawerBundle)}s · {drawerBundle.aspectRatio || '16:9'}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="cvp-drawer-close"
+                onClick={() => setDrawerBundleId(null)}
+                aria-label="Close sidebar"
+                autoFocus
+              >
+                <MdClose size={20} aria-hidden />
+              </button>
+            </header>
+
+            <div className="cvp-drawer-body">
+              {drawerBundle.description ? (
+                <p className="cvp-drawer-desc">{drawerBundle.description}</p>
+              ) : null}
+
+              <div className="cvp-drawer-label">
+                <strong>Scenes</strong>
+                <span>Tap a scene to use only that one</span>
+              </div>
+
+              <div className="cvp-drawer-scenes">
+                {(drawerBundle.scenes || []).map((scene, index) => {
+                  const isSelected = selectedSceneKey === String(scene.id);
+                  const kind = scene.layoutType || scene.tags?.[0] || '';
+                  return (
+                    <button
+                      key={scene.id || index}
+                      type="button"
+                      className={`cvp-scene-card${isSelected ? ' selected' : ''}`}
+                      onClick={() => pickFromDrawer(`scene:${scene.id}`)}
+                      aria-pressed={isSelected}
+                    >
+                      <span className="cvp-scene-card__preview">
+                        <TemplateScenePreview template={scene} compact />
+                        <span className="cvp-scene-card__num">{index + 1}</span>
+                        <span className="cvp-scene-card__time">{Number(scene.duration) || 8}s</span>
+                        {isSelected ? (
+                          <span className="cvp-scene-card__check" aria-hidden>
+                            <MdCheck size={14} />
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className="cvp-scene-card__body">
+                        <strong>{scene.title || `Scene ${index + 1}`}</strong>
+                        {kind ? <span>{kind}</span> : null}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <footer className="cvp-drawer-footer">
+              <button
+                type="button"
+                className="cvp-btn cvp-btn-primary cvp-drawer-apply"
+                onClick={() => pickFromDrawer(`bundle:${drawerBundle.id}`)}
+              >
+                {drawerAllSelected ? <MdCheck size={18} aria-hidden /> : <MdPlayCircleOutline size={18} aria-hidden />}
+                {drawerAllSelected ? `Using all ${drawerSceneCount} scenes` : `Use all ${drawerSceneCount} scenes`}
+              </button>
+            </footer>
+          </aside>
+        </>
+      )}
 
       {showDiscardConfirm && (
         <div className="cvp-confirm-overlay" onClick={() => setShowDiscardConfirm(false)}>
