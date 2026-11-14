@@ -12,8 +12,13 @@ import {
   MdFace,
   MdFolderOpen,
   MdAspectRatio,
-  MdAutoAwesome,
   MdClose,
+  MdApps,
+  MdBusinessCenter,
+  MdSchool,
+  MdCampaign,
+  MdGroups,
+  MdCropSquare,
   MdTimer,
   MdPlayCircleOutline,
 } from 'react-icons/md';
@@ -66,6 +71,15 @@ const CANVAS_OPTIONS = [
 const PREBUILT_TAGS = ['Professional', 'Presentation', 'Marketing', 'Social Media', 'Education', 'Personal'];
 
 const TEMPLATE_FILTERS = ['All', 'Corporate', 'Training', 'Marketing', 'Social', 'Minimal'];
+
+const FILTER_ICONS = {
+  All: MdApps,
+  Corporate: MdBusinessCenter,
+  Training: MdSchool,
+  Marketing: MdCampaign,
+  Social: MdGroups,
+  Minimal: MdCropSquare,
+};
 
 function normalizeId(value) {
   if (value == null || value === '') return '';
@@ -944,6 +958,22 @@ const CreateVideoModal = ({
   const drawerSceneCount = drawerBundle?.scenes?.length || 0;
   const drawerAllSelected = Boolean(drawerBundle) && selectedBundleKey === String(drawerBundle.id) && isBundleSelected;
 
+  const categoryCounts = (() => {
+    const query = searchQuery.trim().toLowerCase();
+    const counts = Object.fromEntries(TEMPLATE_FILTERS.map((label) => [label, 0]));
+    templateBundles.forEach((bundle) => {
+      const matchesRatio = (bundle.scenes || []).some((scene) => sceneMatchesAspectRatio(scene, aspectRatio));
+      const matchesSearch =
+        !query ||
+        [bundle.name, bundle.category, bundle.description].some((text) => (text || '').toLowerCase().includes(query)) ||
+        (bundle.scenes || []).some((scene) => (scene.title || '').toLowerCase().includes(query));
+      if (!matchesRatio || !matchesSearch) return;
+      counts.All += 1;
+      if (counts[bundle.filterCategory] != null) counts[bundle.filterCategory] += 1;
+    });
+    return counts;
+  })();
+
   const pickFromDrawer = (templateId) => {
     handleSelectTemplate(templateId);
     setDrawerBundleId(null);
@@ -957,7 +987,7 @@ const CreateVideoModal = ({
       aria-labelledby="cvp-title"
       style={{ backgroundImage: `url(${DAYPART_BACKGROUNDS[daypart] || bgAfternoon})` }}
     >
-      <div className="cvp-scroll" ref={scrollRef}>
+      <div className="cvp-head">
         <header className="cvp-topbar">
           <button type="button" className="cvp-exit" onClick={closeWithGuard}>
             <MdArrowBack size={18} aria-hidden />
@@ -984,10 +1014,7 @@ const CreateVideoModal = ({
             })}
           </ol>
 
-          <span className="cvp-topbar-tag">
-            <MdAutoAwesome size={15} aria-hidden />
-            New avatar video
-          </span>
+          <span className="cvp-topbar-spacer" aria-hidden />
         </header>
 
         <div className="cvp-hero" key={`hero-${step}`}>
@@ -1005,7 +1032,9 @@ const CreateVideoModal = ({
             </p>
           ) : null}
         </div>
+      </div>
 
+      <div className="cvp-scroll" ref={scrollRef}>
         <main className={`cvp-body cvp-body--step-${step}`} key={`body-${step}`}>
           {step === 1 && (
             <div className="cvp-canvas-grid" role="radiogroup" aria-label="Canvas size">
@@ -1050,7 +1079,7 @@ const CreateVideoModal = ({
 
           {step === 2 && (
             <section className="cvp-tpl" aria-label="Templates">
-              <div className="cvp-tpl-toolbar">
+              <aside className="cvp-tpl-side" aria-label="Find a template">
                 <label className="cvp-search" htmlFor="create-video-search-input">
                   <MdSearch size={18} aria-hidden />
                   <input
@@ -1062,22 +1091,34 @@ const CreateVideoModal = ({
                   />
                 </label>
 
-                <div className="cvp-filter-row" role="tablist" aria-label="Template categories">
-                  {TEMPLATE_FILTERS.map((filterLabel) => (
-                    <button
-                      key={filterLabel}
-                      type="button"
-                      role="tab"
-                      aria-selected={selectedFilter === filterLabel}
-                      className={`cvp-filter-chip${selectedFilter === filterLabel ? ' active' : ''}`}
-                      onClick={() => setSelectedFilter(filterLabel)}
-                    >
-                      {filterLabel}
-                    </button>
-                  ))}
+                <p className="cvp-tpl-side-label">Categories</p>
+                <div className="cvp-filter-list" role="tablist" aria-label="Template categories" aria-orientation="vertical">
+                  {TEMPLATE_FILTERS.map((filterLabel) => {
+                    const Icon = FILTER_ICONS[filterLabel] || MdApps;
+                    const active = selectedFilter === filterLabel;
+                    return (
+                      <button
+                        key={filterLabel}
+                        type="button"
+                        role="tab"
+                        aria-selected={active}
+                        className={`cvp-filter-item${active ? ' active' : ''}`}
+                        onClick={() => setSelectedFilter(filterLabel)}
+                      >
+                        <span className="cvp-filter-item__icon" aria-hidden>
+                          <Icon size={17} />
+                        </span>
+                        <span className="cvp-filter-item__label">{filterLabel === 'All' ? 'All templates' : filterLabel}</span>
+                        {!templatesLoading ? (
+                          <span className="cvp-filter-item__count">{categoryCounts[filterLabel] ?? 0}</span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
                 </div>
-              </div>
+              </aside>
 
+              <div className="cvp-tpl-main">
               <div className="cvp-tpl-grid">
                 <button
                   type="button"
@@ -1180,6 +1221,7 @@ const CreateVideoModal = ({
               {!templatesLoading && filteredBundles.length === 0 ? (
                 <p className="cvp-tpl-empty">No templates match your search or category.</p>
               ) : null}
+              </div>
             </section>
           )}
 
