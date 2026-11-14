@@ -11,6 +11,7 @@ import {
   MdLayers,
   MdFace,
   MdFolderOpen,
+  MdFolder,
   MdAspectRatio,
   MdClose,
   MdApps,
@@ -29,6 +30,7 @@ import {
   sceneMatchesAspectRatio,
 } from '../../../utils/fetchEditorTemplates.js';
 import TemplateScenePreview from '../../features/editor/editor/TemplateScenePreview';
+import CvpSelect from './CvpSelect';
 import { sanitizeUserFacingMessage } from '../../../utils/userFacingMessage.js';
 import {
   DUPLICATE_PROJECT_NAME_MESSAGE,
@@ -895,6 +897,17 @@ const CreateVideoModal = ({
     shared: workspaceOptions.filter((workspace) => workspace.section === 'shared')
   };
 
+  const workspaceToOption = (workspace) => ({
+    value: String(workspace.id),
+    label: workspace.name,
+    badge: workspace.section === 'shared' ? String(workspace.userRole || '').toLowerCase() : undefined,
+    icon: (
+      <span className={`cvp-ws-avatar cvp-ws-avatar--${workspace.section}`}>
+        {String(workspace.name || '?').trim().charAt(0).toUpperCase()}
+      </span>
+    ),
+  });
+
   const stepCopy = STEP_COPY[step] || STEP_COPY[1];
   const selectedCanvas = CANVAS_OPTIONS.find((option) => option.id === canvasSize) || CANVAS_OPTIONS[0];
   const selectedFolder = folderOptions.find((folder) => String(folder.id) === String(folderId)) || null;
@@ -1286,61 +1299,43 @@ const CreateVideoModal = ({
                 </div>
 
                 <div className="cvp-field-row">
-                  <label className="cvp-field">
-                    <span className="cvp-field-label">Workspace</span>
-                    <select value={workspaceId} onChange={handleWorkspaceSelect} disabled={workspaceLoading}>
-                      {!workspaceOptions.length && (
-                        <option value="">{workspaceLoading ? 'Loading…' : 'No workspaces available'}</option>
-                      )}
+                  <div className="cvp-field">
+                    <span className="cvp-field-label" id="cvp-workspace-label">Workspace</span>
+                    <CvpSelect
+                      labelId="cvp-workspace-label"
+                      value={workspaceId}
+                      disabled={workspaceLoading && !workspaceOptions.length}
+                      placeholder={workspaceLoading ? 'Loading…' : 'No workspaces available'}
+                      groups={[
+                        { label: 'Personal workspace', options: groupedWorkspaces.personal.map(workspaceToOption) },
+                        { label: 'My workspaces', options: groupedWorkspaces.my.map(workspaceToOption) },
+                        { label: 'Shared with me', options: groupedWorkspaces.shared.map(workspaceToOption) },
+                      ]}
+                      actions={[{ value: '__create_workspace__', label: 'Create new workspace', icon: <MdAdd size={18} /> }]}
+                      onChange={(value) => handleWorkspaceSelect({ target: { value } })}
+                    />
+                  </div>
 
-                      {groupedWorkspaces.personal.length > 0 && (
-                        <optgroup label="Personal Workspace">
-                          {groupedWorkspaces.personal.map((workspace) => (
-                            <option key={workspace.id} value={workspace.id}>
-                              {workspace.name}
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-
-                      {groupedWorkspaces.my.length > 0 && (
-                        <optgroup label="My Workspaces">
-                          {groupedWorkspaces.my.map((workspace) => (
-                            <option key={workspace.id} value={workspace.id}>
-                              {workspace.name}
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-
-                      {groupedWorkspaces.shared.length > 0 && (
-                        <optgroup label="Shared With Me">
-                          {groupedWorkspaces.shared.map((workspace) => (
-                            <option key={workspace.id} value={workspace.id}>
-                              {workspace.name} ({workspace.userRole})
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-
-                      <option value="__create_workspace__">+ Create New Workspace</option>
-                    </select>
-                  </label>
-
-                  <label className="cvp-field">
-                    <span className="cvp-field-label">Folder</span>
-                    <select value={folderId} onChange={handleFolderSelect} disabled={folderLoading || !workspaceId}>
-                      {!folderOptions.length && (
-                        <option value="">{folderLoading ? 'Loading…' : 'No folders available'}</option>
-                      )}
-                      {folderOptions.map((folder) => (
-                        <option key={folder.id} value={folder.id}>
-                          {folder.name}
-                        </option>
-                      ))}
-                      <option value="__create_folder__">+ Create New Folder</option>
-                    </select>
-                  </label>
+                  <div className="cvp-field">
+                    <span className="cvp-field-label" id="cvp-folder-label">Folder</span>
+                    <CvpSelect
+                      labelId="cvp-folder-label"
+                      value={folderId}
+                      disabled={!workspaceId || (folderLoading && !folderOptions.length)}
+                      placeholder={folderLoading ? 'Loading…' : 'No folders available'}
+                      groups={[
+                        {
+                          options: folderOptions.map((folder) => ({
+                            value: String(folder.id),
+                            label: folder.name || 'Untitled folder',
+                            icon: <MdFolder size={18} />,
+                          })),
+                        },
+                      ]}
+                      actions={[{ value: '__create_folder__', label: 'Create new folder', icon: <MdAdd size={18} /> }]}
+                      onChange={(value) => handleFolderSelect({ target: { value } })}
+                    />
+                  </div>
                 </div>
 
                 {showInlineWorkspaceCreate && (
