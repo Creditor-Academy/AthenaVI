@@ -3,10 +3,16 @@ import {
   MdCheck,
   MdSearch,
   MdAdd,
-  MdClose,
+  MdArrowBack,
+  MdArrowForward,
   MdCheckCircle,
   MdCancel,
-  MdWarning
+  MdWarning,
+  MdLayers,
+  MdFace,
+  MdFolderOpen,
+  MdAspectRatio,
+  MdAutoAwesome,
 } from 'react-icons/md';
 import workspaceService from '../../../services/workspaceService.js';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -15,21 +21,44 @@ import {
   sceneMatchesAspectRatio,
 } from '../../../utils/fetchEditorTemplates.js';
 import TemplateBundlePicker from '../../features/editor/editor/TemplateBundlePicker';
+import TemplateScenePreview from '../../features/editor/editor/TemplateScenePreview';
 import { sanitizeUserFacingMessage } from '../../../utils/userFacingMessage.js';
 import {
   DUPLICATE_PROJECT_NAME_MESSAGE,
   findDuplicateProjectName,
 } from '../../../utils/projectNameValidation.js';
+import { usePptDaypart } from '../../../utils/pptDaypart';
+import bgMorning from '../../../assets/ppt-bg/morning.png';
+import bgAfternoon from '../../../assets/ppt-bg/afternoon.png';
+import bgEvening from '../../../assets/ppt-bg/evening.png';
+import bgNight from '../../../assets/ppt-bg/night.png';
 import './CreateVideoModal.css';
 
+const DAYPART_BACKGROUNDS = {
+  morning: bgMorning,
+  afternoon: bgAfternoon,
+  evening: bgEvening,
+  night: bgNight,
+};
+
 const WIZARD_STEPS = [
-  { id: 1, label: 'Canvas Size' },
+  { id: 1, label: 'Canvas size' },
   { id: 2, label: 'Template' },
   { id: 3, label: 'Details' }
 ];
 
+const STEP_COPY = {
+  1: { title: 'Choose a canvas size', subtitle: 'Pick the shape of your video.' },
+  2: { title: 'Pick a template', subtitle: 'Use a whole template, a single scene from one, or start blank.' },
+  3: { title: 'Name your project', subtitle: 'Give it a title and choose where to save it.' },
+};
+
+// Only landscape can be created today; the others are shown so people know they're coming.
 const CANVAS_OPTIONS = [
-  { id: 'landscape', label: '16:9 Landscape', ratio: '16:9' },
+  { id: 'landscape', label: 'Landscape', ratio: '16:9', hint: 'YouTube, websites and presentations', available: true },
+  { id: 'portrait', label: 'Portrait', ratio: '9:16', hint: 'Reels, TikTok and Stories', available: false },
+  { id: 'square', label: 'Square', ratio: '1:1', hint: 'Instagram and LinkedIn feeds', available: false },
+  { id: 'four-five', label: 'Vertical post', ratio: '4:5', hint: 'Instagram and Facebook posts', available: false },
 ];
 
 const PREBUILT_TAGS = ['Professional', 'Presentation', 'Marketing', 'Social Media', 'Education', 'Personal'];
@@ -167,7 +196,8 @@ const CreateVideoModal = ({
   const [step, setStep] = useState(() => templateSeed ? 3 : 1);
 
   const [canvasSize, setCanvasSize] = useState('landscape');
-  const [customCanvas, setCustomCanvas] = useState({ width: '', height: '' });
+  // Custom sizes aren't offered yet; kept so the payload code below still handles them.
+  const [customCanvas] = useState({ width: '', height: '' });
 
   const [selectedFilter, setSelectedFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -267,13 +297,12 @@ const CreateVideoModal = ({
     });
   }, [templateBundles, searchQuery, selectedFilter, aspectRatio]);
 
+  // Workspace and folder are filled in automatically, so they don't count as the person's changes.
   const hasDirtyData = useMemo(() => {
     return Boolean(
       videoTitle.trim() ||
       selectedTemplateId ||
       videoTags.length ||
-      workspaceId ||
-      folderId ||
       showInlineWorkspaceCreate ||
       showInlineFolderCreate ||
       newWorkspaceName.trim() ||
@@ -285,8 +314,6 @@ const CreateVideoModal = ({
     videoTitle,
     selectedTemplateId,
     videoTags,
-    workspaceId,
-    folderId,
     showInlineWorkspaceCreate,
     showInlineFolderCreate,
     newWorkspaceName,
@@ -530,6 +557,40 @@ const CreateVideoModal = ({
     };
   }, []);
 
+  const daypart = usePptDaypart();
+  const scrollRef = useRef(null);
+  const titleInputRef = useRef(null);
+  const escapeRef = useRef(() => {});
+
+  // The page covers the dashboard, so the dashboard behind it shouldn't scroll.
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') escapeRef.current();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    scrollRef.current?.scrollTo?.({ top: 0 });
+    if (step === 3) {
+      const id = window.setTimeout(() => titleInputRef.current?.focus(), 60);
+      return () => window.clearTimeout(id);
+    }
+    return undefined;
+  }, [isOpen, step]);
+
   if (!isOpen) return null;
 
   const closeWithGuard = () => {
@@ -538,6 +599,11 @@ const CreateVideoModal = ({
       return;
     }
     onClose();
+  };
+
+  escapeRef.current = () => {
+    if (showDiscardConfirm) setShowDiscardConfirm(false);
+    else closeWithGuard();
   };
 
   async function loadTemplates() {
@@ -810,94 +876,183 @@ const CreateVideoModal = ({
     shared: workspaceOptions.filter((workspace) => workspace.section === 'shared')
   };
 
-  return (
-    <div className="create-video-modal-overlay" role="presentation" onClick={closeWithGuard}>
-      <div className="create-video-modal" role="dialog" aria-modal="true" aria-label="Create a project" onClick={(event) => event.stopPropagation()}>
-        <aside className="create-video-wizard-sidebar">
-          <div className="create-video-logo-block">
-            <div className="create-video-logo-mark">VI</div>
-            <div className="create-video-logo-text">Virtual Studio</div>
-          </div>
+  const stepCopy = STEP_COPY[step] || STEP_COPY[1];
+  const selectedCanvas = CANVAS_OPTIONS.find((option) => option.id === canvasSize) || CANVAS_OPTIONS[0];
+  const selectedFolder = folderOptions.find((folder) => String(folder.id) === String(folderId)) || null;
+  const isBundleSelected = Boolean(selectedTemplateId) && String(selectedTemplateId).startsWith('bundle:');
 
-          <ol className="create-video-step-list" aria-label="Create project steps">
-            {WIZARD_STEPS.map((stepItem) => {
+  // What the person picked on the template step, in words.
+  const templateSummary = (() => {
+    if (selectedTemplateId === 'blank') return { title: 'Blank canvas', detail: 'Start with an empty scene' };
+    if (isBundleSelected) {
+      const bundle = selectedTemplate?.bundle || templateSeed?.bundle;
+      const count = bundle?.scenes?.length || 0;
+      return {
+        title: bundle?.name || templateSeed?.name || 'Template',
+        detail: count ? `All ${count} scenes` : 'All scenes',
+      };
+    }
+    if (selectedTemplate?.scene) {
+      return {
+        title: selectedTemplate.scene.title || 'Scene',
+        detail: selectedTemplate.bundle?.name ? `One scene from ${selectedTemplate.bundle.name}` : 'One scene',
+      };
+    }
+    if (templateSeed?.name) return { title: templateSeed.name, detail: 'Template' };
+    return null;
+  })();
+
+  const previewScene =
+    selectedTemplate?.scene ||
+    selectedTemplate?.bundle?.coverScene ||
+    selectedTemplate?.scenes?.[0] ||
+    templateSeed?.bundle?.coverScene ||
+    templateSeed?.bundle?.scenes?.[0] ||
+    null;
+
+  const createDisabled = !canCreateVideo || submitting || verifyingName;
+
+  const createTitle = showDuplicateNameError
+    ? DUPLICATE_PROJECT_NAME_MESSAGE
+    : folderProjectsLoadError
+      ? 'Could not verify existing projects in this folder'
+      : selectedWorkspace && !canCreateInWorkspace(selectedWorkspace)
+        ? 'You need Editor access to create a project in this workspace'
+        : '';
+
+  const blankSelected = selectedTemplateId === 'blank';
+  const blankCard = (
+    <button
+      type="button"
+      className={`template-bundle-card cvp-blank-card${blankSelected ? ' template-bundle-card--selected' : ''}`}
+      onClick={() => handleSelectTemplate('blank')}
+      aria-pressed={blankSelected}
+    >
+      <div className="template-bundle-card__preview cvp-blank-card__preview">
+        <span className="cvp-blank-card__plus" aria-hidden>
+          <MdAdd size={30} />
+        </span>
+        {blankSelected ? <div className="template-bundle-card__selected-badge">✓ Selected</div> : null}
+      </div>
+      <div className="template-bundle-card__body">
+        <h4 className={`template-bundle-card__title${blankSelected ? ' template-bundle-card__title--selected' : ''}`}>
+          Blank canvas
+        </h4>
+        <p className="template-bundle-card__desc">Start with an empty scene and build the video your way.</p>
+        <div className="template-bundle-card__meta">
+          <span>
+            <MdLayers size={14} />
+            1 scene
+          </span>
+        </div>
+      </div>
+    </button>
+  );
+
+  return (
+    <div
+      className={`cvp-page cvp-page--${daypart}`}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="cvp-title"
+      style={{ backgroundImage: `url(${DAYPART_BACKGROUNDS[daypart] || bgAfternoon})` }}
+    >
+      <div className="cvp-scroll" ref={scrollRef}>
+        <header className="cvp-topbar">
+          <button type="button" className="cvp-exit" onClick={closeWithGuard}>
+            <MdArrowBack size={18} aria-hidden />
+            <span>Dashboard</span>
+          </button>
+
+          <ol className="cvp-progress" aria-label="Create video steps">
+            {WIZARD_STEPS.map((stepItem, index) => {
               const isActive = step === stepItem.id;
-              // When templateSeed is used, steps before the current are pre-completed
               const isCompleted = step > stepItem.id || (templateSeed && stepItem.id < 3);
               return (
-                <li key={stepItem.id} className={`create-video-step-item ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}>
-                  <span className="create-video-step-dot" aria-hidden>
-                    {isCompleted ? <MdCheck size={14} /> : stepItem.id}
+                <li
+                  key={stepItem.id}
+                  className={`cvp-progress-item${isActive ? ' active' : ''}${isCompleted ? ' completed' : ''}`}
+                  aria-current={isActive ? 'step' : undefined}
+                >
+                  {index > 0 ? <span className="cvp-progress-line" aria-hidden /> : null}
+                  <span className="cvp-progress-dot" aria-hidden>
+                    {isCompleted && !isActive ? <MdCheck size={14} /> : stepItem.id}
                   </span>
-                  <span className="create-video-step-label">{stepItem.label}</span>
+                  <span className="cvp-progress-label">{stepItem.label}</span>
                 </li>
               );
             })}
           </ol>
-        </aside>
 
-        <section className="create-video-wizard-main">
-          <header className="create-video-wizard-header">
-            {step === 1 && (
-              <>
-                <h2>Choose your canvas size</h2>
-                <p>Select an aspect ratio before continuing</p>
-              </>
-            )}
-            {step === 2 && (
-              <>
-                <h2>Start with a template</h2>
-                <p>Choose a template group, apply all scenes, or pick a single layout</p>
-              </>
-            )}
-            {step === 3 && (
-              <>
-                <h2>Name your project</h2>
-                <p>Choose title, tags, workspace, and folder</p>
-              </>
-            )}
-          </header>
+          <span className="cvp-topbar-tag">
+            <MdAutoAwesome size={15} aria-hidden />
+            New avatar video
+          </span>
+        </header>
 
-          <div className="create-video-wizard-body">
-            {presenterSeed?.avatarName ? (
-              <div className="create-video-presenter-banner" role="status">
-                Using <strong>{presenterSeed.avatarName}</strong>
+        <div className="cvp-hero" key={`hero-${step}`}>
+          <h1 id="cvp-title" className="cvp-title">{stepCopy.title}</h1>
+          <p className="cvp-subtitle">{stepCopy.subtitle}</p>
+          {presenterSeed?.avatarName ? (
+            <p className="cvp-presenter-chip" role="status">
+              <MdFace size={16} aria-hidden />
+              <span>
+                Presenter: <strong>{presenterSeed.avatarName}</strong>
                 {presenterSeed.lookName && presenterSeed.lookName !== presenterSeed.avatarName
-                  ? <> — {presenterSeed.lookName}</>
+                  ? <> · {presenterSeed.lookName}</>
                   : null}
-                {' '}as your presenter
-              </div>
-            ) : null}
-            {step === 1 && (
-              <div>
-                <div className="create-video-page-size-grid create-video-page-size-grid--single" role="radiogroup" aria-label="Choose canvas size">
-                  {CANVAS_OPTIONS.map(({ id, label, ratio }) => (
-                    <button
-                      key={id}
-                      type="button"
-                      role="radio"
-                      aria-checked={canvasSize === id}
-                      className={`create-video-size-card ${canvasSize === id ? 'selected' : ''}`}
-                      onClick={() => setCanvasSize(id)}
-                    >
-                      <span className={`create-video-size-visual ${id}`}>
-                        {ratio}
-                      </span>
-                      <span className="create-video-size-name">{label}</span>
-                      <span className="create-video-size-ratio">{ratio}</span>
-                    </button>
-                  ))}
-                </div>
-                <p className="create-video-canvas-note">
-                  Only 16:9 Landscape is available. More aspect ratios coming soon.
-                </p>
-              </div>
-            )}
+              </span>
+            </p>
+          ) : null}
+        </div>
 
-            {step === 2 && (
-              <>
-                <label className="create-video-search" htmlFor="create-video-search-input">
-                  <MdSearch size={18} />
+        <main className={`cvp-body cvp-body--step-${step}`} key={`body-${step}`}>
+          {step === 1 && (
+            <div className="cvp-canvas-grid" role="radiogroup" aria-label="Canvas size">
+              {CANVAS_OPTIONS.map((option) => {
+                const isSelected = canvasSize === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={isSelected}
+                    aria-disabled={!option.available}
+                    disabled={!option.available}
+                    className={`cvp-canvas-card${isSelected ? ' selected' : ''}${option.available ? '' : ' soon'}`}
+                    onClick={() => option.available && setCanvasSize(option.id)}
+                  >
+                    {isSelected ? (
+                      <span className="cvp-canvas-check" aria-hidden>
+                        <MdCheck size={16} />
+                      </span>
+                    ) : null}
+                    {!option.available ? <span className="cvp-canvas-soon">Coming soon</span> : null}
+                    <span className="cvp-canvas-stage" aria-hidden>
+                      <span className={`cvp-canvas-frame cvp-canvas-frame--${option.id}`}>
+                        <span className="cvp-canvas-presenter" />
+                        <span className="cvp-canvas-lines">
+                          <span />
+                          <span />
+                        </span>
+                      </span>
+                    </span>
+                    <span className="cvp-canvas-text">
+                      <strong>{option.label}</strong>
+                      <span className="cvp-canvas-ratio">{option.ratio}</span>
+                    </span>
+                    <span className="cvp-canvas-hint">{option.hint}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {step === 2 && (
+            <section className="cvp-panel cvp-template-panel" aria-label="Templates">
+              <div className="cvp-template-toolbar">
+                <label className="cvp-search" htmlFor="create-video-search-input">
+                  <MdSearch size={18} aria-hidden />
                   <input
                     id="create-video-search-input"
                     type="search"
@@ -907,346 +1062,406 @@ const CreateVideoModal = ({
                   />
                 </label>
 
-                <div className="create-video-filter-row" role="tablist" aria-label="Template filters">
+                <div className="cvp-filter-row" role="tablist" aria-label="Template categories">
                   {TEMPLATE_FILTERS.map((filterLabel) => (
                     <button
                       key={filterLabel}
                       type="button"
                       role="tab"
                       aria-selected={selectedFilter === filterLabel}
-                      className={`create-video-filter-chip ${selectedFilter === filterLabel ? 'active' : ''}`}
+                      className={`cvp-filter-chip${selectedFilter === filterLabel ? ' active' : ''}`}
                       onClick={() => setSelectedFilter(filterLabel)}
                     >
                       {filterLabel}
                     </button>
                   ))}
                 </div>
+              </div>
 
+              <div className="cvp-template-content">
                 {templatesLoading ? (
-                  <div className="create-video-template-grid">
-                    {Array.from({ length: 4 }).map((_, index) => (
-                      <div key={index} className="create-video-template-skeleton" />
+                  <div className="tbp-grid">
+                    {Array.from({ length: 6 }).map((_, index) => (
+                      <div key={index} className="tbp-skeleton" />
                     ))}
                   </div>
                 ) : (
-                  <div className="create-video-bundle-picker">
-                    <button
-                      type="button"
-                      className={`create-video-template-card blank ${selectedTemplateId === 'blank' ? 'selected' : ''}`}
-                      onClick={() => handleSelectTemplate('blank')}
-                      style={{ marginBottom: 16, maxWidth: 220 }}
-                    >
-                      <div className="create-video-thumb-wrap blank">
-                        <span className="create-video-blank-plus">
-                          <MdAdd size={40} />
-                        </span>
-                      </div>
-                      <span className="create-video-template-name">Start from Blank</span>
-                    </button>
-
-                    <TemplateBundlePicker
-                      bundles={filteredBundles}
-                      loading={false}
-                      searchQuery={searchQuery}
-                      activeLayout="All Layouts"
-                      onSelectScene={(scene) => handleSelectTemplate(`scene:${scene.id}`)}
-                      onApplyBundle={(bundle) => handleSelectTemplate(`bundle:${bundle.id}`)}
-                      emptyMessage="No template groups match your canvas size or filters."
-                      selectedSceneId={
-                        selectedTemplateId && String(selectedTemplateId).startsWith('scene:')
-                          ? String(selectedTemplateId).replace('scene:', '')
-                          : null
-                      }
-                      selectedBundleId={
-                        selectedTemplateId && String(selectedTemplateId).startsWith('bundle:')
-                          ? String(selectedTemplateId).replace('bundle:', '')
-                          : null
-                      }
-                    />
-
-                    {selectedTemplateId && selectedTemplateId !== 'blank' ? (
-                      <p className="create-video-selection-note">
-                        Selected:{' '}
-                        {String(selectedTemplateId).startsWith('bundle:')
-                          ? `${selectedTemplate?.bundle?.name || 'Template bundle'} (all scenes)`
-                          : selectedTemplate?.scene?.title || 'Scene'}
-                      </p>
-                    ) : null}
-                  </div>
+                  <TemplateBundlePicker
+                    bundles={filteredBundles}
+                    loading={false}
+                    searchQuery={searchQuery}
+                    activeLayout="All Layouts"
+                    leadingItem={blankCard}
+                    onSelectScene={(scene) => handleSelectTemplate(`scene:${scene.id}`)}
+                    onApplyBundle={(bundle) => handleSelectTemplate(`bundle:${bundle.id}`)}
+                    emptyMessage="No templates match your search or category."
+                    selectedSceneId={
+                      selectedTemplateId && String(selectedTemplateId).startsWith('scene:')
+                        ? String(selectedTemplateId).replace('scene:', '')
+                        : null
+                    }
+                    selectedBundleId={
+                      isBundleSelected ? String(selectedTemplateId).replace('bundle:', '') : null
+                    }
+                  />
                 )}
-              </>
-            )}
+              </div>
+            </section>
+          )}
 
-            {step === 3 && (
-              <div className="create-video-form-stack">
-                {templateSeed && (
-                  <div className="create-video-template-seed-banner">
-                    <span className="create-video-template-seed-banner__icon">🎬</span>
-                    <div className="create-video-template-seed-banner__text">
-                      <span className="create-video-template-seed-banner__label">Template selected</span>
-                      <span className="create-video-template-seed-banner__name">{templateSeed.name}</span>
-                    </div>
-                  </div>
-                )}
-                <label className="create-video-field">
-                  <span className="create-video-field-label">Project Title *</span>
+          {step === 3 && (
+            <div className="cvp-details">
+              <section className="cvp-panel cvp-form" aria-label="Project details">
+                <label className="cvp-field">
+                  <span className="cvp-field-label">Project title</span>
                   <input
+                    ref={titleInputRef}
                     type="text"
                     value={videoTitle}
                     onChange={(event) => {
                       setVideoTitle(event.target.value);
                       setShowNameDuplicateError(false);
                     }}
-                    placeholder="Enter project title..."
-                    className={showDuplicateNameError ? 'create-video-input-error' : ''}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' && !createDisabled) {
+                        event.preventDefault();
+                        handleCreate();
+                      }
+                    }}
+                    placeholder="e.g. Product launch walkthrough"
+                    className={showDuplicateNameError ? 'cvp-input-error' : ''}
                     aria-invalid={showDuplicateNameError}
                     aria-describedby={showDuplicateNameError ? 'project-title-duplicate-error' : undefined}
                   />
                   {showDuplicateNameError && (
-                    <p
-                      id="project-title-duplicate-error"
-                      className="create-video-title-error"
-                      role="alert"
-                    >
+                    <p id="project-title-duplicate-error" className="cvp-field-error" role="alert">
                       {DUPLICATE_PROJECT_NAME_MESSAGE}
                     </p>
                   )}
                   {folderProjectsLoading && (
-                    <span className="create-video-field-hint">Checking existing projects…</span>
+                    <span className="cvp-field-hint">Checking existing projects…</span>
                   )}
                   {folderProjectsLoadError && (
-                    <span className="create-video-field-error">
-                      Could not verify existing projects in this folder
-                    </span>
+                    <span className="cvp-field-error">Could not verify existing projects in this folder</span>
                   )}
                 </label>
 
-                <div className="create-video-field">
-                  <span>Tags</span>
-                  <div className="create-video-tag-pills">
-                    {PREBUILT_TAGS.map((tag) => (
-                      <button
-                        key={tag}
-                        type="button"
-                        className={`create-video-tag-pill ${videoTags.includes(tag) ? 'active' : ''}`}
-                        onClick={() => handleToggleTag(tag)}
-                      >
-                        {tag}
-                      </button>
-                    ))}
+                <div className="cvp-field">
+                  <span className="cvp-field-label">
+                    Tags <span className="cvp-field-optional">Optional</span>
+                  </span>
+                  <div className="cvp-tag-pills">
+                    {PREBUILT_TAGS.map((tag) => {
+                      const active = videoTags.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          aria-pressed={active}
+                          className={`cvp-tag-pill${active ? ' active' : ''}`}
+                          onClick={() => handleToggleTag(tag)}
+                        >
+                          {active ? <MdCheck size={14} aria-hidden /> : null}
+                          {tag}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                <label className="create-video-field">
-                  <span>Workspace *</span>
-                  <select value={workspaceId} onChange={handleWorkspaceSelect} disabled={workspaceLoading}>
-                    {!workspaceOptions.length && <option value="">No workspaces available</option>}
+                <div className="cvp-field-row">
+                  <label className="cvp-field">
+                    <span className="cvp-field-label">Workspace</span>
+                    <select value={workspaceId} onChange={handleWorkspaceSelect} disabled={workspaceLoading}>
+                      {!workspaceOptions.length && (
+                        <option value="">{workspaceLoading ? 'Loading…' : 'No workspaces available'}</option>
+                      )}
 
-                    {groupedWorkspaces.personal.length > 0 && (
-                      <optgroup label="Personal Workspace">
-                        {groupedWorkspaces.personal.map((workspace) => (
-                          <option key={workspace.id} value={workspace.id}>
-                            {workspace.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
+                      {groupedWorkspaces.personal.length > 0 && (
+                        <optgroup label="Personal Workspace">
+                          {groupedWorkspaces.personal.map((workspace) => (
+                            <option key={workspace.id} value={workspace.id}>
+                              {workspace.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
 
-                    {groupedWorkspaces.my.length > 0 && (
-                      <optgroup label="My Workspaces">
-                        {groupedWorkspaces.my.map((workspace) => (
-                          <option key={workspace.id} value={workspace.id}>
-                            {workspace.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
+                      {groupedWorkspaces.my.length > 0 && (
+                        <optgroup label="My Workspaces">
+                          {groupedWorkspaces.my.map((workspace) => (
+                            <option key={workspace.id} value={workspace.id}>
+                              {workspace.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
 
-                    {groupedWorkspaces.shared.length > 0 && (
-                      <optgroup label="Shared With Me">
-                        {groupedWorkspaces.shared.map((workspace) => (
-                          <option key={workspace.id} value={workspace.id}>
-                            {workspace.name} ({workspace.userRole})
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
+                      {groupedWorkspaces.shared.length > 0 && (
+                        <optgroup label="Shared With Me">
+                          {groupedWorkspaces.shared.map((workspace) => (
+                            <option key={workspace.id} value={workspace.id}>
+                              {workspace.name} ({workspace.userRole})
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
 
-                    <option value="__create_workspace__">+ Create New Workspace</option>
-                  </select>
-                </label>
+                      <option value="__create_workspace__">+ Create New Workspace</option>
+                    </select>
+                  </label>
+
+                  <label className="cvp-field">
+                    <span className="cvp-field-label">Folder</span>
+                    <select value={folderId} onChange={handleFolderSelect} disabled={folderLoading || !workspaceId}>
+                      {!folderOptions.length && (
+                        <option value="">{folderLoading ? 'Loading…' : 'No folders available'}</option>
+                      )}
+                      {folderOptions.map((folder) => (
+                        <option key={folder.id} value={folder.id}>
+                          {folder.name}
+                        </option>
+                      ))}
+                      <option value="__create_folder__">+ Create New Folder</option>
+                    </select>
+                  </label>
+                </div>
 
                 {showInlineWorkspaceCreate && (
-                  <div className="create-video-inline-row">
+                  <div className="cvp-inline-row">
                     <input
-                      className="create-video-inline-input"
+                      className="cvp-inline-input"
                       type="text"
                       placeholder="New workspace name"
                       value={newWorkspaceName}
                       onChange={(event) => setNewWorkspaceName(event.target.value)}
+                      autoFocus
                     />
-                    <button type="button" className="create-video-btn create-video-btn-primary" onClick={handleCreateWorkspaceInline} disabled={creatingWorkspace}>
-                      {creatingWorkspace ? 'Creating...' : 'Create'}
+                    <button
+                      type="button"
+                      className="cvp-btn cvp-btn-primary cvp-btn-small"
+                      onClick={handleCreateWorkspaceInline}
+                      disabled={creatingWorkspace || !newWorkspaceName.trim()}
+                    >
+                      {creatingWorkspace ? 'Creating…' : 'Create'}
+                    </button>
+                    <button
+                      type="button"
+                      className="cvp-btn cvp-btn-ghost cvp-btn-small"
+                      onClick={() => {
+                        setShowInlineWorkspaceCreate(false);
+                        setNewWorkspaceName('');
+                      }}
+                    >
+                      Cancel
                     </button>
                   </div>
                 )}
 
-                <label className="create-video-field">
-                  <span>Choose Folder *</span>
-                  <select value={folderId} onChange={handleFolderSelect} disabled={folderLoading || !workspaceId}>
-                    {!folderOptions.length && <option value="">No folders available</option>}
-                    {folderOptions.map((folder) => (
-                      <option key={folder.id} value={folder.id}>
-                        {folder.name}
-                      </option>
-                    ))}
-                    <option value="__create_folder__">+ Create New Folder</option>
-                  </select>
-                </label>
-
                 {showInlineFolderCreate && (
-                  <div className="create-video-inline-row">
+                  <div className="cvp-inline-row">
                     <input
-                      className="create-video-inline-input"
+                      className="cvp-inline-input"
                       type="text"
                       placeholder="New folder name"
                       value={newFolderName}
                       onChange={(event) => setNewFolderName(event.target.value)}
+                      autoFocus
                     />
-                    <button type="button" className="create-video-btn create-video-btn-primary" onClick={handleCreateFolderInline} disabled={creatingFolder || !workspaceId}>
-                      {creatingFolder ? 'Creating...' : 'Create'}
+                    <button
+                      type="button"
+                      className="cvp-btn cvp-btn-primary cvp-btn-small"
+                      onClick={handleCreateFolderInline}
+                      disabled={creatingFolder || !workspaceId || !newFolderName.trim()}
+                    >
+                      {creatingFolder ? 'Creating…' : 'Create'}
+                    </button>
+                    <button
+                      type="button"
+                      className="cvp-btn cvp-btn-ghost cvp-btn-small"
+                      onClick={() => {
+                        setShowInlineFolderCreate(false);
+                        setNewFolderName('');
+                      }}
+                    >
+                      Cancel
                     </button>
                   </div>
                 )}
 
                 {selectedWorkspace && !canCreateInWorkspace(selectedWorkspace) && (
-                  <div className="create-video-warning">
+                  <div className="cvp-warning" role="alert">
                     You are a Viewer in this shared workspace. Project creation is disabled here.
                   </div>
                 )}
-              </div>
-            )}
-          </div>
+              </section>
 
-          <footer className="create-video-footer">
-            <button type="button" className="create-video-btn create-video-btn-ghost" onClick={closeWithGuard}>
+              <aside className="cvp-panel cvp-summary" aria-label="Your video">
+                <div className="cvp-summary-preview">
+                  {previewScene ? (
+                    <TemplateScenePreview template={previewScene} compact />
+                  ) : (
+                    <span className="cvp-summary-blank">
+                      <MdAdd size={28} aria-hidden />
+                      Blank canvas
+                    </span>
+                  )}
+                  <span className="cvp-summary-ratio">{selectedCanvas.ratio}</span>
+                </div>
+                <h2 className="cvp-summary-title">{trimmedVideoTitle || 'Untitled project'}</h2>
+                <dl className="cvp-summary-list">
+                  <div>
+                    <dt>
+                      <MdAspectRatio size={16} aria-hidden />
+                      Canvas
+                    </dt>
+                    <dd>{selectedCanvas.label} · {selectedCanvas.ratio}</dd>
+                  </div>
+                  <div>
+                    <dt>
+                      <MdLayers size={16} aria-hidden />
+                      Template
+                    </dt>
+                    <dd>
+                      {templateSummary ? (
+                        <>
+                          {templateSummary.title}
+                          <small>{templateSummary.detail}</small>
+                        </>
+                      ) : (
+                        'None'
+                      )}
+                    </dd>
+                  </div>
+                  {presenterSeed?.avatarName ? (
+                    <div>
+                      <dt>
+                        <MdFace size={16} aria-hidden />
+                        Presenter
+                      </dt>
+                      <dd>{presenterSeed.avatarName}</dd>
+                    </div>
+                  ) : null}
+                  <div>
+                    <dt>
+                      <MdFolderOpen size={16} aria-hidden />
+                      Saves to
+                    </dt>
+                    <dd>
+                      {selectedWorkspace?.name || '—'}
+                      {selectedFolder?.name ? <small>{selectedFolder.name}</small> : null}
+                    </dd>
+                  </div>
+                </dl>
+              </aside>
+            </div>
+          )}
+        </main>
+      </div>
+
+      <footer className="cvp-footer">
+        <div className="cvp-footer-inner">
+          {step === 1 ? (
+            <button type="button" className="cvp-btn cvp-btn-ghost" onClick={closeWithGuard}>
               Cancel
             </button>
+          ) : (
+            <button type="button" className="cvp-btn cvp-btn-ghost" onClick={handleBack}>
+              <MdArrowBack size={18} aria-hidden />
+              Back
+            </button>
+          )}
 
-            <div className="create-video-footer-actions">
-              <button type="button" className="create-video-btn create-video-btn-ghost" onClick={handleBack} disabled={step === 1}>
-                Back
-              </button>
-
-              {step === 2 && selectedTemplateId && selectedTemplateId !== 'blank' && (
-                <div className="create-video-selection-chip">
-                  <span className="create-video-selection-chip__check">✓</span>
-                  <span className="create-video-selection-chip__label">
-                    {String(selectedTemplateId).startsWith('bundle:')
-                      ? `${selectedTemplate?.bundle?.name || 'Template bundle'} (all scenes)`
-                      : selectedTemplate?.scene?.title || 'Scene selected'}
-                  </span>
-                </div>
-              )}
-
-              {step === 2 && selectedTemplateId === 'blank' && (
-                <div className="create-video-selection-chip">
-                  <span className="create-video-selection-chip__check">✓</span>
-                  <span className="create-video-selection-chip__label">Blank canvas</span>
-                </div>
-              )}
-
-              {step < 3 ? (
-                <button
-                  type="button"
-                  className="create-video-btn create-video-btn-primary"
-                  onClick={handleNext}
-                  disabled={(step === 1 && !canProceedStep1) || (step === 2 && !canProceedStep2)}
-                >
-                  Next
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="create-video-btn create-video-btn-primary"
-                  onClick={handleCreate}
-                  disabled={
-                    !trimmedVideoTitle ||
-                    !aspectRatio ||
-                    !workspaceId ||
-                    !folderId ||
-                    !canCreateInWorkspace(selectedWorkspace) ||
-                    submitting ||
-                    verifyingName ||
-                    folderProjectsLoading ||
-                    folderProjectsLoadError
-                  }
-                  title={
-                    showDuplicateNameError
-                      ? DUPLICATE_PROJECT_NAME_MESSAGE
-                      : folderProjectsLoadError
-                        ? 'Could not verify existing projects in this folder'
-                        : selectedWorkspace && !canCreateInWorkspace(selectedWorkspace)
-                          ? 'You need Editor access to create a project in this workspace'
-                          : ''
-                  }
-                >
-                  {verifyingName ? 'Checking...' : submitting ? 'Creating...' : 'Create Project'}
-                </button>
-              )}
+          {step === 2 && templateSummary ? (
+            <div className="cvp-selection-chip" role="status">
+              <span className="cvp-selection-chip__check" aria-hidden>
+                <MdCheck size={13} />
+              </span>
+              <span className="cvp-selection-chip__label">
+                {templateSummary.title}
+                <small>{templateSummary.detail}</small>
+              </span>
             </div>
-          </footer>
-        </section>
+          ) : (
+            <span className="cvp-footer-step">Step {step} of {WIZARD_STEPS.length}</span>
+          )}
 
-        {showDiscardConfirm && (
-          <div className="create-video-confirm-overlay" onClick={() => setShowDiscardConfirm(false)}>
-            <div className="create-video-confirm-dialog" onClick={(event) => event.stopPropagation()}>
-              <div className="create-video-confirm-icon-wrap">
-                <MdWarning className="create-video-confirm-icon" />
-              </div>
-              <h3 className="create-video-confirm-title">Discard changes?</h3>
-              <p className="create-video-confirm-text">Discard this project setup? Your progress will be lost.</p>
-              <div className="create-video-confirm-actions">
-                <button
-                  type="button"
-                  className="create-video-btn create-video-btn-ghost"
-                  onClick={() => setShowDiscardConfirm(false)}
-                >
-                  Keep Editing
-                </button>
-                <button
-                  type="button"
-                  className="create-video-btn create-video-btn-primary"
-                  onClick={() => {
-                    setShowDiscardConfirm(false);
-                    showToast('Changes discarded', 'error');
-                    onClose();
-                  }}
-                >
-                  Discard
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+          {step < 3 ? (
+            <button
+              type="button"
+              className="cvp-btn cvp-btn-primary"
+              onClick={handleNext}
+              disabled={(step === 1 && !canProceedStep1) || (step === 2 && !canProceedStep2)}
+              title={step === 2 && !canProceedStep2 ? 'Pick a template or a blank canvas to continue' : undefined}
+            >
+              Continue
+              <MdArrowForward size={18} aria-hidden />
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="cvp-btn cvp-btn-primary"
+              onClick={handleCreate}
+              disabled={createDisabled}
+              title={createTitle}
+            >
+              {verifyingName ? 'Checking…' : submitting ? 'Creating…' : 'Create project'}
+              {!verifyingName && !submitting ? <MdArrowForward size={18} aria-hidden /> : null}
+            </button>
+          )}
+        </div>
+      </footer>
 
-        {toast && (
+      {showDiscardConfirm && (
+        <div className="cvp-confirm-overlay" onClick={() => setShowDiscardConfirm(false)}>
           <div
-            className={`create-video-toast create-video-toast--${toast.type}`}
-            role="alert"
-            aria-live="polite"
+            className="cvp-confirm-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="cvp-confirm-title"
+            onClick={(event) => event.stopPropagation()}
           >
-            {toast.type === 'success' ? (
-              <MdCheckCircle className="create-video-toast-icon" />
-            ) : toast.type === 'warning' ? (
-              <MdWarning className="create-video-toast-icon" />
-            ) : (
-              <MdCancel className="create-video-toast-icon" />
-            )}
-            <span>{toast.message}</span>
+            <div className="cvp-confirm-icon-wrap">
+              <MdWarning className="cvp-confirm-icon" />
+            </div>
+            <h3 id="cvp-confirm-title" className="cvp-confirm-title">Discard this video?</h3>
+            <p className="cvp-confirm-text">The choices you made here will be lost.</p>
+            <div className="cvp-confirm-actions">
+              <button
+                type="button"
+                className="cvp-btn cvp-btn-ghost"
+                onClick={() => setShowDiscardConfirm(false)}
+                autoFocus
+              >
+                Keep editing
+              </button>
+              <button
+                type="button"
+                className="cvp-btn cvp-btn-danger"
+                onClick={() => {
+                  setShowDiscardConfirm(false);
+                  onClose();
+                }}
+              >
+                Discard
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className={`cvp-toast cvp-toast--${toast.type}`} role="alert" aria-live="polite">
+          {toast.type === 'success' ? (
+            <MdCheckCircle className="cvp-toast-icon" />
+          ) : toast.type === 'warning' ? (
+            <MdWarning className="cvp-toast-icon" />
+          ) : (
+            <MdCancel className="cvp-toast-icon" />
+          )}
+          <span>{toast.message}</span>
+        </div>
+      )}
     </div>
   );
 };

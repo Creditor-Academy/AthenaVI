@@ -68,6 +68,8 @@ const TemplateBundlePicker = ({
   emptyMessage = 'No templates found matching your criteria.',
   selectedSceneId = null,
   selectedBundleId = null,
+  /** Optional card shown first in the template grid (e.g. "Blank canvas"). */
+  leadingItem = null,
 }) => {
   const [activeBundle, setActiveBundle] = useState(null);
 
@@ -117,14 +119,18 @@ const TemplateBundlePicker = ({
   if (!activeBundle) {
     if (filteredBundles.length === 0) {
       return (
-        <div className="empty-state tbp-empty">
-          <p>{emptyMessage}</p>
-        </div>
+        <>
+          {leadingItem ? <div className="tbp-grid">{leadingItem}</div> : null}
+          <div className="empty-state tbp-empty">
+            <p>{emptyMessage}</p>
+          </div>
+        </>
       );
     }
 
     return (
       <div className="tbp-grid">
+        {leadingItem}
         {filteredBundles.map((bundle) => (
           <BundleCard
             key={bundle.file || bundle.id}
