@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { usePptDaypart } from '../../../utils/pptDaypart'
+import { useImageReady } from '../../../utils/useImageReady'
 import pptBgMorning from '../../../assets/ppt-bg/morning.png'
 import pptBgAfternoon from '../../../assets/ppt-bg/afternoon.png'
 import pptBgEvening from '../../../assets/ppt-bg/evening.png'
@@ -28,6 +29,8 @@ const SUBLINE_MS = 2400
 export default function PptDeckOpenBoot({ title = '' }) {
   const daypart = usePptDaypart()
   const background = PPT_DAY_BACKGROUNDS[daypart] || PPT_DAY_BACKGROUNDS.afternoon
+  // This screen is already a loader, so instead of a second cover the landscape fades in once loaded.
+  const backgroundReady = useImageReady(background)
   const [sublineIndex, setSublineIndex] = useState(0)
   const label = String(title || '').trim()
     ? `Loading presentation: ${String(title).trim()}`
@@ -45,12 +48,16 @@ export default function PptDeckOpenBoot({ title = '' }) {
   return (
     <div
       className={`ppt-deck-open ppt-deck-open--${daypart}`}
-      style={{ backgroundImage: `url(${background})` }}
       role="status"
       aria-live="polite"
       aria-busy="true"
       aria-label={label}
     >
+      <div
+        className={`ppt-deck-open-bg${backgroundReady ? ' is-ready' : ''}`}
+        style={{ backgroundImage: `url(${background})` }}
+        aria-hidden
+      />
       <div className="ppt-deck-open-center">
         <div className="ppt-deck-open-orb" aria-hidden>
           <span />

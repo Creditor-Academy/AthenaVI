@@ -1,0 +1,97 @@
+/* Cover shown until a page's daypart landscape has loaded. Colors are sampled from each image. */
+.daypart-bg-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: linear-gradient(180deg, #5f6d9d 0%, #5b5364 55%, #0a262e 100%);
+  color: #ffffff;
+  font-family: var(--font-family);
+  opacity: 1;
+  transition: opacity 0.42s ease;
+}
+
+.daypart-bg-loader--morning {
+  background: linear-gradient(180deg, #96c3bc 0%, #80ae9e 55%, #125444 100%);
+}
+
+.daypart-bg-loader--afternoon {
+  background: linear-gradient(180deg, #bab9a4 0%, #b7a270 55%, #5a5814 100%);
+}
+
+.daypart-bg-loader--evening {
+  background: linear-gradient(180deg, #5f6d9d 0%, #5b5364 55%, #0a262e 100%);
+}
+
+.daypart-bg-loader--night {
+  background: linear-gradient(180deg, #041837 0%, #092952 55%, #021320 100%);
+}
+
+/* Soft vignette so the white spinner reads on the lighter morning/afternoon tones. */
+.daypart-bg-loader::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%, rgba(15, 23, 42, 0.28) 0%, rgba(15, 23, 42, 0.08) 60%, transparent 100%);
+}
+
+.daypart-bg-loader.is-done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.daypart-bg-loader__spinner {
+  position: relative;
+  width: 56px;
+  height: 56px;
+}
+
+.daypart-bg-loader__spinner span {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.24);
+  border-top-color: #ffffff;
+  animation: daypart-bg-loader-spin 0.95s linear infinite;
+}
+
+.daypart-bg-loader__spinner span:nth-child(2) {
+  inset: 10px;
+  border-top-color: rgba(255, 255, 255, 0.75);
+  border-right-color: transparent;
+  animation-duration: 1.45s;
+  animation-direction: reverse;
+}
+
+/* Doubled class so page-wide paragraph colors (e.g. the create-video page's) can't override it. */
+.daypart-bg-loader .daypart-bg-loader__label.daypart-bg-loader__label {
+  position: relative;
+  margin: 0;
+  color: #ffffff;
+  font-family: var(--font-family);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 8px rgba(15, 23, 42, 0.35);
+}
+
+@keyframes daypart-bg-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .daypart-bg-loader {
+    transition: none;
+  }
+
+  .daypart-bg-loader__spinner span {
+    animation-duration: 2.4s;
+  }
+}

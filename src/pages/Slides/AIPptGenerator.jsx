@@ -17,6 +17,8 @@ import pptBgAfternoon from '../../assets/ppt-bg/afternoon.png'
 import pptBgEvening from '../../assets/ppt-bg/evening.png'
 import pptBgNight from '../../assets/ppt-bg/night.png'
 import { usePptDaypart } from '../../utils/pptDaypart'
+import { useImageReady } from '../../utils/useImageReady'
+import DaypartBgLoader from '../../components/ui/DaypartBgLoader/DaypartBgLoader'
 import presentationService, { PresentationConflictError } from '../../services/presentationService'
 import { isInsufficientCreditsError } from '../../services/creditsService'
 import { startPptGenerateFromOutline } from './AIPptComponents/pptGenerateHappyPath.js'
@@ -146,6 +148,8 @@ export default function AIPptGenerator({
   const showHistorySidebar = stage === 'preview' || (stage === 'wizard' && wizardStep === 1)
   const isDayPage = stage === 'wizard'
   const dayBackground = PPT_DAY_BACKGROUNDS[promptDaypart] || PPT_DAY_BACKGROUNDS.afternoon
+  // A cover shows on the landscape pages until their background image has loaded.
+  const dayBackgroundReady = useImageReady(isDayPage ? dayBackground : null)
 
   if (openingEditor) {
     return <PptDeckOpenBoot title={openingTitle} />
@@ -156,6 +160,9 @@ export default function AIPptGenerator({
       className={`aig-container ${showHistorySidebar ? 'aig-container--with-history' : ''} ${isDayPage ? `aig-container--daypart aig-container--${promptDaypart}` : ''}`}
       style={isDayPage ? { backgroundImage: `url(${dayBackground})` } : undefined}
     >
+      {isDayPage && (
+        <DaypartBgLoader ready={dayBackgroundReady} daypart={promptDaypart} label="Getting your studio ready…" />
+      )}
       {stage !== 'editor' && !isDayPage && (
         <>
           <div className="aig-bg-sky">

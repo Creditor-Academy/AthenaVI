@@ -37,6 +37,8 @@ import {
   findDuplicateProjectName,
 } from '../../../utils/projectNameValidation.js';
 import { usePptDaypart } from '../../../utils/pptDaypart';
+import { useImageReady } from '../../../utils/useImageReady';
+import DaypartBgLoader from '../DaypartBgLoader/DaypartBgLoader';
 import bgMorning from '../../../assets/ppt-bg/morning.png';
 import bgAfternoon from '../../../assets/ppt-bg/afternoon.png';
 import bgEvening from '../../../assets/ppt-bg/evening.png';
@@ -576,6 +578,9 @@ const CreateVideoModal = ({
   }, []);
 
   const daypart = usePptDaypart();
+  const background = DAYPART_BACKGROUNDS[daypart] || bgAfternoon;
+  // Only fetch the landscape once the page is opened; a cover shows until it has loaded.
+  const backgroundReady = useImageReady(isOpen ? background : null);
   // The template whose scenes are open in the right sidebar.
   const [drawerBundleId, setDrawerBundleId] = useState(null);
   const scrollRef = useRef(null);
@@ -998,8 +1003,10 @@ const CreateVideoModal = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="cvp-title"
-      style={{ backgroundImage: `url(${DAYPART_BACKGROUNDS[daypart] || bgAfternoon})` }}
+      style={{ backgroundImage: `url(${background})` }}
     >
+      <DaypartBgLoader ready={backgroundReady} daypart={daypart} label="Getting your studio ready…" />
+
       <div className="cvp-head">
         <header className="cvp-topbar">
           <button type="button" className="cvp-exit" onClick={closeWithGuard}>
