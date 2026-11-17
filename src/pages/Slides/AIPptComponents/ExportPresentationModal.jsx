@@ -65,6 +65,11 @@ function serverStageLabel(progress, typeName) {
 
 const CANCELLED_NOTICE = 'Export cancelled. No credits were charged.'
 
+/** Server download links last an hour: older than this, ask the server for a fresh one. */
+const LINK_REFRESH_MS = 50 * 60 * 1000
+/** Waiting on an export opened from the inbox (its size isn't known here). */
+const RESUME_TIMEOUT_MS = 45 * 60 * 1000
+
 /** A small file icon with the format on it (PPTX orange, PDF red, PNG blue, JPG green). */
 function FileBadge({ format, size = 'md' }) {
   const type = FILE_TYPES.find((t) => t.id === format) || FILE_TYPES[0]
@@ -151,6 +156,8 @@ function sortedSlides(slides) {
  * @param {string} [props.aspectRatio]
  * @param {object} [props.themeTokens]
  * @param {string} [props.theme]
+ * @param {string} [props.resumeExportId]  an export started earlier (opened from the inbox): the
+ *   dialog shows its download, its progress or why it failed, instead of the options
  */
 export default function ExportPresentationModal({
   workspaceId,
@@ -164,6 +171,7 @@ export default function ExportPresentationModal({
   theme: themeProp = null,
   onBeforeExport,
   onClose,
+  resumeExportId = null,
 }) {
   // The last choices made for this deck.
   const [prefs] = useState(() => loadExportPrefs(presentationId))
@@ -188,6 +196,12 @@ export default function ExportPresentationModal({
   // Set by Cancel while an export runs; `serverExportRef` is the server job to stop, if any.
   const cancelRef = useRef(false)
   const serverExportRef = useRef(null)
+  // A server export is running: the dialog can be closed (the inbox says when it's ready).
+  const [serverJobRunning, setServerJobRunning] = useState(false)
+  // The finished server export behind the Download button, to refresh an expired link.
+  const readyRef = useRef(null)
+  // The download started by itself (false for an export opened from the inbox).
+  const [autoDownloaded, setAutoDownloaded] = useState(true)
   const [downloadUrl, setDownloadUrl] = useState('')
   const [downloadFilename, setDownloadFilename] = useState('')
   // PPTX: what the file contains (editable, pictures and why, fonts), from the server.
@@ -265,6 +279,9 @@ export default function ExportPresentationModal({
   }, [deckSlides, scope, totalSlides, currentIndex, selection.count, selection.slideIds])
 
   const busy = phase === 'working'
+  // Busy with a server export: closing leaves it running (the inbox says when it's ready).
+  // Images drawn in this browser, or the save before the export, stop when the dialog closes.
+  const closable = !busy || (serverJobRunning && !cancelling)
   const isImage = selected === 'PNG' || selected === 'JPEG'
   const pixels = imagePixelSize(canvas, scale)
   const typeInfo = FILE_TYPES.find((t) => t.id === selected) || FILE_TYPES[0]
@@ -272,11 +289,11 @@ export default function ExportPresentationModal({
 
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === 'Escape' && !busy) onClose?.()
+      if (e.key === 'Escape' && closable) onClose?.()
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [onClose, busy])
+  }, [onClose, closable])
 
   const chooseScope = (next) => {
     if (busy) return
@@ -301,6 +318,36 @@ export default function ExportPresentationModal({
     return Math.min(45 * 60 * 1000, Math.max(10 * 60 * 1000, count * perSlideMs))
   }, [selection.count, selected])
 
+  /** Wait for a server export to finish; returns its link, file name and (PPTX) report. */
+  const waitForServerExport = useCallback(
+    async (exportId, { format, typeName, count = 0, timeoutMs, isStopped = null }) => {
+      const ready = await presentationService.pollExportUntilReady(workspaceId, presentationId, exportId, {
+        timeoutMs,
+        intervalMs: 1500,
+        isCancelled: () => cancelRef.current || unmountedRef.current || Boolean(isStopped?.()),
+        onProgress: (s) => {
+          if (cancelRef.current) return
+          const st = String(s?.status || s?.exportStatus || 'PROCESSING').toUpperCase()
+          const p = s?.progress
+          setStatusText(serverStageLabel(p, typeName) || STATUS_LABEL[st] || `${format}: ${st.toLowerCase()}…`)
+          // The server's own percentage (null when it can't see the job: an indeterminate bar).
+          setProgress(p && Number.isFinite(p.percent) ? { percent: p.percent, done: p.done, total: p.total } : null)
+        },
+      })
+      serverExportRef.current = null
+      const url = ready?.presignedUrl || ready?.url || ready?.downloadUrl
+      if (!url) throw new Error('Export finished but no download link was returned')
+      readyRef.current = { exportId, at: Date.now() }
+
+      // The server's file decides the extension: PNG / JPEG of several slides is a .zip.
+      const serverExt = String(ready?.filename || ready?.s3Key || '').match(/\.([a-z0-9]{2,5})$/i)?.[1]
+      const ext = String(serverExt || '').toLowerCase().replace('jpeg', 'jpg')
+      const filename = ext ? `${exportFileBase(title)}.${ext}` : exportDownloadName(title, format, count)
+      return { url, filename, report: format === 'PPTX' ? ready?.report || null : null }
+    },
+    [workspaceId, presentationId, title]
+  )
+
   /** Files the server built: start the job, wait for it, return the link. */
   const exportOnServer = useCallback(async () => {
     const started = await presentationService.startExport(workspaceId, presentationId, {
@@ -317,30 +364,15 @@ export default function ExportPresentationModal({
       await presentationService.cancelExport(workspaceId, presentationId, exportId).catch(() => {})
       throw new ExportCancelledError()
     }
+    setServerJobRunning(true)
 
-    const ready = await presentationService.pollExportUntilReady(workspaceId, presentationId, exportId, {
+    return waitForServerExport(exportId, {
+      format: selected,
+      typeName: typeInfo.name,
+      count: selection.count,
       timeoutMs: exportTimeoutMs,
-      intervalMs: 1500,
-      isCancelled: () => cancelRef.current || unmountedRef.current,
-      onProgress: (s) => {
-        if (cancelRef.current) return
-        const st = String(s?.status || s?.exportStatus || 'PROCESSING').toUpperCase()
-        const p = s?.progress
-        setStatusText(serverStageLabel(p, typeInfo.name) || STATUS_LABEL[st] || `${selected}: ${st.toLowerCase()}…`)
-        // The server's own percentage (null when it can't see the job: an indeterminate bar).
-        setProgress(p && Number.isFinite(p.percent) ? { percent: p.percent, done: p.done, total: p.total } : null)
-      },
     })
-    serverExportRef.current = null
-    const url = ready?.presignedUrl || ready?.url || ready?.downloadUrl
-    if (!url) throw new Error('Export finished but no download link was returned')
-
-    // The server's file decides the extension: PNG / JPEG of several slides is a .zip.
-    const serverExt = String(ready?.filename || ready?.s3Key || '').match(/\.([a-z0-9]{2,5})$/i)?.[1]
-    const ext = String(serverExt || '').toLowerCase().replace('jpeg', 'jpg')
-    const filename = ext ? `${exportFileBase(title)}.${ext}` : exportDownloadName(title, selected, selection.count)
-    return { url, filename, report: selected === 'PPTX' ? ready?.report || null : null }
-  }, [workspaceId, presentationId, selected, selection.slideIds, selection.count, pptxTarget, isImage, scale, quality, transparent, exportTimeoutMs, title, typeInfo.name])
+  }, [workspaceId, presentationId, selected, selection.slideIds, selection.count, pptxTarget, isImage, scale, quality, transparent, exportTimeoutMs, typeInfo.name, waitForServerExport])
 
   /**
    * Slide images made in this browser by the export renderer: no server job. Throws
@@ -398,6 +430,41 @@ export default function ExportPresentationModal({
     return { url: objectUrlRef.current, filename: exportDownloadName(title, selected, images.length) }
   }, [workspaceId, presentationId, selected, selection.slideIds, selection.count, scale, quality, transparent, title])
 
+  /** The file is ready: show it (and start the download for an export started just now). */
+  const showReady = useCallback((result, { download }) => {
+    setDownloadUrl(result.url)
+    setDownloadFilename(result.filename)
+    setReport(result.report || null)
+    setStatusText('Your download is ready')
+    setProgress(null)
+    setPhase('done')
+    setAutoDownloaded(Boolean(download))
+    if (download) triggerFileDownload(result.url, result.filename)
+  }, [])
+
+  /** Back to the options with why it stopped: a calm note after Cancel, an error otherwise. */
+  const showFailure = useCallback((err) => {
+    setPhase('pick')
+    setProgress(null)
+    setCancelling(false)
+    serverExportRef.current = null
+    if (err instanceof ExportCancelledError || cancelRef.current) {
+      cancelRef.current = false
+      setNotice(CANCELLED_NOTICE)
+      setStatusText('')
+      return
+    }
+    if (isInsufficientCreditsError(err)) {
+      setError(err.message || 'Insufficient credits to export')
+    } else if (err?.status === 401) {
+      // Only reached when the session could not be renewed (the sign-in prompt is showing).
+      setError('Your session has expired. Sign in again, then export.')
+    } else {
+      setError(err.message || 'Export failed. Try again in a moment.')
+    }
+    setStatusText('')
+  }, [])
+
   const runExport = useCallback(async () => {
     if (!workspaceId || !presentationId) {
       setError('Save the presentation before exporting.')
@@ -414,6 +481,8 @@ export default function ExportPresentationModal({
     setCancelling(false)
     cancelRef.current = false
     serverExportRef.current = null
+    readyRef.current = null
+    setServerJobRunning(false)
     setDownloadUrl('')
     setReport(null)
     setProgress(null)
@@ -459,35 +528,12 @@ export default function ExportPresentationModal({
         result = await exportOnServer()
       }
       if (unmountedRef.current) return
-
-      setDownloadUrl(result.url)
-      setDownloadFilename(result.filename)
-      setReport(result.report || null)
-      setStatusText('Your download is ready')
-      setProgress(null)
-      setPhase('done')
-      triggerFileDownload(result.url, result.filename)
+      showReady(result, { download: true })
     } catch (err) {
       if (unmountedRef.current) return
-      setPhase('pick')
-      setProgress(null)
-      setCancelling(false)
-      serverExportRef.current = null
-      if (err instanceof ExportCancelledError || cancelRef.current) {
-        cancelRef.current = false
-        setNotice(CANCELLED_NOTICE)
-        setStatusText('')
-        return
-      }
-      if (isInsufficientCreditsError(err)) {
-        setError(err.message || 'Insufficient credits to export')
-      } else if (err?.status === 401) {
-        // Only reached when the session could not be renewed (the sign-in prompt is showing).
-        setError('Your session has expired. Sign in again, then export.')
-      } else {
-        setError(err.message || 'Export failed. Try again in a moment.')
-      }
-      setStatusText('')
+      showFailure(err)
+    } finally {
+      setServerJobRunning(false)
     }
   }, [
     workspaceId,
@@ -506,7 +552,51 @@ export default function ExportPresentationModal({
     exportInBrowser,
     exportOnServer,
     typeInfo.name,
+    showReady,
+    showFailure,
   ])
+
+  // Opened from the inbox ("export ready" / "export failed"): show that export instead of the
+  // options: its Download with a fresh link, its progress if it is still running, or the error.
+  useEffect(() => {
+    if (!resumeExportId || !workspaceId || !presentationId) return undefined
+    let stopped = false
+    const run = async () => {
+      setPhase('working')
+      setError('')
+      setNotice('')
+      setProgress(null)
+      setStatusText('Checking your export…')
+      cancelRef.current = false
+      serverExportRef.current = resumeExportId
+      setServerJobRunning(true)
+      try {
+        const first = await presentationService.getExportStatus(workspaceId, presentationId, resumeExportId)
+        if (stopped) return
+        const format = String(first?.format || '').toUpperCase()
+        const type = FILE_TYPES.find((t) => t.id === format)
+        if (type) setSelected(format)
+        const result = await waitForServerExport(resumeExportId, {
+          format: type ? format : 'PPTX',
+          typeName: type?.name || 'file',
+          timeoutMs: RESUME_TIMEOUT_MS,
+          isStopped: () => stopped,
+        })
+        if (stopped || unmountedRef.current) return
+        // The user came for this file, but may have downloaded it already: no automatic download.
+        showReady(result, { download: false })
+      } catch (err) {
+        if (stopped || unmountedRef.current) return
+        showFailure(err)
+      } finally {
+        if (!stopped) setServerJobRunning(false)
+      }
+    }
+    run()
+    return () => {
+      stopped = true
+    }
+  }, [resumeExportId, workspaceId, presentationId, waitForServerExport, showReady, showFailure])
 
   const canExport = Boolean(workspaceId && presentationId)
   const scopes = [
@@ -522,6 +612,31 @@ export default function ExportPresentationModal({
       : progress?.total
         ? Math.round((progress.done / progress.total) * 100)
         : null
+
+  /** Download (again). A server link older than LINK_REFRESH_MS is swapped for a fresh one first. */
+  const downloadAgain = useCallback(async () => {
+    let url = downloadUrl
+    const ready = readyRef.current
+    if (ready && Date.now() - ready.at > LINK_REFRESH_MS) {
+      try {
+        const fresh = await presentationService.getExportStatus(workspaceId, presentationId, ready.exportId)
+        const state = String(fresh?.status || '').toUpperCase()
+        const next = fresh?.presignedUrl || fresh?.url || fresh?.downloadUrl
+        if (state === 'READY' && next) {
+          url = next
+          readyRef.current = { ...ready, at: Date.now() }
+          setDownloadUrl(next)
+        } else if (state === 'EXPIRED') {
+          setError(fresh?.error || 'This download has expired. Export the presentation again.')
+          setPhase('pick')
+          return
+        }
+      } catch (err) {
+        console.warn('Export: could not refresh the download link', err)
+      }
+    }
+    triggerFileDownload(url, downloadFilename)
+  }, [downloadUrl, downloadFilename, workspaceId, presentationId])
 
   /** Stop the export in progress: the server job (if any) is cancelled; nothing is charged. */
   const cancelExport = useCallback(async () => {
@@ -550,7 +665,7 @@ export default function ExportPresentationModal({
   const modal = (
     <div
       className="ppt-editor-modal-overlay"
-      onClick={(e) => e.target === e.currentTarget && !busy && onClose?.()}
+      onClick={(e) => e.target === e.currentTarget && closable && onClose?.()}
     >
       <div className="ppt-editor-modal ppt-export-modal" role="dialog" aria-modal="true" aria-labelledby="ppt-export-title">
         <header className="ppt-export-head">
@@ -558,7 +673,7 @@ export default function ExportPresentationModal({
             <h3 id="ppt-export-title">Download</h3>
             <p title={title}>{title}</p>
           </div>
-          <button type="button" className="ppt-export-close" onClick={onClose} disabled={busy} aria-label="Close">
+          <button type="button" className="ppt-export-close" onClick={onClose} disabled={!closable} aria-label="Close">
             <FiX size={18} />
           </button>
         </header>
@@ -750,7 +865,11 @@ export default function ExportPresentationModal({
               <>
                 <strong>{statusText}</strong>
                 <p className="ppt-export-status-file">{downloadFilename}</p>
-                <p>Your download should start by itself. If it didn&apos;t, click Download again.</p>
+                <p>
+                  {!autoDownloaded
+                    ? 'Click Download to save it.'
+                    : 'Your download should start by itself. If it didn’t, click Download again.'}
+                </p>
                 {reportLines.length ? (
                   <ul className="ppt-export-report" aria-label="What's in your file">
                     {reportLines.map((line) => (
@@ -784,6 +903,11 @@ export default function ExportPresentationModal({
                 ) : (
                   <span className="ppt-export-bar" />
                 )}
+                {serverJobRunning && !cancelling ? (
+                  <p className="ppt-export-status-hint">
+                    You can close this window. We&apos;ll let you know in your inbox when it&apos;s ready.
+                  </p>
+                ) : null}
               </>
             )}
           </div>
@@ -811,7 +935,7 @@ export default function ExportPresentationModal({
                 rel="noopener noreferrer"
                 onClick={(e) => {
                   e.preventDefault()
-                  triggerFileDownload(downloadUrl, downloadFilename)
+                  downloadAgain()
                 }}
               >
                 <FiDownload size={16} /> Download

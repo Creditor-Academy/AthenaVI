@@ -12,7 +12,7 @@
 | 3 | One renderer: PDF and images drawn by the editor's own page | ✅ Code done (except 3.4 and part of 3.8) · staging check pending |
 | 4 | PPTX that matches the editor in PowerPoint and Google Slides | ✅ Code done 2026-11-13: all 24 items, F13–F23, every library shape and photo mask native, native groups, export report in the dialog · check in real PowerPoint / Google Slides pending |
 | 5 | Fonts in PowerPoint | ✅ Code done 2026-11-06: fonts embedded in the PPTX, the font the editor drew, the editor's font rule, theme fonts · check in real PowerPoint (Windows / Mac) pending |
-| 6 | Job queue, progress, cancel | 🟡 6.1–6.5 code done 2026-11-17: BullMQ queue (in-process without Redis), one shared browser, real progress, Cancel, one retry after a browser crash · 6.6–6.9 not started · check with a real Redis on staging pending |
+| 6 | Job queue, progress, cancel | 🟡 6.1–6.9 code done 2026-11-17: BullMQ queue (in-process without Redis), one shared browser, real progress, Cancel, one retry after a browser crash, time limits by slide count, the queue's state instead of the heartbeat guess, files expire after 7 days, one log line per export with a failure-rate alert, the dialog can be closed with an inbox link back · pending: check with a real Redis on staging, apply the S3 lifecycle rule |
 | 7 | QA, rollout, docs | Not started |
 
 ---
@@ -467,7 +467,7 @@ The same font must be used in the editor, the PDF, PowerPoint and Google Slides,
 
 ---
 
-### Phase 6: Job infrastructure (M) — 6.1–6.5 code done 2026-11-17, staging check pending
+### Phase 6: Job infrastructure (M) — 6.1–6.9 code done 2026-11-17, staging check and S3 rule pending
 
 - [x] **6.1** A BullMQ `presentation-export` queue on the existing Redis. The API adds a job; a worker (in the same service at first, separable later) runs it with **concurrency 2 per instance** (configurable).
   - New `exportQueue.js`. The job id is the export id, and the worker runs `PPT_EXPORT_CONCURRENCY` jobs at once (default 2). Each job runs once in BullMQ (crash retries happen inside the job, see 6.5). A job whose server died is picked up again once (`maxStalledCount: 1`).
@@ -506,10 +506,70 @@ The same font must be used in the editor, the PDF, PowerPoint and Google Slides,
 
   The new `exportQueue.test.js` has 7 tests, run against a stand-in for BullMQ and ioredis. They cover job ids, worker options, progress on the job, cancel (waiting → removed, running → aborted), the fallbacks (Redis down at boot or when adding), `PPT_EXPORT_WORKER=0` and shutdown. The dialog has a browser test with 12 checks.
 - **Not yet checked against a real Redis.** There was none on the dev machine. The real BullMQ and ioredis were run against a port with nothing listening: the queue falls back to in-process after the 10s connect limit and the export still runs. Check on staging with Redis (Checkpoint 6).
-- [ ] **6.6** Timeouts per job scale with the slide count. Remove the "stale heartbeat" guess once the queue tracks job state.
-- [ ] **6.7** An S3 lifecycle rule deletes `presentations/*/exports/*` after 7 days. Presigned links last 1 hour, and asking again issues a fresh link.
-- [ ] **6.8** Logging and metrics: duration, slide count, format, renderer version and failure reason for each export. Alert if the failure rate passes 5% in an hour.
-- [ ] **6.9** Notify in the inbox when an export finishes after the dialog was closed (this exists; keep it).
+- [x] **6.6** Timeouts per job scale with the slide count. Remove the "stale heartbeat" guess once the queue tracks job state.
+  - Each export has a time limit from `exportJobTimeoutMs()`: 2 minutes plus a per-slide allowance (PPTX 20s, PDF 10s, PNG/JPEG 8s, times the image scale), capped at 30 minutes. `PPT_EXPORT_JOB_TIMEOUT_BASE_MS` and `PPT_EXPORT_JOB_TIMEOUT_MAX_MS` override these.
+  - The clock starts when the job starts, so time in the queue doesn't count, and stops once the file is made.
+  - Past the limit the job's pages are closed and the export fails with "This export took too long and was stopped…". It is not retried, and the user gets an inbox message.
+  - **The queue's state now decides** (`queueVerdict()`):
+    - a job that is waiting is left alone for up to 15 minutes (`PPT_EXPORT_MAX_QUEUE_WAIT_MS`), then failed with "servers are busy" and taken off the queue;
+    - an `active` job is trusted, because BullMQ's lock catches a dead worker;
+    - a job that BullMQ has finished or failed while its row is still in progress is failed at once.
+  - The heartbeat check is kept only for jobs the queue can't see: no Redis, or an in-process fallback job on another server. The old 45-minute absolute cap is gone.
+  - **Jobs that would otherwise get stuck:** when BullMQ gives up on a job (its server died twice) or the job throws, `failLostExport()` marks the row FAILED and tells the user in the inbox. Before, the row stayed in progress until someone opened the dialog.
+  - **A restart during the save no longer loses the export:** the file key is stored together with `SAVING`. If the server stops after the upload, the next run charges once (same idempotent key) and marks the export READY without rendering again.
+  - The dialog's own wait doesn't count time in the queue either; the server enforces both limits.
+- [x] **6.7** An S3 lifecycle rule deletes export files after 7 days. Presigned links last 1 hour, and asking again issues a fresh link.
+  - **New key layout:** S3 lifecycle rules match a key prefix only, so `presentations/*/exports/*` (wildcard in the middle) can't be expired by a rule. New exports go to `presentation-exports/<workspace>/<deck>/<export>.<ext>` (`PPT_EXPORT_S3_PREFIX`). The PPTX report JSON sits next to its file, so the same rule covers it.
+  - **The rule:** `node scripts/s3-export-lifecycle.js` shows the rule and changes nothing; `--apply` writes it.
+    - The rule: `presentation-exports-expire`, prefix `presentation-exports/`, expire after `PPT_EXPORT_RETENTION_DAYS` (7), and abort incomplete uploads after 1 day.
+    - The script keeps the bucket's other rules.
+    - `--legacy` lists old-layout export files past 7 days; `--legacy --delete-legacy` deletes them.
+  - **Links:** `getExport` presigns a new 1-hour link on every request. A finished export older than the retention period returns `EXPIRED` with a plain message instead of a dead link.
+    - In the dialog, clicking Download more than 50 minutes after the export finished fetches a fresh link first.
+- [x] **6.8** Logging and metrics: duration, slide count, format, renderer version and failure reason for each export. Alert if the failure rate passes 5% in an hour.
+  - **One `presentation_export_finished` log line per export:**
+    - what it was: outcome, format, slide count, size in bytes, PPTX target or image scale;
+    - timings: `durationMs`, `renderMs`, `queueMs`, `totalMs`;
+    - how it ran: attempts, the time limit and whether it was hit, whether it was resumed after a restart;
+    - `rendererVersion` (the render page's version, or `legacy`);
+    - for failures, the user-facing reason and the technical error.
+    - Failures log at warn level, others at info.
+  - **Per-server metrics** (`exportMetrics.js`) for the last hour, in `GET /health/export` → `metrics`:
+    - counts by outcome and by format;
+    - the failure rate (cancels don't count as failures);
+    - p50/p95 render time per format;
+    - the top failure reasons.
+  - **Alert:** an error log line, `presentation_export_failure_rate_high`, when more than 5% fail.
+    - It needs at least 20 finished exports in the hour, and repeats at most every 15 minutes.
+    - `PPT_EXPORT_ALERT_FAILURE_RATE`, `PPT_EXPORT_ALERT_MIN_EXPORTS` and `PPT_EXPORT_ALERT_COOLDOWN_MS` change these.
+    - `PPT_EXPORT_ALERT_WEBHOOK_URL` also posts it (Slack-style `{ text }`).
+  - The numbers are per server. For totals across servers, alert on the `presentation_export_finished` lines in the log platform.
+- [x] **6.9** Notify in the inbox when an export finishes after the dialog was closed (this exists; keep it).
+  - **The dialog can now be closed while a server export runs.** It says "You can close this window. We'll let you know in your inbox when it's ready." Closing doesn't cancel. Before, the close button was disabled while exporting, and Cancel stopped the export.
+    - Images drawn in the browser, and the save before an export, still can't be left running.
+  - **Ready, failed and timed-out exports notify; cancelled ones don't.** Exports given up by the queue now notify too.
+  - **The notification link** used to point at `/workspaces/…/presentations/…`, which isn't a route. It now opens `/dashboard/editor?workspaceId…&presentationId…&export=<id>`.
+    - The editor opens the export dialog on that export: the Download button with a fresh link (no automatic download), its live progress if it's still running, or the reason it failed or expired.
+    - The `export` parameter is removed from the address afterwards.
+    - The dashboard now switches to the linked deck when another one was open.
+- **Tests:**
+  - `exportJobs.test.js` has 35 tests (9 new, 1 replaced):
+    - an export past its time limit (stops, plain message, not retried, nothing charged, inbox message);
+    - the finished log line;
+    - resume after a restart while saving;
+    - the file key stored with SAVING;
+    - lost jobs;
+    - expired links;
+    - the inbox link;
+    - the time-limit maths;
+    - the queue verdict, including the finished-just-now race.
+  - `exportQueue.test.js` has 9 tests (2 new: a lost job handed over, from BullMQ and in-process).
+  - The new `exportOps.test.js` has 8 tests: S3 keys, the lifecycle rule and merging it, expiry, the metrics, and the alert threshold, minimum and cooldown.
+  - Frontend: `exportPolling.test.mjs` has 2 new tests (expired; queue time not counted). The dialog's browser test has 12 more checks: close while exporting, opened from the inbox when ready, running, failed or expired, and the fresh link after 50 minutes.
+- **Not done here:**
+  - The lifecycle rule isn't applied to a bucket yet. Run the script with `--apply` on each environment (it needs `s3:GetLifecycleConfiguration` and `s3:PutLifecycleConfiguration`).
+  - Exports already in S3 under the old layout stay there until `--legacy --delete-legacy` is run.
+  - Opening the editor from an inbox link was checked in code and with the dialog alone, not end to end in the full app.
 
 **Checkpoint 6**
 - [ ] 10 exports started at once on staging all finish; memory stays within the container limit.

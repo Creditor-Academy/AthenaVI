@@ -44,6 +44,30 @@ describe('waiting for an export', () => {
     }
   })
 
+  it("an expired download is an error with the server's message", async () => {
+    stubStatuses([{ status: 'EXPIRED', error: 'This download has expired.' }])
+    await assert.rejects(
+      presentationService.pollExportUntilReady('w', 'p', 'e', { intervalMs: 1 }),
+      /This download has expired/
+    )
+  })
+
+  it('time waiting in the server queue does not count toward the time limit', async () => {
+    // 30 checks 5ms apart while queued is far past a 40ms limit; it still waits for the result.
+    const steps = [...Array(30).fill({ status: 'QUEUED' }), { status: 'RENDERING' }, { status: 'READY' }]
+    const calls = stubStatuses(steps)
+    const ready = await presentationService.pollExportUntilReady('w', 'p', 'e', { intervalMs: 5, timeoutMs: 40 })
+    assert.equal(ready.status, 'READY')
+    assert.equal(calls.length, steps.length)
+
+    // Running (not queued) for longer than the limit still times out.
+    stubStatuses([{ status: 'RENDERING' }])
+    await assert.rejects(
+      presentationService.pollExportUntilReady('w', 'p', 'e', { intervalMs: 5, timeoutMs: 40 }),
+      /Timed out waiting for export/
+    )
+  })
+
   it('gives up after repeated network failures', async () => {
     const calls = stubStatuses([httpError(503)])
     await assert.rejects(presentationService.pollExportUntilReady('w', 'p', 'e', { intervalMs: 1 }))

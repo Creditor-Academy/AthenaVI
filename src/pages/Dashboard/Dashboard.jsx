@@ -427,6 +427,17 @@ function Dashboard({ onCreate, initialSection }) {
       if (settingsTab) {
         setSettingsInitialTab(settingsTab)
       }
+      if (section === 'editor') {
+        // A link to a deck (e.g. an inbox notification) opens that deck, even if another is open.
+        const fromUrl = loadPresentationEditorSession()
+        if (fromUrl?.workspaceId && fromUrl?.presentationId) {
+          setEditorData((current) =>
+            current?.workspaceId === fromUrl.workspaceId && current?.presentationId === fromUrl.presentationId
+              ? current
+              : fromUrl
+          )
+        }
+      }
       goToSection(section)
     }
 

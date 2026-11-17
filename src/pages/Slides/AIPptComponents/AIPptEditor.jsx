@@ -1221,6 +1221,8 @@ function AIPptEditor({
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [exportModalOpen, setExportModalOpen] = useState(false)
+  // Opened from an inbox "export ready / failed" notification (`?export=<id>`): that export.
+  const [resumeExportId, setResumeExportId] = useState(null)
   const [convertTemplateOpen, setConvertTemplateOpen] = useState(false)
   const [selectedSlideId, setSelectedSlideId] = useState(null)
   const [selectedElementId, setSelectedElementId] = useState(null)
@@ -1311,6 +1313,36 @@ function AIPptEditor({
   const minimapDragIdRef = useRef(null)
 
   const history = usePptEditorHistory()
+
+  // An inbox notification links to `/dashboard/editor?…&export=<id>`: open the export dialog on
+  // that export (its download, progress or error). The param is removed so a refresh doesn't
+  // reopen it. Also checked on in-app navigation, for a notification clicked while this deck is open.
+  useEffect(() => {
+    if (viewOnly || !workspaceId || !presentationId) return undefined
+    const openFromUrl = () => {
+      let exportId = null
+      try {
+        const url = new URL(window.location.href)
+        if (url.searchParams.get('presentationId') && url.searchParams.get('presentationId') !== presentationId) return
+        exportId = url.searchParams.get('export')
+        if (!exportId) return
+        url.searchParams.delete('export')
+        window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
+      } catch {
+        return
+      }
+      setResumeExportId(exportId)
+      setExportModalOpen(true)
+    }
+    openFromUrl()
+    // The inbox navigates in-app (pushState + this event); back / forward is popstate.
+    window.addEventListener('popstate', openFromUrl)
+    window.addEventListener('athena:navigation', openFromUrl)
+    return () => {
+      window.removeEventListener('popstate', openFromUrl)
+      window.removeEventListener('athena:navigation', openFromUrl)
+    }
+  }, [viewOnly, workspaceId, presentationId])
 
   useEffect(() => {
     localSlidesRef.current = localSlides
@@ -5600,7 +5632,11 @@ function AIPptEditor({
           themeTokens={themeTokens}
           theme={config.theme}
           onBeforeExport={saveBeforeExport}
-          onClose={() => setExportModalOpen(false)}
+          resumeExportId={resumeExportId}
+          onClose={() => {
+            setExportModalOpen(false)
+            setResumeExportId(null)
+          }}
         />
       )}
 

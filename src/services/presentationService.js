@@ -764,11 +764,14 @@ class PresentationService {
     exportId,
     { intervalMs = 2000, timeoutMs = 10 * 60 * 1000, onProgress, isCancelled } = {}
   ) {
-    const started = Date.now()
+    // Time waiting in the server's queue doesn't count: the server gives up a job that waits
+    // too long, and each running job has its own time limit there.
+    let deadline = Date.now() + timeoutMs
+    let lastPoll = Date.now()
     // The export keeps running on the server while we poll: a dropped connection or a 5xx from
     // a restarting proxy on one status check must not report the export as failed.
     let transientFailures = 0
-    while (Date.now() - started < timeoutMs) {
+    while (Date.now() < deadline) {
       if (isCancelled?.()) throw new ExportCancelledError()
       let status
       try {
@@ -787,10 +790,13 @@ class PresentationService {
 
       const state = String(status?.status || status?.exportStatus || '').toUpperCase()
       if (state === 'READY') return status
-      if (state === 'FAILED') {
+      if (state === 'FAILED' || state === 'EXPIRED') {
         throw new Error(status?.error || status?.message || 'Export failed')
       }
       if (state === 'CANCELLED') throw new ExportCancelledError()
+      const now = Date.now()
+      if (state === 'QUEUED') deadline += now - lastPoll
+      lastPoll = now
       await sleep(intervalMs)
     }
     const minutes = Math.round(timeoutMs / 60000)

@@ -1839,6 +1839,12 @@
   white-space: nowrap;
 }
 
+/* "You can close this window…" under the progress bar of a server export. */
+.ppt-export-status .ppt-export-status-hint {
+  margin-top: 4px;
+  font-size: 12px;
+}
+
 .ppt-export-status {
   overflow-y: auto;
   /* Centred, but scrolls from the top when the report makes it taller than the dialog. */
