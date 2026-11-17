@@ -47,6 +47,15 @@ export class PresentationConflictError extends Error {
   }
 }
 
+/** The export was cancelled (by the user, or on the server) before it finished. */
+export class ExportCancelledError extends Error {
+  constructor(message = 'Export cancelled') {
+    super(message)
+    this.name = 'ExportCancelledError'
+    this.code = 'EXPORT_CANCELLED'
+  }
+}
+
 export class PresentationRateLimitError extends Error {
   constructor(message, data = {}) {
     super(message || 'Too many generate requests. Please wait and try again.')
@@ -732,17 +741,35 @@ class PresentationService {
     )
   }
 
+  /**
+   * Cancel a server export that hasn't finished (queued or running). Nothing is charged.
+   * Rejects with status 409 when it already finished or is being saved.
+   */
+  cancelExport(workspaceId, presentationId, exportId) {
+    return this.request(
+      API_CONFIG.ENDPOINTS.PRESENTATIONS.EXPORT_STATUS(workspaceId, presentationId, exportId),
+      { method: 'DELETE' }
+    )
+  }
+
+  /**
+   * Poll until the export is READY (resolves with its status) or FAILED (rejects).
+   * `onProgress(status)` gets every status; `status.progress` is `{ stage, percent, done, total }`
+   * while it runs. `isCancelled()` returning true, or the export being CANCELLED on the server,
+   * rejects with ExportCancelledError.
+   */
   async pollExportUntilReady(
     workspaceId,
     presentationId,
     exportId,
-    { intervalMs = 2000, timeoutMs = 10 * 60 * 1000, onProgress } = {}
+    { intervalMs = 2000, timeoutMs = 10 * 60 * 1000, onProgress, isCancelled } = {}
   ) {
     const started = Date.now()
     // The export keeps running on the server while we poll: a dropped connection or a 5xx from
     // a restarting proxy on one status check must not report the export as failed.
     let transientFailures = 0
     while (Date.now() - started < timeoutMs) {
+      if (isCancelled?.()) throw new ExportCancelledError()
       let status
       try {
         status = await this.getExportStatus(workspaceId, presentationId, exportId)
@@ -755,6 +782,7 @@ class PresentationService {
         await sleep(Math.min(intervalMs * 2 ** transientFailures, 15000))
         continue
       }
+      if (isCancelled?.()) throw new ExportCancelledError()
       onProgress?.(status)
 
       const state = String(status?.status || status?.exportStatus || '').toUpperCase()
@@ -762,6 +790,7 @@ class PresentationService {
       if (state === 'FAILED') {
         throw new Error(status?.error || status?.message || 'Export failed')
       }
+      if (state === 'CANCELLED') throw new ExportCancelledError()
       await sleep(intervalMs)
     }
     const minutes = Math.round(timeoutMs / 60000)

@@ -3119,3 +3119,16 @@
   border-radius: 5px;
   background: #2563eb;
 }
+
+/* A neutral note in the export dialog (e.g. "Export cancelled. No credits were charged."). */
+.ppt-export-alert.is-info {
+  border-color: color-mix(in srgb, var(--primary) 28%, #e2e8f0);
+  background: color-mix(in srgb, var(--primary) 7%, #ffffff);
+  color: #334155;
+}
+
+[data-mode='dark'] .ppt-export-alert.is-info {
+  border-color: color-mix(in srgb, var(--primary) 40%, #334155);
+  background: color-mix(in srgb, var(--primary) 14%, #0f172a);
+  color: #e2e8f0;
+}

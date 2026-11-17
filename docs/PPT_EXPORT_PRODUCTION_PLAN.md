@@ -12,7 +12,7 @@
 | 3 | One renderer: PDF and images drawn by the editor's own page | ✅ Code done (except 3.4 and part of 3.8) · staging check pending |
 | 4 | PPTX that matches the editor in PowerPoint and Google Slides | ✅ Code done 2026-11-13: all 24 items, F13–F23, every library shape and photo mask native, native groups, export report in the dialog · check in real PowerPoint / Google Slides pending |
 | 5 | Fonts in PowerPoint | ✅ Code done 2026-11-06: fonts embedded in the PPTX, the font the editor drew, the editor's font rule, theme fonts · check in real PowerPoint (Windows / Mac) pending |
-| 6 | Job queue, progress, cancel | Not started |
+| 6 | Job queue, progress, cancel | 🟡 6.1–6.5 code done 2026-11-17: BullMQ queue (in-process without Redis), one shared browser, real progress, Cancel, one retry after a browser crash · 6.6–6.9 not started · check with a real Redis on staging pending |
 | 7 | QA, rollout, docs | Not started |
 
 ---
@@ -467,13 +467,45 @@ The same font must be used in the editor, the PDF, PowerPoint and Google Slides,
 
 ---
 
-### Phase 6: Job infrastructure (M)
+### Phase 6: Job infrastructure (M) — 6.1–6.5 code done 2026-11-17, staging check pending
 
-- [ ] **6.1** A BullMQ `presentation-export` queue on the existing Redis. The API adds a job; a worker (in the same service at first, separable later) runs it with **concurrency 2 per instance** (configurable).
-- [ ] **6.2** One browser per worker, reused across jobs, with a new page per job. Restart the browser after N jobs or on a crash.
-- [ ] **6.3** Progress: the worker reports `progress` (slides done / total). `getExport` returns it, and the dialog shows a real percentage bar.
-- [ ] **6.4** Cancel: a `DELETE /export/:id` endpoint removes a queued job or cancels a running one. The dialog gets a Cancel button. No credits are charged.
-- [ ] **6.5** Retry once automatically on browser crashes; never retry a validation error. The idempotent credit charge (already keyed on `exportId`) stays.
+- [x] **6.1** A BullMQ `presentation-export` queue on the existing Redis. The API adds a job; a worker (in the same service at first, separable later) runs it with **concurrency 2 per instance** (configurable).
+  - New `exportQueue.js`. The job id is the export id, and the worker runs `PPT_EXPORT_CONCURRENCY` jobs at once (default 2). Each job runs once in BullMQ (crash retries happen inside the job, see 6.5). A job whose server died is picked up again once (`maxStalledCount: 1`).
+  - **Without Redis** (local dev, Redis down at boot, or `PPT_EXPORT_QUEUE=local`), exports run in the same process as before. The producer connection has its offline queue turned off, so when Redis is down an add fails at once and that export runs in-process. It can't sit in a buffer and then run twice.
+  - `PPT_EXPORT_WORKER=0` runs no worker on an instance (API only), ready for a separate worker service later. Shutdown closes the worker without waiting; BullMQ hands its jobs to the next worker.
+  - `GET /health/export` also reports `queue` (mode, concurrency, Redis counts) and `browserPool`.
+  - `getExport` no longer gives up a job as "stale" while the queue still holds it (a backlog can be longer than the 5-minute limit).
+- [x] **6.2** One browser per worker, reused across jobs, with a new page per job. Restart the browser after N jobs or on a crash.
+  - In `exportBrowser.js`, one shared Chrome serves all exports. Each export gets its own **incognito context** (no cookies or cache shared between decks), closed afterwards.
+  - The browser is replaced after `PPT_EXPORT_BROWSER_MAX_JOBS` exports (default 50), dropped as soon as it crashes, and closed after `PPT_EXPORT_BROWSER_IDLE_MS` with nothing to do (default 5 minutes). `PPT_EXPORT_BROWSER_REUSE=0` goes back to one browser per export.
+  - An idle browser doesn't keep Node running, so scripts and tests exit at once. The boot check still uses its own short-lived browser.
+- [x] **6.3** Progress: the worker reports `progress` (slides done / total). `getExport` returns it, and the dialog shows a real percentage bar.
+  - `progress` is `{ stage, percent, done, total }`. The stages are `queued`, `preparing`, `drawing` (per slide), `building`, `saving` and `done`.
+  - The percentage ranges are set per format in `exportProgress()`. PDF has no per-slide signal while the render page draws, so it moves in steps.
+  - The progress is kept on the BullMQ job, so any instance can report it. A new `SAVING` status covers the time while the file is uploaded and credits are charged.
+  - The dialog shows the server's percentage and the step: "Drawing page 3 of 5…", "Building your PowerPoint…", "Saving your file…", and "Waiting for a free spot…" while queued.
+- [x] **6.4** Cancel: a `DELETE /export/:id` endpoint removes a queued job or cancels a running one. The dialog gets a Cancel button. No credits are charged.
+  - **`DELETE …/presentations/:id/export/:exportId`**
+    - The row is set to `CANCELLED`, and a queued job is taken off the queue.
+    - A running job on this instance stops immediately: its browser context is closed.
+    - A job on another instance stops at its next heartbeat or slide.
+    - Credits are charged only after the file is saved, and the job claims `SAVING` before charging, so a cancel during the upload wins: the file is deleted and nothing is charged.
+    - It returns 409 for an export that is `READY` or `SAVING`, and cancelling twice does no harm.
+    - No inbox message is sent for a cancelled export.
+  - **Dialog:** Cancel stays enabled while exporting (server jobs and in-browser images). Afterwards the dialog returns to the options with "Export cancelled. No credits were charged." On a 409 it says "Almost done…" and the download completes.
+- [x] **6.5** Retry once automatically on browser crashes; never retry a validation error. The idempotent credit charge (already keyed on `exportId`) stays.
+  - `isRetryableExportError` treats only a crashed or disconnected browser as worth retrying. Bad requests, timeouts, a missing browser, storage errors and cancels are never retried.
+  - The retry runs with a fresh browser. A second crash fails the export with "The export stopped unexpectedly. Please try again."
+  - A failure never overwrites a cancel.
+- **Tests:** `exportJobs.test.js` now has 26 tests (13 new), with a real headless browser and the DB and S3 stubbed:
+  - progress per slide, and live progress in `getExport`;
+  - cancelling while running (stops in under 2s, nothing uploaded or charged, no inbox message), while queued (never renders), during the upload (file deleted, no charge), when finished (409), and twice;
+  - browser reuse: 4 exports on 1 browser, a fresh one on the 5th;
+  - Chrome killed mid-export: retried and READY; killed twice: FAILED;
+  - a queued job is not marked stale.
+
+  The new `exportQueue.test.js` has 7 tests, run against a stand-in for BullMQ and ioredis. They cover job ids, worker options, progress on the job, cancel (waiting → removed, running → aborted), the fallbacks (Redis down at boot or when adding), `PPT_EXPORT_WORKER=0` and shutdown. The dialog has a browser test with 12 checks.
+- **Not yet checked against a real Redis.** There was none on the dev machine. The real BullMQ and ioredis were run against a port with nothing listening: the queue falls back to in-process after the 10s connect limit and the export still runs. Check on staging with Redis (Checkpoint 6).
 - [ ] **6.6** Timeouts per job scale with the slide count. Remove the "stale heartbeat" guess once the queue tracks job state.
 - [ ] **6.7** An S3 lifecycle rule deletes `presentations/*/exports/*` after 7 days. Presigned links last 1 hour, and asking again issues a fresh link.
 - [ ] **6.8** Logging and metrics: duration, slide count, format, renderer version and failure reason for each export. Alert if the failure rate passes 5% in an hour.

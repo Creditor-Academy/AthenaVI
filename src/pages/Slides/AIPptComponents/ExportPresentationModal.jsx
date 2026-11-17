@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { FiCheck, FiDownload, FiLoader, FiX } from 'react-icons/fi'
-import presentationService from '../../../services/presentationService'
+import presentationService, { ExportCancelledError } from '../../../services/presentationService'
 import { isInsufficientCreditsError } from '../../../services/creditsService'
 import { PPT_EXPORT_FORMATS, resolveCanvasSize } from '../../../utils/presentationHelpers'
 import { deckFromPresentation } from '../../../export-render/exportDeck'
@@ -37,9 +37,33 @@ const FILE_TYPES = [
 const STATUS_LABEL = {
   QUEUED: 'Queued — starting export…',
   RENDERING: 'Building your file — large decks can take a few minutes…',
+  SAVING: 'Saving your file…',
   READY: 'Ready',
   FAILED: 'Failed',
 }
+
+/** What the server is doing, from its progress (`{ stage, done, total }`). */
+function serverStageLabel(progress, typeName) {
+  if (!progress) return null
+  const { stage, done = 0, total = 0 } = progress
+  switch (stage) {
+    case 'queued':
+      return 'Waiting for a free spot — other exports are ahead of yours…'
+    case 'preparing':
+      return 'Getting your pages ready…'
+    case 'drawing':
+      return total > 0 ? `Drawing page ${Math.min(done + 1, total)} of ${total}…` : 'Drawing your pages…'
+    case 'building':
+      return `Building your ${typeName}…`
+    case 'saving':
+    case 'done':
+      return 'Saving your file…'
+    default:
+      return null
+  }
+}
+
+const CANCELLED_NOTICE = 'Export cancelled. No credits were charged.'
 
 /** A small file icon with the format on it (PPTX orange, PDF red, PNG blue, JPG green). */
 function FileBadge({ format, size = 'md' }) {
@@ -158,6 +182,12 @@ export default function ExportPresentationModal({
   const [statusText, setStatusText] = useState('')
   const [progress, setProgress] = useState(null)
   const [error, setError] = useState('')
+  // A neutral message above the options (e.g. after Cancel); errors use `error`.
+  const [notice, setNotice] = useState('')
+  const [cancelling, setCancelling] = useState(false)
+  // Set by Cancel while an export runs; `serverExportRef` is the server job to stop, if any.
+  const cancelRef = useRef(false)
+  const serverExportRef = useRef(null)
   const [downloadUrl, setDownloadUrl] = useState('')
   const [downloadFilename, setDownloadFilename] = useState('')
   // PPTX: what the file contains (editable, pictures and why, fonts), from the server.
@@ -281,14 +311,27 @@ export default function ExportPresentationModal({
     })
     const exportId = started?.exportId || started?.id || started?.export?.id || started?._id
     if (!exportId) throw new Error('Export started but no export id was returned')
+    serverExportRef.current = exportId
+    // Cancel pressed while the export was being started: stop it now.
+    if (cancelRef.current) {
+      await presentationService.cancelExport(workspaceId, presentationId, exportId).catch(() => {})
+      throw new ExportCancelledError()
+    }
 
     const ready = await presentationService.pollExportUntilReady(workspaceId, presentationId, exportId, {
       timeoutMs: exportTimeoutMs,
+      intervalMs: 1500,
+      isCancelled: () => cancelRef.current || unmountedRef.current,
       onProgress: (s) => {
+        if (cancelRef.current) return
         const st = String(s?.status || s?.exportStatus || 'PROCESSING').toUpperCase()
-        setStatusText(STATUS_LABEL[st] || `${selected}: ${st.toLowerCase()}…`)
+        const p = s?.progress
+        setStatusText(serverStageLabel(p, typeInfo.name) || STATUS_LABEL[st] || `${selected}: ${st.toLowerCase()}…`)
+        // The server's own percentage (null when it can't see the job: an indeterminate bar).
+        setProgress(p && Number.isFinite(p.percent) ? { percent: p.percent, done: p.done, total: p.total } : null)
       },
     })
+    serverExportRef.current = null
     const url = ready?.presignedUrl || ready?.url || ready?.downloadUrl
     if (!url) throw new Error('Export finished but no download link was returned')
 
@@ -297,7 +340,7 @@ export default function ExportPresentationModal({
     const ext = String(serverExt || '').toLowerCase().replace('jpeg', 'jpg')
     const filename = ext ? `${exportFileBase(title)}.${ext}` : exportDownloadName(title, selected, selection.count)
     return { url, filename, report: selected === 'PPTX' ? ready?.report || null : null }
-  }, [workspaceId, presentationId, selected, selection.slideIds, selection.count, pptxTarget, isImage, scale, quality, transparent, exportTimeoutMs, title])
+  }, [workspaceId, presentationId, selected, selection.slideIds, selection.count, pptxTarget, isImage, scale, quality, transparent, exportTimeoutMs, title, typeInfo.name])
 
   /**
    * Slide images made in this browser by the export renderer: no server job. Throws
@@ -319,13 +362,15 @@ export default function ExportPresentationModal({
       scale,
       quality,
       transparent,
-      isCancelled: () => unmountedRef.current,
+      isCancelled: () => unmountedRef.current || cancelRef.current,
       onProgress: ({ done, total: all }) => {
         setProgress({ done, total: all })
         if (done < all) setStatusText(`Drawing page ${done + 1} of ${all}…`)
       },
     })
 
+    // Cancelled while the last page was drawn: stop before charging.
+    if (cancelRef.current) throw new ExportCancelledError()
     // Same fee as a server export, once per download.
     setStatusText('Finishing up…')
     await presentationService.chargeBrowserExport(workspaceId, presentationId, {
@@ -365,6 +410,10 @@ export default function ExportPresentationModal({
     saveExportPrefs(presentationId, { format: selected, pptxTarget, scope, selectedIds, scale, quality, transparent })
     setPhase('working')
     setError('')
+    setNotice('')
+    setCancelling(false)
+    cancelRef.current = false
+    serverExportRef.current = null
     setDownloadUrl('')
     setReport(null)
     setProgress(null)
@@ -375,7 +424,9 @@ export default function ExportPresentationModal({
         setStatusText('Saving your latest changes…')
         try {
           await onBeforeExport()
+          if (cancelRef.current) throw new ExportCancelledError()
         } catch (saveErr) {
+          if (saveErr instanceof ExportCancelledError) throw saveErr
           const wrapped = new Error(
             `Your latest changes couldn't be saved, so the export didn't start. ${
               saveErr?.message || 'Check your connection and try again.'
@@ -391,6 +442,7 @@ export default function ExportPresentationModal({
         try {
           result = await exportInBrowser()
         } catch (browserErr) {
+          if (cancelRef.current) throw new ExportCancelledError()
           if (isBlockingChargeError(browserErr) || unmountedRef.current) throw browserErr
           // A picture the browser can't read (or anything else): the server draws the same pages.
           console.warn('Export: browser images failed, exporting on the server', browserErr)
@@ -419,6 +471,14 @@ export default function ExportPresentationModal({
       if (unmountedRef.current) return
       setPhase('pick')
       setProgress(null)
+      setCancelling(false)
+      serverExportRef.current = null
+      if (err instanceof ExportCancelledError || cancelRef.current) {
+        cancelRef.current = false
+        setNotice(CANCELLED_NOTICE)
+        setStatusText('')
+        return
+      }
       if (isInsufficientCreditsError(err)) {
         setError(err.message || 'Insufficient credits to export')
       } else if (err?.status === 401) {
@@ -456,7 +516,35 @@ export default function ExportPresentationModal({
   ]
   const outputLine = exportOutputSummary({ format: selected, count: selection.count, pixels: isImage ? pixels : null })
   const reportLines = pptxReportLines(report, pptxTarget)
-  const percent = progress?.total ? Math.round((progress.done / progress.total) * 100) : null
+  const percent =
+    progress?.percent != null
+      ? Math.max(0, Math.min(100, Math.round(progress.percent)))
+      : progress?.total
+        ? Math.round((progress.done / progress.total) * 100)
+        : null
+
+  /** Stop the export in progress: the server job (if any) is cancelled; nothing is charged. */
+  const cancelExport = useCallback(async () => {
+    if (cancelRef.current) return
+    cancelRef.current = true
+    setCancelling(true)
+    setStatusText('Cancelling…')
+    const exportId = serverExportRef.current
+    if (!exportId) return // not started on the server (yet): the run stops at its next step
+    try {
+      await presentationService.cancelExport(workspaceId, presentationId, exportId)
+    } catch (err) {
+      if (err?.status === 409) {
+        // Already finished (or being saved): let it complete and download.
+        cancelRef.current = false
+        setCancelling(false)
+        setStatusText('Almost done — finishing your file…')
+        return
+      }
+      // Couldn't reach the server: stop waiting here anyway; the job is given up on the server.
+      console.warn('Export: cancel request failed', err)
+    }
+  }, [workspaceId, presentationId])
 
   // Rendered on <body> so the editor's own layout (transforms, overflow) can't clip or shift it.
   const modal = (
@@ -478,6 +566,10 @@ export default function ExportPresentationModal({
         {error ? (
           <div className="ppt-export-alert" role="alert">
             {error}
+          </div>
+        ) : notice ? (
+          <div className="ppt-export-alert is-info" role="status">
+            {notice}
           </div>
         ) : null}
 
@@ -678,9 +770,14 @@ export default function ExportPresentationModal({
                     className="ppt-export-bar is-determinate"
                     role="progressbar"
                     aria-valuemin={0}
-                    aria-valuemax={progress.total}
-                    aria-valuenow={progress.done}
-                    aria-label={`Page ${progress.done} of ${progress.total}`}
+                    aria-valuemax={100}
+                    aria-valuenow={percent}
+                    aria-valuetext={
+                      progress?.total && progress.percent == null
+                        ? `Page ${progress.done} of ${progress.total}`
+                        : `${percent}%`
+                    }
+                    aria-label="Export progress"
                   >
                     <i style={{ width: `${percent}%` }} />
                   </span>
@@ -700,10 +797,10 @@ export default function ExportPresentationModal({
             <button
               type="button"
               className="ppt-editor-modal-btn ppt-editor-modal-btn--ghost"
-              onClick={onClose}
-              disabled={busy}
+              onClick={busy ? cancelExport : onClose}
+              disabled={busy && cancelling}
             >
-              {phase === 'done' ? 'Close' : 'Cancel'}
+              {phase === 'done' ? 'Close' : busy && cancelling ? 'Cancelling…' : 'Cancel'}
             </button>
             {phase === 'done' && downloadUrl ? (
               <a
