@@ -21,6 +21,18 @@ export function applySeoHead(pathname, doc = typeof document !== 'undefined' ? d
     canonical.remove()
   }
 
+  let description = doc.head.querySelector('meta[name="description"]')
+  if (seo.description) {
+    if (!description) {
+      description = doc.createElement('meta')
+      description.setAttribute('name', 'description')
+      doc.head.appendChild(description)
+    }
+    description.setAttribute('content', seo.description)
+  } else if (description) {
+    description.remove()
+  }
+
   let robots = doc.head.querySelector('meta[name="robots"]')
   if (!robots) {
     robots = doc.createElement('meta')

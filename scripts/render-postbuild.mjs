@@ -2,8 +2,8 @@
  * Post-build step (both the nginx deploy and Render static hosting).
  * - Copies index.html into each known client route (dist/<route>/index.html) so direct hits
  *   work even when the host's SPA rewrite rules are not applied.
- * - Gives every copy its own SEO tags (src/seo/seoRoutes.js): public marketing pages get a
- *   self-referencing <link rel="canonical">; sign-in pages and the app get
+ * - Gives every copy its own SEO tags (src/seo/seoRoutes.js): public marketing pages get their
+ *   meta description and a self-referencing <link rel="canonical">; sign-in pages and the app get
  *   <meta name="robots" content="noindex, follow">. They are in the HTML itself, so crawlers
  *   (and "view source") see them without running the app.
  * - Writes 404.html (SPA fallback for unknown paths), marked noindex.
@@ -50,14 +50,16 @@ const ROUTE_DIRS = [
 
 const escapeAttr = (value) => String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;')
 
-/** index.html with this page's canonical / robots tags (any already there are replaced). */
+/** index.html with this page's description / canonical / robots tags (any already there are replaced). */
 export function withSeoTags(html, pathname) {
   const seo = seoForPath(pathname)
   const tags = [
+    seo.description ? `<meta name="description" content="${escapeAttr(seo.description)}" />` : null,
     seo.canonical ? `<link rel="canonical" href="${escapeAttr(seo.canonical)}" />` : null,
     seo.indexable ? null : `<meta name="robots" content="${escapeAttr(seo.robots)}" />`,
   ].filter(Boolean)
   const cleaned = html
+    .replace(/\s*<meta[^>]+name=["']description["'][^>]*>/gi, '')
     .replace(/\s*<link[^>]+rel=["']canonical["'][^>]*>/gi, '')
     .replace(/\s*<meta[^>]+name=["']robots["'][^>]*>/gi, '')
   if (!tags.length) return cleaned

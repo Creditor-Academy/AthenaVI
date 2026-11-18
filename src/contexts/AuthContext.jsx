@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import authService from '../services/authService.js'
 import userService from '../services/userService.js'
+import { trackGoogleAuth, trackLogin, trackSignUp } from '../utils/analytics.js'
 import {
   clearOAuthParamsFromUrl,
   getOAuthAccessTokenFromUrl,
@@ -74,6 +75,8 @@ export const AuthProvider = ({ children }) => {
       // When the OAuth request carried an invitation token, the backend has already
       // accepted it and reports the joined workspace in the redirect hash.
       const invitedWorkspaceId = new URLSearchParams((window.location.hash || '').slice(1)).get('workspace_id')
+      // Set by the backend when this Google sign-in created the account.
+      const isNewGoogleUser = new URLSearchParams((window.location.hash || '').slice(1)).get('new_user') === '1'
       localStorage.setItem('accessToken', accessToken)
       clearOAuthParamsFromUrl()
 
@@ -89,6 +92,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       setIsAuthenticated(true)
+      trackGoogleAuth(isNewGoogleUser)
       window.history.replaceState({ view: 'dashboard' }, '', '/dashboard')
       window.dispatchEvent(new CustomEvent('auth:oauth-complete', { detail: { workspaceId: invitedWorkspaceId } }))
       window.dispatchEvent(new CustomEvent('auth:session-ready'))
@@ -163,6 +167,7 @@ export const AuthProvider = ({ children }) => {
       const { user: userData } = await authService.login(credentials)
       setUser(userData)
       setIsAuthenticated(true)
+      trackLogin('email')
       window.dispatchEvent(new CustomEvent('auth:session-ready'))
       return { success: true }
     } catch (error) {
@@ -181,6 +186,7 @@ export const AuthProvider = ({ children }) => {
       const { user: newUser, workspace } = await authService.register(userData)
       setUser(newUser)
       setIsAuthenticated(true)
+      trackSignUp('email')
       window.dispatchEvent(new CustomEvent('auth:session-ready'))
       return { success: true, workspace: workspace || null }
     } catch (error) {
@@ -273,6 +279,8 @@ export const AuthProvider = ({ children }) => {
         return { success: false, error: 'No access token found in URL' }
       }
       const invitedWorkspaceId = new URLSearchParams((window.location.hash || '').slice(1)).get('workspace_id')
+      // Set by the backend when this Google sign-in created the account.
+      const isNewGoogleUser = new URLSearchParams((window.location.hash || '').slice(1)).get('new_user') === '1'
       localStorage.setItem('accessToken', accessToken)
       clearOAuthParamsFromUrl()
             const profile = await userService.getUserProfile()
@@ -281,6 +289,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(userData))
       setUser(userData)
       setIsAuthenticated(true)
+      trackGoogleAuth(isNewGoogleUser)
       window.history.replaceState({ view: 'dashboard' }, '', '/dashboard')
       window.dispatchEvent(new CustomEvent('auth:oauth-complete', { detail: { workspaceId: invitedWorkspaceId } }))
       window.dispatchEvent(new CustomEvent('auth:session-ready'))

@@ -1,5 +1,5 @@
 /**
- * Which public pages search engines should index, and their canonical URLs.
+ * Which public pages search engines should index, their canonical URLs and meta descriptions.
  *
  * Used by the build (scripts/render-postbuild.mjs writes a canonical / robots tag into each
  * page's HTML), by the app (applySeoHead keeps them right after in-app navigation), and by the
@@ -43,6 +43,28 @@ export const INDEXABLE_PATHS = [
  */
 export const NOINDEX_PUBLIC_PATHS = ['/login', '/signup', '/early-access']
 
+/** Meta descriptions from the digital marketing team's sheet ("Meta Description_virtual-studio"). */
+export const PAGE_DESCRIPTIONS = {
+  '/': 'Create engaging online courses with Athena Virtual Studio. Explore AI-powered tools for course creation, interactive learning content and digital training.',
+  '/products': 'Explore Athena Virtual Studio products for creating digital learning experiences. Discover course authoring, AI content tools and solutions for training teams.',
+  '/marketing-suite': "Discover Athena's marketing suite for creating and managing digital marketing content. Explore tools designed to support campaigns, content and audience engagement.",
+  '/sales-suite': "Explore Athena's sales suite and discover digital tools that help sales teams present solutions, share content and support customer conversations.",
+  '/customer-experience': 'Explore Athena solutions designed to support customer experiences with engaging digital content, helpful resources and interactive communication.',
+  '/learning-development': 'Discover Athena Virtual Studio for learning and development. Create engaging training content and digital learning experiences for employees and learners.',
+  '/use-cases': 'See how Athena Virtual Studio can support different use cases, from online course creation to employee training and interactive digital learning.',
+  '/technology': 'Learn about the technology behind Athena Virtual Studio and explore how AI-powered capabilities support digital content creation and engaging learning experiences.',
+  '/ai-videos': 'Create engaging videos with AI using Athena Virtual Studio. Explore video creation capabilities that help turn ideas and learning content into video experiences.',
+  '/ai-avatars-videos': 'Create presenter-style videos with AI avatars using Athena Virtual Studio. Explore ways to turn scripts and ideas into engaging video content.',
+  '/about-us': 'Get to know Athena Virtual Studio, our platform and our approach to helping people create digital content and engaging online learning experiences.',
+  '/news': 'Read the latest news and updates from Athena Virtual Studio, including platform announcements, product developments and company updates.',
+  '/resources': 'Explore resources from Athena Virtual Studio for creating digital content, developing online courses and improving learning experiences.',
+  '/ethics': "Learn about Athena's approach to ethics and responsible technology. Read the principles that guide the responsible use of AI and digital learning tools.",
+  '/help': 'Find help and guidance for using Athena Virtual Studio. Explore support information and answers to common questions about the platform.',
+  '/privacy': 'Read the Athena Virtual Studio privacy policy to understand how information is collected, used, stored and protected when you use our services.',
+  '/download': 'Get the Athena Virtual Studio app or downloads and find the information you need to access the platform on your device.',
+  '/early-access': "Request early access to Athena Virtual Studio and be among the first to explore the platform's tools for creating digital content and learning experiences.",
+}
+
 export const ROBOTS_INDEX = 'index, follow'
 export const ROBOTS_NOINDEX = 'noindex, follow'
 
@@ -67,8 +89,9 @@ export function canonicalUrl(pathname) {
  */
 export function seoForPath(pathname) {
   const path = normalizeSeoPath(pathname)
+  const description = PAGE_DESCRIPTIONS[path] || null
   if (INDEXABLE_PATHS.includes(path)) {
-    return { indexable: true, canonical: canonicalUrl(path), robots: ROBOTS_INDEX }
+    return { indexable: true, canonical: canonicalUrl(path), robots: ROBOTS_INDEX, description }
   }
-  return { indexable: false, canonical: null, robots: ROBOTS_NOINDEX }
+  return { indexable: false, canonical: null, robots: ROBOTS_NOINDEX, description }
 }

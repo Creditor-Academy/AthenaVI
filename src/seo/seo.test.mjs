@@ -12,6 +12,7 @@ import {
   canonicalUrl,
   seoForPath,
   normalizeSeoPath,
+  PAGE_DESCRIPTIONS,
 } from './seoRoutes.js'
 import { withSeoTags } from '../../scripts/render-postbuild.mjs'
 
@@ -20,7 +21,12 @@ const read = (file) => readFileSync(path.join(root, file), 'utf8')
 
 describe('canonical and robots per page', () => {
   it('public pages get a self-referencing canonical in the form the server answers (trailing slash)', () => {
-    assert.deepEqual(seoForPath('/'), { indexable: true, canonical: `${SITE_URL}/`, robots: 'index, follow' })
+    assert.deepEqual(seoForPath('/'), {
+      indexable: true,
+      canonical: `${SITE_URL}/`,
+      robots: 'index, follow',
+      description: PAGE_DESCRIPTIONS['/'],
+    })
     assert.equal(seoForPath('/products').canonical, `${SITE_URL}/products/`)
     assert.equal(seoForPath('/products/').canonical, `${SITE_URL}/products/`)
     assert.equal(seoForPath('/ai-avatars-videos?utm_source=x#top').canonical, `${SITE_URL}/ai-avatars-videos/`)
@@ -29,8 +35,21 @@ describe('canonical and robots per page', () => {
 
   it('sign-in pages, the app and unknown paths: noindex, follow and no canonical', () => {
     for (const p of [...NOINDEX_PUBLIC_PATHS, '/dashboard', '/dashboard/editor', '/create', '/p/abc', '/templates', '/nope']) {
-      assert.deepEqual(seoForPath(p), { indexable: false, canonical: null, robots: 'noindex, follow' }, p)
+      const seo = seoForPath(p)
+      assert.equal(seo.indexable, false, p)
+      assert.equal(seo.canonical, null, p)
+      assert.equal(seo.robots, 'noindex, follow', p)
     }
+    assert.equal(seoForPath('/dashboard').description, null, 'the app has no description')
+  })
+
+  it('every indexable page has its meta description from the marketing sheet', () => {
+    for (const p of INDEXABLE_PATHS) {
+      const d = seoForPath(p).description
+      assert.ok(d && d.length >= 100 && d.length <= 170, `${p}: ${d?.length} characters`)
+    }
+    assert.match(seoForPath('/products/').description, /^Explore Athena Virtual Studio products/)
+    assert.equal(seoForPath('/login').description, null, 'none given for login / sign-up')
   })
 
   it('normalises paths', () => {
@@ -64,10 +83,13 @@ describe('sitemap.xml and robots.txt', () => {
 describe('built HTML', () => {
   const html = '<!doctype html><html><head>\n    <title>Virtual Studio</title>\n  </head><body></body></html>'
 
-  it('a public page gets its canonical in <head>', () => {
+  it('a public page gets its description and canonical in <head>', () => {
     const out = withSeoTags(html, '/products')
     assert.match(out, /<link rel="canonical" href="https:\/\/virtualstudio\.lmsathena\.com\/products\/" \/>\s*<\/head>/)
+    assert.ok(out.includes(`<meta name="description" content="${PAGE_DESCRIPTIONS['/products']}" />`))
     assert.doesNotMatch(out, /name="robots"/)
+    // An apostrophe in a description stays inside the double-quoted attribute.
+    assert.ok(withSeoTags(html, '/ethics').includes(`content="Learn about Athena's approach`))
   })
 
   it('sign-in and app pages get noindex, follow and no canonical', () => {

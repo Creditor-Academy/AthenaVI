@@ -38,6 +38,48 @@ function athenaContractsOptimizePlugin() {
   }
 }
 
+/** The Google Tag Manager container from the marketing team. VITE_GTM_ID overrides it; "off" disables it. */
+const DEFAULT_GTM_ID = 'GTM-M4CC43NS'
+
+export function gtmIdFromEnv(raw) {
+  const value = String(raw ?? '').trim()
+  if (!value) return DEFAULT_GTM_ID
+  if (/^(off|false|0|none)$/i.test(value)) return null
+  return /^GTM-[A-Z0-9]+$/.test(value) ? value : null
+}
+
+/** The Google tag snippet for a GTM container, as Google's "Set up a Google tag" page gives it. */
+export function gtmSnippet(gtmId) {
+  return [
+    '<!-- Google tag (Google Tag Manager) -->',
+    `<script async src="https://www.googletagmanager.com/gtm.js?id=${gtmId}"></script>`,
+    '<script>',
+    '  window.dataLayer = window.dataLayer || [];',
+    '  function gtag(){dataLayer.push(arguments);}',
+    "  gtag('js', new Date());",
+    '</script>',
+  ].join('\n    ')
+}
+
+/**
+ * Google Tag Manager on the site's pages, right after <head> (as Google asks). Production builds
+ * only, so local development doesn't send visits to Analytics; never on export-render.html (the
+ * page the backend renders exports with).
+ */
+function googleTagManagerPlugin(gtmId) {
+  return {
+    name: 'google-tag-manager',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'pre',
+      handler(html, ctx) {
+        if (!gtmId || path.basename(ctx.filename || '') !== 'index.html') return html
+        return html.replace(/<head>/i, `<head>\n    ${gtmSnippet(gtmId)}`)
+      },
+    },
+  }
+}
+
 // https://vite.dev/config/
 function resolveDevApiTarget(raw) {
   const fallback = 'http://127.0.0.1:9000'
@@ -59,7 +101,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: '/',
-    plugins: [react(), athenaContractsOptimizePlugin()],
+    plugins: [react(), athenaContractsOptimizePlugin(), googleTagManagerPlugin(gtmIdFromEnv(env.VITE_GTM_ID))],
     resolve: {
       alias: athenaContractsAliases,
     },
