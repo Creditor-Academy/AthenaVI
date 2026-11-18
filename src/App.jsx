@@ -45,15 +45,15 @@ function mergeCreateConfigFromDeepLink(prev) {
 const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard.jsx'))
 const Create = lazy(() => import('./pages/Editor/Editor.jsx'))
 const Products = lazy(() => import('./pages/Products/Products.jsx'))
-const AboutUsBlog = lazy(() => import('./pages/AboutUs/AboutUs.jsx'))
-const News = lazy(() => import('./pages/News/News.jsx'))
-const Resources = lazy(() => import('./pages/Resources/Resources.jsx'))
+// const AboutUsBlog = lazy(() => import('./pages/AboutUs/AboutUs.jsx'))
+// const News = lazy(() => import('./pages/News/News.jsx'))
+// const Resources = lazy(() => import('./pages/Resources/Resources.jsx'))
 const HelpCenter = lazy(() => import('./pages/HelpCenter/HelpCenter.jsx'))
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy/PrivacyPolicy.jsx'))
 const MarketingSuite = lazy(() => import('./pages/MarketingSuite/MarketingSuite.jsx'))
 const SalesSuite = lazy(() => import('./pages/SalesSuite/SalesSuite.jsx'))
 const Ethics = lazy(() => import('./pages/Ethics/Ethics.jsx'))
-const Technology = lazy(() => import('./pages/Technology/Technology.jsx'))
+// const Technology = lazy(() => import('./pages/Technology/Technology.jsx'))
 const CustomerExperience = lazy(() => import('./pages/CustomerExperience/CustomerExperience.jsx'))
 const LearningDevelopment = lazy(() => import('./pages/LearningDevelopment/LearningDevelopment.jsx'))
 const Settings = lazy(() => import('./pages/Settings/Settings.jsx'))
@@ -109,15 +109,15 @@ const PATH_TO_VIEW_MAP = {
   '/slides/help': 'dashboard',
   '/create': 'create',
   '/products': 'products',
-  '/about-us': 'about-us-blog',
-  '/news': 'news',
-  '/resources': 'resources',
+  // '/about-us': 'about-us-blog',
+  // '/news': 'news',
+  // '/resources': 'resources',
   '/help': 'help-center',
   '/privacy': 'privacy-policy',
   '/marketing-suite': 'marketing-suite',
   '/sales-suite': 'sales-suite',
   '/ethics': 'ethics',
-  '/technology': 'technology',
+  // '/technology': 'technology',
   '/use-cases': 'use-cases',
   '/customer-experience': 'customer-experience',
   '/learning-development': 'learning-development',
@@ -333,15 +333,15 @@ function App() {
       'dashboard': '/dashboard',
       'create': '/create',
       'products': '/products',
-      'about-us-blog': '/about-us',
-      'news': '/news',
-      'resources': '/resources',
+      // 'about-us-blog': '/about-us',
+      // 'news': '/news',
+      // 'resources': '/resources',
       'help-center': '/help',
       'privacy-policy': '/privacy',
       'marketing-suite': '/marketing-suite',
       'sales-suite': '/sales-suite',
       'ethics': '/ethics',
-      'technology': '/technology',
+      // 'technology': '/technology',
       'use-cases': '/use-cases',
       'customer-experience': '/customer-experience',
       'learning-development': '/learning-development',
@@ -516,10 +516,10 @@ function App() {
 
   const handleNavigateToCompany = (item) => {
     const companyPageMap = {
-      'About Us': 'about-us-blog',
-      'Blog': 'about-us-blog',
-      'News': 'news',
-      'Resources': 'resources',
+      // 'About Us': 'about-us-blog',
+      // 'Blog': 'about-us-blog',
+      // 'News': 'news',
+      // 'Resources': 'resources',
       'Privacy Policy': 'privacy-policy',
       'Help Center': 'help-center'
     }
@@ -742,6 +742,7 @@ function App() {
         </>
       )}
 
+      {/* Hidden for now (not linked from the site navigation)
       {view === 'about-us-blog' && (
         <>
           <AboutUsBlog 
@@ -771,7 +772,9 @@ function App() {
           />
         </>
       )}
+      */}
 
+      {/* Hidden for now (not linked from the site navigation)
       {view === 'news' && (
         <>
           <News 
@@ -801,7 +804,9 @@ function App() {
           />
         </>
       )}
+      */}
 
+      {/* Hidden for now (not linked from the site navigation)
       {view === 'resources' && (
         <>
           <Resources 
@@ -831,6 +836,7 @@ function App() {
           />
         </>
       )}
+      */}
 
       {view === 'help-center' && (
         <>
@@ -877,6 +883,7 @@ function App() {
         </>
       )}
 
+      {/* Hidden for now (not linked from the site navigation)
       {view === 'technology' && (
         <>
           <Technology 
@@ -891,6 +898,7 @@ function App() {
           />
         </>
       )}
+      */}
 
       {view === 'ethics' && (
         <>

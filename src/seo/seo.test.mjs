@@ -34,7 +34,7 @@ describe('canonical and robots per page', () => {
   })
 
   it('sign-in pages, the app and unknown paths: noindex, follow and no canonical', () => {
-    for (const p of [...NOINDEX_PUBLIC_PATHS, '/dashboard', '/dashboard/editor', '/create', '/p/abc', '/templates', '/nope']) {
+    for (const p of [...NOINDEX_PUBLIC_PATHS, '/dashboard', '/dashboard/editor', '/create', '/p/abc', '/templates', '/nope', '/news', '/technology', '/about-us', '/resources']) {
       const seo = seoForPath(p)
       assert.equal(seo.indexable, false, p)
       assert.equal(seo.canonical, null, p)
@@ -55,13 +55,14 @@ describe('canonical and robots per page', () => {
   it('normalises paths', () => {
     assert.equal(normalizeSeoPath(''), '/')
     assert.equal(normalizeSeoPath('products//'), '/products')
-    assert.equal(canonicalUrl('//news'), `${SITE_URL}/news/`)
+    assert.equal(canonicalUrl('//products'), `${SITE_URL}/products/`)
   })
 })
 
 describe('sitemap.xml and robots.txt', () => {
   it('the sitemap lists exactly the indexable pages, by their canonical URL', () => {
-    const locs = [...read('public/sitemap.xml').matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
+    const sitemap = read('public/sitemap.xml').replace(/<!--[\s\S]*?-->/g, '') // pages hidden for now
+    const locs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
     assert.deepEqual(locs, INDEXABLE_PATHS.map(canonicalUrl))
     for (const p of NOINDEX_PUBLIC_PATHS) assert.ok(!locs.some((l) => l.includes(p)), `${p} is not in the sitemap`)
   })
@@ -101,9 +102,9 @@ describe('built HTML', () => {
   })
 
   it('tags already in the HTML are replaced, never doubled', () => {
-    const once = withSeoTags(withSeoTags(html, '/news'), '/news')
+    const once = withSeoTags(withSeoTags(html, '/products'), '/products')
     assert.equal(once.match(/rel="canonical"/g).length, 1)
-    const switched = withSeoTags(withSeoTags(html, '/news'), '/login')
+    const switched = withSeoTags(withSeoTags(html, '/products'), '/login')
     assert.doesNotMatch(switched, /rel="canonical"/)
     assert.equal(switched.match(/name="robots"/g).length, 1)
   })

@@ -619,7 +619,7 @@ function Navbar({
     { title: 'Video Campaigns', desc: 'Marketing videos', icon: <FiTrendingUp /> },
     { title: 'Personal Avatars', desc: 'Digital instructors', icon: <FiUserCheck /> },
     { title: 'AI Avatars & Videos', desc: 'AI avatars and video demos', icon: <FiPlayCircle /> },
-    { title: 'Technology', desc: 'Technology overview', icon: <FiCpu /> },
+    // { title: 'Technology', desc: 'Technology overview', icon: <FiCpu /> },
   ]
 
   const solutionsItems = [
@@ -740,9 +740,11 @@ function Navbar({
               <p className="mega-video-desc">
                 Save time and money on localisation with AI‑powered video translation.
               </p>
+              {/* Hidden for now (not linked from the site navigation)
               <a href="#" className="mega-see-all" onClick={(e) => { e.preventDefault(); if (onNavigateToTechnology) onNavigateToTechnology(); setActiveDropdown(null) }}>
                 See all Technology <MdArrowOutward />
               </a>
+              */}
             </div>
           </div>
 

@@ -25,12 +25,12 @@ export const INDEXABLE_PATHS = [
   '/customer-experience',
   '/learning-development',
   '/use-cases',
-  '/technology',
+  // '/technology', // hidden for now (not linked from the site navigation)
   '/ai-videos',
   '/ai-avatars-videos',
-  '/about-us',
-  '/news',
-  '/resources',
+  // '/about-us', // hidden for now (not linked from the site navigation)
+  // '/news', // hidden for now (not linked from the site navigation)
+  // '/resources', // hidden for now (not linked from the site navigation)
   '/ethics',
   '/help',
   '/privacy',
