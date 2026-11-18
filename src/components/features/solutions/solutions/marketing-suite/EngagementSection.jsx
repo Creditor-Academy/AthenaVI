@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { MdChevronLeft, MdChevronRight, MdSearch } from 'react-icons/md'
 import avatar1 from '../../../../../assets/avatar1.png'
-import avatar2 from '../../../../../assets/avatar2.png'
-import avatar3 from '../../../../../assets/avatar3.png'
-import avatar4 from '../../../../../assets/avatar4.png'
+import avatar2 from '../../../../../assets/avatar2.webp'
+import avatar3 from '../../../../../assets/avatar3.webp'
+import avatar4 from '../../../../../assets/avatar4.webp'
 
 const styles = `
 .engagement-section {

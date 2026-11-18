@@ -1,11 +1,11 @@
 import { fetchTemplateBundles } from './fetchTemplateBundles';
 import { fetchTemplateAvatarLookSet } from './templateAvatarPreview';
-import avatar1 from '../assets/Avatarr1.png';
-import avatar2 from '../assets/Avatarr2.png';
-import avatar3 from '../assets/Avatarr3.png';
-import avatar4 from '../assets/Avatarr4.png';
-import avatar5 from '../assets/Avatarr5.png';
-import avatar6 from '../assets/Avatarr6.png';
+import avatar1 from '../assets/Avatarr1.webp';
+import avatar2 from '../assets/Avatarr2.webp';
+import avatar3 from '../assets/Avatarr3.webp';
+import avatar4 from '../assets/Avatarr4.webp';
+import avatar5 from '../assets/Avatarr5.webp';
+import avatar6 from '../assets/Avatarr6.webp';
 import productVideo from '../assets/ProductVideo.mp4';
 import technologyVideo from '../assets/Technology.mp4';
 import personalAvatarVideo from '../assets/Personal Avatar.mp4';

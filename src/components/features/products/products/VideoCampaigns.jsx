@@ -1,4 +1,5 @@
 import bgvideo from "../../../../assets/bgvideo.mp4";
+import LazyVideo from '../../../ui/LazyVideo/LazyVideo.jsx'
 
 const styles = `
 @keyframes fadeInUp {
@@ -168,15 +169,9 @@ function VideoCampaigns() {
       <section id="video-campaigns" className="video-campaigns-section">
 
         {/* Background Video */}
-        <video
-          className="video-bg"
-          autoPlay
-          muted
-          loop
-          playsInline
-        >
+        <LazyVideo className="video-bg">
           <source src={bgvideo} type="video/mp4" />
-        </video>
+        </LazyVideo>
 
         {/* Overlay */}
         <div className="video-overlay"></div>

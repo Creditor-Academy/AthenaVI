@@ -591,12 +591,12 @@ function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolu
 
   const featuredArticles = [
     {
-      image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop&q=80&auto=format',
       date: 'March 28, 2024',
       title: 'AthenaVI Launches Next-Generation AI Avatar Technology with Enhanced Realism'
     },
     {
-      image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&h=400&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&h=400&fit=crop&q=80&auto=format',
       date: 'March 25, 2024',
       title: 'Revolutionary Video Translation Feature Now Supports 120+ Languages'
     }
@@ -604,28 +604,28 @@ function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolu
 
   const trendingArticles = [
     {
-      image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop&q=80&auto=format',
       category: 'Technology',
       date: 'April 15, 2024',
       title: 'How AI-Powered Video Creation is Transforming Business Communication',
       excerpt: 'AthenaVI\'s advanced AI technology enables businesses to create professional videos at scale, reducing production costs by up to 80% while maintaining exceptional quality.'
     },
     {
-      image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&h=400&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=600&h=400&fit=crop&q=80&auto=format',
       category: 'Product Updates',
       date: 'April 12, 2024',
       title: 'New Personal Avatar Studio: Create Lifelike Digital Presenters in Minutes',
       excerpt: 'Introducing our most advanced avatar creation tool yet, featuring real-time customization and natural voice synthesis.'
     },
     {
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop&q=80&auto=format',
       category: 'Company News',
       date: 'April 10, 2024',
       title: 'AthenaVI Reaches 1 Million Active Users Worldwide',
       excerpt: 'Celebrating a major milestone as we continue to democratize professional video creation for businesses and creators globally.'
     },
     {
-      image: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=600&h=400&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=600&h=400&fit=crop&q=80&auto=format',
       category: 'Partnerships',
       date: 'April 8, 2024',
       title: 'Strategic Partnership with Global Media Companies Announced',
@@ -634,11 +634,11 @@ function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolu
   ]
 
   const categoryList = [
-    { name: 'Product Updates', count: 12, image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=200&h=200&fit=crop&q=80' },
-    { name: 'Technology', count: 18, image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=200&h=200&fit=crop&q=80' },
-    { name: 'Company News', count: 15, image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=200&h=200&fit=crop&q=80' },
-    { name: 'Partnerships', count: 8, image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=200&h=200&fit=crop&q=80' },
-    { name: 'Industry Insights', count: 22, image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=200&h=200&fit=crop&q=80' }
+    { name: 'Product Updates', count: 12, image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=200&h=200&fit=crop&q=80&auto=format' },
+    { name: 'Technology', count: 18, image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=200&h=200&fit=crop&q=80&auto=format' },
+    { name: 'Company News', count: 15, image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=200&h=200&fit=crop&q=80&auto=format' },
+    { name: 'Partnerships', count: 8, image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=200&h=200&fit=crop&q=80&auto=format' },
+    { name: 'Industry Insights', count: 22, image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=200&h=200&fit=crop&q=80&auto=format' }
   ]
 
   return (
@@ -660,7 +660,7 @@ function News({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToSolu
         <section className="hero-section">
           <div className="hero-background">
             <img
-              src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1920&h=1080&fit=crop&q=80"
+              src="https://images.unsplash.com/photo-1677442136019-21780ecad995?w=1920&h=1080&fit=crop&q=80&auto=format"
               alt="AthenaVI AI Technology"
               className="hero-background-image"
             />

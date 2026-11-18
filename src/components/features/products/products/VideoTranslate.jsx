@@ -1,5 +1,6 @@
 import { FaMicrophoneAlt, FaLanguage, FaRegSmileBeam } from 'react-icons/fa'
-import VideosectionImage from '../../../../assets/Videosection.PNG'
+import LazyVideo from '../../../ui/LazyVideo/LazyVideo.jsx'
+import VideosectionImage from '../../../../assets/Videosection.webp'
 import ProductVideo from '../../../../assets/Product.mp4'
 
 const styles = `
@@ -247,15 +248,9 @@ function VideoTranslate({ variant = 'dark' }) {
                 <div className="product-image-overlay"></div>
               </div>
               <div className="product-video-container">
-                <video
-                  className="product-video"
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                >
+                <LazyVideo className="product-video">
                   <source src={ProductVideo} type="video/mp4" />
-                </video>
+                </LazyVideo>
               </div>
             </div>
 

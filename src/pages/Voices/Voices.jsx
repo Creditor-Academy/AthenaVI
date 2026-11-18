@@ -49,7 +49,7 @@ import HeroCarouselBanner from '../../components/ui/HeroCarouselBanner/HeroCarou
 import LoadMoreButton from '../../components/ui/LoadMoreButton/LoadMoreButton';
 import heroVoicesSlide1 from '../../assets/hero_voices_slide1.jpg';
 import voiceBg from '../../assets/Voice.jpg';
-import aiIntegrationBg from '../../assets/AIIntegration.png';
+import aiIntegrationBg from '../../assets/AIIntegration.webp';
 import './Voices.css';
 
 const TAB_ICONS = {

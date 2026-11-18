@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { MdArrowForward, MdArrowOutward, MdArrowBackIos, MdArrowForwardIos } from 'react-icons/md'
 import { LANDING_FONT, LANDING_LIGHT, LANDING_TYPE } from '../../styles/landingTypography'
-import VisualAIAgentImg from '../../assets/Visual AI Agent.png'
-import VideoStudioImg from '../../assets/Video Studio.png'
-import VideoCampaignsImg from '../../assets/Video Campaigns.png'
-import ScalableInteractionImg from '../../assets/Scalable Intrection System.png'
+import VisualAIAgentImg from '../../assets/Visual AI Agent.webp'
+import VideoStudioImg from '../../assets/Video Studio.webp'
+import VideoCampaignsImg from '../../assets/Video Campaigns.webp'
+import ScalableInteractionImg from '../../assets/Scalable Intrection System.webp'
 
 const styles = `
 /* ── Section ── */

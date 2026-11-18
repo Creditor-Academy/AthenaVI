@@ -2,6 +2,16 @@ import { useState } from 'react'
 import { MdArrowOutward } from 'react-icons/md'
 
 import HeroArcGallery from './HeroArcGallery'
+// Hero clips (compressed, muted): served with the site.
+import heroTarget from '../../assets/video/preview_video_target.mp4'
+import heroTarget1 from '../../assets/video/preview_video_target (1).mp4'
+import heroTarget2 from '../../assets/video/preview_video_target (2).mp4'
+import heroTarget6 from '../../assets/video/preview_video_target (6).mp4'
+import heroTarget7 from '../../assets/video/preview_video_target (7).mp4'
+import heroTalk1 from '../../assets/video/preview_video_talk_1.mp4'
+import heroTalk2 from '../../assets/video/preview_video_talk_2.mp4'
+import heroTalk2b from '../../assets/video/preview_video_talk_2 (1).mp4'
+import heroTalk3 from '../../assets/video/preview_video_talk_3.mp4'
 import heygenService from '../../services/heygenService'
 import { extractHeygenList, mapAvatarGroup } from '../../utils/heygenAvatars'
 
@@ -333,16 +343,16 @@ const styles = `
 function Hero({ onContactSalesClick }) {
   const [avatarsList] = useState([
     /* ── Target avatars in sequence (1 → 7) ── */
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target.mp4', name: 'Noah', role: 'Technical Expert' },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(1).mp4', name: 'Liam', role: 'Virtual Studio' },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(2).mp4', name: 'Lucas', role: 'Product Presenter' },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(6).mp4', name: 'Mia', role: 'Brand Storyteller' },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_target+(7).mp4', name: 'Zara', role: 'Sales Presenter' },
+    { src: heroTarget, name: 'Noah', role: 'Technical Expert' },
+    { src: heroTarget1, name: 'Liam', role: 'Virtual Studio' },
+    { src: heroTarget2, name: 'Lucas', role: 'Product Presenter' },
+    { src: heroTarget6, name: 'Mia', role: 'Brand Storyteller' },
+    { src: heroTarget7, name: 'Zara', role: 'Sales Presenter' },
     /* ── Talk avatars ── */
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_1.mp4', name: 'Ava', role: 'Digital Assistant' },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_2.mp4', name: 'Ethan', role: 'AI Video Assistant' },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_2+(1).mp4', name: 'Oliver', role: 'Digital Host' },
-    { src: 'https://testing-vi.s3.us-east-1.amazonaws.com/Hero+Video/preview_video_talk_3.mp4', name: 'Olivia', role: 'Language Coach' },
+    { src: heroTalk1, name: 'Ava', role: 'Digital Assistant' },
+    { src: heroTalk2, name: 'Ethan', role: 'AI Video Assistant' },
+    { src: heroTalk2b, name: 'Oliver', role: 'Digital Host' },
+    { src: heroTalk3, name: 'Olivia', role: 'Language Coach' },
   ])
 
   return (

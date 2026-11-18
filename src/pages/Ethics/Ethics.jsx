@@ -1,6 +1,6 @@
 import Navbar from '../../components/layout/Navbar/Navbar.jsx'
 import Footer from '../../components/layout/Footer/Footer.jsx'
-import EthicsBg from '../../assets/EthicsBg.png'
+import EthicsBg from '../../assets/EthicsBg.webp'
 
 import { motion, useScroll, useSpring } from 'framer-motion'
 import {

@@ -19,7 +19,7 @@
   justify-content: center;
   padding: clamp(16px, 4vw, 32px);
   background-color: #0a1628;
-  background-image: url('../../assets/login_bg.jpg');
+  background-image: url('../../assets/login_bg.webp');
   background-position: center center;
   background-size: cover;
   background-repeat: no-repeat;

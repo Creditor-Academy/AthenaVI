@@ -2,7 +2,7 @@ import React from 'react';
 import { FiShield, FiMic, FiGlobe, FiVideo, FiCpu } from 'react-icons/fi';
 import { LANDING_DARK, LANDING_FONT } from '../../styles/landingTypography';
 
-import DigitalTwin03 from '../../assets/digitaltwin04.png';
+import DigitalTwin03 from '../../assets/digitaltwin04.webp';
 
 const styles = `
 .dt-showcase-section {

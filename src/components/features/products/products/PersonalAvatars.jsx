@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import LazyVideo from '../../../ui/LazyVideo/LazyVideo.jsx'
 import { MdFaceRetouchingNatural, MdGraphicEq, MdMotionPhotosAuto } from 'react-icons/md'
 import personalAvatarVideo from '../../../../assets/Personal Avatar.mp4'
 
@@ -389,14 +390,7 @@ function PersonalAvatars({ variant = 'light' }) {
             }}
           >
             <div className="video-wrapper">
-              <video
-                className="avatar-video"
-                autoPlay
-                loop
-                muted
-                playsInline
-                src={personalAvatarVideo}
-              />
+              <LazyVideo className="avatar-video" src={personalAvatarVideo} />
             </div>
           </motion.div>
         </motion.div>

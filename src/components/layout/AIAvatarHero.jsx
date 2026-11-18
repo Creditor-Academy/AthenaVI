@@ -1,8 +1,8 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { MdPlayArrow, MdArrowForward } from 'react-icons/md'
-import bgHero from '../../assets/AvtarHero.png'
-import groupAvtar from '../../assets/GroupAvatar.png'
+import bgHero from '../../assets/AvtarHero.webp'
+import groupAvtar from '../../assets/GroupAvatar.webp'
 
 const styles = `
 .avatar-hero-section {

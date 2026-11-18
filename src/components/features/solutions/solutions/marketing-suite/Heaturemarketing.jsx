@@ -354,37 +354,37 @@ function Heaturemarketing() {
     {
       title: 'Video Translate',
       description: 'Expand your global reach with seamless AI-powered translation, voice cloning, and lip-syncing to localize video content for different audiences.',
-      image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=600&h=400&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=600&h=400&fit=crop&q=80&auto=format',
       enterpriseOnly: false
     },
     {
       title: 'Video Campaigns',
       description: 'Effortlessly create tailored, AI-driven video content for email campaigns and other personalized marketing efforts to maximize engagement.',
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop&q=80&auto=format',
       enterpriseOnly: false
     },
     {
       title: 'Express Avatars',
       description: 'Transform any video footage into AI avatars, enabling faster content creation that makes your brand stand out.',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop&q=80&auto=format',
       enterpriseOnly: false
     },
     {
       title: 'Interactive Agents',
       description: 'Connect with customers in real-time using AI avatars powered by large language models (LLMs) and your knowledge base for 24/7 personalized interaction.',
-      image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=600&h=400&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=600&h=400&fit=crop&q=80&auto=format',
       enterpriseOnly: false
     },
     {
       title: 'Seamless Integrations',
       description: 'Work directly within popular tools like Canva and PowerPoint to streamline your creative process.',
-      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop&q=80&auto=format',
       enterpriseOnly: false
     },
     {
       title: 'Premium Avatars',
       description: 'Upload a five-minute video recording to create a fully personalized, lifelike, reusable avatar that replicates your voice and captures intricate details of your appearance and expressions.',
-      image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600&h=400&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600&h=400&fit=crop&q=80&auto=format',
       enterpriseOnly: false
     }
   ]

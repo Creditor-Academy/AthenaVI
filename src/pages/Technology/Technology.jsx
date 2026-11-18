@@ -21,10 +21,10 @@ import productVideo from '../../assets/Technology.mp4'
 
 // Import card assets
 import consultingImg from '../../assets/AI2.jpg'
-import engineeringImg from '../../assets/AI system integration.png'
-import connectivityImg from '../../assets/AI virtual assistant.png'
-import integrationImg from '../../assets/ML-Photoroom.png'
-import Neural from '../../assets/NeuralNetwork.jpg'
+import engineeringImg from '../../assets/AI system integration.webp'
+import connectivityImg from '../../assets/AI virtual assistant.webp'
+import integrationImg from '../../assets/ML-Photoroom.webp'
+import Neural from '../../assets/NeuralNetwork.webp'
 
 const styles = `
 .technology-page {
@@ -697,7 +697,7 @@ function Technology({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigate
       icon: MdPsychology,
       title: 'AI Strategy and Consulting',
       description: 'Provide expert guidance on developing an AI strategy and roadmap to drive business outcomes.',
-      backgroundImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop&q=80',
+      backgroundImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop&q=80&auto=format',
       gradient: 'linear-gradient(135deg, #061a18 0%, #0d2a27 100%)',
       cardAsset: consultingImg,
       isDark: true,
@@ -712,7 +712,7 @@ function Technology({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigate
       icon: MdSpeed,
       title: 'Machine Learning Solutions',
       description: 'Develop and deploy custom machine learning models to extract insights and make predictions from your data.',
-      backgroundImage: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=800&h=600&fit=crop&q=80',
+      backgroundImage: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=800&h=600&fit=crop&q=80&auto=format',
       gradient: 'linear-gradient(135deg, #0a0f1a 0%, #1e1b4b 100%)',
       cardAsset: engineeringImg,
       isDark: true,
@@ -727,7 +727,7 @@ function Technology({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigate
       icon: MdIntegrationInstructions,
       title: 'Neural Network Systems',
       description: 'Advanced architectures for deep learning applications.',
-      backgroundImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=600&fit=crop&q=80',
+      backgroundImage: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=600&fit=crop&q=80&auto=format',
       gradient: 'linear-gradient(135deg, #1a1005 0%, #2a1f0f 100%)',
       cardAsset: connectivityImg,
       isDark: true,
@@ -742,7 +742,7 @@ function Technology({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigate
       icon: MdIntegrationInstructions,
       title: 'AI Integration and Deployment',
       description: 'Assist in seamlessly integrating AI solutions into your existing systems and deploying them at scale.',
-      backgroundImage: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=600&fit=crop&q=80',
+      backgroundImage: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=600&fit=crop&q=80&auto=format',
       gradient: 'linear-gradient(135deg, #020617 0%, #0f172a 100%)',
       cardAsset: integrationImg,
       isDark: true,
@@ -757,7 +757,7 @@ function Technology({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigate
       icon: MdAutoAwesome,
       title: 'AthenaVI Advanced Intelligence',
       description: 'Leverage cutting-edge AI technology to power AthenaVI, delivering intelligent, adaptive, and personalized virtual instruction experiences.',
-      backgroundImage: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=600&fit=crop&q=80',
+      backgroundImage: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=600&fit=crop&q=80&auto=format',
       gradient: 'linear-gradient(135deg, #1a0510 0%, #2a0f1b 100%)',
       cardAsset: Neural,
       isDark: true,
@@ -774,7 +774,7 @@ function Technology({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigate
       metric: '250+',
       metricLabel: 'Active users every day',
       description: 'Advanced NLP capabilities that understand, process, and generate human language with unprecedented accuracy.',
-      backgroundImage: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=800&h=600&fit=crop&q=80',
+      backgroundImage: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=800&h=600&fit=crop&q=80&auto=format',
       gradient: 'linear-gradient(135deg, #0a0a0a 0%, #171717 100%)',
       cardAsset: connectivityImg,
       isDark: true,

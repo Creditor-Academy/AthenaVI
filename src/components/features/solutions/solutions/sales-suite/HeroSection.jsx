@@ -20,7 +20,7 @@ const styles = `
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('https://images.unsplash.com/photo-1552664730-d307ca884978?w=1920&h=1080&fit=crop&q=80');
+  background-image: url('https://images.unsplash.com/photo-1552664730-d307ca884978?w=1920&h=1080&fit=crop&q=80&auto=format');
   background-size: cover;
   background-position: center;
   opacity: 0.15;
@@ -308,7 +308,7 @@ function HeroSection() {
   const features = [
     {
       label: 'Personalized Outreach',
-      image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=300&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=300&fit=crop&q=80&auto=format',
       overlay: (
         <div className="feature-overlay">
           <div className="feature-icon">
@@ -319,12 +319,12 @@ function HeroSection() {
     },
     {
       label: 'Sales Videos',
-      image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=400&h=300&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=400&h=300&fit=crop&q=80&auto=format',
       badge: 'AI Powered'
     },
     {
       label: 'Multi-Language',
-      image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=400&h=300&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=400&h=300&fit=crop&q=80&auto=format',
       overlay: (
         <div className="feature-overlay">
           <div className="feature-icon">
@@ -335,7 +335,7 @@ function HeroSection() {
     },
     {
       label: 'Video Library',
-      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=300&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=300&fit=crop&q=80&auto=format',
       overlay: (
         <div className="feature-overlay">
           <div className="feature-icon">

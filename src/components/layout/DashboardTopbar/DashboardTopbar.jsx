@@ -3,7 +3,7 @@ import { Search, ShoppingBag, Bell, Menu, X, PanelLeft } from 'lucide-react'
 import ProfileDropdown from '../../ui/ProfileDropdown/ProfileDropdown.jsx'
 import DashboardSearchPanel from '../DashboardSearch/DashboardSearchPanel.jsx'
 import '../DashboardSearch/DashboardSearchPanel.css'
-import LogoImg from '../../../assets/herologo.png'
+import LogoImg from '../../../assets/herologo.webp'
 
 function DashboardTopbar({
     sidebarMobileOpen,

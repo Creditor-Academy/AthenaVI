@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import LazyVideo from '../../ui/LazyVideo/LazyVideo.jsx'
 import { MdKeyboardArrowDown, MdArrowOutward, MdMenu, MdClose } from 'react-icons/md'
 import {
   FiCpu, FiPlayCircle, FiGlobe, FiTrendingUp, FiUserCheck,
@@ -7,7 +8,7 @@ import {
 } from 'react-icons/fi'
 import ProductVideo from '../../../assets/ProductVideo.mp4'
 import SolutionVideo from '../../../assets/SolutionNav.mp4'
-import LogoImg from '../../../assets/herologo.png'
+import LogoImg from '../../../assets/herologo.webp'
 
 /* ─────────────────────────────────────────────────
    STYLES
@@ -730,9 +731,9 @@ function Navbar({
             </div>
             <div className="mega-right">
               <div className="mega-video">
-                <video autoPlay muted loop playsInline>
+                <LazyVideo active={activeDropdown === 'products'}>
                   <source src={ProductVideo} type="video/mp4" />
-                </video>
+                </LazyVideo>
               </div>
               <div className="mega-video-title">
                 Translate audio &amp; captions <MdArrowOutward />
@@ -770,9 +771,9 @@ function Navbar({
             </div>
             <div className="mega-right">
               <div className="mega-video">
-                <video autoPlay muted loop playsInline>
+                <LazyVideo active={activeDropdown === 'solutions'}>
                   <source src={SolutionVideo} type="video/mp4" />
-                </video>
+                </LazyVideo>
               </div>
               <div className="mega-video-title">
                 Explore Industry Solutions <MdArrowOutward />

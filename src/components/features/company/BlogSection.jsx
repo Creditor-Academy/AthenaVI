@@ -341,37 +341,37 @@ function BlogSection({ variant = 'light' }) {
       date: 'March 15, 2024',
       title: 'The Future of AI-Powered Video Creation',
       excerpt: 'Exploring how artificial intelligence is revolutionizing the way we create and consume video content, making professional-quality videos accessible to everyone.',
-      image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop'
+      image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=600&h=400&fit=crop&auto=format'
     },
     {
       date: 'March 10, 2024',
       title: 'Building Trust in AI Technology',
       excerpt: 'Our commitment to ethical AI development and transparent practices that ensure our technology serves humanity responsibly.',
-      image: 'https://images.unsplash.com/photo-1555255707-c07966088b7b?w=600&h=400&fit=crop'
+      image: 'https://images.unsplash.com/photo-1555255707-c07966088b7b?w=600&h=400&fit=crop&auto=format'
     },
     {
       date: 'March 5, 2024',
       title: 'Personalization at Scale: The New Marketing Paradigm',
       excerpt: 'How AI avatars and personalized video content are transforming marketing strategies and customer engagement across industries.',
-      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop'
+      image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&h=400&fit=crop&auto=format'
     },
     {
       date: 'February 28, 2024',
       title: 'Breaking Language Barriers with AI Translation',
       excerpt: 'Discover how our video translation technology is helping businesses reach global audiences with authentic, localized content.',
-      image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=400&fit=crop'
+      image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&h=400&fit=crop&auto=format'
     },
     {
       date: 'February 20, 2024',
       title: 'The Art of Storytelling in Digital Media',
       excerpt: 'Learn how modern video production tools are enabling creators to tell compelling stories that resonate with audiences worldwide.',
-      image: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=600&h=400&fit=crop'
+      image: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=600&h=400&fit=crop&auto=format'
     },
     {
       date: 'February 15, 2024',
       title: 'Innovation in Content Creation Workflows',
       excerpt: 'Streamlining creative processes with intelligent automation and collaborative tools that enhance productivity and creativity.',
-      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop'
+      image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&h=400&fit=crop&auto=format'
     }
   ]
 

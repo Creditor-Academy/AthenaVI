@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { MdArrowOutward, MdSchool, MdAutoAwesome, MdRocketLaunch, MdInsights } from 'react-icons/md'
-import BgImage from '../../../../assets/Bg.png'
+import BgImage from '../../../../assets/Bg.webp'
 
 /* 3D tilt card — follows cursor */
 function StepCard({ icon, number, title, description }) {
@@ -106,7 +106,7 @@ const styles = `
   display: flex;
   flex-direction: column;
   gap: 24px;
-  max-width: 580px;
+  max-width: 660px;
 }
 
 /* Override text colors for background-image hero */
@@ -120,8 +120,10 @@ const styles = `
   font-family: 'Georgia', 'Times New Roman', serif;
   font-weight: 400;
   letter-spacing: -1.5px;
-  line-height: 1.2;
-  font-size: 55px;
+  line-height: 1.15;
+  /* Three lines at most on desktop (it used to wrap onto five). */
+  font-size: clamp(34px, 3.4vw, 48px);
+  text-wrap: balance;
   text-shadow: 0 2px 20px rgba(0,0,0,0.4);
 }
 
@@ -521,7 +523,7 @@ const styles = `
     margin-right: -40px;
   }
   .hero-section .hero-title {
-    font-size: 44px;
+    font-size: clamp(30px, 4.4vw, 40px);
   }
 }
 

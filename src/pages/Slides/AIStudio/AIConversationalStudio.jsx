@@ -20,7 +20,7 @@ import {
 } from './imageStudioGenerateFlow.js';
 import creditsService, { isInsufficientCreditsError } from '../../../services/creditsService.js';
 import { resolvePresentationWorkspaceContext } from '../../../utils/presentationContext.js';
-import LogoImg from '../../../assets/herologo.png';
+import LogoImg from '../../../assets/herologo.webp';
 import InfographicAnimatedBackground from './InfographicAnimatedBackground.jsx';
 import { useAuth } from '../../../contexts/AuthContext.jsx';
 import ImageGenCreditsGate from '../../../components/features/image-generation/ImageGenCreditsGate.jsx';

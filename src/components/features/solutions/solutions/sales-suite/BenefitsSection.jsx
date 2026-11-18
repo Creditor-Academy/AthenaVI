@@ -215,37 +215,37 @@ function BenefitsSection() {
   const benefits = [
     {
       icon: <MdPersonalVideo />,
-      image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&h=400&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=600&h=400&fit=crop&q=80&auto=format',
       title: 'Personalized Videos at Scale',
       description: 'Personalize videos at scale, giving a human face to communications and sales outreach. Create unique video messages for each prospect without the time and cost of traditional production.'
     },
     {
       icon: <MdSpeed />,
-      image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=600&h=400&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=600&h=400&fit=crop&q=80&auto=format',
       title: 'Fast & Cost-efficient',
       description: 'Turn existing sales decks, proposals, or audio files into engaging video content with minimal effort. Reduce production time from weeks to minutes.'
     },
     {
       icon: <MdTouchApp />,
-      image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=600&h=400&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=600&h=400&fit=crop&q=80&auto=format',
       title: 'At the Touch of a Button',
       description: 'Create diverse sales and training content at the touch of a button. No technical skills required - our AI handles everything.'
     },
     {
       icon: <MdPublic />,
-      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&h=400&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=600&h=400&fit=crop&q=80&auto=format',
       title: 'Scale from Anywhere',
       description: 'Seamlessly scale and localize sales content across regions, languages and dialects. Reach global prospects in their native language.'
     },
     {
       icon: <MdEdit />,
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&h=400&fit=crop&q=80&auto=format',
       title: 'All in One Place',
       description: 'Make revisions and updates without having to go back into video production. Edit scripts, change presenters, or update content instantly.'
     },
     {
       icon: <MdPlayCircle />,
-      image: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=600&h=400&fit=crop&q=80',
+      image: 'https://images.unsplash.com/photo-1551434678-e076c223a692?w=600&h=400&fit=crop&q=80&auto=format',
       title: 'Instant Explainer Videos',
       description: 'Create highly affordable explainer videos without the need for expensive production teams. Perfect for product demos, onboarding, and sales pitches.'
     }

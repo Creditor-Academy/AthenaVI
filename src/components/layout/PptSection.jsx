@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiLayout, FiEdit3, FiArrowRight, FiCheck } from 'react-icons/fi';
 import { LANDING_FONT, LANDING_LIGHT, LANDING_TYPE } from '../../styles/landingTypography';
 
-import PptPromptGen from '../../assets/ppt_prompt_gen.jpg';
-import PptSmartLayout from '../../assets/ppt_smart_layout.jpg';
-import PptBrandKit from '../../assets/ppt_brand_kit.jpg';
+import PptPromptGen from '../../assets/ppt_prompt_gen.webp';
+import PptSmartLayout from '../../assets/ppt_smart_layout.webp';
+import PptBrandKit from '../../assets/ppt_brand_kit.webp';
 
 const styles = `
 .ppt-section {

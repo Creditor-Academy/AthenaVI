@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Loader2, Sparkles, Image as ImageIcon, Download, Copy, Check, MessageSquare, Trash2, X, BarChart3, Share2, Printer, Plus, Search, LayoutGrid, List, Heart, ChevronDown, SlidersHorizontal, MoreHorizontal, RotateCcw } from 'lucide-react';
 import imageGenService from '../../../services/imageGenService.js';
 import ConfirmDialog from '../../../components/ui/ConfirmDialog/ConfirmDialog.jsx';
-import LogoImg from '../../../assets/herologo.png';
+import LogoImg from '../../../assets/herologo.webp';
 
 const START_CHAT_MODES = [
   { id: 'image', label: 'Image', Icon: ImageIcon },

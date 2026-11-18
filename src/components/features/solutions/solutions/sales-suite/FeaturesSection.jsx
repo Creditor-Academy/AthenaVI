@@ -388,7 +388,7 @@ function FeaturesSection() {
           <div className="features-layout">
             <div className="features-image-container">
               <img
-                src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop&q=80"
+                src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop&q=80&auto=format"
                 alt="Sales team collaboration"
                 className="features-image"
                 loading="lazy"

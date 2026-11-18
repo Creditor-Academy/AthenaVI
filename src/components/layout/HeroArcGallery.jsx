@@ -292,7 +292,7 @@ function HeroArcGallery({ avatars = [], fullWidth = false, pillarLabels = [] }) 
                 }}
                 src={avatar.src}
                 muted
-                autoPlay
+                preload="none"
                 loop
                 playsInline
                 webkit-playsinline="true"

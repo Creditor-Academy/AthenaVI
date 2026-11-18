@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import CourseCreatorImg from "../../assets/Course Creator.jpg";
 import UniversityImg from "../../assets/University.jpg";
-import CorporateTrainingImg from "../../assets/Cooporate training teams.jpg";
+import CorporateTrainingImg from "../../assets/Cooporate training teams.webp";
 import MarketingTeamsImg from "../../assets/Marketing Teams.jpg";
 
 const CARDS = [

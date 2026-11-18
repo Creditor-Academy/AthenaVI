@@ -1,6 +1,6 @@
 import { MdArrowOutward, MdCheckCircle } from 'react-icons/md'
 import { motion } from 'framer-motion'
-import AIVirtualAssistant from '../../../../../assets/CustomerExpHero.png'
+import AIVirtualAssistant from '../../../../../assets/CustomerExpHero.webp'
 import CustomerSatisfaction from '../../../../../assets/CustomerSatisfaction.jpg'
 
 const styles = `

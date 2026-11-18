@@ -1,6 +1,6 @@
 import { MdArrowOutward } from 'react-icons/md'
 import { FiPlay } from 'react-icons/fi'
-import AvatarImg from '../../assets/AvtarHero.png'
+import AvatarImg from '../../assets/AvtarHero.webp'
 import { LANDING_DARK, LANDING_FONT } from '../../styles/landingTypography'
 
 const css = `

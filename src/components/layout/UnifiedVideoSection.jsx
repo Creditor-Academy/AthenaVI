@@ -1,8 +1,8 @@
 import React from 'react';
 import { FiCheckCircle } from 'react-icons/fi';
-import SceneEditorImg from '../../assets/scene_editor_mockup.jpg';
-import AiPptImg from '../../assets/ai_ppt_mockup.jpg';
-import AiImageGenImg from '../../assets/ai_image_gen_mockup.jpg';
+import SceneEditorImg from '../../assets/scene_editor_mockup.webp';
+import AiPptImg from '../../assets/ai_ppt_mockup.webp';
+import AiImageGenImg from '../../assets/ai_image_gen_mockup.webp';
 import { LANDING_FONT, LANDING_LIGHT, LANDING_TYPE } from '../../styles/landingTypography';
 
 /* ── Feature cards ── */

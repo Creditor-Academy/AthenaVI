@@ -1,9 +1,9 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import avatar2 from '../../assets/Avatarr2.png'
-import avatar3 from '../../assets/Avatarr3.png'
-import avatar4 from '../../assets/Avatarr4.png'
-import avatar5 from '../../assets/Avatarr5.png'
+import avatar2 from '../../assets/Avatarr2.webp'
+import avatar3 from '../../assets/Avatarr3.webp'
+import avatar4 from '../../assets/Avatarr4.webp'
+import avatar5 from '../../assets/Avatarr5.webp'
 
 const styles = `
 .avatar-marquee-section {

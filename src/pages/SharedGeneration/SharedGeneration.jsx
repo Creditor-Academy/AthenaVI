@@ -3,7 +3,7 @@ import { BsStars } from 'react-icons/bs';
 import { MdArrowForward } from 'react-icons/md';
 import axios from 'axios';
 import { buildUrl } from '../../config/api.js';
-import LogoImg from '../../assets/herologo.png';
+import LogoImg from '../../assets/herologo.webp';
 import './SharedGeneration.css';
 
 export default function SharedGeneration() {

@@ -476,19 +476,19 @@ const scenarios = [
     input: "A clean, bright lifestyle photograph of a minimalist ceramic vase, airy lighting, promotional banner.",
     inputType: 'text',
     resultImages: [
-      "/promo_banner_1.jpg",
-      "/promo_banner_1b.jpg"
+      "/promo_banner_1.webp",
+      "/promo_banner_1b.webp"
     ]
   },
   {
     id: 'reference',
     title: 'Reference Image',
     icon: <FiImage />,
-    input: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=300", // Bright minimalist office reference
+    input: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=300&auto=format", // Bright minimalist office reference
     inputType: 'image',
     resultImages: [
-      "/promo_banner_2.jpg",
-      "/promo_banner_2b.jpg"
+      "/promo_banner_2.webp",
+      "/promo_banner_2b.webp"
     ]
   },
   {
@@ -498,8 +498,8 @@ const scenarios = [
     input: "Generate a clean, subtle 3D infographic chart with soft pastel colors, elegant business style.",
     inputType: 'text',
     resultImages: [
-      "/infographic_clean.jpg",
-      "/infographic_clean_b.jpg"
+      "/infographic_clean.webp",
+      "/infographic_clean_b.webp"
     ]
   }
 ];

@@ -292,9 +292,9 @@ const styles = `
 
 function AboutUsSection({ variant = 'light' }) {
   // Placeholder image URL - replace with actual image
-  const heroImageUrl = 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1600&q=80'
-  const mainImageUrl = 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=80'
-  const videoThumbnailUrl = 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80'
+  const heroImageUrl = 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1600&q=80&auto=format'
+  const mainImageUrl = 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&q=80&auto=format'
+  const videoThumbnailUrl = 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&q=80&auto=format'
 
   return (
     <>

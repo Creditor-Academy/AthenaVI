@@ -678,7 +678,7 @@ function ResourcesSection(props) {
       type: 'WHITE PAPER',
       title: 'The Future of AI-Powered Virtual Instruction',
       buttonText: 'Read the White Paper',
-      backgroundImage: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop',
+      backgroundImage: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop&auto=format',
       cardClass: 'white-paper',
       icon: MdDescription,
       description: 'Explore the transformative potential of AI-powered virtual instructors in modern education. This comprehensive white paper delves into how artificial intelligence is revolutionizing the way we teach and learn, making education more accessible, personalized, and effective.',
@@ -698,7 +698,7 @@ function ResourcesSection(props) {
       type: 'CASE STUDY',
       title: 'How Leading Universities Use AthenaVI for Online Learning',
       buttonText: 'See the Case Study',
-      backgroundImage: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=600&fit=crop',
+      backgroundImage: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=600&fit=crop&auto=format',
       cardClass: 'case-study',
       icon: MdSchool,
       description: 'Discover how top-tier universities have successfully integrated AthenaVI into their online learning platforms, resulting in improved student satisfaction, higher completion rates, and enhanced educational outcomes.',
@@ -718,7 +718,7 @@ function ResourcesSection(props) {
       type: 'VIDEO',
       title: 'Creating Your First AI Avatar: A Complete Tutorial',
       buttonText: 'Watch the video',
-      backgroundImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop',
+      backgroundImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=600&fit=crop&auto=format',
       cardClass: 'video',
       icon: MdPlayCircle,
       description: 'Learn step-by-step how to create your first AI-powered Virtual Studio using AthenaVI. This comprehensive tutorial covers everything from avatar selection to voice customization and content creation.',
@@ -794,7 +794,7 @@ function ResourcesSection(props) {
             transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
           >
             <motion.img
-              src="/avatar4.png"
+              src="/avatar4.webp"
               alt="AI Instructor"
               className="resources-header-avatar"
               animate={{ y: [0, -15, 0] }}

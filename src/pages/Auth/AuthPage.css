@@ -24,7 +24,7 @@
   max-height: 100dvh;
   overflow: hidden;
   padding: var(--auth-shell-pad);
-  background: url('../../assets/login_bg.jpg') center / cover no-repeat;
+  background: url('../../assets/login_bg.webp') center / cover no-repeat;
   font-family: 'Inter', sans-serif;
   box-sizing: border-box;
 }

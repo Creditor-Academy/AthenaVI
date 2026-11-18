@@ -2,12 +2,12 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { MdPlayArrow, MdOutlineTimer, MdTransform } from 'react-icons/md'
 import { TemplateDomeShowcase } from '../ui/DomeGallery'
-import introThumb from '../../assets/IntroSequence.png'
-import demoThumb from '../../assets/ProductDemo.png'
-import strategyThumb from '../../assets/StrategicOverview.png'
-import metricsThumb from '../../assets/PerformanceMetrics.png'
-import journeyThumb from '../../assets/CustomerJourney.png'
-import integrationThumb from '../../assets/AIIntegration.png'
+import introThumb from '../../assets/IntroSequence.webp'
+import demoThumb from '../../assets/ProductDemo.webp'
+import strategyThumb from '../../assets/StrategicOverview.webp'
+import metricsThumb from '../../assets/PerformanceMetrics.webp'
+import journeyThumb from '../../assets/CustomerJourney.webp'
+import integrationThumb from '../../assets/AIIntegration.webp'
 
 const styles = `
 .template-showcase-section {

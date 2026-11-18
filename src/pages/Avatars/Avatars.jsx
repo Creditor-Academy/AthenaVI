@@ -48,7 +48,7 @@ import HeroCarouselBanner from '../../components/ui/HeroCarouselBanner/HeroCarou
 import LoadMoreButton from '../../components/ui/LoadMoreButton/LoadMoreButton';
 import heroAvatarSlide1 from '../../assets/hero_avatar_slide1.jpg';
 import heroAvatarSlide2 from '../../assets/hero_avatar_slide2.jpg';
-import customerExpBg from '../../assets/CustomerExpHero.png';
+import customerExpBg from '../../assets/CustomerExpHero.webp';
 import './Avatars.css';
 
 const TAB_ICONS = {

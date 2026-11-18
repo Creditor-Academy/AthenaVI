@@ -3,7 +3,7 @@ import { MdCheck, MdGroup, MdEmail, MdError } from 'react-icons/md'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 import workspaceService from '../../services/workspaceService.js'
 import invitationFlowService from '../../services/invitationFlowService.js'
-import logoImg from '../../assets/herologo.png'
+import logoImg from '../../assets/herologo.webp'
 import {
   parseInvitationTokenFromUrl,
   buildInvitationHeadline,

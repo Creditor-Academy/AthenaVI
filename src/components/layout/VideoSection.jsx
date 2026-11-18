@@ -234,19 +234,19 @@ const styles = `
 
 const cards = [
   {
-    image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=600&fit=crop&q=80&auto=format',
     alt: 'AI-Powered Creation',
     title: 'AI-Powered Creation',
     description: 'Generate professional videos in minutes with our advanced AI technology. Simply provide your content and let the AI handle the rest.'
   },
   {
-    image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=600&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=600&fit=crop&q=80&auto=format',
     alt: 'Easy Customization',
     title: 'Easy Customization',
     description: 'Personalize every aspect of your videos with intuitive editing tools. Adjust styles, fonts, colors, and transitions to match your brand.'
   },
   {
-    image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=600&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=600&fit=crop&q=80&auto=format',
     alt: 'Multi-Language Support',
     title: 'Multi-Language Support',
     description: 'Create videos in any language with automatic translation features. Reach a global audience with AI-powered voice synthesis.'

@@ -8,7 +8,7 @@ import {
 import { FaInstagram, FaFacebookF, FaYoutube, FaLinkedinIn, FaXTwitter } from 'react-icons/fa6';
 import imageGenService from '../../../services/imageGenService.js';
 import creditsService from '../../../services/creditsService.js';
-import LogoImg from '../../../assets/herologo.png';
+import LogoImg from '../../../assets/herologo.webp';
 import geminiLogo from '../../../assets/google_gemini_logo.svg';
 import chatgptLogo from '../../../assets/chatgpt_logo.svg';
 import youtubeThumbPreview from '../../../assets/ai-img-gen/Youtube_thumbnail.png';
