@@ -83,7 +83,9 @@ services:
     previews:
       generation: automatic
 
-    # React SPA + Google OAuth callback paths — serve index.html for all routes
+    # Pages the app builds on the fly get index.html. Public pages have their own
+    # dist/<page>/index.html (scripts/render-postbuild.mjs). Anything else is not a page:
+    # Render answers it with dist/404.html (the app's Not Found page) and status 404.
     routes:
       - type: rewrite
         source: /
@@ -92,16 +94,46 @@ services:
         source: /auth/*
         destination: /index.html
       - type: rewrite
+        source: /oauth/*
+        destination: /index.html
+      - type: rewrite
+        source: /login/callback
+        destination: /index.html
+      - type: rewrite
         source: /dashboard/*
         destination: /index.html
       - type: rewrite
-        source: /login
+        source: /slides
         destination: /index.html
       - type: rewrite
-        source: /signup
+        source: /slides/*
         destination: /index.html
       - type: rewrite
-        source: /*
+        source: /create/*
+        destination: /index.html
+      - type: rewrite
+        source: /p/*
+        destination: /index.html
+      - type: rewrite
+        source: /share/*
+        destination: /index.html
+      - type: rewrite
+        source: /invitations/*
+        destination: /index.html
+      - type: rewrite
+        source: /invite/*
+        destination: /index.html
+      - type: rewrite
+        source: /reset-password
+        destination: /index.html
+      - type: rewrite
+        source: /reset-password/*
+        destination: /index.html
+      - type: rewrite
+        source: /hub
+        destination: /index.html
+      - type: rewrite
+        source: /products/choose
         destination: /index.html
 
     # Security headers + long-lived cache for Vite hashed assets (/assets/*)

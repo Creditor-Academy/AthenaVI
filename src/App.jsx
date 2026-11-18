@@ -21,6 +21,7 @@ import SessionExpiredModal from './components/ui/SessionExpiredModal/SessionExpi
 import PptDeckOpenBoot from './pages/Slides/AIPptComponents/PptDeckOpenBoot.jsx'
 import SharedGeneration from './pages/SharedGeneration/SharedGeneration.jsx'
 import { applySeoHead } from './seo/applySeoHead.js'
+import { saveReturnTo, takeReturnTo, clearReturnTo } from './utils/authReturnTo.js'
 
 function isPptEditorBootPath() {
   const path = readClientPath()
@@ -66,6 +67,7 @@ const GoogleCallback = lazy(() => import('./components/features/auth/GoogleCallb
 const PublicPresentation = lazy(() => import('./pages/Slides/PublicPresentation/PublicPresentation.jsx'))
 const PATH_TO_VIEW_MAP = {
   '/': 'landing',
+  '/index.html': 'landing',
   '/hub': 'dashboard',
   '/products/choose': 'dashboard',
   '/dashboard': 'dashboard',
@@ -135,12 +137,30 @@ const PATH_TO_VIEW_MAP = {
 // Protected Route Component
 const ProtectedRoute = ({ children, setView }) => {
   const { isAuthenticated, isSessionExpired, loading } = useAuth()
+  // Signed in while this page was open: losing that later is a sign-out, not a visit.
+  const wasSignedInRef = useRef(false)
 
   useEffect(() => {
-    if (!loading && !isAuthenticated && !isSessionExpired) {
-      // Redirect to landing page if not authenticated
+    if (isAuthenticated) wasSignedInRef.current = true
+  }, [isAuthenticated])
+
+  useEffect(() => {
+    if (loading || isAuthenticated || isSessionExpired) return
+    if (wasSignedInRef.current) {
+      // Signed out from inside the app: back to the homepage.
       setView('landing')
+      return
     }
+    // A signed-out visit to an app page (a bookmark, a shared link): sign in first, then this
+    // exact page opens (handleAuthComplete). The login page replaces it in the history, so Back
+    // doesn't bounce between the two.
+    saveReturnTo()
+    try {
+      window.history.replaceState({ view: 'login' }, '', '/login')
+    } catch {
+      // the login page still shows
+    }
+    setView('login')
   }, [isAuthenticated, isSessionExpired, loading, setView])
 
   if (loading) {
@@ -208,7 +228,11 @@ const SessionExpiredModalContainer = ({ setView }) => {
   return (
     <SessionExpiredModal
       isOpen={isSessionExpired}
-      onLogoutAndLogin={() => handleSessionExpiredLogout(setView)}
+      onLogoutAndLogin={() => {
+        // Sign in again, then come back to the page that was open.
+        saveReturnTo()
+        handleSessionExpiredLogout(setView)
+      }}
     />
   )
 }
@@ -362,15 +386,19 @@ function App() {
   }, [view])
 
   const acceptingInviteRef = useRef(false)
+  // When the page saved before sign-in was opened (sign-in can report "done" twice).
+  const returnedAtRef = useRef(0)
 
   const handleAuthComplete = useCallback(async ({ workspaceId } = {}) => {
     const pending = getPendingInvitation()
     // Google OAuth already accepted the invite server-side; just land in the workspace.
     if (workspaceId) {
+      clearReturnTo()
       invitationFlowService.finishInviteWithWorkspace({ id: workspaceId, name: pending?.workspaceName })
       return
     }
     if (pending?.token) {
+      clearReturnTo()
       // The OAuth-complete event can fire twice; never accept the same invite concurrently.
       if (acceptingInviteRef.current) return
       acceptingInviteRef.current = true
@@ -386,6 +414,22 @@ function App() {
       } finally {
         acceptingInviteRef.current = false
       }
+    }
+    // A second "signed in" right after opening the saved page: stay there.
+    if (Date.now() - returnedAtRef.current < 5000) return
+    // Signed in from an app page (or after the session expired): open that page again.
+    const returnTo = takeReturnTo()
+    if (returnTo) {
+      returnedAtRef.current = Date.now()
+      try {
+        window.history.replaceState({}, '', returnTo)
+      } catch {
+        setView('dashboard')
+        return
+      }
+      setCreateVideoConfig((prev) => mergeCreateConfigFromDeepLink(prev))
+      setView(resolveViewFromLocation(PATH_TO_VIEW_MAP))
+      return
     }
     setView('dashboard')
   }, [])
@@ -465,6 +509,8 @@ function App() {
   }, [])
 
   const handleLoginClick = () => {
+    // Signing in from a public page goes to the dashboard, not a page saved earlier.
+    clearReturnTo()
     setView('login')
   }
 

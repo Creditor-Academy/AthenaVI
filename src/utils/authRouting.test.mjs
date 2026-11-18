@@ -88,7 +88,23 @@ describe('authRouting', () => {
     installWindow({ pathname: '/share/x', view: 'landing' })
     assert.equal(resolveViewFromLocation(map), 'share')
 
-    installWindow({ pathname: '/unknown', view: 'landing' })
-    assert.equal(resolveViewFromLocation(map), 'landing')
+    installWindow({ pathname: '/dashboard/some-new-section' })
+    assert.equal(resolveViewFromLocation(map), 'dashboard')
+
+    installWindow({ pathname: '/create/abc' })
+    assert.equal(resolveViewFromLocation(map), 'create')
+
+    // Invite and reset links keep the last view behind their own screens.
+    installWindow({ pathname: '/invitations/accept/tok', view: 'dashboard' })
+    assert.equal(resolveViewFromLocation(map), 'dashboard')
+  })
+
+  it('an unknown URL is the Not Found page, never the homepage or the last view', () => {
+    for (const pathname of ['/unknown', '/templates', '/products/nope', '/pricing']) {
+      installWindow({ pathname, view: 'dashboard' })
+      assert.equal(resolveViewFromLocation({ '/': 'landing', '/products': 'products' }), 'not-found', pathname)
+    }
+    installWindow({ pathname: '/', hash: '#/nope', view: 'landing' })
+    assert.equal(resolveViewFromLocation({ '/': 'landing' }), 'not-found')
   })
 })

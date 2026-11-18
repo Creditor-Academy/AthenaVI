@@ -102,7 +102,14 @@ export function resolveViewFromLocation(pathToViewMap) {
     return 'share';
   }
 
-  return window.localStorage.getItem('athenavi:view') || 'landing';
+  // Dashboard sections and the video editor take sub-paths (the dashboard picks the section).
+  if (currentPath.startsWith('/dashboard/')) {
+    return 'dashboard';
+  }
+  if (currentPath.startsWith('/create/')) {
+    return 'create';
+  }
 
+  // Anything else is not a page: the Not Found page (the server answers it with status 404).
   return 'not-found';
 }
