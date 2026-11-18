@@ -157,7 +157,8 @@ a {
   text-decoration: none;
 }
 
-h1 {
+h1,
+.heading-h1 {
   font-family: var(--font-serif);
   font-size: clamp(40px, 6vw, 64px);
   font-weight: 400;

@@ -252,7 +252,7 @@ function CreativeRealityStudio({ variant = 'light' }) {
       <style>{styles}</style>
       <section id="creative-reality-studio" className={`product-section ${variant}`}>
         <div className="product-section-content">
-          <h1 className="product-section-title">Creative Reality™ Studio</h1>
+          <h2 className="product-section-title heading-h1">Creative Reality™ Studio</h2>
 
           <div className="product-grid-layout">
             {/* First Column: Text Card on top, Image below */}

@@ -25,7 +25,9 @@ describe('canonical and robots per page', () => {
       indexable: true,
       canonical: `${SITE_URL}/`,
       robots: 'index, follow',
+      title: 'AI Course Creation Platform | Athena Virtual Studio',
       description: PAGE_DESCRIPTIONS['/'],
+      h1: 'Create AI-Powered Videos That Speak Your Language',
     })
     assert.equal(seoForPath('/products').canonical, `${SITE_URL}/products/`)
     assert.equal(seoForPath('/products/').canonical, `${SITE_URL}/products/`)
@@ -34,7 +36,7 @@ describe('canonical and robots per page', () => {
   })
 
   it('sign-in pages, the app and unknown paths: noindex, follow and no canonical', () => {
-    for (const p of [...NOINDEX_PUBLIC_PATHS, '/dashboard', '/dashboard/editor', '/create', '/p/abc', '/templates', '/nope', '/news', '/technology', '/about-us', '/resources']) {
+    for (const p of [...NOINDEX_PUBLIC_PATHS, '/dashboard', '/dashboard/editor', '/create', '/p/abc', '/templates', '/nope', '/news', '/technology', '/about-us', '/resources', '/download']) {
       const seo = seoForPath(p)
       assert.equal(seo.indexable, false, p)
       assert.equal(seo.canonical, null, p)
@@ -50,6 +52,24 @@ describe('canonical and robots per page', () => {
     }
     assert.match(seoForPath('/products/').description, /^Explore Athena Virtual Studio products/)
     assert.equal(seoForPath('/login').description, null, 'none given for login / sign-up')
+  })
+
+  it('every public page has its own title and one H1; the app and hidden pages get the defaults', () => {
+    const pages = [...INDEXABLE_PATHS, ...NOINDEX_PUBLIC_PATHS]
+    const titles = pages.map((p) => seoForPath(p).title)
+    const h1s = pages.map((p) => seoForPath(p).h1)
+    for (const [i, p] of pages.entries()) {
+      assert.ok(titles[i]?.endsWith('| Athena Virtual Studio') && titles[i].length <= 65, `${p}: ${titles[i]}`)
+      assert.ok(h1s[i], `${p} has an H1`)
+    }
+    assert.equal(new Set(titles).size, pages.length, 'titles are unique')
+    assert.equal(new Set(h1s).size, pages.length, 'H1s are unique')
+    assert.match(seoForPath('/products/').title, /online course creation tools/i, 'uses the sheet keyword')
+    for (const p of ['/dashboard', '/news', '/nope', '/download']) {
+      assert.equal(seoForPath(p).title, 'Athena Virtual Studio', p)
+      assert.equal(seoForPath(p).h1, null, p)
+    }
+    assert.equal(seoForPath('/p/abc').title, null, 'a shared deck keeps its own tab title')
   })
 
   it('normalises paths', () => {
@@ -82,7 +102,32 @@ describe('sitemap.xml and robots.txt', () => {
 })
 
 describe('built HTML', () => {
-  const html = '<!doctype html><html><head>\n    <title>Virtual Studio</title>\n  </head><body></body></html>'
+  const html =
+    '<!doctype html><html><head>\n    <title>Athena Virtual Studio</title>\n  </head><body>\n    <div id="root"></div>\n    <script type="module" src="/assets/index.js"></script>\n  </body></html>'
+
+  it('a public page gets its title, and its H1 + description inside #root for crawlers', () => {
+    const out = withSeoTags(html, '/ai-videos')
+    assert.ok(out.includes('<title>AI Video Creation | Athena Virtual Studio</title>'))
+    assert.ok(
+      out.includes(
+        `<div id="root"><div class="seo-prerender"><h1>Create Engaging Videos with AI</h1><p>${PAGE_DESCRIPTIONS['/ai-videos']}</p></div></div>`
+      )
+    )
+    // Hidden from view until the app replaces it (no flash of unstyled text), still in the HTML.
+    assert.match(out, /<style>\.seo-prerender\{[^<]*clip:rect\(0 0 0 0\)[^<]*<\/style>[\s\S]*<\/head>/)
+    // Characters are escaped in the HTML.
+    assert.ok(withSeoTags(html, '/learning-development').includes('<h1>E-Learning &amp; Corporate Training Videos Powered by AI</h1>'))
+    assert.equal(withSeoTags(html, '/signup').match(/<h1>/g).length, 1)
+  })
+
+  it('the app and the 404 fallback get the default title and no prerendered heading', () => {
+    for (const p of ['/dashboard/home', '/__not-found__', '/download']) {
+      const out = withSeoTags(html, p)
+      assert.ok(out.includes('<title>Athena Virtual Studio</title>'), p)
+      assert.ok(out.includes('<div id="root"></div>'), p)
+      assert.doesNotMatch(out, /seo-prerender/, p)
+    }
+  })
 
   it('a public page gets its description and canonical in <head>', () => {
     const out = withSeoTags(html, '/products')
@@ -107,5 +152,9 @@ describe('built HTML', () => {
     const switched = withSeoTags(withSeoTags(html, '/products'), '/login')
     assert.doesNotMatch(switched, /rel="canonical"/)
     assert.equal(switched.match(/name="robots"/g).length, 1)
+    assert.equal(once.match(/<h1>/g).length, 1)
+    assert.equal(once.match(/\.seo-prerender\{/g).length, 1)
+    assert.ok(switched.includes('<h1>Your studio awaits</h1>') && !switched.includes('Create AI Agents'))
+    assert.equal(withSeoTags(withSeoTags(html, '/products'), '/dashboard').match(/<h1>|seo-prerender/g), null)
   })
 })

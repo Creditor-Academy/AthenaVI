@@ -364,8 +364,11 @@ function App() {
       currentPath.startsWith('/share/') ||
       isOAuthCallbackPath(currentPath)
     const isDashboardSubPath = isDashboardClientPath()
+    // The sign-in screen is also the sign-up form: /signup and /early-access keep their own URL
+    // (and with it their own title, H1 and analytics source).
+    const isSignupPath = view === 'login' && /^\/(signup|early-access)$/.test(currentPath)
     const targetUrl =
-      (view === 'dashboard' && isDashboardSubPath) ? currentPath
+      (view === 'dashboard' && isDashboardSubPath) || isSignupPath ? currentPath
       : newUrl
     try {
       if (!onProtectedPath && currentPath !== targetUrl) {
@@ -1008,7 +1011,8 @@ function App() {
 
       {view === 'login' && (
         <AuthPage
-          initialMode={['/signup', '/early-access'].includes(window.location.pathname) ? 'signup' : 'login'}
+          // The server answers /signup with /signup/ (each page is a folder), so allow the slash.
+          initialMode={/^\/(signup|early-access)\/?$/.test(window.location.pathname) ? 'signup' : 'login'}
           onAuthComplete={handleAuthComplete}
           onBack={() => setView('landing')}
         />

@@ -34,7 +34,8 @@ export const INDEXABLE_PATHS = [
   '/ethics',
   '/help',
   '/privacy',
-  '/download',
+  // /download is not here: it is the signed-in app's download hand-off (visitors get the
+  // sign-in form), so it is noindex like the rest of the app.
 ]
 
 /**
@@ -42,6 +43,60 @@ export const INDEXABLE_PATHS = [
  * old waitlist link and now shows the sign-up form, so it is treated like /signup.
  */
 export const NOINDEX_PUBLIC_PATHS = ['/login', '/signup', '/early-access']
+
+export const BRAND = 'Athena Virtual Studio'
+
+/** The title of the signed-in app and of any page not listed below. */
+export const DEFAULT_TITLE = BRAND
+
+/**
+ * <title> per page: the page's primary keyword from the marketing sheet, then the brand.
+ * Kept to about 60 characters so search results show it in full.
+ */
+export const PAGE_TITLES = {
+  '/': `AI Course Creation Platform | ${BRAND}`,
+  '/products': `Online Course Creation Tools | ${BRAND}`,
+  '/marketing-suite': `Marketing Suite: AI Marketing Tools | ${BRAND}`,
+  '/sales-suite': `Sales Suite: Sales Enablement Tools | ${BRAND}`,
+  '/customer-experience': `Customer Experience Solutions | ${BRAND}`,
+  '/learning-development': `Learning & Development Tools | ${BRAND}`,
+  '/use-cases': `Digital Learning Use Cases | ${BRAND}`,
+  '/technology': `AI Learning Technology | ${BRAND}`,
+  '/ai-videos': `AI Video Creation | ${BRAND}`,
+  '/ai-avatars-videos': `AI Avatar Video Creation | ${BRAND}`,
+  '/about-us': `About Us | ${BRAND}`,
+  '/news': `News & Updates | ${BRAND}`,
+  '/resources': `Online Learning Resources | ${BRAND}`,
+  '/ethics': `AI Ethics & Responsible AI | ${BRAND}`,
+  '/help': `Help Center | ${BRAND}`,
+  '/privacy': `Privacy Policy | ${BRAND}`,
+  '/login': `Log In | ${BRAND}`,
+  '/signup': `Sign Up | ${BRAND}`,
+  '/early-access': `Early Access | ${BRAND}`,
+}
+
+/**
+ * The page's one <h1>, exactly as the page renders it. The build also writes it into the HTML
+ * (with the meta description) so crawlers that don't run JavaScript see it; the app replaces it
+ * when it starts. If a page's heading changes, change it here too.
+ */
+export const PAGE_H1 = {
+  '/': 'Create AI-Powered Videos That Speak Your Language',
+  '/products': 'Create AI Agents That Know Everything About Your Business',
+  '/marketing-suite': 'Personalized AI Marketing Suite',
+  '/sales-suite': 'Transform Your Sales Strategy with AI',
+  '/customer-experience': 'Revolutionize Customer Experience with Interactive AI Humans',
+  '/learning-development': 'E-Learning & Corporate Training Videos Powered by AI',
+  '/use-cases': 'Universal Applications for Visual AI',
+  '/ai-videos': 'Create Engaging Videos with AI',
+  '/ai-avatars-videos': 'AI Avatars for Real-Time Video & Human Interaction',
+  '/ethics': 'Ethical Pledge for Synthetic Media',
+  '/help': 'Help Center',
+  '/privacy': 'Privacy Policy',
+  '/login': 'Your studio awaits',
+  '/signup': "Lights, camera — let's go",
+  '/early-access': 'Get early access',
+}
 
 /** Meta descriptions from the digital marketing team's sheet ("Meta Description_virtual-studio"). */
 export const PAGE_DESCRIPTIONS = {
@@ -89,9 +144,17 @@ export function canonicalUrl(pathname) {
  */
 export function seoForPath(pathname) {
   const path = normalizeSeoPath(pathname)
-  const description = PAGE_DESCRIPTIONS[path] || null
-  if (INDEXABLE_PATHS.includes(path)) {
-    return { indexable: true, canonical: canonicalUrl(path), robots: ROBOTS_INDEX, description }
+  const indexable = INDEXABLE_PATHS.includes(path)
+  // Pages with their own title, description and H1; the app and hidden pages get the defaults.
+  const listed = indexable || NOINDEX_PUBLIC_PATHS.includes(path)
+  // A shared presentation names its own tab; leave it alone.
+  const ownTitle = /^\/p\//.test(path)
+  return {
+    indexable,
+    canonical: indexable ? canonicalUrl(path) : null,
+    robots: indexable ? ROBOTS_INDEX : ROBOTS_NOINDEX,
+    title: ownTitle ? null : (listed && PAGE_TITLES[path]) || DEFAULT_TITLE,
+    description: (listed && PAGE_DESCRIPTIONS[path]) || null,
+    h1: (listed && PAGE_H1[path]) || null,
   }
-  return { indexable: false, canonical: null, robots: ROBOTS_NOINDEX, description }
 }

@@ -229,7 +229,7 @@ function VideoTranslate({ variant = 'dark' }) {
       <section className={`product-section ${variant}`}>
         <div className="product-section-content">
 
-          <h1 className="product-section-title">Video Translate</h1>
+          <h2 className="product-section-title heading-h1">Video Translate</h2>
           <p className="product-section-description">
             Automatically translate your videos into multiple languages with perfect lip-sync and natural voice. Reach global audiences without losing authenticity.
           </p>

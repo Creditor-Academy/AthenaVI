@@ -12,6 +12,7 @@ import {
 } from '../../utils/inviteNavigation.js'
 import './auth-forms.css'
 import './AuthPage.css'
+import { applySeoHead } from '../../seo/applySeoHead.js'
 
 const slideVariants = {
   enter: (direction) => ({ x: direction > 0 ? 32 : -32, opacity: 0 }),
@@ -70,16 +71,30 @@ function AuthPage({ onAuthComplete, onBack, initialMode = 'login' }) {
     }
   }, [])
 
+  // A visit that started on /early-access stays an early-access sign-up (its own H1 and URL).
+  const [isEarlyAccess] = useState(() => /^\/early-access\/?$/.test(window.location.pathname))
+
+  /** Keep the address bar, title and H1 in step with the form shown (only on the sign-in URLs). */
+  const showFormUrl = (nextMode) => {
+    if (!/^\/(login|signup|early-access)\/?$/.test(window.location.pathname)) return
+    const url = nextMode === 'login' ? '/login' : isEarlyAccess ? '/early-access' : '/signup'
+    if (window.location.pathname === url) return
+    window.history.replaceState({ ...(window.history.state || {}), view: 'login' }, '', url)
+    applySeoHead(url)
+  }
+
   const switchToSignup = () => {
     setDirection(1)
     setMode('signup')
     setShowForgotPassword(false)
+    showFormUrl('signup')
   }
 
   const switchToLogin = () => {
     setDirection(-1)
     setMode('login')
     setShowForgotPassword(false)
+    showFormUrl('login')
   }
 
   const isLogin = mode === 'login'
@@ -116,7 +131,7 @@ function AuthPage({ onAuthComplete, onBack, initialMode = 'login' }) {
           </div>
 
           <div className="auth-panel__center">
-            <h1 className="auth-panel__tagline">Where every lesson comes alive.</h1>
+            <p className="auth-panel__tagline">Where every lesson comes alive.</p>
             <p className="auth-panel__subcopy">
               Turn lessons into lifelike avatar videos in minutes.
             </p>
@@ -138,7 +153,7 @@ function AuthPage({ onAuthComplete, onBack, initialMode = 'login' }) {
 
             {!showForgotPassword && isLogin && (
               <header className="auth-form-panel__header">
-                <h2>Your studio awaits</h2>
+                <h1>Your studio awaits</h1>
                 <p>
                   {hasPendingInvite
                     ? 'Sign in to accept your workspace invitation.'
@@ -149,7 +164,7 @@ function AuthPage({ onAuthComplete, onBack, initialMode = 'login' }) {
 
             {!showForgotPassword && !isLogin && (
               <header className="auth-form-panel__header">
-                <h2>Lights, camera &mdash; let&apos;s go</h2>
+                <h1>{isEarlyAccess ? 'Get early access' : <>Lights, camera &mdash; let&apos;s go</>}</h1>
                 <p>
                   {hasPendingInvite
                     ? 'Create your account to join the invited workspace.'

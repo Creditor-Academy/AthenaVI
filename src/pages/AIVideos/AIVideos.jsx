@@ -22,6 +22,13 @@ const styles = `
   background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
 }
 
+.ai-videos-title {
+  margin: 48px 0 28px;
+  max-width: 900px;
+  text-align: center;
+  font-size: clamp(32px, 5vw, 52px);
+}
+
 .ai-videos-wrapper {
   width: 100%;
   max-width: 1200px;
@@ -68,6 +75,7 @@ function AIVideos({
         />
         
         <main className="ai-videos-content">
+          <h1 className="ai-videos-title">Create Engaging Videos with AI</h1>
           <div className="ai-videos-wrapper">
             <video 
               className="ai-videos-player"

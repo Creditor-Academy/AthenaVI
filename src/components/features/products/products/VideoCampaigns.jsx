@@ -184,9 +184,9 @@ function VideoCampaigns() {
         {/* Content */}
         <div className="video-campaigns-content">
 
-          <h1 className="video-campaigns-title">
+          <h2 className="video-campaigns-title heading-h1">
             Video Campaigns
-          </h1>
+          </h2>
 
           <p className="video-campaigns-description">
             Plan, launch, and scale high-impact video campaigns with tools

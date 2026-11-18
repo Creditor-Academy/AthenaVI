@@ -294,9 +294,9 @@ function PersonalAvatars({ variant = 'light' }) {
           viewport={{ once: true, amount: 0.3 }}
         >
           <div className="text-column">
-            <motion.h1 className="product-section-title" variants={itemVariants}>
+            <motion.h2 className="product-section-title heading-h1" variants={itemVariants}>
               Personal Avatars
-            </motion.h1>
+            </motion.h2>
             <motion.p className="product-section-description" variants={itemVariants}>
               Create your own digital avatar that looks, sounds, and moves like you. Perfect for personalized video content, presentations, and virtual interactions.
             </motion.p>
