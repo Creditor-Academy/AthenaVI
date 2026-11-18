@@ -1,0 +1,23 @@
+# Athena Virtual Studio
+# /login, /signup and /early-access are not blocked here on purpose: they carry
+# <meta name="robots" content="noindex, follow">, which crawlers can only see if they may fetch the page.
+
+User-agent: *
+Allow: /
+
+# The signed-in app and one-off links: nothing to index.
+Disallow: /dashboard/
+Disallow: /create
+Disallow: /profile
+Disallow: /settings
+Disallow: /support
+Disallow: /hub
+Disallow: /slides/
+Disallow: /auth/
+Disallow: /oauth/
+Disallow: /invitations/
+Disallow: /invite/
+Disallow: /reset-password
+Disallow: /export-render.html
+
+Sitemap: https://virtualstudio.lmsathena.com/sitemap.xml

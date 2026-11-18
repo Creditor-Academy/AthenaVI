@@ -20,6 +20,7 @@ import { parseProjectCommentsDeepLink } from './utils/inboxNotifications.js'
 import SessionExpiredModal from './components/ui/SessionExpiredModal/SessionExpiredModal.jsx'
 import PptDeckOpenBoot from './pages/Slides/AIPptComponents/PptDeckOpenBoot.jsx'
 import SharedGeneration from './pages/SharedGeneration/SharedGeneration.jsx'
+import { applySeoHead } from './seo/applySeoHead.js'
 
 function isPptEditorBootPath() {
   const path = readClientPath()
@@ -352,6 +353,12 @@ function App() {
         window.location.hash = targetUrl
       }
     }
+  }, [view])
+
+  // Canonical link and robots meta for the page now shown (after the URL above is settled).
+  // The built HTML of each page already has them; this keeps them right after in-app navigation.
+  useEffect(() => {
+    applySeoHead(readClientPath())
   }, [view])
 
   const acceptingInviteRef = useRef(false)
