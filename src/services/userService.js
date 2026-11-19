@@ -15,9 +15,7 @@ class UserService {
       console.log('Fetching user profile from:', buildUrl('/api/user/profile'))
       
       const headers = getAuthHeaders()
-      console.log('Request headers:', headers)
-      console.log('Token from localStorage:', localStorage.getItem('accessToken'))
-      
+
       const response = await fetch(buildUrl('/api/user/profile'), {
         method: 'GET',
         headers: headers

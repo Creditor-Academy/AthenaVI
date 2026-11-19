@@ -1,4 +1,6 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { lazyWithReload } from './utils/lazyWithReload.js'
+import AppErrorBoundary from './components/ui/AppErrorBoundary/AppErrorBoundary.jsx'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import AppDialogHost from './components/ui/AppDialogHost/AppDialogHost'
@@ -42,29 +44,29 @@ function mergeCreateConfigFromDeepLink(prev) {
   }
 }
 
-const Dashboard = lazy(() => import('./pages/Dashboard/Dashboard.jsx'))
-const Create = lazy(() => import('./pages/Editor/Editor.jsx'))
-const Products = lazy(() => import('./pages/Products/Products.jsx'))
-// const AboutUsBlog = lazy(() => import('./pages/AboutUs/AboutUs.jsx'))
-// const News = lazy(() => import('./pages/News/News.jsx'))
-// const Resources = lazy(() => import('./pages/Resources/Resources.jsx'))
-const HelpCenter = lazy(() => import('./pages/HelpCenter/HelpCenter.jsx'))
-const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy/PrivacyPolicy.jsx'))
-const MarketingSuite = lazy(() => import('./pages/MarketingSuite/MarketingSuite.jsx'))
-const SalesSuite = lazy(() => import('./pages/SalesSuite/SalesSuite.jsx'))
-const Ethics = lazy(() => import('./pages/Ethics/Ethics.jsx'))
-// const Technology = lazy(() => import('./pages/Technology/Technology.jsx'))
-const CustomerExperience = lazy(() => import('./pages/CustomerExperience/CustomerExperience.jsx'))
-const LearningDevelopment = lazy(() => import('./pages/LearningDevelopment/LearningDevelopment.jsx'))
-const Settings = lazy(() => import('./pages/Settings/Settings.jsx'))
-const UseCases = lazy(() => import('./pages/UseCases/UseCases.jsx'))
-const InviteAcceptance = lazy(() => import('./pages/InviteAcceptance/InviteAcceptance.jsx'))
-const AIAvatarsVideos = lazy(() => import('./pages/AIAvatarsVideos/AIAvatarsVideos.jsx'))
-const AIVideos = lazy(() => import('./pages/AIVideos/AIVideos.jsx'))
-const NotFound = lazy(() => import('./pages/NotFound/NotFound.jsx'))
-const RenderDownload = lazy(() => import('./pages/Download/RenderDownload.jsx'))
-const GoogleCallback = lazy(() => import('./components/features/auth/GoogleCallback.jsx'))
-const PublicPresentation = lazy(() => import('./pages/Slides/PublicPresentation/PublicPresentation.jsx'))
+const Dashboard = lazyWithReload(() => import('./pages/Dashboard/Dashboard.jsx'))
+const Create = lazyWithReload(() => import('./pages/Editor/Editor.jsx'))
+const Products = lazyWithReload(() => import('./pages/Products/Products.jsx'))
+// const AboutUsBlog = lazyWithReload(() => import('./pages/AboutUs/AboutUs.jsx'))
+// const News = lazyWithReload(() => import('./pages/News/News.jsx'))
+// const Resources = lazyWithReload(() => import('./pages/Resources/Resources.jsx'))
+const HelpCenter = lazyWithReload(() => import('./pages/HelpCenter/HelpCenter.jsx'))
+const PrivacyPolicy = lazyWithReload(() => import('./pages/PrivacyPolicy/PrivacyPolicy.jsx'))
+const MarketingSuite = lazyWithReload(() => import('./pages/MarketingSuite/MarketingSuite.jsx'))
+const SalesSuite = lazyWithReload(() => import('./pages/SalesSuite/SalesSuite.jsx'))
+const Ethics = lazyWithReload(() => import('./pages/Ethics/Ethics.jsx'))
+// const Technology = lazyWithReload(() => import('./pages/Technology/Technology.jsx'))
+const CustomerExperience = lazyWithReload(() => import('./pages/CustomerExperience/CustomerExperience.jsx'))
+const LearningDevelopment = lazyWithReload(() => import('./pages/LearningDevelopment/LearningDevelopment.jsx'))
+const Settings = lazyWithReload(() => import('./pages/Settings/Settings.jsx'))
+const UseCases = lazyWithReload(() => import('./pages/UseCases/UseCases.jsx'))
+const InviteAcceptance = lazyWithReload(() => import('./pages/InviteAcceptance/InviteAcceptance.jsx'))
+const AIAvatarsVideos = lazyWithReload(() => import('./pages/AIAvatarsVideos/AIAvatarsVideos.jsx'))
+const AIVideos = lazyWithReload(() => import('./pages/AIVideos/AIVideos.jsx'))
+const NotFound = lazyWithReload(() => import('./pages/NotFound/NotFound.jsx'))
+const RenderDownload = lazyWithReload(() => import('./pages/Download/RenderDownload.jsx'))
+const GoogleCallback = lazyWithReload(() => import('./components/features/auth/GoogleCallback.jsx'))
+const PublicPresentation = lazyWithReload(() => import('./pages/Slides/PublicPresentation/PublicPresentation.jsx'))
 const PATH_TO_VIEW_MAP = {
   '/': 'landing',
   '/index.html': 'landing',
@@ -572,6 +574,7 @@ function App() {
         <SessionExpiredModalContainer setView={setView} />
         <AppDialogHost />
         <UploadProgressHost />
+        <AppErrorBoundary resetKey={view}>
         <Suspense fallback={<PageFallback />}>
         {/* Reset Password Page - Standalone */}
       {window.location.pathname.includes('/reset-password') && (
@@ -1091,6 +1094,7 @@ function App() {
         </>
       )}
         </Suspense>
+        </AppErrorBoundary>
     </AuthProvider>
     </ThemeProvider>
   )

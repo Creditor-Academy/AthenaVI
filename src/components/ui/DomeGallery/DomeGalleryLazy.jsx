@@ -1,7 +1,8 @@
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
+import { lazyWithReload } from '../../../utils/lazyWithReload.js';
 import './DomeGalleryShell.css';
 
-const DomeGallery = lazy(() => import('./DomeGallery'));
+const DomeGallery = lazyWithReload(() => import('./DomeGallery'));
 
 function DomeGallerySpinner() {
   return (

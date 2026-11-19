@@ -11,6 +11,33 @@ import {
 // Create Auth Context
 const AuthContext = createContext()
 
+/**
+ * The signed-in user with an `id`. The login and sign-up replies only carry name and email, but
+ * the dashboard tells your own work from shared work by id (Workspace, My work), so without it
+ * those pages stay empty until a refresh. Use an id the record already has, else load the
+ * profile. Saved to storage like the rest of the session.
+ */
+async function completeUserRecord(userData) {
+  const base = userData && typeof userData === 'object' ? userData : {}
+  const knownId = base.id || base._id || base.userId
+  let full = knownId ? { ...base, id: knownId } : base
+  if (!knownId) {
+    try {
+      const profile = await userService.getUserProfile()
+      const profileId = profile?.id || profile?._id || profile?.userId
+      if (profile && profileId) full = { ...base, ...profile, id: profileId }
+    } catch (profileError) {
+      console.error('Failed to load the profile after sign-in:', profileError)
+    }
+  }
+  try {
+    localStorage.setItem('user', JSON.stringify(full))
+  } catch {
+    // storage full / blocked: the session still works for this page
+  }
+  return full
+}
+
 // Auth Provider Component
 const DEFAULT_CAPABILITIES = {
   isPlatformSuperadmin: false,
@@ -164,7 +191,9 @@ export const AuthProvider = ({ children }) => {
   // Login function
   const login = async (credentials) => {
     try {
-      const { user: userData } = await authService.login(credentials)
+      const { user: loggedIn } = await authService.login(credentials)
+      // Complete the user (id, profile) before the dashboard opens, as a page refresh would.
+      const userData = await completeUserRecord(loggedIn)
       setUser(userData)
       setIsAuthenticated(true)
       trackLogin('email')
@@ -183,7 +212,8 @@ export const AuthProvider = ({ children }) => {
   // Register function
   const register = async (userData) => {
     try {
-      const { user: newUser, workspace } = await authService.register(userData)
+      const { user: registered, workspace } = await authService.register(userData)
+      const newUser = await completeUserRecord(registered)
       setUser(newUser)
       setIsAuthenticated(true)
       trackSignUp('email')
