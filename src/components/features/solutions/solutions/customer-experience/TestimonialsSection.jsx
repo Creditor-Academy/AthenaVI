@@ -202,7 +202,7 @@ const TestimonialsSection = () => {
               <p className="cx-test-quote">{t.quote}</p>
               <div className="cx-test-author">
                 <div className="cx-test-avatar">
-                  <img src={t.avatar} alt={t.name} />
+                  <img src={t.avatar} alt={t.name} width="96" height="96" loading="lazy" decoding="async" />
                 </div>
                 <div className="cx-test-info">
                   <span className="cx-test-name">{t.name}</span>

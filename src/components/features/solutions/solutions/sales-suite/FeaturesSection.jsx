@@ -390,8 +390,11 @@ function FeaturesSection() {
               <img
                 src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=600&fit=crop&q=80&auto=format"
                 alt="Sales team collaboration"
+                width="800"
+                height="600"
                 className="features-image"
                 loading="lazy"
+                decoding="async"
               />
               <div className="features-image-overlay">
                 <h3 className="features-image-title">AI-Powered Sales Videos</h3>

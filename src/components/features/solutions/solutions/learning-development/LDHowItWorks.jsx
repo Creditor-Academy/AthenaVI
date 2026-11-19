@@ -427,7 +427,7 @@ const LDHowItWorks = () => {
                 transition={{ duration: 1.5 }}
               >
                 <div className="ld-screen-content">
-                  <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=1200" alt="Training Platform" />
+                  <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=1200" alt="Training Platform" width="1200" height="800" loading="lazy" decoding="async" />
                   <motion.div className="ld-play-portal" whileHover={{ scale: 1.1 }}>
                     <HiOutlinePlay />
                     <motion.div 

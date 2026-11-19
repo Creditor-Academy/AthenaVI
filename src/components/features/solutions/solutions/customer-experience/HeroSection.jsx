@@ -1,7 +1,7 @@
 import { MdArrowOutward, MdCheckCircle } from 'react-icons/md'
 import { motion } from 'framer-motion'
 import AIVirtualAssistant from '../../../../../assets/CustomerExpHero.webp'
-import CustomerSatisfaction from '../../../../../assets/CustomerSatisfaction.jpg'
+import CustomerSatisfaction from '../../../../../assets/CustomerSatisfaction.webp'
 
 const styles = `
 .cx-hero {
@@ -296,7 +296,7 @@ function HeroSection() {
           transition={{ duration: 0.5, delay: 0.4 }}
           className="cx-hero-actions"
         >
-          <a href="#" className="btn-primary-cx">
+          <a href="/signup/" className="btn-primary-cx">
             Start Free Trial
             <MdArrowOutward />
           </a>
@@ -333,7 +333,7 @@ function HeroSection() {
         className="cx-hero-visual"
       >
         <div className="visual-image-wrapper">
-          <img src={AIVirtualAssistant} alt="AI Virtual Assistant Dashboard" />
+          <img src={AIVirtualAssistant} alt="AI Virtual Assistant Dashboard" width="500" height="500" decoding="async" fetchPriority="high" />
           
           <motion.div 
             className="floating-bubble bubble-1"

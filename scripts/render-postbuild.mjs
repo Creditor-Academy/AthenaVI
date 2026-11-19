@@ -12,7 +12,15 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { seoForPath, INDEXABLE_PATHS, NOINDEX_PUBLIC_PATHS } from '../src/seo/seoRoutes.js'
+import {
+  seoForPath,
+  INDEXABLE_PATHS,
+  NOINDEX_PUBLIC_PATHS,
+  openGraphForPath,
+  jsonLdForPath,
+  LCP_IMAGE_PATH,
+  normalizeSeoPath,
+} from '../src/seo/seoRoutes.js'
 
 const distDir = join(process.cwd(), 'dist')
 const indexHtml = join(distDir, 'index.html')
@@ -80,17 +88,34 @@ function withPrerenderedHeading(html, seo) {
  */
 export function withSeoTags(html, pathname) {
   const seo = seoForPath(pathname)
+  const og = openGraphForPath(pathname)
+  const jsonLd = jsonLdForPath(pathname)
   html = withPrerenderedHeading(html, seo)
   if (seo.title) html = html.replace(/<title>[^<]*<\/title>/i, `<title>${escapeText(seo.title)}</title>`)
   const tags = [
     seo.description ? `<meta name="description" content="${escapeAttr(seo.description)}" />` : null,
     seo.canonical ? `<link rel="canonical" href="${escapeAttr(seo.canonical)}" />` : null,
     seo.indexable ? null : `<meta name="robots" content="${escapeAttr(seo.robots)}" />`,
+    og ? `<meta property="og:type" content="${escapeAttr(og.type)}" />` : null,
+    og ? `<meta property="og:site_name" content="${escapeAttr(og.siteName)}" />` : null,
+    og ? `<meta property="og:title" content="${escapeAttr(og.title)}" />` : null,
+    og?.description ? `<meta property="og:description" content="${escapeAttr(og.description)}" />` : null,
+    og ? `<meta property="og:url" content="${escapeAttr(og.url)}" />` : null,
+    og ? `<meta property="og:image" content="${escapeAttr(og.image)}" />` : null,
+    jsonLd
+      ? `<script type="application/ld+json" id="seo-jsonld">${JSON.stringify(jsonLd).replace(/</g, '\\u003c')}</script>`
+      : null,
+    normalizeSeoPath(pathname) === '/'
+      ? `<link rel="preload" as="image" href="${escapeAttr(LCP_IMAGE_PATH)}" fetchpriority="high" data-seo-lcp="1" />`
+      : null,
   ].filter(Boolean)
   const cleaned = html
     .replace(/\s*<meta[^>]+name=["']description["'][^>]*>/gi, '')
     .replace(/\s*<link[^>]+rel=["']canonical["'][^>]*>/gi, '')
     .replace(/\s*<meta[^>]+name=["']robots["'][^>]*>/gi, '')
+    .replace(/\s*<meta[^>]+property=["']og:[^"']+["'][^>]*>/gi, '')
+    .replace(/\s*<script[^>]*id=["']seo-jsonld["'][^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/\s*<link[^>]+data-seo-lcp=["']1["'][^>]*>/gi, '')
   if (!tags.length) return cleaned
   return cleaned.replace(/\s*<\/head>/i, `\n    ${tags.join('\n    ')}\n  </head>`)
 }

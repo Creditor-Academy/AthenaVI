@@ -162,7 +162,7 @@ const CXFinalCTA = () => {
 
           <div className="cx-cta-actions">
             <motion.a 
-              href="#" 
+              href="/signup/" 
               className="cx-cta-btn-primary"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}

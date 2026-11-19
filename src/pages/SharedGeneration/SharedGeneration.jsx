@@ -114,9 +114,9 @@ export default function SharedGeneration() {
             <div className="editorial-cta-section">
               <h2 className="cta-headline">Create something of your own.</h2>
               <p className="cta-support">Describe what you imagine. Athena turns your idea into a visual.</p>
-              <button onClick={() => window.location.href = '/signup'} className="editorial-cta-btn">
+              <a href="/signup/" className="editorial-cta-btn">
                 Try Athena for free <MdArrowForward size={18} />
-              </button>
+              </a>
               
               <div className="editorial-sequence">
                 <span>IDEA</span>
