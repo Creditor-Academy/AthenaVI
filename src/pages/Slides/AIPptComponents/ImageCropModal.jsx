@@ -1,10 +1,14 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { FiCheck, FiRotateCcw, FiX } from 'react-icons/fi'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { FiCheck, FiRotateCcw, FiX, FiZoomIn, FiZoomOut } from 'react-icons/fi'
 import {
+  MAX_CROP_ZOOM,
   centeredCropForAspect,
+  cropPixelAspect,
+  cropZoom,
   dragCrop,
   lockCropAspect,
   normalizeCrop,
+  zoomCrop,
 } from '../../../utils/imageCrop'
 import './pptEditorExtras.css'
 import './pptPanelUi.css'
@@ -25,21 +29,38 @@ const ASPECTS = [
 ]
 
 const HANDLES = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w']
-const STAGE_MAX_W = 560
-const STAGE_MAX_H = 340
+const DEFAULT_STAGE = { width: 560, height: 360 }
+/** Share of the stage the frame fills once it settles; the rest shows the photo around it. */
+const FRAME_SHARE = 0.7
 const FULL = { x: 0, y: 0, width: 1, height: 1 }
 
+/** Where the photo and the frame sit on the stage: the frame centred, the photo around it. */
+function layoutFor(crop, imageAspect, stage) {
+  const aspect = cropPixelAspect(crop, imageAspect)
+  const frameW = Math.min(stage.width * FRAME_SHARE, stage.height * FRAME_SHARE * aspect)
+  const frameH = frameW / aspect
+  const imgW = frameW / crop.width
+  const imgH = frameH / crop.height
+  const frameX = (stage.width - frameW) / 2
+  const frameY = (stage.height - frameH) / 2
+  return { imgX: frameX - crop.x * imgW, imgY: frameY - crop.y * imgH, imgW, imgH }
+}
+
 /**
- * Crop + image settings for an image element (slide editor and canvas editor).
- * Drag inside the box to move it, drag a handle to resize; arrow keys nudge it.
- * `onApply({ crop, fit, opacity, naturalWidth, naturalHeight })` — crop is null when the
- * whole image is kept.
+ * Crop + image settings for an image (slide, canvas and video editors), the way Canva does it:
+ * the frame is what will show; drag the photo behind it to choose the part that appears, zoom
+ * with the slider or the mouse wheel, and drag the frame's handles to change its shape. The
+ * photo outside the frame stays visible, faded, so you can see what is being cut.
+ *
+ * `onApply({ crop, fit, opacity, naturalWidth, naturalHeight })` — crop is null when the whole
+ * image is kept.
  */
 export default function ImageCropModal({
   imageUrl,
   initialCrop = null,
   initialFit = 'cover',
   initialOpacity = 1,
+  showFit = true,
   onApply,
   onClose,
 }) {
@@ -49,9 +70,14 @@ export default function ImageCropModal({
   const [aspectId, setAspectId] = useState('free')
   const [natural, setNatural] = useState(null)
   const [loadError, setLoadError] = useState(false)
+  const [stage, setStage] = useState(DEFAULT_STAGE)
+  // While a handle is dragged the photo holds still (so the edge follows the pointer);
+  // on release everything settles back with the frame centred.
+  const [frozen, setFrozen] = useState(null)
+  const [dragKind, setDragKind] = useState(null)
   const stageRef = useRef(null)
-  const dragRef = useRef(null)
-  const boxRef = useRef(null)
+  const frameRef = useRef(null)
+  const listenersRef = useRef(null)
 
   const imageAspect = natural ? natural.width / natural.height : 1
   const aspectValue = (() => {
@@ -59,12 +85,27 @@ export default function ImageCropModal({
     return a === 'original' ? imageAspect : a
   })()
 
-  const stageSize = natural
-    ? (() => {
-        const width = Math.min(STAGE_MAX_W, STAGE_MAX_H * imageAspect)
-        return { width, height: width / imageAspect }
-      })()
-    : { width: STAGE_MAX_W, height: STAGE_MAX_H }
+  useLayoutEffect(() => {
+    const el = stageRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return undefined
+    const measure = () => {
+      const { width, height } = el.getBoundingClientRect()
+      if (width > 0 && height > 0) setStage({ width, height })
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const layout = frozen || layoutFor(crop, imageAspect, stage)
+  const frame = {
+    x: layout.imgX + crop.x * layout.imgW,
+    y: layout.imgY + crop.y * layout.imgH,
+    width: crop.width * layout.imgW,
+    height: crop.height * layout.imgH,
+  }
+  const zoom = cropZoom(crop, imageAspect)
 
   const chooseAspect = (id) => {
     setAspectId(id)
@@ -73,11 +114,16 @@ export default function ImageCropModal({
     if (value) setCrop(centeredCropForAspect(value, imageAspect))
   }
 
-  const listenersRef = useRef(null)
+  const setZoom = useCallback(
+    (next) => setCrop((current) => zoomCrop(current, next, imageAspect)),
+    [imageAspect]
+  )
+
   const stopDrag = useCallback(() => {
     const listeners = listenersRef.current
     listenersRef.current = null
-    dragRef.current = null
+    setFrozen(null)
+    setDragKind(null)
     if (!listeners) return
     window.removeEventListener('pointermove', listeners.move)
     window.removeEventListener('pointerup', listeners.up)
@@ -86,29 +132,25 @@ export default function ImageCropModal({
 
   useEffect(() => stopDrag, [stopDrag])
 
+  /** `handle` 'pan' drags the photo behind the frame; a corner / edge id resizes the frame. */
   const beginDrag = (event, handle) => {
-    if (!stageRef.current) return
+    if (!natural || event.button > 0) return
     event.preventDefault()
     event.stopPropagation()
     stopDrag()
-    const rect = stageRef.current.getBoundingClientRect()
-    dragRef.current = {
-      handle,
-      start: crop,
-      startX: event.clientX,
-      startY: event.clientY,
-      stageW: rect.width || 1,
-      stageH: rect.height || 1,
-      aspect: aspectValue,
-      imageAspect,
-    }
-    boxRef.current?.focus({ preventScroll: true })
+    const start = { crop, x: event.clientX, y: event.clientY, imgW: layout.imgW, imgH: layout.imgH }
+    if (handle !== 'pan') setFrozen(layout)
+    setDragKind(handle === 'pan' ? 'pan' : 'resize')
+    frameRef.current?.focus({ preventScroll: true })
     const move = (moveEvent) => {
-      const drag = dragRef.current
-      if (!drag) return
-      const dx = (moveEvent.clientX - drag.startX) / drag.stageW
-      const dy = (moveEvent.clientY - drag.startY) / drag.stageH
-      setCrop(dragCrop(drag.start, drag.handle, dx, dy, { aspect: drag.aspect, imageAspect: drag.imageAspect }))
+      const dx = (moveEvent.clientX - start.x) / start.imgW
+      const dy = (moveEvent.clientY - start.y) / start.imgH
+      if (handle === 'pan') {
+        // Dragging the photo right shows more of its left side.
+        setCrop(dragCrop(start.crop, 'move', -dx, -dy))
+      } else {
+        setCrop(dragCrop(start.crop, handle, dx, dy, { aspect: aspectValue, imageAspect }))
+      }
     }
     const up = () => stopDrag()
     listenersRef.current = { move, up }
@@ -117,8 +159,30 @@ export default function ImageCropModal({
     window.addEventListener('pointercancel', up)
   }
 
-  const onBoxKeyDown = (event) => {
-    const step = event.shiftKey ? 0.05 : 0.01
+  // Wheel zoom (needs a non-passive listener to keep the page from scrolling).
+  useEffect(() => {
+    const el = stageRef.current
+    if (!el || !natural) return undefined
+    const onWheel = (event) => {
+      event.preventDefault()
+      setCrop((current) => zoomCrop(current, cropZoom(current, imageAspect) * Math.exp(-event.deltaY * 0.0015), imageAspect))
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [natural, imageAspect])
+
+  const onFrameKeyDown = (event) => {
+    if (event.key === '+' || event.key === '=') {
+      event.preventDefault()
+      setZoom(zoom * 1.1)
+      return
+    }
+    if (event.key === '-' || event.key === '_') {
+      event.preventDefault()
+      setZoom(zoom / 1.1)
+      return
+    }
+    const step = (event.shiftKey ? 0.05 : 0.01) * Math.min(crop.width, crop.height)
     const moves = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }
     const move = moves[event.key]
     if (!move) return
@@ -137,10 +201,12 @@ export default function ImageCropModal({
   if (!imageUrl) return null
 
   const cropped = normalizeCrop(crop)
-  const pct = (n) => `${n * 100}%`
   const pixelSize = natural
     ? `${Math.round(crop.width * natural.width)} × ${Math.round(crop.height * natural.height)} px`
     : ''
+  const ready = natural && !loadError
+  const imgRect = { left: layout.imgX, top: layout.imgY, width: layout.imgW, height: layout.imgH }
+  const stageClass = ['ppt-crop-stage', dragKind ? `is-dragging is-dragging--${dragKind}` : ''].join(' ')
 
   return (
     <div
@@ -158,8 +224,10 @@ export default function ImageCropModal({
         </header>
 
         <div className="ppt-crop-workspace">
-          <div ref={stageRef} className="ppt-crop-stage" style={{ width: stageSize.width, height: stageSize.height }}>
+          <div ref={stageRef} className={stageClass}>
+            {/* The whole photo, faded: what the crop leaves out. Drag it to move the photo. */}
             <img
+              className="ppt-crop-photo ppt-crop-photo--ghost"
               src={imageUrl}
               alt=""
               draggable={false}
@@ -168,51 +236,99 @@ export default function ImageCropModal({
                 if (width && height) setNatural({ width, height })
               }}
               onError={() => setLoadError(true)}
-              style={{ opacity: opacity / 100 }}
+              onPointerDown={(e) => beginDrag(e, 'pan')}
+              style={{ ...imgRect, opacity: ready ? 0.35 * (opacity / 100) : 0 }}
             />
-            {natural && !loadError ? (
-              <>
-                <div className="ppt-crop-shade" style={{ left: 0, top: 0, width: '100%', height: pct(crop.y) }} />
-                <div className="ppt-crop-shade" style={{ left: 0, top: pct(crop.y + crop.height), width: '100%', bottom: 0 }} />
-                <div className="ppt-crop-shade" style={{ left: 0, top: pct(crop.y), width: pct(crop.x), height: pct(crop.height) }} />
-                <div
-                  className="ppt-crop-shade"
-                  style={{ left: pct(crop.x + crop.width), top: pct(crop.y), right: 0, height: pct(crop.height) }}
-                />
-                <div
-                  ref={boxRef}
-                  className="ppt-crop-box"
-                  role="slider"
-                  tabIndex={0}
-                  aria-label="Crop area — drag to move, arrow keys to nudge"
-                  aria-valuetext={pixelSize}
-                  style={{ left: pct(crop.x), top: pct(crop.y), width: pct(crop.width), height: pct(crop.height) }}
-                  onPointerDown={(e) => beginDrag(e, 'move')}
-                  onKeyDown={onBoxKeyDown}
-                >
-                  <span className="ppt-crop-grid" aria-hidden />
-                  {HANDLES.map((handle) => (
-                    <span
-                      key={handle}
-                      className={`ppt-crop-handle ppt-crop-handle--${handle}`}
-                      onPointerDown={(e) => beginDrag(e, handle)}
-                      aria-hidden
-                    />
-                  ))}
-                </div>
-              </>
+            {ready ? (
+              <div
+                ref={frameRef}
+                className="ppt-crop-box"
+                role="slider"
+                tabIndex={0}
+                aria-label="Visible part of the image: drag to move the photo, arrow keys to nudge, plus and minus to zoom"
+                aria-valuetext={`${pixelSize}, zoom ${Math.round(zoom * 100)}%`}
+                style={{ left: frame.x, top: frame.y, width: frame.width, height: frame.height }}
+                onPointerDown={(e) => beginDrag(e, 'pan')}
+                onKeyDown={onFrameKeyDown}
+              >
+                {/* The part that will appear, at full strength. */}
+                <span className="ppt-crop-window" aria-hidden>
+                  <img
+                    className="ppt-crop-photo"
+                    src={imageUrl}
+                    alt=""
+                    draggable={false}
+                    style={{
+                      left: layout.imgX - frame.x,
+                      top: layout.imgY - frame.y,
+                      width: layout.imgW,
+                      height: layout.imgH,
+                      opacity: opacity / 100,
+                    }}
+                  />
+                </span>
+                <span className="ppt-crop-grid" aria-hidden />
+                {HANDLES.map((handle) => (
+                  <span
+                    key={handle}
+                    className={`ppt-crop-handle ppt-crop-handle--${handle}`}
+                    onPointerDown={(e) => beginDrag(e, handle)}
+                    aria-hidden
+                  />
+                ))}
+              </div>
             ) : null}
             {loadError ? <p className="ppt-crop-error">This image couldn’t be loaded for cropping.</p> : null}
           </div>
+          {ready ? (
+            <p className="ppt-crop-hint">
+              Drag the photo to choose what shows. Scroll or use the slider to zoom. Drag the corners to change the frame.
+            </p>
+          ) : null}
         </div>
 
         <div className="ppt-props-stack ppt-crop-modal-controls">
+          <div className="ppt-props-row ppt-props-row--slider">
+            <span className="ppt-props-row-label">Zoom</span>
+            <div className="ppt-props-slider ppt-crop-zoom">
+              <button
+                type="button"
+                className="ppt-crop-zoom-btn"
+                aria-label="Zoom out"
+                disabled={!ready || zoom <= 1.001}
+                onClick={() => setZoom(zoom / 1.2)}
+              >
+                <FiZoomOut size={14} />
+              </button>
+              <input
+                type="range"
+                min={100}
+                max={MAX_CROP_ZOOM * 100}
+                step={1}
+                value={Math.round(zoom * 100)}
+                disabled={!ready}
+                aria-label="Zoom"
+                onChange={(e) => setZoom(Number(e.target.value) / 100)}
+              />
+              <button
+                type="button"
+                className="ppt-crop-zoom-btn"
+                aria-label="Zoom in"
+                disabled={!ready || zoom >= MAX_CROP_ZOOM - 0.001}
+                onClick={() => setZoom(zoom * 1.2)}
+              >
+                <FiZoomIn size={14} />
+              </button>
+              <span className="ppt-props-slider-value">{Math.round(zoom * 100)}%</span>
+            </div>
+          </div>
+
           <div className="ppt-props-row ppt-props-row--stack">
             <span className="ppt-props-row-label">
-              Crop ratio {pixelSize ? <span className="ppt-crop-size">· {pixelSize}</span> : null}
+              Frame shape {pixelSize ? <span className="ppt-crop-size">· {pixelSize}</span> : null}
             </span>
             <div className="ppt-crop-ratio-row">
-              <div className="ppt-segmented" role="radiogroup" aria-label="Crop ratio">
+              <div className="ppt-segmented" role="radiogroup" aria-label="Frame shape">
                 {ASPECTS.map((opt) => (
                   <button
                     key={opt.id}
@@ -241,23 +357,25 @@ export default function ImageCropModal({
             </div>
           </div>
 
-          <div className="ppt-props-row ppt-props-row--stack">
-            <span className="ppt-props-row-label">Fit {cropped ? '(used when the image isn’t cropped)' : ''}</span>
-            <div className="ppt-segmented" role="radiogroup" aria-label="Image fit">
-              {FIT_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={fit === opt.value}
-                  className={`ppt-segmented-btn ${fit === opt.value ? 'is-active' : ''}`}
-                  onClick={() => setFit(opt.value)}
-                >
-                  {opt.label}
-                </button>
-              ))}
+          {showFit ? (
+            <div className="ppt-props-row ppt-props-row--stack">
+              <span className="ppt-props-row-label">Fit {cropped ? '(used when the image isn’t cropped)' : ''}</span>
+              <div className="ppt-segmented" role="radiogroup" aria-label="Image fit">
+                {FIT_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={fit === opt.value}
+                    className={`ppt-segmented-btn ${fit === opt.value ? 'is-active' : ''}`}
+                    onClick={() => setFit(opt.value)}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : null}
 
           <div className="ppt-props-row ppt-props-row--slider">
             <span className="ppt-props-row-label">Opacity</span>

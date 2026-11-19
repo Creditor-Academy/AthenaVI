@@ -105,7 +105,9 @@ Base: `/api/workspaces/{workspaceId}/…`
 | PATCH | `/presentations/{id}/slides/{slideId}/elements/reorder` | `{ elementIds }` |
 | POST | `/presentations/{id}/slides/{slideId}/regenerate` | AI regenerate slide |
 | POST | `/presentations/{id}/export` | Start export |
-| GET | `/presentations/{id}/export/{exportId}` | Export status + download URL |
+| GET | `/presentations/{id}/export/{exportId}` | Export status, progress + download URL |
+| DELETE | `/presentations/{id}/export/{exportId}` | Cancel an export |
+| POST | `/presentations/{id}/export/browser` | Charge a browser-drawn image download |
 
 Related (not under presentations, but canvas media depends on them):
 
@@ -626,27 +628,55 @@ Frontend treats `status` / `deckStatus` / `deck.status` (uppercase) as `READY` |
 
 ## 12. Export
 
-`POST …/export`
+Full reference: the Export section of `AthenaVI_backend/docs/api/PRESENTATION_API.md`.
+
+**Start** `POST …/export` (202):
 
 ```json
-{ "format": "PPTX", "slideId": null }
+{
+  "format": "PNG",
+  "slideIds": ["…", "…"],
+  "scale": 2,
+  "quality": 90,
+  "transparent": false,
+  "pptxTarget": "powerpoint"
+}
 ```
 
-`slideId: null` = full deck; set for single-slide PNG/JPEG.
+- `slideIds`: any slides (1–40), any order; the file keeps deck order. Omit for the whole deck. `slideId` (one slide, or `null`) still works for older clients.
+- `scale` 1 | 2 | 3 and `transparent` (PNG), `quality` 60–100 (JPEG), `pptxTarget` `powerpoint` | `google-slides` (PPTX).
+- Several PNG / JPEG slides come back as a `.zip` named by page number.
 
-Status:
+**Poll** `GET …/export/{exportId}` until the status is final:
+
+| Status | UI |
+|---|---|
+| `QUEUED` / `RENDERING` / `SAVING` | Show `progress.percent` and the step (`progress.stage`: `queued`, `preparing`, `drawing`, `building`, `saving`). |
+| `READY` | Download `presignedUrl` (also `url` / `downloadUrl`) as `filename`. The link lasts `expiresIn` seconds (3600): ask again for a fresh one. PPTX also has `report` (editable count, what became pictures, fonts). |
+| `FAILED` | Show `error` (written for users). |
+| `CANCELLED` | Back to the options; nothing was charged. |
+| `EXPIRED` | The file was deleted after 7 days: offer to export again. |
 
 ```json
 {
   "exportId": "exp_…",
   "status": "READY",
+  "filename": "Q3 Plan.pptx",
   "presignedUrl": "https://…",
   "url": "https://…",
-  "downloadUrl": "https://…"
+  "downloadUrl": "https://…",
+  "expiresIn": 3600,
+  "report": { "editable": 54, "pictures": [{ "label": "photo filters", "count": 2 }], "fonts": ["Inter"] }
 }
 ```
 
-At least one of `presignedUrl` | `url` | `downloadUrl` required when READY.
+At least one of `presignedUrl` | `url` | `downloadUrl` is present when READY.
+
+**Cancel** `DELETE …/export/{exportId}`: allowed while `QUEUED` / `RENDERING`; 409 once `READY` or `SAVING` (it is about to be ready). Nothing is charged.
+
+**Browser images** `POST …/export/browser` `{ format, slideIds, downloadId }`: charges the export fee for PNG / JPEG drawn in the editor, once per `downloadId` (a UUID the browser picks per download).
+
+**Inbox:** an export that finishes after the dialog closed sends an inbox message linking to `/dashboard/editor?workspaceId=…&presentationId=…&export={exportId}`; the editor reopens the export dialog on it.
 
 ---
 

@@ -25,6 +25,7 @@ import { buildClipTransform, CLIP_TRANSFORM_ORIGIN } from '../../../../utils/cli
 import { resolveClipMediaSrc, isVideoMedia, isAvatarClip, clipHasHeygenAudio } from '../../../../utils/heygenVideo'
 import { resolveAvatarDisplaySrc } from '../../../../utils/templateAvatarPreview'
 import { formatLayerBorderCss } from '../../../../utils/layerBorderUtils'
+import { croppedImageStyle } from '../../../../utils/imageCrop'
 import {
   computeClipAnimationState,
   getAnimatedTextContent,
@@ -347,7 +348,7 @@ function SceneFrame({ scene, frameInScene, sceneStartFrame, fps, audioEnabled = 
                 ) : (
                   <img
                     src={src}
-                    style={{ width: '100%', height: '100%', objectFit }}
+                    style={(!isAvatar && croppedImageStyle(clip.style?.crop)) || { width: '100%', height: '100%', objectFit }}
                     alt=""
                   />
                 )

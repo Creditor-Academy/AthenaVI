@@ -130,6 +130,44 @@ export function centeredCropForAspect(aspect, imageAspect = 1) {
   return { x: (1 - width) / 2, y: (1 - height) / 2, width, height }
 }
 
+/** Pixel width / height of a crop (fractions) on an image with `imageAspect` = naturalW / naturalH. */
+export function cropPixelAspect(crop, imageAspect = 1) {
+  const c = crop || { width: 1, height: 1 }
+  return (c.width / c.height) * (imageAspect || 1)
+}
+
+export const MAX_CROP_ZOOM = 5
+
+/**
+ * How far a crop is zoomed in: 1 = the largest region of its shape that fits the image,
+ * 2 = half that width, and so on (Canva's "scale the photo inside the frame").
+ */
+export function cropZoom(crop, imageAspect = 1) {
+  const c = crop || { width: 1, height: 1 }
+  const max = centeredCropForAspect(cropPixelAspect(c, imageAspect), imageAspect)
+  return Math.max(1, max.width / c.width)
+}
+
+/**
+ * The same frame shape zoomed to `zoom` (1…MAX_CROP_ZOOM), keeping the centre of what shows
+ * where it was and the region inside the image.
+ */
+export function zoomCrop(crop, zoom, imageAspect = 1) {
+  const c = crop || { x: 0, y: 0, width: 1, height: 1 }
+  const max = centeredCropForAspect(cropPixelAspect(c, imageAspect), imageAspect)
+  const z = Math.min(MAX_CROP_ZOOM, Math.max(1, Number(zoom) || 1))
+  const width = Math.max(MIN_CROP_FRACTION, max.width / z)
+  const height = Math.max(MIN_CROP_FRACTION, max.height / z)
+  const cx = c.x + c.width / 2
+  const cy = c.y + c.height / 2
+  return {
+    x: Math.min(1 - width, Math.max(0, cx - width / 2)),
+    y: Math.min(1 - height, Math.max(0, cy - height / 2)),
+    width,
+    height,
+  }
+}
+
 /** True when two stored crops describe a different visible region. */
 export function cropChanged(previous, next) {
   const a = normalizeCrop(previous)

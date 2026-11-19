@@ -16,6 +16,7 @@ import { resolveClipRect } from '../../../../utils/clipLayout'
 import { resolveClipMediaSrc, isVideoMedia } from '../../../../utils/heygenVideo'
 import { resolveAvatarDisplaySrc } from '../../../../utils/templateAvatarPreview'
 import { formatLayerBorderCss } from '../../../../utils/layerBorderUtils'
+import { croppedImageStyle } from '../../../../utils/imageCrop'
 import {
   canAcceptImageFill,
   parseCanvasDragData,
@@ -498,7 +499,7 @@ const ImageClip = ({
         <img
           src={src}
           alt=""
-          style={{
+          style={croppedImageStyle(s.crop) ? { ...croppedImageStyle(s.crop), display: 'block', pointerEvents: 'none' } : {
             width: '100%', height: '100%',
             objectFit: s.objectFit || (clip.role === 'icon' ? 'contain' : 'cover'),
             display: 'block',

@@ -578,14 +578,38 @@ The same font must be used in the editor, the PDF, PowerPoint and Google Slides,
 
 ---
 
-### Phase 7: QA, rollout and documentation (S–M)
+### Phase 7: QA, rollout and documentation (S–M) — 7.1, 7.3, 7.4 and 7.5 code/docs done 2026-11-19; 7.2 manual checks and 7.6 rollout pending
 
-- [ ] **7.1** Feature flag `PPT_EXPORT_V2`, controlling the render page, the PPTX fidelity work and the queue. Turn it on for internal workspaces first.
+- [x] **7.1** Feature flag `PPT_EXPORT_V2`, controlling the render page, the PPTX fidelity work and the queue. Turn it on for internal workspaces first.
+  - New `exportFlag.js` (backend). `PPT_EXPORT_V2`:
+    - `on` (the default, so deploying changes nothing): everyone;
+    - `internal`: only workspaces in `PPT_EXPORT_V2_WORKSPACES`, or people whose email domain is in `PPT_EXPORT_V2_EMAIL_DOMAINS` (both comma-separated);
+    - `off`: nobody.
+  - **What an export without V2 does:** PDF and images from the server's HTML renderer, a PPTX built from the stored deck (no measuring by the render page, fonts named but not embedded), and the job runs in the process that took the request, not on the queue. This is how exports ran before Phases 3–6.
+    - The PPTX builder's own improvements from Phase 4 (native shapes, tables, charts…) are part of the one builder and can't be switched off. Without measurements they fall back to the stored sizes.
+  - The choice is made once, in `queueExport`, and stored on the job (`exportV2`), so a job keeps its pipeline if the setting changes while it waits. Jobs queued before the flag existed run as V2.
+  - The `presentation_export_finished` log line has `exportV2`, so the failure rate and speed of the two pipelines can be compared during the rollout. `GET /health/export` shows the mode and how many workspaces and domains are listed (not the entries).
+  - **Rollout:** set `PPT_EXPORT_V2=internal` with the team's workspaces / email domain; then `on`.
+  - Tests: `exportFlag.test.js` (5: modes, allowlists, a failed lookup, health, and `queueExport` storing the choice and running non-V2 jobs in-process); `exportJobs.test.js` (4 new: V2 uses the render page for PDF, images and PPTX; non-V2 never opens it and still makes a real PDF; old jobs run as V2; the log line).
 - [ ] **7.2** Run the full matrix (section 6) on the golden decks plus 10 real customer decks (with permission, or anonymised copies).
-- [ ] **7.3** Add the harness to CI on the backend: golden decks → PDF and PPTX → scores must stay above the thresholds. A drop fails the build.
-- [ ] **7.4** Update `docs/api/PRESENTATION_API.md` (`slideIds`, `scale`, `quality`, `transparent`, `progress`, cancel) and the frontend data contract doc.
-- [ ] **7.5** Write a support note on what PowerPoint and Google Slides can't do, and which elements become pictures.
+  - **Done:** the LibreOffice column, from the harness (2026-11-19, `baselines/ci-baseline.json`): see section 6.
+  - **Still to do (needs people and apps):** open the six golden decks in PowerPoint for Windows, Mac and web, and Google Slides, and fill those columns; collect 10 customer decks with permission and run them through the harness and the same apps.
+- [x] **7.3** Add the harness to CI on the backend: golden decks → PDF and PPTX → scores must stay above the thresholds. A drop fails the build.
+  - New `scripts/presentation-eval/fidelity-gate.js`, run by `npm run test:export-fidelity` after the harness. It fails the build when:
+    - a deck errors, or a deck in the baseline isn't measured;
+    - **PDF:** a deck's average is below the 0.98 target, or any slide drops more than 0.02 below the baseline;
+    - **PPTX:** a deck's average drops more than 0.01, or any slide more than 0.03, below the baseline. PPTX is drawn by LibreOffice, which doesn't draw every PowerPoint effect, so it is held to "no worse than now" rather than to the 0.95 target; raise the baseline as it improves.
+  - The baseline is `scripts/presentation-eval/baselines/ci-baseline.json` (2026-11-19, the same scores as 2026-11-13). A change that is meant to look different updates it in the same commit.
+  - **Jenkins:** a new "Export Fidelity" stage after the unit tests. It runs only when the job sets `EXPORT_FIDELITY_RENDER_URL` (a deployed frontend's `/export-render.html`), so it doesn't block deploys before the agent is ready. The agent needs LibreOffice (`soffice`) and poppler-utils (`pdftoppm`). The report is kept as a build artifact.
+  - Tests: `fidelityGate.test.js` (4).
+- [x] **7.4** Update `docs/api/PRESENTATION_API.md` (`slideIds`, `scale`, `quality`, `transparent`, `progress`, cancel) and the frontend data contract doc.
+  - `PRESENTATION_API.md` (backend): the Export section rewritten from the code. It covers every request field, the statuses (`SAVING`, `CANCELLED`, `EXPIRED`), `progress`, the download fields and fresh links, the PPTX `report`, time limits, cancel, the browser image charge, the inbox link and the flag.
+  - `ENVIRONMENT.md` (backend): every export setting, with defaults.
+  - `ppt-canvas-backend-data-contract.md` (frontend): section 12 and the endpoint table.
+- [x] **7.5** Write a support note on what PowerPoint and Google Slides can't do, and which elements become pictures.
+  - `docs/PPT_EXPORT_SUPPORT_NOTE.md` (frontend): which format to use, what stays editable, what becomes a picture and why, Google Slides, other apps, and answers to common questions (slow, failed, expired link, charges, "looks different").
 - [ ] **7.6** Turn the flag on for everyone; remove the legacy renderer one release later.
+  - Not done: this follows the internal rollout and Checkpoint 7.
 
 **Checkpoint 7 (definition of done)**
 - [ ] PDF export success rate ≥ 99.5% over 7 days in production.
@@ -637,14 +661,16 @@ The same font must be used in the editor, the PDF, PowerPoint and Google Slides,
 
 | Golden deck | PowerPoint Win | PowerPoint Mac | PowerPoint Web | Google Slides | Keynote (optional) | LibreOffice |
 |---|---|---|---|---|---|---|
-| AI deck A | | | | | | |
-| AI deck B | | | | | | |
-| AI deck C | | | | | | |
-| Kitchen sink | | | | | | |
-| 4:3 deck | | | | | | |
-| 40-slide deck | | | | | | |
+| AI deck A (ai-light) | | | | | | ⚠️ 0.944 (lowest 0.898) |
+| AI deck B (ai-dark) | | | | | | ⚠️ 0.887 (lowest 0.618) |
+| AI deck C (ai-editorial) | | | | | | ✅ 0.961 (lowest 0.921) |
+| Kitchen sink (kitchen-sink) | | | | | | ⚠️ 0.906 (lowest 0.699) |
+| 4:3 deck (four-three) | | | | | | ⚠️ 0.946 (lowest 0.871) |
+| 40-slide deck (forty-slides) | | | | | | ⚠️ 0.924 (lowest 0.617) |
 
 Use ✅ (matches the editor) · ⚠️ (known, documented difference) · ❌ (bug: open a ticket).
+
+**LibreOffice** (filled 2026-11-19 by the harness, PPTX average SSIM against the editor, lowest slide in brackets): the ⚠️ are the known, documented differences: theme fonts LibreOffice doesn't have (text wraps differently), effects LibreOffice doesn't draw (run outlines, hollow and gradient text), and the chart slides of the editor bug F12 (every bar the same height in the editor). PDF, which doesn't depend on the opening app, is 0.984–0.997 on every deck. The other columns need the apps (7.2).
 
 ---
 

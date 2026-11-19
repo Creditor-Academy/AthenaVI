@@ -8,6 +8,9 @@ import {
   dragCrop,
   normalizeCrop,
   placementForCrop,
+  cropZoom,
+  zoomCrop,
+  MAX_CROP_ZOOM,
 } from './imageCrop.js'
 
 const near = (a, b, eps = 1e-6) => assert.ok(Math.abs(a - b) < eps, `${a} ≈ ${b}`)
@@ -77,5 +80,39 @@ describe('centeredCropForAspect', () => {
     near(c.height, 1)
     near(c.width, 9 / 16)
     near(c.x, (1 - 9 / 16) / 2)
+  })
+})
+
+describe('zoom (Canva-style scale of the photo inside the frame)', () => {
+  const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-6, `${a} ≈ ${b}`)
+
+  it('the whole image is zoom 1; half the width at the same shape is zoom 2', () => {
+    near(cropZoom({ x: 0, y: 0, width: 1, height: 1 }, 1.5), 1)
+    near(cropZoom({ x: 0.25, y: 0.25, width: 0.5, height: 0.5 }, 1.5), 2)
+  })
+
+  it('zooming keeps the frame shape and the centre of what shows', () => {
+    const start = { x: 0.2, y: 0.3, width: 0.4, height: 0.4 }
+    const z = zoomCrop(start, cropZoom(start, 2) * 2, 2)
+    near(z.width / z.height, 1)
+    near(z.width, 0.2)
+    near(z.x + z.width / 2, 0.4)
+    near(z.y + z.height / 2, 0.5)
+  })
+
+  it('zooming out stops at the image edges and slides the region back inside', () => {
+    const z = zoomCrop({ x: 0.7, y: 0, width: 0.3, height: 0.3 }, 1, 1)
+    near(z.width, 1)
+    near(z.x, 0)
+    const wide = zoomCrop({ x: 0.5, y: 0.5, width: 0.5, height: 0.25 }, 1, 1)
+    near(wide.width, 1)
+    near(wide.height, 0.5)
+    assert.ok(wide.y + wide.height <= 1 + 1e-9)
+  })
+
+  it('zoom is clamped to 1…MAX_CROP_ZOOM', () => {
+    const full = { x: 0, y: 0, width: 1, height: 1 }
+    near(zoomCrop(full, 0.2, 1).width, 1)
+    near(zoomCrop(full, 99, 1).width, 1 / MAX_CROP_ZOOM)
   })
 })

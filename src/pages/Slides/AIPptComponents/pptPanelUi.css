@@ -2994,46 +2994,113 @@
 }
 
 .ppt-crop-workspace {
-  display: grid;
-  place-items: center;
   margin: 0 18px;
-  padding: 14px;
+  padding: 0 0 10px;
   border-radius: 12px;
   background: #0f172a;
+  overflow: hidden;
 }
 
+/* Canva-style crop: the frame stays centred, the photo moves and zooms behind it. */
 .ppt-crop-stage {
   position: relative;
-  max-width: 100%;
+  width: 100%;
+  height: clamp(220px, 46vh, 360px);
+  overflow: hidden;
   touch-action: none;
   user-select: none;
+  background-color: #0f172a;
+  background-image:
+    linear-gradient(45deg, #1e293b 25%, transparent 25%),
+    linear-gradient(-45deg, #1e293b 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #1e293b 75%),
+    linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
 }
 
-.ppt-crop-stage > img {
+.ppt-crop-photo {
+  position: absolute;
   display: block;
-  width: 100%;
-  height: 100%;
+  max-width: none;
+  max-height: none;
   object-fit: fill;
   pointer-events: none;
+  transition: left 0.22s ease, top 0.22s ease, width 0.22s ease, height 0.22s ease;
 }
 
-.ppt-crop-shade {
+.ppt-crop-photo--ghost {
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.ppt-crop-window {
   position: absolute;
-  background: rgba(2, 6, 23, 0.62);
+  inset: 0;
+  overflow: hidden;
   pointer-events: none;
+}
+
+.ppt-crop-stage.is-dragging .ppt-crop-photo,
+.ppt-crop-stage.is-dragging .ppt-crop-box {
+  transition: none;
+}
+
+.ppt-crop-stage.is-dragging--pan,
+.ppt-crop-stage.is-dragging--pan .ppt-crop-box,
+.ppt-crop-stage.is-dragging--pan .ppt-crop-photo--ghost {
+  cursor: grabbing;
+}
+
+.ppt-crop-hint {
+  margin: 10px 14px 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #cbd5e1;
+  text-align: center;
+}
+
+.ppt-crop-zoom {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ppt-crop-zoom input[type='range'] {
+  flex: 1;
+  min-width: 0;
+}
+
+.ppt-crop-zoom-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  background: #ffffff;
+  color: #334155;
+  cursor: pointer;
+}
+
+.ppt-crop-zoom-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .ppt-crop-box {
   position: absolute;
   box-sizing: border-box;
-  border: 2px solid #ffffff;
-  box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.5);
-  cursor: move;
+  /* Outline as a shadow, not a border, so the photo inside lines up with the one behind. */
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 3px rgba(15, 23, 42, 0.5), 0 0 0 9999px rgba(2, 6, 23, 0.25);
+  cursor: grab;
   outline: none;
+  transition: left 0.22s ease, top 0.22s ease, width 0.22s ease, height 0.22s ease;
 }
 
 .ppt-crop-box:focus-visible {
-  border-color: #818cf8;
+  box-shadow: 0 0 0 2px #818cf8, 0 0 0 3px rgba(15, 23, 42, 0.5), 0 0 0 9999px rgba(2, 6, 23, 0.25);
 }
 
 .ppt-crop-grid {
