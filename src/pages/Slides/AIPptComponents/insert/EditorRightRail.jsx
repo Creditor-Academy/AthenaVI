@@ -387,6 +387,8 @@ export default function EditorRightRail({
   onReplaceImage,
   onClearDeviceFrameScreen,
   onCropImage,
+  cropPanel = null,
+  onCloseCrop,
   onToggleImageAsBackground,
   onSpeakerNotesChange,
   slideStyles = {},
@@ -435,7 +437,10 @@ export default function EditorRightRail({
 
   const currentSlideStatus = resolveSlideProgressStatus(slide)
 
-  const panelOpen = Boolean(active)
+  // Cropping an image on the slide: the panel shows the crop options until it's applied.
+  const cropMode = Boolean(cropPanel)
+  const shown = cropMode ? 'crop' : active
+  const panelOpen = Boolean(shown)
 
   useEffect(() => {
     if (designFocus && selectedElementId) {
@@ -522,12 +527,17 @@ export default function EditorRightRail({
   }
 
   const closePanel = () => {
+    if (cropMode) {
+      onCloseCrop?.()
+      return
+    }
     setActive(null)
     setAiOpen(false)
   }
 
-  const panelTitle =
-    active === 'design'
+  const panelTitle = cropMode
+    ? 'Crop'
+    : active === 'design'
       ? DESIGN_PANEL_TITLES[designFocus] || 'Design'
       : active === 'assignee'
         ? assigneeSlideLabel
@@ -542,8 +552,10 @@ export default function EditorRightRail({
       aria-label="Editor sidebar"
     >
       <div
-        className={`ppt-editor-sidebar-panel ${active === 'comments' ? 'ppt-editor-sidebar-panel--comments' : ''}`}
+        className={`ppt-editor-sidebar-panel ${active === 'comments' && !cropMode ? 'ppt-editor-sidebar-panel--comments' : ''}`}
         aria-hidden={!panelOpen}
+        // While cropping, the panel is part of the crop (its close button cancels it).
+        {...(cropMode ? { 'data-crop-ui': '' } : {})}
       >
         <div className="ppt-editor-sidebar-panel-head">
           <strong>{panelTitle}</strong>
@@ -553,7 +565,12 @@ export default function EditorRightRail({
         </div>
 
         <div className="ppt-editor-sidebar-panel-body">
-          {active === 'design' && (
+          {shown === 'crop' && (
+            <div className="ppt-slide-panel ppt-crop-panel" role="region" aria-label="Crop">
+              {cropPanel}
+            </div>
+          )}
+          {shown === 'design' && (
             <div className="ppt-slide-panel ppt-design-panel" role="region" aria-label="Design">
               <DesignContextPanel
                 focus={designFocus}
@@ -591,7 +608,7 @@ export default function EditorRightRail({
             </div>
           )}
 
-          {active === 'transition' && (
+          {shown === 'transition' && (
             <div className="ppt-slide-panel ppt-transition-panel" role="region" aria-label="Slide transition">
               <SlideTransitionPicker
                 value={currentTransition}
@@ -601,7 +618,7 @@ export default function EditorRightRail({
             </div>
           )}
 
-          {active === 'comments' && (
+          {shown === 'comments' && (
             <div className="ppt-slide-panel ppt-slide-panel--sm ppt-slide-panel--comments" role="region" aria-label="Comments">
               {viewOnly && canComment ? (
                 <PptPublicCommentsPanel
@@ -624,7 +641,7 @@ export default function EditorRightRail({
             </div>
           )}
 
-          {active === 'notes' && (
+          {shown === 'notes' && (
             <div className="ppt-slide-panel" role="region" aria-label="Speaker notes">
               <SpeakerNotesPanel
                 notes={slide?.speakerNotes || ''}
@@ -634,7 +651,7 @@ export default function EditorRightRail({
             </div>
           )}
 
-          {active === 'layers' && (
+          {shown === 'layers' && (
             <LayersPanel
               slide={slide}
               selectedElementId={selectedElementId}
@@ -646,7 +663,7 @@ export default function EditorRightRail({
             />
           )}
 
-          {active === 'status' && (
+          {shown === 'status' && (
             <div className="ppt-slide-panel ppt-status-panel" role="region" aria-label="Slide status">
               <p className="ppt-status-panel-lead">
                 Mark this slide’s progress so collaborators can see what’s left at a glance.
@@ -684,7 +701,7 @@ export default function EditorRightRail({
             </div>
           )}
 
-          {active === 'assignee' && (
+          {shown === 'assignee' && (
             <div className="ppt-slide-panel ppt-status-panel" role="region" aria-label="Assignee">
               {canManageAssignee ? (
                 <>

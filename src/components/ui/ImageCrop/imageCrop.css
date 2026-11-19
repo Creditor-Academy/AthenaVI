@@ -1,0 +1,427 @@
+/* ── Crop on the design (Canva-style), shared by the slide, canvas and video editors ── */
+
+.ipc-root {
+  --ipc-k: 1;
+  --ipc-accent: #7c3aed;
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+
+/* The whole photo, faded: what the crop leaves out. */
+.ipc-photo-ghost {
+  position: absolute;
+  display: block;
+  max-width: none;
+  max-height: none;
+  object-fit: fill;
+  opacity: 0.42;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Grab area over the whole photo, with round handles at its corners to scale it. */
+.ipc-photo-box {
+  position: absolute;
+  box-sizing: border-box;
+  outline: calc(1.5px * var(--ipc-k)) solid var(--ipc-accent);
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+
+.ipc-photo-handle {
+  position: absolute;
+  width: calc(14px * var(--ipc-k));
+  height: calc(14px * var(--ipc-k));
+  margin: calc(-7px * var(--ipc-k)) 0 0 calc(-7px * var(--ipc-k));
+  border-radius: 50%;
+  background: #ffffff;
+  border: calc(1px * var(--ipc-k)) solid rgba(15, 23, 42, 0.25);
+  box-shadow: 0 calc(1px * var(--ipc-k)) calc(4px * var(--ipc-k)) rgba(15, 23, 42, 0.35);
+  z-index: 3;
+}
+
+.ipc-photo-handle--nw { left: 0; top: 0; cursor: nwse-resize; }
+.ipc-photo-handle--ne { left: 100%; top: 0; cursor: nesw-resize; }
+.ipc-photo-handle--se { left: 100%; top: 100%; cursor: nwse-resize; }
+.ipc-photo-handle--sw { left: 0; top: 100%; cursor: nesw-resize; }
+
+/* The frame: what will show on the design. */
+.ipc-frame {
+  position: absolute;
+  box-sizing: border-box;
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+  z-index: 2;
+  box-shadow:
+    0 0 0 calc(2px * var(--ipc-k)) #ffffff,
+    0 0 0 calc(3px * var(--ipc-k)) rgba(124, 58, 237, 0.85);
+}
+
+.ipc-frame-window {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ipc-frame-window img {
+  position: absolute;
+  display: block;
+  max-width: none;
+  max-height: none;
+  object-fit: fill;
+  user-select: none;
+}
+
+/* Rule-of-thirds guides while dragging. */
+.ipc-frame-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  background:
+    linear-gradient(to right, transparent calc(33.333% - 0.5px), rgba(255, 255, 255, 0.7) calc(33.333% - 0.5px), rgba(255, 255, 255, 0.7) calc(33.333% + 0.5px), transparent calc(33.333% + 0.5px), transparent calc(66.666% - 0.5px), rgba(255, 255, 255, 0.7) calc(66.666% - 0.5px), rgba(255, 255, 255, 0.7) calc(66.666% + 0.5px), transparent calc(66.666% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(33.333% - 0.5px), rgba(255, 255, 255, 0.7) calc(33.333% - 0.5px), rgba(255, 255, 255, 0.7) calc(33.333% + 0.5px), transparent calc(33.333% + 0.5px), transparent calc(66.666% - 0.5px), rgba(255, 255, 255, 0.7) calc(66.666% - 0.5px), rgba(255, 255, 255, 0.7) calc(66.666% + 0.5px), transparent calc(66.666% + 0.5px));
+}
+
+.ipc-root.is-dragging .ipc-frame-grid {
+  opacity: 1;
+}
+
+.ipc-root.is-dragging--pan .ipc-frame,
+.ipc-root.is-dragging--pan .ipc-photo-box {
+  cursor: grabbing;
+}
+
+/* Frame handles: white L-shaped corners and short bars on the edges. */
+.ipc-frame-handle {
+  position: absolute;
+  z-index: 4;
+  --ipc-len: calc(18px * var(--ipc-k));
+  --ipc-thick: calc(5px * var(--ipc-k));
+}
+
+.ipc-frame-handle--nw,
+.ipc-frame-handle--ne,
+.ipc-frame-handle--se,
+.ipc-frame-handle--sw {
+  width: var(--ipc-len);
+  height: var(--ipc-len);
+}
+
+.ipc-frame-handle--nw { left: calc(-1 * var(--ipc-thick)); top: calc(-1 * var(--ipc-thick)); cursor: nwse-resize; border-left: var(--ipc-thick) solid #fff; border-top: var(--ipc-thick) solid #fff; }
+.ipc-frame-handle--ne { right: calc(-1 * var(--ipc-thick)); top: calc(-1 * var(--ipc-thick)); cursor: nesw-resize; border-right: var(--ipc-thick) solid #fff; border-top: var(--ipc-thick) solid #fff; }
+.ipc-frame-handle--se { right: calc(-1 * var(--ipc-thick)); bottom: calc(-1 * var(--ipc-thick)); cursor: nwse-resize; border-right: var(--ipc-thick) solid #fff; border-bottom: var(--ipc-thick) solid #fff; }
+.ipc-frame-handle--sw { left: calc(-1 * var(--ipc-thick)); bottom: calc(-1 * var(--ipc-thick)); cursor: nesw-resize; border-left: var(--ipc-thick) solid #fff; border-bottom: var(--ipc-thick) solid #fff; }
+
+.ipc-frame-handle--nw,
+.ipc-frame-handle--ne,
+.ipc-frame-handle--se,
+.ipc-frame-handle--sw {
+  box-sizing: border-box;
+  filter: drop-shadow(0 0 calc(1px * var(--ipc-k)) rgba(15, 23, 42, 0.55));
+}
+
+.ipc-frame-handle--n,
+.ipc-frame-handle--s {
+  left: 50%;
+  width: var(--ipc-len);
+  height: var(--ipc-thick);
+  margin-left: calc(var(--ipc-len) / -2);
+  background: #fff;
+  border-radius: calc(3px * var(--ipc-k));
+  box-shadow: 0 0 calc(1px * var(--ipc-k)) rgba(15, 23, 42, 0.55);
+  cursor: ns-resize;
+}
+
+.ipc-frame-handle--n { top: calc(var(--ipc-thick) / -2 - 1px); }
+.ipc-frame-handle--s { bottom: calc(var(--ipc-thick) / -2 - 1px); }
+
+.ipc-frame-handle--e,
+.ipc-frame-handle--w {
+  top: 50%;
+  width: var(--ipc-thick);
+  height: var(--ipc-len);
+  margin-top: calc(var(--ipc-len) / -2);
+  background: #fff;
+  border-radius: calc(3px * var(--ipc-k));
+  box-shadow: 0 0 calc(1px * var(--ipc-k)) rgba(15, 23, 42, 0.55);
+  cursor: ew-resize;
+}
+
+.ipc-frame-handle--e { right: calc(var(--ipc-thick) / -2 - 1px); }
+.ipc-frame-handle--w { left: calc(var(--ipc-thick) / -2 - 1px); }
+
+/* Bigger invisible grab area around every handle. */
+.ipc-frame-handle::after,
+.ipc-photo-handle::after {
+  content: '';
+  position: absolute;
+  inset: calc(-8px * var(--ipc-k));
+}
+
+/* ── Crop panel (properties area) ── */
+
+.icp-panel {
+  --icp-footer-bg: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px 2px 0;
+  color: #0f172a;
+}
+
+.icp-section-title {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #334155;
+}
+
+.icp-aspects {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.icp-aspect {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 2px 6px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease, color 0.12s ease;
+}
+
+.icp-aspect:hover {
+  border-color: #c4b5fd;
+  background: #faf5ff;
+}
+
+.icp-aspect.is-active {
+  border-color: #7c3aed;
+  background: #f5f3ff;
+  color: #5b21b6;
+}
+
+.icp-aspect:focus-visible {
+  outline: 2px solid #7c3aed;
+  outline-offset: 2px;
+}
+
+.icp-aspect-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 24px;
+}
+
+.icp-aspect-shape {
+  box-sizing: border-box;
+  border: 2px solid currentColor;
+  border-radius: 3px;
+}
+
+.icp-zoom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icp-zoom input[type='range'] {
+  flex: 1;
+  min-width: 0;
+  accent-color: #7c3aed;
+}
+
+.icp-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  cursor: pointer;
+}
+
+.icp-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.icp-zoom-value {
+  min-width: 44px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+  font-variant-numeric: tabular-nums;
+}
+
+.icp-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.icp-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.icp-reset:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.icp-tips {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #475569;
+}
+
+.icp-tips li {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.icp-tip-key {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid #7c3aed;
+  transform: translateY(1px);
+}
+
+.icp-tip-key--bracket {
+  border-radius: 0;
+  border-width: 0 0 0 0;
+  border-left: 3px solid #0f172a;
+  border-top: 3px solid #0f172a;
+}
+
+.icp-tip-key--hand {
+  border-radius: 3px;
+  background: #ede9fe;
+}
+
+/* Cancel / Done stay in view at the bottom of the panel however far it scrolls. */
+.icp-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 0 -2px;
+  padding: 10px 2px 12px;
+  background: var(--icp-footer-bg);
+  box-shadow: 0 -8px 12px -10px rgba(15, 23, 42, 0.25);
+}
+
+.icp-btn {
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.icp-btn--primary {
+  border-color: #7c3aed;
+  background: #7c3aed;
+  color: #ffffff;
+}
+
+.icp-btn--primary:hover {
+  background: #6d28d9;
+}
+
+/* Video editor right panel: follows the editor's theme colours (light or dark). */
+.editor-crop-panel {
+  padding: 14px 16px 18px;
+}
+
+.editor-crop-panel-head {
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--text-main, #0f172a);
+}
+
+.editor-crop-panel .icp-panel {
+  --icp-footer-bg: var(--bg-panel, #ffffff);
+  color: var(--text-main, #0f172a);
+}
+
+.editor-crop-panel .icp-section-title,
+.editor-crop-panel .icp-zoom-value {
+  color: var(--text-main, #334155);
+}
+
+.editor-crop-panel .icp-aspect,
+.editor-crop-panel .icp-icon-btn,
+.editor-crop-panel .icp-reset,
+.editor-crop-panel .icp-btn:not(.icp-btn--primary) {
+  background: var(--bg-input, #ffffff);
+  border-color: var(--border-color, #e2e8f0);
+  color: var(--text-main, #334155);
+}
+
+.editor-crop-panel .icp-aspect.is-active {
+  border-color: #7c3aed;
+  background: rgba(124, 58, 237, 0.12);
+  color: var(--text-main, #5b21b6);
+}
+
+.editor-crop-panel .icp-meta,
+.editor-crop-panel .icp-tips {
+  color: var(--text-muted, #64748b);
+}
+
+.editor-crop-panel .icp-tips {
+  background: var(--bg-input, #f8fafc);
+}
+
+.editor-crop-panel .icp-tip-key--bracket {
+  border-color: var(--text-main, #0f172a);
+}

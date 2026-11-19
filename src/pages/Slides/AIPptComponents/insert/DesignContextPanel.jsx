@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { FiCrop, FiImage, FiLock, FiUnlock, FiRefreshCw } from 'react-icons/fi'
+import { croppedImageStyle, normalizeCrop } from '../../../../utils/imageCrop'
 import ElementToolbar from './ElementToolbar'
 import ElementPropertiesPanel from '../ElementPropertiesPanel'
 import SlideTransitionPicker from './SlideTransitionPicker'
@@ -749,6 +750,13 @@ function ShapeDesignSection({
   )
 }
 
+/** Preview box in the image box's shape: wide ones fill the width, tall ones are 140px high. */
+function photoPreviewBox(aspect) {
+  if (!(aspect > 0)) return { width: '100%', height: 130 }
+  if (aspect >= 1.7) return { width: '100%', aspectRatio: String(aspect) }
+  return { height: 140, width: Math.round(140 * aspect), maxWidth: '100%' }
+}
+
 function ImageDesignSection({
   element,
   slide,
@@ -769,6 +777,9 @@ function ImageDesignSection({
   const isBackground =
     Boolean(c.useAsBackground) || slide?.backgroundImageElementId === element?.id
   const canUseAsBackground = Boolean(c.url || c.src || c.thumbnailUrl)
+  const hasPhoto = Boolean(c.url || c.src)
+  const isCropped = Boolean(normalizeCrop(c.crop))
+  const frameAspect = p.width > 0 && p.height > 0 ? p.width / p.height : null
 
   return (
     <div className="ppt-props-stack ppt-image-design-panel">
@@ -821,70 +832,93 @@ function ImageDesignSection({
         <>
           <section className="ppt-props-group">
             <header className="ppt-props-group-head">
-              <h3 className="ppt-props-group-title">Media</h3>
+              <h3 className="ppt-props-group-title">Photo</h3>
             </header>
             <div className="ppt-props-group-body">
-              {(c.url || c.src) && (
-                <div className="ppt-design-image-preview">
-                  <img
-                    src={c.url || c.src}
-                    alt=""
-                    className="ppt-media-flip"
-                    style={{
-                      transform: mediaFlipTransform(c),
-                      transformOrigin: 'center center',
-                      filter: cssPaintString(c.cssFilter),
-                    }}
-                  />
+              {hasPhoto ? (
+                <div className="ppt-photo-card">
+                  <div className="ppt-photo-card-frame" style={photoPreviewBox(frameAspect)}>
+                    <img
+                      src={c.url || c.src}
+                      alt=""
+                      className="ppt-media-flip"
+                      style={{
+                        ...(croppedImageStyle(c.crop) || {
+                          width: '100%',
+                          height: '100%',
+                          objectFit: c.fit || 'cover',
+                        }),
+                        transform: mediaFlipTransform(c),
+                        transformOrigin: 'center center',
+                        filter: cssPaintString(c.cssFilter),
+                      }}
+                    />
+                  </div>
+                  {isCropped ? <span className="ppt-photo-card-badge">Cropped</span> : null}
                 </div>
+              ) : (
+                <p className="ppt-photo-empty">No photo yet. Replace to add one.</p>
               )}
-              <div className="ppt-props-actions">
+
+              <div className="ppt-photo-actions">
                 <button
                   type="button"
-                  className="ppt-props-action-btn"
+                  data-crop-ui=""
+                  className="ppt-photo-action ppt-photo-action--primary"
+                  disabled={disabled || !hasPhoto}
+                  title={hasPhoto ? 'Crop on the slide' : 'Add an image first, then crop it'}
+                  onClick={onCropImage}
+                >
+                  <FiCrop size={15} aria-hidden />
+                  Crop
+                </button>
+                <button
+                  type="button"
+                  className="ppt-photo-action"
                   disabled={disabled}
                   onClick={onReplaceImage}
                 >
                   <FiImage size={15} aria-hidden />
                   Replace
                 </button>
-                <button
-                  type="button"
-                  className="ppt-props-action-btn"
-                  disabled={disabled || !(c.url || c.src)}
-                  title={c.url || c.src ? 'Crop image' : 'Add an image first, then crop it'}
-                  onClick={onCropImage}
-                >
-                  <FiCrop size={15} aria-hidden />
-                  Crop
-                </button>
               </div>
-            </div>
-          </section>
+              {hasPhoto ? (
+                <p className="ppt-photo-hint">Tip: double-click the photo on the slide to crop it.</p>
+              ) : null}
 
-          <section className="ppt-props-group">
-            <header className="ppt-props-group-head">
-              <h3 className="ppt-props-group-title">Crop &amp; fit</h3>
-            </header>
-            <div className="ppt-props-group-body">
-              <div className="ppt-props-row ppt-props-row--stack">
-                <span className="ppt-props-row-label">Fit</span>
-                <div className="ppt-segmented" role="radiogroup" aria-label="Image fit">
-                  {IMAGE_FIT_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      role="radio"
-                      aria-checked={(c.fit || 'cover') === opt.value}
-                      className={`ppt-segmented-btn ${(c.fit || 'cover') === opt.value ? 'is-active' : ''}`}
-                      disabled={disabled}
-                      onClick={() => onChangeContent?.({ fit: opt.value })}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+              {isCropped ? (
+                <div className="ppt-props-row ppt-photo-cropped-row">
+                  <span className="ppt-props-row-label">Showing part of the photo</span>
+                  <button
+                    type="button"
+                    className="ppt-photo-link"
+                    disabled={disabled}
+                    onClick={() => onChangeContent?.({ crop: null })}
+                  >
+                    Remove crop
+                  </button>
                 </div>
-              </div>
+              ) : (
+                <div className="ppt-props-row ppt-props-row--stack">
+                  <span className="ppt-props-row-label">Fit in box</span>
+                  <div className="ppt-segmented" role="radiogroup" aria-label="Image fit">
+                    {IMAGE_FIT_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={(c.fit || 'cover') === opt.value}
+                        className={`ppt-segmented-btn ${(c.fit || 'cover') === opt.value ? 'is-active' : ''}`}
+                        disabled={disabled || !hasPhoto}
+                        onClick={() => onChangeContent?.({ fit: opt.value })}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="ppt-props-row ppt-props-row--switch">
                 <span className="ppt-props-row-label">Use as background</span>
                 <button

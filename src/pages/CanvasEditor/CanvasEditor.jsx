@@ -5,7 +5,6 @@ import CanvasHeader from './components/CanvasHeader'
 import CanvasLeaveDialog from './components/CanvasLeaveDialog'
 import CanvasShortcutHelp from './components/CanvasShortcutHelp'
 import CanvasNarrowNotice from './components/CanvasNarrowNotice'
-import CanvasCropDialog from './components/CanvasCropDialog'
 import CanvasRecoveryDialog from './components/CanvasRecoveryDialog'
 import CanvasLeftDock from './components/CanvasLeftDock'
 import CanvasLeftDrawer from './components/CanvasLeftDrawer'
@@ -17,8 +16,10 @@ import CanvasSizeModal from './CanvasSizeModal'
 import CanvasExportModal from './CanvasExportModal'
 import PptElementContextMenu from '../Slides/AIPptComponents/PptElementContextMenu'
 import PptQuickMenu from '../Slides/AIPptComponents/PptQuickMenu'
-import ImageCropModal from '../Slides/AIPptComponents/ImageCropModal'
-import { cropChanged, frameAspectOf, placementForCrop, withImageCrop } from '../../utils/imageCrop'
+import ImageCropPanel from '../../components/ui/ImageCrop/ImageCropPanel'
+import { FiX } from 'react-icons/fi'
+import useImageCropSession from '../../components/ui/ImageCrop/useImageCropSession'
+import { withImageCrop } from '../../utils/imageCrop'
 import { isShortcutHelpKey } from './canvasShortcuts'
 import {
   DEFAULT_SIZE,
@@ -202,7 +203,6 @@ export default function CanvasEditor({
   const [showExportModal, setShowExportModal] = useState(false)
   const [contextMenu, setContextMenu] = useState(null)
   const [quickMenuOpen, setQuickMenuOpen] = useState(false)
-  const [cropModalOpen, setCropModalOpen] = useState(false)
   const [shortcutHelp, setShortcutHelp] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [copying, setCopying] = useState(false)
@@ -1494,33 +1494,47 @@ export default function CanvasEditor({
     updateCanvasesWithHistory(updated)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleCropApply = useCallback(({ crop, fit, opacity, naturalWidth, naturalHeight }) => {
-    const canvas = canvasesRef.current[activeCanvasIndexRef.current] || canvasesRef.current[0]
-    const elementId = selectedRef.current.elementId
-    const el = canvas?.elements?.find((item) => item.id === elementId)
-    if (!el) return
-    const updated = canvasesRef.current.map((c) =>
-      c.id !== canvas.id
-        ? c
-        : {
-            ...c,
-            elements: c.elements.map((item) =>
-              item.id === elementId
-                ? {
-                    ...item,
-                    // Opacity lives on the image only; also writing it to the frame made 50% render as 25%.
-                    content: withImageCrop({ ...item.content, fit, opacity }, crop),
-                    placement: cropChanged(item.content?.crop, crop)
-                      ? placementForCrop(item.placement, crop, naturalWidth, naturalHeight)
-                      : item.placement,
-                  }
-                : item
-            ),
-          }
-    )
-    updateCanvasesWithHistory(updated)
-    setCropModalOpen(false)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  // Crop on the page itself (Canva-style); the options replace the inspector until applied.
+  const imageCrop = useImageCropSession({
+    onApply: (elementId, { crop, placement }) => {
+      const canvas = canvasesRef.current.find((c) => c.elements?.some((el) => el.id === elementId))
+      if (!canvas) return
+      const updated = canvasesRef.current.map((c) =>
+        c.id !== canvas.id
+          ? c
+          : {
+              ...c,
+              elements: c.elements.map((item) =>
+                item.id === elementId
+                  ? {
+                      ...item,
+                      content: withImageCrop(item.content, crop),
+                      placement: { ...item.placement, ...placement },
+                    }
+                  : item
+              ),
+            }
+      )
+      updateCanvasesWithHistory(updated)
+    },
+  })
+  const beginImageCrop = imageCrop.begin
+  const startImageCrop = useCallback(
+    (el) => {
+      if (!el || el.type !== 'image' || isCanvasElementLocked(el)) return
+      const src = el.content?.url || el.content?.src
+      if (!src) return
+      beginImageCrop({ id: el.id, src, box: el.placement, content: el.content })
+    },
+    [beginImageCrop]
+  )
+  // The image went away (undo, deleted, page removed): stop cropping.
+  const cropSessionId = imageCrop.session?.id
+  const cancelImageCrop = imageCrop.cancel
+  useEffect(() => {
+    if (!cropSessionId) return
+    if (!canvases.some((c) => c.elements?.some((el) => el.id === cropSessionId))) cancelImageCrop()
+  }, [canvases, cropSessionId, cancelImageCrop])
 
   const smartTidy = useCallback((ids) => {
     const canvas = canvasesRef.current[activeCanvasIndexRef.current] || canvasesRef.current[0]
@@ -2067,7 +2081,7 @@ export default function CanvasEditor({
           className="canva-stage-viewport"
           style={{
             '--stage-pad-left': `${drawerOpen ? 490 : 96}px`,
-            '--stage-pad-right': `${inspectorOpen ? 350 : 36}px`,
+            '--stage-pad-right': `${inspectorOpen || imageCrop.session ? 350 : 36}px`,
           }}
         >
           <CanvasStage
@@ -2109,6 +2123,11 @@ export default function CanvasEditor({
             onDuplicateCanvas={duplicateCanvas}
             onDeleteCanvas={deleteCanvas}
             onMoveCanvas={moveCanvas}
+            cropSession={imageCrop.session}
+            onStartCrop={startImageCrop}
+            onCropChange={imageCrop.update}
+            onCropDone={imageCrop.done}
+            onCropCancel={imageCrop.cancel}
           />
 
           {/* Canva Bottom Control Bar (Floating) */}
@@ -2124,7 +2143,34 @@ export default function CanvasEditor({
         </main>
 
         {/* Right Inspector Sidebar (Floating) */}
-        {inspectorOpen && (
+        {imageCrop.session ? (
+          <aside className="canva-inspector canva-inspector--crop" data-crop-ui="">
+            <header className="canva-inspector-header">
+              <div className="canva-inspector-header-top">
+                <h3>Crop</h3>
+                <div className="canva-inspector-header-actions">
+                  <button
+                    type="button"
+                    className="canva-inspector-tool-btn"
+                    onClick={imageCrop.cancel}
+                    title="Cancel crop"
+                    aria-label="Cancel crop"
+                  >
+                    <FiX />
+                  </button>
+                </div>
+              </div>
+            </header>
+            <div className="canva-inspector-crop-body">
+              <ImageCropPanel
+                session={imageCrop.session}
+                onChange={imageCrop.update}
+                onDone={imageCrop.done}
+                onCancel={imageCrop.cancel}
+              />
+            </div>
+          </aside>
+        ) : inspectorOpen && (
           <CanvasRightInspector
             selectedElement={selectedElement}
             activeCanvas={activeCanvas}
@@ -2145,7 +2191,9 @@ export default function CanvasEditor({
             onSelectElement={(id) => handleSelect(id)}
             onDeleteElement={(id) => deleteElements([id])}
             onReplaceImage={openMediaForReplace}
-            onCropImage={() => setCropModalOpen(true)}
+            onCropImage={() =>
+              imageCrop.session ? imageCrop.done() : startImageCrop(selectedElement)
+            }
             onClearDeviceFrameScreen={handleClearDeviceFrameScreen}
             onToggleImageAsBackground={handleToggleImageAsBackground}
           />
@@ -2173,19 +2221,6 @@ export default function CanvasEditor({
         />
       )}
 
-      {cropModalOpen && selectedElement && (
-        <CanvasCropDialog onClose={() => setCropModalOpen(false)}>
-          <ImageCropModal
-            imageUrl={selectedElement.content?.url || selectedElement.content?.src}
-            initialCrop={selectedElement.content?.crop}
-            initialFit={selectedElement.content?.fit}
-            initialOpacity={selectedElement.content?.opacity}
-            frameAspect={frameAspectOf(selectedElement.placement)}
-            onApply={handleCropApply}
-            onClose={() => setCropModalOpen(false)}
-          />
-        </CanvasCropDialog>
-      )}
 
       {shortcutHelp && <CanvasShortcutHelp onClose={() => setShortcutHelp(false)} />}
 

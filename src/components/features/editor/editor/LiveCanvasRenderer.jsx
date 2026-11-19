@@ -17,6 +17,7 @@ import { resolveClipMediaSrc, isVideoMedia } from '../../../../utils/heygenVideo
 import { resolveAvatarDisplaySrc } from '../../../../utils/templateAvatarPreview'
 import { formatLayerBorderCss } from '../../../../utils/layerBorderUtils'
 import { croppedImageStyle } from '../../../../utils/imageCrop'
+import InPlaceImageCrop from '../../../ui/ImageCrop/InPlaceImageCrop'
 import {
   canAcceptImageFill,
   parseCanvasDragData,
@@ -105,6 +106,7 @@ const ClipTransformShell = ({
   onDragOver,
   onDragLeave,
   onDrop,
+  onDoubleClick,
   clickOnly = false,
 }) => {
   const {
@@ -136,6 +138,7 @@ const ClipTransformShell = ({
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
+      onDoubleClick={onDoubleClick}
       style={{ ...layoutStyle, overflow: 'visible', transform: undefined, transformOrigin: undefined }}
     >
       {/* Transform + canvas overflow paint (rotation-aware clip/mask) */}
@@ -446,6 +449,7 @@ const ImageClip = ({
   overlayMode = false,
   compositionWidth = 1920,
   compositionHeight = 1080,
+  onStartCrop,
 }) => {
   const s   = clip.style || {}
   const cf  = clip.cssFilters || {}
@@ -481,6 +485,15 @@ const ImageClip = ({
     <ClipTransformShell
       clip={clip}
       onSelect={onSelect}
+      onDoubleClick={
+        onStartCrop && src && !overlayMode && !clip.locked && clip.role !== 'icon'
+          ? (e) => {
+              // Double-click a photo to crop it on the canvas (like Canva).
+              e.stopPropagation()
+              onStartCrop(clip.id)
+            }
+          : undefined
+      }
       outerStyle={animatedOuter}
       overflowStyle={getClipOverflowPaint(clip, isSelected, compositionWidth, compositionHeight, {
         animRotation: animState?.rotation || 0,
@@ -1096,6 +1109,11 @@ const LiveCanvasRenderer = ({
   onFillShape,
   onCanvasDrop,
   onUpdateClipFields,
+  cropSession = null,
+  onStartCrop,
+  onCropChange,
+  onCropDone,
+  onCropCancel,
   showGuides = false,
   showPageGrid = false,
   showSafeZone = false,
@@ -1401,6 +1419,8 @@ const LiveCanvasRenderer = ({
         )}
         {/* Background clips render first; higher layer numbers paint on top for hit-testing */}
         {sortClipsForRender(rootClips).map(clip => {
+          // The photo being cropped is drawn by the crop overlay instead.
+          if (cropSession?.id === clip.id) return null
           const isSelected = selectedIds.includes(clip.id) || selectedId === clip.id
           const isLocked = !!clip.locked
           const selectionCount = selectedIds.length || (selectedId ? 1 : 0)
@@ -1462,7 +1482,7 @@ const LiveCanvasRenderer = ({
               />
             )
           }
-          if (clip.type === 'image') return <ImageClip key={clip.id} {...sharedProps} />
+          if (clip.type === 'image') return <ImageClip key={clip.id} {...sharedProps} onStartCrop={onStartCrop} />
           if (clip.type === 'avatar') return <AvatarClip key={clip.id} {...sharedProps} scene={scene} />
           if (clip.type === 'video') return <VideoClip key={clip.id} {...sharedProps} scene={scene} />
           if (clip.type === 'shape') return <ShapeClip key={clip.id} {...sharedProps} onFillShape={onFillShape} />
@@ -1478,6 +1498,18 @@ const LiveCanvasRenderer = ({
           }
           return null
         })}
+        {!overlayMode && cropSession && clips.some((c) => c.id === cropSession.id) ? (
+          <InPlaceImageCrop
+            session={cropSession}
+            canvasW={compositionWidth}
+            canvasH={compositionHeight}
+            cssScale={displayScale}
+            getStageRect={() => compositionRef.current?.getBoundingClientRect()}
+            onChange={onCropChange}
+            onDone={onCropDone}
+            onCancel={onCropCancel}
+          />
+        ) : null}
         {!overlayMode && isMultiTextSelection && onUpdateClipFields && !textEditClipId && (
           <MultiSelectionOverlay
             clips={clips}

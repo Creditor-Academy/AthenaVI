@@ -4300,10 +4300,6 @@ body > .ppt-fill-picker-pop {
   text-align: right;
 }
 
-.canvas-crop-dialog-scope {
-  display: contents;
-}
-
 .canvas-narrow-notice {
   position: fixed;
   inset: 0;
@@ -4328,4 +4324,19 @@ body > .ppt-fill-picker-pop {
 /* The PPT editor's toggles are black; here they follow the accent like the rest of the editor. */
 .canvas-editor-page .ppt-toggle-switch.is-on {
   background: var(--canva-accent);
+}
+
+/* Crop options (shown in place of the inspector while an image is cropped on the page). */
+.canva-inspector-crop-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 14px 16px 16px;
+}
+
+.canva-inspector-crop-body .icp-panel {
+  --icp-footer-bg: rgba(255, 255, 255, 0.96);
+}
+.canva-inspector-crop-body {
+  padding-bottom: 0;
 }

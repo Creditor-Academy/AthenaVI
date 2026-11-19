@@ -31,7 +31,9 @@ import SharePresentationModal from './SharePresentationModal'
 import ExportPresentationModal from './ExportPresentationModal'
 import SlideMockFallback from './SlideMockFallback'
 import ConvertToTemplateModal from './ConvertToTemplateModal'
-import ImageCropModal from './ImageCropModal'
+import InPlaceImageCrop from '../../../components/ui/ImageCrop/InPlaceImageCrop'
+import ImageCropPanel from '../../../components/ui/ImageCrop/ImageCropPanel'
+import useImageCropSession from '../../../components/ui/ImageCrop/useImageCropSession'
 import PptQuickMenu from './PptQuickMenu'
 import PptElementContextMenu from './PptElementContextMenu'
 import SlideEditAiPanel from './SlideEditAiPanel'
@@ -114,7 +116,6 @@ import {
 import { resolveThemeVisual } from '../../../utils/pptThemeVisual'
 import { coercePlainText } from '../../../utils/pptTextContent'
 import { deckTitleFromSlides, exportDeckTitle, isDefaultDeckTitle } from '../../../utils/deckTitle'
-import { cropChanged, frameAspectOf, normalizeCrop, placementForCrop } from '../../../utils/imageCrop'
 import {
   imageFilesFromDataTransfer,
   imagePlacementForPage,
@@ -442,6 +443,7 @@ function InteractiveElementShell({
   onStartTextEdit,
   onFillDeviceFrame,
   onFillImage,
+  onStartCrop,
   children,
 }) {
   const p = el.placement || {}
@@ -851,8 +853,16 @@ function InteractiveElementShell({
         onSelect?.(el.id, e)
       }}
       onDoubleClick={(e) => {
-        if (!editable || locked || !isText) return
+        if (!editable || locked) return
         if (e.shiftKey || e.ctrlKey || e.metaKey) return
+        // Double-click a photo to crop it on the slide (like Canva).
+        if (isImageSlot && onStartCrop && (el.content?.url || el.content?.src)) {
+          e.stopPropagation()
+          onSelect?.(el.id, e)
+          onStartCrop(el)
+          return
+        }
+        if (!isText) return
         e.stopPropagation()
         onSelect?.(el.id, e)
         onStartTextEdit?.(el.id)
@@ -988,6 +998,11 @@ function SlideStage({
   onDropImageFiles,
   showEmptyTextHint = false,
   showDangerZone = false,
+  cropSession = null,
+  onStartCrop,
+  onCropChange,
+  onCropDone,
+  onCropCancel,
 }) {
   const stageRef = useRef(null)
   const [chromeHost, setChromeHost] = useState(null)
@@ -1078,7 +1093,7 @@ function SlideStage({
         ) : null}
         <PptCanvasGuidesOverlay guides={smartGuides} canvasW={canvas.width} canvasH={canvas.height} />
         {hasElements
-          ? elements.map((el, i) => (
+          ? elements.map((el, i) => el.id === cropSession?.id ? null : (
               <InteractiveElementShell
                 key={el.id || `el-${i}`}
                 el={el}
@@ -1104,6 +1119,7 @@ function SlideStage({
                 onGuidesChange={onGuidesChange}
                 onFillDeviceFrame={onFillDeviceFrame}
                 onFillImage={onFillImage}
+                onStartCrop={onStartCrop}
               >
                 <PptCanvasElement
                   el={el}
@@ -1172,6 +1188,17 @@ function SlideStage({
               </InteractiveElementShell>
             ))
           : null}
+        {cropSession && elements.some((el) => el.id === cropSession.id) ? (
+          <InPlaceImageCrop
+            session={cropSession}
+            canvasW={canvas.width}
+            canvasH={canvas.height}
+            getStageRect={() => stageRef.current?.getBoundingClientRect()}
+            onChange={onCropChange}
+            onDone={onCropDone}
+            onCancel={onCropCancel}
+          />
+        ) : null}
       </div>
       <div
         ref={setChromeHost}
@@ -1278,7 +1305,6 @@ function AIPptEditor({
   // Slides with a regenerate in flight — only these are locked; the rest stay editable.
   const [regeneratingSlideIds, setRegeneratingSlideIds] = useState(() => new Set())
   const regeneratingSlideIdsRef = useRef(regeneratingSlideIds)
-  const [cropModalOpen, setCropModalOpen] = useState(false)
   const [deleteSlideId, setDeleteSlideId] = useState(null)
   const [slideStyles, setSlideStyles] = useState({
     headerFont: 'Inter',
@@ -2395,21 +2421,32 @@ function AIPptEditor({
     [handleUndo, handleRedo, elementMutations, multiSelectIds, selectedElementId, selectedSlide, viewOnly, askOwner, editorClipboard, selectionClipboardText]
   )
 
-  const handleCropApply = useCallback(
-    ({ crop, fit, opacity, naturalWidth, naturalHeight }) => {
-      if (!selectedElementId || !selectedElement) return
-      const nextCrop = normalizeCrop(crop)
+  // Crop on the slide itself (Canva-style): the box and the photo behind it are adjusted on
+  // the canvas, the options sit in the right panel. One undo step when it's applied.
+  const imageCrop = useImageCropSession({
+    onApply: (elementId, { crop, placement }) => {
       // patchElement merges content, so a removed crop must be sent as null.
-      // Opacity stays on the image only (also writing it to the frame squared it: 50% → 25%).
-      elementMutations.patchElement(selectedElementId, {
-        content: { ...selectedElement.content, fit, opacity, crop: nextCrop },
-        placement: cropChanged(selectedElement.content?.crop, nextCrop)
-          ? placementForCrop(selectedElement.placement, nextCrop, naturalWidth, naturalHeight)
-          : selectedElement.placement,
-      })
+      elementMutations.patchElement(elementId, { content: { crop: crop || null }, placement })
     },
-    [selectedElementId, selectedElement, elementMutations]
+  })
+  const beginImageCrop = imageCrop.begin
+  const startImageCrop = useCallback(
+    (el) => {
+      if (viewOnly || !el || el.type !== 'image' || el.locked) return
+      const src = el.content?.url || el.content?.src
+      if (!src) return
+      beginImageCrop({ id: el.id, src, box: el.placement, content: el.content })
+    },
+    [viewOnly, beginImageCrop]
   )
+  // The image went away (another slide opened by keyboard, undo, deleted elsewhere): stop cropping.
+  const cropSessionId = imageCrop.session?.id
+  const cancelImageCrop = imageCrop.cancel
+  useEffect(() => {
+    if (!cropSessionId) return
+    const stillThere = (selectedSlide?.elements?.elements || []).some((el) => el.id === cropSessionId)
+    if (!stillThere) cancelImageCrop()
+  }, [selectedSlide, cropSessionId, cancelImageCrop])
 
   const handleBackgroundGradientChange = useCallback(
     (payload) => {
@@ -5179,6 +5216,11 @@ function AIPptEditor({
                           ? (files, point) => insertImageFiles(files, { center: point })
                           : undefined
                       }
+                      cropSession={selectedSlideId === slide.id ? imageCrop.session : null}
+                      onStartCrop={selectedSlideId === slide.id ? startImageCrop : undefined}
+                      onCropChange={imageCrop.update}
+                      onCropDone={imageCrop.done}
+                      onCropCancel={imageCrop.cancel}
                     />
                   </SlideContentGate>
 
@@ -5275,7 +5317,20 @@ function AIPptEditor({
           onToggleElementLock={() => elementMutations.toggleLock(canvasSelectionIds)}
           onReplaceImage={handleReplaceImage}
           onClearDeviceFrameScreen={handleClearDeviceFrameScreen}
-          onCropImage={() => setCropModalOpen(true)}
+          onCropImage={() =>
+            imageCrop.session ? imageCrop.done() : startImageCrop(selectedElement)
+          }
+          cropPanel={
+            imageCrop.session ? (
+              <ImageCropPanel
+                session={imageCrop.session}
+                onChange={imageCrop.update}
+                onDone={imageCrop.done}
+                onCancel={imageCrop.cancel}
+              />
+            ) : null
+          }
+          onCloseCrop={imageCrop.cancel}
           onToggleImageAsBackground={handleToggleImageAsBackground}
           onSpeakerNotesChange={elementMutations.updateSpeakerNotes}
           slideStyles={slideStyles}
@@ -5655,17 +5710,6 @@ function AIPptEditor({
         />
       )}
 
-      {cropModalOpen && selectedElement && (
-        <ImageCropModal
-          imageUrl={selectedElement.content?.url || selectedElement.content?.src}
-          initialCrop={selectedElement.content?.crop}
-          initialFit={selectedElement.content?.fit}
-          initialOpacity={selectedElement.content?.opacity}
-          frameAspect={frameAspectOf(selectedElement.placement)}
-          onApply={handleCropApply}
-          onClose={() => setCropModalOpen(false)}
-        />
-      )}
     </div>
     </EditorErrorBoundary>
   )

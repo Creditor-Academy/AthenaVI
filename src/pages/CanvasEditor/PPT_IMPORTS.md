@@ -10,7 +10,6 @@ Canvas reuses the presentation editor by import. Files under `src/pages/Slides/`
 | `AIPptComponents/PptCanvasGuidesOverlay.jsx` | `components/CanvasStage.jsx` |
 | `AIPptComponents/PptElementContextMenu.jsx` | `CanvasEditor.jsx` |
 | `AIPptComponents/PptQuickMenu.jsx` | `CanvasEditor.jsx` |
-| `AIPptComponents/ImageCropModal.jsx` | `CanvasEditor.jsx` (wrapped by `components/CanvasCropDialog.jsx`) |
 | `AIPptComponents/ElementTransformControls.jsx` | `components/CanvasContextBar.jsx` |
 | `AIPptComponents/insert/TextPanel.jsx` | `components/CanvasLeftDrawer.jsx` |
 | `AIPptComponents/insert/MediaPanel.jsx` | `components/CanvasLeftDrawer.jsx` |

@@ -14,6 +14,7 @@ import { pageCoverDataUrl } from '../canvasThumbnail'
 import { CanvasPageRender } from '../CanvasExportFrame'
 import PptCanvasElement from '../../Slides/AIPptComponents/PptCanvasElement'
 import PptCanvasGuidesOverlay from '../../Slides/AIPptComponents/PptCanvasGuidesOverlay'
+import InPlaceImageCrop from '../../../components/ui/ImageCrop/InPlaceImageCrop'
 import { computePptSmartGuides } from '../../../utils/pptSmartGuides'
 import {
   collectPptMoveIds,
@@ -312,6 +313,7 @@ function InteractiveCanvasElementShell({
   onStartTextEdit,
   onFillImage,
   onFillDeviceFrame,
+  onStartCrop,
   children,
 }) {
   const p = el.placement || {}
@@ -675,8 +677,16 @@ function InteractiveCanvasElementShell({
         onSelect?.(el.id, e)
       }}
       onDoubleClick={(e) => {
-        if (!editable || locked || !isText) return
+        if (!editable || locked) return
         if (e.shiftKey || e.ctrlKey || e.metaKey) return
+        // Double-click a photo to crop it on the page (like Canva).
+        if (el.type === 'image' && onStartCrop && (el.content?.url || el.content?.src)) {
+          e.stopPropagation()
+          onSelect?.(el.id, e)
+          onStartCrop(el)
+          return
+        }
+        if (!isText) return
         e.stopPropagation()
         onSelect?.(el.id, e)
         onStartTextEdit?.(el.id)
@@ -815,6 +825,11 @@ export default function CanvasStage({
   onDuplicateCanvas,
   onDeleteCanvas,
   onMoveCanvas,
+  cropSession = null,
+  onStartCrop,
+  onCropChange,
+  onCropDone,
+  onCropCancel,
 }) {
   // One surface ref per page — element drag/resize maths is relative to its own page.
   const [surfaceRefs] = useState(() => new Map())
@@ -1013,6 +1028,8 @@ export default function CanvasStage({
                 }}
               >
                 {isCurrent ? pageElements.map((element, elIdx) => {
+                  // The image being cropped is drawn by the crop overlay instead.
+                  if (cropSession?.id === element.id) return null
                   const isSelected =
                     pageSelectedIds.includes(element.id) ||
                     Boolean(element.groupId && pageSelectedIds.includes(element.groupId))
@@ -1040,6 +1057,7 @@ export default function CanvasStage({
                       onStartTextEdit={onEdit}
                       onFillImage={onFillImage}
                       onFillDeviceFrame={onFillDeviceFrame}
+                      onStartCrop={onStartCrop}
                     >
                       <PptCanvasElement
                         el={element}
@@ -1113,6 +1131,18 @@ export default function CanvasStage({
                     canvasH={canvas.height}
                   />
                 )}
+
+                {isCurrent && cropSession && pageElements.some((el) => el.id === cropSession.id) ? (
+                  <InPlaceImageCrop
+                    session={cropSession}
+                    canvasW={canvas.width}
+                    canvasH={canvas.height}
+                    getStageRect={() => surfaceRef.current?.getBoundingClientRect()}
+                    onChange={onCropChange}
+                    onDone={onCropDone}
+                    onCancel={onCropCancel}
+                  />
+                ) : null}
 
                 {isCurrent && !canvas.elements.length && (
                   <div className="canva-surface-empty">

@@ -102,10 +102,10 @@ import {
 } from '../../hooks/useDragResize'
 
 import { notify, confirmDialog } from '../../utils/appDialog'
-import ImageCropModal from '../Slides/AIPptComponents/ImageCropModal'
+import ImageCropPanel from '../../components/ui/ImageCrop/ImageCropPanel'
+import useImageCropSession from '../../components/ui/ImageCrop/useImageCropSession'
 import { resolveClipMediaSrc, isVideoMedia, isAvatarClip } from '../../utils/heygenVideo'
 import { resolveClipRect } from '../../utils/clipLayout'
-import { cropAspectRatio, cropChanged, frameAspectOf } from '../../utils/imageCrop'
 function projectHasPreExistingScenes(scenes) {
   return Array.isArray(scenes) && scenes.length > 0
 }
@@ -1117,39 +1117,65 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
     deleteLayer(activeSceneId, layerId)
   }
 
-  // Crop (Canva-style) for photo layers; videos and avatars keep Fit in the side panel.
-  const [cropLayerId, setCropLayerId] = useState(null)
+  // Crop on the canvas (Canva-style) for photo layers; the options show in the right panel.
+  // Videos, avatars, icons and full-screen backgrounds keep Fit in the side panel.
   const isCroppableLayer = (clip) => {
-    if (!clip || clip.type !== 'image' || clip.role === 'icon' || isAvatarClip(clip)) return false
+    if (!clip || clip.type !== 'image' || clip.role === 'icon' || clip.locked) return false
+    if (isAvatarClip(clip) || isBackgroundClip(clip)) return false
     const src = resolveClipMediaSrc(clip, activeScene)
     return Boolean(src) && !isVideoMedia(clip, src)
   }
-  const handleOpenLayerCrop = () => {
-    const clip = activeScene?.clips?.find((c) => c.id === selectedLayerId)
-    if (isCroppableLayer(clip)) setCropLayerId(clip.id)
-    else setIsRightSidebarOpen(true)
-  }
-  const handleLayerCropApply = ({ crop, fit, opacity, naturalWidth, naturalHeight }) => {
-    const clip = activeScene?.clips?.find((c) => c.id === cropLayerId)
-    if (!clip) return
+  const layerCrop = useImageCropSession({
+    onApply: (clipId, { crop, placement }) => {
+      pausePlayback()
+      updateClipFields(
+        clipId,
+        {
+          style: { crop: crop || undefined },
+          size: { width: Math.round(placement.width), height: Math.round(placement.height) },
+          position: { x: Math.round(placement.x), y: Math.round(placement.y) },
+          _userPlaced: true, // pixel coordinates from here on
+        },
+        { history: true }
+      )
+      setTimeout(() => saveProject(false), 250)
+    },
+  })
+  const startLayerCrop = (clipId) => {
+    const clip = activeScene?.clips?.find((c) => c.id === clipId)
+    if (!isCroppableLayer(clip)) return false
     pausePlayback()
-    const updates = { style: { crop: crop || undefined, objectFit: fit }, opacity }
-    // Like Canva: the layer takes the crop's shape, keeping its width and centre.
-    const ratio = cropChanged(clip.style?.crop, crop) && !isBackgroundClip(clip)
-      ? cropAspectRatio(crop, naturalWidth, naturalHeight)
-      : null
-    const rect = ratio ? resolveClipRect(clip) : null
-    const height = rect ? Math.max(8, Math.round(rect.size.width / ratio)) : null
-    // A crop chosen in the layer's own shape (the default) leaves the layer where it is.
-    if (rect && Math.abs(height - rect.size.height) > 1) {
-      const width = rect.size.width
-      updates.size = { width, height }
-      updates.position = { x: rect.position.x, y: Math.round(rect.position.y + (rect.size.height - height) / 2) }
-      updates._userPlaced = true // pixel coordinates from here on
-    }
-    updateClipFields(clip.id, updates, { history: true })
-    setTimeout(() => saveProject(false), 250)
+    const rect = resolveClipRect(clip)
+    layerCrop.begin({
+      id: clip.id,
+      src: resolveClipMediaSrc(clip, activeScene),
+      box: {
+        x: rect.position.x,
+        y: rect.position.y,
+        width: rect.size.width,
+        height: rect.size.height,
+        rotation: Number(clip.rotation) || 0,
+      },
+      content: { crop: clip.style?.crop, scaleX: clip.style?.scaleX, scaleY: clip.style?.scaleY },
+    })
+    setIsRightSidebarOpen(true)
+    setRightPanelTab('properties')
+    return true
   }
+  const handleOpenLayerCrop = () => {
+    if (layerCrop.session) {
+      layerCrop.done()
+      return
+    }
+    if (!startLayerCrop(selectedLayerId)) setIsRightSidebarOpen(true)
+  }
+  // The layer went away (scene switch, undo, deleted): stop cropping.
+  const layerCropId = layerCrop.session?.id
+  const cancelLayerCrop = layerCrop.cancel
+  useEffect(() => {
+    if (!layerCropId) return
+    if (!activeScene?.clips?.some((c) => c.id === layerCropId)) cancelLayerCrop()
+  }, [activeScene, layerCropId, cancelLayerCrop])
 
   // Update a specific layer's position within the active scene (with optional snap)
   const updateLayerPosition = (layerId, x, y, options) => {
@@ -3235,6 +3261,11 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
                 onMoveLayerOrder={moveLayerOrder}
                 onToggleLayerLock={toggleLayerLock}
                 onOpenLayerCrop={handleOpenLayerCrop}
+                cropSession={layerCrop.session}
+                onStartCrop={startLayerCrop}
+                onCropChange={layerCrop.update}
+                onCropDone={layerCrop.done}
+                onCropCancel={layerCrop.cancel}
                 updateClipContent={updateClipContent}
                 onFillShape={fillShapeWithImage}
                 onCanvasDrop={handleCanvasDrop}
@@ -3417,7 +3448,19 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
                 </button>
               </div>
 
-              {rightPanelTab === 'properties' ? (
+              {layerCrop.session ? (
+                <div className="editor-crop-panel" data-crop-ui="">
+                  <div className="editor-crop-panel-head">
+                    <strong>Crop</strong>
+                  </div>
+                  <ImageCropPanel
+                    session={layerCrop.session}
+                    onChange={layerCrop.update}
+                    onDone={layerCrop.done}
+                    onCancel={layerCrop.cancel}
+                  />
+                </div>
+              ) : rightPanelTab === 'properties' ? (
               <SceneConfigurationPanel
                 activeScene={activeScene}
                 activeSceneId={activeSceneId}
@@ -3457,22 +3500,6 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
           </div>
         </div>
       </div>
-
-      {cropLayerId && (() => {
-        const clip = activeScene?.clips?.find((c) => c.id === cropLayerId)
-        if (!clip) return null
-        return (
-          <ImageCropModal
-            imageUrl={resolveClipMediaSrc(clip, activeScene)}
-            initialCrop={clip.style?.crop}
-            initialFit={clip.style?.objectFit || 'cover'}
-            initialOpacity={clip.opacity ?? 1}
-            frameAspect={frameAspectOf(resolveClipRect(clip).size)}
-            onApply={handleLayerCropApply}
-            onClose={() => setCropLayerId(null)}
-          />
-        )
-      })()}
 
       <PreviewModal
         showPreviewModal={showPreviewModal}

@@ -743,7 +743,6 @@
 }
 
 .ppt-share-modal-overlay,
-.ppt-crop-modal-overlay,
 .ppt-quick-menu-overlay {
   position: fixed;
   inset: 0;
@@ -757,10 +756,6 @@
 .ppt-share-modal {
   background: #fff;
   border-radius: 20px;
-}
-
-.ppt-crop-modal {
-  background: #fff;
 }
 
 .ppt-quick-menu-overlay {

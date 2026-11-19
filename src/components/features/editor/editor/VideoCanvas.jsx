@@ -45,6 +45,11 @@ const VideoCanvas = forwardRef(({
   onMoveLayerOrder,
   onToggleLayerLock,
   onOpenLayerCrop,
+  cropSession = null,
+  onStartCrop,
+  onCropChange,
+  onCropDone,
+  onCropCancel,
   onAddScene,
   updateClipContent,
   onFillShape,
@@ -437,6 +442,11 @@ const VideoCanvas = forwardRef(({
                 onMoveLayerOrder={onMoveLayerOrder}
                 onToggleLayerLock={onToggleLayerLock}
                 onOpenLayerCrop={onOpenLayerCrop}
+                cropSession={cropSession}
+                onStartCrop={onStartCrop}
+                onCropChange={onCropChange}
+                onCropDone={onCropDone}
+                onCropCancel={onCropCancel}
                 onFillShape={onFillShape}
                 onCanvasDrop={onCanvasDrop}
                 showGuides={editorView.showGuides}
