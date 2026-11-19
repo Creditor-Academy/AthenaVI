@@ -62,6 +62,8 @@ export function placementForCrop(placement, crop, naturalWidth, naturalHeight) {
   if (!ratio || !(width > 0)) return p
   const height = Math.max(8, Math.round(width / ratio))
   const oldHeight = Number(p.height) || height
+  // Same shape as the frame (the usual case: the crop was chosen in it): leave the box alone.
+  if (Math.abs(height - oldHeight) <= 1) return p
   const y = Math.round((Number(p.y) || 0) + (oldHeight - height) / 2)
   return { ...p, height, y }
 }
@@ -128,6 +130,36 @@ export function centeredCropForAspect(aspect, imageAspect = 1) {
     width = fr
   }
   return { x: (1 - width) / 2, y: (1 - height) / 2, width, height }
+}
+
+/**
+ * `crop` reshaped to the pixel aspect `aspect`, keeping its centre: the largest region of that
+ * shape inside it (so the zoom stays about the same), moved back inside the image if needed.
+ * With no crop this is what `object-fit: cover` shows in a frame of that shape.
+ */
+export function fitCropToAspect(crop, aspect, imageAspect = 1) {
+  const c = normalizeCrop(crop) || { x: 0, y: 0, width: 1, height: 1 }
+  if (!(aspect > 0)) return c
+  const fr = aspect / (imageAspect || 1)
+  let width = c.width
+  let height = c.height
+  if (width / height > fr) width = height * fr
+  else height = width / fr
+  const cx = c.x + c.width / 2
+  const cy = c.y + c.height / 2
+  return {
+    x: Math.min(1 - width, Math.max(0, cx - width / 2)),
+    y: Math.min(1 - height, Math.max(0, cy - height / 2)),
+    width,
+    height,
+  }
+}
+
+/** Width / height of an element's box from its placement or size; null when unknown. */
+export function frameAspectOf(box) {
+  const w = Number(box?.width)
+  const h = Number(box?.height)
+  return w > 0 && h > 0 ? w / h : null
 }
 
 /** Pixel width / height of a crop (fractions) on an image with `imageAspect` = naturalW / naturalH. */

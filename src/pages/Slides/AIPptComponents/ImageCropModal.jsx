@@ -3,9 +3,11 @@ import { FiCheck, FiRotateCcw, FiX, FiZoomIn, FiZoomOut } from 'react-icons/fi'
 import {
   MAX_CROP_ZOOM,
   centeredCropForAspect,
+  cropChanged,
   cropPixelAspect,
   cropZoom,
   dragCrop,
+  fitCropToAspect,
   lockCropAspect,
   normalizeCrop,
   zoomCrop,
@@ -19,6 +21,8 @@ const FIT_OPTIONS = [
   { value: 'fill', label: 'Fill' },
 ]
 
+// 'frame': the shape of the image's box on the slide / canvas (passed as `frameAspect`).
+const FRAME_ASPECT = { id: 'frame', label: 'Current', value: 'frame', title: 'The shape of the image box on your design' }
 const ASPECTS = [
   { id: 'free', label: 'Free', value: null },
   { id: 'original', label: 'Original', value: 'original' },
@@ -52,22 +56,32 @@ function layoutFor(crop, imageAspect, stage) {
  * with the slider or the mouse wheel, and drag the frame's handles to change its shape. The
  * photo outside the frame stays visible, faded, so you can see what is being cut.
  *
+ * `frameAspect` (width / height of the image's box on the design): the frame opens in that
+ * shape, showing exactly what the box shows now (`object-fit: cover` when it isn't cropped yet),
+ * and keeps that shape while resizing until another shape is chosen.
+ *
  * `onApply({ crop, fit, opacity, naturalWidth, naturalHeight })` — crop is null when the whole
- * image is kept.
+ * image is kept (or an uncropped image is applied without changing the frame).
  */
 export default function ImageCropModal({
   imageUrl,
   initialCrop = null,
   initialFit = 'cover',
   initialOpacity = 1,
+  frameAspect = null,
   showFit = true,
   onApply,
   onClose,
 }) {
   const [fit, setFit] = useState(initialFit || 'cover')
   const [opacity, setOpacity] = useState(Math.round((initialOpacity ?? 1) * 100))
+  const hasFrame = Number(frameAspect) > 0
+  const defaultAspectId = hasFrame ? 'frame' : 'free'
+  const aspects = hasFrame ? [FRAME_ASPECT, ...ASPECTS] : ASPECTS
   const [crop, setCrop] = useState(() => normalizeCrop(initialCrop) || FULL)
-  const [aspectId, setAspectId] = useState('free')
+  // What the image box shows now: where the dialog opens and what Reset goes back to.
+  const [startCrop, setStartCrop] = useState(() => normalizeCrop(initialCrop) || FULL)
+  const [aspectId, setAspectId] = useState(defaultAspectId)
   const [natural, setNatural] = useState(null)
   const [loadError, setLoadError] = useState(false)
   const [stage, setStage] = useState(DEFAULT_STAGE)
@@ -80,10 +94,13 @@ export default function ImageCropModal({
   const listenersRef = useRef(null)
 
   const imageAspect = natural ? natural.width / natural.height : 1
-  const aspectValue = (() => {
-    const a = ASPECTS.find((item) => item.id === aspectId)?.value
-    return a === 'original' ? imageAspect : a
-  })()
+  const aspectFor = (id) => {
+    const a = aspects.find((item) => item.id === id)?.value
+    if (a === 'original') return imageAspect
+    if (a === 'frame') return Number(frameAspect)
+    return a
+  }
+  const aspectValue = aspectFor(aspectId)
 
   useLayoutEffect(() => {
     const el = stageRef.current
@@ -109,15 +126,15 @@ export default function ImageCropModal({
 
   const chooseAspect = (id) => {
     setAspectId(id)
-    const a = ASPECTS.find((item) => item.id === id)?.value
-    const value = a === 'original' ? imageAspect : a
-    if (value) setCrop(centeredCropForAspect(value, imageAspect))
+    const value = aspectFor(id)
+    if (!value) return
+    // The box's own shape keeps the current view as far as it can; presets start centred.
+    setCrop((current) =>
+      id === 'frame' ? fitCropToAspect(current, value, imageAspect) : centeredCropForAspect(value, imageAspect)
+    )
   }
 
-  const setZoom = useCallback(
-    (next) => setCrop((current) => zoomCrop(current, next, imageAspect)),
-    [imageAspect]
-  )
+  const setZoom = (next) => setCrop((current) => zoomCrop(current, next, imageAspect))
 
   const stopDrag = useCallback(() => {
     const listeners = listenersRef.current
@@ -233,7 +250,13 @@ export default function ImageCropModal({
               draggable={false}
               onLoad={(e) => {
                 const { naturalWidth: width, naturalHeight: height } = e.currentTarget
-                if (width && height) setNatural({ width, height })
+                if (!width || !height) return
+                setNatural({ width, height })
+                if (hasFrame) {
+                  const start = fitCropToAspect(initialCrop, Number(frameAspect), width / height)
+                  setStartCrop(start)
+                  setCrop(start)
+                }
               }}
               onError={() => setLoadError(true)}
               onPointerDown={(e) => beginDrag(e, 'pan')}
@@ -329,7 +352,7 @@ export default function ImageCropModal({
             </span>
             <div className="ppt-crop-ratio-row">
               <div className="ppt-segmented" role="radiogroup" aria-label="Frame shape">
-                {ASPECTS.map((opt) => (
+                {aspects.map((opt) => (
                   <button
                     key={opt.id}
                     type="button"
@@ -337,6 +360,7 @@ export default function ImageCropModal({
                     aria-checked={aspectId === opt.id}
                     className={`ppt-segmented-btn ${aspectId === opt.id ? 'is-active' : ''}`}
                     disabled={!natural}
+                    title={opt.title}
                     onClick={() => chooseAspect(opt.id)}
                   >
                     {opt.label}
@@ -346,11 +370,12 @@ export default function ImageCropModal({
               <button
                 type="button"
                 className="ppt-crop-reset"
+                title="Back to what the image box shows now"
                 onClick={() => {
-                  setAspectId('free')
-                  setCrop(FULL)
+                  setAspectId(defaultAspectId)
+                  setCrop(startCrop)
                 }}
-                disabled={!cropped}
+                disabled={!cropChanged(crop, startCrop) && aspectId === defaultAspectId}
               >
                 <FiRotateCcw size={13} aria-hidden /> Reset
               </button>
@@ -402,8 +427,11 @@ export default function ImageCropModal({
             className="ppt-crop-modal-btn ppt-crop-modal-btn--primary"
             disabled={loadError}
             onClick={() => {
+              // Opened on an uncropped image and the frame wasn't changed: keep it uncropped.
+              const untouched = !normalizeCrop(initialCrop) && !cropChanged(crop, startCrop)
+              const finalCrop = aspectValue && cropped ? lockCropAspect(cropped, aspectValue, imageAspect) : cropped
               onApply?.({
-                crop: aspectValue && cropped ? lockCropAspect(cropped, aspectValue, imageAspect) : cropped,
+                crop: untouched ? null : finalCrop,
                 fit,
                 opacity: opacity / 100,
                 naturalWidth: natural?.width || null,

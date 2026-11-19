@@ -18,7 +18,7 @@ import CanvasExportModal from './CanvasExportModal'
 import PptElementContextMenu from '../Slides/AIPptComponents/PptElementContextMenu'
 import PptQuickMenu from '../Slides/AIPptComponents/PptQuickMenu'
 import ImageCropModal from '../Slides/AIPptComponents/ImageCropModal'
-import { cropChanged, placementForCrop, withImageCrop } from '../../utils/imageCrop'
+import { cropChanged, frameAspectOf, placementForCrop, withImageCrop } from '../../utils/imageCrop'
 import { isShortcutHelpKey } from './canvasShortcuts'
 import {
   DEFAULT_SIZE,
@@ -2180,6 +2180,7 @@ export default function CanvasEditor({
             initialCrop={selectedElement.content?.crop}
             initialFit={selectedElement.content?.fit}
             initialOpacity={selectedElement.content?.opacity}
+            frameAspect={frameAspectOf(selectedElement.placement)}
             onApply={handleCropApply}
             onClose={() => setCropModalOpen(false)}
           />

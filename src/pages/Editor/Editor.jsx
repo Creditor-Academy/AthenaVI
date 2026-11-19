@@ -105,7 +105,7 @@ import { notify, confirmDialog } from '../../utils/appDialog'
 import ImageCropModal from '../Slides/AIPptComponents/ImageCropModal'
 import { resolveClipMediaSrc, isVideoMedia, isAvatarClip } from '../../utils/heygenVideo'
 import { resolveClipRect } from '../../utils/clipLayout'
-import { cropAspectRatio, cropChanged } from '../../utils/imageCrop'
+import { cropAspectRatio, cropChanged, frameAspectOf } from '../../utils/imageCrop'
 function projectHasPreExistingScenes(scenes) {
   return Array.isArray(scenes) && scenes.length > 0
 }
@@ -1138,10 +1138,11 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
     const ratio = cropChanged(clip.style?.crop, crop) && !isBackgroundClip(clip)
       ? cropAspectRatio(crop, naturalWidth, naturalHeight)
       : null
-    if (ratio) {
-      const rect = resolveClipRect(clip)
+    const rect = ratio ? resolveClipRect(clip) : null
+    const height = rect ? Math.max(8, Math.round(rect.size.width / ratio)) : null
+    // A crop chosen in the layer's own shape (the default) leaves the layer where it is.
+    if (rect && Math.abs(height - rect.size.height) > 1) {
       const width = rect.size.width
-      const height = Math.max(8, Math.round(width / ratio))
       updates.size = { width, height }
       updates.position = { x: rect.position.x, y: Math.round(rect.position.y + (rect.size.height - height) / 2) }
       updates._userPlaced = true // pixel coordinates from here on
@@ -3466,6 +3467,7 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
             initialCrop={clip.style?.crop}
             initialFit={clip.style?.objectFit || 'cover'}
             initialOpacity={clip.opacity ?? 1}
+            frameAspect={frameAspectOf(resolveClipRect(clip).size)}
             onApply={handleLayerCropApply}
             onClose={() => setCropLayerId(null)}
           />

@@ -114,7 +114,7 @@ import {
 import { resolveThemeVisual } from '../../../utils/pptThemeVisual'
 import { coercePlainText } from '../../../utils/pptTextContent'
 import { deckTitleFromSlides, exportDeckTitle, isDefaultDeckTitle } from '../../../utils/deckTitle'
-import { cropChanged, normalizeCrop, placementForCrop } from '../../../utils/imageCrop'
+import { cropChanged, frameAspectOf, normalizeCrop, placementForCrop } from '../../../utils/imageCrop'
 import {
   imageFilesFromDataTransfer,
   imagePlacementForPage,
@@ -5661,6 +5661,7 @@ function AIPptEditor({
           initialCrop={selectedElement.content?.crop}
           initialFit={selectedElement.content?.fit}
           initialOpacity={selectedElement.content?.opacity}
+          frameAspect={frameAspectOf(selectedElement.placement)}
           onApply={handleCropApply}
           onClose={() => setCropModalOpen(false)}
         />

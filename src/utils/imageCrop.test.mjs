@@ -10,6 +10,8 @@ import {
   placementForCrop,
   cropZoom,
   zoomCrop,
+  fitCropToAspect,
+  frameAspectOf,
   MAX_CROP_ZOOM,
 } from './imageCrop.js'
 
@@ -114,5 +116,43 @@ describe('zoom (Canva-style scale of the photo inside the frame)', () => {
     const full = { x: 0, y: 0, width: 1, height: 1 }
     near(zoomCrop(full, 0.2, 1).width, 1)
     near(zoomCrop(full, 99, 1).width, 1 / MAX_CROP_ZOOM)
+  })
+})
+
+describe('opening the crop in the shape of the image box', () => {
+  const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-6, `${a} ≈ ${b}`)
+
+  it('an uncropped image starts with what object-fit: cover shows in the box', () => {
+    // 3:2 photo in a square box: the centre square, full height.
+    const c = fitCropToAspect(null, 1, 1.5)
+    near(c.height, 1)
+    near(c.width, 1 / 1.5)
+    near(c.x, (1 - 1 / 1.5) / 2)
+    near(c.y, 0)
+    // 3:2 photo in a 16:9 box: full width, top and bottom trimmed.
+    const wide = fitCropToAspect(null, 16 / 9, 1.5)
+    near(wide.width, 1)
+    near((wide.width * 1.5) / wide.height, 16 / 9)
+  })
+
+  it('an existing crop keeps its centre and zoom and takes the box shape', () => {
+    const start = { x: 0.2, y: 0.2, width: 0.4, height: 0.2 } // 2:1 on a square photo
+    const c = fitCropToAspect(start, 1, 1)
+    near(c.width, 0.2)
+    near(c.height, 0.2)
+    near(c.x + c.width / 2, 0.4)
+    near(c.y + c.height / 2, 0.3)
+  })
+
+  it('box aspect comes from the placement / size; unknown boxes give null', () => {
+    near(frameAspectOf({ width: 400, height: 300 }), 4 / 3)
+    assert.equal(frameAspectOf({ width: 0, height: 300 }), null)
+    assert.equal(frameAspectOf(null), null)
+  })
+
+  it('a crop in the box shape leaves the box exactly where it is', () => {
+    const placement = { x: 10, y: 20, width: 400, height: 300 }
+    const crop = fitCropToAspect(null, 400 / 300, 1000 / 500)
+    assert.deepEqual(placementForCrop(placement, crop, 1000, 500), placement)
   })
 })
