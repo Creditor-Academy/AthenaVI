@@ -4,23 +4,28 @@
 **Repos:** `AthenaVI` (frontend, FE), `AthenaVI_backend` (backend, BE), plus infra (S3 / nginx).
 **Scope:** every presentation, Brand Kit, Canvas and general bug in the report.
 **Out of scope for now:** the video bugs V-1 to V-5 (avatar generation, the crash after narration, credits charged for a failed video, the lost video title, the static preview) and the truncated video error toast. They get their own plan.
-**Status:** Plan only. Root causes come from reading the code. P-1 and C-1 still need to be confirmed against production (see each item).
+**Status:** C-1 code done 2026-11-20 (🔵, not committed or deployed). The other bugs are not started. Root causes come from reading the code. P-1 and C-1 still need to be confirmed against production (see each item).
+**Tracking:** every bug has a **Checkpoint** (its definition of done) below. Tick the boxes as the work lands, and update the Status column. A bug is ✅ only when every box in its checkpoint is ticked.
 
-| # | Bug | Sev. | Area | Owner | Estimate | Sprint |
-|---|---|---|---|---|---|---|
-| P-1 | Slide text lost after reload despite "SAVED"; Present shows the slide blank | High | Presentations | FE + BE | 3 d | 1 |
-| C-1 | Canvas PNG/PDF export fails when an AI image is on the page | High | Canvas | Infra + FE + BE | 2 d | 1 |
-| C-2 | Inspector number fields: 1600 becomes 10600, can't clear, no maximum | High | Canvas | FE | 1 d | 1 |
-| P-3 | Media panel stuck on "Loading…" | Medium | Presentations | FE + BE | 0.5 d | 1 |
-| P-4 / C-3 | New items land on top of existing content; Title and Subtitle overlap | Medium / Low | Both editors | FE | 1.5 d | 2 |
-| P-2 | AI deck charged 393 credits against an estimate of 319 | Medium | Credits | BE + FE | 2 d | 2 |
-| B-1 | Brand kit applies only partly to AI decks | Medium | Brand Kit | BE + FE | 2.5 d | 2 |
-| B-2 | No Brand Kit in the Canvas editor | Medium | Brand Kit | FE | 3 d | 3 |
-| L-1 | Folder picker: no default folder, Continue disabled | Low | Workspaces | BE + FE | 1 d | 3 |
-| L-2 | Canvas design card shows a broken thumbnail | Low | Workspaces | BE + FE | 0.5 d | 2 |
-| L-3 | "Danger zone" button in the deck tool rail is easy to hit | Low | Presentations | FE | 0.25 d | 2 |
-| L-4 | No per-action credit feedback | Low | Credits | FE | 1 d | 3 |
-| L-5 | Failed operations give no retry or support guidance | Low | All | FE | 1.5 d | 3 |
+Status key: ⬜ not started · 🟡 in progress · 🔵 code done, waiting for staging / QA · ✅ done (QA signed off).
+
+| # | Bug | Sev. | Area | Owner | Estimate | Sprint | Status |
+|---|---|---|---|---|---|---|---|
+| P-1 | Slide text lost after reload despite "SAVED"; Present shows the slide blank | High | Presentations | FE + BE | 3 d | 1 | ⬜ |
+| C-1 | Canvas PNG/PDF export fails when an AI image is on the page | High | Canvas | FE + BE | 2 d | 1 | 🔵 |
+| C-2 | Inspector number fields: 1600 becomes 10600, can't clear, no maximum | High | Canvas | FE | 1 d | 1 | ⬜ |
+| P-3 | Media panel stuck on "Loading…" | Medium | Presentations | FE + BE | 0.5 d | 1 | ⬜ |
+| P-4 / C-3 | New items land on top of existing content; Title and Subtitle overlap | Medium / Low | Both editors | FE | 1.5 d | 2 | ⬜ |
+| P-2 | AI deck charged 393 credits against an estimate of 319 | Medium | Credits | BE + FE | 2 d | 2 | ⬜ |
+| B-1 | Brand kit applies only partly to AI decks | Medium | Brand Kit | BE + FE | 2.5 d | 2 | ⬜ |
+| B-2 | No Brand Kit in the Canvas editor | Medium | Brand Kit | FE | 3 d | 3 | ⬜ |
+| L-1 | Folder picker: no default folder, Continue disabled | Low | Workspaces | BE + FE | 1 d | 3 | ⬜ |
+| L-2 | Canvas design card shows a broken thumbnail | Low | Workspaces | BE + FE | 0.5 d | 2 | ⬜ |
+| L-3 | "Danger zone" button in the deck tool rail is easy to hit | Low | Presentations | FE | 0.25 d | 2 | ⬜ |
+| L-4 | No per-action credit feedback | Low | Credits | FE | 1 d | 3 | ⬜ |
+| L-5 | Failed operations give no retry or support guidance | Low | All | FE | 1.5 d | 3 | ⬜ |
+
+Fixed outside this plan (section 7): `/templates/` answering 403, and table text cut off in cells, both 🔵.
 
 Total: about 20 developer-days. Sprint 1 holds the three High bugs plus the quick P-3 fix, so the data-loss and export problems ship first.
 
@@ -33,6 +38,7 @@ Total: about 20 developer-days. Sprint 1 holds the three High bugs plus the quic
 - **Unit test.** Every fix comes with one that fails before the fix and passes after it.
 - **Deploy order:** BE before FE when a fix touches both, so a new frontend never calls an endpoint that isn't there yet.
 - **Out of scope:** no video-editor code is changed in this plan. The shared helpers in L-5 (error actions) are built so the video flow can use them later.
+- **Checkpoints.** Each bug ends with a checklist. Its last box, **Close-out**, is the same for every bug: unit tests merged and green, the retest passing on staging, the screen recording and commit SHA on the ticket, and QA's sign-off on production.
 
 ---
 
@@ -105,6 +111,17 @@ The backend stores what it receives correctly. This is a frontend save-pipeline 
 
 **Before closing:** open the QA deck in the database and check whether slide 3's `elements` hold an empty text box (cause 2) or old text (cause 3). Write the answer in the ticket.
 
+**Checkpoint P-1 (done when)**
+- [ ] Root cause confirmed on the QA deck (empty text box or old text) and written in the ticket.
+- [ ] The badge shows **Saving…** while anything is pending, **Saved** only when every write has finished, and **Not saved – Retry** after a failed write (checked with the network offline).
+- [ ] Add slide from a layout: the server copy has the layout's content straight away (reload at once after adding).
+- [ ] Typing on a just-added slide is kept after a reload, including on Slow 3G.
+- [ ] Reload or closing the tab with pending edits keeps them (`pagehide` flush) or warns first (`beforeunload`).
+- [ ] Duplicate right after an edit: the copy has the edit after reload.
+- [ ] Undo/redo on a just-added slide still saves (no 404 on a `new-slide-…` id in the network tab).
+- [ ] Slide 3 of "Intro to Personal Finance" shows its text in the editor and in Present after a reload.
+- [ ] **Close-out:** unit tests merged and green; retest passes on staging; screen recording + commit SHA on the ticket; QA signs off on production.
+
 ---
 
 ### C-1. Canvas export fails when an AI image is on the page (High)
@@ -142,6 +159,21 @@ The backend stores what it receives correctly. This is a frontend save-pipeline 
 
 **Retest:** the report's steps, in a normal window right after placing the image (the cache case) and in a private window.
 
+**Done 2026-11-20 (code, not committed or deployed)**
+- **Cause confirmed: the browser cache, not the bucket.** The production bucket (`virtual-instructor`) does allow `https://virtualstudio.lmsathena.com` (a CORS preflight returns `Access-Control-Allow-Origin`), so no infra change is needed. The editor first shows the picture with a plain `<img>`; S3 answers that without CORS headers and the browser caches it; the export's check then got that cached copy and was refused. Reproduced in a browser against a stand-in server that behaves like S3: the old check failed exactly this way.
+- **Fix (FE):** before drawing, every picture on the page is downloaded again with `cache: 'no-store'` (the address unchanged, so presigned links still work) and the page is drawn from those copies (`src/utils/export/inlineImages.js`, `canvasExportCapture.preparePagesForExport`). The old pre-check (`probeImage`) is gone, and html-to-image no longer adds a cache-busting query (it broke presigned links).
+- **Fallback (BE):** when a host refuses the browser (an origin not on the bucket's list, e.g. dev or staging), the picture comes through `GET /api/media/image?url=…`. It is signed-in only, fetches only https URLs on our bucket (plus `MEDIA_PROXY_HOSTS`), adds no credentials and follows no redirects (so it returns only what the URL already serves), images only, 25 MB, 15 s. This replaces the planned per-asset raw route: it also covers brand-kit logos and presigned links.
+- **Message:** a picture that still can't be loaded is named ("Couldn't load “…”, so nothing was saved. Export without it, or replace the image.") with an **Export without this image** button.
+- **Tests:** `inlineImages.test.mjs` (8), `mediaProxy.service.test.js` (3); frontend 454 / 454, backend 1171 / 1171. Browser test with the real export dialog: PNG (the picture's pixels checked in the file), JPEG, WebP and PDF all download with the image on the page after it was shown first; with a refusing host, the message and "Export without this image" work.
+
+**Checkpoint C-1 (done when)**
+- [x] The production bucket sends `Access-Control-Allow-Origin` for `https://virtualstudio.lmsathena.com` *(checked 20 Nov; no infra change needed)*. Staging bucket: check once the staging site address is known.
+- [x] PNG, JPG, WebP and PDF export work with an image that was already shown in the editor (the cached-copy case). *(browser test against an S3 stand-in)*
+- [ ] The same on staging with real pictures: an AI image, an upload, an Unsplash photo and a brand logo, in Chrome and Safari.
+- [x] The image route only serves our bucket's images, as public / presigned URLs already allow; anything else is refused. *(unit tests)*
+- [x] A picture that still can't be loaded is named, with "Export without this image" offered instead of a failed export. *(browser test)*
+- [ ] **Close-out:** unit tests merged and green; retest passes on staging; screen recording + commit SHA on the ticket; QA signs off on production.
+
 ---
 
 ### C-2. Inspector number fields corrupt input (High)
@@ -174,6 +206,15 @@ The backend stores what it receives correctly. This is a frontend save-pipeline 
 
 **Retest:** the report's steps, plus clearing the field and typing a huge value.
 
+**Checkpoint C-2 (done when)**
+- [ ] Select the width, type 1600, press Enter: the width is 1600.
+- [ ] The field can be cleared while typing; leaving it empty restores the previous value.
+- [ ] 999999 is limited to the page-based maximum; nothing reaches 101600 px.
+- [ ] Arrow up/down change the value by 1 (Shift: 10); Escape restores it.
+- [ ] Typing a number is one undo step, not one per key.
+- [ ] The same field is used for every Inspector number, and in the slide editor.
+- [ ] **Close-out:** unit tests merged and green; retest passes on staging; screen recording + commit SHA on the ticket; QA signs off on production.
+
 ---
 
 ### P-3. Media panel stuck on "Loading…" (Medium, fixed in Sprint 1 because it is small)
@@ -201,6 +242,13 @@ The backend stores what it receives correctly. This is a frontend save-pipeline 
 - Unit: after `onMediaAttached` resolves, loading is false; a slow first search doesn't overwrite a later one; a timeout shows Retry.
 
 **Retest:** open Media, insert an Unsplash photo, insert a second one without closing the panel, then switch to Pexels and back.
+
+**Checkpoint P-3 (done when)**
+- [ ] After inserting a stock photo into a slide, the panel shows the photos again (no "Loading…").
+- [ ] Quick searches in a row show the last search's results, never an older one.
+- [ ] A provider that doesn't answer shows "Couldn't load photos – Retry" after 15 s (tested by blocking the request).
+- [ ] The server's Unsplash, Pexels and Pixabay calls stop after 10 s.
+- [ ] **Close-out:** unit tests merged and green; retest passes on staging; screen recording + commit SHA on the ticket; QA signs off on production.
 
 ---
 
@@ -242,6 +290,14 @@ Both land on top of what is there.
 
 **Retest:** the report's steps in both editors, adding three text boxes, two shapes and two images.
 
+**Checkpoint P-4 / C-3 (done when)**
+- [ ] Slide editor: three text boxes, two shapes and two images in a row land without covering each other or existing content.
+- [ ] Canvas: Title then Subtitle puts the subtitle below the title.
+- [ ] A new item never lands outside the page; on a full page it still gets a position.
+- [ ] A new Canvas item goes on top of the existing ones.
+- [ ] `canvasDocument.test.mjs` updated for the new placement rule.
+- [ ] **Close-out:** unit tests merged and green; retest passes on staging; screen recording + commit SHA on the ticket; QA signs off on production.
+
 ---
 
 ### P-2. AI deck: 393 credits charged against an estimate of 319
@@ -270,6 +326,15 @@ Both land on top of what is there.
 - Script: generate 10 decks on staging and compare estimate vs charge (target within ±10 %, never above the cap).
 
 **Retest:** the report's steps. The charge must be within the range shown and not above it.
+
+**Checkpoint P-2 (done when)**
+- [ ] **Decision recorded:** cap the charge at the top of the estimate (recommended) or not.
+- [ ] A rejected path-A image is not charged; only path B is.
+- [ ] The estimate is a range and no longer includes the export charge.
+- [ ] The progress screen shows credits used against the expected range, updated after the outline.
+- [ ] 10 test generations on staging: each charge within ±10 % of the estimate and never above the cap; results in the ticket.
+- [ ] `credit_estimate_exceeded` is logged when the cap absorbs a charge.
+- [ ] **Close-out:** unit tests merged and green; retest passes on staging; screen recording + commit SHA on the ticket; QA signs off on production.
 
 ---
 
@@ -303,6 +368,15 @@ Both land on top of what is there.
 
 **Retest:** the report's steps on "Budgeting Basics for Students"; check every slide and Present.
 
+**Checkpoint B-1 (done when)**
+- [ ] On "Budgeting Basics for Students", Apply changes the heading font and the title accent on every slide, in the editor and in Present.
+- [ ] A colour or font the user chose by hand is kept.
+- [ ] A manual deck gives the same result as before.
+- [ ] One undo step reverses the whole Apply; "Undo brand kit" restores the previous theme.
+- [ ] New AI decks follow the theme (no fixed colours or fonts unless the layout needs one).
+- [ ] Export fidelity of `ai-light` is unchanged apart from the brand changes.
+- [ ] **Close-out:** unit tests merged and green; retest passes on staging; screen recording + commit SHA on the ticket; QA signs off on production.
+
 ---
 
 ### L-2. Canvas design card shows a broken thumbnail
@@ -322,6 +396,11 @@ Both land on top of what is there.
 
 **Retest:** Workspaces → the "QA Course Thumbnail" card shows the design.
 
+**Checkpoint L-2 (done when)**
+- [ ] The "QA Course Thumbnail" card shows the design in Workspaces, My Work and Recents.
+- [ ] A card whose picture fails to load shows the type icon, never alt text.
+- [ ] **Close-out:** unit tests merged and green; retest passes on staging; screen recording + commit SHA on the ticket; QA signs off on production.
+
 ### L-3. "Danger zone" button in the deck tool rail
 
 **What happens**
@@ -334,6 +413,11 @@ Both land on top of what is there.
 - Make it off by default, and remember the choice per user.
 
 **Retest:** open a deck: no hatched border; the toggle shows and hides it.
+
+**Checkpoint L-3 (done when)**
+- [ ] The button is called **Safe area**, with a tooltip, and sits next to zoom, away from Notes and Layers.
+- [ ] It is off by default, and the choice is remembered per user.
+- [ ] **Close-out:** unit tests merged and green; retest passes on staging; screen recording + commit SHA on the ticket; QA signs off on production.
 
 ---
 
@@ -364,6 +448,15 @@ Both land on top of what is there.
 
 **Retest:** open the QA canvas design → Brand → apply the QA kit → export a PNG (this also checks C-1 with a logo).
 
+**Checkpoint B-2 (done when)**
+- [ ] The Canvas dock has a **Brand** tab with the workspace's kits.
+- [ ] Brand colours appear first in every Canvas colour picker; fonts apply to the selected text.
+- [ ] A logo inserted from the kit still shows a week later (asset copy, not a presigned link).
+- [ ] "Apply to whole design" changes every page in one undo step.
+- [ ] "Brand kit photos" works in the Canvas Media panel.
+- [ ] The QA design exports as PNG with the logo on it.
+- [ ] **Close-out:** unit tests merged and green; retest passes on staging; screen recording + commit SHA on the ticket; QA signs off on production.
+
 ### L-1. Folder picker has no default folder
 
 **What happens**
@@ -379,6 +472,12 @@ Both land on top of what is there.
 - FE: Continue is enabled with the default selected.
 
 **Retest:** a workspace with no folders → Create → presentation: Continue works at once.
+
+**Checkpoint L-1 (done when)**
+- [ ] Every existing workspace has a **My Projects** folder after the migration; running it twice changes nothing.
+- [ ] A new workspace gets one on creation.
+- [ ] The picker pre-selects it and Continue is enabled at once.
+- [ ] **Close-out:** unit tests merged and green; retest passes on staging; screen recording + commit SHA on the ticket; QA signs off on production.
 
 ### L-4. No per-action credit feedback
 
@@ -401,6 +500,12 @@ Both land on top of what is there.
 
 **Retest:** generate an AI image; the toast shows −12 and the balance updates without a reload.
 
+**Checkpoint L-4 (done when)**
+- [ ] Each paid action (AI deck, AI image, AI text, regenerate slide, paid export, brand-kit AI) shows "−N credits · action · View history" once.
+- [ ] The balance in the header updates without a reload.
+- [ ] "View history" opens the credit history at that entry.
+- [ ] **Close-out:** unit tests merged and green; retest passes on staging; screen recording + commit SHA on the ticket; QA signs off on production.
+
 ### L-5. Failed operations give no retry or support guidance
 
 **What happens**
@@ -417,6 +522,13 @@ Both land on top of what is there.
 - Unit: `friendlyError` never returns JSON; Retry calls the action again.
 
 **Retest:** force a failure (offline) during export and AI image; a plain message, Retry and support links appear and stay until closed.
+
+**Checkpoint L-5 (done when)**
+- [ ] Error messages stay until closed and offer Retry where the action can be repeated.
+- [ ] Every error has "Contact support" and "Help" links, and a reference id support can search for.
+- [ ] No message shows raw JSON; the full text is behind "Details".
+- [ ] Used in export (slides and Canvas), AI deck, AI image, uploads, stock search and saving.
+- [ ] **Close-out:** unit tests merged and green; retest passes on staging; screen recording + commit SHA on the ticket; QA signs off on production.
 
 ---
 
@@ -435,8 +547,57 @@ Both land on top of what is there.
 - canvas undo, layers and reload (listed as working in the report);
 - image crop in both editors.
 
+### Release checkpoints
+
+**Checkpoint R1 (end of Sprint 1)**
+- [ ] P-1, C-1, C-2 and P-3 checkpoints all ticked.
+- [ ] S3 CORS live on production and staging.
+- [ ] Regression list passed on staging.
+- [ ] QA recordings for the four bugs attached; QA signs off R1.
+
+**Checkpoint R2 (end of Sprint 2)**
+- [ ] P-4 / C-3, P-2, B-1, L-2 and L-3 checkpoints all ticked.
+- [ ] P-1 regression: add slide, type, reload at once — text kept.
+- [ ] Regression list passed on staging; QA signs off R2.
+
+**Checkpoint R3 (end of Sprint 3: plan done)**
+- [ ] B-2, L-1, L-4 and L-5 checkpoints all ticked.
+- [ ] Full pass of the report's presentation, Brand Kit and Canvas sections on production with the QA account: no open item.
+- [ ] The QA report's sections 3, 4, 6 and 8 (non-video items) marked fixed by QA.
+
 ## 6. Video bugs (not in this plan)
 
 Not started, by request: V-1 (plan-locked avatars and the HeyGen dependency), V-2 (crash after narration), V-3 (91 credits for a failed video), V-4 (title saved as "Untitled Project"), V-5 (static preview), and the truncated video error toast.
 
 L-4 and L-5 are built so the video flow can use them. V-3 should also follow the P-2 rule: no charge for output that wasn't delivered.
+
+## 7. Fixed outside this plan
+
+Raised separately on 20 Nov 2026 and fixed in code. T-1 is committed (frontend `7311886`, backend `08562cf`); T-2 is not committed yet. Neither is deployed.
+
+### T-1. Table text cut off in cells (slide and Canvas editors) — 🔵
+
+Cell text now wraps onto new lines, rows grow to fit it, and the column and row borders of a selected table can be dragged (as in PowerPoint and Canva). Export (PDF and PPTX) uses the same column widths and row heights.
+- Code: `PptEditableTable.jsx`, `utils/pptTableLayout.js` (+ tests), both editors; table styles moved to `pptEditorExtras.css` so the export page has them too; backend `pptxTable.js`.
+
+**Checkpoint T-1 (done when)**
+- [x] Long text wraps inside its cell; no text is cut. *(browser test, 20 Nov)*
+- [x] Typing grows only the edited row; deleting the text shrinks it back. *(browser test)*
+- [x] Column and row borders can be dragged; each drag is one undo step. *(browser test)*
+- [x] Present draws the same row heights as the editor. *(browser test)*
+- [x] Export: tables keep their card, header shading and wrapped text; `kitchen-sink` PDF 0.984, PPTX 0.912 (baseline 0.984 / 0.906).
+- [x] Unit tests: frontend 446 / 446, backend table tests pass.
+- [x] Committed: frontend `7311886`, backend `08562cf`.
+- [ ] Deployed.
+- [ ] Checked in the real slide editor and Canvas editor on staging with the QA deck (e.g. the AI deck's tables).
+- [ ] QA signs off.
+
+### T-2. `/templates/` answered "403 Forbidden" — 🔵
+
+`/templates/` is the folder of template data files the editors load, not a page; nginx refused to list it. `public/templates/index.html` now sends visitors to `/dashboard/templates` (sign-in first when needed).
+
+**Checkpoint T-2 (done when)**
+- [x] `/templates` and `/templates/` open the Templates page; the JSON files in the folder still load. *(tested on the production build, 20 Nov)*
+- [ ] Committed and deployed.
+- [ ] `https://virtualstudio.lmsathena.com/templates/` checked on production.
+- [ ] *(Optional, server access)* production nginx gets `error_page 403 =404 /404.html;` so other folders (`/assets/`, `/mockups/`, `/oauth/`) show the Not found page instead of 403.

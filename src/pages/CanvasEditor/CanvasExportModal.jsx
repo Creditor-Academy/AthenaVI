@@ -6,6 +6,7 @@ import {
   EXPORT_FORMATS,
   EXPORT_SCALES,
   buildDesignPdf,
+  describeBlockedImages,
   describeExportError,
   exportFileName,
   imageLabelsOnPage,
@@ -13,7 +14,7 @@ import {
   slugTitle,
   zipStoredFiles,
 } from './canvasExport'
-import { assertPageIsExportable, captureExportNode } from './canvasExportCapture'
+import { captureExportNode, preparePagesForExport } from './canvasExportCapture'
 import './CanvasEditor.css'
 
 function downloadBlob(blob, filename) {
@@ -119,6 +120,8 @@ export default function CanvasExportModal({
   const [isExporting, setIsExporting] = useState(false)
   const [downloadSuccess, setDownloadSuccess] = useState(false)
   const [error, setError] = useState('')
+  // Pictures that couldn't be loaded on the last try: offer to export without them.
+  const [blockedImages, setBlockedImages] = useState([])
   const [capturePage, setCapturePage] = useState(null)
   const frameRef = useRef(null)
   const pendingFrame = useRef(null)
@@ -148,8 +151,9 @@ export default function CanvasExportModal({
       setCapturePage(page)
     })
 
-  const handleExport = async () => {
+  const handleExport = async ({ skipBlocked = false } = {}) => {
     setError('')
+    setBlockedImages([])
     const selection = pagesForExport(pages, { scope, activeIndex, rangeStart, rangeEnd })
     if (selection.error) {
       setError(selection.error)
@@ -163,18 +167,27 @@ export default function CanvasExportModal({
       const rasterScale = format === 'pdf' ? 1 : scale
       const captured = []
 
-      for (let index = 0; index < selection.pages.length; index += 1) {
-        const page = selection.pages[index]
-        lastPage = page
+      // Every picture is downloaded fresh first, so a copy the browser cached without CORS
+      // headers can't block the file (canvasExportCapture.preparePagesForExport).
+      const prepared = await preparePagesForExport(selection.pages, { skipBlocked })
+      if (prepared.blocked.length && !skipBlocked) {
+        setBlockedImages(prepared.blocked)
+        setError(describeBlockedImages(prepared.blocked))
+        return
+      }
+
+      for (let index = 0; index < prepared.pages.length; index += 1) {
+        const page = prepared.pages[index]
+        const original = selection.pages[index]
+        lastPage = original
         const node = await waitForFrame(page)
-        await assertPageIsExportable(page)
         const blob = await captureExportNode(node, {
           format: rasterFormat,
           scale: rasterScale,
           background: pageBackground(page),
           transparent: allowTransparent && transparentBg,
         })
-        captured.push({ page, blob, number: pages.indexOf(page) + 1 })
+        captured.push({ page, blob, number: pages.indexOf(original) + 1 })
       }
 
       if (format === 'pdf') {
@@ -341,7 +354,19 @@ export default function CanvasExportModal({
           )}
 
           {error && (
-            <p className="canvas-export-error" role="alert">{error}</p>
+            <div className="canvas-export-error" role="alert">
+              <p>{error}</p>
+              {blockedImages.length ? (
+                <button
+                  type="button"
+                  className="canvas-export-error-action"
+                  onClick={() => handleExport({ skipBlocked: true })}
+                  disabled={isExporting}
+                >
+                  Export without {blockedImages.length === 1 ? 'this image' : 'these images'}
+                </button>
+              ) : null}
+            </div>
           )}
         </div>
 
@@ -350,7 +375,7 @@ export default function CanvasExportModal({
           <button
             type="button"
             className="canvas-size-create"
-            onClick={handleExport}
+            onClick={() => handleExport()}
             disabled={isExporting || !pages.length}
           >
             {downloadSuccess ? (

@@ -588,7 +588,13 @@ The same font must be used in the editor, the PDF, PowerPoint and Google Slides,
     - The LibreOffice column, from the harness (2026-11-19 and again 2026-11-20, `baselines/ci-baseline.json`): see section 6.
     - Everything the apps need is ready. `node scripts/presentation-eval/export-fidelity.js --label qa --qa-pack` writes `qa-pack/` with, for each golden deck, the PowerPoint file, the "Made for: Google Slides" file and the PDF, plus a README. Both PPTX kinds were checked to open (LibreOffice).
     - The step-by-step checklist for testers: [`PPT_EXPORT_QA_CHECKLIST.md`](PPT_EXPORT_QA_CHECKLIST.md) (what to check per element, how to mark ✅ / ⚠️ / ❌, the customer-deck procedure).
-  - **Still to do (needs people and apps; PowerPoint isn't installed on the dev machine):** open the six golden decks in PowerPoint for Windows, Mac and web, and Google Slides, and fill those columns; collect 10 customer decks with permission and run the checklist on them.
+  - **Automated pre-check of the files the apps will open (2026-11-20).** A fresh QA pack from the current code (including the table wrap / column-width change) was checked without the apps:
+    - All 12 PPTX files (6 decks × PowerPoint and Google Slides versions) pass the Office Open XML schema check, the same rules PowerPoint uses before offering "Repair".
+    - Structure: every internal link points at a part that exists, no duplicate shape ids, slide count equal to the PDF on every deck, slide size 16:9 (4:3 for `four-three`), speaker notes on every slide, `kitchen-sink`'s table and charts native.
+    - PowerPoint versions embed their two fonts; Google Slides versions name only Google Fonts (Inter, Lato, Montserrat, Open Sans, Playfair Display). Largest file 13 MB (`forty-slides`), far under Google Slides' import limit.
+    - One harmless finding, from the PPTX library (pptxgenjs 4.0.1), not our code: `[Content_Types].xml` lists a slide master per slide although only `slideMaster1.xml` exists. Every pptxgenjs file has this and PowerPoint opens them; watch for a "Repair" prompt anyway.
+    - Scores unchanged: PDF 0.984–0.997; PPTX 0.887–0.961 (`kitchen-sink` 0.912, up from 0.906).
+  - **Still to do (needs people and apps; PowerPoint isn't installed on the dev machine and Google Drive isn't connected):** open the six golden decks in PowerPoint for Windows and in Google Slides (the must-do pass, about 3 hours with the QA pack and [`PPT_EXPORT_QA_CHECKLIST.md`](PPT_EXPORT_QA_CHECKLIST.md)) and fill those columns. Optional: `kitchen-sink` in PowerPoint for Mac and web; 3–5 customer decks with permission.
 - [x] **7.3** Add the harness to CI on the backend: golden decks → PDF and PPTX → scores must stay above the thresholds. A drop fails the build.
   - New `scripts/presentation-eval/fidelity-gate.js`, run by `npm run test:export-fidelity` after the harness. It fails the build when:
     - a deck errors, or a deck in the baseline isn't measured;

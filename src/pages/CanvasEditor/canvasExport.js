@@ -10,6 +10,7 @@ export const EXPORT_FORMATS = [
 export const EXPORT_SCALES = [1, 2, 4]
 
 export { zipStoredFiles } from '../../utils/export/zip.js'
+import { pageImageRefs } from '../../utils/export/inlineImages.js'
 
 export function slugTitle(title) {
   const slug = String(title || 'design')
@@ -46,45 +47,29 @@ export function pagesForExport(canvases, { scope = 'current', activeIndex = 0, r
   return { pages: [pages[index]], error: null }
 }
 
-function imageFileName(url) {
-  try {
-    const path = new URL(url, 'https://design.local').pathname
-    const base = decodeURIComponent(path.split('/').filter(Boolean).pop() || '')
-    return base || 'image'
-  } catch {
-    return 'image'
-  }
+/** http(s) pictures on a page (background and elements), so a failed load can name the file. */
+export function imageLabelsOnPage(page) {
+  return pageImageRefs(page)
 }
 
-/** http(s) images on a page, so a CORS failure can name the file. */
-export function imageLabelsOnPage(page) {
-  const found = []
-  const push = (url) => {
-    if (typeof url !== 'string' || !/^https?:\/\//i.test(url)) return
-    if (found.some((item) => item.url === url)) return
-    found.push({ url, name: imageFileName(url) })
+/** The message for pictures that couldn't be loaded into the file (`[{ name }]`). */
+export function describeBlockedImages(images = []) {
+  const names = images.map((item) => item?.name).filter(Boolean)
+  if (!names.length) {
+    return "Couldn't load an image on this page, so nothing was saved. Export without it, or replace the image."
   }
-  push(page?.backgroundImage)
-  for (const element of page?.elements || []) {
-    const content = element?.content || {}
-    push(content.url)
-    push(content.src)
-    push(content.imageUrl)
-  }
-  return found
+  const shown = names.slice(0, 3).map((name) => `“${name}”`).join(', ')
+  const more = names.length > 3 ? ` and ${names.length - 3} more` : ''
+  const one = names.length === 1
+  return `Couldn't load ${shown}${more}, so nothing was saved. Export without ${one ? 'it' : 'them'}, or replace ${one ? 'the image' : 'the images'}.`
 }
 
 export function describeExportError(error, images = []) {
   const text = String(error?.message || error || 'Export failed.')
-  if (text.startsWith("Couldn't draw")) return text
+  if (text.startsWith("Couldn't")) return text
   const blocked = /taint|cors|securityerror|cross-origin|blocked/i.test(text)
   if (!blocked) return text || 'Export failed.'
-  const names = images.map((item) => item?.name).filter(Boolean).slice(0, 3)
-  if (!names.length) {
-    return "Couldn't draw an image into the file. The image host blocked it, so nothing was saved."
-  }
-  const listed = names.map((name) => `“${name}”`).join(', ')
-  return `Couldn't draw ${listed}. The image host blocked it, so nothing was saved.`
+  return describeBlockedImages(images)
 }
 
 function pdfOrientation(width, height) {

@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  /templates/ is the folder of template asset files the editors load (e.g. pitch-assets.json),
+  not a page. Without this file nginx answered "403 Forbidden" for /templates and /templates/.
+  Send visitors to the Templates page instead (it asks them to sign in first when needed).
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex, follow" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Templates | Virtual Studio</title>
+    <link rel="canonical" href="/dashboard/templates" />
+    <meta http-equiv="refresh" content="0; url=/dashboard/templates" />
+    <script>
+      window.location.replace('/dashboard/templates' + window.location.search + window.location.hash)
+    </script>
+  </head>
+  <body>
+    <p>Opening <a href="/dashboard/templates">Templates</a>…</p>
+  </body>
+</html>

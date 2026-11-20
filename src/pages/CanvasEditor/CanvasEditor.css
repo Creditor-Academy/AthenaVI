@@ -3726,6 +3726,31 @@ body > .ppt-fill-picker-pop {
   font-weight: 600;
 }
 
+.canvas-export-error p {
+  margin: 0;
+}
+
+.canvas-export-error-action {
+  margin-top: 8px;
+  padding: 6px 12px;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #b91c1c;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.canvas-export-error-action:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+.canvas-export-error-action:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 /* ==========================================================================
    CONTEXT MENU STYLING & PORTAL Z-INDEX
    ========================================================================== */

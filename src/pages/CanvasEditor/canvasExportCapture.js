@@ -1,20 +1,41 @@
-import { imageLabelsOnPage, describeExportError } from './canvasExport.js'
-import { dataUrlToBlob, probeImage, waitForImages } from '../../utils/export/capture.js'
+import { dataUrlToBlob, waitForImages } from '../../utils/export/capture.js'
+import { inlinePageImages, pageWithoutImages } from '../../utils/export/inlineImages.js'
+import { buildUrl, getAuthHeaders } from '../../config/api'
 
-export { probeImage, waitForImages }
+export { waitForImages }
 
-export async function blockedImagesOnPage(page) {
+/** Our API's copy of an image (backend /api/media/image), when its host refuses the browser. */
+export const exportImageProxy = {
+  url: (imageUrl) => buildUrl(`/api/media/image?url=${encodeURIComponent(imageUrl)}`),
+  headers: () => {
+    const headers = { ...getAuthHeaders() }
+    delete headers['Content-Type']
+    return headers
+  },
+}
+
+/**
+ * The pages to draw, with every picture downloaded fresh (inlineImages.js) so a copy the browser
+ * cached without CORS headers can't block the export. Resolves `{ pages, blocked }`; `blocked`
+ * lists pictures that couldn't be loaded on any page. With `skipBlocked`, those are left out of
+ * the pages (the user chose "Export without them").
+ */
+export async function preparePagesForExport(pages, { skipBlocked = false, proxy = exportImageProxy, fetchImpl } = {}) {
+  const cache = new Map()
+  const ready = []
   const blocked = []
-  for (const image of imageLabelsOnPage(page)) {
-    try {
-      // Sequential so a failure names the image that failed, in order.
-      // eslint-disable-next-line no-await-in-loop
-      await probeImage(image.url)
-    } catch {
-      blocked.push(image)
+  for (const page of pages) {
+    const result = await inlinePageImages(page, { proxy, cache, ...(fetchImpl ? { fetchImpl } : {}) })
+    ready.push(result.page)
+    for (const item of result.blocked) {
+      if (!blocked.some((b) => b.url === item.url)) blocked.push(item)
     }
   }
-  return blocked
+  if (skipBlocked && blocked.length) {
+    const skip = new Set(blocked.map((item) => item.url))
+    return { pages: ready.map((page) => pageWithoutImages(page, skip)), blocked }
+  }
+  return { pages: ready, blocked }
 }
 
 /**
@@ -28,7 +49,9 @@ export async function captureExportNode(node, { format = 'png', scale = 1, backg
 
   const { toPng, toJpeg, toCanvas } = await import('html-to-image')
   const pixelRatio = scale === 4 ? 4 : scale === 2 ? 2 : 1
-  const common = { pixelRatio, cacheBust: true, skipFonts: false }
+  // Pictures are already data URLs (preparePagesForExport). Cache-busting would only add a
+  // query to the few remaining addresses (fonts), and it breaks presigned links.
+  const common = { pixelRatio, cacheBust: false, skipFonts: false }
 
   if (format === 'jpeg') {
     const dataUrl = await toJpeg(node, {
@@ -58,11 +81,4 @@ export async function captureExportNode(node, { format = 'png', scale = 1, backg
     backgroundColor: transparent ? undefined : background || '#ffffff',
   })
   return dataUrlToBlob(dataUrl)
-}
-
-export async function assertPageIsExportable(page) {
-  const blocked = await blockedImagesOnPage(page)
-  if (blocked.length) {
-    throw new Error(describeExportError(new Error('tainted'), blocked))
-  }
 }

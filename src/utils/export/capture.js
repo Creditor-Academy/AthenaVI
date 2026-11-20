@@ -26,24 +26,3 @@ export function waitForImages(root) {
   )
 }
 
-/** Draw one remote image. A tainted canvas means the host blocked the export. */
-export function probeImage(url) {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas')
-        canvas.width = 1
-        canvas.height = 1
-        canvas.getContext('2d').drawImage(img, 0, 0)
-        canvas.toDataURL()
-        resolve()
-      } catch (error) {
-        reject(error)
-      }
-    }
-    img.onerror = () => reject(new Error('tainted'))
-    img.src = url
-  })
-}
