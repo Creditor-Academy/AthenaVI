@@ -148,6 +148,8 @@ import {
 } from '../../../utils/layoutCanvasService'
 import { rethemeSlidesGraphicElements } from '../../../utils/rethemeGraphicElements'
 import { contentPlainText, contentWithSyncedText, setPptTextSelection } from '../../../utils/pptTextContent'
+import { activeTextEditDraft, subscribeTextEditDraft } from '../../../utils/textEditDraft'
+import { mergeLoadedSlides } from '../../../utils/pptSlideMerge'
 import { PPT_DEFAULT_PLACEMENTS } from '../../../constants/pptInsertCatalog'
 import {
   collectSlideFontFamilies,
@@ -188,6 +190,9 @@ import '../AIPptGenerator.css'
 
 import { confirmDialog, promptDialog } from '../../../utils/appDialog'
 const CANVAS_SAVE_DEBOUNCE_MS = 600
+
+/** The text being typed is saved this long after typing stops (textEditDraft.js). */
+const TEXT_DRAFT_SAVE_MS = 1000
 
 function isOptimisticSlideId(id) {
   const value = String(id || '')
@@ -1351,6 +1356,17 @@ function AIPptEditor({
   const skipTextCommitRef = useRef(false)
   const slidePersistQueueRef = useRef(Promise.resolve())
   const slideIdMapRef = useRef({})
+  // Save status (QA P-1). Slides with a canvas save waiting on its timer, slides with a save on
+  // its way, slides whose last save failed, running slide-persist tasks, slides edited since the
+  // deck started loading, and the text drafts already saved (element id → text).
+  const canvasPendingRef = useRef(new Set())
+  const canvasInflightRef = useRef(new Set())
+  const failedSlidesRef = useRef(new Set())
+  const persistBusyRef = useRef(0)
+  const editedSinceLoadRef = useRef(new Set())
+  const draftSavedRef = useRef(new Map())
+  const flushAllSavesNowRef = useRef(null)
+  const [saveState, setSaveState] = useState('saved')
   const minimapDragIdRef = useRef(null)
 
   const history = usePptEditorHistory()
@@ -1776,6 +1792,8 @@ function AIPptEditor({
   const reloadPresentation = useCallback(async () => {
     if (viewOnly) return null
     if (!workspaceId || !presentationId) return
+    // Edits made from here until the load lands are kept (mergeLoadedSlides).
+    editedSinceLoadRef.current = new Set()
     const data = await presentationService.getPresentation(workspaceId, presentationId)
     let slides = extractSlidesFromPresentation(data)
     const nextAspect =
@@ -1821,24 +1839,36 @@ function AIPptEditor({
       }
     }
 
-    // Paint slide shells immediately, then hydrate graphics one slide at a time.
+    // Paint slide shells immediately, then hydrate graphics one slide at a time. A slide edited
+    // (or added) meanwhile keeps the edit: replacing it put the old content back on screen, and
+    // the next save sent that to the server (QA P-1).
     resetSlideLoadQueue()
-    setLocalSlides(slides)
-    localSlidesRef.current = slides
+    {
+      const shells = mergeLoadedSlides(localSlidesRef.current, slides, editedSinceLoadRef.current)
+      setLocalSlides(shells)
+      localSlidesRef.current = shells
+    }
     slides = await hydrateSlidesGraphicElements(slides, {
       sequential: true,
-      onSlideHydrated: (hydrated, idx) => {
+      onSlideHydrated: (hydrated) => {
         setLocalSlides((prev) => {
           const base = Array.isArray(prev) && prev.length ? prev : slides
+          if (editedSinceLoadRef.current.has(hydrated?.id)) return base
+          const at = base.findIndex((slide) => slide?.id === hydrated?.id)
+          // Deleted meanwhile: stays deleted.
+          if (at < 0) return base
           const next = [...base]
-          next[idx] = hydrated
+          next[at] = hydrated
           localSlidesRef.current = next
           return next
         })
       },
     })
-    setLocalSlides(slides)
-    localSlidesRef.current = slides
+    {
+      const merged = mergeLoadedSlides(localSlidesRef.current, slides, editedSinceLoadRef.current)
+      setLocalSlides(merged)
+      localSlidesRef.current = merged
+    }
     setThemeTokens(tokens)
     setFontCssUrl(
       data?.fontCssUrl ||
@@ -1977,36 +2007,110 @@ function AIPptEditor({
     [workspaceId, presentationId, applySlideUpdate]
   )
 
+  const resolvePersistedSlideId = useCallback((id) => {
+    let current = id
+    const seen = new Set()
+    while (slideIdMapRef.current[current] && !seen.has(current)) {
+      seen.add(current)
+      current = slideIdMapRef.current[current]
+    }
+    return current
+  }, [])
+
+  const enqueueSlidePersist = useCallback((task) => {
+    persistBusyRef.current += 1
+    slidePersistQueueRef.current = slidePersistQueueRef.current
+      .then(() => task())
+      .catch(() => {})
+      .finally(() => {
+        persistBusyRef.current = Math.max(0, persistBusyRef.current - 1)
+      })
+  }, [])
+
+  const markSlideEdited = useCallback(
+    (slideId) => {
+      if (!slideId) return
+      editedSinceLoadRef.current.add(slideId)
+      editedSinceLoadRef.current.add(resolvePersistedSlideId(slideId))
+    },
+    [resolvePersistedSlideId]
+  )
+
+  /** The slide's canvas as it should be saved: including the text being typed on it, if any. */
+  const canvasDocForSave = useCallback((slide) => {
+    const doc = slide?.elements
+    const draft = activeTextEditDraft()
+    if (!doc || !draft) return doc
+    const list = doc.elements || []
+    if (!list.some((el) => el.id === draft.elementId)) return doc
+    return {
+      ...doc,
+      elements: list.map((el) =>
+        el.id === draft.elementId
+          ? { ...el, content: contentWithSyncedText(el.content, draft.text, draft.runs) }
+          : el
+      ),
+    }
+  }, [])
+
+  /**
+   * Save one slide's canvas now (its latest local state). `slideId` may be the temporary id of a
+   * slide still being created: the save waits for it and uses its real id (a save to the
+   * temporary id used to be dropped or 404). `deck` pins the deck, for saves sent while leaving it.
+   */
+  const saveSlideCanvasNow = useCallback(
+    async (slideId, { keepalive = false, deck = null } = {}) => {
+      const ws = deck?.workspaceId ?? workspaceId
+      const pid = deck?.presentationId ?? presentationId
+      if (!ws || !pid || !slideId || viewOnly) return
+      let id = resolvePersistedSlideId(slideId)
+      if (isOptimisticSlideId(id) && !keepalive) {
+        await slidePersistQueueRef.current
+        id = resolvePersistedSlideId(slideId)
+      }
+      // Still not created (it failed, or the page is closing): the add request carries its content.
+      if (isOptimisticSlideId(id)) return
+      if (regeneratingSlideIdsRef.current.has(id)) return
+      const slide = localSlidesRef.current.find((s) => s.id === id || s.id === slideId)
+      const doc = canvasDocForSave(slide)
+      if (!doc) return
+      const draft = doc !== slide.elements ? activeTextEditDraft() : null
+      canvasInflightRef.current.add(id)
+      try {
+        await presentationService.saveCanvas(ws, pid, id, doc, { keepalive })
+        // Do not applySlideUpdate — server echo races rapid flip/rotate/nudge
+        failedSlidesRef.current.delete(id)
+        if (draft) draftSavedRef.current.set(draft.elementId, draft.text)
+      } catch (err) {
+        failedSlidesRef.current.add(id)
+        if (err instanceof PresentationConflictError) {
+          setError('Presentation is generating — canvas edits are locked.')
+        } else if (!keepalive) {
+          setError(err.message || 'Failed to save canvas')
+        }
+      } finally {
+        canvasInflightRef.current.delete(id)
+      }
+    },
+    [workspaceId, presentationId, viewOnly, resolvePersistedSlideId, canvasDocForSave]
+  )
+
   const queueCanvasSave = useCallback(
     (slideId, _canvasDoc) => {
       if (!workspaceId || !presentationId || !slideId || isGenerating || viewOnly) return
-      if (regeneratingSlideIdsRef.current.has(slideId)) return
+      if (regeneratingSlideIdsRef.current.has(resolvePersistedSlideId(slideId))) return
+      markSlideEdited(slideId)
       if (canvasSaveTimers.current[slideId]) {
         clearTimeout(canvasSaveTimers.current[slideId])
       }
-      canvasSaveTimers.current[slideId] = setTimeout(async () => {
+      canvasPendingRef.current.add(slideId)
+      canvasSaveTimers.current[slideId] = setTimeout(() => {
+        canvasPendingRef.current.delete(slideId)
         // Always persist the latest local canvas — never a stale snapshot from schedule time
-        const slide = localSlidesRef.current.find((s) => s.id === slideId)
-        const canvasDoc = slide?.elements
-        if (!canvasDoc) return
-        try {
-          await presentationService.saveCanvas(
-            workspaceId,
-            presentationId,
-            slideId,
-            canvasDoc
-          )
-          // Do not applySlideUpdate — server echo races rapid flip/rotate/nudge
-        } catch (err) {
-          if (err instanceof PresentationConflictError) {
-            setError('Presentation is generating — canvas edits are locked.')
-          } else {
-            setError(err.message || 'Failed to save canvas')
-          }
-        }
+        saveSlideCanvasNow(slideId)
       }, CANVAS_SAVE_DEBOUNCE_MS)
     },
-    [workspaceId, presentationId, isGenerating, viewOnly]
+    [workspaceId, presentationId, isGenerating, viewOnly, resolvePersistedSlideId, markSlideEdited, saveSlideCanvasNow]
   )
 
   const pushHistorySnapshot = useCallback(
@@ -2022,20 +2126,60 @@ function AIPptEditor({
     [history]
   )
 
-  const enqueueSlidePersist = useCallback((task) => {
-    slidePersistQueueRef.current = slidePersistQueueRef.current
-      .then(() => task())
-      .catch(() => {})
-  }, [])
+  /**
+   * Send every edit not sent yet, now: canvas saves waiting on their timer, element and placement
+   * patches (their slides get a full canvas save, which carries the same latest state), failed
+   * saves, and the text being typed. When the page is closing (`keepalive`), saves still on
+   * their way are sent again too: a closing page cancels ordinary requests.
+   */
+  const flushAllSavesNow = useCallback(
+    ({ keepalive = false, deck = null } = {}) => {
+      const slideIds = new Set(canvasPendingRef.current)
+      canvasPendingRef.current.forEach((id) => clearTimeout(canvasSaveTimers.current[id]))
+      canvasPendingRef.current.clear()
+      const mutations = elementMutationsRef.current
+      ;(mutations?.pendingPatchSlideIds?.() || []).forEach((id) => slideIds.add(id))
+      mutations?.cancelPendingPatches?.()
+      Object.keys(elementPatchTimers.current).forEach((key) => {
+        clearTimeout(elementPatchTimers.current[key])
+        slideIds.add(key.slice(0, key.indexOf(':')))
+      })
+      elementPatchTimers.current = {}
+      pendingPlacementRef.current = {}
+      failedSlidesRef.current.forEach((id) => slideIds.add(id))
+      if (keepalive) canvasInflightRef.current.forEach((id) => slideIds.add(id))
+      const draft = activeTextEditDraft()
+      if (draft && draftSavedRef.current.get(draft.elementId) !== draft.text) {
+        const owner = localSlidesRef.current.find((slide) =>
+          (slide.elements?.elements || []).some((el) => el.id === draft.elementId)
+        )
+        if (owner) slideIds.add(owner.id)
+      }
+      // The same slide under its temporary and real id is saved once.
+      const unique = new Set([...slideIds].map((id) => resolvePersistedSlideId(id)))
+      unique.forEach((id) => {
+        saveSlideCanvasNow(id, { keepalive, deck })
+      })
+      return unique.size
+    },
+    [resolvePersistedSlideId, saveSlideCanvasNow]
+  )
+  flushAllSavesNowRef.current = flushAllSavesNow
 
-  const resolvePersistedSlideId = useCallback((id) => {
-    let current = id
-    const seen = new Set()
-    while (slideIdMapRef.current[current] && !seen.has(current)) {
-      seen.add(current)
-      current = slideIdMapRef.current[current]
-    }
-    return current
+  /** 'saving' while anything isn't on the server yet, 'error' after a failed save, else 'saved'. */
+  const computeSaveState = useCallback(() => {
+    const draft = activeTextEditDraft()
+    const draftUnsaved = Boolean(draft) && draftSavedRef.current.get(draft.elementId) !== draft.text
+    const pending =
+      canvasPendingRef.current.size +
+      canvasInflightRef.current.size +
+      Object.keys(elementPatchTimers.current).length +
+      (elementMutationsRef.current?.pendingPatchSlideIds?.().length || 0) +
+      persistBusyRef.current +
+      presentationService.pendingWriteCount()
+    if (pending || draftUnsaved) return 'saving'
+    if (failedSlidesRef.current.size) return 'error'
+    return 'saved'
   }, [])
 
   const flushPendingCanvasSaves = useCallback(async ({
@@ -2054,11 +2198,13 @@ function AIPptEditor({
       if (!timers[onlySlideId]) return
       clearTimeout(timers[onlySlideId])
       delete timers[onlySlideId]
+      canvasPendingRef.current.delete(onlySlideId)
     } else {
       Object.keys(timers).forEach((slideId) => {
         clearTimeout(timers[slideId])
         delete timers[slideId]
       })
+      canvasPendingRef.current.clear()
     }
     const slides = localSlidesRef.current || []
     const saves = slides
@@ -2134,7 +2280,11 @@ function AIPptEditor({
     if (!tempId || !realId || tempId === realId) return
     slideIdMapRef.current[tempId] = realId
     setLocalSlides((prev) => {
-      const next = prev.map((slide) => (slide.id === tempId ? { ...slide, id: realId } : slide))
+      // `clientKey` keeps the slide's React key, so the slide isn't remounted (which dropped
+      // text being typed on it) when its real id arrives.
+      const next = prev.map((slide) =>
+        slide.id === tempId ? { ...slide, id: realId, clientKey: slide.clientKey || tempId } : slide
+      )
       localSlidesRef.current = next
       return next
     })
@@ -2167,6 +2317,7 @@ function AIPptEditor({
       Object.values(canvasSaveTimers.current).forEach((t) => clearTimeout(t))
       elementPatchTimers.current = {}
       canvasSaveTimers.current = {}
+      canvasPendingRef.current.clear()
       pendingPlacementRef.current = {}
       if (nudgeBurstTimerRef.current) {
         clearTimeout(nudgeBurstTimerRef.current)
@@ -2180,20 +2331,26 @@ function AIPptEditor({
       setEditingTextId(null)
       setPptTextSelection(null)
 
-      setLocalSlides(snapshot.slides)
-      localSlidesRef.current = snapshot.slides
-      setSelectedSlideId(snapshot.selectedSlideId)
+      // A snapshot taken while a slide was being created holds its temporary id: restore it
+      // under its real id, so later saves don't go to an id the server doesn't know.
+      const slides = snapshot.slides.map((slide) => {
+        const id = resolvePersistedSlideId(slide?.id)
+        return id === slide?.id ? slide : { ...slide, id, clientKey: slide.clientKey || slide.id }
+      })
+      setLocalSlides(slides)
+      localSlidesRef.current = slides
+      setSelectedSlideId(resolvePersistedSlideId(snapshot.selectedSlideId))
       setSelectedElementId(snapshot.selectedElementId)
 
       queueMicrotask(() => {
         skipTextCommitRef.current = false
       })
 
-      ;(snapshot.slides || []).forEach((slide) => {
+      ;(slides || []).forEach((slide) => {
         if (slide?.id && slide.elements) queueCanvasSave(slide.id, slide.elements)
       })
     },
-    [queueCanvasSave]
+    [queueCanvasSave, resolvePersistedSlideId]
   )
 
   const elementMutations = usePptElementMutations({
@@ -2211,8 +2368,68 @@ function AIPptEditor({
     applySlideUpdate,
     queueCanvasSave,
     pushHistory: pushHistorySnapshot,
+    resolveSlideId: resolvePersistedSlideId,
+    isUnsavedSlideId: isOptimisticSlideId,
+    markSlideEdited,
   })
   elementMutationsRef.current = elementMutations
+
+  // Save status for the badge, and nothing lost when the page is reloaded or closed (QA P-1).
+  useEffect(() => {
+    if (viewOnly || !presentationId) return undefined
+    const tick = () => {
+      const next = computeSaveState()
+      setSaveState((prev) => (prev === next ? prev : next))
+    }
+    tick()
+    const interval = setInterval(tick, 300)
+    // Typing shows "Saving…" at once, not on the next tick.
+    const unsubscribeDraft = subscribeTextEditDraft(tick)
+    const onBeforeUnload = (event) => {
+      if (computeSaveState() === 'saved') return
+      // Start sending now, and ask before leaving: the browser's "Leave site?" prompt.
+      flushAllSavesNowRef.current?.()
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    // The page is going away: send what isn't on the server with requests that outlive it.
+    const onPageHide = () => flushAllSavesNowRef.current?.({ keepalive: true })
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') flushAllSavesNowRef.current?.()
+    }
+    window.addEventListener('beforeunload', onBeforeUnload)
+    window.addEventListener('pagehide', onPageHide)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      clearInterval(interval)
+      unsubscribeDraft()
+      window.removeEventListener('beforeunload', onBeforeUnload)
+      window.removeEventListener('pagehide', onPageHide)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [viewOnly, presentationId, computeSaveState])
+
+  // The text being typed is saved shortly after typing stops, without ending the edit, so a
+  // reload before clicking away doesn't lose it.
+  useEffect(() => {
+    if (viewOnly || !workspaceId || !presentationId) return undefined
+    let timer = null
+    const unsubscribe = subscribeTextEditDraft(() => {
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        const draft = activeTextEditDraft()
+        if (!draft || draftSavedRef.current.get(draft.elementId) === draft.text) return
+        const owner = localSlidesRef.current.find((slide) =>
+          (slide.elements?.elements || []).some((el) => el.id === draft.elementId)
+        )
+        if (owner) saveSlideCanvasNow(owner.id)
+      }, TEXT_DRAFT_SAVE_MS)
+    })
+    return () => {
+      clearTimeout(timer)
+      unsubscribe()
+    }
+  }, [viewOnly, workspaceId, presentationId, saveSlideCanvasNow])
 
   const insertImageFilesRef = useRef(null)
   const editorClipboard = useEditorClipboard({
@@ -2306,19 +2523,25 @@ function AIPptEditor({
       setEditingTextId(null)
       setPptTextSelection(null)
       if (skipTextCommitRef.current) return
-      const el = selectedSlide?.elements?.elements?.find((e) => e.id === elementId)
+      // The latest slides, not this render's copy: the slide may have got its real id since.
+      const hasEl = (slide) => (slide?.elements?.elements || []).some((e) => e.id === elementId)
+      const owner =
+        localSlidesRef.current.find(
+          (slide) => slide.id === resolvePersistedSlideId(selectedSlideIdRef.current) && hasEl(slide)
+        ) || localSlidesRef.current.find(hasEl)
+      const el = owner?.elements?.elements?.find((e) => e.id === elementId)
       if (!el) return
       const nextContent = contentWithSyncedText(el.content, text, runs)
       if (contentPlainText(el.content) === contentPlainText(nextContent)) return
       elementMutations.patchElement(
         elementId,
         { content: nextContent },
-        { history: false }
+        { history: false, slideId: owner.id }
       )
       // Lets the text element know the edit was kept (undo deliberately drops it).
       return true
     },
-    [elementMutations, selectedSlide]
+    [elementMutations, resolvePersistedSlideId]
   )
 
   const handleTableCellChange = useCallback(
@@ -2719,6 +2942,7 @@ function AIPptEditor({
         placementHistoryArmedRef.current = false
         pushHistorySnapshot()
       }
+      markSlideEdited(slideId)
       setLocalSlides((prev) => {
         const next = prev.map((s) => {
           if (s.id !== slideId) return s
@@ -2729,7 +2953,7 @@ function AIPptEditor({
         return next
       })
     },
-    [aspectRatio, pushHistorySnapshot]
+    [aspectRatio, pushHistorySnapshot, markSlideEdited]
   )
 
   const handlePlacementCommit = useCallback(
@@ -2762,8 +2986,14 @@ function AIPptEditor({
         }
         elementPatchTimers.current[batchKey] = setTimeout(async () => {
           delete elementPatchTimers.current[batchKey]
-          const slide = localSlidesRef.current.find((s) => s.id === slideId)
+          const persistId = resolvePersistedSlideId(slideId)
+          const slide = localSlidesRef.current.find((s) => s.id === slideId || s.id === persistId)
           if (!slide?.elements) return
+          // Still being created: its canvas save waits for it.
+          if (isOptimisticSlideId(persistId)) {
+            queueCanvasSave(slideId, slide.elements)
+            return
+          }
           const batchPatches = (slide.elements.elements || [])
             .filter((el) => ids.includes(el.id) && el.placement)
             .map((el) => ({ id: el.id, placement: el.placement }))
@@ -2772,7 +3002,7 @@ function AIPptEditor({
             await presentationService.batchUpdateElements(
               workspaceId,
               presentationId,
-              slideId,
+              persistId,
               batchPatches
             )
           } catch (err) {
@@ -2797,11 +3027,18 @@ function AIPptEditor({
           delete pendingPlacementRef.current[key]
           delete elementPatchTimers.current[key]
           if (!latest) return
+          const persistId = resolvePersistedSlideId(slideId)
+          if (isOptimisticSlideId(persistId)) {
+            // Still being created: its canvas save (which has this placement) waits for it.
+            const slide = localSlidesRef.current.find((s) => s.id === slideId || s.id === persistId)
+            if (slide?.elements) queueCanvasSave(slideId, slide.elements)
+            return
+          }
           try {
             await presentationService.updateElement(
               workspaceId,
               presentationId,
-              slideId,
+              persistId,
               elementId,
               { placement: latest }
             )
@@ -2810,7 +3047,7 @@ function AIPptEditor({
               setError('Presentation is generating — canvas edits are locked.')
               return
             }
-            const slide = localSlidesRef.current.find((s) => s.id === slideId)
+            const slide = localSlidesRef.current.find((s) => s.id === slideId || s.id === persistId)
             if (!slide) return
             const elements = (slide.elements?.elements || []).map((el) =>
               el.id === elementId ? { ...el, placement: { ...el.placement, ...latest } } : el
@@ -2824,7 +3061,7 @@ function AIPptEditor({
         scheduleOne(elementId, patches[elementId])
       }
     },
-    [workspaceId, presentationId, isGenerating, viewOnly, aspectRatio, queueCanvasSave]
+    [workspaceId, presentationId, isGenerating, viewOnly, aspectRatio, queueCanvasSave, resolvePersistedSlideId]
   )
 
   /** Immediate local nudge + debounced persist (Canva-style keyboard move). */
@@ -2952,12 +3189,13 @@ function AIPptEditor({
       }
     })()
 
+    const deckIds = { workspaceId, presentationId }
     return () => {
       cancelled = true
-      Object.values(canvasSaveTimers.current).forEach((t) => clearTimeout(t))
-      Object.values(elementPatchTimers.current).forEach((t) => clearTimeout(t))
+      // Leaving this deck (or the editor): send what isn't saved yet instead of dropping it
+      // (QA P-1). Pinned to this deck: the next one may already be in props.
+      if (!viewOnly) flushAllSavesNowRef.current?.({ deck: deckIds })
       if (nudgeBurstTimerRef.current) clearTimeout(nudgeBurstTimerRef.current)
-      pendingPlacementRef.current = {}
     }
     // Intentionally omit reloadPresentation / outline — those identities churn and
     // were causing a second full-screen "Loading presentation…" flash.
@@ -3196,6 +3434,7 @@ function AIPptEditor({
     const tempId = `new-slide-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
     const newSlide = {
       id: tempId,
+      clientKey: tempId,
       title,
       description,
       layoutId: layoutId || schema?.layout_id || null,
@@ -3237,12 +3476,30 @@ function AIPptEditor({
           !afterSlideId && nextSlide && !isOptimisticSlideId(nextSlide.id)
             ? nextSlide.id
             : undefined
-        const created = await presentationService.addSlide(workspaceId, presentationId, {
+        const body = {
           afterSlideId,
           beforeSlideId,
           ...(title ? { title } : {}),
           ...(layoutId ? { layoutId } : {}),
-        })
+        }
+        // The slide's content goes with the request, so the server never holds it blank while a
+        // later save is still on its way (QA P-1: a reload in between lost the layout's text).
+        const sentDoc = canvasDocForSave(localSlidesRef.current.find((slide) => slide.id === tempId))
+        let created
+        let sentContent = Boolean(sentDoc)
+        try {
+          created = await presentationService.addSlide(
+            workspaceId,
+            presentationId,
+            sentDoc ? { ...body, elements: sentDoc } : body
+          )
+        } catch (err) {
+          // An older server (no `elements`) or a doc it refuses: add it as before; the canvas
+          // save below carries the content.
+          if (!sentDoc || err?.status !== 400) throw err
+          created = await presentationService.addSlide(workspaceId, presentationId, body)
+          sentContent = false
+        }
         const newSlideId = createdSlideIdFromPayload(created)
         if (!newSlideId) throw new Error('Failed to add slide')
         if (!localSlidesRef.current.some((slide) => slide.id === tempId)) {
@@ -3252,14 +3509,10 @@ function AIPptEditor({
           return
         }
         remapSlideId(tempId, newSlideId)
+        // Edits made while it was being created (or content the server refused): save them now.
         const latest = localSlidesRef.current.find((slide) => slide.id === newSlideId)
-        if (latest?.elements) {
-          await presentationService.saveCanvas(
-            workspaceId,
-            presentationId,
-            newSlideId,
-            latest.elements
-          )
+        if (latest?.elements && (!sentContent || canvasDocForSave(latest) !== sentDoc)) {
+          await saveSlideCanvasNow(newSlideId)
         }
       } catch (err) {
         setLocalSlides((prev) => {
@@ -3338,6 +3591,7 @@ function AIPptEditor({
     const clone = {
       ...JSON.parse(JSON.stringify(source)),
       id: tempId,
+      clientKey: tempId,
       status: 'READY',
       manuallyEdited: true,
     }
@@ -3357,8 +3611,10 @@ function AIPptEditor({
     enqueueSlidePersist(async () => {
       if (!localSlidesRef.current.some((slide) => slide.id === tempId)) return
       const persistSourceId = resolvePersistedSlideId(slideId)
-      if (isOptimisticSlideId(persistSourceId)) return
       try {
+        // The source couldn't be created on the server: the copy can't be either (it used to
+        // stay on screen only, and vanish on reload).
+        if (isOptimisticSlideId(persistSourceId)) throw new Error('Failed to duplicate slide')
         const created = await presentationService.duplicateSlide(
           workspaceId,
           presentationId,
@@ -3373,6 +3629,9 @@ function AIPptEditor({
           return
         }
         remapSlideId(tempId, newSlideId)
+        // The server copied its saved source; the copy on screen also has edits not saved yet
+        // (and any made to the copy since): save it as shown.
+        await saveSlideCanvasNow(newSlideId)
       } catch (err) {
         setLocalSlides((prev) => {
           const next = prev.filter((slide) => slide.id !== tempId)
@@ -4775,7 +5034,26 @@ function AIPptEditor({
                 : undefined
             }
           />
-          {presentationId && <span className="aig-editor-badge">Saved</span>}
+          {presentationId && !viewOnly ? (
+            saveState === 'error' ? (
+              <button
+                type="button"
+                className="aig-editor-badge aig-editor-badge--error"
+                onClick={() => flushAllSavesNow()}
+                title="Some changes weren't saved. Click to try again."
+              >
+                Not saved · Retry
+              </button>
+            ) : (
+              <span
+                className={`aig-editor-badge aig-editor-badge--${saveState}`}
+                role="status"
+                aria-live="polite"
+              >
+                {saveState === 'saving' ? 'Saving…' : 'Saved'}
+              </span>
+            )
+          ) : null}
         </div>
 
         <svg className="aig-ai-star-grad" aria-hidden>
@@ -5057,7 +5335,7 @@ function AIPptEditor({
           <div className="aig-editor-scroll-container">
             {localSlides.map((slide, idx) => (
               <div
-                key={slide.id}
+                key={slide.clientKey || slide.id}
                 ref={(node) => {
                   if (node) slideContainerRefs.current[slide.id] = node
                   else delete slideContainerRefs.current[slide.id]
@@ -5509,7 +5787,7 @@ function AIPptEditor({
                         ? 'after'
                         : null
                   return (
-                    <Fragment key={slide.id}>
+                    <Fragment key={slide.clientKey || slide.id}>
                       <MinimapSlideCard
                         slide={slide}
                         index={idx}
@@ -5586,7 +5864,7 @@ function AIPptEditor({
             ) : (
               <div className="aig-minimap-rail-slides">
                 {localSlides.map((slide, idx) => (
-                  <Fragment key={slide.id}>
+                  <Fragment key={slide.clientKey || slide.id}>
                     <button
                       type="button"
                       className={`aig-minimap-rail-num ${selectedSlideId === slide.id ? 'is-active' : ''}`}

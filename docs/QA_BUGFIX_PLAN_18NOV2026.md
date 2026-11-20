@@ -4,14 +4,14 @@
 **Repos:** `AthenaVI` (frontend, FE), `AthenaVI_backend` (backend, BE), plus infra (S3 / nginx).
 **Scope:** every presentation, Brand Kit, Canvas and general bug in the report.
 **Out of scope for now:** the video bugs V-1 to V-5 (avatar generation, the crash after narration, credits charged for a failed video, the lost video title, the static preview) and the truncated video error toast. They get their own plan.
-**Status:** C-1 code done 2026-11-20 (🔵, not committed or deployed). The other bugs are not started. Root causes come from reading the code. P-1 and C-1 still need to be confirmed against production (see each item).
+**Status:** C-1 committed 2026-11-20 (`931b09b`, not deployed). P-1 code done 2026-11-20 (🔵, not committed or deployed). The other bugs are not started. Root causes come from reading the code. P-1 and C-1 still need to be confirmed against production (see each item).
 **Tracking:** every bug has a **Checkpoint** (its definition of done) below. Tick the boxes as the work lands, and update the Status column. A bug is ✅ only when every box in its checkpoint is ticked.
 
 Status key: ⬜ not started · 🟡 in progress · 🔵 code done, waiting for staging / QA · ✅ done (QA signed off).
 
 | # | Bug | Sev. | Area | Owner | Estimate | Sprint | Status |
 |---|---|---|---|---|---|---|---|
-| P-1 | Slide text lost after reload despite "SAVED"; Present shows the slide blank | High | Presentations | FE + BE | 3 d | 1 | ⬜ |
+| P-1 | Slide text lost after reload despite "SAVED"; Present shows the slide blank | High | Presentations | FE + BE | 3 d | 1 | 🔵 |
 | C-1 | Canvas PNG/PDF export fails when an AI image is on the page | High | Canvas | FE + BE | 2 d | 1 | 🔵 |
 | C-2 | Inspector number fields: 1600 becomes 10600, can't clear, no maximum | High | Canvas | FE | 1 d | 1 | ⬜ |
 | P-3 | Media panel stuck on "Loading…" | Medium | Presentations | FE + BE | 0.5 d | 1 | ⬜ |
@@ -111,15 +111,32 @@ The backend stores what it receives correctly. This is a frontend save-pipeline 
 
 **Before closing:** open the QA deck in the database and check whether slide 3's `elements` hold an empty text box (cause 2) or old text (cause 3). Write the answer in the ticket.
 
+**Done 2026-11-20 (code, not committed or deployed)**
+- **Reproduced** in the real slide editor against a stand-in API (old code, same steps):
+  - add slide from the "Minimal title slide" layout, reload while the request is on its way (server answering in 1 s): the server's slide is **blank** (one empty text box);
+  - type on that slide, reload without clicking away: the typed text is **lost**, and the badge said **Saved** the whole time.
+  - Both match QA's slide 3 exactly. A third cause, found while fixing: text being typed is only committed when the box loses focus, so it was never saved before a reload.
+- **Fix (frontend, `AIPptEditor.jsx`, `usePptElementMutations.js`, `PptCanvasElement.jsx`, new `utils/textEditDraft.js`, `utils/pptSlideMerge.js`):**
+  - **Real save status:** the badge shows **Saving…** while any save is waiting, on its way, or text is being typed; **Saved** only when all of it is on the server; **Not saved · Retry** (red, clickable) after a failed save.
+  - **Text being typed is saved** about 1 s after typing stops, without leaving the box, and counted as unsaved until then.
+  - **New slides carry their content** in the add request (`elements`), so the server never holds them blank.
+  - **Temporary ids are resolved when a save is sent:** saves made while a slide is being created wait for it and use its real id (no more dropped saves or 404s); undo/redo restores slides under their real ids; slides keep a stable React key, so the box being typed in isn't remounted when the real id arrives.
+  - **Nothing dropped when leaving:** leaving the editor or switching decks sends pending saves instead of clearing them; reload / closing the tab sends them with `keepalive` requests (`pagehide`) and asks first ("Leave site?") while anything is unsaved; hiding the tab saves at once.
+  - **Duplicate** saves the copy as shown (with edits not yet saved on the source); a copy of a slide that couldn't be created is removed with a message instead of staying on screen only.
+  - **Loading a deck** no longer overwrites a slide edited (or added) while it was still loading.
+- **Backend:** add-slide accepts optional `elements` (the same canvas format as the canvas save) and stores them (`slideEditor.service.js`, `presentation.validations.js`, `presentation.service.js`).
+- **Tests:** `pptSlideMerge.test.mjs` (4), `addSlideElements.test.js` (3); frontend 458 / 458, backend 1174 / 1174. Browser test in the real editor, 12 / 12: add from a layout + reload at once (also with a 1 s server), typing + reload within 0.5 s, the badge's states, a failed save + Retry, duplicate right after an edit, undo/redo with no 404 or temporary-id requests, a throttled network (2 s latency, 50 KB/s), and Present.
+- **Note for QA:** the text already lost on slide 3 of the QA deck was never saved, so it can't be recovered. Retype it after the deploy (that is also the retest).
+
 **Checkpoint P-1 (done when)**
-- [ ] Root cause confirmed on the QA deck (empty text box or old text) and written in the ticket.
-- [ ] The badge shows **Saving…** while anything is pending, **Saved** only when every write has finished, and **Not saved – Retry** after a failed write (checked with the network offline).
-- [ ] Add slide from a layout: the server copy has the layout's content straight away (reload at once after adding).
-- [ ] Typing on a just-added slide is kept after a reload, including on Slow 3G.
-- [ ] Reload or closing the tab with pending edits keeps them (`pagehide` flush) or warns first (`beforeunload`).
-- [ ] Duplicate right after an edit: the copy has the edit after reload.
-- [ ] Undo/redo on a just-added slide still saves (no 404 on a `new-slide-…` id in the network tab).
-- [ ] Slide 3 of "Intro to Personal Finance" shows its text in the editor and in Present after a reload.
+- [ ] Root cause confirmed on the QA deck (empty text box or old text) and written in the ticket. *(Reproduced locally with the old code: blank slide, and typed text lost. Still to look at slide 3 in the production database.)*
+- [x] The badge shows **Saving…** while anything is pending, **Saved** only when every write has finished, and **Not saved · Retry** after a failed write. *(browser test, with the server failing saves; Retry then saves)*
+- [x] Add slide from a layout: the server copy has the layout's content straight away (reload at once after adding). *(browser test, also with a slow server)*
+- [x] Typing on a just-added slide is kept after a reload, including on a slow network. *(browser test: reload 0.5 s after typing; 2 s latency at 50 KB/s)*
+- [x] Reload or closing the tab with pending edits keeps them (`pagehide` flush) or warns first (`beforeunload`). *(browser test)*
+- [x] Duplicate right after an edit: the copy has the edit after reload. *(browser test)*
+- [x] Undo/redo on a just-added slide still saves (no 404 on a `new-slide-…` id). *(browser test, request log checked)*
+- [ ] Slide 3 of "Intro to Personal Finance" shows its text in the editor and in Present after a reload. *(Present checked in the browser test; on the QA deck after the deploy, with the text retyped)*
 - [ ] **Close-out:** unit tests merged and green; retest passes on staging; screen recording + commit SHA on the ticket; QA signs off on production.
 
 ---

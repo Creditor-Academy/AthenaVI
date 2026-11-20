@@ -36,8 +36,19 @@ export function usePptElementMutations({
   applySlideUpdate: _applySlideUpdate,
   queueCanvasSave,
   pushHistory,
+  // A slide added in this session has a temporary id until the server answers; edits made
+  // meanwhile keep that id. These map it to the real id when the save is sent (QA P-1).
+  resolveSlideId = (id) => id,
+  isUnsavedSlideId = () => false,
+  // Called for every slide an edit touches (the editor keeps those edits when a reload races them).
+  markSlideEdited,
 }) {
   const localSlidesRef = useRef(localSlides)
+  /** The slide `id` refers to, under its temporary or its real id. */
+  const isSlide = useCallback(
+    (slide, id) => slide?.id === id || slide?.id === resolveSlideId(id),
+    [resolveSlideId]
+  )
   const patchTimersRef = useRef({})
   const pendingPatchRef = useRef({})
   const clipboardRef = useRef([])
@@ -60,19 +71,20 @@ export function usePptElementMutations({
           selectedElementId,
         })
       }
+      markSlideEdited?.(slideId)
       setLocalSlides((prev) => {
         const next = prev.map((s) => {
-          if (s.id !== slideId) return s
+          if (!isSlide(s, slideId)) return s
           const elements = mutator(s.elements?.elements || [])
           return { ...s, elements: buildCanvasDoc(s, { aspectRatio, elements }) }
         })
         localSlidesRef.current = next
         return next
       })
-      const latest = localSlidesRef.current.find((s) => s.id === slideId)
+      const latest = localSlidesRef.current.find((s) => isSlide(s, slideId))
       if (latest?.elements) queueCanvasSave?.(slideId, latest.elements)
     },
-    [selectedSlideId, selectedElementId, aspectRatio, pushHistory, setLocalSlides, queueCanvasSave]
+    [selectedSlideId, selectedElementId, aspectRatio, pushHistory, setLocalSlides, queueCanvasSave, markSlideEdited, isSlide]
   )
 
   const cancelPendingPatches = useCallback(() => {
@@ -95,10 +107,11 @@ export function usePptElementMutations({
         })
       }
 
+      markSlideEdited?.(slideId)
       // Always merge against latest state so rapid rotate/flip clicks don't clobber each other
       setLocalSlides((prev) => {
         const next = prev.map((s) => {
-          if (s.id !== slideId) return s
+          if (!isSlide(s, slideId)) return s
           const nextElements = (s.elements?.elements || []).map((el) => {
             if (el.id !== elementId) return el
             return {
@@ -151,9 +164,18 @@ export function usePptElementMutations({
 
         // Send full placement/content from latest local element so partial patches
         // never wipe x/y/size or other content fields on the server.
-        const slide = localSlidesRef.current.find((s) => s.id === slideId)
+        const slide = localSlidesRef.current.find((s) => isSlide(s, slideId))
         const el = slide?.elements?.elements?.find((e) => e.id === elementId)
         if (!el) return
+
+        // The slide's id now (it may have been created on the server since the edit). Still
+        // being created: its canvas save waits for it (queueCanvasSave), instead of a PATCH
+        // to an id the server doesn't know.
+        const persistId = resolveSlideId(slideId)
+        if (isUnsavedSlideId(persistId)) {
+          queueCanvasSave?.(slideId, slide.elements)
+          return
+        }
 
         const payload = {}
         if (pending.placement) payload.placement = { ...(el.placement || {}) }
@@ -164,14 +186,14 @@ export function usePptElementMutations({
           await presentationService.updateElement(
             workspaceId,
             presentationId,
-            slideId,
+            persistId,
             elementId,
             payload
           )
           // Do not applySlideUpdate — delayed responses race newer local edits
         } catch {
-          const latest = localSlidesRef.current.find((s) => s.id === slideId)
-          if (latest?.elements) queueCanvasSave?.(slideId, latest.elements)
+          const latest = localSlidesRef.current.find((s) => isSlide(s, slideId))
+          if (latest?.elements) queueCanvasSave?.(persistId, latest.elements)
         }
       }, ELEMENT_PATCH_DEBOUNCE_MS)
     },
@@ -185,6 +207,10 @@ export function usePptElementMutations({
       pushHistory,
       setLocalSlides,
       queueCanvasSave,
+      resolveSlideId,
+      isUnsavedSlideId,
+      markSlideEdited,
+      isSlide,
     ]
   )
 
@@ -429,9 +455,10 @@ export function usePptElementMutations({
 
   const updateSpeakerNotes = useCallback(
     (slideId, notes) => {
+      markSlideEdited?.(slideId)
       setLocalSlides((prev) =>
         prev.map((s) =>
-          s.id === slideId
+          isSlide(s, slideId)
             ? {
                 ...s,
                 speakerNotes: notes,
@@ -441,12 +468,19 @@ export function usePptElementMutations({
         )
       )
       if (workspaceId && presentationId) {
-        presentationService
-          .patchSlide(workspaceId, presentationId, slideId, { speakerNotes: notes })
-          .catch(() => {})
+        const persistId = resolveSlideId(slideId)
+        if (isUnsavedSlideId(persistId)) {
+          // Not on the server yet: the canvas save (which carries the notes) waits for it.
+          const latest = localSlidesRef.current.find((s) => isSlide(s, slideId))
+          if (latest?.elements) queueCanvasSave?.(slideId, latest.elements)
+        } else {
+          presentationService
+            .patchSlide(workspaceId, presentationId, persistId, { speakerNotes: notes })
+            .catch(() => {})
+        }
       }
     },
-    [workspaceId, presentationId, setLocalSlides]
+    [workspaceId, presentationId, setLocalSlides, resolveSlideId, isUnsavedSlideId, queueCanvasSave, markSlideEdited, isSlide]
   )
 
   return {

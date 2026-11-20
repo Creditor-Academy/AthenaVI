@@ -82,6 +82,11 @@ class PresentationService {
     }
   }
 
+  /** How many writes are still waiting for the server (the editor's save status). */
+  pendingWriteCount() {
+    return pendingWrites.size
+  }
+
   unwrap(json) {
     return json?.data ?? json
   }
@@ -560,10 +565,11 @@ class PresentationService {
 
   // ── Canvas / elements ──────────────────────────────────────────────
 
-  saveCanvas(workspaceId, presentationId, slideId, canvasDoc) {
+  /** `keepalive`: the request outlives the page (sent while the tab closes; bodies up to 64 KB). */
+  saveCanvas(workspaceId, presentationId, slideId, canvasDoc, { keepalive = false } = {}) {
     return this.request(
       API_CONFIG.ENDPOINTS.PRESENTATIONS.CANVAS(workspaceId, presentationId, slideId),
-      { method: 'PUT', body: JSON.stringify(canvasDoc) }
+      { method: 'PUT', body: JSON.stringify(canvasDoc), ...(keepalive ? { keepalive: true, quiet: true } : {}) }
     )
   }
 

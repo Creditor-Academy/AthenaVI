@@ -17,6 +17,7 @@ import {
 import { getListMarker, splitTextLines, stripLeadingListMarkers } from '../../../utils/textListUtils'
 import { measureTextContentSize } from '../../../utils/canvasTransformUtils'
 import { handlePlainTextPaste, measureNeededTextHeight } from '../../../utils/textBoxEditing'
+import { notifyTextEditDraft, registerTextEditDraft } from '../../../utils/textEditDraft'
 import { croppedImageStyle } from '../../../utils/imageCrop'
 import {
   collapseDuplicatedRuns,
@@ -471,6 +472,25 @@ function EditableText({
     return () => cancelAnimationFrame(measureRaf.current)
   }, [])
 
+  // While editing, the typed text is a draft the editor can save (textEditDraft.js), so a
+  // reload or a closed tab before the edit is committed doesn't lose it.
+  useEffect(() => {
+    if (!editing) return undefined
+    return registerTextEditDraft({
+      elementId,
+      read: () => {
+        if (!typedRef.current || endedRef.current) return null
+        let text = liveTextRef.current ?? ''
+        const listType = latestPropsRef.current.listType
+        if (listType) text = stripLeadingListMarkers(text)
+        // Everything deleted mid-edit: not a draft to save (commit keeps the old text too).
+        if (!String(text).trim() && String(startTextRef.current).trim()) return null
+        if (text === startTextRef.current) return null
+        return { text, runs: collapseDuplicatedRuns({ text, runs: liveRunsRef.current }) }
+      },
+    })
+  }, [editing, elementId])
+
   // Typing right after a link carries on as ordinary text: the browser would otherwise put the
   // new characters inside the link's span and extend the link with them.
   useEffect(() => {
@@ -735,6 +755,7 @@ function EditableText({
             typedRef.current = true
             liveRunsRef.current = serializeEditableRuns(e.currentTarget)
             liveTextRef.current = liveRunsRef.current.map((run) => run.text).join('')
+            notifyTextEditDraft()
             cancelAnimationFrame(measureRaf.current)
             measureRaf.current = requestAnimationFrame(() => {
               syncHeight({ commit: false, allowShrink: true })

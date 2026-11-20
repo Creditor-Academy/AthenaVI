@@ -4051,6 +4051,24 @@
   text-transform: uppercase;
 }
 
+/* Save status (QA P-1): Saved / Saving… / Not saved · Retry. */
+.aig-editor-badge--saving {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.aig-editor-badge--error {
+  border: none;
+  background: #dc2626;
+  color: #ffffff;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.aig-editor-badge--error:hover {
+  background: #b91c1c;
+}
+
 .aig-editor-nav-right {
   display: flex;
   align-items: center;
