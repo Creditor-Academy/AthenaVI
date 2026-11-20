@@ -283,7 +283,7 @@ The browser test of the dialog has 27 checks, including the size in every state,
   - the page's version is checked.
 
   PDF is `page.pdf()`: vector text, one 13.333 × 7.5in page per slide. PNG/JPEG are exact 1920 × 1080 clips.
-- **Fallback:** if the page can't be reached, export logs `export_renderer_unavailable` and uses the old `slideHtml.js` renderer. `PPT_EXPORT_RENDERER=legacy` forces that.
+- **Fallback:** if the page can't be reached, export logs `export_renderer_unavailable` and uses the old `slideHtml.js` renderer. *(`PPT_EXPORT_RENDERER=legacy`, which forced that, was removed in 7.6 on 2026-11-20; the automatic fallback stays.)*
 - **Also fixed:** the image zip had every CRC32 set to 0. Strict unzip tools reject that.
 
 **Deploy order:** frontend first (it ships `export-render.html`), then backend. The backend uses `FRONTEND_URL`, so no new env var is needed unless the page lives elsewhere.
@@ -307,7 +307,7 @@ The browser test of the dialog has 27 checks, including the size in every state,
 **Backend**
 - [x] **3.5** Add `exportRenderer.service.js`. It opens `EXPORT_RENDER_URL`, injects the deck with presigned media, and waits for `ready` (with a timeout). It also uses request interception to allow only the frontend origin, S3/CDN media and Google Fonts. *(done: `exportRenderer.service.js`; URL from `EXPORT_RENDER_URL`, else `FRONTEND_URL`)*
 - [x] **3.6** PDF = `page.pdf()` from the render page. PNG/JPEG = a screenshot per slide (`clip` set to the slide, `deviceScaleFactor` = scale). *(done: PDF is vector, one 13.333 × 7.5in page per slide; images are exactly 1920 × 1080)*
-- [x] **3.7** Keep `slideHtml.js` only for legacy slides that have no elements, and as an emergency fallback behind an env flag (`PPT_EXPORT_RENDERER=legacy`). Remove its element renderer once Phase 3 is stable. *(done: automatic fallback when the page can't be reached, and `PPT_EXPORT_RENDERER=legacy`; removing the old element renderer comes later)*
+- [x] **3.7** Keep `slideHtml.js` only for legacy slides that have no elements, and as an emergency fallback behind an env flag (`PPT_EXPORT_RENDERER=legacy`). Remove its element renderer once Phase 3 is stable. *(done: automatic fallback when the page can't be reached. The manual `PPT_EXPORT_RENDERER=legacy` switch was removed in 7.6, 2026-11-20; the old renderer stays only as that automatic backup)*
 - [ ] **3.8** Versioning: the render page reports `rendererVersion`. The backend logs it with each export and refuses to run against a version below the minimum it supports. *(partly: an older page is refused; the version isn't logged with each export yet)*
 
 **Tests**
@@ -319,7 +319,7 @@ The browser test of the dialog has 27 checks, including the size in every state,
 **Checkpoint 3**
 - [ ] PDF and server-side images are drawn by the editor's renderer. *(done in code; confirm on staging)*
 - [ ] Every golden deck passes the visual diff threshold. *(averages pass; 11 of 83 slides are between 0.962 and 0.979)*
-- [x] `PPT_EXPORT_RENDERER=legacy` still works as a rollback. *(covered by `exportRenderer.test.js`)*
+- [x] `PPT_EXPORT_RENDERER=legacy` still works as a rollback. *(covered by `exportRenderer.test.js`; superseded in 7.6: the manual switch is gone and the server renderer is now only the automatic backup when the render page doesn't answer)*
 
 ---
 
@@ -578,43 +578,55 @@ The same font must be used in the editor, the PDF, PowerPoint and Google Slides,
 
 ---
 
-### Phase 7: QA, rollout and documentation (S–M) — 7.1, 7.3, 7.4 and 7.5 code/docs done 2026-11-19; 7.2 manual checks and 7.6 rollout pending
+### Phase 7: QA, rollout and documentation (S–M) — done 2026-11-20 except the checks that need people and production data (7.2 apps and customer decks, Checkpoint 7)
 
 - [x] **7.1** Feature flag `PPT_EXPORT_V2`, controlling the render page, the PPTX fidelity work and the queue. Turn it on for internal workspaces first.
-  - New `exportFlag.js` (backend). `PPT_EXPORT_V2`:
-    - `on` (the default, so deploying changes nothing): everyone;
-    - `internal`: only workspaces in `PPT_EXPORT_V2_WORKSPACES`, or people whose email domain is in `PPT_EXPORT_V2_EMAIL_DOMAINS` (both comma-separated);
-    - `off`: nobody.
-  - **What an export without V2 does:** PDF and images from the server's HTML renderer, a PPTX built from the stored deck (no measuring by the render page, fonts named but not embedded), and the job runs in the process that took the request, not on the queue. This is how exports ran before Phases 3–6.
-    - The PPTX builder's own improvements from Phase 4 (native shapes, tables, charts…) are part of the one builder and can't be switched off. Without measurements they fall back to the stored sizes.
-  - The choice is made once, in `queueExport`, and stored on the job (`exportV2`), so a job keeps its pipeline if the setting changes while it waits. Jobs queued before the flag existed run as V2.
-  - The `presentation_export_finished` log line has `exportV2`, so the failure rate and speed of the two pipelines can be compared during the rollout. `GET /health/export` shows the mode and how many workspaces and domains are listed (not the entries).
-  - **Rollout:** set `PPT_EXPORT_V2=internal` with the team's workspaces / email domain; then `on`.
-  - Tests: `exportFlag.test.js` (5: modes, allowlists, a failed lookup, health, and `queueExport` storing the choice and running non-V2 jobs in-process); `exportJobs.test.js` (4 new: V2 uses the render page for PDF, images and PPTX; non-V2 never opens it and still makes a real PDF; old jobs run as V2; the log line).
+  - Done 2026-11-19 (`exportFlag.js`: `on` / `internal` with workspace and email-domain lists / `off`, chosen when the export is queued and stored on the job, reported in the finished log line and `/health/export`).
+  - **Removed again in 7.6 (2026-11-20)** once every golden deck passed on the new pipeline: see 7.6.
 - [ ] **7.2** Run the full matrix (section 6) on the golden decks plus 10 real customer decks (with permission, or anonymised copies).
-  - **Done:** the LibreOffice column, from the harness (2026-11-19, `baselines/ci-baseline.json`): see section 6.
-  - **Still to do (needs people and apps):** open the six golden decks in PowerPoint for Windows, Mac and web, and Google Slides, and fill those columns; collect 10 customer decks with permission and run them through the harness and the same apps.
+  - **Done:**
+    - The LibreOffice column, from the harness (2026-11-19 and again 2026-11-20, `baselines/ci-baseline.json`): see section 6.
+    - Everything the apps need is ready. `node scripts/presentation-eval/export-fidelity.js --label qa --qa-pack` writes `qa-pack/` with, for each golden deck, the PowerPoint file, the "Made for: Google Slides" file and the PDF, plus a README. Both PPTX kinds were checked to open (LibreOffice).
+    - The step-by-step checklist for testers: [`PPT_EXPORT_QA_CHECKLIST.md`](PPT_EXPORT_QA_CHECKLIST.md) (what to check per element, how to mark ✅ / ⚠️ / ❌, the customer-deck procedure).
+  - **Still to do (needs people and apps; PowerPoint isn't installed on the dev machine):** open the six golden decks in PowerPoint for Windows, Mac and web, and Google Slides, and fill those columns; collect 10 customer decks with permission and run the checklist on them.
 - [x] **7.3** Add the harness to CI on the backend: golden decks → PDF and PPTX → scores must stay above the thresholds. A drop fails the build.
   - New `scripts/presentation-eval/fidelity-gate.js`, run by `npm run test:export-fidelity` after the harness. It fails the build when:
     - a deck errors, or a deck in the baseline isn't measured;
     - **PDF:** a deck's average is below the 0.98 target, or any slide drops more than 0.02 below the baseline;
     - **PPTX:** a deck's average drops more than 0.01, or any slide more than 0.03, below the baseline. PPTX is drawn by LibreOffice, which doesn't draw every PowerPoint effect, so it is held to "no worse than now" rather than to the 0.95 target; raise the baseline as it improves.
+  - Since 2026-11-20 the harness also fails a deck that quietly used the backup renderer (an `export_renderer_unavailable` or `pptx_renderer_capture_failed` warning during the run), so a broken render page can't pass CI on the backup's scores.
   - The baseline is `scripts/presentation-eval/baselines/ci-baseline.json` (2026-11-19, the same scores as 2026-11-13). A change that is meant to look different updates it in the same commit.
   - **Jenkins:** a new "Export Fidelity" stage after the unit tests. It runs only when the job sets `EXPORT_FIDELITY_RENDER_URL` (a deployed frontend's `/export-render.html`), so it doesn't block deploys before the agent is ready. The agent needs LibreOffice (`soffice`) and poppler-utils (`pdftoppm`). The report is kept as a build artifact.
   - Tests: `fidelityGate.test.js` (4).
 - [x] **7.4** Update `docs/api/PRESENTATION_API.md` (`slideIds`, `scale`, `quality`, `transparent`, `progress`, cancel) and the frontend data contract doc.
-  - `PRESENTATION_API.md` (backend): the Export section rewritten from the code. It covers every request field, the statuses (`SAVING`, `CANCELLED`, `EXPIRED`), `progress`, the download fields and fresh links, the PPTX `report`, time limits, cancel, the browser image charge, the inbox link and the flag.
-  - `ENVIRONMENT.md` (backend): every export setting, with defaults.
+  - `PRESENTATION_API.md` (backend): the Export section rewritten from the code. It covers every request field, the statuses (`SAVING`, `CANCELLED`, `EXPIRED`), `progress`, the download fields and fresh links, the PPTX `report`, time limits, cancel, the browser image charge and the inbox link. Since 7.6 it describes the one pipeline and its backup instead of the flag.
+  - `ENVIRONMENT.md` (backend): every export setting, with defaults (the flag settings removed in 7.6).
   - `ppt-canvas-backend-data-contract.md` (frontend): section 12 and the endpoint table.
 - [x] **7.5** Write a support note on what PowerPoint and Google Slides can't do, and which elements become pictures.
   - `docs/PPT_EXPORT_SUPPORT_NOTE.md` (frontend): which format to use, what stays editable, what becomes a picture and why, Google Slides, other apps, and answers to common questions (slow, failed, expired link, charges, "looks different").
-- [ ] **7.6** Turn the flag on for everyone; remove the legacy renderer one release later.
-  - Not done: this follows the internal rollout and Checkpoint 7.
+- [x] **7.6** Turn the flag on for everyone; remove the legacy renderer one release later.
+  - **The check first (2026-11-20).** All six golden decks were run through the new pipeline (render page at the current frontend build):
+    - AI-generated (`ai-light`, `ai-dark`, `ai-editorial`) and hand-built (`kitchen-sink`: every element type), plus `four-three` and `forty-slides`.
+    - PDF 0.984–0.997 on every deck, all above the 0.98 target.
+    - PPTX (LibreOffice) equal to the baseline: 0.887–0.961.
+    - No export fell back to the old renderer. The CI gate passes.
+  - **Decision (product owner, 2026-11-20):** since it works well for both AI-generated and manually made decks, everyone always gets the new pipeline. The old server renderer is kept **only as the automatic backup** when the render page can't be reached; it is no longer something to switch to.
+  - **Removed (backend):**
+    - `exportFlag.js` and `PPT_EXPORT_V2`, `PPT_EXPORT_V2_WORKSPACES`, `PPT_EXPORT_V2_EMAIL_DOMAINS`;
+    - the manual `PPT_EXPORT_RENDERER=legacy`;
+    - the non-V2 path (server renderer by choice, PPTX without measuring or embedded fonts, jobs forced in-process; `enqueue`'s `local` option);
+    - `exportV2` in the job, the log line and `/health/export`.
+  - **Old jobs:** a job queued by the previous release with `exportV2: false` now runs on the new pipeline.
+  - **Backup, now never silent:** a render page that doesn't answer still gives a finished export (PDF / images from the server renderer, PPTX from the stored sizes). It logs `export_renderer_unavailable` or `pptx_renderer_capture_failed`, and the log line has `rendererVersion: "legacy"`. A missing `EXPORT_RENDER_URL` / `FRONTEND_URL` now logs the same warning instead of quietly using the backup.
+  - **Backup measured (harness `--legacy`, which now points the export at a render page that isn't there):** `kitchen-sink` PDF 0.765 / PPTX 0.799, `ai-light` PDF 0.906 / PPTX 0.906. That is usable but plainer, so the backup should stay rare: watch the two warnings.
+  - **When to remove the backup too:** after a week of production with no `export_renderer_unavailable` / `pptx_renderer_capture_failed` warnings (Checkpoint 7). Then `buildPdfBufferLegacy`, the server image renderer and the `slideHtml.js` element renderer can go, and a page outage becomes a failed export with a plain message.
+  - Tests: `exportJobs.test.js` (4 replacing the flag tests: every export uses the render page; an old `exportV2: false` job still does; the page down → backup with a warning and a real PDF; no page configured → backup with a warning); `exportRenderer.test.js` (the legacy switch no longer turns the page off). `exportFlag.test.js` removed. Backend suite: 1167 / 1167.
 
 **Checkpoint 7 (definition of done)**
-- [ ] PDF export success rate ≥ 99.5% over 7 days in production.
-- [ ] Every golden deck: PDF and images ≥ 0.98, PPTX (LibreOffice) ≥ 0.95, and the manual matrix all ✅ or a documented ⚠️.
-- [ ] Slide selection and image size options are live in the editor and in My Work.
+- [ ] PDF export success rate ≥ 99.5% over 7 days in production. *(production data: `presentation_export_finished` log lines, or `GET /health/export` → `metrics`)*
+- [ ] Every golden deck: PDF and images ≥ 0.98, PPTX (LibreOffice) ≥ 0.95, and the manual matrix all ✅ or a documented ⚠️. *(PDF ✅ on all six; PPTX through LibreOffice 0.887–0.961, the gaps documented in section 6; the app columns wait for 7.2)*
+- [ ] Slide selection and image size options are live in the editor and in My Work. *(in the code since Phase 2; confirm after the production deploy)*
+- [ ] No `export_renderer_unavailable` / `pptx_renderer_capture_failed` warnings over the same 7 days (the backup wasn't needed).
 
 ---
 
@@ -670,7 +682,7 @@ The same font must be used in the editor, the PDF, PowerPoint and Google Slides,
 
 Use ✅ (matches the editor) · ⚠️ (known, documented difference) · ❌ (bug: open a ticket).
 
-**LibreOffice** (filled 2026-11-19 by the harness, PPTX average SSIM against the editor, lowest slide in brackets): the ⚠️ are the known, documented differences: theme fonts LibreOffice doesn't have (text wraps differently), effects LibreOffice doesn't draw (run outlines, hollow and gradient text), and the chart slides of the editor bug F12 (every bar the same height in the editor). PDF, which doesn't depend on the opening app, is 0.984–0.997 on every deck. The other columns need the apps (7.2).
+**LibreOffice** (filled 2026-11-19 by the harness and confirmed 2026-11-20 after 7.6, the same scores, PPTX average SSIM against the editor, lowest slide in brackets): the ⚠️ are the known, documented differences: theme fonts LibreOffice doesn't have (text wraps differently), effects LibreOffice doesn't draw (run outlines, hollow and gradient text), and the chart slides of the editor bug F12 (every bar the same height in the editor). PDF, which doesn't depend on the opening app, is 0.984–0.997 on every deck. The other columns need the apps (7.2): the files are made by `--qa-pack`, and how to check them is in [`PPT_EXPORT_QA_CHECKLIST.md`](PPT_EXPORT_QA_CHECKLIST.md).
 
 ---
 
