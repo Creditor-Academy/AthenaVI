@@ -1,9 +1,21 @@
 import React, { useEffect, useState } from 'react'
+import { ROBOTS_NOINDEX } from '../../seo/seoRoutes.js'
 import './NotFound.css'
 
 function NotFound({ setView }) {
   const [glitching, setGlitching] = useState(false)
   const [blink, setBlink] = useState(false)
+
+  // Catch-all page: keep it out of search even if the server answered 200 with the app shell.
+  useEffect(() => {
+    let robots = document.head.querySelector('meta[name="robots"]')
+    if (!robots) {
+      robots = document.createElement('meta')
+      robots.setAttribute('name', 'robots')
+      document.head.appendChild(robots)
+    }
+    robots.setAttribute('content', ROBOTS_NOINDEX)
+  }, [])
 
   const handleGoHome = () => {
     const token = localStorage.getItem('accessToken')

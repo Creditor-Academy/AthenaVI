@@ -2,7 +2,7 @@
 /** Run: node scripts/run-tests.mjs src/seo/seo.test.mjs */
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -96,8 +96,12 @@ describe('sitemap.xml and robots.txt', () => {
       assert.ok(!disallowed.some((d) => d && p.startsWith(d)), `${p} must not be blocked`)
     }
     assert.ok(disallowed.includes('/dashboard/'))
-    // The app loads its template data from /templates/*.json while rendering public pages.
+    // Template JSON is /template-assets/*.json. /templates is an SPA route (Not Found, noindex);
+    // crawlers must be allowed to fetch it to see that tag, and must be allowed to fetch the JSON.
     assert.ok(!disallowed.some((d) => d.startsWith('/templates')))
+    assert.ok(!disallowed.some((d) => d.startsWith('/template-assets')))
+    assert.equal(existsSync(path.join(root, 'public/templates')), false, 'public/templates would 403 on nginx')
+    assert.ok(existsSync(path.join(root, 'public/template-assets/pitch_template.json')))
   })
 })
 

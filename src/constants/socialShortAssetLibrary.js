@@ -1,12 +1,13 @@
 /**
- * Social Short template assets — loaded from public/templates/social-short-assets.json.
+ * Social Short template assets — loaded from public/template-assets/social-short-assets.json.
  */
+import { TEMPLATE_ASSETS_BASE } from './templateRegistry';
 
 let cached = null;
 
 export async function loadSocialShortAssets() {
   if (cached) return cached;
-  const response = await fetch('/templates/social-short-assets.json');
+  const response = await fetch(`${TEMPLATE_ASSETS_BASE}/social-short-assets.json`);
   if (!response.ok) throw new Error('Failed to load social short assets');
   cached = await response.json();
   return cached;

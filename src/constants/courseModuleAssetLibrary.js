@@ -1,12 +1,13 @@
 /**
- * Course Module template assets — loaded from public/templates/course-module-assets.json.
+ * Course Module template assets — loaded from public/template-assets/course-module-assets.json.
  */
+import { TEMPLATE_ASSETS_BASE } from './templateRegistry';
 
 let cached = null;
 
 export async function loadCourseModuleAssets() {
   if (cached) return cached;
-  const response = await fetch('/templates/course-module-assets.json');
+  const response = await fetch(`${TEMPLATE_ASSETS_BASE}/course-module-assets.json`);
   if (!response.ok) throw new Error('Failed to load course module assets');
   cached = await response.json();
   return cached;

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { TEMPLATE_BUNDLE_FILES, CATEGORY_FILE_MAP } from '../constants/templateRegistry';
+import { TEMPLATE_ASSETS_BASE, TEMPLATE_BUNDLE_FILES, CATEGORY_FILE_MAP } from '../constants/templateRegistry';
 
 /**
  * @deprecated Prefer useTemplateBundles for grouped template UX.
@@ -19,7 +19,7 @@ const useTemplates = (category) => {
 
     const fetchTemplateFile = async (file) => {
       try {
-        const response = await fetch(`/templates/${file}.json`);
+        const response = await fetch(`${TEMPLATE_ASSETS_BASE}/${file}.json`);
         if (!response.ok) return { scenes: [] };
         const data = await response.json();
         return { scenes: data.scenes || [] };

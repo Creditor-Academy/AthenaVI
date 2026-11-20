@@ -3,8 +3,8 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUT = join(__dirname, '../public/templates/course_explanation_template.json');
-const ASSETS_PATH = join(__dirname, '../public/templates/course-explanation-assets.json');
+const OUT = join(__dirname, '../public/template-assets/course_explanation_template.json');
+const ASSETS_PATH = join(__dirname, '../public/template-assets/course-explanation-assets.json');
 const assets = JSON.parse(readFileSync(ASSETS_PATH, 'utf8'));
 
 const DURATION = 9;

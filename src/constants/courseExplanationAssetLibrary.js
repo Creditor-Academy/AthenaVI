@@ -1,12 +1,13 @@
 /**
- * Course Explanation template assets — loaded from public/templates/course-explanation-assets.json.
+ * Course Explanation template assets — loaded from public/template-assets/course-explanation-assets.json.
  */
+import { TEMPLATE_ASSETS_BASE } from './templateRegistry';
 
 let cached = null;
 
 export async function loadCourseExplanationAssets() {
   if (cached) return cached;
-  const response = await fetch('/templates/course-explanation-assets.json');
+  const response = await fetch(`${TEMPLATE_ASSETS_BASE}/course-explanation-assets.json`);
   if (!response.ok) throw new Error('Failed to load course explanation assets');
   cached = await response.json();
   return cached;

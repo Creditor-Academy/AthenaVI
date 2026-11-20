@@ -3,8 +3,8 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const OUT = join(__dirname, '../public/templates/social_short_template.json');
-const ASSETS_PATH = join(__dirname, '../public/templates/social-short-assets.json');
+const OUT = join(__dirname, '../public/template-assets/social_short_template.json');
+const ASSETS_PATH = join(__dirname, '../public/template-assets/social-short-assets.json');
 const assets = JSON.parse(readFileSync(ASSETS_PATH, 'utf8'));
 
 /** Snappy reel pacing — 7 × 8s ≈ 56s (trim scenes for shorter cuts). */
