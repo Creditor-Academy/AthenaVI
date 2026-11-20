@@ -992,6 +992,7 @@ function SlideStage({
   onStartTextEdit,
   onEndTextEdit,
   onTableCellChange,
+  onTableLayoutChange,
   onImageAuthError,
   onFillDeviceFrame,
   onFillImage,
@@ -1183,6 +1184,20 @@ function SlideStage({
                   }}
                   onTableCellChange={(ri, ci, val) => onTableCellChange?.(el.id, ri, ci, val)}
                   onTableActivate={() => onSelectElement?.(el.id)}
+                  onTableLayoutChange={
+                    editable && onTableLayoutChange
+                      ? (patch, { boxPx, kind } = {}) => {
+                          // The table's box height comes in its own layout px; the stage is
+                          // laid out at the same scale, so its height gives canvas units.
+                          const stageH = stageRef.current?.offsetHeight
+                          const height =
+                            boxPx != null && stageH
+                              ? Math.max(20, Math.round((boxPx * canvas.height) / stageH))
+                              : null
+                          onTableLayoutChange(el.id, patch, { height, kind })
+                        }
+                      : undefined
+                  }
                   onImageAuthError={onImageAuthError}
                 />
               </InteractiveElementShell>
@@ -2318,9 +2333,10 @@ function AIPptEditor({
       const cells = baseCells.map((row, ri) =>
         ri === rowIndex ? (row || []).map((cell, ci) => (ci === colIndex ? value : cell)) : [...(row || [])]
       )
+      // Only the cells: patchElement merges into the latest content, so a column or row size
+      // set a moment ago isn't put back from this render's copy.
       elementMutations.patchElement(elementId, {
         content: {
-          ...el.content,
           cells,
           rows: cells.length,
           cols: cells[0]?.length || 0,
@@ -2328,6 +2344,21 @@ function AIPptEditor({
       })
     },
     [selectedSlide, elementMutations]
+  )
+
+  // Table column / row sizes and the box following its rows (PptEditableTable).
+  const handleTableLayoutChange = useCallback(
+    (elementId, contentPatch, { height = null, kind = 'auto' } = {}) => {
+      if (viewOnly) return
+      const patch = {}
+      if (contentPatch) patch.content = contentPatch
+      if (height != null) patch.placement = { height }
+      if (!patch.content && !patch.placement) return
+      // A drag is one undo step (patchElement records the state before the first change of a
+      // burst); the box fitting its text rides along with the edit that caused it.
+      elementMutations.patchElement(elementId, patch, { history: kind !== 'auto' })
+    },
+    [elementMutations, viewOnly]
   )
 
   const reorderSelectedRef = useRef(null)
@@ -5208,6 +5239,7 @@ function AIPptEditor({
                       onStartTextEdit={handleStartTextEdit}
                       onEndTextEdit={handleEndTextEdit}
                       onTableCellChange={handleTableCellChange}
+                      onTableLayoutChange={handleTableLayoutChange}
                       onImageAuthError={handleImageAuthError}
                       onFillDeviceFrame={handleFillDeviceFrame}
                       onFillImage={handleFillImage}

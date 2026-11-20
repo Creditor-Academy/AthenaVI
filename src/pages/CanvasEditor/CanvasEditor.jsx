@@ -1346,6 +1346,37 @@ export default function CanvasEditor({
   const bringToFront = useCallback((ids) => restack(ids, 'toFront'), [restack])
   const sendToBack = useCallback((ids) => restack(ids, 'toBack'), [restack])
 
+
+  // Table column / row sizes and the box following its rows (PptEditableTable). A drag is live
+  // until it ends, then one undo step; the box fitting its text isn't a step of its own.
+  const handleTableLayoutChange = useCallback((elementId, contentPatch, { height = null, kind = 'auto' } = {}) => {
+    const canvas = canvasesRef.current[activeCanvasIndexRef.current] || canvasesRef.current[0]
+    if (!canvas?.elements?.some((item) => item.id === elementId)) return
+    if (!contentPatch && height == null) return
+    const updated = canvasesRef.current.map((c) =>
+      c.id !== canvas.id
+        ? c
+        : {
+            ...c,
+            elements: c.elements.map((item) =>
+              item.id === elementId
+                ? {
+                    ...item,
+                    ...(contentPatch ? { content: { ...item.content, ...contentPatch } } : {}),
+                    ...(height != null ? { placement: { ...item.placement, height } } : {}),
+                  }
+                : item
+            ),
+          }
+    )
+    if (kind === 'drag-end') {
+      updateCanvasesWithHistory(updated)
+    } else {
+      canvasesRef.current = updated
+      setCanvases(updated)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleTableCellChange = useCallback((elementId, rowIndex, colIndex, value) => {
     const canvas = canvasesRef.current[activeCanvasIndexRef.current] || canvasesRef.current[0]
     const el = canvas?.elements?.find((item) => item.id === elementId)
@@ -2114,6 +2145,7 @@ export default function CanvasEditor({
               setEditing({ canvasId: null, elementId: null })
             }}
             onTableCellChange={handleTableCellChange}
+            onTableLayoutChange={handleTableLayoutChange}
             onFillImage={handleFillImage}
             onDropImageFiles={(canvasId, files, point) => insertImageFiles(files, { canvasId, center: point })}
             onFillDeviceFrame={handleFillImage}

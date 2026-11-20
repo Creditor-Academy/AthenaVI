@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef } from 
 import { FiCode } from 'react-icons/fi'
 import PptChartRenderer, { getEmbedIframeUrl } from './PptChartRenderer'
 import ExternalLinkHoverLayer from './ExternalLinkHoverLayer'
+import PptEditableTable from './PptEditableTable'
 import {
   resolveThemeColor,
   resolveFillCss,
@@ -844,54 +845,6 @@ function unsetIfRuns(usesRuns, boxPaint) {
   return boxPaint.WebkitTextFillColor
 }
 
-function EditableTable({ content, editable, onCellChange, onActivate, style }) {
-  const c = content || {}
-  const cells = Array.isArray(c.cells)
-    ? c.cells
-    : Array.isArray(c.rows) && Array.isArray(c.rows[0])
-      ? c.rows
-      : []
-
-  return (
-    <div className="aig-canvas-table" style={style}>
-      <table className="aig-canvas-table-grid">
-        <tbody>
-          {cells.map((row, ri) => (
-            <tr key={ri}>
-              {(row || []).map((cell, ci) => {
-                const Tag = c.hasHeader !== false && ri === 0 ? 'th' : 'td'
-                return (
-                  <Tag key={ci}>
-                    {editable ? (
-                      <input
-                        className="ppt-table-cell-input"
-                        value={cell}
-                        placeholder={c.hasHeader !== false && ri === 0 ? `Header ${ci + 1}` : 'Type here'}
-                        onChange={(e) => {
-                          const inputType = e.nativeEvent?.inputType
-                          if (inputType === 'historyUndo' || inputType === 'historyRedo') return
-                          onCellChange?.(ri, ci, e.target.value)
-                        }}
-                        onFocus={() => onActivate?.()}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onActivate?.()
-                        }}
-                      />
-                      ) : (
-                      typeof cell === 'string' || typeof cell === 'number' ? cell : ''
-                    )}
-                  </Tag>
-                )
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
 /**
  * One slide element. An element effect (shadow, glow, outline…) is a CSS filter on a wrapper,
  * so it follows the element's outline and can spill past its box.
@@ -926,6 +879,7 @@ function PptCanvasElementBody({
   onHeightChange,
   onTableCellChange,
   onTableActivate,
+  onTableLayoutChange,
   onImageAuthError,
   // Present: a click on a link in a text box opens it (elsewhere read-only links don't react).
   followLinks = false,
@@ -1412,11 +1366,14 @@ function PptCanvasElementBody({
 
   if (el.type === 'table') {
     return (
-      <EditableTable
+      <PptEditableTable
+        el={el}
         content={el.content}
         editable={editable}
+        selected={selected}
         onCellChange={onTableCellChange}
         onActivate={onTableActivate}
+        onLayoutChange={onTableLayoutChange}
         style={fillStyle}
       />
     )

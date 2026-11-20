@@ -1199,9 +1199,8 @@
   display: none;
 }
 
-/* Canvas element fallbacks for new types */
+/* Canvas element fallbacks for new types (tables: pptEditorExtras.css, which the export page loads too) */
 .aig-canvas-chart,
-.aig-canvas-table,
 .aig-canvas-embed {
   display: flex;
   flex-direction: column;
@@ -1224,25 +1223,6 @@
   flex: 1;
   border-radius: 3px 3px 0 0;
   min-height: 8%;
-}
-
-.aig-canvas-table-grid {
-  width: 100%;
-  height: 100%;
-  border-collapse: collapse;
-  font-size: 10px;
-}
-
-.aig-canvas-table-grid th,
-.aig-canvas-table-grid td {
-  border: 1px solid #e2e8f0;
-  padding: 2px 4px;
-  text-align: left;
-}
-
-.aig-canvas-table-grid th {
-  background: #f1f5f9;
-  font-weight: 700;
 }
 
 .aig-canvas-embed-label {

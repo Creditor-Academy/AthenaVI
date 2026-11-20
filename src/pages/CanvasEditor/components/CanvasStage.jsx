@@ -816,6 +816,7 @@ export default function CanvasStage({
   onPlacementCommit,
   onTextChange,
   onTableCellChange,
+  onTableLayoutChange,
   onFillImage,
   onFillDeviceFrame,
   onDropImageFiles,
@@ -1117,6 +1118,20 @@ export default function CanvasStage({
                           onTableCellChange?.(element.id, ri, ci, val)
                         }
                         onTableActivate={() => onSelect?.(element.id)}
+                        onTableLayoutChange={
+                          isCurrent && onTableLayoutChange
+                            ? (patch, { boxPx, kind } = {}) => {
+                                // Box height in the table's layout px → page units (the page is
+                                // laid out at the same scale as its elements).
+                                const surfaceH = surfaceRef.current?.offsetHeight
+                                const height =
+                                  boxPx != null && surfaceH
+                                    ? Math.max(20, Math.round((boxPx * canvas.height) / surfaceH))
+                                    : null
+                                onTableLayoutChange(element.id, patch, { height, kind })
+                              }
+                            : undefined
+                        }
                       />
                     </InteractiveCanvasElementShell>
                   )
