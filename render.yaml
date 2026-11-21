@@ -83,58 +83,61 @@ services:
     previews:
       generation: automatic
 
-    # Pages the app builds on the fly get index.html. Public pages have their own
-    # dist/<page>/index.html (scripts/render-postbuild.mjs). Anything else is not a page:
-    # Render answers it with dist/404.html (the app's Not Found page) and status 404.
+    # App and editor routes get spa.html (empty, noindex). Public pages have their own
+    # dist/<page>/index.html from the prerender step. dist/index.html is the homepage.
+    # Anything else is not a page: Render answers it with dist/404.html and status 404.
     routes:
       - type: rewrite
         source: /
         destination: /index.html
       - type: rewrite
         source: /auth/*
-        destination: /index.html
+        destination: /spa.html
       - type: rewrite
         source: /oauth/*
-        destination: /index.html
+        destination: /spa.html
       - type: rewrite
         source: /login/callback
-        destination: /index.html
+        destination: /spa.html
       - type: rewrite
         source: /dashboard/*
-        destination: /index.html
+        destination: /spa.html
       - type: rewrite
         source: /slides
-        destination: /index.html
+        destination: /spa.html
       - type: rewrite
         source: /slides/*
-        destination: /index.html
+        destination: /spa.html
+      - type: rewrite
+        source: /create
+        destination: /spa.html
       - type: rewrite
         source: /create/*
-        destination: /index.html
+        destination: /spa.html
       - type: rewrite
         source: /p/*
-        destination: /index.html
+        destination: /spa.html
       - type: rewrite
         source: /share/*
-        destination: /index.html
+        destination: /spa.html
       - type: rewrite
         source: /invitations/*
-        destination: /index.html
+        destination: /spa.html
       - type: rewrite
         source: /invite/*
-        destination: /index.html
+        destination: /spa.html
       - type: rewrite
         source: /reset-password
-        destination: /index.html
+        destination: /spa.html
       - type: rewrite
         source: /reset-password/*
-        destination: /index.html
+        destination: /spa.html
       - type: rewrite
         source: /hub
-        destination: /index.html
+        destination: /spa.html
       - type: rewrite
         source: /products/choose
-        destination: /index.html
+        destination: /spa.html
 
     # Security headers + long-lived cache for Vite hashed assets (/assets/*)
     headers:

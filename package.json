@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/render-postbuild.mjs",
-    "build:render": "node scripts/render-build.mjs && vite build && node scripts/render-postbuild.mjs",
+    "build": "vite build && node scripts/render-postbuild.mjs && node scripts/prerender-public.mjs",
+    "build:render": "node scripts/render-build.mjs && vite build && node scripts/render-postbuild.mjs && node scripts/prerender-public.mjs",
     "seed:layouts": "node scripts/seed-presentation-templates.mjs",
     "seed:layouts:update": "node scripts/seed-presentation-templates.mjs --update",
     "seed:layouts:dry-run": "node scripts/seed-presentation-templates.mjs --dry-run",
@@ -40,6 +40,7 @@
     "globals": "^16.5.0",
     "jsdom": "^29.1.1",
     "postcss": "^8.5.8",
+    "puppeteer": "^25.18.1",
     "tailwindcss": "^3.4.17",
     "typescript": "^6.0.2",
     "vite": "^7.2.4"

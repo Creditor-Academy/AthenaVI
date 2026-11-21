@@ -1,6 +1,7 @@
-import { seoForPath, openGraphForPath, jsonLdForPath, LCP_IMAGE_PATH, normalizeSeoPath } from './seoRoutes.js'
+import { seoForPath, openGraphForPath, twitterForPath, jsonLdForPath, LCP_IMAGE_PATH, normalizeSeoPath } from './seoRoutes.js'
 
 const OG_KEYS = ['og:type', 'og:site_name', 'og:title', 'og:description', 'og:url', 'og:image']
+const TWITTER_KEYS = ['twitter:card', 'twitter:title', 'twitter:description', 'twitter:image']
 
 function upsertMeta(doc, attr, key, content) {
   let el = doc.head.querySelector(`meta[${attr}="${key}"]`)
@@ -17,7 +18,7 @@ function upsertMeta(doc, attr, key, content) {
 }
 
 /**
- * Set the page's title, description, canonical link, Open Graph tags, JSON-LD and robots meta
+ * Set the page's title, description, canonical, Open Graph, Twitter, JSON-LD and robots meta
  * for `pathname` (see seoRoutes). The built HTML of each page already carries them; this keeps
  * them right after in-app navigation, and for paths the server answers with the app shell.
  */
@@ -60,6 +61,17 @@ export function applySeoHead(pathname, doc = typeof document !== 'undefined' ? d
       }
     : {}
   for (const key of OG_KEYS) upsertMeta(doc, 'property', key, ogValues[key] || null)
+
+  const twitter = twitterForPath(pathname)
+  const twitterValues = twitter
+    ? {
+        'twitter:card': twitter.card,
+        'twitter:title': twitter.title,
+        'twitter:description': twitter.description,
+        'twitter:image': twitter.image,
+      }
+    : {}
+  for (const key of TWITTER_KEYS) upsertMeta(doc, 'name', key, twitterValues[key] || null)
 
   const jsonLd = jsonLdForPath(pathname)
   let script = doc.getElementById('seo-jsonld')

@@ -12,10 +12,12 @@ dist
 dist-ssr
 *.local
 
-# Environment variables — keep real values local. Commit .env.example only.
+# Environment variables — keep secrets local.
+# .env.production is committed because it only holds the public GTM container id.
 .env
 .env.development
 .env.production
+!.env.production
 .env.local
 .env.*.local
 .env.development.local

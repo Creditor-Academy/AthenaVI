@@ -54,8 +54,8 @@ export const DEFAULT_TITLE = BRAND
  * Kept to about 60 characters so search results show it in full.
  */
 export const PAGE_TITLES = {
-  // The product is an AI avatar video generator for training videos, not a course-authoring suite.
-  '/': `AI Avatar Video Generator for Training Videos | ${BRAND}`,
+  // Under 60 characters. The product is avatar video for training, not a course-authoring suite.
+  '/': `AI Avatar Videos for Training | ${BRAND}`,
   '/products': `Online Course Creation Tools | ${BRAND}`,
   '/marketing-suite': `Marketing Suite: AI Marketing Tools | ${BRAND}`,
   '/sales-suite': `Sales Suite: Sales Enablement Tools | ${BRAND}`,
@@ -101,15 +101,15 @@ export const PAGE_H1 = {
 
 /** Meta descriptions from the digital marketing team's sheet ("Meta Description_virtual-studio"). */
 export const PAGE_DESCRIPTIONS = {
-  '/': 'Create training videos with AI avatars in Athena Virtual Studio. Turn a script into a presenter-led video for courses, employee training and digital learning.',
-  '/products': 'Explore Athena Virtual Studio products for creating digital learning experiences. Discover course authoring, AI content tools and solutions for training teams.',
-  '/marketing-suite': "Discover Athena's marketing suite for creating and managing digital marketing content. Explore tools designed to support campaigns, content and audience engagement.",
+  '/': 'Create AI-powered videos with lifelike avatars in Athena Virtual Studio. Transform text into engaging video content.',
+  '/products': 'Explore Athena Virtual Studio products for digital learning. Discover course authoring, AI content tools and solutions for training teams.',
+  '/marketing-suite': "Discover Athena's marketing suite for creating and managing marketing content, campaigns and audience engagement.",
   '/sales-suite': "Explore Athena's sales suite and discover digital tools that help sales teams present solutions, share content and support customer conversations.",
   '/customer-experience': 'Explore Athena solutions designed to support customer experiences with engaging digital content, helpful resources and interactive communication.',
   '/learning-development': 'Discover Athena Virtual Studio for learning and development. Create engaging training content and digital learning experiences for employees and learners.',
   '/use-cases': 'See how Athena Virtual Studio can support different use cases, from online course creation to employee training and interactive digital learning.',
-  '/technology': 'Learn about the technology behind Athena Virtual Studio and explore how AI-powered capabilities support digital content creation and engaging learning experiences.',
-  '/ai-videos': 'Create engaging videos with AI using Athena Virtual Studio. Explore video creation capabilities that help turn ideas and learning content into video experiences.',
+  '/technology': 'Learn about the technology behind Athena Virtual Studio and how it supports digital content creation and learning.',
+  '/ai-videos': 'Create videos with AI in Athena Virtual Studio. Turn ideas and learning content into video experiences.',
   '/ai-avatars-videos': 'Create presenter-style videos with AI avatars using Athena Virtual Studio. Explore ways to turn scripts and ideas into engaging video content.',
   '/about-us': 'Get to know Athena Virtual Studio, our platform and our approach to helping people create digital content and engaging online learning experiences.',
   '/news': 'Read the latest news and updates from Athena Virtual Studio, including platform announcements, product developments and company updates.',
@@ -118,7 +118,9 @@ export const PAGE_DESCRIPTIONS = {
   '/help': 'Find help and guidance for using Athena Virtual Studio. Explore support information and answers to common questions about the platform.',
   '/privacy': 'Read the Athena Virtual Studio privacy policy to understand how information is collected, used, stored and protected when you use our services.',
   '/download': 'Get the Athena Virtual Studio app or downloads and find the information you need to access the platform on your device.',
-  '/early-access': "Request early access to Athena Virtual Studio and be among the first to explore the platform's tools for creating digital content and learning experiences.",
+  '/login': 'Sign in to Athena Virtual Studio to create avatar videos and manage your projects.',
+  '/signup': 'Create an Athena Virtual Studio account to make avatar videos and training content.',
+  '/early-access': 'Request access to Athena Virtual Studio and explore tools for creating avatar videos and digital learning content.',
 }
 
 export const ROBOTS_INDEX = 'index, follow'
@@ -136,25 +138,6 @@ export const OG_IMAGE = `${SITE_URL}${OG_IMAGE_PATH}`
 
 /** First hero frame. Preloaded on the home page so it can paint before the avatar videos. */
 export const LCP_IMAGE_PATH = '/hero-posters/01.webp'
-
-export const BREADCRUMB_LABELS = {
-  '/': 'Home',
-  '/products': 'Products',
-  '/marketing-suite': 'Marketing Suite',
-  '/sales-suite': 'Sales Suite',
-  '/customer-experience': 'Customer Experience',
-  '/learning-development': 'Learning and Development',
-  '/use-cases': 'Use Cases',
-  '/ai-videos': 'AI Videos',
-  '/ai-avatars-videos': 'AI Avatars and Videos',
-  '/ethics': 'Ethics',
-  '/help': 'Help Center',
-  '/privacy': 'Privacy Policy',
-}
-
-const ATHENA_LMS_URL = 'https://lmsathena.com'
-const ORGANIZATION_ID = `${ATHENA_LMS_URL}/#organization`
-const SOFTWARE_ID = `${SITE_URL}/#software`
 
 /** `/products/` → `/products`; `''` → `/`. Query and hash are dropped. */
 export function normalizeSeoPath(pathname = '/') {
@@ -179,9 +162,70 @@ export function browserPathFor(pathname) {
   return path
 }
 
+const NOT_FOUND_SEO = {
+  indexable: false,
+  canonical: null,
+  robots: ROBOTS_NOINDEX,
+  title: `Page Not Found | ${BRAND}`,
+  description: 'The page you requested is not on Athena Virtual Studio.',
+  h1: 'Page Not Found',
+}
+
+/** Signed-in app, editors, and one-off links. These are not prerendered. */
+export function isAppPath(pathname) {
+  const path = normalizeSeoPath(pathname)
+  if (path.startsWith('/p/')) return true
+  const roots = [
+    '/dashboard',
+    '/slides',
+    '/create',
+    '/profile',
+    '/settings',
+    '/support',
+    '/hub',
+    '/download',
+    '/share',
+    '/invitations',
+    '/invite',
+    '/reset-password',
+    '/auth',
+    '/oauth',
+  ]
+  if (roots.some((root) => path === root || path.startsWith(`${root}/`))) return true
+  return path === '/products/choose' || path === '/login/callback'
+}
+
+export function isPublicPath(pathname) {
+  const path = normalizeSeoPath(pathname)
+  return INDEXABLE_PATHS.includes(path) || NOINDEX_PUBLIC_PATHS.includes(path)
+}
+
+/**
+ * Indexable pages are listed in the sitemap. Sign-in pages are public too: their own title,
+ * description, canonical, and social tags, plus `noindex`. The app has no canonical. Unknown
+ * paths use the 404 document (`/__not-found__` is that file).
+ */
+export function seoForPath(pathname) {
+  const path = normalizeSeoPath(pathname)
+  if (path === '/__not-found__' || (!isPublicPath(path) && !isAppPath(path))) return { ...NOT_FOUND_SEO }
+  const indexable = INDEXABLE_PATHS.includes(path)
+  const listed = indexable || NOINDEX_PUBLIC_PATHS.includes(path)
+  // A shared presentation names its own tab; leave it alone.
+  const ownTitle = /^\/p\//.test(path)
+  return {
+    indexable,
+    canonical: listed ? canonicalUrl(path) : null,
+    robots: indexable ? ROBOTS_INDEX : ROBOTS_NOINDEX,
+    title: ownTitle ? null : (listed && PAGE_TITLES[path]) || DEFAULT_TITLE,
+    description: (listed && PAGE_DESCRIPTIONS[path]) || null,
+    h1: (listed && PAGE_H1[path]) || null,
+  }
+}
+
+/** Open Graph for every public route that has a canonical. Omitted on the app and the 404. */
 export function openGraphForPath(pathname) {
   const seo = seoForPath(pathname)
-  if (!seo.indexable || !seo.canonical) return null
+  if (!seo.canonical || !seo.title) return null
   return {
     title: seo.title,
     description: seo.description,
@@ -192,82 +236,30 @@ export function openGraphForPath(pathname) {
   }
 }
 
-export function jsonLdForPath(pathname) {
-  const path = normalizeSeoPath(pathname)
-  const seo = seoForPath(path)
-  if (!seo.indexable || !seo.canonical) return null
-  const crumbs = [{ name: 'Home', item: `${SITE_URL}/` }]
-  if (path !== '/') {
-    crumbs.push({ name: BREADCRUMB_LABELS[path] || seo.title, item: seo.canonical })
-  }
+export function twitterForPath(pathname) {
+  const og = openGraphForPath(pathname)
+  if (!og) return null
   return {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'Organization',
-        '@id': ORGANIZATION_ID,
-        name: 'Athena LMS',
-        url: ATHENA_LMS_URL,
-        telephone: '+1 (425) 400-9246',
-        address: {
-          '@type': 'PostalAddress',
-          streetAddress: '12315 NE 97th Street',
-          addressLocality: 'Kirkland',
-          addressRegion: 'WA',
-          addressCountry: 'US',
-        },
-      },
-      {
-        '@type': 'SoftwareApplication',
-        '@id': SOFTWARE_ID,
-        name: 'Athena Virtual Studio',
-        alternateName: 'Virtual Studio',
-        applicationCategory: 'MultimediaApplication',
-        operatingSystem: 'Web',
-        url: `${SITE_URL}/`,
-        description: PAGE_DESCRIPTIONS['/'],
-        publisher: { '@id': ORGANIZATION_ID },
-      },
-      {
-        '@type': 'BreadcrumbList',
-        itemListElement: crumbs.map((crumb, index) => ({
-          '@type': 'ListItem',
-          position: index + 1,
-          name: crumb.name,
-          item: crumb.item,
-        })),
-      },
-    ],
+    card: 'summary_large_image',
+    title: og.title,
+    description: og.description,
+    image: og.image,
   }
 }
 
 /**
- * Indexable pages get a self-referencing canonical. Sign-in, the app, shared links and unknown
- * paths get `noindex, follow` and no canonical. `/__not-found__` is the static 404 document.
+ * SoftwareApplication on the home page only. Name, url, and description are copied from the
+ * page itself (the footer and the hero). No address, phone, price, or rating is added.
  */
-export function seoForPath(pathname) {
-  const path = normalizeSeoPath(pathname)
-  if (path === '/__not-found__') {
-    return {
-      indexable: false,
-      canonical: null,
-      robots: ROBOTS_NOINDEX,
-      title: `Page not found | ${BRAND}`,
-      description: 'The page you requested is not on Athena Virtual Studio.',
-      h1: 'Page not found',
-    }
-  }
-  const indexable = INDEXABLE_PATHS.includes(path)
-  // Pages with their own title, description and H1; the app and hidden pages get the defaults.
-  const listed = indexable || NOINDEX_PUBLIC_PATHS.includes(path)
-  // A shared presentation names its own tab; leave it alone.
-  const ownTitle = /^\/p\//.test(path)
+export function jsonLdForPath(pathname) {
+  if (normalizeSeoPath(pathname) !== '/') return null
   return {
-    indexable,
-    canonical: indexable ? canonicalUrl(path) : null,
-    robots: indexable ? ROBOTS_INDEX : ROBOTS_NOINDEX,
-    title: ownTitle ? null : (listed && PAGE_TITLES[path]) || DEFAULT_TITLE,
-    description: (listed && PAGE_DESCRIPTIONS[path]) || null,
-    h1: (listed && PAGE_H1[path]) || null,
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: BRAND,
+    applicationCategory: 'MultimediaApplication',
+    operatingSystem: 'Web',
+    url: `${SITE_URL}/`,
+    description: PAGE_DESCRIPTIONS['/'],
   }
 }
