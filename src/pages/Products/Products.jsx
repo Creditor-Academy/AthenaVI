@@ -26,21 +26,15 @@ const productSectionMap = {
 
 function Products({ onLoginClick, initialSection = null, onNavigateToProduct, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology, onNavigateToUseCases }) {
   useEffect(() => {
-    // Scroll to initial section if provided
-    if (initialSection) {
-      const sectionId = productSectionMap[initialSection]
-      if (sectionId) {
-        setTimeout(() => {
-          const element = document.getElementById(sectionId)
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }
-        }, 100)
-      }
-    } else {
-      // Scroll to top
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+    const hash = window.location.hash.replace(/^#/, '')
+    const sectionId = productSectionMap[initialSection] || hash
+    if (sectionId && document.getElementById(sectionId)) {
+      setTimeout(() => {
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+      return
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [initialSection])
 
 

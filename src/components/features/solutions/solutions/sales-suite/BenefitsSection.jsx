@@ -279,8 +279,11 @@ function BenefitsSection() {
                   <img
                     src={benefit.image}
                     alt={benefit.title}
+                    width="600"
+                    height="400"
                     className="benefits-card-image"
                     loading="lazy"
+                    decoding="async"
                   />
                   <div className="benefits-card-content">
                     <div className="benefits-card-icon">

@@ -227,7 +227,7 @@ function VideoTranslate({ variant = 'dark' }) {
     <>
       <style>{styles}</style>
 
-      <section className={`product-section ${variant}`}>
+      <section id="video-translate" className={`product-section ${variant}`}>
         <div className="product-section-content">
 
           <h2 className="product-section-title heading-h1">Video Translate</h2>
@@ -243,6 +243,10 @@ function VideoTranslate({ variant = 'dark' }) {
                 <img
                   src={VideosectionImage}
                   alt="Video Translation Mockup"
+                  width="1024"
+                  height="1024"
+                  loading="lazy"
+                  decoding="async"
                   className="product-image"
                 />
                 <div className="product-image-overlay"></div>

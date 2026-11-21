@@ -192,7 +192,7 @@ function CTASection() {
             to create better connections, engage their prospects, and close more deals.
           </p>
           <div className="cta-buttons">
-            <a href="#" className="primary-cta">
+            <a href="/signup/" className="primary-cta">
               Start Free Trial
             </a>
             <a href="#" className="secondary-cta">

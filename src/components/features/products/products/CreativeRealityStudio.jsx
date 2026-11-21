@@ -267,6 +267,10 @@ function CreativeRealityStudio({ variant = 'light' }) {
               <div className="product-grid-image-container">
                 <img
                   src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&h=400&fit=crop&auto=format"
+                  width="600"
+                  height="400"
+                  loading="lazy"
+                  decoding="async"
                   alt="Virtual classroom instruction"
                   className="product-grid-image"
                 />
@@ -278,6 +282,10 @@ function CreativeRealityStudio({ variant = 'light' }) {
               <img
                 src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=800&fit=crop&auto=format"
                 alt="Creative studio professional"
+                width="800"
+                height="800"
+                loading="lazy"
+                decoding="async"
                 className="product-grid-center-image"
               />
               <div className="product-grid-center-overlay">
@@ -294,6 +302,10 @@ function CreativeRealityStudio({ variant = 'light' }) {
                 <img
                   src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=400&fit=crop&auto=format"
                   alt="Virtual Studio platform"
+                  width="600"
+                  height="400"
+                  loading="lazy"
+                  decoding="async"
                   className="product-grid-image"
                 />
               </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { MdChevronLeft, MdChevronRight, MdSearch } from 'react-icons/md'
-import avatar1 from '../../../../../assets/avatar1.png'
+import avatar1 from '../../../../../assets/avatar1.webp'
 import avatar2 from '../../../../../assets/avatar2.webp'
 import avatar3 from '../../../../../assets/avatar3.webp'
 import avatar4 from '../../../../../assets/avatar4.webp'
@@ -212,24 +212,32 @@ function EngagementSection() {
   const cards = [
     {
       image: avatar1,
+      width: 380,
+      height: 657,
       color: '#f4686fff',
       title: 'Cost-efficient Content',
       description: 'Traditional video production with human presenters can be expensive and time-consuming. Virtual Studio offers an innovative AI video solution that is not just affordable but also highly efficient.',
     },
     {
       image: avatar2,
+      width: 408,
+      height: 612,
       color: '#f1cb6bff',
       title: 'Personalization',
       description: 'Make your content personalized and targeted at an unprecedented scale, making each interaction unique and memorable.',
     },
     {
       image: avatar3,
+      width: 408,
+      height: 612,
       color: '#30cea2ff',
       title: 'Global Audience',
       description: 'With over 120 languages available, different voices and tones, and a premium range of virtual presenters your content can resonate with a global audience.',
     },
     {
       image: avatar4,
+      width: 408,
+      height: 612,
       color: '#f06f76ff',
       title: 'Higher Engagement',
       description: 'People retain 95% of video content messaging compared to only 10% of text and images alone. With Virtual Studio, you are creating an experience.',
@@ -325,7 +333,7 @@ function EngagementSection() {
                   className="poster-container"
                   onClick={() => setCurrentSlide(index)}
                 >
-                  <img src={card.image} alt={card.title} className="poster-img" />
+                  <img src={card.image} alt={card.title} width={card.width} height={card.height} loading="lazy" decoding="async" className="poster-img" />
                 </div>
 
                 <div className="detail-panel" style={{ background: card.color }}>

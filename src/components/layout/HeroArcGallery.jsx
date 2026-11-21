@@ -291,8 +291,12 @@ function HeroArcGallery({ avatars = [], fullWidth = false, pillarLabels = [] }) 
                   videoRefs.current[i] = el
                 }}
                 src={avatar.src}
+                poster={avatar.poster}
+                width="960"
+                height="540"
                 muted
-                preload="none"
+                preload={i === 0 ? 'metadata' : 'none'}
+                fetchPriority={i === 0 ? 'high' : 'low'}
                 loop
                 playsInline
                 webkit-playsinline="true"

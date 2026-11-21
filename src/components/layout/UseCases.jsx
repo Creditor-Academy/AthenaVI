@@ -1,9 +1,9 @@
 import { useState } from "react";
 
-import CourseCreatorImg from "../../assets/Course Creator.jpg";
-import UniversityImg from "../../assets/University.jpg";
+import CourseCreatorImg from "../../assets/Course Creator.webp";
+import UniversityImg from "../../assets/University.webp";
 import CorporateTrainingImg from "../../assets/Cooporate training teams.webp";
-import MarketingTeamsImg from "../../assets/Marketing Teams.jpg";
+import MarketingTeamsImg from "../../assets/Marketing Teams.webp";
 
 const CARDS = [
   {
@@ -11,6 +11,8 @@ const CARDS = [
     tag: "Education",
     tagColor: "#1a3a2a",
     img: CourseCreatorImg,
+    width: 736,
+    height: 736,
     stat: "10K+",
     statLabel: "Courses created using Virtual Studio",
     bottomLabel: "Start creating",
@@ -20,6 +22,8 @@ const CARDS = [
     tag: "Health",
     tagColor: "rgba(0,0,0,0.45)",
     img: UniversityImg,
+    width: 736,
+    height: 1051,
     bottomLabel: "Let them be heard",
   },
   {
@@ -34,12 +38,16 @@ const CARDS = [
     tag: "Education",
     tagColor: "rgba(0,0,0,0.45)",
     img: CorporateTrainingImg,
+    width: 736,
+    height: 1313,
     bottomLabel: "Explore more",
   },
   {
     title: "Your home for video AI",
     tag: null,
     img: MarketingTeamsImg,
+    width: 671,
+    height: 1200,
     bottomLabel: "Explore more",
     isGreen: true,
   },
@@ -196,6 +204,8 @@ export default function UseCases() {
                     <img
                       src={card.img}
                       alt={card.title}
+                      width={card.width}
+                      height={card.height}
                       loading="lazy"
                       decoding="async"
                       draggable={false}
@@ -231,6 +241,8 @@ export default function UseCases() {
                   <img
                     src={card.img}
                     alt={card.title}
+                    width={card.width}
+                    height={card.height}
                     loading="lazy"
                     decoding="async"
                     draggable={false}

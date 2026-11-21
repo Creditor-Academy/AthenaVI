@@ -12,6 +12,7 @@ import heroTalk1 from '../../assets/video/preview_video_talk_1.mp4'
 import heroTalk2 from '../../assets/video/preview_video_talk_2.mp4'
 import heroTalk2b from '../../assets/video/preview_video_talk_2 (1).mp4'
 import heroTalk3 from '../../assets/video/preview_video_talk_3.mp4'
+import { HREF, isPlainLeftClick } from '../../seo/publicNav.js'
 import heygenService from '../../services/heygenService'
 import { extractHeygenList, mapAvatarGroup } from '../../utils/heygenAvatars'
 
@@ -343,16 +344,16 @@ const styles = `
 function Hero({ onContactSalesClick }) {
   const [avatarsList] = useState([
     /* ── Target avatars in sequence (1 → 7) ── */
-    { src: heroTarget, name: 'Noah', role: 'Technical Expert' },
-    { src: heroTarget1, name: 'Liam', role: 'Virtual Studio' },
-    { src: heroTarget2, name: 'Lucas', role: 'Product Presenter' },
-    { src: heroTarget6, name: 'Mia', role: 'Brand Storyteller' },
-    { src: heroTarget7, name: 'Zara', role: 'Sales Presenter' },
+    { src: heroTarget, poster: '/hero-posters/01.webp', name: 'Noah', role: 'Technical Expert' },
+    { src: heroTarget1, poster: '/hero-posters/02.webp', name: 'Liam', role: 'Virtual Studio' },
+    { src: heroTarget2, poster: '/hero-posters/03.webp', name: 'Lucas', role: 'Product Presenter' },
+    { src: heroTarget6, poster: '/hero-posters/04.webp', name: 'Mia', role: 'Brand Storyteller' },
+    { src: heroTarget7, poster: '/hero-posters/05.webp', name: 'Zara', role: 'Sales Presenter' },
     /* ── Talk avatars ── */
-    { src: heroTalk1, name: 'Ava', role: 'Digital Assistant' },
-    { src: heroTalk2, name: 'Ethan', role: 'AI Video Assistant' },
-    { src: heroTalk2b, name: 'Oliver', role: 'Digital Host' },
-    { src: heroTalk3, name: 'Olivia', role: 'Language Coach' },
+    { src: heroTalk1, poster: '/hero-posters/06.webp', name: 'Ava', role: 'Digital Assistant' },
+    { src: heroTalk2, poster: '/hero-posters/07.webp', name: 'Ethan', role: 'AI Video Assistant' },
+    { src: heroTalk2b, poster: '/hero-posters/08.webp', name: 'Oliver', role: 'Digital Host' },
+    { src: heroTalk3, poster: '/hero-posters/09.webp', name: 'Olivia', role: 'Language Coach' },
   ])
 
   return (
@@ -387,26 +388,31 @@ function Hero({ onContactSalesClick }) {
             Create professional videos in minutes, not hours.
           </p>
           <div className="hero-cta">
-            <button 
-              type="button" 
+            <a
+              href={HREF.signup}
               className="btn-primary"
               onClick={(e) => {
-                e.preventDefault();
-                window.history.pushState({ view: 'login' }, '', '/signup');
-                window.dispatchEvent(new PopStateEvent('popstate'));
+                if (!isPlainLeftClick(e)) return
+                e.preventDefault()
+                window.history.pushState({ view: 'login' }, '', HREF.signup)
+                window.dispatchEvent(new PopStateEvent('popstate'))
               }}
             >
               Get Started Free
               <MdArrowOutward />
-            </button>
-            <button 
-              type="button" 
+            </a>
+            <a
+              href={HREF.sales}
               className="btn-outline"
-              onClick={onContactSalesClick}
+              onClick={(e) => {
+                if (!isPlainLeftClick(e)) return
+                e.preventDefault()
+                onContactSalesClick?.()
+              }}
             >
               Contact Sales
               <MdArrowOutward />
-            </button>
+            </a>
           </div>
         </div>
 

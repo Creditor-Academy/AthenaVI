@@ -23,6 +23,7 @@ import SessionExpiredModal from './components/ui/SessionExpiredModal/SessionExpi
 import PptDeckOpenBoot from './pages/Slides/AIPptComponents/PptDeckOpenBoot.jsx'
 import SharedGeneration from './pages/SharedGeneration/SharedGeneration.jsx'
 import { applySeoHead } from './seo/applySeoHead.js'
+import { browserPathFor } from './seo/seoRoutes.js'
 import { saveReturnTo, takeReturnTo, clearReturnTo } from './utils/authReturnTo.js'
 
 function isPptEditorBootPath() {
@@ -369,11 +370,13 @@ function App() {
     // The sign-in screen is also the sign-up form: /signup and /early-access keep their own URL
     // (and with it their own title, H1 and analytics source).
     const isSignupPath = view === 'login' && /^\/(signup|early-access)$/.test(currentPath)
-    const targetUrl =
-      (view === 'dashboard' && isDashboardSubPath) || isSignupPath ? currentPath
-      : newUrl
+    const isDashHere = view === 'dashboard' && isDashboardSubPath
+    // Public pages keep the trailing slash the server answers with, so refresh does not 301.
+    const rawTarget = isDashHere || isSignupPath ? currentPath : newUrl
+    const targetUrl = isDashHere ? rawTarget : browserPathFor(rawTarget)
+    const shownPath = isDashHere ? currentPath : window.location.pathname
     try {
-      if (!onProtectedPath && currentPath !== targetUrl) {
+      if (!onProtectedPath && shownPath !== targetUrl) {
         window.history.pushState({ view }, '', targetUrl)
       }
     } catch {
