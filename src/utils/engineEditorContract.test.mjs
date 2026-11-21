@@ -24,11 +24,11 @@ const twoCardSchema = {
 }
 
 describe('Engine ↔ PPT editor contract (Ankit backup)', () => {
-  it('keeps AI 5–20, manual 40, and 60 elements — same as presentation.constants', () => {
+  it('keeps AI 5–20, manual 40, and 500 elements — same as presentation.constants', () => {
     assert.equal(PPT_CAPS.AI_SLIDE_MIN, 5)
     assert.equal(PPT_CAPS.AI_SLIDE_MAX, 20)
     assert.equal(PPT_CAPS.DECK_MAX_SLIDES, 40)
-    assert.equal(PPT_CAPS.ELEMENTS_PER_SLIDE, 60)
+    assert.equal(PPT_CAPS.ELEMENTS_PER_SLIDE, 500)
   })
 
   it('maps 9:16 to the 16:9 PPT canvas instead of opening Canvas sizes', () => {

@@ -15,7 +15,7 @@ This document is the **full list of data the canvas needs** — create, load, ed
 |-----|-------|
 | AI outline slides | 5–20 |
 | Deck max slides | 40 |
-| Elements per slide | 50 |
+| Elements per slide | 500 |
 | Title max length | 255 |
 | Export formats | `PPTX`, `PDF`, `PNG`, `JPEG` |
 | Density | `concise` \| `balanced` \| `detailed` |

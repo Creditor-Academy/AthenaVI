@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react'
-import { buildCanvasDoc } from '../../../utils/presentationHelpers'
+import { PPT_CAPS, buildCanvasDoc } from '../../../utils/presentationHelpers'
 import {
   canPptGroup,
   canPptUngroup,
@@ -42,6 +42,9 @@ export function usePptElementMutations({
   isUnsavedSlideId = () => false,
   // Called for every slide an edit touches (the editor keeps those edits when a reload races them).
   markSlideEdited,
+  // Told when an edit would put more than PPT_CAPS.ELEMENTS_PER_SLIDE elements on a slide. The
+  // server refuses such a slide, so the edit is not made (it used to be, and then never saved).
+  onElementCapReached,
 }) {
   const localSlidesRef = useRef(localSlides)
   /** The slide `id` refers to, under its temporary or its real id. */
@@ -52,6 +55,17 @@ export function usePptElementMutations({
   const patchTimersRef = useRef({})
   const pendingPatchRef = useRef({})
   const clipboardRef = useRef([])
+
+  /** True when `adding` more elements still fit on the slide; otherwise reports the cap. */
+  const fitsElementCap = useCallback(
+    (slide, adding) => {
+      const count = slide?.elements?.elements?.length || 0
+      if (count + adding <= PPT_CAPS.ELEMENTS_PER_SLIDE) return true
+      onElementCapReached?.(PPT_CAPS.ELEMENTS_PER_SLIDE)
+      return false
+    },
+    [onElementCapReached]
+  )
 
   useEffect(() => {
     localSlidesRef.current = localSlides
@@ -254,6 +268,7 @@ export function usePptElementMutations({
       const expanded = expandPptSelectionIds(slide.elements?.elements || [], requested)
       const sources = (slide.elements?.elements || []).filter((el) => expanded.includes(el.id))
       if (!sources.length) return
+      if (!fitsElementCap(slide, sources.length)) return
 
       pushHistory?.({ slides: localSlidesRef.current, selectedSlideId, selectedElementId })
       const clones = cloneElementsWithOffset(sources, slide.elements?.elements || [])
@@ -271,6 +286,7 @@ export function usePptElementMutations({
       updateElements,
       setSelectedElementId,
       setMultiSelectIds,
+      fitsElementCap,
     ]
   )
 
@@ -294,6 +310,7 @@ export function usePptElementMutations({
   const pasteClipboard = useCallback(() => {
     const slide = getSlide()
     if (!slide || isGenerating || !clipboardRef.current?.length) return
+    if (!fitsElementCap(slide, clipboardRef.current.length)) return
     pushHistory?.({ slides: localSlidesRef.current, selectedSlideId, selectedElementId })
     const clones = cloneElementsWithOffset(clipboardRef.current, slide.elements?.elements || [])
     updateElements(slide.id, (els) => [...els, ...clones], { history: false })
@@ -309,6 +326,7 @@ export function usePptElementMutations({
     updateElements,
     setSelectedElementId,
     setMultiSelectIds,
+    fitsElementCap,
   ])
 
   const cutSelection = useCallback(
@@ -352,6 +370,8 @@ export function usePptElementMutations({
     (selectedIds) => {
       const slide = getSlide()
       if (!slide || !canPptGroup(slide.elements?.elements || [], selectedIds)) return
+      // A group is one more element on the slide, next to its children.
+      if (!fitsElementCap(slide, 1)) return
       pushHistory?.({ slides: localSlides, selectedSlideId, selectedElementId })
       // The id is decided here: the updater runs later, so reading an id back from it always
       // missed and the new group was never selected (the handles stayed on one child).
@@ -369,6 +389,7 @@ export function usePptElementMutations({
       updateElements,
       setSelectedElementId,
       setMultiSelectIds,
+      fitsElementCap,
     ]
   )
 

@@ -22,7 +22,7 @@ export const PPT_CAPS = {
   AI_SLIDE_MIN: 5,
   AI_SLIDE_MAX: 20,
   DECK_MAX_SLIDES: 40,
-  ELEMENTS_PER_SLIDE: 60,
+  ELEMENTS_PER_SLIDE: 500,
 }
 
 export const PPT_AI_SLIDE_COUNTS = [5, 8, 10, 12, 20]
