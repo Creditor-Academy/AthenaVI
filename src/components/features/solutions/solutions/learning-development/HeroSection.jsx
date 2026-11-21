@@ -453,9 +453,9 @@ const HeroSection = () => {
           <div className="same-card-orange">
             <div className="white-line-deco" />
             <div className="avatar-row-stack">
-              <div className="avatar-circ"><img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100" alt="" width="100" height="100" decoding="async" /></div>
-              <div className="avatar-circ"><img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=100" alt="" width="100" height="100" decoding="async" /></div>
-              <div className="avatar-circ"><img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=100" alt="" width="100" height="100" decoding="async" /></div>
+              <div className="avatar-circ"><img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100" alt="Portrait of a woman with curly hair" width="100" height="100" decoding="async" /></div>
+              <div className="avatar-circ"><img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=100" alt="Portrait of a man with a short beard" width="100" height="100" decoding="async" /></div>
+              <div className="avatar-circ"><img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=100" alt="Portrait of a woman wearing a blazer" width="100" height="100" decoding="async" /></div>
             </div>
             <div className="val-heavy-num">124K+</div>
             <p className="val-sub-msg">More than 2,000 people has joined us</p>

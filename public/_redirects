@@ -1,19 +1,22 @@
-# Netlify-style rules (for hosts that read this file). Pages the app builds on the fly get the
-# app; public pages have their own <page>/index.html; anything else is a 404 with the
-# app's Not Found page.
-/dashboard/*        /index.html  200
-/slides             /index.html  200
-/slides/*           /index.html  200
-/create/*           /index.html  200
-/p/*                /index.html  200
-/share/*            /index.html  200
-/invitations/*      /index.html  200
-/invite/*           /index.html  200
-/reset-password     /index.html  200
-/reset-password/*   /index.html  200
-/auth/*             /index.html  200
-/oauth/*            /index.html  200
-/login/callback     /index.html  200
-/hub                /index.html  200
-/products/choose    /index.html  200
+# Netlify-style rules (for hosts that read this file). App and editor routes get the
+# empty noindex shell (spa.html). Public pages have their own <page>/index.html from the
+# prerender step. Anything else is a 404 with the Not Found page.
+# spa.html is not index.html: index.html is the prerendered homepage.
+/dashboard          /spa.html    200
+/dashboard/*        /spa.html    200
+/slides             /spa.html    200
+/slides/*           /spa.html    200
+/create             /spa.html    200
+/create/*           /spa.html    200
+/p/*                /spa.html    200
+/share/*            /spa.html    200
+/invitations/*      /spa.html    200
+/invite/*           /spa.html    200
+/reset-password     /spa.html    200
+/reset-password/*   /spa.html    200
+/auth/*             /spa.html    200
+/oauth/*            /spa.html    200
+/login/callback     /spa.html    200
+/hub                /spa.html    200
+/products/choose    /spa.html    200
 /*                  /404.html    404
