@@ -1,12 +1,13 @@
 /**
- * Sales Demo template assets — loaded from public/templates/sales-demo-assets.json.
+ * Sales Demo template assets — loaded from public/template-assets/sales-demo-assets.json.
  */
+import { TEMPLATE_ASSETS_BASE } from './templateRegistry';
 
 let cached = null;
 
 export async function loadSalesDemoAssets() {
   if (cached) return cached;
-  const response = await fetch('/templates/sales-demo-assets.json');
+  const response = await fetch(`${TEMPLATE_ASSETS_BASE}/sales-demo-assets.json`);
   if (!response.ok) throw new Error('Failed to load sales demo assets');
   cached = await response.json();
   return cached;

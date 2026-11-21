@@ -1,4 +1,5 @@
 import {
+  TEMPLATE_ASSETS_BASE,
   TEMPLATE_BUNDLE_SOURCES,
   BUNDLE_CATEGORY_FILTER,
 } from '../constants/templateRegistry';
@@ -45,7 +46,7 @@ export async function fetchEditorTemplateScenes() {
   const results = [];
   for (const source of TEMPLATE_BUNDLE_SOURCES) {
     try {
-      const res = await fetch(`/templates/${source.file}.json`);
+      const res = await fetch(`${TEMPLATE_ASSETS_BASE}/${source.file}.json`);
       if (!res.ok) continue;
       const data = await res.json();
       (data.scenes || []).forEach((scene) => {

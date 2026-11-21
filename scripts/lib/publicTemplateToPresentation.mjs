@@ -9,7 +9,7 @@ import {
 } from '../../src/utils/videoTemplateToCanvasElements.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
-const TEMPLATES_DIR = join(__dirname, '../../public/templates')
+const TEMPLATES_DIR = join(__dirname, '../../public/template-assets')
 
 const DEFAULT_INTENT = {
   title: 'Hook the audience with a strong opening statement',
