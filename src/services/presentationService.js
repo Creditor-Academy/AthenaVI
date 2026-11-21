@@ -4,6 +4,10 @@ import { PPT_TITLE_MAX, sleep } from '../utils/presentationHelpers.js'
 import { generateUniqueProjectName } from '../utils/projectNameValidation.js'
 import workspaceService from './workspaceService.js'
 import { prepareImageForUpload } from '../utils/imageUploadFormat.js'
+import { createKeepaliveBudget } from './keepaliveBudget.js'
+
+/** Room left for slide saves sent while the tab closes (see saveCanvas). */
+const canvasKeepaliveBudget = createKeepaliveBudget()
 
 /** Turn a { message, errors } envelope into one readable line for the UI. */
 function formatValidationMessage(payload) {
@@ -565,12 +569,21 @@ class PresentationService {
 
   // ── Canvas / elements ──────────────────────────────────────────────
 
-  /** `keepalive`: the request outlives the page (sent while the tab closes; bodies up to 64 KB). */
-  saveCanvas(workspaceId, presentationId, slideId, canvasDoc, { keepalive = false } = {}) {
-    return this.request(
-      API_CONFIG.ENDPOINTS.PRESENTATIONS.CANVAS(workspaceId, presentationId, slideId),
-      { method: 'PUT', body: JSON.stringify(canvasDoc), ...(keepalive ? { keepalive: true, quiet: true } : {}) }
-    )
+  /**
+   * `keepalive`: the request outlives the page (sent while the tab closes). Browsers cap the
+   * bodies of keepalive requests in flight at 64 KB in total, so a slide that doesn't fit in
+   * what's left is sent as an ordinary request instead of being refused by the browser.
+   */
+  async saveCanvas(workspaceId, presentationId, slideId, canvasDoc, { keepalive = false } = {}) {
+    const endpoint = API_CONFIG.ENDPOINTS.PRESENTATIONS.CANVAS(workspaceId, presentationId, slideId)
+    const body = JSON.stringify(canvasDoc)
+    if (!keepalive) return this.request(endpoint, { method: 'PUT', body })
+    const release = canvasKeepaliveBudget.reserve(body)
+    try {
+      return await this.request(endpoint, { method: 'PUT', body, quiet: true, ...(release ? { keepalive: true } : {}) })
+    } finally {
+      release?.()
+    }
   }
 
   insertElement(workspaceId, presentationId, slideId, body) {

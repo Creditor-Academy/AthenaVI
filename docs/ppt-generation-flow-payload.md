@@ -274,7 +274,7 @@ Rules:
 |------------|-------|
 | AI slide count | 5–20 (clamped) |
 | Deck max slides | 40 |
-| Elements per slide | 50 |
+| Elements per slide | 500 |
 | Title max length | 255 chars |
 | `themeId` (theme endpoint) | underscores, must exist in backend catalog or is omitted |
 | `density` enum | `concise`, `balanced`, `detailed` |

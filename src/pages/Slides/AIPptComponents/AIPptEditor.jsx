@@ -2371,6 +2371,7 @@ function AIPptEditor({
     resolveSlideId: resolvePersistedSlideId,
     isUnsavedSlideId: isOptimisticSlideId,
     markSlideEdited,
+    onElementCapReached: (cap) => setError(`Max ${cap} elements per slide`),
   })
   elementMutationsRef.current = elementMutations
 
