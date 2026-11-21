@@ -156,6 +156,7 @@ function PrivacyPolicy({ onLoginClick, onLogoClick, onNavigateToCompany, onNavig
           onNavigateToUseCases={onNavigateToUseCases}
         />
 
+        <main>
         <div className="page-header">
           <h1>Privacy Policy</h1>
           <p>Your privacy is important to us. This policy explains how we collect, use, and protect your information.</p>
@@ -301,6 +302,7 @@ function PrivacyPolicy({ onLoginClick, onLogoClick, onNavigateToCompany, onNavig
             <p>We will respond to your inquiry within 30 days.</p>
           </div>
         </div>
+        </main>
 
         <Footer
           onLogoClick={onLogoClick}

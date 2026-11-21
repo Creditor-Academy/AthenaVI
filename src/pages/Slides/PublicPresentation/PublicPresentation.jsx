@@ -10,6 +10,7 @@ import { extractShareToken } from '../../../utils/pptShareSession'
 import { getPublicPresentationToken } from '../../../utils/authRouting'
 import { extractSlidesFromPresentation } from '../../../utils/presentationHelpers'
 import '../AIPptGenerator.css'
+import '../ensurePlayfairFont.js'
 import '../AIPptComponents/pptPanelUi.css'
 
 function setNoReferrerMeta() {

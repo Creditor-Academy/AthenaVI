@@ -39,7 +39,7 @@ const styles = `
   gap: 8px;
   font-size: ${LANDING_TYPE.eyebrowSize};
   font-weight: ${LANDING_TYPE.eyebrowWeight};
-  color: #3b82f6;
+  color: #1d4ed8;
   letter-spacing: 2px;
   text-transform: uppercase;
   margin-bottom: 16px;
@@ -127,7 +127,7 @@ const styles = `
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-.accordion-header h4 {
+.accordion-header h3 {
   font-size: 18px;
   font-weight: 700;
   color: #0f172a;
@@ -135,8 +135,8 @@ const styles = `
   transition: color 0.3s ease;
 }
 
-.accordion-item.active .accordion-header h4 {
-  color: #3b82f6;
+.accordion-item.active .accordion-header h3 {
+  color: #1d4ed8;
 }
 
 .accordion-inner {
@@ -517,7 +517,7 @@ const PptSection = () => {
                   >
                     <motion.div layout="position" className="accordion-header">
                       <div className="accordion-icon">{feature.icon}</div>
-                      <h4>{feature.title}</h4>
+                      <h3>{feature.title}</h3>
                     </motion.div>
                     
                     <AnimatePresence>

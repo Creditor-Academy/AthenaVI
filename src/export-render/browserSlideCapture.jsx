@@ -10,6 +10,7 @@
 import { createRoot } from 'react-dom/client'
 import { flushSync } from 'react-dom'
 import '../pages/Slides/AIPptGenerator.css'
+import '../pages/Slides/ensurePlayfairFont.js'
 import '../pages/Slides/AIPptComponents/pptEditorExtras.css'
 import {
   collectSlideFontFamilies,

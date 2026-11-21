@@ -1339,6 +1339,7 @@ function Ethics({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToPr
             onNavigateToCompany={onNavigateToCompany}
           />
 
+          <main>
           {/* Section 1: Hero */}
           <div className="ethics-hero" id="Introduction" style={{ backgroundImage: `url(${EthicsBg})` }}>
             <motion.div
@@ -1782,6 +1783,7 @@ function Ethics({ onLoginClick, onLogoClick, onNavigateToCompany, onNavigateToPr
               </p>
             </div>
           </motion.div>
+          </main>
 
           <Footer
             onLogoClick={onLogoClick}

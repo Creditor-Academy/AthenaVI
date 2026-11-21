@@ -8,8 +8,8 @@ import UploadProgressHost from './components/ui/UploadProgressHost/UploadProgres
 import invitationFlowService from './services/invitationFlowService.js'
 import { getPendingInvitation } from './utils/inviteNavigation.js'
 import Landing from './pages/Landing/Landing.jsx'
-import AuthPage from './pages/Auth/AuthPage.jsx'
-import ResetPassword from './components/features/auth/authentication/ResetPassword.jsx'
+const AuthPage = lazyWithReload(() => import('./pages/Auth/AuthPage.jsx'))
+const ResetPassword = lazyWithReload(() => import('./components/features/auth/authentication/ResetPassword.jsx'))
 import { persistWorkspaceFolderNavigation } from './utils/navigateToWorkspaceFolder.js'
 import { isOAuthCallbackPath, isPublicPresentationPath, resolveViewFromLocation } from './utils/authRouting.js'
 import {

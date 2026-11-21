@@ -6,6 +6,7 @@ import pptBgAfternoon from '../../../assets/ppt-bg/afternoon.png'
 import pptBgEvening from '../../../assets/ppt-bg/evening.png'
 import pptBgNight from '../../../assets/ppt-bg/night.png'
 import './PptDeckOpenBoot.css'
+import { ensureGoogleFontLoaded } from '../../../utils/googleFonts.js'
 
 const PPT_DAY_BACKGROUNDS = {
   morning: pptBgMorning,
@@ -35,6 +36,10 @@ export default function PptDeckOpenBoot({ title = '' }) {
   const label = String(title || '').trim()
     ? `Loading presentation: ${String(title).trim()}`
     : 'Loading presentation'
+
+  useEffect(() => {
+    ensureGoogleFontLoaded('Playfair Display')
+  }, [])
 
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches

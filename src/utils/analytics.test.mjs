@@ -114,11 +114,15 @@ describe('Google Tag Manager snippet', () => {
     assert.equal(gtmIdFromEnv('"><script>'), null, 'only a real container id')
   })
 
-  it('is the snippet from the Google tag setup page', () => {
+  it('boots dataLayer immediately and loads GTM plus Clarity after the page loads', () => {
     const html = gtmSnippet('GTM-M4CC43NS')
-    assert.ok(html.includes('<script async src="https://www.googletagmanager.com/gtm.js?id=GTM-M4CC43NS"></script>'))
     assert.ok(html.includes('window.dataLayer = window.dataLayer || [];'))
     assert.ok(html.includes('function gtag(){dataLayer.push(arguments);}'))
-    assert.ok(html.includes("gtag('js', new Date());"))
+    assert.ok(html.includes("'gtm.start'"))
+    assert.ok(html.includes('https://www.googletagmanager.com/gtm.js?id='))
+    assert.ok(html.includes('GTM-M4CC43NS'))
+    assert.ok(html.includes('https://www.clarity.ms/tag/'))
+    assert.ok(html.includes("addEventListener('load'"))
+    assert.doesNotMatch(html, /<script async src="https:\/\/www\.googletagmanager\.com/)
   })
 })

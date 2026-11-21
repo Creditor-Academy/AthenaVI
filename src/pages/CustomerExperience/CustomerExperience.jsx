@@ -31,12 +31,14 @@ function CustomerExperience({ onLoginClick, onNavigateToEthics, onLogoClick, onN
           onNavigateToTechnology={onNavigateToTechnology}
         />
         
-        <HeroSection />
-        <CXComparison />
-        <CoreCapabilities />
-        <CXImpact />
-        <TestimonialsSection />
-        <CXFinalCTA />
+        <main>
+          <HeroSection />
+          <CXComparison />
+          <CoreCapabilities />
+          <CXImpact />
+          <TestimonialsSection />
+          <CXFinalCTA />
+        </main>
         
         <Footer 
           onLogoClick={onLogoClick}

@@ -4,6 +4,7 @@ import LayoutPolishedPreview from '../../../../components/ppt/LayoutPolishedPrev
 import PackSlidePreview from '../../../../components/ppt/PackSlidePreview'
 import '../PptBuilder.css'
 import '../../AIPptGenerator.css'
+import '../../ensurePlayfairFont.js'
 import presentationService from '../../../../services/presentationService'
 import brandKitService from '../../../../services/brandKitService'
 import { listBrandKitsUsableInWorkspace } from '../../../../utils/brandKitWorkspace'

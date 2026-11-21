@@ -150,7 +150,7 @@ const FeatureCard = ({ feat, index, isActive, onActivate }) => {
 
             {/* Text */}
             <div style={{ position: 'relative', zIndex: 1 }}>
-                <h4 style={{
+                <h3 style={{
                     fontFamily: "'Inter', sans-serif",
                     fontSize: '17px',
                     fontWeight: 600,
@@ -160,7 +160,7 @@ const FeatureCard = ({ feat, index, isActive, onActivate }) => {
                     lineHeight: '1.4',
                 }}>
                     {feat.title}
-                </h4>
+                </h3>
                 <p style={{
                     fontFamily: "'Inter', sans-serif",
                     fontSize: '14px',
@@ -475,7 +475,7 @@ const css = `
   .pf-toolbar-title {
     margin-left: 10px;
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.35);
+    color: rgba(255, 255, 255, 0.86);
     font-family: 'SF Mono', 'Fira Code', monospace;
   }
 
