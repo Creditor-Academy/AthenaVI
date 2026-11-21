@@ -237,7 +237,7 @@ const styles = `
 .feature-tag {
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: #475569;
   background: #f8fafc;
   padding: 4px 10px;
   border-radius: 6px;
@@ -369,7 +369,7 @@ const UnifiedVideoSection = () => {
                     <div className="card-number">0{i + 1}</div>
                     <div className="card-category">{card.category}</div>
                     <div className="ref-img-wrap">
-                      <img src={card.image} alt={card.alt} className="ref-img" />
+                      <img src={card.image} alt={card.alt} className="ref-img" loading="lazy" decoding="async" />
                     </div>
                     <h3 className="ref-title">{card.title}</h3>
                     <p className="ref-description">{card.description}</p>
@@ -395,7 +395,7 @@ const UnifiedVideoSection = () => {
                       ))}
                     </div>
                     <div className="ref-img-wrap">
-                      <img src={card.image} alt={card.alt} className="ref-img" />
+                      <img src={card.image} alt={card.alt} className="ref-img" loading="lazy" decoding="async" />
                     </div>
                   </>
                 )}

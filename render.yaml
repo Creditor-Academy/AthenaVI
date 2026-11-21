@@ -150,3 +150,8 @@ services:
       - path: /assets/*
         name: Cache-Control
         value: public, max-age=31536000, immutable
+      # Sent on the HTTPS response. Public http:// is a 500 from the Pingora proxy in
+      # front of this host, which this file cannot redirect.
+      - path: /*
+        name: Strict-Transport-Security
+        value: max-age=31536000; includeSubDomains

@@ -26,48 +26,48 @@ const EXPLANATIONS = [
     title: "Life Science Graphics",
     category: "Specialized",
     desc: "Pre-made DNA structures, cell divisions, and clinical trials graphics optimized for scientific research.",
-    accentColor: "#3b82f6",
-    accentRgb: "59, 130, 246"
+    accentColor: "#1d4ed8",
+    accentRgb: "29, 78, 216"
   },
   {
     id: "exp-2",
     title: "Corporate Briefings",
     category: "Professional",
     desc: "Polished templates for presenting financial reports, key KPIs, and corporate milestones.",
-    accentColor: "#10b981",
-    accentRgb: "16, 185, 129"
+    accentColor: "#047857",
+    accentRgb: "4, 120, 87"
   },
   {
     id: "exp-3",
     title: "Onboarding & SaaS",
     category: "Product Suite",
     desc: "Interactive dashboards and avatar walkthrough layouts to demonstrate software features.",
-    accentColor: "#8b5cf6",
-    accentRgb: "139, 92, 246"
+    accentColor: "#6d28d9",
+    accentRgb: "109, 40, 217"
   },
   {
     id: "exp-4",
     title: "Educational Lessons",
     category: "Academic",
     desc: "Clear visual structures for teaching physics, math, and humanities with graphical focus.",
-    accentColor: "#ef4444",
-    accentRgb: "239, 68, 68"
+    accentColor: "#b91c1c",
+    accentRgb: "185, 28, 28"
   },
   {
     id: "exp-5",
     title: "Marketing Campaigns",
     category: "Ads & Social",
     desc: "High-impact layouts optimized to grab attention and boost product conversions.",
-    accentColor: "#06b6d4",
-    accentRgb: "6, 182, 212"
+    accentColor: "#0e7490",
+    accentRgb: "14, 116, 144"
   },
   {
     id: "exp-6",
     title: "Company Onboarding",
     category: "Human Resources",
     desc: "Welcome templates introducing workspace tools, guidelines, and corporate culture.",
-    accentColor: "#f59e0b",
-    accentRgb: "245, 158, 11"
+    accentColor: "#b45309",
+    accentRgb: "180, 83, 9"
   }
 ]
 
@@ -373,7 +373,7 @@ const css = `
   align-items: center;
   gap: 20px;
   flex-wrap: wrap;
-  opacity: 0.65;
+  opacity: 1;
 }
 
 .pts-partner-logo {
@@ -433,7 +433,7 @@ const css = `
 function ImageCard({ img }) {
   return (
     <div className="pts-image-card">
-      <img src={img} alt="Template Preview" className="pts-card-img" />
+      <img src={img} alt="Template Preview" className="pts-card-img" loading="lazy" decoding="async" />
     </div>
   )
 }

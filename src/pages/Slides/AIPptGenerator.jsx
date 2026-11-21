@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import './AIPptGenerator.css'
+import './ensurePlayfairFont.js'
 
 import AIPptWizard from './AIPptComponents/AIPptWizard'
 import PptDeckOpenBoot from './AIPptComponents/PptDeckOpenBoot'

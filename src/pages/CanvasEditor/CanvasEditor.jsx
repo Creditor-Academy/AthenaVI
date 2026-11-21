@@ -105,6 +105,7 @@ import {
 } from '../../components/ppt/DeviceFrameVisual'
 import '../Slides/AIPptComponents/pptEditorExtras.css'
 import '../Slides/AIPptGenerator.css'
+import '../Slides/ensurePlayfairFont.js'
 import './CanvasEditor.css'
 
 const AUTOSAVE_DEBOUNCE_MS = 1000

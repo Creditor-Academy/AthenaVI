@@ -102,6 +102,7 @@ function UseCases({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateT
           onNavigateToUseCases={onNavigateToUseCases}
         />
 
+        <main>
         <section className="use-cases-hero">
           <motion.span
             className="hero-tag"
@@ -140,7 +141,7 @@ function UseCases({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateT
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
               <div className="card-icon">{uc.icon}</div>
-              <h3 className="card-title">{uc.title}</h3>
+              <h2 className="card-title">{uc.title}</h2>
               <p className="card-desc">{uc.desc}</p>
               <ul className="card-features">
                 {uc.features.map((feature, fIndex) => (
@@ -185,6 +186,7 @@ function UseCases({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigateT
             </p>
           </div>
         </section>
+        </main>
 
         <Footer
           onLogoClick={onLogoClick}
