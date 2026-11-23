@@ -15,6 +15,7 @@ import {
   PAGE_DESCRIPTIONS,
 } from './seoRoutes.js'
 import { withSeoTags } from '../../scripts/render-postbuild.mjs'
+import { crawlableNavAnchors, pageHref } from './siteNav.js'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 const read = (file) => readFileSync(path.join(root, file), 'utf8')
@@ -81,10 +82,23 @@ describe('canonical and robots per page', () => {
 
 describe('sitemap.xml and robots.txt', () => {
   it('the sitemap lists exactly the indexable pages, by their canonical URL', () => {
-    const sitemap = read('public/sitemap.xml').replace(/<!--[\s\S]*?-->/g, '') // pages hidden for now
+    const raw = read('public/sitemap.xml')
+    const sitemap = raw.replace(/<!--[\s\S]*?-->/g, '')
     const locs = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
     assert.deepEqual(locs, INDEXABLE_PATHS.map(canonicalUrl))
     for (const p of NOINDEX_PUBLIC_PATHS) assert.ok(!locs.some((l) => l.includes(p)), `${p} is not in the sitemap`)
+    for (const hidden of ['/technology/', '/about-us/', '/news/', '/resources/']) {
+      assert.equal(raw.includes(hidden), false, `${hidden} is not in the sitemap`)
+    }
+  })
+
+  it('navbar and footer hrefs cover every indexable page and skip the hidden ones', () => {
+    const hrefs = new Set(crawlableNavAnchors().map((item) => item.href))
+    for (const p of INDEXABLE_PATHS) assert.ok(hrefs.has(pageHref(p)), p)
+    for (const hidden of ['/technology', '/about-us', '/news', '/resources']) {
+      assert.equal(hrefs.has(pageHref(hidden)), false, hidden)
+    }
+    assert.ok(crawlableNavAnchors().length >= 15)
   })
 
   it('robots.txt points at the sitemap and lets crawlers see the noindex on sign-in pages', () => {
@@ -110,9 +124,17 @@ describe('built HTML', () => {
     assert.ok(out.includes('<title>AI Video Creation | Athena Virtual Studio</title>'))
     assert.ok(
       out.includes(
-        `<div id="root"><div class="seo-prerender"><h1>Create Engaging Videos with AI</h1><p>${PAGE_DESCRIPTIONS['/ai-videos']}</p></div></div>`
+        `<div id="root"><div class="seo-prerender"><h1>Create Engaging Videos with AI</h1><p>${PAGE_DESCRIPTIONS['/ai-videos']}</p><nav>`
       )
     )
+    const suite = withSeoTags(html, '/marketing-suite')
+    assert.ok((suite.match(/<a /g) || []).length >= 15, 'prerendered page exposes the navbar and footer links')
+    for (const href of ['/marketing-suite/', '/products/', '/ai-avatars-videos/', '/use-cases/', '/ethics/', '/privacy/', '/help/']) {
+      assert.ok(suite.includes(`href="${href}"`), href)
+    }
+    for (const hidden of ['/technology/', '/about-us/', '/news/', '/resources/']) {
+      assert.equal(suite.includes(hidden), false, hidden)
+    }
     // Hidden from view until the app replaces it (no flash of unstyled text), still in the HTML.
     assert.match(out, /<style>\.seo-prerender\{[^<]*clip:rect\(0 0 0 0\)[^<]*<\/style>[\s\S]*<\/head>/)
     // Characters are escaped in the HTML.

@@ -9,6 +9,26 @@ import {
 import ProductVideo from '../../../assets/ProductVideo.mp4'
 import SolutionVideo from '../../../assets/SolutionNav.mp4'
 import LogoImg from '../../../assets/herologo.webp'
+import {
+  PRODUCT_NAV,
+  SOLUTION_NAV,
+  HOME_HREF,
+  LOGIN_HREF,
+  SIGNUP_HREF,
+  USE_CASES_HREF,
+  ETHICS_HREF,
+  PRIVACY_HREF,
+  HELP_HREF,
+} from '../../../seo/siteNav.js'
+
+const hrefByTitle = (list, title) => list.find((item) => item.title === title)?.href
+
+/** Let the browser open the real href for modified clicks; otherwise keep in-app navigation. */
+const spaClick = (event, action) => {
+  if (event.metaKey || event.ctrlKey) return
+  event.preventDefault()
+  action()
+}
 
 /* ─────────────────────────────────────────────────
    STYLES
@@ -614,31 +634,31 @@ function Navbar({
 
   /* ── data ── */
   const productsItems = [
-    { title: 'Visual AI Agents', desc: 'AI teaching avatars', icon: <FiCpu /> },
-    { title: 'Creative Reality™ Studio', desc: 'AI video studio', icon: <FiPlayCircle /> },
-    { title: 'Video Translate', desc: 'Multilingual video', icon: <FiGlobe /> },
-    { title: 'Video Campaigns', desc: 'Marketing videos', icon: <FiTrendingUp /> },
-    { title: 'Personal Avatars', desc: 'Digital instructors', icon: <FiUserCheck /> },
-    { title: 'AI Avatars & Videos', desc: 'AI avatars and video demos', icon: <FiPlayCircle /> },
+    { title: 'Visual AI Agents', desc: 'AI teaching avatars', icon: <FiCpu />, href: hrefByTitle(PRODUCT_NAV, 'Visual AI Agents') },
+    { title: 'Creative Reality™ Studio', desc: 'AI video studio', icon: <FiPlayCircle />, href: hrefByTitle(PRODUCT_NAV, 'Creative Reality™ Studio') },
+    { title: 'Video Translate', desc: 'Multilingual video', icon: <FiGlobe />, href: hrefByTitle(PRODUCT_NAV, 'Video Translate') },
+    { title: 'Video Campaigns', desc: 'Marketing videos', icon: <FiTrendingUp />, href: hrefByTitle(PRODUCT_NAV, 'Video Campaigns') },
+    { title: 'Personal Avatars', desc: 'Digital instructors', icon: <FiUserCheck />, href: hrefByTitle(PRODUCT_NAV, 'Personal Avatars') },
+    { title: 'AI Avatars & Videos', desc: 'AI avatars and video demos', icon: <FiPlayCircle />, href: hrefByTitle(PRODUCT_NAV, 'AI Avatars & Videos') },
     // { title: 'Technology', desc: 'Technology overview', icon: <FiCpu /> },
   ]
 
   const solutionsItems = [
-    { title: 'Marketing Suite', desc: 'Campaign automation', icon: <FiBriefcase /> },
-    { title: 'Sales Solutions', desc: 'Video outreach', icon: <FiDollarSign /> },
-    { title: 'Customer Experience', desc: 'Customer engagement', icon: <FiUsers /> },
-    { title: 'Learning & Development', desc: 'Corporate training', icon: <FiBookOpen /> },
-    { title: 'AI Videos', desc: 'Automated comms', icon: <FiMail /> },
+    { title: 'Marketing Suite', desc: 'Campaign automation', icon: <FiBriefcase />, href: hrefByTitle(SOLUTION_NAV, 'Marketing Suite') },
+    { title: 'Sales Solutions', desc: 'Video outreach', icon: <FiDollarSign />, href: hrefByTitle(SOLUTION_NAV, 'Sales Solutions') },
+    { title: 'Customer Experience', desc: 'Customer engagement', icon: <FiUsers />, href: hrefByTitle(SOLUTION_NAV, 'Customer Experience') },
+    { title: 'Learning & Development', desc: 'Corporate training', icon: <FiBookOpen />, href: hrefByTitle(SOLUTION_NAV, 'Learning & Development') },
+    { title: 'AI Videos', desc: 'Automated comms', icon: <FiMail />, href: hrefByTitle(SOLUTION_NAV, 'AI Videos') },
   ]
 
   const companyItems = [
     { title: 'About Us', desc: 'Company overview', icon: <FiInfo /> },
     { title: 'Blog', desc: 'Insights & articles', icon: <FiFileText /> },
     { title: 'News', desc: 'Platform updates', icon: <FiRss /> },
-    { title: 'Ethics', desc: 'AI Ethics pledge', icon: <FiShield /> },
+    { title: 'Ethics', desc: 'AI Ethics pledge', icon: <FiShield />, href: ETHICS_HREF },
     { title: 'Resources', desc: 'Learning materials', icon: <FiLayers /> },
-    { title: 'Privacy Policy', desc: 'Data protection', icon: <FiShield /> },
-    { title: 'Help Center', desc: 'Customer support', icon: <FiHelpCircle /> },
+    { title: 'Privacy Policy', desc: 'Data protection', icon: <FiShield />, href: PRIVACY_HREF },
+    { title: 'Help Center', desc: 'Customer support', icon: <FiHelpCircle />, href: HELP_HREF },
   ]
 
   /* ── item click dispatcher ── */
@@ -662,9 +682,13 @@ function Navbar({
   /* ── reusable desktop dropdown item ── */
   const DDItem = ({ item, onClick }) => (
     <a
-      href="#"
+      href={item.href}
       className="dd-item"
-      onClick={(e) => { e.preventDefault(); onClick(item.title) }}
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey) return
+        e.preventDefault()
+        onClick(item.title)
+      }}
     >
       <div className="dd-icon">{item.icon}</div>
       <div className="dd-text">
@@ -677,9 +701,13 @@ function Navbar({
   /* ── reusable drawer sub item ── */
   const DrawerItem = ({ item, onClick }) => (
     <a
-      href="#"
+      href={item.href}
       className="drawer-sub-item"
-      onClick={(e) => { e.preventDefault(); onClick(item.title) }}
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey) return
+        e.preventDefault()
+        onClick(item.title)
+      }}
     >
       <span className="drawer-sub-icon">{item.icon}</span>
       <div>
@@ -698,9 +726,9 @@ function Navbar({
 
         {/* Logo */}
         <a
-          href="#"
+          href={HOME_HREF}
           className="nav-logo"
-          onClick={(e) => { e.preventDefault(); setDrawerOpen(false); if (onLogoClick) onLogoClick() }}
+          onClick={(e) => spaClick(e, () => { setDrawerOpen(false); if (onLogoClick) onLogoClick() })}
           aria-label="Home"
         >
           <img src={LogoImg} alt="Logo" className="nav-logo-img" />
@@ -781,7 +809,7 @@ function Navbar({
               <p className="mega-video-desc">
                 Deploy scalable AI avatar video agents tailored for your business use cases.
               </p>
-              <a href="#" className="mega-see-all" onClick={(e) => { e.preventDefault(); if (onNavigateToUseCases) onNavigateToUseCases(); setActiveDropdown(null) }}>
+              <a href={USE_CASES_HREF} className="mega-see-all" onClick={(e) => spaClick(e, () => { if (onNavigateToUseCases) onNavigateToUseCases(); setActiveDropdown(null) })}>
                 See all Use Cases <MdArrowOutward />
               </a>
             </div>
@@ -789,9 +817,9 @@ function Navbar({
 
           {/* Use Cases */}
           <a
-            href="#"
+            href={USE_CASES_HREF}
             className="nav-plain"
-            onClick={(e) => { e.preventDefault(); if (onNavigateToUseCases) onNavigateToUseCases() }}
+            onClick={(e) => spaClick(e, () => { if (onNavigateToUseCases) onNavigateToUseCases() })}
           >
             Use Cases
           </a>
@@ -828,20 +856,19 @@ function Navbar({
         {/* Right CTA */}
         <div className="nav-actions">
           <a
-            href="#"
+            href={LOGIN_HREF}
             className="login-link"
-            onClick={(e) => { e.preventDefault(); if (onLoginClick) onLoginClick() }}
+            onClick={(e) => spaClick(e, () => { if (onLoginClick) onLoginClick() })}
           >
             Log in
           </a>
           <a
-            href="/signup"
+            href={SIGNUP_HREF}
             className="act-primary"
-            onClick={(e) => {
-              e.preventDefault();
+            onClick={(e) => spaClick(e, () => {
               window.history.pushState({ view: 'login' }, '', '/signup');
               window.dispatchEvent(new PopStateEvent('popstate'));
-            }}
+            })}
           >
             Get Started <MdArrowOutward />
           </a>
@@ -912,9 +939,9 @@ function Navbar({
         {/* Use Cases */}
         <div className="drawer-section">
           <a
-            href="#"
+            href={USE_CASES_HREF}
             className="drawer-nav-btn"
-            onClick={(e) => { e.preventDefault(); if (onNavigateToUseCases) onNavigateToUseCases(); setDrawerOpen(false) }}
+            onClick={(e) => spaClick(e, () => { if (onNavigateToUseCases) onNavigateToUseCases(); setDrawerOpen(false) })}
           >
             Use Cases
           </a>
@@ -922,9 +949,9 @@ function Navbar({
 
         {/* Pricing */}
         <div className="drawer-section">
-          <a href="#" className="drawer-nav-btn" onClick={(e) => { e.preventDefault(); setDrawerOpen(false) }}>
+          <button type="button" className="drawer-nav-btn" onClick={() => setDrawerOpen(false)}>
             Pricing
-          </a>
+          </button>
         </div>
 
         {/* Company */}
@@ -949,21 +976,20 @@ function Navbar({
         {/* Actions */}
         <div className="drawer-actions">
           <a
-            href="#"
+            href={LOGIN_HREF}
             className="login-link"
-            onClick={(e) => { e.preventDefault(); setDrawerOpen(false); if (onLoginClick) onLoginClick() }}
+            onClick={(e) => spaClick(e, () => { setDrawerOpen(false); if (onLoginClick) onLoginClick() })}
           >
             Log in
           </a>
-          <a 
-            href="/signup" 
-            className="act-primary" 
-            onClick={(e) => { 
-              e.preventDefault(); 
+          <a
+            href={SIGNUP_HREF}
+            className="act-primary"
+            onClick={(e) => spaClick(e, () => {
               setDrawerOpen(false);
               window.history.pushState({ view: 'login' }, '', '/signup');
               window.dispatchEvent(new PopStateEvent('popstate'));
-            }}
+            })}
           >
             Get Started <MdArrowOutward />
           </a>
