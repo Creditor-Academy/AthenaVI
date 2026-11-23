@@ -27,6 +27,10 @@ import '../AvatarConsentStep/AvatarConsentStep.css';
 import '../../../pages/Avatars/Avatars.css';
 import './CreateAvatarModal.css';
 import { notify } from '../../../utils/appDialog';
+import {
+  getDefaultAvatarCreateTypeId,
+  isAvatarCreateTypeIdAllowed,
+} from '../../../pages/Avatars/avatarTypeOptions';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -67,7 +71,10 @@ function DigitalTwinStepIndicator({ activeStep }) {
 }
 
 function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompleted }) {
-  const creationType = typeOption?.id || 'digital_twin';
+  const requestedType = typeOption?.id || getDefaultAvatarCreateTypeId();
+  const creationType = isAvatarCreateTypeIdAllowed(requestedType)
+    ? requestedType
+    : getDefaultAvatarCreateTypeId();
   const [creationName, setCreationName] = useState('');
   const [creationPrompt, setCreationPrompt] = useState('');
   const [creationPhase, setCreationPhase] = useState('form');
@@ -105,6 +112,18 @@ function CreateAvatarModal({ isOpen, typeOption, onClose, onCreateLooks, onCompl
     setCreditsUsed(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const requestedId = typeOption?.id;
+    if (requestedId && !isAvatarCreateTypeIdAllowed(requestedId)) {
+      notify(
+        'Digital twin avatars are not available. Choose photo or prompt-based avatars instead.',
+        'error'
+      );
+      onClose?.();
+    }
+  }, [isOpen, typeOption, onClose]);
 
   useEffect(() => {
     if (!isOpen) {

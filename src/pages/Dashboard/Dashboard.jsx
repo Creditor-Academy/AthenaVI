@@ -36,7 +36,10 @@ import AIPptEditor from '../Slides/AIPptComponents/AIPptEditor.jsx'
 import PptDeckOpenBoot from '../Slides/AIPptComponents/PptDeckOpenBoot.jsx'
 import CanvasBuilder from '../CanvasEditor/CanvasBuilder.jsx'
 import CanvasEditor from '../CanvasEditor/CanvasEditor.jsx'
-import { getAvatarTypeOption } from '../Avatars/avatarTypeOptions.js'
+import {
+  getAvatarTypeOption,
+  isAvatarCreateTypeIdAllowed,
+} from '../Avatars/avatarTypeOptions.js'
 import NotificationsQuickModal from '../../components/ui/NotificationsQuickModal/NotificationsQuickModal.jsx'
 import AdminAlertsQuickModal from '../../components/ui/AdminAlertsQuickModal/AdminAlertsQuickModal.jsx'
 import CreditsQuickModal from '../../components/ui/CreditsQuickModal/CreditsQuickModal.jsx'
@@ -840,7 +843,9 @@ function Dashboard({ onCreate, initialSection }) {
           {section === 'create-avatar' && (
             <CreateAvatar
               onBack={() => goToSection('avatars')}
-              onOpenModal={(typeId) => setAvatarCreateTypeId(typeId)}
+              onOpenModal={(typeId) => {
+                if (isAvatarCreateTypeIdAllowed(typeId)) setAvatarCreateTypeId(typeId);
+              }}
             />
           )}
           {section === 'create-avatar-look' && avatarLookContext && (

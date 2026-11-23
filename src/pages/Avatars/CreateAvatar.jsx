@@ -1,10 +1,20 @@
 import { MdArrowBack } from 'react-icons/md';
 import '../../components/features/workspace/workspace/WorkspaceStyles.css';
 import '../MyWork/MyWork.css';
-import { AVATAR_TYPE_OPTIONS } from './avatarTypeOptions';
+import {
+  getCreatableAvatarTypeOptions,
+  isAvatarCreateTypeIdAllowed,
+} from './avatarTypeOptions';
 import './Avatars.css';
 
 function CreateAvatar({ onBack, onOpenModal }) {
+  const creatableOptions = getCreatableAvatarTypeOptions();
+
+  const handleOpen = (typeId) => {
+    if (!isAvatarCreateTypeIdAllowed(typeId)) return;
+    onOpenModal?.(typeId);
+  };
+
   return (
     <div className="videos-page avatars-page create-avatar-page">
       <div className="videos-shell">
@@ -31,12 +41,12 @@ function CreateAvatar({ onBack, onOpenModal }) {
 
         <main className="videos-main create-avatar-main">
           <div className="type-selector-cards">
-            {AVATAR_TYPE_OPTIONS.map((option) => (
+            {creatableOptions.map((option) => (
               <button
                 key={option.id}
                 type="button"
                 className="type-card type-card--image"
-                onClick={() => onOpenModal?.(option.id)}
+                onClick={() => handleOpen(option.id)}
                 aria-label={`Create ${option.title}`}
               >
                 <img src={option.image} alt="" className="type-card__bg" loading="lazy" />

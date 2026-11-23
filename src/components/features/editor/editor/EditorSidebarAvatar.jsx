@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MdAdd, MdMic, MdSearch, MdStar, MdAutoAwesome, MdCloudUpload, MdChevronLeft } from 'react-icons/md';
 import { Loader2 } from 'lucide-react';
 import heygenService from '../../../../services/heygenService';
+import { isHeygenDigitalTwinCreateEnabled } from '../../../../pages/Avatars/avatarTypeOptions';
 import { AvatarConsentModal } from '../../../ui/AvatarConsentStep/AvatarConsentStep';
 import {
   getConsentUrlFromResponse,
@@ -421,7 +422,19 @@ const EditorSidebarAvatar = ({
     setUploadStatus('Preparing asset upload...');
 
     try {
-      const type = file.type.startsWith('video/') ? 'digital_twin' : 'photo';
+      const isVideo = file.type.startsWith('video/');
+      if (isVideo && !isHeygenDigitalTwinCreateEnabled()) {
+        setIsUploading(false);
+        setUploadStatus('');
+        notify(
+          'Digital twin training from video is not available. Upload a photo for a photo avatar instead.',
+          'error'
+        );
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+
+      const type = isVideo ? 'digital_twin' : 'photo';
 
       setUploadStatus(`Uploading ${type.replace('_', ' ')}...`);
 
