@@ -12,7 +12,7 @@ import {
   installDownloadTracking,
   resetAnalyticsForTests,
 } from './analytics.js'
-import { gtmIdFromEnv, gtmSnippet } from '../../vite.config.js'
+import { gtmIdFromEnv, gtmHeadInline, gtmNoscript } from '../../vite.config.js'
 
 function memoryStorage() {
   const map = new Map()
@@ -106,19 +106,22 @@ describe('analytics key events (dataLayer for Google Tag Manager)', () => {
 })
 
 describe('Google Tag Manager snippet', () => {
-  it('uses the marketing container unless VITE_GTM_ID says otherwise', () => {
-    assert.equal(gtmIdFromEnv(undefined), 'GTM-M4CC43NS')
-    assert.equal(gtmIdFromEnv(''), 'GTM-M4CC43NS')
-    assert.equal(gtmIdFromEnv('GTM-ABC123'), 'GTM-ABC123')
+  it('reads VITE_GTM_ID and does not fall back to a built-in container', () => {
+    assert.equal(gtmIdFromEnv(undefined), null)
+    assert.equal(gtmIdFromEnv(''), null)
+    assert.equal(gtmIdFromEnv('GTM-WFMG65MD'), 'GTM-WFMG65MD')
     assert.equal(gtmIdFromEnv('off'), null)
     assert.equal(gtmIdFromEnv('"><script>'), null, 'only a real container id')
   })
 
-  it('is the snippet from the Google tag setup page', () => {
-    const html = gtmSnippet('GTM-M4CC43NS')
-    assert.ok(html.includes('<script async src="https://www.googletagmanager.com/gtm.js?id=GTM-M4CC43NS"></script>'))
-    assert.ok(html.includes('window.dataLayer = window.dataLayer || [];'))
-    assert.ok(html.includes('function gtag(){dataLayer.push(arguments);}'))
-    assert.ok(html.includes("gtag('js', new Date());"))
+  it('is the Google Tag Manager snippet only, with no gtag.js', () => {
+    const head = gtmHeadInline('GTM-WFMG65MD')
+    const noscript = gtmNoscript('GTM-WFMG65MD')
+    assert.match(head, /googletagmanager\.com\/gtm\.js\?id='\+i\+dl/)
+    assert.ok(head.includes("'GTM-WFMG65MD'"))
+    assert.ok(noscript.includes('https://www.googletagmanager.com/ns.html?id=GTM-WFMG65MD'))
+    assert.equal(head.includes('gtag'), false)
+    assert.equal(noscript.includes('gtag'), false)
+    assert.equal(`${head}\n${noscript}`.includes('GTM-M4CC43NS'), false)
   })
 })

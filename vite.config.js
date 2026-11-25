@@ -38,33 +38,34 @@ function athenaContractsOptimizePlugin() {
   }
 }
 
-/** The Google Tag Manager container from the marketing team. VITE_GTM_ID overrides it; "off" disables it. */
-const DEFAULT_GTM_ID = 'GTM-M4CC43NS'
-
+/**
+ * Google Tag Manager container id from VITE_GTM_ID. Empty or "off" installs nothing.
+ * There is no built-in container id: the old GTM-M4CC43NS container is not loaded.
+ */
 export function gtmIdFromEnv(raw) {
   const value = String(raw ?? '').trim()
-  if (!value) return DEFAULT_GTM_ID
-  if (/^(off|false|0|none)$/i.test(value)) return null
+  if (!value || /^(off|false|0|none)$/i.test(value)) return null
   return /^GTM-[A-Z0-9]+$/.test(value) ? value : null
 }
 
-/** The Google tag snippet for a GTM container, as Google's "Set up a Google tag" page gives it. */
-export function gtmSnippet(gtmId) {
-  return [
-    '<!-- Google tag (Google Tag Manager) -->',
-    `<script async src="https://www.googletagmanager.com/gtm.js?id=${gtmId}"></script>`,
-    '<script>',
-    '  window.dataLayer = window.dataLayer || [];',
-    '  function gtag(){dataLayer.push(arguments);}',
-    "  gtag('js', new Date());",
-    '</script>',
-  ].join('\n    ')
+/** Official GTM snippet: inline loader in <head>, noscript iframe at the start of <body>. No gtag.js. */
+export function gtmHeadInline(gtmId) {
+  return `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','${gtmId}');`
+}
+
+export function gtmNoscript(gtmId) {
+  return `<iframe src="https://www.googletagmanager.com/ns.html?id=${gtmId}" height="0" width="0" style="display:none;visibility:hidden"></iframe>`
 }
 
 /**
- * Google Tag Manager on the site's pages, right after <head> (as Google asks). Production builds
- * only, so local development doesn't send visits to Analytics; never on export-render.html (the
- * page the backend renders exports with).
+ * Google Tag Manager on the site's pages. The script is the first thing in <head> and the
+ * noscript iframe is the first thing in <body>, as Google specifies. Production builds only, so
+ * local development does not send visits; never on export-render.html (the page the backend
+ * renders exports with). GA4 is configured inside the container, so gtag.js is not loaded here.
  */
 function googleTagManagerPlugin(gtmId) {
   return {
@@ -74,7 +75,21 @@ function googleTagManagerPlugin(gtmId) {
       order: 'pre',
       handler(html, ctx) {
         if (!gtmId || path.basename(ctx.filename || '') !== 'index.html') return html
-        return html.replace(/<head>/i, `<head>\n    ${gtmSnippet(gtmId)}`)
+        return {
+          html,
+          tags: [
+            {
+              tag: 'script',
+              injectTo: 'head-prepend',
+              children: gtmHeadInline(gtmId),
+            },
+            {
+              tag: 'noscript',
+              injectTo: 'body-prepend',
+              children: gtmNoscript(gtmId),
+            },
+          ],
+        }
       },
     },
   }
