@@ -213,7 +213,7 @@ function ReadySection() {
 
           {/* Right — single clean avatar image */}
           <div className="rs-right">
-            <img src={AvatarImg} alt="Virtual Studio avatar" className="rs-avatar" />
+            <img src={AvatarImg} alt="Virtual Studio avatar" width="1024" height="559" loading="lazy" decoding="async" className="rs-avatar" />
           </div>
 
         </div>

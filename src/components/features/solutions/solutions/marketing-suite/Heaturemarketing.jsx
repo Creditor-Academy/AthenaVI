@@ -413,8 +413,11 @@ function Heaturemarketing() {
                   <img 
                     src={feature.image} 
                     alt={feature.title}
+                    width="600"
+                    height="400"
                     className="feature-marketing-card-image"
                     loading="lazy"
+                    decoding="async"
                   />
                 </div>
                 <div className="feature-marketing-card-content">

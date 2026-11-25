@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { HREF, isPlainLeftClick } from '../../seo/publicNav.js'
 import './NotFound.css'
 
 function NotFound({ setView }) {
@@ -199,19 +200,27 @@ function NotFound({ setView }) {
             Hoo… where'd that go?
           </div>
 
-          <h2 className="nf-heading">Page Not Found</h2>
+          <h1 className="nf-heading">Page Not Found</h1>
           <p className="nf-sub">
             Even our wisest owl can't find what you're looking for.
             <br />The page may have flown away or never existed.
           </p>
 
           <div className="nf-actions">
-            <button className="nf-btn primary" onClick={handleGoHome}>
+            <a
+              href={HREF.home}
+              className="nf-btn primary"
+              onClick={(e) => {
+                if (!isPlainLeftClick(e)) return
+                e.preventDefault()
+                handleGoHome()
+              }}
+            >
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
               Go Home
-            </button>
+            </a>
             <button className="nf-btn secondary" onClick={() => window.history.back()}>
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -222,9 +231,25 @@ function NotFound({ setView }) {
 
           <p className="nf-hint">
             or try:{' '}
-            <span onClick={() => setView('help-center')} className="nf-link">Help Center</span>
+            <a
+              href={HREF.help}
+              className="nf-link"
+              onClick={(e) => {
+                if (!isPlainLeftClick(e)) return
+                e.preventDefault()
+                setView('help-center')
+              }}
+            >Help Center</a>
             {' · '}
-            <span onClick={() => setView('products')} className="nf-link">Solutions</span>
+            <a
+              href={HREF.products}
+              className="nf-link"
+              onClick={(e) => {
+                if (!isPlainLeftClick(e)) return
+                e.preventDefault()
+                setView('products')
+              }}
+            >Solutions</a>
           </p>
         </div>
       </div>

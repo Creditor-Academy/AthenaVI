@@ -54,7 +54,8 @@ export const DEFAULT_TITLE = BRAND
  * Kept to about 60 characters so search results show it in full.
  */
 export const PAGE_TITLES = {
-  '/': `AI Course Creation Platform | ${BRAND}`,
+  // The product is an AI avatar video generator for training videos, not a course-authoring suite.
+  '/': `AI Avatar Video Generator for Training Videos | ${BRAND}`,
   '/products': `Online Course Creation Tools | ${BRAND}`,
   '/marketing-suite': `Marketing Suite: AI Marketing Tools | ${BRAND}`,
   '/sales-suite': `Sales Suite: Sales Enablement Tools | ${BRAND}`,
@@ -100,7 +101,7 @@ export const PAGE_H1 = {
 
 /** Meta descriptions from the digital marketing team's sheet ("Meta Description_virtual-studio"). */
 export const PAGE_DESCRIPTIONS = {
-  '/': 'Create engaging online courses with Athena Virtual Studio. Explore AI-powered tools for course creation, interactive learning content and digital training.',
+  '/': 'Create training videos with AI avatars in Athena Virtual Studio. Turn a script into a presenter-led video for courses, employee training and digital learning.',
   '/products': 'Explore Athena Virtual Studio products for creating digital learning experiences. Discover course authoring, AI content tools and solutions for training teams.',
   '/marketing-suite': "Discover Athena's marketing suite for creating and managing digital marketing content. Explore tools designed to support campaigns, content and audience engagement.",
   '/sales-suite': "Explore Athena's sales suite and discover digital tools that help sales teams present solutions, share content and support customer conversations.",
@@ -123,6 +124,38 @@ export const PAGE_DESCRIPTIONS = {
 export const ROBOTS_INDEX = 'index, follow'
 export const ROBOTS_NOINDEX = 'noindex, follow'
 
+/**
+ * Placeholder URLs. They stay out of the sitemap and the header/footer until they have real
+ * content. They are not routes, so the server answers 404 with the noindex Not Found page.
+ */
+export const PLACEHOLDER_PATHS = ['/technology', '/about-us', '/news', '/resources']
+
+/** Share image for Open Graph. A product still, no overlaid claims. */
+export const OG_IMAGE_PATH = '/og-cover.webp'
+export const OG_IMAGE = `${SITE_URL}${OG_IMAGE_PATH}`
+
+/** First hero frame. Preloaded on the home page so it can paint before the avatar videos. */
+export const LCP_IMAGE_PATH = '/hero-posters/01.webp'
+
+export const BREADCRUMB_LABELS = {
+  '/': 'Home',
+  '/products': 'Products',
+  '/marketing-suite': 'Marketing Suite',
+  '/sales-suite': 'Sales Suite',
+  '/customer-experience': 'Customer Experience',
+  '/learning-development': 'Learning and Development',
+  '/use-cases': 'Use Cases',
+  '/ai-videos': 'AI Videos',
+  '/ai-avatars-videos': 'AI Avatars and Videos',
+  '/ethics': 'Ethics',
+  '/help': 'Help Center',
+  '/privacy': 'Privacy Policy',
+}
+
+const ATHENA_LMS_URL = 'https://lmsathena.com'
+const ORGANIZATION_ID = `${ATHENA_LMS_URL}/#organization`
+const SOFTWARE_ID = `${SITE_URL}/#software`
+
 /** `/products/` → `/products`; `''` → `/`. Query and hash are dropped. */
 export function normalizeSeoPath(pathname = '/') {
   let path = String(pathname || '/').split('?')[0].split('#')[0].trim()
@@ -138,12 +171,92 @@ export function canonicalUrl(pathname) {
   return `${SITE_URL}${path}${TRAILING_SLASH ? '/' : ''}`
 }
 
+/** Address-bar path for a public page: the trailing-slash URL the server answers with 200. */
+export function browserPathFor(pathname) {
+  const path = normalizeSeoPath(pathname)
+  if (path === '/') return '/'
+  if (INDEXABLE_PATHS.includes(path) || NOINDEX_PUBLIC_PATHS.includes(path)) return `${path}/`
+  return path
+}
+
+export function openGraphForPath(pathname) {
+  const seo = seoForPath(pathname)
+  if (!seo.indexable || !seo.canonical) return null
+  return {
+    title: seo.title,
+    description: seo.description,
+    url: seo.canonical,
+    image: OG_IMAGE,
+    type: 'website',
+    siteName: BRAND,
+  }
+}
+
+export function jsonLdForPath(pathname) {
+  const path = normalizeSeoPath(pathname)
+  const seo = seoForPath(path)
+  if (!seo.indexable || !seo.canonical) return null
+  const crumbs = [{ name: 'Home', item: `${SITE_URL}/` }]
+  if (path !== '/') {
+    crumbs.push({ name: BREADCRUMB_LABELS[path] || seo.title, item: seo.canonical })
+  }
+  return {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'Organization',
+        '@id': ORGANIZATION_ID,
+        name: 'Athena LMS',
+        url: ATHENA_LMS_URL,
+        telephone: '+1 (425) 400-9246',
+        address: {
+          '@type': 'PostalAddress',
+          streetAddress: '12315 NE 97th Street',
+          addressLocality: 'Kirkland',
+          addressRegion: 'WA',
+          addressCountry: 'US',
+        },
+      },
+      {
+        '@type': 'SoftwareApplication',
+        '@id': SOFTWARE_ID,
+        name: 'Athena Virtual Studio',
+        alternateName: 'Virtual Studio',
+        applicationCategory: 'MultimediaApplication',
+        operatingSystem: 'Web',
+        url: `${SITE_URL}/`,
+        description: PAGE_DESCRIPTIONS['/'],
+        publisher: { '@id': ORGANIZATION_ID },
+      },
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: crumbs.map((crumb, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          name: crumb.name,
+          item: crumb.item,
+        })),
+      },
+    ],
+  }
+}
+
 /**
- * The tags a page should carry. Indexable pages: a self-referencing canonical. Everything else
- * (sign-in, the app behind sign-in, shared links, unknown paths): `noindex, follow`, no canonical.
+ * Indexable pages get a self-referencing canonical. Sign-in, the app, shared links and unknown
+ * paths get `noindex, follow` and no canonical. `/__not-found__` is the static 404 document.
  */
 export function seoForPath(pathname) {
   const path = normalizeSeoPath(pathname)
+  if (path === '/__not-found__') {
+    return {
+      indexable: false,
+      canonical: null,
+      robots: ROBOTS_NOINDEX,
+      title: `Page not found | ${BRAND}`,
+      description: 'The page you requested is not on Athena Virtual Studio.',
+      h1: 'Page not found',
+    }
+  }
   const indexable = INDEXABLE_PATHS.includes(path)
   // Pages with their own title, description and H1; the app and hidden pages get the defaults.
   const listed = indexable || NOINDEX_PUBLIC_PATHS.includes(path)

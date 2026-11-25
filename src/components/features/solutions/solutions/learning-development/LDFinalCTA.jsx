@@ -223,7 +223,7 @@ const LDFinalCTA = () => {
           {/* Action Buttons */}
           <div className="ld-cta-btns">
             <motion.a 
-              href="#" 
+              href="/signup/" 
               className="btn-primary-gradient"
               whileTap={{ scale: 0.95 }}
             >

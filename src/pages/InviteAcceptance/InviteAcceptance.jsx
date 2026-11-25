@@ -100,7 +100,7 @@ const InviteAcceptance = () => {
         setPageMode('wrongAccount')
         return
       }
-      window.location.assign(invitation.requiresRegistration ? '/signup' : '/login')
+      window.location.assign(invitation.requiresRegistration ? '/signup/' : '/login/')
       return
     }
 

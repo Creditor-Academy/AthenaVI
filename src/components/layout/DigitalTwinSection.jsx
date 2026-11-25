@@ -234,6 +234,10 @@ const DigitalTwinSection = () => {
           <img
             src={DigitalTwin03}
             alt="AI digital twin clone portrait background"
+            width="1920"
+            height="1080"
+            loading="lazy"
+            decoding="async"
             className="dt-portrait-img"
           />
         </div>

@@ -13,6 +13,7 @@ import {
 import './auth-forms.css'
 import './AuthPage.css'
 import { applySeoHead } from '../../seo/applySeoHead.js'
+import { browserPathFor } from '../../seo/seoRoutes.js'
 
 const slideVariants = {
   enter: (direction) => ({ x: direction > 0 ? 32 : -32, opacity: 0 }),
@@ -77,7 +78,7 @@ function AuthPage({ onAuthComplete, onBack, initialMode = 'login' }) {
   /** Keep the address bar, title and H1 in step with the form shown (only on the sign-in URLs). */
   const showFormUrl = (nextMode) => {
     if (!/^\/(login|signup|early-access)\/?$/.test(window.location.pathname)) return
-    const url = nextMode === 'login' ? '/login' : isEarlyAccess ? '/early-access' : '/signup'
+    const url = browserPathFor(nextMode === 'login' ? '/login' : isEarlyAccess ? '/early-access' : '/signup')
     if (window.location.pathname === url) return
     window.history.replaceState({ ...(window.history.state || {}), view: 'login' }, '', url)
     applySeoHead(url)

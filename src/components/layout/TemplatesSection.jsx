@@ -3,7 +3,7 @@ import { LANDING_DARK, LANDING_FONT } from '../../styles/landingTypography'
 
 import temp1 from '../../assets/Template_Image/temp1.webp'
 import temp2 from '../../assets/Template_Image/temp2.webp'
-import temp3 from '../../assets/Template_Image/temp3.png'
+import temp3 from '../../assets/Template_Image/temp3.webp'
 import temp4 from '../../assets/Template_Image/temp4.webp'
 import temp5 from '../../assets/Template_Image/temp5.webp'
 import temp6 from '../../assets/Template_Image/temp6.webp'
@@ -433,7 +433,7 @@ const css = `
 function ImageCard({ img }) {
   return (
     <div className="pts-image-card">
-      <img src={img} alt="Template Preview" className="pts-card-img" />
+      <img src={img} alt="Template Preview" width="1191" height="774" loading="lazy" decoding="async" className="pts-card-img" />
     </div>
   )
 }

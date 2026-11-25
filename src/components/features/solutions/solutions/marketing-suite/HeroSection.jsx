@@ -356,8 +356,11 @@ function HeroSection() {
                   <img 
                     src={feature.image} 
                     alt={feature.label}
+                    width="400"
+                    height="300"
                     className="feature-panel-image"
                     loading="lazy"
+                    decoding="async"
                   />
                   {feature.overlay}
                 </div>

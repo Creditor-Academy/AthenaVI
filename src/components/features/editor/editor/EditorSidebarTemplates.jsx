@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { MdClose } from 'react-icons/md';
 import { pageTemplates } from '../../../../constants/editorData';
 import StaticPreview from './StaticPreview';
-import avatar1 from '../../../../assets/avatar1.png';
+import avatar1 from '../../../../assets/avatar1.webp';
 
 const EditorSidebarTemplates = ({ handleAddTemplateScene, setShowTemplateModal }) => {
   const [previewTemplate, setPreviewTemplate] = useState(null);

@@ -1,6 +1,7 @@
 import { MdArrowOutward, MdLanguage } from 'react-icons/md'
 import { FaInstagram } from 'react-icons/fa'
 import LogoImg from '../../../assets/herologo.webp'
+import { HREF, hrefForProduct, hrefForSolution, isPlainLeftClick } from '../../../seo/publicNav.js'
 import './Footer.css'
 
 
@@ -12,6 +13,7 @@ function Footer({
   onNavigateToCompany
 }) {
   const handleProductClick = (e, productName) => {
+    if (!isPlainLeftClick(e)) return
     e.preventDefault()
     if (onNavigateToProduct) {
       onNavigateToProduct(productName)
@@ -19,6 +21,7 @@ function Footer({
   }
 
   const handleSolutionClick = (e, solutionName) => {
+    if (!isPlainLeftClick(e)) return
     e.preventDefault()
     if (onNavigateToSolution) {
       onNavigateToSolution(solutionName)
@@ -32,6 +35,7 @@ function Footer({
   }
 
   const handleEthicsClick = (e) => {
+    if (!isPlainLeftClick(e)) return
     e.preventDefault()
     if (onNavigateToEthics) {
       onNavigateToEthics()
@@ -39,6 +43,7 @@ function Footer({
   }
 
   const handleLogoClick = (e) => {
+    if (!isPlainLeftClick(e)) return
     e.preventDefault()
     if (onLogoClick) {
       onLogoClick()
@@ -50,8 +55,8 @@ function Footer({
       <footer className="footer">
         <div className="footer-content">
           <div className="footer-brand">
-            <a href="#" className="footer-logo" onClick={handleLogoClick}>
-              <img src={LogoImg} alt="Logo" className="footer-logo-img" />
+            <a href={HREF.home} className="footer-logo" onClick={handleLogoClick}>
+              <img src={LogoImg} alt="Athena Virtual Studio" width="865" height="240" decoding="async" loading="lazy" className="footer-logo-img" />
             </a>
             <p className="footer-description">
               Create AI-powered videos with lifelike avatars. Transform your content into engaging visual experiences with Virtual Studio.
@@ -80,20 +85,20 @@ function Footer({
 
           <div className="footer-column">
             <h3 className="footer-column-title">Products</h3>
-            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Visual AI Agents')}>Visual AI Agents</a>
-            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Creative Reality™ Studio')}>Creative Reality™ Studio</a>
-            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Video Translate')}>Video Translate</a>
-            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Video Campaigns')}>Video Campaigns</a>
-            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Personal Avatars')}>Personal Avatars</a>
+            <a href={hrefForProduct('Visual AI Agents')} className="footer-link" onClick={(e) => handleProductClick(e, 'Visual AI Agents')}>Visual AI Agents</a>
+            <a href={hrefForProduct('Creative Reality™ Studio')} className="footer-link" onClick={(e) => handleProductClick(e, 'Creative Reality™ Studio')}>Creative Reality™ Studio</a>
+            <a href={hrefForProduct('Video Translate')} className="footer-link" onClick={(e) => handleProductClick(e, 'Video Translate')}>Video Translate</a>
+            <a href={hrefForProduct('Video Campaigns')} className="footer-link" onClick={(e) => handleProductClick(e, 'Video Campaigns')}>Video Campaigns</a>
+            <a href={hrefForProduct('Personal Avatars')} className="footer-link" onClick={(e) => handleProductClick(e, 'Personal Avatars')}>Personal Avatars</a>
           </div>
 
           <div className="footer-column">
             <h3 className="footer-column-title">Solutions</h3>
-            <a href="#" className="footer-link" onClick={(e) => handleSolutionClick(e, 'Marketing Suite')}>Marketing Suite</a>
-            <a href="#" className="footer-link" onClick={(e) => handleSolutionClick(e, 'Sales Solutions')}>Sales Solutions</a>
-            <a href="#" className="footer-link">Customer Experience</a>
-            <a href="#" className="footer-link">Learning & Development</a>
-            <a href="#" className="footer-link">AI Videos</a>
+            <a href={hrefForSolution('Marketing Suite')} className="footer-link" onClick={(e) => handleSolutionClick(e, 'Marketing Suite')}>Marketing Suite</a>
+            <a href={hrefForSolution('Sales Solutions')} className="footer-link" onClick={(e) => handleSolutionClick(e, 'Sales Solutions')}>Sales Solutions</a>
+            <a href={hrefForSolution('Customer Experience')} className="footer-link" onClick={(e) => handleSolutionClick(e, 'Customer Experience')}>Customer Experience</a>
+            <a href={hrefForSolution('Learning & Development')} className="footer-link" onClick={(e) => handleSolutionClick(e, 'Learning & Development')}>Learning & Development</a>
+            <a href={hrefForSolution('AI Videos')} className="footer-link" onClick={(e) => handleSolutionClick(e, 'AI Videos')}>AI Videos</a>
           </div>
 
           <div className="footer-newsletter">
@@ -124,16 +129,19 @@ function Footer({
             © {new Date().getFullYear()} Virtual Studio. All rights reserved.
           </div>
           <div className="footer-bottom-links">
-            <a href="#" className="footer-bottom-link" onClick={handleEthicsClick}>Trust Center</a>
-            <a href="#" className="footer-bottom-link" onClick={(e) => {
+            <a href={HREF.ethics} className="footer-bottom-link" onClick={handleEthicsClick}>Trust Center</a>
+            <a href={HREF.privacy} className="footer-bottom-link" onClick={(e) => {
+              if (!isPlainLeftClick(e)) return
               e.preventDefault()
               handleCompanyClick('Privacy Policy')
             }}>Privacy Policy</a>
-            <a href="#" className="footer-bottom-link">Terms of Service</a>
+            <span className="footer-bottom-link">Terms of Service</span>
+            <a href={HREF.athenaLms} className="footer-bottom-link">Athena LMS</a>
             <a
-              href="#"
+              href={HREF.help}
               className="footer-bottom-link"
               onClick={(e) => {
+                if (!isPlainLeftClick(e)) return
                 e.preventDefault()
                 handleCompanyClick('Help Center')
               }}

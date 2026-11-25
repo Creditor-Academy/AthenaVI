@@ -104,10 +104,10 @@ const styles = `
 `
 
 const avatars = [
-  { src: avatar2, premium: true, bgColor: '#7aedfaff' },
-  { src: avatar3, premium: false, bgColor: '#9fffc5ff' },
-  { src: avatar4, premium: true, bgColor: '#b4c3ffff' },
-  { src: avatar5, premium: false, bgColor: '#ff9ad3ff' },
+  { src: avatar2, width: 500, height: 500, premium: true, bgColor: '#7aedfaff' },
+  { src: avatar3, width: 500, height: 500, premium: false, bgColor: '#9fffc5ff' },
+  { src: avatar4, width: 941, height: 941, premium: true, bgColor: '#b4c3ffff' },
+  { src: avatar5, width: 500, height: 500, premium: false, bgColor: '#ff9ad3ff' },
 ]
 
 const AvatarMarquee = () => {
@@ -133,7 +133,7 @@ const AvatarMarquee = () => {
           >
             {list.map((av, index) => (
               <div key={index} className="avatar-card-marquee" style={{ background: av.bgColor }}>
-                <img src={av.src} alt={`AI Avatar ${index}`} />
+                <img src={av.src} alt={`AI Avatar ${index}`} width={av.width} height={av.height} loading="lazy" decoding="async" />
                 {av.premium && (
                   <div className="badge-premium">
                     <span className="badge-dot"></span>

@@ -369,7 +369,7 @@ const UnifiedVideoSection = () => {
                     <div className="card-number">0{i + 1}</div>
                     <div className="card-category">{card.category}</div>
                     <div className="ref-img-wrap">
-                      <img src={card.image} alt={card.alt} className="ref-img" />
+                      <img src={card.image} alt={card.alt} width="1376" height="768" loading="lazy" decoding="async" className="ref-img" />
                     </div>
                     <h3 className="ref-title">{card.title}</h3>
                     <p className="ref-description">{card.description}</p>
@@ -395,7 +395,7 @@ const UnifiedVideoSection = () => {
                       ))}
                     </div>
                     <div className="ref-img-wrap">
-                      <img src={card.image} alt={card.alt} className="ref-img" />
+                      <img src={card.image} alt={card.alt} width="1376" height="768" loading="lazy" decoding="async" className="ref-img" />
                     </div>
                   </>
                 )}

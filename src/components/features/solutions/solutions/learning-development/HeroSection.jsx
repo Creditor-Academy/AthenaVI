@@ -432,7 +432,7 @@ const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            <a href="#" className="cb-btn-primary">Get Started for Free</a>
+            <a href="/signup/" className="cb-btn-primary">Get Started for Free</a>
             <a href="#" className="cb-btn-secondary">
               <HiOutlineArrowUpRight />
               Watch Demo
@@ -453,9 +453,9 @@ const HeroSection = () => {
           <div className="same-card-orange">
             <div className="white-line-deco" />
             <div className="avatar-row-stack">
-              <div className="avatar-circ"><img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100" /></div>
-              <div className="avatar-circ"><img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=100" /></div>
-              <div className="avatar-circ"><img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=100" /></div>
+              <div className="avatar-circ"><img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100" alt="" width="100" height="100" decoding="async" /></div>
+              <div className="avatar-circ"><img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=100" alt="" width="100" height="100" decoding="async" /></div>
+              <div className="avatar-circ"><img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=100" alt="" width="100" height="100" decoding="async" /></div>
             </div>
             <div className="val-heavy-num">124K+</div>
             <p className="val-sub-msg">More than 2,000 people has joined us</p>
@@ -476,12 +476,12 @@ const HeroSection = () => {
 
           {/* Main Visual (Expert with Tablet in Orange) */}
           <div className="woman-expert-visual">
-            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800" alt="Learning Expert" />
+            <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800" alt="Learning Expert" width="800" height="800" decoding="async" fetchPriority="high" />
           </div>
 
           {/* Bottom Team Visual */}
           <div className="team-collaboration-visual">
-            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1200" alt="Collaboration" />
+            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1200" alt="Collaboration" width="1200" height="800" loading="lazy" decoding="async" />
           </div>
 
           {/* Far Right Stats Column matching reference styles */}
