@@ -308,9 +308,9 @@ function Avatars({ onCreate, onCreateAvatar, onCreateLooks }) {
       },
       {
         id: 'avatars-custom',
-        tag: 'Custom Digital Twin',
+        tag: 'Custom Photo & Prompt',
         title: 'Create Your Personal Avatar with Photo & Prompt',
-        subtitle: 'Generate hyper-realistic digital twins instantly. Upload your photo or describe your character to craft unique looks.',
+        subtitle: 'Upload your photo or describe your character to craft unique AI presenter looks.',
         ctaText: 'Create Avatar',
         onCtaClick: () => (onCreateAvatar ? onCreateAvatar() : setActiveSection('private')),
         stats: [
