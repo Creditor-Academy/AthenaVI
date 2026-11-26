@@ -8,6 +8,7 @@ import {
   FiPlus,
   FiRefreshCw,
   FiTrash2,
+  FiClipboard,
 } from 'react-icons/fi'
 import { BsStars } from 'react-icons/bs'
 import { PPT_PROGRESS_STATUSES, resolveSlideProgressStatus, progressStatusLabel, progressStatusDotClass } from '../../../constants/pptSlideEditorOptions'
@@ -35,6 +36,8 @@ export default function MinimapSlideCard({
   onOpenMenu,
   onCloseMenu,
   onDuplicate,
+  onCopySlide,
+  onPasteSlide,
   onDelete,
   onAddAfter,
   onMoveUp,
@@ -195,6 +198,30 @@ export default function MinimapSlideCard({
             >
               <FiCopy size={15} />
               Duplicate
+            </button>
+            {onCopySlide ? (
+              <button
+                type="button"
+                role="menuitem"
+                className="aig-minimap-slide-menu-item"
+                onClick={run(onCopySlide)}
+              >
+                <FiCopy size={15} />
+                Copy slide
+                <span className="aig-minimap-slide-menu-kbd">Ctrl+C</span>
+              </button>
+            ) : null}
+            <button
+              type="button"
+              role="menuitem"
+              className="aig-minimap-slide-menu-item"
+              disabled={!onPasteSlide || atDeckCap || disabled}
+              title={onPasteSlide ? 'Paste the copied slide after this one' : 'Copy a slide first'}
+              onClick={run(onPasteSlide)}
+            >
+              <FiClipboard size={15} />
+              Paste slide
+              <span className="aig-minimap-slide-menu-kbd">Ctrl+V</span>
             </button>
             <button
               type="button"

@@ -15,6 +15,8 @@ export class InsufficientCreditsError extends Error {
 }
 
 export function isInsufficientCreditsError(error) {
+  // A HeyGen plan-gate can also be a 402 ("needs Avatar 6"): that is not a credits problem.
+  if (error?.kind === 'plan') return false;
   return (
     error?.code === 'INSUFFICIENT_CREDITS' ||
     error?.status === 402 ||

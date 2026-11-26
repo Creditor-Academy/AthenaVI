@@ -17,9 +17,10 @@ The two editors share the element renderer and the insert/design panels (`src/pa
 **Status (26 Nov):**
 - **Phase 0:** committed and pushed 26 Nov. Left: deploy to staging, retest there, and D-0's questions to the testers.
 - **Phase 1:** N-1, D-1, D-2, D-3, D-4, D-5, C-1, K-1, R-1 and H-1 to H-4 committed and pushed 26 Nov (FE `88c288f`, BE `0c7d7b0`). Left: staging retest. See "Phase 1 implementation (26 Nov)" and "Image-loss hunt (26 Nov)" below.
-- **Phase 1b:** B-3 and E-4a coded and browser-tested on the dev setup, not committed. See "Phase 1b implementation (26 Nov)" below.
+- **Phase 1b:** B-3 and E-4a committed and pushed 26 Nov (FE `db5d17b`, BE `d5a5f1d`). Left: staging retest.
+- **Phase 1c:** S-1 (copy and paste whole slides, requested 26 Nov) coded and browser-tested on the dev setup, not committed.
 - **Findings re-checked in the running app:** 14 confirmed (including the team's two new bugs B-2 and R-1, and a new finding N-1), 2 not reproduced, 8 not tested in the browser. See "Browser verification (26 Nov)" below.
-- **Tests:** frontend 507 / 507 and backend 1,314 / 1,314 pass with the Phase 1b code.
+- **Tests:** frontend 514 / 514 (with S-1) and backend 1,314 / 1,314 pass.
 
 In the item headings, ✔ means the cause was checked line by line in the code, and · means it comes from the audit's reading and is to be confirmed while fixing.
 
@@ -32,12 +33,13 @@ Status key: ⬜ not started · 🟡 in progress · 🔵 code done, waiting for s
 | **0. Stop the image loss** | Remove the confirmed cause, stop Media inserts wiping the background, log every slide write | D-0, D-8, L-1, B-1, B-2 | 2.5 d | Layout smoke test green; repro steps pass on staging; logging live; Media insert keeps the background |
 | **1. Safe saving** | No save can remove newer work; review links keep showing images | N-1, D-1, D-2, D-3, D-4, D-5, C-1, K-1, R-1, H-1 to H-4 | 11 d | Revision tests green and in `npm test`; two-tab, undo, stale-tab-close and rapid-edit retests pass; review link presents without blanking while the owner edits |
 | **1b. Empty slides and background photos** | An emptied slide is really empty; a background photo can be edited | B-3, E-4a | 1.5 d | Emptied slide stays blank in the editor, after reload and in PDF / PowerPoint exports; a background photo can be cropped, replaced, turned back into an image and removed, and each survives reload |
+| **1c. Copy and paste slides** | A whole slide can be copied and pasted elsewhere, also into another deck | S-1 | 0.75 d | A slide with a background photo, text and images copied with Ctrl+C / ⋯ → Copy slide pastes after the selected slide in the same and another deck, complete after reload |
 | **2. Wrong results from edits** | Edits change what the user meant, nothing else | E-1, E-2, E-3 | 1.25 d | Each item's checkpoint passes |
 | **3. Reported editor problems** | Backgrounds, "Use as background", colours, image links | E-4 (rest), E-5, E-6, D-6 | 3.5 d | QA retests the three reported problems on the testers' decks |
 | **4. Image editor and safety net** | Image editor placement and recovery; slide version history | C-2 to C-5, D-7 | 3.1 d | Support can restore a slide; image editor checkpoints pass |
 | **5. Editing feel** | Drag, resize and text boxes behave at any zoom / rotation | G-1 to G-5 | 2.75 d | Each item's checkpoint passes |
 
-**Total:** about 26 developer-days (FE about 20, BE about 6), including the image-loss hunt fixes and Phase 1b.
+**Total:** about 27 developer-days (FE about 21, BE about 6), including the image-loss hunt fixes, Phase 1b and Phase 1c.
 
 **Staffing:**
 - With one FE and one BE developer, this is about 5 weeks.
@@ -53,6 +55,7 @@ Status key: ⬜ not started · 🟡 in progress · 🔵 code done, waiting for s
 - **Phase 1:** N-1 → D-1 BE → D-2 → D-3 → D-1 FE → D-4 → D-5, C-1, K-1, R-1.
   - N-1 first: together with D-1, it caused the overwrite confirmed in the browser.
 - **Phase 1b:** B-3 → E-4a. Committed as its own batch, after the Phase 1 batch (Phase 1 + H-1 to H-4).
+- **Phase 1c:** S-1, its own batch, before Phase 2.
   - D-2 and D-3 make the 409 handling in D-1 FE simple.
   - D-4 depends on D-3.
 
@@ -95,6 +98,7 @@ Status key: ⬜ not started · 🟡 in progress · 🔵 code done, waiting for s
 | H-4 | Switching layout deleted images the user added (editor and server) | High | Presentations | BE + FE | 0.3 d | 1 | 🔵 |
 | B-3 | After deleting every element, a ghost title and picture appear that can't be selected or deleted (also in exports) | High | Presentations | BE + FE | 0.5 d | 1b | 🔵 |
 | E-4a | A photo used as the slide background can't be selected, edited, resized or removed | High | Presentations | FE | 1 d | 1b | 🔵 |
+| S-1 | A whole slide can't be copied and pasted (only Duplicate, right after itself); copying all elements leaves the background behind | Medium | Presentations | FE | 0.75 d | 1c | 🔵 |
 
 ### Browser verification (26 Nov)
 
@@ -588,6 +592,39 @@ Note: Ctrl+S only makes a save happen sooner. Data safety comes from D-8 and D-1
 - [ ] Close-out.
 
 **Phase 1b gate:** every checkpoint above passes on staging.
+
+---
+
+## 3c. Phase 1c: copy and paste slides (0.75 d)
+
+**Goal:** a whole slide can be copied and pasted at another position or into another deck, as in Canva and PowerPoint. Requested by the team on 26 Nov.
+
+### S-1. Copy and paste whole slides (Medium, FE) ✔
+
+**Report (team, 26 Nov):** "why am I unable to select a complete slide and paste it to another slide?"
+
+**What happens.**
+- Ctrl+C / Ctrl+V only handle **elements** (`AIPptEditor.jsx` key handler, `useEditorClipboard`). With a slide thumbnail selected, Ctrl+C does nothing.
+- The slide ⋯ menu has only **Duplicate** (`MinimapSlideCard.jsx`), which inserts the copy right after the original: no other position, no other deck.
+- Selecting every element (Ctrl+A) and pasting on another slide copies the elements but not the slide's background (colour, gradient, background photo), which belongs to the slide, so the result doesn't look like the original.
+
+**Fix.**
+1. **Copy / cut slide:** Ctrl+C / Ctrl+X while the slide list has focus (a thumbnail selected), and ⋯ → **Copy slide**. The whole slide is copied: elements, background (colour, gradient, background photo), transition, speaker notes, layout id. Kept in the browser (local storage), so it also pastes in another deck in the same browser.
+2. **Paste slide:** Ctrl+V while the slide list has focus, and ⋯ → **Paste slide**: a new slide right after the selected one, created with its content in the add request (as `handleAddSlide` does), new element ids, saved like any added slide. One undo step.
+3. Pasting **elements** onto a slide keeps today's behaviour (the target slide's background stays).
+
+**Built (26 Nov).** `src/utils/slideClipboard.js` (copy, read, paste with new element ids; groups and the background photo keep pointing at the right elements; 4 tests in `slideClipboard.test.mjs`). Slide ⋯ menu: **Copy slide** and **Paste slide** (shortcut hints; Paste disabled when nothing is copied or the deck is full). Ctrl+C / Ctrl+X / Ctrl+V act on slides when the last click was in the slide list, on elements otherwise. Cut asks the usual delete confirmation. A pasted slide counts as edited (B-3), so it never shows placeholder content.
+
+**Browser result (dev setup, 26 Nov):** ⋯ → Copy slide on slide 5 (background photo, 5 images) → ⋯ → Paste slide, and Ctrl+C on slide 5 → Ctrl+V on slide 2: after reload both copies match slide 5 exactly in the database (elements, colour, background photo and fit, transition; only ids differ, the background photo id points at the copy's own photo). Ctrl+X on a slide → delete confirmation → removed; Ctrl+V after the last slide brought it back. Copy / paste of an image on the canvas still pastes an element, not a slide. Not run: paste into another deck, undo of a paste.
+
+**Checkpoint**
+- [x] Copy a slide with a background photo, text and images → paste after another slide: identical, and still after reload. (dev)
+- [ ] Paste into another deck: identical, and still after reload.
+- [ ] Cut → paste moves the slide; undo of the paste removes it.
+- [x] Copying elements (Ctrl+A, Ctrl+C on the canvas) and pasting them still works as before. (dev)
+- [ ] Close-out.
+
+**Phase 1c gate:** every checkpoint above passes on staging.
 
 ---
 

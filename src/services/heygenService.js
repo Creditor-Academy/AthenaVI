@@ -22,10 +22,12 @@ export function isSpeechPreviewUnsupportedError(error) {
 }
 import {
   AVATAR_IV_ENGINE,
+  isAvatar6Engine,
   isLegacyV2Look,
   finalizeVideoCreatePayload,
 } from '../utils/heygenAvatars.js';
 import { sanitizeUserFacingMessage } from '../utils/userFacingMessage.js';
+import { ApiError, apiErrorFromResponse, extractApiMessage, classifyApiError } from '../utils/apiUserMessage.js';
 import {
   buildHeygenFileAssetFromUploadPayload,
   buildHeygenUrlAsset,
@@ -55,6 +57,8 @@ function sanitizeThrownError(error) {
 }
 
 const MISSING_ROUTE_STATUSES = new Set([404, 405, 501]);
+const VIDEO_CREATE_BUSY_RETRIES = 4;
+const VIDEO_CREATE_BUSY_DELAY_MS = 2500;
 let avatarUploadRouteAvailable = null;
 let voiceUploadRouteAvailable = null;
 
@@ -87,11 +91,8 @@ async function throwIfHeygenResponseFailed(response, fallbackLabel = 'Request') 
   }
 
   const message =
-    errorData.message ||
-    errorData.error ||
-    (Array.isArray(errorData.errors) && errorData.errors.length
-      ? errorData.errors.join(' ')
-      : `${fallbackLabel} failed: ${response.status}`);
+    extractApiMessage(errorData) || `${fallbackLabel} failed (${response.status})`;
+  const kind = classifyApiError(response.status, errorData);
 
   if (response.status === 413) {
     throw userError(
@@ -99,15 +100,19 @@ async function throwIfHeygenResponseFailed(response, fallbackLabel = 'Request') 
     );
   }
 
-  if (response.status === 402) {
+  if (response.status === 402 && kind === 'credits') {
     throw new InsufficientCreditsError(sanitizeUserFacingMessage(message), errorData);
   }
 
-  if (response.status === 403) {
+  if (response.status === 403 && kind !== 'plan') {
     throw userError(message || 'You do not have permission for this action. Try signing in again.');
   }
 
-  throw userError(`${fallbackLabel} failed: ${response.status} - ${message}`);
+  throw new ApiError(sanitizeUserFacingMessage(message), {
+    status: response.status,
+    body: errorData,
+    kind,
+  });
 }
 
 const LOOKS_QUERY_KEYS = new Set([
@@ -583,7 +588,7 @@ class HeygenService {
     }
 
     try {
-      const listRes = await this.getAvatarGroups({ ownership: 'private', limit: 100 });
+      const listRes = await this.getAvatarGroups({ ownership: 'private', limit: 50 });
       const data = listRes?.data ?? listRes;
       const groups = Array.isArray(data)
         ? data
@@ -611,8 +616,7 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        const errText = await response.text();
-        throw userError(`Failed to get avatar consent: ${response.status} - ${errText}`);
+        throw await apiErrorFromResponse(response, 'Failed to get avatar consent');
       }
 
       const data = await response.json();
@@ -724,8 +728,7 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        const errText = await response.text();
-        throw userError(`Failed to design voice: ${response.status} - ${errText}`);
+        throw await apiErrorFromResponse(response, 'Failed to design voice');
       }
 
       const data = await response.json();
@@ -781,8 +784,7 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        const errText = await response.text();
-        throw userError(`Failed to select voice: ${response.status} - ${errText}`);
+        throw await apiErrorFromResponse(response, 'Failed to select voice');
       }
 
       const data = await response.json();
@@ -873,7 +875,7 @@ class HeygenService {
 
   // --- HeyGen Video Management (Project-specific) ---
 
-  async generateVideo(workspaceId, projectId, input) {
+  async generateVideo(workspaceId, projectId, input, attempt = 0) {
     try {
       const {
         sceneId,
@@ -904,6 +906,7 @@ class HeygenService {
         avatarEngine: input.avatarEngine,
         isLegacyV2,
         supportedEngines,
+        defaultAvatarEngine: input.defaultAvatarEngine,
       });
 
       const payload = {
@@ -921,6 +924,14 @@ class HeygenService {
         removeBackground,
         outputFormat,
       };
+
+      // Calmer motion: Avatar 6 engines only.
+      if (
+        isAvatar6Engine(avatarEngine) &&
+        (input.motionExpressiveness === 'less' || input.motionExpressiveness === 'default')
+      ) {
+        payload.motionExpressiveness = input.motionExpressiveness;
+      }
 
       // Expressiveness: photo_avatar + Avatar IV only (backend shouldIncludeExpressiveness).
       if (
@@ -948,17 +959,23 @@ class HeygenService {
         body: JSON.stringify(payload)
       });
 
-      if (response.status === 402) {
-        const payload = await response.json().catch(() => ({}));
-        throw new InsufficientCreditsError(
-          sanitizeUserFacingMessage(payload.message || 'Insufficient workspace credits for video generation'),
-          payload
-        );
-      }
-
       if (!response.ok) {
-        const errText = await response.text();
-        throw userError(`Failed to generate video: ${response.status} - ${errText}`);
+        const apiError = await apiErrorFromResponse(response, 'Failed to generate video');
+        if (apiError.kind === 'credits') {
+          throw new InsufficientCreditsError(
+            sanitizeUserFacingMessage(
+              extractApiMessage(apiError.body) || 'Insufficient workspace credits for video generation'
+            ),
+            apiError.body
+          );
+        }
+        // 409: the same request is already being created (double click / second tab). The
+        // backend is idempotent, so the same POST returns that row once it exists.
+        if (apiError.status === 409 && attempt < VIDEO_CREATE_BUSY_RETRIES) {
+          await new Promise((resolve) => setTimeout(resolve, VIDEO_CREATE_BUSY_DELAY_MS));
+          return this.generateVideo(workspaceId, projectId, input, attempt + 1);
+        }
+        throw apiError;
       }
 
       const data = await response.json();
@@ -978,7 +995,7 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw userError(`Failed to list avatar videos: ${response.status}`);
+        throw await apiErrorFromResponse(response, 'Failed to list avatar videos');
       }
 
       const data = await response.json();
@@ -1007,7 +1024,7 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw userError(`Failed to fetch avatar video: ${response.status}`);
+        throw await apiErrorFromResponse(response, 'Failed to fetch avatar video');
       }
 
       const data = await response.json();
@@ -1027,7 +1044,7 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw userError(`Failed to get download URL: ${response.status}`);
+        throw await apiErrorFromResponse(response, 'Failed to get download URL');
       }
 
       const data = await response.json();
@@ -1052,7 +1069,7 @@ class HeygenService {
       });
 
       if (!response.ok) {
-        throw userError(`Failed to fetch video stream: ${response.status}`);
+        throw await apiErrorFromResponse(response, 'Failed to fetch video stream');
       }
 
       const blob = await response.blob();

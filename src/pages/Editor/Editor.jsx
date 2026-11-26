@@ -19,6 +19,8 @@ import PresenterModeModal from '../../components/features/editor/editor/Presente
 import VoiceOnlySpeechModal from '../../components/features/editor/editor/VoiceOnlySpeechModal'
 import heygenService from '../../services/heygenService'
 import { getSanitizedErrorMessage } from '../../utils/userFacingMessage'
+import { toUserMessage } from '../../utils/apiUserMessage.js'
+import SectionErrorBoundary from '../../components/ui/SectionErrorBoundary/SectionErrorBoundary.jsx'
 import {
   DUPLICATE_PROJECT_NAME_MESSAGE,
 } from '../../utils/projectNameValidation'
@@ -2188,7 +2190,12 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
       overrides?.avatarTypeLabel || getSceneAvatarKind(scene);
     const voiceId = overrides?.voiceId || getSceneVoiceId(scene);
     const script = overrides?.script || getSceneScript(scene);
-    const isRegenerate = !!scene?.heygenVideoId || scene?.heygenStatus === 'completed';
+    // A new HeyGen scene id only when replacing a finished video. A failed or still-running
+    // scene keeps its id, so the backend reuses that row (retry on the same id, one charge).
+    const heygenStatusNow = scene?.heygenStatus || scene?.generation?.status;
+    const isRegenerate =
+      heygenStatusNow === 'completed' ||
+      (!!scene?.heygenVideoId && !['failed', 'processing'].includes(heygenStatusNow));
     let stableSceneId = overrides?.sceneId || scene?.sceneId || scene?.id || sceneId;
 
     if (isRegenerate && !overrides?.sceneId) {
@@ -2271,7 +2278,12 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
             scene?.avatarEngine,
           isLegacyV2: lookContext.isLegacyV2,
           supportedEngines: lookContext.supportedEngines,
+          defaultAvatarEngine:
+            overrides?.defaultAvatarEngine ?? scene?.presenter?.defaultAvatarEngine,
         }),
+        defaultAvatarEngine: overrides?.defaultAvatarEngine ?? scene?.presenter?.defaultAvatarEngine,
+        motionExpressiveness:
+          overrides?.motionExpressiveness ?? scene?.presenter?.motionExpressiveness,
         avatarType: avatarKind,
         supportedEngines: lookContext.supportedEngines,
         isLegacyV2: lookContext.isLegacyV2,
@@ -2483,7 +2495,12 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
         }
 
         updateScene(sceneId, { heygenStatus: 'failed' });
+        bumpCreditsRefresh();
         window.dispatchEvent(new CustomEvent('generation-failed'));
+        notifyEditorToast(
+          'Avatar video generation failed. You have not been charged. Use Retry in Scene settings.',
+          'error'
+        );
 
         // Native OS notification if tab is in background
         if (typeof document !== 'undefined' && document.hidden && 'Notification' in window && Notification.permission === 'granted') {
@@ -2501,12 +2518,25 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
 
     } catch (error) {
       console.error('Failed to start video generation:', error);
+      bumpCreditsRefresh();
+      const { kind, text } = toUserMessage(error);
+      if (kind === 'busy') {
+        // Already being generated (double click / another tab): not an error.
+        updateScene(sceneId, { heygenStatus: scene?.heygenStatus });
+        notifyEditorToast(
+          'This scene is already being generated. Give it a moment, then try again if nothing appears.',
+          'info'
+        );
+        window.dispatchEvent(new CustomEvent('generation-failed'));
+        return;
+      }
       updateScene(sceneId, { heygenStatus: 'failed' });
       if (isInsufficientCreditsError(error)) {
-        bumpCreditsRefresh();
         notify('Not enough workspace credits to generate this avatar video. Allocate credits in Settings → Billing or ask your workspace owner.');
+      } else if (kind === 'plan') {
+        notify(text);
       } else {
-        notify('Failed to start video generation: ' + getSanitizedErrorMessage(error));
+        notify('Failed to start video generation: ' + getSanitizedErrorMessage({ message: text }));
       }
       window.dispatchEvent(new CustomEvent('generation-failed'));
     }
@@ -2692,6 +2722,8 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
             avatarId: payload.avatarLookId || payload.avatarType,
             avatarLookId: payload.avatarLookId || payload.avatarType,
             avatarEngine: payload.avatarEngine,
+            defaultAvatarEngine: payload.defaultAvatarEngine ?? null,
+            motionExpressiveness: payload.motionExpressiveness,
             avatarType: payload.avatarTypeLabel,
             avatarName: payload.avatarName || 'AI Presenter',
             avatarGroupId: payload.avatarGroupId,
@@ -2831,6 +2863,8 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
             avatarId: payload.avatarLookId || payload.avatarType,
             avatarLookId: payload.avatarLookId || payload.avatarType,
             avatarEngine: payload.avatarEngine,
+            defaultAvatarEngine: payload.defaultAvatarEngine ?? null,
+            motionExpressiveness: payload.motionExpressiveness,
             avatarType: payload.avatarTypeLabel,
             avatarName: payload.avatarName,
             avatarGroupId: payload.avatarGroupId,
@@ -2875,7 +2909,15 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
     }, 500);
   };
 
-  const handleGenerateVoiceOnlySpeech = async ({ voiceId, script, speed, locale, inputType }) => {
+  const handleGenerateVoiceOnlySpeech = async (request) => {
+    try {
+      return await generateVoiceOnlySpeech(request)
+    } finally {
+      bumpCreditsRefresh()
+    }
+  }
+
+  const generateVoiceOnlySpeech = async ({ voiceId, script, speed, locale, inputType }) => {
     const workspaceId = project.workspaceId || project.createConfig?.workspaceId
     const projectId = project.id || project.createConfig?.videoId
     if (!workspaceId || !projectId || !activeSceneId) {
@@ -3217,6 +3259,13 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
         <div className="main-content">
           <div className="main-content-row" style={{ position: 'relative' }}>
             <div className="editor-content">
+              <SectionErrorBoundary
+                label="Video canvas"
+                resetKey={activeSceneId}
+                title="Something went wrong with this scene."
+                hint="Your project is saved. Retry, or pick another scene."
+                minHeight={240}
+              >
               <VideoCanvas
                 ref={playerRef}
                 scenes={scenes}
@@ -3278,6 +3327,7 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
                 projectId={project.id}
                 previewOpen={showPreviewModal}
               />
+              </SectionErrorBoundary>
             </div>
           </div>
 
@@ -3461,6 +3511,12 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
                   />
                 </div>
               ) : rightPanelTab === 'properties' ? (
+              <SectionErrorBoundary
+                label="Scene settings"
+                resetKey={activeSceneId}
+                title="Something went wrong with this scene."
+                hint="Your project is saved. Retry, or pick another scene."
+              >
               <SceneConfigurationPanel
                 activeScene={activeScene}
                 activeSceneId={activeSceneId}
@@ -3482,6 +3538,7 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
                   }
                 }}
               />
+              </SectionErrorBoundary>
               ) : null}
 
               <div
@@ -3527,4 +3584,20 @@ function Create({ onBack, onNavigateToProfile, initialConfig = null }) {
   )
 }
 
-export default Create
+/** The editor never crashes to a white page (F2): a crash shows Retry / Back to projects. */
+function CreateWithBoundary(props) {
+  return (
+    <SectionErrorBoundary
+      label="Video editor"
+      title="The editor hit an error."
+      hint="Your project is saved. Retry, or go back to your projects."
+      onBack={props.onBack}
+      backLabel="Back to projects"
+      minHeight="60vh"
+    >
+      <Create {...props} />
+    </SectionErrorBoundary>
+  )
+}
+
+export default CreateWithBoundary

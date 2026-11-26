@@ -26,6 +26,7 @@ import {
   applyPlaybackUrlToScene,
   fetchHeygenPlaybackUrl,
   resolveSceneHeygenVideoId,
+  settleUnplayableHeygenScene,
 } from './heygenVideo';
 
 export { resolveSceneHeygenVideoId };
@@ -697,7 +698,17 @@ export async function rehydrateSceneVideos(scenes, workspaceId, projectId) {
           heygenVideoId,
           err
         );
-        return sceneWithId;
+        try {
+          return await settleUnplayableHeygenScene(
+            scene,
+            workspaceId,
+            projectId,
+            heygenVideoId,
+            heygenService
+          );
+        } catch {
+          return scene;
+        }
       }
     })
   );
@@ -745,6 +756,40 @@ function applySpeechUrlToScene(scene, url) {
  * Rehydrate voice-only narration by speechGenerationId.
  * Uses /download to obtain a fresh presigned URL (do not persist presigned URLs in project JSON).
  */
+/**
+ * A scene whose narration could not be loaded (F2): a failed row shows "failed" (retry) instead
+ * of trying to stream audio; a row that is gone (404) is treated as not generated.
+ */
+async function settleUnplayableSpeechScene(scene, workspaceId, projectId, speechId) {
+  const withStatus = (status, extra = {}) => ({
+    ...scene,
+    ...extra,
+    speechStatus: status,
+    generation: { ...(scene.generation || {}), ...extra.generation, status },
+  })
+  try {
+    const result = await workspaceService.getSpeechGeneration(workspaceId, projectId, speechId)
+    const row = result?.speechGeneration || result
+    const status = String(row?.status || '').toLowerCase()
+    if (status === 'failed' || status === 'error') {
+      return withStatus('failed', { speechPlaybackUrl: undefined })
+    }
+    if (status && status !== 'completed') return withStatus('processing')
+    return scene
+  } catch (err) {
+    if ((err?.status ?? err?.statusCode) === 404) {
+      return {
+        ...scene,
+        speechGenerationId: undefined,
+        speechPlaybackUrl: undefined,
+        speechStatus: undefined,
+        generation: { ...(scene.generation || {}), speechGenerationId: undefined, status: undefined },
+      }
+    }
+    return scene
+  }
+}
+
 export async function rehydrateSceneSpeech(scenes, workspaceId, projectId) {
   if (!workspaceId || !projectId || !scenes?.length) return scenes
 
@@ -766,6 +811,7 @@ export async function rehydrateSceneSpeech(scenes, workspaceId, projectId) {
         }
       } catch (err) {
         console.warn('[ProjectData] Failed to rehydrate speech for scene', scene.sceneId || scene.id, speechId, err)
+        return settleUnplayableSpeechScene(scene, workspaceId, projectId, speechId)
       }
 
       return scene

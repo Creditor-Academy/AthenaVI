@@ -53,6 +53,8 @@ import {
   isSingleAppearanceGroup,
   finalizeVideoCreatePayload,
   canUseExpressiveness,
+  canUseMotionExpressiveness,
+  formatAvatarEngineLabel,
   resolveAvatarEngine,
   supportsTransparentWebm,
 } from '../../../../utils/heygenAvatars';
@@ -179,6 +181,7 @@ const QuickCreateModal = ({
   const [backgroundColor, setBackgroundColor] = useState('#F0F0F0');
   const [aspectRatio, setAspectRatio] = useState('16:9');
   const [expressiveness, setExpressiveness] = useState('medium');
+  const [motionExpressiveness, setMotionExpressiveness] = useState('default');
 
   const [loadingGroups, setLoadingGroups] = useState(false);
   const [loadingLooks, setLoadingLooks] = useState(false);
@@ -431,6 +434,7 @@ const QuickCreateModal = ({
         [LOOK_ENGINE_FILTERS.ALL]: 'supported',
         [LOOK_ENGINE_FILTERS.AVATAR_IV]: 'Avatar IV',
         [LOOK_ENGINE_FILTERS.AVATAR_V]: 'Avatar V',
+        [LOOK_ENGINE_FILTERS.AVATAR_6]: 'Avatar 6',
         [LOOK_ENGINE_FILTERS.LEGACY_V2]: 'Expressive',
       };
       setLooksError(`No ${filterLabels[filter] || 'supported'} looks for this character. Try another character or engine.`);
@@ -457,6 +461,7 @@ const QuickCreateModal = ({
           avatarEngine: mappedLook.generatableEngine,
           isLegacyV2: mappedLook.isLegacyV2,
           supportedEngines: mappedLook.supportedEngines,
+          defaultAvatarEngine: mappedLook.defaultAvatarEngine,
         })
     );
   }, [looksPageData]);
@@ -687,9 +692,11 @@ const QuickCreateModal = ({
     const resolvedEngine = finalizeVideoCreatePayload({
       avatarId: selectedAvatar.id,
       avatarType: avatarKind,
-      avatarEngine: selectedAvatar.generatableEngine || avatarEngine,
+      // The user's choice among the look's engines (set to the look's own engine on select).
+      avatarEngine: avatarEngine || selectedAvatar.generatableEngine,
       isLegacyV2: selectedAvatar.isLegacyV2,
       supportedEngines: selectedAvatar.supportedEngines,
+      defaultAvatarEngine: selectedAvatar.defaultAvatarEngine,
     });
     const includeExpressiveness = canUseExpressiveness(
       {
@@ -708,6 +715,8 @@ const QuickCreateModal = ({
       avatarName: selectedAvatar.name,
       avatarTypeLabel: avatarKind,
       avatarEngine: resolvedEngine,
+      defaultAvatarEngine: selectedAvatar.defaultAvatarEngine ?? null,
+      ...(canUseMotionExpressiveness(resolvedEngine) ? { motionExpressiveness } : {}),
       supportedEngines: selectedAvatar.supportedEngines,
       isLegacyV2: selectedAvatar.isLegacyV2,
       engineUnknown: selectedAvatar.engineUnknown,
@@ -821,6 +830,9 @@ const QuickCreateModal = ({
 
   const showExpressiveness =
     selectedAvatar && canUseExpressiveness(selectedAvatar, avatarEngine);
+  const lookEngines = selectedAvatar?.supportedEngines || [];
+  const showCalmerMotion = Boolean(selectedAvatar) && canUseMotionExpressiveness(avatarEngine);
+  const showEngineCard = Boolean(selectedAvatar) && (lookEngines.length > 1 || showCalmerMotion);
 
   const canUseTransparent = supportsTransparentWebm(selectedAvatar);
 
@@ -903,6 +915,9 @@ const QuickCreateModal = ({
                   },
                   { id: LOOK_ENGINE_FILTERS.AVATAR_IV, label: 'Avatar IV', count: looksPageData.engineCounts.avatar_iv },
                   { id: LOOK_ENGINE_FILTERS.AVATAR_V, label: 'Avatar V', count: looksPageData.engineCounts.avatar_v },
+                  ...(looksPageData.engineCounts.avatar_6 > 0
+                    ? [{ id: LOOK_ENGINE_FILTERS.AVATAR_6, label: 'Avatar 6', count: looksPageData.engineCounts.avatar_6 }]
+                    : []),
                   ...(looksPageData.engineCounts.legacy_v2 > 0
                     ? [{ id: LOOK_ENGINE_FILTERS.LEGACY_V2, label: 'Expressive', count: looksPageData.engineCounts.legacy_v2 }]
                     : []),
@@ -1543,6 +1558,46 @@ const QuickCreateModal = ({
                           </button>
                         ))}
                       </div>
+                    </div>
+                  </section>
+                )}
+
+                {showEngineCard && (
+                  <section className="qc-settings-card qc-settings-card--express" data-testid="qc-engine-card">
+                    <header className="qc-settings-card-head">
+                      <span className="qc-settings-card-icon qc-settings-card-icon--express" aria-hidden>
+                        <MdTune size={17} />
+                      </span>
+                      <div>
+                        <h3>Video engine · {formatAvatarEngineLabel(avatarEngine)}</h3>
+                        <p>The engines this look supports. Avatar 6 Turbo costs less than Avatar 6 Pro.</p>
+                      </div>
+                    </header>
+                    <div className="qc-settings-card-body" style={{ display: 'grid', gap: 10 }}>
+                      {lookEngines.length > 1 ? (
+                        <div className="qc-express-options">
+                          {lookEngines.map((engine) => (
+                            <button
+                              key={engine}
+                              type="button"
+                              className={`qc-option-card qc-option-card--express ${avatarEngine === engine ? 'active' : ''}`}
+                              onClick={() => setAvatarEngine(engine)}
+                            >
+                              <strong>{formatAvatarEngineLabel(engine)}</strong>
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                      {showCalmerMotion ? (
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+                          <input
+                            type="checkbox"
+                            checked={motionExpressiveness === 'less'}
+                            onChange={(e) => setMotionExpressiveness(e.target.checked ? 'less' : 'default')}
+                          />
+                          Calmer motion
+                        </label>
+                      ) : null}
                     </div>
                   </section>
                 )}

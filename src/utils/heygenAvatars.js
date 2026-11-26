@@ -2,25 +2,96 @@
 
 import { getCenteredAvatarPlacement } from './heygenVideo.js';
 
+export const AVATAR_III_ENGINE = 'avatar_iii';
 export const AVATAR_IV_ENGINE = 'avatar_iv';
 export const AVATAR_V_ENGINE = 'avatar_v';
+export const AVATAR_6_ENGINE = 'heygen-avatar-6';
+export const AVATAR_6_TURBO_ENGINE = 'heygen-avatar-6-turbo';
 export const LEGACY_V2_ENGINE = 'legacy_v2';
+
+/**
+ * Engines a look can render with on POST .../heygen/videos (besides avatar_iii legacy looks),
+ * in the order the backend falls back to (`MODERN_ENGINE_PREFERENCE`): Avatar 6 Turbo before
+ * Avatar 6 Pro (same inputs, half the price).
+ */
+export const MODERN_AVATAR_ENGINES = Object.freeze([
+  AVATAR_IV_ENGINE,
+  AVATAR_V_ENGINE,
+  AVATAR_6_TURBO_ENGINE,
+  AVATAR_6_ENGINE,
+]);
 
 export const LOOK_ENGINE_FILTERS = {
   ALL: 'all',
   AVATAR_IV: 'avatar_iv',
   AVATAR_V: 'avatar_v',
+  AVATAR_6: 'avatar_6',
   LEGACY_V2: 'legacy_v2',
   UNKNOWN: 'unknown',
 };
 
-export function normalizeAvatarEngine(engine) {
-  if (!engine) return AVATAR_IV_ENGINE;
-  const value = String(engine).toLowerCase();
-  if (value === LEGACY_V2_ENGINE) return LEGACY_V2_ENGINE;
-  return value === AVATAR_V_ENGINE ? AVATAR_V_ENGINE : AVATAR_IV_ENGINE;
+const ENGINE_ALIASES = {
+  avatar_iii: AVATAR_III_ENGINE,
+  iii: AVATAR_III_ENGINE,
+  avatar_3: AVATAR_III_ENGINE,
+  avatar_iv: AVATAR_IV_ENGINE,
+  iv: AVATAR_IV_ENGINE,
+  avatar_v: AVATAR_V_ENGINE,
+  v: AVATAR_V_ENGINE,
+  'heygen-avatar-6': AVATAR_6_ENGINE,
+  'heygen-avatar-6-pro': AVATAR_6_ENGINE,
+  avatar_6: AVATAR_6_ENGINE,
+  avatar_6_pro: AVATAR_6_ENGINE,
+  avatar_vi: AVATAR_6_ENGINE,
+  'heygen-avatar-6-turbo': AVATAR_6_TURBO_ENGINE,
+  avatar_6_turbo: AVATAR_6_TURBO_ENGINE,
+  avatar_vi_turbo: AVATAR_6_TURBO_ENGINE,
+  legacy_v2: LEGACY_V2_ENGINE,
+};
+
+/** Known engine for a value (aliases included), or null. */
+export function toKnownAvatarEngine(engine) {
+  if (engine == null) return null;
+  return ENGINE_ALIASES[String(engine).trim().toLowerCase()] ?? null;
 }
 
+/** Engine value safe to keep in state / send; unknown or empty -> Avatar IV (backend default). */
+export function normalizeAvatarEngine(engine) {
+  return toKnownAvatarEngine(engine) ?? AVATAR_IV_ENGINE;
+}
+
+export function isAvatar6Engine(engine) {
+  const known = toKnownAvatarEngine(engine);
+  return known === AVATAR_6_ENGINE || known === AVATAR_6_TURBO_ENGINE;
+}
+
+export function isModernAvatarEngine(engine) {
+  return MODERN_AVATAR_ENGINES.includes(toKnownAvatarEngine(engine));
+}
+
+/** Short label for an engine badge. */
+export function formatAvatarEngineLabel(engine) {
+  switch (toKnownAvatarEngine(engine)) {
+    case AVATAR_6_TURBO_ENGINE:
+      return 'Avatar 6 Turbo';
+    case AVATAR_6_ENGINE:
+      return 'Avatar 6 Pro';
+    case AVATAR_V_ENGINE:
+      return 'Avatar V';
+    case AVATAR_III_ENGINE:
+    case LEGACY_V2_ENGINE:
+      return 'Expressive';
+    default:
+      return 'Avatar IV';
+  }
+}
+
+/** "Calmer motion" (`motionExpressiveness`) is an Avatar 6 option only. */
+export function canUseMotionExpressiveness(engine) {
+  return isAvatar6Engine(engine);
+}
+
+/** Modern engines (IV, V, Avatar 6, Avatar 6 Turbo) the look declares, in backend preference order. */
 export function getLookSupportedEngines(look) {
   const raw =
     look?.supported_api_engines ??
@@ -28,7 +99,16 @@ export function getLookSupportedEngines(look) {
     look?.supportedEngines ??
     [];
   if (!Array.isArray(raw)) return [];
-  return raw.filter((e) => e === AVATAR_IV_ENGINE || e === AVATAR_V_ENGINE);
+  const declared = new Set(raw.map(toKnownAvatarEngine).filter(Boolean));
+  return MODERN_AVATAR_ENGINES.filter((engine) => declared.has(engine));
+}
+
+/** The look's own engine: backend `defaultAvatarEngine` when it is one the look supports. */
+export function getLookDefaultEngine(look) {
+  const engines = getLookSupportedEngines(look);
+  const declared = toKnownAvatarEngine(look?.defaultAvatarEngine ?? look?.default_avatar_engine);
+  if (declared && engines.includes(declared)) return declared;
+  return engines[0] ?? null;
 }
 
 /** True when HeyGen did not declare engine compatibility on the look. */
@@ -36,13 +116,12 @@ export function isUnknownEngineLook(look) {
   return getLookSupportedEngines(look).length === 0;
 }
 
-/** True when the look explicitly supports Avatar IV or Avatar V generation. */
+/** True when the look explicitly supports a modern engine (Avatar IV, V, 6 or 6 Turbo). */
 export function hasIvOrVEngineSupport(look) {
-  return (
-    supportsAvatarEngine(look, AVATAR_IV_ENGINE) ||
-    supportsAvatarEngine(look, AVATAR_V_ENGINE)
-  );
+  return getLookSupportedEngines(look).length > 0;
 }
+
+export const hasModernEngineSupport = hasIvOrVEngineSupport;
 
 export function lookInEngineBucket(look, bucketKey, parsed) {
   const bucket = parsed?.engineBuckets?.[bucketKey];
@@ -69,8 +148,7 @@ export function isLegacyV2Look(look, parsed = null) {
     look?.supportedEngines ??
     [];
   if (Array.isArray(raw) && raw.length > 0) {
-    const normalized = raw.map((e) => String(e || '').trim().toLowerCase()).filter(Boolean);
-    const hasV3 = normalized.some((e) => e === AVATAR_IV_ENGINE || e === AVATAR_V_ENGINE);
+    const hasV3 = raw.some(isModernAvatarEngine);
     // e.g. supported_api_engines: ['avatar_iii'] — HeyGen v2 only
     if (!hasV3) return true;
   }
@@ -105,6 +183,9 @@ export function getGeneratableLooks(parsed, filter = LOOK_ENGINE_FILTERS.ALL) {
   if (filter === LOOK_ENGINE_FILTERS.AVATAR_V) {
     return looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.AVATAR_V).filter(hasIvOrVEngineSupport);
   }
+  if (filter === LOOK_ENGINE_FILTERS.AVATAR_6) {
+    return looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.AVATAR_6).filter(hasIvOrVEngineSupport);
+  }
   if (filter === LOOK_ENGINE_FILTERS.UNKNOWN) {
     return looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.UNKNOWN);
   }
@@ -114,6 +195,7 @@ export function getGeneratableLooks(parsed, filter = LOOK_ENGINE_FILTERS.ALL) {
   [
     ...looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.AVATAR_IV),
     ...looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.AVATAR_V),
+    ...looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.AVATAR_6),
     ...looksForEngineFilter(parsed, LOOK_ENGINE_FILTERS.LEGACY_V2),
   ].forEach((look) => {
     const id = getLookId(look) || look?.id;
@@ -138,11 +220,14 @@ export function getGeneratableLookCount(parsed) {
   const declared = getParsedLookCount(parsed);
   if (declared > 0) return declared;
   const counts = parsed.engineCounts ?? {};
-  return (counts.avatar_iv ?? 0) + (counts.avatar_v ?? 0) + (counts.legacy_v2 ?? 0);
+  return (
+    (counts.avatar_iv ?? 0) + (counts.avatar_v ?? 0) + (counts.avatar_6 ?? 0) + (counts.legacy_v2 ?? 0)
+  );
 }
 
 export function supportsAvatarEngine(item, engine) {
-  const normalized = normalizeAvatarEngine(engine);
+  const normalized = toKnownAvatarEngine(engine);
+  if (!normalized) return false;
   const engines = getLookSupportedEngines(item);
   if (engines.length === 0) return false;
   return engines.includes(normalized);
@@ -224,35 +309,21 @@ export function resolveVideoAvatarEngine(context = {}) {
     return AVATAR_IV_ENGINE;
   }
 
-  // Studio / digital-twin video avatars cannot use Avatar IV on HeyGen v3.
-  if (isStudioOrDigitalTwinAvatarType(avatarType)) {
-    return AVATAR_V_ENGINE;
-  }
-
   const engines = getLookSupportedEngines(look);
 
-  if (
-    preferred === AVATAR_IV_ENGINE ||
-    preferred === AVATAR_V_ENGINE
-  ) {
-    if (engines.length === 0 || engines.includes(preferred)) {
-      return preferred;
-    }
-  }
-
+  // No engine list on the look: keep today's choice; the backend picks from the look itself.
   if (engines.length === 0) {
-    return AVATAR_IV_ENGINE;
+    if (preferred && isModernAvatarEngine(preferred)) return preferred;
+    return isStudioOrDigitalTwinAvatarType(avatarType) ? AVATAR_V_ENGINE : AVATAR_IV_ENGINE;
   }
 
-  if (engines.includes(AVATAR_IV_ENGINE)) {
-    return AVATAR_IV_ENGINE;
-  }
+  // A choice the look supports is kept (the user may switch among the look's engines).
+  if (preferred && engines.includes(preferred)) return preferred;
 
-  if (engines.includes(AVATAR_V_ENGINE)) {
-    return AVATAR_V_ENGINE;
-  }
-
-  return AVATAR_IV_ENGINE;
+  // Otherwise the look's own engine (backend `defaultAvatarEngine`, same preference order).
+  const declaredDefault = toKnownAvatarEngine(context.defaultAvatarEngine);
+  if (declaredDefault && engines.includes(declaredDefault)) return declaredDefault;
+  return engines[0];
 }
 
 /**
@@ -263,18 +334,15 @@ export function persistPresenterAvatarEngine(
   engine,
   { avatarId, avatarType, isLegacyV2 } = {}
 ) {
-  const kind = avatarType || 'studio_avatar';
-
   if (isLegacyV2Look({ id: avatarId, isLegacyV2 }) || engine === LEGACY_V2_ENGINE) {
     return AVATAR_IV_ENGINE;
   }
 
-  if (isStudioOrDigitalTwinAvatarType(kind)) {
-    return AVATAR_V_ENGINE;
-  }
-
-  const normalized = normalizeAvatarEngine(engine);
-  return normalized === AVATAR_V_ENGINE ? AVATAR_V_ENGINE : AVATAR_IV_ENGINE;
+  const known = toKnownAvatarEngine(engine);
+  if (known && isModernAvatarEngine(known)) return known;
+  return isStudioOrDigitalTwinAvatarType(avatarType || 'studio_avatar')
+    ? AVATAR_V_ENGINE
+    : AVATAR_IV_ENGINE;
 }
 
 /** Finalize engine before POST .../heygen/videos (studio → avatar_v; expressive → avatar_iv). */
@@ -284,6 +352,7 @@ export function finalizeVideoCreatePayload({
   avatarEngine,
   isLegacyV2,
   supportedEngines,
+  defaultAvatarEngine,
 }) {
   return persistPresenterAvatarEngine(
     resolveVideoAvatarEngine({
@@ -293,6 +362,7 @@ export function finalizeVideoCreatePayload({
       avatarEngine,
       isLegacyV2,
       supportedEngines,
+      defaultAvatarEngine,
     }),
     { avatarId, avatarType: avatarType || 'studio_avatar', isLegacyV2 }
   );
@@ -318,6 +388,7 @@ export function parseAvatarLooksResponse(responseData) {
 
   const bucketIv = Array.isArray(engineBuckets.avatar_iv) ? engineBuckets.avatar_iv : [];
   const bucketV = Array.isArray(engineBuckets.avatar_v) ? engineBuckets.avatar_v : [];
+  const bucket6 = Array.isArray(engineBuckets.avatar_6) ? engineBuckets.avatar_6 : [];
   const bucketLegacyV2 = Array.isArray(engineBuckets.legacy_v2) ? engineBuckets.legacy_v2 : [];
   const bucketUnknown = Array.isArray(engineBuckets.unknown) ? engineBuckets.unknown : [];
 
@@ -328,6 +399,10 @@ export function parseAvatarLooksResponse(responseData) {
   const vCount =
     engineCounts.avatar_v ??
     (bucketV.length || allLooks.filter((l) => supportsAvatarEngine(l, AVATAR_V_ENGINE)).length);
+  const avatar6Count =
+    engineCounts.avatar_6 ??
+    (bucket6.length ||
+      allLooks.filter((l) => getLookSupportedEngines(l).some(isAvatar6Engine)).length);
   const legacyV2Count =
     engineCounts.legacy_v2 ??
     (bucketLegacyV2.length || allLooks.filter((l) => isLegacyV2Look(l)).length);
@@ -350,12 +425,14 @@ export function parseAvatarLooksResponse(responseData) {
     engineBuckets: {
       avatar_iv: bucketIv,
       avatar_v: bucketV,
+      avatar_6: bucket6,
       legacy_v2: bucketLegacyV2,
       unknown: bucketUnknown,
     },
     engineCounts: {
       avatar_iv: ivCount,
       avatar_v: vCount,
+      avatar_6: avatar6Count,
       legacy_v2: legacyV2Count,
       unknown: unknownCount,
       totalLooks: Number(totalLooks) || allLooks.length,
@@ -399,6 +476,11 @@ export function looksForEngineFilter(parsed, filter) {
     return engineBuckets.avatar_v?.length
       ? engineBuckets.avatar_v
       : allLooks.filter((l) => supportsAvatarEngine(l, AVATAR_V_ENGINE));
+  }
+  if (filter === LOOK_ENGINE_FILTERS.AVATAR_6) {
+    return engineBuckets.avatar_6?.length
+      ? engineBuckets.avatar_6
+      : allLooks.filter((l) => getLookSupportedEngines(l).some(isAvatar6Engine));
   }
   if (filter === LOOK_ENGINE_FILTERS.LEGACY_V2) {
     return engineBuckets.legacy_v2?.length
@@ -539,6 +621,7 @@ export function buildAvatarPresenterSeed(avatar, look) {
     avatarEngine: look?.generatableEngine ?? look?.avatarEngine,
     isLegacyV2: look?.isLegacyV2,
     supportedEngines: look?.supportedEngines,
+    defaultAvatarEngine: look?.defaultAvatarEngine,
   });
 
   return {
@@ -952,11 +1035,13 @@ export function mapAvatarLook(look, fallbackName = 'Look', parsed = null) {
   const usesLegacyV2Video =
     look?.usesLegacyV2Video ?? look?.uses_legacy_v2_video ?? false;
   const videoApi = look?.videoApi ?? look?.video_api ?? null;
+  const defaultAvatarEngine = isLegacyV2 ? null : getLookDefaultEngine(look);
   const generatableEngine = resolveVideoAvatarEngine({
     avatarLookId: id,
     avatarType: look?.avatar_type ?? look?.avatarType,
     supportedEngines,
     isLegacyV2,
+    defaultAvatarEngine,
     parsed,
   });
 
@@ -976,6 +1061,7 @@ export function mapAvatarLook(look, fallbackName = 'Look', parsed = null) {
     usesLegacyV2Video,
     videoApi,
     generatableEngine,
+    defaultAvatarEngine,
     engineUnknown: supportedEngines.length === 0 && !isLegacyV2,
     defaultVoiceId: getLookDefaultVoiceId(look),
     defaultVoiceName: getLookDefaultVoiceName(look),
@@ -984,7 +1070,11 @@ export function mapAvatarLook(look, fallbackName = 'Look', parsed = null) {
 
 export function formatLookBadgeLabel(look) {
   if (look?.isLegacyV2) return 'Expressive';
-  return formatAvatarTypeLabel(look?.avatarType);
+  const typeLabel = formatAvatarTypeLabel(look?.avatarType);
+  // Engine badge only where it matters for the user (Avatar 6 needs a plan; Avatar V differs).
+  const engine = look?.defaultAvatarEngine ?? look?.generatableEngine;
+  const engineLabel = isAvatar6Engine(engine) ? formatAvatarEngineLabel(engine) : '';
+  return [typeLabel, engineLabel].filter(Boolean).join(' · ');
 }
 
 export function formatAvatarTypeLabel(type) {

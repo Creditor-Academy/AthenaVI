@@ -154,6 +154,13 @@ import { contentPlainText, contentWithSyncedText, setPptTextSelection } from '..
 import { activeTextEditDraft, subscribeTextEditDraft } from '../../../utils/textEditDraft'
 import { mergeLoadedSlides } from '../../../utils/pptSlideMerge'
 import { slideListChanges, slidesToSaveAfterRestore } from '../../../utils/pptHistoryRestore'
+import {
+  buildSlideClip,
+  hasSlideClipboard,
+  pastedSlideFromClip,
+  readSlideClipboard,
+  writeSlideClipboard,
+} from '../../../utils/slideClipboard'
 import { mergeSlideDocs } from '../../../utils/mergeSlideDocs'
 import {
   getLocalBase,
@@ -1656,6 +1663,18 @@ function AIPptEditor({
   const backgroundPhoto = backgroundPhotoOf(selectedSlide)
   // Bumped to open Design → Background (a click on empty slide space, E-4a).
   const [openDesignRequest, setOpenDesignRequest] = useState(0)
+  // A whole slide is on the slide clipboard (S-1): enables "Paste slide".
+  const [slideClipboardReady, setSlideClipboardReady] = useState(() => hasSlideClipboard())
+  // The slide list was clicked last (S-1): Ctrl+C / X / V then act on the whole slide. Thumbnails
+  // aren't focusable, so this follows the last pointer press instead of keyboard focus.
+  const slideListActiveRef = useRef(false)
+  useEffect(() => {
+    const onPointerDown = (e) => {
+      slideListActiveRef.current = Boolean(e.target?.closest?.('.aig-editor-minimap'))
+    }
+    document.addEventListener('pointerdown', onPointerDown, true)
+    return () => document.removeEventListener('pointerdown', onPointerDown, true)
+  }, [])
   const canvasSelectionIds = multiSelectIds.length
     ? multiSelectIds
     : [selectedElementId].filter(Boolean)
@@ -3807,18 +3826,27 @@ function AIPptEditor({
     }
 
     const tempId = `new-slide-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    // A pasted slide (S-1) brings its background, transition and speaker notes.
+    const extras = options.slideExtras || null
     const newSlide = {
       id: tempId,
       clientKey: tempId,
       title,
       description,
       layoutId: layoutId || schema?.layout_id || null,
+      ...(extras?.background || {}),
       elements: {
         version: 1,
         canvas,
         elements: seedElements,
+        ...(extras?.background || {}),
+        ...(extras?.transition && extras.transition !== 'none' ? { transition: extras.transition } : {}),
+        ...(extras?.speakerNotes ? { speakerNotes: extras.speakerNotes } : {}),
       },
-      transition: 'none',
+      transition: extras?.transition || 'none',
+      ...(extras?.speakerNotes ? { speakerNotes: extras.speakerNotes } : {}),
+      // A pasted slide is the user's content: never rebuilt from its layout (D-8).
+      ...(extras ? { manuallyEdited: true } : {}),
       progressStatus: null,
       status: 'READY',
     }
@@ -3833,6 +3861,7 @@ function AIPptEditor({
       return next
     })
     selectSlide(tempId, 'sidebar')
+    if (extras) markSlideEdited(tempId)
 
     if (!workspaceId || !presentationId) return
 
@@ -3953,6 +3982,30 @@ function AIPptEditor({
     await handleAddSlide(index, {
       seed: pick?.seed || null,
       name: pick?.name || pick?.seed?.title || 'Blank Slide',
+    })
+  }
+
+  /** Copy (or cut) a whole slide to the slide clipboard (S-1): elements, background, notes. */
+  const handleCopySlide = (slideId, { cut = false } = {}) => {
+    const slide = localSlidesRef.current.find((s) => s.id === slideId)
+    if (!slide) return
+    const clip = buildSlideClip(slide, canvasDocForSave(slide))
+    if (!clip || !writeSlideClipboard(clip)) return
+    setSlideClipboardReady(true)
+    if (cut && !viewOnly) handleDeleteSlide(slideId)
+  }
+
+  /** Paste the copied slide right after `afterSlideId` (S-1). One undo step, saved like any added slide. */
+  const handlePasteSlide = (afterSlideId) => {
+    if (viewOnly) return
+    const pasted = pastedSlideFromClip(readSlideClipboard())
+    if (!pasted) return
+    const list = localSlidesRef.current
+    const at = list.findIndex((s) => s.id === afterSlideId)
+    handleAddSlide(at >= 0 ? at : list.length - 1, {
+      seed: { title: pasted.title, description: '', elements: pasted.elements },
+      layoutId: pasted.layoutId,
+      slideExtras: { background: pasted.background, transition: pasted.transition, speakerNotes: pasted.speakerNotes },
     })
   }
 
@@ -4960,6 +5013,8 @@ function AIPptEditor({
 
   // Keep keyboard ctx fresh without rebinding the listener every nudge (key-repeat lag).
   keyCtxRef.current = {
+    handleCopySlide,
+    handlePasteSlide,
     viewOnly,
     editingTextId,
     selectedElementId,
@@ -5107,6 +5162,29 @@ function AIPptEditor({
         ctx.elementMutations.duplicateElement(selectionIds)
         return
       }
+      // A slide thumbnail has focus (S-1): copy / cut / paste the whole slide.
+      const inSlideList = Boolean(
+        !typing &&
+          (slideListActiveRef.current ||
+            e.target?.closest?.('.aig-editor-minimap') ||
+            active?.closest?.('.aig-editor-minimap'))
+      )
+      if (inSlideList && mod && (key === 'c' || key === 'x') && ctx.selectedSlideId) {
+        e.preventDefault()
+        if (key === 'x' && ctx.viewOnly) return
+        ctx.handleCopySlide(ctx.selectedSlideId, { cut: key === 'x' })
+        return
+      }
+      if (inSlideList && mod && key === 'v' && hasSlideClipboard()) {
+        e.preventDefault()
+        if (ctx.viewOnly) {
+          ctx.askOwner()
+          return
+        }
+        ctx.handlePasteSlide(ctx.selectedSlideId)
+        return
+      }
+
       // Copy/cut/paste go through the browser's clipboard events (see useEditorClipboard), so
       // an image copied in another app can be pasted, and copied elements still paste here.
       if (mod && key === 'c') {
@@ -6235,6 +6313,8 @@ function AIPptEditor({
                         }}
                         onCloseMenu={closeMinimapMenu}
                         onDuplicate={() => handleDuplicateSlide(slide.id)}
+                        onCopySlide={() => handleCopySlide(slide.id)}
+                        onPasteSlide={slideClipboardReady ? () => handlePasteSlide(slide.id) : undefined}
                         onDelete={() => handleDeleteSlide(slide.id)}
                         onAddAfter={() => openAddSlideModal(idx)}
                         onMoveUp={() => handleReorderSlides(idx, idx - 1)}

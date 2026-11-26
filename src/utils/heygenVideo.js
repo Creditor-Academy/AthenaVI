@@ -34,6 +34,15 @@ export function isHeygenVideoPlaybackReady(videoData) {
   return !!videoData?.playbackReady
 }
 
+const HEYGEN_POLL_MAX_TRANSIENT_ERRORS = 5
+
+/** A poll error worth retrying: not ready yet (409), rate limit, server error or no response. */
+export function isTransientPollError(err) {
+  const status = err?.status ?? err?.statusCode
+  if (status == null) return err?.name === 'TypeError' || /network|failed to fetch|timed? ?out/i.test(String(err?.message || ''))
+  return status === 409 || status === 429 || status >= 500
+}
+
 /**
  * Poll until playbackReady (do not wait for s3Key).
  * Uses ?sync=status — never sync=full for canvas polling.
@@ -45,10 +54,21 @@ export async function pollUntilHeygenPlaybackReady(
   heygenService,
   { intervalMs = HEYGEN_POLL_INTERVAL_MS, maxAttempts = HEYGEN_POLL_MAX_ATTEMPTS, onProgress } = {}
 ) {
+  let transientErrors = 0
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const videoData = await heygenService.getVideo(workspaceId, projectId, heygenVideoId, {
-      sync: 'status',
-    })
+    let videoData
+    try {
+      videoData = await heygenService.getVideo(workspaceId, projectId, heygenVideoId, {
+        sync: 'status',
+      })
+      transientErrors = 0
+    } catch (err) {
+      // 409 "not ready", 429, 5xx and dropped connections are not a failed job: poll again.
+      if (!isTransientPollError(err) || transientErrors >= HEYGEN_POLL_MAX_TRANSIENT_ERRORS) throw err
+      transientErrors += 1
+      await sleep(intervalMs)
+      continue
+    }
 
     if (isHeygenVideoFailed(videoData)) {
       throw new Error('Avatar video generation failed')
@@ -405,8 +425,43 @@ export async function resolveScenePlaybackUrl(scene, workspaceId, projectId, hey
     return applyPlaybackUrlToScene(sceneWithId, playbackUrl)
   } catch (err) {
     console.warn('[HeyGen] Playback rehydration failed for scene', scene.id, err)
-    return sceneWithId
+    return settleUnplayableHeygenScene(scene, workspaceId, projectId, heygenVideoId, heygenService)
   }
+}
+
+/**
+ * A scene whose generated video could not be loaded: set its real state instead of leaving it
+ * "completed" with nothing to play (F2). Failed row → 'failed' (Retry shown); unfinished row →
+ * 'processing'; row gone (404) → not generated; status unknown (offline) → state as saved.
+ */
+export async function settleUnplayableHeygenScene(scene, workspaceId, projectId, heygenVideoId, heygenService) {
+  const withStatus = (status) => ({
+    ...scene,
+    heygenVideoId,
+    heygenStatus: status,
+    generation: { ...(scene.generation || {}), heygenVideoId, status },
+  })
+  let row = null
+  try {
+    row = await heygenService.getVideo(workspaceId, projectId, heygenVideoId, { sync: false })
+  } catch (err) {
+    if ((err?.status ?? err?.statusCode) === 404) {
+      return {
+        ...scene,
+        heygenVideoId: undefined,
+        heygenStatus: undefined,
+        generatedVideoUrl: undefined,
+        playbackUrl: undefined,
+        generation: { ...(scene.generation || {}), heygenVideoId: undefined, status: undefined },
+      }
+    }
+    const saved = scene.heygenStatus ?? scene.generation?.status
+    return saved ? withStatus(saved) : scene
+  }
+  if (!row) return scene
+  if (isHeygenVideoFailed(row)) return withStatus('failed')
+  if (String(row.status || '').toLowerCase() !== 'completed') return withStatus('processing')
+  return withStatus('completed')
 }
 
 export async function resolveScenePlaybackUrls(scenes, workspaceId, projectId, heygenService) {
