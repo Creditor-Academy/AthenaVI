@@ -397,6 +397,30 @@ function cssPxToCanvas(cssPx, stageEl, canvasSize) {
 const DEFAULT_SLIDE_BG = '#FFFFFF'
 const DEFAULT_TEXT_COLOR = '#0F172A'
 
+/** Editable title + body text boxes for a new blank slide (placements scale with the canvas). */
+function buildBlankSlideElements(canvas) {
+  const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+  return [
+    {
+      id: `el-${stamp}-title`,
+      type: 'text',
+      presetId: 'text_title',
+      // Empty text: the editor shows its "Double-click to edit" hint, Present / export show nothing.
+      content: { text: '', fontSize: 64, bold: true, align: 'left', color: DEFAULT_TEXT_COLOR },
+      placement: normalizeElementPlacement({ x: 0.083, y: 0.12, width: 0.834, height: 0.14 }, canvas),
+      layer: 1,
+    },
+    {
+      id: `el-${stamp}-body`,
+      type: 'text',
+      presetId: 'text_body',
+      content: { text: '', fontSize: 28, bold: false, align: 'left', color: '#475569' },
+      placement: normalizeElementPlacement({ x: 0.083, y: 0.3, width: 0.834, height: 0.2 }, canvas),
+      layer: 2,
+    },
+  ]
+}
+
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
 }
@@ -1832,6 +1856,7 @@ function AIPptEditor({
         palette: tokens?.palette || null,
         themeTokens: tokens,
         deckPackId: packId,
+        skipSlideIds: editedSinceLoadRef.current,
       })
       if (didRepair) {
         const refreshed = await presentationService.getPresentation(workspaceId, presentationId)
@@ -1957,6 +1982,23 @@ function AIPptEditor({
     const passKey = `${presentationId}:${localSlides.length}:${deckStatus}`
     if (layoutRepairPassRef.current === passKey) return
 
+    // A slide the user changed this session, or with a save not finished yet, is never rebuilt
+    // from its layout: the rebuild was saved over the server copy and deleted the user's images (D-8).
+    const userTouchedSlideIds = () => {
+      const ids = new Set([
+        ...editedSinceLoadRef.current,
+        ...canvasPendingRef.current,
+        ...canvasInflightRef.current,
+        ...failedSlidesRef.current,
+      ])
+      // Same slide under its temporary id → its server id.
+      ;[...ids].forEach((id) => {
+        const mapped = slideIdMapRef.current[id]
+        if (mapped) ids.add(mapped)
+      })
+      return ids
+    }
+
     let cancelled = false
     ;(async () => {
       const didRepair = await repairPresentationLayoutSlides({
@@ -1968,13 +2010,21 @@ function AIPptEditor({
         palette: themeTokens?.palette || themeVisual?.palette || null,
         themeTokens,
         deckPackId,
+        skipSlideIds: userTouchedSlideIds(),
       })
       if (cancelled) return
       layoutRepairPassRef.current = passKey
       if (didRepair) {
         const data = await presentationService.getPresentation(workspaceId, presentationId)
         if (!cancelled) {
-          setLocalSlides(extractSlidesFromPresentation(data))
+          // Take the repaired slides from the server, but keep every slide edited meanwhile.
+          const merged = mergeLoadedSlides(
+            localSlidesRef.current,
+            extractSlidesFromPresentation(data),
+            userTouchedSlideIds()
+          )
+          localSlidesRef.current = merged
+          setLocalSlides(merged)
         }
       }
     })()
@@ -3416,7 +3466,7 @@ function AIPptEditor({
     const layoutId = options.layoutId || null
     const layoutSchema = options.schema || null
     const title = seed?.title || options.name || 'Blank Slide'
-    const description = seed?.description ?? 'Double click to add content.'
+    let description = seed?.description ?? ''
     let seedElements = Array.isArray(seed?.elements) ? seed.elements : []
     const canvas = resolveCanvasSize(null, aspectRatio)
     const schema =
@@ -3430,6 +3480,13 @@ function AIPptEditor({
       })
     } else if (!seedElements.length && layoutSchemaHasCanvasElements(schema)) {
       seedElements = resolveLayoutCanvasElementsDoc(schema)?.elements || []
+    }
+    // A blank slide (no layout, no seed content) gets real title / body text boxes. Without
+    // elements the stage drew the slide's title + description as read-only fallback markup
+    // (SlideMockFallback), which could not be selected, edited or deleted.
+    if (!seedElements.length && !seed) {
+      seedElements = buildBlankSlideElements(canvas)
+      description = ''
     }
 
     const tempId = `new-slide-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
@@ -4316,14 +4373,20 @@ function AIPptEditor({
   const handleMediaAttached = useCallback(
     async (result) => {
       const slide = extractSlideFromMutation(result)
+      // The server added the image without a canvas save from here: mark the slide as the
+      // user's so layout repair never rebuilds over it (D-8).
       if (slide) {
         applySlideUpdate(slide)
+        markSlideEdited(slide.id)
         return
       }
       const slideId = selectedSlideId || localSlides[0]?.id
-      if (slideId) await refreshSlide(slideId)
+      if (slideId) {
+        markSlideEdited(slideId)
+        await refreshSlide(slideId)
+      }
     },
-    [applySlideUpdate, refreshSlide, selectedSlideId, localSlides]
+    [applySlideUpdate, refreshSlide, selectedSlideId, localSlides, markSlideEdited]
   )
 
   const handleFillDeviceFrame = useCallback(

@@ -645,6 +645,49 @@ export async function applyCompiledLayoutToSlide({
   return result
 }
 
+/**
+ * An element only a user action creates: inserted in the editor (`el-…`) or attached from the
+ * Media panel (`img_…`, slideMedia.service). Server-generated layout content also uses `el_…`
+ * ids without a slotId, so those are not treated as the user's.
+ */
+function isUserAddedElement(el) {
+  if (!el || typeof el !== 'object' || el.slotId) return false
+  return /^(el-|img_)/.test(String(el.id || ''))
+}
+
+const CARRIED_BACKGROUND_IMAGE_KEYS = ['backgroundImage', 'backgroundImageFit']
+
+/**
+ * Layout repair rebuilds a slide from its layout. Anything the user added is not part of the
+ * layout, so it is carried over into the rebuilt canvas instead of being deleted (D-8):
+ * user-added elements (on top, in their original order) and a background image.
+ */
+export function carryOverUserContent(compiledDoc, previousDoc) {
+  if (!compiledDoc || typeof compiledDoc !== 'object') return compiledDoc
+  const compiled = Array.isArray(compiledDoc.elements) ? compiledDoc.elements : []
+  const previous = Array.isArray(previousDoc?.elements) ? previousDoc.elements : []
+  const compiledIds = new Set(compiled.map((el) => el?.id))
+  const carried = previous.filter((el) => isUserAddedElement(el) && !compiledIds.has(el.id))
+
+  const next = { ...compiledDoc }
+  if (carried.length) {
+    let top = compiled.reduce((max, el) => Math.max(max, Number(el?.layer) || 0), 0)
+    const ordered = [...carried].sort((a, b) => (Number(a.layer) || 0) - (Number(b.layer) || 0))
+    next.elements = [...compiled, ...ordered.map((el) => ({ ...el, layer: (top += 1) }))]
+  }
+
+  if (previousDoc?.backgroundImage) {
+    for (const key of CARRIED_BACKGROUND_IMAGE_KEYS) {
+      if (previousDoc[key] != null) next[key] = previousDoc[key]
+    }
+    const bgElementId = previousDoc.backgroundImageElementId
+    if (bgElementId && (next.elements || []).some((el) => el?.id === bgElementId)) {
+      next.backgroundImageElementId = bgElementId
+    }
+  }
+  return next
+}
+
 export async function repairPresentationLayoutSlides({
   workspaceId,
   presentationId,
@@ -654,12 +697,15 @@ export async function repairPresentationLayoutSlides({
   palette = null,
   themeTokens = null,
   deckPackId = null,
+  // Slides the user changed in this session: never rebuilt over (D-8).
+  skipSlideIds = null,
 }) {
   const repairs = []
 
   for (const slide of slides) {
     const layoutId = slide?.layoutId || slide?.layout_id
     if (!layoutId) continue
+    if (skipSlideIds?.has?.(slide.id)) continue
 
     const elements = slide?.elements?.elements || []
     const schema = await resolveLayoutSchema({
@@ -671,25 +717,31 @@ export async function repairPresentationLayoutSlides({
     if (!needsLayoutCanvasRepair(slide, elements, schema, { deckPackId })) continue
 
     repairs.push(
-      applyCompiledLayoutToSlide({
-        workspaceId,
-        presentationId,
-        slideId: slide.id,
-        layoutId,
-        schema,
-        layoutSchemaMap,
-        aspectRatio,
-        palette,
-        themeTokens,
-        slideTitle: slide.title,
-        slideContent: {
-          ...(slide.content || slide.placeholder || {}),
-          imageRef: slide.imageRef || slide.content?.imageRef || null,
-        },
-        mergeFromElements: elements,
-        // Repair is best-effort: render whatever content exists instead of leaving the canvas broken.
-        skipContentValidation: true,
-      })
+      (async () => {
+        const compiledDoc = await applyCompiledLayoutToSlide({
+          workspaceId,
+          presentationId,
+          slideId: slide.id,
+          layoutId,
+          schema,
+          layoutSchemaMap,
+          aspectRatio,
+          palette,
+          themeTokens,
+          slideTitle: slide.title,
+          slideContent: {
+            ...(slide.content || slide.placeholder || {}),
+            imageRef: slide.imageRef || slide.content?.imageRef || null,
+          },
+          mergeFromElements: elements,
+          // Repair is best-effort: render whatever content exists instead of leaving the canvas broken.
+          skipContentValidation: true,
+          skipSave: true,
+        })
+        if (!compiledDoc) return null
+        const canvasDoc = carryOverUserContent(compiledDoc, slide?.elements)
+        return presentationService.saveCanvas(workspaceId, presentationId, slide.id, canvasDoc)
+      })()
     )
   }
 
