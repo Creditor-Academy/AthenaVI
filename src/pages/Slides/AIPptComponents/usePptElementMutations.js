@@ -54,6 +54,8 @@ export function usePptElementMutations({
   )
   const patchTimersRef = useRef({})
   const pendingPatchRef = useRef({})
+  // slideId → PATCH requests sent and not settled yet (D-3).
+  const inflightPatchCountRef = useRef({})
   const clipboardRef = useRef([])
 
   /** True when `adding` more elements still fit on the slide; otherwise reports the cap. */
@@ -196,6 +198,9 @@ export function usePptElementMutations({
         if (pending.content) payload.content = { ...(el.content || {}) }
         if (pending.locked != null) payload.locked = el.locked
 
+        // Counted until the request settles, not just until it is sent (D-3): a server reply
+        // arriving meanwhile must not put the element back to its old state.
+        inflightPatchCountRef.current[slideId] = (inflightPatchCountRef.current[slideId] || 0) + 1
         try {
           await presentationService.updateElement(
             workspaceId,
@@ -208,6 +213,10 @@ export function usePptElementMutations({
         } catch {
           const latest = localSlidesRef.current.find((s) => isSlide(s, slideId))
           if (latest?.elements) queueCanvasSave?.(persistId, latest.elements)
+        } finally {
+          const left = (inflightPatchCountRef.current[slideId] || 1) - 1
+          if (left > 0) inflightPatchCountRef.current[slideId] = left
+          else delete inflightPatchCountRef.current[slideId]
         }
       }, ELEMENT_PATCH_DEBOUNCE_MS)
     },
@@ -521,8 +530,10 @@ export function usePptElementMutations({
     updateSpeakerNotes,
     updateElements,
     /** True while a debounced element PATCH is waiting or in-flight for this slide. */
+    /** A PATCH for this slide is waiting to be sent or still on its way. */
     hasPendingPatchesForSlide: (slideId) =>
-      Object.keys(pendingPatchRef.current).some((k) => k.startsWith(`${slideId}:`)),
+      Object.keys(pendingPatchRef.current).some((k) => k.startsWith(`${slideId}:`)) ||
+      Boolean(inflightPatchCountRef.current[slideId]),
     /** Slides with a debounced element PATCH not sent yet (keys are `slideId:elementId`). */
     pendingPatchSlideIds: () =>
       [...new Set(Object.keys(pendingPatchRef.current).map((k) => k.slice(0, k.indexOf(':'))))],

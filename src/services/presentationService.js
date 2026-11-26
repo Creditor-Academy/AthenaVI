@@ -5,6 +5,7 @@ import { generateUniqueProjectName } from '../utils/projectNameValidation.js'
 import workspaceService from './workspaceService.js'
 import { prepareImageForUpload } from '../utils/imageUploadFormat.js'
 import { createKeepaliveBudget } from './keepaliveBudget.js'
+import { noteServerSlides } from '../utils/slideRevisionStore.js'
 
 /** Room left for slide saves sent while the tab closes (see saveCanvas). */
 const canvasKeepaliveBudget = createKeepaliveBudget()
@@ -176,7 +177,14 @@ class PresentationService {
 
     // 202 Accepted may still return a JSON body
     const json = await response.json().catch(() => ({}))
-    return this.unwrap(json)
+    const result = this.unwrap(json)
+    // Every reply that carries slides updates the editor's copy of the server state (D-1).
+    try {
+      noteServerSlides(result)
+    } catch {
+      // Bookkeeping only; never fail the request.
+    }
+    return result
   }
 
   // ── Workspace pickers ──────────────────────────────────────────────
@@ -574,8 +582,13 @@ class PresentationService {
    * bodies of keepalive requests in flight at 64 KB in total, so a slide that doesn't fit in
    * what's left is sent as an ordinary request instead of being refused by the browser.
    */
-  async saveCanvas(workspaceId, presentationId, slideId, canvasDoc, { keepalive = false } = {}) {
-    const endpoint = API_CONFIG.ENDPOINTS.PRESENTATIONS.CANVAS(workspaceId, presentationId, slideId)
+  async saveCanvas(workspaceId, presentationId, slideId, canvasDoc, { keepalive = false, baseRevision } = {}) {
+    // `baseRevision` (D-1): the slide revision this canvas was edited from. The server refuses
+    // the save with 409 when the slide changed since, instead of overwriting those changes.
+    const base = API_CONFIG.ENDPOINTS.PRESENTATIONS.CANVAS(workspaceId, presentationId, slideId)
+    const endpoint = Number.isInteger(baseRevision) && baseRevision >= 0
+      ? `${base}${base.includes('?') ? '&' : '?'}baseRevision=${baseRevision}`
+      : base
     const body = JSON.stringify(canvasDoc)
     if (!keepalive) return this.request(endpoint, { method: 'PUT', body })
     const release = canvasKeepaliveBudget.reserve(body)

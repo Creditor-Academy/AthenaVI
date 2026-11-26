@@ -15,9 +15,11 @@
 
 The two editors share the element renderer and the insert/design panels (`src/pages/Slides/AIPptComponents/`), so a fix there covers both.
 **Status (26 Nov):**
-- **Phase 0:** all code is done (D-8, L-1, B-1, B-2) and browser-tested on the dev setup, not committed. Left: commit, deploy to staging, retest there, and D-0's questions to the testers.
+- **Phase 0:** all code is done (D-8, L-1, B-1, B-2) and browser-tested on the dev setup, committed and pushed 26 Nov. Left: deploy to staging, retest there, and D-0's questions to the testers.
+- **Phase 1:** all code is done (N-1, D-1, D-2, D-3, D-4, D-5, C-1, K-1, R-1, plus H-1 to H-4 from the image-loss hunt) and browser-tested on the dev setup, not committed. See "Phase 1 implementation (26 Nov)" and "Image-loss hunt (26 Nov)" below.
+- **Phase 1b:** B-3 and E-4a (from the team's 26 Nov testing) are planned, not started. They start once the Phase 1 batch is committed.
 - **Findings re-checked in the running app:** 14 confirmed (including the team's two new bugs B-2 and R-1, and a new finding N-1), 2 not reproduced, 8 not tested in the browser. See "Browser verification (26 Nov)" below.
-- **Tests:** frontend 473 / 473 and backend 1,300 / 1,300 pass with the Phase 0 code.
+- **Tests:** frontend 506 / 506 and backend 1,312 / 1,312 pass with the Phase 1 code and the image-loss hunt fixes.
 
 In the item headings, ✔ means the cause was checked line by line in the code, and · means it comes from the audit's reading and is to be confirmed while fixing.
 
@@ -28,13 +30,14 @@ Status key: ⬜ not started · 🟡 in progress · 🔵 code done, waiting for s
 | Phase | Goal | Items | Effort | Gate to leave the phase |
 |---|---|---|---|---|
 | **0. Stop the image loss** | Remove the confirmed cause, stop Media inserts wiping the background, log every slide write | D-0, D-8, L-1, B-1, B-2 | 2.5 d | Layout smoke test green; repro steps pass on staging; logging live; Media insert keeps the background |
-| **1. Safe saving** | No save can remove newer work; review links keep showing images | N-1, D-1, D-2, D-3, D-4, D-5, C-1, K-1, R-1 | 10 d | Backend smoke test green and in `npm test`; two-tab, undo and rapid-edit retests pass; review link presents without blanking while the owner edits |
+| **1. Safe saving** | No save can remove newer work; review links keep showing images | N-1, D-1, D-2, D-3, D-4, D-5, C-1, K-1, R-1, H-1 to H-4 | 11 d | Revision tests green and in `npm test`; two-tab, undo, stale-tab-close and rapid-edit retests pass; review link presents without blanking while the owner edits |
+| **1b. Empty slides and background photos** | An emptied slide is really empty; a background photo can be edited | B-3, E-4a | 1.5 d | Emptied slide stays blank in the editor, after reload and in PDF / PowerPoint exports; a background photo can be cropped, replaced, turned back into an image and removed, and each survives reload |
 | **2. Wrong results from edits** | Edits change what the user meant, nothing else | E-1, E-2, E-3 | 1.25 d | Each item's checkpoint passes |
-| **3. Reported editor problems** | Backgrounds, "Use as background", colours, image links | E-4, E-5, E-6, D-6 | 4.25 d | QA retests the three reported problems on the testers' decks |
+| **3. Reported editor problems** | Backgrounds, "Use as background", colours, image links | E-4 (rest), E-5, E-6, D-6 | 3.5 d | QA retests the three reported problems on the testers' decks |
 | **4. Image editor and safety net** | Image editor placement and recovery; slide version history | C-2 to C-5, D-7 | 3.1 d | Support can restore a slide; image editor checkpoints pass |
 | **5. Editing feel** | Drag, resize and text boxes behave at any zoom / rotation | G-1 to G-5 | 2.75 d | Each item's checkpoint passes |
 
-**Total:** about 24 developer-days (FE about 19, BE about 5).
+**Total:** about 26 developer-days (FE about 20, BE about 6), including the image-loss hunt fixes and Phase 1b.
 
 **Staffing:**
 - With one FE and one BE developer, this is about 5 weeks.
@@ -42,12 +45,14 @@ Status key: ⬜ not started · 🟡 in progress · 🔵 code done, waiting for s
 - The BE work is mostly in Phases 0, 1 and 4:
   - L-1, B-2 and D-1 (BE) come first;
   - R-1 (BE) can go in any time;
+  - B-3 has a small BE part (PowerPoint export);
   - D-7 can start as soon as D-1 (BE) is merged.
 
 **Order inside the phases:**
 - **Phase 0:** D-8 and B-2 ship together as a hotfix, without waiting for Phase 1.
 - **Phase 1:** N-1 → D-1 BE → D-2 → D-3 → D-1 FE → D-4 → D-5, C-1, K-1, R-1.
   - N-1 first: together with D-1, it caused the overwrite confirmed in the browser.
+- **Phase 1b:** B-3 → E-4a. Committed as its own batch, after the Phase 1 batch (Phase 1 + H-1 to H-4).
   - D-2 and D-3 make the 409 handling in D-1 FE simple.
   - D-4 depends on D-3.
 
@@ -57,17 +62,17 @@ Status key: ⬜ not started · 🟡 in progress · 🔵 code done, waiting for s
 | D-8 | Layout repair rebuilds slides added this session and deletes user images | High | Presentations | FE | 1 d | 0 | 🔵 |
 | L-1 | Log every slide write; warn when images drop | High | Presentations | BE | 0.5 d | 0 | 🔵 |
 | B-1 | New blank slide shows text that can't be edited or deleted | High | Presentations | FE | 0.25 d (QA) | 0 | 🔵 |
-| D-1 | Slide saves overwrite newer data (no version check) | High | Presentations | BE + FE | 2.5 d | 1 | ⬜ |
-| D-2 | Two saves of one slide run at once and finish out of order | High | Presentations | FE | 1 d | 1 | ⬜ |
-| D-3 | Server replies overwrite or drop newer local edits | High | Presentations | FE | 1 d | 1 | ⬜ |
-| D-4 | Media click goes through the server; the image is lost or not shown | High | Presentations | FE | 1 d | 1 | ⬜ |
-| D-5 | Undo/redo of slide add / delete / reorder never reaches the server | High | Presentations | FE | 1.5 d | 1 | ⬜ |
-| C-1 | Image editor: text being typed is not saved on close / refresh | High | Canvas | FE | 1 d | 1 | ⬜ |
-| K-1 | Ctrl+S in the PPT editor opens the browser's "Save page" box | Medium | Presentations | FE | 0.5 d | 1 | ⬜ |
+| D-1 | Slide saves overwrite newer data (no version check) | High | Presentations | BE + FE | 2.5 d | 1 | 🔵 |
+| D-2 | Two saves of one slide run at once and finish out of order | High | Presentations | FE | 1 d | 1 | 🔵 |
+| D-3 | Server replies overwrite or drop newer local edits | High | Presentations | FE | 1 d | 1 | 🔵 |
+| D-4 | Media click goes through the server; the image is lost or not shown | High | Presentations | FE | 1 d | 1 | 🔵 |
+| D-5 | Undo/redo of slide add / delete / reorder never reaches the server | High | Presentations | FE | 1.5 d | 1 | 🔵 |
+| C-1 | Image editor: text being typed is not saved on close / refresh | High | Canvas | FE | 1 d | 1 | 🔵 |
+| K-1 | Ctrl+S in the PPT editor opens the browser's "Save page" box | Medium | Presentations | FE | 0.5 d | 1 | 🔵 |
 | E-1 | Delete / arrows act on the previously selected element | High | Presentations | FE | 0.5 d | 2 | ⬜ |
 | E-2 | Editing a chart value deletes every series but the first | High | Both editors | FE | 0.5 d | 2 | ⬜ |
 | E-3 | "Connect Google Sheets / Analytics" inserts made-up numbers | High | Both editors | FE | 0.25 d | 2 | ⬜ |
-| E-4 | Background colour / image can't be selected or removed | Medium | Presentations | FE | 1.5 d | 3 | ⬜ |
+| E-4 | Background colour can't be chosen reliably (white on dark themes, `design_bg` block); the background-photo part moved to E-4a | Medium | Presentations | FE | 0.75 d | 3 | ⬜ |
 | E-5 | "Use as background" leaves the frame, cards and overlay behind | Medium | Presentations | FE | 1.5 d | 3 | ⬜ |
 | E-6 | Hex colour field applies invalid colours, can't retype | Medium | Both editors | FE | 0.25 d | 3 | ⬜ |
 | D-6 | Broken image links never recover | Medium | Both editors | FE + BE | 1 d | 3 | ⬜ |
@@ -81,9 +86,15 @@ Status key: ⬜ not started · 🟡 in progress · 🔵 code done, waiting for s
 | G-3 | Text box shrinks on the first keystroke | Medium | Both editors | FE | 0.5 d | 5 | ⬜ |
 | G-4 | Resizing a rotated element ignores the rotation | Medium | Both editors | FE | 1 d | 5 | ⬜ |
 | G-5 | Resizing a cropped image from an edge stretches it | Medium | Both editors | FE | 0.5 d | 5 | ⬜ |
-| N-1 | Undo re-saves every slide in the deck, not just the changed one | High | Presentations | FE | 0.5 d | 1 | ⬜ |
+| N-1 | Undo re-saves every slide in the deck, not just the changed one | High | Presentations | FE | 0.5 d | 1 | 🔵 |
 | B-2 | Adding an image from the Media panel deletes the slide's background colour | High | Presentations | BE | 0.25 d | 0 | 🔵 |
-| R-1 | Review link: images blank out whenever the deck changes while someone presents | High | Review links | BE + FE | 1 d | 1 | ⬜ |
+| R-1 | Review link: images blank out whenever the deck changes while someone presents | High | Review links | BE + FE | 1 d | 1 | 🔵 |
+| H-1 | Undo after a Media insert removed the image together with the previous edit | High | Presentations | FE | 0.1 d | 1 | 🔵 |
+| H-2 | A closing tab with an older copy overwrote the slide (page-close save had no revision) | High | Presentations | BE + FE | 0.4 d | 1 | 🔵 |
+| H-3 | Undo / re-created slides / merges / pre-export saves wiped the slide background | High | Presentations | FE | 0.2 d | 1 | 🔵 |
+| H-4 | Switching layout deleted images the user added (editor and server) | High | Presentations | BE + FE | 0.3 d | 1 | 🔵 |
+| B-3 | After deleting every element, a ghost title and picture appear that can't be selected or deleted (also in exports) | High | Presentations | BE + FE | 0.5 d | 1b | ⬜ |
+| E-4a | A photo used as the slide background can't be selected, edited, resized or removed | High | Presentations | FE | 1 d | 1b | ⬜ |
 
 ### Browser verification (26 Nov)
 
@@ -113,6 +124,39 @@ The findings were re-checked in the running app: local frontend and backend on `
 | B-2 | ✔ Confirmed | Slide 5 background set to `#C9DAF8` (stored in the slide doc). A Media-panel click added an image, and the slide turned white: the DB showed `backgroundColor: null` straight after `POST …/attach-asset`. Drag-and-drop on the same slide kept the colour (it goes through `POST …/elements`). **Cause:** `slideMedia.service.js:24` `getElementsDoc` rebuilds the doc from `version`, `canvas` and `elements` only, so every Media click, upload or stock insert also drops `backgroundColor`, the gradient keys and `backgroundImage`. **Fix (BE):** spread the stored doc, as `slideEditor.service.js:52` does, plus a test that background keys survive an attach. |
 | R-1 | ✔ Confirmed | A reviewer presented slide 5 from the view link while the owner made 3 small edits. Each edit made the review page re-fetch the deck (`GET /api/p/:token`). Every image came back with a new signature, so the browser downloaded each image again, and the presented images were fully blank for about 1 s per edit (0 of 2 visible). **Cause:** links are re-signed on every fetch, and the viewer swaps them in at once. **Fix:** (BE) return the plain bucket address, since the bucket is public, or sign with a fixed time window so the same key keeps the same link; (FE) when an image's `s3Key` hasn't changed, keep the loaded image, and otherwise preload the new link before swapping. |
 | R-1 (expiry) | ✖ Not reproduced | With links signed for 60 s, images already shown kept showing after expiry, even when scrolling and presenting, because the browser reuses images it already downloaded. Expiry still matters for a reviewer who opens a slide whose image was never downloaded, and for the 304 path: `GET /api/p/:token` answers 304 by content ETag, so a client can keep links older than 1 h. The R-1 BE fix covers both. |
+
+### Phase 1 implementation (26 Nov)
+
+Code done and browser-tested on the dev setup (local frontend and backend, dev DB), not committed. Frontend 505 / 505 and backend 1,309 / 1,309 tests pass, plus the presentation script checks; `vite build` passes.
+
+| # | What was built | Browser result |
+|---|---|---|
+| N-1 | Undo / redo saves only slides whose canvas changed, plus slides whose pending save it cancelled (`pptHistoryRestore.js`, 7 tests). | ✔ Across three two-tab runs every canvas save went to the changed slide only (before: all 6 slides per undo). |
+| D-1 (BE) | Every elements write bumps `elements.revision` in `presentationDao.updateSlide`, writes only if the row is unchanged since it was read (`updatedAt` guard), and refuses a stale `baseRevision` with 409. `PUT …/canvas?baseRevision=N`; without it, last write wins as before. Element add / patch / delete / reorder and Media attach pass the revision they read and re-run on a lost race. `slideRevision.js`; `test/slideRevision.test.js` (6 tests, 4 fail on the old code). The old smoke test is removed (superseded). | ✔ See D-1 (FE). |
+| D-1 (FE) | `slideRevisionStore.js` records server copies from every API reply, plus the revision the local copy is built on (set on load, applied replies, own saves and merges, never by PATCH echoes the editor doesn't apply). Canvas saves send `baseRevision`; on 409 the editor fetches the slide, 3-way merges (`mergeSlideDocs.js`, 10 tests) and saves again (up to 2 tries). Saves while the page closes send no revision, so the user's last edit is never refused. | ✔ Two tabs: B adds a text box; A (older copy) edits the title and undoes. A's save got 409, fetched, merged, saved (`baseRevision=13`, 200): slide 3 kept both (2 elements). Before: B's box deleted. The first try exposed a gap (PATCH echoes moved the base; the revision was lost in normalising); both fixed and retested. |
+| D-2 | One canvas save per slide at a time; an edit during a save sends one follow-up with the latest content. | ✔ Part of the two-tab runs (no out-of-order writes). |
+| D-3 | A server reply arriving while the slide has unsaved local work (element / placement patches waiting or in flight, canvas save waiting, in flight or asked again) is merged instead of replacing or dropping. Element patches count as pending until their request settles. | ✔ Covered by the D-1 runs; merges kept both sides. |
+| D-4 | Media click / upload fills only a selected **device frame** (the panel says so). With a plain image selected it adds a new image. A multi-file upload fills the frame with the first file only. | ✔ Plain image selected → Media click → `attach-asset` without a target, images 4 → 5 (added). Not done: `s3Key` in the editor-side payloads (the backend derives it from the bucket address on load). |
+| D-5 | Undo / redo of slide add, delete and reorder is sent to the server: delete, re-create (with content, id remapped) and reorder (`slideListChanges`, 5 tests). | ✔ Add → undo → reload: 6 → 7 → 6 → **6** (before: 7). Delete slide 6 → undo → reload: 6 → 5 → 6 → **6**, back in place with both charts. |
+| C-1 | Image editor: the text being typed counts as unsaved, goes with saves and the tab-close save, and autosaves 1 s after typing stops (`canvasTextDraft.js`, 3 tests). | ✔ Typed, stayed in the box 3 s, refreshed → text kept. Immediate refresh → leave warning shown, and the text survived even after leaving. Before: "Saved", no warning, text lost. |
+| K-1 | Ctrl/Cmd+S in the PPT editor saves now (also while typing) and never opens the browser's "Save page as"; File menu "Save now · Ctrl+S"; badge tooltip. | ✔ The editor cancels Ctrl+S. |
+| R-1 | Image links signed as of the start of a fixed window (half the TTL), valid for the full TTL from any moment in it: one image keeps one link across fetches. The window is part of the review-link and deck-render ETags, so a 304 never keeps expired links (`test/stableImageLinks.test.js`, 3 tests). Not done: the FE "keep loaded image if `s3Key` unchanged" part; with stable links the same URL comes back, so it isn't needed within a window. | ✔ Reviewer presents while the owner makes 3 edits (2 re-fetches): 0 blank samples out of 272 and 0 link changes (before: blank ~1 s per edit). |
+
+### Image-loss hunt (26 Nov)
+
+After Phase 1, every path that writes a slide was exercised in the browser, with a DB snapshot of every image before and after each scenario and the L-1 log watched. Four more loss paths were found and fixed (code done, not committed). Frontend 506 / 506 and backend 1,312 / 1,312 tests pass.
+
+| # | Scenario | Found | Fix | Retest |
+|---|---|---|---|---|
+| H-1 | Edit text → Media insert → one Ctrl+Z | ✖ **Loss.** The Media insert was not an undo step: one undo went back to before the text edit and removed the image **and** the edit (L-1 caught `PUT …/canvas removed [img_…]`). | `handleMediaAttached` saves an undo snapshot before applying the insert. | ✔ One undo removes only the image; the text edit stays. |
+| H-2 | Tab A (older copy) edits and closes at once, after tab B added an image | ✖ **Loss.** The page-close save carried no revision and overwrote the slide, deleting B's image. | Page-close saves send `baseRevision` + `clientMerge.knownElementIds`; on a mismatch the server keeps the client's copy **plus** elements added elsewhere since (`mergeAddedElsewhere`); elements the client knew and removed stay removed. 2 backend tests. | ✔ B's image kept (images 1 → 1) and A's closing edit kept. |
+| H-3 | Delete a slide with a background colour → undo | ✖ **Background lost.** Save docs were the editor's normalised `slide.elements`, which has no background keys (they live on the slide), so undo / re-created slides / conflict merges / pre-export saves replaced the stored doc without them. | `canvasDocForSave` always builds the doc from the whole slide (`buildCanvasDoc`), so every save path carries the background. | ✔ Re-created slide kept `#C9DAF8`; edit → undo kept it. |
+| H-4 | Switch a slide's layout (code review; no alternative layouts offered to the test account) | ✖ **Loss in code.** The editor and the server both rebuilt the slide from the new layout's slots only, deleting images the user added; drag-and-dropped images (server `el_…` ids) were not even covered by the D-8 carry-over rule. | Both sides carry over user content: slot-less image / video / chart / table elements, `el-` / `img_` ids, and the background image. Server `applyLayout` writes with the revision it read and retries. Tests on both sides. | Unit tests only (not reachable from the test account's UI). |
+| — | Media insert → edit → undo → reload | ✔ No loss | — | — |
+| — | Duplicate a slide with 5 images; delete the copy → undo → reload | ✔ No loss (re-created copy has all 5) | — | — |
+| — | Copy / paste an image to another slide; delete → undo → reload | ✔ No loss | — | — |
+| — | Two tabs, stale undo (regression) | ✔ No loss: both tabs' changes kept | — | — |
+| — | "Use as background" on / off; group / ungroup | Not completed in the browser (script couldn't drive the controls); covered by yesterday's manual check and backend tests. | — | — |
 
 Environment notes: the hosted dev Redis dropped its connection several times. Each time, logins, signup and design creation failed for a few seconds ("Session and OTP services are temporarily unavailable"), then it reconnected. It is not caused by the editor code.
 
@@ -475,11 +519,66 @@ Note: Ctrl+S only makes a save happen sooner. Data safety comes from D-8 and D-1
 - [ ] Close-out.
 
 **Phase 1 gate:**
-- Both backend smoke tests are green and in `npm test`.
+- `test/slideRevision.test.js` (backend) and the layout-repair test (frontend) are green and in `npm test` (the backend smoke test was replaced by `test/slideRevision.test.js`).
 - The two-tab retest passes, including undo in the older tab (N-1), and so does the rapid-edit retest (edits, then reload).
 - The Media-click retest passes, and so does undo of add / delete.
 - A review link presents without blanking while the owner edits (R-1).
+- The image-loss hunt retests pass on staging: Media insert → undo (H-1), closing a stale tab (H-2), delete slide → undo keeps the background (H-3).
 - No image-drop warnings from L-1 on staging for 2 days of QA use.
+
+---
+
+## 3b. Phase 1b: empty slides and background photos (1.5 d)
+
+**Goal:** two problems the team hit while testing on 26 Nov. A slide you emptied is really empty, everywhere, and a photo used as the slide background can still be edited. Pulled forward because testers hit them now, both are small, and both touch code Phase 1 just changed.
+
+**Order:** B-3 → E-4a. Committed as its own batch after the Phase 1 batch.
+
+### B-3. Emptied slide shows a ghost title and picture (High, FE + BE) ✔
+
+**Report (team, 26 Nov):** after deleting every element on a slide, a faded title ("Untitled Presentation") and picture appeared, inside a dashed box, and they couldn't be clicked or deleted.
+
+**What happens.**
+- A slide with no elements is drawn with a display-only placeholder (`SlideMockFallback`, `AIPptEditor.jsx` stage, `hasElements`): the slide's title, text and "main image".
+- The main image comes from `slide.imageRef`, which the server sets on every Media insert (`persistSlideImage`) and keeps after the image is deleted. The title is the slide title (the deck name on a first slide).
+- They aren't elements, so they can't be selected or deleted. Same family as B-1.
+- The same placeholder is used by the image / PDF export page (`src/export-render/ExportSlide.jsx`), and the PowerPoint export falls back to `addLegacyToPptxSlide` (`export.service.js:1164-1177`), which draws the title, text and `imageRef` image. So an emptied slide also exports with the ghost content.
+
+**Fix.**
+1. **FE (editor and export page):** draw the placeholder only for slides that never had a canvas, i.e. not `manuallyEdited` and no elements. A slide the user edited and emptied is drawn blank (with its background), and new content can be added.
+2. **BE (PowerPoint export):** an edited slide with an empty canvas exports blank with its background, instead of the legacy title-and-image fallback. Old or generated slides without a canvas keep today's fallback.
+3. Tests on both sides for the rule.
+
+**Checkpoint**
+- [ ] Delete every element on a slide: the slide is blank; reload: still blank.
+- [ ] Export that deck to PDF / image and PowerPoint: the slide is blank (background only).
+- [ ] A generated slide that never had a canvas still shows its content.
+- [ ] Close-out.
+
+### E-4a. Background photo can't be selected or edited (High, FE) ✔
+
+**Report (team, 26 Nov):** after "Use as background", the photo can't be clicked, enlarged or edited. Reset removed it from the background as expected.
+
+**What happens.**
+- A background photo is left out of the clickable layer on purpose (`isSlideBackgroundElement`), so clicks reach the slide, not the photo.
+- Nothing else reaches it: clicking it selects nothing; Slide design → Background shows only "Add image" and "Reset", with no sign that a photo is the background. So it can't be cropped, filtered, replaced or turned back into a normal image (except through "Reset", whose name doesn't say that).
+- Confirmed in the browser on 26 Nov (see E-4 in "Browser verification").
+
+**Fix.**
+1. Slide design → Background shows a **Background photo** block (thumbnail) whenever a photo is the background:
+   - **Edit photo:** selects the photo and opens its Image panel (Crop, Filters, Replace, the "Use as background" switch);
+   - **Stop using as background:** today's Reset, renamed; the photo goes back to a normal image that can be moved and resized;
+   - **Remove:** deletes the photo.
+2. Clicking an empty part of the slide opens Slide design → Background (from E-4).
+
+**Checkpoint**
+- [ ] Photo as background → Edit photo → crop, filter, replace: each applies and survives reload.
+- [ ] Stop using as background → the photo is a normal image again (movable, resizable); reload keeps it.
+- [ ] Remove → the background photo is gone; reload keeps it gone; no image-drop warning other than that removal.
+- [ ] Clicking empty slide space opens Background.
+- [ ] Close-out.
+
+**Phase 1b gate:** every checkpoint above passes on staging.
 
 ---
 
@@ -538,7 +637,7 @@ Note: Ctrl+S only makes a save happen sooner. Data safety comes from D-8 and D-1
 
 ---
 
-## 5. Phase 3: reported editor problems (4.25 d)
+## 5. Phase 3: reported editor problems (3.5 d)
 
 **Goal:** the problems the team reported, apart from data loss, are fixed: background selection, "Use as background" leftovers, the colour field and blank images in long sessions.
 
@@ -552,16 +651,16 @@ Note: Ctrl+S only makes a save happen sooner. Data safety comes from D-8 and D-1
 - On a dark theme, white can't be chosen, because white counts as "no colour" (`:95-99`).
 - On slides with a `design_bg` block, a picked colour may not show, because that block is drawn on top of it.
 
-**Fix.**
-1. Clicking an empty part of the slide opens Design → Background.
-2. In the Background section, add "Remove image". Add "Select background image" when the background came from an element.
+**Fix.** Points 1 and 2 moved to E-4a (Phase 1b); what stays here is the colour part.
+1. ~~Clicking an empty part of the slide opens Design → Background.~~ → E-4a.
+2. ~~In the Background section, add "Remove image" and "Select background image".~~ → E-4a.
 3. The colour picker always wins:
    - update or remove the `design_bg` block;
    - store an explicit choice, so white works on dark themes.
 4. One rule for what is clickable: background blocks stay out of the clickable layer, but are always reachable from the Background section.
 
 **Checkpoint**
-- [ ] Click the empty slide → the Background panel opens. Changing the colour, removing the image and white on a dark theme all work and survive reload.
+- [ ] Changing the colour works on slides with a `design_bg` block, and white works on a dark theme; both survive reload.
 - [ ] Close-out.
 
 ### E-5. "Use as background" leaves things behind (Medium, FE) ✔
@@ -684,10 +783,13 @@ Note: Ctrl+S only makes a save happen sooner. Data safety comes from D-8 and D-1
 
 | Change | Item | Phase | Notes |
 |---|---|---|---|
-| Log every slide write; warn when images drop | L-1 | 0 | Code done. Slide, user, route, element and image counts before / after. Still to do: warn only when the image count drops. |
-| Media attach keeps the slide's background keys (`slideMedia.service.js:24`) | B-2 | 0 | One shared `getElementsDoc` for both services, plus a test. |
-| `revision` in `slide.elements`, `baseRevision` and 409 on every slide write, write guarded by `updatedAt` | D-1 | 1 | No migration. A request without `baseRevision` keeps today's behaviour. Mirror `canvas.service.js:84-116`. |
-| Links that don't change between fetches: plain bucket addresses (bucket is public), or signing with a fixed time window that is folded into the review ETag | R-1 (+ D-6) | 1 | Stops review-link images blanking on every deck update, and removes link expiry. |
+| Log every slide write; warn when images drop | L-1 | 0 | Done (pushed). Warns only when the image count drops or the background image is removed. |
+| Media attach keeps the slide's background keys (`slideMedia.service.js`) | B-2 | 0 | Done (pushed). |
+| `revision` in `slide.elements`, `baseRevision` and 409 on every slide write, write guarded by `updatedAt` | D-1 | 1 | Code done. No migration. A request without `baseRevision` keeps today's behaviour. Mirror `canvas.service.js:84-116`. |
+| Links that don't change between fetches: signing with a fixed time window, folded into the review and deck-render ETags | R-1 (+ D-6) | 1 | Code done. Stops review-link images blanking on every deck update. |
+| Page-close saves: `clientMerge` (known element ids) → server keeps elements added elsewhere instead of overwriting | H-2 | 1 | Code done. |
+| `applyLayout` keeps user-added elements and the background image; written with the revision it read, retried | H-4 | 1 | Code done. |
+| PowerPoint export: an edited, emptied slide exports blank instead of the legacy title-and-image fallback | B-3 | 1b | Planned. |
 | `POST /presentations/:id/media/sign` | D-6 | 3 | Only if signed links stay. Same own-bucket rules as `presignSlideMedia.js`. |
 | `slide_revisions` table with restore route | D-7 | 4 | At least 20 per slide, and everything from the last 7 days. |
 

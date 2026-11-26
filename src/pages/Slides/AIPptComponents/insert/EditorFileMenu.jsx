@@ -13,6 +13,7 @@ import {
   FiCornerUpRight,
   FiSliders,
   FiLogOut,
+  FiSave,
 } from 'react-icons/fi'
 import './insertPanels.css'
 
@@ -32,6 +33,7 @@ export default function EditorFileMenu({
   onRedo,
   onExit,
   onFindReplace,
+  onSaveNow,
   onConvertToTemplate,
   viewOnly = false,
 }) {
@@ -77,6 +79,14 @@ export default function EditorFileMenu({
   ]
 
   const editItems = [
+    {
+      id: 'save-now',
+      label: 'Save now',
+      Icon: FiSave,
+      shortcut: 'Ctrl+S',
+      action: onSaveNow,
+      hidden: viewOnly || !onSaveNow,
+    },
     {
       id: 'undo',
       label: 'Undo',
@@ -160,7 +170,7 @@ export default function EditorFileMenu({
           </div>
 
           <div className="ppt-file-menu-section">
-            {editItems.map((item) => {
+            {editItems.filter((item) => !item.hidden).map((item) => {
               const Icon = item.Icon
               return (
                 <button

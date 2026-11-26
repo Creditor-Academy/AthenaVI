@@ -171,3 +171,13 @@ test('nothing to carry: the rebuilt canvas is unchanged', () => {
   assert.deepEqual(carryOverUserContent(doc, { elements: [{ id: 'slot-OLD', slotId: 'OLD' }] }), doc)
   assert.deepEqual(carryOverUserContent(doc, null), doc)
 })
+
+test('a drag-and-dropped image (server el_ id, no slot) is carried over; generated el_ text is not', () => {
+  const dropped = { id: 'el_f326b4f73738', type: 'image', layer: 9, content: { url: 'https://b/drop.png' } }
+  const generatedText = { id: 'el_0a1b2c3d4e5f', type: 'text', layer: 3, content: { text: 'old' } }
+  const next = carryOverUserContent(
+    { elements: [{ id: 'slot-TITLE', slotId: 'TITLE', type: 'text', layer: 1 }] },
+    { elements: [generatedText, dropped] }
+  )
+  assert.deepEqual(next.elements.map((e) => e.id), ['slot-TITLE', 'el_f326b4f73738'])
+})

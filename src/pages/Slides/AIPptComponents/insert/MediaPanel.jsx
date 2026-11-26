@@ -301,17 +301,21 @@ export default function MediaPanel({
       return prev.filter((u) => u.id !== id)
     })
 
-  /** Put an uploaded image where it belongs: the selected frame, the slide (server), or the page. */
-  const placeUploadedImage = async (asset, file) => {
+  /**
+   * Put an uploaded image where it belongs: the selected frame, the slide (server), or the page.
+   * `mayFill`: only the first file of an upload fills the selected frame; the others are added as
+   * new images (uploading 3 files used to fill the same frame 3 times, D-4).
+   */
+  const placeUploadedImage = async (asset, file, { mayFill = true } = {}) => {
     const url = assetUrl(asset)
     const assetId = asset.id || asset._id
     const alt = asset.name || file.name
-    if (fillWithImage({ url, src: url, alt, assetId })) return
+    if (mayFill && fillWithImage({ url, src: url, alt, assetId })) return
     if (canUseSlideMedia && assetId) {
       try {
         const result = await presentationService.attachSlideAsset(workspaceId, presentationId, slideId, {
           assetId,
-          elementId: targetElementId || undefined,
+          elementId: (mayFill && targetElementId) || undefined,
         })
         if (onMediaAttached) {
           await onMediaAttached(result)
@@ -328,7 +332,7 @@ export default function MediaPanel({
    * Upload with a progress tile in the Images / Videos section. The picture is placed once it
    * has loaded, so it shows straight away instead of an empty frame while it downloads.
    */
-  const uploadOne = async (file) => {
+  const uploadOne = async (file, { mayFill = true } = {}) => {
     const video = isVideoFile(file)
     if (!video && !isImageFile(file)) {
       setError(`"${file.name}" isn't an image or MP4 video.`)
@@ -361,7 +365,7 @@ export default function MediaPanel({
       if (activeKindRef.current === listKind) {
         setItems((prev) => [asset, ...prev.filter((item) => (item.id || item._id) !== (asset.id || asset._id))])
       }
-      if (!video) await placeUploadedImage(asset, file)
+      if (!video) await placeUploadedImage(asset, file, { mayFill })
       if (asset.uploadedSmallerCopy) {
         setError(`"${file.name}" was too large for the server, so a smaller copy was uploaded.`)
       }
@@ -380,7 +384,7 @@ export default function MediaPanel({
       return
     }
     setError('')
-    for (const file of files.slice(0, 10)) void uploadOne(file)
+    files.slice(0, 10).forEach((file, index) => void uploadOne(file, { mayFill: index === 0 }))
   }
 
   const attachLibraryAsset = async (item) => {

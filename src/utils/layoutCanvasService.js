@@ -650,8 +650,13 @@ export async function applyCompiledLayoutToSlide({
  * Media panel (`img_…`, slideMedia.service). Server-generated layout content also uses `el_…`
  * ids without a slotId, so those are not treated as the user's.
  */
+// Content a user adds. Layouts put their pictures, charts and tables in slots (slotId), so a
+// slot-less one was added by the user, whatever its id (drag-and-drop images get server `el_…` ids).
+const USER_CONTENT_TYPES = new Set(['image', 'video', 'chart', 'table'])
+
 function isUserAddedElement(el) {
   if (!el || typeof el !== 'object' || el.slotId) return false
+  if (USER_CONTENT_TYPES.has(el.type)) return true
   return /^(el-|img_)/.test(String(el.id || ''))
 }
 
