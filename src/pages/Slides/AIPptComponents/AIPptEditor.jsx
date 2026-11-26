@@ -99,6 +99,8 @@ import {
   buildCanvasDoc,
   extractElementFromMutation,
   extractSlideFromMutation,
+  showsSlideFallback,
+  slideBackgroundPhotoElement,
   extractSlidesFromPresentation,
   extractDeckPackId,
   extractAppliedBrandKitId,
@@ -277,6 +279,22 @@ function adoptServerSlides(slides, skip = null, revisions = null) {
     const revision = serverRevisionOf(slide) ?? revisions?.get?.(slide.id) ?? null
     if (revision != null) setLocalBase(slide.id, revision)
   }
+}
+
+/**
+ * The photo used as a slide's background (E-4a), or null. `elementId` is null for a background
+ * set from Design → Add image (no element on the slide).
+ */
+function backgroundPhotoOf(slide) {
+  if (!slide) return null
+  const els = slide.elements?.elements || []
+  const el =
+    els.find((e) => e.id === slide.backgroundImageElementId) ||
+    els.find((e) => (e.type === 'image' || e.type === 'icon') && e.content?.useAsBackground)
+  const url = el?.content?.url || el?.content?.src || el?.content?.thumbnailUrl
+  if (el && url) return { elementId: el.id, url }
+  if (slide.backgroundImage) return { elementId: null, url: slide.backgroundImage }
+  return null
 }
 
 /** The slide with a merged elements doc (D-1). Background keys also live on the slide itself. */
@@ -1071,6 +1089,7 @@ function SlideStage({
   showEmptyTextHint = false,
   showDangerZone = false,
   cropSession = null,
+  onEmptyClick,
   onStartCrop,
   onCropChange,
   onCropDone,
@@ -1092,8 +1111,14 @@ function SlideStage({
   const slideBgStyle = resolveSlideStageBackground(
     slide,
     themeVisual?.palette?.bg || themeVisual?.background || DEFAULT_SLIDE_BG,
-    palette
+    palette,
+    // The background photo is drawn below as a layer (resolveStageElements), E-4a.
+    { photoLayer: true }
   )
+  // The background photo layer is painted, not interacted with (no select / drag / snapping);
+  // clicks reach the slide, which selects the photo element (onEmptyClick).
+  const backgroundLayers = elements.filter((el) => el.backgroundLayer)
+  const interactiveElements = elements.filter((el) => !el.backgroundLayer)
 
   useEffect(() => {
     logCanvasGreySuspects(slide, {
@@ -1116,6 +1141,7 @@ function SlideStage({
           return
         }
         onSelectElement?.(null)
+        onEmptyClick?.()
       }}
       onContextMenu={(e) => {
         if (e.target.closest?.('[data-element-id]')) return
@@ -1150,7 +1176,9 @@ function SlideStage({
             color: themeVisual.body,
           }}
         >
-          {!hasElements ? <SlideMockFallback slide={slide} themeVisual={themeVisual} /> : null}
+          {!hasElements && showsSlideFallback(slide) ? (
+            <SlideMockFallback slide={slide} themeVisual={themeVisual} />
+          ) : null}
         </div>
       </div>
       {/* Elements live outside the hard clip so selected overflow can paint
@@ -1164,8 +1192,18 @@ function SlideStage({
           />
         ) : null}
         <PptCanvasGuidesOverlay guides={smartGuides} canvasW={canvas.width} canvasH={canvas.height} />
+        {backgroundLayers.map((el) => (
+          <div
+            key={el.id}
+            className="aig-slide-bg-photo-layer"
+            aria-hidden
+            style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}
+          >
+            <PptCanvasElement el={el} palette={palette} selected={false} canvasW={canvas.width} editable={false} />
+          </div>
+        ))}
         {hasElements
-          ? elements.map((el, i) => el.id === cropSession?.id ? null : (
+          ? interactiveElements.map((el, i) => el.id === cropSession?.id ? null : (
               <InteractiveElementShell
                 key={el.id || `el-${i}`}
                 el={el}
@@ -1182,7 +1220,7 @@ function SlideStage({
                 editing={editingTextId === el.id}
                 stageRef={stageRef}
                 chromeHost={chromeHost}
-                allElements={elements}
+                allElements={interactiveElements}
                 onSelect={onSelectElement}
                 onContextMenu={onContextMenuElement}
                 onStartTextEdit={onStartTextEdit}
@@ -1613,6 +1651,11 @@ function AIPptEditor({
     localSlides.find((s) => s.id === selectedSlideId) || localSlides[0] || null
   const selectedElement =
     selectedSlide?.elements?.elements?.find((el) => el.id === selectedElementId) || null
+  // The photo used as this slide's background (E-4a): out of the clickable layer, so the Design
+  // panel offers it. `elementId` is null for a background set from Design → Add image.
+  const backgroundPhoto = backgroundPhotoOf(selectedSlide)
+  // Bumped to open Design → Background (a click on empty slide space, E-4a).
+  const [openDesignRequest, setOpenDesignRequest] = useState(0)
   const canvasSelectionIds = multiSelectIds.length
     ? multiSelectIds
     : [selectedElementId].filter(Boolean)
@@ -2138,6 +2181,14 @@ function AIPptEditor({
       if (!slideId) return
       editedSinceLoadRef.current.add(slideId)
       editedSinceLoadRef.current.add(resolvePersistedSlideId(slideId))
+      // The server flags a slide manuallyEdited on its first save; flag the local copy now, so an
+      // emptied slide shows blank at once instead of the content placeholder (B-3).
+      const local = localSlidesRef.current.find((s) => s.id === slideId)
+      if (local && !local.manuallyEdited) {
+        const next = localSlidesRef.current.map((s) => (s.id === slideId ? { ...s, manuallyEdited: true } : s))
+        localSlidesRef.current = next
+        setLocalSlides(next)
+      }
     },
     [resolvePersistedSlideId]
   )
@@ -2155,6 +2206,14 @@ function AIPptEditor({
       if (!slide?.elements) return slide?.elements
       const list = Array.isArray(slide.elements.elements) ? slide.elements.elements : []
       const doc = buildCanvasDoc(slide, { aspectRatio, elements: list })
+      // The stored background picture follows the background photo element (replaced, refitted):
+      // exports and thumbnails read this copy (E-4a).
+      const photo = slideBackgroundPhotoElement({ ...slide, elements: { ...slide.elements, elements: list } })
+      if (photo) {
+        doc.backgroundImage = photo.content?.url || photo.content?.src || photo.content?.thumbnailUrl
+        doc.backgroundImageFit = photo.content?.fit || 'cover'
+        doc.backgroundImageElementId = photo.id
+      }
       const draft = activeTextEditDraft()
       if (!draft || !list.some((el) => el.id === draft.elementId)) return doc
       return {
@@ -3079,6 +3138,52 @@ function AIPptEditor({
       }
     },
     [selectedSlideId, localSlides, workspaceId, presentationId, aspectRatio, queueCanvasSave, pushHistorySnapshot]
+  )
+
+  /** Design → Background photo → Edit photo: select it, which opens its Image panel (E-4a). */
+  const handleEditBackgroundPhoto = useCallback(
+    (elementId, onSlideId = null) => {
+      if (!elementId || viewOnly) return
+      const slideId = onSlideId || selectedSlideIdRef.current || localSlidesRef.current[0]?.id
+      setMultiSelectIds([elementId])
+      setSelectedElementId(elementId)
+      if (slideId && slideId !== selectedSlideIdRef.current) setSelectedSlideId(slideId)
+    },
+    [viewOnly]
+  )
+
+  /**
+   * Design → Background photo → Remove (E-4a): the photo and the slide's background image go
+   * in one undo step. A background set from Design → Add image (no element) only loses the image.
+   */
+  const handleRemoveBackgroundPhoto = useCallback(
+    (elementId) => {
+      const slideId = selectedSlideIdRef.current || localSlidesRef.current[0]?.id
+      const slide = localSlidesRef.current.find((s) => s.id === slideId)
+      if (!slide || viewOnly) return
+      pushHistorySnapshot()
+      const elements = (slide.elements?.elements || []).filter((el) => !elementId || el.id !== elementId)
+      const nextDoc = buildCanvasDoc({ ...slide, ...NO_BACKGROUND_IMAGE }, { aspectRatio, elements })
+      const next = localSlidesRef.current.map((s) =>
+        s.id === slideId ? { ...s, ...NO_BACKGROUND_IMAGE, elements: nextDoc } : s
+      )
+      localSlidesRef.current = next
+      setLocalSlides(next)
+      if (elementId) {
+        setSelectedElementId((prev) => (prev === elementId ? null : prev))
+        setMultiSelectIds((prev) => prev.filter((id) => id !== elementId))
+      }
+      if (!workspaceId || !presentationId) return
+      presentationService
+        .patchSlide(workspaceId, presentationId, slideId, {
+          backgroundImage: null,
+          backgroundImageFit: null,
+          backgroundImageElementId: null,
+        })
+        .catch(() => {})
+      queueCanvasSave(slideId, nextDoc)
+    },
+    [viewOnly, pushHistorySnapshot, aspectRatio, workspaceId, presentationId, queueCanvasSave]
   )
 
   const handleToggleImageAsBackground = useCallback(
@@ -5797,6 +5902,22 @@ function AIPptEditor({
                         if (viewOnly) return
                         selectCanvasElement(slide.id, id, event)
                       }}
+                      // Empty slide space opens Design → Background (E-4a).
+                      onEmptyClick={
+                        viewOnly
+                          ? undefined
+                          : () => {
+                              // A click on a background photo selects it, like any picture: its
+                              // Image panel opens (crop, replace, filters, "Use as background").
+                              // A second click (photo already selected) goes to Slide design.
+                              const bg = backgroundPhotoOf(slide)
+                              if (bg?.elementId && selectedElementIdRef.current !== bg.elementId) {
+                                handleEditBackgroundPhoto(bg.elementId, slide.id)
+                              } else {
+                                setOpenDesignRequest((n) => n + 1)
+                              }
+                            }
+                      }
                       onContextMenuElement={(id, event) => {
                         if (viewOnly) return
                         openElementContextMenu(slide.id, id, event)
@@ -5912,6 +6033,11 @@ function AIPptEditor({
           onApplyLayout={handleApplyLayout}
           onResetBackground={() => handleBackgroundColorChange(DEFAULT_SLIDE_BG)}
           onAddBackgroundImage={openMediaForBackground}
+          backgroundPhoto={backgroundPhoto}
+          onEditBackgroundPhoto={handleEditBackgroundPhoto}
+          onStopBackgroundPhoto={(elementId) => handleToggleImageAsBackground(elementId, false)}
+          onRemoveBackgroundPhoto={handleRemoveBackgroundPhoto}
+          openDesignRequest={openDesignRequest}
           onChangeTransition={handleChangeTransition}
           onChangeSlideStatus={handleChangeSlideStatus}
           onChangeElementContent={handleChangeElementContentWithBackground}

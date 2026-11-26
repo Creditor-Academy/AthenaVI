@@ -1,4 +1,4 @@
-import { isSlideBackgroundElement } from './presentationHelpers'
+import { isSlideBackgroundElement, slideBackgroundPhotoElement } from './presentationHelpers'
 import { shouldPaintElement } from './canvasRenderDebug'
 import { finalizeChartShapes } from './chartShapeFinalize'
 import { syncPptGroupBounds } from './pptGroupUtils'
@@ -16,7 +16,41 @@ export const EDITOR_STAGE_WIDTH = 900
  * to their children, the background image element left out, and custom chart layouts
  * finalized. Shared by the editor stage and Present so both show the same slide.
  */
+/**
+ * The background photo as a full-slide layer under everything (E-4a): the photo element itself,
+ * so its filters, effects, fit, flips and crop show. Not interactive (`backgroundLayer`); it is
+ * selected and edited through the photo element (click on the slide, Design → Background photo).
+ */
+function backgroundPhotoLayer(slide, canvas) {
+  const photo = slideBackgroundPhotoElement(slide)
+  if (!photo) return []
+  return [
+    {
+      ...photo,
+      id: `bg-layer-${photo.id}`,
+      sourceElementId: photo.id,
+      backgroundLayer: true,
+      locked: true,
+      groupId: undefined,
+      layer: -1,
+      placement: {
+        x: 0,
+        y: 0,
+        width: canvas.width,
+        height: canvas.height,
+        rotation: 0,
+        opacity: photo.placement?.opacity ?? 1,
+      },
+      content: { ...photo.content, fit: photo.content?.fit || 'cover' },
+    },
+  ]
+}
+
 export function resolveStageElements(slide, canvas, palette) {
+  return [...backgroundPhotoLayer(slide, canvas), ...resolveForegroundElements(slide, canvas, palette)]
+}
+
+function resolveForegroundElements(slide, canvas, palette) {
   const rawElements = syncPptGroupBounds(slide?.elements?.elements || []).filter(
     (el) =>
       !isSlideBackgroundElement(el, slide) &&

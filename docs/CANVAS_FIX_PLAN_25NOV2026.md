@@ -15,11 +15,11 @@
 
 The two editors share the element renderer and the insert/design panels (`src/pages/Slides/AIPptComponents/`), so a fix there covers both.
 **Status (26 Nov):**
-- **Phase 0:** all code is done (D-8, L-1, B-1, B-2) and browser-tested on the dev setup, committed and pushed 26 Nov. Left: deploy to staging, retest there, and D-0's questions to the testers.
-- **Phase 1:** all code is done (N-1, D-1, D-2, D-3, D-4, D-5, C-1, K-1, R-1, plus H-1 to H-4 from the image-loss hunt) and browser-tested on the dev setup, not committed. See "Phase 1 implementation (26 Nov)" and "Image-loss hunt (26 Nov)" below.
-- **Phase 1b:** B-3 and E-4a (from the team's 26 Nov testing) are planned, not started. They start once the Phase 1 batch is committed.
+- **Phase 0:** committed and pushed 26 Nov. Left: deploy to staging, retest there, and D-0's questions to the testers.
+- **Phase 1:** N-1, D-1, D-2, D-3, D-4, D-5, C-1, K-1, R-1 and H-1 to H-4 committed and pushed 26 Nov (FE `88c288f`, BE `0c7d7b0`). Left: staging retest. See "Phase 1 implementation (26 Nov)" and "Image-loss hunt (26 Nov)" below.
+- **Phase 1b:** B-3 and E-4a coded and browser-tested on the dev setup, not committed. See "Phase 1b implementation (26 Nov)" below.
 - **Findings re-checked in the running app:** 14 confirmed (including the team's two new bugs B-2 and R-1, and a new finding N-1), 2 not reproduced, 8 not tested in the browser. See "Browser verification (26 Nov)" below.
-- **Tests:** frontend 506 / 506 and backend 1,312 / 1,312 pass with the Phase 1 code and the image-loss hunt fixes.
+- **Tests:** frontend 507 / 507 and backend 1,314 / 1,314 pass with the Phase 1b code.
 
 In the item headings, ✔ means the cause was checked line by line in the code, and · means it comes from the audit's reading and is to be confirmed while fixing.
 
@@ -93,8 +93,8 @@ Status key: ⬜ not started · 🟡 in progress · 🔵 code done, waiting for s
 | H-2 | A closing tab with an older copy overwrote the slide (page-close save had no revision) | High | Presentations | BE + FE | 0.4 d | 1 | 🔵 |
 | H-3 | Undo / re-created slides / merges / pre-export saves wiped the slide background | High | Presentations | FE | 0.2 d | 1 | 🔵 |
 | H-4 | Switching layout deleted images the user added (editor and server) | High | Presentations | BE + FE | 0.3 d | 1 | 🔵 |
-| B-3 | After deleting every element, a ghost title and picture appear that can't be selected or deleted (also in exports) | High | Presentations | BE + FE | 0.5 d | 1b | ⬜ |
-| E-4a | A photo used as the slide background can't be selected, edited, resized or removed | High | Presentations | FE | 1 d | 1b | ⬜ |
+| B-3 | After deleting every element, a ghost title and picture appear that can't be selected or deleted (also in exports) | High | Presentations | BE + FE | 0.5 d | 1b | 🔵 |
+| E-4a | A photo used as the slide background can't be selected, edited, resized or removed | High | Presentations | FE | 1 d | 1b | 🔵 |
 
 ### Browser verification (26 Nov)
 
@@ -157,6 +157,15 @@ After Phase 1, every path that writes a slide was exercised in the browser, with
 | — | Copy / paste an image to another slide; delete → undo → reload | ✔ No loss | — | — |
 | — | Two tabs, stale undo (regression) | ✔ No loss: both tabs' changes kept | — | — |
 | — | "Use as background" on / off; group / ungroup | Not completed in the browser (script couldn't drive the controls); covered by yesterday's manual check and backend tests. | — | — |
+
+### Phase 1b implementation (26 Nov)
+
+Code done and browser-tested on the dev setup, not committed. Frontend 507 / 507 and backend 1,314 / 1,314 tests pass; `vite build` passes.
+
+| # | What was built | Browser result |
+|---|---|---|
+| B-3 | One rule, `showsSlideFallback(slide)` (`presentationHelpers.js`): the title / text / main-image placeholder only for slides never edited (`manuallyEdited` false). Used in **five** places that each had their own copy: the editor stage, slide thumbnails (`MinimapSlidePreview`), Present (`PresentMode`), the image / PDF export page (`ExportSlide`) and My Work deck previews (`DeckLiveSlideStage`). The editor flags a slide `manuallyEdited` locally on its first edit (as the server does on save), so an emptied slide is blank at once. **BE:** `isUserEmptiedSlide` (`slideHtml.js`): the PowerPoint export and the HTML export draw an edited, emptied slide blank with its background instead of the legacy title-and-image fallback (`test/emptiedSlideExport.test.js`, 2 tests). | ✔ Slide 1 emptied (select all → Delete): blank in the editor, its thumbnail and Present, also after reload (before: ghost "Untitled Presentation" + faded picture, in the thumbnail too). PDF / PowerPoint export not run locally (export worker off); covered by the backend test. |
+| E-4a | Slide design → Background shows a **Background photo** block (thumbnail) when a photo is the background: **Edit photo** (selects it; the Image panel opens with Replace, Filters, Fit and the "Use as background" switch), **Detach from background**, **Remove photo** (full-width buttons, 16:9 thumbnail) (photo and background image in one undo step). The background photo is **drawn from the photo element itself** as a full-slide, non-clickable bottom layer (`resolveStageElements`; editor, Present and exports), so filters, effects, fit, flips and a replaced picture show; before, the slide painted a stored copy of the link and every adjustment was invisible. The stored copy now follows the element on save (exports, thumbnails). Clicking the background photo on the slide **selects it** and opens its Image panel (a second click goes to Slide design). While a photo is the background, **Crop is disabled** with the hint "Turn off Use as background to crop, move or resize it": a background photo fills the slide and isn't drawn as a movable picture. A background set from Design → Add image (no element) gets **Remove** only. Changed from the plan: the existing **Reset** keeps its name and meaning (it resets the colour and the photo); the new block has the clearer "Stop using as background". | ✔ Click on the background photo → selected, Image panel (Crop disabled + hint); switch off → normal photo with resize / rotate handles, kept after reload. Design block: Edit photo → Image panel (Crop / Replace / switch on). Stop using as background → saved (DB: photo element kept, `useAsBackground` false, no background image). Set again → Remove → after reload the photo element is gone and the background cleared. |
 
 Environment notes: the hosted dev Redis dropped its connection several times. Each time, logins, signup and design creation failed for a few seconds ("Session and OTP services are temporarily unavailable"), then it reconnected. It is not caused by the editor code.
 
@@ -789,7 +798,7 @@ Note: Ctrl+S only makes a save happen sooner. Data safety comes from D-8 and D-1
 | Links that don't change between fetches: signing with a fixed time window, folded into the review and deck-render ETags | R-1 (+ D-6) | 1 | Code done. Stops review-link images blanking on every deck update. |
 | Page-close saves: `clientMerge` (known element ids) → server keeps elements added elsewhere instead of overwriting | H-2 | 1 | Code done. |
 | `applyLayout` keeps user-added elements and the background image; written with the revision it read, retried | H-4 | 1 | Code done. |
-| PowerPoint export: an edited, emptied slide exports blank instead of the legacy title-and-image fallback | B-3 | 1b | Planned. |
+| PowerPoint and HTML export: an edited, emptied slide exports blank instead of the legacy title-and-image fallback | B-3 | 1b | Code done. |
 | `POST /presentations/:id/media/sign` | D-6 | 3 | Only if signed links stay. Same own-bucket rules as `presignSlideMedia.js`. |
 | `slide_revisions` table with restore route | D-7 | 4 | At least 20 per slide, and everything from the last 7 days. |
 

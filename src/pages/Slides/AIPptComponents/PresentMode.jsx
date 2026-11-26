@@ -5,6 +5,7 @@ import ExternalLinkHoverLayer from './ExternalLinkHoverLayer'
 import PptCanvasElement from './PptCanvasElement'
 import {
   getSlideImage,
+  showsSlideFallback,
   resolveCanvasSize,
   resolveSlideStageBackground,
 } from '../../../utils/presentationHelpers'
@@ -200,11 +201,15 @@ export default function PresentMode({
   const slideTransition = (s) => s?.transition || s?.elements?.transition || 'none'
   const transition = slideTransition(slide)
   const hasElements = elements.length > 0
-  const fallbackImage = hasElements ? null : getSlideImage(slide).url
+  // The title / image placeholder is only for slides that never had a canvas (B-3).
+  const showFallback = !hasElements && showsSlideFallback(slide)
+  const fallbackImage = showFallback ? getSlideImage(slide).url : null
   const slideBgStyle = resolveSlideStageBackground(
     slide,
     themeVisual?.inner || '#fff',
-    palette
+    palette,
+    // The background photo is drawn as a layer by resolveStageElements (E-4a).
+    { photoLayer: true }
   )
 
   const go = useCallback(
@@ -388,11 +393,13 @@ export default function PresentMode({
                 />
               ))}
             </PresentSlideStage>
-          ) : (
+          ) : showFallback ? (
             <div className="ppt-present-fallback">
               <h1 style={{ color: themeVisual?.title }}>{slide?.title}</h1>
               {fallbackImage && <img src={fallbackImage} alt="" />}
             </div>
+          ) : (
+            <PresentSlideStage canvas={canvas} stageStyle={{ ...fontVars, color: themeVisual?.body }} />
           )}
         </div>
       </div>

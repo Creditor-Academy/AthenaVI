@@ -4,6 +4,7 @@ import { EDITOR_STAGE_WIDTH } from '../../utils/slideStageElements'
 import {
   DEFAULT_SLIDE_BG,
   getSlideImage,
+  showsSlideFallback,
   isSlideBackgroundElement,
   resolveCanvasSize,
   resolveSlideStageBackground,
@@ -174,7 +175,8 @@ export default function DeckLiveSlideStage({
               </div>
             )
           })
-        ) : (
+        ) : !showsSlideFallback(slide) ? null : (
+          // Placeholder only for slides that never had a canvas; an emptied slide stays blank (B-3).
           <div className="aig-slide-mock" style={{ width: '100%', height: '100%' }}>
             <h1 className="aig-slide-mock-title" style={{ color: themeVisual?.title }}>
               {coercePlainText(slide?.title || slide?.content?.title)}
