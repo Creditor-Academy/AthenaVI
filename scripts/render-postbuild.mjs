@@ -17,6 +17,14 @@ import { seoForPath, INDEXABLE_PATHS, NOINDEX_PUBLIC_PATHS } from '../src/seo/se
 const distDir = join(process.cwd(), 'dist')
 const indexHtml = join(distDir, 'index.html')
 
+/**
+ * `/templates` is not a view in PATH_TO_VIEW_MAP (the catch-all renders Not Found).
+ * It still gets its own dist/templates/index.html, marked noindex, so the URL is a
+ * page instead of a static directory. Template JSON is served from /template-assets/.
+ * A `templates/` folder with no index.html makes nginx 403 on `/templates/`.
+ */
+const SPA_SHELL_DIRS = ['templates']
+
 /** App routes from App.jsx PATH_TO_VIEW_MAP (no leading slash). All are noindex. */
 const APP_ROUTE_DIRS = [
   'dashboard',
@@ -47,6 +55,7 @@ const APP_ROUTE_DIRS = [
 const ROUTE_DIRS = [
   ...INDEXABLE_PATHS.filter((p) => p !== '/').map((p) => p.slice(1)),
   ...NOINDEX_PUBLIC_PATHS.map((p) => p.slice(1)),
+  ...SPA_SHELL_DIRS,
   ...APP_ROUTE_DIRS,
 ]
 

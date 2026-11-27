@@ -1,4 +1,5 @@
 import {
+  TEMPLATE_ASSETS_BASE,
   TEMPLATE_BUNDLE_SOURCES,
   BUNDLE_CATEGORY_FILTER,
 } from '../constants/templateRegistry';
@@ -41,7 +42,7 @@ export async function fetchTemplateBundle(file) {
   const source = TEMPLATE_BUNDLE_SOURCES.find((item) => item.file === file);
   if (!source) return null;
   try {
-    const res = await fetch(`/templates/${file}.json`);
+    const res = await fetch(`${TEMPLATE_ASSETS_BASE}/${file}.json`);
     if (!res.ok) return null;
     const data = await res.json();
     return normalizeBundle(data, source);
@@ -57,7 +58,7 @@ export async function fetchTemplateBundles() {
       if (seenFiles.has(source.file)) return null;
       seenFiles.add(source.file);
       try {
-        const res = await fetch(`/templates/${source.file}.json`, { cache: 'no-store' });
+        const res = await fetch(`${TEMPLATE_ASSETS_BASE}/${source.file}.json`, { cache: 'no-store' });
         if (!res.ok) {
           console.warn(`[templates] Failed to load ${source.file}.json (${res.status})`);
           return null;

@@ -250,7 +250,7 @@ Frontend: `src/services/stockService.js`, `StockMediaBrowser.jsx`
 | Service | Usage |
 |---------|-------|
 | **Unsplash** | Marketing/editor placeholder images (hardcoded URLs) |
-| **Pexels** | Template assets in `public/templates/` |
+| **Pexels** | Template assets in `public/template-assets/` |
 | **Mixkit** | Demo stock videos in editor data |
 | **Pixabay CDN** | Demo videos in `domeGalleryContent.js` |
 | **Google Fonts** | Typography |

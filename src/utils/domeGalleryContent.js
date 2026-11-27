@@ -1,3 +1,4 @@
+import { TEMPLATE_ASSETS_BASE } from '../constants/templateRegistry';
 import { fetchTemplateBundles } from './fetchTemplateBundles';
 import { fetchTemplateAvatarLookSet } from './templateAvatarPreview';
 import avatar1 from '../assets/Avatarr1.webp';
@@ -98,7 +99,7 @@ async function loadTemplateAssetLibrary(bundleFile) {
   const assetsFile = bundleFileToAssetsFile(bundleFile);
   const empty = { imageById: new Map(), iconIds: new Set() };
   try {
-    const res = await fetch(`/templates/${assetsFile}`);
+    const res = await fetch(`${TEMPLATE_ASSETS_BASE}/${assetsFile}`);
     if (!res.ok) {
       assetLibraryCache.set(bundleFile, empty);
       return empty;

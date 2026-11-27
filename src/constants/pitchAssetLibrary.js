@@ -1,13 +1,14 @@
 /**
  * Single source of truth for pitch-deck template assets.
- * Loaded from public/templates/pitch-assets.json (also used by build-pitch-template.mjs).
+ * Loaded from public/template-assets/pitch-assets.json (also used by build-pitch-template.mjs).
  */
+import { TEMPLATE_ASSETS_BASE } from './templateRegistry';
 
 let cached = null;
 
 export async function loadPitchAssets() {
   if (cached) return cached;
-  const response = await fetch('/templates/pitch-assets.json');
+  const response = await fetch(`${TEMPLATE_ASSETS_BASE}/pitch-assets.json`);
   if (!response.ok) throw new Error('Failed to load pitch assets');
   cached = await response.json();
   return cached;

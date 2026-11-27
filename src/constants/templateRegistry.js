@@ -1,4 +1,12 @@
-/** Single source of truth for template bundle JSON files and display metadata. */
+/**
+ * Single source of truth for template bundle JSON files and display metadata.
+ *
+ * The JSON is served from `/template-assets/`, not `/templates`. `/templates` is an
+ * SPA route. A real `templates/` directory with no index.html makes nginx answer
+ * `/templates/` with 403 (`try_files $uri $uri/` hits the directory).
+ */
+export const TEMPLATE_ASSETS_BASE = '/template-assets'
+
 export const TEMPLATE_BUNDLE_SOURCES = [
   {
     file: 'platform_tutorial_template',
