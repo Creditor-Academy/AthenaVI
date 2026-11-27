@@ -83,7 +83,7 @@ const styles = `
   transition: all 0.3s ease;
   height: 120px; /* Fixed height for consistent SVG lines */
   justify-content: center;
-  opacity: 0.5;
+  opacity: 0.72;
   filter: grayscale(100%);
 }
 
@@ -570,7 +570,7 @@ const ImageGenerationSection = () => {
           {subState === 'typing' && <span className="typing-cursor"></span>}
         </div>
       ) : (
-        <img className="shared-input-image" src={scenario.input} alt="Reference" />
+        <img className="shared-input-image" src={scenario.input} alt="Reference" loading="lazy" decoding="async" />
       )}
     </motion.div>
   );
@@ -634,7 +634,7 @@ const ImageGenerationSection = () => {
                 <div key={scen.id} className={`node-card ${isActive ? 'active' : ''}`}>
                   <div className="node-header">
                     <div className="node-icon">{scen.icon}</div>
-                    <h4 className="node-title">{scen.title}</h4>
+                    <h3 className="node-title">{scen.title}</h3>
                   </div>
                   {/* Render the shared input HERE during typing phase */}
                   {isTypingPhase && renderSharedInput()}
@@ -690,8 +690,8 @@ const ImageGenerationSection = () => {
                     >
                       <div className="chat-avatar"><FiZap /></div>
                       <div className="photos-result">
-                        <img src={scenario.resultImages[0]} alt="Result 1" />
-                        <img src={scenario.resultImages[1]} alt="Result 2" />
+                        <img src={scenario.resultImages[0]} alt="Result 1" loading="lazy" decoding="async" />
+                        <img src={scenario.resultImages[1]} alt="Result 2" loading="lazy" decoding="async" />
                       </div>
                     </motion.div>
                   )}
@@ -715,7 +715,7 @@ const ImageGenerationSection = () => {
                    scale: subState === 'done' ? 1 : 0.9 
                  }}
                >
-                 <img src={scenario.resultImages[0]} alt="V1" />
+                 <img src={scenario.resultImages[0]} alt="V1" loading="lazy" decoding="async" />
                  <div className="variation-badge">V1</div>
                </motion.div>
 
@@ -727,7 +727,7 @@ const ImageGenerationSection = () => {
                  }}
                  transition={{ delay: 0.1 }}
                >
-                 <img src={scenario.resultImages[1]} alt="V2" />
+                 <img src={scenario.resultImages[1]} alt="V2" loading="lazy" decoding="async" />
                  <div className="variation-badge">V2</div>
                </motion.div>
              </div>

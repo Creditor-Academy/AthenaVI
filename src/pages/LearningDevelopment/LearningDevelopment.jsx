@@ -30,12 +30,14 @@ function LearningDevelopment({ onLoginClick, onNavigateToEthics, onLogoClick, on
           onNavigateToTechnology={onNavigateToTechnology}
         />
         
-        <HeroSection />
-        <LDBenefits />
-        <LDHowItWorks />
-        <LDWhyChoose />
-        <LDImpact />
-        <LDFinalCTA />
+        <main>
+          <HeroSection />
+          <LDBenefits />
+          <LDHowItWorks />
+          <LDWhyChoose />
+          <LDImpact />
+          <LDFinalCTA />
+        </main>
         
         <Footer 
           onLogoClick={onLogoClick}

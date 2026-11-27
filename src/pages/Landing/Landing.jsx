@@ -1,13 +1,15 @@
+import { lazy, Suspense } from 'react'
 import Navbar from '../../components/layout/Navbar/Navbar.jsx'
 import Hero from '../../components/layout/Hero.jsx'
-import UnifiedVideoSection from '../../components/layout/UnifiedVideoSection.jsx'
-import DigitalTwinSection from '../../components/layout/DigitalTwinSection.jsx'
-import PptSection from '../../components/layout/PptSection.jsx'
-import ImageGenerationSection from '../../components/layout/ImageGenerationSection.jsx'
-import TemplatesSection from '../../components/layout/TemplatesSection.jsx'
-import PlatformFeatures from '../../components/layout/PlatformFeatures.jsx'
-import ReadySection from '../../components/layout/ReadySection.jsx'
 import Footer from '../../components/layout/Footer/Footer.jsx'
+
+const UnifiedVideoSection = lazy(() => import('../../components/layout/UnifiedVideoSection.jsx'))
+const DigitalTwinSection = lazy(() => import('../../components/layout/DigitalTwinSection.jsx'))
+const PptSection = lazy(() => import('../../components/layout/PptSection.jsx'))
+const ImageGenerationSection = lazy(() => import('../../components/layout/ImageGenerationSection.jsx'))
+const PlatformFeatures = lazy(() => import('../../components/layout/PlatformFeatures.jsx'))
+const TemplatesSection = lazy(() => import('../../components/layout/TemplatesSection.jsx'))
+const ReadySection = lazy(() => import('../../components/layout/ReadySection.jsx'))
 
 const styles = `
 .landing-page {
@@ -79,14 +81,18 @@ function Landing({ onLoginClick, onNavigateToProduct, onLogoClick, onNavigateToC
           onNavigateToCompany={onNavigateToCompany}
           onNavigateToUseCases={onNavigateToUseCases}
         />
-        <Hero onContactSalesClick={() => onNavigateToSolution?.('Sales Solutions')} />
-        <UnifiedVideoSection />
-        <DigitalTwinSection />
-        <PptSection />
-        <ImageGenerationSection />
-        <PlatformFeatures />
-        <TemplatesSection onNavigateToSolution={onLoginClick} />
-        <ReadySection />
+        <main>
+          <Hero onContactSalesClick={() => onNavigateToSolution?.('Sales Solutions')} />
+          <Suspense fallback={null}>
+            <UnifiedVideoSection />
+            <DigitalTwinSection />
+            <PptSection />
+            <ImageGenerationSection />
+            <PlatformFeatures />
+            <TemplatesSection onNavigateToSolution={onLoginClick} />
+            <ReadySection />
+          </Suspense>
+        </main>
         <Footer
           onLogoClick={onLogoClick}
           onNavigateToProduct={onNavigateToProduct}

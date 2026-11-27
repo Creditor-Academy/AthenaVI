@@ -7,6 +7,7 @@ import { resolvePresentationWorkspaceContext } from '../../../utils/presentation
 import { extractPresentationId, toApiThemeId } from '../../../utils/presentationHelpers'
 import './PptBuilder.css'
 import '../AIPptGenerator.css'
+import '../ensurePlayfairFont.js'
 
 const DEFAULT_LIGHT_THEME_ID = 'clean_light'
 

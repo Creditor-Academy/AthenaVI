@@ -9,6 +9,16 @@ import {
 import ProductVideo from '../../../assets/ProductVideo.mp4'
 import SolutionVideo from '../../../assets/SolutionNav.mp4'
 import LogoImg from '../../../assets/herologo.webp'
+import {
+  HOME_HREF,
+  LOGIN_HREF,
+  SIGNUP_HREF,
+  PRODUCTS_HREF,
+  USE_CASES_HREF,
+  PRODUCT_LINKS,
+  SOLUTION_LINKS,
+  isPlainLeftClick,
+} from '../../../seo/publicNav.js'
 
 /* ─────────────────────────────────────────────────
    STYLES
@@ -78,6 +88,7 @@ const styles = `
   font-size: 13.5px;
   font-weight: 500;
   color: rgba(203, 213, 225, 0.9);
+  text-decoration: none;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -228,7 +239,7 @@ const styles = `
 
 .mega-video-desc {
   font-size: 12px;
-  color: #64748b;
+  color: #cbd5e1;
   line-height: 1.55;
   margin-top: -6px;
 }
@@ -293,7 +304,7 @@ const styles = `
 .dd-item:hover .dd-title { color: #60a5fa; }
 .dd-desc {
   font-size: 11.5px;
-  color: #475569;
+  color: #cbd5e1;
   margin-top: 2px;
   line-height: 1.4;
 }
@@ -532,7 +543,7 @@ const styles = `
 
 .drawer-sub-desc {
   font-size: 11px;
-  color: #475569;
+  color: #cbd5e1;
 }
 
 .drawer-actions {
@@ -614,21 +625,20 @@ function Navbar({
 
   /* ── data ── */
   const productsItems = [
-    { title: 'Visual AI Agents', desc: 'AI teaching avatars', icon: <FiCpu /> },
-    { title: 'Creative Reality™ Studio', desc: 'AI video studio', icon: <FiPlayCircle /> },
-    { title: 'Video Translate', desc: 'Multilingual video', icon: <FiGlobe /> },
-    { title: 'Video Campaigns', desc: 'Marketing videos', icon: <FiTrendingUp /> },
-    { title: 'Personal Avatars', desc: 'Digital instructors', icon: <FiUserCheck /> },
-    { title: 'AI Avatars & Videos', desc: 'AI avatars and video demos', icon: <FiPlayCircle /> },
-    // { title: 'Technology', desc: 'Technology overview', icon: <FiCpu /> },
+    { ...PRODUCT_LINKS[0], icon: <FiCpu /> },
+    { ...PRODUCT_LINKS[1], icon: <FiPlayCircle /> },
+    { ...PRODUCT_LINKS[2], icon: <FiGlobe /> },
+    { ...PRODUCT_LINKS[3], icon: <FiTrendingUp /> },
+    { ...PRODUCT_LINKS[4], icon: <FiUserCheck /> },
+    { ...PRODUCT_LINKS[5], icon: <FiPlayCircle /> },
   ]
 
   const solutionsItems = [
-    { title: 'Marketing Suite', desc: 'Campaign automation', icon: <FiBriefcase /> },
-    { title: 'Sales Solutions', desc: 'Video outreach', icon: <FiDollarSign /> },
-    { title: 'Customer Experience', desc: 'Customer engagement', icon: <FiUsers /> },
-    { title: 'Learning & Development', desc: 'Corporate training', icon: <FiBookOpen /> },
-    { title: 'AI Videos', desc: 'Automated comms', icon: <FiMail /> },
+    { ...SOLUTION_LINKS[0], icon: <FiBriefcase /> },
+    { ...SOLUTION_LINKS[1], icon: <FiDollarSign /> },
+    { ...SOLUTION_LINKS[2], icon: <FiUsers /> },
+    { ...SOLUTION_LINKS[3], icon: <FiBookOpen /> },
+    { ...SOLUTION_LINKS[4], icon: <FiMail /> },
   ]
 
   const companyItems = [
@@ -662,9 +672,13 @@ function Navbar({
   /* ── reusable desktop dropdown item ── */
   const DDItem = ({ item, onClick }) => (
     <a
-      href="#"
+      href={item.href}
       className="dd-item"
-      onClick={(e) => { e.preventDefault(); onClick(item.title) }}
+      onClick={(e) => {
+        if (!isPlainLeftClick(e)) return
+        e.preventDefault()
+        onClick(item.title)
+      }}
     >
       <div className="dd-icon">{item.icon}</div>
       <div className="dd-text">
@@ -677,9 +691,13 @@ function Navbar({
   /* ── reusable drawer sub item ── */
   const DrawerItem = ({ item, onClick }) => (
     <a
-      href="#"
+      href={item.href}
       className="drawer-sub-item"
-      onClick={(e) => { e.preventDefault(); onClick(item.title) }}
+      onClick={(e) => {
+        if (!isPlainLeftClick(e)) return
+        e.preventDefault()
+        onClick(item.title)
+      }}
     >
       <span className="drawer-sub-icon">{item.icon}</span>
       <div>
@@ -698,27 +716,37 @@ function Navbar({
 
         {/* Logo */}
         <a
-          href="#"
+          href={HOME_HREF}
           className="nav-logo"
-          onClick={(e) => { e.preventDefault(); setDrawerOpen(false); if (onLogoClick) onLogoClick() }}
-          aria-label="Home"
+          onClick={(e) => {
+            if (!isPlainLeftClick(e)) return
+            e.preventDefault()
+            setDrawerOpen(false)
+            if (onLogoClick) onLogoClick()
+          }}
+          aria-label="Athena Virtual Studio"
         >
-          <img src={LogoImg} alt="Logo" className="nav-logo-img" />
+          <img src={LogoImg} alt="Athena Virtual Studio" className="nav-logo-img" />
         </a>
 
         {/* Centre links (desktop) */}
         <div className="nav-links">
 
           {/* Products */}
-          <button
+          <a
+            href={PRODUCTS_HREF}
             className={`nav-btn ${activeDropdown === 'products' ? 'open' : ''}`}
             onMouseEnter={() => openDD('products')}
             onMouseLeave={closeDD}
-            onClick={() => setActiveDropdown(activeDropdown === 'products' ? null : 'products')}
+            onClick={(e) => {
+              if (!isPlainLeftClick(e)) return
+              e.preventDefault()
+              setActiveDropdown(activeDropdown === 'products' ? null : 'products')
+            }}
             aria-expanded={activeDropdown === 'products'}
           >
             Products <MdKeyboardArrowDown className="chevron" />
-          </button>
+          </a>
           <div
             className={`nav-dropdown mega ${activeDropdown === 'products' ? 'open' : ''}`}
             onMouseEnter={keepDD}
@@ -750,15 +778,20 @@ function Navbar({
           </div>
 
           {/* Solutions */}
-          <button
+          <a
+            href={USE_CASES_HREF}
             className={`nav-btn ${activeDropdown === 'solutions' ? 'open' : ''}`}
             onMouseEnter={() => openDD('solutions')}
             onMouseLeave={closeDD}
-            onClick={() => setActiveDropdown(activeDropdown === 'solutions' ? null : 'solutions')}
+            onClick={(e) => {
+              if (!isPlainLeftClick(e)) return
+              e.preventDefault()
+              setActiveDropdown(activeDropdown === 'solutions' ? null : 'solutions')
+            }}
             aria-expanded={activeDropdown === 'solutions'}
           >
             Solutions <MdKeyboardArrowDown className="chevron" />
-          </button>
+          </a>
           <div
             className={`nav-dropdown mega ${activeDropdown === 'solutions' ? 'open' : ''}`}
             onMouseEnter={keepDD}
@@ -781,7 +814,12 @@ function Navbar({
               <p className="mega-video-desc">
                 Deploy scalable AI avatar video agents tailored for your business use cases.
               </p>
-              <a href="#" className="mega-see-all" onClick={(e) => { e.preventDefault(); if (onNavigateToUseCases) onNavigateToUseCases(); setActiveDropdown(null) }}>
+              <a href={USE_CASES_HREF} className="mega-see-all" onClick={(e) => {
+                if (!isPlainLeftClick(e)) return
+                e.preventDefault()
+                if (onNavigateToUseCases) onNavigateToUseCases()
+                setActiveDropdown(null)
+              }}>
                 See all Use Cases <MdArrowOutward />
               </a>
             </div>
@@ -789,9 +827,13 @@ function Navbar({
 
           {/* Use Cases */}
           <a
-            href="#"
+            href={USE_CASES_HREF}
             className="nav-plain"
-            onClick={(e) => { e.preventDefault(); if (onNavigateToUseCases) onNavigateToUseCases() }}
+            onClick={(e) => {
+              if (!isPlainLeftClick(e)) return
+              e.preventDefault()
+              if (onNavigateToUseCases) onNavigateToUseCases()
+            }}
           >
             Use Cases
           </a>
@@ -828,14 +870,18 @@ function Navbar({
         {/* Right CTA */}
         <div className="nav-actions">
           <a
-            href="#"
+            href={LOGIN_HREF}
             className="login-link"
-            onClick={(e) => { e.preventDefault(); if (onLoginClick) onLoginClick() }}
+            onClick={(e) => {
+              if (!isPlainLeftClick(e)) return
+              e.preventDefault()
+              if (onLoginClick) onLoginClick()
+            }}
           >
             Log in
           </a>
           <a
-            href="/signup"
+            href={SIGNUP_HREF}
             className="act-primary"
             onClick={(e) => {
               e.preventDefault();
@@ -865,11 +911,11 @@ function Navbar({
       />
 
       {/* ── Mobile drawer ── */}
-      <aside className={`mobile-drawer ${drawerOpen ? 'open' : ''}`} aria-hidden={!drawerOpen}>
+      <aside className={`mobile-drawer ${drawerOpen ? 'open' : ''}`} aria-hidden={!drawerOpen} inert={drawerOpen ? undefined : true}>
 
         {/* Drawer header */}
         <div className="drawer-head">
-          <img src={LogoImg} alt="Logo" style={{ height: 32, width: 'auto' }} />
+          <img src={LogoImg} alt="Athena Virtual Studio" style={{ height: 32, width: 'auto' }} />
           <button className="drawer-close" onClick={() => setDrawerOpen(false)} aria-label="Close menu">
             <MdClose />
           </button>
@@ -912,9 +958,14 @@ function Navbar({
         {/* Use Cases */}
         <div className="drawer-section">
           <a
-            href="#"
+            href={USE_CASES_HREF}
             className="drawer-nav-btn"
-            onClick={(e) => { e.preventDefault(); if (onNavigateToUseCases) onNavigateToUseCases(); setDrawerOpen(false) }}
+            onClick={(e) => {
+              if (!isPlainLeftClick(e)) return
+              e.preventDefault()
+              if (onNavigateToUseCases) onNavigateToUseCases()
+              setDrawerOpen(false)
+            }}
           >
             Use Cases
           </a>
@@ -922,9 +973,9 @@ function Navbar({
 
         {/* Pricing */}
         <div className="drawer-section">
-          <a href="#" className="drawer-nav-btn" onClick={(e) => { e.preventDefault(); setDrawerOpen(false) }}>
+          <button type="button" className="drawer-nav-btn" onClick={() => setDrawerOpen(false)}>
             Pricing
-          </a>
+          </button>
         </div>
 
         {/* Company */}
@@ -949,14 +1000,19 @@ function Navbar({
         {/* Actions */}
         <div className="drawer-actions">
           <a
-            href="#"
+            href={LOGIN_HREF}
             className="login-link"
-            onClick={(e) => { e.preventDefault(); setDrawerOpen(false); if (onLoginClick) onLoginClick() }}
+            onClick={(e) => {
+              if (!isPlainLeftClick(e)) return
+              e.preventDefault()
+              setDrawerOpen(false)
+              if (onLoginClick) onLoginClick()
+            }}
           >
             Log in
           </a>
           <a 
-            href="/signup" 
+            href={SIGNUP_HREF} 
             className="act-primary" 
             onClick={(e) => { 
               e.preventDefault(); 

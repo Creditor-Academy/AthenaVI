@@ -1,6 +1,15 @@
 import { MdArrowOutward, MdLanguage } from 'react-icons/md'
 import { FaInstagram } from 'react-icons/fa'
 import LogoImg from '../../../assets/herologo.webp'
+import {
+  HOME_HREF,
+  ETHICS_HREF,
+  HELP_HREF,
+  PRIVACY_HREF,
+  PRODUCT_LINKS,
+  SOLUTION_LINKS,
+  isPlainLeftClick,
+} from '../../../seo/publicNav.js'
 import './Footer.css'
 
 
@@ -11,38 +20,10 @@ function Footer({
   onNavigateToEthics,
   onNavigateToCompany
 }) {
-  const handleProductClick = (e, productName) => {
-    e.preventDefault()
-    if (onNavigateToProduct) {
-      onNavigateToProduct(productName)
-    }
-  }
-
-  const handleSolutionClick = (e, solutionName) => {
-    e.preventDefault()
-    if (onNavigateToSolution) {
-      onNavigateToSolution(solutionName)
-    }
-  }
-
-  const handleCompanyClick = (item) => {
-    if (onNavigateToCompany) {
-      onNavigateToCompany(item)
-    }
-  }
-
-  const handleEthicsClick = (e) => {
-    e.preventDefault()
-    if (onNavigateToEthics) {
-      onNavigateToEthics()
-    }
-  }
-
-  const handleLogoClick = (e) => {
-    e.preventDefault()
-    if (onLogoClick) {
-      onLogoClick()
-    }
+  const stayInApp = (event, action) => {
+    if (!isPlainLeftClick(event)) return
+    event.preventDefault()
+    if (action) action()
   }
 
   return (
@@ -50,8 +31,8 @@ function Footer({
       <footer className="footer">
         <div className="footer-content">
           <div className="footer-brand">
-            <a href="#" className="footer-logo" onClick={handleLogoClick}>
-              <img src={LogoImg} alt="Logo" className="footer-logo-img" />
+            <a href={HOME_HREF} className="footer-logo" onClick={(e) => stayInApp(e, onLogoClick)}>
+              <img src={LogoImg} alt="Athena Virtual Studio" className="footer-logo-img" />
             </a>
             <p className="footer-description">
               Create AI-powered videos with lifelike avatars. Transform your content into engaging visual experiences with Virtual Studio.
@@ -79,25 +60,35 @@ function Footer({
           </div>
 
           <div className="footer-column">
-            <h3 className="footer-column-title">Products</h3>
-            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Visual AI Agents')}>Visual AI Agents</a>
-            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Creative Reality™ Studio')}>Creative Reality™ Studio</a>
-            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Video Translate')}>Video Translate</a>
-            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Video Campaigns')}>Video Campaigns</a>
-            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Personal Avatars')}>Personal Avatars</a>
+            <p className="footer-column-title">Products</p>
+            {PRODUCT_LINKS.map((item) => (
+              <a
+                key={item.title}
+                href={item.href}
+                className="footer-link"
+                onClick={(e) => stayInApp(e, () => onNavigateToProduct && onNavigateToProduct(item.title))}
+              >
+                {item.title}
+              </a>
+            ))}
           </div>
 
           <div className="footer-column">
-            <h3 className="footer-column-title">Solutions</h3>
-            <a href="#" className="footer-link" onClick={(e) => handleSolutionClick(e, 'Marketing Suite')}>Marketing Suite</a>
-            <a href="#" className="footer-link" onClick={(e) => handleSolutionClick(e, 'Sales Solutions')}>Sales Solutions</a>
-            <a href="#" className="footer-link">Customer Experience</a>
-            <a href="#" className="footer-link">Learning & Development</a>
-            <a href="#" className="footer-link">AI Videos</a>
+            <p className="footer-column-title">Solutions</p>
+            {SOLUTION_LINKS.map((item) => (
+              <a
+                key={item.title}
+                href={item.href}
+                className="footer-link"
+                onClick={(e) => stayInApp(e, () => onNavigateToSolution && onNavigateToSolution(item.title))}
+              >
+                {item.title}
+              </a>
+            ))}
           </div>
 
           <div className="footer-newsletter">
-            <h3 className="newsletter-title">Stay Updated</h3>
+            <p className="newsletter-title">Stay Updated</p>
             <p className="newsletter-description">
               Get the latest news and updates about AI video technology.
             </p>
@@ -124,19 +115,13 @@ function Footer({
             © {new Date().getFullYear()} Virtual Studio. All rights reserved.
           </div>
           <div className="footer-bottom-links">
-            <a href="#" className="footer-bottom-link" onClick={handleEthicsClick}>Trust Center</a>
-            <a href="#" className="footer-bottom-link" onClick={(e) => {
-              e.preventDefault()
-              handleCompanyClick('Privacy Policy')
-            }}>Privacy Policy</a>
-            <a href="#" className="footer-bottom-link">Terms of Service</a>
+            <a href={ETHICS_HREF} className="footer-bottom-link" onClick={(e) => stayInApp(e, onNavigateToEthics)}>Trust Center</a>
+            <a href={PRIVACY_HREF} className="footer-bottom-link" onClick={(e) => stayInApp(e, () => onNavigateToCompany && onNavigateToCompany('Privacy Policy'))}>Privacy Policy</a>
+            <span className="footer-bottom-link">Terms of Service</span>
             <a
-              href="#"
+              href={HELP_HREF}
               className="footer-bottom-link"
-              onClick={(e) => {
-                e.preventDefault()
-                handleCompanyClick('Help Center')
-              }}
+              onClick={(e) => stayInApp(e, () => onNavigateToCompany && onNavigateToCompany('Help Center'))}
             >
               Help Center
             </a>

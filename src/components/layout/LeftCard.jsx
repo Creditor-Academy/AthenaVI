@@ -72,7 +72,7 @@ const styles = `
 .left-card-title {
   font-size: 22px;
   font-weight: 700;
-  margin-bottom: 10px;
+  margin: 1em 0 10px;
   color: #ffffff;
   letter-spacing: -0.5px;
   line-height: 1.25;
@@ -190,9 +190,9 @@ const LeftCard = () => {
         <span className="left-card-tag">Core Feature</span>
       </div>
 
-      <h3 className="left-card-title">
+      <h2 className="left-card-title">
         AI Instructor Video Creation
-      </h3>
+      </h2>
 
       <p className="left-card-subtitle">
         Create professional AI-powered instructional videos with scene-based

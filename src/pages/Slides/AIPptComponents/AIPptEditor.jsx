@@ -187,6 +187,7 @@ import {
 } from '../../../components/ppt/EmptyImagePlaceholder'
 import './pptEditorExtras.css'
 import '../AIPptGenerator.css'
+import '../ensurePlayfairFont.js'
 
 import { confirmDialog, promptDialog } from '../../../utils/appDialog'
 const CANVAS_SAVE_DEBOUNCE_MS = 600

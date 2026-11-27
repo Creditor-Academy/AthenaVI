@@ -48,23 +48,45 @@ export function gtmIdFromEnv(raw) {
   return /^GTM-[A-Z0-9]+$/.test(value) ? value : null
 }
 
-/** The Google tag snippet for a GTM container, as Google's "Set up a Google tag" page gives it. */
+/**
+ * Google Tag Manager (official gtm.start bootstrap) and Microsoft Clarity.
+ * Both load after window `load` so they stay off the first-paint critical path.
+ * dataLayer is created immediately so events fired before the script arrives are kept.
+ */
 export function gtmSnippet(gtmId) {
+  const id = JSON.stringify(gtmId)
   return [
-    '<!-- Google tag (Google Tag Manager) -->',
-    `<script async src="https://www.googletagmanager.com/gtm.js?id=${gtmId}"></script>`,
+    '<!-- Google Tag Manager and Microsoft Clarity, after load -->',
     '<script>',
     '  window.dataLayer = window.dataLayer || [];',
     '  function gtag(){dataLayer.push(arguments);}',
-    "  gtag('js', new Date());",
+    '  (function () {',
+    `    var id = ${id};`,
+    '    function loadTags() {',
+    '      if (window.__athenaTags) return;',
+    '      window.__athenaTags = true;',
+    "      window.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });",
+    "      var g = document.createElement('script');",
+    '      g.async = true;',
+    "      g.src = 'https://www.googletagmanager.com/gtm.js?id=' + encodeURIComponent(id);",
+    '      document.head.appendChild(g);',
+    '      (function (c, l, a, r, i, t, y) {',
+    '        c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments); };',
+    '        t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;',
+    '        y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);',
+    "      })(window, document, 'clarity', 'script', 'z9bkfsndgq');",
+    '    }',
+    "    if (document.readyState === 'complete') window.setTimeout(loadTags, 0);",
+    "    else window.addEventListener('load', function () { window.setTimeout(loadTags, 0); });",
+    '  })();',
     '</script>',
   ].join('\n    ')
 }
 
 /**
- * Google Tag Manager on the site's pages, right after <head> (as Google asks). Production builds
- * only, so local development doesn't send visits to Analytics; never on export-render.html (the
- * page the backend renders exports with).
+ * Google Tag Manager on the site's pages, at the end of <head> so the charset meta stays
+ * in the first 1024 bytes. Production builds only, so local development doesn't send visits
+ * to Analytics; never on export-render.html (the page the backend renders exports with).
  */
 function googleTagManagerPlugin(gtmId) {
   return {
@@ -74,7 +96,8 @@ function googleTagManagerPlugin(gtmId) {
       order: 'pre',
       handler(html, ctx) {
         if (!gtmId || path.basename(ctx.filename || '') !== 'index.html') return html
-        return html.replace(/<head>/i, `<head>\n    ${gtmSnippet(gtmId)}`)
+        // After the charset meta. A script at the start of <head> pushes charset past the first 1024 bytes.
+        return html.replace(/<\/head>/i, `    ${gtmSnippet(gtmId)}\n  </head>`)
       },
     },
   }
@@ -124,6 +147,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
+      manifest: true,
       // @athena/contracts is CommonJS linked from ./packages (outside node_modules).
       commonjsOptions: {
         include: [/node_modules/, /packages[\\/]athena-contracts/],

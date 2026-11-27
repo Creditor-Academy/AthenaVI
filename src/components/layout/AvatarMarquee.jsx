@@ -133,7 +133,7 @@ const AvatarMarquee = () => {
           >
             {list.map((av, index) => (
               <div key={index} className="avatar-card-marquee" style={{ background: av.bgColor }}>
-                <img src={av.src} alt={`AI Avatar ${index}`} />
+                <img src={av.src} alt={`AI Avatar ${index}`} loading="lazy" decoding="async" />
                 {av.premium && (
                   <div className="badge-premium">
                     <span className="badge-dot"></span>

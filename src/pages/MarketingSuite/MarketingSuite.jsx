@@ -28,10 +28,12 @@ function MarketingSuite({ onLoginClick, onNavigateToEthics, onLogoClick, onNavig
           onNavigateToUseCases={onNavigateToUseCases}
         />
         
-        <HeroSection />
-        <Heaturemarketing />
-        <EngagementSection />
-        <CTASection />
+        <main>
+          <HeroSection />
+          <Heaturemarketing />
+          <EngagementSection />
+          <CTASection />
+        </main>
         
         <Footer 
           onLogoClick={onLogoClick}

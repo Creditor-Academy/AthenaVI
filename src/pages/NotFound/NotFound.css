@@ -262,6 +262,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  text-decoration: none;
   padding: 12px 26px;
   font-size: 14px;
   font-weight: 600;

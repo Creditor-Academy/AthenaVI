@@ -235,6 +235,8 @@ const DigitalTwinSection = () => {
             src={DigitalTwin03}
             alt="AI digital twin clone portrait background"
             className="dt-portrait-img"
+            loading="lazy"
+            decoding="async"
           />
         </div>
 
@@ -255,7 +257,7 @@ const DigitalTwinSection = () => {
           <div className="dt-left-column">
             <div className="dt-feature-panel">
               <div className="dt-panel-top-row">
-                <div className="dt-panel-number">01</div>
+                <div className="dt-panel-number" aria-hidden="true">01</div>
                 <div className="dt-panel-icon-wrapper"><FiVideo size={16} /></div>
               </div>
               <h3 className="dt-panel-title">Photo to Avatar</h3>
@@ -266,7 +268,7 @@ const DigitalTwinSection = () => {
 
             <div className="dt-feature-panel">
               <div className="dt-panel-top-row">
-                <div className="dt-panel-number">02</div>
+                <div className="dt-panel-number" aria-hidden="true">02</div>
                 <div className="dt-panel-icon-wrapper"><FiCpu size={16} /></div>
               </div>
               <h3 className="dt-panel-title">Custom Styling & Outfits</h3>
@@ -280,7 +282,7 @@ const DigitalTwinSection = () => {
           <div className="dt-right-column">
             <div className="dt-feature-panel">
               <div className="dt-panel-top-row">
-                <div className="dt-panel-number">03</div>
+                <div className="dt-panel-number" aria-hidden="true">03</div>
                 <div className="dt-panel-icon-wrapper"><FiMic size={16} /></div>
               </div>
               <h3 className="dt-panel-title">Expression Control</h3>
@@ -291,7 +293,7 @@ const DigitalTwinSection = () => {
 
             <div className="dt-feature-panel">
               <div className="dt-panel-top-row">
-                <div className="dt-panel-number">04</div>
+                <div className="dt-panel-number" aria-hidden="true">04</div>
                 <div className="dt-panel-icon-wrapper"><FiGlobe size={16} /></div>
               </div>
               <h3 className="dt-panel-title">Studio-Grade Lip Sync</h3>
@@ -302,7 +304,7 @@ const DigitalTwinSection = () => {
 
             <div className="dt-feature-panel">
               <div className="dt-panel-top-row">
-                <div className="dt-panel-number">05</div>
+                <div className="dt-panel-number" aria-hidden="true">05</div>
                 <div className="dt-panel-icon-wrapper"><FiShield size={16} /></div>
               </div>
               <h3 className="dt-panel-title">Instant Export</h3>

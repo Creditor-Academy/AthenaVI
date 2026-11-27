@@ -26,21 +26,16 @@ const productSectionMap = {
 
 function Products({ onLoginClick, initialSection = null, onNavigateToProduct, onLogoClick, onNavigateToCompany, onNavigateToSolution, onNavigateToEthics, onNavigateToTechnology, onNavigateToUseCases }) {
   useEffect(() => {
-    // Scroll to initial section if provided
-    if (initialSection) {
-      const sectionId = productSectionMap[initialSection]
-      if (sectionId) {
-        setTimeout(() => {
-          const element = document.getElementById(sectionId)
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          }
-        }, 100)
-      }
-    } else {
-      // Scroll to top
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+    const hash = window.location.hash.replace(/^#/, '')
+    const sectionId = productSectionMap[initialSection]
+      || (Object.values(productSectionMap).includes(hash) ? hash : '')
+    if (sectionId) {
+      const timer = setTimeout(() => {
+        document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+      return () => clearTimeout(timer)
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [initialSection])
 
 
@@ -59,11 +54,13 @@ function Products({ onLoginClick, initialSection = null, onNavigateToProduct, on
           onNavigateToUseCases={onNavigateToUseCases}
         />
         
-        <VisualAIAgents variant="light" />
-        <CreativeRealityStudio variant="dark" />
-        <VideoTranslate variant="light" />
-        <VideoCampaigns variant="dark" />
-        <PersonalAvatars variant="light" />
+        <main>
+          <VisualAIAgents variant="light" />
+          <CreativeRealityStudio variant="dark" />
+          <VideoTranslate variant="light" />
+          <VideoCampaigns variant="dark" />
+          <PersonalAvatars variant="light" />
+        </main>
         
         <Footer 
           onLogoClick={onLogoClick}

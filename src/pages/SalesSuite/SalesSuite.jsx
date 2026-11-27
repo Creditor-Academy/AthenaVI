@@ -29,11 +29,13 @@ function SalesSuite({ onLoginClick, onLogoClick, onNavigateToSolution, onNavigat
           onNavigateToUseCases={onNavigateToUseCases}
         />
         
-        <HeroSection />
-        <ImpactSection />
-        <FeaturesSection />
-        <BenefitsSection />
-        <CTASection />
+        <main>
+          <HeroSection />
+          <ImpactSection />
+          <FeaturesSection />
+          <BenefitsSection />
+          <CTASection />
+        </main>
         
         <Footer 
           onLogoClick={onLogoClick}

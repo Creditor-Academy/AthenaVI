@@ -128,7 +128,7 @@ const styles = `
 .right-card-title {
   font-size: 24px;
   font-weight: 700;
-  margin-bottom: 12px;
+  margin: 1em 0 12px;
   color: #ffffff;
   position: relative;
   z-index: 10;
@@ -347,7 +347,7 @@ const RightCardCarousel = () => {
                 </div>
                 <span className="right-card-tag">{card.tag}</span>
               </div>
-              <h3 className="right-card-title">{card.title}</h3>
+              <h2 className="right-card-title">{card.title}</h2>
               <p className="right-card-description">{card.description}</p>
             </motion.div>
           );
