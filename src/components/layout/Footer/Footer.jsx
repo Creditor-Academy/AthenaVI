@@ -1,8 +1,22 @@
 import { MdArrowOutward, MdLanguage } from 'react-icons/md'
 import { FaInstagram } from 'react-icons/fa'
 import LogoImg from '../../../assets/herologo.webp'
+import {
+  FOOTER_PRODUCT_NAV,
+  SOLUTION_NAV,
+  HOME_HREF,
+  ETHICS_HREF,
+  PRIVACY_HREF,
+  HELP_HREF,
+} from '../../../seo/siteNav.js'
 import './Footer.css'
 
+/** Let the browser open the real href for modified clicks; otherwise keep in-app navigation. */
+const spaClick = (event, action) => {
+  if (event.metaKey || event.ctrlKey) return
+  event.preventDefault()
+  action()
+}
 
 function Footer({
   onLogoClick,
@@ -12,17 +26,15 @@ function Footer({
   onNavigateToCompany
 }) {
   const handleProductClick = (e, productName) => {
-    e.preventDefault()
-    if (onNavigateToProduct) {
-      onNavigateToProduct(productName)
-    }
+    spaClick(e, () => {
+      if (onNavigateToProduct) onNavigateToProduct(productName)
+    })
   }
 
   const handleSolutionClick = (e, solutionName) => {
-    e.preventDefault()
-    if (onNavigateToSolution) {
-      onNavigateToSolution(solutionName)
-    }
+    spaClick(e, () => {
+      if (onNavigateToSolution) onNavigateToSolution(solutionName)
+    })
   }
 
   const handleCompanyClick = (item) => {
@@ -32,17 +44,15 @@ function Footer({
   }
 
   const handleEthicsClick = (e) => {
-    e.preventDefault()
-    if (onNavigateToEthics) {
-      onNavigateToEthics()
-    }
+    spaClick(e, () => {
+      if (onNavigateToEthics) onNavigateToEthics()
+    })
   }
 
   const handleLogoClick = (e) => {
-    e.preventDefault()
-    if (onLogoClick) {
-      onLogoClick()
-    }
+    spaClick(e, () => {
+      if (onLogoClick) onLogoClick()
+    })
   }
 
   return (
@@ -50,7 +60,7 @@ function Footer({
       <footer className="footer">
         <div className="footer-content">
           <div className="footer-brand">
-            <a href="#" className="footer-logo" onClick={handleLogoClick}>
+            <a href={HOME_HREF} className="footer-logo" onClick={handleLogoClick}>
               <img src={LogoImg} alt="Logo" className="footer-logo-img" />
             </a>
             <p className="footer-description">
@@ -80,20 +90,16 @@ function Footer({
 
           <div className="footer-column">
             <h3 className="footer-column-title">Products</h3>
-            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Visual AI Agents')}>Visual AI Agents</a>
-            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Creative Reality™ Studio')}>Creative Reality™ Studio</a>
-            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Video Translate')}>Video Translate</a>
-            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Video Campaigns')}>Video Campaigns</a>
-            <a href="#" className="footer-link" onClick={(e) => handleProductClick(e, 'Personal Avatars')}>Personal Avatars</a>
+            {FOOTER_PRODUCT_NAV.map((item) => (
+              <a key={item.title} href={item.href} className="footer-link" onClick={(e) => handleProductClick(e, item.title)}>{item.title}</a>
+            ))}
           </div>
 
           <div className="footer-column">
             <h3 className="footer-column-title">Solutions</h3>
-            <a href="#" className="footer-link" onClick={(e) => handleSolutionClick(e, 'Marketing Suite')}>Marketing Suite</a>
-            <a href="#" className="footer-link" onClick={(e) => handleSolutionClick(e, 'Sales Solutions')}>Sales Solutions</a>
-            <a href="#" className="footer-link">Customer Experience</a>
-            <a href="#" className="footer-link">Learning & Development</a>
-            <a href="#" className="footer-link">AI Videos</a>
+            {SOLUTION_NAV.map((item) => (
+              <a key={item.title} href={item.href} className="footer-link" onClick={(e) => handleSolutionClick(e, item.title)}>{item.title}</a>
+            ))}
           </div>
 
           <div className="footer-newsletter">
@@ -124,19 +130,13 @@ function Footer({
             © {new Date().getFullYear()} Virtual Studio. All rights reserved.
           </div>
           <div className="footer-bottom-links">
-            <a href="#" className="footer-bottom-link" onClick={handleEthicsClick}>Trust Center</a>
-            <a href="#" className="footer-bottom-link" onClick={(e) => {
-              e.preventDefault()
-              handleCompanyClick('Privacy Policy')
-            }}>Privacy Policy</a>
-            <a href="#" className="footer-bottom-link">Terms of Service</a>
+            <a href={ETHICS_HREF} className="footer-bottom-link" onClick={handleEthicsClick}>Trust Center</a>
+            <a href={PRIVACY_HREF} className="footer-bottom-link" onClick={(e) => spaClick(e, () => handleCompanyClick('Privacy Policy'))}>Privacy Policy</a>
+            <span className="footer-bottom-link">Terms of Service</span>
             <a
-              href="#"
+              href={HELP_HREF}
               className="footer-bottom-link"
-              onClick={(e) => {
-                e.preventDefault()
-                handleCompanyClick('Help Center')
-              }}
+              onClick={(e) => spaClick(e, () => handleCompanyClick('Help Center'))}
             >
               Help Center
             </a>

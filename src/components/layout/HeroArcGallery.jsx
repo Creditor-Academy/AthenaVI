@@ -4,6 +4,10 @@ import { useAnimationFrame } from 'framer-motion'
 const SCROLL_DURATION_DESKTOP = 35
 const SCROLL_DURATION_MOBILE = 45
 
+/** Same fill as the tile, so a headless crawl can paint the hero without fetching the mp4. */
+const HERO_POSTER =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='270' height='380'%3E%3Crect width='100%25' height='100%25' fill='%230f172a'/%3E%3C/svg%3E"
+
 function getScrollDuration() {
   if (typeof window === 'undefined') return SCROLL_DURATION_DESKTOP
   return window.matchMedia('(max-width: 768px)').matches
@@ -291,6 +295,7 @@ function HeroArcGallery({ avatars = [], fullWidth = false, pillarLabels = [] }) 
                   videoRefs.current[i] = el
                 }}
                 src={avatar.src}
+                poster={HERO_POSTER}
                 muted
                 preload="none"
                 loop

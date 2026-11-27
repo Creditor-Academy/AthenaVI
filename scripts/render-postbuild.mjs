@@ -3,16 +3,17 @@
  * - Copies index.html into each known client route (dist/<route>/index.html) so direct hits
  *   work even when the host's SPA rewrite rules are not applied.
  * - Gives every copy its own SEO tags (src/seo/seoRoutes.js): public pages get their own <title>,
- *   meta description and H1 (prerendered inside #root), and indexable pages a self-referencing
- *   <link rel="canonical">; sign-in pages and the app get
+ *   meta description, H1, and the navbar/footer links (prerendered inside #root), and indexable
+ *   pages a self-referencing <link rel="canonical">; sign-in pages and the app get
  *   <meta name="robots" content="noindex, follow">. They are in the HTML itself, so crawlers
- *   (and "view source") see them without running the app.
+ *   (and "view source") see them without running the app. The app replaces #root when it starts.
  * - Writes 404.html (SPA fallback for unknown paths), marked noindex.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { seoForPath, INDEXABLE_PATHS, NOINDEX_PUBLIC_PATHS } from '../src/seo/seoRoutes.js'
+import { crawlableNavAnchors } from '../src/seo/siteNav.js'
 
 const distDir = join(process.cwd(), 'dist')
 const indexHtml = join(distDir, 'index.html')
@@ -61,14 +62,28 @@ const escapeText = (value) => String(value).replace(/&/g, '&amp;').replace(/</g,
 const PRERENDER_STYLE =
   '<style>.seo-prerender{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}</style>'
 
+/** Navbar and footer targets, as anchors, for crawlers that do not run the app. */
+function crawlNavHtml() {
+  // One anchor per line so `grep -c '<a '` counts them in the built page.
+  return `<nav>\n${crawlableNavAnchors()
+    .map((item) => {
+      const external = /^https?:/i.test(item.href)
+      const extra = external ? ' target="_blank" rel="noopener noreferrer"' : ''
+      return `<a href="${escapeAttr(item.href)}"${extra}>${escapeText(item.title)}</a>`
+    })
+    .join('\n')}\n</nav>`
+}
+
 function withPrerenderedHeading(html, seo) {
-  // Drop any heading already written (the inner <div> holds only an <h1> and a <p>).
+  // Drop any heading already written (the inner block holds an <h1>, a <p>, and a <nav> of links).
   const cleaned = html
     .replace(/\s*<style>\.seo-prerender\{[^<]*<\/style>/, '')
     .replace(/<div class="seo-prerender">[\s\S]*?<\/div>/, '')
   if (!seo.h1) return cleaned
   const body =
-    `<h1>${escapeText(seo.h1)}</h1>` + (seo.description ? `<p>${escapeText(seo.description)}</p>` : '')
+    `<h1>${escapeText(seo.h1)}</h1>` +
+    (seo.description ? `<p>${escapeText(seo.description)}</p>` : '') +
+    crawlNavHtml()
   return cleaned
     .replace(/\s*<\/head>/i, `\n    ${PRERENDER_STYLE}\n  </head>`)
     .replace('<div id="root"></div>', `<div id="root"><div class="seo-prerender">${body}</div></div>`)

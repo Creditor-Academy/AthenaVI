@@ -42,14 +42,6 @@
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
-  <!-- Hidden for now (not linked from the site navigation)
-  <url>
-    <loc>https://virtualstudio.lmsathena.com/technology/</loc>
-    <lastmod>2026-11-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  -->
   <url>
     <loc>https://virtualstudio.lmsathena.com/ai-videos/</loc>
     <lastmod>2026-11-18</lastmod>
@@ -62,30 +54,6 @@
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
-  <!-- Hidden for now (not linked from the site navigation)
-  <url>
-    <loc>https://virtualstudio.lmsathena.com/about-us/</loc>
-    <lastmod>2026-11-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  -->
-  <!-- Hidden for now (not linked from the site navigation)
-  <url>
-    <loc>https://virtualstudio.lmsathena.com/news/</loc>
-    <lastmod>2026-11-18</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  -->
-  <!-- Hidden for now (not linked from the site navigation)
-  <url>
-    <loc>https://virtualstudio.lmsathena.com/resources/</loc>
-    <lastmod>2026-11-18</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  -->
   <url>
     <loc>https://virtualstudio.lmsathena.com/ethics/</loc>
     <lastmod>2026-11-18</lastmod>
