@@ -12,13 +12,114 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Jost:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700;900&family=Montserrat:wght@300;400;500;600;700;800&family=Open+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&family=Lato:wght@300;400;700;900&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <title>Athena Virtual Studio</title>
 
-    <!-- Microsoft Clarity -->
-    <script type="text/javascript">
-      (function(c,l,a,r,i,t,y){
-        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-      })(window, document, "clarity", "script", "z9bkfsndgq");
+    <!-- Microsoft Clarity (gated: public marketing pages only; see comment inside) -->
+    <script>
+      /* Clarity gate (traffic hygiene). Clarity loads ONLY when the visitor is on a public marketing
+         page of virtualstudio.lmsathena.com, is not logged in, is not flagged internal (?internal=1), is not a
+         headless/prerender browser, and the browser timezone is not India (Asia/Kolkata|Asia/Calcutta).
+         ?internal=1 sets a 2-year flag (cookie on .lmsathena.com + localStorage); ?internal=0 clears it.
+         dataLayer gets traffic_type: internal|external, and geo_excluded: "IN" for India-timezone browsers.
+         NOTE: the India check is a best-effort browser-timezone check, not IP geolocation. */
+      (function (w, d) {
+        var CFG = {"id": "z9bkfsndgq", "hosts": ["virtualstudio.lmsathena.com"], "cookieDomain": ".lmsathena.com", "mode": "allow", "exact": ["/", "/about-us", "/ai-videos", "/ai-avatars-videos", "/use-cases", "/sales-suite", "/marketing-suite", "/learning-development", "/customer-experience", "/products", "/privacy", "/ethics", "/technology", "/early-access", "/help", "/download"], "prefixes": ["/resources/", "/news/", "/use-cases/"], "tokenKeys": ["accessToken", "user"], "tokenCookies": [], "delayMs": 0};
+        var KEY = "athena_internal_traffic";
+        var pushed = {};
+        var loaded = false;
+        var timer = null;
+        function push(k, v) {
+          if (pushed[k] === v) return;
+          pushed[k] = v;
+          var o = {}; o[k] = v;
+          w.dataLayer = w.dataLayer || [];
+          w.dataLayer.push(o);
+        }
+        function readFlag() {
+          try { if (w.localStorage.getItem(KEY) === "1") return true; } catch (e) {}
+          return d.cookie.split("; ").indexOf(KEY + "=1") !== -1;
+        }
+        function writeFlag(on) {
+          var dom = CFG.cookieDomain && ("." + location.hostname).slice(-CFG.cookieDomain.length) === CFG.cookieDomain
+            ? "; domain=" + CFG.cookieDomain : "";
+          try { if (on) w.localStorage.setItem(KEY, "1"); else w.localStorage.removeItem(KEY); } catch (e) {}
+          d.cookie = on
+            ? KEY + "=1; max-age=63072000; path=/; SameSite=Lax" + dom
+            : KEY + "=; max-age=0; path=/; SameSite=Lax" + dom;
+        }
+        function syncFlag() {
+          var p = null;
+          try { p = new URLSearchParams(location.search).get("internal"); } catch (e) {}
+          if (p === "1") writeFlag(true); else if (p === "0") writeFlag(false);
+          return readFlag();
+        }
+        function loggedIn() {
+          var i, v;
+          for (i = 0; i < CFG.tokenKeys.length; i++) {
+            try {
+              v = w.localStorage.getItem(CFG.tokenKeys[i]) || w.sessionStorage.getItem(CFG.tokenKeys[i]);
+              if (v && v !== "null" && v !== "undefined") return true;
+            } catch (e) {}
+          }
+          for (i = 0; i < CFG.tokenCookies.length; i++) {
+            if (d.cookie.split("; ").some(function (c) { return c.indexOf(CFG.tokenCookies[i] + "=") === 0 && c.length > CFG.tokenCookies[i].length + 1; })) return true;
+          }
+          return false;
+        }
+        function indiaTz() {
+          try {
+            var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            return tz === "Asia/Kolkata" || tz === "Asia/Calcutta";
+          } catch (e) { return false; }
+        }
+        function isBot() {
+          return !!navigator.webdriver || /HeadlessChrome|Prerender|Lighthouse|bot|crawler|spider/i.test(navigator.userAgent || "");
+        }
+        function routeOk(p) {
+          var path = p.length > 1 && p.charAt(p.length - 1) === "/" ? p.slice(0, -1) : p;
+          var i;
+          if (CFG.mode === "allow") {
+            if (CFG.exact.indexOf(path) !== -1) return true;
+            for (i = 0; i < CFG.prefixes.length; i++) if ((path + "/").indexOf(CFG.prefixes[i]) === 0) return true;
+            return false;
+          }
+          for (i = 0; i < CFG.prefixes.length; i++) if ((path + "/").indexOf(CFG.prefixes[i]) === 0) return false;
+          return CFG.exact.indexOf(path) === -1;
+        }
+        function load() {
+          if (typeof w.clarity === "function" && loaded) { w.clarity("consent", true); return; }
+          loaded = true;
+          (function (c, l, a, r, i, t, y) {
+            c[a] = c[a] || function () { (c[a].q = c[a].q || []).push(arguments); };
+            t = l.createElement(r); t.async = 1; t.src = "https://www.clarity.ms/tag/" + i;
+            y = l.getElementsByTagName(r)[0]; y.parentNode.insertBefore(t, y);
+          })(w, d, "clarity", "script", CFG.id);
+        }
+        function evaluate() {
+          var internal = syncFlag() || loggedIn();
+          var india = indiaTz();
+          push("traffic_type", internal ? "internal" : "external");
+          if (india) push("geo_excluded", "IN");
+          var ok = !internal && !india && !isBot() &&
+            CFG.hosts.indexOf(location.hostname) !== -1 && routeOk(location.pathname);
+          if (timer) { clearTimeout(timer); timer = null; }
+          if (!ok) {
+            if (loaded && typeof w.clarity === "function") w.clarity("consent", false);
+            return;
+          }
+          timer = setTimeout(load, CFG.delayMs);
+        }
+        // Re-check on SPA navigation (pushState/replaceState/back/forward).
+        ["pushState", "replaceState"].forEach(function (m) {
+          var orig = history[m];
+          if (typeof orig !== "function") return;
+          history[m] = function () {
+            var r = orig.apply(this, arguments);
+            try { evaluate(); } catch (e) {}
+            return r;
+          };
+        });
+        w.addEventListener("popstate", function () { try { evaluate(); } catch (e) {} });
+        try { evaluate(); } catch (e) {}
+      })(window, document);
     </script>
   </head>
   <body>
