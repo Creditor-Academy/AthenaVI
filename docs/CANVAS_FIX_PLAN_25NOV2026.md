@@ -14,13 +14,15 @@
 - the bugs the audit confirmed in both editors.
 
 The two editors share the element renderer and the insert/design panels (`src/pages/Slides/AIPptComponents/`), so a fix there covers both.
-**Status (26 Nov):**
+**Status (27 Nov):**
 - **Phase 0:** committed and pushed 26 Nov. Left: deploy to staging, retest there, and D-0's questions to the testers.
 - **Phase 1:** N-1, D-1, D-2, D-3, D-4, D-5, C-1, K-1, R-1 and H-1 to H-4 committed and pushed 26 Nov (FE `88c288f`, BE `0c7d7b0`). Left: staging retest. See "Phase 1 implementation (26 Nov)" and "Image-loss hunt (26 Nov)" below.
 - **Phase 1b:** B-3 and E-4a committed and pushed 26 Nov (FE `db5d17b`, BE `d5a5f1d`). Left: staging retest.
-- **Phase 1c:** S-1 (copy and paste whole slides, requested 26 Nov) coded and browser-tested on the dev setup, not committed.
+- **Phase 1c:** S-1 committed and pushed 26 Nov (FE `a5143a6`, together with the HeyGen editor fixes F1 to F3). Left: staging retest.
+- **Release check (27 Nov):** backend `development` (same code as `bugs`) + frontend `bugFix` browser-tested end to end for Phases 0 to 1c; going to production. Not testable locally: H-4 (no alternative layouts offered), exported files (QA account has 0 credits).
+- **New (27 Nov):** B-4, ghost text after deleting the last element of a never-edited slide; planned for Phase 2 (next sprint).
 - **Findings re-checked in the running app:** 14 confirmed (including the team's two new bugs B-2 and R-1, and a new finding N-1), 2 not reproduced, 8 not tested in the browser. See "Browser verification (26 Nov)" below.
-- **Tests:** frontend 514 / 514 (with S-1) and backend 1,314 / 1,314 pass.
+- **Tests:** frontend 525 / 525 and backend 1,314 / 1,314 pass.
 
 In the item headings, ✔ means the cause was checked line by line in the code, and · means it comes from the audit's reading and is to be confirmed while fixing.
 
@@ -34,12 +36,12 @@ Status key: ⬜ not started · 🟡 in progress · 🔵 code done, waiting for s
 | **1. Safe saving** | No save can remove newer work; review links keep showing images | N-1, D-1, D-2, D-3, D-4, D-5, C-1, K-1, R-1, H-1 to H-4 | 11 d | Revision tests green and in `npm test`; two-tab, undo, stale-tab-close and rapid-edit retests pass; review link presents without blanking while the owner edits |
 | **1b. Empty slides and background photos** | An emptied slide is really empty; a background photo can be edited | B-3, E-4a | 1.5 d | Emptied slide stays blank in the editor, after reload and in PDF / PowerPoint exports; a background photo can be cropped, replaced, turned back into an image and removed, and each survives reload |
 | **1c. Copy and paste slides** | A whole slide can be copied and pasted elsewhere, also into another deck | S-1 | 0.75 d | A slide with a background photo, text and images copied with Ctrl+C / ⋯ → Copy slide pastes after the selected slide in the same and another deck, complete after reload |
-| **2. Wrong results from edits** | Edits change what the user meant, nothing else | E-1, E-2, E-3 | 1.25 d | Each item's checkpoint passes |
+| **2. Wrong results from edits** | Edits change what the user meant, nothing else; an emptied slide never shows a ghost title | B-4, E-1, E-2, E-3 | 1.5 d | Each item's checkpoint passes |
 | **3. Reported editor problems** | Backgrounds, "Use as background", colours, image links | E-4 (rest), E-5, E-6, D-6 | 3.5 d | QA retests the three reported problems on the testers' decks |
 | **4. Image editor and safety net** | Image editor placement and recovery; slide version history | C-2 to C-5, D-7 | 3.1 d | Support can restore a slide; image editor checkpoints pass |
 | **5. Editing feel** | Drag, resize and text boxes behave at any zoom / rotation | G-1 to G-5 | 2.75 d | Each item's checkpoint passes |
 
-**Total:** about 27 developer-days (FE about 21, BE about 6), including the image-loss hunt fixes, Phase 1b and Phase 1c.
+**Total:** about 27.25 developer-days (FE about 21.25, BE about 6), including the image-loss hunt fixes, Phase 1b, Phase 1c and B-4.
 
 **Staffing:**
 - With one FE and one BE developer, this is about 5 weeks.
@@ -56,6 +58,7 @@ Status key: ⬜ not started · 🟡 in progress · 🔵 code done, waiting for s
   - N-1 first: together with D-1, it caused the overwrite confirmed in the browser.
 - **Phase 1b:** B-3 → E-4a. Committed as its own batch, after the Phase 1 batch (Phase 1 + H-1 to H-4).
 - **Phase 1c:** S-1, its own batch, before Phase 2.
+- **Phase 2:** B-4 first (small, same area as E-1: the delete path), then E-1 → E-2 → E-3.
   - D-2 and D-3 make the 409 handling in D-1 FE simple.
   - D-4 depends on D-3.
 
@@ -99,6 +102,7 @@ Status key: ⬜ not started · 🟡 in progress · 🔵 code done, waiting for s
 | B-3 | After deleting every element, a ghost title and picture appear that can't be selected or deleted (also in exports) | High | Presentations | BE + FE | 0.5 d | 1b | 🔵 |
 | E-4a | A photo used as the slide background can't be selected, edited, resized or removed | High | Presentations | FE | 1 d | 1b | 🔵 |
 | S-1 | A whole slide can't be copied and pasted (only Duplicate, right after itself); copying all elements leaves the background behind | Medium | Presentations | FE | 0.75 d | 1c | 🔵 |
+| B-4 | Deleting the last element of a never-edited slide shows a ghost title ("Untitled Presentation" / slide title) that can't be selected or edited, until reload or until something is added | Medium | Presentations | FE | 0.25 d | 2 | ⬜ |
 
 ### Browser verification (26 Nov)
 
@@ -619,8 +623,8 @@ Note: Ctrl+S only makes a save happen sooner. Data safety comes from D-8 and D-1
 
 **Checkpoint**
 - [x] Copy a slide with a background photo, text and images → paste after another slide: identical, and still after reload. (dev)
-- [ ] Paste into another deck: identical, and still after reload.
-- [ ] Cut → paste moves the slide; undo of the paste removes it.
+- [x] Paste into another deck: identical, and still after reload. (dev, 27 Nov: slide with colour + background photo into a new deck, 7 elements / 5 images, kept after reload)
+- [x] Cut → paste moves the slide; undo of the paste removes it. (dev)
 - [x] Copying elements (Ctrl+A, Ctrl+C on the canvas) and pasting them still works as before. (dev)
 - [ ] Close-out.
 
@@ -628,9 +632,33 @@ Note: Ctrl+S only makes a save happen sooner. Data safety comes from D-8 and D-1
 
 ---
 
-## 4. Phase 2: wrong results from edits (1.25 d)
+## 4. Phase 2: wrong results from edits (1.5 d)
 
 **Goal:** an edit changes what the user meant and nothing else. A second FE developer can build this in parallel with Phase 1; it is QA'd after Phase 1.
+
+### B-4. Ghost title after deleting the last element of a never-edited slide (Medium, FE) ✔
+
+**Report (team, 27 Nov):** on a slide, after deleting all the elements, a text appears ("Blank slide" or "Untitled Presentation") that can't be clicked, edited or deleted. Adding anything to the slide makes it disappear.
+
+**Reproduced (dev, 27 Nov):** new deck, slide 1 never edited (`manuallyEdited` false, one empty text box). Select all → Delete: the stage shows "Untitled Presentation (1)" (the deck name). After a reload the slide is blank. The request was `DELETE …/elements/:id` (200).
+
+**What happens.**
+- A slide with no elements shows the display-only placeholder `SlideMockFallback` (the slide title, or the deck name on the first slide, plus text / image) whenever `showsSlideFallback(slide)` is true, i.e. the slide is not `manuallyEdited` (B-3 rule, `presentationHelpers.js`).
+- The server marks the slide edited on the delete (`persistElementsDoc` saves `manuallyEdited: true`), which is why a reload fixes it.
+- The editor marks its local copy edited through `markSlideEdited` on every other edit, but **`handleDeleteElement` (`AIPptEditor.jsx:4411`) never calls it** (it isn't in its dependency list either). So deleting the last element of a slide that was never edited leaves the local slide unedited, and the placeholder appears until reload.
+- B-3 was tested on slides that were already edited, so this path was missed.
+- Adding an element hides it because the placeholder is drawn only when there are no elements.
+
+**Fix.**
+1. `handleDeleteElement` calls `markSlideEdited(slideId)` before removing the elements (single delete, multi-delete and the "clear background" path), as the other element mutations do.
+2. Check the other ways to empty a slide use the same rule: Cut (Ctrl+X) of the last element, delete from the Layers panel, undo back to an empty canvas.
+3. Test: deleting the last element of an unedited slide leaves `manuallyEdited` true locally (unit test on the delete path or the mutations hook).
+
+**Checkpoint**
+- [ ] Never-edited slide → select all → Delete: blank at once (no ghost), still blank after reload.
+- [ ] Same with Cut (Ctrl+X) and with the Layers panel delete.
+- [ ] Generated slides that were never opened still show their content (B-3 rule unchanged).
+- [ ] Close-out.
 
 ### E-1. Delete / arrows act on the previously selected element (High, FE) ✔
 
