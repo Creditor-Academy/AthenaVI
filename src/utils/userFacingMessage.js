@@ -1,3 +1,5 @@
+import { stripRawJson } from './apiUserMessage.js';
+
 /**
  * Strip third-party provider branding from strings shown in toasts, alerts,
  * inline errors, and other user-facing status messages.
@@ -6,7 +8,8 @@
 export function sanitizeUserFacingMessage(message) {
   if (message == null || message === '') return message;
 
-  let text = String(message);
+  // Never show a raw response body or stack trace (F1): keep only its message.
+  let text = stripRawJson(String(message));
 
   // Preserve API paths before branding replacement (e.g. /api/heygen/avatars/upload).
   const pathSlots = [];

@@ -157,14 +157,38 @@ export function patchFromBackgroundFill(fill, fallback = DEFAULT_SLIDE_BG) {
   }
 }
 
-export function resolveSlideStageBackground(slide, fallback = DEFAULT_SLIDE_BG, palette = null) {
+/**
+ * The image element used as the slide's background ("Use as background"), or null (E-4a).
+ * The stage draws this element itself (resolveStageElements), so its filters, effects, fit,
+ * flips and a replaced picture all show; the slide's stored `backgroundImage` is only a copy.
+ */
+export function slideBackgroundPhotoElement(slide) {
+  const els = Array.isArray(slide?.elements?.elements) ? slide.elements.elements : []
+  const isPicture = (e) => e && (e.type === 'image' || e.type === 'icon')
+  const el =
+    els.find((e) => isPicture(e) && slide?.backgroundImageElementId && e.id === slide.backgroundImageElementId) ||
+    els.find((e) => isPicture(e) && e.content?.useAsBackground)
+  if (!el) return null
+  return el.content?.url || el.content?.src || el.content?.thumbnailUrl ? el : null
+}
+
+/**
+ * CSS for the slide stage background. `photoLayer`: the caller draws the background photo
+ * element as a layer (resolveStageElements), so only the colour is painted here.
+ */
+export function resolveSlideStageBackground(slide, fallback = DEFAULT_SLIDE_BG, palette = null, { photoLayer = false } = {}) {
   const stored = slide?.backgroundColor || slide?.elements?.backgroundColor || null
   const color = isDefaultSlideBackgroundColor(stored) ? fallback : stored
-  if (slide?.backgroundImage) {
-    const fit = slide.backgroundImageFit || 'cover'
+  const photo = slideBackgroundPhotoElement(slide)
+  if (photo && photoLayer) return { backgroundColor: color }
+  // The photo's current picture and fit (not the copy taken when it became the background).
+  const photoUrl = photo ? photo.content?.url || photo.content?.src || photo.content?.thumbnailUrl : null
+  const imageUrl = photoUrl || slide?.backgroundImage
+  if (imageUrl) {
+    const fit = (photo ? photo.content?.fit : null) || slide?.backgroundImageFit || 'cover'
     return {
       backgroundColor: color,
-      backgroundImage: `url(${slide.backgroundImage})`,
+      backgroundImage: `url(${imageUrl})`,
       backgroundSize: fit === 'fill' ? '100% 100%' : fit,
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
@@ -1183,6 +1207,16 @@ export function normalizeSlideForEditor(slide, index = 0, aspectRatio = '16:9') 
  * Canvas elements are the render truth; imageRef is the fallback.
  * source: "none" means the slide is intentionally image-free (title/agenda/chart).
  */
+/**
+ * Whether a slide with no elements shows the content placeholder (title, text, main image).
+ * Only slides that never had a canvas (generation in progress, old decks) do. A slide the user
+ * edited and emptied is blank: the placeholder drew a ghost title and an image the user had
+ * deleted, which couldn't be selected or removed (CANVAS_FIX_PLAN B-3).
+ */
+export function showsSlideFallback(slide) {
+  return !slide?.manuallyEdited
+}
+
 export function getSlideImage(slide) {
   const elements = Array.isArray(slide?.elements?.elements)
     ? slide.elements.elements

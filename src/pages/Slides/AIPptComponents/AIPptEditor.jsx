@@ -99,6 +99,8 @@ import {
   buildCanvasDoc,
   extractElementFromMutation,
   extractSlideFromMutation,
+  showsSlideFallback,
+  slideBackgroundPhotoElement,
   extractSlidesFromPresentation,
   extractDeckPackId,
   extractAppliedBrandKitId,
@@ -142,6 +144,7 @@ import {
 } from '../../../utils/videoTemplateToCanvasElements'
 import {
   applyCompiledLayoutToSlide,
+  carryOverUserContent,
   fetchLayoutSchemaMap,
   rebindSlideContentLocally,
   repairPresentationLayoutSlides,
@@ -150,6 +153,21 @@ import { rethemeSlidesGraphicElements } from '../../../utils/rethemeGraphicEleme
 import { contentPlainText, contentWithSyncedText, setPptTextSelection } from '../../../utils/pptTextContent'
 import { activeTextEditDraft, subscribeTextEditDraft } from '../../../utils/textEditDraft'
 import { mergeLoadedSlides } from '../../../utils/pptSlideMerge'
+import { slideListChanges, slidesToSaveAfterRestore } from '../../../utils/pptHistoryRestore'
+import {
+  buildSlideClip,
+  hasSlideClipboard,
+  pastedSlideFromClip,
+  readSlideClipboard,
+  writeSlideClipboard,
+} from '../../../utils/slideClipboard'
+import { mergeSlideDocs } from '../../../utils/mergeSlideDocs'
+import {
+  getLocalBase,
+  getServerSlideBefore,
+  revisionsInReply,
+  setLocalBase,
+} from '../../../utils/slideRevisionStore'
 import { PPT_DEFAULT_PLACEMENTS } from '../../../constants/pptInsertCatalog'
 import {
   collectSlideFontFamilies,
@@ -244,6 +262,55 @@ const NO_BACKGROUND_GRADIENT = {
   backgroundGradientKind: undefined,
   backgroundGradientStops: undefined,
   backgroundFill: undefined,
+}
+const SLIDE_BACKGROUND_KEYS = [
+  'backgroundColor',
+  ...Object.keys(NO_BACKGROUND_GRADIENT),
+  ...Object.keys(NO_BACKGROUND_IMAGE),
+]
+
+/** The revision of a slide as the server sent it, or null. */
+function serverRevisionOf(slide) {
+  const r = Number(slide?.elements?.revision)
+  return Number.isInteger(r) && r >= 0 ? r : null
+}
+
+/**
+ * The editor's copy of these server slides now contains them (D-1): their revision becomes the
+ * base of the next canvas save. Slides in `skip` kept their local copy instead. Normalised slides
+ * have lost `elements.revision`: pass the raw reply's revisions (`revisionsInReply`).
+ */
+function adoptServerSlides(slides, skip = null, revisions = null) {
+  for (const slide of slides || []) {
+    if (!slide?.id || skip?.has?.(slide.id)) continue
+    const revision = serverRevisionOf(slide) ?? revisions?.get?.(slide.id) ?? null
+    if (revision != null) setLocalBase(slide.id, revision)
+  }
+}
+
+/**
+ * The photo used as a slide's background (E-4a), or null. `elementId` is null for a background
+ * set from Design → Add image (no element on the slide).
+ */
+function backgroundPhotoOf(slide) {
+  if (!slide) return null
+  const els = slide.elements?.elements || []
+  const el =
+    els.find((e) => e.id === slide.backgroundImageElementId) ||
+    els.find((e) => (e.type === 'image' || e.type === 'icon') && e.content?.useAsBackground)
+  const url = el?.content?.url || el?.content?.src || el?.content?.thumbnailUrl
+  if (el && url) return { elementId: el.id, url }
+  if (slide.backgroundImage) return { elementId: null, url: slide.backgroundImage }
+  return null
+}
+
+/** The slide with a merged elements doc (D-1). Background keys also live on the slide itself. */
+function withSlideDoc(slide, doc) {
+  const next = { ...slide, elements: { ...(slide.elements || {}), ...doc } }
+  for (const key of SLIDE_BACKGROUND_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(doc, key)) next[key] = doc[key]
+  }
+  return next
 }
 const RESIZE_MIN_WIDTH = 40
 const RESIZE_MIN_HEIGHT = 40
@@ -396,6 +463,30 @@ function cssPxToCanvas(cssPx, stageEl, canvasSize) {
 
 const DEFAULT_SLIDE_BG = '#FFFFFF'
 const DEFAULT_TEXT_COLOR = '#0F172A'
+
+/** Editable title + body text boxes for a new blank slide (placements scale with the canvas). */
+function buildBlankSlideElements(canvas) {
+  const stamp = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+  return [
+    {
+      id: `el-${stamp}-title`,
+      type: 'text',
+      presetId: 'text_title',
+      // Empty text: the editor shows its "Double-click to edit" hint, Present / export show nothing.
+      content: { text: '', fontSize: 64, bold: true, align: 'left', color: DEFAULT_TEXT_COLOR },
+      placement: normalizeElementPlacement({ x: 0.083, y: 0.12, width: 0.834, height: 0.14 }, canvas),
+      layer: 1,
+    },
+    {
+      id: `el-${stamp}-body`,
+      type: 'text',
+      presetId: 'text_body',
+      content: { text: '', fontSize: 28, bold: false, align: 'left', color: '#475569' },
+      placement: normalizeElementPlacement({ x: 0.083, y: 0.3, width: 0.834, height: 0.2 }, canvas),
+      layer: 2,
+    },
+  ]
+}
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
@@ -1005,6 +1096,7 @@ function SlideStage({
   showEmptyTextHint = false,
   showDangerZone = false,
   cropSession = null,
+  onEmptyClick,
   onStartCrop,
   onCropChange,
   onCropDone,
@@ -1026,8 +1118,14 @@ function SlideStage({
   const slideBgStyle = resolveSlideStageBackground(
     slide,
     themeVisual?.palette?.bg || themeVisual?.background || DEFAULT_SLIDE_BG,
-    palette
+    palette,
+    // The background photo is drawn below as a layer (resolveStageElements), E-4a.
+    { photoLayer: true }
   )
+  // The background photo layer is painted, not interacted with (no select / drag / snapping);
+  // clicks reach the slide, which selects the photo element (onEmptyClick).
+  const backgroundLayers = elements.filter((el) => el.backgroundLayer)
+  const interactiveElements = elements.filter((el) => !el.backgroundLayer)
 
   useEffect(() => {
     logCanvasGreySuspects(slide, {
@@ -1050,6 +1148,7 @@ function SlideStage({
           return
         }
         onSelectElement?.(null)
+        onEmptyClick?.()
       }}
       onContextMenu={(e) => {
         if (e.target.closest?.('[data-element-id]')) return
@@ -1084,7 +1183,9 @@ function SlideStage({
             color: themeVisual.body,
           }}
         >
-          {!hasElements ? <SlideMockFallback slide={slide} themeVisual={themeVisual} /> : null}
+          {!hasElements && showsSlideFallback(slide) ? (
+            <SlideMockFallback slide={slide} themeVisual={themeVisual} />
+          ) : null}
         </div>
       </div>
       {/* Elements live outside the hard clip so selected overflow can paint
@@ -1098,8 +1199,18 @@ function SlideStage({
           />
         ) : null}
         <PptCanvasGuidesOverlay guides={smartGuides} canvasW={canvas.width} canvasH={canvas.height} />
+        {backgroundLayers.map((el) => (
+          <div
+            key={el.id}
+            className="aig-slide-bg-photo-layer"
+            aria-hidden
+            style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0 }}
+          >
+            <PptCanvasElement el={el} palette={palette} selected={false} canvasW={canvas.width} editable={false} />
+          </div>
+        ))}
         {hasElements
-          ? elements.map((el, i) => el.id === cropSession?.id ? null : (
+          ? interactiveElements.map((el, i) => el.id === cropSession?.id ? null : (
               <InteractiveElementShell
                 key={el.id || `el-${i}`}
                 el={el}
@@ -1116,7 +1227,7 @@ function SlideStage({
                 editing={editingTextId === el.id}
                 stageRef={stageRef}
                 chromeHost={chromeHost}
-                allElements={elements}
+                allElements={interactiveElements}
                 onSelect={onSelectElement}
                 onContextMenu={onContextMenuElement}
                 onStartTextEdit={onStartTextEdit}
@@ -1361,6 +1472,8 @@ function AIPptEditor({
   // deck started loading, and the text drafts already saved (element id → text).
   const canvasPendingRef = useRef(new Set())
   const canvasInflightRef = useRef(new Set())
+  // Slides edited again while their save was in flight: one follow-up save goes when it returns (D-2).
+  const canvasDirtyRef = useRef(new Set())
   const failedSlidesRef = useRef(new Set())
   const persistBusyRef = useRef(0)
   const editedSinceLoadRef = useRef(new Set())
@@ -1545,6 +1658,23 @@ function AIPptEditor({
     localSlides.find((s) => s.id === selectedSlideId) || localSlides[0] || null
   const selectedElement =
     selectedSlide?.elements?.elements?.find((el) => el.id === selectedElementId) || null
+  // The photo used as this slide's background (E-4a): out of the clickable layer, so the Design
+  // panel offers it. `elementId` is null for a background set from Design → Add image.
+  const backgroundPhoto = backgroundPhotoOf(selectedSlide)
+  // Bumped to open Design → Background (a click on empty slide space, E-4a).
+  const [openDesignRequest, setOpenDesignRequest] = useState(0)
+  // A whole slide is on the slide clipboard (S-1): enables "Paste slide".
+  const [slideClipboardReady, setSlideClipboardReady] = useState(() => hasSlideClipboard())
+  // The slide list was clicked last (S-1): Ctrl+C / X / V then act on the whole slide. Thumbnails
+  // aren't focusable, so this follows the last pointer press instead of keyboard focus.
+  const slideListActiveRef = useRef(false)
+  useEffect(() => {
+    const onPointerDown = (e) => {
+      slideListActiveRef.current = Boolean(e.target?.closest?.('.aig-editor-minimap'))
+    }
+    document.addEventListener('pointerdown', onPointerDown, true)
+    return () => document.removeEventListener('pointerdown', onPointerDown, true)
+  }, [])
   const canvasSelectionIds = multiSelectIds.length
     ? multiSelectIds
     : [selectedElementId].filter(Boolean)
@@ -1734,6 +1864,8 @@ function AIPptEditor({
   const applySlideUpdate = useCallback((slidePayload, indexHint = 0) => {
     if (!slidePayload) return
     const normalized = normalizeSlideForEditor(slidePayload, indexHint, aspectRatio)
+    // The local copy now contains this reply (taken as is, or merged below).
+    adoptServerSlides([slidePayload])
     setLocalSlides((prev) => {
       const idx = prev.findIndex((s) => s.id === normalized.id)
       if (idx === -1) return prev
@@ -1741,21 +1873,29 @@ function AIPptEditor({
       const currentEls = current?.elements?.elements || []
       const incomingEls = normalized?.elements?.elements || []
 
-      // While flip/rotate/nudge patches are pending, never let a server echo
-      // replace optimistic element transforms with stale placement/content.
-      const preserveLocalElements =
-        elementMutationsRef.current?.hasPendingPatchesForSlide?.(normalized.id) ||
-        Object.keys(pendingPlacementRef.current).some((k) =>
-          k.startsWith(`${normalized.id}:`)
-        )
+      // Local work not on the server yet: element / placement patches, or a canvas save that is
+      // waiting, in flight or asked for again (D-3). A reply arriving then must not put the old
+      // content back (the next save would send it), nor drop what only the server has (e.g. an
+      // image just attached): merge both, with the copy the reply built on as the base.
+      const id = normalized.id
+      const hasUnsavedLocalWork =
+        elementMutationsRef.current?.hasPendingPatchesForSlide?.(id) ||
+        Object.keys(pendingPlacementRef.current).some((k) => k.startsWith(`${id}:`)) ||
+        canvasPendingRef.current.has(id) ||
+        canvasInflightRef.current.has(id) ||
+        canvasDirtyRef.current.has(id)
 
-      const mergedElements = preserveLocalElements
-        ? currentEls
-        : incomingEls.length > 0
-          ? incomingEls
-          : currentEls.length > 0
-            ? currentEls
-            : incomingEls
+      let mergedElements
+      if (hasUnsavedLocalWork && current?.elements && normalized?.elements) {
+        const incomingRevision = Number(slidePayload?.elements?.revision)
+        const base = Number.isInteger(incomingRevision)
+          ? getServerSlideBefore(id, incomingRevision)?.doc || null
+          : null
+        mergedElements = mergeSlideDocs(base, current.elements, normalized.elements).elements
+      } else {
+        mergedElements =
+          incomingEls.length > 0 ? incomingEls : currentEls.length > 0 ? currentEls : incomingEls
+      }
 
       const next = [...prev]
       next[idx] = {
@@ -1832,6 +1972,7 @@ function AIPptEditor({
         palette: tokens?.palette || null,
         themeTokens: tokens,
         deckPackId: packId,
+        skipSlideIds: editedSinceLoadRef.current,
       })
       if (didRepair) {
         const refreshed = await presentationService.getPresentation(workspaceId, presentationId)
@@ -1847,6 +1988,7 @@ function AIPptEditor({
       const shells = mergeLoadedSlides(localSlidesRef.current, slides, editedSinceLoadRef.current)
       setLocalSlides(shells)
       localSlidesRef.current = shells
+      adoptServerSlides(slides, editedSinceLoadRef.current, revisionsInReply(data))
     }
     slides = await hydrateSlidesGraphicElements(slides, {
       sequential: true,
@@ -1860,6 +2002,7 @@ function AIPptEditor({
           const next = [...base]
           next[at] = hydrated
           localSlidesRef.current = next
+          adoptServerSlides([hydrated])
           return next
         })
       },
@@ -1868,6 +2011,7 @@ function AIPptEditor({
       const merged = mergeLoadedSlides(localSlidesRef.current, slides, editedSinceLoadRef.current)
       setLocalSlides(merged)
       localSlidesRef.current = merged
+      adoptServerSlides(slides, editedSinceLoadRef.current, revisionsInReply(data))
     }
     setThemeTokens(tokens)
     setFontCssUrl(
@@ -1957,6 +2101,23 @@ function AIPptEditor({
     const passKey = `${presentationId}:${localSlides.length}:${deckStatus}`
     if (layoutRepairPassRef.current === passKey) return
 
+    // A slide the user changed this session, or with a save not finished yet, is never rebuilt
+    // from its layout: the rebuild was saved over the server copy and deleted the user's images (D-8).
+    const userTouchedSlideIds = () => {
+      const ids = new Set([
+        ...editedSinceLoadRef.current,
+        ...canvasPendingRef.current,
+        ...canvasInflightRef.current,
+        ...failedSlidesRef.current,
+      ])
+      // Same slide under its temporary id → its server id.
+      ;[...ids].forEach((id) => {
+        const mapped = slideIdMapRef.current[id]
+        if (mapped) ids.add(mapped)
+      })
+      return ids
+    }
+
     let cancelled = false
     ;(async () => {
       const didRepair = await repairPresentationLayoutSlides({
@@ -1968,13 +2129,20 @@ function AIPptEditor({
         palette: themeTokens?.palette || themeVisual?.palette || null,
         themeTokens,
         deckPackId,
+        skipSlideIds: userTouchedSlideIds(),
       })
       if (cancelled) return
       layoutRepairPassRef.current = passKey
       if (didRepair) {
         const data = await presentationService.getPresentation(workspaceId, presentationId)
         if (!cancelled) {
-          setLocalSlides(extractSlidesFromPresentation(data))
+          // Take the repaired slides from the server, but keep every slide edited meanwhile.
+          const fresh = extractSlidesFromPresentation(data)
+          const touched = userTouchedSlideIds()
+          const merged = mergeLoadedSlides(localSlidesRef.current, fresh, touched)
+          localSlidesRef.current = merged
+          setLocalSlides(merged)
+          adoptServerSlides(fresh, touched, revisionsInReply(data))
         }
       }
     })()
@@ -2032,34 +2200,90 @@ function AIPptEditor({
       if (!slideId) return
       editedSinceLoadRef.current.add(slideId)
       editedSinceLoadRef.current.add(resolvePersistedSlideId(slideId))
+      // The server flags a slide manuallyEdited on its first save; flag the local copy now, so an
+      // emptied slide shows blank at once instead of the content placeholder (B-3).
+      const local = localSlidesRef.current.find((s) => s.id === slideId)
+      if (local && !local.manuallyEdited) {
+        const next = localSlidesRef.current.map((s) => (s.id === slideId ? { ...s, manuallyEdited: true } : s))
+        localSlidesRef.current = next
+        setLocalSlides(next)
+      }
     },
     [resolvePersistedSlideId]
   )
 
   /** The slide's canvas as it should be saved: including the text being typed on it, if any. */
-  const canvasDocForSave = useCallback((slide) => {
-    const doc = slide?.elements
-    const draft = activeTextEditDraft()
-    if (!doc || !draft) return doc
-    const list = doc.elements || []
-    if (!list.some((el) => el.id === draft.elementId)) return doc
-    return {
-      ...doc,
-      elements: list.map((el) =>
-        el.id === draft.elementId
-          ? { ...el, content: contentWithSyncedText(el.content, draft.text, draft.runs) }
-          : el
-      ),
-    }
-  }, [])
+  /**
+   * The doc a canvas save sends: always built from the whole slide. The editor's normalised
+   * slide keeps background keys on the slide itself, not in `slide.elements`, so sending
+   * `slide.elements` as loaded (undo, re-created slides, merges, pre-export saves) replaced the
+   * stored doc without them and wiped the slide's background colour / gradient / image.
+   * The text being typed in a box on this slide is included.
+   */
+  const canvasDocForSave = useCallback(
+    (slide) => {
+      if (!slide?.elements) return slide?.elements
+      const list = Array.isArray(slide.elements.elements) ? slide.elements.elements : []
+      const doc = buildCanvasDoc(slide, { aspectRatio, elements: list })
+      // The stored background picture follows the background photo element (replaced, refitted):
+      // exports and thumbnails read this copy (E-4a).
+      const photo = slideBackgroundPhotoElement({ ...slide, elements: { ...slide.elements, elements: list } })
+      if (photo) {
+        doc.backgroundImage = photo.content?.url || photo.content?.src || photo.content?.thumbnailUrl
+        doc.backgroundImageFit = photo.content?.fit || 'cover'
+        doc.backgroundImageElementId = photo.id
+      }
+      const draft = activeTextEditDraft()
+      if (!draft || !list.some((el) => el.id === draft.elementId)) return doc
+      return {
+        ...doc,
+        elements: list.map((el) =>
+          el.id === draft.elementId
+            ? { ...el, content: contentWithSyncedText(el.content, draft.text, draft.runs) }
+            : el
+        ),
+      }
+    },
+    [aspectRatio]
+  )
 
   /**
    * Save one slide's canvas now (its latest local state). `slideId` may be the temporary id of a
    * slide still being created: the save waits for it and uses its real id (a save to the
    * temporary id used to be dropped or 404). `deck` pins the deck, for saves sent while leaving it.
    */
+  /**
+   * A canvas save was refused because the slide changed on the server since this tab's copy
+   * (another tab, person or server action). Fetch the server copy and merge it with the local
+   * one (mergeSlideDocs: both sides' changes are kept), so the next save carries both (D-1).
+   * Returns true when the slide was merged and should be saved again.
+   */
+  const mergeSlideAfterConflict = useCallback(
+    async (ws, pid, id, baseDoc) => {
+      let serverSlide = null
+      try {
+        const raw = await presentationService.getSlide(ws, pid, id)
+        serverSlide = extractSlideFromMutation(raw) || raw
+      } catch {
+        return false
+      }
+      if (!serverSlide?.elements || !Array.isArray(serverSlide.elements.elements)) return false
+      if (serverSlide.status === 'PENDING' || serverSlide.status === 'GENERATING') return false
+      const current = localSlidesRef.current.find((s) => s.id === id)
+      if (!current) return false
+      const merged = mergeSlideDocs(baseDoc, canvasDocForSave(current), serverSlide.elements)
+      const next = localSlidesRef.current.map((s) => (s.id === id ? withSlideDoc(s, merged) : s))
+      localSlidesRef.current = next
+      setLocalSlides(next)
+      adoptServerSlides([serverSlide])
+      return true
+    },
+    [canvasDocForSave]
+  )
+
+  const saveSlideCanvasNowRef = useRef(null)
   const saveSlideCanvasNow = useCallback(
-    async (slideId, { keepalive = false, deck = null } = {}) => {
+    async (slideId, { keepalive = false, deck = null, conflictRetries = 0 } = {}) => {
       const ws = deck?.workspaceId ?? workspaceId
       const pid = deck?.presentationId ?? presentationId
       if (!ws || !pid || !slideId || viewOnly) return
@@ -2071,29 +2295,70 @@ function AIPptEditor({
       // Still not created (it failed, or the page is closing): the add request carries its content.
       if (isOptimisticSlideId(id)) return
       if (regeneratingSlideIdsRef.current.has(id)) return
+      // One save per slide at a time (D-2): two saves racing could land out of order and leave the
+      // older content on the server. A save asked for meanwhile runs once this one returns.
+      // Saves sent while the page closes skip the queue: they won't get another chance.
+      if (!keepalive && canvasInflightRef.current.has(id)) {
+        canvasDirtyRef.current.add(id)
+        return
+      }
       const slide = localSlidesRef.current.find((s) => s.id === id || s.id === slideId)
       const doc = canvasDocForSave(slide)
       if (!doc) return
-      const draft = doc !== slide.elements ? activeTextEditDraft() : null
+      // The draft this save carries (only when the box being typed in is on this slide).
+      const typing = activeTextEditDraft()
+      const draft =
+        typing && (slide.elements?.elements || []).some((el) => el.id === typing.elementId) ? typing : null
+      // The server copy this tab's edits build on (D-1).
+      const known = getLocalBase(id)
+      // A save sent while the page closes can't be refused and retried: the server merges it
+      // instead when the slide moved on (keeps elements added elsewhere since). It needs the
+      // element ids this tab knew at that revision, to tell "added elsewhere" from "removed here".
+      const sendDoc =
+        keepalive && known
+          ? { ...doc, clientMerge: { knownElementIds: (known.doc?.elements || []).map((el) => el?.id).filter(Boolean) } }
+          : doc
+      let saveAgain = null
       canvasInflightRef.current.add(id)
       try {
-        await presentationService.saveCanvas(ws, pid, id, doc, { keepalive })
+        const saved = await presentationService.saveCanvas(ws, pid, id, sendDoc, {
+          keepalive,
+          baseRevision: known?.revision,
+        })
+        // The server now holds exactly what was sent: later edits build on that revision.
+        adoptServerSlides([saved?.slide || saved])
         // Do not applySlideUpdate — server echo races rapid flip/rotate/nudge
         failedSlidesRef.current.delete(id)
         if (draft) draftSavedRef.current.set(draft.elementId, draft.text)
       } catch (err) {
-        failedSlidesRef.current.add(id)
-        if (err instanceof PresentationConflictError) {
-          setError('Presentation is generating — canvas edits are locked.')
-        } else if (!keepalive) {
-          setError(err.message || 'Failed to save canvas')
+        const revisionConflict =
+          err instanceof PresentationConflictError && !keepalive && known && conflictRetries < 2
+        if (revisionConflict && (await mergeSlideAfterConflict(ws, pid, id, known.doc))) {
+          saveAgain = { deck, conflictRetries: conflictRetries + 1 }
+        } else {
+          failedSlidesRef.current.add(id)
+          if (err instanceof PresentationConflictError) {
+            setError(
+              /generat/i.test(err.message || '')
+                ? 'Presentation is generating — canvas edits are locked.'
+                : err.message || 'This slide was changed somewhere else. Reload it and try again.'
+            )
+          } else if (!keepalive) {
+            setError(err.message || 'Failed to save canvas')
+          }
         }
       } finally {
         canvasInflightRef.current.delete(id)
       }
+      if (saveAgain) {
+        canvasDirtyRef.current.delete(id)
+        return saveSlideCanvasNowRef.current?.(id, saveAgain)
+      }
+      if (canvasDirtyRef.current.delete(id)) return saveSlideCanvasNowRef.current?.(id, { deck })
     },
-    [workspaceId, presentationId, viewOnly, resolvePersistedSlideId, canvasDocForSave]
+    [workspaceId, presentationId, viewOnly, resolvePersistedSlideId, canvasDocForSave, mergeSlideAfterConflict]
   )
+  saveSlideCanvasNowRef.current = saveSlideCanvasNow
 
   const queueCanvasSave = useCallback(
     (slideId, _canvasDoc) => {
@@ -2216,11 +2481,11 @@ function AIPptEditor({
       .map((s) => {
         const id = resolvePersistedSlideId(s.id)
         if (isOptimisticSlideId(id)) return null
-        return presentationService.saveCanvas(workspaceId, presentationId, id, s.elements)
+        return presentationService.saveCanvas(workspaceId, presentationId, id, canvasDocForSave(s))
       })
       .filter(Boolean)
     if (saves.length) await Promise.all(saves)
-  }, [workspaceId, presentationId, viewOnly, isGenerating, resolvePersistedSlideId])
+  }, [workspaceId, presentationId, viewOnly, isGenerating, resolvePersistedSlideId, canvasDocForSave])
 
   // Export reads the saved deck, so every edit must be on the server first:
   // 1. element edits still waiting on their debounce are cancelled — their slides get a full
@@ -2313,6 +2578,17 @@ function AIPptEditor({
     (snapshot) => {
       if (!snapshot?.slides) return
 
+      // What is local now, and which slides still had an edit waiting to be saved: the restore
+      // cancels those saves, so they are re-sent below (N-1).
+      const slidesBeforeRestore = localSlidesRef.current || []
+      const cancelledSaveIds = new Set([
+        // Timers stay in canvasSaveTimers after they fire; canvasPendingRef holds the unsent ones.
+        ...canvasPendingRef.current,
+        ...Object.keys(elementPatchTimers.current).map((key) => key.slice(0, key.indexOf(':'))),
+        ...(elementMutationsRef.current?.pendingPatchSlideIds?.() || []),
+        ...failedSlidesRef.current,
+      ])
+
       Object.values(elementPatchTimers.current).forEach((t) => clearTimeout(t))
       Object.values(canvasSaveTimers.current).forEach((t) => clearTimeout(t))
       elementPatchTimers.current = {}
@@ -2346,11 +2622,75 @@ function AIPptEditor({
         skipTextCommitRef.current = false
       })
 
-      ;(slides || []).forEach((slide) => {
-        if (slide?.id && slide.elements) queueCanvasSave(slide.id, slide.elements)
+      // Tell the server about slides the restore removed, brought back or reordered (D-5): the
+      // undo used to stay local, so an undone "add slide" came back on reload and an undone
+      // "delete slide" existed only in this tab.
+      const { removed, recreated, orderChanged } = slideListChanges(
+        slidesBeforeRestore.map((slide) => resolvePersistedSlideId(slide?.id)),
+        slides.map((slide) => slide?.id),
+        isOptimisticSlideId
+      )
+      const recreatedSet = new Set(recreated)
+
+      // Save only slides the restore changed (or whose pending save it cancelled). Saving every
+      // slide wrote this tab's copy of the whole deck over the server (N-1). Re-created slides
+      // carry their content in the add request instead (their old id is gone on the server).
+      const toSave = new Set(
+        slidesToSaveAfterRestore(slidesBeforeRestore, slides, cancelledSaveIds, resolvePersistedSlideId)
+      )
+      slides.forEach((slide) => {
+        if (toSave.has(slide.id) && !recreatedSet.has(slide.id)) queueCanvasSave(slide.id, slide.elements)
+      })
+
+      if (!workspaceId || !presentationId || viewOnly) return
+      if (!removed.length && !recreated.length && !orderChanged) return
+      enqueueSlidePersist(async () => {
+        try {
+          for (const id of removed) {
+            // Already gone (404) is fine: the goal is that it doesn't exist.
+            await presentationService.deleteSlide(workspaceId, presentationId, id).catch(() => {})
+          }
+          for (const oldId of recreated) {
+            const list = localSlidesRef.current
+            const at = list.findIndex((slide) => slide.id === oldId)
+            if (at < 0) continue // undone again meanwhile
+            const slide = list[at]
+            const prev = list
+              .slice(0, at)
+              .reverse()
+              .find((s) => !isOptimisticSlideId(s.id) && !recreatedSet.has(s.id))
+            const doc = canvasDocForSave(slide)
+            const created = await presentationService.addSlide(workspaceId, presentationId, {
+              ...(prev ? { afterSlideId: prev.id } : {}),
+              ...(slide.title ? { title: slide.title } : {}),
+              ...(slide.layoutId ? { layoutId: slide.layoutId } : {}),
+              ...(doc ? { elements: doc } : {}),
+            })
+            const newId = createdSlideIdFromPayload(created)
+            if (newId) {
+              recreatedSet.delete(oldId)
+              remapSlideId(oldId, newId)
+            }
+          }
+          const ids = localSlidesRef.current.map((slide) => resolvePersistedSlideId(slide.id))
+          if (ids.length > 1 && !ids.some(isOptimisticSlideId)) {
+            await presentationService.reorderSlides(workspaceId, presentationId, ids)
+          }
+        } catch (err) {
+          setError(err.message || 'Could not save the undo of the slide change. Reload to see the saved deck.')
+        }
       })
     },
-    [queueCanvasSave, resolvePersistedSlideId]
+    [
+      queueCanvasSave,
+      resolvePersistedSlideId,
+      workspaceId,
+      presentationId,
+      viewOnly,
+      enqueueSlidePersist,
+      canvasDocForSave,
+      remapSlideId,
+    ]
   )
 
   const elementMutations = usePptElementMutations({
@@ -2817,6 +3157,52 @@ function AIPptEditor({
       }
     },
     [selectedSlideId, localSlides, workspaceId, presentationId, aspectRatio, queueCanvasSave, pushHistorySnapshot]
+  )
+
+  /** Design → Background photo → Edit photo: select it, which opens its Image panel (E-4a). */
+  const handleEditBackgroundPhoto = useCallback(
+    (elementId, onSlideId = null) => {
+      if (!elementId || viewOnly) return
+      const slideId = onSlideId || selectedSlideIdRef.current || localSlidesRef.current[0]?.id
+      setMultiSelectIds([elementId])
+      setSelectedElementId(elementId)
+      if (slideId && slideId !== selectedSlideIdRef.current) setSelectedSlideId(slideId)
+    },
+    [viewOnly]
+  )
+
+  /**
+   * Design → Background photo → Remove (E-4a): the photo and the slide's background image go
+   * in one undo step. A background set from Design → Add image (no element) only loses the image.
+   */
+  const handleRemoveBackgroundPhoto = useCallback(
+    (elementId) => {
+      const slideId = selectedSlideIdRef.current || localSlidesRef.current[0]?.id
+      const slide = localSlidesRef.current.find((s) => s.id === slideId)
+      if (!slide || viewOnly) return
+      pushHistorySnapshot()
+      const elements = (slide.elements?.elements || []).filter((el) => !elementId || el.id !== elementId)
+      const nextDoc = buildCanvasDoc({ ...slide, ...NO_BACKGROUND_IMAGE }, { aspectRatio, elements })
+      const next = localSlidesRef.current.map((s) =>
+        s.id === slideId ? { ...s, ...NO_BACKGROUND_IMAGE, elements: nextDoc } : s
+      )
+      localSlidesRef.current = next
+      setLocalSlides(next)
+      if (elementId) {
+        setSelectedElementId((prev) => (prev === elementId ? null : prev))
+        setMultiSelectIds((prev) => prev.filter((id) => id !== elementId))
+      }
+      if (!workspaceId || !presentationId) return
+      presentationService
+        .patchSlide(workspaceId, presentationId, slideId, {
+          backgroundImage: null,
+          backgroundImageFit: null,
+          backgroundImageElementId: null,
+        })
+        .catch(() => {})
+      queueCanvasSave(slideId, nextDoc)
+    },
+    [viewOnly, pushHistorySnapshot, aspectRatio, workspaceId, presentationId, queueCanvasSave]
   )
 
   const handleToggleImageAsBackground = useCallback(
@@ -3416,7 +3802,7 @@ function AIPptEditor({
     const layoutId = options.layoutId || null
     const layoutSchema = options.schema || null
     const title = seed?.title || options.name || 'Blank Slide'
-    const description = seed?.description ?? 'Double click to add content.'
+    let description = seed?.description ?? ''
     let seedElements = Array.isArray(seed?.elements) ? seed.elements : []
     const canvas = resolveCanvasSize(null, aspectRatio)
     const schema =
@@ -3431,20 +3817,36 @@ function AIPptEditor({
     } else if (!seedElements.length && layoutSchemaHasCanvasElements(schema)) {
       seedElements = resolveLayoutCanvasElementsDoc(schema)?.elements || []
     }
+    // A blank slide (no layout, no seed content) gets real title / body text boxes. Without
+    // elements the stage drew the slide's title + description as read-only fallback markup
+    // (SlideMockFallback), which could not be selected, edited or deleted.
+    if (!seedElements.length && !seed) {
+      seedElements = buildBlankSlideElements(canvas)
+      description = ''
+    }
 
     const tempId = `new-slide-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+    // A pasted slide (S-1) brings its background, transition and speaker notes.
+    const extras = options.slideExtras || null
     const newSlide = {
       id: tempId,
       clientKey: tempId,
       title,
       description,
       layoutId: layoutId || schema?.layout_id || null,
+      ...(extras?.background || {}),
       elements: {
         version: 1,
         canvas,
         elements: seedElements,
+        ...(extras?.background || {}),
+        ...(extras?.transition && extras.transition !== 'none' ? { transition: extras.transition } : {}),
+        ...(extras?.speakerNotes ? { speakerNotes: extras.speakerNotes } : {}),
       },
-      transition: 'none',
+      transition: extras?.transition || 'none',
+      ...(extras?.speakerNotes ? { speakerNotes: extras.speakerNotes } : {}),
+      // A pasted slide is the user's content: never rebuilt from its layout (D-8).
+      ...(extras ? { manuallyEdited: true } : {}),
       progressStatus: null,
       status: 'READY',
     }
@@ -3459,6 +3861,7 @@ function AIPptEditor({
       return next
     })
     selectSlide(tempId, 'sidebar')
+    if (extras) markSlideEdited(tempId)
 
     if (!workspaceId || !presentationId) return
 
@@ -3579,6 +3982,30 @@ function AIPptEditor({
     await handleAddSlide(index, {
       seed: pick?.seed || null,
       name: pick?.name || pick?.seed?.title || 'Blank Slide',
+    })
+  }
+
+  /** Copy (or cut) a whole slide to the slide clipboard (S-1): elements, background, notes. */
+  const handleCopySlide = (slideId, { cut = false } = {}) => {
+    const slide = localSlidesRef.current.find((s) => s.id === slideId)
+    if (!slide) return
+    const clip = buildSlideClip(slide, canvasDocForSave(slide))
+    if (!clip || !writeSlideClipboard(clip)) return
+    setSlideClipboardReady(true)
+    if (cut && !viewOnly) handleDeleteSlide(slideId)
+  }
+
+  /** Paste the copied slide right after `afterSlideId` (S-1). One undo step, saved like any added slide. */
+  const handlePasteSlide = (afterSlideId) => {
+    if (viewOnly) return
+    const pasted = pastedSlideFromClip(readSlideClipboard())
+    if (!pasted) return
+    const list = localSlidesRef.current
+    const at = list.findIndex((s) => s.id === afterSlideId)
+    handleAddSlide(at >= 0 ? at : list.length - 1, {
+      seed: { title: pasted.title, description: '', elements: pasted.elements },
+      layoutId: pasted.layoutId,
+      slideExtras: { background: pasted.background, transition: pasted.transition, speakerNotes: pasted.speakerNotes },
     })
   }
 
@@ -4316,14 +4743,23 @@ function AIPptEditor({
   const handleMediaAttached = useCallback(
     async (result) => {
       const slide = extractSlideFromMutation(result)
+      // The insert is an undo step of its own: without this snapshot, the next Ctrl+Z went back
+      // to before the previous edit and removed the new image together with that edit.
+      pushHistorySnapshot()
+      // The server added the image without a canvas save from here: mark the slide as the
+      // user's so layout repair never rebuilds over it (D-8).
       if (slide) {
         applySlideUpdate(slide)
+        markSlideEdited(slide.id)
         return
       }
       const slideId = selectedSlideId || localSlides[0]?.id
-      if (slideId) await refreshSlide(slideId)
+      if (slideId) {
+        markSlideEdited(slideId)
+        await refreshSlide(slideId)
+      }
     },
-    [applySlideUpdate, refreshSlide, selectedSlideId, localSlides]
+    [applySlideUpdate, refreshSlide, selectedSlideId, localSlides, markSlideEdited, pushHistorySnapshot]
   )
 
   const handleFillDeviceFrame = useCallback(
@@ -4521,7 +4957,7 @@ function AIPptEditor({
       setSelectedElementId(null)
 
       try {
-        const canvasDoc = await applyCompiledLayoutToSlide({
+        const compiledDoc = await applyCompiledLayoutToSlide({
           workspaceId,
           presentationId,
           slideId,
@@ -4535,6 +4971,9 @@ function AIPptEditor({
           mergeFromElements: originalElements,
           skipSave: true,
         })
+        // The new layout only has its own slots: keep the pictures, charts and tables the user
+        // added (and a background image) instead of deleting them with the old layout.
+        const canvasDoc = compiledDoc ? carryOverUserContent(compiledDoc, slide.elements) : compiledDoc
         if (canvasDoc) {
           setLocalSlides((prev) => {
             const next = prev.map((s) =>
@@ -4574,6 +5013,8 @@ function AIPptEditor({
 
   // Keep keyboard ctx fresh without rebinding the listener every nudge (key-repeat lag).
   keyCtxRef.current = {
+    handleCopySlide,
+    handlePasteSlide,
     viewOnly,
     editingTextId,
     selectedElementId,
@@ -4614,6 +5055,15 @@ function AIPptEditor({
 
       const mod = e.ctrlKey || e.metaKey
       const key = String(e.key || '').toLowerCase()
+
+      // Ctrl/Cmd+S saves now (K-1). Always swallowed, also while typing: the browser's
+      // "Save page as" is never what's wanted here. Text being typed is part of the save.
+      if (mod && key === 's' && !e.altKey) {
+        e.preventDefault()
+        e.stopPropagation()
+        if (!ctx.viewOnly && !e.shiftKey) flushAllSavesNowRef.current?.()
+        return
+      }
 
       // Slide text uses editor history. Native undo on controlled fields flashes
       // restored text then React overwrites it with the empty value.
@@ -4712,6 +5162,29 @@ function AIPptEditor({
         ctx.elementMutations.duplicateElement(selectionIds)
         return
       }
+      // A slide thumbnail has focus (S-1): copy / cut / paste the whole slide.
+      const inSlideList = Boolean(
+        !typing &&
+          (slideListActiveRef.current ||
+            e.target?.closest?.('.aig-editor-minimap') ||
+            active?.closest?.('.aig-editor-minimap'))
+      )
+      if (inSlideList && mod && (key === 'c' || key === 'x') && ctx.selectedSlideId) {
+        e.preventDefault()
+        if (key === 'x' && ctx.viewOnly) return
+        ctx.handleCopySlide(ctx.selectedSlideId, { cut: key === 'x' })
+        return
+      }
+      if (inSlideList && mod && key === 'v' && hasSlideClipboard()) {
+        e.preventDefault()
+        if (ctx.viewOnly) {
+          ctx.askOwner()
+          return
+        }
+        ctx.handlePasteSlide(ctx.selectedSlideId)
+        return
+      }
+
       // Copy/cut/paste go through the browser's clipboard events (see useEditorClipboard), so
       // an image copied in another app can be pasted, and copied elements still paste here.
       if (mod && key === 'c') {
@@ -5028,6 +5501,7 @@ function AIPptEditor({
             onSharePreview={() => setShareOpen(true)}
             onUndo={viewOnly ? askOwner : handleUndo}
             onRedo={viewOnly ? askOwner : handleRedo}
+            onSaveNow={viewOnly ? undefined : () => flushAllSavesNow()}
             onExit={onBack}
             onConvertToTemplate={
               canAccessSuperadminPortal && !viewOnly
@@ -5050,6 +5524,7 @@ function AIPptEditor({
                 className={`aig-editor-badge aig-editor-badge--${saveState}`}
                 role="status"
                 aria-live="polite"
+                title="Changes save automatically. Ctrl+S (Cmd+S) saves now."
               >
                 {saveState === 'saving' ? 'Saving…' : 'Saved'}
               </span>
@@ -5076,22 +5551,23 @@ function AIPptEditor({
             workspaceId={viewOnly ? undefined : workspaceId}
             presentationId={presentationId}
             slideId={selectedSlide?.id}
+            // Clicking a Media photo fills a selected device frame (the panel says so). With a plain
+            // image selected it adds a new image: replacing it was surprising and lost the old one
+            // (D-4). Replacing an image is done with its Replace action.
             targetElementId={
-              selectedSlide?.elements?.elements?.find((el) => el.id === selectedElementId)
-                ?.type === 'image'
-                ? selectedElementId
-                : null
+              (() => {
+                const selected = selectedSlide?.elements?.elements?.find(
+                  (el) => el.id === selectedElementId
+                )
+                return selected && isPptDeviceFrameElement(selected) ? selectedElementId : null
+              })()
             }
             fillElementId={
               (() => {
                 const selected = selectedSlide?.elements?.elements?.find(
                   (el) => el.id === selectedElementId
                 )
-                if (!selected) return null
-                if (isPptDeviceFrameElement(selected) || selected.type === 'image') {
-                  return selectedElementId
-                }
-                return null
+                return selected && isPptDeviceFrameElement(selected) ? selectedElementId : null
               })()
             }
             onFillElement={(content) => {
@@ -5504,6 +5980,22 @@ function AIPptEditor({
                         if (viewOnly) return
                         selectCanvasElement(slide.id, id, event)
                       }}
+                      // Empty slide space opens Design → Background (E-4a).
+                      onEmptyClick={
+                        viewOnly
+                          ? undefined
+                          : () => {
+                              // A click on a background photo selects it, like any picture: its
+                              // Image panel opens (crop, replace, filters, "Use as background").
+                              // A second click (photo already selected) goes to Slide design.
+                              const bg = backgroundPhotoOf(slide)
+                              if (bg?.elementId && selectedElementIdRef.current !== bg.elementId) {
+                                handleEditBackgroundPhoto(bg.elementId, slide.id)
+                              } else {
+                                setOpenDesignRequest((n) => n + 1)
+                              }
+                            }
+                      }
                       onContextMenuElement={(id, event) => {
                         if (viewOnly) return
                         openElementContextMenu(slide.id, id, event)
@@ -5619,6 +6111,11 @@ function AIPptEditor({
           onApplyLayout={handleApplyLayout}
           onResetBackground={() => handleBackgroundColorChange(DEFAULT_SLIDE_BG)}
           onAddBackgroundImage={openMediaForBackground}
+          backgroundPhoto={backgroundPhoto}
+          onEditBackgroundPhoto={handleEditBackgroundPhoto}
+          onStopBackgroundPhoto={(elementId) => handleToggleImageAsBackground(elementId, false)}
+          onRemoveBackgroundPhoto={handleRemoveBackgroundPhoto}
+          openDesignRequest={openDesignRequest}
           onChangeTransition={handleChangeTransition}
           onChangeSlideStatus={handleChangeSlideStatus}
           onChangeElementContent={handleChangeElementContentWithBackground}
@@ -5816,6 +6313,8 @@ function AIPptEditor({
                         }}
                         onCloseMenu={closeMinimapMenu}
                         onDuplicate={() => handleDuplicateSlide(slide.id)}
+                        onCopySlide={() => handleCopySlide(slide.id)}
+                        onPasteSlide={slideClipboardReady ? () => handlePasteSlide(slide.id) : undefined}
                         onDelete={() => handleDeleteSlide(slide.id)}
                         onAddAfter={() => openAddSlideModal(idx)}
                         onMoveUp={() => handleReorderSlides(idx, idx - 1)}

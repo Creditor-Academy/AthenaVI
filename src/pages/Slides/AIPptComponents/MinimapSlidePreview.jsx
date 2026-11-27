@@ -5,6 +5,7 @@ import { EDITOR_STAGE_WIDTH } from '../../../utils/slideStageElements'
 import { resolveLayoutSchemaById } from '../../../utils/deckLayoutRegistry'
 import {
   getSlideImage,
+  showsSlideFallback,
   isSlideBackgroundElement,
   resolveCanvasSize,
   resolveSlideStageBackground,
@@ -184,7 +185,8 @@ function MinimapSlidePreview({
               </div>
             )
           })
-        ) : (
+        ) : !showsSlideFallback(slide) ? null : (
+          // Placeholder only for slides that never had a canvas; an emptied slide stays blank (B-3).
           <div className="aig-slide-mock aig-minimap-preview-mock">
             <h1 className="aig-slide-mock-title" style={{ color: themeVisual?.title }}>
               {slide?.title || slide?.content?.title || ''}

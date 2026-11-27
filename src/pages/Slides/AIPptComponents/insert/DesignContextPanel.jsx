@@ -93,6 +93,10 @@ function SlideDesignSection({
   onBackgroundColorChange,
   onBackgroundGradientChange,
   onAddBackgroundImage,
+  backgroundPhoto = null,
+  onEditBackgroundPhoto,
+  onStopBackgroundPhoto,
+  onRemoveBackgroundPhoto,
   onSlideStylesChange,
   onChangeTransition,
   disabled,
@@ -158,6 +162,56 @@ function SlideDesignSection({
               Reset
             </button>
           </div>
+          {backgroundPhoto?.url ? (
+            // A photo used as the background is out of the clickable layer: reach it from here (E-4a).
+            <div className="ppt-bg-photo" data-testid="background-photo">
+              <div className="ppt-bg-photo-head">
+                <span className="ppt-props-row-label">Background photo</span>
+                <span className="ppt-bg-photo-caption">Fills the slide</span>
+              </div>
+              <button
+                type="button"
+                className="ppt-bg-photo-thumb-btn"
+                disabled={disabled || !backgroundPhoto.elementId}
+                onClick={() => backgroundPhoto.elementId && onEditBackgroundPhoto?.(backgroundPhoto.elementId)}
+                title={backgroundPhoto.elementId ? 'Edit photo' : undefined}
+              >
+                <img className="ppt-bg-photo-thumb" src={backgroundPhoto.url} alt="Slide background photo" />
+              </button>
+              <div className="ppt-bg-photo-actions">
+                {backgroundPhoto.elementId ? (
+                  <button
+                    type="button"
+                    className="ppt-props-action-btn ppt-bg-photo-btn ppt-bg-photo-btn--primary"
+                    disabled={disabled}
+                    onClick={() => onEditBackgroundPhoto?.(backgroundPhoto.elementId)}
+                  >
+                    <FiImage size={15} aria-hidden />
+                    Edit photo
+                  </button>
+                ) : null}
+                {backgroundPhoto.elementId ? (
+                  <button
+                    type="button"
+                    className="ppt-props-action-btn ppt-props-action-btn--ghost ppt-bg-photo-btn"
+                    disabled={disabled}
+                    title="Turn it back into a normal photo you can move, resize and crop"
+                    onClick={() => onStopBackgroundPhoto?.(backgroundPhoto.elementId)}
+                  >
+                    Detach from background
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="ppt-props-action-btn ppt-props-action-btn--ghost ppt-bg-photo-btn ppt-bg-photo-btn--danger"
+                  disabled={disabled}
+                  onClick={() => onRemoveBackgroundPhoto?.(backgroundPhoto.elementId || null)}
+                >
+                  Remove photo
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -865,8 +919,14 @@ function ImageDesignSection({
                   type="button"
                   data-crop-ui=""
                   className="ppt-photo-action ppt-photo-action--primary"
-                  disabled={disabled || !hasPhoto}
-                  title={hasPhoto ? 'Crop on the slide' : 'Add an image first, then crop it'}
+                  disabled={disabled || !hasPhoto || isBackground}
+                  title={
+                    isBackground
+                      ? 'Turn off "Use as background" to crop this photo'
+                      : hasPhoto
+                        ? 'Crop on the slide'
+                        : 'Add an image first, then crop it'
+                  }
                   onClick={onCropImage}
                 >
                   <FiCrop size={15} aria-hidden />
@@ -882,7 +942,14 @@ function ImageDesignSection({
                   Replace
                 </button>
               </div>
-              {hasPhoto ? (
+              {isBackground ? (
+                // A background photo fills the slide and isn't drawn as a movable picture, so crop,
+                // move and resize only work once it's a normal image again (E-4a).
+                <p className="ppt-photo-hint">
+                  This photo fills the slide background. Turn off “Use as background” below to crop,
+                  move or resize it.
+                </p>
+              ) : hasPhoto ? (
                 <p className="ppt-photo-hint">Tip: double-click the photo on the slide to crop it.</p>
               ) : null}
 
@@ -1255,6 +1322,10 @@ export default function DesignContextPanel({
   selectedLayoutId,
   onSelectLayoutId,
   onApplyLayout,
+  backgroundPhoto = null,
+  onEditBackgroundPhoto,
+  onStopBackgroundPhoto,
+  onRemoveBackgroundPhoto,
   onBackgroundColorChange,
   onBackgroundGradientChange,
   onAddBackgroundImage,
@@ -1288,6 +1359,10 @@ export default function DesignContextPanel({
           onBackgroundColorChange={onBackgroundColorChange}
           onBackgroundGradientChange={onBackgroundGradientChange}
           onAddBackgroundImage={onAddBackgroundImage}
+          backgroundPhoto={backgroundPhoto}
+          onEditBackgroundPhoto={onEditBackgroundPhoto}
+          onStopBackgroundPhoto={onStopBackgroundPhoto}
+          onRemoveBackgroundPhoto={onRemoveBackgroundPhoto}
           onSlideStylesChange={onSlideStylesChange}
           onChangeTransition={onChangeTransition}
           disabled={disabled}

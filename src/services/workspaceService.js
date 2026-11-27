@@ -1,4 +1,5 @@
 import API_CONFIG, { buildUrl, getAuthHeaders } from '../config/api.js';
+import { apiErrorFromResponse } from '../utils/apiUserMessage.js';
 import videoLibraryService from './videoLibraryService.js';
 import inboxService from './inboxService.js';
 import { mapInboxNotificationsToInvitations } from '../utils/inboxInvitationMapper.js';
@@ -1032,8 +1033,8 @@ class WorkspaceService {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `Failed to generate speech: ${response.status}`);
+      // Keeps status (402 credits, 409 not ready) and never the raw body.
+      throw await apiErrorFromResponse(response, 'Failed to generate speech');
     }
 
     const data = await response.json().catch(() => ({}));
@@ -1048,8 +1049,8 @@ class WorkspaceService {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `Failed to fetch speech: ${response.status}`);
+      // Keeps status (402 credits, 409 not ready) and never the raw body.
+      throw await apiErrorFromResponse(response, 'Failed to fetch speech');
     }
 
     const data = await response.json().catch(() => ({}));
@@ -1067,8 +1068,8 @@ class WorkspaceService {
     );
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `Failed to download speech: ${response.status}`);
+      // Keeps status (402 credits, 409 not ready) and never the raw body.
+      throw await apiErrorFromResponse(response, 'Failed to download speech');
     }
 
     const data = await response.json().catch(() => ({}));
@@ -1089,8 +1090,7 @@ class WorkspaceService {
     );
 
     if (!response.ok) {
-      const errorText = await response.text().catch(() => '');
-      throw new Error(errorText || `Failed to stream speech: ${response.status}`);
+      throw await apiErrorFromResponse(response, 'Failed to stream speech');
     }
 
     const blob = await response.blob();

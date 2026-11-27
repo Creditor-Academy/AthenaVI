@@ -396,6 +396,12 @@ export default function EditorRightRail({
   onBackgroundGradientChange,
   onBackgroundColorChange,
   designFocus = 'slide',
+  backgroundPhoto = null,
+  onEditBackgroundPhoto,
+  onStopBackgroundPhoto,
+  onRemoveBackgroundPhoto,
+  // Bumped by the editor to open Design (e.g. a click on empty slide space, E-4a).
+  openDesignRequest = 0,
   layoutSchemaMap = {},
   aspectRatio = '16:9',
   disabled = false,
@@ -425,6 +431,16 @@ export default function EditorRightRail({
 }) {
   const [active, setActive] = useState(null)
   const [aiOpen, setAiOpen] = useState(false)
+  // A new "open Design" request from the editor (E-4a): adjust state while rendering, React's
+  // pattern for state that follows a prop.
+  const [seenDesignRequest, setSeenDesignRequest] = useState(openDesignRequest)
+  if (openDesignRequest !== seenDesignRequest) {
+    setSeenDesignRequest(openDesignRequest)
+    if (openDesignRequest) {
+      setActive('design')
+      setAiOpen(false)
+    }
+  }
   const [layoutTemplates, setLayoutTemplates] = useState([])
   const [layoutLoading, setLayoutLoading] = useState(false)
   const [selectedLayoutId, setSelectedLayoutId] = useState('')
@@ -589,6 +605,10 @@ export default function EditorRightRail({
                 onBackgroundColorChange={onBackgroundColorChange}
                 onBackgroundGradientChange={onBackgroundGradientChange}
                 onAddBackgroundImage={onAddBackgroundImage}
+                backgroundPhoto={backgroundPhoto}
+                onEditBackgroundPhoto={onEditBackgroundPhoto}
+                onStopBackgroundPhoto={onStopBackgroundPhoto}
+                onRemoveBackgroundPhoto={onRemoveBackgroundPhoto}
                 onSlideStylesChange={onSlideStylesChange}
                 onChangeElementContent={(content) =>
                   selectedElementId && onChangeElementContent?.(selectedElementId, content)

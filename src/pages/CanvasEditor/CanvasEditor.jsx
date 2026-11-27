@@ -103,6 +103,8 @@ import {
   buildDeviceFrameScreenPatch,
   clearDeviceFrameScreenPatch,
 } from '../../components/ppt/DeviceFrameVisual'
+import { activeTextEditDraft, subscribeTextEditDraft } from '../../utils/textEditDraft'
+import { canvasesWithTextDraft } from './canvasTextDraft'
 import '../Slides/AIPptComponents/pptEditorExtras.css'
 import '../Slides/AIPptGenerator.css'
 import './CanvasEditor.css'
@@ -266,6 +268,8 @@ export default function CanvasEditor({
   }, [])
   const saveTimerRef = useRef(null)
   const savingRef = useRef(false)
+  // elementId → text last saved from the box being typed in (C-1).
+  const draftSavedRef = useRef(new Map())
   const pendingSaveRef = useRef(false)
   // Server revision this editor last loaded or saved. Sent with every save so the server
   // refuses (409) instead of overwriting a newer save from another tab or person.
@@ -336,16 +340,23 @@ export default function CanvasEditor({
   const currentSaveRef = useRef(null)
   const hydratePromiseRef = useRef(null)
 
+  /** Text typed in a box and not saved yet (C-1): the box commits only when editing ends. */
+  const unsavedTextDraft = useCallback(() => {
+    const draft = activeTextEditDraft()
+    return draft && draftSavedRef.current.get(draft.elementId) !== draft.text ? draft : null
+  }, [])
+
   const isDirty = useCallback(() => {
     const saved = savedSnapshotRef.current
     return (
+      Boolean(unsavedTextDraft()) ||
       pendingUploadsRef.current.size > 0 ||
       docTitleRef.current !== lastSyncedTitleRef.current ||
       canvasesRef.current !== saved.canvases ||
       docTitleRef.current !== saved.docTitle ||
       sizeRef.current !== saved.size
     )
-  }, [])
+  }, [unsavedTextDraft])
 
   const persistRef = useRef(null)
   const createRef = useRef(null)
@@ -426,11 +437,17 @@ export default function CanvasEditor({
       size: sizeRef.current,
     }
 
+    // The text being typed goes with the save (C-1); the snapshot used to tell what is saved
+    // stays the editor's own document, so finishing the edit later is still seen as a change.
+    const draft = activeTextEditDraft()
+    const payload = serializeForSave({ ...snapshot, canvases: canvasesWithTextDraft(snapshot.canvases, draft) })
+
     const run = (async () => {
       try {
-        const saved = await canvasService.saveCanvasData(workspaceId, id, serializeForSave(snapshot), {
+        const saved = await canvasService.saveCanvasData(workspaceId, id, payload, {
           baseRevision: revisionRef.current,
         })
+        if (draft) draftSavedRef.current.set(draft.elementId, draft.text)
         revisionRef.current = readRevision(saved?.data) || revisionRef.current + 1
         savedSnapshotRef.current = snapshot
         // Library cards show the project name, so keep it in step with the header title.
@@ -708,7 +725,7 @@ export default function CanvasEditor({
     if (!canPersist || !canvasIdRef.current || saveHaltedRef.current || !isDirty()) return
     const id = canvasIdRef.current
     const payload = serializeForSave({
-      canvases: canvasesRef.current,
+      canvases: canvasesWithTextDraft(canvasesRef.current, activeTextEditDraft()),
       docTitle: docTitleRef.current,
       size: sizeRef.current,
     })
@@ -741,6 +758,18 @@ export default function CanvasEditor({
 
   // ── Leaving the editor ───────────────────────────────────────────────────
   const [leavePrompt, setLeavePrompt] = useState(null) // null | 'ask' | 'saving' | 'failed'
+
+  // Typing in a text box: save it shortly after typing stops (C-1), like any other edit.
+  useEffect(() => {
+    if (!canPersist) return undefined
+    return subscribeTextEditDraft(() => {
+      if (!hydratedRef.current || !canvasIdRef.current || !unsavedTextDraft()) return
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = setTimeout(() => {
+        persistRef.current?.()
+      }, AUTOSAVE_DEBOUNCE_MS)
+    })
+  }, [canPersist, unsavedTextDraft])
 
   // Browser refresh / tab close with unsaved changes.
   useEffect(() => {
