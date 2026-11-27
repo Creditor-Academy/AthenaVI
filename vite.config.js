@@ -38,8 +38,8 @@ function athenaContractsOptimizePlugin() {
   }
 }
 
-/** The Google Tag Manager container from the marketing team. VITE_GTM_ID overrides it; "off" disables it. */
-const DEFAULT_GTM_ID = 'GTM-M4CC43NS'
+/** The owned Google Tag Manager container. GA4 is configured inside it. VITE_GTM_ID overrides it; "off" disables it. */
+const DEFAULT_GTM_ID = 'GTM-WFMG65MD'
 
 export function gtmIdFromEnv(raw) {
   const value = String(raw ?? '').trim()
@@ -48,23 +48,28 @@ export function gtmIdFromEnv(raw) {
   return /^GTM-[A-Z0-9]+$/.test(value) ? value : null
 }
 
-/** The Google tag snippet for a GTM container, as Google's "Set up a Google tag" page gives it. */
+/** Google's standard GTM head snippet: pushes gtm.start, then loads gtm.js. */
 export function gtmSnippet(gtmId) {
-  return [
-    '<!-- Google tag (Google Tag Manager) -->',
-    `<script async src="https://www.googletagmanager.com/gtm.js?id=${gtmId}"></script>`,
-    '<script>',
-    '  window.dataLayer = window.dataLayer || [];',
-    '  function gtag(){dataLayer.push(arguments);}',
-    "  gtag('js', new Date());",
-    '</script>',
-  ].join('\n    ')
+  return `<!-- Google Tag Manager --><script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');</script><!-- End Google Tag Manager -->`
+}
+
+/** Google's standard GTM <noscript> iframe, placed immediately after the opening <body> tag. */
+export function gtmNoscript(gtmId) {
+  return `<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${gtmId}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`
+}
+
+/** Head snippet as high as <head> allows, plus the noscript fallback. Unchanged when GTM is off. */
+export function injectGoogleTagManager(html, gtmId) {
+  if (!gtmId) return html
+  return html
+    .replace(/<head>/i, `<head>\n    ${gtmSnippet(gtmId)}`)
+    .replace(/<body(\s[^>]*)?>/i, (open) => `${open}\n    ${gtmNoscript(gtmId)}`)
 }
 
 /**
- * Google Tag Manager on the site's pages, right after <head> (as Google asks). Production builds
- * only, so local development doesn't send visits to Analytics; never on export-render.html (the
- * page the backend renders exports with).
+ * Google Tag Manager on the site's pages: the standard snippet right after <head>, and the
+ * noscript iframe right after <body>. Production builds only, so local development doesn't send
+ * visits to Analytics; never on export-render.html (the page the backend renders exports with).
  */
 function googleTagManagerPlugin(gtmId) {
   return {
@@ -74,7 +79,7 @@ function googleTagManagerPlugin(gtmId) {
       order: 'pre',
       handler(html, ctx) {
         if (!gtmId || path.basename(ctx.filename || '') !== 'index.html') return html
-        return html.replace(/<head>/i, `<head>\n    ${gtmSnippet(gtmId)}`)
+        return injectGoogleTagManager(html, gtmId)
       },
     },
   }
