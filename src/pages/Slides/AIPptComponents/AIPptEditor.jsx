@@ -1445,6 +1445,12 @@ function AIPptEditor({
   })
   const [multiSelectIds, setMultiSelectIds] = useState([])
   const [elementContextMenu, setElementContextMenu] = useState(null)
+  // Present opens over the editor: close the editor's own menus first so none is left behind it.
+  const openPresent = useCallback(() => {
+    setQuickMenuOpen(false)
+    setElementContextMenu(null)
+    setPresentOpen(true)
+  }, [])
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [layoutSchemaMap, setLayoutSchemaMap] = useState({})
   const brandKitMenuRef = useRef(null)
@@ -2774,7 +2780,8 @@ function AIPptEditor({
 
   const insertImageFilesRef = useRef(null)
   const editorClipboard = useEditorClipboard({
-    enabled: !viewOnly && !isGenerating,
+    // Off while presenting: Ctrl+V would paste onto the slide behind Present.
+    enabled: !viewOnly && !isGenerating && !presentOpen,
     hasElements: () => Boolean(elementMutationsRef.current?.hasClipboard?.()),
     onPasteElements: () => elementMutationsRef.current?.pasteClipboard?.(),
     onPasteImages: (files) => insertImageFilesRef.current?.(files),
@@ -2982,7 +2989,7 @@ function AIPptEditor({
           elementMutations.toggleLock(ids)
           break
         case 'present':
-          setPresentOpen(true)
+          openPresent()
           break
         case 'share':
           if (viewOnly) { askOwner(); break }
@@ -3013,7 +3020,7 @@ function AIPptEditor({
           break
       }
     },
-    [handleUndo, handleRedo, elementMutations, multiSelectIds, selectedElementId, selectedSlide, viewOnly, askOwner, editorClipboard, selectionClipboardText]
+    [handleUndo, handleRedo, elementMutations, multiSelectIds, selectedElementId, selectedSlide, viewOnly, askOwner, editorClipboard, selectionClipboardText, openPresent]
   )
 
   // Crop on the slide itself (Canva-style): the box and the photo behind it are adjusted on
@@ -5013,6 +5020,8 @@ function AIPptEditor({
 
   // Keep keyboard ctx fresh without rebinding the listener every nudge (key-repeat lag).
   keyCtxRef.current = {
+    presentOpen,
+    openPresent,
     handleCopySlide,
     handlePasteSlide,
     viewOnly,
@@ -5065,6 +5074,11 @@ function AIPptEditor({
         return
       }
 
+      // Present owns the keyboard (QA Present plan, Phase 1.1): no editor shortcut may run behind
+      // it. Arrows would nudge the selected element, Delete remove it, Ctrl+Z/D/G/L change the
+      // deck — all out of sight and saved. View-only guests would get the "view only" notice.
+      if (ctx.presentOpen) return
+
       // Slide text uses editor history. Native undo on controlled fields flashes
       // restored text then React overwrites it with the empty value.
       if (mod && (key === 'z' || key === 'y')) {
@@ -5110,7 +5124,7 @@ function AIPptEditor({
         }
         if (mod && key === 'enter') {
           e.preventDefault()
-          setPresentOpen(true)
+          ctx.openPresent()
         }
         if (mod && (key === '=' || key === '+')) {
           e.preventDefault()
@@ -5221,7 +5235,7 @@ function AIPptEditor({
       }
       if (mod && key === 'enter') {
         e.preventDefault()
-        setPresentOpen(true)
+        ctx.openPresent()
         return
       }
       if (mod && key === 'k') {
@@ -5699,7 +5713,7 @@ function AIPptEditor({
           <button
             className="aig-editor-btn-primary"
             type="button"
-            onClick={() => setPresentOpen(true)}
+            onClick={openPresent}
             title="Present"
             aria-label="Present"
           >
@@ -6433,6 +6447,8 @@ function AIPptEditor({
           presence={presentPresence}
           onIndexChange={(i) => {
             presentIndexRef.current = i
+            // Viewers following the presenter get the new slide now, not on the next heartbeat.
+            memberPresenter.notifySlideChange()
           }}
           // Present is mounted outside the workspace that sets the deck's theme fonts.
           fontVars={{

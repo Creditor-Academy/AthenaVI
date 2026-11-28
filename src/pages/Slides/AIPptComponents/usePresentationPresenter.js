@@ -79,6 +79,40 @@ export default function usePresentationPresenter({
     }
   }, [workspaceId, presentationId])
 
+  // Heartbeats go out one at a time, in order: a slide change sent while another heartbeat is on
+  // its way waits for it, then sends the newest slide. Out-of-order requests could otherwise leave
+  // the server on an older slide until the next tick.
+  const inFlightRef = useRef(null)
+  const sendAgainRef = useRef(false)
+  const sendSerialRef = useRef(null)
+  const sendSerial = useCallback(() => {
+    if (inFlightRef.current) {
+      sendAgainRef.current = true
+      return inFlightRef.current
+    }
+    const run = async () => {
+      try {
+        await sendHeartbeat()
+      } finally {
+        inFlightRef.current = null
+        if (sendAgainRef.current) {
+          sendAgainRef.current = false
+          sendSerialRef.current?.()
+        }
+      }
+    }
+    inFlightRef.current = run()
+    return inFlightRef.current
+  }, [sendHeartbeat])
+  useEffect(() => {
+    sendSerialRef.current = sendSerial
+  }, [sendSerial])
+
+  const enabledRef = useRef(enabled)
+  useEffect(() => {
+    enabledRef.current = enabled
+  }, [enabled])
+
   useEffect(() => {
     if (!enabled || !workspaceId || !presentationId) return undefined
     let cancelled = false
@@ -86,7 +120,7 @@ export default function usePresentationPresenter({
 
     const tick = async () => {
       if (cancelled) return
-      await sendHeartbeat()
+      await sendSerial()
       if (!cancelled) timer = window.setTimeout(tick, HEARTBEAT_MS)
     }
     tick()
@@ -95,7 +129,7 @@ export default function usePresentationPresenter({
       cancelled = true
       window.clearTimeout(timer)
     }
-  }, [enabled, workspaceId, presentationId, sendHeartbeat])
+  }, [enabled, workspaceId, presentationId, sendSerial])
 
   useEffect(() => {
     if (!enabled) return undefined
@@ -118,14 +152,23 @@ export default function usePresentationPresenter({
   const startPresenting = useCallback(() => {
     wantPresentingRef.current = true
     setConflict(null)
-    sendHeartbeat()
-  }, [sendHeartbeat])
+    sendSerial()
+  }, [sendSerial])
 
   const stopPresenting = useCallback(() => {
     wantPresentingRef.current = false
     setIsPresenting(false)
-    sendHeartbeat()
-  }, [sendHeartbeat])
+    sendSerial()
+  }, [sendSerial])
 
-  return { presenter, isPresenting, conflict, startPresenting, stopPresenting }
+  /**
+   * The presenter moved to another slide: tell the server now (Present plan, Phase 1.7), so
+   * viewers don't wait for the next 12 s heartbeat. Nothing to send unless presenting to viewers.
+   */
+  const notifySlideChange = useCallback(() => {
+    if (!enabledRef.current || !wantPresentingRef.current) return
+    sendSerial()
+  }, [sendSerial])
+
+  return { presenter, isPresenting, conflict, startPresenting, stopPresenting, notifySlideChange }
 }

@@ -1,7 +1,16 @@
+/*
+ * Present sits above every editor layer: menus and popovers (up to 120010), dialogs (99990),
+ * toasts (99999) and the generation overlay. Nothing the editor opens may draw over a show.
+ * Change it here only (Present plan, Phase 1.2).
+ */
+:root {
+  --ppt-z-present: 130000;
+}
+
 .ppt-present-overlay {
   position: fixed;
   inset: 0;
-  z-index: 10000;
+  z-index: var(--ppt-z-present);
   background:
     radial-gradient(1200px 700px at 50% 8%, rgba(59, 130, 246, 0.10), transparent 60%),
     linear-gradient(180deg, #0b1120 0%, #05070d 100%);
@@ -10,12 +19,19 @@
   animation: pptPresentOverlayIn 0.22s ease;
 }
 
+/* Focus sits on the overlay itself (keyboard control of the show); no ring around the screen. */
+.ppt-present-overlay:focus {
+  outline: none;
+}
+
 @keyframes pptPresentOverlayIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
 .ppt-present-header {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -54,14 +70,6 @@
   color: #64748b;
   font-weight: 400;
   margin: 0 1px;
-}
-
-.ppt-present-transition-tag {
-  color: #94a3b8;
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .ppt-present-header-actions {
@@ -130,6 +138,8 @@
 }
 
 .ppt-present-banner {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -176,6 +186,8 @@
   padding: 24px;
   min-height: 0;
   min-width: 0;
+  /* The slide is sized from this box (cqw / cqh below), so it never spills over the controls. */
+  container-type: size;
   transition: opacity 0.28s ease, transform 0.28s ease;
 }
 
@@ -239,11 +251,11 @@
 }
 
 .ppt-present-slide {
-  --ppt-present-max-h: 76vh;
   position: relative;
-  /* Width also limited by the available height × the slide's ratio, so the box always keeps
-     the slide's shape; a max-height on a fixed width squashed slides on shorter screens. */
-  width: min(92vw, 1200px, calc(var(--ppt-present-max-h) * var(--ppt-present-ratio, 1.7778)));
+  /* As wide as the space between the controls allows, keeping the slide's shape. Sized from
+     the screen (76vh) it was taller than that space on laptops (e.g. 1440 x 900 with notes)
+     and covered the header's buttons, which then couldn't be clicked. */
+  width: min(100cqw, 1200px, calc(100cqh * var(--ppt-present-ratio, 1.7778)));
   max-width: 100%;
   border-radius: 10px;
   overflow: hidden;
@@ -289,6 +301,8 @@
 }
 
 .ppt-present-notes {
+  position: relative;
+  z-index: 2;
   padding: 12px 24px 14px;
   background: rgba(0, 0, 0, 0.4);
   color: #cbd5e1;
@@ -307,12 +321,16 @@
 
 .ppt-present-notes p {
   margin: 0;
+  /* Keep the facilitator's line breaks. */
+  white-space: pre-wrap;
   line-height: 1.5;
   max-height: 4.5em;
   overflow-y: auto;
 }
 
 .ppt-present-nav {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -371,6 +389,8 @@
 }
 
 .ppt-present-hints {
+  position: relative;
+  z-index: 2;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -397,10 +417,6 @@
     display: none;
   }
 
-  .ppt-present-transition-tag {
-    display: none;
-  }
-
   .ppt-present-banner {
     font-size: 12px;
     padding: 6px 12px;
@@ -411,8 +427,6 @@
   }
 
   .ppt-present-slide {
-    --ppt-present-max-h: 64dvh;
-    width: min(100%, calc(var(--ppt-present-max-h) * var(--ppt-present-ratio, 1.7778)));
     border-radius: 4px;
   }
 
@@ -435,6 +449,57 @@
     display: none;
   }
 
+  .ppt-present-hints {
+    display: none;
+  }
+}
+
+/* Short screens (a phone held sideways, a small laptop window): the controls take as little
+   height as possible so the slide keeps most of it. The width rule above doesn't catch an
+   844 x 390 phone in landscape. */
+@media (max-height: 520px) {
+  .ppt-present-header {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .ppt-present-header-actions button {
+    padding: 4px 8px;
+  }
+
+  .ppt-present-live-btn span,
+  .ppt-present-focus-btn span {
+    display: none;
+  }
+
+  .ppt-present-banner {
+    padding: 4px 12px;
+    font-size: 12px;
+  }
+
+  .ppt-present-stage {
+    padding: 4px 12px;
+  }
+
+  .ppt-present-notes {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .ppt-present-notes p {
+    max-height: 3em;
+  }
+
+  .ppt-present-nav {
+    padding: 4px 12px;
+  }
+
+  .ppt-present-nav button {
+    width: 34px;
+    height: 34px;
+  }
+
+  .ppt-present-dots,
   .ppt-present-hints {
     display: none;
   }

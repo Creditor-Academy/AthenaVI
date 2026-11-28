@@ -10,7 +10,6 @@ import {
   resolveSlideStageBackground,
 } from '../../../utils/presentationHelpers'
 import { EDITOR_STAGE_WIDTH, resolveStageElements } from '../../../utils/slideStageElements'
-import { PPT_SLIDE_TRANSITIONS } from '../../../constants/pptSlideEditorOptions'
 import './PresentMode.css'
 
 /**
@@ -148,7 +147,10 @@ export default function PresentMode({
   // CSS variables for the deck's theme fonts (--ppt-font-heading / --ppt-font-body).
   fontVars = null,
 }) {
-  const [index, setIndex] = useState(initialSlideIndex)
+  const [rawIndex, setIndex] = useState(initialSlideIndex)
+  // Slides can be removed while presenting (undo, a collaborator): never point past the last one.
+  const lastIndex = Math.max(0, slides.length - 1)
+  const index = Math.min(Math.max(0, rawIndex), lastIndex)
   const [focusElementId, setFocusElementId] = useState(null)
   // `reverse` flips the slide direction when stepping back; `tick` restarts the animation.
   // Opening on a slide plays the transition that leads into it, so a transition just applied
@@ -188,9 +190,14 @@ export default function PresentMode({
     })
   }, [following, presenter, slides.length])
 
+  // The editor passes a new callback on every render; only a slide change should call it.
+  const onIndexChangeRef = useRef(onIndexChange)
   useEffect(() => {
-    onIndexChange?.(index)
-  }, [index, onIndexChange])
+    onIndexChangeRef.current = onIndexChange
+  }, [onIndexChange])
+  useEffect(() => {
+    onIndexChangeRef.current?.(index)
+  }, [index])
 
   const slide = slides[index]
   const canvas = resolveCanvasSize(slide, aspectRatio)
@@ -199,7 +206,6 @@ export default function PresentMode({
   const elements = resolveStageElements(slide, canvas, palette).filter((el) => el.type !== 'group')
   // A transition belongs to the slide it leads into (the editor stores it on the next slide).
   const slideTransition = (s) => s?.transition || s?.elements?.transition || 'none'
-  const transition = slideTransition(slide)
   const hasElements = elements.length > 0
   // The title / image placeholder is only for slides that never had a canvas (B-3).
   const showFallback = !hasElements && showsSlideFallback(slide)
@@ -212,20 +218,22 @@ export default function PresentMode({
     { photoLayer: true }
   )
 
-  const go = useCallback(
-    (delta) => {
-      const target = Math.max(0, Math.min(slides.length - 1, index + delta))
+  const goTo = useCallback(
+    (to) => {
+      const target = Math.max(0, Math.min(slides.length - 1, to))
       if (target === index) return
+      const forward = target > index
       setFollowing(false)
       setFocusElementId(null)
       // Going forward plays the destination's transition; going back replays the one that
       // led into the current slide, in the opposite direction.
-      const leadsIn = delta > 0 ? slides[target] : slides[index]
-      setMotion((m) => ({ id: slideTransition(leadsIn), reverse: delta < 0, tick: m.tick + 1 }))
+      const leadsIn = forward ? slides[target] : slides[index]
+      setMotion((m) => ({ id: slideTransition(leadsIn), reverse: !forward, tick: m.tick + 1 }))
       setIndex(target)
     },
     [slides, index]
   )
+  const go = useCallback((delta) => goTo(index + delta), [goTo, index])
 
   const touchStartRef = useRef(null)
   const onTouchStart = (e) => {
@@ -273,38 +281,120 @@ export default function PresentMode({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusableIds.join('|')])
 
+  // Focus moves into Present and stays there (Phase 1.3): Tab can't reach the editor behind it.
+  // On exit it goes back to where it was (the Present button).
+  const rootRef = useRef(null)
+  useEffect(() => {
+    const previous = document.activeElement
+    rootRef.current?.focus({ preventScroll: true })
+    return () => {
+      if (previous?.isConnected && typeof previous.focus === 'function') previous.focus({ preventScroll: true })
+    }
+  }, [])
+
+  const trapTab = useCallback((e) => {
+    const root = rootRef.current
+    if (!root) return
+    const items = [
+      ...root.querySelectorAll('button:not([disabled]), a[href], iframe, [tabindex]:not([tabindex="-1"])'),
+    ].filter((el) => el.getClientRects().length > 0)
+    const active = document.activeElement
+    if (!items.length) {
+      e.preventDefault()
+      root.focus({ preventScroll: true })
+      return
+    }
+    const first = items[0]
+    const last = items[items.length - 1]
+    if (!root.contains(active) || active === root) {
+      e.preventDefault()
+      if (e.shiftKey) last.focus()
+      else first.focus()
+    } else if (e.shiftKey && active === first) {
+      e.preventDefault()
+      last.focus()
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault()
+      first.focus()
+    }
+  }, [])
+
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === 'Escape') {
-        if (focusElementId) setFocusElementId(null)
-        else onClose?.()
+      if (e.key === 'Tab') {
+        trapTab(e)
+        return
       }
-      if (e.key === 'ArrowRight' || e.key === ' ') {
-        e.preventDefault()
-        go(1)
+      // Ctrl / Cmd / Alt combinations belong to the browser (reload, zoom, switching tabs).
+      if (e.ctrlKey || e.metaKey || e.altKey) return
+      // A button reached with Tab takes Space itself.
+      const onButton = Boolean(e.target?.closest?.('button'))
+      switch (e.key) {
+        case 'Escape':
+          if (focusElementId) setFocusElementId(null)
+          else onClose?.()
+          break
+        // Presentation clickers send PageDown / PageUp (Phase 1.8).
+        case 'ArrowRight':
+        case 'ArrowDown':
+        case 'PageDown':
+          e.preventDefault()
+          go(1)
+          break
+        case ' ':
+          if (onButton) return
+          e.preventDefault()
+          go(1)
+          break
+        case 'ArrowLeft':
+        case 'ArrowUp':
+        case 'PageUp':
+          e.preventDefault()
+          go(-1)
+          break
+        case 'Home':
+          e.preventDefault()
+          goTo(0)
+          break
+        case 'End':
+          e.preventDefault()
+          goTo(slides.length - 1)
+          break
+        case 'f':
+        case 'F':
+          cycleFocus()
+          break
+        default:
       }
-      if (e.key === 'ArrowLeft') go(-1)
-      if (e.key === 'f' || e.key === 'F') cycleFocus()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onClose, go, cycleFocus, focusElementId])
+  }, [onClose, go, goTo, cycleFocus, focusElementId, trapTab, slides.length])
+
+  // A mouse click on a control leaves focus on Present, so Space still means "next slide".
+  const keepFocusOnPresent = (e) => {
+    if (e.target?.closest?.('button')) e.preventDefault()
+  }
 
   const transitionClass =
     motion.tick > 0 && motion.id !== 'none'
       ? `ppt-present-stage--${motion.id}${motion.reverse ? ' is-reverse' : ''}`
       : ''
 
-  const transitionLabel = PPT_SLIDE_TRANSITIONS.find((t) => t.id === transition)?.label
-
   return (
-    <div className="ppt-present-overlay" role="dialog" aria-label="Present mode">
-      <header className="ppt-present-header">
+    <div
+      ref={rootRef}
+      className="ppt-present-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Present mode"
+      tabIndex={-1}
+    >
+      <header className="ppt-present-header" onMouseDown={keepFocusOnPresent}>
         <div className="ppt-present-header-left">
           <span className="ppt-present-counter">
             {index + 1} <em>/</em> {slides.length}
           </span>
-          {transitionLabel && <span className="ppt-present-transition-tag">{transitionLabel}</span>}
         </div>
 
         <div className="ppt-present-header-actions">
@@ -342,7 +432,7 @@ export default function PresentMode({
       </header>
 
       {presenter && !isPresenting && (
-        <div className="ppt-present-banner">
+        <div className="ppt-present-banner" onMouseDown={keepFocusOnPresent}>
           <span className="ppt-present-banner-dot" aria-hidden />
           <span>
             {conflict ? `${conflict.displayName} is presenting` : `Following ${presenter.displayName}`}
@@ -406,12 +496,12 @@ export default function PresentMode({
 
       {chrome === 'presenter' && slide?.speakerNotes && (
         <footer className="ppt-present-notes">
-          <strong>Speaker notes</strong>
+          <strong>Facilitator notes</strong>
           <p>{slide.speakerNotes}</p>
         </footer>
       )}
 
-      <nav className="ppt-present-nav">
+      <nav className="ppt-present-nav" onMouseDown={keepFocusOnPresent}>
         <button type="button" disabled={index <= 0} onClick={() => go(-1)} aria-label="Previous slide">
           <FiChevronLeft size={20} />
         </button>
