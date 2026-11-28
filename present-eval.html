@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Present measurement</title>
+  </head>
+  <body>
+    <!--
+      Dev-only page for the Present harness (AthenaVI_backend: npm run eval:present).
+      It opens Present on a deck injected with window.__athenaPresent.open() and records every
+      animation frame, so slide changes can be measured. No API calls, no sign-in.
+      Not part of the production build (vite.config.js lists the pages that are).
+      See docs/PRESENT_MODE_PRODUCTION_PLAN.md, Phase 0.
+    -->
+    <div id="root"></div>
+    <script type="module" src="/src/present-eval/main.jsx"></script>
+  </body>
+</html>
