@@ -27,6 +27,7 @@ import PptCanvasGuidesOverlay from './PptCanvasGuidesOverlay'
 import PptCanvasTextSafeAreaOverlay from './PptCanvasTextSafeAreaOverlay'
 import { textElementsInDangerZone } from '../../../utils/slideTextSafeArea.js'
 import PresentMode from './PresentMode'
+import { requestPresentFullscreen } from './present/fullscreen'
 import SharePresentationModal from './SharePresentationModal'
 import ExportPresentationModal from './ExportPresentationModal'
 import SlideMockFallback from './SlideMockFallback'
@@ -1447,6 +1448,9 @@ function AIPptEditor({
   const [elementContextMenu, setElementContextMenu] = useState(null)
   // Present opens over the editor: close the editor's own menus first so none is left behind it.
   const openPresent = useCallback(() => {
+    // Full screen must be asked for inside the click / key press that starts the show
+    // (Present plan, Phase 2.2). Refused or unavailable (iPhone, a frame): Present runs in the window.
+    requestPresentFullscreen()
     setQuickMenuOpen(false)
     setElementContextMenu(null)
     setPresentOpen(true)

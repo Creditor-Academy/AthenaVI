@@ -11,6 +11,7 @@
  *   slide  [data-present-slide]  or .ppt-present-slide        (the letterboxed slide box)
  *   stage  [data-present-stage]  or .ppt-present-stage-plane  (the scaled slide contents)
  *   index  [data-present-index]  (0-based) or the "3 / 12" counter, .ppt-present-counter
+ *   chrome [data-present-chrome] controls over the slide; the harness hides them for its pictures
  */
 
 const pick = (scope, selectors) => {
